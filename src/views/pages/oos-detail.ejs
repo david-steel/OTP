@@ -1,0 +1,148 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <h1 class="text-2xl font-bold"><%= org.name %></h1>
+          <% if (org.badge === 'founding') { %>
+            <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding Publisher</span>
+          <% } %>
+          <% if (org.qualityTier) { %>
+            <span class="badge-<%= org.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= org.qualityTier %></span>
+          <% } %>
+        </div>
+        <div class="text-gray-500 text-sm">
+          <%= org.industry %> &middot; <%= org.size %> &middot;
+          <%= oosFile.template.replace('_', ' ') %> template &middot;
+          v<%= oosFile.version %>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-2xl font-bold text-otp-600"><%= oosFile.claimCount %></div>
+        <div class="text-xs text-gray-500">claims</div>
+      </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="mt-4 flex gap-6 text-sm">
+      <div>
+        <span class="text-gray-500">Confidence:</span>
+        <span class="ml-1 bg-confidence-high text-white px-1.5 py-0.5 rounded text-xs"><%= (oosFile.confidenceDistribution || {}).high || 0 %> H</span>
+        <span class="ml-0.5 bg-confidence-medium text-white px-1.5 py-0.5 rounded text-xs"><%= (oosFile.confidenceDistribution || {}).medium || 0 %> M</span>
+        <span class="ml-0.5 bg-confidence-low text-white px-1.5 py-0.5 rounded text-xs"><%= (oosFile.confidenceDistribution || {}).low || 0 %> L</span>
+      </div>
+      <div>
+        <span class="text-gray-500">Words:</span> <%= oosFile.wordCount %>
+      </div>
+      <div>
+        <span class="text-gray-500">Published:</span> <%= oosFile.publishedAt ? new Date(oosFile.publishedAt).toLocaleDateString() : 'Draft' %>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-4 flex gap-3">
+      <button onclick="document.getElementById('compare-modal').classList.remove('hidden')" class="px-4 py-2 bg-otp-500 text-white rounded text-sm hover:bg-otp-400">Compare with Another OOS</button>
+      <a href="/org/<%= org.id %>" class="px-4 py-2 border rounded text-sm hover:bg-gray-50">View Publisher Profile</a>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex gap-3 mb-4">
+    <select id="filter-section" class="text-sm border rounded px-3 py-1.5" onchange="filterClaims()">
+      <option value="">All Sections</option>
+      <% const sections = [...new Set(claims.map(c => c.section))]; %>
+      <% sections.forEach(function(s) { %>
+        <option value="<%= s %>"><%= s.replace(/_/g, ' ') %></option>
+      <% }); %>
+    </select>
+    <select id="filter-confidence" class="text-sm border rounded px-3 py-1.5" onchange="filterClaims()">
+      <option value="">All Confidence</option>
+      <option value="HIGH">HIGH</option>
+      <option value="MEDIUM">MEDIUM</option>
+      <option value="LOW">LOW</option>
+    </select>
+    <select id="filter-evidence" class="text-sm border rounded px-3 py-1.5" onchange="filterClaims()">
+      <option value="">All Evidence</option>
+      <option value="MEASURED_RESULT">MEASURED_RESULT</option>
+      <option value="OBSERVED_REPEATEDLY">OBSERVED_REPEATEDLY</option>
+      <option value="OBSERVED_ONCE">OBSERVED_ONCE</option>
+      <option value="HUMAN_DEFINED_RULE">HUMAN_DEFINED_RULE</option>
+      <option value="INFERENCE">INFERENCE</option>
+      <option value="SPECULATION">SPECULATION</option>
+    </select>
+  </div>
+
+  <!-- Claims List -->
+  <div id="claims-list">
+    <% let currentSection = ''; %>
+    <% claims.forEach(function(claim) { %>
+      <% if (claim.section !== currentSection) { %>
+        <% currentSection = claim.section; %>
+        <h2 class="text-lg font-semibold mt-8 mb-3 capitalize section-header" data-section="<%= claim.section %>">
+          <%= claim.section.replace(/_/g, ' ') %>
+        </h2>
+      <% } %>
+      <div class="claim-item bg-white p-4 rounded-lg border mb-3 claim-card"
+           data-section="<%= claim.section %>"
+           data-confidence="<%= claim.confidence %>"
+           data-evidence="<%= claim.evidence %>">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded"><%= claim.claimId %></span>
+          <span class="text-xs text-white px-2 py-0.5 rounded
+            <% if (claim.confidence === 'HIGH') { %>bg-confidence-high<% } %>
+            <% if (claim.confidence === 'MEDIUM') { %>bg-confidence-medium<% } %>
+            <% if (claim.confidence === 'LOW') { %>bg-confidence-low<% } %>
+          "><%= claim.confidence %></span>
+          <span class="text-xs text-white px-2 py-0.5 rounded
+            <% if (claim.evidence === 'MEASURED_RESULT') { %>bg-evidence-measured<% } %>
+            <% if (claim.evidence === 'OBSERVED_REPEATEDLY' || claim.evidence === 'OBSERVED_ONCE') { %>bg-evidence-observed<% } %>
+            <% if (claim.evidence === 'HUMAN_DEFINED_RULE') { %>bg-evidence-rule<% } %>
+            <% if (claim.evidence === 'INFERENCE') { %>bg-evidence-inference<% } %>
+            <% if (claim.evidence === 'SPECULATION') { %>bg-evidence-speculation<% } %>
+          "><%= claim.evidence.replace(/_/g, ' ') %></span>
+        </div>
+        <p class="font-medium text-sm mb-1"><%= claim.rule %></p>
+        <p class="text-sm text-gray-600 mb-1"><strong>Why:</strong> <%= claim.why %></p>
+        <p class="text-sm text-gray-500 mb-1"><strong>Failure mode:</strong> <%= claim.failureMode %></p>
+        <p class="text-xs text-gray-400"><strong>Scope:</strong> <%= claim.scope %></p>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Compare Modal -->
+  <div id="compare-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg w-96">
+      <h3 class="font-bold mb-4">Compare with Another OOS</h3>
+      <p class="text-sm text-gray-600 mb-4">Enter the ID of another published OOS to see a side-by-side comparison.</p>
+      <input type="text" id="compare-id" placeholder="OOS File ID..." class="w-full border rounded px-3 py-2 mb-4 text-sm">
+      <div class="flex gap-2">
+        <button onclick="window.location.href='/compare/<%= oosFile.id %>/' + document.getElementById('compare-id').value" class="flex-1 px-4 py-2 bg-otp-500 text-white rounded text-sm">Compare</button>
+        <button onclick="document.getElementById('compare-modal').classList.add('hidden')" class="px-4 py-2 border rounded text-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterClaims() {
+  const section = document.getElementById('filter-section').value;
+  const confidence = document.getElementById('filter-confidence').value;
+  const evidence = document.getElementById('filter-evidence').value;
+
+  document.querySelectorAll('.claim-item').forEach(el => {
+    const matchSection = !section || el.dataset.section === section;
+    const matchConf = !confidence || el.dataset.confidence === confidence;
+    const matchEvid = !evidence || el.dataset.evidence === evidence;
+    el.style.display = (matchSection && matchConf && matchEvid) ? '' : 'none';
+  });
+
+  document.querySelectorAll('.section-header').forEach(el => {
+    if (!section || el.dataset.section === section) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+</script>

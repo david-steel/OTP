@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orgtp.com/schemas/oos/v1.0",
+  "title": "Organizational Operating System (OOS) v1.0",
+  "description": "Schema for the OOS artifact -- structured, machine-readable capture of organizational AI coordination intelligence",
+  "type": "object",
+  "required": ["frontmatter", "claims"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": [
+        "oos_version", "org_pseudonym", "industry", "org_size", "template",
+        "agent_count", "platforms", "generated_at", "version", "parent_version",
+        "word_count", "claim_count", "confidence_distribution", "evidence_distribution"
+      ],
+      "properties": {
+        "oos_version": { "type": "string", "pattern": "^\\d+\\.\\d+$" },
+        "org_id": { "type": "string", "format": "uuid" },
+        "org_pseudonym": { "type": "string", "minLength": 1 },
+        "industry": { "type": "string", "minLength": 1 },
+        "org_size": { "type": "string", "enum": ["solo", "small", "medium", "large", "enterprise"] },
+        "template": { "type": "string", "enum": ["agent_army", "value_chain", "org_chart"] },
+        "agent_count": { "type": "integer", "minimum": 1 },
+        "platforms": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "version": { "type": "integer", "minimum": 1 },
+        "parent_version": { "type": ["integer", "null"], "minimum": 1 },
+        "word_count": { "type": "integer", "minimum": 1800, "maximum": 3000 },
+        "claim_count": { "type": "integer", "minimum": 10 },
+        "confidence_distribution": {
+          "type": "object",
+          "required": ["high", "medium", "low"],
+          "properties": {
+            "high": { "type": "integer", "minimum": 0 },
+            "medium": { "type": "integer", "minimum": 0 },
+            "low": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "evidence_distribution": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "section", "rule", "why", "failure_mode", "confidence", "evidence", "scope"],
+        "properties": {
+          "claim_id": { "type": "string", "pattern": "^C\\d{1,4}$" },
+          "section": { "type": "string", "minLength": 1 },
+          "display_order": { "type": "integer", "minimum": 0 },
+          "rule": { "type": "string", "minLength": 1 },
+          "why": { "type": "string", "minLength": 1 },
+          "failure_mode": { "type": "string", "minLength": 1 },
+          "confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "HUMAN_DEFINED_RULE", "OBSERVED_ONCE", "OBSERVED_REPEATEDLY",
+              "MEASURED_RESULT", "INFERENCE", "SPECULATION"
+            ]
+          },
+          "scope": { "type": "string", "minLength": 1 },
+          "visibility": { "type": "string", "enum": ["free", "paid", "premium"] }
+        }
+      }
+    }
+  }
+}

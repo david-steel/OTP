@@ -1,0 +1,63 @@
+<div class="bg-otp-900 text-white">
+  <div class="max-w-4xl mx-auto px-4 py-20 text-center">
+    <h1 class="text-4xl font-bold mb-4">Where Agents Learn to Work as a Team</h1>
+    <p class="text-xl text-otp-200 mb-8 max-w-2xl mx-auto">
+      The hard problem in AI isn't building one good agent. It's getting twelve of them to not step on each other.
+      OTP is the infrastructure where organizations publish, compare, and learn from each other's coordination intelligence.
+    </p>
+    <div class="flex gap-4 justify-center">
+      <a href="/browse" class="px-6 py-3 bg-otp-500 rounded-lg font-medium hover:bg-otp-400">Browse Intelligence</a>
+      <a href="/publish" class="px-6 py-3 border border-otp-400 rounded-lg font-medium hover:bg-otp-800">Publish Your OOS</a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 py-16">
+  <div class="grid grid-cols-3 gap-8 mb-16">
+    <div class="text-center">
+      <div class="text-3xl font-bold text-otp-600"><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %></div>
+      <div class="text-sm text-gray-500 mt-1">Publishers</div>
+    </div>
+    <div class="text-center">
+      <div class="text-3xl font-bold text-otp-600"><%= typeof claimCount !== 'undefined' ? claimCount : '0' %></div>
+      <div class="text-sm text-gray-500 mt-1">Knowledge Claims</div>
+    </div>
+    <div class="text-center">
+      <div class="text-3xl font-bold text-otp-600"><%= typeof templateCount !== 'undefined' ? templateCount : '3' %></div>
+      <div class="text-sm text-gray-500 mt-1">Templates</div>
+    </div>
+  </div>
+
+  <h2 class="text-2xl font-bold mb-6">How It Works</h2>
+  <div class="grid grid-cols-3 gap-8 mb-16">
+    <div class="bg-white p-6 rounded-lg border">
+      <div class="text-otp-500 font-bold text-lg mb-2">1. Publish</div>
+      <p class="text-gray-600 text-sm">Capture your AI coordination intelligence in a structured OOS file. Claims with confidence ratings, evidence types, and failure modes.</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg border">
+      <div class="text-otp-500 font-bold text-lg mb-2">2. Compare</div>
+      <p class="text-gray-600 text-sm">See what other organizations do differently. The diff engine shows what's unique to you, what's similar, and where you conflict.</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg border">
+      <div class="text-otp-500 font-bold text-lg mb-2">3. Learn</div>
+      <p class="text-gray-600 text-sm">Import proven coordination patterns. The Intelligence Graph surfaces patterns no single organization could see alone.</p>
+    </div>
+  </div>
+
+  <h2 class="text-2xl font-bold mb-6">Example Claim</h2>
+  <div class="bg-white p-6 rounded-lg border claim-card mb-8">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded">C001</span>
+      <span class="text-xs bg-confidence-high text-white px-2 py-0.5 rounded">HIGH</span>
+      <span class="text-xs bg-evidence-measured text-white px-2 py-0.5 rounded">MEASURED_RESULT</span>
+      <span class="text-xs text-gray-400 ml-auto">core_operating_rules</span>
+    </div>
+    <p class="font-medium mb-2">Every agent writes to a shared state file. No agent reads data sources directly.</p>
+    <p class="text-sm text-gray-600 mb-2"><strong>Why:</strong> Direct data source access creates race conditions and inconsistent views across agents.</p>
+    <p class="text-sm text-gray-500"><strong>Failure mode:</strong> Two agents read the same data source at different times, get different results, make conflicting decisions.</p>
+  </div>
+
+  <div class="text-center">
+    <a href="/graph" class="text-otp-600 hover:text-otp-700 font-medium">View the Intelligence Graph &rarr;</a>
+  </div>
+</div>

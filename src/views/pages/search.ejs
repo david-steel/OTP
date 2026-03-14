@@ -1,0 +1,74 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-6">Search Intelligence</h1>
+
+  <!-- Search Form -->
+  <form action="/search" method="GET" class="mb-6">
+    <div class="flex gap-2">
+      <input type="text" name="q" value="<%= typeof q !== 'undefined' ? q : '' %>"
+        placeholder="Search coordination patterns, failure modes, escalation protocols..."
+        class="flex-1 border rounded-lg px-4 py-3 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500">
+      <button type="submit" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400">Search</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex gap-3 mt-3">
+      <select name="confidence" class="text-sm border rounded px-3 py-1.5">
+        <option value="">All Confidence</option>
+        <option value="HIGH" <%= typeof confidence !== 'undefined' && confidence === 'HIGH' ? 'selected' : '' %>>HIGH</option>
+        <option value="MEDIUM" <%= typeof confidence !== 'undefined' && confidence === 'MEDIUM' ? 'selected' : '' %>>MEDIUM</option>
+        <option value="LOW" <%= typeof confidence !== 'undefined' && confidence === 'LOW' ? 'selected' : '' %>>LOW</option>
+      </select>
+      <select name="evidence" class="text-sm border rounded px-3 py-1.5">
+        <option value="">All Evidence</option>
+        <option value="MEASURED_RESULT">MEASURED_RESULT</option>
+        <option value="OBSERVED_REPEATEDLY">OBSERVED_REPEATEDLY</option>
+        <option value="OBSERVED_ONCE">OBSERVED_ONCE</option>
+        <option value="HUMAN_DEFINED_RULE">HUMAN_DEFINED_RULE</option>
+      </select>
+      <select name="template" class="text-sm border rounded px-3 py-1.5">
+        <option value="">All Templates</option>
+        <option value="agent_army">Agent Army</option>
+        <option value="value_chain">Value Chain</option>
+        <option value="org_chart">Org Chart</option>
+      </select>
+      <input type="text" name="industry" placeholder="Industry..." class="text-sm border rounded px-3 py-1.5 w-40"
+        value="<%= typeof industry !== 'undefined' ? industry : '' %>">
+    </div>
+  </form>
+
+  <!-- Results -->
+  <% if (typeof results !== 'undefined' && results.length > 0) { %>
+    <div class="text-sm text-gray-500 mb-4"><%= pagination.total %> results</div>
+    <div class="space-y-3">
+      <% results.forEach(function(r) { %>
+        <a href="/oos/<%= r.oos_file_id %>" class="block bg-white p-4 rounded-lg border claim-card">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded"><%= r.claim_ref %></span>
+            <span class="text-xs text-white px-2 py-0.5 rounded
+              <% if (r.confidence === 'HIGH') { %>bg-confidence-high<% } %>
+              <% if (r.confidence === 'MEDIUM') { %>bg-confidence-medium<% } %>
+              <% if (r.confidence === 'LOW') { %>bg-confidence-low<% } %>
+            "><%= r.confidence %></span>
+            <span class="text-xs bg-gray-100 px-1 rounded"><%= r.evidence.replace(/_/g, ' ') %></span>
+            <span class="text-xs text-gray-400 ml-auto"><%= r.org_name %> &middot; <%= r.industry %></span>
+            <% if (r.badge === 'founding') { %>
+              <span class="badge-founding text-white text-xs px-1.5 py-0.5 rounded">F</span>
+            <% } %>
+          </div>
+          <p class="font-medium text-sm"><%= r.rule %></p>
+          <p class="text-xs text-gray-500 mt-1"><%= r.section.replace(/_/g, ' ') %></p>
+        </a>
+      <% }); %>
+    </div>
+  <% } else if (typeof q !== 'undefined' && q) { %>
+    <div class="text-center py-16 text-gray-400">
+      <p class="text-lg mb-2">No results for "<%= q %>"</p>
+      <p class="text-sm">Try different keywords or <a href="/browse" class="text-otp-500 hover:underline">browse all published intelligence</a>.</p>
+    </div>
+  <% } else { %>
+    <div class="text-center py-16 text-gray-400">
+      <p class="text-lg mb-2">Search across all published coordination intelligence.</p>
+      <p class="text-sm">Try: "shared state", "escalation protocol", "conflict resolution", "failure mode"</p>
+    </div>
+  <% } %>
+</div>

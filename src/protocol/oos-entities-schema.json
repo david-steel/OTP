@@ -1,0 +1,478 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orgtp.com/schemas/oos-entities/v1.0",
+  "title": "OOS Entity Schema v1.0",
+  "description": "Structured representation of organizational entities -- agents, humans, systems, workflows, escalations, and their relationships. This is a recognized extension to the core OOS claim schema. Entities describe WHAT exists. Claims describe HOW they coordinate.",
+  "type": "object",
+  "properties": {
+    "agents": {
+      "type": "array",
+      "description": "AI agents operating within the organization",
+      "items": {
+        "$ref": "#/$defs/agent"
+      }
+    },
+    "humans": {
+      "type": "array",
+      "description": "Human roles that interact with or oversee AI agents",
+      "items": {
+        "$ref": "#/$defs/human"
+      }
+    },
+    "systems": {
+      "type": "array",
+      "description": "External systems, tools, or platforms agents interact with",
+      "items": {
+        "$ref": "#/$defs/system"
+      }
+    },
+    "workflows": {
+      "type": "array",
+      "description": "Multi-step processes involving multiple agents and/or humans",
+      "items": {
+        "$ref": "#/$defs/workflow"
+      }
+    },
+    "escalation_hierarchy": {
+      "$ref": "#/$defs/escalation_hierarchy",
+      "description": "How issues escalate from agent to agent to human"
+    },
+    "conflict_protocols": {
+      "type": "array",
+      "description": "Defined protocols for resolving conflicts between agents",
+      "items": {
+        "$ref": "#/$defs/conflict_protocol"
+      }
+    },
+    "override_rules": {
+      "type": "array",
+      "description": "Rules defining when one agent or human overrides another",
+      "items": {
+        "$ref": "#/$defs/override_rule"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Key operational decisions with authority assignments",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Dependency relationships between entities",
+      "items": {
+        "$ref": "#/$defs/dependency"
+      }
+    }
+  },
+  "$defs": {
+    "agent": {
+      "type": "object",
+      "required": ["id", "name", "role", "authority_level", "inputs", "outputs"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^AGT-\\d{3}$",
+          "description": "Unique agent identifier (e.g., AGT-001)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Agent name or title (pseudonymized -- no real names)"
+        },
+        "role": {
+          "type": "string",
+          "description": "One-line role statement"
+        },
+        "mission": {
+          "type": "string",
+          "description": "What this agent exists to accomplish"
+        },
+        "authority_level": {
+          "type": "string",
+          "enum": ["autonomous", "semi_autonomous", "supervised", "advisory"],
+          "description": "How much independent authority this agent has"
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What this agent consumes (data sources, shared state files, triggers)"
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What this agent produces (files, actions, decisions, alerts)"
+        },
+        "tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Systems and APIs this agent has access to"
+        },
+        "owns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Domains this agent has authority over"
+        },
+        "does_not_own": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit boundaries -- what this agent must NOT do"
+        },
+        "escalates_to": {
+          "type": "string",
+          "description": "Agent or human ID this agent escalates to when it cannot resolve"
+        },
+        "platform": {
+          "type": "string",
+          "description": "AI platform (e.g., claude, gpt, gemini, custom)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "planned", "deprecated"],
+          "description": "Current operational status"
+        },
+        "related_claims": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^C\\d{1,4}$" },
+          "description": "Claim IDs that reference this agent's coordination patterns"
+        }
+      }
+    },
+    "human": {
+      "type": "object",
+      "required": ["id", "role", "authority_level"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^HMN-\\d{3}$",
+          "description": "Unique human role identifier (e.g., HMN-001). Not a person -- a role."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role title (e.g., 'CEO', 'Ops Lead', 'Creative Director')"
+        },
+        "authority_level": {
+          "type": "string",
+          "enum": ["executive", "manager", "operator", "reviewer"],
+          "description": "Level of decision authority"
+        },
+        "override_authority": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which agent IDs this human can override"
+        },
+        "receives_escalations_from": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Agent IDs that escalate to this human"
+        },
+        "approves": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What actions require this human's approval"
+        },
+        "related_claims": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^C\\d{1,4}$" }
+        }
+      }
+    },
+    "system": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^SYS-\\d{3}$",
+          "description": "Unique system identifier (e.g., SYS-001)"
+        },
+        "name": {
+          "type": "string",
+          "description": "System category (e.g., 'CRM', 'project management', 'email') -- not product names"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["database", "api", "saas_platform", "communication", "storage", "analytics", "automation", "custom"],
+          "description": "System category"
+        },
+        "accessed_by": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Agent IDs that interact with this system"
+        },
+        "access_mode": {
+          "type": "string",
+          "enum": ["read_only", "read_write", "write_only"],
+          "description": "How agents interact with this system"
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["id", "name", "trigger", "steps"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^WFL-\\d{3}$",
+          "description": "Unique workflow identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Workflow name (e.g., 'Daily Briefing', 'Client Onboarding')"
+        },
+        "trigger": {
+          "type": "string",
+          "description": "What initiates this workflow (schedule, event, manual)"
+        },
+        "frequency": {
+          "type": "string",
+          "description": "How often this runs (daily, weekly, on-demand, event-triggered)"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["order", "actor", "action"],
+            "properties": {
+              "order": { "type": "integer", "minimum": 1 },
+              "actor": {
+                "type": "string",
+                "description": "Agent ID, human ID, or system ID that performs this step"
+              },
+              "action": { "type": "string", "description": "What happens at this step" },
+              "output": { "type": "string", "description": "What this step produces" },
+              "handoff_to": { "type": "string", "description": "Who receives the output" },
+              "failure_action": {
+                "type": "string",
+                "description": "What happens if this step fails"
+              }
+            }
+          }
+        },
+        "related_claims": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^C\\d{1,4}$" }
+        }
+      }
+    },
+    "escalation_hierarchy": {
+      "type": "object",
+      "required": ["levels"],
+      "properties": {
+        "levels": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["level", "handler", "trigger"],
+            "properties": {
+              "level": { "type": "integer", "minimum": 1 },
+              "handler": {
+                "type": "string",
+                "description": "Agent or human ID that handles at this level"
+              },
+              "trigger": {
+                "type": "string",
+                "description": "Condition that triggers escalation to this level"
+              },
+              "response_time": {
+                "type": "string",
+                "description": "Expected response time (e.g., 'immediate', '1 hour', '24 hours')"
+              },
+              "authority": {
+                "type": "string",
+                "description": "What this handler can do that the previous level cannot"
+              }
+            }
+          }
+        },
+        "default_escalation_timeout": {
+          "type": "string",
+          "description": "If no response at current level within this time, auto-escalate"
+        }
+      }
+    },
+    "conflict_protocol": {
+      "type": "object",
+      "required": ["id", "parties", "resolution"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CFT-\\d{3}$"
+        },
+        "parties": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" },
+          "description": "Agent or human IDs involved in this conflict type"
+        },
+        "conflict_type": {
+          "type": "string",
+          "enum": ["priority", "scope", "resource", "data", "strategic"],
+          "description": "Category of conflict"
+        },
+        "detection": {
+          "type": "string",
+          "description": "How this conflict is detected"
+        },
+        "resolution": {
+          "type": "string",
+          "description": "How this conflict is resolved"
+        },
+        "winner": {
+          "type": "string",
+          "description": "Which party prevails by default (if applicable)"
+        },
+        "escalation": {
+          "type": "string",
+          "description": "What happens if resolution fails"
+        },
+        "related_claims": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^C\\d{1,4}$" }
+        }
+      }
+    },
+    "override_rule": {
+      "type": "object",
+      "required": ["id", "overrider", "overridden", "condition"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^OVR-\\d{3}$"
+        },
+        "overrider": {
+          "type": "string",
+          "description": "Agent or human ID that performs the override"
+        },
+        "overridden": {
+          "type": "string",
+          "description": "Agent ID whose action is overridden"
+        },
+        "condition": {
+          "type": "string",
+          "description": "When this override activates"
+        },
+        "scope": {
+          "type": "string",
+          "description": "What actions are subject to this override"
+        },
+        "reversible": {
+          "type": "boolean",
+          "description": "Can the overridden agent resume after the override condition clears?"
+        },
+        "related_claims": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^C\\d{1,4}$" }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["id", "domain", "authority"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^DEC-\\d{3}$"
+        },
+        "domain": {
+          "type": "string",
+          "description": "What area this decision covers"
+        },
+        "authority": {
+          "type": "string",
+          "description": "Who makes this decision (agent ID or human ID)"
+        },
+        "autonomy_level": {
+          "type": "string",
+          "enum": ["fully_autonomous", "semi_autonomous", "human_required"],
+          "description": "How much independence the authority has"
+        },
+        "approval_required_from": {
+          "type": "string",
+          "description": "Who must approve (if semi-autonomous)"
+        },
+        "escalation_if_uncertain": {
+          "type": "string",
+          "description": "Where this goes if the authority is unsure"
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "required": ["source", "target", "type"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Entity ID that depends"
+        },
+        "target": {
+          "type": "string",
+          "description": "Entity ID that is depended upon"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["data_flow", "approval", "trigger", "shared_resource", "sequential"],
+          "description": "Nature of the dependency"
+        },
+        "description": {
+          "type": "string",
+          "description": "What flows between them"
+        },
+        "criticality": {
+          "type": "string",
+          "enum": ["critical", "important", "optional"],
+          "description": "Impact if this dependency breaks"
+        }
+      }
+    },
+    "knowledge_claim": {
+      "type": "object",
+      "description": "Extended claim format with publisher identity and evidence references. Superset of core claim schema.",
+      "required": ["claim_id", "section", "rule", "why", "failure_mode", "confidence", "evidence", "scope"],
+      "properties": {
+        "claim_id": { "type": "string", "pattern": "^C\\d{1,4}$" },
+        "section": { "type": "string" },
+        "rule": { "type": "string" },
+        "why": { "type": "string" },
+        "failure_mode": { "type": "string" },
+        "confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+        "evidence": {
+          "type": "string",
+          "enum": ["HUMAN_DEFINED_RULE", "OBSERVED_ONCE", "OBSERVED_REPEATEDLY", "MEASURED_RESULT", "INFERENCE", "SPECULATION"]
+        },
+        "scope": { "type": "string" },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Numeric confidence (0.0-1.0). Optional granular alternative to HIGH/MEDIUM/LOW."
+        },
+        "evidence_reference": {
+          "type": "string",
+          "description": "Reference to supporting evidence (internal doc, metric, incident ID). No URLs or PII."
+        },
+        "publisher_identity": {
+          "type": "object",
+          "description": "Who published this claim (added by platform, not by publisher)",
+          "properties": {
+            "org_id": { "type": "string" },
+            "org_pseudonym": { "type": "string" },
+            "published_version": { "type": "integer" },
+            "published_at": { "type": "string", "format": "date-time" }
+          }
+        },
+        "related_entities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Entity IDs (AGT-xxx, HMN-xxx, SYS-xxx, WFL-xxx) this claim references"
+        },
+        "supersedes": {
+          "type": "string",
+          "description": "Claim ID this claim replaces (for tracking claim evolution)"
+        }
+      }
+    }
+  }
+}

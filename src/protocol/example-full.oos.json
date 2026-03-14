@@ -1,0 +1,632 @@
+{
+  "_comment": "Full OOS example with entities, workflows, escalations, and claims. This is the JSON representation of a complete Organizational Operating System.",
+  "frontmatter": {
+    "oos_version": "1.0",
+    "org_pseudonym": "Acme Digital Agency",
+    "industry": "digital_marketing_agency",
+    "org_size": "small",
+    "template": "agent_army",
+    "agent_count": 8,
+    "platforms": ["claude", "custom"],
+    "generated_at": "2026-03-14T12:00:00Z",
+    "version": 1,
+    "parent_version": null,
+    "word_count": 2400,
+    "claim_count": 14,
+    "confidence_distribution": { "high": 5, "medium": 6, "low": 3 },
+    "evidence_distribution": {
+      "human_defined_rule": 3,
+      "observed_once": 2,
+      "observed_repeatedly": 4,
+      "measured_result": 3,
+      "inference": 1,
+      "speculation": 1
+    }
+  },
+
+  "entities": {
+    "agents": [
+      {
+        "id": "AGT-001",
+        "name": "Chief of Staff",
+        "role": "Daily operations coordinator and cross-agent orchestrator",
+        "mission": "Ensure all agents are aligned and the founder's limited time is optimized",
+        "authority_level": "semi_autonomous",
+        "inputs": ["all agent shared state files", "calendar data", "task management data"],
+        "outputs": ["daily briefing", "priority queue", "cross-agent coordination signals"],
+        "tools": ["calendar API", "task management API", "messaging API"],
+        "owns": ["daily briefings", "time allocation tracking", "delegation tracking"],
+        "does_not_own": ["strategic decisions", "client communications", "financial decisions"],
+        "escalates_to": "HMN-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C001", "C008"]
+      },
+      {
+        "id": "AGT-002",
+        "name": "Performance Analyst",
+        "role": "Customer advertising and call center data analyst",
+        "mission": "Read the numbers across all ad platforms, find patterns, flag what matters",
+        "authority_level": "advisory",
+        "inputs": ["ad platform APIs", "call center data", "shared state files"],
+        "outputs": ["performance reports", "spend alerts", "trend analysis"],
+        "tools": ["ad platform APIs", "analytics spreadsheets"],
+        "owns": ["performance analysis", "spend anomaly detection", "cross-platform patterns"],
+        "does_not_own": ["campaign strategy", "client communications", "budget changes"],
+        "escalates_to": "AGT-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C003", "C011"]
+      },
+      {
+        "id": "AGT-003",
+        "name": "Executive Assistant",
+        "role": "Email triage, draft responses, urgent client escalation",
+        "mission": "Protect the founder's inbox and ensure no client email goes unanswered",
+        "authority_level": "supervised",
+        "inputs": ["email inbox", "client domain whitelist"],
+        "outputs": ["email drafts", "triage summaries", "urgent escalations"],
+        "tools": ["email API"],
+        "owns": ["email triage", "draft responses"],
+        "does_not_own": ["sending emails (requires human approval)", "strategic decisions"],
+        "escalates_to": "HMN-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C002", "C013"]
+      },
+      {
+        "id": "AGT-004",
+        "name": "Sales Operator",
+        "role": "Pipeline management, deal tracking, revenue signals",
+        "mission": "Maintain pipeline health and flag revenue opportunities and risks",
+        "authority_level": "semi_autonomous",
+        "inputs": ["CRM data", "proposal platform events"],
+        "outputs": ["pipeline reports", "deal alerts", "revenue forecasts"],
+        "tools": ["CRM API", "proposal platform"],
+        "owns": ["pipeline tracking", "deal velocity monitoring"],
+        "does_not_own": ["pricing decisions", "client relationships", "contract terms"],
+        "escalates_to": "HMN-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C004"]
+      },
+      {
+        "id": "AGT-005",
+        "name": "Retention Guardian",
+        "role": "Client retention intelligence and churn risk detection",
+        "mission": "Protect existing client revenue by detecting churn risk early",
+        "authority_level": "semi_autonomous",
+        "inputs": ["client health scores", "engagement data", "performance trends"],
+        "outputs": ["churn risk alerts", "retention recommendations", "client health reports"],
+        "tools": ["analytics platform", "CRM API"],
+        "owns": ["client retention intelligence", "churn risk detection"],
+        "does_not_own": ["client communications (routes through AGT-003)", "pricing"],
+        "escalates_to": "HMN-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C004"]
+      },
+      {
+        "id": "AGT-006",
+        "name": "Project Tracker",
+        "role": "Project status monitoring and delivery risk flagging",
+        "mission": "Ensure no project deadline is missed and no delivery risk goes undetected",
+        "authority_level": "semi_autonomous",
+        "inputs": ["project management platform", "task data"],
+        "outputs": ["project status reports", "deadline alerts", "resource allocation flags"],
+        "tools": ["project management API"],
+        "owns": ["project tracking", "deadline monitoring"],
+        "does_not_own": ["client communications", "resource allocation decisions"],
+        "escalates_to": "AGT-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C006"]
+      },
+      {
+        "id": "AGT-007",
+        "name": "Data Architect",
+        "role": "Data infrastructure, measurement systems, blind spot detection",
+        "mission": "Ensure clean data flows between all agents and no measurement gap exists",
+        "authority_level": "semi_autonomous",
+        "inputs": ["all data sources", "agent output quality metrics"],
+        "outputs": ["data architecture docs", "measurement gap reports", "data quality alerts"],
+        "tools": ["ad platform APIs", "database", "monitoring tools"],
+        "owns": ["data architecture", "measurement system design"],
+        "does_not_own": ["strategic decisions", "performance analysis (that is AGT-002)"],
+        "escalates_to": "HMN-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": ["C001", "C007"]
+      },
+      {
+        "id": "AGT-008",
+        "name": "Intelligence Scout",
+        "role": "Frontier scanning for advancements in AI, sales systems, and tooling",
+        "mission": "Surface net improvements to the agent army's capabilities",
+        "authority_level": "autonomous",
+        "inputs": ["web sources", "research feeds", "competitor signals"],
+        "outputs": ["advancement candidates", "experiment proposals", "competitive alerts"],
+        "tools": ["web search", "content feeds"],
+        "owns": ["frontier intelligence", "advancement gating"],
+        "does_not_own": ["implementation (proposes, does not execute)", "strategic decisions"],
+        "escalates_to": "AGT-001",
+        "platform": "claude",
+        "status": "active",
+        "related_claims": []
+      }
+    ],
+
+    "humans": [
+      {
+        "id": "HMN-001",
+        "role": "CEO / Founder",
+        "authority_level": "executive",
+        "override_authority": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-007", "AGT-008"],
+        "receives_escalations_from": ["AGT-001", "AGT-003", "AGT-004", "AGT-005", "AGT-007"],
+        "approves": ["external communications", "pricing changes", "strategic decisions", "hiring", "financial commitments"],
+        "related_claims": ["C013", "C014"]
+      },
+      {
+        "id": "HMN-002",
+        "role": "Operations Lead",
+        "authority_level": "manager",
+        "override_authority": ["AGT-006"],
+        "receives_escalations_from": ["AGT-006"],
+        "approves": ["project timeline changes", "resource reallocation"],
+        "related_claims": []
+      }
+    ],
+
+    "systems": [
+      {
+        "id": "SYS-001",
+        "name": "Ad Platform APIs",
+        "type": "api",
+        "accessed_by": ["AGT-002", "AGT-007"],
+        "access_mode": "read_only"
+      },
+      {
+        "id": "SYS-002",
+        "name": "CRM Platform",
+        "type": "saas_platform",
+        "accessed_by": ["AGT-004", "AGT-005"],
+        "access_mode": "read_write"
+      },
+      {
+        "id": "SYS-003",
+        "name": "Project Management Platform",
+        "type": "saas_platform",
+        "accessed_by": ["AGT-006"],
+        "access_mode": "read_only"
+      },
+      {
+        "id": "SYS-004",
+        "name": "Email System",
+        "type": "communication",
+        "accessed_by": ["AGT-003"],
+        "access_mode": "read_write"
+      },
+      {
+        "id": "SYS-005",
+        "name": "Shared State Storage",
+        "type": "storage",
+        "accessed_by": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-007", "AGT-008"],
+        "access_mode": "read_write"
+      }
+    ],
+
+    "workflows": [
+      {
+        "id": "WFL-001",
+        "name": "Daily Briefing",
+        "trigger": "Scheduled: 8:00 AM every weekday",
+        "frequency": "daily",
+        "steps": [
+          {
+            "order": 1,
+            "actor": "AGT-002",
+            "action": "Pull ad performance data from all platforms, write to shared state",
+            "output": "performance-latest.md",
+            "handoff_to": "AGT-001",
+            "failure_action": "Log error, continue briefing without ad data, flag stale data"
+          },
+          {
+            "order": 2,
+            "actor": "AGT-004",
+            "action": "Scan CRM pipeline, write pipeline status to shared state",
+            "output": "pipeline-latest.md",
+            "handoff_to": "AGT-001",
+            "failure_action": "Log error, continue briefing without pipeline data"
+          },
+          {
+            "order": 3,
+            "actor": "AGT-006",
+            "action": "Scan project management platform, write project status to shared state",
+            "output": "projects-latest.md",
+            "handoff_to": "AGT-001",
+            "failure_action": "Log error, flag stale project data"
+          },
+          {
+            "order": 4,
+            "actor": "AGT-003",
+            "action": "Scan email inbox, triage client emails, write summary to shared state",
+            "output": "inbox-latest.md",
+            "handoff_to": "AGT-001",
+            "failure_action": "Log error, flag that inbox was not scanned"
+          },
+          {
+            "order": 5,
+            "actor": "AGT-001",
+            "action": "Read all shared state files, compile into unified daily briefing",
+            "output": "Daily briefing document with executive summary, urgent items, schedule, systems status",
+            "handoff_to": "HMN-001",
+            "failure_action": "Publish partial briefing with warnings about missing data"
+          }
+        ],
+        "related_claims": ["C001", "C008", "C009"]
+      },
+      {
+        "id": "WFL-002",
+        "name": "Client Churn Risk Response",
+        "trigger": "Event: Client health score drops below threshold",
+        "frequency": "event-triggered",
+        "steps": [
+          {
+            "order": 1,
+            "actor": "AGT-005",
+            "action": "Detect health score decline, classify risk level, generate alert",
+            "output": "Churn risk alert with client context and recommended actions",
+            "handoff_to": "AGT-001",
+            "failure_action": "Escalate directly to HMN-001"
+          },
+          {
+            "order": 2,
+            "actor": "AGT-001",
+            "action": "Check if AGT-004 has pending expansion plays for this client. If yes, pause them.",
+            "output": "Expansion pause notification to AGT-004",
+            "handoff_to": "AGT-004",
+            "failure_action": "Flag conflict for HMN-001 review"
+          },
+          {
+            "order": 3,
+            "actor": "AGT-003",
+            "action": "Draft retention-focused outreach email for human review",
+            "output": "Draft email in inbox queue awaiting HMN-001 approval",
+            "handoff_to": "HMN-001",
+            "failure_action": "Alert HMN-001 that draft could not be generated"
+          },
+          {
+            "order": 4,
+            "actor": "HMN-001",
+            "action": "Review alert, approve/edit email, decide on retention strategy",
+            "output": "Approved email sent, retention strategy logged",
+            "handoff_to": "AGT-005",
+            "failure_action": "If no response in 24 hours, AGT-001 re-escalates"
+          }
+        ],
+        "related_claims": ["C004", "C002", "C013"]
+      }
+    ],
+
+    "escalation_hierarchy": {
+      "levels": [
+        {
+          "level": 1,
+          "handler": "AGT-001",
+          "trigger": "Any agent encounters an issue outside its authority or cannot resolve an error",
+          "response_time": "immediate (within agent cycle)",
+          "authority": "Can reprioritize agent work, defer non-urgent items, coordinate between agents"
+        },
+        {
+          "level": 2,
+          "handler": "HMN-002",
+          "trigger": "AGT-001 cannot resolve (requires project timeline change, resource reallocation, or operational decision)",
+          "response_time": "within 4 hours during business hours",
+          "authority": "Can change project timelines, reallocate team resources, approve operational changes"
+        },
+        {
+          "level": 3,
+          "handler": "HMN-001",
+          "trigger": "HMN-002 cannot resolve, or issue involves clients, finances, strategy, or external communications",
+          "response_time": "within 24 hours",
+          "authority": "Unlimited. Can override any agent, any decision, any process. Final authority."
+        }
+      ],
+      "default_escalation_timeout": "24 hours"
+    },
+
+    "conflict_protocols": [
+      {
+        "id": "CFT-001",
+        "parties": ["AGT-004", "AGT-005"],
+        "conflict_type": "priority",
+        "detection": "AGT-004 proposes expansion/upsell to a client that AGT-005 has flagged as at-risk",
+        "resolution": "AGT-005 wins. Retention overrides expansion when client health is declining.",
+        "winner": "AGT-005",
+        "escalation": "If AGT-004 disputes the health score, escalate to HMN-001 with both perspectives",
+        "related_claims": ["C004"]
+      },
+      {
+        "id": "CFT-002",
+        "parties": ["AGT-002", "AGT-007"],
+        "conflict_type": "scope",
+        "detection": "Both agents produce analysis of the same data source with different conclusions",
+        "resolution": "AGT-007 owns data architecture (what data means structurally). AGT-002 owns performance analysis (what data means operationally). If the scope overlap is unclear, AGT-001 arbitrates.",
+        "winner": "depends on domain",
+        "escalation": "AGT-001 arbitrates. If unresolved, escalate to HMN-001.",
+        "related_claims": ["C003", "C006"]
+      }
+    ],
+
+    "override_rules": [
+      {
+        "id": "OVR-001",
+        "overrider": "AGT-005",
+        "overridden": "AGT-004",
+        "condition": "Client health score drops below defined threshold",
+        "scope": "All expansion, upsell, and cross-sell actions for the at-risk client",
+        "reversible": true,
+        "related_claims": ["C004"]
+      },
+      {
+        "id": "OVR-002",
+        "overrider": "HMN-001",
+        "overridden": "ALL",
+        "condition": "Any time, for any reason",
+        "scope": "All agent actions and decisions without exception",
+        "reversible": true,
+        "related_claims": ["C013", "C014"]
+      }
+    ],
+
+    "decisions": [
+      {
+        "id": "DEC-001",
+        "domain": "External communications (emails, messages to clients)",
+        "authority": "AGT-003",
+        "autonomy_level": "semi_autonomous",
+        "approval_required_from": "HMN-001",
+        "escalation_if_uncertain": "HMN-001"
+      },
+      {
+        "id": "DEC-002",
+        "domain": "Ad spend changes and budget reallocation",
+        "authority": "HMN-001",
+        "autonomy_level": "human_required",
+        "approval_required_from": null,
+        "escalation_if_uncertain": null
+      },
+      {
+        "id": "DEC-003",
+        "domain": "Agent priority and task scheduling",
+        "authority": "AGT-001",
+        "autonomy_level": "fully_autonomous",
+        "approval_required_from": null,
+        "escalation_if_uncertain": "HMN-001"
+      }
+    ],
+
+    "dependencies": [
+      {
+        "source": "AGT-001",
+        "target": "SYS-005",
+        "type": "data_flow",
+        "description": "Chief of Staff reads all shared state files to compile briefings",
+        "criticality": "critical"
+      },
+      {
+        "source": "AGT-002",
+        "target": "SYS-001",
+        "type": "data_flow",
+        "description": "Performance Analyst pulls data from ad platform APIs",
+        "criticality": "critical"
+      },
+      {
+        "source": "WFL-002",
+        "target": "AGT-005",
+        "type": "trigger",
+        "description": "Churn risk workflow is triggered by Retention Guardian's health score monitoring",
+        "criticality": "important"
+      },
+      {
+        "source": "AGT-003",
+        "target": "HMN-001",
+        "type": "approval",
+        "description": "All emails drafted by Executive Assistant require CEO approval before sending",
+        "criticality": "critical"
+      },
+      {
+        "source": "AGT-004",
+        "target": "AGT-005",
+        "type": "shared_resource",
+        "description": "Both access CRM data for the same clients. Override rule OVR-001 governs conflicts.",
+        "criticality": "important"
+      }
+    ]
+  },
+
+  "claims": [
+    {
+      "claim_id": "C001",
+      "section": "core_operating_rules",
+      "rule": "Every agent writes to a shared state file. No agent reads data sources directly.",
+      "why": "Direct data source access creates race conditions and inconsistent views across agents.",
+      "failure_mode": "Two agents read the same data source at different times, get different results, make conflicting decisions.",
+      "confidence": "HIGH",
+      "confidence_score": 0.95,
+      "evidence": "MEASURED_RESULT",
+      "evidence_reference": "Incident 2026-01-15: reporting agent and campaign agent queried Meta API simultaneously, produced conflicting spend numbers. Resolved by implementing shared state pattern.",
+      "scope": "All agents. Does not apply to initial data collection job.",
+      "related_entities": ["AGT-001", "AGT-002", "AGT-007", "SYS-005"]
+    },
+    {
+      "claim_id": "C002",
+      "section": "core_operating_rules",
+      "rule": "Only one agent has authority to send external communications.",
+      "why": "Multiple agents sending emails creates duplicate communications and confused clients.",
+      "failure_mode": "Two agents both draft and send a client update. Client receives contradictory information.",
+      "confidence": "HIGH",
+      "confidence_score": 0.92,
+      "evidence": "OBSERVED_REPEATEDLY",
+      "evidence_reference": "Observed 3 times in first month of operation before this rule was established.",
+      "scope": "All external-facing communications. Internal agent messaging is unrestricted.",
+      "related_entities": ["AGT-003"]
+    },
+    {
+      "claim_id": "C003",
+      "section": "core_operating_rules",
+      "rule": "The analytics agent reports patterns but never recommends actions.",
+      "why": "When analytics recommended actions, recommendations were ignored because they lacked client context.",
+      "failure_mode": "Analytics agent recommends budget increase. Account manager knows client has cash flow issues. Client loses trust.",
+      "confidence": "HIGH",
+      "confidence_score": 0.88,
+      "evidence": "OBSERVED_REPEATEDLY",
+      "evidence_reference": "Three incidents where analytics recommendations were overridden by account managers with client context.",
+      "scope": "Analytics and reporting functions. Strategy agents may recommend within their authority.",
+      "related_entities": ["AGT-002"]
+    },
+    {
+      "claim_id": "C004",
+      "section": "core_operating_rules",
+      "rule": "The retention agent overrides the sales agent when a client is flagged at risk.",
+      "why": "Sales expansion to at-risk client accelerates churn. Retention must take priority.",
+      "failure_mode": "Sales agent proposes upsell to declining client. Client cancels.",
+      "confidence": "HIGH",
+      "confidence_score": 0.85,
+      "evidence": "OBSERVED_ONCE",
+      "evidence_reference": "One near-miss where expansion play was paused 2 hours before client expressed frustration.",
+      "scope": "Applies when client health score drops below threshold. Does not apply to healthy accounts.",
+      "related_entities": ["AGT-004", "AGT-005", "CFT-001", "OVR-001"]
+    },
+    {
+      "claim_id": "C005",
+      "section": "core_operating_rules",
+      "rule": "All agent output is logged to an audit trail before any action is taken.",
+      "why": "Without audit trails, diagnosing agent errors requires guessing.",
+      "failure_mode": "Agent makes error. Without logs, team spends hours debugging. With logs, root cause found in minutes.",
+      "confidence": "HIGH",
+      "confidence_score": 0.96,
+      "evidence": "MEASURED_RESULT",
+      "evidence_reference": "Measured: debugging time decreased from avg 3 hours to avg 12 minutes after audit trail implementation.",
+      "scope": "All agents, all actions. No exceptions.",
+      "related_entities": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-007", "AGT-008"]
+    },
+    {
+      "claim_id": "C006",
+      "section": "agent_roles_and_authority",
+      "rule": "Each agent has a written one-line role statement and a list of authorized actions.",
+      "why": "Without explicit authority boundaries, agents drift into overlapping responsibilities.",
+      "failure_mode": "Two agents update the same project status. Conflicting updates confuse the team.",
+      "confidence": "MEDIUM",
+      "confidence_score": 0.72,
+      "evidence": "OBSERVED_REPEATEDLY",
+      "evidence_reference": "Overlap between project tracker and analytics agent resolved by explicit role definitions.",
+      "scope": "All agents. Authority documents reviewed monthly.",
+      "related_entities": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-007", "AGT-008"]
+    },
+    {
+      "claim_id": "C007",
+      "section": "agent_roles_and_authority",
+      "rule": "No agent modifies another agent's shared state file.",
+      "why": "Shared state files are single-writer. Multiple writers cause data races.",
+      "failure_mode": "Project agent and billing agent both write to client status file. One overwrites the other.",
+      "confidence": "HIGH",
+      "confidence_score": 0.94,
+      "evidence": "MEASURED_RESULT",
+      "evidence_reference": "Data corruption incident resolved by enforcing single-writer pattern. Zero corruption since.",
+      "scope": "All shared state files. Agents may read any state but only write to their own.",
+      "related_entities": ["SYS-005"]
+    },
+    {
+      "claim_id": "C008",
+      "section": "coordination_patterns",
+      "rule": "Agents coordinate through shared state files, not direct messaging.",
+      "why": "Direct messaging creates hidden dependencies. Shared state makes coordination visible.",
+      "failure_mode": "Agent A messages Agent B directly. Message not logged. When B fails, team cannot trace the cause.",
+      "confidence": "MEDIUM",
+      "confidence_score": 0.68,
+      "evidence": "INFERENCE",
+      "evidence_reference": "Inferred from visibility benefits of shared state pattern (C001, C007). Not yet stress-tested at scale.",
+      "scope": "Production coordination. Development may use direct messaging.",
+      "related_entities": ["SYS-005", "WFL-001"]
+    },
+    {
+      "claim_id": "C009",
+      "section": "coordination_patterns",
+      "rule": "Cross-agent workflows use a publish-subscribe pattern through shared state.",
+      "why": "Pub/sub decouples agents. Any agent can consume shared state without the publisher knowing.",
+      "failure_mode": "Tightly coupled agents create cascading failures. One goes down, all dependents fail.",
+      "confidence": "MEDIUM",
+      "confidence_score": 0.75,
+      "evidence": "OBSERVED_REPEATEDLY",
+      "evidence_reference": "Daily briefing workflow (WFL-001) survives individual scanner failures because of pub/sub pattern.",
+      "scope": "All multi-agent workflows. Single-agent tasks do not require pub/sub.",
+      "related_entities": ["WFL-001", "SYS-005"]
+    },
+    {
+      "claim_id": "C010",
+      "section": "operational_heuristics",
+      "rule": "If an agent encounters an unresolvable error, it logs the error and stops. No automatic retry.",
+      "why": "Automatic retries on unresolvable errors create noise and mask root cause.",
+      "failure_mode": "Agent retries failed API call 100 times, consuming rate limits and generating 100 error logs.",
+      "confidence": "MEDIUM",
+      "confidence_score": 0.65,
+      "evidence": "OBSERVED_ONCE",
+      "evidence_reference": "One incident where ad platform rate limit was consumed by retry loop.",
+      "scope": "All agents. Temporary network errors may be retried once with backoff.",
+      "related_entities": []
+    },
+    {
+      "claim_id": "C011",
+      "section": "failure_patterns",
+      "rule": "Giving the analytics agent write access to campaign settings produced strategically wrong optimizations.",
+      "why": "Analytics agent optimized for metrics the client did not prioritize.",
+      "failure_mode": "Agent decreases spend on a brand-building campaign. Client is frustrated by the uninstructed change.",
+      "confidence": "HIGH",
+      "confidence_score": 0.90,
+      "evidence": "OBSERVED_ONCE",
+      "evidence_reference": "Incident where analytics agent reduced spend on client's strategic brand campaign. Reverted. Write access removed.",
+      "scope": "Any agent with optimization authority. Require human approval for strategic changes.",
+      "related_entities": ["AGT-002"]
+    },
+    {
+      "claim_id": "C012",
+      "section": "failure_patterns",
+      "rule": "A single shared state file for all agents became a bottleneck and source of merge conflicts.",
+      "why": "Single file means every update blocks every other agent.",
+      "failure_mode": "Two agents update simultaneously. One update lost. State becomes inconsistent.",
+      "confidence": "HIGH",
+      "confidence_score": 0.93,
+      "evidence": "MEASURED_RESULT",
+      "evidence_reference": "Measured: 12 state corruption events in first month with single file. Zero after switching to per-agent files.",
+      "scope": "All shared state. Per-agent files resolved the issue.",
+      "related_entities": ["SYS-005"]
+    },
+    {
+      "claim_id": "C013",
+      "section": "human_ai_boundary_conditions",
+      "rule": "All external communications require human approval before sending.",
+      "why": "AI communications can be tonally wrong, factually incorrect, or strategically misaligned.",
+      "failure_mode": "Agent sends email with incorrect performance numbers. Client loses trust.",
+      "confidence": "HIGH",
+      "confidence_score": 0.98,
+      "evidence": "HUMAN_DEFINED_RULE",
+      "evidence_reference": "Founding rule. Non-negotiable. Established before first agent was deployed.",
+      "scope": "All external communications. Internal logging and status updates are autonomous.",
+      "related_entities": ["AGT-003", "HMN-001", "DEC-001"]
+    },
+    {
+      "claim_id": "C014",
+      "section": "human_ai_boundary_conditions",
+      "rule": "Pricing, contracts, and financial commitments require human decision-making.",
+      "why": "Financial decisions have legal and relationship implications AI agents cannot fully assess.",
+      "failure_mode": "Agent applies discount violating margin floors. Retained client becomes unprofitable.",
+      "confidence": "LOW",
+      "confidence_score": 0.45,
+      "evidence": "SPECULATION",
+      "evidence_reference": "No incident has occurred. Rule is precautionary based on known risk patterns in automated pricing.",
+      "scope": "All financial decisions. Agents may calculate and recommend but never execute.",
+      "related_entities": ["HMN-001", "DEC-002"]
+    }
+  ]
+}

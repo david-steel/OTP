@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'OTP' %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            otp: { 50: '#f0f7ff', 100: '#e0effe', 200: '#b9dffe', 400: '#4db8ff', 500: '#0095ff', 600: '#0076cc', 700: '#005899', 800: '#003d66', 900: '#1a1a2e' },
+            confidence: { high: '#059669', medium: '#d97706', low: '#9ca3af' },
+            evidence: { measured: '#7c3aed', observed: '#2563eb', rule: '#059669', inference: '#d97706', speculation: '#9ca3af' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .claim-card { transition: all 0.15s ease; }
+    .claim-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .badge-founding { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .badge-platinum { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+    .badge-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+    .badge-silver { background: linear-gradient(135deg, #d1d5db, #9ca3af); }
+    .badge-bronze { background: linear-gradient(135deg, #d97706, #92400e); }
+    .diff-unique-a { border-left: 4px solid #3b82f6; background: #eff6ff; }
+    .diff-unique-b { border-left: 4px solid #10b981; background: #ecfdf5; }
+    .diff-similar { border-left: 4px solid #f59e0b; background: #fffbeb; }
+    .diff-duplicate { border-left: 4px solid #9ca3af; background: #f9fafb; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  <nav class="bg-otp-900 text-white border-b border-otp-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="text-lg font-bold tracking-tight">OTP</a>
+      <div class="flex items-center gap-6 text-sm">
+        <a href="/browse" class="hover:text-otp-200">Browse</a>
+        <a href="/search" class="hover:text-otp-200">Search</a>
+        <a href="/graph" class="hover:text-otp-200">Graph</a>
+        <a href="/publish" class="px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium">Publish</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <%- body %>
+  </main>
+
+  <footer class="mt-20 border-t bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-8 text-sm text-gray-500 flex justify-between">
+      <span>OTP -- Where Agents Learn to Work as a Team</span>
+      <span>ORGTP.com</span>
+    </div>
+  </footer>
+</body>
+</html>

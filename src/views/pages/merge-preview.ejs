@@ -1,0 +1,191 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-1">Merge Preview</h1>
+  <p class="text-sm text-gray-500 mb-6">Review what would change if you imported patterns from <strong><%= preview.sourceOrg.name %></strong> into your OOS. This is a preview only -- no changes are applied.</p>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-5 gap-3 mb-8">
+    <div class="bg-white border p-3 rounded text-center">
+      <div class="text-xl font-bold"><%= preview.summary.total %></div>
+      <div class="text-xs text-gray-500">Total Items</div>
+    </div>
+    <div class="bg-green-50 border border-green-200 p-3 rounded text-center">
+      <div class="text-xl font-bold text-green-600"><%= preview.summary.importable %></div>
+      <div class="text-xs text-green-500">Importable</div>
+    </div>
+    <div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-center">
+      <div class="text-xl font-bold text-yellow-600"><%= preview.summary.conflicts %></div>
+      <div class="text-xs text-yellow-500">Conflicts</div>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 p-3 rounded text-center">
+      <div class="text-xl font-bold text-blue-600"><%= preview.summary.adaptable %></div>
+      <div class="text-xs text-blue-500">Adapt</div>
+    </div>
+    <div class="bg-gray-50 border p-3 rounded text-center">
+      <div class="text-xl font-bold text-gray-500"><%= preview.summary.skipped %></div>
+      <div class="text-xs text-gray-400">Skipped</div>
+    </div>
+  </div>
+
+  <!-- Budget Bar -->
+  <div class="bg-white border p-4 rounded-lg mb-6">
+    <div class="flex justify-between text-sm mb-1">
+      <span>Word Budget</span>
+      <span><%= preview.budget.projectedWordCount %> / <%= preview.budget.maxWordCount %> words</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div class="h-2 rounded-full <%= preview.budget.remaining < 200 ? 'bg-red-500' : 'bg-otp-500' %>"
+           style="width: <%= Math.min(100, (preview.budget.projectedWordCount / preview.budget.maxWordCount) * 100) %>%"></div>
+    </div>
+    <div class="text-xs text-gray-400 mt-1"><%= preview.budget.remaining %> words remaining</div>
+  </div>
+
+  <!-- Warnings -->
+  <% if (preview.warnings.length > 0) { %>
+    <div class="mb-6">
+      <% preview.warnings.forEach(function(w) { %>
+        <div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800 mb-2"><%= w %></div>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- Recommendations -->
+  <% if (preview.recommendations.length > 0) { %>
+    <div class="bg-otp-50 border border-otp-200 p-4 rounded-lg mb-6">
+      <h3 class="font-semibold text-sm mb-2">Recommendations</h3>
+      <ul class="text-sm text-gray-700 space-y-1">
+        <% preview.recommendations.forEach(function(r) { %>
+          <li>&bull; <%= r %></li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+
+  <!-- Filter -->
+  <div class="flex gap-3 mb-4">
+    <select id="merge-filter-cat" class="text-sm border rounded px-3 py-1.5" onchange="filterMerge()">
+      <option value="">All Categories</option>
+      <% Object.keys(preview.summary.byCategory).forEach(function(cat) { %>
+        <option value="<%= cat %>"><%= cat.replace('_', ' ') %> (<%= preview.summary.byCategory[cat] %>)</option>
+      <% }); %>
+    </select>
+    <select id="merge-filter-action" class="text-sm border rounded px-3 py-1.5" onchange="filterMerge()">
+      <option value="">All Actions</option>
+      <option value="import">Import (<%= preview.summary.importable %>)</option>
+      <option value="conflict">Conflict (<%= preview.summary.conflicts %>)</option>
+      <option value="adapt">Adapt (<%= preview.summary.adaptable %>)</option>
+      <option value="skip">Skip (<%= preview.summary.skipped %>)</option>
+    </select>
+  </div>
+
+  <!-- Merge Candidates -->
+  <div id="merge-list">
+    <% preview.candidates.forEach(function(mc) { %>
+      <div class="merge-item bg-white border rounded-lg p-4 mb-3"
+           data-category="<%= mc.category %>"
+           data-action="<%= mc.suggestedAction %>">
+
+        <!-- Header -->
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-medium px-2 py-0.5 rounded
+            <% if (mc.suggestedAction === 'import') { %>bg-green-100 text-green-700<% } %>
+            <% if (mc.suggestedAction === 'conflict') { %>bg-yellow-100 text-yellow-700<% } %>
+            <% if (mc.suggestedAction === 'adapt') { %>bg-blue-100 text-blue-700<% } %>
+            <% if (mc.suggestedAction === 'skip') { %>bg-gray-100 text-gray-500<% } %>
+          "><%= mc.suggestedAction.toUpperCase() %></span>
+          <span class="text-xs bg-gray-100 px-2 py-0.5 rounded"><%= mc.category.replace('_', ' ') %></span>
+          <% if (mc.source.confidence) { %>
+            <span class="text-xs bg-gray-100 px-1 rounded"><%= mc.source.confidence %></span>
+          <% } %>
+          <span class="text-xs text-gray-400 ml-auto"><%= mc.id %></span>
+        </div>
+
+        <!-- Source Content -->
+        <p class="font-medium text-sm mb-1"><%= mc.source.label %></p>
+        <p class="text-xs text-gray-500 mb-2"><%= mc.reason %></p>
+
+        <!-- Conflict Details -->
+        <% if (mc.conflictsWith) { %>
+          <div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm mb-2">
+            <div class="text-xs text-yellow-600 mb-1">Conflicts with your claim (<%= Math.round(mc.conflictsWith.similarityScore * 100) %>% overlap):</div>
+            <p class="font-medium text-sm"><%= mc.conflictsWith.label %></p>
+          </div>
+        <% } %>
+
+        <!-- Impact -->
+        <% if (mc.impact.risks.length > 0) { %>
+          <div class="text-xs text-gray-500 mb-2">
+            <% mc.impact.risks.forEach(function(risk) { %>
+              <div class="text-red-500">&triangledown; <%= risk %></div>
+            <% }); %>
+          </div>
+        <% } %>
+
+        <!-- Adapt Suggestion -->
+        <% if (mc.adaptSuggestion) { %>
+          <div class="bg-blue-50 border border-blue-200 p-2 rounded text-xs text-blue-700 mb-2">
+            <strong>Adapt:</strong> <%= mc.adaptSuggestion %>
+          </div>
+        <% } %>
+
+        <!-- User Decision Buttons -->
+        <div class="flex gap-2 mt-3">
+          <button class="decision-btn px-3 py-1 text-xs rounded border hover:bg-green-50 hover:border-green-300"
+                  data-candidate="<%= mc.id %>" data-decision="accept"
+                  onclick="setDecision(this)">Accept</button>
+          <button class="decision-btn px-3 py-1 text-xs rounded border hover:bg-red-50 hover:border-red-300"
+                  data-candidate="<%= mc.id %>" data-decision="reject"
+                  onclick="setDecision(this)">Reject</button>
+          <% if (mc.adaptSuggestion) { %>
+            <button class="decision-btn px-3 py-1 text-xs rounded border hover:bg-blue-50 hover:border-blue-300"
+                    data-candidate="<%= mc.id %>" data-decision="adapt"
+                    onclick="setDecision(this)">Adapt</button>
+          <% } %>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Decision Summary (Phase 2 CTA) -->
+  <div class="mt-8 p-6 bg-white border rounded-lg">
+    <h3 class="font-semibold mb-2">Your Decisions</h3>
+    <div id="decision-summary" class="text-sm text-gray-600 mb-4">
+      Make your accept / reject / adapt decisions above.
+    </div>
+    <p class="text-xs text-gray-400">Merge execution launches in Phase 2. For now, use these decisions as a guide for manual updates to your OOS.</p>
+  </div>
+</div>
+
+<script>
+const decisions = {};
+
+function setDecision(btn) {
+  const candidate = btn.dataset.candidate;
+  const decision = btn.dataset.decision;
+  decisions[candidate] = decision;
+
+  // Highlight selected button
+  btn.parentElement.querySelectorAll('.decision-btn').forEach(b => {
+    b.classList.remove('bg-green-100', 'bg-red-100', 'bg-blue-100', 'border-green-400', 'border-red-400', 'border-blue-400');
+  });
+  const colors = { accept: ['bg-green-100', 'border-green-400'], reject: ['bg-red-100', 'border-red-400'], adapt: ['bg-blue-100', 'border-blue-400'] };
+  btn.classList.add(...(colors[decision] || []));
+
+  // Update summary
+  const accepted = Object.values(decisions).filter(d => d === 'accept').length;
+  const rejected = Object.values(decisions).filter(d => d === 'reject').length;
+  const adapted = Object.values(decisions).filter(d => d === 'adapt').length;
+  const total = Object.keys(decisions).length;
+  document.getElementById('decision-summary').innerHTML =
+    `<strong>${total}</strong> decisions made: <span class="text-green-600">${accepted} accepted</span>, <span class="text-red-500">${rejected} rejected</span>, <span class="text-blue-600">${adapted} adapted</span>`;
+}
+
+function filterMerge() {
+  const cat = document.getElementById('merge-filter-cat').value;
+  const action = document.getElementById('merge-filter-action').value;
+  document.querySelectorAll('.merge-item').forEach(el => {
+    const matchCat = !cat || el.dataset.category === cat;
+    const matchAction = !action || el.dataset.action === action;
+    el.style.display = (matchCat && matchAction) ? '' : 'none';
+  });
+}
+</script>

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orgtp.com/schemas/graph/v1.0",
+  "title": "OTP Organizational Intelligence Graph Schema",
+  "description": "Schema for the Intelligence Graph -- relationships between OOS files and claims",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "description": "Each published OOS file is a node",
+      "items": {
+        "type": "object",
+        "required": ["id", "orgName", "template", "industry", "claimCount"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "orgName": { "type": "string" },
+          "template": { "type": "string", "enum": ["agent_army", "value_chain", "org_chart"] },
+          "industry": { "type": "string" },
+          "claimCount": { "type": "integer", "minimum": 0 },
+          "qualityTier": { "type": ["string", "null"], "enum": ["platinum", "gold", "silver", "bronze", null] },
+          "badge": { "type": ["string", "null"], "enum": ["founding", "early", null] }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Edges represent similar claims between two OOS files. Minimum 2 similar claims to form an edge.",
+      "items": {
+        "type": "object",
+        "required": ["source", "target", "weight", "topClaims"],
+        "properties": {
+          "source": { "type": "string", "format": "uuid", "description": "Source OOS file ID" },
+          "target": { "type": "string", "format": "uuid", "description": "Target OOS file ID" },
+          "weight": { "type": "integer", "minimum": 2, "description": "Number of similar claim pairs" },
+          "topClaims": {
+            "type": "array",
+            "maxItems": 3,
+            "description": "Top 3 most similar claim pairs for display",
+            "items": {
+              "type": "object",
+              "properties": {
+                "claimA": { "type": "string", "description": "Rule text from source claim" },
+                "claimB": { "type": "string", "description": "Rule text from target claim" },
+                "score": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

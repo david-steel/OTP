@@ -1,0 +1,91 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-2">Publisher Dashboard</h1>
+  <p class="text-gray-500 text-sm mb-8">Your OTP intelligence overview.</p>
+
+  <!-- Profile Card -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <h2 class="text-xl font-bold"><%= dashboard.profile.name %></h2>
+          <% if (dashboard.profile.badge === 'founding') { %>
+            <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding Publisher</span>
+          <% } %>
+          <% if (dashboard.profile.qualityTier) { %>
+            <span class="badge-<%= dashboard.profile.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= dashboard.profile.qualityTier %></span>
+          <% } %>
+        </div>
+        <div class="text-sm text-gray-500"><%= dashboard.profile.industry %> &middot; <%= dashboard.profile.size %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= dashboard.stats.publishedFiles %></div>
+      <div class="text-xs text-gray-500">Published Files</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= dashboard.stats.totalClaims %></div>
+      <div class="text-xs text-gray-500">Total Claims</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= dashboard.stats.connectedOrgs %></div>
+      <div class="text-xs text-gray-500">Connected Orgs</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= dashboard.stats.views30d %></div>
+      <div class="text-xs text-gray-500">Views (30d)</div>
+    </div>
+  </div>
+
+  <!-- Published Files -->
+  <h3 class="font-semibold mb-3">Your OOS Files</h3>
+  <% if (dashboard.oosFiles.length > 0) { %>
+    <% dashboard.oosFiles.forEach(function(oos) { %>
+      <div class="bg-white p-4 rounded-lg border mb-3 flex items-center justify-between">
+        <div>
+          <a href="/oos/<%= oos.id %>" class="font-medium text-otp-600 hover:underline capitalize"><%= oos.template.replace('_', ' ') %> OOS</a>
+          <div class="text-xs text-gray-400">v<%= oos.version %> &middot; <%= oos.claimCount %> claims &middot; Published <%= oos.publishedAt ? new Date(oos.publishedAt).toLocaleDateString() : 'Draft' %></div>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-xs px-2 py-1 rounded capitalize
+            <% if (oos.status === 'published') { %>bg-green-100 text-green-700<% } %>
+            <% if (oos.status === 'draft') { %>bg-yellow-100 text-yellow-700<% } %>
+            <% if (oos.status === 'archived') { %>bg-gray-100 text-gray-500<% } %>
+          "><%= oos.status %></span>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="text-center py-8 text-gray-400 text-sm">
+      <p>No OOS files yet. <a href="/publish" class="text-otp-500 hover:underline">Publish your first one.</a></p>
+    </div>
+  <% } %>
+
+  <!-- Update History -->
+  <h3 class="font-semibold mt-8 mb-3">Version History</h3>
+  <div class="bg-white border rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-xs text-gray-500">
+        <tr>
+          <th class="px-4 py-2">Version</th>
+          <th class="px-4 py-2">Claims</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% dashboard.updateHistory.forEach(function(v) { %>
+          <tr class="border-t">
+            <td class="px-4 py-2">v<%= v.version %></td>
+            <td class="px-4 py-2"><%= v.claimCount %></td>
+            <td class="px-4 py-2 capitalize"><%= v.status %></td>
+            <td class="px-4 py-2 text-gray-400"><%= v.publishedAt ? new Date(v.publishedAt).toLocaleDateString() : 'Not published' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

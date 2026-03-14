@@ -1,0 +1,366 @@
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-2">Publish Your OOS</h1>
+  <p class="text-gray-500 text-sm mb-8">Capture your AI coordination intelligence in a structured format. Claims with confidence ratings, evidence types, and failure modes.</p>
+
+  <form id="publish-form">
+    <!-- Step 1: Template -->
+    <div class="bg-white p-6 rounded-lg border mb-6">
+      <h2 class="font-semibold mb-4">1. Choose Your Template</h2>
+      <div class="grid grid-cols-3 gap-4">
+        <label class="border rounded-lg p-4 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="template" value="agent_army" class="sr-only" checked>
+          <div class="font-medium text-sm mb-1">Agent Army</div>
+          <div class="text-xs text-gray-500">For orgs with named AI agents that have defined roles and coordinate with each other.</div>
+        </label>
+        <label class="border rounded-lg p-4 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="template" value="value_chain" class="sr-only">
+          <div class="font-medium text-sm mb-1">Value Chain</div>
+          <div class="text-xs text-gray-500">For orgs that map AI capabilities to their business process flow.</div>
+        </label>
+        <label class="border rounded-lg p-4 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="template" value="org_chart" class="sr-only">
+          <div class="font-medium text-sm mb-1">Org Chart</div>
+          <div class="text-xs text-gray-500">For orgs that map AI capabilities to departments and functions.</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 2: Content -->
+    <div class="bg-white p-6 rounded-lg border mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold">2. Paste Your OOS Content</h2>
+        <button type="button" onclick="loadExample()" class="text-xs text-otp-500 hover:underline">Load Example</button>
+      </div>
+      <textarea id="oos-content" name="rawContent" rows="30"
+        class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500"
+        placeholder="Paste your OOS markdown here. Include YAML frontmatter between --- delimiters, then your sections and claims.
+
+Example claim format:
+
+**[C001]** core_operating_rules
+- **Rule:** Every agent writes to a shared state file.
+- **Why:** Direct access creates race conditions.
+- **Failure mode:** Agents get conflicting data.
+- **Confidence:** HIGH
+- **Evidence:** MEASURED_RESULT
+- **Scope:** All agents."></textarea>
+      <div class="flex justify-between mt-2 text-xs text-gray-400">
+        <span id="word-count">0 words (need 1800-3000)</span>
+        <span id="claim-count">0 claims detected</span>
+      </div>
+    </div>
+
+    <!-- Step 3: Validate & Preview -->
+    <div class="flex gap-3">
+      <button type="button" onclick="validateOOS()" class="px-6 py-3 bg-gray-100 border rounded-lg font-medium text-sm hover:bg-gray-200">
+        Validate
+      </button>
+      <button type="button" onclick="publishOOS()" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400">
+        Validate & Publish
+      </button>
+    </div>
+
+    <!-- Validation Results -->
+    <div id="validation-results" class="mt-6 hidden">
+      <div id="validation-errors" class="hidden">
+        <h3 class="font-semibold text-red-600 mb-2">Errors (must fix before publishing)</h3>
+        <div id="error-list" class="space-y-2"></div>
+      </div>
+      <div id="validation-warnings" class="hidden mt-4">
+        <h3 class="font-semibold text-yellow-600 mb-2">Warnings (recommended to fix)</h3>
+        <div id="warning-list" class="space-y-2"></div>
+      </div>
+      <div id="pii-flags" class="hidden mt-4">
+        <h3 class="font-semibold text-red-600 mb-2">PII Detected (must resolve)</h3>
+        <div id="pii-list" class="space-y-2"></div>
+      </div>
+      <div id="validation-success" class="hidden mt-4">
+        <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-green-800">
+          OOS published successfully! <a id="published-link" href="#" class="underline">View your published OOS</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+const textarea = document.getElementById('oos-content');
+
+textarea.addEventListener('input', () => {
+  const text = textarea.value;
+
+  // Word count (rough -- content after frontmatter)
+  const contentMatch = text.match(/^---[\s\S]*?---\n([\s\S]*)$/);
+  const content = contentMatch ? contentMatch[1] : text;
+  const words = content.trim().split(/\s+/).filter(w => w.length > 0).length;
+  document.getElementById('word-count').textContent =
+    `${words} words ${words < 1800 ? '(need ' + (1800 - words) + ' more)' : words > 3000 ? '(over by ' + (words - 3000) + ')' : '(good)'}`;
+
+  // Claim count
+  const claimMatches = text.match(/\*\*\[C\d+\]\*\*/g);
+  const claimCount = claimMatches ? claimMatches.length : 0;
+  document.getElementById('claim-count').textContent =
+    `${claimCount} claims detected ${claimCount < 10 ? '(need at least 10)' : '(good)'}`;
+});
+
+async function validateOOS() {
+  const template = document.querySelector('input[name="template"]:checked').value;
+  const rawContent = textarea.value;
+
+  try {
+    const resp = await fetch('/api/v1/oos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template, rawContent }),
+    });
+    const data = await resp.json();
+    showValidation(data);
+  } catch (e) {
+    alert('Failed to validate. Check your content format.');
+  }
+}
+
+async function publishOOS() {
+  const template = document.querySelector('input[name="template"]:checked').value;
+  const rawContent = textarea.value;
+
+  try {
+    // Create draft
+    const createResp = await fetch('/api/v1/oos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template, rawContent }),
+    });
+    const createData = await createResp.json();
+
+    if (createData.validation && !createData.validation.valid) {
+      showValidation(createData);
+      return;
+    }
+
+    // Publish
+    const publishResp = await fetch(`/api/v1/oos/${createData.oosFile.id}/publish`, {
+      method: 'POST',
+    });
+    const publishData = await publishResp.json();
+
+    if (publishData.error) {
+      showValidation(publishData);
+      return;
+    }
+
+    // Success
+    document.getElementById('validation-results').classList.remove('hidden');
+    document.getElementById('validation-success').classList.remove('hidden');
+    document.getElementById('published-link').href = `/oos/${createData.oosFile.id}`;
+
+  } catch (e) {
+    alert('Failed to publish. Check your content and try again.');
+  }
+}
+
+function showValidation(data) {
+  const container = document.getElementById('validation-results');
+  container.classList.remove('hidden');
+
+  const errorDiv = document.getElementById('validation-errors');
+  const warningDiv = document.getElementById('validation-warnings');
+  const piiDiv = document.getElementById('pii-flags');
+
+  errorDiv.classList.add('hidden');
+  warningDiv.classList.add('hidden');
+  piiDiv.classList.add('hidden');
+
+  if (data.error?.details || (data.validation?.errors && data.validation.errors.length > 0)) {
+    errorDiv.classList.remove('hidden');
+    const errors = data.error?.details || data.validation?.errors || [];
+    document.getElementById('error-list').innerHTML = errors.map(e =>
+      `<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">${e.message || e.issue || JSON.stringify(e)}</div>`
+    ).join('');
+  }
+
+  if (data.validation?.warnings && data.validation.warnings.length > 0) {
+    warningDiv.classList.remove('hidden');
+    document.getElementById('warning-list').innerHTML = data.validation.warnings.map(w =>
+      `<div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">${w.message}</div>`
+    ).join('');
+  }
+
+  if (data.piiFlags && data.piiFlags.length > 0) {
+    piiDiv.classList.remove('hidden');
+    document.getElementById('pii-list').innerHTML = data.piiFlags.map(f =>
+      `<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">
+        <strong>${f.type}:</strong> "${f.text}" found in ${f.location}. <em>${f.suggestion}</em>
+      </div>`
+    ).join('');
+  }
+}
+
+function loadExample() {
+  textarea.value = `---
+oos_version: "1.0"
+org_pseudonym: "My AI Team"
+industry: "technology"
+org_size: "small"
+template: "agent_army"
+agent_count: 3
+platforms:
+  - "claude"
+generated_at: "${new Date().toISOString()}"
+version: 1
+parent_version: null
+word_count: 1900
+claim_count: 12
+confidence_distribution:
+  high: 4
+  medium: 5
+  low: 3
+evidence_distribution:
+  human_defined_rule: 3
+  observed_once: 2
+  observed_repeatedly: 3
+  measured_result: 2
+  inference: 1
+  speculation: 1
+---
+
+## Purpose
+
+A small technology team running 3 AI agents for content creation, research, and project management. This OOS captures coordination patterns discovered over 3 months of production use.
+
+## Prime Directives
+
+1. No agent sends external content without human approval.
+2. Every agent writes to its own shared state file.
+3. Human decision-maker has final authority on all strategic decisions.
+
+## System Identity
+
+A technology organization using AI agents to augment a small team. Agents handle repetitive operational tasks so humans focus on strategy, relationships, and creative decisions.
+
+**[C001]** core_operating_rules
+- **Rule:** Each agent writes to its own shared state file. No agent modifies another agent's state.
+- **Why:** Prevents data corruption from concurrent writes.
+- **Failure mode:** Two agents write to the same file. One update is lost. State becomes inconsistent.
+- **Confidence:** HIGH
+- **Evidence:** MEASURED_RESULT
+- **Scope:** All agents. Each agent has exactly one state file it owns.
+
+**[C002]** core_operating_rules
+- **Rule:** External communications require human approval before sending.
+- **Why:** AI-generated content can be tonally wrong or factually incorrect.
+- **Failure mode:** Agent sends email with incorrect information. Recipient loses trust.
+- **Confidence:** HIGH
+- **Evidence:** HUMAN_DEFINED_RULE
+- **Scope:** All external emails, messages, and published content.
+
+**[C003]** core_operating_rules
+- **Rule:** Research agent summarizes findings but does not make recommendations.
+- **Why:** Recommendations without business context led to irrelevant suggestions.
+- **Failure mode:** Agent recommends action that conflicts with current business priorities.
+- **Confidence:** HIGH
+- **Evidence:** OBSERVED_REPEATEDLY
+- **Scope:** Research and analysis functions only.
+
+**[C004]** core_operating_rules
+- **Rule:** All agent actions are logged to an audit trail.
+- **Why:** Without logs, debugging agent errors takes hours instead of minutes.
+- **Failure mode:** Agent makes error. No log. Team cannot determine what happened.
+- **Confidence:** HIGH
+- **Evidence:** MEASURED_RESULT
+- **Scope:** All agents, all actions.
+
+**[C005]** agent_roles_and_authority
+- **Rule:** Content agent has semi-autonomous authority. It drafts but never publishes.
+- **Why:** Content quality requires human judgment for tone and accuracy.
+- **Failure mode:** Auto-published content contains errors. Public trust damaged.
+- **Confidence:** MEDIUM
+- **Evidence:** OBSERVED_ONCE
+- **Scope:** Content creation workflow.
+
+**[C006]** agent_roles_and_authority
+- **Rule:** Research agent operates autonomously for data gathering but escalates analysis to humans.
+- **Why:** Data gathering is safe to automate. Interpretation requires context.
+- **Failure mode:** Agent misinterprets data and propagates incorrect analysis.
+- **Confidence:** MEDIUM
+- **Evidence:** OBSERVED_REPEATEDLY
+- **Scope:** Research and analysis tasks.
+
+**[C007]** agent_roles_and_authority
+- **Rule:** Project management agent tracks deadlines but does not reassign work.
+- **Why:** Work assignment requires understanding of team capacity and priorities that the agent lacks.
+- **Failure mode:** Agent reassigns work to someone already overloaded. Deadline missed.
+- **Confidence:** MEDIUM
+- **Evidence:** INFERENCE
+- **Scope:** Project tracking functions.
+
+**[C008]** coordination_patterns
+- **Rule:** Agents coordinate through shared state files, not direct messaging.
+- **Why:** Direct messaging creates hidden dependencies and unauditable coordination.
+- **Failure mode:** Agent-to-agent message not logged. Coordination failure is invisible.
+- **Confidence:** MEDIUM
+- **Evidence:** OBSERVED_REPEATEDLY
+- **Scope:** All multi-agent coordination.
+
+**[C009]** failure_patterns
+- **Rule:** We tried giving the content agent access to publish directly. Quality dropped immediately.
+- **Why:** The agent optimized for speed over accuracy when it could publish without review.
+- **Failure mode:** Three blog posts published with factual errors in one week.
+- **Confidence:** HIGH
+- **Evidence:** OBSERVED_ONCE
+- **Scope:** Content publishing. Reverted to human-approval model.
+
+**[C010]** failure_patterns
+- **Rule:** Single shared state file for all agents caused data corruption within the first week.
+- **Why:** Concurrent writes from multiple agents created race conditions.
+- **Failure mode:** State file contained mixed data from two agents. Required manual cleanup.
+- **Confidence:** MEDIUM
+- **Evidence:** MEASURED_RESULT
+- **Scope:** Shared state architecture. Resolved by per-agent files.
+
+**[C011]** human_ai_boundary_conditions
+- **Rule:** Financial commitments and pricing decisions require human approval.
+- **Why:** Financial decisions have legal and relationship implications AI cannot assess.
+- **Failure mode:** Agent agrees to terms that violate margin requirements.
+- **Confidence:** LOW
+- **Evidence:** SPECULATION
+- **Scope:** All financial decisions. Precautionary rule.
+
+**[C012]** human_ai_boundary_conditions
+- **Rule:** The founder has unlimited override authority over all agents at any time.
+- **Why:** A human must always be able to stop any AI action immediately.
+- **Failure mode:** No override mechanism exists. Harmful AI action cannot be stopped.
+- **Confidence:** MEDIUM
+- **Evidence:** HUMAN_DEFINED_RULE
+- **Scope:** All agents. Non-negotiable.
+
+## Confidence Map
+
+| Confidence | Count |
+|---|---|
+| HIGH | 4 |
+| MEDIUM | 5 |
+| LOW | 3 |
+
+## Merge Protocol
+
+Import claims at LOW confidence. Do not auto-merge contradictions. Preserve provenance.
+
+## Update Protocol
+
+Review every 90 days. Flag stale claims. Update confidence when evidence strengthens.
+
+## Summary
+
+1. Per-agent shared state files prevent data corruption.
+2. External communications always require human approval.
+3. Research summarizes but does not recommend.
+4. Audit trails on every action enable fast debugging.
+5. Direct publishing access for content agents degrades quality.
+6. Single shared state files cause corruption -- use per-agent files.
+7. Financial decisions are human-only.
+8. Founder has unlimited override authority.
+`;
+  textarea.dispatchEvent(new Event('input'));
+}
+</script>
