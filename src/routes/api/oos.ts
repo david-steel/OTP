@@ -12,14 +12,26 @@ import { computeAllSimilarities } from '../../services/similarity.js';
 import { computeDiff } from '../../services/diff-engine.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { extractGraph } from '../../graph/graph-extractor.js';
+import { resolveApiKey } from '../../middleware/api-key-auth.js';
 import type { TemplateType } from '../../shared/enums.js';
 
-// Helper: get org from authenticated user
+// Helper: get org from authenticated user (Clerk session OR API key)
 async function getAuthOrg(request: FastifyRequest) {
+  // Try Clerk auth first
   const auth = getAuth(request);
-  if (!auth.userId) return null;
-  const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-  return orgArr[0] || null;
+  if (auth.userId) {
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    if (orgArr[0]) return orgArr[0];
+  }
+
+  // Fall back to API key auth
+  const apiKeyCtx = await resolveApiKey(request);
+  if (apiKeyCtx) {
+    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
+    return orgArr[0] || null;
+  }
+
+  return null;
 }
 
 export default async function oosRoutes(app: FastifyInstance) {
