@@ -4,13 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' ? title : 'OTP' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
         extend: {
           colors: {
-            otp: { 50: '#f0f7ff', 100: '#e0effe', 200: '#b9dffe', 400: '#4db8ff', 500: '#0095ff', 600: '#0076cc', 700: '#005899', 800: '#003d66', 900: '#1a1a2e' },
+            otp: { 50: '#f0f7ff', 100: '#e0effe', 200: '#b9dffe', 300: '#7cc4fe', 400: '#4db8ff', 500: '#0095ff', 600: '#0076cc', 700: '#005899', 800: '#003d66', 900: '#0a0f1e', 950: '#060a14' },
             confidence: { high: '#059669', medium: '#d97706', low: '#9ca3af' },
             evidence: { measured: '#7c3aed', observed: '#2563eb', rule: '#059669', inference: '#d97706', speculation: '#9ca3af' }
           }
@@ -19,58 +23,117 @@
     }
   </script>
   <style>
-    .claim-card { transition: all 0.15s ease; }
-    .claim-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+
+    /* Animations */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes grid-move { 0% { transform: translate(0, 0); } 100% { transform: translate(40px, 40px); } }
+
+    .animate-fade-in-up { animation: fadeInUp 0.7s ease-out forwards; opacity: 0; }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .delay-600 { animation-delay: 0.6s; }
+
+    /* Scroll-triggered animations */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Cards */
+    .card-hover { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+
+    /* Badges */
     .badge-founding { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .badge-platinum { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
     .badge-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
     .badge-silver { background: linear-gradient(135deg, #d1d5db, #9ca3af); }
     .badge-bronze { background: linear-gradient(135deg, #d97706, #92400e); }
+
+    /* Diff */
     .diff-unique-a { border-left: 4px solid #3b82f6; background: #eff6ff; }
     .diff-unique-b { border-left: 4px solid #10b981; background: #ecfdf5; }
     .diff-similar { border-left: 4px solid #f59e0b; background: #fffbeb; }
     .diff-duplicate { border-left: 4px solid #9ca3af; background: #f9fafb; }
+
+    /* Claim cards */
+    .claim-card { transition: all 0.15s ease; }
+    .claim-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    /* Clerk */
     .cl-userButtonBox { height: 32px; }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #0095ff 0%, #7c3aed 50%, #0095ff 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradient-shift 4s ease infinite;
+    }
+    @keyframes gradient-shift { 0% { background-position: 0% center; } 50% { background-position: 100% center; } 100% { background-position: 0% center; } }
+
+    /* Grid background */
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* Glow effects */
+    .glow-blue { box-shadow: 0 0 60px rgba(0, 149, 255, 0.15); }
+    .glow-purple { box-shadow: 0 0 60px rgba(124, 58, 237, 0.15); }
+
+    /* Nav */
+    .nav-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
-  <nav class="bg-otp-900 text-white border-b border-otp-800">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/" class="text-lg font-bold tracking-tight">OTP</a>
+<body class="bg-white text-gray-900 min-h-screen">
+  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-otp-950/80 text-white border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <a href="/" class="text-xl font-bold tracking-tight">
+        <span class="text-otp-400">O</span><span class="text-white">T</span><span class="text-otp-400">P</span>
+      </a>
 
-      <!-- Mobile: auth buttons + hamburger -->
+      <!-- Mobile: auth + hamburger -->
       <div class="flex md:hidden items-center gap-3">
-        <div id="auth-nav-header" class="flex items-center gap-2 text-sm">
-          <!-- Clerk JS populates: Sign In / Sign Up or UserButton -->
-        </div>
-        <button id="mobile-menu-btn" class="p-1" aria-label="Menu">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        <div id="auth-nav-header" class="flex items-center gap-2 text-sm"></div>
+        <button id="mobile-menu-btn" class="p-1.5 rounded-lg hover:bg-white/10 transition-colors" aria-label="Menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
         </button>
       </div>
 
       <!-- Desktop nav -->
-      <div class="hidden md:flex items-center gap-6 text-sm">
-        <a href="/browse" class="hover:text-otp-200">Browse</a>
-        <a href="/search" class="hover:text-otp-200">Search</a>
-        <a href="/graph" class="hover:text-otp-200">Graph</a>
-        <a href="/guide" class="hover:text-otp-200">Guide</a>
-        <div id="auth-nav" class="flex items-center gap-4">
-          <a href="/publish" class="px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium">Publish</a>
+      <div class="hidden md:flex items-center gap-8 text-sm">
+        <a href="/browse" class="text-gray-300 hover:text-white transition-colors">Browse</a>
+        <a href="/search" class="text-gray-300 hover:text-white transition-colors">Search</a>
+        <a href="/graph" class="text-gray-300 hover:text-white transition-colors">Graph</a>
+        <a href="/guide" class="text-gray-300 hover:text-white transition-colors">Guide</a>
+        <div id="auth-nav" class="flex items-center gap-3">
+          <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
         </div>
       </div>
     </div>
 
-    <!-- Mobile nav -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-otp-800">
-      <div class="px-4 py-3 flex flex-col gap-3 text-sm">
-        <a href="/browse" class="hover:text-otp-200 py-1">Browse</a>
-        <a href="/search" class="hover:text-otp-200 py-1">Search</a>
-        <a href="/graph" class="hover:text-otp-200 py-1">Graph</a>
-        <a href="/guide" class="hover:text-otp-200 py-1">Guide</a>
-        <div id="auth-nav-mobile" class="flex items-center gap-3 pt-2 border-t border-otp-800">
-          <a href="/publish" class="px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium">Publish</a>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-white/5 bg-otp-950/95 nav-blur">
+      <div class="px-4 py-4 flex flex-col gap-1 text-sm">
+        <a href="/browse" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Browse</a>
+        <a href="/search" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Search</a>
+        <a href="/graph" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Graph</a>
+        <a href="/guide" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Guide</a>
+        <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
+          <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
         </div>
       </div>
     </div>
@@ -78,24 +141,61 @@
 
   <script>
     document.getElementById('mobile-menu-btn').addEventListener('click', function() {
-      var menu = document.getElementById('mobile-menu');
-      menu.classList.toggle('hidden');
+      document.getElementById('mobile-menu').classList.toggle('hidden');
     });
   </script>
 
-  <main>
+  <main class="pt-[65px]">
     <%- body %>
   </main>
 
-  <footer class="mt-20 border-t bg-white">
-    <div class="max-w-6xl mx-auto px-4 py-6 text-sm text-gray-500 flex flex-col sm:flex-row justify-between gap-2">
-      <span>OTP -- Where Agents Learn to Work as a Team</span>
-      <div class="flex gap-4">
-        <a href="/investors" class="hover:text-gray-700">Investors</a>
+  <footer class="bg-otp-950 text-gray-400 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <div class="flex flex-col sm:flex-row justify-between gap-8">
+        <div>
+          <div class="text-xl font-bold mb-2">
+            <span class="text-otp-400">O</span><span class="text-white">T</span><span class="text-otp-400">P</span>
+          </div>
+          <p class="text-sm text-gray-500 max-w-xs">Where agents learn to work as a team. The coordination intelligence layer for AI-native organizations.</p>
+        </div>
+        <div class="flex gap-12 text-sm">
+          <div>
+            <div class="font-semibold text-gray-300 mb-3">Platform</div>
+            <div class="flex flex-col gap-2">
+              <a href="/browse" class="hover:text-white transition-colors">Browse</a>
+              <a href="/search" class="hover:text-white transition-colors">Search</a>
+              <a href="/graph" class="hover:text-white transition-colors">Graph</a>
+              <a href="/publish" class="hover:text-white transition-colors">Publish</a>
+            </div>
+          </div>
+          <div>
+            <div class="font-semibold text-gray-300 mb-3">Company</div>
+            <div class="flex flex-col gap-2">
+              <a href="/guide" class="hover:text-white transition-colors">Guide</a>
+              <a href="/investors" class="hover:text-white transition-colors">Investors</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-10 pt-6 border-t border-white/5 text-xs text-gray-600 flex flex-col sm:flex-row justify-between gap-2">
         <span>ORGTP.com</span>
+        <span>Organization Transfer Protocol</span>
       </div>
     </div>
   </footer>
+
+  <!-- Scroll reveal script -->
+  <script>
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+  </script>
 
   <% if (typeof clerkPubKey !== 'undefined' && clerkPubKey && typeof clerkInstance !== 'undefined' && clerkInstance) { %>
   <script
@@ -116,66 +216,56 @@
         var btn = document.createElement('button');
         btn.textContent = 'Sign In';
         btn.className = cls + ' cursor-pointer';
-        btn.addEventListener('click', function() {
-          clerk.openSignIn({ redirectUrl: window.location.href });
-        });
+        btn.addEventListener('click', function() { clerk.openSignIn({ redirectUrl: window.location.href }); });
         return btn;
       }
-
       function makeSignUpBtn(cls) {
         var btn = document.createElement('button');
         btn.textContent = 'Sign Up';
         btn.className = cls + ' cursor-pointer';
-        btn.addEventListener('click', function() {
-          clerk.openSignUp({ redirectUrl: '/dashboard' });
-        });
+        btn.addEventListener('click', function() { clerk.openSignUp({ redirectUrl: '/dashboard' }); });
         return btn;
       }
 
-      // --- Desktop nav (auth-nav) ---
+      // Desktop nav
       var desktopNav = document.getElementById('auth-nav');
       if (desktopNav) {
         desktopNav.innerHTML = '';
         if (clerk.user) {
-          var d1 = document.createElement('a'); d1.href = '/dashboard'; d1.className = 'hover:text-otp-200'; d1.textContent = 'Dashboard'; desktopNav.appendChild(d1);
-          var d2 = document.createElement('a'); d2.href = '/publish'; d2.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium'; d2.textContent = 'Publish'; desktopNav.appendChild(d2);
-          var d3 = document.createElement('div'); desktopNav.appendChild(d3);
-          clerk.mountUserButton(d3, { afterSignOutUrl: '/' });
+          var d1 = document.createElement('a'); d1.href = '/dashboard'; d1.className = 'text-gray-300 hover:text-white transition-colors'; d1.textContent = 'Dashboard'; desktopNav.appendChild(d1);
+          var d2 = document.createElement('a'); d2.href = '/publish'; d2.className = 'px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors'; d2.textContent = 'Publish'; desktopNav.appendChild(d2);
+          var d3 = document.createElement('div'); desktopNav.appendChild(d3); clerk.mountUserButton(d3, { afterSignOutUrl: '/' });
         } else {
-          var d4 = document.createElement('a'); d4.href = '/publish'; d4.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium'; d4.textContent = 'Publish'; desktopNav.appendChild(d4);
-          desktopNav.appendChild(makeSignInBtn('hover:text-otp-200'));
-          desktopNav.appendChild(makeSignUpBtn('px-3 py-1.5 border border-otp-400 rounded hover:bg-otp-800 font-medium'));
+          desktopNav.appendChild(makeSignInBtn('text-gray-300 hover:text-white transition-colors'));
+          desktopNav.appendChild(makeSignUpBtn('px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors'));
         }
       }
 
-      // --- Mobile header (auth-nav-header, always visible next to hamburger) ---
+      // Mobile header
       var headerNav = document.getElementById('auth-nav-header');
       if (headerNav) {
         headerNav.innerHTML = '';
         if (clerk.user) {
-          var h1 = document.createElement('div'); headerNav.appendChild(h1);
-          clerk.mountUserButton(h1, { afterSignOutUrl: '/' });
+          var h1 = document.createElement('div'); headerNav.appendChild(h1); clerk.mountUserButton(h1, { afterSignOutUrl: '/' });
         } else {
-          headerNav.appendChild(makeSignInBtn('hover:text-otp-200 text-sm'));
-          headerNav.appendChild(makeSignUpBtn('px-2 py-1 bg-otp-500 rounded hover:bg-otp-400 font-medium text-sm'));
+          headerNav.appendChild(makeSignInBtn('text-gray-300 hover:text-white text-sm transition-colors'));
+          headerNav.appendChild(makeSignUpBtn('px-3 py-1.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-sm transition-colors'));
         }
       }
 
-      // --- Mobile menu (auth-nav-mobile, inside hamburger dropdown) ---
+      // Mobile menu
       var mobileNav = document.getElementById('auth-nav-mobile');
       if (mobileNav) {
         mobileNav.innerHTML = '';
         if (clerk.user) {
-          var m1 = document.createElement('a'); m1.href = '/dashboard'; m1.className = 'hover:text-otp-200 py-1'; m1.textContent = 'Dashboard'; mobileNav.appendChild(m1);
-          var m2 = document.createElement('a'); m2.href = '/publish'; m2.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium'; m2.textContent = 'Publish'; mobileNav.appendChild(m2);
+          var m1 = document.createElement('a'); m1.href = '/dashboard'; m1.className = 'text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors'; m1.textContent = 'Dashboard'; mobileNav.appendChild(m1);
+          var m2 = document.createElement('a'); m2.href = '/publish'; m2.className = 'px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors'; m2.textContent = 'Publish'; mobileNav.appendChild(m2);
         } else {
-          var m3 = document.createElement('a'); m3.href = '/publish'; m3.className = 'hover:text-otp-200 py-1'; m3.textContent = 'Publish'; mobileNav.appendChild(m3);
-          mobileNav.appendChild(makeSignInBtn('hover:text-otp-200 py-1 text-left'));
-          mobileNav.appendChild(makeSignUpBtn('hover:text-otp-200 py-1 text-left'));
+          mobileNav.appendChild(makeSignInBtn('text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-left transition-colors'));
+          mobileNav.appendChild(makeSignUpBtn('px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors'));
         }
       }
 
-      // Emit event so page scripts can react to auth state
       window.dispatchEvent(new CustomEvent('clerk-loaded', { detail: { user: clerk.user } }));
       });
     })();

@@ -1,0 +1,86 @@
+<div class="max-w-3xl mx-auto px-4 py-12">
+  <a href="/blog" class="text-sm text-otp-500 hover:underline mb-6 inline-block">&larr; Back to Blog</a>
+
+  <article>
+    <div class="text-xs text-gray-400 mb-2">March 2026 &middot; David Steel</div>
+    <h1 class="text-3xl font-bold mb-6">The Hard Problem in AI Isn't Intelligence. It's Coordination.</h1>
+
+    <div class="prose prose-gray max-w-none text-gray-700 leading-relaxed space-y-5">
+
+      <p>I run 14 AI agents for a digital marketing agency. They manage $183K in monthly ad spend across 40+ client accounts. They run a call center with 3 human employees. They scan Slack, triage email, track projects, monitor pipelines, evaluate their own maturity level, and compile a morning briefing before I wake up.</p>
+
+      <p>The hard part was never building one good agent.</p>
+
+      <p>The hard part was getting all 14 to stop stepping on each other.</p>
+
+      <h2 class="text-xl font-bold mt-10 mb-3">The Problems Nobody Talks About</h2>
+
+      <p>When you have one AI agent, you have a tool. When you have twelve, you have an organization. And organizations have organizational problems.</p>
+
+      <p>Two agents wrote to the same shared state file. One update got lost. We had 12 data corruption events in the first month.</p>
+
+      <p>The analytics agent got write access to campaigns. It optimized for the wrong metrics because it lacked client context. Technically correct. Strategically wrong. A client's strategic brand campaign got its budget cut.</p>
+
+      <p>We built a message bus so agents could coordinate directly. Deployed 13 inbox files. All empty. Zero transactions. The protocol described communication, but no workflow actually included steps to use it. Dead infrastructure.</p>
+
+      <p>The escalation system flagged a client overspending by 140% on Day 1. Seventeen days later, the alert was still sitting there. The agent that detected the problem reported it correctly. The agent responsible for escalating it never fired. The spec said what should happen. Nobody checked if it actually did.</p>
+
+      <p>These are not model problems. GPT-5 will not fix them. Claude Opus 10 will not fix them. These are coordination problems. Organizational problems. Human-AI boundary problems. And every company deploying AI agents is discovering them independently.</p>
+
+      <h2 class="text-xl font-bold mt-10 mb-3">The Moment It Clicked</h2>
+
+      <p>A friend named Kris Goodrich runs his own AI-augmented business. Different industry. Different tools. Different scale. I took his operational system and plugged it into mine. My agent army ran the comparison and told me three things:</p>
+
+      <ol class="list-decimal pl-5 space-y-2">
+        <li>What Kris did that I didn't do at all</li>
+        <li>What we both did, but differently</li>
+        <li>Where our approaches conflicted</li>
+      </ol>
+
+      <p>That was the moment. Organizational AI intelligence is transferable. Not the prompts. Not the tools. The coordination patterns. The failure modes. The rules about where AI stops and humans take over.</p>
+
+      <p>But the snapshot was stale within days. My agent army changes constantly. New agents, refined protocols, discovered failure modes, model upgrades. A static document decays fast. The system needs to handle continuous evolution, not point-in-time snapshots.</p>
+
+      <h2 class="text-xl font-bold mt-10 mb-3">What We Built</h2>
+
+      <p>OTP is the Organization Transfer Protocol. It is infrastructure for publishing, comparing, and learning from structured AI coordination intelligence.</p>
+
+      <p>The core artifact is called an OOS, an Organizational Operating System. It captures what your AI team actually does, structured as claims. Each claim has a rule, a reason, a failure mode, a confidence rating, and evidence typing. Not opinions. Not best practices. Battle-tested operational intelligence with honest assessments of what you know, what you observed, and what you are still guessing about.</p>
+
+      <p>When you publish an OOS, it becomes a node in the Intelligence Graph. As more organizations publish, edges form between nodes where patterns overlap. The graph reveals what no single organization can see alone: the recurring coordination failures across industries, the architectural patterns that keep showing up independently, the human-AI boundary conditions that every organization draws in roughly the same place.</p>
+
+      <p>With 3 publishers, you see individual operating systems. With 100, you see industry patterns. With 1,000, you see the emerging architecture of how humans and AI agents work together. That dataset does not exist anywhere today.</p>
+
+      <h2 class="text-xl font-bold mt-10 mb-3">Why Now</h2>
+
+      <p>Bain published "AI Enterprise: Code Red" in February 2026. Their thesis: AI is no longer a feature. It is the operating system for how work gets done. They describe "agent factories," "agent contracts," and "the organizational unit of advantage" shifting from functions to integrated AI-human systems.</p>
+
+      <p>That "tightly integrated system" Bain describes is exactly what the OOS captures. OTP is how you transfer it.</p>
+
+      <p>Every AI platform is racing to build better models. Nobody is building the coordination layer. The layer that answers: how do you actually run a team of AI agents without them breaking things?</p>
+
+      <p>We know the answer for our agency. Kris knows it for his business. Tom McFadyen knows it for his consultancy. But those answers are locked inside each organization. There is no system of record. No way to search. No way to compare.</p>
+
+      <p>Until now.</p>
+
+      <h2 class="text-xl font-bold mt-10 mb-3">What This Is Today</h2>
+
+      <p>This is a functional MVP. Three publishers. 56 claims. A working Intelligence Graph. Full-text search across every published claim. A comparison engine that shows you exactly what another organization does differently.</p>
+
+      <p>It was built in 48 hours by the same 14-agent AI system it is designed to serve. That is not a footnote. That is the proof of concept.</p>
+
+      <p>If you run AI agents and you have learned something the hard way about making them work together, <a href="/guide" class="text-otp-500 hover:underline">we want your OOS</a>.</p>
+
+      <p>If you are building in this space and want to see what other organizations are doing, <a href="/browse" class="text-otp-500 hover:underline">start browsing</a>.</p>
+
+      <p>If you are an investor looking at the infrastructure layer for the agentic era, <a href="/investors" class="text-otp-500 hover:underline">read the thesis</a>.</p>
+
+      <p>The hard problem is coordination. We are building the solution in the open.</p>
+
+      <div class="mt-10 pt-6 border-t">
+        <p class="text-sm text-gray-500">David Steel is the founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production. He can be reached at <a href="mailto:dsteel@sneeze.it" class="text-otp-500 hover:underline">dsteel@sneeze.it</a>.</p>
+      </div>
+
+    </div>
+  </article>
+</div>

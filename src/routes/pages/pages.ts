@@ -149,6 +149,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP' });
   });
 
+  // Blog index
+  app.get('/blog', async (request, reply) => {
+    return reply.view('pages/blog', { title: 'Blog - OTP' });
+  });
+
+  // Blog post 1
+  app.get('/blog/why-we-built-otp', async (request, reply) => {
+    return reply.view('pages/blog-post-1', { title: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination. - OTP' });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });
