@@ -37,7 +37,16 @@
   <nav class="bg-otp-900 text-white border-b border-otp-800">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="/" class="text-lg font-bold tracking-tight">OTP</a>
-      <div class="flex items-center gap-6 text-sm">
+
+      <!-- Mobile menu button -->
+      <button id="mobile-menu-btn" class="md:hidden p-1" aria-label="Menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <!-- Desktop nav -->
+      <div class="hidden md:flex items-center gap-6 text-sm">
         <a href="/browse" class="hover:text-otp-200">Browse</a>
         <a href="/search" class="hover:text-otp-200">Search</a>
         <a href="/graph" class="hover:text-otp-200">Graph</a>
@@ -47,14 +56,34 @@
         </div>
       </div>
     </div>
+
+    <!-- Mobile nav -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-otp-800">
+      <div class="px-4 py-3 flex flex-col gap-3 text-sm">
+        <a href="/browse" class="hover:text-otp-200 py-1">Browse</a>
+        <a href="/search" class="hover:text-otp-200 py-1">Search</a>
+        <a href="/graph" class="hover:text-otp-200 py-1">Graph</a>
+        <a href="/guide" class="hover:text-otp-200 py-1">Guide</a>
+        <div id="auth-nav-mobile" class="flex items-center gap-3 pt-2 border-t border-otp-800">
+          <a href="/publish" class="px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium">Publish</a>
+        </div>
+      </div>
+    </div>
   </nav>
+
+  <script>
+    document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+      var menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    });
+  </script>
 
   <main>
     <%- body %>
   </main>
 
   <footer class="mt-20 border-t bg-white">
-    <div class="max-w-6xl mx-auto px-4 py-8 text-sm text-gray-500 flex justify-between">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-sm text-gray-500 flex flex-col sm:flex-row justify-between gap-2">
       <span>OTP -- Where Agents Learn to Work as a Team</span>
       <div class="flex gap-4">
         <a href="/investors" class="hover:text-gray-700">Investors</a>
@@ -78,46 +107,51 @@
       clerk.load().then(function() {
       window.__clerk = clerk;
 
-      const authNav = document.getElementById('auth-nav');
-      if (!authNav) return;
+      // Update both desktop and mobile auth navs
+      ['auth-nav', 'auth-nav-mobile'].forEach(function(navId) {
+        var authNav = document.getElementById(navId);
+        if (!authNav) return;
 
-      if (clerk.user) {
-        authNav.innerHTML = '';
+        if (clerk.user) {
+          authNav.innerHTML = '';
 
-        const dashLink = document.createElement('a');
-        dashLink.href = '/dashboard';
-        dashLink.className = 'hover:text-otp-200';
-        dashLink.textContent = 'Dashboard';
-        authNav.appendChild(dashLink);
+          var dashLink = document.createElement('a');
+          dashLink.href = '/dashboard';
+          dashLink.className = 'hover:text-otp-200';
+          dashLink.textContent = 'Dashboard';
+          authNav.appendChild(dashLink);
 
-        const pubLink = document.createElement('a');
-        pubLink.href = '/publish';
-        pubLink.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium';
-        pubLink.textContent = 'Publish';
-        authNav.appendChild(pubLink);
+          var pubLink = document.createElement('a');
+          pubLink.href = '/publish';
+          pubLink.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium';
+          pubLink.textContent = 'Publish';
+          authNav.appendChild(pubLink);
 
-        const userBtnDiv = document.createElement('div');
-        authNav.appendChild(userBtnDiv);
-        clerk.mountUserButton(userBtnDiv, {
-          afterSignOutUrl: '/',
-        });
-      } else {
-        authNav.innerHTML = '';
+          if (navId === 'auth-nav') {
+            var userBtnDiv = document.createElement('div');
+            authNav.appendChild(userBtnDiv);
+            clerk.mountUserButton(userBtnDiv, {
+              afterSignOutUrl: '/',
+            });
+          }
+        } else {
+          authNav.innerHTML = '';
 
-        const pubLink = document.createElement('a');
-        pubLink.href = '/publish';
-        pubLink.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium';
-        pubLink.textContent = 'Publish';
-        authNav.appendChild(pubLink);
+          var pubLink2 = document.createElement('a');
+          pubLink2.href = '/publish';
+          pubLink2.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium';
+          pubLink2.textContent = 'Publish';
+          authNav.appendChild(pubLink2);
 
-        const signInBtn = document.createElement('button');
-        signInBtn.textContent = 'Sign In';
-        signInBtn.className = 'hover:text-otp-200 cursor-pointer';
-        signInBtn.addEventListener('click', () => {
-          clerk.openSignIn({ redirectUrl: window.location.href });
-        });
-        authNav.appendChild(signInBtn);
-      }
+          var signInBtn = document.createElement('button');
+          signInBtn.textContent = 'Sign In';
+          signInBtn.className = 'hover:text-otp-200 cursor-pointer';
+          signInBtn.addEventListener('click', function() {
+            clerk.openSignIn({ redirectUrl: window.location.href });
+          });
+          authNav.appendChild(signInBtn);
+        }
+      });
 
       // Emit event so page scripts can react to auth state
       window.dispatchEvent(new CustomEvent('clerk-loaded', { detail: { user: clerk.user } }));
