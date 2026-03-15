@@ -159,6 +159,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/blog-post-1', { title: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination. - OTP' });
   });
 
+  // Blog post 2
+  app.get('/blog/what-is-an-oos', async (request, reply) => {
+    return reply.view('pages/blog-post-2', { title: 'What Is an Organizational Operating System? - OTP' });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });

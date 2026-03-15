@@ -2,70 +2,115 @@
 <section class="bg-otp-950 border-b border-white/5">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-10 sm:pb-14">
     <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3 animate-fade-in-up">Blog</h1>
-    <p class="text-gray-400 max-w-lg animate-fade-in-up delay-100">Thinking about AI coordination, organizational intelligence, and building in public.</p>
+    <p class="text-gray-400 max-w-lg animate-fade-in-up delay-100">Building in public. AI coordination patterns, failure modes, and lessons from running 14 agents in production.</p>
   </div>
 </section>
 
 <section class="bg-gray-50 py-12 sm:py-16">
   <div class="max-w-5xl mx-auto px-4 sm:px-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
 
-      <!-- Post 1: Why We Built OTP -->
-      <a href="/blog/why-we-built-otp" class="reveal bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group">
-        <div class="h-44 bg-gradient-to-br from-otp-400 via-otp-500 to-otp-700 relative overflow-hidden flex items-center justify-center">
+    <!-- Featured post (full width) -->
+    <a href="/blog/why-we-built-otp" class="reveal block bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group mb-8 sm:mb-10">
+      <div class="grid grid-cols-1 sm:grid-cols-2">
+        <div class="h-52 sm:h-auto bg-gradient-to-br from-otp-400 via-otp-500 to-indigo-600 relative overflow-hidden flex items-center justify-center">
           <div class="absolute inset-0 bg-grid opacity-10"></div>
-          <div class="absolute top-[-20px] right-[-20px] w-36 h-36 border-2 border-white/10 rotate-45 rounded-xl"></div>
-          <div class="absolute bottom-[-30px] left-[-15px] w-28 h-28 bg-white/5 rounded-full"></div>
-          <div class="absolute top-4 left-5 w-2.5 h-2.5 bg-white/20 rounded-full"></div>
-          <div class="absolute bottom-6 right-6 w-2 h-2 bg-white/25 rotate-45"></div>
-          <!-- Illustration: connected agents -->
+          <div class="absolute top-[-30px] right-[-30px] w-48 h-48 border-2 border-white/10 rotate-45 rounded-2xl"></div>
+          <div class="absolute bottom-[-40px] left-[-20px] w-36 h-36 bg-white/5 rounded-full"></div>
+          <div class="absolute top-5 left-6 w-3 h-3 bg-white/20 rounded-full"></div>
+          <div class="absolute bottom-8 right-8 w-2.5 h-2.5 bg-white/25 rotate-45"></div>
+          <div class="absolute top-10 right-14 w-2 h-2 border border-white/25 rotate-45"></div>
+          <!-- Illustration: multi-agent coordination scene -->
           <div class="relative group-hover:-translate-y-1 transition-transform duration-500">
-            <svg width="120" height="100" viewBox="0 0 120 100" fill="none">
-              <line x1="60" y1="15" x2="25" y2="50" stroke="white" stroke-width="1.5" opacity="0.5"/>
-              <line x1="60" y1="15" x2="95" y2="50" stroke="white" stroke-width="1.5" opacity="0.5"/>
-              <line x1="25" y1="50" x2="60" y2="85" stroke="white" stroke-width="1.5" opacity="0.5"/>
-              <line x1="95" y1="50" x2="60" y2="85" stroke="white" stroke-width="1.5" opacity="0.5"/>
-              <line x1="25" y1="50" x2="95" y2="50" stroke="white" stroke-width="1" opacity="0.2"/>
-              <circle cx="60" cy="15" r="10" fill="white" opacity="0.95"/>
-              <circle cx="25" cy="50" r="8" fill="white" opacity="0.9"/>
-              <circle cx="95" cy="50" r="8" fill="white" opacity="0.9"/>
-              <circle cx="60" cy="85" r="8" fill="white" opacity="0.9"/>
-              <text x="60" y="18" text-anchor="middle" fill="#0076cc" font-size="7" font-weight="800">OTP</text>
-              <text x="25" y="53" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">A</text>
-              <text x="95" y="53" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">B</text>
-              <text x="60" y="88" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">C</text>
-              <circle cx="60" cy="15" r="10" stroke="white" stroke-width="1.5" fill="none">
-                <animate attributeName="r" values="10;18;10" dur="3s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" repeatCount="indefinite"/>
-              </circle>
-              <circle r="2" fill="white" opacity="0.8">
-                <animateMotion dur="1.5s" repeatCount="indefinite" path="M 60 15 L 25 50"/>
-              </circle>
-              <circle r="2" fill="white" opacity="0.8">
-                <animateMotion dur="1.8s" repeatCount="indefinite" path="M 60 15 L 95 50"/>
-              </circle>
+            <!-- Terminal window mini -->
+            <div class="w-[100px] bg-white/90 rounded-lg shadow-xl overflow-hidden">
+              <div class="flex gap-0.5 px-1.5 py-1 bg-gray-100 border-b border-gray-200"><div class="w-1 h-1 rounded-full bg-red-400"></div><div class="w-1 h-1 rounded-full bg-amber-400"></div><div class="w-1 h-1 rounded-full bg-green-400"></div></div>
+              <div class="p-1.5 space-y-0.5">
+                <div class="h-0.5 bg-otp-300 rounded-full w-full"></div>
+                <div class="h-0.5 bg-purple-300 rounded-full w-3/4"></div>
+                <div class="h-0.5 bg-otp-200 rounded-full w-full"></div>
+                <div class="h-0.5 bg-green-300 rounded-full w-2/3"></div>
+                <div class="h-0.5 bg-otp-200 rounded-full w-full"></div>
+                <div class="h-0.5 bg-amber-300 rounded-full w-1/2"></div>
+              </div>
+            </div>
+            <!-- Agent icons orbiting -->
+            <div class="absolute -top-4 -right-6 w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg shadow-lg flex items-center justify-center border border-white/30" style="animation: float 3s ease-in-out infinite;">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="absolute -bottom-3 -right-5 w-7 h-7 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg shadow-lg flex items-center justify-center border border-white/30" style="animation: float 3s ease-in-out infinite 1s;">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v1"/></svg>
+            </div>
+            <div class="absolute top-2 -left-7 w-7 h-7 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg shadow-lg flex items-center justify-center border border-white/30" style="animation: float 3.5s ease-in-out infinite 0.5s;">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <!-- Connection lines -->
+            <svg class="absolute -inset-8" width="130" height="110" viewBox="0 0 130 110" fill="none" style="left: -32px; top: -20px;">
+              <line x1="48" y1="35" x2="95" y2="12" stroke="white" stroke-width="1" opacity="0.3" stroke-dasharray="3 3"><animate attributeName="stroke-dashoffset" values="0;-12" dur="2s" repeatCount="indefinite"/></line>
+              <line x1="48" y1="55" x2="90" y2="80" stroke="white" stroke-width="1" opacity="0.3" stroke-dasharray="3 3"><animate attributeName="stroke-dashoffset" values="0;-12" dur="2.5s" repeatCount="indefinite"/></line>
+              <line x1="25" y1="45" x2="40" y2="40" stroke="white" stroke-width="1" opacity="0.3" stroke-dasharray="3 3"><animate attributeName="stroke-dashoffset" values="0;-12" dur="1.8s" repeatCount="indefinite"/></line>
             </svg>
           </div>
         </div>
-        <div class="p-5 sm:p-6">
+        <div class="p-6 sm:p-8 flex flex-col justify-center">
           <div class="text-[10px] font-bold text-otp-500 uppercase tracking-wider mb-2">Founding Essay</div>
-          <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-otp-600 transition-colors">The Hard Problem in AI Isn't Intelligence. It's Coordination.</h2>
-          <p class="text-gray-500 text-sm leading-relaxed line-clamp-3">I run 14 AI agents for a digital marketing agency. The hard part was never building one good agent. It was getting all of them to stop stepping on each other.</p>
-          <div class="flex items-center gap-2 mt-4 text-xs text-gray-400">
-            <span>David Steel</span>
-            <span>&middot;</span>
-            <span>March 2026</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-3 leading-snug group-hover:text-otp-600 transition-colors">The Hard Problem in AI Isn't Intelligence. It's Coordination.</h2>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">I run 14 AI agents for a digital marketing agency. The hard part was never building one good agent. It was getting all of them to stop stepping on each other. That problem led to OTP.</p>
+          <div class="flex items-center gap-2 text-xs text-gray-400"><span>David Steel</span><span>&middot;</span><span>March 2026</span><span>&middot;</span><span>8 min read</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Post grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+
+      <!-- Post 2: What Is an OOS -->
+      <a href="/blog/what-is-an-oos" class="reveal bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group">
+        <div class="h-44 bg-gradient-to-br from-purple-400 via-purple-500 to-indigo-600 relative overflow-hidden flex items-center justify-center">
+          <div class="absolute inset-0 bg-grid opacity-10"></div>
+          <div class="absolute top-[-20px] left-[-20px] w-36 h-36 border-2 border-white/10 rounded-full"></div>
+          <div class="absolute bottom-[-25px] right-[-25px] w-28 h-28 bg-white/5 rotate-45 rounded-xl"></div>
+          <div class="absolute top-5 right-6 w-2 h-2 bg-white/25 rotate-45"></div>
+          <div class="absolute bottom-4 left-5 w-3 h-3 border border-white/20 rounded-full"></div>
+          <!-- Illustration: structured claim card -->
+          <div class="relative group-hover:-translate-y-1 transition-transform duration-500">
+            <div class="w-[140px] bg-white/90 rounded-lg shadow-xl p-2.5">
+              <div class="flex gap-1 mb-1.5">
+                <div class="text-[6px] font-mono bg-gray-200 px-1 py-0.5 rounded font-bold text-gray-600">C001</div>
+                <div class="text-[6px] bg-green-500 text-white px-1 py-0.5 rounded font-bold">HIGH</div>
+                <div class="text-[6px] bg-purple-500 text-white px-1 py-0.5 rounded font-bold">MEASURED</div>
+              </div>
+              <div class="space-y-1">
+                <div class="h-1 bg-gray-800 rounded-full w-full"></div>
+                <div class="h-1 bg-gray-800 rounded-full w-4/5"></div>
+                <div class="h-0.5 bg-gray-300 rounded-full w-full mt-1.5"></div>
+                <div class="h-0.5 bg-gray-300 rounded-full w-2/3"></div>
+                <div class="h-0.5 bg-gray-200 rounded-full w-full mt-1"></div>
+                <div class="h-0.5 bg-gray-200 rounded-full w-3/4"></div>
+              </div>
+            </div>
+            <!-- Arrows showing structure -->
+            <div class="absolute -right-4 top-1 text-[6px] text-white/70 font-bold flex flex-col gap-2">
+              <div class="flex items-center gap-1" style="animation: float 3s ease-in-out infinite;"><svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>Rule</div>
+              <div class="flex items-center gap-1" style="animation: float 3s ease-in-out infinite 0.5s;"><svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>Why</div>
+              <div class="flex items-center gap-1" style="animation: float 3s ease-in-out infinite 1s;"><svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>Fail</div>
+            </div>
           </div>
+        </div>
+        <div class="p-5 sm:p-6">
+          <div class="text-[10px] font-bold text-purple-500 uppercase tracking-wider mb-2">Deep Dive</div>
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors">What Is an Organizational Operating System?</h2>
+          <p class="text-gray-500 text-sm leading-relaxed line-clamp-3">Your org already has an operating system for AI. You just haven't written it down. The OOS makes it explicit, portable, and valuable.</p>
+          <div class="flex items-center gap-2 mt-4 text-xs text-gray-400"><span>David Steel</span><span>&middot;</span><span>March 2026</span><span>&middot;</span><span>6 min read</span></div>
         </div>
       </a>
 
-      <!-- Post 2: Placeholder for next post -->
+      <!-- Coming soon -->
       <div class="reveal delay-200 bg-white/50 rounded-2xl overflow-hidden border border-dashed border-gray-200 flex flex-col items-center justify-center p-8 text-center min-h-[380px]">
         <div class="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         </div>
         <div class="text-sm font-semibold text-gray-400 mb-1">Coming Soon</div>
-        <p class="text-xs text-gray-300">More posts on building in public, agent coordination patterns, and lessons from production.</p>
+        <p class="text-xs text-gray-300">Merging two organizations' AI intelligence. What we found.</p>
       </div>
 
     </div>
