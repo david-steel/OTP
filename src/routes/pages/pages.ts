@@ -2,7 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys } from '../../db/schema.js';
+import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
@@ -164,9 +165,42 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/blog-post-2', { title: 'What Is an Organizational Operating System? - OTP' });
   });
 
+  // Blog post 3
+  app.get('/blog/built-in-48-hours', async (request, reply) => {
+    return reply.view('pages/blog-post-3', { title: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure. - OTP' });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });
+  });
+
+  // Settings: API Keys
+  app.get('/settings/api', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'unauthenticated', keys: [] });
+    }
+
+    const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    if (!org) {
+      return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'no_org', keys: [] });
+    }
+
+    const keys = await db
+      .select({
+        id: apiKeys.id,
+        name: apiKeys.name,
+        keyPrefix: apiKeys.keyPrefix,
+        scopes: apiKeys.scopes,
+        lastUsedAt: apiKeys.lastUsedAt,
+        createdAt: apiKeys.createdAt,
+      })
+      .from(apiKeys)
+      .where(and(eq(apiKeys.orgId, org.id), isNull(apiKeys.revokedAt)))
+      .orderBy(desc(apiKeys.createdAt));
+
+    return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'authenticated', keys });
   });
 
   // Publish page -- serves the form, auth check happens client-side + on API call

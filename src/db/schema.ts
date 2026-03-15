@@ -110,6 +110,22 @@ export const claimSimilarities = pgTable('claim_similarities', {
   scoreIdx: index('sim_score_idx').on(table.similarityScore),
 }));
 
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull().default('Default'),
+  keyPrefix: varchar('key_prefix', { length: 8 }).notNull(),
+  keyHash: varchar('key_hash', { length: 64 }).notNull(),
+  scopes: text('scopes').array().notNull(),
+  lastUsedAt: timestamp('last_used_at'),
+  expiresAt: timestamp('expires_at'),
+  revokedAt: timestamp('revoked_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  hashIdx: index('idx_api_keys_hash').on(table.keyHash),
+  orgIdx: index('idx_api_keys_org').on(table.orgId),
+}));
+
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id),
