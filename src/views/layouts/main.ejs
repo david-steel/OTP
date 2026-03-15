@@ -38,12 +38,17 @@
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="/" class="text-lg font-bold tracking-tight">OTP</a>
 
-      <!-- Mobile menu button -->
-      <button id="mobile-menu-btn" class="md:hidden p-1" aria-label="Menu">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
+      <!-- Mobile: auth buttons + hamburger -->
+      <div class="flex md:hidden items-center gap-3">
+        <div id="auth-nav-header" class="flex items-center gap-2 text-sm">
+          <!-- Clerk JS populates: Sign In / Sign Up or UserButton -->
+        </div>
+        <button id="mobile-menu-btn" class="p-1" aria-label="Menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
 
       <!-- Desktop nav -->
       <div class="hidden md:flex items-center gap-6 text-sm">
@@ -107,51 +112,68 @@
       clerk.load().then(function() {
       window.__clerk = clerk;
 
-      // Update both desktop and mobile auth navs
-      ['auth-nav', 'auth-nav-mobile'].forEach(function(navId) {
-        var authNav = document.getElementById(navId);
-        if (!authNav) return;
+      function makeSignInBtn(cls) {
+        var btn = document.createElement('button');
+        btn.textContent = 'Sign In';
+        btn.className = cls + ' cursor-pointer';
+        btn.addEventListener('click', function() {
+          clerk.openSignIn({ redirectUrl: window.location.href });
+        });
+        return btn;
+      }
 
+      function makeSignUpBtn(cls) {
+        var btn = document.createElement('button');
+        btn.textContent = 'Sign Up';
+        btn.className = cls + ' cursor-pointer';
+        btn.addEventListener('click', function() {
+          clerk.openSignUp({ redirectUrl: '/dashboard' });
+        });
+        return btn;
+      }
+
+      // --- Desktop nav (auth-nav) ---
+      var desktopNav = document.getElementById('auth-nav');
+      if (desktopNav) {
+        desktopNav.innerHTML = '';
         if (clerk.user) {
-          authNav.innerHTML = '';
-
-          var dashLink = document.createElement('a');
-          dashLink.href = '/dashboard';
-          dashLink.className = 'hover:text-otp-200';
-          dashLink.textContent = 'Dashboard';
-          authNav.appendChild(dashLink);
-
-          var pubLink = document.createElement('a');
-          pubLink.href = '/publish';
-          pubLink.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium';
-          pubLink.textContent = 'Publish';
-          authNav.appendChild(pubLink);
-
-          if (navId === 'auth-nav') {
-            var userBtnDiv = document.createElement('div');
-            authNav.appendChild(userBtnDiv);
-            clerk.mountUserButton(userBtnDiv, {
-              afterSignOutUrl: '/',
-            });
-          }
+          var d1 = document.createElement('a'); d1.href = '/dashboard'; d1.className = 'hover:text-otp-200'; d1.textContent = 'Dashboard'; desktopNav.appendChild(d1);
+          var d2 = document.createElement('a'); d2.href = '/publish'; d2.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium'; d2.textContent = 'Publish'; desktopNav.appendChild(d2);
+          var d3 = document.createElement('div'); desktopNav.appendChild(d3);
+          clerk.mountUserButton(d3, { afterSignOutUrl: '/' });
         } else {
-          authNav.innerHTML = '';
-
-          var pubLink2 = document.createElement('a');
-          pubLink2.href = '/publish';
-          pubLink2.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium';
-          pubLink2.textContent = 'Publish';
-          authNav.appendChild(pubLink2);
-
-          var signInBtn = document.createElement('button');
-          signInBtn.textContent = 'Sign In';
-          signInBtn.className = 'hover:text-otp-200 cursor-pointer';
-          signInBtn.addEventListener('click', function() {
-            clerk.openSignIn({ redirectUrl: window.location.href });
-          });
-          authNav.appendChild(signInBtn);
+          var d4 = document.createElement('a'); d4.href = '/publish'; d4.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium'; d4.textContent = 'Publish'; desktopNav.appendChild(d4);
+          desktopNav.appendChild(makeSignInBtn('hover:text-otp-200'));
+          desktopNav.appendChild(makeSignUpBtn('px-3 py-1.5 border border-otp-400 rounded hover:bg-otp-800 font-medium'));
         }
-      });
+      }
+
+      // --- Mobile header (auth-nav-header, always visible next to hamburger) ---
+      var headerNav = document.getElementById('auth-nav-header');
+      if (headerNav) {
+        headerNav.innerHTML = '';
+        if (clerk.user) {
+          var h1 = document.createElement('div'); headerNav.appendChild(h1);
+          clerk.mountUserButton(h1, { afterSignOutUrl: '/' });
+        } else {
+          headerNav.appendChild(makeSignInBtn('hover:text-otp-200 text-sm'));
+          headerNav.appendChild(makeSignUpBtn('px-2 py-1 bg-otp-500 rounded hover:bg-otp-400 font-medium text-sm'));
+        }
+      }
+
+      // --- Mobile menu (auth-nav-mobile, inside hamburger dropdown) ---
+      var mobileNav = document.getElementById('auth-nav-mobile');
+      if (mobileNav) {
+        mobileNav.innerHTML = '';
+        if (clerk.user) {
+          var m1 = document.createElement('a'); m1.href = '/dashboard'; m1.className = 'hover:text-otp-200 py-1'; m1.textContent = 'Dashboard'; mobileNav.appendChild(m1);
+          var m2 = document.createElement('a'); m2.href = '/publish'; m2.className = 'px-3 py-1.5 bg-otp-500 rounded hover:bg-otp-400 font-medium'; m2.textContent = 'Publish'; mobileNav.appendChild(m2);
+        } else {
+          var m3 = document.createElement('a'); m3.href = '/publish'; m3.className = 'hover:text-otp-200 py-1'; m3.textContent = 'Publish'; mobileNav.appendChild(m3);
+          mobileNav.appendChild(makeSignInBtn('hover:text-otp-200 py-1 text-left'));
+          mobileNav.appendChild(makeSignUpBtn('hover:text-otp-200 py-1 text-left'));
+        }
+      }
 
       // Emit event so page scripts can react to auth state
       window.dispatchEvent(new CustomEvent('clerk-loaded', { detail: { user: clerk.user } }));
