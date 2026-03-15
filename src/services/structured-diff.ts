@@ -108,7 +108,7 @@ function diffAgents(
   const matchedB = new Set<number>();
 
   for (const agentA of agentsA) {
-    let bestMatch: { index: number; agent: typeof agentB[0]; score: number } | null = null;
+    let bestMatch: { index: number; agent: typeof agentsB[0]; score: number } | null = null;
 
     for (let i = 0; i < agentsB.length; i++) {
       if (matchedB.has(i)) continue;
@@ -139,7 +139,7 @@ function diffAgents(
       }
 
       const ownsA = new Set(agentA.owns || []);
-      const ownsB = new Set(agentB.owns || []);
+      const ownsB = new Set((bestMatch.agent as any).owns || []);
       const uniqueOwnsA = [...ownsA].filter(o => !ownsB.has(o));
       const uniqueOwnsB = [...ownsB].filter(o => !ownsA.has(o));
 

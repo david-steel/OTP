@@ -16,7 +16,7 @@ import type {
   EdgeType,
 } from './types.js';
 
-type DB = NodePgDatabase<Record<string, never>>;
+type DB = NodePgDatabase<any>;
 
 // ---- Query 1: Find Agent Conflicts ----
 // Returns all conflict_with edges within an org or across all orgs

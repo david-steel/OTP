@@ -53,7 +53,7 @@ export default async function searchRoutes(app: FastifyInstance) {
     `);
 
     // Count total results
-    const [countResult] = await db.execute(sql`
+    const countRes = await db.execute(sql`
       SELECT COUNT(*) AS total
       FROM claims c
       JOIN oos_files f ON c.oos_file_id = f.id
@@ -67,7 +67,7 @@ export default async function searchRoutes(app: FastifyInstance) {
         ${evidence ? sql`AND c.evidence = ${evidence}` : sql``}
     `) as any;
 
-    const total = parseInt(countResult?.total || '0', 10);
+    const total = parseInt((countRes.rows as any[])?.[0]?.total || '0', 10);
 
     // Audit
     await db.insert(auditLogs).values(
@@ -112,7 +112,7 @@ export default async function searchRoutes(app: FastifyInstance) {
       LIMIT ${limit} OFFSET ${offset}
     `);
 
-    const [countResult] = await db.execute(sql`
+    const countRes = await db.execute(sql`
       SELECT COUNT(*) AS total
       FROM oos_files f
       JOIN organizations o ON f.org_id = o.id
@@ -122,7 +122,7 @@ export default async function searchRoutes(app: FastifyInstance) {
         ${size ? sql`AND o.size = ${size}` : sql``}
     `) as any;
 
-    const total = parseInt(countResult?.total || '0', 10);
+    const total = parseInt((countRes.rows as any[])?.[0]?.total || '0', 10);
 
     return {
       data: results.rows || [],

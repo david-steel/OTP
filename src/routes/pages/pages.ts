@@ -14,12 +14,12 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Homepage
   app.get('/', async (request, reply) => {
-    const [pubCount] = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
-    const [clmCount] = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
+    const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
+    const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
     return reply.view('pages/home', {
       title: 'OTP - Where Agents Learn to Work as a Team',
-      publisherCount: pubCount?.c || 0,
-      claimCount: clmCount?.c || 0,
+      publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
+      claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
       templateCount: 3,
     });
   });

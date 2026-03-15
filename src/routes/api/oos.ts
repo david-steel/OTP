@@ -17,8 +17,8 @@ import type { TemplateType } from '../../shared/enums.js';
 async function getAuthOrg(request: any) {
   const clerkOrgId = request.auth?.orgId || request.headers['x-clerk-org-id'];
   if (!clerkOrgId) return null;
-  const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, clerkOrgId)).limit(1);
-  return org || null;
+  const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, clerkOrgId)).limit(1);
+  return orgArr[0] || null;
 }
 
 export default async function oosRoutes(app: FastifyInstance) {
