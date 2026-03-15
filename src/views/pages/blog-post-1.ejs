@@ -1,13 +1,28 @@
-<div class="max-w-3xl mx-auto px-4 py-12">
-  <a href="/blog" class="text-sm text-otp-500 hover:underline mb-6 inline-block">&larr; Back to Blog</a>
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Founding Essay</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">The Hard Problem in AI Isn't Intelligence. It's Coordination.</h1>
+    </div>
+  </div>
+</section>
 
-  <article>
-    <div class="text-xs text-gray-400 mb-2">March 2026 &middot; David Steel</div>
-    <h1 class="text-3xl font-bold mb-6">The Hard Problem in AI Isn't Intelligence. It's Coordination.</h1>
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
 
-    <div class="prose prose-gray max-w-none text-gray-700 leading-relaxed space-y-5">
-
-      <div class="bg-gray-50 border-l-4 border-otp-500 p-6 rounded-r-lg mb-8">
+      <div class="bg-gray-50 border-l-4 border-otp-500 p-5 sm:p-6 rounded-r-xl mb-8">
         <p class="text-gray-600 italic mb-3">"If, in some cataclysm, all of scientific knowledge were to be destroyed, and only one sentence passed on to the next generation of creatures, what statement would contain the most information in the fewest words?"</p>
         <p class="text-gray-600 italic mb-3">Richard Feynman answered with the atomic hypothesis: all things are made of atoms. One sentence. Enough information, combined with imagination, to reconstruct the rest.</p>
         <p class="text-gray-700">We asked the same question about organizations running AI. If everything were lost, what single artifact would contain enough operational intelligence to rebuild how your AI team works? That question led to the Organizational Operating System. Internally, we still call the generator the "cataclysm code." This is its origin.</p>
@@ -18,9 +33,9 @@
 
       <p>The hard part was never building one good agent.</p>
 
-      <p>The hard part was getting all 14 to stop stepping on each other.</p>
+      <p class="text-lg font-semibold text-gray-900">The hard part was getting all 14 to stop stepping on each other.</p>
 
-      <h2 class="text-xl font-bold mt-10 mb-3">The Problems Nobody Talks About</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Problems Nobody Talks About</h2>
 
       <p>When you have one AI agent, you have a tool. When you have twelve, you have an organization. And organizations have organizational problems.</p>
 
@@ -32,23 +47,25 @@
 
       <p>The escalation system flagged a client overspending by 140% on Day 1. Seventeen days later, the alert was still sitting there. The agent that detected the problem reported it correctly. The agent responsible for escalating it never fired. The spec said what should happen. Nobody checked if it actually did.</p>
 
-      <p>These are not model problems. GPT-5 will not fix them. Claude Opus 10 will not fix them. These are coordination problems. Organizational problems. Human-AI boundary problems. And every company deploying AI agents is discovering them independently.</p>
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-5 my-8">
+        <p class="text-otp-800 font-semibold text-sm">These are not model problems. GPT-5 will not fix them. Claude Opus 10 will not fix them. These are coordination problems. Organizational problems. Human-AI boundary problems. And every company deploying AI agents is discovering them independently.</p>
+      </div>
 
-      <h2 class="text-xl font-bold mt-10 mb-3">The Moment It Clicked</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Moment It Clicked</h2>
 
       <p>A friend named Kris Goodrich runs his own AI-augmented business. Different industry. Different tools. Different scale. I took his operational system and plugged it into mine. My agent army ran the comparison and told me three things:</p>
 
-      <ol class="list-decimal pl-5 space-y-2">
+      <ol class="list-decimal pl-5 space-y-2 my-4">
         <li>What Kris did that I didn't do at all</li>
         <li>What we both did, but differently</li>
         <li>Where our approaches conflicted</li>
       </ol>
 
-      <p>That was the moment. Organizational AI intelligence is transferable. Not the prompts. Not the tools. The coordination patterns. The failure modes. The rules about where AI stops and humans take over.</p>
+      <p>That was the moment. <span class="font-semibold text-gray-900">Organizational AI intelligence is transferable.</span> Not the prompts. Not the tools. The coordination patterns. The failure modes. The rules about where AI stops and humans take over.</p>
 
       <p>But the snapshot was stale within days. My agent army changes constantly. New agents, refined protocols, discovered failure modes, model upgrades. A static document decays fast. The system needs to handle continuous evolution, not point-in-time snapshots.</p>
 
-      <h2 class="text-xl font-bold mt-10 mb-3">What We Built</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What We Built</h2>
 
       <p>OTP is the Organization Transfer Protocol. It is infrastructure for publishing, comparing, and learning from structured AI coordination intelligence.</p>
 
@@ -56,9 +73,11 @@
 
       <p>When you publish an OOS, it becomes a node in the Intelligence Graph. As more organizations publish, edges form between nodes where patterns overlap. The graph reveals what no single organization can see alone: the recurring coordination failures across industries, the architectural patterns that keep showing up independently, the human-AI boundary conditions that every organization draws in roughly the same place.</p>
 
-      <p>With 3 publishers, you see individual operating systems. With 100, you see industry patterns. With 1,000, you see the emerging architecture of how humans and AI agents work together. That dataset does not exist anywhere today.</p>
+      <div class="bg-gray-50 rounded-xl p-5 my-8 border border-gray-100">
+        <p class="text-gray-600 text-sm">With <strong class="text-gray-800">3 publishers</strong>, you see individual operating systems. With <strong class="text-gray-800">100</strong>, you see industry patterns. With <strong class="text-gray-800">1,000</strong>, you see the emerging architecture of how humans and AI agents work together. That dataset does not exist anywhere today.</p>
+      </div>
 
-      <h2 class="text-xl font-bold mt-10 mb-3">Why Now</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Why Now</h2>
 
       <p>Bain published "AI Enterprise: Code Red" in February 2026. Their thesis: AI is no longer a feature. It is the operating system for how work gets done. They describe "agent factories," "agent contracts," and "the organizational unit of advantage" shifting from functions to integrated AI-human systems.</p>
 
@@ -68,26 +87,52 @@
 
       <p>We know the answer for our agency. Kris knows it for his business. Tom McFadyen knows it for his consultancy. But those answers are locked inside each organization. There is no system of record. No way to search. No way to compare.</p>
 
-      <p>Until now.</p>
+      <p class="text-lg font-semibold text-gray-900">Until now.</p>
 
-      <h2 class="text-xl font-bold mt-10 mb-3">What This Is Today</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What This Is Today</h2>
 
       <p>This is a functional MVP. Three publishers. 56 claims. A working Intelligence Graph. Full-text search across every published claim. A comparison engine that shows you exactly what another organization does differently.</p>
 
       <p>It was built in 48 hours by the same 14-agent AI system it is designed to serve. That is not a footnote. That is the proof of concept.</p>
 
-      <p>If you run AI agents and you have learned something the hard way about making them work together, <a href="/guide" class="text-otp-500 hover:underline">we want your OOS</a>.</p>
-
-      <p>If you are building in this space and want to see what other organizations are doing, <a href="/browse" class="text-otp-500 hover:underline">start browsing</a>.</p>
-
-      <p>If you are an investor looking at the infrastructure layer for the agentic era, <a href="/investors" class="text-otp-500 hover:underline">read the thesis</a>.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
+        <a href="/guide" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
+          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Create Your OOS</div>
+          <p class="text-xs text-gray-400">Learn how to publish your coordination intelligence</p>
+        </a>
+        <a href="/browse" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
+          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Browse Intelligence</div>
+          <p class="text-xs text-gray-400">See what other organizations are doing</p>
+        </a>
+        <a href="/investors" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
+          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">For Investors</div>
+          <p class="text-xs text-gray-400">Read the infrastructure thesis</p>
+        </a>
+      </div>
 
       <p>The hard problem is coordination. We are building the solution in the open.</p>
 
-      <div class="mt-10 pt-6 border-t">
-        <p class="text-sm text-gray-500">David Steel is the founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production. He can be reached at <a href="mailto:dsteel@sneeze.it" class="text-otp-500 hover:underline">dsteel@sneeze.it</a>.</p>
+      <!-- Author -->
+      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+        <div>
+          <div class="font-bold text-gray-900">David Steel</div>
+          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+        </div>
       </div>
 
-    </div>
-  </article>
-</div>
+    </article>
+  </div>
+</section>
+
+<!-- Next post CTA -->
+<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <p class="text-sm text-gray-400 mb-4">More coming soon. Follow along as we build in public.</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
+      Publish Your OOS
+      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+    </a>
+  </div>
+</section>
