@@ -92,6 +92,10 @@
     .glow-blue { box-shadow: 0 0 60px rgba(0, 149, 255, 0.15); }
     .glow-purple { box-shadow: 0 0 60px rgba(124, 58, 237, 0.15); }
 
+    /* Flow line */
+    .flow-line { animation: flow-pulse 3s ease-in-out infinite; }
+    @keyframes flow-pulse { 0%, 100% { opacity: 0.15; background-position: 0% center; } 50% { opacity: 0.4; background-position: 100% center; } }
+
     /* Nav */
     .nav-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   </style>
@@ -119,6 +123,7 @@
         <a href="/search" class="text-gray-300 hover:text-white transition-colors">Search</a>
         <a href="/graph" class="text-gray-300 hover:text-white transition-colors">Graph</a>
         <a href="/guide" class="text-gray-300 hover:text-white transition-colors">Guide</a>
+        <a href="/blog" class="text-gray-300 hover:text-white transition-colors">Blog</a>
         <div id="auth-nav" class="flex items-center gap-3">
           <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
         </div>
@@ -132,6 +137,7 @@
         <a href="/search" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Search</a>
         <a href="/graph" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Graph</a>
         <a href="/guide" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Guide</a>
+        <a href="/blog" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Blog</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
           <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
         </div>
@@ -172,6 +178,7 @@
             <div class="font-semibold text-gray-300 mb-3">Company</div>
             <div class="flex flex-col gap-2">
               <a href="/guide" class="hover:text-white transition-colors">Guide</a>
+              <a href="/blog" class="hover:text-white transition-colors">Blog</a>
               <a href="/investors" class="hover:text-white transition-colors">Investors</a>
             </div>
           </div>

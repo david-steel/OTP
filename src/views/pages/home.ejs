@@ -1,9 +1,11 @@
 <!-- Hero -->
-<section class="relative overflow-hidden bg-otp-950 bg-grid">
+<section class="relative overflow-hidden bg-otp-950">
+  <!-- Animated network canvas -->
+  <canvas id="hero-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.6;"></canvas>
+
   <!-- Gradient orbs -->
-  <div class="absolute top-[-200px] left-[-100px] w-[500px] h-[500px] bg-otp-500/20 rounded-full blur-[120px]"></div>
-  <div class="absolute bottom-[-150px] right-[-100px] w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[120px]"></div>
-  <div class="absolute top-[40%] left-[50%] w-[300px] h-[300px] bg-otp-400/10 rounded-full blur-[100px]"></div>
+  <div class="absolute top-[-200px] left-[-100px] w-[500px] h-[500px] bg-otp-500/20 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-[-150px] right-[-100px] w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[120px] pointer-events-none"></div>
 
   <div class="relative max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-20 sm:pb-36 text-center">
     <div class="animate-fade-in-up">
@@ -35,25 +37,208 @@
   </div>
 </section>
 
+<!-- Hero canvas animation -->
+<script>
+(function() {
+  var canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var nodes = [];
+  var particles = [];
+  var mouse = { x: -1000, y: -1000 };
+  var W, H;
+
+  function resize() {
+    var rect = canvas.parentElement.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function initNodes() {
+    nodes = [];
+    var count = Math.min(Math.floor(W * H / 18000), 60);
+    for (var i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 2 + 1.5,
+        color: Math.random() > 0.5 ? '0, 149, 255' : '124, 58, 237',
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function spawnParticle(x1, y1, x2, y2) {
+    if (particles.length > 30) return;
+    particles.push({
+      x: x1, y: y1, tx: x2, ty: y2,
+      progress: 0, speed: 0.008 + Math.random() * 0.012,
+      color: '0, 149, 255'
+    });
+  }
+
+  resize(); initNodes();
+  window.addEventListener('resize', function() { resize(); initNodes(); });
+  canvas.addEventListener('mousemove', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top;
+  });
+  canvas.addEventListener('mouseleave', function() { mouse.x = -1000; mouse.y = -1000; });
+
+  var spawnTimer = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Update nodes
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      n.x += n.vx; n.y += n.vy;
+      n.pulse += 0.02;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+
+      // Mouse repulsion
+      var dx = n.x - mouse.x, dy = n.y - mouse.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150) {
+        var force = (150 - dist) / 150 * 0.5;
+        n.vx += (dx / dist) * force * 0.3;
+        n.vy += (dy / dist) * force * 0.3;
+      }
+      // Damping
+      n.vx *= 0.998; n.vy *= 0.998;
+    }
+
+    // Draw edges
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var dx = nodes[i].x - nodes[j].x;
+        var dy = nodes[i].y - nodes[j].y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 160) {
+          var alpha = (1 - dist / 160) * 0.15;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = 'rgba(0, 149, 255, ' + alpha + ')';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw nodes
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      var glow = Math.sin(n.pulse) * 0.3 + 0.7;
+
+      // Outer glow
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + n.color + ', ' + (0.03 * glow) + ')';
+      ctx.fill();
+
+      // Core
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * glow, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + n.color + ', ' + (0.6 * glow) + ')';
+      ctx.fill();
+    }
+
+    // Spawn data particles periodically
+    spawnTimer++;
+    if (spawnTimer > 60 && nodes.length > 1) {
+      spawnTimer = 0;
+      var a = Math.floor(Math.random() * nodes.length);
+      var b = Math.floor(Math.random() * nodes.length);
+      if (a !== b) {
+        var dx = nodes[a].x - nodes[b].x;
+        var dy = nodes[a].y - nodes[b].y;
+        if (Math.sqrt(dx * dx + dy * dy) < 200) {
+          spawnParticle(nodes[a].x, nodes[a].y, nodes[b].x, nodes[b].y);
+        }
+      }
+    }
+
+    // Update & draw particles
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.progress += p.speed;
+      if (p.progress >= 1) { particles.splice(i, 1); continue; }
+
+      var px = p.x + (p.tx - p.x) * p.progress;
+      var py = p.y + (p.ty - p.y) * p.progress;
+      var alpha = Math.sin(p.progress * Math.PI);
+
+      // Trail
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 149, 255, ' + (alpha * 0.8) + ')';
+      ctx.fill();
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(px, py, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 149, 255, ' + (alpha * 0.15) + ')';
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
 <!-- Stats bar -->
 <section class="relative bg-otp-900 border-y border-white/5">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
     <div class="grid grid-cols-3 gap-4 sm:gap-8">
       <div class="text-center reveal">
-        <div class="text-2xl sm:text-4xl font-extrabold text-white"><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %></div>
+        <div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %>">0</div>
         <div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Publishers</div>
       </div>
       <div class="text-center reveal delay-100">
-        <div class="text-2xl sm:text-4xl font-extrabold text-white"><%= typeof claimCount !== 'undefined' ? claimCount : '0' %></div>
+        <div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof claimCount !== 'undefined' ? claimCount : '0' %>">0</div>
         <div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Knowledge Claims</div>
       </div>
       <div class="text-center reveal delay-200">
-        <div class="text-2xl sm:text-4xl font-extrabold text-white"><%= typeof templateCount !== 'undefined' ? templateCount : '3' %></div>
+        <div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof templateCount !== 'undefined' ? templateCount : '3' %>">0</div>
         <div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Templates</div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Animated counter script -->
+<script>
+(function() {
+  var counted = false;
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !counted) {
+      counted = true;
+      document.querySelectorAll('.counter').forEach(function(el) {
+        var target = parseInt(el.getAttribute('data-target')) || 0;
+        var duration = 1200;
+        var start = performance.now();
+        function tick(now) {
+          var elapsed = now - start;
+          var progress = Math.min(elapsed / duration, 1);
+          var eased = 1 - Math.pow(1 - progress, 3);
+          el.textContent = Math.round(target * eased);
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+  }, { threshold: 0.3 });
+  var statsSection = document.querySelector('.counter');
+  if (statsSection) observer.observe(statsSection.parentElement.parentElement.parentElement);
+})();
+</script>
 
 <!-- How it works -->
 <section class="bg-gray-50 py-16 sm:py-24">
@@ -63,29 +248,36 @@
       <p class="text-gray-500 max-w-lg mx-auto">Three steps from tribal knowledge to shared coordination intelligence.</p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-      <div class="reveal bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 card-hover">
-        <div class="w-10 h-10 rounded-xl bg-otp-50 flex items-center justify-center mb-5">
-          <svg class="w-5 h-5 text-otp-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-        </div>
-        <div class="text-lg font-bold text-gray-900 mb-2">1. Publish</div>
-        <p class="text-gray-500 text-sm leading-relaxed">Capture your AI coordination intelligence in a structured OOS file. Claims with confidence ratings, evidence types, and failure modes.</p>
+    <!-- Animated flow line connecting the cards (desktop only) -->
+    <div class="relative">
+      <div class="hidden sm:block absolute top-[52px] left-[16.67%] right-[16.67%] h-[2px]">
+        <div class="flow-line h-full rounded-full" style="background: linear-gradient(90deg, #0095ff, #7c3aed, #059669); background-size: 200% 100%;"></div>
       </div>
 
-      <div class="reveal delay-200 bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 card-hover">
-        <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center mb-5">
-          <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 relative">
+        <div class="reveal bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 card-hover">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center mb-5 shadow-lg shadow-otp-500/20">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          </div>
+          <div class="text-lg font-bold text-gray-900 mb-2">1. Publish</div>
+          <p class="text-gray-500 text-sm leading-relaxed">Capture your AI coordination intelligence in a structured OOS file. Claims with confidence ratings, evidence types, and failure modes.</p>
         </div>
-        <div class="text-lg font-bold text-gray-900 mb-2">2. Compare</div>
-        <p class="text-gray-500 text-sm leading-relaxed">See what other organizations do differently. The diff engine shows what's unique to you, what's similar, and where you conflict.</p>
-      </div>
 
-      <div class="reveal delay-400 bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 card-hover">
-        <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mb-5">
-          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <div class="reveal delay-200 bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 card-hover">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-5 shadow-lg shadow-purple-500/20">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          </div>
+          <div class="text-lg font-bold text-gray-900 mb-2">2. Compare</div>
+          <p class="text-gray-500 text-sm leading-relaxed">See what other organizations do differently. The diff engine shows what's unique to you, what's similar, and where you conflict.</p>
         </div>
-        <div class="text-lg font-bold text-gray-900 mb-2">3. Learn</div>
-        <p class="text-gray-500 text-sm leading-relaxed">Import proven coordination patterns. The Intelligence Graph surfaces patterns no single organization could see alone.</p>
+
+        <div class="reveal delay-400 bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 card-hover">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mb-5 shadow-lg shadow-green-500/20">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div class="text-lg font-bold text-gray-900 mb-2">3. Learn</div>
+          <p class="text-gray-500 text-sm leading-relaxed">Import proven coordination patterns. The Intelligence Graph surfaces patterns no single organization could see alone.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -99,24 +291,30 @@
         <div class="text-xs font-semibold text-otp-500 uppercase tracking-widest mb-3">Inside an OOS</div>
         <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Knowledge as structured claims</h2>
         <p class="text-gray-500 leading-relaxed mb-6">Every operational lesson becomes a claim with confidence ratings, evidence types, and documented failure modes. No more tribal knowledge locked in one person's head.</p>
-        <a href="/guide" class="inline-flex items-center gap-2 text-otp-500 font-semibold hover:text-otp-600 transition-colors text-sm">
+        <a href="/guide" class="inline-flex items-center gap-2 text-otp-500 font-semibold hover:text-otp-600 transition-colors text-sm group">
           Learn how to create yours
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
       </div>
 
       <div class="reveal delay-200">
-        <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 sm:p-6 glow-blue">
-          <div class="flex flex-wrap items-center gap-2 mb-4">
-            <span class="text-xs font-mono bg-gray-200/50 px-2.5 py-1 rounded-md font-semibold text-gray-600">C001</span>
-            <span class="text-xs bg-confidence-high text-white px-2.5 py-1 rounded-md font-semibold">HIGH</span>
-            <span class="text-xs bg-evidence-measured text-white px-2.5 py-1 rounded-md font-semibold">MEASURED_RESULT</span>
-            <span class="text-xs text-gray-400 sm:ml-auto font-medium">core_operating_rules</span>
-          </div>
-          <p class="font-semibold text-gray-900 mb-3 leading-snug">Every agent writes to a shared state file. No agent reads data sources directly.</p>
-          <div class="space-y-2 text-sm">
-            <p class="text-gray-600"><span class="font-semibold text-gray-700">Why:</span> Direct data source access creates race conditions and inconsistent views across agents.</p>
-            <p class="text-gray-500"><span class="font-semibold text-gray-600">Failure mode:</span> Two agents read the same data source at different times, get different results, make conflicting decisions.</p>
+        <div class="relative">
+          <!-- Floating decorative badges -->
+          <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 px-2 py-1 bg-confidence-high text-white text-[10px] font-bold rounded-lg shadow-lg shadow-green-500/20 animate-fade-in delay-500" style="animation: float 3s ease-in-out infinite;">HIGH CONFIDENCE</div>
+          <div class="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 px-2 py-1 bg-evidence-measured text-white text-[10px] font-bold rounded-lg shadow-lg shadow-purple-500/20 animate-fade-in delay-600" style="animation: float 3s ease-in-out infinite 1.5s;">MEASURED</div>
+
+          <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 sm:p-6 glow-blue">
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <span class="text-xs font-mono bg-gray-200/50 px-2.5 py-1 rounded-md font-semibold text-gray-600">C001</span>
+              <span class="text-xs bg-confidence-high text-white px-2.5 py-1 rounded-md font-semibold">HIGH</span>
+              <span class="text-xs bg-evidence-measured text-white px-2.5 py-1 rounded-md font-semibold">MEASURED_RESULT</span>
+              <span class="text-xs text-gray-400 sm:ml-auto font-medium">core_operating_rules</span>
+            </div>
+            <p class="font-semibold text-gray-900 mb-3 leading-snug">Every agent writes to a shared state file. No agent reads data sources directly.</p>
+            <div class="space-y-2 text-sm">
+              <p class="text-gray-600"><span class="font-semibold text-gray-700">Why:</span> Direct data source access creates race conditions and inconsistent views across agents.</p>
+              <p class="text-gray-500"><span class="font-semibold text-gray-600">Failure mode:</span> Two agents read the same data source at different times, get different results, make conflicting decisions.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -124,22 +322,144 @@
   </div>
 </section>
 
-<!-- Graph CTA -->
-<section class="relative overflow-hidden bg-otp-950 bg-grid py-16 sm:py-24">
-  <div class="absolute top-[-100px] right-[-50px] w-[300px] h-[300px] bg-otp-500/10 rounded-full blur-[100px]"></div>
-  <div class="absolute bottom-[-100px] left-[-50px] w-[250px] h-[250px] bg-purple-500/10 rounded-full blur-[80px]"></div>
+<!-- Graph CTA with animated mini-graph -->
+<section class="relative overflow-hidden bg-otp-950 py-16 sm:py-24">
+  <canvas id="graph-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.5;"></canvas>
 
   <div class="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
     <div class="reveal">
       <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">The Intelligence Graph</h2>
       <p class="text-gray-400 max-w-lg mx-auto mb-8 leading-relaxed">See how coordination patterns connect across organizations. Discover shared operational truths and unique approaches.</p>
-      <a href="/graph" class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/10 rounded-lg font-semibold hover:bg-white/15 transition-all">
+      <a href="/graph" class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/10 rounded-lg font-semibold hover:bg-white/15 transition-all group">
         Explore the Graph
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </a>
     </div>
   </div>
 </section>
+
+<!-- Graph section canvas -->
+<script>
+(function() {
+  var canvas = document.getElementById('graph-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var nodes = [];
+  var W, H;
+  var colors = ['0, 149, 255', '124, 58, 237', '5, 150, 105', '217, 119, 6'];
+  var labels = ['Radar', 'Dash', 'Dirk', 'Pepper', 'Crystal', 'Neil', 'Jeff', 'Pulse'];
+
+  function resize() {
+    var rect = canvas.parentElement.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function init() {
+    nodes = [];
+    var cx = W / 2, cy = H / 2;
+    var count = 8;
+    for (var i = 0; i < count; i++) {
+      var angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+      var radius = Math.min(W, H) * 0.3;
+      nodes.push({
+        x: cx + Math.cos(angle) * radius + (Math.random() - 0.5) * 40,
+        y: cy + Math.sin(angle) * radius + (Math.random() - 0.5) * 40,
+        baseAngle: angle,
+        r: 4 + Math.random() * 3,
+        color: colors[i % colors.length],
+        label: labels[i],
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  resize(); init();
+  window.addEventListener('resize', function() { resize(); init(); });
+
+  var t = 0;
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    t += 0.005;
+    var cx = W / 2, cy = H / 2;
+
+    // Orbit nodes slowly
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      var radius = Math.min(W, H) * 0.3;
+      var wobble = Math.sin(t * 2 + n.phase) * 8;
+      n.x = cx + Math.cos(n.baseAngle + t * 0.3) * (radius + wobble);
+      n.y = cy + Math.sin(n.baseAngle + t * 0.3) * (radius + wobble);
+    }
+
+    // Draw edges with animated opacity
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var pulse = (Math.sin(t * 3 + i + j) + 1) / 2;
+        var alpha = 0.03 + pulse * 0.07;
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.strokeStyle = 'rgba(0, 149, 255, ' + alpha + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // Draw nodes
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      var glow = (Math.sin(t * 2 + n.phase) + 1) / 2;
+
+      // Outer glow
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + n.color + ', ' + (0.04 + glow * 0.04) + ')';
+      ctx.fill();
+
+      // Core
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + n.color + ', ' + (0.5 + glow * 0.3) + ')';
+      ctx.fill();
+
+      // Label
+      ctx.font = '10px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, ' + (0.25 + glow * 0.15) + ')';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.label, n.x, n.y + n.r + 14);
+    }
+
+    // Center hub
+    var hubGlow = (Math.sin(t) + 1) / 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 149, 255, ' + (0.3 + hubGlow * 0.4) + ')';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 149, 255, ' + (0.03 + hubGlow * 0.04) + ')';
+    ctx.fill();
+
+    // Hub connections
+    for (var i = 0; i < nodes.length; i++) {
+      var pulse = (Math.sin(t * 2 + i * 0.7) + 1) / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(nodes[i].x, nodes[i].y);
+      ctx.strokeStyle = 'rgba(0, 149, 255, ' + (0.05 + pulse * 0.1) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
 
 <!-- Founding publisher CTA -->
 <section class="bg-white py-16 sm:py-24">
@@ -150,9 +470,9 @@
     </div>
     <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Be one of the first 50</h2>
     <p class="text-gray-500 max-w-xl mx-auto mb-8 leading-relaxed">Founding Publishers get a permanent badge, early access to Phase 2 features, and shape the protocol itself. Your coordination intelligence becomes part of the foundation.</p>
-    <a href="/publish" class="inline-flex items-center gap-2 px-8 py-3.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-base">
+    <a href="/publish" class="inline-flex items-center gap-2 px-8 py-3.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-base group">
       Publish Your OOS
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
     </a>
   </div>
 </section>
