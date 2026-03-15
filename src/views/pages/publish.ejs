@@ -103,6 +103,22 @@ textarea.addEventListener('input', () => {
     `${claimCount} claims detected ${claimCount < 10 ? '(need at least 10)' : '(good)'}`;
 });
 
+function handleAuthError(data, status) {
+  if (status === 401) {
+    if (window.__clerk) {
+      window.__clerk.openSignIn({ redirectUrl: '/publish' });
+    } else {
+      alert('Please sign in to publish.');
+    }
+    return true;
+  }
+  if (data.error?.code === 'ORG_NOT_FOUND') {
+    window.location.href = '/dashboard';
+    return true;
+  }
+  return false;
+}
+
 async function validateOOS() {
   const template = document.querySelector('input[name="template"]:checked').value;
   const rawContent = textarea.value;
@@ -114,6 +130,7 @@ async function validateOOS() {
       body: JSON.stringify({ template, rawContent }),
     });
     const data = await resp.json();
+    if (handleAuthError(data, resp.status)) return;
     showValidation(data);
   } catch (e) {
     alert('Failed to validate. Check your content format.');
@@ -132,6 +149,7 @@ async function publishOOS() {
       body: JSON.stringify({ template, rawContent }),
     });
     const createData = await createResp.json();
+    if (handleAuthError(createData, createResp.status)) return;
 
     if (createData.validation && !createData.validation.valid) {
       showValidation(createData);
@@ -143,6 +161,7 @@ async function publishOOS() {
       method: 'POST',
     });
     const publishData = await publishResp.json();
+    if (handleAuthError(publishData, publishResp.status)) return;
 
     if (publishData.error) {
       showValidation(publishData);

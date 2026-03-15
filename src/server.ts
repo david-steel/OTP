@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import fastifyView from '@fastify/view';
 import fastifyStatic from '@fastify/static';
 import fastifyRateLimit from '@fastify/rate-limit';
+import { clerkPlugin } from '@clerk/fastify';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,17 +18,33 @@ await app.register(fastifyRateLimit, {
   timeWindow: '1 minute',
 });
 
+// Clerk authentication
+await app.register(clerkPlugin, {
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
+
 // Static files
 await app.register(fastifyStatic, {
   root: path.join(__dirname, '..', 'public'),
   prefix: '/public/',
 });
 
+// Derive Clerk frontend API domain from publishable key
+const clerkPubKey = process.env.CLERK_PUBLISHABLE_KEY || '';
+const clerkInstance = clerkPubKey.startsWith('pk_')
+  ? Buffer.from(clerkPubKey.split('_').slice(2).join('_'), 'base64').toString().replace(/\$$/, '')
+  : '';
+
 // EJS templates
 await app.register(fastifyView, {
   engine: { ejs: await import('ejs') },
   root: path.join(__dirname, 'views'),
   layout: 'layouts/main',
+  defaultContext: {
+    clerkPubKey,
+    clerkInstance,
+  },
 });
 
 // Health check

@@ -1,0 +1,94 @@
+<div class="max-w-xl mx-auto px-4 py-16">
+  <h1 class="text-2xl font-bold mb-2">Complete Your Publisher Profile</h1>
+  <p class="text-gray-500 text-sm mb-8">Set up your organization to start publishing OOS files. You're among the first 50 -- you'll get a Founding Publisher badge.</p>
+
+  <form id="register-form" class="space-y-6">
+    <div>
+      <label class="block text-sm font-medium mb-1">Organization Name</label>
+      <input type="text" name="name" required minlength="1" maxlength="255"
+        class="w-full border rounded-lg px-4 py-2 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500"
+        placeholder="e.g. Acme Corp">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1">Industry</label>
+      <input type="text" name="industry" required minlength="1" maxlength="255"
+        class="w-full border rounded-lg px-4 py-2 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500"
+        placeholder="e.g. technology, healthcare, finance, marketing">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1">Organization Size</label>
+      <div class="grid grid-cols-5 gap-2">
+        <label class="border rounded-lg p-3 text-center cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="size" value="solo" class="sr-only" checked>
+          <div class="text-sm font-medium">Solo</div>
+          <div class="text-xs text-gray-400">1 person</div>
+        </label>
+        <label class="border rounded-lg p-3 text-center cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="size" value="small" class="sr-only">
+          <div class="text-sm font-medium">Small</div>
+          <div class="text-xs text-gray-400">2-10</div>
+        </label>
+        <label class="border rounded-lg p-3 text-center cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="size" value="medium" class="sr-only">
+          <div class="text-sm font-medium">Medium</div>
+          <div class="text-xs text-gray-400">11-50</div>
+        </label>
+        <label class="border rounded-lg p-3 text-center cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="size" value="large" class="sr-only">
+          <div class="text-sm font-medium">Large</div>
+          <div class="text-xs text-gray-400">51-500</div>
+        </label>
+        <label class="border rounded-lg p-3 text-center cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
+          <input type="radio" name="size" value="enterprise" class="sr-only">
+          <div class="text-sm font-medium">Enterprise</div>
+          <div class="text-xs text-gray-400">500+</div>
+        </label>
+      </div>
+    </div>
+
+    <div id="register-error" class="hidden bg-red-50 border border-red-200 p-3 rounded-lg text-sm text-red-800"></div>
+
+    <button type="submit" class="w-full px-6 py-3 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400">
+      Create Publisher Profile
+    </button>
+  </form>
+</div>
+
+<script>
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorDiv = document.getElementById('register-error');
+    errorDiv.classList.add('hidden');
+
+    const data = {
+      name: form.name.value.trim(),
+      industry: form.industry.value.trim(),
+      size: form.querySelector('input[name="size"]:checked').value,
+    };
+
+    try {
+      const resp = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await resp.json();
+
+      if (!resp.ok) {
+        errorDiv.textContent = result.error?.message || 'Registration failed. Please try again.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Success -- redirect to dashboard
+      window.location.href = '/dashboard';
+    } catch (err) {
+      errorDiv.textContent = 'Network error. Please try again.';
+      errorDiv.classList.remove('hidden');
+    }
+  });
+</script>

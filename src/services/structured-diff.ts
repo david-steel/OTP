@@ -138,8 +138,8 @@ function diffAgents(
         });
       }
 
-      const ownsA = new Set(agentA.owns || []);
-      const ownsB = new Set((bestMatch.agent as any).owns || []);
+      const ownsA = new Set<string>(agentA.owns || []);
+      const ownsB = new Set<string>((bestMatch.agent as any).owns || []);
       const uniqueOwnsA = [...ownsA].filter(o => !ownsB.has(o));
       const uniqueOwnsB = [...ownsB].filter(o => !ownsA.has(o));
 

@@ -1,0 +1,204 @@
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-2">How to Generate Your OOS</h1>
+  <p class="text-gray-500 text-sm mb-8">A step-by-step guide to publishing your Organizational Operating System on OTP.</p>
+
+  <!-- What is an OOS -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <h2 class="font-semibold text-lg mb-3">What is an OOS?</h2>
+    <p class="text-sm text-gray-700 mb-3">An OOS (Organizational Operating System) is a structured snapshot of how your AI agents work together. Not what tools they use -- how they coordinate, who owns what, what goes wrong, and what you learned the hard way.</p>
+    <p class="text-sm text-gray-700">Think of it as an operating manual for your AI team, written in a format that other organizations can learn from and compare against.</p>
+  </div>
+
+  <!-- What you need -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <h2 class="font-semibold text-lg mb-3">What You Need</h2>
+    <p class="text-sm text-gray-700 mb-3">An AI setup with at least one of these:</p>
+    <ul class="text-sm text-gray-700 list-disc pl-5 mb-3 space-y-1">
+      <li>Multiple AI agents or assistants working together</li>
+      <li>AI automations with defined roles or responsibilities</li>
+      <li>An AI-augmented workflow with clear rules about what AI does vs. what humans do</li>
+    </ul>
+    <p class="text-sm text-gray-500">Any AI platform works (Claude, GPT, Gemini, or all three). Any org size works. Failure patterns are some of the most valuable claims -- you do not need a perfect system.</p>
+  </div>
+
+  <!-- The 3 options -->
+  <div class="bg-otp-50 border border-otp-200 p-6 rounded-lg mb-6">
+    <h2 class="font-semibold text-lg mb-4">Three Ways to Generate Your OOS</h2>
+
+    <!-- Option 1 -->
+    <div class="mb-6">
+      <h3 class="font-medium mb-2">Option 1: Use AI to Generate It <span class="text-xs bg-otp-500 text-white px-2 py-0.5 rounded ml-1">Recommended</span></h3>
+      <p class="text-sm text-gray-700 mb-3">Copy the prompt below, paste it into Claude, ChatGPT, or any AI assistant, and replace the bracketed sections with your details.</p>
+      <div class="relative">
+        <pre id="ai-prompt" class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto max-h-96 overflow-y-auto">I need you to generate an OOS (Organizational Operating System) file for my organization.
+
+Here is what we do: [Describe your business in 2-3 sentences]
+
+Here is our AI setup:
+[List your AI agents, automations, or AI-augmented workflows. For each one, describe:
+- What it does
+- What tools it uses
+- What it owns vs. what it does NOT own
+- Who/what it reports to or escalates to]
+
+Here are the rules we follow:
+[List any rules, policies, or patterns you have about how your AI operates.
+Examples: "All emails require human approval before sending",
+"The analytics bot reports but never recommends",
+"If two agents disagree, the founder decides within 24 hours"]
+
+Here are things that went wrong:
+[List 2-5 failures, mistakes, or surprises you discovered while building
+your AI setup. Be specific. These are often the most valuable claims.]
+
+Here are the boundaries between AI and human:
+[What decisions are human-only? What does AI handle autonomously?
+Where is the line?]
+
+Now generate an OOS file in this exact format:
+
+1. YAML frontmatter between --- delimiters with: oos_version "1.0",
+   org_pseudonym, industry, org_size (solo/small/medium/large/enterprise),
+   template (agent_army/value_chain/org_chart), agent_count, platforms
+   used, generated_at (ISO timestamp), version 1, parent_version null,
+   word_count, claim_count, confidence_distribution (high/medium/low
+   counts), evidence_distribution (counts per evidence type)
+
+2. A Purpose section (2-3 sentences)
+
+3. A Prime Directives section (3-5 top-level rules)
+
+4. At minimum 15 claims using this format:
+
+**[C001]** section_name
+- **Rule:** [Clear, specific rule]
+- **Why:** [Why this exists]
+- **Failure mode:** [What breaks when violated]
+- **Confidence:** HIGH | MEDIUM | LOW
+- **Evidence:** HUMAN_DEFINED_RULE | OBSERVED_ONCE | OBSERVED_REPEATEDLY
+  | MEASURED_RESULT | INFERENCE | SPECULATION
+- **Scope:** [Where this applies]
+
+Sections: core_operating_rules, agent_roles_and_authority,
+coordination_patterns, operational_heuristics, failure_patterns,
+human_ai_boundary_conditions
+
+Rules for claims:
+- Every claim must have all 6 fields
+- Be specific and concrete, not generic
+- Failure modes should describe real consequences
+- Include at least 2-3 failure_patterns claims
+- Total word count between 1800-3000 words
+- Minimum 10 claims, aim for 15-25</pre>
+        <button onclick="copyPrompt()" class="absolute top-2 right-2 px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Copy Prompt</button>
+      </div>
+    </div>
+
+    <!-- Option 2 -->
+    <div class="mb-6">
+      <h3 class="font-medium mb-2">Option 2: Write It Manually</h3>
+      <ol class="text-sm text-gray-700 list-decimal pl-5 space-y-1">
+        <li>Go to the <a href="/publish" class="text-otp-500 hover:underline">Publish page</a> and click "Load Example" to see the format</li>
+        <li>Replace the example content with your own organization's rules, failures, and boundaries</li>
+        <li>Make sure you have at least 10 claims and 1800 words</li>
+        <li>Click Validate to check your format before publishing</li>
+      </ol>
+    </div>
+
+    <!-- Option 3 -->
+    <div>
+      <h3 class="font-medium mb-2">Option 3: Get Help</h3>
+      <p class="text-sm text-gray-700">Email <a href="mailto:dsteel@sneeze.it" class="text-otp-500 hover:underline">dsteel@sneeze.it</a> and we will send you a blank template or walk you through it.</p>
+    </div>
+  </div>
+
+  <!-- Claim format -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <h2 class="font-semibold text-lg mb-3">Claim Format</h2>
+    <p class="text-sm text-gray-700 mb-4">Each claim captures one piece of operational intelligence. Here is what each field means:</p>
+    <table class="w-full text-sm">
+      <thead><tr class="border-b"><th class="text-left py-2 font-medium">Field</th><th class="text-left py-2 font-medium">What to write</th></tr></thead>
+      <tbody class="text-gray-700">
+        <tr class="border-b"><td class="py-2 font-mono text-xs">Rule</td><td class="py-2">What you do, stated as a clear rule</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">Why</td><td class="py-2">Why this rule exists -- the reasoning behind it</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">Failure mode</td><td class="py-2">What happens when this rule is broken -- real consequences</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">Confidence</td><td class="py-2">HIGH (proven), MEDIUM (strong belief, limited data), LOW (hypothesis)</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">Evidence</td><td class="py-2">What supports this claim (see table below)</td></tr>
+        <tr><td class="py-2 font-mono text-xs">Scope</td><td class="py-2">Where this applies in your organization</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Evidence types -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <h2 class="font-semibold text-lg mb-3">Evidence Types</h2>
+    <table class="w-full text-sm">
+      <thead><tr class="border-b"><th class="text-left py-2 font-medium">Type</th><th class="text-left py-2 font-medium">When to use</th><th class="text-left py-2 font-medium">Example</th></tr></thead>
+      <tbody class="text-gray-700">
+        <tr class="border-b"><td class="py-2"><span class="inline-block px-2 py-0.5 bg-evidence-rule/10 text-evidence-rule rounded text-xs font-medium">HUMAN_DEFINED_RULE</span></td><td class="py-2">You decided this as policy</td><td class="py-2 text-xs text-gray-500">"All emails require human approval"</td></tr>
+        <tr class="border-b"><td class="py-2"><span class="inline-block px-2 py-0.5 bg-evidence-observed/10 text-evidence-observed rounded text-xs font-medium">OBSERVED_ONCE</span></td><td class="py-2">Happened once, you learned from it</td><td class="py-2 text-xs text-gray-500">"Bot sent a wrong email, so we added approval"</td></tr>
+        <tr class="border-b"><td class="py-2"><span class="inline-block px-2 py-0.5 bg-evidence-observed/10 text-evidence-observed rounded text-xs font-medium">OBSERVED_REPEATEDLY</span></td><td class="py-2">You have seen this pattern multiple times</td><td class="py-2 text-xs text-gray-500">"Every time we skip review, errors go up"</td></tr>
+        <tr class="border-b"><td class="py-2"><span class="inline-block px-2 py-0.5 bg-evidence-measured/10 text-evidence-measured rounded text-xs font-medium">MEASURED_RESULT</span></td><td class="py-2">You have data or metrics</td><td class="py-2 text-xs text-gray-500">"Response time dropped 40% after adding triage"</td></tr>
+        <tr class="border-b"><td class="py-2"><span class="inline-block px-2 py-0.5 bg-evidence-inference/10 text-evidence-inference rounded text-xs font-medium">INFERENCE</span></td><td class="py-2">Logical deduction</td><td class="py-2 text-xs text-gray-500">"Two agents writing same file = race conditions"</td></tr>
+        <tr><td class="py-2"><span class="inline-block px-2 py-0.5 bg-evidence-speculation/10 text-evidence-speculation rounded text-xs font-medium">SPECULATION</span></td><td class="py-2">Hypothesis, not tested yet</td><td class="py-2 text-xs text-gray-500">"A third agent might reduce handoff delays"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sections -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <h2 class="font-semibold text-lg mb-3">Sections</h2>
+    <table class="w-full text-sm">
+      <thead><tr class="border-b"><th class="text-left py-2 font-medium">Section</th><th class="text-left py-2 font-medium">What goes here</th></tr></thead>
+      <tbody class="text-gray-700">
+        <tr class="border-b"><td class="py-2 font-mono text-xs">core_operating_rules</td><td class="py-2">The non-negotiable rules your AI team runs on</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">agent_roles_and_authority</td><td class="py-2">Who does what, who owns what, authority boundaries</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">coordination_patterns</td><td class="py-2">How agents communicate, hand off work, share state</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">operational_heuristics</td><td class="py-2">Rules of thumb that emerged from experience</td></tr>
+        <tr class="border-b"><td class="py-2 font-mono text-xs">failure_patterns</td><td class="py-2">Things that went wrong and what you learned</td></tr>
+        <tr><td class="py-2 font-mono text-xs">human_ai_boundary_conditions</td><td class="py-2">Where AI stops and humans take over</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tips -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <h2 class="font-semibold text-lg mb-3">What Makes a Great OOS</h2>
+    <div class="grid grid-cols-2 gap-6">
+      <div>
+        <h3 class="font-medium text-sm text-green-700 mb-2">Do</h3>
+        <ul class="text-sm text-gray-700 space-y-2">
+          <li>Be specific. "Agent A writes to file X, Agent B reads file X" beats "agents share data."</li>
+          <li>Include failures. Zero failure_patterns claims looks like marketing, not intelligence.</li>
+          <li>Be honest about confidence. LOW/SPECULATION claims show intellectual honesty.</li>
+          <li>Update it as your AI setup evolves.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-medium text-sm text-red-700 mb-2">Do not</h3>
+        <ul class="text-sm text-gray-700 space-y-2">
+          <li>Include client names, employee PII, or proprietary pricing (our PII scanner will flag these).</li>
+          <li>Write generic advice. "AI should be supervised" is not a claim.</li>
+          <li>Pad it. 15 specific claims beat 30 vague ones.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="text-center py-6">
+    <a href="/publish" class="inline-block px-8 py-3 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400">Publish Your OOS</a>
+    <p class="text-sm text-gray-500 mt-3">Questions? Email <a href="mailto:dsteel@sneeze.it" class="text-otp-500 hover:underline">dsteel@sneeze.it</a></p>
+  </div>
+</div>
+
+<script>
+function copyPrompt() {
+  const text = document.getElementById('ai-prompt').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Prompt', 2000);
+  });
+}
+</script>

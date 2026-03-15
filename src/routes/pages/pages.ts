@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities } from '../../db/schema.js';
@@ -143,22 +144,78 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/graph', { title: 'Intelligence Graph - OTP' });
   });
 
-  // Publish page
+  // Guide page
+  app.get('/guide', async (request, reply) => {
+    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP' });
+  });
+
+  // Publish page -- serves the form, auth check happens client-side + on API call
   app.get('/publish', async (request, reply) => {
     return reply.view('pages/publish', { title: 'Publish Your OOS - OTP' });
   });
 
-  // Dashboard
+  // Dashboard -- requires auth, shows registration if no org
   app.get('/dashboard', async (request, reply) => {
-    // In production, this reads from Clerk auth context
-    // For now, serve a template that calls the API
+    const auth = getAuth(request);
+
+    if (!auth.userId) {
+      // Not signed in -- show prompt to sign in (handled client-side by Clerk JS)
+      return reply.view('pages/dashboard', {
+        title: 'Dashboard - OTP',
+        authState: 'unauthenticated',
+        dashboard: {
+          profile: { name: '', industry: '', size: '', badge: null, qualityTier: null },
+          stats: { publishedFiles: 0, totalClaims: 0, connectedOrgs: 0, views30d: 0 },
+          oosFiles: [],
+          updateHistory: [],
+        },
+      });
+    }
+
+    // Check if user has an org
+    const [org] = await db.select()
+      .from(organizations)
+      .where(eq(organizations.clerkOrgId, auth.userId))
+      .limit(1);
+
+    if (!org) {
+      // Signed in but no org -- show registration form
+      return reply.view('pages/register', {
+        title: 'Complete Your Profile - OTP',
+      });
+    }
+
+    // Signed in + has org -- show real dashboard
+    const orgOosFiles = await db.select()
+      .from(oosFiles)
+      .where(eq(oosFiles.orgId, org.id))
+      .orderBy(desc(oosFiles.publishedAt));
+
+    const totalClaims = orgOosFiles.filter(f => f.status === 'published').reduce((sum, f) => sum + f.claimCount, 0);
+
+    const connections = await db.execute(sql`
+      SELECT COUNT(DISTINCT CASE
+        WHEN oos_a_id IN (SELECT id FROM oos_files WHERE org_id = ${org.id}) THEN oos_b_id
+        ELSE oos_a_id
+      END) AS connected_orgs
+      FROM claim_similarities
+      WHERE oos_a_id IN (SELECT id FROM oos_files WHERE org_id = ${org.id})
+         OR oos_b_id IN (SELECT id FROM oos_files WHERE org_id = ${org.id})
+    `);
+
     return reply.view('pages/dashboard', {
       title: 'Dashboard - OTP',
+      authState: 'authenticated',
       dashboard: {
-        profile: { name: 'Your Organization', industry: '--', size: '--', badge: null, qualityTier: null },
-        stats: { publishedFiles: 0, totalClaims: 0, connectedOrgs: 0, views30d: 0 },
-        oosFiles: [],
-        updateHistory: [],
+        profile: { name: org.name, industry: org.industry, size: org.size, badge: org.badge, qualityTier: org.qualityTier },
+        stats: {
+          publishedFiles: orgOosFiles.filter(f => f.status === 'published').length,
+          totalClaims,
+          connectedOrgs: parseInt((connections.rows as any)?.[0]?.connected_orgs || '0', 10),
+          views30d: 0,
+        },
+        oosFiles: orgOosFiles,
+        updateHistory: orgOosFiles,
       },
     });
   });

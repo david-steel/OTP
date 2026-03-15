@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
+import { oosFiles, organizations, claimSimilarities, claims } from '../../db/schema.js';
 import {
   findAgentConflicts,
   findEscalationPath,
@@ -14,9 +16,38 @@ export default async function graphRoutes(app: FastifyInstance) {
 
   // GET /api/v1/graph -- Full Intelligence Graph (nodes + edges for visualization)
   app.get('/graph', async (request, reply) => {
-    // TODO: replace with real query once graph tables are populated
-    // For now, uses the legacy graph-builder that reads from claim_similarities
-    return { nodes: [], edges: [], message: 'Graph populates as OOS files are published' };
+    const publishedFiles = await db.select({
+      id: oosFiles.id,
+      orgName: organizations.name,
+      template: oosFiles.template,
+      industry: organizations.industry,
+      claimCount: oosFiles.claimCount,
+      qualityTier: organizations.qualityTier,
+      badge: organizations.badge,
+    })
+      .from(oosFiles)
+      .innerJoin(organizations, eq(oosFiles.orgId, organizations.id))
+      .where(eq(oosFiles.status, 'published'));
+
+    const similarities = await db.execute(sql`
+      SELECT cs.oos_a_id, cs.oos_b_id,
+             ca.rule AS claim_a_rule, cb.rule AS claim_b_rule,
+             cs.similarity_score AS score
+      FROM claim_similarities cs
+      JOIN claims ca ON cs.claim_a_id = ca.id
+      JOIN claims cb ON cs.claim_b_id = cb.id
+    `);
+
+    const simRows = (similarities.rows || []).map((r: any) => ({
+      oosAId: r.oos_a_id,
+      oosBId: r.oos_b_id,
+      claimARule: r.claim_a_rule,
+      claimBRule: r.claim_b_rule,
+      score: parseFloat(r.score),
+    }));
+
+    const graph = buildGraph(publishedFiles, simRows);
+    return graph;
   });
 
   // GET /api/v1/graph/org/:orgId -- Subgraph for a single organization
@@ -50,7 +81,7 @@ export default async function graphRoutes(app: FastifyInstance) {
   // GET /api/v1/graph/compare -- Compare two organizations
   app.get<{ Querystring: { orgA: string; orgB: string } }>(
     '/graph/compare',
-    async (request) => {
+    async (request, reply) => {
       const { orgA, orgB } = request.query;
       if (!orgA || !orgB) {
         return reply.status(400).send({

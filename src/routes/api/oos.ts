@@ -1,4 +1,5 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, count } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, auditLogs } from '../../db/schema.js';
@@ -13,11 +14,11 @@ import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js'
 import { extractGraph } from '../../graph/graph-extractor.js';
 import type { TemplateType } from '../../shared/enums.js';
 
-// Helper: get org from auth context
-async function getAuthOrg(request: any) {
-  const clerkOrgId = request.auth?.orgId || request.headers['x-clerk-org-id'];
-  if (!clerkOrgId) return null;
-  const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, clerkOrgId)).limit(1);
+// Helper: get org from authenticated user
+async function getAuthOrg(request: FastifyRequest) {
+  const auth = getAuth(request);
+  if (!auth.userId) return null;
+  const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
   return orgArr[0] || null;
 }
 
