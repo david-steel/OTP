@@ -1,27 +1,26 @@
 <!-- Hero -->
 <section class="relative overflow-hidden bg-otp-950">
-  <canvas id="hero-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.6;"></canvas>
-  <div class="absolute top-[-200px] left-[-100px] w-[500px] h-[500px] bg-otp-500/20 rounded-full blur-[120px] pointer-events-none"></div>
-  <div class="absolute bottom-[-150px] right-[-100px] w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[120px] pointer-events-none"></div>
+  <canvas id="hero-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.4;"></canvas>
+  <div class="absolute top-[-200px] left-[-100px] w-[600px] h-[600px] bg-otp-500/15 rounded-full blur-[140px] pointer-events-none"></div>
+  <div class="absolute bottom-[-100px] right-[-150px] w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-24">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-      <!-- Left: text -->
-      <div>
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-28">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+      <!-- Left: text (5 cols) -->
+      <div class="lg:col-span-5">
         <div class="animate-fade-in-up">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
             <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
             <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> publishers live</span>
           </div>
         </div>
-        <h1 class="text-3xl sm:text-5xl font-extrabold text-white leading-tight mb-6 animate-fade-in-up delay-100">
+        <h1 class="text-3xl sm:text-[2.75rem] lg:text-5xl font-extrabold text-white leading-[1.15] mb-6 animate-fade-in-up delay-100">
           Where Agents Learn to
           <span class="gradient-text">Work as a Team</span>
         </h1>
-        <p class="text-base sm:text-lg text-gray-400 mb-8 animate-fade-in-up delay-200 leading-relaxed">
+        <p class="text-base sm:text-lg text-gray-400 mb-8 animate-fade-in-up delay-200 leading-relaxed max-w-md">
           The hard problem in AI isn't building one good agent.
           It's getting twelve of them to not step on each other.
-          OTP is the coordination intelligence layer.
         </p>
         <div class="flex flex-col sm:flex-row gap-3 animate-fade-in-up delay-300">
           <a href="/browse" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-center">Browse Intelligence</a>
@@ -29,218 +28,186 @@
         </div>
       </div>
 
-      <!-- Right: Illustrated OOS with orbiting agents -->
-      <div class="hidden lg:flex justify-center animate-fade-in delay-400">
-        <div class="relative w-[420px] h-[420px]">
-          <!-- Outer orbit ring -->
-          <svg class="absolute inset-0 w-full h-full orbit-ring" viewBox="0 0 420 420" fill="none">
-            <circle cx="210" cy="210" r="175" stroke="rgba(0,149,255,0.1)" stroke-width="1" stroke-dasharray="8 8"/>
-            <circle cx="210" cy="210" r="130" stroke="rgba(124,58,237,0.08)" stroke-width="1" stroke-dasharray="6 6"/>
-            <!-- Network mesh -->
-            <line x1="80" y1="120" x2="210" y2="210" stroke="rgba(0,149,255,0.06)" stroke-width="1"/>
-            <line x1="340" y1="120" x2="210" y2="210" stroke="rgba(0,149,255,0.06)" stroke-width="1"/>
-            <line x1="80" y1="300" x2="210" y2="210" stroke="rgba(124,58,237,0.06)" stroke-width="1"/>
-            <line x1="340" y1="300" x2="210" y2="210" stroke="rgba(124,58,237,0.06)" stroke-width="1"/>
-            <line x1="80" y1="120" x2="340" y2="300" stroke="rgba(0,149,255,0.04)" stroke-width="0.5"/>
-            <line x1="340" y1="120" x2="80" y2="300" stroke="rgba(0,149,255,0.04)" stroke-width="0.5"/>
-            <line x1="210" y1="35" x2="210" y2="385" stroke="rgba(0,149,255,0.04)" stroke-width="0.5"/>
-            <line x1="35" y1="210" x2="385" y2="210" stroke="rgba(0,149,255,0.04)" stroke-width="0.5"/>
+      <!-- Right: Detailed illustration (7 cols) -->
+      <div class="hidden lg:block lg:col-span-7 animate-fade-in delay-300">
+        <div class="relative ml-8" style="perspective: 1200px;">
+
+          <!-- Background dashed grid -->
+          <svg class="absolute inset-0 w-full h-full" viewBox="0 0 560 420" fill="none" style="opacity: 0.3;">
+            <line x1="0" y1="70" x2="560" y2="70" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="0" y1="140" x2="560" y2="140" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="0" y1="210" x2="560" y2="210" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="0" y1="280" x2="560" y2="280" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="0" y1="350" x2="560" y2="350" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="70" y1="0" x2="70" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="140" y1="0" x2="140" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="210" y1="0" x2="210" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="280" y1="0" x2="280" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="350" y1="0" x2="350" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="420" y1="0" x2="420" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <line x1="490" y1="0" x2="490" y2="420" stroke="white" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+            <!-- Decorators at grid intersections -->
+            <rect x="138" y="68" width="4" height="4" fill="#7c3aed" opacity="0.6" transform="rotate(45 140 70)"/>
+            <rect x="348" y="138" width="4" height="4" fill="#0095ff" opacity="0.6" transform="rotate(45 350 140)"/>
+            <rect x="488" y="278" width="4" height="4" fill="#059669" opacity="0.4" transform="rotate(45 490 280)"/>
+            <circle cx="210" cy="350" r="2" fill="#d97706" opacity="0.5"/>
+            <rect x="68" y="278" width="3" height="3" stroke="#0095ff" stroke-width="1" fill="none" opacity="0.4" transform="rotate(45 70 280)"/>
+            <circle cx="420" cy="70" r="1.5" fill="#7c3aed" opacity="0.4"/>
           </svg>
 
-          <!-- Central OOS document -->
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140px] h-[170px]">
-            <div class="relative w-full h-full">
-              <!-- Document glow -->
-              <div class="absolute inset-0 bg-otp-500/20 rounded-2xl blur-xl"></div>
-              <!-- Document body -->
-              <div class="relative bg-gradient-to-br from-otp-800 to-otp-900 rounded-2xl border border-otp-500/30 p-4 h-full flex flex-col shadow-2xl shadow-otp-500/10">
-                <div class="text-[10px] font-bold text-otp-300 mb-2 tracking-wider">OOS v1.0</div>
-                <div class="space-y-1.5 flex-1">
-                  <div class="h-1.5 bg-otp-500/30 rounded-full w-full"></div>
-                  <div class="h-1.5 bg-purple-500/30 rounded-full w-4/5"></div>
-                  <div class="h-1.5 bg-otp-500/20 rounded-full w-full"></div>
-                  <div class="h-1.5 bg-green-500/30 rounded-full w-3/5"></div>
-                  <div class="h-1.5 bg-otp-500/20 rounded-full w-full"></div>
-                  <div class="h-1.5 bg-amber-500/30 rounded-full w-4/5"></div>
-                  <div class="h-1.5 bg-otp-500/20 rounded-full w-2/3"></div>
-                </div>
-                <div class="flex gap-1 mt-2">
-                  <span class="w-2 h-2 rounded-full bg-green-400/60"></span>
-                  <span class="w-2 h-2 rounded-full bg-amber-400/60"></span>
-                  <span class="w-2 h-2 rounded-full bg-gray-400/40"></span>
+          <!-- Main terminal window -->
+          <div class="relative bg-otp-900/90 rounded-2xl border border-white/10 shadow-2xl shadow-black/40 overflow-hidden w-[380px]" style="animation: float 6s ease-in-out infinite;">
+            <!-- Window chrome -->
+            <div class="flex items-center gap-2 px-4 py-3 bg-otp-900 border-b border-white/5">
+              <div class="flex gap-1.5">
+                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+              </div>
+              <div class="text-[10px] text-gray-500 font-mono ml-3">sneeze-it.oos.md</div>
+            </div>
+            <!-- Code content -->
+            <div class="p-4 font-mono text-[11px] leading-relaxed">
+              <div class="text-gray-600">---</div>
+              <div><span class="text-purple-400">oos_version</span><span class="text-gray-600">:</span> <span class="text-green-400">"1.0"</span></div>
+              <div><span class="text-purple-400">org_pseudonym</span><span class="text-gray-600">:</span> <span class="text-green-400">"Sneeze It"</span></div>
+              <div><span class="text-purple-400">template</span><span class="text-gray-600">:</span> <span class="text-green-400">"agent_army"</span></div>
+              <div><span class="text-purple-400">agent_count</span><span class="text-gray-600">:</span> <span class="text-amber-300">12</span></div>
+              <div class="text-gray-600">---</div>
+              <div class="mt-2"></div>
+              <div><span class="text-otp-400 font-bold">[C001]</span> <span class="text-gray-500">core_operating_rules</span></div>
+              <div class="text-gray-300">Rule<span class="text-gray-600">:</span> Every agent writes to a</div>
+              <div class="text-gray-300">shared state file<span class="text-gray-600">.</span></div>
+              <div><span class="text-green-400">Confidence</span><span class="text-gray-600">:</span> <span class="text-green-300">HIGH</span></div>
+              <div><span class="text-purple-400">Evidence</span><span class="text-gray-600">:</span> <span class="text-purple-300">MEASURED_RESULT</span></div>
+              <div class="mt-2"></div>
+              <div><span class="text-otp-400 font-bold">[C002]</span> <span class="text-gray-500">core_operating_rules</span></div>
+              <div class="text-gray-300">Rule<span class="text-gray-600">:</span> External comms require</div>
+              <div class="text-gray-300">human approval<span id="cursor" class="text-otp-400">|</span></div>
+            </div>
+          </div>
+
+          <!-- Overlapping agent dashboard card -->
+          <div class="absolute top-6 -right-2 w-[220px] bg-white rounded-xl shadow-2xl shadow-black/20 border border-gray-100 overflow-hidden" style="animation: float 5s ease-in-out infinite 1s;">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Agent Status</div>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
+                <div class="flex-1"><div class="text-[10px] font-semibold text-gray-800">Radar</div><div class="text-[9px] text-gray-400">Chief of Staff</div></div>
+                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
+                <div class="flex-1"><div class="text-[10px] font-semibold text-gray-800">Dash</div><div class="text-[9px] text-gray-400">Performance Analyst</div></div>
+                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
+                <div class="flex-1"><div class="text-[10px] font-semibold text-gray-800">Dirk</div><div class="text-[9px] text-gray-400">Revenue Operator</div></div>
+                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
+                <div class="flex-1"><div class="text-[10px] font-semibold text-gray-800">Dan</div><div class="text-[9px] text-gray-400">Strategic Co-Founder</div></div>
+                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quality tier badge card -->
+          <div class="absolute bottom-4 right-8 bg-white rounded-xl shadow-2xl shadow-black/20 border border-gray-100 px-4 py-3" style="animation: float 4s ease-in-out infinite 2s;">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center shadow-inner">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-400 font-medium">Quality Tier</div>
+                <div class="text-sm font-bold text-gray-900">Platinum</div>
+                <div class="flex gap-0.5 mt-0.5">
+                  <div class="w-8 h-1 rounded-full bg-amber-400"></div>
+                  <div class="w-8 h-1 rounded-full bg-amber-400"></div>
+                  <div class="w-8 h-1 rounded-full bg-amber-400"></div>
+                  <div class="w-8 h-1 rounded-full bg-amber-400"></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Orbiting agent icons -->
-          <div class="absolute inset-0 hero-orbit" style="animation: orbit 30s linear infinite;">
-            <!-- Radar -->
-            <div class="absolute" style="top: 18px; left: 50%; transform: translateX(-50%);">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/30 border border-green-400/30">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-              </div>
-              <div class="text-[9px] text-green-300/70 text-center mt-1 font-semibold">Radar</div>
-            </div>
-            <!-- Dash -->
-            <div class="absolute" style="top: 70px; right: 30px;">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-700 flex items-center justify-center shadow-lg shadow-cyan-500/30 border border-cyan-400/30">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-              </div>
-              <div class="text-[9px] text-cyan-300/70 text-center mt-1 font-semibold">Dash</div>
-            </div>
-            <!-- Dirk -->
-            <div class="absolute" style="bottom: 70px; right: 30px;">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/30 border border-amber-400/30">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-              <div class="text-[9px] text-amber-300/70 text-center mt-1 font-semibold">Dirk</div>
-            </div>
-            <!-- Pepper -->
-            <div class="absolute" style="bottom: 18px; left: 50%; transform: translateX(-50%);">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/30 border border-red-400/30">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              </div>
-              <div class="text-[9px] text-red-300/70 text-center mt-1 font-semibold">Pepper</div>
-            </div>
-            <!-- Crystal -->
-            <div class="absolute" style="bottom: 70px; left: 30px;">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center shadow-lg shadow-gray-500/30 border border-gray-400/30">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-              </div>
-              <div class="text-[9px] text-gray-300/70 text-center mt-1 font-semibold">Crystal</div>
-            </div>
-            <!-- Dan -->
-            <div class="absolute" style="top: 70px; left: 30px;">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/30 border border-purple-400/30">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              </div>
-              <div class="text-[9px] text-purple-300/70 text-center mt-1 font-semibold">Dan</div>
-            </div>
-          </div>
+          <!-- Connection lines between elements (SVG overlay) -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 560 420" fill="none" style="opacity: 0.6;">
+            <!-- Terminal to agent dashboard -->
+            <path d="M 380 80 Q 420 60 440 70" stroke="url(#grad1)" stroke-width="1.5" stroke-dasharray="4 4">
+              <animate attributeName="stroke-dashoffset" values="0;-16" dur="2s" repeatCount="indefinite"/>
+            </path>
+            <!-- Terminal to quality badge -->
+            <path d="M 350 300 Q 400 340 430 340" stroke="url(#grad2)" stroke-width="1.5" stroke-dasharray="4 4">
+              <animate attributeName="stroke-dashoffset" values="0;-16" dur="2.5s" repeatCount="indefinite"/>
+            </path>
+            <!-- Data pulse dots -->
+            <circle r="3" fill="#0095ff" opacity="0.8">
+              <animateMotion dur="2s" repeatCount="indefinite" path="M 380 80 Q 420 60 440 70"/>
+            </circle>
+            <circle r="3" fill="#7c3aed" opacity="0.8">
+              <animateMotion dur="2.5s" repeatCount="indefinite" path="M 350 300 Q 400 340 430 340"/>
+            </circle>
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0095ff" stop-opacity="0.5"/><stop offset="100%" stop-color="#0095ff" stop-opacity="0"/></linearGradient>
+              <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7c3aed" stop-opacity="0.5"/><stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/></linearGradient>
+            </defs>
+          </svg>
 
-          <!-- Floating decorators -->
-          <div class="absolute top-[15%] left-[12%] w-2 h-2 bg-otp-400 rotate-45" style="animation: float 4s ease-in-out infinite;"></div>
-          <div class="absolute top-[25%] right-[10%] w-1.5 h-1.5 bg-purple-400 rotate-45" style="animation: float 3s ease-in-out infinite 1s;"></div>
-          <div class="absolute bottom-[20%] left-[8%] w-2 h-2 border border-otp-400/50 rotate-45" style="animation: float 5s ease-in-out infinite 0.5s;"></div>
-          <div class="absolute bottom-[15%] right-[15%] w-1.5 h-1.5 bg-green-400 rotate-45" style="animation: float 3.5s ease-in-out infinite 2s;"></div>
-          <div class="absolute top-[45%] right-[5%] w-1 h-1 bg-amber-400 rounded-full" style="animation: float 4s ease-in-out infinite 1.5s;"></div>
-          <div class="absolute top-[50%] left-[5%] w-1 h-1 bg-cyan-400 rounded-full" style="animation: float 3s ease-in-out infinite 0.8s;"></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Blinking cursor animation -->
 <style>
-  @keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .hero-orbit > div { animation: counter-orbit 30s linear infinite; }
-  @keyframes counter-orbit { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-  .hero-orbit > div:nth-child(4) { transform: translateX(-50%) rotate(0deg); animation: counter-orbit-center 30s linear infinite; }
-  @keyframes counter-orbit-center { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(-360deg); } }
-  .hero-orbit > div:nth-child(1) { transform: translateX(-50%) rotate(0deg); animation: counter-orbit-center 30s linear infinite; }
+  #cursor { animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 </style>
 
-<!-- Hero canvas script -->
+<!-- Hero canvas -->
 <script>
 (function() {
-  var canvas = document.getElementById('hero-canvas');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var dpr = window.devicePixelRatio || 1;
-  var nodes = [], particles = [];
-  var mouse = { x: -1000, y: -1000 };
-  var W, H;
-  function resize() {
-    var rect = canvas.parentElement.getBoundingClientRect();
-    W = rect.width; H = rect.height;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  function initNodes() {
-    nodes = [];
-    var count = Math.min(Math.floor(W * H / 22000), 50);
-    for (var i = 0; i < count; i++) {
-      nodes.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, r: Math.random() * 1.5 + 1, color: Math.random() > 0.5 ? '0,149,255' : '124,58,237', pulse: Math.random() * Math.PI * 2 });
-    }
-  }
-  resize(); initNodes();
-  window.addEventListener('resize', function() { resize(); initNodes(); });
-  canvas.addEventListener('mousemove', function(e) { var r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; });
-  canvas.addEventListener('mouseleave', function() { mouse.x = -1000; mouse.y = -1000; });
-  var spawnT = 0;
+  var c = document.getElementById('hero-canvas'); if (!c) return;
+  var ctx = c.getContext('2d'), dpr = window.devicePixelRatio||1, nodes=[], particles=[], mouse={x:-1e3,y:-1e3}, W, H;
+  function resize() { var r=c.parentElement.getBoundingClientRect(); W=r.width; H=r.height; c.width=W*dpr; c.height=H*dpr; c.style.width=W+'px'; c.style.height=H+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  function init() { nodes=[]; var n=Math.min(Math.floor(W*H/25000),45); for(var i=0;i<n;i++) nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.5+.8,c:Math.random()>.5?'0,149,255':'124,58,237',p:Math.random()*6.28}); }
+  resize(); init();
+  window.addEventListener('resize',function(){resize();init();});
+  c.addEventListener('mousemove',function(e){var r=c.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
+  c.addEventListener('mouseleave',function(){mouse.x=-1e3;mouse.y=-1e3;});
+  var st=0;
   function draw() {
-    ctx.clearRect(0, 0, W, H);
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i]; n.x += n.vx; n.y += n.vy; n.pulse += 0.02;
-      if (n.x < 0 || n.x > W) n.vx *= -1; if (n.y < 0 || n.y > H) n.vy *= -1;
-      var dx = n.x - mouse.x, dy = n.y - mouse.y, d = Math.sqrt(dx*dx+dy*dy);
-      if (d < 120) { var f = (120 - d) / 120 * 0.3; n.vx += (dx/d)*f*0.3; n.vy += (dy/d)*f*0.3; }
-      n.vx *= 0.998; n.vy *= 0.998;
-    }
-    for (var i = 0; i < nodes.length; i++) for (var j = i+1; j < nodes.length; j++) {
-      var dx = nodes[i].x-nodes[j].x, dy = nodes[i].y-nodes[j].y, d = Math.sqrt(dx*dx+dy*dy);
-      if (d < 140) { ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.strokeStyle='rgba(0,149,255,'+(1-d/140)*0.12+')'; ctx.lineWidth=0.5; ctx.stroke(); }
-    }
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i], g = Math.sin(n.pulse)*0.3+0.7;
-      ctx.beginPath(); ctx.arc(n.x,n.y,n.r*3,0,Math.PI*2); ctx.fillStyle='rgba('+n.color+','+(0.03*g)+')'; ctx.fill();
-      ctx.beginPath(); ctx.arc(n.x,n.y,n.r*g,0,Math.PI*2); ctx.fillStyle='rgba('+n.color+','+(0.5*g)+')'; ctx.fill();
-    }
-    spawnT++;
-    if (spawnT > 50 && nodes.length > 1) { spawnT = 0; var a=Math.floor(Math.random()*nodes.length), b=Math.floor(Math.random()*nodes.length); if(a!==b){var dx=nodes[a].x-nodes[b].x,dy=nodes[a].y-nodes[b].y;if(Math.sqrt(dx*dx+dy*dy)<180&&particles.length<25) particles.push({x:nodes[a].x,y:nodes[a].y,tx:nodes[b].x,ty:nodes[b].y,p:0,s:0.01+Math.random()*0.01});} }
-    for (var i = particles.length-1; i >= 0; i--) {
-      var p = particles[i]; p.p += p.s; if (p.p >= 1) { particles.splice(i,1); continue; }
-      var px = p.x+(p.tx-p.x)*p.p, py = p.y+(p.ty-p.y)*p.p, a = Math.sin(p.p*Math.PI);
-      ctx.beginPath(); ctx.arc(px,py,2,0,Math.PI*2); ctx.fillStyle='rgba(0,149,255,'+a*0.7+')'; ctx.fill();
-      ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fillStyle='rgba(0,149,255,'+a*0.1+')'; ctx.fill();
-    }
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<nodes.length;i++){var n=nodes[i];n.x+=n.vx;n.y+=n.vy;n.p+=.015;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;var dx=n.x-mouse.x,dy=n.y-mouse.y,d=Math.sqrt(dx*dx+dy*dy);if(d<100){n.vx+=(dx/d)*.08;n.vy+=(dy/d)*.08;}n.vx*=.999;n.vy*=.999;}
+    for(var i=0;i<nodes.length;i++)for(var j=i+1;j<nodes.length;j++){var dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.strokeStyle='rgba(0,149,255,'+(1-d/130)*.1+')';ctx.lineWidth=.5;ctx.stroke();}}
+    for(var i=0;i<nodes.length;i++){var n=nodes[i],g=Math.sin(n.p)*.3+.7;ctx.beginPath();ctx.arc(n.x,n.y,n.r*g,0,6.28);ctx.fillStyle='rgba('+n.c+','+(0.4*g)+')';ctx.fill();}
+    st++;if(st>60&&nodes.length>1){st=0;var a=0|Math.random()*nodes.length,b=0|Math.random()*nodes.length;if(a!==b){var dx=nodes[a].x-nodes[b].x,dy=nodes[a].y-nodes[b].y;if(Math.sqrt(dx*dx+dy*dy)<160&&particles.length<20)particles.push({x:nodes[a].x,y:nodes[a].y,tx:nodes[b].x,ty:nodes[b].y,p:0,s:.01+Math.random()*.01});}}
+    for(var i=particles.length-1;i>=0;i--){var p=particles[i];p.p+=p.s;if(p.p>=1){particles.splice(i,1);continue;}var px=p.x+(p.tx-p.x)*p.p,py=p.y+(p.ty-p.y)*p.p,a=Math.sin(p.p*3.14);ctx.beginPath();ctx.arc(px,py,1.5,0,6.28);ctx.fillStyle='rgba(0,149,255,'+a*.6+')';ctx.fill();}
     requestAnimationFrame(draw);
   }
   draw();
 })();
 </script>
 
-<!-- Stats bar -->
+<!-- Stats -->
 <section class="relative bg-otp-900 border-y border-white/5">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
     <div class="grid grid-cols-3 gap-4 sm:gap-8">
-      <div class="text-center reveal">
-        <div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %>">0</div>
-        <div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Publishers</div>
-      </div>
-      <div class="text-center reveal delay-100">
-        <div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof claimCount !== 'undefined' ? claimCount : '0' %>">0</div>
-        <div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Knowledge Claims</div>
-      </div>
-      <div class="text-center reveal delay-200">
-        <div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof templateCount !== 'undefined' ? templateCount : '3' %>">0</div>
-        <div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Templates</div>
-      </div>
+      <div class="text-center reveal"><div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %>">0</div><div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Publishers</div></div>
+      <div class="text-center reveal delay-100"><div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof claimCount !== 'undefined' ? claimCount : '0' %>">0</div><div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Knowledge Claims</div></div>
+      <div class="text-center reveal delay-200"><div class="text-2xl sm:text-4xl font-extrabold text-white counter" data-target="<%= typeof templateCount !== 'undefined' ? templateCount : '3' %>">0</div><div class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Templates</div></div>
     </div>
   </div>
 </section>
+<script>(function(){var c=false;var o=new IntersectionObserver(function(e){if(e[0].isIntersecting&&!c){c=true;document.querySelectorAll('.counter').forEach(function(el){var t=parseInt(el.getAttribute('data-target'))||0,s=performance.now();function tick(n){var p=Math.min((n-s)/1200,1);el.textContent=Math.round(t*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);});}},{threshold:0.3});var e=document.querySelector('.counter');if(e)o.observe(e.parentElement.parentElement.parentElement);})();</script>
 
-<!-- Counter animation -->
-<script>
-(function() {
-  var counted = false;
-  var obs = new IntersectionObserver(function(e) {
-    if (e[0].isIntersecting && !counted) { counted = true;
-      document.querySelectorAll('.counter').forEach(function(el) {
-        var t = parseInt(el.getAttribute('data-target'))||0, s = performance.now();
-        function tick(n) { var p = Math.min((n-s)/1200,1); el.textContent = Math.round(t*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(tick); }
-        requestAnimationFrame(tick);
-      });
-    }
-  }, { threshold: 0.3 });
-  var c = document.querySelector('.counter');
-  if (c) obs.observe(c.parentElement.parentElement.parentElement);
-})();
-</script>
-
-<!-- How it works - illustrated cards -->
+<!-- How it works -->
 <section class="bg-gray-50 py-16 sm:py-24">
   <div class="max-w-5xl mx-auto px-4 sm:px-6">
     <div class="text-center mb-12 sm:mb-16 reveal">
@@ -249,28 +216,30 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-      <!-- Publish card with illustration -->
-      <div class="reveal bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover">
-        <div class="h-44 bg-gradient-to-br from-otp-400 to-otp-600 relative overflow-hidden flex items-center justify-center">
-          <!-- Background shapes -->
-          <div class="absolute top-[-20px] right-[-20px] w-32 h-32 border border-white/10 rotate-45"></div>
-          <div class="absolute bottom-[-30px] left-[-10px] w-24 h-24 bg-white/5 rounded-full"></div>
-          <div class="absolute top-4 left-4 w-3 h-3 bg-white/20 rounded-full"></div>
-          <div class="absolute bottom-8 right-8 w-2 h-2 bg-white/30 rotate-45"></div>
-          <!-- Document icon illustration -->
-          <div class="relative" style="animation: float 4s ease-in-out infinite;">
-            <div class="w-20 h-24 bg-white/90 rounded-lg shadow-xl relative">
-              <div class="absolute top-0 right-0 w-6 h-6 bg-otp-200"></div>
-              <div class="p-3 pt-4 space-y-1.5">
-                <div class="h-1.5 bg-otp-300 rounded-full w-full"></div>
-                <div class="h-1.5 bg-otp-200 rounded-full w-3/4"></div>
-                <div class="h-1.5 bg-otp-300 rounded-full w-full"></div>
-                <div class="h-1.5 bg-otp-200 rounded-full w-1/2"></div>
-                <div class="h-1.5 bg-green-300 rounded-full w-2/3"></div>
+      <!-- Publish -->
+      <div class="reveal bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group">
+        <div class="h-48 bg-gradient-to-br from-otp-400 via-otp-500 to-otp-700 relative overflow-hidden flex items-center justify-center p-6">
+          <div class="absolute inset-0 bg-grid opacity-10"></div>
+          <div class="absolute top-[-30px] right-[-30px] w-40 h-40 border-2 border-white/10 rotate-45 rounded-xl"></div>
+          <div class="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/5 rounded-full"></div>
+          <div class="absolute top-3 left-4 w-2.5 h-2.5 bg-white/25 rounded-full"></div>
+          <div class="absolute bottom-5 right-5 w-2 h-2 bg-white/30 rotate-45"></div>
+          <div class="absolute top-8 right-12 w-1.5 h-1.5 border border-white/30 rotate-45"></div>
+          <!-- Publish scene: browser window with OOS editor -->
+          <div class="relative group-hover:-translate-y-1 transition-transform duration-500">
+            <div class="w-[160px] bg-white rounded-lg shadow-2xl shadow-black/20 overflow-hidden">
+              <div class="flex items-center gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-100"><div class="w-1.5 h-1.5 rounded-full bg-red-400"></div><div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div><div class="w-1.5 h-1.5 rounded-full bg-green-400"></div><div class="text-[7px] text-gray-400 ml-1.5">Publish OOS</div></div>
+              <div class="p-2 space-y-1">
+                <div class="h-1 bg-gray-200 rounded-full w-3/4"></div>
+                <div class="h-6 bg-otp-50 rounded border border-otp-100 p-1"><div class="h-1 bg-otp-200 rounded-full w-full"></div><div class="h-1 bg-otp-100 rounded-full w-2/3 mt-0.5"></div></div>
+                <div class="flex gap-1 mt-1">
+                  <div class="h-3 bg-otp-500 rounded text-[5px] text-white font-bold flex items-center px-1.5">Publish</div>
+                  <div class="h-3 bg-gray-100 rounded text-[5px] text-gray-500 font-bold flex items-center px-1.5">Validate</div>
+                </div>
               </div>
             </div>
-            <div class="absolute -top-2 -right-3 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center shadow-md">
-              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            <div class="absolute -bottom-2 -right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/40 border-2 border-white">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
             </div>
           </div>
         </div>
@@ -278,34 +247,50 @@
           <div class="text-xs font-semibold text-otp-500 uppercase tracking-wider mb-2">Step 1</div>
           <div class="text-lg font-bold text-gray-900 mb-2">Publish</div>
           <p class="text-gray-500 text-sm leading-relaxed">Capture your AI coordination intelligence in a structured OOS file with confidence ratings, evidence types, and failure modes.</p>
+          <a href="/publish" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-sm mt-3 group/link"><span>Start publishing</span><svg class="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
         </div>
       </div>
 
-      <!-- Compare card with illustration -->
-      <div class="reveal delay-200 bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover">
-        <div class="h-44 bg-gradient-to-br from-purple-400 to-purple-600 relative overflow-hidden flex items-center justify-center">
-          <div class="absolute top-[-15px] left-[-15px] w-28 h-28 border border-white/10 rounded-full"></div>
-          <div class="absolute bottom-[-20px] right-[-20px] w-20 h-20 bg-white/5 rotate-45"></div>
-          <div class="absolute top-6 right-6 w-2 h-2 bg-white/30 rotate-45"></div>
-          <div class="absolute bottom-6 left-6 w-3 h-3 border border-white/20 rounded-full"></div>
-          <!-- Diff illustration -->
-          <div class="relative flex gap-2" style="animation: float 4s ease-in-out infinite 0.5s;">
-            <div class="w-16 h-20 bg-white/90 rounded-lg shadow-xl p-2 space-y-1">
-              <div class="h-1 bg-purple-300 rounded-full w-full"></div>
-              <div class="h-1 bg-blue-300 rounded-full w-3/4"></div>
-              <div class="h-1 bg-purple-300 rounded-full w-full"></div>
-              <div class="h-1 bg-green-300 rounded-full w-2/3"></div>
-              <div class="h-1 bg-purple-200 rounded-full w-full"></div>
+      <!-- Compare -->
+      <div class="reveal delay-200 bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group">
+        <div class="h-48 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-700 relative overflow-hidden flex items-center justify-center p-6">
+          <div class="absolute inset-0 bg-grid opacity-10"></div>
+          <div class="absolute top-[-20px] left-[-20px] w-36 h-36 border-2 border-white/10 rounded-full"></div>
+          <div class="absolute bottom-[-25px] right-[-25px] w-28 h-28 bg-white/5 rotate-45 rounded-xl"></div>
+          <div class="absolute top-4 right-6 w-2 h-2 bg-white/25 rotate-45"></div>
+          <div class="absolute bottom-4 left-4 w-3 h-3 border border-white/20 rounded-full"></div>
+          <div class="absolute bottom-12 right-4 w-1.5 h-1.5 bg-white/20 rounded-full"></div>
+          <!-- Compare scene: two documents with diff highlights -->
+          <div class="relative flex items-start gap-3 group-hover:-translate-y-1 transition-transform duration-500">
+            <div class="w-[70px] bg-white rounded-lg shadow-xl overflow-hidden">
+              <div class="flex gap-0.5 px-1.5 py-1 bg-gray-50 border-b border-gray-100"><div class="w-1 h-1 rounded-full bg-red-400"></div><div class="w-1 h-1 rounded-full bg-amber-400"></div><div class="w-1 h-1 rounded-full bg-green-400"></div></div>
+              <div class="p-1.5 space-y-1">
+                <div class="h-1 bg-gray-200 rounded-full w-full"></div>
+                <div class="h-1 bg-blue-300 rounded-full w-3/4"></div>
+                <div class="h-1 bg-gray-200 rounded-full w-full"></div>
+                <div class="h-1 bg-blue-300 rounded-full w-2/3"></div>
+                <div class="h-1 bg-gray-200 rounded-full w-full"></div>
+                <div class="h-1 bg-green-300 rounded-full w-4/5"></div>
+                <div class="h-1 bg-gray-200 rounded-full w-1/2"></div>
+              </div>
             </div>
-            <div class="flex flex-col items-center justify-center gap-1">
-              <svg class="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <div class="flex flex-col items-center justify-center gap-0.5 pt-6">
+              <div class="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              </div>
+              <div class="text-[7px] text-white/60 font-bold">DIFF</div>
             </div>
-            <div class="w-16 h-20 bg-white/90 rounded-lg shadow-xl p-2 space-y-1">
-              <div class="h-1 bg-purple-300 rounded-full w-full"></div>
-              <div class="h-1 bg-amber-300 rounded-full w-3/4"></div>
-              <div class="h-1 bg-purple-300 rounded-full w-full"></div>
-              <div class="h-1 bg-blue-300 rounded-full w-1/2"></div>
-              <div class="h-1 bg-purple-200 rounded-full w-full"></div>
+            <div class="w-[70px] bg-white rounded-lg shadow-xl overflow-hidden mt-3">
+              <div class="flex gap-0.5 px-1.5 py-1 bg-gray-50 border-b border-gray-100"><div class="w-1 h-1 rounded-full bg-red-400"></div><div class="w-1 h-1 rounded-full bg-amber-400"></div><div class="w-1 h-1 rounded-full bg-green-400"></div></div>
+              <div class="p-1.5 space-y-1">
+                <div class="h-1 bg-gray-200 rounded-full w-full"></div>
+                <div class="h-1 bg-amber-300 rounded-full w-3/4"></div>
+                <div class="h-1 bg-gray-200 rounded-full w-full"></div>
+                <div class="h-1 bg-amber-300 rounded-full w-1/2"></div>
+                <div class="h-1 bg-gray-200 rounded-full w-full"></div>
+                <div class="h-1 bg-green-300 rounded-full w-4/5"></div>
+                <div class="h-1 bg-gray-200 rounded-full w-2/3"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -313,32 +298,48 @@
           <div class="text-xs font-semibold text-purple-500 uppercase tracking-wider mb-2">Step 2</div>
           <div class="text-lg font-bold text-gray-900 mb-2">Compare</div>
           <p class="text-gray-500 text-sm leading-relaxed">See what other organizations do differently. The diff engine shows what's unique, similar, and where you conflict.</p>
+          <a href="/browse" class="inline-flex items-center gap-1 text-purple-500 font-semibold text-sm mt-3 group/link"><span>Browse & compare</span><svg class="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
         </div>
       </div>
 
-      <!-- Learn card with illustration -->
-      <div class="reveal delay-400 bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover">
-        <div class="h-44 bg-gradient-to-br from-green-400 to-emerald-600 relative overflow-hidden flex items-center justify-center">
-          <div class="absolute top-[-25px] right-[-25px] w-36 h-36 border border-white/10 rounded-full"></div>
-          <div class="absolute bottom-4 left-4 w-2 h-2 bg-white/30 rounded-full"></div>
-          <div class="absolute top-4 left-8 w-3 h-3 bg-white/10 rotate-45"></div>
-          <!-- Network/graph illustration -->
-          <div class="relative" style="animation: float 4s ease-in-out infinite 1s;">
-            <svg width="100" height="80" viewBox="0 0 100 80" fill="none">
-              <line x1="50" y1="15" x2="20" y2="45" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/>
-              <line x1="50" y1="15" x2="80" y2="45" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/>
-              <line x1="20" y1="45" x2="50" y2="65" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/>
-              <line x1="80" y1="45" x2="50" y2="65" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/>
-              <line x1="20" y1="45" x2="80" y2="45" stroke="white" stroke-width="1" stroke-opacity="0.2"/>
-              <circle cx="50" cy="15" r="8" fill="white" fill-opacity="0.9"/>
-              <circle cx="20" cy="45" r="6" fill="white" fill-opacity="0.9"/>
-              <circle cx="80" cy="45" r="6" fill="white" fill-opacity="0.9"/>
-              <circle cx="50" cy="65" r="7" fill="white" fill-opacity="0.9"/>
-              <text x="50" y="18" text-anchor="middle" fill="#059669" font-size="8" font-weight="bold">OTP</text>
-              <circle cx="50" cy="15" r="8" stroke="white" stroke-width="2" fill="none" stroke-opacity="0.3">
-                <animate attributeName="r" values="8;14;8" dur="3s" repeatCount="indefinite"/>
-                <animate attributeName="stroke-opacity" values="0.3;0;0.3" dur="3s" repeatCount="indefinite"/>
-              </circle>
+      <!-- Learn -->
+      <div class="reveal delay-400 bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group">
+        <div class="h-48 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-700 relative overflow-hidden flex items-center justify-center p-6">
+          <div class="absolute inset-0 bg-grid opacity-10"></div>
+          <div class="absolute top-[-25px] right-[-25px] w-40 h-40 border-2 border-white/10 rounded-full"></div>
+          <div class="absolute bottom-[-15px] left-[-15px] w-24 h-24 bg-white/5 rotate-12 rounded-xl"></div>
+          <div class="absolute bottom-5 left-5 w-2 h-2 bg-white/25 rounded-full"></div>
+          <div class="absolute top-5 left-10 w-2 h-2 bg-white/15 rotate-45"></div>
+          <div class="absolute top-10 right-6 w-1.5 h-1.5 border border-white/25 rounded-full"></div>
+          <!-- Learn scene: network graph -->
+          <div class="relative group-hover:-translate-y-1 transition-transform duration-500">
+            <svg width="140" height="110" viewBox="0 0 140 110" fill="none">
+              <!-- Edges -->
+              <line x1="70" y1="20" x2="25" y2="55" stroke="white" stroke-width="1.5" opacity="0.4"/>
+              <line x1="70" y1="20" x2="115" y2="55" stroke="white" stroke-width="1.5" opacity="0.4"/>
+              <line x1="25" y1="55" x2="45" y2="90" stroke="white" stroke-width="1.5" opacity="0.4"/>
+              <line x1="115" y1="55" x2="95" y2="90" stroke="white" stroke-width="1.5" opacity="0.4"/>
+              <line x1="45" y1="90" x2="95" y2="90" stroke="white" stroke-width="1.5" opacity="0.4"/>
+              <line x1="25" y1="55" x2="115" y2="55" stroke="white" stroke-width="1" opacity="0.15"/>
+              <line x1="70" y1="20" x2="45" y2="90" stroke="white" stroke-width="1" opacity="0.15"/>
+              <line x1="70" y1="20" x2="95" y2="90" stroke="white" stroke-width="1" opacity="0.15"/>
+              <!-- Nodes -->
+              <circle cx="70" cy="20" r="12" fill="white" opacity="0.95"/>
+              <text x="70" y="23" text-anchor="middle" fill="#059669" font-size="7" font-weight="800">OTP</text>
+              <circle cx="25" cy="55" r="9" fill="white" opacity="0.9"/>
+              <text x="25" y="58" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">A</text>
+              <circle cx="115" cy="55" r="9" fill="white" opacity="0.9"/>
+              <text x="115" y="58" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">B</text>
+              <circle cx="45" cy="90" r="8" fill="white" opacity="0.9"/>
+              <text x="45" y="93" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">C</text>
+              <circle cx="95" cy="90" r="8" fill="white" opacity="0.9"/>
+              <text x="95" y="93" text-anchor="middle" fill="#6b7280" font-size="6" font-weight="700">D</text>
+              <!-- Pulse rings -->
+              <circle cx="70" cy="20" r="12" stroke="white" stroke-width="1.5" fill="none"><animate attributeName="r" values="12;22;12" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;0;0.4" dur="3s" repeatCount="indefinite"/></circle>
+              <!-- Data flow dots -->
+              <circle r="2" fill="white" opacity="0.8"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 70 20 L 25 55"/></circle>
+              <circle r="2" fill="white" opacity="0.8"><animateMotion dur="1.8s" repeatCount="indefinite" path="M 70 20 L 115 55"/></circle>
+              <circle r="2" fill="white" opacity="0.6"><animateMotion dur="2s" repeatCount="indefinite" path="M 45 90 L 95 90"/></circle>
             </svg>
           </div>
         </div>
@@ -346,6 +347,7 @@
           <div class="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">Step 3</div>
           <div class="text-lg font-bold text-gray-900 mb-2">Learn</div>
           <p class="text-gray-500 text-sm leading-relaxed">Import proven coordination patterns. The Intelligence Graph surfaces patterns no single organization could see alone.</p>
+          <a href="/graph" class="inline-flex items-center gap-1 text-green-600 font-semibold text-sm mt-3 group/link"><span>View the graph</span><svg class="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
         </div>
       </div>
     </div>
@@ -360,14 +362,11 @@
         <div class="text-xs font-semibold text-otp-500 uppercase tracking-widest mb-3">Inside an OOS</div>
         <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Knowledge as structured claims</h2>
         <p class="text-gray-500 leading-relaxed mb-6">Every operational lesson becomes a claim with confidence ratings, evidence types, and documented failure modes. No more tribal knowledge locked in one person's head.</p>
-        <a href="/guide" class="inline-flex items-center gap-2 text-otp-500 font-semibold hover:text-otp-600 transition-colors text-sm group">
-          Learn how to create yours
-          <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </a>
+        <a href="/guide" class="inline-flex items-center gap-2 text-otp-500 font-semibold hover:text-otp-600 transition-colors text-sm group">Learn how to create yours<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
       </div>
       <div class="reveal delay-200">
         <div class="relative">
-          <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 px-2 py-1 bg-confidence-high text-white text-[10px] font-bold rounded-lg shadow-lg shadow-green-500/20" style="animation: float 3s ease-in-out infinite;">HIGH CONFIDENCE</div>
+          <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 px-2 py-1 bg-confidence-high text-white text-[10px] font-bold rounded-lg shadow-lg shadow-green-500/20" style="animation: float 3s ease-in-out infinite;">HIGH</div>
           <div class="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 px-2 py-1 bg-evidence-measured text-white text-[10px] font-bold rounded-lg shadow-lg shadow-purple-500/20" style="animation: float 3s ease-in-out infinite 1.5s;">MEASURED</div>
           <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 sm:p-6 glow-blue">
             <div class="flex flex-wrap items-center gap-2 mb-4">
@@ -388,52 +387,28 @@
   </div>
 </section>
 
-<!-- Graph CTA with animated visualization -->
+<!-- Graph CTA -->
 <section class="relative overflow-hidden bg-otp-950 py-16 sm:py-24">
   <canvas id="graph-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.5;"></canvas>
-  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
-    <div class="reveal">
-      <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">The Intelligence Graph</h2>
-      <p class="text-gray-400 max-w-lg mx-auto mb-8 leading-relaxed">See how coordination patterns connect across organizations. Discover shared operational truths and unique approaches.</p>
-      <a href="/graph" class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/10 rounded-lg font-semibold hover:bg-white/15 transition-all group">
-        Explore the Graph
-        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-      </a>
-    </div>
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 text-center reveal">
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">The Intelligence Graph</h2>
+    <p class="text-gray-400 max-w-lg mx-auto mb-8 leading-relaxed">See how coordination patterns connect across organizations. Discover shared operational truths and unique approaches.</p>
+    <a href="/graph" class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/10 rounded-lg font-semibold hover:bg-white/15 transition-all group">Explore the Graph<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
   </div>
 </section>
-
-<!-- Graph canvas -->
 <script>
-(function() {
-  var canvas = document.getElementById('graph-canvas');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var dpr = window.devicePixelRatio || 1;
-  var nodes = [], W, H;
-  var colors = ['0,149,255','124,58,237','5,150,105','217,119,6','239,68,68','6,182,212','156,163,175','245,158,11'];
-  var labels = ['Radar','Dash','Dirk','Pepper','Crystal','Neil','Jeff','Pulse'];
-  function resize() { var r = canvas.parentElement.getBoundingClientRect(); W = r.width; H = r.height; canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width = W+'px'; canvas.style.height = H+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
-  function init() { nodes = []; var cx = W/2, cy = H/2; for (var i = 0; i < 8; i++) { var a = (i/8)*Math.PI*2-Math.PI/2, r = Math.min(W,H)*0.3; nodes.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,baseAngle:a,r:4+Math.random()*3,color:colors[i],label:labels[i],phase:Math.random()*Math.PI*2}); } }
-  resize(); init(); window.addEventListener('resize', function() { resize(); init(); });
-  var t = 0;
-  function draw() {
-    ctx.clearRect(0,0,W,H); t += 0.005;
-    var cx = W/2, cy = H/2;
-    for (var i = 0; i < nodes.length; i++) { var n = nodes[i], r = Math.min(W,H)*0.3, w = Math.sin(t*2+n.phase)*8; n.x = cx+Math.cos(n.baseAngle+t*0.3)*(r+w); n.y = cy+Math.sin(n.baseAngle+t*0.3)*(r+w); }
-    for (var i = 0; i < nodes.length; i++) for (var j = i+1; j < nodes.length; j++) { var p = (Math.sin(t*3+i+j)+1)/2; ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.strokeStyle='rgba(0,149,255,'+(0.03+p*0.07)+')'; ctx.lineWidth=0.5; ctx.stroke(); }
-    for (var i = 0; i < nodes.length; i++) { var n = nodes[i], g = (Math.sin(t*2+n.phase)+1)/2; ctx.beginPath(); ctx.arc(n.x,n.y,n.r*5,0,Math.PI*2); ctx.fillStyle='rgba('+n.color+','+(0.04+g*0.04)+')'; ctx.fill(); ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fillStyle='rgba('+n.color+','+(0.5+g*0.3)+')'; ctx.fill(); ctx.font='10px Inter,sans-serif'; ctx.fillStyle='rgba(255,255,255,'+(0.25+g*0.15)+')'; ctx.textAlign='center'; ctx.fillText(n.label,n.x,n.y+n.r+14); }
-    var hg = (Math.sin(t)+1)/2;
-    ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fillStyle='rgba(0,149,255,'+(0.3+hg*0.4)+')'; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.fillStyle='rgba(0,149,255,'+(0.03+hg*0.04)+')'; ctx.fill();
-    for (var i = 0; i < nodes.length; i++) { var p = (Math.sin(t*2+i*0.7)+1)/2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(nodes[i].x,nodes[i].y); ctx.strokeStyle='rgba(0,149,255,'+(0.05+p*0.1)+')'; ctx.lineWidth=1; ctx.stroke(); }
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
+(function(){var c=document.getElementById('graph-canvas');if(!c)return;var ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1,nodes=[],W,H;var colors=['0,149,255','124,58,237','5,150,105','217,119,6','239,68,68','6,182,212','156,163,175','245,158,11'];var labels=['Radar','Dash','Dirk','Pepper','Crystal','Neil','Jeff','Pulse'];
+function resize(){var r=c.parentElement.getBoundingClientRect();W=r.width;H=r.height;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);}
+function init(){nodes=[];var cx=W/2,cy=H/2;for(var i=0;i<8;i++){var a=(i/8)*Math.PI*2-Math.PI/2,r=Math.min(W,H)*0.3;nodes.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,baseAngle:a,r:4+Math.random()*3,color:colors[i],label:labels[i],phase:Math.random()*6.28});}}
+resize();init();window.addEventListener('resize',function(){resize();init();});var t=0;
+function draw(){ctx.clearRect(0,0,W,H);t+=.005;var cx=W/2,cy=H/2;for(var i=0;i<nodes.length;i++){var n=nodes[i],r=Math.min(W,H)*.3,w=Math.sin(t*2+n.phase)*8;n.x=cx+Math.cos(n.baseAngle+t*.3)*(r+w);n.y=cy+Math.sin(n.baseAngle+t*.3)*(r+w);}
+for(var i=0;i<nodes.length;i++)for(var j=i+1;j<nodes.length;j++){var p=(Math.sin(t*3+i+j)+1)/2;ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.strokeStyle='rgba(0,149,255,'+(0.03+p*.07)+')';ctx.lineWidth=.5;ctx.stroke();}
+for(var i=0;i<nodes.length;i++){var n=nodes[i],g=(Math.sin(t*2+n.phase)+1)/2;ctx.beginPath();ctx.arc(n.x,n.y,n.r*5,0,6.28);ctx.fillStyle='rgba('+n.color+','+(0.04+g*.04)+')';ctx.fill();ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,6.28);ctx.fillStyle='rgba('+n.color+','+(0.5+g*.3)+')';ctx.fill();ctx.font='10px Inter,sans-serif';ctx.fillStyle='rgba(255,255,255,'+(0.25+g*.15)+')';ctx.textAlign='center';ctx.fillText(n.label,n.x,n.y+n.r+14);}
+var hg=(Math.sin(t)+1)/2;ctx.beginPath();ctx.arc(cx,cy,6,0,6.28);ctx.fillStyle='rgba(0,149,255,'+(0.3+hg*.4)+')';ctx.fill();ctx.beginPath();ctx.arc(cx,cy,20,0,6.28);ctx.fillStyle='rgba(0,149,255,'+(0.03+hg*.04)+')';ctx.fill();
+for(var i=0;i<nodes.length;i++){var p=(Math.sin(t*2+i*.7)+1)/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(nodes[i].x,nodes[i].y);ctx.strokeStyle='rgba(0,149,255,'+(0.05+p*.1)+')';ctx.lineWidth=1;ctx.stroke();}requestAnimationFrame(draw);}draw();})();
 </script>
 
-<!-- Founding publisher CTA -->
+<!-- Founding CTA -->
 <section class="bg-white py-16 sm:py-24">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center reveal">
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs text-amber-700 font-semibold mb-6">
@@ -441,10 +416,7 @@
       Founding Publisher Program
     </div>
     <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Be one of the first 50</h2>
-    <p class="text-gray-500 max-w-xl mx-auto mb-8 leading-relaxed">Founding Publishers get a permanent badge, early access to Phase 2 features, and shape the protocol itself. Your coordination intelligence becomes part of the foundation.</p>
-    <a href="/publish" class="inline-flex items-center gap-2 px-8 py-3.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-base group">
-      Publish Your OOS
-      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-    </a>
+    <p class="text-gray-500 max-w-xl mx-auto mb-8 leading-relaxed">Founding Publishers get a permanent badge, early access to Phase 2 features, and shape the protocol itself.</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-8 py-3.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-base group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
   </div>
 </section>
