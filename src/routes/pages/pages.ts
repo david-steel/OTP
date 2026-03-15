@@ -149,6 +149,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP' });
   });
 
+  // Investors page
+  app.get('/investors', async (request, reply) => {
+    return reply.view('pages/investors', { title: 'For Investors - OTP' });
+  });
+
   // Publish page -- serves the form, auth check happens client-side + on API call
   app.get('/publish', async (request, reply) => {
     return reply.view('pages/publish', { title: 'Publish Your OOS - OTP' });
