@@ -72,10 +72,10 @@
     type="text/javascript"
   ></script>
   <script>
-    window.addEventListener('load', async () => {
-      const clerk = window.Clerk;
-      if (!clerk) return;
-      await clerk.load();
+    (function waitForClerk() {
+      if (!window.Clerk) return setTimeout(waitForClerk, 50);
+      var clerk = window.Clerk;
+      clerk.load().then(function() {
       window.__clerk = clerk;
 
       const authNav = document.getElementById('auth-nav');
@@ -121,7 +121,8 @@
 
       // Emit event so page scripts can react to auth state
       window.dispatchEvent(new CustomEvent('clerk-loaded', { detail: { user: clerk.user } }));
-    });
+      });
+    })();
   </script>
   <% } %>
 </body>
