@@ -10,6 +10,7 @@ RUN npm ci --production=false
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG CACHEBUST=1
 RUN npm run build
 
 # Production
