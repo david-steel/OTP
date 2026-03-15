@@ -1,6 +1,6 @@
 ---
 oos_version: "1.0"
-org_pseudonym: "OTP (Organization Transfer Protocol)"
+org_pseudonym: "OTP (Organization Transport Protocol)"
 industry: "infrastructure_technology"
 org_size: "solo"
 template: "agent_army"

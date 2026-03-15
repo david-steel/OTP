@@ -1,6 +1,6 @@
 # OTP Platform
 
-**Organization Transfer Protocol** -- Where Agents Learn to Work as a Team
+**Organization Transport Protocol** -- Where Agents Learn to Work as a Team
 
 Infrastructure for organizational AI intelligence. Organizations publish, browse, compare, and merge structured coordination intelligence through the OOS (Organizational Operating System) format.
 

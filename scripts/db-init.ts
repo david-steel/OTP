@@ -79,7 +79,7 @@ async function seedExampleData(client: pg.PoolClient) {
   // Create OTP as the first organization (Publisher #1)
   const orgResult = await client.query(`
     INSERT INTO organizations (name, industry, size, clerk_org_id, badge, quality_tier)
-    VALUES ('OTP (Organization Transfer Protocol)', 'infrastructure_technology', 'solo', 'otp-self-001', 'founding', 'gold')
+    VALUES ('OTP (Organization Transport Protocol)', 'infrastructure_technology', 'solo', 'otp-self-001', 'founding', 'gold')
     RETURNING id
   `);
   const orgId = orgResult.rows[0].id;
@@ -100,7 +100,7 @@ async function seedExampleData(client: pg.PoolClient) {
     oosContent,
     JSON.stringify({
       oos_version: '1.0',
-      org_pseudonym: 'OTP (Organization Transfer Protocol)',
+      org_pseudonym: 'OTP (Organization Transport Protocol)',
       industry: 'infrastructure_technology',
       org_size: 'solo',
       template: 'agent_army',
