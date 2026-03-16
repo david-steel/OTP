@@ -14,10 +14,11 @@ import { buildGraph } from '../../graph/graph-builder.js';
 
 export default async function graphRoutes(app: FastifyInstance) {
 
-  // GET /api/v1/graph -- Full Intelligence Graph (nodes + edges for visualization)
+  // GET /api/v1/graph -- Full Intelligence Graph (nodes + edges + claims for visualization)
   app.get('/graph', async (request, reply) => {
     const publishedFiles = await db.select({
       id: oosFiles.id,
+      orgId: oosFiles.orgId,
       orgName: organizations.name,
       template: oosFiles.template,
       industry: organizations.industry,
@@ -47,7 +48,64 @@ export default async function graphRoutes(app: FastifyInstance) {
     }));
 
     const graph = buildGraph(publishedFiles, simRows);
-    return graph;
+
+    // Fetch claim-level data for all published OOS files (for layer controls)
+    const oosIds = publishedFiles.map(f => f.id);
+    const claimsMap: Record<string, Array<{
+      claimId: string;
+      section: string;
+      confidence: string;
+      evidence: string;
+      rule: string;
+    }>> = {};
+
+    if (oosIds.length > 0) {
+      const allClaims = await db.select({
+        oosFileId: claims.oosFileId,
+        claimId: claims.claimId,
+        section: claims.section,
+        confidence: claims.confidence,
+        evidence: claims.evidence,
+        rule: claims.rule,
+      })
+        .from(claims)
+        .where(sql`${claims.oosFileId} IN (${sql.join(oosIds.map(id => sql`${id}`), sql`, `)})`);
+
+      for (const c of allClaims) {
+        if (!claimsMap[c.oosFileId]) claimsMap[c.oosFileId] = [];
+        claimsMap[c.oosFileId].push({
+          claimId: c.claimId,
+          section: c.section,
+          confidence: c.confidence,
+          evidence: c.evidence,
+          rule: c.rule,
+        });
+      }
+    }
+
+    // Compute stats
+    const totalClaims = publishedFiles.reduce((sum, f) => sum + f.claimCount, 0);
+
+    // Count cross-org patterns from coordination_patterns materialized view
+    let patternCount = 0;
+    try {
+      const patternResult = await db.execute(sql`SELECT COUNT(*) AS cnt FROM coordination_patterns`);
+      patternCount = parseInt((patternResult.rows as any[])[0]?.cnt || '0', 10);
+    } catch {
+      // Materialized view may not be refreshed yet
+    }
+
+    return {
+      nodes: graph.nodes,
+      edges: graph.edges,
+      claims: claimsMap,
+      stats: {
+        publishers: publishedFiles.length,
+        totalClaims,
+        connections: graph.edges.length,
+        patterns: patternCount,
+      },
+    };
   });
 
   // GET /api/v1/graph/org/:orgId -- Subgraph for a single organization

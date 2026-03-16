@@ -348,7 +348,46 @@ export default async function oosRoutes(app: FastifyInstance) {
       confidence: c.confidence,
       evidence: c.evidence,
     })), org.pseudonym || org.name);
-    // TODO: insert graphData.nodes and graphData.edges into graph_nodes and graph_edges tables
+    // Delete existing graph data for this OOS file (in case of re-publish)
+    await db.execute(sql`DELETE FROM graph_edges WHERE oos_file_id = ${id}`);
+    await db.execute(sql`DELETE FROM graph_nodes WHERE oos_file_id = ${id}`);
+
+    // Insert graph nodes and collect generated UUIDs
+    const externalIdToUuid = new Map<string, string>();
+
+    for (const node of graphData.nodes) {
+      // Determine external_id: ORG for organization, claimId for knowledge_claims, externalId for entities
+      let externalId: string;
+      if (node.type === 'organization') {
+        externalId = 'ORG';
+      } else if (node.type === 'knowledge_claim') {
+        externalId = (node.properties as any).claimId || 'UNKNOWN';
+      } else {
+        externalId = ((node.properties as any).externalId || 'UNKNOWN') as string;
+      }
+
+      const insertResult = await db.execute(sql`
+        INSERT INTO graph_nodes (external_id, type, label, properties, oos_file_id, org_id)
+        VALUES (${externalId}, ${node.type}::graph_node_type, ${node.label}, ${JSON.stringify(node.properties)}::jsonb, ${node.oosFileId}, ${node.orgId})
+        RETURNING id
+      `);
+      const insertedId = (insertResult.rows as any[])[0]?.id;
+      if (insertedId) {
+        externalIdToUuid.set(externalId, insertedId);
+      }
+    }
+
+    // Insert graph edges with mapped UUIDs
+    for (const edge of graphData.edges) {
+      const sourceUuid = externalIdToUuid.get(edge.sourceId);
+      const targetUuid = externalIdToUuid.get(edge.targetId);
+      if (!sourceUuid || !targetUuid) continue; // Skip edges with unresolved references
+
+      await db.execute(sql`
+        INSERT INTO graph_edges (source_id, target_id, type, properties, oos_file_id, weight)
+        VALUES (${sourceUuid}, ${targetUuid}, ${edge.type}::graph_edge_type, ${JSON.stringify(edge.properties)}::jsonb, ${id}, ${edge.weight})
+      `);
+    }
 
     // Audit
     await db.insert(auditLogs).values(
