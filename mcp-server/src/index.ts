@@ -350,6 +350,129 @@ server.tool(
   }
 );
 
+// ============================================================
+// TOOL: discover_intelligence
+// Run the OTP Scout to find relevant claims from other orgs
+// ============================================================
+server.tool(
+  "discover_intelligence",
+  "Run the OTP Scout to discover relevant coordination intelligence from other organizations. Analyzes gaps in your OOS and finds high-quality claims you might want to adopt. Requires API key.",
+  {
+    limit: z.number().optional().describe("Maximum number of recommendations to discover (default 20)"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: OTP_API_KEY environment variable is required to discover intelligence. Get your API key at https://orgtp.com/settings/api",
+        }],
+      };
+    }
+
+    const result = await otpFetch("/recommendations/discover", {
+      method: "POST",
+      body: JSON.stringify({ limit: params.limit }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ============================================================
+// TOOL: get_inbox
+// View your intelligence inbox
+// ============================================================
+server.tool(
+  "get_inbox",
+  "View your intelligence inbox -- recommendations discovered by the Scout. Filter by status (pending, accepted, rejected, adapted) or section. Requires API key.",
+  {
+    status: z.enum(["pending", "accepted", "rejected", "adapted"]).optional().describe("Filter by recommendation status (default: pending)"),
+    section: z.string().optional().describe("Filter by claim section (e.g. 'failure_patterns', 'coordination_patterns')"),
+    limit: z.number().optional().describe("Results per page (default 20, max 100)"),
+    offset: z.number().optional().describe("Offset for pagination (default 0)"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: OTP_API_KEY environment variable is required. Get your API key at https://orgtp.com/settings/api",
+        }],
+      };
+    }
+
+    const query = new URLSearchParams();
+    if (params.status) query.set("status", params.status);
+    if (params.section) query.set("section", params.section);
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.offset) query.set("offset", String(params.offset));
+
+    const qs = query.toString();
+    const result = await otpFetch(`/recommendations${qs ? `?${qs}` : ""}`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ============================================================
+// TOOL: review_recommendation
+// Accept, reject, or adapt a recommendation
+// ============================================================
+server.tool(
+  "review_recommendation",
+  "Review a recommendation from your inbox. Accept to adopt as-is, reject to dismiss, or adapt to modify the claim for your organization's context. Requires API key.",
+  {
+    id: z.string().uuid().describe("The recommendation ID to review"),
+    action: z.enum(["accept", "reject", "adapt"]).describe("Action to take: accept, reject, or adapt"),
+    notes: z.string().optional().describe("Optional review notes explaining your decision"),
+    adapted_rule: z.string().optional().describe("Modified rule text (required when action is 'adapt')"),
+    adapted_why: z.string().optional().describe("Modified reasoning text (optional when action is 'adapt')"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: OTP_API_KEY environment variable is required. Get your API key at https://orgtp.com/settings/api",
+        }],
+      };
+    }
+
+    const result = await otpFetch(`/recommendations/${params.id}/review`, {
+      method: "POST",
+      body: JSON.stringify({
+        action: params.action,
+        notes: params.notes,
+        adapted_rule: params.adapted_rule,
+        adapted_why: params.adapted_why,
+      }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ============================================================
+// TOOL: get_inbox_stats
+// Get a summary of your intelligence inbox
+// ============================================================
+server.tool(
+  "get_inbox_stats",
+  "Get a summary of your intelligence inbox -- how many recommendations are pending, accepted, rejected, and adapted. Shows top sections and average relevance score. Requires API key.",
+  {},
+  async () => {
+    if (!OTP_API_KEY) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: OTP_API_KEY environment variable is required. Get your API key at https://orgtp.com/settings/api",
+        }],
+      };
+    }
+
+    const result = await otpFetch("/recommendations/stats");
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
 // -- Start --
 
 async function main() {
