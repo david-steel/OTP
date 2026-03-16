@@ -53,6 +53,9 @@ export default async function oosRoutes(app: FastifyInstance) {
     const parsed = parseOOS(result.fixed, template || 'agent_army');
     const validation = validateOOS(parsed, template || 'agent_army');
 
+    // Run PII scan on the fixed content
+    const piiResult = scanOOSContent(result.fixed);
+
     return {
       fixed: result.fixed,
       fixes: result.fixes,
@@ -60,6 +63,8 @@ export default async function oosRoutes(app: FastifyInstance) {
       unfixable: result.unfixable,
       unfixableCount: result.unfixable.length,
       validation,
+      piiFlags: piiResult.flags,
+      piiClean: piiResult.clean,
     };
   });
 

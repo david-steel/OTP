@@ -586,7 +586,8 @@ function showFixResults(data) {
   // If everything is clean, show all-clear
   var hasErrors = data.validation && data.validation.errors && data.validation.errors.length > 0;
   var hasUnfixable = data.unfixable && data.unfixable.length > 0;
-  if (!hasErrors && !hasUnfixable) {
+  var hasPII = data.piiFlags && data.piiFlags.length > 0;
+  if (!hasErrors && !hasUnfixable && !hasPII) {
     document.getElementById('all-clear').classList.remove('hidden');
   }
 }

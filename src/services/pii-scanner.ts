@@ -18,7 +18,7 @@ const PATTERNS: Array<{
   },
   {
     type: 'pricing',
-    regex: /\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?(?:\/(?:mo|month|yr|year|hr|hour))?/gi,
+    regex: /\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?\/(?:mo|month|yr|year|hr|hour)/gi,
     suggestion: 'Remove specific pricing. Use relative terms like "premium tier" or "base rate"',
   },
   {
