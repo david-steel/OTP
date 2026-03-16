@@ -25,10 +25,89 @@
       </div>
     </div>
 
-    <!-- Step 2: Content -->
+    <!-- Step 2: Generate Your OOS -->
     <div class="bg-white p-6 rounded-lg border mb-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-semibold">2. Add Your OOS Content</h2>
+        <h2 class="font-semibold">2. Generate Your OOS</h2>
+        <button type="button" onclick="togglePrompt()" class="text-xs text-otp-500 hover:underline" id="prompt-toggle-btn">Show prompt</button>
+      </div>
+      <p class="text-gray-500 text-sm mb-4">Copy this prompt, fill in the bracketed sections, and give it to any AI (Claude, ChatGPT, Gemini). Upload the resulting .md file in Step 3.</p>
+
+      <div id="prompt-section" class="hidden">
+        <div class="relative">
+          <pre id="generation-prompt" class="bg-gray-50 border rounded-lg p-4 text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto max-h-[500px] overflow-y-auto leading-relaxed">I need you to generate an OOS (Organizational Operating System) file for my organization.
+
+Here is what we do: [Describe your business in 2-3 sentences]
+
+Here is our AI setup:
+[List your AI agents, automations, or AI-augmented workflows. For each one, describe:
+- What it does
+- What tools it uses
+- What it owns vs. what it does NOT own
+- Who/what it reports to or escalates to]
+
+Here are the rules we follow:
+[List any rules, policies, or patterns you have about how your AI operates.
+Examples: "All emails require human approval before sending",
+"The analytics bot reports but never recommends",
+"If two agents disagree, the founder decides within 24 hours"]
+
+Here are things that went wrong:
+[List 2-5 failures, mistakes, or surprises you discovered while building
+your AI setup. Be specific. These are often the most valuable claims.]
+
+Here are the boundaries between AI and human:
+[What decisions are human-only? What does AI handle autonomously?
+Where is the line?]
+
+Now generate an OOS file in this exact format:
+
+1. YAML frontmatter between --- delimiters with: oos_version "1.0",
+   org_pseudonym, industry, org_size (solo/small/medium/large/enterprise),
+   template (agent_army/value_chain/org_chart), agent_count, platforms
+   used, generated_at (ISO timestamp), version 1, parent_version null,
+   word_count, claim_count, confidence_distribution (high/medium/low
+   counts), evidence_distribution (counts per evidence type)
+
+2. A Purpose section (2-3 sentences)
+
+3. A Prime Directives section (3-5 top-level rules)
+
+4. At minimum 15 claims using this format:
+
+**[C001]** section_name
+- **Rule:** [Clear, specific rule]
+- **Why:** [Why this exists]
+- **Failure mode:** [What breaks when violated]
+- **Confidence:** HIGH | MEDIUM | LOW
+- **Evidence:** HUMAN_DEFINED_RULE | OBSERVED_ONCE | OBSERVED_REPEATEDLY
+  | MEASURED_RESULT | INFERENCE | SPECULATION
+- **Scope:** [Where this applies]
+
+Sections: core_operating_rules, agent_roles_and_authority,
+coordination_patterns, operational_heuristics, failure_patterns,
+human_ai_boundary_conditions
+
+Rules for claims:
+- Every claim must have all 6 fields
+- Be specific and concrete, not generic
+- Failure modes should describe real consequences
+- Include at least 2-3 failure_patterns claims
+- Total word count between 1800-3000 words
+- Minimum 10 claims, aim for 15-25</pre>
+          <button type="button" onclick="copyPrompt()" id="copy-prompt-btn"
+            class="absolute top-2 right-2 px-3 py-1.5 bg-white border rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-otp-500 transition-colors shadow-sm">
+            Copy
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">After you get the .md file, upload it below. Our auto-fixer will clean up any formatting issues.</p>
+      </div>
+    </div>
+
+    <!-- Step 3: Content -->
+    <div class="bg-white p-6 rounded-lg border mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold">3. Upload Your OOS</h2>
         <div class="flex items-center gap-3">
           <button type="button" onclick="downloadTemplate()" class="text-xs text-gray-500 hover:underline">Download Template</button>
           <button type="button" onclick="loadExample()" class="text-xs text-otp-500 hover:underline">Load Example</button>
@@ -103,7 +182,7 @@ Example claim format:
       </div>
     </div>
 
-    <!-- Step 3: Validate & Preview -->
+    <!-- Step 4: Validate & Publish -->
     <div class="flex gap-3">
       <button type="button" onclick="validateAndFix()" id="validate-btn" class="px-6 py-3 bg-gray-100 border rounded-lg font-medium text-sm hover:bg-gray-200">
         Validate & Auto-Fix
@@ -712,6 +791,26 @@ Review every 90 days. Flag stale claims. Update confidence when evidence strengt
   // Show textarea and run pre-validation for example
   if (!textareaVisible) toggleTextarea();
   runPreValidation(textarea.value);
+}
+
+// ---- Prompt toggle and copy ----
+
+function togglePrompt() {
+  var section = document.getElementById('prompt-section');
+  var btn = document.getElementById('prompt-toggle-btn');
+  var isHidden = section.classList.contains('hidden');
+  section.classList.toggle('hidden');
+  btn.textContent = isHidden ? 'Hide prompt' : 'Show prompt';
+}
+
+function copyPrompt() {
+  var text = document.getElementById('generation-prompt').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById('copy-prompt-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('text-green-600');
+    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('text-green-600'); }, 2000);
+  });
 }
 
 // ---- Download template ----
