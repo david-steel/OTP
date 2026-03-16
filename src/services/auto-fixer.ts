@@ -305,19 +305,27 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
     fixes.push({ code: 'PLATFORMS_DEFAULTED', description: 'Defaulted platforms to ["claude"]', field: 'frontmatter.platforms', before: '(missing)', after: '["claude"]' });
   }
 
-  // Fix generated_at
+  // Fix generated_at -- normalize any parseable date to strict ISO 8601
   if (!fm.generated_at) {
     fm.generated_at = new Date().toISOString();
     fmChanged = true;
     fixes.push({ code: 'GENERATED_AT_ADDED', description: 'Set generated_at to current timestamp', field: 'frontmatter.generated_at', before: '(missing)', after: fm.generated_at as string });
   } else {
-    // Try to parse, fix if invalid
-    const d = new Date(fm.generated_at as string);
+    const raw = String(fm.generated_at);
+    const d = new Date(raw);
     if (isNaN(d.getTime())) {
       const oldVal = fm.generated_at;
       fm.generated_at = new Date().toISOString();
       fmChanged = true;
       fixes.push({ code: 'GENERATED_AT_FIXED', description: 'Fixed invalid generated_at timestamp', field: 'frontmatter.generated_at', before: String(oldVal), after: fm.generated_at as string });
+    } else {
+      // Valid date but may not be strict ISO -- normalize
+      const iso = d.toISOString();
+      if (raw !== iso) {
+        fm.generated_at = iso;
+        fmChanged = true;
+        fixes.push({ code: 'GENERATED_AT_NORMALIZED', description: 'Normalized generated_at to ISO 8601', field: 'frontmatter.generated_at', before: raw, after: iso });
+      }
     }
   }
 
