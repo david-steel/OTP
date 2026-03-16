@@ -12,6 +12,7 @@ import { computeAllSimilarities } from '../../services/similarity.js';
 import { computeDiff } from '../../services/diff-engine.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { extractGraph } from '../../graph/graph-extractor.js';
+import { autoFixOOS } from '../../services/auto-fixer.js';
 import { resolveApiKey } from '../../middleware/api-key-auth.js';
 import type { TemplateType } from '../../shared/enums.js';
 
@@ -35,6 +36,32 @@ async function getAuthOrg(request: FastifyRequest) {
 }
 
 export default async function oosRoutes(app: FastifyInstance) {
+
+  // ============================================================
+  // POST /api/v1/oos/fix -- Auto-fix OOS content (no auth required)
+  // ============================================================
+  app.post('/oos/fix', async (request, reply) => {
+    const body = request.body as { rawContent?: string; template?: string };
+    if (!body?.rawContent || typeof body.rawContent !== 'string') {
+      return reply.status(400).send({ error: { code: 'MISSING_CONTENT', message: 'rawContent is required' } });
+    }
+
+    const template = (body.template || undefined) as TemplateType | undefined;
+    const result = autoFixOOS(body.rawContent, template);
+
+    // Run validation on the fixed content to show remaining issues
+    const parsed = parseOOS(result.fixed, template || 'agent_army');
+    const validation = validateOOS(parsed, template || 'agent_army');
+
+    return {
+      fixed: result.fixed,
+      fixes: result.fixes,
+      fixCount: result.fixes.length,
+      unfixable: result.unfixable,
+      unfixableCount: result.unfixable.length,
+      validation,
+    };
+  });
 
   // ============================================================
   // POST /api/v1/oos -- Create new OOS (draft)
