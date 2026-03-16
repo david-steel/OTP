@@ -1,3 +1,8 @@
+<style>
+  @keyframes dash-flow { to { stroke-dashoffset: -24; } }
+  .org-edges line { animation: dash-flow 1.5s linear infinite; }
+  #graph-page footer { display: none; }
+</style>
 <div class="bg-otp-950 min-h-screen -mt-[65px] pt-[65px]" id="graph-page">
   <!-- Top Stats Bar -->
   <div class="border-b border-white/5 bg-otp-950/90 backdrop-blur-sm">
@@ -341,6 +346,7 @@
       .attr('stroke', '#8b5cf6')
       .attr('stroke-width', function(d) { return Math.min(Math.max(d.weight || 1, 1), 6); })
       .attr('stroke-opacity', 0.3)
+      .attr('stroke-dasharray', '8,4')
       .style('cursor', 'pointer')
       .on('click', function(event, d) {
         var srcId = d.source.id || d.source;
@@ -605,12 +611,13 @@
       '</div></div>';
   }
 
-  function goCompare(sourceId) {
+  // Expose goCompare globally so onclick in dynamically generated HTML can call it
+  window.goCompare = function(sourceId) {
     var sel = document.getElementById('compare-target');
     if (sel && sel.value) {
       window.location.href = '/compare/' + sourceId + '/' + sel.value;
     }
-  }
+  };
 
   function showDetailPanel(d) {
     document.getElementById('layer-panel').classList.add('hidden');
@@ -670,10 +677,14 @@
     layers.confidence = document.getElementById('layer-confidence').checked;
     layers.evidence = document.getElementById('layer-evidence').checked;
 
-    // Show/hide org edges
+    // Org edges always visible, connections toggle controls emphasis
     if (orgEdgeElems) {
       orgEdgeElems.transition().duration(300)
-        .attr('stroke-opacity', layers.connections ? 0.3 : 0);
+        .attr('stroke-opacity', layers.connections ? 0.5 : 0.15)
+        .attr('stroke-width', function(d) {
+          var base = Math.min(Math.max(d.weight || 1, 1), 6);
+          return layers.connections ? base + 1 : base;
+        });
     }
 
     // Show/hide claim nodes based on any claim-level layer being active

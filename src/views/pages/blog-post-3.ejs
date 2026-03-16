@@ -1,0 +1,129 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Building in Public</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">We Built This Platform in 48 Hours. With the System It's Designed to Measure.</h1>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <p>On Friday March 14, 2026, OTP existed as 170 files in an Obsidian vault. Strategy documents. Protocol specifications. Competitive analysis. Market sizing. Publisher profiles. A schema draft. Zero lines of production code.</p>
+
+      <p>By Saturday morning, it was a running platform with 3 publishers, 56 claims, a working Intelligence Graph, full-text search, PII scanning, quality tiers, a diff engine, and a custom domain.</p>
+
+      <p>Here is the part that matters: it was built by the same 14-agent AI system that OTP is designed to measure.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Build Session</h2>
+
+      <p>I said "Build OTP Phase 1" and pointed Claude Code at the vault. 170 files of strategy, product spec, protocol schema, and architectural decisions. The AI read all of it. Then it built:</p>
+
+      <ul class="list-disc pl-5 space-y-2 my-4">
+        <li>61 source files. TypeScript, Fastify, PostgreSQL, Drizzle ORM, EJS templates, Tailwind CSS, D3.js for the graph.</li>
+        <li>8 database tables with full migration scripts.</li>
+        <li>7 API routes: auth, OOS CRUD, search, browse, graph, merge, scanner.</li>
+        <li>10 server-rendered pages: homepage, search, browse, detail view, comparison, graph visualization, publisher profiles, dashboard, publish form, badge display.</li>
+        <li>A claim parser that extracts structured claims from markdown.</li>
+        <li>A PII scanner that flags client names, emails, and sensitive data before publish.</li>
+        <li>A similarity engine that compares claims across organizations.</li>
+        <li>A diff engine that shows what is unique, shared, and conflicting between two OOS files.</li>
+        <li>Docker configs, CI/CD pipelines, deployment configs.</li>
+        <li>Seed data: OTP's own OOS as the first publisher. Eating our own cooking from minute one.</li>
+      </ul>
+
+      <p>Day 2 added: Cloudflare R2 storage, Railway production deployment, Clerk authentication, the Sneeze It OOS as Publisher #3, the publisher guide, the investor page, two blog posts, and a custom domain at orgtp.com.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Why This Matters More Than You Think</h2>
+
+      <p>There is a recursive quality to this that is easy to overlook.</p>
+
+      <p>OTP is a platform for publishing how your AI agents work together. It was built by AI agents working together. Every coordination pattern the platform is designed to capture was exercised in building the platform itself.</p>
+
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-5 my-8">
+        <p class="text-otp-800 font-semibold text-sm">The 14-agent system that built OTP is also the first publisher on OTP. Its operational intelligence (the OOS) was generated from the same CLAUDE.md file that governed the build. The protocol document and the production system are the same artifact viewed from two angles.</p>
+      </div>
+
+      <p>This is not a gimmick. It is the entire thesis.</p>
+
+      <p>If your organization runs AI agents, those agents operate according to rules. Written or unwritten. Explicit or emergent. The OOS format makes those rules structured, comparable, and transferable. OTP was built by a system whose rules we already captured. That is why it could be built in 48 hours. The operational intelligence already existed. The platform just needed to exist for it to live somewhere.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What 170 Files of Context Actually Buys You</h2>
+
+      <p>People ask how an AI builds a platform in one session. The answer is not "AI is magic." The answer is preparation.</p>
+
+      <p>170 Obsidian files is not documentation. It is a decision record. Every architectural choice, every product trade-off, every "we will not build this in Phase 1" decision was already written down before a single line of code existed.</p>
+
+      <p>The AI did not make decisions. The decisions were already made. The AI executed them. There is a universe of difference between "build me something" and "build exactly this, according to these specs, with these constraints, using these patterns."</p>
+
+      <p>If you hand an AI a vague prompt, you get a vague product. If you hand it 170 files of crystallized thinking, you get exactly what you designed. The OOS is the mechanism for crystallizing that thinking. OTP is where you publish it so others can learn from it.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The 90-Day Plan Is Now 85% GTM</h2>
+
+      <p>The original 90-day execution plan allocated 6 weeks to building the platform and 6 weeks to launching it. We compressed the build into 48 hours. The plan is now almost entirely go-to-market.</p>
+
+      <p>This is the real unlock. When your operational intelligence is explicit and structured, build velocity follows. We did not ship fast because we cut corners. We shipped fast because every decision was already documented in a format an AI system could execute against.</p>
+
+      <p>That observation, by itself, is worth publishing as a claim:</p>
+
+      <div class="bg-gray-50 rounded-xl p-5 my-8 border border-gray-100">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xs font-mono bg-gray-200 px-2 py-0.5 rounded">C025</span>
+          <span class="text-xs bg-green-600 text-white px-2 py-0.5 rounded">HIGH</span>
+          <span class="text-xs bg-purple-600 text-white px-2 py-0.5 rounded">MEASURED_RESULT</span>
+          <span class="text-xs text-gray-400 ml-auto">operational_heuristics</span>
+        </div>
+        <p class="font-semibold text-gray-900 text-sm mb-2">Rule: Pre-crystallized decisions in structured format reduce build time by 10x or more.</p>
+        <p class="text-sm text-gray-600 mb-2"><strong>Why:</strong> AI executes decisions faster than it makes them. 170 files of pre-made decisions meant zero ambiguity during build.</p>
+        <p class="text-sm text-gray-500"><strong>Failure mode:</strong> Vague specs produce vague products. The AI makes 50 micro-decisions you did not anticipate. Half are wrong. Debugging takes longer than building.</p>
+      </div>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">A Note on Speed</h2>
+
+      <p>48 hours is a number that makes people skeptical. "You built a platform in 48 hours?" Yes. But that framing is misleading. Here is the honest version:</p>
+
+      <p>I spent weeks thinking about this problem. Weeks writing about it. Weeks debating architecture with an AI strategic co-founder. Weeks designing the protocol. Weeks deciding what not to build. The actual construction took 48 hours. The thinking took much longer.</p>
+
+      <p>That is the point. The OOS captures the thinking. OTP transfers it. The build is the easy part when the thinking is done.</p>
+
+      <p>And if you are skeptical, good. That is exactly the right response. Come look at the <a href="/browse" class="text-otp-500 hover:underline">published intelligence</a>. Read the <a href="/blog/why-we-built-otp" class="text-otp-500 hover:underline">founding essay</a>. Explore the <a href="/graph" class="text-otp-500 hover:underline">Intelligence Graph</a>. Then decide if the thinking is solid.</p>
+
+      <p>The platform is live. The protocol is real. And we are building in public because the best way to prove the thesis is to let you watch.</p>
+
+      <!-- Author -->
+      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+        <div>
+          <div class="font-bold text-gray-900">David Steel</div>
+          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</section>
+
+<!-- Next post CTA -->
+<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <p class="text-sm text-gray-400 mb-4">Building in public. Follow along.</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
+      Publish Your OOS
+      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+    </a>
+  </div>
+</section>

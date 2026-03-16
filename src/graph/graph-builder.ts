@@ -66,7 +66,7 @@ export function buildGraph(
   // Convert to edges, filtering for minimum 2 similar claims
   const edges: GraphEdge[] = [];
   for (const [, edge] of edgeMap) {
-    if (edge.pairs.length < 2) continue; // Minimum 2 similar claims to form an edge
+    if (edge.pairs.length < 1) continue; // At least 1 similar claim to form an edge
 
     // Sort pairs by score descending, take top 3 for tooltip
     const sortedPairs = edge.pairs.sort((a, b) => b.score - a.score);
