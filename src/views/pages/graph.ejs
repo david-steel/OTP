@@ -1,34 +1,39 @@
 <style>
   @keyframes dash-flow { to { stroke-dashoffset: -24; } }
-  .org-edges line { animation: dash-flow 1.5s linear infinite; }
+  .org-edges path { animation: dash-flow 1.5s linear infinite; }
   #graph-page footer { display: none; }
+  #graph-container {
+    background-color: #ffffff;
+    background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
 </style>
-<div class="bg-otp-950 min-h-screen -mt-[65px] pt-[65px]" id="graph-page">
+<div class="bg-white min-h-screen -mt-[65px] pt-[65px]" id="graph-page">
   <!-- Top Stats Bar -->
-  <div class="border-b border-white/5 bg-otp-950/90 backdrop-blur-sm">
+  <div class="border-b border-gray-200 bg-white">
     <div class="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <h1 class="text-white font-semibold text-sm tracking-wide">Intelligence Graph</h1>
+        <h1 class="text-gray-900 font-semibold text-sm tracking-wide">Intelligence Graph</h1>
       </div>
       <div class="flex items-center gap-6 text-xs">
         <div class="flex items-center gap-2">
           <span class="text-gray-500">Publishers</span>
-          <span class="text-white font-semibold" id="stat-publishers">--</span>
+          <span class="text-gray-900 font-semibold" id="stat-publishers">--</span>
         </div>
-        <div class="w-px h-4 bg-white/10"></div>
+        <div class="w-px h-4 bg-gray-200"></div>
         <div class="flex items-center gap-2">
           <span class="text-gray-500">Claims</span>
-          <span class="text-white font-semibold" id="stat-claims">--</span>
+          <span class="text-gray-900 font-semibold" id="stat-claims">--</span>
         </div>
-        <div class="w-px h-4 bg-white/10"></div>
+        <div class="w-px h-4 bg-gray-200"></div>
         <div class="flex items-center gap-2">
           <span class="text-gray-500">Connections</span>
-          <span class="text-white font-semibold" id="stat-connections">--</span>
+          <span class="text-gray-900 font-semibold" id="stat-connections">--</span>
         </div>
-        <div class="w-px h-4 bg-white/10"></div>
+        <div class="w-px h-4 bg-gray-200"></div>
         <div class="flex items-center gap-2">
           <span class="text-gray-500">Patterns</span>
-          <span class="text-white font-semibold" id="stat-patterns">--</span>
+          <span class="text-gray-900 font-semibold" id="stat-patterns">--</span>
         </div>
       </div>
     </div>
@@ -36,18 +41,15 @@
 
   <!-- Graph Container -->
   <div id="graph-container" style="height: calc(100vh - 200px); position: relative; overflow: hidden;">
-    <!-- Grid background -->
-    <div class="absolute inset-0 bg-grid opacity-30" style="pointer-events: none;"></div>
-
     <!-- Loading state -->
     <div id="graph-loading" class="absolute inset-0 flex items-center justify-center z-10">
       <div class="text-center">
-        <div class="inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-white/5 border border-white/10">
-          <svg class="animate-spin h-5 w-5 text-otp-400" viewBox="0 0 24 24" fill="none">
+        <div class="inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-gray-50 border border-gray-200">
+          <svg class="animate-spin h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <span class="text-gray-400 text-sm">Loading intelligence graph...</span>
+          <span class="text-gray-500 text-sm">Loading intelligence graph...</span>
         </div>
       </div>
     </div>
@@ -55,12 +57,12 @@
     <!-- Empty state -->
     <div id="graph-empty" class="absolute inset-0 flex items-center justify-center z-10 hidden">
       <div class="text-center max-w-md">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-otp-500/10 flex items-center justify-center">
-          <svg class="w-8 h-8 text-otp-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
           </svg>
         </div>
-        <p class="text-white text-lg font-medium mb-2">No published OOS files yet</p>
+        <p class="text-gray-900 text-lg font-medium mb-2">No published OOS files yet</p>
         <p class="text-gray-500 text-sm mb-4">The intelligence graph forms as organizations publish their coordination protocols.</p>
         <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg text-sm font-medium transition-colors">Be the first publisher</a>
       </div>
@@ -71,73 +73,73 @@
 
     <!-- Tooltip -->
     <div id="graph-tooltip" class="absolute pointer-events-none z-30 hidden" style="max-width: 280px;">
-      <div class="rounded-lg border border-white/10 bg-[rgba(10,15,30,0.95)] backdrop-blur-sm px-4 py-3 shadow-xl">
+      <div class="rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-lg">
         <div id="tooltip-content" class="text-sm"></div>
       </div>
     </div>
 
     <!-- Layer Control Panel (bottom-right) -->
     <div id="layer-panel" class="absolute bottom-4 right-4 z-20 hidden" style="width: 240px;">
-      <div class="rounded-xl border border-white/10 bg-[rgba(10,15,30,0.9)] backdrop-blur-sm overflow-hidden shadow-2xl">
-        <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-          <span class="text-white text-xs font-semibold tracking-wide uppercase">Layers</span>
-          <button id="layer-collapse" class="text-gray-500 hover:text-white transition-colors">
+      <div class="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-lg">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <span class="text-gray-900 text-xs font-semibold tracking-wide uppercase">Layers</span>
+          <button id="layer-collapse" class="text-gray-400 hover:text-gray-700 transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
         </div>
         <div id="layer-list" class="px-3 py-2 flex flex-col gap-1">
           <!-- Layer: Organizations -->
-          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
             <div class="relative">
               <input type="checkbox" id="layer-orgs" checked disabled class="sr-only peer">
               <div class="w-8 h-4 bg-otp-500/30 rounded-full peer-checked:bg-otp-500 transition-colors"></div>
-              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-transform"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-white text-xs font-medium">Organizations</div>
-              <div class="text-gray-500 text-[10px]">Publisher nodes</div>
+              <div class="text-gray-900 text-xs font-medium">Organizations</div>
+              <div class="text-gray-400 text-[10px]">Publisher nodes</div>
             </div>
             <div class="w-2.5 h-2.5 rounded-full bg-otp-500 flex-shrink-0"></div>
           </label>
 
           <!-- Layer: Claim Connections -->
-          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
             <div class="relative">
               <input type="checkbox" id="layer-connections" checked class="sr-only peer">
-              <div class="w-8 h-4 bg-white/10 rounded-full peer-checked:bg-purple-500 transition-colors"></div>
-              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-transform"></div>
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-purple-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-white text-xs font-medium">Claim Connections</div>
-              <div class="text-gray-500 text-[10px]">Similar claims across orgs</div>
+              <div class="text-gray-900 text-xs font-medium">Claim Connections</div>
+              <div class="text-gray-400 text-[10px]">Similar claims across orgs</div>
             </div>
             <div class="w-2.5 h-2.5 rounded-full bg-purple-500 flex-shrink-0"></div>
           </label>
 
           <!-- Layer: Sections -->
-          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
             <div class="relative">
               <input type="checkbox" id="layer-sections" class="sr-only peer">
-              <div class="w-8 h-4 bg-white/10 rounded-full peer-checked:bg-cyan-500 transition-colors"></div>
-              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-transform"></div>
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-cyan-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-white text-xs font-medium">Sections</div>
-              <div class="text-gray-500 text-[10px]">Color by section type</div>
+              <div class="text-gray-900 text-xs font-medium">Sections</div>
+              <div class="text-gray-400 text-[10px]">Color by section type</div>
             </div>
             <div class="w-2.5 h-2.5 rounded-full bg-cyan-500 flex-shrink-0"></div>
           </label>
 
           <!-- Layer: Confidence -->
-          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
             <div class="relative">
               <input type="checkbox" id="layer-confidence" class="sr-only peer">
-              <div class="w-8 h-4 bg-white/10 rounded-full peer-checked:bg-emerald-500 transition-colors"></div>
-              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-transform"></div>
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-emerald-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-white text-xs font-medium">Confidence</div>
-              <div class="text-gray-500 text-[10px]">High / Medium / Low</div>
+              <div class="text-gray-900 text-xs font-medium">Confidence</div>
+              <div class="text-gray-400 text-[10px]">High / Medium / Low</div>
             </div>
             <div class="flex items-center gap-0.5 flex-shrink-0">
               <div class="w-2 h-2 rounded-full" style="background:#059669"></div>
@@ -147,30 +149,30 @@
           </label>
 
           <!-- Layer: Evidence -->
-          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
             <div class="relative">
               <input type="checkbox" id="layer-evidence" class="sr-only peer">
-              <div class="w-8 h-4 bg-white/10 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
-              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-transform"></div>
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-white text-xs font-medium">Evidence</div>
-              <div class="text-gray-500 text-[10px]">Evidence type strength</div>
+              <div class="text-gray-900 text-xs font-medium">Evidence</div>
+              <div class="text-gray-400 text-[10px]">Evidence type strength</div>
             </div>
             <div class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></div>
           </label>
         </div>
 
         <!-- Section legend (shown when sections layer active) -->
-        <div id="section-legend" class="hidden border-t border-white/5 px-4 py-3">
-          <div class="text-gray-500 text-[10px] uppercase tracking-wide font-semibold mb-2">Section Colors</div>
+        <div id="section-legend" class="hidden border-t border-gray-100 px-4 py-3">
+          <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">Section Colors</div>
           <div class="flex flex-col gap-1.5 text-[11px]">
-            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#3b82f6"></div><span class="text-gray-400">Core Operating Rules</span></div>
-            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#8b5cf6"></div><span class="text-gray-400">Agent Roles & Authority</span></div>
-            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#06b6d4"></div><span class="text-gray-400">Coordination Patterns</span></div>
-            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#f59e0b"></div><span class="text-gray-400">Operational Heuristics</span></div>
-            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#ef4444"></div><span class="text-gray-400">Failure Patterns</span></div>
-            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#10b981"></div><span class="text-gray-400">Human-AI Boundary</span></div>
+            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#3b82f6"></div><span class="text-gray-600">Core Operating Rules</span></div>
+            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#8b5cf6"></div><span class="text-gray-600">Agent Roles & Authority</span></div>
+            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#06b6d4"></div><span class="text-gray-600">Coordination Patterns</span></div>
+            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#f59e0b"></div><span class="text-gray-600">Operational Heuristics</span></div>
+            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#ef4444"></div><span class="text-gray-600">Failure Patterns</span></div>
+            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#10b981"></div><span class="text-gray-600">Human-AI Boundary</span></div>
           </div>
         </div>
       </div>
@@ -178,10 +180,10 @@
 
     <!-- Node Detail Panel (appears on click, replaces layer panel position) -->
     <div id="detail-panel" class="absolute bottom-4 right-4 z-20 hidden" style="width: 300px;">
-      <div class="rounded-xl border border-white/10 bg-[rgba(10,15,30,0.95)] backdrop-blur-sm overflow-hidden shadow-2xl">
-        <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-          <span class="text-white text-xs font-semibold tracking-wide uppercase" id="detail-title">Organization</span>
-          <button id="detail-close" class="text-gray-500 hover:text-white transition-colors">
+      <div class="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-lg">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <span class="text-gray-900 text-xs font-semibold tracking-wide uppercase" id="detail-title">Organization</span>
+          <button id="detail-close" class="text-gray-400 hover:text-gray-700 transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -269,8 +271,18 @@
       renderGraph(data);
     } catch (e) {
       document.getElementById('graph-loading').innerHTML =
-        '<div class="text-center"><span class="text-red-400 text-sm">Failed to load graph data.</span></div>';
+        '<div class="text-center"><span class="text-red-500 text-sm">Failed to load graph data.</span></div>';
     }
+  }
+
+  // ---- Curved path helper ----
+  function curvedPath(d) {
+    var dx = d.target.x - d.source.x;
+    var dy = d.target.y - d.source.y;
+    var dr = Math.sqrt(dx * dx + dy * dy) * 0.5;
+    return 'M' + d.source.x + ',' + d.source.y +
+           'A' + dr + ',' + dr + ' 0 0,1 ' +
+           d.target.x + ',' + d.target.y;
   }
 
   // ---- Render ----
@@ -281,21 +293,10 @@
     var svg = d3.select('#graph-svg');
     svg.selectAll('*').remove();
 
-    // Defs for glow filter
+    // Defs for drop shadow filter (replaces glow)
     var defs = svg.append('defs');
-    var filter = defs.append('filter').attr('id', 'glow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
-    filter.append('feGaussianBlur').attr('stdDeviation', '4').attr('result', 'coloredBlur');
-    var feMerge = filter.append('feMerge');
-    feMerge.append('feMergeNode').attr('in', 'coloredBlur');
-    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
-
-    // Radial gradient for org nodes
-    data.nodes.forEach(function(n, i) {
-      var grad = defs.append('radialGradient').attr('id', 'org-grad-' + i);
-      var baseColor = templateColors[n.template] || '#6b7280';
-      grad.append('stop').attr('offset', '0%').attr('stop-color', baseColor).attr('stop-opacity', 0.9);
-      grad.append('stop').attr('offset', '100%').attr('stop-color', baseColor).attr('stop-opacity', 0.6);
-    });
+    var shadow = defs.append('filter').attr('id', 'drop-shadow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+    shadow.append('feDropShadow').attr('dx', '0').attr('dy', '2').attr('stdDeviation', '4').attr('flood-color', '#000000').attr('flood-opacity', '0.1');
 
     gMain = svg.append('g').attr('class', 'graph-main');
 
@@ -338,14 +339,15 @@
       });
     }
 
-    // Org-level edges (claim similarity connections)
+    // Org-level edges (claim similarity connections) -- now curved paths
     var orgEdgeLayer = gMain.append('g').attr('class', 'org-edges');
-    orgEdgeElems = orgEdgeLayer.selectAll('line')
+    orgEdgeElems = orgEdgeLayer.selectAll('path')
       .data(data.edges)
-      .join('line')
+      .join('path')
+      .attr('fill', 'none')
       .attr('stroke', '#8b5cf6')
       .attr('stroke-width', function(d) { return Math.min(Math.max(d.weight || 1, 1), 6); })
-      .attr('stroke-opacity', 0.3)
+      .attr('stroke-opacity', 0.4)
       .attr('stroke-dasharray', '8,4')
       .style('cursor', 'pointer')
       .on('click', function(event, d) {
@@ -355,14 +357,14 @@
       })
       .on('mouseenter', function(event, d) {
         d3.select(this).attr('stroke-opacity', 0.7);
-        showTooltip(event, '<div class="text-white font-medium mb-1">' + (d.weight || 1) + ' similar claim' + ((d.weight || 1) > 1 ? 's' : '') + '</div>' +
+        showTooltip(event, '<div class="text-gray-900 font-medium mb-1">' + (d.weight || 1) + ' similar claim' + ((d.weight || 1) > 1 ? 's' : '') + '</div>' +
           (d.topClaims ? d.topClaims.slice(0, 2).map(function(tc) {
-            return '<div class="text-gray-400 text-[11px] truncate mb-0.5">"' + truncate(tc.claimA, 40) + '"</div>';
+            return '<div class="text-gray-500 text-[11px] truncate mb-0.5">"' + truncate(tc.claimA, 40) + '"</div>';
           }).join('') : '') +
-          '<div class="text-gray-500 text-[10px] mt-1">Click to compare</div>');
+          '<div class="text-gray-400 text-[10px] mt-1">Click to compare</div>');
       })
       .on('mouseleave', function() {
-        d3.select(this).attr('stroke-opacity', 0.3);
+        d3.select(this).attr('stroke-opacity', 0.4);
         hideTooltip();
       });
 
@@ -381,8 +383,8 @@
       .style('cursor', 'pointer')
       .on('mouseenter', function(event, d) {
         d3.select(this).attr('r', 5).attr('fill-opacity', 1);
-        showTooltip(event, '<div class="text-white font-medium mb-1">' + d.claimId + '</div>' +
-          '<div class="text-gray-400 text-[11px] mb-1">' + formatSection(d.section) + '</div>' +
+        showTooltip(event, '<div class="text-gray-900 font-medium mb-1">' + d.claimId + '</div>' +
+          '<div class="text-gray-500 text-[11px] mb-1">' + formatSection(d.section) + '</div>' +
           '<div class="text-gray-500 text-[10px] leading-relaxed">' + truncate(d.rule, 120) + '</div>' +
           '<div class="flex gap-3 mt-2">' +
           '<span class="text-[10px]" style="color:' + (confidenceColors[d.confidence] || '#9ca3af') + '">' + d.confidence + '</span>' +
@@ -418,22 +420,13 @@
         .on('end', function(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
       );
 
-    // Org outer glow ring
-    orgNodeElems.append('circle')
-      .attr('r', function(d) { return getOrgRadius(d) + 8; })
-      .attr('fill', 'none')
-      .attr('stroke', function(d) { return templateColors[d.template] || '#6b7280'; })
-      .attr('stroke-width', 1)
-      .attr('stroke-opacity', 0.15);
-
-    // Org main circle
+    // Org main circle -- flat fill, white stroke, drop shadow
     orgNodeElems.append('circle')
       .attr('r', function(d) { return getOrgRadius(d); })
-      .attr('fill', function(d, i) { return 'url(#org-grad-' + i + ')'; })
-      .attr('stroke', function(d) { return templateColors[d.template] || '#6b7280'; })
-      .attr('stroke-width', 2)
-      .attr('stroke-opacity', 0.5)
-      .attr('filter', 'url(#glow)');
+      .attr('fill', function(d) { return templateColors[d.template] || '#6b7280'; })
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2.5)
+      .attr('filter', 'url(#drop-shadow)');
 
     // Org label
     orgNodeElems.append('text')
@@ -442,9 +435,9 @@
       .attr('text-anchor', 'middle')
       .attr('font-size', '12px')
       .attr('font-weight', '600')
-      .attr('fill', '#e2e8f0')
+      .attr('fill', '#374151')
       .attr('paint-order', 'stroke')
-      .attr('stroke', '#060a14')
+      .attr('stroke', '#ffffff')
       .attr('stroke-width', '3px');
 
     // Claim count inside org node
@@ -464,7 +457,7 @@
         return 'translate(' + (r * 0.7) + ',' + (-r * 0.7) + ')';
       })
       .each(function() {
-        d3.select(this).append('circle').attr('r', 6).attr('fill', '#f59e0b').attr('stroke', '#060a14').attr('stroke-width', 2);
+        d3.select(this).append('circle').attr('r', 6).attr('fill', '#f59e0b').attr('stroke', '#ffffff').attr('stroke-width', 2);
         d3.select(this).append('text').text('\u2605').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '7px').attr('fill', '#fff');
       });
 
@@ -488,28 +481,24 @@
         showDetailPanel(d);
       })
       .on('mouseenter', function(event, d) {
-        d3.select(this).select('circle:nth-child(2)').attr('stroke-opacity', 1);
-        showTooltip(event, '<div class="text-white font-semibold mb-1">' + d.orgName + '</div>' +
+        d3.select(this).select('circle:first-child').attr('stroke-width', 3.5);
+        showTooltip(event, '<div class="text-gray-900 font-semibold mb-1">' + d.orgName + '</div>' +
           '<div class="flex items-center gap-2 mb-1">' +
-          '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '30; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
+          '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
           (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
           '</div>' +
-          '<div class="text-gray-400 text-[11px]">' + d.claimCount + ' claims</div>' +
+          '<div class="text-gray-600 text-[11px]">' + d.claimCount + ' claims</div>' +
           (d.qualityTier ? '<div class="text-gray-500 text-[10px] mt-1 capitalize">' + d.qualityTier + ' tier</div>' : '') +
-          '<div class="text-gray-600 text-[10px] mt-1">Click for details</div>');
+          '<div class="text-gray-400 text-[10px] mt-1">Click for details</div>');
       })
       .on('mouseleave', function(event, d) {
-        d3.select(this).select('circle:nth-child(2)').attr('stroke-opacity', 0.5);
+        d3.select(this).select('circle:first-child').attr('stroke-width', 2.5);
         hideTooltip();
       });
 
-    // Tick
+    // Tick -- uses curvedPath for org edges
     simulation.on('tick', function() {
-      orgEdgeElems
-        .attr('x1', function(d) { return d.source.x; })
-        .attr('y1', function(d) { return d.source.y; })
-        .attr('x2', function(d) { return d.target.x; })
-        .attr('y2', function(d) { return d.target.y; });
+      orgEdgeElems.attr('d', curvedPath);
 
       orgNodeElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
 
@@ -602,12 +591,12 @@
     }).join('');
 
     return '<div class="mt-3">' +
-      '<label class="text-gray-500 text-[10px] uppercase tracking-wide block mb-1.5">Compare with</label>' +
+      '<label class="text-gray-400 text-[10px] uppercase tracking-wide block mb-1.5">Compare with</label>' +
       '<div class="flex gap-2">' +
-      '<select id="compare-target" class="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-gray-300 text-xs focus:border-otp-500 focus:outline-none appearance-none" style="background-image:url(\'data:image/svg+xml;utf8,<svg fill=\"%239ca3af\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" d=\"M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\" clip-rule=\"evenodd\"/></svg>\'); background-repeat:no-repeat; background-position:right 8px center; background-size:14px; padding-right:28px;">' +
+      '<select id="compare-target" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 text-xs focus:border-otp-500 focus:outline-none appearance-none" style="background-image:url(\'data:image/svg+xml;utf8,<svg fill=\"%239ca3af\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" d=\"M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\" clip-rule=\"evenodd\"/></svg>\'); background-repeat:no-repeat; background-position:right 8px center; background-size:14px; padding-right:28px;">' +
       options +
       '</select>' +
-      '<button onclick="goCompare(\'' + d.id + '\')" class="px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-colors whitespace-nowrap">Compare</button>' +
+      '<button onclick="goCompare(\'' + d.id + '\')" class="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-medium hover:bg-purple-100 transition-colors whitespace-nowrap border border-purple-200">Compare</button>' +
       '</div></div>';
   }
 
@@ -635,30 +624,30 @@
     var tierBadge = '';
     if (d.qualityTier) {
       var tierC = { platinum: '#a78bfa', gold: '#fbbf24', silver: '#d1d5db', bronze: '#d97706' };
-      tierBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded capitalize" style="background:' + (tierC[d.qualityTier] || '#6b7280') + '20; color:' + (tierC[d.qualityTier] || '#6b7280') + '">' + d.qualityTier + '</span>';
+      tierBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded capitalize" style="background:' + (tierC[d.qualityTier] || '#6b7280') + '15; color:' + (tierC[d.qualityTier] || '#6b7280') + '">' + d.qualityTier + '</span>';
     }
 
     var badgeHtml = '';
     if (d.badge === 'founding') {
-      badgeHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:#f59e0b20; color:#f59e0b">\u2605 Founding</span>';
+      badgeHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">\u2605 Founding</span>';
     }
 
     document.getElementById('detail-content').innerHTML =
       '<div class="flex items-center gap-2 mb-3">' +
-      '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '30; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
+      '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
       (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
       tierBadge + badgeHtml +
       '</div>' +
       '<div class="grid grid-cols-2 gap-3 mb-4">' +
-      '<div class="bg-white/5 rounded-lg px-3 py-2"><div class="text-white text-lg font-bold">' + d.claimCount + '</div><div class="text-gray-500 text-[10px]">Claims</div></div>' +
-      '<div class="bg-white/5 rounded-lg px-3 py-2"><div class="text-white text-lg font-bold capitalize">' + (d.qualityTier || '--') + '</div><div class="text-gray-500 text-[10px]">Quality Tier</div></div>' +
+      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.claimCount + '</div><div class="text-gray-400 text-[10px]">Claims</div></div>' +
+      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold capitalize">' + (d.qualityTier || '--') + '</div><div class="text-gray-400 text-[10px]">Quality Tier</div></div>' +
       '</div>' +
-      (topSections.length > 0 ? '<div class="mb-4"><div class="text-gray-500 text-[10px] uppercase tracking-wide mb-2">Top Sections</div>' +
+      (topSections.length > 0 ? '<div class="mb-4"><div class="text-gray-400 text-[10px] uppercase tracking-wide mb-2">Top Sections</div>' +
       topSections.map(function(s) {
-        return '<div class="flex items-center justify-between py-1"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:' + (sectionColors[s[0]] || '#6b7280') + '"></div><span class="text-gray-300 text-[11px]">' + formatSection(s[0]) + '</span></div><span class="text-gray-500 text-[11px]">' + s[1] + '</span></div>';
+        return '<div class="flex items-center justify-between py-1"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:' + (sectionColors[s[0]] || '#6b7280') + '"></div><span class="text-gray-700 text-[11px]">' + formatSection(s[0]) + '</span></div><span class="text-gray-400 text-[11px]">' + s[1] + '</span></div>';
       }).join('') + '</div>' : '') +
       '<div class="flex gap-2 mt-3">' +
-      '<a href="/oos/' + d.id + '" class="flex-1 text-center px-3 py-2 bg-otp-500/20 text-otp-400 rounded-lg text-xs font-medium hover:bg-otp-500/30 transition-colors">View OOS</a>' +
+      '<a href="/oos/' + d.id + '" class="flex-1 text-center px-3 py-2 bg-otp-500/10 text-otp-500 rounded-lg text-xs font-medium hover:bg-otp-500/20 transition-colors border border-otp-500/20">View OOS</a>' +
       '</div>' +
       buildCompareDropdown(d);
   }
