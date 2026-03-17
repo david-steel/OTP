@@ -11,6 +11,9 @@
           <% if (org.qualityTier) { %>
             <span class="badge-<%= org.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= org.qualityTier %></span>
           <% } %>
+          <% if (org.agenticLevel) { %>
+            <span class="badge-level badge-level-<%= org.agenticLevel %>" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= org.agenticLevel %> <%= org.agenticLabel %></span>
+          <% } %>
         </div>
         <div class="text-gray-500 text-sm"><%= org.industry %> &middot; <%= org.size %></div>
         <div class="text-xs text-gray-400 mt-1">Member since <%= new Date(org.memberSince).toLocaleDateString() %></div>

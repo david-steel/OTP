@@ -62,6 +62,7 @@ await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/scanner.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/api-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/recommendations.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));

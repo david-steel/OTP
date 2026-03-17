@@ -46,3 +46,25 @@ export const EVIDENCE_STRENGTH: Record<EvidenceType, number> = {
   INFERENCE: 2,
   SPECULATION: 1,
 };
+
+// Ticket enums
+export const TICKET_STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
+export type TicketStatus = (typeof TICKET_STATUSES)[number];
+
+export const TICKET_PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
+export type TicketPriority = (typeof TICKET_PRIORITIES)[number];
+
+export const TICKET_CATEGORIES = ['bug', 'feature', 'question', 'other'] as const;
+export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
+
+// Agentic Level labels (Bassim Eledath's 8 Levels of Agentic Engineering)
+export const AGENTIC_LEVEL_LABELS: Record<number, string> = {
+  1: 'Tab Complete',
+  2: 'Agent IDE',
+  3: 'Context Engineering',
+  4: 'Compounding Engineering',
+  5: 'MCP & Skills',
+  6: 'Harness Engineering',
+  7: 'Background Agents',
+  8: 'Autonomous Agent Teams',
+};

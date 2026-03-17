@@ -7,6 +7,7 @@ import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
+import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -31,7 +32,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const rows = await db.execute(sql`
       SELECT f.id, f.template, f.version, f.claim_count, f.word_count,
              f.confidence_distribution, f.evidence_distribution, f.published_at,
-             o.id AS org_id, o.name AS org_name, o.industry, o.size, o.badge, o.quality_tier
+             o.id AS org_id, o.name AS org_name, o.industry, o.size, o.badge, o.quality_tier, o.agentic_level
       FROM oos_files f JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
       ORDER BY f.published_at DESC NULLS LAST
@@ -134,7 +135,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     return reply.view('pages/org-profile', {
       title: `${org.name} - OTP`,
-      org: { ...org, memberSince: org.createdAt },
+      org: { ...org, memberSince: org.createdAt, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' },
       stats: { publishedFiles: pubFiles.length, totalClaims, latestVersion: pubFiles[0]?.version || 0, latestPublish: pubFiles[0]?.publishedAt },
       oosFiles: pubFiles,
     });
@@ -173,6 +174,11 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });
+  });
+
+  // Tickets page
+  app.get('/tickets', async (request, reply) => {
+    return reply.view('pages/tickets', { title: 'Issue Tracker - OTP' });
   });
 
   // Settings: API Keys
@@ -261,7 +267,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Dashboard - OTP',
       authState: 'authenticated',
       dashboard: {
-        profile: { name: org.name, industry: org.industry, size: org.size, badge: org.badge, qualityTier: org.qualityTier },
+        profile: { name: org.name, industry: org.industry, size: org.size, badge: org.badge, qualityTier: org.qualityTier, agenticLevel: org.agenticLevel, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' },
         stats: {
           publishedFiles: orgOosFiles.filter(f => f.status === 'published').length,
           totalClaims,

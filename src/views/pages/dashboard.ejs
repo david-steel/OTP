@@ -33,6 +33,9 @@
             <% if (dashboard.profile.qualityTier) { %>
               <span class="badge-<%= dashboard.profile.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= dashboard.profile.qualityTier %></span>
             <% } %>
+            <% if (dashboard.profile.agenticLevel) { %>
+              <span class="badge-level badge-level-<%= dashboard.profile.agenticLevel %>" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= dashboard.profile.agenticLevel %> <%= dashboard.profile.agenticLabel %></span>
+            <% } %>
           </div>
           <div class="text-sm text-gray-500"><%= dashboard.profile.industry %> &middot; <%= dashboard.profile.size %></div>
         </div>

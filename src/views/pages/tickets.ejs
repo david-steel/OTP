@@ -1,0 +1,220 @@
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold">Issue Tracker</h1>
+      <p class="text-gray-500 text-sm">Report bugs, request features, and track resolutions.</p>
+    </div>
+    <button id="new-ticket-btn" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400">
+      Report Issue
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-red-600" id="stat-open">-</div>
+      <div class="text-xs text-gray-500">Open</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-yellow-600" id="stat-progress">-</div>
+      <div class="text-xs text-gray-500">In Progress</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-green-600" id="stat-resolved">-</div>
+      <div class="text-xs text-gray-500">Resolved</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-gray-500" id="stat-closed">-</div>
+      <div class="text-xs text-gray-500">Closed</div>
+    </div>
+  </div>
+
+  <!-- New Ticket Form (hidden by default) -->
+  <div id="ticket-form" class="hidden bg-otp-50 border border-otp-200 p-6 rounded-lg mb-8">
+    <h2 class="font-semibold text-lg mb-4">Report an Issue</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+        <input type="text" id="ticket-title" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Brief description of the issue">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea id="ticket-description" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Steps to reproduce, expected behavior, actual behavior..."></textarea>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select id="ticket-category" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="bug">Bug</option>
+            <option value="feature">Feature Request</option>
+            <option value="question">Question</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <select id="ticket-priority" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email (optional)</label>
+          <input type="email" id="ticket-email" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="For follow-up">
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button id="submit-ticket" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400">Submit</button>
+        <button id="cancel-ticket" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300">Cancel</button>
+      </div>
+      <div id="ticket-success" class="hidden text-green-700 text-sm bg-green-50 border border-green-200 p-3 rounded-lg"></div>
+      <div id="ticket-error" class="hidden text-red-700 text-sm bg-red-50 border border-red-200 p-3 rounded-lg"></div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex gap-3 mb-4">
+    <button class="ticket-filter px-3 py-1 text-sm rounded-lg border bg-otp-500 text-white" data-status="">All</button>
+    <button class="ticket-filter px-3 py-1 text-sm rounded-lg border hover:bg-gray-50" data-status="open">Open</button>
+    <button class="ticket-filter px-3 py-1 text-sm rounded-lg border hover:bg-gray-50" data-status="in_progress">In Progress</button>
+    <button class="ticket-filter px-3 py-1 text-sm rounded-lg border hover:bg-gray-50" data-status="resolved">Resolved</button>
+    <button class="ticket-filter px-3 py-1 text-sm rounded-lg border hover:bg-gray-50" data-status="closed">Closed</button>
+  </div>
+
+  <!-- Ticket List -->
+  <div id="ticket-list" class="space-y-3">
+    <div class="text-center py-8 text-gray-400 text-sm">Loading tickets...</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var currentFilter = '';
+
+  // Toggle form
+  document.getElementById('new-ticket-btn').addEventListener('click', function() {
+    document.getElementById('ticket-form').classList.toggle('hidden');
+  });
+  document.getElementById('cancel-ticket').addEventListener('click', function() {
+    document.getElementById('ticket-form').classList.add('hidden');
+  });
+
+  // Load stats
+  fetch('/api/v1/tickets/stats').then(r => r.json()).then(function(data) {
+    var s = data.stats;
+    document.getElementById('stat-open').textContent = s.open_count || '0';
+    document.getElementById('stat-progress').textContent = s.in_progress_count || '0';
+    document.getElementById('stat-resolved').textContent = s.resolved_count || '0';
+    document.getElementById('stat-closed').textContent = s.closed_count || '0';
+  }).catch(function() {});
+
+  // Load tickets
+  function loadTickets(status) {
+    var url = '/api/v1/tickets' + (status ? '?status=' + status : '');
+    fetch(url).then(r => r.json()).then(function(data) {
+      var list = document.getElementById('ticket-list');
+      if (!data.tickets || data.tickets.length === 0) {
+        list.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">No tickets found.</div>';
+        return;
+      }
+      list.innerHTML = data.tickets.map(function(t) {
+        var statusColor = {
+          open: 'bg-red-100 text-red-700',
+          in_progress: 'bg-yellow-100 text-yellow-700',
+          resolved: 'bg-green-100 text-green-700',
+          closed: 'bg-gray-100 text-gray-500',
+        }[t.status] || 'bg-gray-100 text-gray-500';
+        var priorityColor = {
+          critical: 'text-red-600',
+          high: 'text-orange-600',
+          medium: 'text-yellow-600',
+          low: 'text-gray-500',
+        }[t.priority] || 'text-gray-500';
+        var categoryIcon = {
+          bug: '&#x1f41b;',
+          feature: '&#x2728;',
+          question: '&#x2753;',
+          other: '&#x1f4cb;',
+        }[t.category] || '';
+        return '<div class="bg-white p-4 rounded-lg border claim-card">' +
+          '<div class="flex items-start justify-between">' +
+            '<div class="flex-1">' +
+              '<div class="flex items-center gap-2 mb-1">' +
+                '<span class="text-xs ' + priorityColor + ' font-medium uppercase">' + t.priority + '</span>' +
+                '<span class="font-medium">' + escapeHtml(t.title) + '</span>' +
+              '</div>' +
+              '<p class="text-sm text-gray-500 line-clamp-2">' + escapeHtml(t.description).substring(0, 200) + '</p>' +
+              (t.resolution ? '<div class="mt-2 text-sm text-green-700 bg-green-50 p-2 rounded"><strong>Resolution:</strong> ' + escapeHtml(t.resolution) + '</div>' : '') +
+            '</div>' +
+            '<div class="flex flex-col items-end gap-1 ml-4">' +
+              '<span class="text-xs px-2 py-0.5 rounded ' + statusColor + '">' + t.status.replace('_', ' ') + '</span>' +
+              '<span class="text-xs text-gray-400">' + new Date(t.created_at || t.createdAt).toLocaleDateString() + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('ticket-list').innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Failed to load tickets.</div>';
+    });
+  }
+
+  loadTickets('');
+
+  // Filter buttons
+  document.querySelectorAll('.ticket-filter').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.ticket-filter').forEach(function(b) {
+        b.classList.remove('bg-otp-500', 'text-white');
+        b.classList.add('hover:bg-gray-50');
+      });
+      this.classList.add('bg-otp-500', 'text-white');
+      this.classList.remove('hover:bg-gray-50');
+      loadTickets(this.dataset.status);
+    });
+  });
+
+  // Submit ticket
+  document.getElementById('submit-ticket').addEventListener('click', function() {
+    var title = document.getElementById('ticket-title').value;
+    var description = document.getElementById('ticket-description').value;
+    var category = document.getElementById('ticket-category').value;
+    var priority = document.getElementById('ticket-priority').value;
+    var email = document.getElementById('ticket-email').value;
+
+    document.getElementById('ticket-success').classList.add('hidden');
+    document.getElementById('ticket-error').classList.add('hidden');
+
+    fetch('/api/v1/tickets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title, description: description, category: category, priority: priority, reporterEmail: email || undefined }),
+    }).then(r => r.json()).then(function(data) {
+      if (data.ticket) {
+        document.getElementById('ticket-success').textContent = 'Ticket #' + data.ticket.id.substring(0, 8) + ' created. We will review it shortly.';
+        document.getElementById('ticket-success').classList.remove('hidden');
+        document.getElementById('ticket-title').value = '';
+        document.getElementById('ticket-description').value = '';
+        loadTickets(currentFilter);
+        // Reload stats
+        fetch('/api/v1/tickets/stats').then(r => r.json()).then(function(s) {
+          document.getElementById('stat-open').textContent = s.stats.open_count || '0';
+        });
+      } else {
+        document.getElementById('ticket-error').textContent = data.error?.message || 'Failed to create ticket.';
+        document.getElementById('ticket-error').classList.remove('hidden');
+      }
+    }).catch(function(err) {
+      document.getElementById('ticket-error').textContent = 'Network error. Please try again.';
+      document.getElementById('ticket-error').classList.remove('hidden');
+    });
+  });
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+})();
+</script>

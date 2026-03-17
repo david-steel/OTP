@@ -35,6 +35,10 @@ export const actorTypeEnum = pgEnum('actor_type', ['user', 'system', 'agent']);
 
 // ---- Tables ----
 
+export const ticketStatusEnum = pgEnum('ticket_status', ['open', 'in_progress', 'resolved', 'closed']);
+export const ticketPriorityEnum = pgEnum('ticket_priority', ['low', 'medium', 'high', 'critical']);
+export const ticketCategoryEnum = pgEnum('ticket_category', ['bug', 'feature', 'question', 'other']);
+
 export const organizations = pgTable('organizations', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -45,6 +49,7 @@ export const organizations = pgTable('organizations', {
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   badge: badgeEnum('badge'),
   qualityTier: qualityTierEnum('quality_tier'),
+  agenticLevel: integer('agentic_level'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
@@ -124,6 +129,24 @@ export const apiKeys = pgTable('api_keys', {
 }, (table) => ({
   hashIdx: index('idx_api_keys_hash').on(table.keyHash),
   orgIdx: index('idx_api_keys_org').on(table.orgId),
+}));
+
+export const tickets = pgTable('tickets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id),
+  title: varchar('title', { length: 500 }).notNull(),
+  description: text('description').notNull(),
+  status: ticketStatusEnum('status').notNull().default('open'),
+  priority: ticketPriorityEnum('priority').notNull().default('medium'),
+  category: ticketCategoryEnum('category').notNull().default('bug'),
+  reporterEmail: varchar('reporter_email', { length: 255 }),
+  resolution: text('resolution'),
+  agentNotes: text('agent_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  statusIdx: index('ticket_status_idx').on(table.status),
+  orgIdx: index('ticket_org_idx').on(table.orgId),
 }));
 
 export const auditLogs = pgTable('audit_logs', {

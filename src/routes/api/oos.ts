@@ -8,6 +8,7 @@ import { parseOOS } from '../../services/claim-parser.js';
 import { validateOOS } from '../../services/format-validator.js';
 import { scanOOSContent } from '../../services/pii-scanner.js';
 import { calculateQualityTier } from '../../services/badge-calculator.js';
+import { calculateAgenticLevel } from '../../services/agentic-level-calculator.js';
 import { computeAllSimilarities } from '../../services/similarity.js';
 import { computeDiff } from '../../services/diff-engine.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
@@ -283,9 +284,12 @@ export default async function oosRoutes(app: FastifyInstance) {
       .where(eq(oosFiles.id, id))
       .returning();
 
-    // Update org quality tier
+    // Calculate agentic level from claims
+    const agenticResult = calculateAgenticLevel(parsed.claims, parsed.frontmatter as unknown as Record<string, unknown>);
+
+    // Update org quality tier and agentic level
     await db.update(organizations)
-      .set({ qualityTier: qualityResult.tier, updatedAt: now })
+      .set({ qualityTier: qualityResult.tier, agenticLevel: agenticResult.level, updatedAt: now })
       .where(eq(organizations.id, org.id));
 
     // Step 5: Compute similarities (background-ish -- runs inline for Phase 1)
@@ -407,6 +411,8 @@ export default async function oosRoutes(app: FastifyInstance) {
       oosFile: published,
       qualityTier: qualityResult.tier,
       qualityScore: qualityResult.score,
+      agenticLevel: agenticResult.level,
+      agenticLabel: agenticResult.label,
       similaritiesFound: simPairs.length,
       validation,
       piiScan: { clean: true },
@@ -433,7 +439,7 @@ export default async function oosRoutes(app: FastifyInstance) {
 
     return {
       oosFile,
-      org: org ? { id: org.id, name: org.name, industry: org.industry, size: org.size, badge: org.badge, qualityTier: org.qualityTier } : null,
+      org: org ? { id: org.id, name: org.name, industry: org.industry, size: org.size, badge: org.badge, qualityTier: org.qualityTier, agenticLevel: org.agenticLevel } : null,
     };
   });
 

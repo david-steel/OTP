@@ -473,6 +473,95 @@ server.tool(
   }
 );
 
+// ============================================================
+// TOOL: submit_ticket
+// Report a bug or request a feature
+// ============================================================
+server.tool(
+  "submit_ticket",
+  "Report a bug, request a feature, or ask a question about the OTP platform. Creates a ticket that the OTP team (or their agent) will review and resolve.",
+  {
+    title: z.string().min(5).max(500).describe("Brief description of the issue"),
+    description: z.string().min(10).describe("Detailed description: steps to reproduce, expected behavior, actual behavior"),
+    category: z.enum(["bug", "feature", "question", "other"]).optional().describe("Ticket category (default: bug)"),
+    priority: z.enum(["low", "medium", "high", "critical"]).optional().describe("Priority level (default: medium)"),
+    reporter_email: z.string().email().optional().describe("Email for follow-up (optional)"),
+  },
+  async (params) => {
+    const result = await otpFetch("/tickets", {
+      method: "POST",
+      body: JSON.stringify({
+        title: params.title,
+        description: params.description,
+        category: params.category || "bug",
+        priority: params.priority || "medium",
+        reporterEmail: params.reporter_email,
+      }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ============================================================
+// TOOL: list_tickets
+// List open tickets on OTP
+// ============================================================
+server.tool(
+  "list_tickets",
+  "List tickets on the OTP platform. Filter by status (open, in_progress, resolved, closed) or category (bug, feature, question, other).",
+  {
+    status: z.enum(["open", "in_progress", "resolved", "closed"]).optional().describe("Filter by status"),
+    category: z.enum(["bug", "feature", "question", "other"]).optional().describe("Filter by category"),
+    limit: z.number().optional().describe("Results per page (max 100)"),
+  },
+  async (params) => {
+    const query = new URLSearchParams();
+    if (params.status) query.set("status", params.status);
+    if (params.category) query.set("category", params.category);
+    if (params.limit) query.set("limit", String(params.limit));
+
+    const result = await otpFetch(`/tickets?${query}`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ============================================================
+// TOOL: update_ticket
+// Update a ticket (resolve, add notes, change status)
+// ============================================================
+server.tool(
+  "update_ticket",
+  "Update a ticket on OTP. Use to resolve issues, add agent notes, or change status. Requires API key.",
+  {
+    id: z.string().uuid().describe("The ticket ID to update"),
+    status: z.enum(["open", "in_progress", "resolved", "closed"]).optional().describe("New status"),
+    priority: z.enum(["low", "medium", "high", "critical"]).optional().describe("New priority"),
+    resolution: z.string().optional().describe("Resolution description (what was done to fix it)"),
+    agent_notes: z.string().optional().describe("Internal notes from the fixing agent"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: OTP_API_KEY environment variable is required to update tickets.",
+        }],
+      };
+    }
+
+    const result = await otpFetch(`/tickets/${params.id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        status: params.status,
+        priority: params.priority,
+        resolution: params.resolution,
+        agentNotes: params.agent_notes,
+      }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
 // -- Start --
 
 async function main() {
