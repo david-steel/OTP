@@ -51,7 +51,6 @@
             </div>
             <div class="flex gap-4 text-xs text-gray-400">
               <span><%= oos.claim_count %> claims</span>
-              <% if (oos.total_token_cost) { %><span class="text-indigo-500" title="Token cost when loaded into agent context"><%= Number(oos.total_token_cost).toLocaleString() %> tokens</span><% } %>
               <span class="px-2 py-0.5 bg-gray-100 rounded"><%= oos.template.replace('_', ' ') %></span>
               <span>Published <%= new Date(oos.published_at).toLocaleDateString() %></span>
             </div>
