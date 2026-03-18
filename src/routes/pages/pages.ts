@@ -13,6 +13,8 @@ function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
 }
 
+const BASE_URL = 'https://orgtp.com';
+
 export default async function pageRoutes(app: FastifyInstance) {
 
   // Homepage
@@ -21,6 +23,30 @@ export default async function pageRoutes(app: FastifyInstance) {
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
     return reply.view('pages/home', {
       title: 'OTP - Where Agents Learn to Work as a Team',
+      description: 'OTP is the coordination intelligence layer for AI-native organizations. Publish, compare, and learn from Organizational Operating Systems.',
+      canonical: BASE_URL + '/',
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'OTP - Organization Transport Protocol',
+          url: BASE_URL,
+          logo: BASE_URL + '/public/favicon-192x192.png',
+          description: 'The coordination intelligence layer for AI-native organizations. Where agents learn to work as a team.',
+          sameAs: []
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'OTP',
+          url: BASE_URL,
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: { '@type': 'EntryPoint', urlTemplate: BASE_URL + '/search?q={search_term_string}' },
+            'query-input': 'required name=search_term_string'
+          }
+        }
+      ],
       publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
       claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
       templateCount: 3,
@@ -38,7 +64,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       ORDER BY f.published_at DESC NULLS LAST
       LIMIT 50
     `);
-    return reply.view('pages/browse', { title: 'Browse Intelligence - OTP', oosFiles: rows.rows || [] });
+    return reply.view('pages/browse', { title: 'Browse Intelligence - OTP', description: 'Browse published Organizational Operating Systems. See how organizations coordinate their AI agent teams.', canonical: BASE_URL + '/browse', oosFiles: rows.rows || [] });
   });
 
   // Search
@@ -66,7 +92,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         pagination.total = results.length;
       }
 
-      return reply.view('pages/search', { title: q ? `"${q}" - Search - OTP` : 'Search - OTP', q, confidence, evidence, template, industry, results, pagination });
+      return reply.view('pages/search', { title: q ? `"${q}" - Search - OTP` : 'Search - OTP', description: 'Search knowledge claims across published Organizational Operating Systems on OTP.', canonical: BASE_URL + '/search', q, confidence, evidence, template, industry, results, pagination });
     }
   );
 
@@ -80,7 +106,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const claimRows = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
 
     const orgData = org ? { ...org, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' } : {};
-    return reply.view('pages/oos-detail', { title: `${org?.name || 'OOS'} - OTP`, oosFile, org: orgData, claims: claimRows });
+    return reply.view('pages/oos-detail', { title: `${org?.name || 'OOS'} - OTP`, description: `View the Organizational Operating System published by ${org?.name || 'this organization'} on OTP. ${oosFile.claimCount} coordination claims.`, canonical: BASE_URL + '/oos/' + id, oosFile, org: orgData, claims: claimRows });
   });
 
   // Compare
@@ -136,6 +162,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     return reply.view('pages/org-profile', {
       title: `${org.name} - OTP`,
+      description: `${org.name} on OTP. ${org.industry || 'Organization'} with published coordination intelligence.`,
+      canonical: BASE_URL + '/org/' + id,
       org: { ...org, memberSince: org.createdAt, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' },
       stats: { publishedFiles: pubFiles.length, totalClaims, latestVersion: pubFiles[0]?.version || 0, latestPublish: pubFiles[0]?.publishedAt },
       oosFiles: pubFiles,
@@ -144,57 +172,93 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Graph page
   app.get('/graph', async (request, reply) => {
-    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP' });
+    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the Intelligence Graph showing how AI coordination patterns connect across organizations.', canonical: BASE_URL + '/graph' });
   });
 
   // Guide page
   app.get('/guide', async (request, reply) => {
-    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP' });
+    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Step-by-step guide to generating and publishing your Organizational Operating System on OTP.', canonical: BASE_URL + '/guide' });
   });
 
   // Blog index
   app.get('/blog', async (request, reply) => {
-    return reply.view('pages/blog', { title: 'Blog - OTP' });
+    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog' });
   });
 
   // Blog post 1
   app.get('/blog/why-we-built-otp', async (request, reply) => {
-    return reply.view('pages/blog-post-1', { title: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination. - OTP' });
+    return reply.view('pages/blog-post-1', {
+      title: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination. - OTP',
+      description: 'The hard problem in AI is not building one good agent. It is getting twelve of them to coordinate without stepping on each other. Why we built OTP.',
+      canonical: BASE_URL + '/blog/why-we-built-otp',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-01', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/why-we-built-otp' }
+    });
   });
 
   // Blog post 2
   app.get('/blog/what-is-an-oos', async (request, reply) => {
-    return reply.view('pages/blog-post-2', { title: 'What Is an Organizational Operating System? - OTP' });
+    return reply.view('pages/blog-post-2', {
+      title: 'What Is an Organizational Operating System? - OTP',
+      description: 'An Organizational Operating System captures how your AI agents coordinate. Learn the structure, claims, confidence ratings, and evidence model.',
+      canonical: BASE_URL + '/blog/what-is-an-oos',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'What Is an Organizational Operating System?', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-01', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/what-is-an-oos' }
+    });
   });
 
   // Blog post 3
   app.get('/blog/built-in-48-hours', async (request, reply) => {
-    return reply.view('pages/blog-post-3', { title: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure. - OTP' });
+    return reply.view('pages/blog-post-3', {
+      title: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure. - OTP',
+      description: 'How we built the OTP platform in 48 hours using the same AI agent coordination system the platform is designed to measure.',
+      canonical: BASE_URL + '/blog/built-in-48-hours',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-15', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/built-in-48-hours' }
+    });
   });
 
   // Blog post 4
   app.get('/blog/nvidia-made-the-case', async (request, reply) => {
-    return reply.view('pages/blog-post-4', { title: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It. - OTP' });
+    return reply.view('pages/blog-post-4', {
+      title: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It. - OTP',
+      description: 'Jensen Huang told the world every company needs an agent strategy. OTP is the coordination layer that makes multi-agent strategy work.',
+      canonical: BASE_URL + '/blog/nvidia-made-the-case',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-17', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/nvidia-made-the-case' }
+    });
   });
 
   // Blog post 5
   app.get('/blog/bain-code-red', async (request, reply) => {
-    return reply.view('pages/blog-post-5', { title: 'Bain Just Described the Problem OTP Solves. They Called It "Code Red." - OTP' });
+    return reply.view('pages/blog-post-5', {
+      title: 'Bain Just Described the Problem OTP Solves. They Called It "Code Red." - OTP',
+      description: 'Bain called enterprise multi-agent coordination a Code Red problem. OTP is the coordination intelligence layer that solves it.',
+      canonical: BASE_URL + '/blog/bain-code-red',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Bain Just Described the Problem OTP Solves. They Called It "Code Red."', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-17', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/bain-code-red' }
+    });
   });
 
   // Blog post 6
   app.get('/blog/agentic-levels', async (request, reply) => {
-    return reply.view('pages/blog-post-6', { title: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter. - OTP' });
+    return reply.view('pages/blog-post-6', {
+      title: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter. - OTP',
+      description: 'Agentic maturity levels on OTP measure how sophisticated your AI agent coordination is. From tab completion to autonomous agent teams.',
+      canonical: BASE_URL + '/blog/agentic-levels',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-17', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/agentic-levels' }
+    });
   });
 
   // Investors page
   app.get('/investors', async (request, reply) => {
-    return reply.view('pages/investors', { title: 'For Investors - OTP' });
+    return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });
   });
 
   // Tickets page
   app.get('/tickets', async (request, reply) => {
-    return reply.view('pages/tickets', { title: 'Issue Tracker - OTP' });
+    return reply.view('pages/tickets', { title: 'Issue Tracker - OTP', description: 'Report issues, request features, and track platform improvements for OTP.', canonical: BASE_URL + '/tickets' });
   });
 
   // Settings: API Keys
@@ -227,7 +291,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Publish page -- serves the form, auth check happens client-side + on API call
   app.get('/publish', async (request, reply) => {
-    return reply.view('pages/publish', { title: 'Publish Your OOS - OTP' });
+    return reply.view('pages/publish', { title: 'Publish Your OOS - OTP', description: 'Publish your Organizational Operating System on OTP. Capture and share your AI coordination intelligence.', canonical: BASE_URL + '/publish' });
   });
 
   // Dashboard -- requires auth, shows registration if no org

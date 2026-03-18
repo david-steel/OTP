@@ -3,7 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= typeof title !== 'undefined' ? title : 'OTP' %></title>
+  <title><%= typeof title !== 'undefined' ? title : 'OTP - Where Agents Learn to Work as a Team' %></title>
+  <% if (typeof description !== 'undefined' && description) { %><meta name="description" content="<%= description %>"><% } %>
+  <% if (typeof canonical !== 'undefined' && canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="OTP - Organization Transport Protocol">
+  <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>">
+  <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'OTP - Where Agents Learn to Work as a Team' %>">
+  <% if (typeof description !== 'undefined' && description) { %><meta property="og:description" content="<%= description %>"><% } %>
+  <% if (typeof canonical !== 'undefined' && canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+  <meta property="og:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/favicon-192x192.png' %>">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'OTP - Where Agents Learn to Work as a Team' %>">
+  <% if (typeof description !== 'undefined' && description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
+  <meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/favicon-192x192.png' %>">
+
   <link rel="icon" type="image/png" sizes="32x32" href="/public/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/public/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/public/apple-touch-icon.png">
@@ -113,6 +130,10 @@
     /* Nav */
     .nav-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   </style>
+
+  <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
+  <script type="application/ld+json"><%- JSON.stringify(jsonLd) %></script>
+  <% } %>
 </head>
 <body class="bg-white text-gray-900 min-h-screen">
   <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-otp-950/80 text-white border-b border-white/5">
