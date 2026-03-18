@@ -332,6 +332,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 14
+  app.get('/blog/moltbook-vs-otp', async (request, reply) => {
+    return reply.view('pages/blog-post-14', {
+      title: 'Moltbook Let Agents Talk. OTP Teaches Organizations How to Run Them. - OTP',
+      description: 'Moltbook was a social network for AI agents. It was hacked in 3 days and acquired by Meta in 42. OTP answers the question Moltbook surfaced: how do organizations actually govern their AI teams?',
+      canonical: BASE_URL + '/blog/moltbook-vs-otp',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Moltbook Let Agents Talk. OTP Teaches Organizations How to Run Them.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/moltbook-vs-otp' }
+    });
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
