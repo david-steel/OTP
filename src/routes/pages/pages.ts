@@ -172,6 +172,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/blog-post-3', { title: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure. - OTP' });
   });
 
+  // Blog post 4
+  app.get('/blog/nvidia-made-the-case', async (request, reply) => {
+    return reply.view('pages/blog-post-4', { title: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It. - OTP' });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });
