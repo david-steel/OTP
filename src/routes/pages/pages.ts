@@ -343,6 +343,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 15
+  app.get('/blog/ai-coordination-stack', async (request, reply) => {
+    return reply.view('pages/blog-post-15', {
+      title: 'The AI Coordination Stack: Where OTP Fits Among 40+ Frameworks, Protocols, and Platforms - OTP',
+      description: 'MCP, A2A, LangGraph, CrewAI, Salesforce Agentforce, AWS Bedrock, GPT Store - the AI agent ecosystem has 40+ players across 6 layers. OTP is the only one at Layer 6: Organizational Intelligence.',
+      canonical: BASE_URL + '/blog/ai-coordination-stack',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'The AI Coordination Stack: Where OTP Fits Among 40+ Frameworks, Protocols, and Platforms', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/ai-coordination-stack' }
+    });
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
