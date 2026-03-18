@@ -45,13 +45,13 @@ export function validateOOS(parsed: ParseResult, template: TemplateType): Valida
       expected: 1800,
     });
   }
-  if (parsed.wordCount > 3000) {
+  if (parsed.wordCount > 5000) {
     errors.push({
       code: 'WORD_COUNT_ABOVE_MAXIMUM',
       field: 'wordCount',
-      message: `Word count is ${parsed.wordCount}. Maximum is 3000.`,
+      message: `Word count is ${parsed.wordCount}. Maximum is 5000.`,
       value: parsed.wordCount,
-      expected: 3000,
+      expected: 5000,
     });
   }
 

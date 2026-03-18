@@ -517,8 +517,8 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
   if (words < 1800) {
     unfixable.push({ code: 'WORD_COUNT_LOW', field: 'content', message: `Word count is ${words}. Minimum is 1800. Add more detail to your claims, failure modes, and scope descriptions.` });
   }
-  if (words > 3000) {
-    unfixable.push({ code: 'WORD_COUNT_HIGH', field: 'content', message: `Word count is ${words}. Maximum is 3000. Tighten your language or split into separate OOS versions.` });
+  if (words > 5000) {
+    unfixable.push({ code: 'WORD_COUNT_HIGH', field: 'content', message: `Word count is ${words}. Maximum is 5000. Tighten your language or split into separate OOS versions.` });
   }
   if (claimCount < 10) {
     unfixable.push({ code: 'CLAIM_COUNT_LOW', field: 'claims', message: `Only ${claimCount} claims found. Minimum is 10. Add more claims covering failure_patterns and human_ai_boundary_conditions.` });
