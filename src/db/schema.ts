@@ -69,6 +69,8 @@ export const oosFiles = pgTable('oos_files', {
   frontmatter: jsonb('frontmatter').notNull(),
   confidenceDistribution: jsonb('confidence_distribution'),
   evidenceDistribution: jsonb('evidence_distribution'),
+  totalTokenCost: integer('total_token_cost'),
+  tokenEfficiencyScore: real('token_efficiency_score'),
   publishedAt: timestamp('published_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -90,6 +92,7 @@ export const claims = pgTable('claims', {
   evidence: evidenceEnum('evidence').notNull(),
   scope: text('scope').notNull(),
   visibilityOverride: visibilityEnum('visibility_override'),
+  tokenCost: integer('token_cost'),
   // search_vector is managed by a database trigger, not Drizzle
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

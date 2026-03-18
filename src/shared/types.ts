@@ -34,6 +34,7 @@ export interface ParsedClaim {
   confidence: Confidence;
   evidence: EvidenceType;
   scope: string;
+  tokenCost?: number;
 }
 
 export interface ParseResult {

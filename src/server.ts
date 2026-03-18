@@ -62,6 +62,174 @@ app.get('/llms.txt', async (request, reply) => {
   return reply.sendFile('llms.txt');
 });
 
+// llms-full.txt -- comprehensive content for AI systems
+app.get('/llms-full.txt', async (request, reply) => {
+  const { db: database } = await import('./config/database.js');
+  const { sql } = await import('drizzle-orm');
+
+  let publisherCount = 0;
+  let claimCount = 0;
+  let claimSections = '';
+  try {
+    const pc = await database.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
+    publisherCount = parseInt((pc.rows as any[])?.[0]?.c || '0', 10);
+    const cc = await database.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
+    claimCount = parseInt((cc.rows as any[])?.[0]?.c || '0', 10);
+    const sections = await database.execute(sql`
+      SELECT section, COUNT(*) AS cnt FROM claims
+      WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')
+      GROUP BY section ORDER BY cnt DESC
+    `) as any;
+    claimSections = (sections.rows || []).map((r: any) => `- ${r.section} (${r.cnt} claims)`).join('\n');
+  } catch { /* DB unavailable */ }
+
+  const content = `# OTP - Organization Transport Protocol
+# Full Documentation for AI Systems
+# https://orgtp.com
+
+> The coordination intelligence layer for AI-native organizations.
+> MCP is agent-to-tool. A2A is agent-to-agent. OTP is organization-to-intelligence.
+
+## What Is OTP?
+
+OTP (Organization Transport Protocol) is a platform and protocol where organizations publish, compare, and learn from Organizational Operating Systems (OOS). An OOS is a structured document that captures how an organization's AI agents coordinate. OTP occupies the organizational coordination intelligence layer -- above MCP (Model Context Protocol, which connects agents to tools) and A2A (Agent-to-Agent protocol, which connects agents to each other). OTP connects organizations to collective coordination intelligence.
+
+The platform is live at https://orgtp.com with ${publisherCount} publishers and ${claimCount} knowledge claims.
+
+## Glossary of Terms
+
+### Coordination Intelligence
+The collective knowledge of how AI agents within and across organizations should coordinate. Coordination intelligence is captured in structured OOS files, compared across organizations, and surfaced through the Intelligence Graph. It is the organizational equivalent of what training data is to a model -- except it encodes operational coordination patterns rather than language patterns.
+
+### Organizational Operating System (OOS)
+A structured artifact that encodes how AI agents in an organization coordinate. An OOS contains knowledge claims organized into sections, each with confidence ratings (HIGH/MEDIUM/LOW), evidence types, failure modes, and reasoning. The OOS format uses YAML frontmatter with Markdown-structured claims.
+
+### Knowledge Claim
+An individual operational rule extracted from an OOS. Each claim has: a claim ID (e.g., C001), a section (e.g., core_operating_rules), the rule itself, reasoning (why this rule exists), a documented failure mode (what happens when violated), a confidence level, an evidence type, and a scope.
+
+### Intelligence Graph
+A network visualization showing how coordination patterns connect across published OOS files. When two organizations share similar claims, those claims are linked. The graph reveals shared operational truths, unique approaches, and conflicting strategies across the ecosystem.
+
+### Agentic Maturity Levels
+An 8-level framework measuring how sophisticated an organization's AI agent coordination is:
+- L1: Tab Complete (basic autocomplete)
+- L2: Chat Assistant (interactive Q&A)
+- L3: Tool User (agents use external tools)
+- L4: Workflow Agent (multi-step task execution)
+- L5: Autonomous Specialist (domain-expert agents)
+- L6: Multi-Agent System (multiple specialized agents)
+- L7: Orchestrated Agent Team (coordinated agent fleet with shared state)
+- L8: Autonomous Agent Teams (agents coordinate with each other without human mediation)
+Based on the framework by Bassim Eledath.
+
+### Confidence Levels
+How certain an organization is about a knowledge claim:
+- HIGH: Validated through measurement or extensive observation
+- MEDIUM: Observed pattern with reasonable supporting evidence
+- LOW: Inference, speculation, or newly adopted rule
+
+### Evidence Types
+How a knowledge claim was established:
+- MEASURED_RESULT: Quantified through data or experiment
+- OBSERVED_REPEATEDLY: Seen multiple times in practice
+- OBSERVED_ONCE: Seen in practice at least once
+- HUMAN_DEFINED_RULE: Established by human decision
+- INFERENCE: Derived logically from other claims
+- SPECULATION: Hypothesized but not yet validated
+
+### Publisher Badges
+Quality tiers assigned to organizations based on OOS completeness, confidence distribution, and evidence quality:
+- Founding: One of the first 50 publishers (permanent)
+- Platinum: Highest quality tier
+- Gold: Strong quality
+- Silver: Moderate quality
+- Bronze: Entry-level quality
+
+### OOS Templates
+Structured formats for different organizational models:
+- Agent Army: For organizations with multiple specialized AI agents
+- Value Chain: For organizations structured around business process flows
+- Org Chart: For traditional hierarchical organizations augmenting with AI
+
+### Claim Sections
+Standard categories within an OOS:
+${claimSections || '- core_operating_rules\n- agent_roles_and_authority\n- coordination_patterns\n- operational_heuristics\n- failure_patterns\n- human_ai_boundary_conditions'}
+
+## How OTP Works
+
+1. **Publish**: Organizations generate an OOS capturing their AI coordination intelligence -- rules, confidence levels, evidence types, and failure modes.
+2. **Compare**: The diff engine shows what is unique, similar, and conflicting between any two OOS files.
+3. **Learn**: The Intelligence Graph surfaces coordination patterns that no single organization could discover alone.
+
+## The Three-Layer AI Coordination Stack
+
+| Layer | Protocol | Scope | Example |
+|-------|----------|-------|---------|
+| Tool Layer | MCP (Model Context Protocol) | Agent-to-Tool | Claude reads a database via MCP |
+| Agent Layer | A2A (Agent-to-Agent) | Agent-to-Agent | Two agents negotiate a handoff |
+| Organization Layer | OTP (Organization Transport Protocol) | Org-to-Intelligence | 14 agents coordinate via shared operational rules |
+
+OTP is the only protocol that operates at the organizational layer.
+
+## Blog Content Summaries
+
+### The Hard Problem in AI Isn't Intelligence. It's Coordination.
+URL: https://orgtp.com/blog/why-we-built-otp
+The founding essay. Draws from Feynman's "one sentence" thought experiment to argue that the hardest problem in enterprise AI is not building one good agent but getting multiple agents to coordinate without conflict. Introduces the concept of the "cataclysm code" -- a single artifact containing enough operational intelligence to rebuild how your AI team works.
+
+### What Is an Organizational Operating System?
+URL: https://orgtp.com/blog/what-is-an-oos
+Deep dive into the OOS format: structured claims with confidence ratings, evidence types, and failure modes. Explains why traditional documentation fails for AI coordination and how the OOS format makes operational knowledge machine-readable, comparable, and improvable.
+
+### We Built This Platform in 48 Hours
+URL: https://orgtp.com/blog/built-in-48-hours
+Building-in-public narrative of constructing the OTP platform using the same AI agent coordination system the platform measures. Demonstrates recursive credibility -- the system works because it was built by the system.
+
+### Jensen Huang Just Made the Case for OTP
+URL: https://orgtp.com/blog/nvidia-made-the-case
+Analysis of Jensen Huang's GTC 2026 keynote, where he stated "every company needs an agent strategy." Connects NVIDIA's vision of agentic AI to OTP's thesis that organizations need a coordination intelligence layer.
+
+### Bain Called It Code Red. OTP Solves It.
+URL: https://orgtp.com/blog/bain-code-red
+Analysis of Bain & Company's report describing enterprise multi-agent coordination as a "Code Red" problem. Maps Bain's identified gaps directly to OTP's solutions.
+
+### Agentic Maturity Levels on OTP
+URL: https://orgtp.com/blog/agentic-levels
+Explains why OTP added the 8 Levels of Agentic Engineering framework (by Bassim Eledath) as a measurement dimension. Organizations can now see not just what they know, but how mature their coordination is.
+
+### What Is Coordination Intelligence?
+URL: https://orgtp.com/blog/what-is-coordination-intelligence
+Defines the new category: coordination intelligence is the collective knowledge of how AI agents should coordinate within and across organizations. Distinguishes it from agent orchestration (technical plumbing) and positions the three-layer stack: MCP, A2A, OTP.
+
+### How We Coordinate 14 AI Agents Without Them Stepping on Each Other
+URL: https://orgtp.com/blog/how-we-coordinate-14-agents
+Practitioner tutorial from running 14 specialized AI agents in production at a digital agency. Covers: pre-computed shared state, one seat/one owner, escalation over autonomy, agent message bus, and the failure patterns encountered along the way.
+
+## API
+
+OTP provides a REST API at https://orgtp.com/api/v1/ for programmatic access:
+- POST /api/v1/oos -- Publish an OOS file
+- GET /api/v1/browse -- List published OOS files
+- GET /api/v1/search?q= -- Full-text search across claims
+- GET /api/v1/graph -- Intelligence Graph data
+- GET /api/v1/oos/:id/claims -- Get claims for an OOS file
+- POST /api/v1/merge -- Preview a merge between two OOS files
+
+Authentication via API key (Bearer token). Publishers can generate keys from their dashboard.
+
+## About
+
+OTP was created by David Steel, CEO of Sneeze It, a digital agency that runs 14 AI agents in production. The platform was built using the same agent coordination system it measures -- a recursive proof of concept. The team includes agents named Radar (Chief of Staff), Dan (Strategic Co-Founder), Dash (Performance Analyst), Pepper (Executive Assistant), Crystal (Project Manager), Dirk (Revenue Operator), Jeff (Chief Information Officer), Neil (Chief Learning Officer), and more.
+
+## Contact
+- Website: https://orgtp.com
+- Creator: David Steel, dsteel@sneeze.it
+`;
+
+  reply.header('Content-Type', 'text/plain; charset=utf-8');
+  return reply.send(content);
+});
+
 // Dynamic sitemap
 app.get('/sitemap.xml', async (request, reply) => {
   const { db: database } = await import('./config/database.js');
@@ -86,6 +254,11 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog/nvidia-made-the-case', priority: '0.7', changefreq: 'monthly' },
     { loc: '/blog/bain-code-red', priority: '0.7', changefreq: 'monthly' },
     { loc: '/blog/agentic-levels', priority: '0.7', changefreq: 'monthly' },
+    { loc: '/blog/what-is-coordination-intelligence', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/how-we-coordinate-14-agents', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/faq', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/about', priority: '0.6', changefreq: 'monthly' },
   ];
 
   // Dynamic pages: published OOS files and org profiles

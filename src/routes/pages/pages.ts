@@ -251,6 +251,87 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 7
+  app.get('/blog/what-is-coordination-intelligence', async (request, reply) => {
+    return reply.view('pages/blog-post-7', {
+      title: 'What Is Coordination Intelligence? - OTP',
+      description: 'Coordination intelligence is the structured knowledge of how AI agents coordinate within and across organizations. It is the missing layer in the AI stack.',
+      canonical: BASE_URL + '/blog/what-is-coordination-intelligence',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'What Is Coordination Intelligence?', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/what-is-coordination-intelligence' }
+    });
+  });
+
+  // Blog post 8
+  app.get('/blog/how-we-coordinate-14-agents', async (request, reply) => {
+    return reply.view('pages/blog-post-8', {
+      title: 'How We Coordinate 14 AI Agents Without Them Stepping on Each Other - OTP',
+      description: 'Practitioner guide to coordinating 14 AI agents in production. Shared state, one seat per owner, escalation over autonomy, and the failures that taught us.',
+      canonical: BASE_URL + '/blog/how-we-coordinate-14-agents',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'How We Coordinate 14 AI Agents Without Them Stepping on Each Other', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/how-we-coordinate-14-agents' }
+    });
+  });
+
+  // Glossary
+  app.get('/glossary', async (request, reply) => {
+    const faqItems = [
+      { q: 'What is coordination intelligence?', a: 'The collective, structured knowledge of how AI agents within and across organizations should coordinate. It is captured in operational rules, documented failure modes, and evidence-backed patterns.' },
+      { q: 'What is an Organizational Operating System (OOS)?', a: 'A structured artifact that encodes how AI agents in an organization coordinate. Contains knowledge claims with confidence ratings, evidence types, and failure modes.' },
+      { q: 'What is a knowledge claim?', a: 'An individual operational rule extracted from an OOS, with a claim ID, section, rule, reasoning, failure mode, confidence level, and evidence type.' },
+      { q: 'What is the Token Efficiency Ratio?', a: 'A metric measuring whether an operational rule saves more tokens than it costs to load. Ratio above 1.0 means the rule pays for itself.' },
+      { q: 'What is the Intelligence Graph?', a: 'A network showing how coordination patterns connect across published OOS files. Reveals shared operational truths and unique approaches across organizations.' },
+      { q: 'What are agentic maturity levels?', a: 'An 8-level framework (L1 through L8) measuring how sophisticated an organization\'s AI agent coordination is, from basic tab completion to autonomous agent teams.' },
+      { q: 'What is the Organization Transport Protocol?', a: 'The protocol and platform for publishing, comparing, and learning from organizational coordination intelligence. Operates above MCP and A2A in the AI coordination stack.' },
+    ];
+    return reply.view('pages/glossary', {
+      title: 'Glossary - Coordination Intelligence Terms - OTP',
+      description: 'Definitions for coordination intelligence, Organizational Operating Systems, knowledge claims, agentic maturity levels, token efficiency, and the AI coordination stack.',
+      canonical: BASE_URL + '/glossary',
+      jsonLd: [
+        { '@context': 'https://schema.org', '@type': 'DefinedTermSet', name: 'OTP Glossary', description: 'Terms and definitions for the Organization Transport Protocol and coordination intelligence.', url: BASE_URL + '/glossary' },
+        { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) }
+      ]
+    });
+  });
+
+  // FAQ
+  app.get('/faq', async (request, reply) => {
+    const faqItems = [
+      { q: 'What is OTP?', a: 'OTP (Organization Transport Protocol) is a platform where organizations publish, compare, and learn from Organizational Operating Systems. It captures how AI agents coordinate at the organizational level.' },
+      { q: 'What is coordination intelligence?', a: 'The collective, structured knowledge of how AI agents within and across organizations should coordinate. It is machine-readable, comparable, and transferable.' },
+      { q: 'How is OTP different from CrewAI, AutoGen, or LangGraph?', a: 'CrewAI, AutoGen, and LangGraph are agent orchestration frameworks handling execution plumbing. OTP captures organizational intelligence that tells agents what the rules are.' },
+      { q: 'How is OTP different from MCP or A2A?', a: 'MCP connects agents to tools. A2A connects agents to each other. OTP connects organizations to coordination intelligence. The three layers are complementary.' },
+      { q: 'What is the Token Efficiency Ratio?', a: 'A metric measuring whether an operational rule saves more tokens than it costs to load into context. A ratio above 1.0 means the rule pays for itself.' },
+      { q: 'How do I publish my OOS?', a: 'Sign up, choose a template, generate your OOS using our guide, and paste it into the publish form. The platform validates, extracts claims, and publishes.' },
+      { q: 'What templates are available?', a: 'Agent Army for multi-agent teams, Value Chain for process-oriented organizations, and Org Chart for traditional hierarchies integrating AI.' },
+      { q: 'What does the Founding Publisher badge mean?', a: 'Given to the first 50 organizations that publish on OTP. Permanent badge with early access to Phase 2 features.' },
+      { q: 'What is the Intelligence Graph?', a: 'A network visualization showing how coordination patterns connect across organizations. Similar claims are linked, revealing shared truths and unique approaches.' },
+      { q: 'What are agentic maturity levels?', a: 'An 8-level framework measuring AI agent coordination sophistication, from L1 Tab Complete through L8 Autonomous Agent Teams.' },
+      { q: 'What size organization can use OTP?', a: 'Any organization running AI agents, from solo operators to enterprises. The OOS format scales with your team.' },
+      { q: 'Does OTP have an API?', a: 'Yes. REST API and MCP server for programmatic access to OOS data, claims, search, and the Intelligence Graph.' },
+    ];
+    return reply.view('pages/faq', {
+      title: 'FAQ - Organization Transport Protocol - OTP',
+      description: 'Frequently asked questions about OTP, Organizational Operating Systems, coordination intelligence, and how to publish your AI coordination knowledge.',
+      canonical: BASE_URL + '/faq',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) }
+    });
+  });
+
+  // About
+  app.get('/about', async (request, reply) => {
+    return reply.view('pages/about', {
+      title: 'About OTP - Organization Transport Protocol',
+      description: 'OTP was built by David Steel, who runs 14 AI agents in production. The platform was constructed using the same agent coordination system it measures.',
+      canonical: BASE_URL + '/about',
+      jsonLd: [
+        { '@context': 'https://schema.org', '@type': 'Organization', name: 'OTP - Organization Transport Protocol', url: BASE_URL, founder: { '@type': 'Person', name: 'David Steel' }, description: 'The coordination intelligence layer for AI-native organizations.' },
+        { '@context': 'https://schema.org', '@type': 'Person', name: 'David Steel', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' }, description: 'Runs 14 AI agents in production at Sneeze It. Built OTP to capture and share coordination intelligence.' }
+      ]
+    });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });

@@ -91,6 +91,10 @@ export function parseOOS(markdown: string, template: TemplateType): ParseResult 
     const evidence = body.match(FIELD_REGEX.evidence)?.[1] || '';
     const scope = body.match(FIELD_REGEX.scope)?.[1]?.trim() || '';
 
+    // Calculate token cost: ~1 token per 4 characters of loaded content
+    const claimText = [rule, why, failureMode, scope, section, claimId].join(' ');
+    const tokenCost = Math.ceil(claimText.length / 4);
+
     const claim: ParsedClaim = {
       claimId,
       section,
@@ -101,6 +105,7 @@ export function parseOOS(markdown: string, template: TemplateType): ParseResult 
       confidence: confidence as ParsedClaim['confidence'],
       evidence: evidence as ParsedClaim['evidence'],
       scope,
+      tokenCost,
     };
 
     // Validate individual claim

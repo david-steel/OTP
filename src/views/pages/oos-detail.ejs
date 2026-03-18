@@ -41,6 +41,10 @@
       <div>
         <span class="text-gray-500">Published:</span> <%= oosFile.publishedAt ? new Date(oosFile.publishedAt).toLocaleDateString() : 'Draft' %>
       </div>
+      <% var totalTokens = claims.reduce(function(sum, c) { return sum + (c.tokenCost || Math.ceil((c.rule + c.why + c.failureMode + c.scope).length / 4)); }, 0); %>
+      <div title="Total tokens consumed when this OOS is loaded into an agent's context">
+        <span class="text-gray-500">Token Cost:</span> <span class="font-semibold text-indigo-600"><%= totalTokens.toLocaleString() %></span>
+      </div>
     </div>
 
     <!-- Action Buttons -->
@@ -104,6 +108,8 @@
             <% if (claim.evidence === 'INFERENCE') { %>bg-evidence-inference<% } %>
             <% if (claim.evidence === 'SPECULATION') { %>bg-evidence-speculation<% } %>
           "><%= claim.evidence.replace(/_/g, ' ') %></span>
+          <% var claimTokens = claim.tokenCost || Math.ceil((claim.rule + claim.why + claim.failureMode + claim.scope).length / 4); %>
+          <span class="text-xs text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded ml-auto" title="Tokens consumed when this claim is loaded into context"><%= claimTokens %> tokens</span>
         </div>
         <p class="font-medium text-sm mb-1"><%= claim.rule %></p>
         <p class="text-sm text-gray-600 mb-1"><strong>Why:</strong> <%= claim.why %></p>
