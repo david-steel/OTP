@@ -354,6 +354,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Orchestra Kit (design system)
+  app.get('/orchestra-kit', async (request, reply) => {
+    return reply.sendFile('orchestra-kit.html');
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
