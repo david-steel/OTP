@@ -1,0 +1,86 @@
+<!-- Section Detail header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <a href="/claims" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        All Sections
+      </a>
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Coordination Intelligence</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight capitalize"><%= sectionName.replace(/_/g, ' ') %></h1>
+      <p class="text-gray-400 mt-3"><%= claims.length %> claims from <%= orgCount %> organizations</p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+
+    <!-- Section description -->
+    <% var descriptions = {
+      core_operating_rules: 'Foundational rules that all agents must follow. These are the non-negotiable operating principles that prevent coordination failures. High-confidence rules here represent battle-tested operational wisdom.',
+      agent_roles_and_authority: 'Definitions of what each agent owns and does not own. Clear role boundaries prevent overlap, blame diffusion, and tuning conflicts. The most common coordination failure is two agents trying to do the same job.',
+      coordination_patterns: 'How agents share information, synchronize work, and avoid conflicts. These patterns describe the communication architecture: shared state files, message buses, escalation flows, and data handoff protocols.',
+      operational_heuristics: 'Rules of thumb learned from practice. These claims may not be provable in all cases, but they have been observed to work reliably. Heuristics evolve into rules as evidence accumulates.',
+      failure_patterns: 'Documented things that go wrong and how to prevent them. Failure pattern claims are among the most valuable in any OOS because they encode lessons learned the hard way. Other organizations can learn from these without experiencing the failures themselves.',
+      human_ai_boundary_conditions: 'Where human oversight is required and where agents have full autonomy. These claims define the trust boundary between human and AI decision-making. Getting this wrong either bottlenecks the organization (too much human oversight) or creates risk (too little).'
+    }; %>
+    <% if (descriptions[sectionName]) { %>
+      <p class="text-gray-600 leading-relaxed mb-8 max-w-2xl"><%= descriptions[sectionName] %></p>
+    <% } %>
+
+    <!-- Claims by org -->
+    <% var currentOrg = ''; %>
+    <% claims.forEach(function(claim) { %>
+      <% if (claim.org_name !== currentOrg) { %>
+        <% currentOrg = claim.org_name; %>
+        <div class="flex items-center gap-2 mt-8 mb-4">
+          <a href="/org/<%= claim.org_id %>" class="text-sm font-bold text-gray-900 hover:text-otp-600 transition-colors"><%= claim.org_name %></a>
+          <% if (claim.badge === 'founding') { %>
+            <span class="badge-founding text-white text-[10px] px-1.5 py-0.5 rounded-full">Founding</span>
+          <% } %>
+          <% if (claim.quality_tier) { %>
+            <span class="badge-<%= claim.quality_tier %> text-white text-[10px] px-1.5 py-0.5 rounded-full capitalize"><%= claim.quality_tier %></span>
+          <% } %>
+        </div>
+      <% } %>
+      <div class="bg-white p-4 rounded-lg border border-gray-100 mb-3 claim-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded"><%= claim.claim_id %></span>
+          <span class="text-xs text-white px-2 py-0.5 rounded
+            <% if (claim.confidence === 'HIGH') { %>bg-confidence-high<% } %>
+            <% if (claim.confidence === 'MEDIUM') { %>bg-confidence-medium<% } %>
+            <% if (claim.confidence === 'LOW') { %>bg-confidence-low<% } %>
+          "><%= claim.confidence %></span>
+          <span class="text-xs text-white px-2 py-0.5 rounded
+            <% if (claim.evidence === 'MEASURED_RESULT') { %>bg-evidence-measured<% } %>
+            <% if (claim.evidence === 'OBSERVED_REPEATEDLY' || claim.evidence === 'OBSERVED_ONCE') { %>bg-evidence-observed<% } %>
+            <% if (claim.evidence === 'HUMAN_DEFINED_RULE') { %>bg-evidence-rule<% } %>
+            <% if (claim.evidence === 'INFERENCE') { %>bg-evidence-inference<% } %>
+            <% if (claim.evidence === 'SPECULATION') { %>bg-evidence-speculation<% } %>
+          "><%= claim.evidence.replace(/_/g, ' ') %></span>
+          <%
+            var ct = Math.ceil(((claim.rule || '') + (claim.why || '') + (claim.failure_mode || '') + (claim.scope || '')).length / 4);
+            var emk = { 'HIGH_MEASURED_RESULT': 10, 'HIGH_OBSERVED_REPEATEDLY': 7, 'HIGH_OBSERVED_ONCE': 5, 'HIGH_HUMAN_DEFINED_RULE': 5, 'HIGH_INFERENCE': 3, 'HIGH_SPECULATION': 1.5, 'MEDIUM_MEASURED_RESULT': 6, 'MEDIUM_OBSERVED_REPEATEDLY': 4, 'MEDIUM_OBSERVED_ONCE': 3, 'MEDIUM_HUMAN_DEFINED_RULE': 3, 'MEDIUM_INFERENCE': 2, 'MEDIUM_SPECULATION': 1, 'LOW_MEASURED_RESULT': 3, 'LOW_OBSERVED_REPEATEDLY': 2, 'LOW_OBSERVED_ONCE': 1.5, 'LOW_HUMAN_DEFINED_RULE': 1.5, 'LOW_INFERENCE': 0.8, 'LOW_SPECULATION': 0.5 };
+            var emv = emk[claim.confidence + '_' + claim.evidence] || 1;
+            var eClr = emv >= 5 ? 'text-green-600 bg-green-50' : emv >= 2 ? 'text-blue-600 bg-blue-50' : emv >= 1 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
+          %>
+          <span class="text-xs <%= eClr %> px-2 py-0.5 rounded ml-auto"><%= emv %>x efficiency</span>
+        </div>
+        <p class="font-medium text-sm mb-1"><%= claim.rule %></p>
+        <p class="text-sm text-gray-600 mb-1"><strong>Why:</strong> <%= claim.why %></p>
+        <p class="text-sm text-gray-500"><strong>Failure mode:</strong> <%= claim.failure_mode %></p>
+      </div>
+    <% }); %>
+
+    <% if (claims.length === 0) { %>
+      <div class="text-center py-12 text-gray-400">No claims in this section yet. <a href="/publish" class="text-otp-500">Be the first to publish.</a></div>
+    <% } %>
+
+    <div class="mt-10 text-center">
+      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+    </div>
+  </div>
+</section>

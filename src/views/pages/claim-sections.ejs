@@ -1,0 +1,50 @@
+<!-- Section Index header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Knowledge Base</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Coordination Knowledge by Section</h1>
+      <p class="text-gray-400 mt-4 max-w-lg">Browse knowledge claims organized by coordination domain. Each section represents a category of operational intelligence published by organizations on OTP.</p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <% var sectionMeta = {
+        core_operating_rules: { color: '#3b82f6', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', desc: 'Foundational rules that all agents must follow. The non-negotiable operating principles.' },
+        agent_roles_and_authority: { color: '#8b5cf6', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', desc: 'What each agent owns and does not own. Clear boundaries prevent collisions.' },
+        coordination_patterns: { color: '#06b6d4', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', desc: 'How agents share information, avoid conflicts, and synchronize their work.' },
+        operational_heuristics: { color: '#f59e0b', icon: 'M13 10V3L4 14h7v7l9-11h-7z', desc: 'Rules of thumb learned from practice. Not always provable, but reliably useful.' },
+        failure_patterns: { color: '#ef4444', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', desc: 'Documented things that go wrong and how to prevent them. Failures are the most valuable claims.' },
+        human_ai_boundary_conditions: { color: '#10b981', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', desc: 'Where human oversight is required and where agents have full autonomy.' }
+      }; %>
+      <% sections.forEach(function(s) { %>
+        <% var meta = sectionMeta[s.section] || { color: '#6b7280', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16', desc: 'Knowledge claims in this section.' }; %>
+        <a href="/claims/<%= s.section %>" class="block p-5 rounded-xl border border-gray-100 card-hover group">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: <%= meta.color %>15;">
+              <svg class="w-5 h-5" style="color: <%= meta.color %>;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= meta.icon %>"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-gray-900 text-sm capitalize group-hover:text-otp-600 transition-colors"><%= s.section.replace(/_/g, ' ') %></div>
+              <div class="text-xs text-gray-500 mt-1 leading-relaxed"><%= meta.desc %></div>
+              <div class="flex items-center gap-3 mt-2 text-xs">
+                <span class="font-semibold" style="color: <%= meta.color %>;"><%= s.count %> claims</span>
+                <span class="text-gray-400"><%= s.org_count %> orgs</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+
+    <div class="mt-10 text-center">
+      <p class="text-gray-500 text-sm mb-4">Add your coordination knowledge to the graph.</p>
+      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+    </div>
+  </div>
+</section>

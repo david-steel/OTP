@@ -1,0 +1,138 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Ecosystem Guide</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">OTP vs CrewAI vs A2A vs MCP: Understanding the AI Coordination Stack</h1>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <p>The AI coordination space has exploded. MCP, A2A, CrewAI, AutoGen, LangGraph, and now OTP. If you are building with AI agents, you have heard these names. But they solve different problems at different layers. Here is how they fit together.</p>
+
+      <p>Every week, someone asks: "How is OTP different from CrewAI?" or "Doesn't MCP already do this?" These are fair questions. The confusion exists because people treat these tools as competitors. They are not. They are layers in a stack. Understanding which layer each one occupies is the key to choosing the right combination for your organization.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Three Layers</h2>
+
+      <p>AI coordination operates at three distinct layers. Each layer solves a fundamentally different problem.</p>
+
+      <div class="bg-gray-50 rounded-xl p-5 my-8 border border-gray-100">
+        <div class="space-y-4">
+          <div>
+            <p class="text-sm font-bold text-gray-900">Tool Layer (MCP)</p>
+            <p class="text-sm text-gray-600">How agents access external capabilities. Databases, APIs, file systems.</p>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900">Agent Layer (A2A, CrewAI, AutoGen, LangGraph)</p>
+            <p class="text-sm text-gray-600">How agents talk to each other and execute workflows together.</p>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900">Organization Layer (OTP)</p>
+            <p class="text-sm text-gray-600">How organizations encode, share, and learn from <a href="/glossary#coordination-intelligence" class="text-otp-500 hover:text-otp-600 transition-colors">coordination patterns</a>.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>Most confusion comes from treating these as competitors. They are not. They are a <a href="/glossary#three-layer-stack" class="text-otp-500 hover:text-otp-600 transition-colors">stack</a>. You do not choose between them any more than you choose between TCP/IP and HTTP. One sits on top of the other. Each layer depends on the layers below it and enables the layers above it.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">MCP: Agent-to-Tool</h2>
+
+      <p>Model Context Protocol connects agents to tools. Databases, APIs, file systems, calendars, Slack, spreadsheets. MCP gives agents hands. It standardizes how a model interacts with external capabilities so that tool integrations become portable across models and frameworks.</p>
+
+      <p>MCP does not tell agents what to do. It does not coordinate multiple agents. It does not capture why your organization accesses tools in a particular sequence or what happens when a tool call fails. It is plumbing, and very good plumbing at that. Created by Anthropic. Well-adopted. If your agent needs to read a database or call an API, MCP is the standard.</p>
+
+      <p>But plumbing alone does not make a building. MCP is the foundation of the stack, not the whole stack.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">A2A, CrewAI, AutoGen, LangGraph: Agent-to-Agent</h2>
+
+      <p>These frameworks handle agent orchestration. They are the nervous system that connects multiple agents into a functioning team.</p>
+
+      <p>CrewAI assigns roles and manages crew execution. You define agents with specific expertise, give them tasks, and CrewAI handles the workflow. AutoGen enables multi-agent conversations where agents debate, reason, and build on each other's outputs. LangGraph builds stateful agent workflows as directed graphs, giving you fine-grained control over execution paths. Google's A2A protocol standardizes how agents discover and communicate with each other across platforms.</p>
+
+      <p>These tools are powerful. They solve the hard engineering problems of getting agents to execute together. But they do not capture WHY the agents are organized the way they are. They do not record what happens when rules break. They do not track how confidence in each rule was established. They do not enable one organization to learn from another organization's coordination failures.</p>
+
+      <p>The orchestration layer tells agents how to talk to each other. It does not tell you whether the conversation is the right one to be having.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">OTP: Organization-to-Intelligence</h2>
+
+      <p><a href="/glossary#otp" class="text-otp-500 hover:text-otp-600 transition-colors">OTP</a> operates above both layers. It captures the organizational rules that govern how agents should coordinate. Not the execution plumbing, but the <a href="/blog/what-is-coordination-intelligence" class="text-otp-500 hover:text-otp-600 transition-colors">intelligence</a>: what works, what fails, how confident you are, and what evidence supports each decision.</p>
+
+      <p>An OOS (Organizational Operating System) published on OTP does not contain code. It contains structured claims. Each claim is an operational rule with a reason it exists, a failure mode that documents what goes wrong when it is violated, a confidence rating, and an evidence type. This is coordination intelligence in machine-readable form.</p>
+
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-5 my-8">
+        <p class="text-otp-800 font-semibold text-sm">OTP publishes this as an Organizational Operating System with structured claims. The Intelligence Graph connects patterns across organizations. The Token Efficiency Index measures whether each rule is worth the tokens it costs.</p>
+      </div>
+
+      <p>When you publish your OOS, it becomes a node in a growing Intelligence Graph. Other organizations have published their own coordination patterns. Edges form between nodes where patterns overlap. The graph reveals what no single organization can see alone: the recurring failures, the architectural patterns that keep appearing independently, the human-AI boundaries that every organization draws in roughly the same place.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">When to Use What</h2>
+
+      <div class="bg-gray-50 rounded-xl p-5 my-8 border border-gray-100">
+        <div class="space-y-4">
+          <div>
+            <p class="text-sm font-bold text-gray-900">Use MCP when your agent needs to access a tool.</p>
+            <p class="text-sm text-gray-600">Reading a database, calling an API, writing to a file system. MCP is the standard interface.</p>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900">Use CrewAI, AutoGen, or LangGraph when your agents need to execute workflows together.</p>
+            <p class="text-sm text-gray-600">Multi-step tasks, agent handoffs, parallel execution, stateful conversations between agents.</p>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900">Use OTP when you need to capture, compare, and improve how your organization coordinates agents.</p>
+            <p class="text-sm text-gray-600">Publishing your operational rules, learning from other organizations, measuring coordination maturity, tracking confidence in your own system.</p>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900">Use all three together for the full stack.</p>
+            <p class="text-sm text-gray-600">MCP connects agents to tools. The orchestration layer connects agents to each other. OTP connects your organization to coordination intelligence.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>A practical example: your CrewAI crew uses MCP to access your CRM and calendar. The crew coordinates three agents to qualify leads, schedule meetings, and update the pipeline. OTP captures the organizational rules governing that coordination. Why does the qualification agent hand off at that threshold? What happens when the scheduling agent double-books? How confident are you in the lead scoring criteria? That is the intelligence layer.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Future Is the Stack</h2>
+
+      <p>The future is not one tool. It is the stack. MCP gives agents hands. CrewAI, AutoGen, LangGraph, and A2A give agents teamwork. OTP gives organizations intelligence.</p>
+
+      <p>Every layer is necessary. None is sufficient alone. The organizations that figure this out first will have a compounding advantage, because their coordination intelligence improves every time they publish, compare, and learn.</p>
+
+      <p class="text-lg font-semibold text-gray-900">Start by <a href="/publish" class="text-otp-500 hover:text-otp-600 transition-colors">publishing your OOS</a>.</p>
+
+      <!-- Author -->
+      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+        <div>
+          <div class="font-bold text-gray-900">David Steel</div>
+          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</section>
+
+<!-- Next post CTA -->
+<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <p class="text-sm text-gray-400 mb-4">More coming soon. Follow along as we build in public.</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
+      Publish Your OOS
+      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+    </a>
+  </div>
+</section>

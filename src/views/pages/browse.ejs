@@ -55,13 +55,21 @@
               <span>Published <%= new Date(oos.published_at).toLocaleDateString() %></span>
             </div>
           </div>
-          <div class="text-right text-xs text-gray-400 min-w-[80px]">
+          <div class="text-right text-xs text-gray-400 min-w-[100px]">
             <div class="flex gap-1 justify-end mb-1">
               <span class="bg-confidence-high text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).high || 0 %></span>
               <span class="bg-confidence-medium text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).medium || 0 %></span>
               <span class="bg-confidence-low text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).low || 0 %></span>
             </div>
-            <span>H / M / L</span>
+            <%
+              var bH = (oos.confidence_distribution || {}).high || 0;
+              var bM = (oos.confidence_distribution || {}).medium || 0;
+              var bL = (oos.confidence_distribution || {}).low || 0;
+              var bT = bH + bM + bL;
+              var bEff = bT > 0 ? ((bH * 7) + (bM * 3) + (bL * 1)) / bT : 0;
+              var bEffClr = bEff >= 5 ? 'text-green-600' : bEff >= 2 ? 'text-blue-600' : bEff >= 1 ? 'text-amber-600' : 'text-red-600';
+            %>
+            <div class="<%= bEffClr %> font-semibold mt-1"><%= bEff.toFixed(1) %>x efficiency</div>
           </div>
         </a>
       <% }); %>

@@ -284,6 +284,28 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 10
+  app.get('/blog/otp-vs-crewai-vs-a2a-vs-mcp', async (request, reply) => {
+    return reply.view('pages/blog-post-10', {
+      title: 'OTP vs CrewAI vs A2A vs MCP: Understanding the AI Coordination Stack - OTP',
+      description: 'MCP connects agents to tools. CrewAI connects agents to each other. OTP connects organizations to coordination intelligence. Here is how the three layers fit together.',
+      canonical: BASE_URL + '/blog/otp-vs-crewai-vs-a2a-vs-mcp',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'OTP vs CrewAI vs A2A vs MCP: Understanding the AI Coordination Stack', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/otp-vs-crewai-vs-a2a-vs-mcp' }
+    });
+  });
+
+  // Blog post 11
+  app.get('/blog/8-levels-of-agentic-maturity', async (request, reply) => {
+    return reply.view('pages/blog-post-11', {
+      title: 'The 8 Levels of Agentic Maturity (and How to Measure Yours) - OTP',
+      description: 'The 8 Levels of Agentic Engineering by Bassim Eledath give organizations a standard way to measure AI agent coordination maturity. From tab completion to autonomous agent teams.',
+      canonical: BASE_URL + '/blog/8-levels-of-agentic-maturity',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'The 8 Levels of Agentic Maturity (and How to Measure Yours)', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/8-levels-of-agentic-maturity' }
+    });
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
@@ -379,6 +401,46 @@ export default async function pageRoutes(app: FastifyInstance) {
       .orderBy(desc(apiKeys.createdAt));
 
     return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'authenticated', keys });
+  });
+
+  // Claim Sections Index
+  app.get('/claims', async (request, reply) => {
+    const sectionRows = await db.execute(sql`
+      SELECT c.section, COUNT(*) AS count, COUNT(DISTINCT f.org_id) AS org_count
+      FROM claims c JOIN oos_files f ON c.oos_file_id = f.id
+      WHERE f.status = 'published'
+      GROUP BY c.section ORDER BY count DESC
+    `) as any;
+    return reply.view('pages/claim-sections', {
+      title: 'Coordination Knowledge by Section - OTP',
+      description: 'Browse AI coordination knowledge claims organized by domain: operating rules, agent authority, coordination patterns, failure modes, and human-AI boundaries.',
+      canonical: BASE_URL + '/claims',
+      sections: sectionRows.rows || []
+    });
+  });
+
+  // Claim Section Detail
+  app.get<{ Params: { section: string } }>('/claims/:section', async (request, reply) => {
+    const { section } = request.params;
+    const sectionLabel = section.replace(/_/g, ' ');
+    const claimRows = await db.execute(sql`
+      SELECT c.claim_id, c.rule, c.why, c.failure_mode, c.confidence, c.evidence, c.scope,
+             o.id AS org_id, o.name AS org_name, o.badge, o.quality_tier
+      FROM claims c
+      JOIN oos_files f ON c.oos_file_id = f.id
+      JOIN organizations o ON f.org_id = o.id
+      WHERE f.status = 'published' AND c.section = ${section}
+      ORDER BY o.name, c.display_order
+    `) as any;
+    const orgCount = new Set((claimRows.rows || []).map((r: any) => r.org_id)).size;
+    return reply.view('pages/claim-section-detail', {
+      title: `${sectionLabel.replace(/\b\w/g, (c: string) => c.toUpperCase())} - Coordination Intelligence - OTP`,
+      description: `${(claimRows.rows || []).length} knowledge claims about ${sectionLabel} from ${orgCount} organizations on OTP.`,
+      canonical: BASE_URL + '/claims/' + section,
+      sectionName: section,
+      claims: claimRows.rows || [],
+      orgCount
+    });
   });
 
   // Publish page -- serves the form, auth check happens client-side + on API call
