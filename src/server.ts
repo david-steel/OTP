@@ -205,6 +205,10 @@ Defines the new category: coordination intelligence is the collective knowledge 
 URL: https://orgtp.com/blog/how-we-coordinate-14-agents
 Practitioner tutorial from running 14 specialized AI agents in production at a digital agency. Covers: pre-computed shared state, one seat/one owner, escalation over autonomy, agent message bus, and the failure patterns encountered along the way.
 
+### Tokens Are the New Currency. Your OOS Is the Budget.
+URL: https://orgtp.com/blog/tokens-are-the-new-currency
+Explores the token economy of AI-native organizations. Every rule in an OOS costs tokens to load. The Token Efficiency Ratio measures whether each rule earns back more than it spends. Introduces token budgets as the new resource allocation lever and the OOS as a financial plan for AI workforces.
+
 ## API
 
 OTP provides a REST API at https://orgtp.com/api/v1/ for programmatic access:
@@ -256,6 +260,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog/agentic-levels', priority: '0.7', changefreq: 'monthly' },
     { loc: '/blog/what-is-coordination-intelligence', priority: '0.8', changefreq: 'monthly' },
     { loc: '/blog/how-we-coordinate-14-agents', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/tokens-are-the-new-currency', priority: '0.7', changefreq: 'monthly' },
     { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.8', changefreq: 'monthly' },
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },

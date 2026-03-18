@@ -35,6 +35,11 @@
           <span class="text-gray-500">Patterns</span>
           <span class="text-gray-900 font-semibold" id="stat-patterns">--</span>
         </div>
+        <div class="w-px h-4 bg-gray-200"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-500">Avg Efficiency</span>
+          <span class="text-gray-900 font-semibold" id="stat-efficiency">--</span>
+        </div>
       </div>
     </div>
   </div>
@@ -161,6 +166,24 @@
             </div>
             <div class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></div>
           </label>
+
+          <!-- Layer: Token Efficiency -->
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <div class="relative">
+              <input type="checkbox" id="layer-efficiency" class="sr-only peer">
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-indigo-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-gray-900 text-xs font-medium">Token Efficiency</div>
+              <div class="text-gray-400 text-[10px]">ROI per token invested</div>
+            </div>
+            <div class="flex items-center gap-0.5 flex-shrink-0">
+              <div class="w-2 h-2 rounded-full" style="background:#059669"></div>
+              <div class="w-2 h-2 rounded-full" style="background:#3b82f6"></div>
+              <div class="w-2 h-2 rounded-full" style="background:#d97706"></div>
+            </div>
+          </label>
         </div>
 
         <!-- Section legend (shown when sections layer active) -->
@@ -228,6 +251,43 @@
     SPECULATION: '#9ca3af'
   };
 
+  // Token efficiency multipliers by confidence_evidence
+  var effMultipliers = {
+    'HIGH_MEASURED_RESULT': 10, 'HIGH_OBSERVED_REPEATEDLY': 7, 'HIGH_OBSERVED_ONCE': 5,
+    'HIGH_HUMAN_DEFINED_RULE': 5, 'HIGH_INFERENCE': 3, 'HIGH_SPECULATION': 1.5,
+    'MEDIUM_MEASURED_RESULT': 6, 'MEDIUM_OBSERVED_REPEATEDLY': 4, 'MEDIUM_OBSERVED_ONCE': 3,
+    'MEDIUM_HUMAN_DEFINED_RULE': 3, 'MEDIUM_INFERENCE': 2, 'MEDIUM_SPECULATION': 1,
+    'LOW_MEASURED_RESULT': 3, 'LOW_OBSERVED_REPEATEDLY': 2, 'LOW_OBSERVED_ONCE': 1.5,
+    'LOW_HUMAN_DEFINED_RULE': 1.5, 'LOW_INFERENCE': 0.8, 'LOW_SPECULATION': 0.5
+  };
+
+  function calcOrgEfficiency(orgId, graphData) {
+    var claims = graphData.claims ? graphData.claims[orgId] || [] : [];
+    if (claims.length === 0) return 0;
+    var totalCost = 0, totalSavings = 0;
+    claims.forEach(function(c) {
+      var cost = Math.ceil(((c.rule || '') + (c.why || '') + (c.failureMode || '') + (c.scope || '')).length / 4) || 30;
+      var mult = effMultipliers[c.confidence + '_' + c.evidence] || 1;
+      totalCost += cost;
+      totalSavings += cost * mult;
+    });
+    return totalCost > 0 ? totalSavings / totalCost : 0;
+  }
+
+  function efficiencyColor(eff) {
+    if (eff >= 5) return '#059669'; // green
+    if (eff >= 2) return '#3b82f6'; // blue
+    if (eff >= 1) return '#d97706'; // amber
+    return '#ef4444'; // red
+  }
+
+  function efficiencyLabel(eff) {
+    if (eff >= 5) return 'High';
+    if (eff >= 2) return 'Moderate';
+    if (eff >= 1) return 'Low';
+    return 'Inefficient';
+  }
+
   // ---- State ----
   var graphData = null;
   var simulation = null;
@@ -244,7 +304,8 @@
     connections: true,
     sections: false,
     confidence: false,
-    evidence: false
+    evidence: false,
+    efficiency: false
   };
 
   // ---- Load Data ----
@@ -259,6 +320,15 @@
       document.getElementById('stat-claims').textContent = data.stats?.totalClaims || 0;
       document.getElementById('stat-connections').textContent = data.stats?.connections || data.edges?.length || 0;
       document.getElementById('stat-patterns').textContent = data.stats?.patterns || 0;
+
+      // Calculate avg efficiency across all orgs
+      var totalEff = 0;
+      if (data.nodes && data.nodes.length > 0) {
+        data.nodes.forEach(function(n) { totalEff += calcOrgEfficiency(n.id, data); });
+        var avgEff = totalEff / data.nodes.length;
+        document.getElementById('stat-efficiency').textContent = avgEff.toFixed(1) + 'x';
+        document.getElementById('stat-efficiency').style.color = efficiencyColor(avgEff);
+      }
 
       if (!data.nodes || data.nodes.length === 0) {
         document.getElementById('graph-loading').classList.add('hidden');
@@ -488,7 +558,8 @@
           (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
           '</div>' +
           '<div class="text-gray-600 text-[11px]">' + d.claimCount + ' claims</div>' +
-          (d.qualityTier ? '<div class="text-gray-500 text-[10px] mt-1 capitalize">' + d.qualityTier + ' tier</div>' : '') +
+          (function() { var eff = calcOrgEfficiency(d.id, graphData); return '<div class="text-[10px] mt-1" style="color:' + efficiencyColor(eff) + '">Token Efficiency: ' + eff.toFixed(1) + 'x ' + efficiencyLabel(eff) + '</div>'; })() +
+          (d.qualityTier ? '<div class="text-gray-500 text-[10px] capitalize">' + d.qualityTier + ' tier</div>' : '') +
           '<div class="text-gray-400 text-[10px] mt-1">Click for details</div>');
       })
       .on('mouseleave', function(event, d) {
@@ -638,10 +709,14 @@
       (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
       tierBadge + badgeHtml +
       '</div>' +
-      '<div class="grid grid-cols-2 gap-3 mb-4">' +
-      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.claimCount + '</div><div class="text-gray-400 text-[10px]">Claims</div></div>' +
-      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold capitalize">' + (d.qualityTier || '--') + '</div><div class="text-gray-400 text-[10px]">Quality Tier</div></div>' +
-      '</div>' +
+      (function() {
+        var eff = calcOrgEfficiency(d.id, graphData);
+        return '<div class="grid grid-cols-3 gap-2 mb-4">' +
+          '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.claimCount + '</div><div class="text-gray-400 text-[10px]">Claims</div></div>' +
+          '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold capitalize">' + (d.qualityTier || '--') + '</div><div class="text-gray-400 text-[10px]">Quality</div></div>' +
+          '<div class="rounded-lg px-3 py-2 border" style="background:' + efficiencyColor(eff) + '10; border-color:' + efficiencyColor(eff) + '30"><div class="text-lg font-bold" style="color:' + efficiencyColor(eff) + '">' + eff.toFixed(1) + 'x</div><div class="text-[10px]" style="color:' + efficiencyColor(eff) + '">' + efficiencyLabel(eff) + '</div></div>' +
+          '</div>';
+      })() +
       (topSections.length > 0 ? '<div class="mb-4"><div class="text-gray-400 text-[10px] uppercase tracking-wide mb-2">Top Sections</div>' +
       topSections.map(function(s) {
         return '<div class="flex items-center justify-between py-1"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:' + (sectionColors[s[0]] || '#6b7280') + '"></div><span class="text-gray-700 text-[11px]">' + formatSection(s[0]) + '</span></div><span class="text-gray-400 text-[11px]">' + s[1] + '</span></div>';
@@ -665,6 +740,19 @@
     layers.sections = document.getElementById('layer-sections').checked;
     layers.confidence = document.getElementById('layer-confidence').checked;
     layers.evidence = document.getElementById('layer-evidence').checked;
+    layers.efficiency = document.getElementById('layer-efficiency').checked;
+
+    // When efficiency layer is active, recolor org nodes by efficiency
+    if (orgNodeElems && graphData) {
+      orgNodeElems.select('circle:first-child')
+        .transition().duration(400)
+        .attr('fill', function(d) {
+          if (layers.efficiency) {
+            return efficiencyColor(calcOrgEfficiency(d.id, graphData));
+          }
+          return templateColors[d.template] || '#6b7280';
+        });
+    }
 
     // Org edges always visible, connections toggle controls emphasis
     if (orgEdgeElems) {
@@ -694,7 +782,7 @@
   }
 
   // Wire up layer toggles
-  ['layer-connections', 'layer-sections', 'layer-confidence', 'layer-evidence'].forEach(function(id) {
+  ['layer-connections', 'layer-sections', 'layer-confidence', 'layer-evidence', 'layer-efficiency'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('change', updateLayers);
   });

@@ -273,6 +273,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 9
+  app.get('/blog/tokens-are-the-new-currency', async (request, reply) => {
+    return reply.view('pages/blog-post-9', {
+      title: 'Tokens Are the New Currency. Your OOS Is the Budget. - OTP',
+      description: 'Every rule in your OOS costs tokens to load. The Token Efficiency Ratio measures whether each rule earns back more than it spends. Treat your OOS like a financial plan for your AI workforce.',
+      canonical: BASE_URL + '/blog/tokens-are-the-new-currency',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Tokens Are the New Currency. Your OOS Is the Budget.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/tokens-are-the-new-currency' }
+    });
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
