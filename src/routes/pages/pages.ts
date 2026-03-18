@@ -187,11 +187,6 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/blog-post-6', { title: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter. - OTP' });
   });
 
-  // Blog post 6
-  app.get('/blog/agentic-levels', async (request, reply) => {
-    return reply.view('pages/blog-post-6', { title: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter. - OTP' });
-  });
-
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });
