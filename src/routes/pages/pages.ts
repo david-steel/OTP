@@ -177,6 +177,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/blog-post-4', { title: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It. - OTP' });
   });
 
+  // Blog post 5
+  app.get('/blog/bain-code-red', async (request, reply) => {
+    return reply.view('pages/blog-post-5', { title: 'Bain Just Described the Problem OTP Solves. They Called It "Code Red." - OTP' });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP' });
