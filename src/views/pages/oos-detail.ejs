@@ -41,9 +41,50 @@
       <div>
         <span class="text-gray-500">Published:</span> <%= oosFile.publishedAt ? new Date(oosFile.publishedAt).toLocaleDateString() : 'Draft' %>
       </div>
-      <% var totalTokens = claims.reduce(function(sum, c) { return sum + (c.tokenCost || Math.ceil((c.rule + c.why + c.failureMode + c.scope).length / 4)); }, 0); %>
-      <div title="Total tokens consumed when this OOS is loaded into an agent's context">
-        <span class="text-gray-500">Token Cost:</span> <span class="font-semibold text-indigo-600"><%= totalTokens.toLocaleString() %></span>
+      <%
+        // Token Efficiency calculation
+        var efficiencyMultipliers = {
+          'HIGH_MEASURED_RESULT': 10, 'HIGH_OBSERVED_REPEATEDLY': 7, 'HIGH_OBSERVED_ONCE': 5,
+          'HIGH_HUMAN_DEFINED_RULE': 5, 'HIGH_INFERENCE': 3, 'HIGH_SPECULATION': 1.5,
+          'MEDIUM_MEASURED_RESULT': 6, 'MEDIUM_OBSERVED_REPEATEDLY': 4, 'MEDIUM_OBSERVED_ONCE': 3,
+          'MEDIUM_HUMAN_DEFINED_RULE': 3, 'MEDIUM_INFERENCE': 2, 'MEDIUM_SPECULATION': 1,
+          'LOW_MEASURED_RESULT': 3, 'LOW_OBSERVED_REPEATEDLY': 2, 'LOW_OBSERVED_ONCE': 1.5,
+          'LOW_HUMAN_DEFINED_RULE': 1.5, 'LOW_INFERENCE': 0.8, 'LOW_SPECULATION': 0.5
+        };
+        var totalTokenCost = 0;
+        var totalTokenSavings = 0;
+        claims.forEach(function(c) {
+          var cost = Math.ceil((c.rule + c.why + c.failureMode + c.scope).length / 4);
+          var key = c.confidence + '_' + c.evidence;
+          var mult = efficiencyMultipliers[key] || 1;
+          totalTokenCost += cost;
+          totalTokenSavings += cost * mult;
+        });
+        var tokenEfficiencyIndex = totalTokenCost > 0 ? (totalTokenSavings / totalTokenCost) : 0;
+        var teiLabel, teiColor, teiBg;
+        if (tokenEfficiencyIndex >= 5) { teiLabel = 'High Efficiency'; teiColor = 'text-green-700'; teiBg = 'bg-green-50 border-green-200'; }
+        else if (tokenEfficiencyIndex >= 2) { teiLabel = 'Moderate Efficiency'; teiColor = 'text-blue-700'; teiBg = 'bg-blue-50 border-blue-200'; }
+        else if (tokenEfficiencyIndex >= 1) { teiLabel = 'Low Efficiency'; teiColor = 'text-amber-700'; teiBg = 'bg-amber-50 border-amber-200'; }
+        else { teiLabel = 'Inefficient'; teiColor = 'text-red-700'; teiBg = 'bg-red-50 border-red-200'; }
+      %>
+    </div>
+
+    <!-- Token Efficiency Index -->
+    <div class="mt-4 p-4 rounded-lg border <%= teiBg %>">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Token Efficiency Index</div>
+          <div class="flex items-center gap-3">
+            <span class="text-2xl font-extrabold <%= teiColor %>"><%= tokenEfficiencyIndex.toFixed(1) %>x</span>
+            <span class="text-sm font-semibold <%= teiColor %>"><%= teiLabel %></span>
+          </div>
+          <div class="text-xs text-gray-500 mt-1">Every token invested in this OOS is estimated to save <%= tokenEfficiencyIndex.toFixed(1) %> tokens in prevented failures, retries, and coordination collisions.</div>
+        </div>
+        <div class="text-right text-sm">
+          <div class="text-gray-500">Token Cost: <span class="font-semibold text-gray-700"><%= totalTokenCost.toLocaleString() %></span></div>
+          <div class="text-gray-500">Est. Savings: <span class="font-semibold text-green-600"><%= totalTokenSavings.toLocaleString() %></span></div>
+          <div class="text-gray-500">Net: <span class="font-semibold text-green-600">+<%= (totalTokenSavings - totalTokenCost).toLocaleString() %></span> tokens</div>
+        </div>
       </div>
     </div>
 
@@ -108,8 +149,19 @@
             <% if (claim.evidence === 'INFERENCE') { %>bg-evidence-inference<% } %>
             <% if (claim.evidence === 'SPECULATION') { %>bg-evidence-speculation<% } %>
           "><%= claim.evidence.replace(/_/g, ' ') %></span>
-          <% var claimTokens = claim.tokenCost || Math.ceil((claim.rule + claim.why + claim.failureMode + claim.scope).length / 4); %>
-          <span class="text-xs text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded ml-auto" title="Tokens consumed when this claim is loaded into context"><%= claimTokens %> tokens</span>
+          <%
+            var claimTokens = Math.ceil((claim.rule + claim.why + claim.failureMode + claim.scope).length / 4);
+            var cKey = claim.confidence + '_' + claim.evidence;
+            var cMult = efficiencyMultipliers[cKey] || 1;
+            var cSavings = Math.round(claimTokens * cMult);
+            var cNet = cSavings - claimTokens;
+            var cLabel, cClr;
+            if (cMult >= 5) { cLabel = 'High'; cClr = 'text-green-600 bg-green-50'; }
+            else if (cMult >= 2) { cLabel = 'Moderate'; cClr = 'text-blue-600 bg-blue-50'; }
+            else if (cMult >= 1) { cLabel = 'Low'; cClr = 'text-amber-600 bg-amber-50'; }
+            else { cLabel = 'Negative'; cClr = 'text-red-600 bg-red-50'; }
+          %>
+          <span class="text-xs <%= cClr %> px-2 py-0.5 rounded ml-auto" title="Costs <%= claimTokens %> tokens to load. Estimated to save <%= cSavings %> tokens (<%= cMult %>x return). Net: <%= cNet > 0 ? '+' : '' %><%= cNet %> tokens."><%= cMult %>x <%= cLabel %> &middot; <%= claimTokens %>t</span>
         </div>
         <p class="font-medium text-sm mb-1"><%= claim.rule %></p>
         <p class="text-sm text-gray-600 mb-1"><strong>Why:</strong> <%= claim.why %></p>
