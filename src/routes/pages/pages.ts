@@ -321,6 +321,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 13
+  app.get('/blog/gas-town-vs-otp', async (request, reply) => {
+    return reply.view('pages/blog-post-13', {
+      title: 'Gas Town Is the Factory Floor. OTP Is the Blueprint Exchange. - OTP',
+      description: 'Steve Yegge\'s Gas Town orchestrates parallel coding agents. OTP captures organizational coordination intelligence. They solve different layers of the same problem.',
+      canonical: BASE_URL + '/blog/gas-town-vs-otp',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Gas Town Is the Factory Floor. OTP Is the Blueprint Exchange.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/gas-town-vs-otp' }
+    });
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
