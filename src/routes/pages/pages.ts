@@ -79,7 +79,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     const [org] = await db.select().from(organizations).where(eq(organizations.id, oosFile.orgId)).limit(1);
     const claimRows = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
 
-    return reply.view('pages/oos-detail', { title: `${org?.name || 'OOS'} - OTP`, oosFile, org: org || {}, claims: claimRows });
+    const orgData = org ? { ...org, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' } : {};
+    return reply.view('pages/oos-detail', { title: `${org?.name || 'OOS'} - OTP`, oosFile, org: orgData, claims: claimRows });
   });
 
   // Compare

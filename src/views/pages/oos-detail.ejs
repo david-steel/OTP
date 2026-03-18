@@ -11,6 +11,9 @@
           <% if (org.qualityTier) { %>
             <span class="badge-<%= org.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= org.qualityTier %></span>
           <% } %>
+          <% if (org.agenticLevel) { %>
+            <span class="badge-level badge-level-<%= org.agenticLevel %>" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= org.agenticLevel %> <%= org.agenticLabel || '' %></span>
+          <% } %>
         </div>
         <div class="text-gray-500 text-sm">
           <%= org.industry %> &middot; <%= org.size %> &middot;
@@ -112,13 +115,24 @@
 
   <!-- Compare Modal -->
   <div id="compare-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg w-96">
+    <div class="bg-white p-6 rounded-lg w-[28rem]">
       <h3 class="font-bold mb-4">Compare with Another OOS</h3>
-      <p class="text-sm text-gray-600 mb-4">Enter the ID of another published OOS to see a side-by-side comparison.</p>
-      <input type="text" id="compare-id" placeholder="OOS File ID..." class="w-full border rounded px-3 py-2 mb-4 text-sm">
+      <p class="text-sm text-gray-600 mb-3">Search for an organization to compare against.</p>
+      <div class="relative mb-4">
+        <input type="text" id="compare-search" placeholder="Search by org name or industry..." class="w-full border rounded-lg px-3 py-2 text-sm" autocomplete="off">
+        <div id="compare-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto z-10"></div>
+        <input type="hidden" id="compare-id" value="">
+      </div>
+      <div id="compare-selected" class="hidden mb-4 bg-otp-50 border border-otp-200 rounded-lg p-3 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-sm" id="compare-selected-name"></div>
+          <div class="text-xs text-gray-500" id="compare-selected-meta"></div>
+        </div>
+        <button onclick="clearCompareSelection()" class="text-gray-400 hover:text-gray-600 text-sm">&#x2715;</button>
+      </div>
       <div class="flex gap-2">
-        <button onclick="window.location.href='/compare/<%= oosFile.id %>/' + document.getElementById('compare-id').value" class="flex-1 px-4 py-2 bg-otp-500 text-white rounded text-sm">Compare</button>
-        <button onclick="document.getElementById('compare-modal').classList.add('hidden')" class="px-4 py-2 border rounded text-sm">Cancel</button>
+        <button id="compare-btn" onclick="doCompare()" disabled class="flex-1 px-4 py-2 bg-otp-500 text-white rounded-lg text-sm hover:bg-otp-400 disabled:opacity-40 disabled:cursor-not-allowed">Compare</button>
+        <button onclick="document.getElementById('compare-modal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
       </div>
     </div>
   </div>
@@ -126,23 +140,113 @@
 
 <script>
 function filterClaims() {
-  const section = document.getElementById('filter-section').value;
-  const confidence = document.getElementById('filter-confidence').value;
-  const evidence = document.getElementById('filter-evidence').value;
+  var section = document.getElementById('filter-section').value;
+  var confidence = document.getElementById('filter-confidence').value;
+  var evidence = document.getElementById('filter-evidence').value;
 
-  document.querySelectorAll('.claim-item').forEach(el => {
-    const matchSection = !section || el.dataset.section === section;
-    const matchConf = !confidence || el.dataset.confidence === confidence;
-    const matchEvid = !evidence || el.dataset.evidence === evidence;
+  document.querySelectorAll('.claim-item').forEach(function(el) {
+    var matchSection = !section || el.dataset.section === section;
+    var matchConf = !confidence || el.dataset.confidence === confidence;
+    var matchEvid = !evidence || el.dataset.evidence === evidence;
     el.style.display = (matchSection && matchConf && matchEvid) ? '' : 'none';
   });
 
-  document.querySelectorAll('.section-header').forEach(el => {
-    if (!section || el.dataset.section === section) {
-      el.style.display = '';
-    } else {
-      el.style.display = 'none';
-    }
+  document.querySelectorAll('.section-header').forEach(function(el) {
+    el.style.display = (!section || el.dataset.section === section) ? '' : 'none';
   });
 }
+
+// Compare search/autocomplete
+var compareDebounce = null;
+var allOosFiles = null;
+var currentOosId = '<%= oosFile.id %>';
+
+document.getElementById('compare-search').addEventListener('input', function() {
+  var q = this.value.trim();
+  clearTimeout(compareDebounce);
+  if (q.length < 1) { document.getElementById('compare-results').classList.add('hidden'); return; }
+  compareDebounce = setTimeout(function() { searchOos(q); }, 200);
+});
+
+document.getElementById('compare-search').addEventListener('focus', function() {
+  if (!this.value.trim()) loadAllOos();
+});
+
+function loadAllOos() {
+  if (allOosFiles) { renderResults(allOosFiles); return; }
+  fetch('/api/v1/browse?limit=50').then(function(r) { return r.json(); }).then(function(data) {
+    allOosFiles = (data.data || []).filter(function(o) { return o.id !== currentOosId; });
+    renderResults(allOosFiles);
+  });
+}
+
+function searchOos(q) {
+  if (!allOosFiles) {
+    fetch('/api/v1/browse?limit=50').then(function(r) { return r.json(); }).then(function(data) {
+      allOosFiles = (data.data || []).filter(function(o) { return o.id !== currentOosId; });
+      filterAndRender(q);
+    });
+  } else {
+    filterAndRender(q);
+  }
+}
+
+function filterAndRender(q) {
+  var lower = q.toLowerCase();
+  var filtered = allOosFiles.filter(function(o) {
+    return (o.org_name || '').toLowerCase().includes(lower) ||
+           (o.industry || '').toLowerCase().includes(lower) ||
+           (o.template || '').toLowerCase().includes(lower);
+  });
+  renderResults(filtered);
+}
+
+function renderResults(items) {
+  var container = document.getElementById('compare-results');
+  if (!items.length) {
+    container.innerHTML = '<div class="p-3 text-sm text-gray-400">No other published OOS files found.</div>';
+    container.classList.remove('hidden');
+    return;
+  }
+  container.innerHTML = items.map(function(o) {
+    var badge = o.badge === 'founding' ? '<span class="badge-founding text-white text-[10px] px-1.5 py-0.5 rounded ml-1">Founding</span>' : '';
+    var tier = o.quality_tier ? '<span class="badge-' + o.quality_tier + ' text-white text-[10px] px-1.5 py-0.5 rounded ml-1">' + o.quality_tier + '</span>' : '';
+    var level = o.agentic_level ? '<span class="badge-level badge-level-' + o.agentic_level + ' ml-1">L' + o.agentic_level + '</span>' : '';
+    return '<button class="w-full text-left px-3 py-2.5 hover:bg-otp-50 border-b border-gray-100 last:border-0" onclick="selectCompare(\'' + o.id + '\',\'' + escHtml(o.org_name) + '\',\'' + escHtml(o.industry) + ' | ' + o.claim_count + ' claims | v' + o.version + '\')">' +
+      '<div class="flex items-center gap-1"><span class="font-medium text-sm">' + escHtml(o.org_name) + '</span>' + badge + tier + level + '</div>' +
+      '<div class="text-xs text-gray-500">' + escHtml(o.industry) + ' &middot; ' + o.claim_count + ' claims &middot; v' + o.version + '</div>' +
+    '</button>';
+  }).join('');
+  container.classList.remove('hidden');
+}
+
+function selectCompare(id, name, meta) {
+  document.getElementById('compare-id').value = id;
+  document.getElementById('compare-selected-name').textContent = name;
+  document.getElementById('compare-selected-meta').textContent = meta;
+  document.getElementById('compare-selected').classList.remove('hidden');
+  document.getElementById('compare-results').classList.add('hidden');
+  document.getElementById('compare-search').value = '';
+  document.getElementById('compare-btn').disabled = false;
+}
+
+function clearCompareSelection() {
+  document.getElementById('compare-id').value = '';
+  document.getElementById('compare-selected').classList.add('hidden');
+  document.getElementById('compare-btn').disabled = true;
+}
+
+function doCompare() {
+  var otherId = document.getElementById('compare-id').value;
+  if (otherId) window.location.href = '/compare/' + currentOosId + '/' + otherId;
+}
+
+function escHtml(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// Close results on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#compare-modal .relative')) {
+    document.getElementById('compare-results').classList.add('hidden');
+  }
+});
 </script>
