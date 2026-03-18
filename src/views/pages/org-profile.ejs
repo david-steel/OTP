@@ -1,73 +1,153 @@
-<div class="max-w-4xl mx-auto px-4 py-8">
-  <!-- Profile Header -->
-  <div class="bg-white p-6 rounded-lg border mb-6">
-    <div class="flex items-start justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <h1 class="text-2xl font-bold"><%= org.name %></h1>
-          <% if (org.badge === 'founding') { %>
-            <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding Publisher</span>
-          <% } %>
-          <% if (org.qualityTier) { %>
-            <span class="badge-<%= org.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= org.qualityTier %></span>
-          <% } %>
-          <% if (org.agenticLevel) { %>
-            <span class="badge-level badge-level-<%= org.agenticLevel %>" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= org.agenticLevel %> <%= org.agenticLabel %></span>
-          <% } %>
+<!-- Publisher Hero -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white"><%= org.name %></h1>
+            <% if (org.badge === 'founding') { %>
+              <span class="badge-founding text-white text-xs px-2.5 py-0.5 rounded-full font-semibold">Founding Publisher</span>
+            <% } %>
+            <% if (org.qualityTier) { %>
+              <span class="badge-<%= org.qualityTier %> text-white text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize"><%= org.qualityTier %></span>
+            <% } %>
+            <% if (org.agenticLevel) { %>
+              <span class="badge-level badge-level-<%= org.agenticLevel %>" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= org.agenticLevel %> <%= org.agenticLabel %></span>
+            <% } %>
+          </div>
+          <div class="text-gray-400 text-sm"><%= org.industry %> &middot; <%= org.size %></div>
+          <div class="text-xs text-gray-500 mt-1">Member since <%= new Date(org.memberSince).toLocaleDateString() %></div>
         </div>
-        <div class="text-gray-500 text-sm"><%= org.industry %> &middot; <%= org.size %></div>
-        <div class="text-xs text-gray-400 mt-1">Member since <%= new Date(org.memberSince).toLocaleDateString() %></div>
-      </div>
-      <div class="text-right">
-        <div class="text-3xl font-bold text-otp-600"><%= stats.totalClaims %></div>
-        <div class="text-xs text-gray-500">total claims</div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-4 gap-4 mt-6 text-center text-sm">
-      <div>
-        <div class="text-lg font-bold"><%= stats.publishedFiles %></div>
-        <div class="text-xs text-gray-500">Published Files</div>
-      </div>
-      <div>
-        <div class="text-lg font-bold"><%= stats.totalClaims %></div>
-        <div class="text-xs text-gray-500">Total Claims</div>
-      </div>
-      <div>
-        <div class="text-lg font-bold">v<%= stats.latestVersion %></div>
-        <div class="text-xs text-gray-500">Latest Version</div>
-      </div>
-      <div>
-        <div class="text-lg font-bold"><%= stats.latestPublish ? new Date(stats.latestPublish).toLocaleDateString() : '--' %></div>
-        <div class="text-xs text-gray-500">Last Published</div>
+        <div class="text-right hidden sm:block">
+          <div class="text-4xl font-extrabold text-otp-400"><%= stats.totalClaims %></div>
+          <div class="text-xs text-gray-500">total claims</div>
+        </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Published OOS Files -->
-  <h2 class="text-lg font-semibold mb-4">Published OOS Files</h2>
-  <% if (oosFiles.length > 0) { %>
-    <% oosFiles.forEach(function(oos) { %>
-      <a href="/oos/<%= oos.id %>" class="block bg-white p-4 rounded-lg border mb-3 claim-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-sm font-medium capitalize"><%= oos.template.replace('_', ' ') %></span>
-            <span class="text-xs text-gray-400 ml-2">v<%= oos.version %></span>
+<!-- Stats + Token Efficiency -->
+<section class="bg-white border-b border-gray-100">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6">
+      <div class="bg-gray-50 rounded-xl p-4">
+        <div class="text-2xl font-extrabold text-gray-900"><%= stats.publishedFiles %></div>
+        <div class="text-xs text-gray-500 mt-1">Published Files</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4">
+        <div class="text-2xl font-extrabold text-gray-900"><%= stats.totalClaims %></div>
+        <div class="text-xs text-gray-500 mt-1">Total Claims</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4">
+        <div class="text-2xl font-extrabold text-gray-900">v<%= stats.latestVersion %></div>
+        <div class="text-xs text-gray-500 mt-1">Latest Version</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4">
+        <div class="text-2xl font-extrabold text-gray-900"><%= stats.connectedOrgs %></div>
+        <div class="text-xs text-gray-500 mt-1">Connected Orgs</div>
+      </div>
+    </div>
+
+    <%
+      // Aggregate Token Efficiency across all published OOS files
+      // We compute from the latest OOS file's confidence distribution
+      var latestOos = oosFiles.length > 0 ? oosFiles[0] : null;
+      var confDist = latestOos ? (latestOos.confidenceDistribution || {}) : {};
+      var highCount = confDist.high || 0;
+      var medCount = confDist.medium || 0;
+      var lowCount = confDist.low || 0;
+      var totalClaims = highCount + medCount + lowCount;
+
+      // Estimate efficiency based on confidence distribution
+      // HIGH claims avg ~7x, MEDIUM ~3x, LOW ~1x
+      var weightedEfficiency = totalClaims > 0
+        ? ((highCount * 7) + (medCount * 3) + (lowCount * 1)) / totalClaims
+        : 0;
+
+      var estTokenCost = totalClaims > 0 ? Math.round(totalClaims * 140) : 0;
+      var estTokenSavings = Math.round(estTokenCost * weightedEfficiency);
+      var estNet = estTokenSavings - estTokenCost;
+
+      var pTeiLabel, pTeiColor, pTeiBg;
+      if (weightedEfficiency >= 5) { pTeiLabel = 'High Efficiency'; pTeiColor = 'text-green-700'; pTeiBg = 'bg-green-50 border-green-200'; }
+      else if (weightedEfficiency >= 2) { pTeiLabel = 'Moderate Efficiency'; pTeiColor = 'text-blue-700'; pTeiBg = 'bg-blue-50 border-blue-200'; }
+      else if (weightedEfficiency >= 1) { pTeiLabel = 'Low Efficiency'; pTeiColor = 'text-amber-700'; pTeiBg = 'bg-amber-50 border-amber-200'; }
+      else { pTeiLabel = 'Inefficient'; pTeiColor = 'text-red-700'; pTeiBg = 'bg-red-50 border-red-200'; }
+    %>
+
+    <% if (totalClaims > 0) { %>
+    <!-- Token Efficiency Index -->
+    <div class="p-4 rounded-xl border <%= pTeiBg %>">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Token Efficiency Index</div>
+          <div class="flex items-center gap-3">
+            <span class="text-2xl font-extrabold <%= pTeiColor %>"><%= weightedEfficiency.toFixed(1) %>x</span>
+            <span class="text-sm font-semibold <%= pTeiColor %>"><%= pTeiLabel %></span>
           </div>
-          <div class="flex gap-2 text-xs">
-            <span class="bg-gray-100 px-2 py-0.5 rounded"><%= oos.claimCount %> claims</span>
-            <span class="bg-gray-100 px-2 py-0.5 rounded"><%= oos.wordCount %> words</span>
+          <div class="text-xs text-gray-500 mt-1">Based on confidence distribution across <%= totalClaims %> published claims.</div>
+        </div>
+        <div class="text-right text-sm hidden sm:block">
+          <div class="text-gray-500">Est. Token Cost: <span class="font-semibold text-gray-700"><%= estTokenCost.toLocaleString() %></span></div>
+          <div class="text-gray-500">Est. Savings: <span class="font-semibold text-green-600"><%= estTokenSavings.toLocaleString() %></span></div>
+          <div class="text-gray-500">Net: <span class="font-semibold text-green-600"><%= estNet > 0 ? '+' : '' %><%= estNet.toLocaleString() %></span> tokens</div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</section>
+
+<!-- Published OOS Files -->
+<section class="bg-gray-50 py-8 sm:py-10">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <h2 class="text-lg font-bold text-gray-900 mb-4">Published OOS Files</h2>
+    <% if (oosFiles.length > 0) { %>
+      <div class="space-y-3">
+      <% oosFiles.forEach(function(oos) { %>
+        <a href="/oos/<%= oos.id %>" class="block bg-white p-5 rounded-xl border border-gray-100 card-hover">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-bold text-gray-900 capitalize"><%= oos.template.replace('_', ' ') %> Template</span>
+              <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">v<%= oos.version %></span>
+              <% if (oos.status === 'published') { %>
+                <span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">Published</span>
+              <% } %>
+            </div>
+            <div class="text-xs text-gray-400"><%= oos.publishedAt ? new Date(oos.publishedAt).toLocaleDateString() : 'Draft' %></div>
           </div>
-        </div>
-        <div class="flex gap-1 mt-2">
-          <span class="bg-confidence-high text-white px-1.5 py-0.5 rounded text-xs"><%= (oos.confidenceDistribution || {}).high || 0 %> H</span>
-          <span class="bg-confidence-medium text-white px-1.5 py-0.5 rounded text-xs"><%= (oos.confidenceDistribution || {}).medium || 0 %> M</span>
-          <span class="bg-confidence-low text-white px-1.5 py-0.5 rounded text-xs"><%= (oos.confidenceDistribution || {}).low || 0 %> L</span>
-          <span class="text-xs text-gray-400 ml-2">Published <%= oos.publishedAt ? new Date(oos.publishedAt).toLocaleDateString() : 'Draft' %></span>
-        </div>
-      </a>
-    <% }); %>
-  <% } else { %>
-    <div class="text-center py-8 text-gray-400 text-sm">No published OOS files yet.</div>
-  <% } %>
-</div>
+          <div class="flex flex-wrap items-center gap-3 text-xs">
+            <span class="bg-gray-50 text-gray-600 px-2.5 py-1 rounded-lg font-medium"><%= oos.claimCount %> claims</span>
+            <span class="bg-gray-50 text-gray-600 px-2.5 py-1 rounded-lg font-medium"><%= oos.wordCount %> words</span>
+            <div class="flex gap-1">
+              <span class="bg-confidence-high text-white px-2 py-0.5 rounded font-semibold"><%= (oos.confidenceDistribution || {}).high || 0 %> H</span>
+              <span class="bg-confidence-medium text-white px-2 py-0.5 rounded font-semibold"><%= (oos.confidenceDistribution || {}).medium || 0 %> M</span>
+              <span class="bg-confidence-low text-white px-2 py-0.5 rounded font-semibold"><%= (oos.confidenceDistribution || {}).low || 0 %> L</span>
+            </div>
+            <%
+              var oosConf = oos.confidenceDistribution || {};
+              var oH = oosConf.high || 0, oM = oosConf.medium || 0, oL = oosConf.low || 0;
+              var oTotal = oH + oM + oL;
+              var oEff = oTotal > 0 ? ((oH * 7) + (oM * 3) + (oL * 1)) / oTotal : 0;
+              var oEffColor = oEff >= 5 ? 'text-green-600 bg-green-50' : oEff >= 2 ? 'text-blue-600 bg-blue-50' : oEff >= 1 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
+            %>
+            <% if (oTotal > 0) { %>
+              <span class="<%= oEffColor %> px-2.5 py-0.5 rounded font-semibold" title="Token Efficiency Index"><%= oEff.toFixed(1) %>x efficiency</span>
+            <% } %>
+          </div>
+        </a>
+      <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-12 text-gray-400 text-sm bg-white rounded-xl border border-gray-100">No published OOS files yet.</div>
+    <% } %>
+
+    <!-- Back -->
+    <div class="mt-8 text-center">
+      <a href="/browse" class="text-otp-500 hover:text-otp-600 font-semibold text-sm">Browse all publishers</a>
+    </div>
+  </div>
+</section>
