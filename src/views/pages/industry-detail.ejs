@@ -1,0 +1,44 @@
+<!-- Industry Detail header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <a href="/industries" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        All Industries
+      </a>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight"><%= industry %> AI Agent Coordination</h1>
+      <p class="text-gray-400 mt-3"><%= orgs.length %> organization<%= orgs.length > 1 ? 's' : '' %> publishing coordination intelligence in <%= industry %></p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="space-y-4">
+      <% orgs.forEach(function(org) { %>
+        <a href="/org/<%= org.id %>" class="block bg-white p-5 rounded-xl border border-gray-100 card-hover">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-gray-900"><%= org.name %></span>
+              <% if (org.badge === 'founding') { %>
+                <span class="badge-founding text-white text-[10px] px-1.5 py-0.5 rounded-full">Founding</span>
+              <% } %>
+              <% if (org.quality_tier) { %>
+                <span class="badge-<%= org.quality_tier %> text-white text-[10px] px-1.5 py-0.5 rounded-full capitalize"><%= org.quality_tier %></span>
+              <% } %>
+              <% if (org.agentic_level) { %>
+                <span class="badge-level badge-level-<%= org.agentic_level %>">L<%= org.agentic_level %></span>
+              <% } %>
+            </div>
+            <span class="text-sm text-gray-500"><%= org.claim_count %> claims</span>
+          </div>
+          <div class="text-xs text-gray-400"><%= org.size %> &middot; <%= org.template.replace('_', ' ') %> template</div>
+        </a>
+      <% }); %>
+    </div>
+
+    <div class="mt-10 text-center">
+      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+    </div>
+  </div>
+</section>

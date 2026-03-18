@@ -15,6 +15,10 @@ function toParsedClaim(c: any): ParsedClaim {
 
 const BASE_URL = 'https://orgtp.com';
 
+function bc(...items: Array<{ name: string; url: string }>) {
+  return [{ name: 'Home', url: BASE_URL + '/' }, ...items];
+}
+
 export default async function pageRoutes(app: FastifyInstance) {
 
   // Homepage
@@ -64,7 +68,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       ORDER BY f.published_at DESC NULLS LAST
       LIMIT 50
     `);
-    return reply.view('pages/browse', { title: 'Browse Intelligence - OTP', description: 'Browse published Organizational Operating Systems. See how organizations coordinate their AI agent teams.', canonical: BASE_URL + '/browse', oosFiles: rows.rows || [] });
+    return reply.view('pages/browse', { title: 'Browse Intelligence - OTP', description: 'Browse published Organizational Operating Systems. See how organizations coordinate their AI agent teams.', canonical: BASE_URL + '/browse', breadcrumbs: bc({ name: 'Browse', url: BASE_URL + '/browse' }), jsonLd: { '@context': 'https://schema.org', '@type': 'DataCatalog', name: 'OTP Intelligence Catalog', description: 'Published Organizational Operating Systems with coordination intelligence.', url: BASE_URL + '/browse' }, oosFiles: rows.rows || [] });
   });
 
   // Search
@@ -92,7 +96,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         pagination.total = results.length;
       }
 
-      return reply.view('pages/search', { title: q ? `"${q}" - Search - OTP` : 'Search - OTP', description: 'Search knowledge claims across published Organizational Operating Systems on OTP.', canonical: BASE_URL + '/search', q, confidence, evidence, template, industry, results, pagination });
+      return reply.view('pages/search', { title: q ? `"${q}" - Search - OTP` : 'Search - OTP', description: 'Search knowledge claims across published Organizational Operating Systems on OTP.', canonical: BASE_URL + '/search', breadcrumbs: bc({ name: 'Search', url: BASE_URL + '/search' }), q, confidence, evidence, template, industry, results, pagination });
     }
   );
 
@@ -172,17 +176,17 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Graph page
   app.get('/graph', async (request, reply) => {
-    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the Intelligence Graph showing how AI coordination patterns connect across organizations.', canonical: BASE_URL + '/graph' });
+    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the Intelligence Graph showing how AI coordination patterns connect across organizations.', canonical: BASE_URL + '/graph', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
   });
 
   // Guide page
   app.get('/guide', async (request, reply) => {
-    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Step-by-step guide to generating and publishing your Organizational Operating System on OTP.', canonical: BASE_URL + '/guide' });
+    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Step-by-step guide to generating and publishing your Organizational Operating System on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
   // Blog index
   app.get('/blog', async (request, reply) => {
-    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog' });
+    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' } });
   });
 
   // Blog post 1
@@ -306,6 +310,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 12
+  app.get('/blog/what-is-an-oos-file', async (request, reply) => {
+    return reply.view('pages/blog-post-12', {
+      title: 'What Is an OOS File? The New Standard for AI Organizational Intelligence - OTP',
+      description: 'The OOS file is a structured format for capturing how AI agents coordinate. YAML frontmatter, Markdown claims, confidence levels, evidence types, and failure modes in a portable, diffable file.',
+      canonical: BASE_URL + '/blog/what-is-an-oos-file',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'What Is an OOS File? The New Standard for AI Organizational Intelligence', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/what-is-an-oos-file' }
+    });
+  });
+
   // Glossary
   app.get('/glossary', async (request, reply) => {
     const faqItems = [
@@ -321,6 +336,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Glossary - Coordination Intelligence Terms - OTP',
       description: 'Definitions for coordination intelligence, Organizational Operating Systems, knowledge claims, agentic maturity levels, token efficiency, and the AI coordination stack.',
       canonical: BASE_URL + '/glossary',
+      breadcrumbs: bc({ name: 'Glossary', url: BASE_URL + '/glossary' }),
       jsonLd: [
         { '@context': 'https://schema.org', '@type': 'DefinedTermSet', name: 'OTP Glossary', description: 'Terms and definitions for the Organization Transport Protocol and coordination intelligence.', url: BASE_URL + '/glossary' },
         { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) }
@@ -347,6 +363,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/faq', {
       title: 'FAQ - Organization Transport Protocol - OTP',
       description: 'Frequently asked questions about OTP, Organizational Operating Systems, coordination intelligence, and how to publish your AI coordination knowledge.',
+      breadcrumbs: bc({ name: 'FAQ', url: BASE_URL + '/faq' }),
       canonical: BASE_URL + '/faq',
       jsonLd: { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) }
     });
@@ -357,6 +374,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/about', {
       title: 'About OTP - Organization Transport Protocol',
       description: 'OTP was built by David Steel, who runs 14 AI agents in production. The platform was constructed using the same agent coordination system it measures.',
+      breadcrumbs: bc({ name: 'About', url: BASE_URL + '/about' }),
       canonical: BASE_URL + '/about',
       jsonLd: [
         { '@context': 'https://schema.org', '@type': 'Organization', name: 'OTP - Organization Transport Protocol', url: BASE_URL, founder: { '@type': 'Person', name: 'David Steel' }, description: 'The coordination intelligence layer for AI-native organizations.' },
@@ -415,6 +433,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Coordination Knowledge by Section - OTP',
       description: 'Browse AI coordination knowledge claims organized by domain: operating rules, agent authority, coordination patterns, failure modes, and human-AI boundaries.',
       canonical: BASE_URL + '/claims',
+      breadcrumbs: bc({ name: 'Claims', url: BASE_URL + '/claims' }),
       sections: sectionRows.rows || []
     });
   });
@@ -436,10 +455,53 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/claim-section-detail', {
       title: `${sectionLabel.replace(/\b\w/g, (c: string) => c.toUpperCase())} - Coordination Intelligence - OTP`,
       description: `${(claimRows.rows || []).length} knowledge claims about ${sectionLabel} from ${orgCount} organizations on OTP.`,
+      breadcrumbs: bc({ name: 'Claims', url: BASE_URL + '/claims' }, { name: sectionLabel.replace(/\b\w/g, (c: string) => c.toUpperCase()), url: BASE_URL + '/claims/' + section }),
       canonical: BASE_URL + '/claims/' + section,
       sectionName: section,
       claims: claimRows.rows || [],
       orgCount
+    });
+  });
+
+  // Industries Index
+  app.get('/industries', async (request, reply) => {
+    const rows = await db.execute(sql`
+      SELECT o.industry, COUNT(DISTINCT o.id) AS org_count,
+             COUNT(c.id) AS claim_count
+      FROM organizations o
+      JOIN oos_files f ON f.org_id = o.id
+      LEFT JOIN claims c ON c.oos_file_id = f.id
+      WHERE f.status = 'published'
+      GROUP BY o.industry ORDER BY org_count DESC
+    `) as any;
+    return reply.view('pages/industries', {
+      title: 'AI Coordination by Industry - OTP',
+      description: 'See how organizations in different industries coordinate their AI agent teams. Browse coordination intelligence by industry.',
+      canonical: BASE_URL + '/industries',
+      breadcrumbs: bc({ name: 'Industries', url: BASE_URL + '/industries' }),
+      industries: rows.rows || []
+    });
+  });
+
+  // Industry Detail
+  app.get<{ Params: { industry: string } }>('/industry/:industry', async (request, reply) => {
+    const { industry } = request.params;
+    const decoded = decodeURIComponent(industry);
+    const rows = await db.execute(sql`
+      SELECT o.id, o.name, o.size, o.badge, o.quality_tier, o.agentic_level,
+             f.template, f.claim_count
+      FROM organizations o
+      JOIN oos_files f ON f.org_id = o.id
+      WHERE f.status = 'published' AND o.industry ILIKE ${decoded}
+      ORDER BY f.claim_count DESC
+    `) as any;
+    return reply.view('pages/industry-detail', {
+      title: `${decoded} AI Agent Coordination - OTP`,
+      description: `How ${decoded} organizations coordinate their AI agent teams. ${(rows.rows || []).length} publishers on OTP.`,
+      canonical: BASE_URL + '/industry/' + encodeURIComponent(decoded),
+      breadcrumbs: bc({ name: 'Industries', url: BASE_URL + '/industries' }, { name: decoded, url: BASE_URL + '/industry/' + encodeURIComponent(decoded) }),
+      industry: decoded,
+      orgs: rows.rows || []
     });
   });
 

@@ -137,6 +137,9 @@
   <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
   <script type="application/ld+json"><%- JSON.stringify(jsonLd) %></script>
   <% } %>
+  <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 0) { %>
+  <script type="application/ld+json"><%- JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }) %></script>
+  <% } %>
 </head>
 <body class="bg-white text-gray-900 min-h-screen">
   <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-otp-950/80 text-white border-b border-white/5">
@@ -160,7 +163,7 @@
         <a href="/browse" class="text-gray-300 hover:text-white transition-colors">Browse</a>
         <a href="/search" class="text-gray-300 hover:text-white transition-colors">Search</a>
         <a href="/graph" class="text-gray-300 hover:text-white transition-colors">Graph</a>
-        <a href="/guide" class="text-gray-300 hover:text-white transition-colors">Guide</a>
+        <a href="/claims" class="text-gray-300 hover:text-white transition-colors">Claims</a>
         <a href="/blog" class="text-gray-300 hover:text-white transition-colors">Blog</a>
         <a href="/tickets" class="text-gray-300 hover:text-white transition-colors">Issues</a>
         <div id="auth-nav" class="flex items-center gap-3">
@@ -175,7 +178,7 @@
         <a href="/browse" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Browse</a>
         <a href="/search" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Search</a>
         <a href="/graph" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Graph</a>
-        <a href="/guide" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Guide</a>
+        <a href="/claims" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Claims</a>
         <a href="/blog" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Blog</a>
         <a href="/tickets" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Issues</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">

@@ -1,0 +1,134 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Standard</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">What Is an OOS File? The New Standard for AI Organizational Intelligence</h1>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <p>Every major coordination system has a standard file format. The web has HTML. APIs have OpenAPI. Configuration has YAML. Data interchange has JSON. But until now, there was no standard format for capturing how an organization's AI agents coordinate. No structured way to encode the rules, the failure modes, the confidence levels, the evidence behind every operational decision an AI team makes.</p>
+
+      <p>The OOS file fills that gap.</p>
+
+      <p>An <a href="/glossary#organizational-operating-system" class="text-otp-500 hover:text-otp-600 underline">Organizational Operating System</a> file is not documentation. It is not a wiki page or a README. It is a structured, machine-readable artifact that captures the coordination intelligence of an AI-native organization. And it is designed from the ground up to be portable, diffable, and comparable across organizations.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Format</h2>
+
+      <p>An OOS (Organizational Operating System) file is a structured document that uses YAML frontmatter and Markdown-formatted claims. The frontmatter captures metadata about the organization: name, industry, size, template type, agent count, version number, and word count. This header alone tells you enough to categorize and compare the file before reading a single claim.</p>
+
+      <p>The body contains <a href="/glossary#knowledge-claim" class="text-otp-500 hover:text-otp-600 underline">knowledge claims</a>. Each claim is a self-contained unit of operational intelligence. It has a claim ID for referencing, a section for categorization, the rule itself, the reasoning behind the rule, the failure mode that occurs when the rule is violated, a confidence level, an evidence type, and a scope defining which agents or teams the rule applies to.</p>
+
+      <p>The combination of YAML frontmatter and structured claims makes the OOS file both human-readable and machine-parseable. You can open it in any text editor. You can also feed it to an AI system that extracts, indexes, and compares every claim automatically.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What Makes It Different from Documentation</h2>
+
+      <p>Traditional documentation describes what a system does. An OOS describes what a system knows. That distinction matters.</p>
+
+      <p>A wiki page might say: "Agents write to shared state files." An OOS claim says the same thing, but adds six dimensions that plain text cannot. It tells you the confidence level. It tells you the evidence type. It tells you the failure mode. It tells you why the rule exists. It tells you the scope. And it gives the claim a unique identifier so it can be tracked, compared, and referenced across organizations.</p>
+
+      <p>Documentation decays. Nobody knows which parts are current, which are aspirational, and which are wrong. An OOS file makes these distinctions explicit. A HIGH confidence, MEASURED_RESULT claim is fundamentally different from a LOW confidence, SPECULATION claim. Both are valid. But they carry different weights, and the format makes that visible.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Claim Structure</h2>
+
+      <p>Here is what a single claim looks like in practice:</p>
+
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 my-6 font-mono text-sm space-y-2">
+        <div><span class="text-gray-400">claim_id:</span> <span class="text-gray-900 font-semibold">C001</span></div>
+        <div><span class="text-gray-400">section:</span> <span class="text-gray-900">core_operating_rules</span></div>
+        <div><span class="text-gray-400">rule:</span> <span class="text-gray-900">"Every agent writes to a shared state file. No agent reads data sources directly."</span></div>
+        <div><span class="text-gray-400">why:</span> <span class="text-gray-900">"Direct data source access creates race conditions and inconsistent views across agents."</span></div>
+        <div><span class="text-gray-400">failure_mode:</span> <span class="text-gray-900">"Two agents read the same data source at different times, get different results, make conflicting decisions."</span></div>
+        <div><span class="text-gray-400">confidence:</span> <span class="text-green-600 font-semibold">HIGH</span></div>
+        <div><span class="text-gray-400">evidence:</span> <span class="text-purple-600 font-semibold">MEASURED_RESULT</span></div>
+        <div><span class="text-gray-400">scope:</span> <span class="text-gray-900">All agents</span></div>
+      </div>
+
+      <p>Each field adds a dimension that plain text documentation cannot provide. The <strong class="text-gray-900">claim ID</strong> makes it referenceable. The <strong class="text-gray-900">section</strong> makes it categorizable. The <strong class="text-gray-900">rule</strong> states the operational truth. The <strong class="text-gray-900">why</strong> explains the reasoning, so a new team member or a new AI system can understand the intent, not just the instruction. The <strong class="text-gray-900">failure mode</strong> documents what actually goes wrong when the rule is violated. This is operational knowledge that most organizations lose.</p>
+
+      <p>The <strong class="text-gray-900">confidence level</strong> tells you how certain the organization is. HIGH means it has been validated through measurement or extensive observation. MEDIUM means it is an observed pattern with reasonable evidence. LOW means it is an inference or speculation. The <strong class="text-gray-900">evidence type</strong> tells you how the claim was established. MEASURED_RESULT means someone ran the numbers. OBSERVED_REPEATEDLY means it kept happening. SPECULATION means the organization is being honest about what it does not yet know.</p>
+
+      <p>Together, these fields turn a simple rule into a structured, comparable unit of organizational intelligence.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Why Files, Not APIs</h2>
+
+      <p>OOS files are portable. You can store them in git. You can diff two versions to see exactly what changed between releases. You can share them over email, paste them into a chat, or host them on a static server. No platform account required. No API key needed to read one.</p>
+
+      <p>The file format is the protocol. Any AI system that understands YAML and Markdown can parse an OOS file. Any diff tool can compare two versions. Any version control system can track the history. This is intentional. The value of coordination intelligence increases when it moves freely between systems, not when it is locked behind a proprietary API.</p>
+
+      <p><a href="/blog/what-is-an-oos" class="text-otp-500 hover:text-otp-600 underline">OTP</a> is the first platform that reads, indexes, and compares OOS files at scale. But it is not the only system that can. That is the point.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Token Efficiency Built In</h2>
+
+      <p>Every claim in an OOS file has a measurable token cost. When you load a rule into an AI agent's context window, it consumes tokens. Those tokens are a finite resource. The question is whether each rule earns back more than it costs.</p>
+
+      <p>Because claims include confidence and evidence metadata, you can calculate the <a href="/glossary#token-efficiency-ratio" class="text-otp-500 hover:text-otp-600 underline">Token Efficiency Ratio</a> for each rule. A HIGH confidence, MEASURED_RESULT claim that prevents a documented failure mode returns 10x its token cost. A LOW confidence, SPECULATION claim that has never been validated returns 0.5x at best. The ratio tells you which rules are earning their keep and which are dead weight in your context window.</p>
+
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-5 my-8">
+        <p class="text-otp-800 font-semibold text-sm">The OOS file format makes this calculation possible because it structures what plain text cannot. You cannot calculate the token efficiency of a paragraph in a wiki. You can calculate it for every claim in an OOS.</p>
+      </div>
+
+      <p>This means organizations can treat their OOS like a budget. High-performing rules stay. Low-performing rules get validated or removed. The format itself enforces the discipline.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Standard Is the File</h2>
+
+      <p>The OOS file is not proprietary. It is a format. Any AI system can read it, compare it, and learn from it. Any organization can generate one. Any version control system can track its evolution. Any diff tool can show you what changed.</p>
+
+      <p>That is the point. Coordination intelligence should not be locked inside any single platform, any single vendor, or any single AI model. It should live in a portable, structured, versioned file that the organization owns and controls.</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
+        <a href="/guide" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
+          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Create Your OOS</div>
+          <p class="text-xs text-gray-400">Generate your first OOS file</p>
+        </a>
+        <a href="/browse" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
+          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Browse Published Files</div>
+          <p class="text-xs text-gray-400">See how other organizations structure theirs</p>
+        </a>
+        <a href="/publish" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
+          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Publish Yours</div>
+          <p class="text-xs text-gray-400">Add your coordination intelligence to the graph</p>
+        </a>
+      </div>
+
+      <p>Publish yours.</p>
+
+      <!-- Author -->
+      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+        <div>
+          <div class="font-bold text-gray-900">David Steel</div>
+          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</section>
+
+<!-- Next post CTA -->
+<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <p class="text-sm text-gray-400 mb-4">The OOS file is the standard. Publish yours and join the Intelligence Graph.</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
+      Publish Your OOS
+      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+    </a>
+  </div>
+</section>

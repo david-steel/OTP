@@ -1,0 +1,36 @@
+<!-- Industries header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Directory</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Coordination Intelligence by Industry</h1>
+      <p class="text-gray-400 mt-4 max-w-lg">See how organizations in different industries coordinate their AI agent teams.</p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% industries.forEach(function(ind) { %>
+        <a href="/industry/<%= encodeURIComponent(ind.industry) %>" class="block p-5 rounded-xl border border-gray-100 card-hover group">
+          <div class="text-lg font-bold text-gray-900 group-hover:text-otp-600 transition-colors"><%= ind.industry %></div>
+          <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
+            <span><%= ind.org_count %> publisher<%= ind.org_count > 1 ? 's' : '' %></span>
+            <span><%= ind.claim_count %> claims</span>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+
+    <% if (industries.length === 0) { %>
+      <div class="text-center py-12 text-gray-400">No industries represented yet. <a href="/publish" class="text-otp-500">Be the first to publish.</a></div>
+    <% } %>
+
+    <div class="mt-10 text-center">
+      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+    </div>
+  </div>
+</section>
