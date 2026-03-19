@@ -1,0 +1,102 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-semibold">Industry</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">1,500% More Tokens Per Workflow. Most of Them Are Wasted.</h1>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <p>A recent analysis published by AI News found that advanced multi-agent workflows generate <strong class="text-gray-900">up to 1,500% more tokens</strong> than standard single-agent formats. Every interaction requires resending full system histories, intermediate reasoning, and tool outputs. The token cost of coordination is not incremental. It is exponential.</p>
+
+      <p>NVIDIA's response was Nemotron 3 Super -- a 120 billion parameter model with only 12 billion active during inference. Five times higher throughput. Four times the memory efficiency. One million token context window. The infrastructure answer to the token cost problem.</p>
+
+      <p>That is the right answer to the wrong question.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Cheaper Tokens Do Not Fix Wasted Tokens</h2>
+
+      <p>Making tokens cheaper is important infrastructure work. NVIDIA, Anthropic, Google, and every major model provider are driving inference costs down. That benefits everyone.</p>
+
+      <p>But the 1,500% overhead is not primarily a cost problem. It is a <strong class="text-gray-900">knowledge architecture problem.</strong></p>
+
+      <p>When a multi-agent workflow resends the full system history on every interaction, it is not because the workflow is poorly designed. It is because the organizational context that each agent needs -- who owns what, what happened before, what the authority boundaries are, how to escalate, what shared state to trust -- does not exist in a structured, referenceable format.</p>
+
+      <p>So the system reconstructs it. Every time. From scratch. At 1,500% overhead.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Two Token Taxes</h2>
+
+      <p>Multi-agent systems pay two distinct token taxes. The industry is focused on one and ignoring the other.</p>
+
+      <p><strong class="text-gray-900">Tax 1: The Inference Tax.</strong> Every reasoning step costs tokens. Complex autonomous agents require reasoning at each stage. Larger models cost more per token. This is the tax NVIDIA is solving with efficient architectures, sparse activation, and faster inference. It is a hardware and model design problem. It is being solved.</p>
+
+      <p><strong class="text-gray-900">Tax 2: The Coordination Tax.</strong> Every time agents need organizational context -- authority boundaries, escalation paths, shared state, failure recovery rules, who owns what -- the system rebuilds that context from raw conversation history. This is not a hardware problem. No amount of cheaper inference fixes it. It is an organizational knowledge architecture problem.</p>
+
+      <p>The Coordination Tax is where the 1,500% lives. And it is where the industry has no answer.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Goal Drift Is a Coordination Symptom</h2>
+
+      <p>The AI News analysis identified another consequence of context explosion: <strong class="text-gray-900">goal drift</strong>. As token volumes swell with resent histories and intermediate reasoning, agents begin diverging from their initial objectives. The context window fills with noise and the signal -- what the agent was supposed to do -- gets diluted.</p>
+
+      <p>NVIDIA's answer is a larger context window. One million tokens. That gives agents more room before they drift.</p>
+
+      <p>But goal drift is not a window size problem. It is a structural clarity problem. An agent drifts when its coordination context is implicit -- buried in thousands of tokens of conversation history rather than stated explicitly in a structured format.</p>
+
+      <p>We run 14 agents. Each one loads a structured <a href="/blog/what-is-an-oos-file" class="text-otp-500 hover:text-otp-600 underline">Organizational Operating System</a> that defines its seat, authority, constraints, escalation rules, and relationship to every other agent. In our production system, a 25-claim OOS loads in roughly <a href="/blog/tokens-are-the-new-currency" class="text-otp-500 hover:text-otp-600 underline">3,500 tokens</a>. That is the entire organizational context for one agent.</p>
+
+      <p>3,500 tokens of structured coordination intelligence versus thousands of tokens of reconstructed history. That is the difference between an agent that stays on mission and an agent that drifts.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Math</h2>
+
+      <p>Consider a 14-agent system running through a daily coordination cycle.</p>
+
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 my-8">
+        <p class="font-semibold text-gray-900 mb-3">Without structured organizational intelligence:</p>
+        <ul class="text-sm space-y-1 text-gray-600 mb-5">
+          <li>Each agent resends ~15,000 tokens of reconstructed context per cycle</li>
+          <li>14 agents x 15,000 tokens = <strong class="text-gray-900">210,000 tokens per cycle</strong></li>
+          <li>Multiple cycles per day. Goal drift increases with each cycle.</li>
+        </ul>
+        <p class="font-semibold text-gray-900 mb-3">With a structured OOS:</p>
+        <ul class="text-sm space-y-1 text-gray-600">
+          <li>Each agent loads ~3,500 tokens of structured coordination context</li>
+          <li>14 agents x 3,500 tokens = <strong class="text-gray-900">49,000 tokens per cycle</strong></li>
+          <li>Context is stable across cycles. Goal drift is structurally prevented.</li>
+        </ul>
+      </div>
+
+      <p>That is a <strong class="text-gray-900">77% reduction in coordination token overhead.</strong> Not from cheaper inference. Not from a bigger context window. From making organizational intelligence explicit instead of reconstructed.</p>
+
+      <p>At scale, across thousands of organizations running multi-agent systems, the wasted tokens from implicit coordination intelligence represent billions of dollars in unnecessary compute. Making tokens cheaper helps. Eliminating wasted tokens helps more.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Infrastructure Solves Cost. Architecture Solves Waste.</h2>
+
+      <p>NVIDIA is solving the right problem at the infrastructure layer. Cheaper, faster, more efficient inference benefits everyone. Nemotron 3 Super is an impressive piece of engineering.</p>
+
+      <p>But the organizational layer has its own problem. And it will not be solved by making the infrastructure faster. It will be solved by making organizational intelligence structured, explicit, and portable -- so multi-agent systems stop spending 1,500% of their token budget rebuilding context that should already exist.</p>
+
+      <p>NVIDIA made the tokens cheaper. <a href="/" class="text-otp-500 hover:text-otp-600 underline">OTP</a> makes sure you stop wasting them.</p>
+
+      <div class="bg-otp-50 border border-otp-200 p-5 sm:p-6 rounded-xl mt-10">
+        <p class="font-semibold text-gray-900 mb-2">Stop paying the Coordination Tax</p>
+        <p class="text-sm text-gray-600 mb-4">An explicit OOS replaces thousands of tokens of reconstructed context with a structured 3,500-token coordination layer. Publish yours and see what your Token Efficiency Ratio looks like.</p>
+        <a href="/guide" class="inline-block px-6 py-2.5 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Publish Your OOS</a>
+      </div>
+
+    </article>
+  </div>
+</section>

@@ -354,6 +354,39 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 16
+  app.get('/blog/gartner-40-percent-will-fail', async (request, reply) => {
+    return reply.view('pages/blog-post-16', {
+      title: 'Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why. - OTP',
+      description: 'Gartner predicts 40% of agentic AI projects will be cancelled by 2027. The failures are not model problems. They are coordination problems. Here is what separates the 60% that survive.',
+      canonical: BASE_URL + '/blog/gartner-40-percent-will-fail',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-19', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/gartner-40-percent-will-fail' }
+    });
+  });
+
+  // Blog post 17
+  app.get('/blog/351k-skills-zero-standards', async (request, reply) => {
+    return reply.view('pages/blog-post-17', {
+      title: '351,000 Agent Skills in 120 Days. Zero Standards for How Agent Teams Work Together. - OTP',
+      description: 'Agent skills marketplaces hit 351,000 skills in 120 days. But skills are agent-level knowledge. The organizational layer -- how agent teams coordinate -- has no standard. That is the gap OTP fills.',
+      canonical: BASE_URL + '/blog/351k-skills-zero-standards',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: '351,000 Agent Skills in 120 Days. Zero Standards for How Agent Teams Work Together.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-19', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/351k-skills-zero-standards' }
+    });
+  });
+
+  // Blog post 18
+  app.get('/blog/1500-percent-more-tokens', async (request, reply) => {
+    return reply.view('pages/blog-post-18', {
+      title: '1,500% More Tokens Per Workflow. Most of Them Are Wasted. - OTP',
+      description: 'Multi-agent workflows generate 1,500% more tokens than standard formats. NVIDIA solved the inference cost. The coordination waste -- rebuilding organizational context every cycle -- is the unsolved problem.',
+      canonical: BASE_URL + '/blog/1500-percent-more-tokens',
+      ogType: 'article',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: '1,500% More Tokens Per Workflow. Most of Them Are Wasted.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-19', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/1500-percent-more-tokens' }
+    });
+  });
+
   // Orchestra Kit (design system)
   app.get('/orchestra-kit', async (request, reply) => {
     return reply.sendFile('orchestra-kit.html');
