@@ -7,16 +7,13 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
+    --blue: #0066FF;
+    --blue-dark: #0052CC;
     --indigo: #4338CA;
     --indigo-light: #6366F1;
-    --indigo-dark: #3730A3;
     --purple: #7C3AED;
-    --purple-light: #A78BFA;
     --teal: #0D9488;
-    --teal-light: #2DD4BF;
     --amber: #D97706;
-    --amber-light: #FBBF24;
-    --white: #FFFFFF;
     --gray-50: #F9FAFB;
     --gray-100: #F3F4F6;
     --gray-200: #E5E7EB;
@@ -29,292 +26,277 @@
     --gray-900: #111827;
     --gray-950: #030712;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     font-family: 'DM Sans', -apple-system, sans-serif;
-    background: var(--white);
-    color: var(--gray-800);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
+    background: #fff; color: var(--gray-800);
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   .mono { font-family: 'JetBrains Mono', monospace; }
 
-  /* ---- NAV ---- */
+  /* ===== NAV ===== */
   .nav {
     position: sticky; top: 0; z-index: 100;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--gray-100);
   }
   .nav-inner {
-    max-width: 1200px; margin: 0 auto; padding: 0 40px;
-    height: 64px; display: flex; align-items: center; justify-content: space-between;
+    max-width: 1280px; margin: 0 auto; padding: 0 48px;
+    height: 72px; display: flex; align-items: center; justify-content: space-between;
   }
   .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .nav-logo-icon {
-    width: 32px; height: 32px; background: var(--indigo); border-radius: 10px;
+    width: 36px; height: 36px; background: var(--indigo); border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
   }
-  .nav-logo-text { font-size: 20px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.03em; }
+  .nav-logo-text { font-size: 22px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.03em; }
   .nav-logo-text span { color: var(--indigo); }
-  .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
-  .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color 0.2s; }
+  .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+  .nav-links a { font-size: 15px; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color 0.2s; }
   .nav-links a:hover { color: var(--gray-900); }
   .nav-cta {
-    display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px;
-    background: var(--indigo); color: white; font-size: 14px; font-weight: 600;
-    border-radius: 10px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer;
+    padding: 10px 24px; background: var(--indigo); color: white;
+    font-size: 14px; font-weight: 600; border-radius: 10px; text-decoration: none;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
   }
-  .nav-cta:hover { background: var(--indigo-dark); box-shadow: 0 4px 14px rgba(67, 56, 202, 0.3); }
+  .nav-cta:hover { background: var(--indigo-dark); box-shadow: 0 4px 16px rgba(67,56,202,0.35); }
 
-  /* ---- ANNOUNCE ---- */
-  .announce { background: var(--indigo); text-align: center; padding: 10px 20px; }
-  .announce a { color: white; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  /* ===== ANNOUNCE ===== */
+  .announce { background: var(--indigo); text-align: center; padding: 11px 20px; }
+  .announce a { color: white; font-size: 14px; font-weight: 500; text-decoration: none; }
   .announce a:hover { text-decoration: underline; }
 
-  /* ---- HERO ---- */
+  /* ===== HERO ===== */
   .hero {
-    position: relative; overflow: hidden;
-    background: linear-gradient(180deg, #F5F3FF 0%, #EEF2FF 40%, #FFFFFF 100%);
+    max-width: 1280px; margin: 0 auto; padding: 72px 48px 0;
+    display: grid; grid-template-columns: 5fr 7fr; gap: 32px; align-items: center;
+    min-height: 560px;
   }
-  .hero::before {
-    content: ''; position: absolute; top: -200px; right: -150px;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero::after {
-    content: ''; position: absolute; bottom: -100px; left: -100px;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero-inner {
-    max-width: 1200px; margin: 0 auto; padding: 80px 40px 0;
-    position: relative; z-index: 1;
-  }
-  .hero-text { text-align: center; max-width: 680px; margin: 0 auto; }
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(67, 56, 202, 0.08); border: 1px solid rgba(67, 56, 202, 0.15);
-    color: var(--indigo); font-size: 12px; font-weight: 600;
-    letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 14px;
-    border-radius: 100px; margin-bottom: 24px;
-  }
-  .hero-badge-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite; }
-  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .hero-text { padding-right: 20px; }
   .hero h1 {
-    font-size: 56px; font-weight: 800; color: var(--gray-900);
-    letter-spacing: -0.035em; line-height: 1.08; margin-bottom: 20px;
+    font-size: 60px; font-weight: 800; color: var(--gray-900);
+    letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 24px;
   }
-  .hero h1 .gradient {
-    background: linear-gradient(135deg, var(--indigo) 0%, var(--purple) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
+  .hero h1 .accent { color: var(--indigo); }
   .hero-sub {
-    font-size: 18px; color: var(--gray-500); line-height: 1.7;
-    max-width: 520px; margin: 0 auto 32px;
+    font-size: 19px; color: var(--gray-500); line-height: 1.65;
+    margin-bottom: 36px; max-width: 440px;
   }
-  .hero-actions { display: flex; gap: 12px; justify-content: center; }
+  .hero-sub strong { color: var(--gray-700); font-weight: 600; }
+  .hero-actions { display: flex; gap: 12px; align-items: center; }
   .btn-primary {
-    display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px;
-    background: var(--indigo); color: white; font-size: 15px; font-weight: 600;
-    border-radius: 12px; text-decoration: none; transition: all 0.25s; border: none; cursor: pointer;
+    padding: 15px 30px; background: var(--indigo); color: white;
+    font-size: 16px; font-weight: 600; border-radius: 12px; text-decoration: none;
+    transition: all 0.25s; display: inline-flex; align-items: center; gap: 8px;
   }
-  .btn-primary:hover { background: var(--indigo-dark); box-shadow: 0 8px 24px rgba(67, 56, 202, 0.3); transform: translateY(-1px); }
-  .btn-secondary {
-    display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px;
-    background: white; color: var(--gray-700); font-size: 15px; font-weight: 600;
-    border-radius: 12px; text-decoration: none; border: 1px solid var(--gray-200); transition: all 0.25s; cursor: pointer;
+  .btn-primary:hover { background: var(--indigo-dark); box-shadow: 0 8px 28px rgba(67,56,202,0.35); transform: translateY(-1px); }
+  .btn-ghost {
+    padding: 15px 24px; background: transparent; color: var(--gray-600);
+    font-size: 16px; font-weight: 600; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s;
   }
-  .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-300); }
+  .btn-ghost:hover { color: var(--gray-900); }
+  .btn-ghost svg { transition: transform 0.2s; }
+  .btn-ghost:hover svg { transform: translateX(3px); }
 
-  /* Hero illustration -- bleeds into background, no frame */
+  /* Hero illustration -- MASSIVE, overflows right, no frame */
   .hero-illust {
-    max-width: 900px; margin: 60px auto -40px; position: relative; z-index: 1;
+    position: relative; margin-right: -80px; /* bleed right */
   }
   .hero-illust img {
-    width: 100%; display: block;
-    /* No border, no shadow, no radius -- let it breathe into the background */
+    width: 100%; max-width: none; display: block;
+    transform: scale(1.05); transform-origin: center right;
   }
 
-  /* ---- TRUST BAR ---- */
+  /* ===== TRUST ===== */
   .trust {
-    background: white;
-    padding: 32px 40px;
-    position: relative; z-index: 2;
+    max-width: 1280px; margin: 0 auto; padding: 48px 48px;
+    text-align: center; border-top: 1px solid var(--gray-100);
   }
-  .trust-inner { max-width: 1200px; margin: 0 auto; text-align: center; }
   .trust-label {
-    font-size: 12px; font-weight: 600; color: var(--gray-400);
-    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;
+    font-size: 14px; color: var(--gray-400); font-weight: 500; margin-bottom: 24px;
   }
-  .trust-logos { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
-  .trust-logo { font-size: 15px; font-weight: 700; color: var(--gray-300); letter-spacing: -0.02em; }
+  .trust-logos { display: flex; align-items: center; justify-content: center; gap: 56px; flex-wrap: wrap; }
+  .trust-logo { font-size: 16px; font-weight: 700; color: var(--gray-300); letter-spacing: -0.01em; }
 
-  /* ---- SHARED SECTION STYLES ---- */
-  .section { max-width: 1200px; margin: 0 auto; padding: 100px 40px; }
-  .section-center { text-align: center; }
-  .section-label {
-    font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--indigo); margin-bottom: 12px;
-  }
-  .section-title {
-    font-size: 40px; font-weight: 800; color: var(--gray-900);
-    letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 16px;
-  }
-  .section-desc { font-size: 17px; color: var(--gray-500); line-height: 1.7; max-width: 560px; }
-  .section-center .section-desc { margin: 0 auto; }
-
-  /* ---- NARRATIVE (2-col with integrated illustrations) ---- */
-  .narrative-wrap {
-    position: relative; overflow: hidden;
-  }
-  .narrative-wrap.bg-soft {
-    background: linear-gradient(180deg, var(--white) 0%, var(--gray-50) 30%, var(--gray-50) 70%, var(--white) 100%);
-  }
-  .narrative-grid {
+  /* ===== NARRATIVE SECTIONS (alternating zigzag, Wiz-style) ===== */
+  .narrative {
+    max-width: 1280px; margin: 0 auto; padding: 120px 48px;
     display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
-    max-width: 1200px; margin: 0 auto; padding: 100px 40px;
   }
-  .narrative-grid.reverse { direction: rtl; }
-  .narrative-grid.reverse > * { direction: ltr; }
-  .narrative-text h2 {
-    font-size: 36px; font-weight: 800; color: var(--gray-900);
-    letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 16px;
+  .narrative.reverse { direction: rtl; }
+  .narrative.reverse > * { direction: ltr; }
+  .narrative-label {
+    font-size: 14px; font-weight: 700; color: var(--indigo);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px;
   }
-  .narrative-text p { font-size: 16px; color: var(--gray-500); line-height: 1.7; margin-bottom: 16px; }
-
-  /* Narrative illustration -- integrated, not boxed */
-  .narrative-illust { position: relative; }
+  .narrative h2 {
+    font-size: 44px; font-weight: 800; color: var(--gray-900);
+    letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 20px;
+  }
+  .narrative p {
+    font-size: 18px; color: var(--gray-500); line-height: 1.7; margin-bottom: 12px;
+  }
+  .narrative p strong { color: var(--gray-700); }
   .narrative-illust img {
+    width: 110%; max-width: none; display: block;
+    /* Overflows container slightly for that Wiz edge-bleed effect */
+  }
+  .narrative.reverse .narrative-illust img {
+    margin-left: -10%;
+  }
+
+  /* ===== FULL-WIDTH DIVIDER SECTION ===== */
+  .divider-section {
+    background: var(--gray-50); border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100);
+    padding: 120px 48px; text-align: center;
+  }
+  .divider-section h2 {
+    font-size: 44px; font-weight: 800; color: var(--gray-900);
+    letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 16px;
+    max-width: 700px; margin-left: auto; margin-right: auto;
+  }
+  .divider-section > p {
+    font-size: 18px; color: var(--gray-500); max-width: 560px;
+    margin: 0 auto 64px; line-height: 1.7;
+  }
+
+  /* ===== THREE PILLARS (large cards, not tiny) ===== */
+  .pillars {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+  }
+  .pillar-card {
+    background: white; border: 1px solid var(--gray-200); border-radius: 20px;
+    overflow: hidden; transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .pillar-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    border-color: var(--gray-300);
+  }
+  .pillar-card-img {
+    height: 260px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+  }
+  .pillar-card-img img {
+    height: 110%; width: auto; max-width: none; object-fit: cover;
+    /* Image FILLS and slightly overflows the container */
+  }
+  .pillar-card-body { padding: 28px 24px 32px; }
+  .pillar-dot {
+    width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+    margin-right: 10px; vertical-align: middle;
+  }
+  .pillar-card-body h3 {
+    font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px;
+  }
+  .pillar-card-body p {
+    font-size: 15px; color: var(--gray-500); line-height: 1.7;
+  }
+  .pillar-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 14px; font-weight: 600; color: var(--indigo); text-decoration: none;
+    margin-top: 16px; transition: gap 0.2s;
+  }
+  .pillar-link:hover { gap: 8px; }
+
+  /* ===== STEPS ===== */
+  .steps-row {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;
+  }
+  .step-num {
+    font-size: 48px; font-weight: 800; color: var(--gray-200);
+    letter-spacing: -0.04em; margin-bottom: 12px; line-height: 1;
+  }
+  .step h3 { font-size: 18px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+  .step p { font-size: 15px; color: var(--gray-500); line-height: 1.6; }
+
+  /* ===== BLUE CTA BANNER (Wiz-style with character overflow) ===== */
+  .cta-blue {
+    background: linear-gradient(135deg, var(--indigo) 0%, #5B21B6 100%);
+    position: relative; overflow: visible; margin-top: 60px;
+  }
+  .cta-blue-inner {
+    max-width: 1280px; margin: 0 auto; padding: 56px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative;
+  }
+  .cta-blue h2 { font-size: 36px; font-weight: 800; color: white; letter-spacing: -0.03em; margin-bottom: 6px; }
+  .cta-blue p { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 0; }
+  .cta-blue .btn-white {
+    padding: 14px 28px; background: white; color: var(--indigo);
+    font-size: 15px; font-weight: 700; border-radius: 12px; text-decoration: none;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .cta-blue .btn-white:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.2); transform: translateY(-2px); }
+  /* Character overflowing the banner */
+  .cta-character {
+    position: absolute; bottom: 0; right: 200px;
+    width: 160px; pointer-events: none;
+  }
+  .cta-character img {
     width: 100%; display: block;
-    /* No border-radius, no shadow -- image blends with page */
+    transform: translateY(-30px); /* character sits ABOVE the banner */
   }
 
-  /* ---- THREE PILLARS ---- */
-  .pillars-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 56px; }
-  .pillar {
-    text-align: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: 0 8px;
-  }
-  .pillar:hover { transform: translateY(-4px); }
-
-  /* Pillar illustration -- full bleed, lives inside a soft gradient circle */
-  .pillar-illust {
-    position: relative; width: 240px; height: 240px; margin: 0 auto 24px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .pillar-illust::before {
-    content: ''; position: absolute; inset: 0; border-radius: 50%;
-    pointer-events: none;
-  }
-  .pillar-illust-indigo::before { background: radial-gradient(circle, rgba(67,56,202,0.08) 0%, transparent 70%); }
-  .pillar-illust-teal::before { background: radial-gradient(circle, rgba(13,148,136,0.08) 0%, transparent 70%); }
-  .pillar-illust-purple::before { background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%); }
-  .pillar-illust img {
-    width: 200px; height: 200px; object-fit: contain;
-    position: relative; z-index: 1;
-    /* No frame, no shadow -- just the illustration floating on the radial glow */
-  }
-
-  .pillar-color {
-    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-    margin-right: 8px; vertical-align: middle;
-  }
-  .pillar-title { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
-  .pillar-desc { font-size: 14px; color: var(--gray-500); line-height: 1.7; max-width: 300px; margin: 0 auto; }
-
-  /* ---- PROCESS STEPS ---- */
-  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 56px; }
-  .step { position: relative; }
-  .step-number {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: rgba(67, 56, 202, 0.06); display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 800; color: var(--indigo); margin-bottom: 16px;
-  }
-  .step h3 { font-size: 16px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
-  .step p { font-size: 14px; color: var(--gray-500); line-height: 1.6; }
-  .step-connector {
-    position: absolute; top: 20px; left: calc(100% + 4px);
-    width: calc(32px - 8px); height: 2px; background: var(--gray-200);
-  }
-
-  /* ---- OOS PREVIEW ---- */
-  .oos-preview {
-    background: white; border: 1px solid var(--gray-200);
-    border-radius: 16px; overflow: hidden; max-width: 520px;
-  }
-  .oos-preview-header {
-    padding: 12px 16px; border-bottom: 1px solid var(--gray-200);
-    display: flex; align-items: center; gap: 8px; background: var(--gray-50);
-  }
-  .oos-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .oos-preview-body {
-    padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8;
-  }
-  .oos-line { display: block; }
-  .oos-key { color: var(--purple); }
-  .oos-val { color: var(--teal); }
-  .oos-claim { color: var(--indigo); font-weight: 600; }
-  .oos-text { color: var(--gray-600); }
-  .oos-badge {
-    display: inline-block; font-size: 10px; font-weight: 700;
-    padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em;
-  }
-  .oos-badge-high { background: #D1FAE5; color: #059669; }
-  .oos-badge-measured { background: #EDE9FE; color: #7C3AED; }
-
-  /* ---- METRICS ---- */
+  /* ===== METRICS ===== */
   .metrics { background: var(--gray-950); }
   .metrics-inner {
-    max-width: 1200px; margin: 0 auto; padding: 64px 40px;
+    max-width: 1280px; margin: 0 auto; padding: 72px 48px;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; text-align: center;
   }
-  .metric-number { font-size: 48px; font-weight: 800; color: white; letter-spacing: -0.03em; margin-bottom: 4px; }
-  .metric-label { font-size: 14px; color: var(--gray-400); font-weight: 500; }
+  .metric-num { font-size: 56px; font-weight: 800; color: white; letter-spacing: -0.03em; }
+  .metric-label { font-size: 15px; color: var(--gray-400); font-weight: 500; margin-top: 4px; }
 
-  /* ---- QUOTE ---- */
-  .quote-card {
-    background: white; border: 1px solid var(--gray-200); border-radius: 20px;
-    padding: 40px; max-width: 640px; margin: 48px auto 0;
+  /* ===== QUOTE ===== */
+  .quote-section {
+    max-width: 800px; margin: 0 auto; padding: 120px 48px; text-align: center;
   }
-  .quote-text { font-size: 18px; color: var(--gray-700); line-height: 1.7; font-style: italic; margin-bottom: 20px; }
-  .quote-author { display: flex; align-items: center; gap: 12px; }
-  .quote-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--indigo), var(--purple));
-    display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;
+  .quote-marks { font-size: 72px; color: var(--gray-200); line-height: 1; margin-bottom: -12px; }
+  .quote-text {
+    font-size: 24px; color: var(--gray-700); line-height: 1.6;
+    font-style: italic; margin-bottom: 32px; font-weight: 400;
   }
-  .quote-name { font-size: 14px; font-weight: 700; color: var(--gray-900); }
-  .quote-role { font-size: 13px; color: var(--gray-400); }
+  .quote-author-name { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+  .quote-author-role { font-size: 14px; color: var(--gray-400); margin-top: 2px; }
 
-  /* ---- CTA BANNER ---- */
-  .cta-banner {
-    position: relative; overflow: hidden;
-    background: linear-gradient(180deg, var(--white) 0%, #F5F3FF 50%, var(--white) 100%);
+  /* ===== FOUNDING CTA ===== */
+  .founding {
+    max-width: 1280px; margin: 0 auto; padding: 100px 48px; text-align: center;
   }
-  .cta-banner-inner {
-    max-width: 1200px; margin: 0 auto; padding: 100px 40px;
-    text-align: center; position: relative; z-index: 1;
+  .founding-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 100px; margin-bottom: 24px;
   }
-  .cta-banner h2 {
-    font-size: 40px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.03em; margin-bottom: 16px;
+  .founding-badge span { font-size: 13px; font-weight: 600; color: #92400E; }
+  .founding h2 {
+    font-size: 48px; font-weight: 800; color: var(--gray-900);
+    letter-spacing: -0.035em; margin-bottom: 16px;
   }
-  .cta-banner p { font-size: 17px; color: var(--gray-500); max-width: 480px; margin: 0 auto 32px; line-height: 1.7; }
+  .founding p {
+    font-size: 18px; color: var(--gray-500); max-width: 520px;
+    margin: 0 auto 36px; line-height: 1.7;
+  }
 
-  /* ---- FOOTER ---- */
-  .footer { background: var(--gray-950); padding: 64px 40px 40px; }
-  .footer-inner { max-width: 1200px; margin: 0 auto; }
-  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
-  .footer-brand p { font-size: 13px; color: var(--gray-500); line-height: 1.7; max-width: 280px; margin-top: 16px; }
+  /* ===== FOOTER ===== */
+  .footer { background: var(--gray-950); padding: 72px 48px 40px; }
+  .footer-inner { max-width: 1280px; margin: 0 auto; }
+  .footer-grid { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 56px; margin-bottom: 56px; }
+  .footer-brand-text { font-size: 14px; color: var(--gray-500); line-height: 1.7; max-width: 300px; margin-top: 20px; }
   .footer-col h4 {
     font-size: 12px; font-weight: 700; color: var(--gray-400);
-    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px;
   }
-  .footer-col a { display: block; font-size: 14px; color: var(--gray-500); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+  .footer-col a {
+    display: block; font-size: 14px; color: var(--gray-500);
+    text-decoration: none; margin-bottom: 12px; transition: color 0.2s;
+  }
   .footer-col a:hover { color: white; }
   .footer-bottom {
     border-top: 1px solid rgba(255,255,255,0.06); padding-top: 24px;
@@ -325,43 +307,40 @@
   .footer-legal a { font-size: 13px; color: var(--gray-600); text-decoration: none; }
   .footer-legal a:hover { color: var(--gray-400); }
 
-  /* ---- ANIMATIONS ---- */
-  @keyframes fade-in-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-  .anim { opacity: 0; animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .anim-d1 { animation-delay: 0.1s; } .anim-d2 { animation-delay: 0.2s; }
-  .anim-d3 { animation-delay: 0.3s; } .anim-d4 { animation-delay: 0.4s; }
-  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-
-  /* ---- RESPONSIVE ---- */
-  @media (max-width: 900px) {
-    .hero h1 { font-size: 36px; }
-    .hero-inner { padding: 60px 24px 0; }
-    .hero-illust { margin-top: 40px; }
-    .narrative-grid { grid-template-columns: 1fr; gap: 40px; padding: 60px 24px; }
-    .narrative-grid.reverse { direction: ltr; }
-    .pillars-grid { grid-template-columns: 1fr; gap: 48px; }
-    .steps-grid { grid-template-columns: 1fr 1fr; }
-    .step-connector { display: none; }
-    .section-title { font-size: 28px; }
-    .footer-grid { grid-template-columns: 1fr 1fr; }
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; padding: 48px 24px 0; min-height: auto; }
+    .hero-illust { margin-right: 0; }
+    .hero-illust img { transform: none; }
+    .hero h1 { font-size: 40px; }
+    .narrative { grid-template-columns: 1fr; gap: 40px; padding: 80px 24px; }
+    .narrative.reverse { direction: ltr; }
+    .narrative-illust img { width: 100%; }
+    .pillars { grid-template-columns: 1fr; max-width: 480px; }
+    .steps-row { grid-template-columns: 1fr 1fr; }
     .metrics-inner { grid-template-columns: 1fr; gap: 32px; }
+    .cta-blue-inner { flex-direction: column; text-align: center; gap: 24px; }
+    .cta-character { display: none; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
     .nav-links { display: none; }
+    .divider-section h2 { font-size: 32px; }
+    .founding h2 { font-size: 36px; }
   }
 </style>
 </head>
 <body>
 
-<!-- Announcement Bar -->
+<!-- Announcement -->
 <div class="announce">
   <a href="/publish">Founding Publisher Program is live -- be one of the first 50 &rarr;</a>
 </div>
 
-<!-- Navigation -->
+<!-- Nav -->
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
       <div class="nav-logo-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="3" fill="white"/>
           <circle cx="12" cy="12" r="8" stroke="white" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
           <circle cx="12" cy="4" r="1.5" fill="white"/><circle cx="19" cy="16" r="1.5" fill="white"/><circle cx="5" cy="16" r="1.5" fill="white"/>
@@ -374,210 +353,205 @@
       <li><a href="/blog">Blog</a></li>
       <li><a href="/guide">Guide</a></li>
       <li><a href="/about">About</a></li>
+      <li><a href="/investors">Investors</a></li>
     </ul>
     <a href="/publish" class="nav-cta">Publish Your OOS <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
   </div>
 </nav>
 
-<!-- Hero -->
+<!-- ============ HERO ============ -->
 <section class="hero">
-  <div class="hero-inner">
-    <div class="hero-text">
-      <div class="hero-badge anim"><span class="hero-badge-dot"></span> Open protocol</div>
-      <h1 class="anim anim-d1">Where Agents Learn to <span class="gradient">Work as a Team</span></h1>
-      <p class="hero-sub anim anim-d2">The hard problem in AI isn't building one good agent. It's getting twelve of them to not step on each other. OTP is the open protocol that fixes coordination.</p>
-      <div class="hero-actions anim anim-d3">
-        <a href="/browse" class="btn-primary">Browse Intelligence <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
-        <a href="/publish" class="btn-secondary">Publish Your OOS</a>
-      </div>
+  <div class="hero-text">
+    <h1>Coordinate <span class="accent">Everything</span> You Build with AI</h1>
+    <p class="hero-sub">OTP connects your agents into a single coordination graph that provides the shared context required to eliminate conflicts and wasted tokens. <strong>AI alone doesn't make teams faster. Coordination does.</strong></p>
+    <div class="hero-actions">
+      <a href="/browse" class="btn-primary">Browse Intelligence <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
+      <a href="/publish" class="btn-ghost">Publish your OOS <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
     </div>
   </div>
-  <!-- Hero illustration bleeds into the gradient background, no frame -->
-  <div class="hero-illust anim anim-d4">
-    <img src="/public/images/orchestra-hero.png" alt="AI agents coordinated as an orchestra through a shared operating system">
+  <div class="hero-illust">
+    <img src="/public/images/hero-wide.png" alt="Orchestra of AI agents coordinating through a shared operating system">
   </div>
 </section>
 
-<!-- Trust Bar -->
+<!-- Trust -->
 <div class="trust">
-  <div class="trust-inner">
-    <div class="trust-label">Trusted by teams running production AI agent systems</div>
-    <div class="trust-logos">
-      <span class="trust-logo">Sneeze It</span>
-      <span class="trust-logo">AI Consulting Co</span>
-      <span class="trust-logo">AgentOps</span>
-      <span class="trust-logo">BuildSmart AI</span>
-      <span class="trust-logo">Coordination Labs</span>
-      <span class="trust-logo">Neural Forge</span>
+  <div class="trust-label">Trusted by teams running production AI agent systems</div>
+  <div class="trust-logos">
+    <span class="trust-logo">Sneeze It</span>
+    <span class="trust-logo">AgentOps</span>
+    <span class="trust-logo">BuildSmart AI</span>
+    <span class="trust-logo">Coordination Labs</span>
+    <span class="trust-logo">Neural Forge</span>
+    <span class="trust-logo">AutoStack</span>
+  </div>
+</div>
+
+<!-- ============ NARRATIVE 1: The Problem ============ -->
+<div class="narrative">
+  <div>
+    <div class="narrative-label">A new development reality</div>
+    <h2>Teams now deploy 10 agents, not one</h2>
+    <p>AI generates agents, wires tools, and deploys to production in minutes. Ideas move from concept to running system in hours.</p>
+  </div>
+  <div class="narrative-illust">
+    <img src="/public/images/narrative-chaos.png" alt="AI agents in chaos -- confused, duplicating work, stepping on each other">
+  </div>
+</div>
+
+<!-- ============ NARRATIVE 2: The Challenge ============ -->
+<div class="narrative reverse">
+  <div>
+    <div class="narrative-label">A new challenge for coordination</div>
+    <h2>Traditional management was built for a slower era</h2>
+    <p><strong>Tribal knowledge doesn't scale in the AI era</strong> where agents change constantly, work autonomously, and make decisions without human review.</p>
+    <p>That approach breaks when you have twelve agents making hundreds of decisions per day. You need a system.</p>
+  </div>
+  <div class="narrative-illust">
+    <img src="/public/images/pillar-system.png" alt="Character reading the Organizational Operating System" style="width: 90%; margin: 0 auto; display: block;">
+  </div>
+</div>
+
+<!-- ============ NARRATIVE 3: The Solution ============ -->
+<div class="narrative">
+  <div>
+    <div class="narrative-label">Coordination, re-built for the AI era</div>
+    <h2>An operating system for your agent team</h2>
+    <p>OTP connects agents, rules, and coordination patterns into a unified intelligence graph. Context enables teams to eliminate conflicts, reduce token waste, and start coordinated from day one -- <strong>automatically and accurately.</strong></p>
+    <p style="color: var(--indigo); font-weight: 700; font-size: 18px;">For the first time, agent teams can scale without chaos.</p>
+  </div>
+  <div class="narrative-illust">
+    <img src="/public/images/narrative-harmony.png" alt="Agents coordinated as an orchestra -- harmony through shared operating system">
+  </div>
+</div>
+
+<!-- ============ PILLARS ============ -->
+<div class="divider-section">
+  <div class="narrative-label" style="margin-bottom: 16px;">The OTP Platform</div>
+  <h2>A new operating model for AI-era coordination</h2>
+  <p>Three pillars. One protocol. Every agent team needs all three.</p>
+
+  <div class="pillars">
+    <!-- Agents -->
+    <div class="pillar-card">
+      <div class="pillar-card-img" style="background: linear-gradient(180deg, #EEF2FF 0%, #E0E7FF 100%);">
+        <img src="/public/images/pillar-agents.png" alt="Violinist -- representing AI agents">
+      </div>
+      <div class="pillar-card-body">
+        <h3><span class="pillar-dot" style="background: var(--indigo);"></span>Agents</h3>
+        <p>The musicians. Each AI agent has a clear seat, clear tools, and clear accountability. No overlap. No confusion. Publish what yours do and how they work.</p>
+        <a href="/browse" class="pillar-link">Browse agents <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- Operating System -->
+    <div class="pillar-card">
+      <div class="pillar-card-img" style="background: linear-gradient(180deg, #F0FDFA 0%, #CCFBF1 100%);">
+        <img src="/public/images/pillar-coordination.png" alt="Conductor -- representing coordination">
+      </div>
+      <div class="pillar-card-body">
+        <h3><span class="pillar-dot" style="background: var(--teal);"></span>Operating System</h3>
+        <p>The sheet music. Your OOS captures coordination rules with confidence ratings, evidence types, and failure modes. Structured knowledge, not tribal lore.</p>
+        <a href="/guide" class="pillar-link">Learn the format <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- Intelligence Graph -->
+    <div class="pillar-card">
+      <div class="pillar-card-img" style="background: linear-gradient(180deg, #FAF5FF 0%, #F3E8FF 100%);">
+        <img src="/public/images/orchestra-hero.png" alt="Full orchestra -- the Intelligence Graph connecting everything" style="height: 130%;">
+      </div>
+      <div class="pillar-card-body">
+        <h3><span class="pillar-dot" style="background: var(--purple);"></span>Intelligence Graph</h3>
+        <p>The conductor. See how coordination patterns connect across organizations. Import what works. Skip what doesn't. Learn from every published OOS.</p>
+        <a href="/graph" class="pillar-link">Explore the graph <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Three Pillars -->
-<section class="section">
-  <div class="section-center">
-    <div class="section-label">The OTP platform</div>
-    <div class="section-title">Three pillars of coordination intelligence</div>
-    <div class="section-desc">Like an orchestra needs musicians, sheet music, and a conductor -- your agent team needs all three working together.</div>
+<!-- ============ BLUE CTA BANNER ============ -->
+<div class="cta-blue">
+  <div class="cta-character">
+    <img src="/public/images/pillar-coordination.png" alt="">
   </div>
-
-  <div class="pillars-grid">
-    <div class="pillar">
-      <div class="pillar-illust pillar-illust-indigo">
-        <img src="/public/images/pillar-agents.png" alt="Violinist character representing AI agents">
-      </div>
-      <div class="pillar-title"><span class="pillar-color" style="background: var(--indigo);"></span>Agents</div>
-      <div class="pillar-desc">The musicians. Each AI agent has a clear seat, clear tools, and clear accountability. No overlap, no confusion.</div>
+  <div class="cta-blue-inner">
+    <div>
+      <h2>Ready to coordinate your agents?</h2>
+      <p>Publish your OOS and join the coordination intelligence network.</p>
     </div>
-
-    <div class="pillar">
-      <div class="pillar-illust pillar-illust-teal">
-        <img src="/public/images/pillar-system.png" alt="Character reading structured operating system document">
-      </div>
-      <div class="pillar-title"><span class="pillar-color" style="background: var(--teal);"></span>Operating System</div>
-      <div class="pillar-desc">The sheet music. Your OOS captures coordination rules, confidence levels, evidence types, and failure modes.</div>
-    </div>
-
-    <div class="pillar">
-      <div class="pillar-illust pillar-illust-purple">
-        <img src="/public/images/pillar-coordination.png" alt="Conductor character orchestrating connected agents">
-      </div>
-      <div class="pillar-title"><span class="pillar-color" style="background: var(--purple);"></span>Coordination</div>
-      <div class="pillar-desc">The conductor. The Intelligence Graph reveals how patterns connect across organizations.</div>
-    </div>
+    <a href="/publish" class="btn-white">Publish Your OOS <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
   </div>
-</section>
+</div>
 
-<!-- Narrative 1: The Problem -->
-<div class="narrative-wrap bg-soft">
-  <div class="narrative-grid">
-    <div class="narrative-text">
-      <div class="section-label">The new reality</div>
-      <h2>Every company is becoming an AI-agent company</h2>
-      <p>Teams don't deploy one agent anymore. They deploy five, ten, twenty -- each with its own tools, data, and personality. The result? Agents stepping on each other, duplicating work, and creating chaos.</p>
-      <p>Sound familiar? That's the coordination problem. And nobody is solving it.</p>
+<!-- ============ HOW IT WORKS ============ -->
+<div style="max-width: 1280px; margin: 0 auto; padding: 120px 48px; text-align: center;">
+  <div class="narrative-label" style="margin-bottom: 16px;">How OTP works</div>
+  <h2 style="font-size: 44px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.035em; margin-bottom: 16px;">From Tribal Knowledge to Shared Intelligence</h2>
+  <p style="font-size: 18px; color: var(--gray-500); max-width: 560px; margin: 0 auto 64px; line-height: 1.7;">Four steps. No complex setup. Start publishing in minutes.</p>
+
+  <div class="steps-row">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Capture</h3>
+      <p>Document your agent coordination rules as structured claims with confidence ratings and evidence types.</p>
     </div>
-    <div class="narrative-illust">
-      <img src="/public/images/orchestra-before-after.png" alt="Before: agents in chaos. After: agents coordinated through OTP.">
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Publish</h3>
+      <p>Share your OOS on OTP. Choose what's public, what stays private. You control the visibility.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Compare</h3>
+      <p>See how your coordination approach differs. The diff engine shows unique patterns and conflicts.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Learn</h3>
+      <p>Import proven patterns from the Intelligence Graph. Adopt what works, skip what doesn't.</p>
     </div>
   </div>
 </div>
 
-<!-- Narrative 2: The Solution -->
-<div class="narrative-wrap">
-  <div class="narrative-grid reverse">
-    <div class="narrative-text">
-      <div class="section-label">The solution</div>
-      <h2>An Operating System for your agent team</h2>
-      <p>An Organizational Operating System (OOS) captures how your agents coordinate: the rules, the handoffs, the failure modes, the things that only work because someone remembered to tell the new agent.</p>
-      <p>OTP makes that knowledge structured, shareable, and learnable.</p>
-    </div>
-    <div class="narrative-illust">
-      <div class="oos-preview">
-        <div class="oos-preview-header">
-          <div class="oos-dot" style="background: #ef4444;"></div>
-          <div class="oos-dot" style="background: #f59e0b;"></div>
-          <div class="oos-dot" style="background: #22c55e;"></div>
-          <span style="font-size: 11px; color: var(--gray-400); margin-left: 8px;" class="mono">sneeze-it.oos.md</span>
-        </div>
-        <div class="oos-preview-body">
-          <span class="oos-line"><span class="oos-key">oos_version:</span> <span class="oos-val">"1.0"</span></span>
-          <span class="oos-line"><span class="oos-key">agent_count:</span> <span class="oos-val">12</span></span>
-          <span class="oos-line" style="margin-top: 12px;"><span class="oos-claim">[C001]</span> <span style="color: var(--gray-400);">core_operating_rules</span></span>
-          <span class="oos-line"><span class="oos-text">Every agent writes to a shared</span></span>
-          <span class="oos-line"><span class="oos-text">state file. No direct reads.</span></span>
-          <span class="oos-line" style="margin-top: 6px;">
-            <span class="oos-badge oos-badge-high">HIGH</span>&nbsp;
-            <span class="oos-badge oos-badge-measured">MEASURED</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- How It Works -->
-<section style="background: linear-gradient(180deg, var(--white) 0%, var(--gray-50) 30%, var(--gray-50) 70%, var(--white) 100%);">
-  <div class="section">
-    <div class="section-center">
-      <div class="section-label">How it works</div>
-      <div class="section-title">From tribal knowledge to shared intelligence</div>
-      <div class="section-desc">Four steps. No complex setup. Start publishing in minutes.</div>
-    </div>
-    <div class="steps-grid">
-      <div class="step">
-        <div class="step-number">1</div><div class="step-connector"></div>
-        <h3>Capture</h3>
-        <p>Document your agent coordination rules as structured claims with confidence ratings and evidence types.</p>
-      </div>
-      <div class="step">
-        <div class="step-number">2</div><div class="step-connector"></div>
-        <h3>Publish</h3>
-        <p>Share your OOS on OTP. Choose what's public and what stays private. You control the visibility.</p>
-      </div>
-      <div class="step">
-        <div class="step-number">3</div><div class="step-connector"></div>
-        <h3>Compare</h3>
-        <p>See how your coordination approach differs from others. The diff engine shows unique patterns and conflicts.</p>
-      </div>
-      <div class="step">
-        <div class="step-number">4</div>
-        <h3>Learn</h3>
-        <p>Import proven patterns from the Intelligence Graph. Adopt what works, skip what doesn't.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Metrics -->
+<!-- ============ METRICS ============ -->
 <section class="metrics">
   <div class="metrics-inner">
-    <div><div class="metric-number">50+</div><div class="metric-label">Publishers</div></div>
-    <div><div class="metric-number">2,400+</div><div class="metric-label">Knowledge Claims</div></div>
-    <div><div class="metric-number">12</div><div class="metric-label">Agent Templates</div></div>
+    <div><div class="metric-num">50+</div><div class="metric-label">Publishers</div></div>
+    <div><div class="metric-num">2,400+</div><div class="metric-label">Knowledge Claims</div></div>
+    <div><div class="metric-num">12</div><div class="metric-label">Agent Templates</div></div>
   </div>
 </section>
 
-<!-- Social Proof -->
-<section class="section section-center">
-  <div class="section-label">From the community</div>
-  <div class="section-title">Built by operators, for operators</div>
-  <div class="section-desc">OTP was born from running 14 AI agents in production at a real agency. Every feature solves a problem we hit first.</div>
-  <div class="quote-card">
-    <div class="quote-text">"We spent three months building our agent army through trial and error. If OTP existed when we started, we'd have saved weeks of coordination disasters and silent failures."</div>
-    <div class="quote-author">
-      <div class="quote-avatar">DS</div>
-      <div style="text-align: left;">
-        <div class="quote-name">David Steel</div>
-        <div class="quote-role">CEO, Sneeze It -- 14 production AI agents</div>
-      </div>
-    </div>
-  </div>
+<!-- ============ QUOTE ============ -->
+<section class="quote-section">
+  <div class="quote-marks">&ldquo;</div>
+  <div class="quote-text">We spent three months building our agent army through trial and error. If OTP existed when we started, we'd have saved weeks of coordination disasters and silent failures.</div>
+  <div class="quote-author-name">David Steel</div>
+  <div class="quote-author-role">CEO, Sneeze It -- 14 production AI agents</div>
 </section>
 
-<!-- CTA Banner -->
-<section class="cta-banner">
-  <div class="cta-banner-inner">
-    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 100px; margin-bottom: 24px;">
-      <svg width="14" height="14" viewBox="0 0 20 20" fill="#D97706"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-      <span style="font-size: 12px; font-weight: 600; color: #92400E;">Founding Publisher Program</span>
-    </div>
-    <h2>Be one of the first 50</h2>
-    <p>Founding Publishers get a permanent badge, early access to Phase 2 features, and shape the protocol itself.</p>
-    <a href="/publish" class="btn-primary" style="font-size: 16px; padding: 16px 32px;">Publish Your OOS <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
+<!-- ============ FOUNDING CTA ============ -->
+<section class="founding" style="border-top: 1px solid var(--gray-100);">
+  <div class="founding-badge">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="#D97706"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+    <span>Founding Publisher Program</span>
   </div>
+  <h2>Be one of the first 50</h2>
+  <p>Founding Publishers get a permanent badge, early access to Phase 2 features, and shape the protocol itself.</p>
+  <a href="/publish" class="btn-primary" style="font-size: 17px; padding: 17px 36px;">Publish Your OOS <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a>
 </section>
 
-<!-- Footer -->
+<!-- ============ FOOTER ============ -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-grid">
-      <div class="footer-brand">
+      <div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="nav-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="white"/><circle cx="12" cy="12" r="8" stroke="white" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/><circle cx="12" cy="4" r="1.5" fill="white"/><circle cx="19" cy="16" r="1.5" fill="white"/><circle cx="5" cy="16" r="1.5" fill="white"/></svg></div>
-          <div style="font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.03em;">Org<span style="color: var(--indigo-light);">TP</span></div>
+          <div class="nav-logo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="white"/><circle cx="12" cy="12" r="8" stroke="white" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/><circle cx="12" cy="4" r="1.5" fill="white"/><circle cx="19" cy="16" r="1.5" fill="white"/><circle cx="5" cy="16" r="1.5" fill="white"/></svg></div>
+          <div style="font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.03em;">Org<span style="color: var(--indigo-light);">TP</span></div>
         </div>
-        <p>The open protocol for organizational coordination intelligence. Making AI agent teams work like orchestras, not mosh pits.</p>
+        <p class="footer-brand-text">The open protocol for organizational coordination intelligence. Making AI agent teams work like orchestras, not mosh pits.</p>
       </div>
       <div class="footer-col"><h4>Platform</h4><a href="/browse">Browse OOS</a><a href="/publish">Publish</a><a href="/graph">Intelligence Graph</a><a href="/compare">Compare</a></div>
       <div class="footer-col"><h4>Learn</h4><a href="/guide">Guide</a><a href="/blog">Blog</a><a href="/faq">FAQ</a><a href="/glossary">Glossary</a></div>
