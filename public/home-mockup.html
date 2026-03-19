@@ -70,9 +70,9 @@
 
   /* ===== HERO ===== */
   .hero {
-    max-width: 1280px; margin: 0 auto; padding: 72px 48px 0;
+    max-width: 1280px; margin: 0 auto; padding: 48px 48px 0;
     display: grid; grid-template-columns: 5fr 7fr; gap: 32px; align-items: center;
-    min-height: 560px;
+    min-height: 480px;
   }
   .hero-text { padding-right: 20px; }
   .hero h1 {
@@ -110,21 +110,10 @@
     transform: scale(1.05); transform-origin: center right;
   }
 
-  /* ===== TRUST ===== */
-  .trust {
-    max-width: 1280px; margin: 0 auto; padding: 48px 48px;
-    text-align: center; border-top: 1px solid var(--gray-100);
-  }
-  .trust-label {
-    font-size: 14px; color: var(--gray-400); font-weight: 500; margin-bottom: 24px;
-  }
-  .trust-logos { display: flex; align-items: center; justify-content: center; gap: 56px; flex-wrap: wrap; }
-  .trust-logo { font-size: 16px; font-weight: 700; color: var(--gray-300); letter-spacing: -0.01em; }
-
   /* ===== NARRATIVE SECTIONS (alternating zigzag, Wiz-style) ===== */
   .narrative {
-    max-width: 1280px; margin: 0 auto; padding: 120px 48px;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    max-width: 1280px; margin: 0 auto; padding: 64px 48px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
   }
   .narrative.reverse { direction: rtl; }
   .narrative.reverse > * { direction: ltr; }
@@ -151,7 +140,7 @@
   /* ===== FULL-WIDTH DIVIDER SECTION ===== */
   .divider-section {
     background: var(--gray-50); border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100);
-    padding: 120px 48px; text-align: center;
+    padding: 72px 48px; text-align: center;
   }
   .divider-section h2 {
     font-size: 44px; font-weight: 800; color: var(--gray-900);
@@ -160,7 +149,7 @@
   }
   .divider-section > p {
     font-size: 18px; color: var(--gray-500); max-width: 560px;
-    margin: 0 auto 64px; line-height: 1.7;
+    margin: 0 auto 48px; line-height: 1.7;
   }
 
   /* ===== THREE PILLARS (large cards, not tiny) ===== */
@@ -218,7 +207,7 @@
   /* ===== BLUE CTA BANNER (Wiz-style with character overflow) ===== */
   .cta-blue {
     background: linear-gradient(135deg, var(--indigo) 0%, #5B21B6 100%);
-    position: relative; overflow: visible; margin-top: 60px;
+    position: relative; overflow: visible; margin-top: 0;
   }
   .cta-blue-inner {
     max-width: 1280px; margin: 0 auto; padding: 56px 48px;
@@ -247,7 +236,7 @@
   /* ===== METRICS ===== */
   .metrics { background: var(--gray-950); }
   .metrics-inner {
-    max-width: 1280px; margin: 0 auto; padding: 72px 48px;
+    max-width: 1280px; margin: 0 auto; padding: 48px 48px;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; text-align: center;
   }
   .metric-num { font-size: 56px; font-weight: 800; color: white; letter-spacing: -0.03em; }
@@ -255,7 +244,7 @@
 
   /* ===== QUOTE ===== */
   .quote-section {
-    max-width: 800px; margin: 0 auto; padding: 120px 48px; text-align: center;
+    max-width: 800px; margin: 0 auto; padding: 72px 48px; text-align: center;
   }
   .quote-marks { font-size: 72px; color: var(--gray-200); line-height: 1; margin-bottom: -12px; }
   .quote-text {
@@ -267,7 +256,7 @@
 
   /* ===== FOUNDING CTA ===== */
   .founding {
-    max-width: 1280px; margin: 0 auto; padding: 100px 48px; text-align: center;
+    max-width: 1280px; margin: 0 auto; padding: 72px 48px; text-align: center;
   }
   .founding-badge {
     display: inline-flex; align-items: center; gap: 8px;
@@ -285,7 +274,7 @@
   }
 
   /* ===== FOOTER ===== */
-  .footer { background: var(--gray-950); padding: 72px 48px 40px; }
+  .footer { background: var(--gray-950); padding: 56px 48px 32px; }
   .footer-inner { max-width: 1280px; margin: 0 auto; }
   .footer-grid { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 56px; margin-bottom: 56px; }
   .footer-brand-text { font-size: 14px; color: var(--gray-500); line-height: 1.7; max-width: 300px; margin-top: 20px; }
@@ -313,7 +302,7 @@
     .hero-illust { margin-right: 0; }
     .hero-illust img { transform: none; }
     .hero h1 { font-size: 40px; }
-    .narrative { grid-template-columns: 1fr; gap: 40px; padding: 80px 24px; }
+    .narrative { grid-template-columns: 1fr; gap: 32px; padding: 48px 24px; }
     .narrative.reverse { direction: ltr; }
     .narrative-illust img { width: 100%; }
     .pillars { grid-template-columns: 1fr; max-width: 480px; }
@@ -374,19 +363,6 @@
   </div>
 </section>
 
-<!-- Trust -->
-<div class="trust">
-  <div class="trust-label">Trusted by teams running production AI agent systems</div>
-  <div class="trust-logos">
-    <span class="trust-logo">Sneeze It</span>
-    <span class="trust-logo">AgentOps</span>
-    <span class="trust-logo">BuildSmart AI</span>
-    <span class="trust-logo">Coordination Labs</span>
-    <span class="trust-logo">Neural Forge</span>
-    <span class="trust-logo">AutoStack</span>
-  </div>
-</div>
-
 <!-- ============ NARRATIVE 1: The Problem ============ -->
 <div class="narrative">
   <div>
@@ -421,7 +397,7 @@
     <p style="color: var(--indigo); font-weight: 700; font-size: 18px;">For the first time, agent teams can scale without chaos.</p>
   </div>
   <div class="narrative-illust">
-    <img src="/public/images/narrative-harmony.png" alt="Agents coordinated as an orchestra -- harmony through shared operating system">
+    <img src="/public/images/pillar-agents.png" alt="Violinist agent -- individual agents working in harmony through coordination">
   </div>
 </div>
 
@@ -485,10 +461,10 @@
 </div>
 
 <!-- ============ HOW IT WORKS ============ -->
-<div style="max-width: 1280px; margin: 0 auto; padding: 120px 48px; text-align: center;">
+<div style="max-width: 1280px; margin: 0 auto; padding: 72px 48px; text-align: center;">
   <div class="narrative-label" style="margin-bottom: 16px;">How OTP works</div>
   <h2 style="font-size: 44px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.035em; margin-bottom: 16px;">From Tribal Knowledge to Shared Intelligence</h2>
-  <p style="font-size: 18px; color: var(--gray-500); max-width: 560px; margin: 0 auto 64px; line-height: 1.7;">Four steps. No complex setup. Start publishing in minutes.</p>
+  <p style="font-size: 18px; color: var(--gray-500); max-width: 560px; margin: 0 auto 48px; line-height: 1.7;">Four steps. No complex setup. Start publishing in minutes.</p>
 
   <div class="steps-row">
     <div class="step">
