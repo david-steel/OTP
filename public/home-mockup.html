@@ -112,9 +112,11 @@
 
   /* ===== NARRATIVE SECTIONS (alternating zigzag, Wiz-style) ===== */
   .narrative {
-    max-width: 1280px; margin: 0 auto; padding: 40px 48px;
+    max-width: 1280px; margin: 0 auto; padding: 16px 48px;
     display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
   }
+  .narrative:first-of-type { padding-top: 40px; }
+  .narrative:last-of-type { padding-bottom: 40px; }
   .narrative.reverse { direction: rtl; }
   .narrative.reverse > * { direction: ltr; }
   .narrative-label {
