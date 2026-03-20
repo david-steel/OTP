@@ -424,6 +424,18 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 19
+  app.get('/blog/the-last-mile-just-got-shorter', async (request, reply) => {
+    return reply.view('pages/blog-post-19', {
+      title: 'The Last Mile Just Got Shorter. - OTP',
+      description: 'DoorDash is paying gig workers to film themselves doing chores to train AI robots. The pattern of workers training their own replacements is not new. It is just getting harder to ignore.',
+      canonical: BASE_URL + '/blog/the-last-mile-just-got-shorter',
+      ogType: 'article',
+      datePublished: '2026-03-20',
+      jsonLd: blogJsonLd('The Last Mile Just Got Shorter.', 'the-last-mile-just-got-shorter', '2026-03-20', 2200)
+    });
+  });
+
   // Orchestra Kit (design system)
   app.get('/orchestra-kit', async (request, reply) => {
     return reply.sendFile('orchestra-kit.html');
