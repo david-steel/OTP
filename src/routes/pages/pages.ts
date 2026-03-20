@@ -37,7 +37,9 @@ export default async function pageRoutes(app: FastifyInstance) {
           url: BASE_URL,
           logo: BASE_URL + '/public/favicon-192x192.png',
           description: 'The coordination intelligence layer for AI-native organizations. Where agents learn to work as a team.',
-          sameAs: []
+          founder: { '@type': 'Person', name: 'David Steel', url: BASE_URL + '/about', jobTitle: 'Founder' },
+          foundingDate: '2026-03',
+          sameAs: ['https://www.linkedin.com/company/orgtp', 'https://x.com/OTP_OOS']
         },
         {
           '@context': 'https://schema.org',
@@ -189,6 +191,23 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' } });
   });
 
+  // Enriched blog post schema helper
+  function blogJsonLd(headline: string, slug: string, datePublished: string, wordCount: number) {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline,
+      author: { '@type': 'Person', name: 'David Steel', url: BASE_URL + '/about', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' } },
+      datePublished,
+      dateModified: datePublished,
+      publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },
+      url: BASE_URL + '/blog/' + slug,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/' + slug },
+      image: BASE_URL + '/public/og-image.png',
+      wordCount,
+    };
+  }
+
   // Blog post 1
   app.get('/blog/why-we-built-otp', async (request, reply) => {
     return reply.view('pages/blog-post-1', {
@@ -196,7 +215,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'The hard problem in AI is not building one good agent. It is getting twelve of them to coordinate without stepping on each other. Why we built OTP.',
       canonical: BASE_URL + '/blog/why-we-built-otp',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-01', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/why-we-built-otp' }
+      datePublished: '2026-03-01',
+      jsonLd: blogJsonLd('The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination.', 'why-we-built-otp', '2026-03-01', 2000)
     });
   });
 
@@ -207,7 +227,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'An Organizational Operating System captures how your AI agents coordinate. Learn the structure, claims, confidence ratings, and evidence model.',
       canonical: BASE_URL + '/blog/what-is-an-oos',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'What Is an Organizational Operating System?', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-01', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/what-is-an-oos' }
+      datePublished: '2026-03-01',
+      jsonLd: blogJsonLd('What Is an Organizational Operating System?', 'what-is-an-oos', '2026-03-01', 1800)
     });
   });
 
@@ -218,7 +239,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'How we built the OTP platform in 48 hours using the same AI agent coordination system the platform is designed to measure.',
       canonical: BASE_URL + '/blog/built-in-48-hours',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-15', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/built-in-48-hours' }
+      datePublished: '2026-03-15',
+      jsonLd: blogJsonLd('We Built This Platform in 48 Hours. With the System It\'s Designed to Measure.', 'built-in-48-hours', '2026-03-15', 1500)
     });
   });
 
@@ -229,7 +251,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Jensen Huang told the world every company needs an agent strategy. OTP is the coordination layer that makes multi-agent strategy work.',
       canonical: BASE_URL + '/blog/nvidia-made-the-case',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-17', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/nvidia-made-the-case' }
+      datePublished: '2026-03-17',
+      jsonLd: blogJsonLd('Jensen Huang Just Made the Case for OTP. He Didn\'t Know It.', 'nvidia-made-the-case', '2026-03-17', 2200)
     });
   });
 
@@ -240,7 +263,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Bain called enterprise multi-agent coordination a Code Red problem. OTP is the coordination intelligence layer that solves it.',
       canonical: BASE_URL + '/blog/bain-code-red',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Bain Just Described the Problem OTP Solves. They Called It "Code Red."', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-17', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/bain-code-red' }
+      datePublished: '2026-03-17',
+      jsonLd: blogJsonLd('Bain Just Described the Problem OTP Solves. They Called It "Code Red."', 'bain-code-red', '2026-03-17', 2000)
     });
   });
 
@@ -251,7 +275,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Agentic maturity levels on OTP measure how sophisticated your AI agent coordination is. From tab completion to autonomous agent teams.',
       canonical: BASE_URL + '/blog/agentic-levels',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-17', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/agentic-levels' }
+      datePublished: '2026-03-17',
+      jsonLd: blogJsonLd('We Added Agentic Maturity Levels to OTP. Here Is Why They Matter.', 'agentic-levels', '2026-03-17', 1800)
     });
   });
 
@@ -262,7 +287,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Coordination intelligence is the structured knowledge of how AI agents coordinate within and across organizations. It is the missing layer in the AI stack.',
       canonical: BASE_URL + '/blog/what-is-coordination-intelligence',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'What Is Coordination Intelligence?', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/what-is-coordination-intelligence' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('What Is Coordination Intelligence?', 'what-is-coordination-intelligence', '2026-03-18', 2000)
     });
   });
 
@@ -273,7 +299,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Practitioner guide to coordinating 14 AI agents in production. Shared state, one seat per owner, escalation over autonomy, and the failures that taught us.',
       canonical: BASE_URL + '/blog/how-we-coordinate-14-agents',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'How We Coordinate 14 AI Agents Without Them Stepping on Each Other', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/how-we-coordinate-14-agents' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('How We Coordinate 14 AI Agents Without Them Stepping on Each Other', 'how-we-coordinate-14-agents', '2026-03-18', 2500)
     });
   });
 
@@ -284,7 +311,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Every rule in your OOS costs tokens to load. The Token Efficiency Ratio measures whether each rule earns back more than it spends. Treat your OOS like a financial plan for your AI workforce.',
       canonical: BASE_URL + '/blog/tokens-are-the-new-currency',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Tokens Are the New Currency. Your OOS Is the Budget.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/tokens-are-the-new-currency' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('Tokens Are the New Currency. Your OOS Is the Budget.', 'tokens-are-the-new-currency', '2026-03-18', 1800)
     });
   });
 
@@ -295,7 +323,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'MCP connects agents to tools. CrewAI connects agents to each other. OTP connects organizations to coordination intelligence. Here is how the three layers fit together.',
       canonical: BASE_URL + '/blog/otp-vs-crewai-vs-a2a-vs-mcp',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'OTP vs CrewAI vs A2A vs MCP: Understanding the AI Coordination Stack', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/otp-vs-crewai-vs-a2a-vs-mcp' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('OTP vs CrewAI vs A2A vs MCP: Understanding the AI Coordination Stack', 'otp-vs-crewai-vs-a2a-vs-mcp', '2026-03-18', 2200)
     });
   });
 
@@ -306,7 +335,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'The 8 Levels of Agentic Engineering by Bassim Eledath give organizations a standard way to measure AI agent coordination maturity. From tab completion to autonomous agent teams.',
       canonical: BASE_URL + '/blog/8-levels-of-agentic-maturity',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'The 8 Levels of Agentic Maturity (and How to Measure Yours)', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/8-levels-of-agentic-maturity' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('The 8 Levels of Agentic Maturity (and How to Measure Yours)', '8-levels-of-agentic-maturity', '2026-03-18', 2500)
     });
   });
 
@@ -317,7 +347,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'The OOS file is a structured format for capturing how AI agents coordinate. YAML frontmatter, Markdown claims, confidence levels, evidence types, and failure modes in a portable, diffable file.',
       canonical: BASE_URL + '/blog/what-is-an-oos-file',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'What Is an OOS File? The New Standard for AI Organizational Intelligence', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/what-is-an-oos-file' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('What Is an OOS File? The New Standard for AI Organizational Intelligence', 'what-is-an-oos-file', '2026-03-18', 2000)
     });
   });
 
@@ -328,7 +359,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Steve Yegge\'s Gas Town orchestrates parallel coding agents. OTP captures organizational coordination intelligence. They solve different layers of the same problem.',
       canonical: BASE_URL + '/blog/gas-town-vs-otp',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Gas Town Is the Factory Floor. OTP Is the Blueprint Exchange.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/gas-town-vs-otp' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('Gas Town Is the Factory Floor. OTP Is the Blueprint Exchange.', 'gas-town-vs-otp', '2026-03-18', 1800)
     });
   });
 
@@ -339,7 +371,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Moltbook was a social network for AI agents. It was hacked in 3 days and acquired by Meta in 42. OTP answers the question Moltbook surfaced: how do organizations actually govern their AI teams?',
       canonical: BASE_URL + '/blog/moltbook-vs-otp',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Moltbook Let Agents Talk. OTP Teaches Organizations How to Run Them.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/moltbook-vs-otp' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('Moltbook Let Agents Talk. OTP Teaches Organizations How to Run Them.', 'moltbook-vs-otp', '2026-03-18', 1800)
     });
   });
 
@@ -350,7 +383,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'MCP, A2A, LangGraph, CrewAI, Salesforce Agentforce, AWS Bedrock, GPT Store - the AI agent ecosystem has 40+ players across 6 layers. OTP is the only one at Layer 6: Organizational Intelligence.',
       canonical: BASE_URL + '/blog/ai-coordination-stack',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'The AI Coordination Stack: Where OTP Fits Among 40+ Frameworks, Protocols, and Platforms', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-18', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/ai-coordination-stack' }
+      datePublished: '2026-03-18',
+      jsonLd: blogJsonLd('The AI Coordination Stack: Where OTP Fits Among 40+ Frameworks, Protocols, and Platforms', 'ai-coordination-stack', '2026-03-18', 2500)
     });
   });
 
@@ -361,7 +395,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Gartner predicts 40% of agentic AI projects will be cancelled by 2027. The failures are not model problems. They are coordination problems. Here is what separates the 60% that survive.',
       canonical: BASE_URL + '/blog/gartner-40-percent-will-fail',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-19', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/gartner-40-percent-will-fail' }
+      datePublished: '2026-03-19',
+      jsonLd: blogJsonLd('Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why.', 'gartner-40-percent-will-fail', '2026-03-19', 2200)
     });
   });
 
@@ -372,7 +407,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Agent skills marketplaces hit 351,000 skills in 120 days. But skills are agent-level knowledge. The organizational layer -- how agent teams coordinate -- has no standard. That is the gap OTP fills.',
       canonical: BASE_URL + '/blog/351k-skills-zero-standards',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: '351,000 Agent Skills in 120 Days. Zero Standards for How Agent Teams Work Together.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-19', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/351k-skills-zero-standards' }
+      datePublished: '2026-03-19',
+      jsonLd: blogJsonLd('351,000 Agent Skills in 120 Days. Zero Standards for How Agent Teams Work Together.', '351k-skills-zero-standards', '2026-03-19', 2000)
     });
   });
 
@@ -383,7 +419,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Multi-agent workflows generate 1,500% more tokens than standard formats. NVIDIA solved the inference cost. The coordination waste -- rebuilding organizational context every cycle -- is the unsolved problem.',
       canonical: BASE_URL + '/blog/1500-percent-more-tokens',
       ogType: 'article',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: '1,500% More Tokens Per Workflow. Most of Them Are Wasted.', author: { '@type': 'Person', name: 'David Steel' }, datePublished: '2026-03-19', publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL }, url: BASE_URL + '/blog/1500-percent-more-tokens' }
+      datePublished: '2026-03-19',
+      jsonLd: blogJsonLd('1,500% More Tokens Per Workflow. Most of Them Are Wasted.', '1500-percent-more-tokens', '2026-03-19', 2000)
     });
   });
 

@@ -24,27 +24,19 @@
   <% if (typeof description !== 'undefined' && description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
   <meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/og-image.png' %>">
 
+  <% if (typeof ogType !== 'undefined' && ogType === 'article') { %>
+  <% if (typeof datePublished !== 'undefined' && datePublished) { %><meta property="article:published_time" content="<%= datePublished %>T00:00:00Z"><% } %>
+  <meta property="article:author" content="https://orgtp.com/about">
+  <meta property="article:section" content="AI Coordination">
+  <% } %>
+
   <link rel="icon" type="image/png" sizes="32x32" href="/public/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/public/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/public/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-        extend: {
-          colors: {
-            otp: { 50: '#f0f7ff', 100: '#e0effe', 200: '#b9dffe', 300: '#7cc4fe', 400: '#4db8ff', 500: '#0095ff', 600: '#0076cc', 700: '#005899', 800: '#003d66', 900: '#0a0f1e', 950: '#060a14' },
-            confidence: { high: '#059669', medium: '#d97706', low: '#9ca3af' },
-            evidence: { measured: '#7c3aed', observed: '#2563eb', rule: '#059669', inference: '#d97706', speculation: '#9ca3af' }
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="/public/styles.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
 

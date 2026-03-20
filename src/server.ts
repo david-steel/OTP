@@ -47,6 +47,18 @@ await app.register(fastifyView, {
   },
 });
 
+// Security headers
+app.addHook('onSend', async (request, reply) => {
+  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-Frame-Options', 'SAMEORIGIN');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Suppress Clerk internal headers from public responses
+  reply.removeHeader('x-clerk-auth-status');
+  reply.removeHeader('x-clerk-auth-reason');
+});
+
 // Health check
 app.get('/health', async () => {
   return { status: 'ok', version: '0.1.0', phase: 'mvp' };
@@ -264,6 +276,12 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog/otp-vs-crewai-vs-a2a-vs-mcp', priority: '0.8', changefreq: 'monthly' },
     { loc: '/blog/8-levels-of-agentic-maturity', priority: '0.8', changefreq: 'monthly' },
     { loc: '/blog/what-is-an-oos-file', priority: '0.7', changefreq: 'monthly' },
+    { loc: '/blog/gas-town-vs-otp', priority: '0.7', changefreq: 'monthly' },
+    { loc: '/blog/moltbook-vs-otp', priority: '0.7', changefreq: 'monthly' },
+    { loc: '/blog/ai-coordination-stack', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/gartner-40-percent-will-fail', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/351k-skills-zero-standards', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/1500-percent-more-tokens', priority: '0.7', changefreq: 'monthly' },
     { loc: '/claims', priority: '0.8', changefreq: 'weekly' },
     { loc: '/claims/core_operating_rules', priority: '0.7', changefreq: 'weekly' },
     { loc: '/claims/agent_roles_and_authority', priority: '0.7', changefreq: 'weekly' },
