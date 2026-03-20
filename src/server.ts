@@ -283,6 +283,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog/351k-skills-zero-standards', priority: '0.8', changefreq: 'monthly' },
     { loc: '/blog/1500-percent-more-tokens', priority: '0.7', changefreq: 'monthly' },
     { loc: '/blog/the-last-mile-just-got-shorter', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/defining-rules-vs-enforcing-them', priority: '0.8', changefreq: 'monthly' },
     { loc: '/claims', priority: '0.8', changefreq: 'weekly' },
     { loc: '/claims/core_operating_rules', priority: '0.7', changefreq: 'weekly' },
     { loc: '/claims/agent_roles_and_authority', priority: '0.7', changefreq: 'weekly' },

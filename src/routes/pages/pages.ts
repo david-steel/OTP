@@ -436,6 +436,18 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 20
+  app.get('/blog/defining-rules-vs-enforcing-them', async (request, reply) => {
+    return reply.view('pages/blog-post-20', {
+      title: 'Your OOS Defines the Rules. Your Runtime Enforces Them. You Need Both. - OTP',
+      description: 'Why the architecture layer and the monitoring layer are complementary, not competing. The OOS defines what the rules are. Runtime monitoring enforces them. You need both.',
+      canonical: BASE_URL + '/blog/defining-rules-vs-enforcing-them',
+      ogType: 'article',
+      datePublished: '2026-03-20',
+      jsonLd: blogJsonLd('Your OOS Defines the Rules. Your Runtime Enforces Them. You Need Both.', 'defining-rules-vs-enforcing-them', '2026-03-20', 2200)
+    });
+  });
+
   // Orchestra Kit (design system)
   app.get('/orchestra-kit', async (request, reply) => {
     return reply.sendFile('orchestra-kit.html');
