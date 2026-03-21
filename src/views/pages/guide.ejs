@@ -2,6 +2,45 @@
   <h1 class="text-2xl font-bold mb-2">How to Generate Your OOS</h1>
   <p class="text-gray-500 text-sm mb-8">A step-by-step guide to publishing your Organizational Operating System&trade; on OTP.</p>
 
+  <!-- One-Line Install for Claude Code -->
+  <div class="bg-otp-950 text-white p-6 rounded-xl mb-8 relative overflow-hidden">
+    <div class="absolute top-0 right-0 px-3 py-1 bg-otp-500 text-white text-xs font-bold rounded-bl-lg">NEW</div>
+    <h2 class="font-semibold text-lg mb-2">One-Line Install for Claude Code</h2>
+    <p class="text-sm text-gray-300 mb-4">Install the OTP MCP server, slash commands, and intelligence tools in one command. Works with Claude Code, Open Claw, or any MCP-compatible client.</p>
+
+    <div class="relative mb-4">
+      <pre id="install-cmd" class="bg-black/40 text-gray-100 text-sm p-4 rounded-lg font-mono">curl -fsSL https://orgtp.com/install.sh | bash</pre>
+      <button onclick="copyInstall()" id="copy-install-btn" class="absolute top-2 right-2 px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Copy</button>
+    </div>
+
+    <p class="text-sm text-gray-300 mb-3">This installs:</p>
+    <div class="grid sm:grid-cols-2 gap-3 mb-4">
+      <div class="bg-white/5 rounded-lg p-3">
+        <h3 class="text-xs font-semibold text-otp-300 mb-1">MCP Server (16 tools)</h3>
+        <p class="text-xs text-gray-400">Browse, search, compare, and publish OOS files directly from your AI agent.</p>
+      </div>
+      <div class="bg-white/5 rounded-lg p-3">
+        <h3 class="text-xs font-semibold text-otp-300 mb-1">5 Slash Commands</h3>
+        <p class="text-xs text-gray-400">/otp, /otp-publish, /otp-morning, /otp-browse, /otp-learn</p>
+      </div>
+    </div>
+
+    <details class="text-sm">
+      <summary class="text-otp-400 cursor-pointer hover:text-otp-300">What each command does</summary>
+      <table class="w-full text-xs mt-3">
+        <tbody class="text-gray-300">
+          <tr class="border-b border-white/5"><td class="py-2 font-mono text-otp-400 pr-3 whitespace-nowrap">/otp</td><td class="py-2">Your dashboard -- inbox stats, pending recommendations, recent network activity.</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2 font-mono text-otp-400 pr-3 whitespace-nowrap">/otp-publish</td><td class="py-2">Finds your CLAUDE.md, publishes it as an OOS. Auto-detects template type.</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2 font-mono text-otp-400 pr-3 whitespace-nowrap">/otp-morning</td><td class="py-2">Morning intelligence briefing -- new recommendations, network activity, patterns to adopt.</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2 font-mono text-otp-400 pr-3 whitespace-nowrap">/otp-browse</td><td class="py-2">Explore published OOS files by industry, quality, or search. Compare against yours.</td></tr>
+          <tr><td class="py-2 font-mono text-otp-400 pr-3 whitespace-nowrap">/otp-learn</td><td class="py-2">Discover intelligence from other orgs. Review and adopt recommendations one by one.</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <p class="text-xs text-gray-500 mt-4">Requires: Node.js 18+, Claude Code CLI. Get an API key (free) at <a href="/settings/api" class="text-otp-400 hover:text-otp-300">/settings/api</a> to publish and receive intelligence.</p>
+  </div>
+
   <!-- What is an OOS -->
   <div class="bg-white p-6 rounded-lg border mb-6">
     <h2 class="font-semibold text-lg mb-3">What is an OOS?</h2>
@@ -216,7 +255,7 @@ Rules for claims:
   "mcpServers": {
     "otp": {
       "command": "npx",
-      "args": ["@otp/mcp-server"],
+      "args": ["otp-mcp-server"],
       "env": {
         "OTP_API_KEY": "your-api-key-here"
       }
@@ -275,6 +314,13 @@ function copyPrompt() {
     const btn = event.target;
     btn.textContent = 'Copied!';
     setTimeout(() => btn.textContent = 'Copy Prompt', 2000);
+  });
+}
+function copyInstall() {
+  navigator.clipboard.writeText('curl -fsSL https://orgtp.com/install.sh | bash').then(() => {
+    const btn = document.getElementById('copy-install-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
   });
 }
 </script>

@@ -64,6 +64,12 @@ app.get('/health', async () => {
   return { status: 'ok', version: '0.1.0', phase: 'mvp' };
 });
 
+// install.sh at root -- one-line installer for Claude Code
+app.get('/install.sh', async (request, reply) => {
+  reply.header('Content-Type', 'text/plain; charset=utf-8');
+  return reply.sendFile('install.sh');
+});
+
 // robots.txt at root
 app.get('/robots.txt', async (request, reply) => {
   return reply.sendFile('robots.txt');
