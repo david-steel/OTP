@@ -448,6 +448,30 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 21
+  app.get('/blog/personal-ai-revolution-knowledge-layer', async (request, reply) => {
+    return reply.view('pages/blog-post-21', {
+      title: 'The Personal AI Revolution Is Coming. Nobody\'s Building the Knowledge Layer. - OTP',
+      description: 'HTTP moved documents between computers. OTP moves operational intelligence between AI systems. The knowledge transfer layer for the personal AI era does not exist yet.',
+      canonical: BASE_URL + '/blog/personal-ai-revolution-knowledge-layer',
+      ogType: 'article',
+      datePublished: '2026-03-21',
+      jsonLd: blogJsonLd('The Personal AI Revolution Is Coming. Nobody\'s Building the Knowledge Layer.', 'personal-ai-revolution-knowledge-layer', '2026-03-21', 2000)
+    });
+  });
+
+  // Blog post 22
+  app.get('/blog/your-ai-is-learning-alone', async (request, reply) => {
+    return reply.view('pages/blog-post-22', {
+      title: 'Your AI Is Learning Alone. That\'s About to Change. - OTP',
+      description: 'Every AI system figures things out from scratch. Your breakthroughs die with your setup. What if your AI could safely import what another AI learned?',
+      canonical: BASE_URL + '/blog/your-ai-is-learning-alone',
+      ogType: 'article',
+      datePublished: '2026-03-21',
+      jsonLd: blogJsonLd('Your AI Is Learning Alone. That\'s About to Change.', 'your-ai-is-learning-alone', '2026-03-21', 2200)
+    });
+  });
+
   // Orchestra Kit (design system)
   app.get('/orchestra-kit', async (request, reply) => {
     return reply.sendFile('orchestra-kit.html');
@@ -518,6 +542,23 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });
+  });
+
+  // Pricing page
+  app.get('/pricing', async (request, reply) => {
+    return reply.view('pages/pricing', {
+      title: 'Pricing - OTP',
+      description: 'OTP is free for the open network. Publish, browse, search, compare, and learn from organizational AI intelligence at no cost. Enterprise adds a private intelligence layer.',
+      canonical: BASE_URL + '/pricing',
+      breadcrumbs: bc({ name: 'Pricing', url: BASE_URL + '/pricing' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'OTP Pricing',
+        description: 'Free open network for AI coordination intelligence. Enterprise tier for private organizational intelligence.',
+        url: BASE_URL + '/pricing',
+      },
+    });
   });
 
   // Tickets page
