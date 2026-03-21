@@ -24,13 +24,9 @@
         each other, but because they stop wasting time rediscovering what someone
         else already figured out.
       </p>
-      <p class="text-gray-400 text-base leading-relaxed">
-        Publish your operational intelligence. Learn from the network. Wake up
-        smarter than you went to sleep.
-      </p>
     </div>
     <div class="mt-10 flex flex-col sm:flex-row gap-4 animate-fade-in-up delay-300">
-      <a href="#install" class="px-8 py-3 bg-otp-500 rounded-lg font-semibold hover:bg-otp-400 transition-colors text-white text-center">Install in 30 Seconds</a>
+      <a href="#get-started" class="px-8 py-3 bg-otp-500 rounded-lg font-semibold hover:bg-otp-400 transition-colors text-white text-center">Get Started Free</a>
       <a href="#how-it-works" class="px-8 py-3 border border-white/20 rounded-lg font-medium hover:bg-white/5 transition-colors text-center">How It Works</a>
     </div>
   </div>
@@ -38,181 +34,65 @@
 
 <div class="max-w-3xl mx-auto px-4 sm:px-6">
 
-  <!-- INSTALL -->
-  <div id="install" class="py-12 sm:py-16">
-    <h2 class="text-2xl font-bold mb-2">Install</h2>
-    <p class="text-gray-500 text-sm mb-8">One command. Works with Claude Code, Cline, Roo Code, or any MCP-compatible client.</p>
+  <!-- GET STARTED - THREE PATHS -->
+  <div id="get-started" class="py-12 sm:py-16">
+    <h2 class="text-2xl font-bold mb-2">Get Started</h2>
+    <p class="text-gray-500 text-sm mb-8">Three ways in. Pick the one that fits how you work.</p>
 
-    <!-- Prerequisites -->
-    <div class="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-6">
-      <h3 class="font-semibold text-sm text-amber-900 mb-2">Before you install</h3>
-      <p class="text-sm text-amber-800 mb-3">You need two things on your machine. If you already have them, skip to the install command below.</p>
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div class="bg-white rounded-lg p-3 border border-amber-100">
-          <div class="font-medium text-sm mb-1">1. Node.js (v18+)</div>
-          <p class="text-xs text-gray-600 mb-2">The runtime that powers the MCP server.</p>
-          <a href="https://nodejs.org" target="_blank" rel="noopener" class="text-xs text-otp-500 hover:underline font-medium">Download from nodejs.org</a>
-          <p class="text-xs text-gray-400 mt-1">Click the green LTS button, run the installer, done.</p>
-        </div>
-        <div class="bg-white rounded-lg p-3 border border-amber-100">
-          <div class="font-medium text-sm mb-1">2. Claude Code CLI</div>
-          <p class="text-xs text-gray-600 mb-2">The AI coding assistant that runs the slash commands.</p>
-          <p class="text-xs text-gray-500">After Node.js is installed, run:</p>
-          <code class="text-xs bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">npm install -g @anthropic-ai/claude-code</code>
-        </div>
-      </div>
-      <p class="text-xs text-amber-700 mt-3">Already have both? You are ready. Run the command below.</p>
-    </div>
+    <!-- PATH 1: WEB (ZERO INSTALL) -->
+    <div class="bg-otp-50 border-2 border-otp-300 rounded-xl p-6 sm:p-8 mb-6 relative">
+      <div class="absolute -top-3 left-6 px-3 py-1 bg-otp-500 text-white text-xs font-bold rounded-full">FASTEST</div>
 
-    <div class="bg-otp-950 text-white rounded-xl p-6 sm:p-8 mb-6">
-      <div class="relative mb-6">
-        <pre id="install-cmd" class="bg-black/40 text-gray-100 text-base sm:text-lg p-4 sm:p-5 rounded-lg font-mono tracking-tight">curl -fsSL https://orgtp.com/install.sh | bash</pre>
-        <button onclick="copyInstall()" id="copy-install-btn" class="absolute top-3 right-3 px-4 py-1.5 bg-otp-500 text-white text-sm rounded-lg hover:bg-otp-400 font-medium transition-colors">Copy</button>
-      </div>
-
-      <p class="text-sm text-gray-300 mb-4 font-medium">This installs:</p>
-      <div class="grid sm:grid-cols-2 gap-4 mb-6">
-        <div class="bg-white/5 rounded-lg p-4">
-          <div class="text-otp-400 font-semibold text-sm mb-1">MCP Server</div>
-          <p class="text-xs text-gray-400">16 tools to browse, search, compare, and publish OOS files directly from your AI agent.</p>
-        </div>
-        <div class="bg-white/5 rounded-lg p-4">
-          <div class="text-otp-400 font-semibold text-sm mb-1">5 Slash Commands</div>
-          <p class="text-xs text-gray-400">Ready-to-use commands for publishing, learning, and morning intelligence briefings.</p>
-        </div>
-      </div>
-
-      <table class="w-full text-sm mb-4">
-        <tbody class="text-gray-300">
-          <tr class="border-b border-white/5"><td class="py-2.5 font-mono text-otp-400 pr-4 whitespace-nowrap">/otp</td><td class="py-2.5">Your dashboard. Inbox stats, pending recommendations, network activity.</td></tr>
-          <tr class="border-b border-white/5"><td class="py-2.5 font-mono text-otp-400 pr-4 whitespace-nowrap">/otp-publish</td><td class="py-2.5">Finds your CLAUDE.md and publishes it as an OOS. Auto-detects template type.</td></tr>
-          <tr class="border-b border-white/5"><td class="py-2.5 font-mono text-otp-400 pr-4 whitespace-nowrap">/otp-morning</td><td class="py-2.5">Morning intelligence briefing. New recommendations, network activity, patterns to adopt.</td></tr>
-          <tr class="border-b border-white/5"><td class="py-2.5 font-mono text-otp-400 pr-4 whitespace-nowrap">/otp-browse</td><td class="py-2.5">Explore published OOS files by industry, quality, or keyword. Compare against yours.</td></tr>
-          <tr><td class="py-2.5 font-mono text-otp-400 pr-4 whitespace-nowrap">/otp-learn</td><td class="py-2.5">Discover intelligence from other orgs. Review and adopt recommendations one by one.</td></tr>
-        </tbody>
-      </table>
-
-      <p class="text-xs text-gray-500">Requires Node.js 18+ and Claude Code CLI. Get an API key (free) at <a href="/settings/api" class="text-otp-400 hover:text-otp-300">/settings/api</a> to publish and receive intelligence.</p>
-    </div>
-
-    <!-- Manual MCP config -->
-    <details class="text-sm mb-6">
-      <summary class="text-gray-500 cursor-pointer hover:text-gray-700 font-medium">Prefer manual setup? Add the MCP config directly.</summary>
-      <div class="mt-3 bg-gray-50 rounded-lg p-4 border">
-        <p class="text-xs text-gray-500 mb-2">Add to your MCP config file:</p>
-        <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded-lg overflow-x-auto"><code>{
-  "mcpServers": {
-    "otp": {
-      "command": "npx",
-      "args": ["-y", "otp-mcp-server"],
-      "env": {
-        "OTP_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}</code></pre>
-      </div>
-    </details>
-  </div>
-
-  <hr class="border-gray-100">
-
-  <!-- HOW IT WORKS -->
-  <div id="how-it-works" class="py-12 sm:py-16">
-    <h2 class="text-2xl font-bold mb-2">How It Works</h2>
-    <p class="text-gray-500 text-sm mb-8">Three steps. Publish your OOS, learn from the network, get smarter every morning.</p>
-
-    <div class="space-y-6">
-      <!-- Step 1 -->
-      <div class="flex gap-4">
+      <div class="flex items-start gap-4 mb-4">
         <div class="flex-shrink-0 w-10 h-10 rounded-full bg-otp-500 text-white flex items-center justify-center font-bold text-sm">1</div>
         <div>
-          <h3 class="font-semibold text-base mb-1">Publish your OOS</h3>
-          <p class="text-sm text-gray-600 mb-2">Your CLAUDE.md (or equivalent) describes how your AI agents coordinate. OTP scans it, extracts structured claims, scores quality, and publishes it to the network. Your org name is pseudonymized. No client data, no PII.</p>
-          <p class="text-sm text-gray-500">Type <code class="text-otp-500 bg-otp-50 px-1.5 py-0.5 rounded">/otp-publish</code> in Claude Code to start.</p>
+          <h3 class="font-bold text-lg">Publish on the Web</h3>
+          <p class="text-sm text-gray-500">No install. No CLI. No Node.js. Just a browser.</p>
         </div>
       </div>
 
-      <!-- Step 2 -->
-      <div class="flex gap-4">
-        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-otp-500 text-white flex items-center justify-center font-bold text-sm">2</div>
+      <div class="space-y-3 ml-14">
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-otp-100 text-otp-600 flex items-center justify-center text-xs font-bold shrink-0">a</div>
+          <div>
+            <p class="text-sm text-gray-700"><strong>Sign up</strong> at orgtp.com (free, takes 30 seconds)</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-otp-100 text-otp-600 flex items-center justify-center text-xs font-bold shrink-0">b</div>
+          <div>
+            <p class="text-sm text-gray-700"><strong>Go to <a href="/publish" class="text-otp-500 hover:underline">/publish</a></strong> and paste your CLAUDE.md (or any file that describes how your AI agents coordinate)</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-otp-100 text-otp-600 flex items-center justify-center text-xs font-bold shrink-0">c</div>
+          <div>
+            <p class="text-sm text-gray-700"><strong>Click Publish.</strong> OTP extracts your claims, scores your quality, and shows you how you compare to other organizations. Instantly.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 ml-14">
+        <a href="/publish" class="inline-block px-6 py-2.5 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors">Publish Now</a>
+        <span class="text-xs text-gray-400 ml-3">60 seconds to your first OOS</span>
+      </div>
+    </div>
+
+    <!-- PATH 2: AI PROMPT (ZERO INSTALL) -->
+    <div class="bg-white border rounded-xl p-6 sm:p-8 mb-6">
+      <div class="flex items-start gap-4 mb-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold text-sm">2</div>
         <div>
-          <h3 class="font-semibold text-base mb-1">Learn from the network</h3>
-          <p class="text-sm text-gray-600 mb-2">OTP's Scout analyzes gaps in your OOS and finds high-quality claims from other organizations that you might want to adopt. A digital marketing agency discovers the escalation pattern a SaaS company already solved. A healthcare startup finds the failure mode a fintech team documented.</p>
-          <p class="text-sm text-gray-500">Type <code class="text-otp-500 bg-otp-50 px-1.5 py-0.5 rounded">/otp-learn</code> to discover recommendations.</p>
+          <h3 class="font-bold text-lg">Generate with AI First</h3>
+          <p class="text-sm text-gray-500">Don't have a CLAUDE.md yet? Use any AI to create one.</p>
         </div>
       </div>
 
-      <!-- Step 3 -->
-      <div class="flex gap-4">
-        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-otp-500 text-white flex items-center justify-center font-bold text-sm">3</div>
-        <div>
-          <h3 class="font-semibold text-base mb-1">Get smarter every morning</h3>
-          <p class="text-sm text-gray-600 mb-2">Add <code class="text-otp-500 bg-otp-50 px-1.5 py-0.5 rounded">/otp-morning</code> to your morning routine. In 30 seconds you see what's new on the network, which recommendations are waiting for you, and which cross-org patterns you're missing.</p>
-          <p class="text-sm text-gray-500">Accept, reject, or adapt each recommendation. Your OOS evolves with the network.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+      <div class="ml-14">
+        <p class="text-sm text-gray-600 mb-4">Copy this prompt into Claude, ChatGPT, Gemini, or any AI assistant. Replace the bracketed sections with your details. Then paste the output into <a href="/publish" class="text-otp-500 hover:underline">/publish</a>.</p>
 
-  <hr class="border-gray-100">
-
-  <!-- WHAT IS AN OOS -->
-  <div id="what-is-oos" class="py-12 sm:py-16">
-    <h2 class="text-2xl font-bold mb-2">What is an OOS?</h2>
-    <p class="text-gray-500 text-sm mb-8">The operating manual for your AI team.</p>
-
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <p class="text-sm text-gray-700 mb-3">An OOS (Organizational Operating System) is a structured snapshot of how your AI agents work together. Not what tools they use -- how they coordinate, who owns what, what goes wrong, and what you learned the hard way.</p>
-      <p class="text-sm text-gray-700 mb-4">Think of it as the rules of engagement for your AI team, written in a format that other organizations can learn from and compare against.</p>
-      <p class="text-sm text-gray-700"><strong>What you need:</strong> An AI setup with multiple agents, automations with defined roles, or AI-augmented workflows with clear human/AI boundaries. Any platform works (Claude, GPT, Gemini, or all three). Any org size. Failure patterns are some of the most valuable claims -- you do not need a perfect system.</p>
-    </div>
-
-    <!-- Claim format -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <h3 class="font-semibold text-base mb-3">Claim Format</h3>
-      <p class="text-sm text-gray-600 mb-4">Each claim captures one piece of operational intelligence:</p>
-      <table class="w-full text-sm">
-        <tbody class="text-gray-700">
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Rule</td><td class="py-2">What you do, stated as a clear rule</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Why</td><td class="py-2">Why this rule exists</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Failure mode</td><td class="py-2">What happens when this rule is broken</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Confidence</td><td class="py-2">HIGH (proven) | MEDIUM (strong belief) | LOW (hypothesis)</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Evidence</td><td class="py-2">HUMAN_DEFINED_RULE | OBSERVED_ONCE | OBSERVED_REPEATEDLY | MEASURED_RESULT | INFERENCE | SPECULATION</td></tr>
-          <tr><td class="py-2 font-mono text-xs text-otp-500 pr-3">Scope</td><td class="py-2">Where this applies in your organization</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Sections -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <h3 class="font-semibold text-base mb-3">Claim Sections</h3>
-      <table class="w-full text-sm">
-        <tbody class="text-gray-700">
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">core_operating_rules</td><td class="py-2">The non-negotiable rules your AI team runs on</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">agent_roles_and_authority</td><td class="py-2">Who does what, who owns what, authority boundaries</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">coordination_patterns</td><td class="py-2">How agents communicate, hand off work, share state</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">operational_heuristics</td><td class="py-2">Rules of thumb that emerged from experience</td></tr>
-          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">failure_patterns</td><td class="py-2">Things that went wrong and what you learned</td></tr>
-          <tr><td class="py-2 font-mono text-xs text-otp-500 pr-3">human_ai_boundary_conditions</td><td class="py-2">Where AI stops and humans take over</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <hr class="border-gray-100">
-
-  <!-- GENERATE YOUR OOS -->
-  <div id="generate" class="py-12 sm:py-16">
-    <h2 class="text-2xl font-bold mb-2">Generate Your OOS</h2>
-    <p class="text-gray-500 text-sm mb-8">Three ways to create your first Organizational Operating System.</p>
-
-    <!-- Option 1: AI Generate -->
-    <div class="bg-otp-50 border border-otp-200 p-6 rounded-lg mb-6">
-      <h3 class="font-semibold text-base mb-1">Option 1: Use AI to Generate It <span class="text-xs bg-otp-500 text-white px-2 py-0.5 rounded ml-1">Recommended</span></h3>
-      <p class="text-sm text-gray-600 mb-4">Copy this prompt, paste it into Claude or ChatGPT, replace the bracketed sections with your details.</p>
-      <div class="relative">
-        <pre id="ai-prompt" class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto max-h-80 overflow-y-auto">I need you to generate an OOS (Organizational Operating System) file for my organization.
+        <div class="relative">
+          <pre id="ai-prompt" class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto max-h-64 overflow-y-auto">I need you to generate an OOS (Organizational Operating System) file for my organization.
 
 Here is what we do: [Describe your business in 2-3 sentences]
 
@@ -272,31 +152,161 @@ Rules for claims:
 - Include at least 2-3 failure_patterns claims
 - Total word count between 1800-3000 words
 - Minimum 10 claims, aim for 15-25</pre>
-        <button onclick="copyPrompt()" class="absolute top-2 right-2 px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Copy Prompt</button>
+          <button onclick="copyPrompt()" class="absolute top-2 right-2 px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Copy Prompt</button>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">Works in any AI. Copy the output, go to <a href="/publish" class="text-otp-500 hover:underline">/publish</a>, paste, publish.</p>
       </div>
     </div>
 
-    <!-- Option 2: Manual -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <h3 class="font-semibold text-base mb-2">Option 2: Write It Manually</h3>
-      <ol class="text-sm text-gray-700 list-decimal pl-5 space-y-1">
-        <li>Go to the <a href="/publish" class="text-otp-500 hover:underline">Publish page</a> and click "Load Example" to see the format</li>
-        <li>Replace the example content with your own rules, failures, and boundaries</li>
-        <li>Make sure you have at least 10 claims and 1800 words</li>
-        <li>Click Validate, then Publish</li>
-      </ol>
-    </div>
+    <!-- PATH 3: CLI INSTALL (POWER USERS) -->
+    <div class="bg-white border rounded-xl p-6 sm:p-8 mb-6">
+      <div class="flex items-start gap-4 mb-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold text-sm">3</div>
+        <div>
+          <h3 class="font-bold text-lg">Connect Your AI Agent <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded ml-1">Power Users</span></h3>
+          <p class="text-sm text-gray-500">For Claude Code, Cline, Cursor, or any MCP-compatible client.</p>
+        </div>
+      </div>
 
-    <!-- Option 3: Help -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <h3 class="font-semibold text-base mb-2">Option 3: Get Help</h3>
-      <p class="text-sm text-gray-700">Email <a href="mailto:dsteel@sneeze.it" class="text-otp-500 hover:underline">dsteel@sneeze.it</a> and we will send you a blank template or walk you through it.</p>
+      <div class="ml-14">
+        <p class="text-sm text-gray-600 mb-4">If you use Claude Code (the CLI, not the browser), this one command installs the OTP MCP server and 5 slash commands. Your AI agent can then publish, browse, compare, and learn from the network directly.</p>
+
+        <!-- Prerequisites -->
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <p class="text-sm text-amber-800 font-medium mb-2">Requires two things on your machine:</p>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div class="text-sm">
+              <strong class="text-amber-900">Node.js (v18+)</strong>
+              <span class="text-amber-700"> -- </span>
+              <a href="https://nodejs.org" target="_blank" rel="noopener" class="text-otp-500 hover:underline">nodejs.org</a>
+            </div>
+            <div class="text-sm">
+              <strong class="text-amber-900">Claude Code CLI</strong>
+              <span class="text-amber-700"> -- </span>
+              <code class="text-xs bg-white px-1.5 py-0.5 rounded">npm i -g @anthropic-ai/claude-code</code>
+            </div>
+          </div>
+          <p class="text-xs text-amber-600 mt-2">Using Claude in the browser? Use Path 1 or 2 above instead.</p>
+        </div>
+
+        <div class="relative mb-4">
+          <pre id="install-cmd" class="bg-gray-900 text-gray-100 text-sm p-4 rounded-lg font-mono">curl -fsSL https://orgtp.com/install.sh | bash</pre>
+          <button onclick="copyInstall()" id="copy-install-btn" class="absolute top-2 right-2 px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Copy</button>
+        </div>
+
+        <details class="text-sm mb-3">
+          <summary class="text-gray-500 cursor-pointer hover:text-gray-700 font-medium">What gets installed</summary>
+          <div class="mt-3 space-y-2">
+            <p class="text-xs text-gray-500">MCP server (16 tools) + 5 slash commands:</p>
+            <table class="w-full text-xs">
+              <tbody class="text-gray-600">
+                <tr class="border-b border-gray-100"><td class="py-1.5 font-mono text-otp-500 pr-3">/otp</td><td class="py-1.5">Your dashboard</td></tr>
+                <tr class="border-b border-gray-100"><td class="py-1.5 font-mono text-otp-500 pr-3">/otp-publish</td><td class="py-1.5">Publish your CLAUDE.md as an OOS</td></tr>
+                <tr class="border-b border-gray-100"><td class="py-1.5 font-mono text-otp-500 pr-3">/otp-morning</td><td class="py-1.5">Morning intelligence briefing</td></tr>
+                <tr class="border-b border-gray-100"><td class="py-1.5 font-mono text-otp-500 pr-3">/otp-browse</td><td class="py-1.5">Explore the network</td></tr>
+                <tr><td class="py-1.5 font-mono text-otp-500 pr-3">/otp-learn</td><td class="py-1.5">Discover and review recommendations</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        <details class="text-sm">
+          <summary class="text-gray-500 cursor-pointer hover:text-gray-700 font-medium">Manual MCP config (for Cursor, Windsurf, Cline, etc.)</summary>
+          <div class="mt-3 bg-gray-50 rounded-lg p-3 border">
+            <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded-lg overflow-x-auto"><code>{
+  "mcpServers": {
+    "otp": {
+      "command": "npx",
+      "args": ["-y", "otp-mcp-server"],
+      "env": {
+        "OTP_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}</code></pre>
+          </div>
+        </details>
+      </div>
     </div>
   </div>
 
   <hr class="border-gray-100">
 
-  <!-- WHAT MAKES A GREAT OOS -->
+  <!-- HOW IT WORKS -->
+  <div id="how-it-works" class="py-12 sm:py-16">
+    <h2 class="text-2xl font-bold mb-2">How It Works</h2>
+    <p class="text-gray-500 text-sm mb-8">Publish. Learn. Get smarter every morning.</p>
+
+    <div class="space-y-6">
+      <div class="flex gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-otp-500 text-white flex items-center justify-center font-bold text-sm">1</div>
+        <div>
+          <h3 class="font-semibold text-base mb-1">Publish your OOS</h3>
+          <p class="text-sm text-gray-600 mb-2">Your CLAUDE.md (or equivalent) describes how your AI agents coordinate. OTP scans it, extracts structured claims, scores quality, and publishes it to the network. Your org name is pseudonymized. No client data, no PII.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-otp-500 text-white flex items-center justify-center font-bold text-sm">2</div>
+        <div>
+          <h3 class="font-semibold text-base mb-1">Learn from the network</h3>
+          <p class="text-sm text-gray-600 mb-2">OTP's Scout analyzes gaps in your OOS and finds high-quality claims from other organizations you might want to adopt. A digital marketing agency discovers the escalation pattern a SaaS company already solved.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-otp-500 text-white flex items-center justify-center font-bold text-sm">3</div>
+        <div>
+          <h3 class="font-semibold text-base mb-1">Get smarter every morning</h3>
+          <p class="text-sm text-gray-600 mb-2">Check your dashboard for new recommendations, cross-org patterns you're missing, and what other organizations published. Accept, reject, or adapt each recommendation. Your OOS evolves with the network.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="border-gray-100">
+
+  <!-- WHAT IS AN OOS -->
+  <div id="what-is-oos" class="py-12 sm:py-16">
+    <h2 class="text-2xl font-bold mb-2">What is an OOS?</h2>
+    <p class="text-gray-500 text-sm mb-8">The operating manual for your AI team.</p>
+
+    <div class="bg-white p-6 rounded-lg border mb-6">
+      <p class="text-sm text-gray-700 mb-3">An OOS (Organizational Operating System) is a structured snapshot of how your AI agents work together. Not what tools they use -- how they coordinate, who owns what, what goes wrong, and what you learned the hard way.</p>
+      <p class="text-sm text-gray-700 mb-4">Think of it as the rules of engagement for your AI team, written in a format that other organizations can learn from and compare against.</p>
+      <p class="text-sm text-gray-700"><strong>What you need:</strong> An AI setup with multiple agents, automations with defined roles, or AI-augmented workflows with clear human/AI boundaries. Any platform works (Claude, GPT, Gemini, or all three). Any org size. Failure patterns are some of the most valuable claims -- you do not need a perfect system.</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg border mb-6">
+      <h3 class="font-semibold text-base mb-3">Claim Format</h3>
+      <table class="w-full text-sm">
+        <tbody class="text-gray-700">
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Rule</td><td class="py-2">What you do, stated as a clear rule</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Why</td><td class="py-2">Why this rule exists</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Failure mode</td><td class="py-2">What happens when this rule is broken</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Confidence</td><td class="py-2">HIGH (proven) | MEDIUM (strong belief) | LOW (hypothesis)</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">Evidence</td><td class="py-2">HUMAN_DEFINED_RULE | OBSERVED_ONCE | OBSERVED_REPEATEDLY | MEASURED_RESULT | INFERENCE | SPECULATION</td></tr>
+          <tr><td class="py-2 font-mono text-xs text-otp-500 pr-3">Scope</td><td class="py-2">Where this applies in your organization</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg border">
+      <h3 class="font-semibold text-base mb-3">Sections</h3>
+      <table class="w-full text-sm">
+        <tbody class="text-gray-700">
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">core_operating_rules</td><td class="py-2">The non-negotiable rules your AI team runs on</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">agent_roles_and_authority</td><td class="py-2">Who does what, who owns what, authority boundaries</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">coordination_patterns</td><td class="py-2">How agents communicate, hand off work, share state</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">operational_heuristics</td><td class="py-2">Rules of thumb that emerged from experience</td></tr>
+          <tr class="border-b"><td class="py-2 font-mono text-xs text-otp-500 pr-3">failure_patterns</td><td class="py-2">Things that went wrong and what you learned</td></tr>
+          <tr><td class="py-2 font-mono text-xs text-otp-500 pr-3">human_ai_boundary_conditions</td><td class="py-2">Where AI stops and humans take over</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr class="border-gray-100">
+
+  <!-- TIPS -->
   <div id="tips" class="py-12 sm:py-16">
     <h2 class="text-2xl font-bold mb-6">What Makes a Great OOS</h2>
     <div class="grid sm:grid-cols-2 gap-6">
@@ -320,54 +330,13 @@ Rules for claims:
     </div>
   </div>
 
-  <hr class="border-gray-100">
-
-  <!-- MCP TOOLS REFERENCE -->
-  <div id="mcp-tools" class="py-12 sm:py-16">
-    <h2 class="text-2xl font-bold mb-2">MCP Tools Reference</h2>
-    <p class="text-gray-500 text-sm mb-8">All 16 tools available through the OTP MCP server.</p>
-
-    <div class="bg-otp-950 text-white rounded-xl p-6 space-y-4">
-      <div class="bg-white/5 rounded-lg p-4">
-        <h3 class="text-xs font-semibold text-otp-200 mb-3 uppercase tracking-wider">Read Tools (No API Key)</h3>
-        <table class="w-full text-xs">
-          <tbody class="text-gray-300">
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">browse_oos</td><td class="py-1.5">Browse published OOS files. Filter by industry, size, template, quality tier.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">search_claims</td><td class="py-1.5">Full-text search across all published claims.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">search_intelligence</td><td class="py-1.5">Deep faceted search with grouping by section, industry, confidence.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_oos</td><td class="py-1.5">Get a specific published OOS by ID.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_claims</td><td class="py-1.5">Get all claims from an OOS file with filtering.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">compare_oos</td><td class="py-1.5">Diff two OOS files. Find unique, similar, and duplicate claims.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_publishers</td><td class="py-1.5">Browse organizations with quality tiers and badges.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_org</td><td class="py-1.5">Get a specific organization's public profile.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_patterns</td><td class="py-1.5">Discover cross-org coordination patterns.</td></tr>
-            <tr><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_sections</td><td class="py-1.5">List all claim sections with counts.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="bg-white/5 rounded-lg p-4">
-        <h3 class="text-xs font-semibold text-otp-200 mb-3 uppercase tracking-wider">Write Tools (API Key Required)</h3>
-        <table class="w-full text-xs">
-          <tbody class="text-gray-300">
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">publish_oos</td><td class="py-1.5">Publish an OOS file. Auto-validates and scores.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">my_dashboard</td><td class="py-1.5">Your publisher dashboard: files, claims, quality tier.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">discover_intelligence</td><td class="py-1.5">Run the Scout to find relevant claims from other orgs.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_inbox</td><td class="py-1.5">View your intelligence inbox.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">get_inbox_stats</td><td class="py-1.5">Inbox summary: pending, accepted, rejected, adapted.</td></tr>
-            <tr><td class="py-1.5 font-mono text-otp-400 pr-3 whitespace-nowrap">review_recommendation</td><td class="py-1.5">Accept, reject, or adapt a recommendation.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
   <!-- FINAL CTA -->
   <div class="py-12 sm:py-16 text-center">
     <div class="bg-otp-950 text-white rounded-xl p-8 sm:p-12">
       <h2 class="text-2xl font-bold mb-3">The lessons already exist.<br>They're just not shared yet.</h2>
       <p class="text-gray-400 mb-6 max-w-lg mx-auto">Publish what you've learned. Learn what others figured out. Wake up smarter than you went to sleep.</p>
       <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="javascript:void(0)" onclick="copyInstall()" class="px-8 py-3 bg-otp-500 rounded-lg font-semibold hover:bg-otp-400 transition-colors">Copy Install Command</a>
+        <a href="/publish" class="px-8 py-3 bg-otp-500 rounded-lg font-semibold hover:bg-otp-400 transition-colors">Publish Your OOS</a>
         <a href="/browse" class="px-8 py-3 border border-white/20 rounded-lg font-medium hover:bg-white/5 transition-colors">Browse the Network</a>
       </div>
     </div>
