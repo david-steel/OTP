@@ -154,11 +154,39 @@
       <div class="hidden md:flex items-center gap-8 text-sm">
         <a href="/guide#install" class="text-otp-400 hover:text-otp-300 font-medium transition-colors">Install</a>
         <a href="/pricing" class="text-gray-300 hover:text-white transition-colors">Pricing</a>
-        <a href="/browse" class="text-gray-300 hover:text-white transition-colors">Browse</a>
-        <a href="/search" class="text-gray-300 hover:text-white transition-colors">Search</a>
-        <a href="/graph" class="text-gray-300 hover:text-white transition-colors">Graph</a>
-        <a href="/claims" class="text-gray-300 hover:text-white transition-colors">Claims</a>
-        <a href="/blog" class="text-gray-300 hover:text-white transition-colors">Blog</a>
+
+        <!-- Explore dropdown -->
+        <div class="relative group">
+          <button class="text-gray-300 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+            Explore
+            <svg class="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="absolute top-full left-0 pt-2 hidden group-hover:block" style="min-width: 160px;">
+            <div class="bg-otp-950 border border-white/10 rounded-lg shadow-xl py-1.5">
+              <a href="/browse" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Browse</a>
+              <a href="/search" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Search</a>
+              <a href="/graph" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Graph</a>
+              <a href="/claims" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Claims</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Learn dropdown -->
+        <div class="relative group">
+          <button class="text-gray-300 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+            Learn
+            <svg class="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="absolute top-full left-0 pt-2 hidden group-hover:block" style="min-width: 160px;">
+            <div class="bg-otp-950 border border-white/10 rounded-lg shadow-xl py-1.5">
+              <a href="/blog" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Blog</a>
+              <a href="/guide" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Guide</a>
+              <a href="/faq" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">FAQ</a>
+              <a href="/glossary" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Glossary</a>
+            </div>
+          </div>
+        </div>
+
         <a href="/tickets" class="text-gray-300 hover:text-white transition-colors">Issues</a>
         <div id="auth-nav" class="flex items-center gap-3">
           <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
@@ -171,12 +199,20 @@
       <div class="px-4 py-4 flex flex-col gap-1 text-sm">
         <a href="/guide#install" class="text-otp-400 hover:text-otp-300 py-2.5 px-3 rounded-lg hover:bg-white/5 font-medium transition-colors">Install</a>
         <a href="/pricing" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Pricing</a>
-        <a href="/browse" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Browse</a>
-        <a href="/search" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Search</a>
-        <a href="/graph" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Graph</a>
-        <a href="/claims" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Claims</a>
-        <a href="/blog" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Blog</a>
-        <a href="/tickets" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Issues</a>
+
+        <div class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-3 pb-1">Explore</div>
+        <a href="/browse" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Browse</a>
+        <a href="/search" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Search</a>
+        <a href="/graph" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Graph</a>
+        <a href="/claims" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Claims</a>
+
+        <div class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-3 pb-1">Learn</div>
+        <a href="/blog" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Blog</a>
+        <a href="/guide" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Guide</a>
+        <a href="/faq" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">FAQ</a>
+        <a href="/glossary" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Glossary</a>
+
+        <a href="/tickets" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors mt-1">Issues</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
           <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
         </div>
