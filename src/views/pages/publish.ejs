@@ -1,41 +1,50 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
-  <h1 class="text-2xl font-bold mb-2">Publish Your OOS</h1>
-  <p class="text-gray-500 text-sm mb-8">Capture your AI coordination intelligence in a structured format. Claims with confidence ratings, evidence types, and failure modes.</p>
+
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold mb-2">Publish Your OOS</h1>
+    <p class="text-gray-500 text-sm">Paste your CLAUDE.md (or any file that describes how your AI agents work together). We handle the rest.</p>
+  </div>
 
   <form id="publish-form">
-    <!-- Step 1: Template -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <h2 class="font-semibold mb-4">1. Choose Your Template</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <label class="border rounded-lg p-4 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
-          <input type="radio" name="template" value="agent_army" class="sr-only" checked>
-          <div class="font-medium text-sm mb-1">Agent Army</div>
-          <div class="text-xs text-gray-500">For orgs with named AI agents that have defined roles and coordinate with each other.</div>
-        </label>
-        <label class="border rounded-lg p-4 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
-          <input type="radio" name="template" value="value_chain" class="sr-only">
-          <div class="font-medium text-sm mb-1">Value Chain</div>
-          <div class="text-xs text-gray-500">For orgs that map AI capabilities to their business process flow.</div>
-        </label>
-        <label class="border rounded-lg p-4 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50">
-          <input type="radio" name="template" value="org_chart" class="sr-only">
-          <div class="font-medium text-sm mb-1">Org Chart</div>
-          <div class="text-xs text-gray-500">For orgs that map AI capabilities to departments and functions.</div>
-        </label>
+
+    <!-- MAIN INPUT: Paste area (always visible, front and center) -->
+    <div class="bg-white p-6 rounded-lg border mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <label for="oos-content" class="font-semibold text-sm text-gray-700">Your OOS Content</label>
+        <div class="flex items-center gap-3">
+          <button type="button" onclick="loadExample()" class="text-xs px-3 py-1.5 bg-otp-50 text-otp-600 rounded-lg hover:bg-otp-100 font-medium transition-colors">Load Example</button>
+          <label class="text-xs px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 font-medium transition-colors cursor-pointer">
+            Upload File
+            <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <textarea id="oos-content" name="rawContent" rows="24"
+        class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500 resize-y"
+        placeholder="Paste your CLAUDE.md content here.
+
+This is the file that describes how your AI agents coordinate -- their roles, rules, tools, escalation patterns, and what you learned the hard way.
+
+Don't have one yet? Click 'Load Example' above to see what an OOS looks like, or use the prompt generator below to create one with any AI."></textarea>
+
+      <div class="flex justify-between mt-2 text-xs text-gray-400">
+        <span id="word-count">0 words</span>
+        <span id="claim-count">0 claims detected</span>
       </div>
     </div>
 
-    <!-- Step 2: Generate Your OOS -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-semibold">2. Generate Your OOS</h2>
-        <button type="button" onclick="togglePrompt()" class="text-xs text-otp-500 hover:underline" id="prompt-toggle-btn">Show prompt</button>
-      </div>
-      <p class="text-gray-500 text-sm mb-4">Copy this prompt, fill in the bracketed sections, and give it to any AI (Claude, ChatGPT, Gemini). Upload the resulting .md file in Step 3.</p>
-
-      <div id="prompt-section" class="hidden">
+    <!-- HELPER: Don't have a CLAUDE.md? -->
+    <details class="mb-4 bg-otp-50 border border-otp-200 rounded-lg">
+      <summary class="px-5 py-3 cursor-pointer font-medium text-sm text-otp-700 flex items-center justify-between">
+        Don't have a CLAUDE.md yet? Generate one with AI.
+        <svg class="w-4 h-4 text-otp-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="px-5 pb-5">
+        <p class="text-sm text-gray-600 mb-3">Copy this prompt, paste it into Claude, ChatGPT, or any AI. Replace the bracketed sections with your details. Then paste the output above.</p>
         <div class="relative">
-          <pre id="generation-prompt" class="bg-gray-50 border rounded-lg p-4 text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto max-h-[500px] overflow-y-auto leading-relaxed">I need you to generate an OOS (Organizational Operating System) file for my organization.
+          <pre id="generation-prompt" class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed">I need you to generate an OOS (Organizational Operating System) file for my organization.
 
 Here is what we do: [Describe your business in 2-3 sentences]
 
@@ -96,137 +105,72 @@ Rules for claims:
 - Total word count between 1800-3000 words
 - Minimum 10 claims, aim for 15-25</pre>
           <button type="button" onclick="copyPrompt()" id="copy-prompt-btn"
-            class="absolute top-2 right-2 px-3 py-1.5 bg-white border rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-otp-500 transition-colors shadow-sm">
-            Copy
+            class="absolute top-2 right-2 px-3 py-1.5 bg-otp-500 text-white rounded text-xs font-medium hover:bg-otp-400">
+            Copy Prompt
           </button>
         </div>
-        <p class="text-xs text-gray-400 mt-2">After you get the .md file, upload it below. Our auto-fixer will clean up any formatting issues.</p>
       </div>
-    </div>
+    </details>
 
-    <!-- Step 3: Content -->
-    <div class="bg-white p-6 rounded-lg border mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-semibold">3. Upload Your OOS</h2>
-        <div class="flex items-center gap-3">
-          <button type="button" onclick="downloadTemplate()" class="text-xs text-gray-500 hover:underline">Download Template</button>
-          <button type="button" onclick="loadExample()" class="text-xs text-otp-500 hover:underline">Load Example</button>
-        </div>
+    <!-- OPTIONAL: Template selector (collapsed, auto-detected) -->
+    <details class="mb-6">
+      <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Advanced: Change template type (auto-detected from your content)</summary>
+      <div class="mt-3 grid grid-cols-3 gap-3">
+        <label class="border rounded-lg p-3 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 text-center">
+          <input type="radio" name="template" value="agent_army" class="sr-only" checked>
+          <div class="font-medium text-xs">Agent Army</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">Named agents with roles</div>
+        </label>
+        <label class="border rounded-lg p-3 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 text-center">
+          <input type="radio" name="template" value="value_chain" class="sr-only">
+          <div class="font-medium text-xs">Value Chain</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">Process flow</div>
+        </label>
+        <label class="border rounded-lg p-3 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 text-center">
+          <input type="radio" name="template" value="org_chart" class="sr-only">
+          <div class="font-medium text-xs">Org Chart</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">Department mapping</div>
+        </label>
       </div>
+    </details>
 
-      <!-- Upload zone -->
-      <div id="upload-zone"
-        class="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-otp-400 hover:bg-otp-50/30 transition-all mb-4"
-        onclick="document.getElementById('file-input').click()">
-        <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden">
-        <div id="upload-prompt">
-          <div class="mx-auto w-12 h-12 rounded-full bg-otp-50 flex items-center justify-center mb-3">
-            <svg class="w-6 h-6 text-otp-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-            </svg>
-          </div>
-          <p class="text-sm font-medium text-gray-700 mb-1">Upload your .md file</p>
-          <p class="text-xs text-gray-400">Drag and drop or click to browse. Accepts .md, .markdown, .txt</p>
-        </div>
-        <div id="upload-success" class="hidden">
-          <div class="mx-auto w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-          </div>
-          <p class="text-sm font-medium text-gray-700 mb-1" id="upload-filename"></p>
-          <p class="text-xs text-gray-400" id="upload-meta"></p>
-          <button type="button" onclick="clearUpload(event)" class="mt-2 text-xs text-red-500 hover:underline">Remove and start over</button>
-        </div>
-      </div>
+    <!-- PUBLISH BUTTON -->
+    <button type="button" onclick="publishOOS()" id="publish-btn"
+      class="w-full px-6 py-4 bg-otp-500 text-white rounded-xl font-semibold text-base hover:bg-otp-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+      Publish to OTP
+    </button>
+    <p class="text-xs text-gray-400 text-center mt-2">We auto-fix formatting issues, scan for PII, extract claims, and score quality. You can always unpublish later.</p>
 
-      <!-- Pre-validation checks (shown after upload) -->
-      <div id="pre-validation" class="hidden mb-4">
-        <div class="bg-gray-50 border rounded-lg p-4 space-y-2 text-sm">
-          <div class="font-medium text-gray-700 mb-2">Quick check</div>
-          <div id="pv-frontmatter" class="flex items-center gap-2"></div>
-          <div id="pv-words" class="flex items-center gap-2"></div>
-          <div id="pv-claims" class="flex items-center gap-2"></div>
-          <div id="pv-template" class="flex items-center gap-2"></div>
-        </div>
-      </div>
-
-      <!-- Toggle to show/edit raw content -->
-      <div class="flex items-center gap-2 mb-2">
-        <button type="button" onclick="toggleTextarea()" id="toggle-btn" class="text-xs text-gray-500 hover:text-otp-500 flex items-center gap-1">
-          <svg id="toggle-icon" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-          <span id="toggle-label">Show raw content (paste or edit)</span>
-        </button>
-      </div>
-
-      <div id="textarea-wrapper" class="hidden">
-        <textarea id="oos-content" name="rawContent" rows="30"
-          class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500"
-          placeholder="Or paste your OOS markdown here. Include YAML frontmatter between --- delimiters, then your sections and claims.
-
-Example claim format:
-
-**[C001]** core_operating_rules
-- **Rule:** Every agent writes to a shared state file.
-- **Why:** Direct access creates race conditions.
-- **Failure mode:** Agents get conflicting data.
-- **Confidence:** HIGH
-- **Evidence:** MEASURED_RESULT
-- **Scope:** All agents."></textarea>
-      </div>
-      <div class="flex justify-between mt-2 text-xs text-gray-400">
-        <span id="word-count">0 words (need 1800-3000)</span>
-        <span id="claim-count">0 claims detected</span>
-      </div>
-    </div>
-
-    <!-- Step 4: Validate & Publish -->
-    <div class="flex gap-3">
-      <button type="button" onclick="validateAndFix()" id="validate-btn" class="px-6 py-3 bg-gray-100 border rounded-lg font-medium text-sm hover:bg-gray-200">
-        Validate & Auto-Fix
-      </button>
-      <button type="button" onclick="publishOOS()" id="publish-btn" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400">
-        Validate & Publish
-      </button>
-    </div>
-
-    <!-- Validation Results -->
+    <!-- Results -->
     <div id="validation-results" class="mt-6 hidden">
-
-      <!-- Auto-fixes applied -->
       <div id="fix-results" class="hidden mb-4">
         <h3 class="font-semibold text-green-700 mb-2" id="fix-header"></h3>
         <div id="fix-list" class="space-y-1"></div>
       </div>
-
-      <!-- Unfixable issues -->
       <div id="unfixable-results" class="hidden mb-4">
         <h3 class="font-semibold text-orange-600 mb-2" id="unfixable-header"></h3>
         <div id="unfixable-list" class="space-y-2"></div>
       </div>
-
       <div id="validation-errors" class="hidden">
-        <h3 class="font-semibold text-red-600 mb-2">Remaining errors (must fix before publishing)</h3>
+        <h3 class="font-semibold text-red-600 mb-2">Issues to fix before publishing</h3>
         <div id="error-list" class="space-y-2"></div>
       </div>
       <div id="validation-warnings" class="hidden mt-4">
-        <h3 class="font-semibold text-yellow-600 mb-2">Warnings (recommended to fix)</h3>
+        <h3 class="font-semibold text-yellow-600 mb-2">Suggestions</h3>
         <div id="warning-list" class="space-y-2"></div>
       </div>
       <div id="pii-flags" class="hidden mt-4">
-        <h3 class="font-semibold text-red-600 mb-2">PII Detected (must resolve)</h3>
+        <h3 class="font-semibold text-red-600 mb-2">Personal Information Detected</h3>
         <div id="pii-list" class="space-y-2"></div>
       </div>
       <div id="all-clear" class="hidden mt-4">
-        <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-green-800 text-sm">
-          All checks passed. Ready to publish.
-        </div>
+        <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-green-800 text-sm">All checks passed.</div>
       </div>
       <div id="validation-success" class="hidden mt-4">
-        <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-green-800">
-          OOS published successfully! <a id="published-link" href="#" class="underline">View your published OOS</a>
+        <div class="bg-green-50 border border-green-200 p-6 rounded-lg text-center">
+          <div class="text-green-800 font-semibold text-lg mb-2">Published!</div>
+          <p class="text-green-700 text-sm mb-4">Your OOS is live on the Intelligence Graph.</p>
+          <a id="published-link" href="#" class="inline-block px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-500 text-sm">View Your OOS</a>
         </div>
       </div>
     </div>
@@ -234,597 +178,184 @@ Example claim format:
 </div>
 
 <script>
-const textarea = document.getElementById('oos-content');
-const uploadZone = document.getElementById('upload-zone');
-const fileInput = document.getElementById('file-input');
-let textareaVisible = false;
+var textarea = document.getElementById('oos-content');
+var fileInput = document.getElementById('file-input');
 
-// ---- File Upload ----
-
-function handleFile(file) {
+// File upload
+fileInput.addEventListener('change', function(e) {
+  var file = e.target.files[0];
   if (!file) return;
-
-  const validExts = ['.md', '.markdown', '.txt'];
-  const ext = '.' + file.name.split('.').pop().toLowerCase();
-  if (!validExts.includes(ext)) {
-    alert('Please upload a .md, .markdown, or .txt file.');
-    return;
-  }
-
-  // 500KB limit
-  if (file.size > 512000) {
-    alert('File too large. Maximum size is 500KB.');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const content = e.target.result;
-
-    // Normalize line endings (Windows CRLF -> LF)
-    const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-    // Fix smart quotes -> straight quotes
-    const cleaned = normalized
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"');
-
-    textarea.value = cleaned;
+  if (file.size > 512000) { alert('File too large (max 500KB).'); return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    textarea.value = ev.target.result.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
     textarea.dispatchEvent(new Event('input'));
-
-    // Show success state
-    document.getElementById('upload-prompt').classList.add('hidden');
-    document.getElementById('upload-success').classList.remove('hidden');
-    document.getElementById('upload-filename').textContent = file.name;
-
-    const sizeKB = (file.size / 1024).toFixed(1);
-    document.getElementById('upload-meta').textContent = sizeKB + ' KB uploaded';
-
-    uploadZone.classList.remove('border-gray-300', 'hover:border-otp-400');
-    uploadZone.classList.add('border-green-300', 'bg-green-50/30');
-
-    runPreValidation(cleaned);
-  };
-  reader.onerror = function() {
-    alert('Failed to read file. Please try again.');
+    autoDetectTemplate(textarea.value);
   };
   reader.readAsText(file);
-}
-
-fileInput.addEventListener('change', function(e) {
-  handleFile(e.target.files[0]);
 });
 
-// Drag and drop
-uploadZone.addEventListener('dragover', function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  uploadZone.classList.add('border-otp-500', 'bg-otp-50');
+// Word/claim count
+textarea.addEventListener('input', function() {
+  var text = textarea.value;
+  var contentMatch = text.match(/^---[\s\S]*?---\n([\s\S]*)$/);
+  var content = contentMatch ? contentMatch[1] : text;
+  var words = content.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+  document.getElementById('word-count').textContent = words + ' words' + (words > 0 && words < 1800 ? ' (need 1800+)' : words >= 1800 ? ' (good)' : '');
+  var claimMatches = text.match(/\*\*\[C\d+\]\*\*/g);
+  var claimCount = claimMatches ? claimMatches.length : 0;
+  document.getElementById('claim-count').textContent = claimCount + ' claims' + (claimCount > 0 && claimCount < 10 ? ' (need 10+)' : claimCount >= 10 ? ' (good)' : '');
 });
 
-uploadZone.addEventListener('dragleave', function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  uploadZone.classList.remove('border-otp-500', 'bg-otp-50');
-});
-
-uploadZone.addEventListener('drop', function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  uploadZone.classList.remove('border-otp-500', 'bg-otp-50');
-  if (e.dataTransfer.files.length > 0) {
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
-
-function clearUpload(e) {
-  e.stopPropagation();
-  textarea.value = '';
-  textarea.dispatchEvent(new Event('input'));
-  fileInput.value = '';
-
-  document.getElementById('upload-prompt').classList.remove('hidden');
-  document.getElementById('upload-success').classList.add('hidden');
-  document.getElementById('pre-validation').classList.add('hidden');
-
-  uploadZone.classList.remove('border-green-300', 'bg-green-50/30');
-  uploadZone.classList.add('border-gray-300', 'hover:border-otp-400');
-}
-
-// ---- Pre-validation ----
-
-function pvIcon(pass) {
-  if (pass) return '<svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
-  return '<svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
-}
-
-function runPreValidation(text) {
-  const pv = document.getElementById('pre-validation');
-  pv.classList.remove('hidden');
-
-  // Frontmatter
-  const hasFM = /^---\n[\s\S]*?\n---/.test(text);
-  document.getElementById('pv-frontmatter').innerHTML =
-    pvIcon(hasFM) + '<span class="' + (hasFM ? 'text-green-700' : 'text-red-600') + '">YAML frontmatter ' + (hasFM ? 'detected' : 'missing -- file must start with ---') + '</span>';
-
-  // Word count
-  const contentMatch = text.match(/^---[\s\S]*?---\n([\s\S]*)$/);
-  const content = contentMatch ? contentMatch[1] : text;
-  const words = content.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
-  const wordsOk = words >= 1800 && words <= 3000;
-  document.getElementById('pv-words').innerHTML =
-    pvIcon(wordsOk) + '<span class="' + (wordsOk ? 'text-green-700' : 'text-red-600') + '">' + words + ' words ' + (words < 1800 ? '(need ' + (1800 - words) + ' more)' : words > 3000 ? '(over by ' + (words - 3000) + ')' : '(good)') + '</span>';
-
-  // Claims
-  const claimMatches = text.match(/\*\*\[C\d+\]\*\*/g);
-  const claimCount = claimMatches ? claimMatches.length : 0;
-  const claimsOk = claimCount >= 10;
-  document.getElementById('pv-claims').innerHTML =
-    pvIcon(claimsOk) + '<span class="' + (claimsOk ? 'text-green-700' : 'text-red-600') + '">' + claimCount + ' claims ' + (claimsOk ? '(good)' : '(need at least 10)') + '</span>';
-
-  // Template detection from frontmatter
-  var templateMatch = text.match(/template:\s*["']?(\w+)["']?/);
-  var detectedTemplate = templateMatch ? templateMatch[1] : null;
-  var templateOk = !!detectedTemplate;
-  document.getElementById('pv-template').innerHTML =
-    pvIcon(templateOk) + '<span class="' + (templateOk ? 'text-green-700' : 'text-red-600') + '">Template: ' + (detectedTemplate || 'not found in frontmatter') + '</span>';
-
-  // Auto-select template radio if detected
-  if (detectedTemplate) {
-    var radio = document.querySelector('input[name="template"][value="' + detectedTemplate + '"]');
+// Auto-detect template from content
+function autoDetectTemplate(text) {
+  var match = text.match(/template:\s*["']?(\w+)["']?/);
+  if (match) {
+    var radio = document.querySelector('input[name="template"][value="' + match[1] + '"]');
     if (radio) radio.checked = true;
   }
 }
 
-// ---- Textarea toggle ----
-
-function toggleTextarea() {
-  textareaVisible = !textareaVisible;
-  document.getElementById('textarea-wrapper').classList.toggle('hidden', !textareaVisible);
-  document.getElementById('toggle-icon').style.transform = textareaVisible ? 'rotate(90deg)' : '';
-  document.getElementById('toggle-label').textContent = textareaVisible ? 'Hide raw content' : 'Show raw content (paste or edit)';
-}
-
-// ---- Word/claim count on textarea input ----
-
-textarea.addEventListener('input', function() {
-  var text = textarea.value;
-
-  // Word count (rough -- content after frontmatter)
-  var contentMatch = text.match(/^---[\s\S]*?---\n([\s\S]*)$/);
-  var content = contentMatch ? contentMatch[1] : text;
-  var words = content.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
-  document.getElementById('word-count').textContent =
-    words + ' words ' + (words < 1800 ? '(need ' + (1800 - words) + ' more)' : words > 3000 ? '(over by ' + (words - 3000) + ')' : '(good)');
-
-  // Claim count
-  var claimMatches = text.match(/\*\*\[C\d+\]\*\*/g);
-  var claimCount = claimMatches ? claimMatches.length : 0;
-  document.getElementById('claim-count').textContent =
-    claimCount + ' claims detected ' + (claimCount < 10 ? '(need at least 10)' : '(good)');
-});
-
 function handleAuthError(data, status) {
   if (status === 401) {
-    if (window.__clerk) {
-      window.__clerk.openSignIn({ redirectUrl: '/publish' });
-    } else {
-      alert('Please sign in to publish.');
-    }
+    if (window.__clerk) { window.__clerk.openSignIn({ redirectUrl: '/publish' }); }
+    else { alert('Please sign in to publish. Click Sign In in the top right.'); }
     return true;
   }
-  if (data.error?.code === 'ORG_NOT_FOUND') {
-    window.location.href = '/dashboard';
-    return true;
-  }
+  if (data.error && data.error.code === 'ORG_NOT_FOUND') { window.location.href = '/dashboard'; return true; }
   return false;
-}
-
-// ---- Validate & Auto-Fix ----
-
-async function validateAndFix() {
-  var btn = document.getElementById('validate-btn');
-  btn.textContent = 'Fixing...';
-  btn.disabled = true;
-
-  var template = document.querySelector('input[name="template"]:checked').value;
-  var rawContent = textarea.value;
-
-  if (!rawContent.trim()) {
-    alert('No content to validate. Upload a file or paste your OOS.');
-    btn.textContent = 'Validate & Auto-Fix';
-    btn.disabled = false;
-    return;
-  }
-
-  try {
-    var resp = await fetch('/api/v1/oos/fix', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawContent: rawContent, template: template }),
-    });
-    var data = await resp.json();
-
-    // Replace content with fixed version
-    if (data.fixed && data.fixCount > 0) {
-      textarea.value = data.fixed;
-      textarea.dispatchEvent(new Event('input'));
-    }
-
-    showFixResults(data);
-
-    // Update pre-validation if visible
-    if (data.fixed) {
-      runPreValidation(data.fixed);
-    }
-
-  } catch (e) {
-    alert('Failed to validate. Check your content format.');
-  } finally {
-    btn.textContent = 'Validate & Auto-Fix';
-    btn.disabled = false;
-  }
 }
 
 async function publishOOS() {
   var btn = document.getElementById('publish-btn');
+  var rawContent = textarea.value.trim();
+
+  if (!rawContent) {
+    alert('Paste your CLAUDE.md content first, or click "Load Example" to try with sample data.');
+    return;
+  }
+
   btn.textContent = 'Publishing...';
   btn.disabled = true;
 
   var template = document.querySelector('input[name="template"]:checked').value;
-  var rawContent = textarea.value;
 
   try {
-    // Step 1: Auto-fix first
+    // Auto-fix first
     var fixResp = await fetch('/api/v1/oos/fix', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rawContent: rawContent, template: template }),
     });
     var fixData = await fixResp.json();
-
-    // Use fixed content
     var contentToPublish = fixData.fixed || rawContent;
     if (fixData.fixCount > 0) {
       textarea.value = contentToPublish;
       textarea.dispatchEvent(new Event('input'));
     }
 
-    // Check if there are unfixable errors that block publishing
     if (fixData.validation && !fixData.validation.valid) {
       showFixResults(fixData);
-      btn.textContent = 'Validate & Publish';
+      btn.textContent = 'Publish to OTP';
       btn.disabled = false;
       return;
     }
 
-    // Step 2: Create draft with fixed content
+    // Create draft
     var createResp = await fetch('/api/v1/oos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ template: template, rawContent: contentToPublish }),
     });
     var createData = await createResp.json();
-    if (handleAuthError(createData, createResp.status)) { btn.textContent = 'Validate & Publish'; btn.disabled = false; return; }
+    if (handleAuthError(createData, createResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
 
     if (createData.validation && !createData.validation.valid) {
       showFixResults(fixData);
       showValidation(createData);
-      btn.textContent = 'Validate & Publish';
+      btn.textContent = 'Publish to OTP';
       btn.disabled = false;
       return;
     }
 
-    // Step 3: Publish
-    var publishResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', {
-      method: 'POST',
-    });
+    // Publish
+    var publishResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
     var publishData = await publishResp.json();
-    if (handleAuthError(publishData, publishResp.status)) { btn.textContent = 'Validate & Publish'; btn.disabled = false; return; }
+    if (handleAuthError(publishData, publishResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
 
     if (publishData.error) {
       showFixResults(fixData);
       showValidation(publishData);
-      btn.textContent = 'Validate & Publish';
+      btn.textContent = 'Publish to OTP';
       btn.disabled = false;
       return;
     }
 
-    // Show fixes applied, then success
     showFixResults(fixData);
     document.getElementById('validation-results').classList.remove('hidden');
     document.getElementById('validation-success').classList.remove('hidden');
     document.getElementById('published-link').href = '/oos/' + createData.oosFile.id;
+    btn.textContent = 'Published!';
 
   } catch (e) {
-    alert('Failed to publish. Check your content and try again.');
-  } finally {
-    btn.textContent = 'Validate & Publish';
+    alert('Something went wrong. Check your content and try again.');
+    btn.textContent = 'Publish to OTP';
     btn.disabled = false;
   }
 }
 
-// ---- Display results ----
-
 function showFixResults(data) {
   var container = document.getElementById('validation-results');
   container.classList.remove('hidden');
+  ['fix-results','unfixable-results','validation-errors','validation-warnings','pii-flags','all-clear','validation-success'].forEach(function(id) { document.getElementById(id).classList.add('hidden'); });
 
-  // Reset all sections
-  var sections = ['fix-results', 'unfixable-results', 'validation-errors', 'validation-warnings', 'pii-flags', 'all-clear', 'validation-success'];
-  sections.forEach(function(id) { document.getElementById(id).classList.add('hidden'); });
-
-  // Show fixes applied
   if (data.fixes && data.fixes.length > 0) {
     var fixDiv = document.getElementById('fix-results');
     fixDiv.classList.remove('hidden');
     document.getElementById('fix-header').textContent = data.fixes.length + ' issue' + (data.fixes.length === 1 ? '' : 's') + ' auto-fixed';
     document.getElementById('fix-list').innerHTML = data.fixes.map(function(f) {
-      return '<div class="bg-green-50 border border-green-200 p-2 rounded text-xs text-green-800 flex items-start gap-2">'
-        + '<svg class="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
-        + '<div><span class="font-medium">' + f.description + '</span>'
-        + (f.before !== f.after ? '<span class="text-green-600 ml-1">(' + f.before + ' &rarr; ' + f.after + ')</span>' : '')
-        + '</div></div>';
+      return '<div class="bg-green-50 border border-green-200 p-2 rounded text-xs text-green-800 flex items-start gap-2"><svg class="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>' + f.description + '</span></div>';
     }).join('');
   }
-
-  // Show unfixable issues
   if (data.unfixable && data.unfixable.length > 0) {
-    var unfixDiv = document.getElementById('unfixable-results');
-    unfixDiv.classList.remove('hidden');
-    document.getElementById('unfixable-header').textContent = data.unfixable.length + ' issue' + (data.unfixable.length === 1 ? '' : 's') + ' require manual fix';
-    document.getElementById('unfixable-list').innerHTML = data.unfixable.map(function(u) {
-      return '<div class="bg-orange-50 border border-orange-200 p-3 rounded text-sm text-orange-800">'
-        + '<strong>' + u.field + ':</strong> ' + u.message
-        + '</div>';
-    }).join('');
+    document.getElementById('unfixable-results').classList.remove('hidden');
+    document.getElementById('unfixable-header').textContent = data.unfixable.length + ' issue' + (data.unfixable.length === 1 ? '' : 's') + ' to fix manually';
+    document.getElementById('unfixable-list').innerHTML = data.unfixable.map(function(u) { return '<div class="bg-orange-50 border border-orange-200 p-3 rounded text-sm text-orange-800"><strong>' + u.field + ':</strong> ' + u.message + '</div>'; }).join('');
   }
-
-  // Show validation errors
   showValidation(data);
-
-  // If everything is clean, show all-clear
   var hasErrors = data.validation && data.validation.errors && data.validation.errors.length > 0;
   var hasUnfixable = data.unfixable && data.unfixable.length > 0;
   var hasPII = data.piiFlags && data.piiFlags.length > 0;
-  if (!hasErrors && !hasUnfixable && !hasPII) {
-    document.getElementById('all-clear').classList.remove('hidden');
-  }
+  if (!hasErrors && !hasUnfixable && !hasPII) { document.getElementById('all-clear').classList.remove('hidden'); }
 }
 
 function showValidation(data) {
-  var errorDiv = document.getElementById('validation-errors');
-  var warningDiv = document.getElementById('validation-warnings');
-  var piiDiv = document.getElementById('pii-flags');
-
-  if (data.error?.details || (data.validation?.errors && data.validation.errors.length > 0)) {
-    errorDiv.classList.remove('hidden');
-    var errors = data.error?.details || data.validation?.errors || [];
-    document.getElementById('error-list').innerHTML = errors.map(function(e) {
-      return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">' + (e.message || e.issue || JSON.stringify(e)) + '</div>';
-    }).join('');
+  if (data.error && data.error.details || (data.validation && data.validation.errors && data.validation.errors.length > 0)) {
+    document.getElementById('validation-errors').classList.remove('hidden');
+    var errors = (data.error && data.error.details) || (data.validation && data.validation.errors) || [];
+    document.getElementById('error-list').innerHTML = errors.map(function(e) { return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">' + (e.message || e.issue || JSON.stringify(e)) + '</div>'; }).join('');
   }
-
-  if (data.validation?.warnings && data.validation.warnings.length > 0) {
-    warningDiv.classList.remove('hidden');
-    document.getElementById('warning-list').innerHTML = data.validation.warnings.map(function(w) {
-      return '<div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">' + w.message + '</div>';
-    }).join('');
+  if (data.validation && data.validation.warnings && data.validation.warnings.length > 0) {
+    document.getElementById('validation-warnings').classList.remove('hidden');
+    document.getElementById('warning-list').innerHTML = data.validation.warnings.map(function(w) { return '<div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">' + w.message + '</div>'; }).join('');
   }
-
   if (data.piiFlags && data.piiFlags.length > 0) {
-    piiDiv.classList.remove('hidden');
-    document.getElementById('pii-list').innerHTML = data.piiFlags.map(function(f) {
-      return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">'
-        + '<strong>' + f.type + ':</strong> "' + f.text + '" found in ' + f.location + '. <em>' + f.suggestion + '</em>'
-        + '</div>';
-    }).join('');
+    document.getElementById('pii-flags').classList.remove('hidden');
+    document.getElementById('pii-list').innerHTML = data.piiFlags.map(function(f) { return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800"><strong>' + f.type + ':</strong> "' + f.text + '" found in ' + f.location + '. <em>' + f.suggestion + '</em></div>'; }).join('');
   }
-}
-
-function loadExample() {
-  textarea.value = `---
-oos_version: "1.0"
-org_pseudonym: "My AI Team"
-industry: "technology"
-org_size: "small"
-template: "agent_army"
-agent_count: 3
-platforms:
-  - "claude"
-generated_at: "${new Date().toISOString()}"
-version: 1
-parent_version: null
-word_count: 1900
-claim_count: 12
-confidence_distribution:
-  high: 4
-  medium: 5
-  low: 3
-evidence_distribution:
-  human_defined_rule: 3
-  observed_once: 2
-  observed_repeatedly: 3
-  measured_result: 2
-  inference: 1
-  speculation: 1
----
-
-## Purpose
-
-A small technology team running 3 AI agents for content creation, research, and project management. This OOS captures coordination patterns discovered over 3 months of production use.
-
-## Prime Directives
-
-1. No agent sends external content without human approval.
-2. Every agent writes to its own shared state file.
-3. Human decision-maker has final authority on all strategic decisions.
-
-## System Identity
-
-A technology organization using AI agents to augment a small team. Agents handle repetitive operational tasks so humans focus on strategy, relationships, and creative decisions.
-
-**[C001]** core_operating_rules
-- **Rule:** Each agent writes to its own shared state file. No agent modifies another agent's state.
-- **Why:** Prevents data corruption from concurrent writes.
-- **Failure mode:** Two agents write to the same file. One update is lost. State becomes inconsistent.
-- **Confidence:** HIGH
-- **Evidence:** MEASURED_RESULT
-- **Scope:** All agents. Each agent has exactly one state file it owns.
-
-**[C002]** core_operating_rules
-- **Rule:** External communications require human approval before sending.
-- **Why:** AI-generated content can be tonally wrong or factually incorrect.
-- **Failure mode:** Agent sends email with incorrect information. Recipient loses trust.
-- **Confidence:** HIGH
-- **Evidence:** HUMAN_DEFINED_RULE
-- **Scope:** All external emails, messages, and published content.
-
-**[C003]** core_operating_rules
-- **Rule:** Research agent summarizes findings but does not make recommendations.
-- **Why:** Recommendations without business context led to irrelevant suggestions.
-- **Failure mode:** Agent recommends action that conflicts with current business priorities.
-- **Confidence:** HIGH
-- **Evidence:** OBSERVED_REPEATEDLY
-- **Scope:** Research and analysis functions only.
-
-**[C004]** core_operating_rules
-- **Rule:** All agent actions are logged to an audit trail.
-- **Why:** Without logs, debugging agent errors takes hours instead of minutes.
-- **Failure mode:** Agent makes error. No log. Team cannot determine what happened.
-- **Confidence:** HIGH
-- **Evidence:** MEASURED_RESULT
-- **Scope:** All agents, all actions.
-
-**[C005]** agent_roles_and_authority
-- **Rule:** Content agent has semi-autonomous authority. It drafts but never publishes.
-- **Why:** Content quality requires human judgment for tone and accuracy.
-- **Failure mode:** Auto-published content contains errors. Public trust damaged.
-- **Confidence:** MEDIUM
-- **Evidence:** OBSERVED_ONCE
-- **Scope:** Content creation workflow.
-
-**[C006]** agent_roles_and_authority
-- **Rule:** Research agent operates autonomously for data gathering but escalates analysis to humans.
-- **Why:** Data gathering is safe to automate. Interpretation requires context.
-- **Failure mode:** Agent misinterprets data and propagates incorrect analysis.
-- **Confidence:** MEDIUM
-- **Evidence:** OBSERVED_REPEATEDLY
-- **Scope:** Research and analysis tasks.
-
-**[C007]** agent_roles_and_authority
-- **Rule:** Project management agent tracks deadlines but does not reassign work.
-- **Why:** Work assignment requires understanding of team capacity and priorities that the agent lacks.
-- **Failure mode:** Agent reassigns work to someone already overloaded. Deadline missed.
-- **Confidence:** MEDIUM
-- **Evidence:** INFERENCE
-- **Scope:** Project tracking functions.
-
-**[C008]** coordination_patterns
-- **Rule:** Agents coordinate through shared state files, not direct messaging.
-- **Why:** Direct messaging creates hidden dependencies and unauditable coordination.
-- **Failure mode:** Agent-to-agent message not logged. Coordination failure is invisible.
-- **Confidence:** MEDIUM
-- **Evidence:** OBSERVED_REPEATEDLY
-- **Scope:** All multi-agent coordination.
-
-**[C009]** failure_patterns
-- **Rule:** We tried giving the content agent access to publish directly. Quality dropped immediately.
-- **Why:** The agent optimized for speed over accuracy when it could publish without review.
-- **Failure mode:** Three blog posts published with factual errors in one week.
-- **Confidence:** HIGH
-- **Evidence:** OBSERVED_ONCE
-- **Scope:** Content publishing. Reverted to human-approval model.
-
-**[C010]** failure_patterns
-- **Rule:** Single shared state file for all agents caused data corruption within the first week.
-- **Why:** Concurrent writes from multiple agents created race conditions.
-- **Failure mode:** State file contained mixed data from two agents. Required manual cleanup.
-- **Confidence:** MEDIUM
-- **Evidence:** MEASURED_RESULT
-- **Scope:** Shared state architecture. Resolved by per-agent files.
-
-**[C011]** human_ai_boundary_conditions
-- **Rule:** Financial commitments and pricing decisions require human approval.
-- **Why:** Financial decisions have legal and relationship implications AI cannot assess.
-- **Failure mode:** Agent agrees to terms that violate margin requirements.
-- **Confidence:** LOW
-- **Evidence:** SPECULATION
-- **Scope:** All financial decisions. Precautionary rule.
-
-**[C012]** human_ai_boundary_conditions
-- **Rule:** The founder has unlimited override authority over all agents at any time.
-- **Why:** A human must always be able to stop any AI action immediately.
-- **Failure mode:** No override mechanism exists. Harmful AI action cannot be stopped.
-- **Confidence:** MEDIUM
-- **Evidence:** HUMAN_DEFINED_RULE
-- **Scope:** All agents. Non-negotiable.
-
-## Confidence Map
-
-| Confidence | Count |
-|---|---|
-| HIGH | 4 |
-| MEDIUM | 5 |
-| LOW | 3 |
-
-## Merge Protocol
-
-Import claims at LOW confidence. Do not auto-merge contradictions. Preserve provenance.
-
-## Update Protocol
-
-Review every 90 days. Flag stale claims. Update confidence when evidence strengthens.
-
-## Summary
-
-1. Per-agent shared state files prevent data corruption.
-2. External communications always require human approval.
-3. Research summarizes but does not recommend.
-4. Audit trails on every action enable fast debugging.
-5. Direct publishing access for content agents degrades quality.
-6. Single shared state files cause corruption -- use per-agent files.
-7. Financial decisions are human-only.
-8. Founder has unlimited override authority.
-`;
-  textarea.dispatchEvent(new Event('input'));
-
-  // Show textarea and run pre-validation for example
-  if (!textareaVisible) toggleTextarea();
-  runPreValidation(textarea.value);
-}
-
-// ---- Prompt toggle and copy ----
-
-function togglePrompt() {
-  var section = document.getElementById('prompt-section');
-  var btn = document.getElementById('prompt-toggle-btn');
-  var isHidden = section.classList.contains('hidden');
-  section.classList.toggle('hidden');
-  btn.textContent = isHidden ? 'Hide prompt' : 'Show prompt';
 }
 
 function copyPrompt() {
-  var text = document.getElementById('generation-prompt').textContent;
-  navigator.clipboard.writeText(text).then(function() {
+  navigator.clipboard.writeText(document.getElementById('generation-prompt').textContent).then(function() {
     var btn = document.getElementById('copy-prompt-btn');
     btn.textContent = 'Copied!';
-    btn.classList.add('text-green-600');
-    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('text-green-600'); }, 2000);
+    setTimeout(function() { btn.textContent = 'Copy Prompt'; }, 2000);
   });
 }
 
-// ---- Download template ----
-// Expose a downloadable blank template
-function downloadTemplate() {
-  var tmpl = document.querySelector('input[name="template"]:checked').value;
-  var content = '---\noos_version: "1.0"\norg_pseudonym: "Your Organization"\nindustry: "your_industry"\norg_size: "small"\ntemplate: "' + tmpl + '"\nagent_count: 1\nplatforms:\n  - "claude"\ngenerated_at: "' + new Date().toISOString() + '"\nversion: 1\nparent_version: null\nword_count: 0\nclaim_count: 0\nconfidence_distribution:\n  high: 0\n  medium: 0\n  low: 0\nevidence_distribution:\n  human_defined_rule: 0\n  observed_once: 0\n  observed_repeatedly: 0\n  measured_result: 0\n  inference: 0\n  speculation: 0\n---\n\n## Purpose\n\n[Describe your organization and how it uses AI in 2-3 sentences.]\n\n## Prime Directives\n\n1. [Your top rule]\n2. [Your second rule]\n3. [Your third rule]\n\n## System Identity\n\n[Brief description of your AI setup.]\n\n**[C001]** core_operating_rules\n- **Rule:** [Clear, specific rule]\n- **Why:** [Why this exists]\n- **Failure mode:** [What breaks when violated]\n- **Confidence:** HIGH\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** [Where this applies]\n';
-  var blob = new Blob([content], { type: 'text/markdown' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'oos-template-' + tmpl + '.md';
-  a.click();
-  URL.revokeObjectURL(url);
+function loadExample() {
+  textarea.value = "---\noos_version: \"1.0\"\norg_pseudonym: \"My AI Team\"\nindustry: \"technology\"\norg_size: \"small\"\ntemplate: \"agent_army\"\nagent_count: 3\nplatforms:\n  - \"claude\"\ngenerated_at: \"" + new Date().toISOString() + "\"\nversion: 1\nparent_version: null\nword_count: 1900\nclaim_count: 12\nconfidence_distribution:\n  high: 4\n  medium: 5\n  low: 3\nevidence_distribution:\n  human_defined_rule: 3\n  observed_once: 2\n  observed_repeatedly: 3\n  measured_result: 2\n  inference: 1\n  speculation: 1\n---\n\n## Purpose\n\nA small technology team running 3 AI agents for content creation, research, and project management. This OOS captures coordination patterns discovered over 3 months of production use.\n\n## Prime Directives\n\n1. No agent sends external content without human approval.\n2. Every agent writes to its own shared state file.\n3. Human decision-maker has final authority on all strategic decisions.\n\n## System Identity\n\nA technology organization using AI agents to augment a small team. Agents handle repetitive operational tasks so humans focus on strategy, relationships, and creative decisions.\n\n**[C001]** core_operating_rules\n- **Rule:** Each agent writes to its own shared state file. No agent modifies another agent's state.\n- **Why:** Prevents data corruption from concurrent writes.\n- **Failure mode:** Two agents write to the same file. One update is lost. State becomes inconsistent.\n- **Confidence:** HIGH\n- **Evidence:** MEASURED_RESULT\n- **Scope:** All agents. Each agent has exactly one state file it owns.\n\n**[C002]** core_operating_rules\n- **Rule:** External communications require human approval before sending.\n- **Why:** AI-generated content can be tonally wrong or factually incorrect.\n- **Failure mode:** Agent sends email with incorrect information. Recipient loses trust.\n- **Confidence:** HIGH\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** All external emails, messages, and published content.\n\n**[C003]** core_operating_rules\n- **Rule:** Research agent summarizes findings but does not make recommendations.\n- **Why:** Recommendations without business context led to irrelevant suggestions.\n- **Failure mode:** Agent recommends action that conflicts with current business priorities.\n- **Confidence:** HIGH\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Research and analysis functions only.\n\n**[C004]** core_operating_rules\n- **Rule:** All agent actions are logged to an audit trail.\n- **Why:** Without logs, debugging agent errors takes hours instead of minutes.\n- **Failure mode:** Agent makes error. No log. Team cannot determine what happened.\n- **Confidence:** HIGH\n- **Evidence:** MEASURED_RESULT\n- **Scope:** All agents, all actions.\n\n**[C005]** agent_roles_and_authority\n- **Rule:** Content agent has semi-autonomous authority. It drafts but never publishes.\n- **Why:** Content quality requires human judgment for tone and accuracy.\n- **Failure mode:** Auto-published content contains errors. Public trust damaged.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_ONCE\n- **Scope:** Content creation workflow.\n\n**[C006]** agent_roles_and_authority\n- **Rule:** Research agent operates autonomously for data gathering but escalates analysis to humans.\n- **Why:** Data gathering is safe to automate. Interpretation requires context.\n- **Failure mode:** Agent misinterprets data and propagates incorrect analysis.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Research and analysis tasks.\n\n**[C007]** agent_roles_and_authority\n- **Rule:** Project management agent tracks deadlines but does not reassign work.\n- **Why:** Work assignment requires understanding of team capacity and priorities that the agent lacks.\n- **Failure mode:** Agent reassigns work to someone already overloaded. Deadline missed.\n- **Confidence:** MEDIUM\n- **Evidence:** INFERENCE\n- **Scope:** Project tracking functions.\n\n**[C008]** coordination_patterns\n- **Rule:** Agents coordinate through shared state files, not direct messaging.\n- **Why:** Direct messaging creates hidden dependencies and unauditable coordination.\n- **Failure mode:** Agent-to-agent message not logged. Coordination failure is invisible.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** All multi-agent coordination.\n\n**[C009]** failure_patterns\n- **Rule:** We tried giving the content agent access to publish directly. Quality dropped immediately.\n- **Why:** The agent optimized for speed over accuracy when it could publish without review.\n- **Failure mode:** Three blog posts published with factual errors in one week.\n- **Confidence:** HIGH\n- **Evidence:** OBSERVED_ONCE\n- **Scope:** Content publishing. Reverted to human-approval model.\n\n**[C010]** failure_patterns\n- **Rule:** Single shared state file for all agents caused data corruption within the first week.\n- **Why:** Concurrent writes from multiple agents created race conditions.\n- **Failure mode:** State file contained mixed data from two agents. Required manual cleanup.\n- **Confidence:** MEDIUM\n- **Evidence:** MEASURED_RESULT\n- **Scope:** Shared state architecture. Resolved by per-agent files.\n\n**[C011]** human_ai_boundary_conditions\n- **Rule:** Financial commitments and pricing decisions require human approval.\n- **Why:** Financial decisions have legal and relationship implications AI cannot assess.\n- **Failure mode:** Agent agrees to terms that violate margin requirements.\n- **Confidence:** LOW\n- **Evidence:** SPECULATION\n- **Scope:** All financial decisions. Precautionary rule.\n\n**[C012]** human_ai_boundary_conditions\n- **Rule:** The founder has unlimited override authority over all agents at any time.\n- **Why:** A human must always be able to stop any AI action immediately.\n- **Failure mode:** No override mechanism exists. Harmful AI action cannot be stopped.\n- **Confidence:** MEDIUM\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** All agents. Non-negotiable.\n\n## Confidence Map\n\n| Confidence | Count |\n|---|---|\n| HIGH | 4 |\n| MEDIUM | 5 |\n| LOW | 3 |\n\n## Merge Protocol\n\nImport claims at LOW confidence. Do not auto-merge contradictions. Preserve provenance.\n\n## Update Protocol\n\nReview every 90 days. Flag stale claims. Update confidence when evidence strengthens.\n\n## Summary\n\n1. Per-agent shared state files prevent data corruption.\n2. External communications always require human approval.\n3. Research summarizes but does not recommend.\n4. Audit trails on every action enable fast debugging.\n5. Direct publishing access for content agents degrades quality.\n6. Single shared state files cause corruption -- use per-agent files.\n7. Financial decisions are human-only.\n8. Founder has unlimited override authority.";
+  textarea.dispatchEvent(new Event('input'));
+  autoDetectTemplate(textarea.value);
 }
 </script>
