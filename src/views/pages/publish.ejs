@@ -1,187 +1,622 @@
-<div class="max-w-4xl mx-auto px-4 py-8">
+<div class="max-w-3xl mx-auto px-4 py-8">
 
   <!-- Header -->
-  <div class="mb-8">
+  <div class="mb-6">
     <h1 class="text-2xl font-bold mb-2">Publish Your OOS</h1>
-    <p class="text-gray-500 text-sm">Paste your CLAUDE.md (or any file that describes how your AI agents work together). We handle the rest.</p>
+    <p class="text-gray-500 text-sm">Answer a few questions about how your AI works. We build the OOS for you.</p>
   </div>
 
-  <form id="publish-form">
+  <!-- Power User Escape -->
+  <div class="mb-6">
+    <button type="button" onclick="togglePowerUser()" id="power-user-toggle" class="text-sm text-otp-500 hover:text-otp-400 underline underline-offset-4 cursor-pointer">Already have an OOS? Paste it directly.</button>
+  </div>
 
-    <!-- MAIN INPUT: Paste area (always visible, front and center) -->
+  <!-- ==================== WIZARD ==================== -->
+  <div id="wizard-container">
+
+    <!-- Progress Bar -->
+    <div class="flex items-center gap-0 mb-2" id="progress-bar">
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-otp-500 text-white" id="prog-1">1</div>
+      <div class="h-0.5 flex-1 bg-gray-200" id="line-1"></div>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-200 text-gray-400" id="prog-2">2</div>
+      <div class="h-0.5 flex-1 bg-gray-200" id="line-2"></div>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-200 text-gray-400" id="prog-3">3</div>
+      <div class="h-0.5 flex-1 bg-gray-200" id="line-3"></div>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-200 text-gray-400" id="prog-4">4</div>
+      <div class="h-0.5 flex-1 bg-gray-200" id="line-4"></div>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-200 text-gray-400" id="prog-5">5</div>
+    </div>
+    <p class="text-xs text-gray-400 mb-8" id="step-label">Step 1 of 5</p>
+
+    <!-- STEP 1: Tell us about you -->
+    <div id="wizard-step-1" class="wizard-step">
+      <h2 class="text-xl font-bold mb-1">Tell us about you</h2>
+      <p class="text-sm text-gray-500 mb-6">Basic info about your organization.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Organization name</label>
+          <input type="text" id="w-orgName" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="e.g. Acme Corp">
+          <div class="text-xs text-red-500 mt-1 hidden" id="err-orgName">Required</div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">What does your org do?</label>
+          <textarea id="w-orgDesc" rows="3" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="We're a digital marketing agency that runs ad campaigns and call centers for franchise businesses."></textarea>
+          <div class="text-xs text-red-500 mt-1 hidden" id="err-orgDesc">Required</div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+            <select id="w-industry" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none text-gray-700">
+              <option value="digital_marketing">Digital Marketing</option>
+              <option value="saas">SaaS</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="consulting">Consulting</option>
+              <option value="ecommerce">E-commerce</option>
+              <option value="education">Education</option>
+              <option value="finance">Finance</option>
+              <option value="legal">Legal</option>
+              <option value="real_estate">Real Estate</option>
+              <option value="technology">Technology</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Team size</label>
+            <select id="w-teamSize" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none text-gray-700">
+              <option value="solo">Solo (just me)</option>
+              <option value="small" selected>Small (2-10)</option>
+              <option value="medium">Medium (11-50)</option>
+              <option value="large">Large (51-200)</option>
+              <option value="enterprise">Enterprise (200+)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end mt-8">
+        <button type="button" onclick="nextStep()" class="px-6 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">Next</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: What AI do you use? -->
+    <div id="wizard-step-2" class="wizard-step hidden">
+      <h2 class="text-xl font-bold mb-1">What AI do you use?</h2>
+      <p class="text-sm text-gray-500 mb-6">Tell us about your AI setup. No wrong answers.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">What AI platforms?</label>
+          <div class="flex flex-wrap gap-2">
+            <label class="border rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 has-[:checked]:text-otp-700 transition-colors">
+              <input type="checkbox" value="claude" class="sr-only w-platform"> Claude
+            </label>
+            <label class="border rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 has-[:checked]:text-otp-700 transition-colors">
+              <input type="checkbox" value="chatgpt" class="sr-only w-platform"> ChatGPT / GPT
+            </label>
+            <label class="border rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 has-[:checked]:text-otp-700 transition-colors">
+              <input type="checkbox" value="gemini" class="sr-only w-platform"> Gemini
+            </label>
+            <label class="border rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 has-[:checked]:text-otp-700 transition-colors">
+              <input type="checkbox" value="copilot" class="sr-only w-platform"> Copilot
+            </label>
+            <label class="border rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 has-[:checked]:text-otp-700 transition-colors">
+              <input type="checkbox" value="open_source" class="sr-only w-platform"> Open Source
+            </label>
+            <label class="border rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 has-[:checked]:text-otp-700 transition-colors">
+              <input type="checkbox" value="other" class="sr-only w-platform"> Other
+            </label>
+          </div>
+          <div class="text-xs text-red-500 mt-1 hidden" id="err-platforms">Select at least one</div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">How many AI agents or automations?</label>
+          <select id="w-agentCount" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none text-gray-700">
+            <option value="1">Just 1</option>
+            <option value="3" selected>2-5</option>
+            <option value="8">6-10</option>
+            <option value="15">11-20</option>
+            <option value="25">20+</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Describe your AI setup</label>
+          <textarea id="w-aiSetup" rows="5" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="We use Claude to write emails and manage projects, GPT for research, and a Zapier automation that routes leads to our CRM. We also have a daily briefing bot that pulls data from Slack and Google Calendar."></textarea>
+          <div class="text-xs text-red-500 mt-1 hidden" id="err-aiSetup">Tell us a little about your setup</div>
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-8">
+        <button type="button" onclick="prevStep()" class="px-6 py-2.5 border rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 transition-colors">Back</button>
+        <button type="button" onclick="nextStep()" class="px-6 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">Next</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: What are the rules? -->
+    <div id="wizard-step-3" class="wizard-step hidden">
+      <h2 class="text-xl font-bold mb-1">What are the rules?</h2>
+      <p class="text-sm text-gray-500 mb-6">Every AI setup has rules, even informal ones. What is your AI allowed and not allowed to do?</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rules your AI follows</label>
+          <p class="text-xs text-gray-400 mb-2">One per line. Examples: "All emails need human approval", "Never commit to timelines", "Research bot reports but never recommends"</p>
+          <textarea id="w-rules" rows="6" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="All emails must be approved before sending
+The research bot summarizes but never recommends
+No financial commitments without founder approval
+Each agent writes to its own file, no cross-writing"></textarea>
+          <div class="text-xs text-red-500 mt-1 hidden" id="err-rules">Add at least one rule</div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">What decisions are human-only?</label>
+          <textarea id="w-humanOnly" rows="3" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="Pricing, hiring, client communication tone, strategic direction, contract terms"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">What does AI handle without asking?</label>
+          <textarea id="w-aiAuto" rows="3" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="Drafting emails, pulling daily reports, scheduling reminders, data entry, summarizing meetings"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-8">
+        <button type="button" onclick="prevStep()" class="px-6 py-2.5 border rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 transition-colors">Back</button>
+        <button type="button" onclick="nextStep()" class="px-6 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">Next</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: What went wrong? -->
+    <div id="wizard-step-4" class="wizard-step hidden">
+      <h2 class="text-xl font-bold mb-1">What went wrong?</h2>
+      <p class="text-sm text-gray-500 mb-6">This is where the real value is. The mistakes and surprises are what other organizations learn from most.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Things that broke, failed, or surprised you</label>
+          <textarea id="w-failures" rows="6" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="We gave our content bot publish access and it posted three blog posts with errors in one week. We reverted to human approval.
+
+We had all agents writing to one shared file. Within a week, data was getting corrupted from concurrent writes. We switched to per-agent files."></textarea>
+          <p class="text-xs text-gray-400 mt-1">Be specific. "It didn't work" is less useful than "The bot sent a client email with wrong pricing because it pulled from an outdated spreadsheet."</p>
+          <div class="text-xs text-red-500 mt-1 hidden" id="err-failures">Share at least one thing that went wrong</div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">What did you learn from those failures?</label>
+          <textarea id="w-lessons" rows="4" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="Always have a human review step before anything goes external. Keep data sources updated or the AI will use stale data. Per-agent state files prevent corruption."></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-8">
+        <button type="button" onclick="prevStep()" class="px-6 py-2.5 border rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 transition-colors">Back</button>
+        <button type="button" onclick="nextStep()" class="px-6 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">Generate My OOS</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Review and Publish -->
+    <div id="wizard-step-5" class="wizard-step hidden">
+      <h2 class="text-xl font-bold mb-1">Review and Publish</h2>
+      <p class="text-sm text-gray-500 mb-6">We built your OOS from your answers. Review it, edit if you want, then publish.</p>
+
+      <div class="bg-gray-50 border rounded-lg p-4 mb-3 max-h-96 overflow-y-auto">
+        <pre id="oos-preview" class="text-xs font-mono whitespace-pre-wrap text-gray-700 leading-relaxed"></pre>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-gray-400 mb-4">
+        <span id="preview-stats"></span>
+        <button type="button" onclick="toggleEditMode()" id="edit-toggle" class="text-otp-500 hover:text-otp-400 font-medium cursor-pointer">Edit</button>
+      </div>
+
+      <div id="edit-container" class="hidden mb-4">
+        <textarea id="oos-edit" rows="20" class="w-full font-mono text-xs border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500 resize-y"></textarea>
+        <button type="button" onclick="doneEditing()" class="mt-2 text-xs text-otp-500 hover:text-otp-400 font-medium cursor-pointer">Done editing</button>
+      </div>
+
+      <div class="flex justify-between mt-4">
+        <button type="button" onclick="prevStep()" class="px-6 py-2.5 border rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 transition-colors">Back</button>
+        <button type="button" onclick="publishFromWizard()" id="publish-btn" class="px-8 py-3 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors">Publish to OTP</button>
+      </div>
+      <p class="text-xs text-gray-400 text-center mt-2">We auto-fix formatting, scan for PII, and score quality. You can unpublish anytime.</p>
+    </div>
+  </div>
+
+  <!-- ==================== POWER USER MODE ==================== -->
+  <div id="power-user-container" class="hidden">
     <div class="bg-white p-6 rounded-lg border mb-4">
       <div class="flex items-center justify-between mb-3">
-        <label for="oos-content" class="font-semibold text-sm text-gray-700">Your OOS Content</label>
+        <label class="font-semibold text-sm text-gray-700">Paste Your OOS</label>
         <div class="flex items-center gap-3">
-          <button type="button" onclick="loadExample()" class="text-xs px-3 py-1.5 bg-otp-50 text-otp-600 rounded-lg hover:bg-otp-100 font-medium transition-colors">Load Example</button>
+          <button type="button" onclick="loadExample()" class="text-xs px-3 py-1.5 bg-otp-50 text-otp-600 rounded-lg hover:bg-otp-100 font-medium transition-colors cursor-pointer">Load Example</button>
           <label class="text-xs px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 font-medium transition-colors cursor-pointer">
             Upload File
             <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden">
           </label>
         </div>
       </div>
-
-      <textarea id="oos-content" name="rawContent" rows="24"
-        class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500 resize-y"
-        placeholder="Paste your CLAUDE.md content here.
-
-This is the file that describes how your AI agents coordinate -- their roles, rules, tools, escalation patterns, and what you learned the hard way.
-
-Don't have one yet? Click 'Load Example' above to see what an OOS looks like, or use the prompt generator below to create one with any AI."></textarea>
-
+      <textarea id="oos-content" rows="24" class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500 resize-y" placeholder="Paste your OOS markdown here..."></textarea>
       <div class="flex justify-between mt-2 text-xs text-gray-400">
         <span id="word-count">0 words</span>
-        <span id="claim-count">0 claims detected</span>
+        <span id="claim-count">0 claims</span>
       </div>
     </div>
 
-    <!-- HELPER: Don't have a CLAUDE.md? -->
-    <details class="mb-4 bg-otp-50 border border-otp-200 rounded-lg">
-      <summary class="px-5 py-3 cursor-pointer font-medium text-sm text-otp-700 flex items-center justify-between">
-        Don't have a CLAUDE.md yet? Generate one with AI.
-        <svg class="w-4 h-4 text-otp-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-      </summary>
-      <div class="px-5 pb-5">
-        <p class="text-sm text-gray-600 mb-3">Copy this prompt, paste it into Claude, ChatGPT, or any AI. Replace the bracketed sections with your details. Then paste the output above.</p>
-        <div class="relative">
-          <pre id="generation-prompt" class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed">I need you to generate an OOS (Organizational Operating System) file for my organization.
-
-Here is what we do: [Describe your business in 2-3 sentences]
-
-Here is our AI setup:
-[List your AI agents, automations, or AI-augmented workflows. For each one, describe:
-- What it does
-- What tools it uses
-- What it owns vs. what it does NOT own
-- Who/what it reports to or escalates to]
-
-Here are the rules we follow:
-[List any rules, policies, or patterns you have about how your AI operates.
-Examples: "All emails require human approval before sending",
-"The analytics bot reports but never recommends",
-"If two agents disagree, the founder decides within 24 hours"]
-
-Here are things that went wrong:
-[List 2-5 failures, mistakes, or surprises you discovered while building
-your AI setup. Be specific. These are often the most valuable claims.]
-
-Here are the boundaries between AI and human:
-[What decisions are human-only? What does AI handle autonomously?
-Where is the line?]
-
-Now generate an OOS file in this exact format:
-
-1. YAML frontmatter between --- delimiters with: oos_version "1.0",
-   org_pseudonym, industry, org_size (solo/small/medium/large/enterprise),
-   template (agent_army/value_chain/org_chart), agent_count, platforms
-   used, generated_at (ISO timestamp), version 1, parent_version null,
-   word_count, claim_count, confidence_distribution (high/medium/low
-   counts), evidence_distribution (counts per evidence type)
-
-2. A Purpose section (2-3 sentences)
-
-3. A Prime Directives section (3-5 top-level rules)
-
-4. At minimum 15 claims using this format:
-
-**[C001]** section_name
-- **Rule:** [Clear, specific rule]
-- **Why:** [Why this exists]
-- **Failure mode:** [What breaks when violated]
-- **Confidence:** HIGH | MEDIUM | LOW
-- **Evidence:** HUMAN_DEFINED_RULE | OBSERVED_ONCE | OBSERVED_REPEATEDLY
-  | MEASURED_RESULT | INFERENCE | SPECULATION
-- **Scope:** [Where this applies]
-
-Sections: core_operating_rules, agent_roles_and_authority,
-coordination_patterns, operational_heuristics, failure_patterns,
-human_ai_boundary_conditions
-
-Rules for claims:
-- Every claim must have all 6 fields
-- Be specific and concrete, not generic
-- Failure modes should describe real consequences
-- Include at least 2-3 failure_patterns claims
-- Total word count between 1800-3000 words
-- Minimum 10 claims, aim for 15-25</pre>
-          <button type="button" onclick="copyPrompt()" id="copy-prompt-btn"
-            class="absolute top-2 right-2 px-3 py-1.5 bg-otp-500 text-white rounded text-xs font-medium hover:bg-otp-400">
-            Copy Prompt
-          </button>
-        </div>
-      </div>
-    </details>
-
-    <!-- OPTIONAL: Template selector (collapsed, auto-detected) -->
-    <details class="mb-6">
-      <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Advanced: Change template type (auto-detected from your content)</summary>
+    <details class="mb-4">
+      <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Change template type</summary>
       <div class="mt-3 grid grid-cols-3 gap-3">
         <label class="border rounded-lg p-3 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 text-center">
-          <input type="radio" name="template" value="agent_army" class="sr-only" checked>
-          <div class="font-medium text-xs">Agent Army</div>
-          <div class="text-[10px] text-gray-400 mt-0.5">Named agents with roles</div>
+          <input type="radio" name="template" value="agent_army" class="sr-only" checked> <div class="font-medium text-xs">Agent Army</div>
         </label>
         <label class="border rounded-lg p-3 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 text-center">
-          <input type="radio" name="template" value="value_chain" class="sr-only">
-          <div class="font-medium text-xs">Value Chain</div>
-          <div class="text-[10px] text-gray-400 mt-0.5">Process flow</div>
+          <input type="radio" name="template" value="value_chain" class="sr-only"> <div class="font-medium text-xs">Value Chain</div>
         </label>
         <label class="border rounded-lg p-3 cursor-pointer hover:border-otp-500 has-[:checked]:border-otp-500 has-[:checked]:bg-otp-50 text-center">
-          <input type="radio" name="template" value="org_chart" class="sr-only">
-          <div class="font-medium text-xs">Org Chart</div>
-          <div class="text-[10px] text-gray-400 mt-0.5">Department mapping</div>
+          <input type="radio" name="template" value="org_chart" class="sr-only"> <div class="font-medium text-xs">Org Chart</div>
         </label>
       </div>
     </details>
 
-    <!-- PUBLISH BUTTON -->
-    <button type="button" onclick="publishOOS()" id="publish-btn"
-      class="w-full px-6 py-4 bg-otp-500 text-white rounded-xl font-semibold text-base hover:bg-otp-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      Publish to OTP
-    </button>
-    <p class="text-xs text-gray-400 text-center mt-2">We auto-fix formatting issues, scan for PII, extract claims, and score quality. You can always unpublish later.</p>
+    <button type="button" onclick="publishOOS()" id="publish-btn-power" class="w-full px-6 py-4 bg-otp-500 text-white rounded-xl font-semibold text-base hover:bg-otp-400 transition-colors">Publish to OTP</button>
+  </div>
 
-    <!-- Results -->
-    <div id="validation-results" class="mt-6 hidden">
-      <div id="fix-results" class="hidden mb-4">
-        <h3 class="font-semibold text-green-700 mb-2" id="fix-header"></h3>
-        <div id="fix-list" class="space-y-1"></div>
-      </div>
-      <div id="unfixable-results" class="hidden mb-4">
-        <h3 class="font-semibold text-orange-600 mb-2" id="unfixable-header"></h3>
-        <div id="unfixable-list" class="space-y-2"></div>
-      </div>
-      <div id="validation-errors" class="hidden">
-        <h3 class="font-semibold text-red-600 mb-2">Issues to fix before publishing</h3>
-        <div id="error-list" class="space-y-2"></div>
-      </div>
-      <div id="validation-warnings" class="hidden mt-4">
-        <h3 class="font-semibold text-yellow-600 mb-2">Suggestions</h3>
-        <div id="warning-list" class="space-y-2"></div>
-      </div>
-      <div id="pii-flags" class="hidden mt-4">
-        <h3 class="font-semibold text-red-600 mb-2">Personal Information Detected</h3>
-        <div id="pii-list" class="space-y-2"></div>
-      </div>
-      <div id="all-clear" class="hidden mt-4">
-        <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-green-800 text-sm">All checks passed.</div>
-      </div>
-      <div id="validation-success" class="hidden mt-4">
-        <div class="bg-green-50 border border-green-200 p-6 rounded-lg text-center">
-          <div class="text-green-800 font-semibold text-lg mb-2">Published!</div>
-          <p class="text-green-700 text-sm mb-4">Your OOS is live on the Intelligence Graph.</p>
-          <a id="published-link" href="#" class="inline-block px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-500 text-sm">View Your OOS</a>
-        </div>
+  <!-- ==================== RESULTS (shared) ==================== -->
+  <div id="validation-results" class="mt-6 hidden">
+    <div id="fix-results" class="hidden mb-4">
+      <h3 class="font-semibold text-green-700 mb-2" id="fix-header"></h3>
+      <div id="fix-list" class="space-y-1"></div>
+    </div>
+    <div id="unfixable-results" class="hidden mb-4">
+      <h3 class="font-semibold text-orange-600 mb-2" id="unfixable-header"></h3>
+      <div id="unfixable-list" class="space-y-2"></div>
+    </div>
+    <div id="validation-errors" class="hidden">
+      <h3 class="font-semibold text-red-600 mb-2">Issues to fix</h3>
+      <div id="error-list" class="space-y-2"></div>
+    </div>
+    <div id="validation-warnings" class="hidden mt-4">
+      <h3 class="font-semibold text-yellow-600 mb-2">Suggestions</h3>
+      <div id="warning-list" class="space-y-2"></div>
+    </div>
+    <div id="pii-flags" class="hidden mt-4">
+      <h3 class="font-semibold text-red-600 mb-2">Personal Information Detected</h3>
+      <div id="pii-list" class="space-y-2"></div>
+    </div>
+    <div id="all-clear" class="hidden mt-4">
+      <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-green-800 text-sm">All checks passed.</div>
+    </div>
+    <div id="validation-success" class="hidden mt-4">
+      <div class="bg-green-50 border border-green-200 p-6 rounded-lg text-center">
+        <div class="text-green-800 font-semibold text-lg mb-2">Published!</div>
+        <p class="text-green-700 text-sm mb-4">Your OOS is live on the Intelligence Graph.</p>
+        <a id="published-link" href="#" class="inline-block px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-500 text-sm">View Your OOS</a>
       </div>
     </div>
-  </form>
+  </div>
 </div>
 
 <script>
+// ==================== WIZARD STATE ====================
+var currentStep = 1;
+
+function saveStepData() {
+  // Data lives in the DOM inputs, no need to copy to a separate object
+}
+
+function validateStep(step) {
+  var valid = true;
+  function showErr(id) { document.getElementById(id).classList.remove('hidden'); valid = false; }
+  function hideErr(id) { document.getElementById(id).classList.add('hidden'); }
+
+  if (step === 1) {
+    hideErr('err-orgName'); hideErr('err-orgDesc');
+    if (!document.getElementById('w-orgName').value.trim()) showErr('err-orgName');
+    if (!document.getElementById('w-orgDesc').value.trim()) showErr('err-orgDesc');
+  }
+  if (step === 2) {
+    hideErr('err-platforms'); hideErr('err-aiSetup');
+    var checked = document.querySelectorAll('.w-platform:checked');
+    if (checked.length === 0) showErr('err-platforms');
+    if (!document.getElementById('w-aiSetup').value.trim()) showErr('err-aiSetup');
+  }
+  if (step === 3) {
+    hideErr('err-rules');
+    if (!document.getElementById('w-rules').value.trim()) showErr('err-rules');
+  }
+  if (step === 4) {
+    hideErr('err-failures');
+    if (!document.getElementById('w-failures').value.trim()) showErr('err-failures');
+  }
+  return valid;
+}
+
+function goToStep(n) {
+  // Hide all steps
+  document.querySelectorAll('.wizard-step').forEach(function(el) { el.classList.add('hidden'); });
+  // Show target
+  document.getElementById('wizard-step-' + n).classList.remove('hidden');
+  currentStep = n;
+  document.getElementById('step-label').textContent = 'Step ' + n + ' of 5';
+  updateProgressBar(n);
+
+  if (n === 5) generateOOSFromWizard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() {
+  if (!validateStep(currentStep)) return;
+  goToStep(currentStep + 1);
+}
+
+function prevStep() {
+  goToStep(currentStep - 1);
+}
+
+function updateProgressBar(step) {
+  for (var i = 1; i <= 5; i++) {
+    var circle = document.getElementById('prog-' + i);
+    if (i < step) {
+      circle.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-otp-500 text-white';
+      circle.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+    } else if (i === step) {
+      circle.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-otp-500 text-white';
+      circle.textContent = i;
+    } else {
+      circle.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-200 text-gray-400';
+      circle.textContent = i;
+    }
+    if (i < 5) {
+      var line = document.getElementById('line-' + i);
+      line.className = 'h-0.5 flex-1 ' + (i < step ? 'bg-otp-500' : 'bg-gray-200');
+    }
+  }
+}
+
+// ==================== OOS GENERATOR ====================
+function generateOOSFromWizard() {
+  var orgName = document.getElementById('w-orgName').value.trim();
+  var orgDesc = document.getElementById('w-orgDesc').value.trim();
+  var industry = document.getElementById('w-industry').value;
+  var teamSize = document.getElementById('w-teamSize').value;
+  var platforms = Array.from(document.querySelectorAll('.w-platform:checked')).map(function(cb) { return cb.value; });
+  var agentCount = document.getElementById('w-agentCount').value;
+  var aiSetup = document.getElementById('w-aiSetup').value.trim();
+  var rules = document.getElementById('w-rules').value.trim().split('\n').filter(function(l) { return l.trim().length > 0; });
+  var humanOnly = document.getElementById('w-humanOnly').value.trim();
+  var aiAuto = document.getElementById('w-aiAuto').value.trim();
+  var failures = document.getElementById('w-failures').value.trim();
+  var lessons = document.getElementById('w-lessons').value.trim();
+
+  var claims = [];
+  var cid = 1;
+  function pad(n) { return n < 10 ? '00' + n : n < 100 ? '0' + n : '' + n; }
+
+  // Rules -> core_operating_rules
+  rules.forEach(function(rule) {
+    rule = rule.replace(/^[-*\d.)\s]+/, '').trim();
+    if (!rule) return;
+    claims.push({
+      id: 'C' + pad(cid++), section: 'core_operating_rules',
+      rule: rule,
+      why: 'Established as a core operating principle to maintain quality and consistency.',
+      failure: 'Without this rule, coordination breaks down and errors propagate.',
+      confidence: 'HIGH', evidence: 'HUMAN_DEFINED_RULE',
+      scope: 'All AI operations.'
+    });
+  });
+
+  // Human-only -> human_ai_boundary_conditions
+  if (humanOnly) {
+    humanOnly.split(/[,\n]/).filter(function(l) { return l.trim(); }).forEach(function(item) {
+      item = item.replace(/^[-*\d.)\s]+/, '').trim();
+      if (!item) return;
+      claims.push({
+        id: 'C' + pad(cid++), section: 'human_ai_boundary_conditions',
+        rule: item + ' requires human decision-making.',
+        why: 'This area involves judgment, relationships, or consequences that AI cannot fully assess.',
+        failure: 'AI makes a decision in this area without context. Trust or quality is damaged.',
+        confidence: 'MEDIUM', evidence: 'HUMAN_DEFINED_RULE',
+        scope: item + '.'
+      });
+    });
+  }
+
+  // AI autonomous -> operational_heuristics
+  if (aiAuto) {
+    aiAuto.split(/[,\n]/).filter(function(l) { return l.trim(); }).forEach(function(item) {
+      item = item.replace(/^[-*\d.)\s]+/, '').trim();
+      if (!item) return;
+      claims.push({
+        id: 'C' + pad(cid++), section: 'operational_heuristics',
+        rule: 'AI handles ' + item + ' autonomously without human approval.',
+        why: 'This task is repetitive, low-risk, and well-defined enough for AI to handle independently.',
+        failure: 'Human bottleneck forms when AI waits for approval on routine work.',
+        confidence: 'MEDIUM', evidence: 'OBSERVED_REPEATEDLY',
+        scope: item + '.'
+      });
+    });
+  }
+
+  // Failures -> failure_patterns
+  if (failures) {
+    failures.split(/\n\n|\n(?=[A-Z]|\d\.)/).filter(function(l) { return l.trim().length > 20; }).forEach(function(block) {
+      block = block.replace(/^[-*\d.)\s]+/, '').trim();
+      if (!block) return;
+      var short = block.length > 120 ? block.substring(0, 120) + '...' : block;
+      claims.push({
+        id: 'C' + pad(cid++), section: 'failure_patterns',
+        rule: short,
+        why: lessons || 'Discovered through operational experience.',
+        failure: 'This pattern repeats if the root cause is not addressed.',
+        confidence: 'HIGH', evidence: 'OBSERVED_ONCE',
+        scope: 'Learned from production experience.'
+      });
+    });
+  }
+
+  // AI setup -> agent_roles_and_authority (1-2 generic claims)
+  if (aiSetup) {
+    claims.push({
+      id: 'C' + pad(cid++), section: 'agent_roles_and_authority',
+      rule: 'Each AI agent or automation has a defined scope. No two agents own the same responsibility.',
+      why: 'Overlapping ownership causes conflicting outputs and wasted effort.',
+      failure: 'Two agents act on the same task. Outputs conflict. Human must arbitrate.',
+      confidence: 'MEDIUM', evidence: 'INFERENCE',
+      scope: 'All agents and automations.'
+    });
+  }
+
+  // Ensure minimum 10 claims with safe defaults
+  var defaults = [
+    { section: 'core_operating_rules', rule: 'All external communications require human review before sending.', why: 'AI-generated content can be tonally wrong or factually incorrect.', failure: 'Message sent with errors. Recipient loses trust.', confidence: 'HIGH', evidence: 'HUMAN_DEFINED_RULE', scope: 'All external emails, messages, and published content.' },
+    { section: 'core_operating_rules', rule: 'All agent actions are logged to an audit trail.', why: 'Without logs, debugging errors takes hours instead of minutes.', failure: 'Agent makes an error with no log. Cannot determine what happened.', confidence: 'HIGH', evidence: 'OBSERVED_REPEATEDLY', scope: 'All agents, all actions.' },
+    { section: 'coordination_patterns', rule: 'Agents coordinate through shared state files, not direct messaging.', why: 'Direct messaging creates hidden dependencies and unauditable coordination.', failure: 'Agent-to-agent coordination is invisible. Failures cannot be traced.', confidence: 'MEDIUM', evidence: 'INFERENCE', scope: 'All multi-agent coordination.' },
+    { section: 'human_ai_boundary_conditions', rule: 'A human has unlimited override authority over all AI at any time.', why: 'A human must always be able to stop any AI action immediately.', failure: 'No override exists. Harmful AI action cannot be stopped.', confidence: 'HIGH', evidence: 'HUMAN_DEFINED_RULE', scope: 'All agents. Non-negotiable.' },
+  ];
+  while (claims.length < 10 && defaults.length > 0) {
+    var d = defaults.shift();
+    // Check for duplicate rules
+    var isDupe = claims.some(function(c) { return c.rule.toLowerCase().includes(d.rule.substring(0, 30).toLowerCase()); });
+    if (!isDupe) {
+      d.id = 'C' + pad(cid++);
+      claims.push(d);
+    }
+  }
+
+  // Count confidence and evidence
+  var confDist = { high: 0, medium: 0, low: 0 };
+  var evidDist = { human_defined_rule: 0, observed_once: 0, observed_repeatedly: 0, measured_result: 0, inference: 0, speculation: 0 };
+  claims.forEach(function(c) {
+    confDist[c.confidence.toLowerCase()]++;
+    evidDist[c.evidence.toLowerCase()]++;
+  });
+
+  // Build markdown
+  var md = '---\n';
+  md += 'oos_version: "1.0"\n';
+  md += 'org_pseudonym: "' + orgName.replace(/"/g, '\\"') + '"\n';
+  md += 'industry: "' + industry + '"\n';
+  md += 'org_size: "' + teamSize + '"\n';
+  md += 'template: "agent_army"\n';
+  md += 'agent_count: ' + agentCount + '\n';
+  md += 'platforms:\n';
+  platforms.forEach(function(p) { md += '  - "' + p + '"\n'; });
+  md += 'generated_at: "' + new Date().toISOString() + '"\n';
+  md += 'version: 1\n';
+  md += 'parent_version: null\n';
+  md += 'claim_count: ' + claims.length + '\n';
+  md += 'confidence_distribution:\n  high: ' + confDist.high + '\n  medium: ' + confDist.medium + '\n  low: ' + confDist.low + '\n';
+  md += 'evidence_distribution:\n';
+  Object.keys(evidDist).forEach(function(k) { md += '  ' + k + ': ' + evidDist[k] + '\n'; });
+  md += '---\n\n';
+
+  md += '## Purpose\n\n' + orgDesc + '\n\n';
+
+  md += '## Prime Directives\n\n';
+  rules.slice(0, 5).forEach(function(r, i) {
+    md += (i + 1) + '. ' + r.replace(/^[-*\d.)\s]+/, '').trim() + '\n';
+  });
+  md += '\n';
+
+  md += '## System Identity\n\n';
+  md += orgDesc + ' ' + aiSetup + '\n\n';
+
+  claims.forEach(function(c) {
+    md += '**[' + c.id + ']** ' + c.section + '\n';
+    md += '- **Rule:** ' + c.rule + '\n';
+    md += '- **Why:** ' + c.why + '\n';
+    md += '- **Failure mode:** ' + c.failure + '\n';
+    md += '- **Confidence:** ' + c.confidence + '\n';
+    md += '- **Evidence:** ' + c.evidence + '\n';
+    md += '- **Scope:** ' + c.scope + '\n\n';
+  });
+
+  md += '## Confidence Map\n\n| Confidence | Count |\n|---|---|\n| HIGH | ' + confDist.high + ' |\n| MEDIUM | ' + confDist.medium + ' |\n| LOW | ' + confDist.low + ' |\n\n';
+  md += '## Merge Protocol\n\nImport claims at LOW confidence. Do not auto-merge contradictions. Preserve provenance.\n\n';
+  md += '## Update Protocol\n\nReview every 90 days. Flag stale claims. Update confidence when evidence strengthens.\n';
+
+  // Compute word count
+  var words = md.replace(/^---[\s\S]*?---\n/, '').trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+  md = md.replace('claim_count: ' + claims.length, 'word_count: ' + words + '\nclaim_count: ' + claims.length);
+
+  // Show preview
+  document.getElementById('oos-preview').textContent = md;
+  document.getElementById('oos-edit').value = md;
+  document.getElementById('preview-stats').textContent = words + ' words | ' + claims.length + ' claims | Template: agent_army';
+
+  // Store for publish
+  generatedOOS = md;
+}
+
+var generatedOOS = '';
+
+function toggleEditMode() {
+  var preview = document.getElementById('oos-preview').parentElement;
+  var editor = document.getElementById('edit-container');
+  var btn = document.getElementById('edit-toggle');
+  if (editor.classList.contains('hidden')) {
+    editor.classList.remove('hidden');
+    preview.classList.add('hidden');
+    btn.textContent = 'Preview';
+  } else {
+    doneEditing();
+  }
+}
+
+function doneEditing() {
+  generatedOOS = document.getElementById('oos-edit').value;
+  document.getElementById('oos-preview').textContent = generatedOOS;
+  document.getElementById('edit-container').classList.add('hidden');
+  document.getElementById('oos-preview').parentElement.classList.remove('hidden');
+  document.getElementById('edit-toggle').textContent = 'Edit';
+}
+
+// ==================== PUBLISH ====================
+async function publishFromWizard() {
+  var btn = document.getElementById('publish-btn');
+  btn.textContent = 'Publishing...';
+  btn.disabled = true;
+
+  var rawContent = generatedOOS;
+  if (!rawContent.trim()) { alert('No content generated.'); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+
+  try {
+    var fixResp = await fetch('/api/v1/oos/fix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rawContent: rawContent, template: 'agent_army' }) });
+    var fixData = await fixResp.json();
+    var content = fixData.fixed || rawContent;
+
+    if (fixData.validation && !fixData.validation.valid) { showFixResults(fixData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+
+    var createResp = await fetch('/api/v1/oos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: 'agent_army', rawContent: content }) });
+    var createData = await createResp.json();
+    if (handleAuthError(createData, createResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+    if (createData.validation && !createData.validation.valid) { showFixResults(fixData); showValidation(createData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+
+    var pubResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
+    var pubData = await pubResp.json();
+    if (handleAuthError(pubData, pubResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+    if (pubData.error) { showFixResults(fixData); showValidation(pubData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+
+    showFixResults(fixData);
+    document.getElementById('validation-results').classList.remove('hidden');
+    document.getElementById('validation-success').classList.remove('hidden');
+    document.getElementById('published-link').href = '/oos/' + createData.oosFile.id;
+    btn.textContent = 'Published!';
+  } catch (e) {
+    alert('Something went wrong. Try again.');
+    btn.textContent = 'Publish to OTP';
+    btn.disabled = false;
+  }
+}
+
+// ==================== POWER USER FUNCTIONS ====================
 var textarea = document.getElementById('oos-content');
 var fileInput = document.getElementById('file-input');
 
-// File upload
+function togglePowerUser() {
+  var wizard = document.getElementById('wizard-container');
+  var power = document.getElementById('power-user-container');
+  var btn = document.getElementById('power-user-toggle');
+  var isWizard = !wizard.classList.contains('hidden');
+  wizard.classList.toggle('hidden');
+  power.classList.toggle('hidden');
+  btn.textContent = isWizard ? 'Use the guided wizard instead' : 'Already have an OOS? Paste it directly.';
+}
+
 fileInput.addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (!file) return;
@@ -190,172 +625,73 @@ fileInput.addEventListener('change', function(e) {
   reader.onload = function(ev) {
     textarea.value = ev.target.result.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
     textarea.dispatchEvent(new Event('input'));
-    autoDetectTemplate(textarea.value);
   };
   reader.readAsText(file);
 });
 
-// Word/claim count
 textarea.addEventListener('input', function() {
   var text = textarea.value;
-  var contentMatch = text.match(/^---[\s\S]*?---\n([\s\S]*)$/);
-  var content = contentMatch ? contentMatch[1] : text;
+  var cm = text.match(/^---[\s\S]*?---\n([\s\S]*)$/);
+  var content = cm ? cm[1] : text;
   var words = content.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
   document.getElementById('word-count').textContent = words + ' words' + (words > 0 && words < 1800 ? ' (need 1800+)' : words >= 1800 ? ' (good)' : '');
   var claimMatches = text.match(/\*\*\[C\d+\]\*\*/g);
-  var claimCount = claimMatches ? claimMatches.length : 0;
-  document.getElementById('claim-count').textContent = claimCount + ' claims' + (claimCount > 0 && claimCount < 10 ? ' (need 10+)' : claimCount >= 10 ? ' (good)' : '');
+  document.getElementById('claim-count').textContent = (claimMatches ? claimMatches.length : 0) + ' claims';
 });
 
-// Auto-detect template from content
-function autoDetectTemplate(text) {
-  var match = text.match(/template:\s*["']?(\w+)["']?/);
-  if (match) {
-    var radio = document.querySelector('input[name="template"][value="' + match[1] + '"]');
-    if (radio) radio.checked = true;
-  }
-}
-
 function handleAuthError(data, status) {
-  if (status === 401) {
-    if (window.__clerk) { window.__clerk.openSignIn({ redirectUrl: '/publish' }); }
-    else { alert('Please sign in to publish. Click Sign In in the top right.'); }
-    return true;
-  }
+  if (status === 401) { if (window.__clerk) { window.__clerk.openSignIn({ redirectUrl: '/publish' }); } else { alert('Please sign in to publish.'); } return true; }
   if (data.error && data.error.code === 'ORG_NOT_FOUND') { window.location.href = '/dashboard'; return true; }
   return false;
 }
 
 async function publishOOS() {
-  var btn = document.getElementById('publish-btn');
+  var btn = document.getElementById('publish-btn-power');
   var rawContent = textarea.value.trim();
-
-  if (!rawContent) {
-    alert('Paste your CLAUDE.md content first, or click "Load Example" to try with sample data.');
-    return;
-  }
-
-  btn.textContent = 'Publishing...';
-  btn.disabled = true;
-
-  var template = document.querySelector('input[name="template"]:checked').value;
-
+  if (!rawContent) { alert('Paste your OOS content first.'); return; }
+  btn.textContent = 'Publishing...'; btn.disabled = true;
+  var template = (document.querySelector('input[name="template"]:checked') || {}).value || 'agent_army';
   try {
-    // Auto-fix first
-    var fixResp = await fetch('/api/v1/oos/fix', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawContent: rawContent, template: template }),
-    });
+    var fixResp = await fetch('/api/v1/oos/fix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rawContent: rawContent, template: template }) });
     var fixData = await fixResp.json();
-    var contentToPublish = fixData.fixed || rawContent;
-    if (fixData.fixCount > 0) {
-      textarea.value = contentToPublish;
-      textarea.dispatchEvent(new Event('input'));
-    }
-
-    if (fixData.validation && !fixData.validation.valid) {
-      showFixResults(fixData);
-      btn.textContent = 'Publish to OTP';
-      btn.disabled = false;
-      return;
-    }
-
-    // Create draft
-    var createResp = await fetch('/api/v1/oos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ template: template, rawContent: contentToPublish }),
-    });
+    var content = fixData.fixed || rawContent;
+    if (fixData.fixCount > 0) { textarea.value = content; textarea.dispatchEvent(new Event('input')); }
+    if (fixData.validation && !fixData.validation.valid) { showFixResults(fixData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+    var createResp = await fetch('/api/v1/oos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: template, rawContent: content }) });
     var createData = await createResp.json();
     if (handleAuthError(createData, createResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
-
-    if (createData.validation && !createData.validation.valid) {
-      showFixResults(fixData);
-      showValidation(createData);
-      btn.textContent = 'Publish to OTP';
-      btn.disabled = false;
-      return;
-    }
-
-    // Publish
-    var publishResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
-    var publishData = await publishResp.json();
-    if (handleAuthError(publishData, publishResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
-
-    if (publishData.error) {
-      showFixResults(fixData);
-      showValidation(publishData);
-      btn.textContent = 'Publish to OTP';
-      btn.disabled = false;
-      return;
-    }
-
+    if (createData.validation && !createData.validation.valid) { showFixResults(fixData); showValidation(createData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+    var pubResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
+    var pubData = await pubResp.json();
+    if (handleAuthError(pubData, pubResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+    if (pubData.error) { showFixResults(fixData); showValidation(pubData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
     showFixResults(fixData);
     document.getElementById('validation-results').classList.remove('hidden');
     document.getElementById('validation-success').classList.remove('hidden');
     document.getElementById('published-link').href = '/oos/' + createData.oosFile.id;
     btn.textContent = 'Published!';
-
-  } catch (e) {
-    alert('Something went wrong. Check your content and try again.');
-    btn.textContent = 'Publish to OTP';
-    btn.disabled = false;
-  }
+  } catch (e) { alert('Something went wrong.'); btn.textContent = 'Publish to OTP'; btn.disabled = false; }
 }
 
 function showFixResults(data) {
-  var container = document.getElementById('validation-results');
-  container.classList.remove('hidden');
+  var c = document.getElementById('validation-results'); c.classList.remove('hidden');
   ['fix-results','unfixable-results','validation-errors','validation-warnings','pii-flags','all-clear','validation-success'].forEach(function(id) { document.getElementById(id).classList.add('hidden'); });
-
-  if (data.fixes && data.fixes.length > 0) {
-    var fixDiv = document.getElementById('fix-results');
-    fixDiv.classList.remove('hidden');
-    document.getElementById('fix-header').textContent = data.fixes.length + ' issue' + (data.fixes.length === 1 ? '' : 's') + ' auto-fixed';
-    document.getElementById('fix-list').innerHTML = data.fixes.map(function(f) {
-      return '<div class="bg-green-50 border border-green-200 p-2 rounded text-xs text-green-800 flex items-start gap-2"><svg class="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>' + f.description + '</span></div>';
-    }).join('');
-  }
-  if (data.unfixable && data.unfixable.length > 0) {
-    document.getElementById('unfixable-results').classList.remove('hidden');
-    document.getElementById('unfixable-header').textContent = data.unfixable.length + ' issue' + (data.unfixable.length === 1 ? '' : 's') + ' to fix manually';
-    document.getElementById('unfixable-list').innerHTML = data.unfixable.map(function(u) { return '<div class="bg-orange-50 border border-orange-200 p-3 rounded text-sm text-orange-800"><strong>' + u.field + ':</strong> ' + u.message + '</div>'; }).join('');
-  }
+  if (data.fixes && data.fixes.length > 0) { document.getElementById('fix-results').classList.remove('hidden'); document.getElementById('fix-header').textContent = data.fixes.length + ' auto-fixed'; document.getElementById('fix-list').innerHTML = data.fixes.map(function(f) { return '<div class="bg-green-50 border border-green-200 p-2 rounded text-xs text-green-800">' + f.description + '</div>'; }).join(''); }
+  if (data.unfixable && data.unfixable.length > 0) { document.getElementById('unfixable-results').classList.remove('hidden'); document.getElementById('unfixable-header').textContent = data.unfixable.length + ' need manual fix'; document.getElementById('unfixable-list').innerHTML = data.unfixable.map(function(u) { return '<div class="bg-orange-50 border border-orange-200 p-3 rounded text-sm text-orange-800"><strong>' + u.field + ':</strong> ' + u.message + '</div>'; }).join(''); }
   showValidation(data);
-  var hasErrors = data.validation && data.validation.errors && data.validation.errors.length > 0;
-  var hasUnfixable = data.unfixable && data.unfixable.length > 0;
-  var hasPII = data.piiFlags && data.piiFlags.length > 0;
-  if (!hasErrors && !hasUnfixable && !hasPII) { document.getElementById('all-clear').classList.remove('hidden'); }
+  if (!(data.validation && data.validation.errors && data.validation.errors.length > 0) && !(data.unfixable && data.unfixable.length > 0) && !(data.piiFlags && data.piiFlags.length > 0)) { document.getElementById('all-clear').classList.remove('hidden'); }
 }
 
 function showValidation(data) {
-  if (data.error && data.error.details || (data.validation && data.validation.errors && data.validation.errors.length > 0)) {
-    document.getElementById('validation-errors').classList.remove('hidden');
-    var errors = (data.error && data.error.details) || (data.validation && data.validation.errors) || [];
-    document.getElementById('error-list').innerHTML = errors.map(function(e) { return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">' + (e.message || e.issue || JSON.stringify(e)) + '</div>'; }).join('');
-  }
-  if (data.validation && data.validation.warnings && data.validation.warnings.length > 0) {
-    document.getElementById('validation-warnings').classList.remove('hidden');
-    document.getElementById('warning-list').innerHTML = data.validation.warnings.map(function(w) { return '<div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">' + w.message + '</div>'; }).join('');
-  }
-  if (data.piiFlags && data.piiFlags.length > 0) {
-    document.getElementById('pii-flags').classList.remove('hidden');
-    document.getElementById('pii-list').innerHTML = data.piiFlags.map(function(f) { return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800"><strong>' + f.type + ':</strong> "' + f.text + '" found in ' + f.location + '. <em>' + f.suggestion + '</em></div>'; }).join('');
-  }
-}
-
-function copyPrompt() {
-  navigator.clipboard.writeText(document.getElementById('generation-prompt').textContent).then(function() {
-    var btn = document.getElementById('copy-prompt-btn');
-    btn.textContent = 'Copied!';
-    setTimeout(function() { btn.textContent = 'Copy Prompt'; }, 2000);
-  });
+  if ((data.error && data.error.details) || (data.validation && data.validation.errors && data.validation.errors.length > 0)) { document.getElementById('validation-errors').classList.remove('hidden'); var errors = (data.error && data.error.details) || (data.validation && data.validation.errors) || []; document.getElementById('error-list').innerHTML = errors.map(function(e) { return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800">' + (e.message || e.issue || JSON.stringify(e)) + '</div>'; }).join(''); }
+  if (data.validation && data.validation.warnings && data.validation.warnings.length > 0) { document.getElementById('validation-warnings').classList.remove('hidden'); document.getElementById('warning-list').innerHTML = data.validation.warnings.map(function(w) { return '<div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">' + w.message + '</div>'; }).join(''); }
+  if (data.piiFlags && data.piiFlags.length > 0) { document.getElementById('pii-flags').classList.remove('hidden'); document.getElementById('pii-list').innerHTML = data.piiFlags.map(function(f) { return '<div class="bg-red-50 border border-red-200 p-3 rounded text-sm text-red-800"><strong>' + f.type + ':</strong> "' + f.text + '" in ' + f.location + '. <em>' + f.suggestion + '</em></div>'; }).join(''); }
 }
 
 function loadExample() {
-  textarea.value = "---\noos_version: \"1.0\"\norg_pseudonym: \"My AI Team\"\nindustry: \"technology\"\norg_size: \"small\"\ntemplate: \"agent_army\"\nagent_count: 3\nplatforms:\n  - \"claude\"\ngenerated_at: \"" + new Date().toISOString() + "\"\nversion: 1\nparent_version: null\nword_count: 1900\nclaim_count: 12\nconfidence_distribution:\n  high: 4\n  medium: 5\n  low: 3\nevidence_distribution:\n  human_defined_rule: 3\n  observed_once: 2\n  observed_repeatedly: 3\n  measured_result: 2\n  inference: 1\n  speculation: 1\n---\n\n## Purpose\n\nA small technology team running 3 AI agents for content creation, research, and project management. This OOS captures coordination patterns discovered over 3 months of production use.\n\n## Prime Directives\n\n1. No agent sends external content without human approval.\n2. Every agent writes to its own shared state file.\n3. Human decision-maker has final authority on all strategic decisions.\n\n## System Identity\n\nA technology organization using AI agents to augment a small team. Agents handle repetitive operational tasks so humans focus on strategy, relationships, and creative decisions.\n\n**[C001]** core_operating_rules\n- **Rule:** Each agent writes to its own shared state file. No agent modifies another agent's state.\n- **Why:** Prevents data corruption from concurrent writes.\n- **Failure mode:** Two agents write to the same file. One update is lost. State becomes inconsistent.\n- **Confidence:** HIGH\n- **Evidence:** MEASURED_RESULT\n- **Scope:** All agents. Each agent has exactly one state file it owns.\n\n**[C002]** core_operating_rules\n- **Rule:** External communications require human approval before sending.\n- **Why:** AI-generated content can be tonally wrong or factually incorrect.\n- **Failure mode:** Agent sends email with incorrect information. Recipient loses trust.\n- **Confidence:** HIGH\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** All external emails, messages, and published content.\n\n**[C003]** core_operating_rules\n- **Rule:** Research agent summarizes findings but does not make recommendations.\n- **Why:** Recommendations without business context led to irrelevant suggestions.\n- **Failure mode:** Agent recommends action that conflicts with current business priorities.\n- **Confidence:** HIGH\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Research and analysis functions only.\n\n**[C004]** core_operating_rules\n- **Rule:** All agent actions are logged to an audit trail.\n- **Why:** Without logs, debugging agent errors takes hours instead of minutes.\n- **Failure mode:** Agent makes error. No log. Team cannot determine what happened.\n- **Confidence:** HIGH\n- **Evidence:** MEASURED_RESULT\n- **Scope:** All agents, all actions.\n\n**[C005]** agent_roles_and_authority\n- **Rule:** Content agent has semi-autonomous authority. It drafts but never publishes.\n- **Why:** Content quality requires human judgment for tone and accuracy.\n- **Failure mode:** Auto-published content contains errors. Public trust damaged.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_ONCE\n- **Scope:** Content creation workflow.\n\n**[C006]** agent_roles_and_authority\n- **Rule:** Research agent operates autonomously for data gathering but escalates analysis to humans.\n- **Why:** Data gathering is safe to automate. Interpretation requires context.\n- **Failure mode:** Agent misinterprets data and propagates incorrect analysis.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Research and analysis tasks.\n\n**[C007]** agent_roles_and_authority\n- **Rule:** Project management agent tracks deadlines but does not reassign work.\n- **Why:** Work assignment requires understanding of team capacity and priorities that the agent lacks.\n- **Failure mode:** Agent reassigns work to someone already overloaded. Deadline missed.\n- **Confidence:** MEDIUM\n- **Evidence:** INFERENCE\n- **Scope:** Project tracking functions.\n\n**[C008]** coordination_patterns\n- **Rule:** Agents coordinate through shared state files, not direct messaging.\n- **Why:** Direct messaging creates hidden dependencies and unauditable coordination.\n- **Failure mode:** Agent-to-agent message not logged. Coordination failure is invisible.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** All multi-agent coordination.\n\n**[C009]** failure_patterns\n- **Rule:** We tried giving the content agent access to publish directly. Quality dropped immediately.\n- **Why:** The agent optimized for speed over accuracy when it could publish without review.\n- **Failure mode:** Three blog posts published with factual errors in one week.\n- **Confidence:** HIGH\n- **Evidence:** OBSERVED_ONCE\n- **Scope:** Content publishing. Reverted to human-approval model.\n\n**[C010]** failure_patterns\n- **Rule:** Single shared state file for all agents caused data corruption within the first week.\n- **Why:** Concurrent writes from multiple agents created race conditions.\n- **Failure mode:** State file contained mixed data from two agents. Required manual cleanup.\n- **Confidence:** MEDIUM\n- **Evidence:** MEASURED_RESULT\n- **Scope:** Shared state architecture. Resolved by per-agent files.\n\n**[C011]** human_ai_boundary_conditions\n- **Rule:** Financial commitments and pricing decisions require human approval.\n- **Why:** Financial decisions have legal and relationship implications AI cannot assess.\n- **Failure mode:** Agent agrees to terms that violate margin requirements.\n- **Confidence:** LOW\n- **Evidence:** SPECULATION\n- **Scope:** All financial decisions. Precautionary rule.\n\n**[C012]** human_ai_boundary_conditions\n- **Rule:** The founder has unlimited override authority over all agents at any time.\n- **Why:** A human must always be able to stop any AI action immediately.\n- **Failure mode:** No override mechanism exists. Harmful AI action cannot be stopped.\n- **Confidence:** MEDIUM\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** All agents. Non-negotiable.\n\n## Confidence Map\n\n| Confidence | Count |\n|---|---|\n| HIGH | 4 |\n| MEDIUM | 5 |\n| LOW | 3 |\n\n## Merge Protocol\n\nImport claims at LOW confidence. Do not auto-merge contradictions. Preserve provenance.\n\n## Update Protocol\n\nReview every 90 days. Flag stale claims. Update confidence when evidence strengthens.\n\n## Summary\n\n1. Per-agent shared state files prevent data corruption.\n2. External communications always require human approval.\n3. Research summarizes but does not recommend.\n4. Audit trails on every action enable fast debugging.\n5. Direct publishing access for content agents degrades quality.\n6. Single shared state files cause corruption -- use per-agent files.\n7. Financial decisions are human-only.\n8. Founder has unlimited override authority.";
+  textarea.value = "---\noos_version: \"1.0\"\norg_pseudonym: \"My AI Team\"\nindustry: \"technology\"\norg_size: \"small\"\ntemplate: \"agent_army\"\nagent_count: 3\nplatforms:\n  - \"claude\"\ngenerated_at: \"" + new Date().toISOString() + "\"\nversion: 1\nparent_version: null\nword_count: 1900\nclaim_count: 12\nconfidence_distribution:\n  high: 4\n  medium: 5\n  low: 3\nevidence_distribution:\n  human_defined_rule: 3\n  observed_once: 2\n  observed_repeatedly: 3\n  measured_result: 2\n  inference: 1\n  speculation: 1\n---\n\n## Purpose\n\nA small technology team running 3 AI agents for content creation, research, and project management.\n\n## Prime Directives\n\n1. No agent sends external content without human approval.\n2. Every agent writes to its own shared state file.\n3. Human decision-maker has final authority.\n\n## System Identity\n\nAgents handle repetitive tasks so humans focus on strategy and relationships.\n\n**[C001]** core_operating_rules\n- **Rule:** Each agent writes to its own shared state file.\n- **Why:** Prevents data corruption from concurrent writes.\n- **Failure mode:** Two agents write to the same file. State becomes inconsistent.\n- **Confidence:** HIGH\n- **Evidence:** MEASURED_RESULT\n- **Scope:** All agents.\n\n**[C002]** core_operating_rules\n- **Rule:** External communications require human approval.\n- **Why:** AI content can be tonally wrong or factually incorrect.\n- **Failure mode:** Agent sends email with incorrect info. Trust damaged.\n- **Confidence:** HIGH\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** All external emails and messages.\n\n**[C003]** core_operating_rules\n- **Rule:** Research agent summarizes but does not recommend.\n- **Why:** Recommendations without business context led to irrelevant suggestions.\n- **Failure mode:** Agent recommends action conflicting with priorities.\n- **Confidence:** HIGH\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Research functions.\n\n**[C004]** core_operating_rules\n- **Rule:** All agent actions logged to audit trail.\n- **Why:** Without logs, debugging takes hours instead of minutes.\n- **Failure mode:** Agent error with no log. Cannot determine what happened.\n- **Confidence:** HIGH\n- **Evidence:** MEASURED_RESULT\n- **Scope:** All agents.\n\n**[C005]** agent_roles_and_authority\n- **Rule:** Content agent drafts but never publishes.\n- **Why:** Quality requires human judgment.\n- **Failure mode:** Auto-published content has errors. Trust damaged.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_ONCE\n- **Scope:** Content creation.\n\n**[C006]** agent_roles_and_authority\n- **Rule:** Research agent gathers data autonomously but escalates analysis.\n- **Why:** Data gathering is safe. Interpretation requires context.\n- **Failure mode:** Agent misinterprets data.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Research tasks.\n\n**[C007]** agent_roles_and_authority\n- **Rule:** PM agent tracks deadlines but does not reassign work.\n- **Why:** Reassignment requires capacity understanding.\n- **Failure mode:** Agent overloads someone. Deadline missed.\n- **Confidence:** MEDIUM\n- **Evidence:** INFERENCE\n- **Scope:** Project tracking.\n\n**[C008]** coordination_patterns\n- **Rule:** Agents coordinate through shared state files, not messaging.\n- **Why:** Direct messaging creates hidden dependencies.\n- **Failure mode:** Coordination failure is invisible.\n- **Confidence:** MEDIUM\n- **Evidence:** OBSERVED_REPEATEDLY\n- **Scope:** Multi-agent coordination.\n\n**[C009]** failure_patterns\n- **Rule:** Direct publish access degraded content quality immediately.\n- **Why:** Agent optimized for speed over accuracy.\n- **Failure mode:** Three posts with factual errors in one week.\n- **Confidence:** HIGH\n- **Evidence:** OBSERVED_ONCE\n- **Scope:** Content publishing. Reverted.\n\n**[C010]** failure_patterns\n- **Rule:** Single shared state file caused data corruption in first week.\n- **Why:** Concurrent writes created race conditions.\n- **Failure mode:** Mixed data from two agents. Manual cleanup needed.\n- **Confidence:** MEDIUM\n- **Evidence:** MEASURED_RESULT\n- **Scope:** Resolved by per-agent files.\n\n**[C011]** human_ai_boundary_conditions\n- **Rule:** Financial decisions require human approval.\n- **Why:** Legal and relationship implications AI cannot assess.\n- **Failure mode:** Agent agrees to bad terms.\n- **Confidence:** LOW\n- **Evidence:** SPECULATION\n- **Scope:** All financial decisions.\n\n**[C012]** human_ai_boundary_conditions\n- **Rule:** Founder has unlimited override authority.\n- **Why:** A human must always be able to stop any AI action.\n- **Failure mode:** No override. Harmful action cannot be stopped.\n- **Confidence:** MEDIUM\n- **Evidence:** HUMAN_DEFINED_RULE\n- **Scope:** All agents. Non-negotiable.\n\n## Confidence Map\n\n| Confidence | Count |\n|---|---|\n| HIGH | 4 |\n| MEDIUM | 5 |\n| LOW | 3 |\n\n## Merge Protocol\n\nImport claims at LOW confidence. Do not auto-merge contradictions.\n\n## Update Protocol\n\nReview every 90 days. Flag stale claims.\n";
   textarea.dispatchEvent(new Event('input'));
-  autoDetectTemplate(textarea.value);
+  // Switch to power user mode to show the example
+  if (!document.getElementById('wizard-container').classList.contains('hidden')) togglePowerUser();
 }
 </script>
