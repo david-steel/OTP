@@ -43,6 +43,27 @@
     <h2 class="text-2xl font-bold mb-2">Install</h2>
     <p class="text-gray-500 text-sm mb-8">One command. Works with Claude Code, Cline, Roo Code, or any MCP-compatible client.</p>
 
+    <!-- Prerequisites -->
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-6">
+      <h3 class="font-semibold text-sm text-amber-900 mb-2">Before you install</h3>
+      <p class="text-sm text-amber-800 mb-3">You need two things on your machine. If you already have them, skip to the install command below.</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="bg-white rounded-lg p-3 border border-amber-100">
+          <div class="font-medium text-sm mb-1">1. Node.js (v18+)</div>
+          <p class="text-xs text-gray-600 mb-2">The runtime that powers the MCP server.</p>
+          <a href="https://nodejs.org" target="_blank" rel="noopener" class="text-xs text-otp-500 hover:underline font-medium">Download from nodejs.org</a>
+          <p class="text-xs text-gray-400 mt-1">Click the green LTS button, run the installer, done.</p>
+        </div>
+        <div class="bg-white rounded-lg p-3 border border-amber-100">
+          <div class="font-medium text-sm mb-1">2. Claude Code CLI</div>
+          <p class="text-xs text-gray-600 mb-2">The AI coding assistant that runs the slash commands.</p>
+          <p class="text-xs text-gray-500">After Node.js is installed, run:</p>
+          <code class="text-xs bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">npm install -g @anthropic-ai/claude-code</code>
+        </div>
+      </div>
+      <p class="text-xs text-amber-700 mt-3">Already have both? You are ready. Run the command below.</p>
+    </div>
+
     <div class="bg-otp-950 text-white rounded-xl p-6 sm:p-8 mb-6">
       <div class="relative mb-6">
         <pre id="install-cmd" class="bg-black/40 text-gray-100 text-base sm:text-lg p-4 sm:p-5 rounded-lg font-mono tracking-tight">curl -fsSL https://orgtp.com/install.sh | bash</pre>
