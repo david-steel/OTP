@@ -117,10 +117,26 @@ export function computeClaimSimilarity(
   const textA = `${claimA.rule} ${claimA.why} ${claimA.scope}`;
   const textB = `${claimB.rule} ${claimB.why} ${claimB.scope}`;
 
-  const tokensA = expandWithConcepts(tokenize(textA));
-  const tokensB = expandWithConcepts(tokenize(textB));
+  const rawTokensA = tokenize(textA);
+  const rawTokensB = tokenize(textB);
+  const tokensA = expandWithConcepts(rawTokensA);
+  const tokensB = expandWithConcepts(rawTokensB);
 
-  const score = jaccardSimilarity(tokensA, tokensB);
+  // Word-level Jaccard
+  const wordScore = jaccardSimilarity(tokensA, tokensB);
+
+  // Concept-level overlap: how many concept groups do both claims touch?
+  const conceptsA = new Set<string>();
+  const conceptsB = new Set<string>();
+  for (const t of rawTokensA) { const c = CONCEPT_GROUPS[t]; if (c) conceptsA.add(c); }
+  for (const t of rawTokensB) { const c = CONCEPT_GROUPS[t]; if (c) conceptsB.add(c); }
+  const sharedConcepts = [...conceptsA].filter(c => conceptsB.has(c));
+  const conceptScore = conceptsA.size > 0 && conceptsB.size > 0
+    ? sharedConcepts.length / Math.max(conceptsA.size, conceptsB.size)
+    : 0;
+
+  // Blend: 60% word overlap + 40% concept overlap
+  const score = wordScore * 0.6 + conceptScore * 0.4;
 
   // Cross-section mapping: some sections are conceptually equivalent
   const sectionMap: Record<string, string> = {
