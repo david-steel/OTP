@@ -693,8 +693,8 @@ export default async function oosRoutes(app: FastifyInstance) {
         existingClaims as any
       );
 
-      // Deduplicate: only keep pairs where oosA < oosB to avoid double counting
-      const uniquePairs = pairs.filter(p => p.oosAId < p.oosBId);
+      // Keep all pairs (both directions stored for easy querying)
+      const uniquePairs = pairs;
 
       if (uniquePairs.length > 0) {
         await db.insert(claimSimilarities).values(
