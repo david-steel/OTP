@@ -638,6 +638,15 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Homepage v2 (preview for Michael)
+  app.get('/v2', async (request, reply) => {
+    return reply.view('pages/home-v2', {
+      title: 'OTP - Get 2.5 Hours Back. Day One.',
+      description: 'Install an AI Chief of Staff for your business. Day one, 2.5 hours back. Every week it gets smarter by learning from hundreds of other businesses.',
+      canonical: BASE_URL + '/v2',
+    });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });
