@@ -106,7 +106,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
     const { id } = request.params;
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
-    if (!oosFile) return reply.status(404).view('pages/home', { title: 'Not Found' });
+    if (!oosFile) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
     const [org] = await db.select().from(organizations).where(eq(organizations.id, oosFile.orgId)).limit(1);
     const claimRows = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
@@ -120,7 +120,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const { idA, idB } = request.params;
     const [oosA] = await db.select().from(oosFiles).where(eq(oosFiles.id, idA)).limit(1);
     const [oosB] = await db.select().from(oosFiles).where(eq(oosFiles.id, idB)).limit(1);
-    if (!oosA || !oosB) return reply.status(404).view('pages/home', { title: 'Not Found' });
+    if (!oosA || !oosB) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
     const [orgA] = await db.select().from(organizations).where(eq(organizations.id, oosA.orgId)).limit(1);
     const [orgB] = await db.select().from(organizations).where(eq(organizations.id, oosB.orgId)).limit(1);
@@ -141,7 +141,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const { sourceId, targetId } = request.params;
     const [sourceOos] = await db.select().from(oosFiles).where(eq(oosFiles.id, sourceId)).limit(1);
     const [targetOos] = await db.select().from(oosFiles).where(eq(oosFiles.id, targetId)).limit(1);
-    if (!sourceOos || !targetOos) return reply.status(404).view('pages/home', { title: 'Not Found' });
+    if (!sourceOos || !targetOos) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
     const [sourceOrg] = await db.select().from(organizations).where(eq(organizations.id, sourceOos.orgId)).limit(1);
     const [targetOrg] = await db.select().from(organizations).where(eq(organizations.id, targetOos.orgId)).limit(1);
@@ -161,7 +161,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/org/:id', async (request, reply) => {
     const { id } = request.params;
     const [org] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
-    if (!org) return reply.status(404).view('pages/home', { title: 'Not Found' });
+    if (!org) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
     const pubFiles = await db.select().from(oosFiles).where(and(eq(oosFiles.orgId, id), eq(oosFiles.status, 'published'))).orderBy(desc(oosFiles.publishedAt));
     const totalClaims = pubFiles.reduce((s, f) => s + f.claimCount, 0);
@@ -669,12 +669,12 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/settings/api', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) {
-      return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'unauthenticated', keys: [] });
+      return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'unauthenticated', keys: [] });
     }
 
     const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     if (!org) {
-      return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'no_org', keys: [] });
+      return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'no_org', keys: [] });
     }
 
     const keys = await db
@@ -690,7 +690,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       .where(and(eq(apiKeys.orgId, org.id), isNull(apiKeys.revokedAt)))
       .orderBy(desc(apiKeys.createdAt));
 
-    return reply.view('pages/settings-api', { title: 'API Keys - OTP', authState: 'authenticated', keys });
+    return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'authenticated', keys });
   });
 
   // Claim Sections Index
@@ -790,6 +790,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       // Not signed in -- show prompt to sign in (handled client-side by Clerk JS)
       return reply.view('pages/dashboard', {
         title: 'Dashboard - OTP',
+        noindex: true,
         authState: 'unauthenticated',
         dashboard: {
           profile: { name: '', industry: '', size: '', badge: null, qualityTier: null },
@@ -810,6 +811,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       // Signed in but no org -- show registration form
       return reply.view('pages/register', {
         title: 'Complete Your Profile - OTP',
+        noindex: true,
       });
     }
 
@@ -833,6 +835,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     return reply.view('pages/dashboard', {
       title: 'Dashboard - OTP',
+      noindex: true,
       authState: 'authenticated',
       dashboard: {
         profile: { name: org.name, industry: org.industry, size: org.size, badge: org.badge, qualityTier: org.qualityTier, agenticLevel: org.agenticLevel, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' },
