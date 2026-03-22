@@ -126,7 +126,11 @@ document.getElementById('consultant-form').addEventListener('submit', async func
       }
     } else {
       var data = await res.json().catch(function() { return {}; });
-      throw new Error(data.error || 'Failed to save.');
+      var errMsg = 'Failed to save.';
+      if (data.error && data.error.message) errMsg = data.error.message;
+      else if (data.error && data.error.details) errMsg = data.error.details.map(function(d) { return d.message; }).join(', ');
+      else if (typeof data.error === 'string') errMsg = data.error;
+      throw new Error(errMsg);
     }
   } catch (err) {
     status.textContent = err.message;

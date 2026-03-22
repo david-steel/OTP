@@ -656,7 +656,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         (SELECT COUNT(*) FROM oos_files WHERE org_id = cp.org_id AND status = 'published' AND workspace_id IS NULL) as oos_count
       FROM consultant_profiles cp
       JOIN organizations o ON o.id = cp.org_id
-      WHERE cp.is_published = true
+      WHERE cp.published = true
       ORDER BY cp.created_at DESC
     `) as any;
     return reply.view('pages/experts-browse', {
@@ -675,7 +675,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       SELECT cp.*, o.name as org_name
       FROM consultant_profiles cp
       JOIN organizations o ON o.id = cp.org_id
-      WHERE cp.slug = ${slug} AND cp.is_published = true
+      WHERE cp.slug = ${slug} AND cp.published = true
     `) as any;
     const profile = (profileRows.rows || [])[0];
     if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
@@ -703,7 +703,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const profileRows = await db.execute(sql`
       SELECT cp.*, o.name as org_name FROM consultant_profiles cp
       JOIN organizations o ON o.id = cp.org_id
-      WHERE cp.slug = ${slug} AND cp.is_published = true
+      WHERE cp.slug = ${slug} AND cp.published = true
     `) as any;
     const profile = (profileRows.rows || [])[0];
     if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
