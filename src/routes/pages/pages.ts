@@ -647,6 +647,192 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // ---- Consultant Ecosystem Pages ----
+
+  // Browse experts
+  app.get('/experts', async (request, reply) => {
+    const profileRows = await db.execute(sql`
+      SELECT cp.*, o.name as org_name,
+        (SELECT COUNT(*) FROM oos_files WHERE org_id = cp.org_id AND status = 'published' AND workspace_id IS NULL) as oos_count
+      FROM consultant_profiles cp
+      JOIN organizations o ON o.id = cp.org_id
+      WHERE cp.is_published = true
+      ORDER BY cp.created_at DESC
+    `) as any;
+    return reply.view('pages/experts-browse', {
+      title: 'Experts - Find AI Coordination Consultants - OTP',
+      description: 'Browse consultants and coaches who specialize in AI agent coordination. Contact experts, view their published intelligence, and hire them for your team.',
+      canonical: BASE_URL + '/experts',
+      breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }),
+      profiles: profileRows.rows || [],
+    });
+  });
+
+  // Expert profile
+  app.get('/expert/:slug', async (request, reply) => {
+    const { slug } = request.params as { slug: string };
+    const profileRows = await db.execute(sql`
+      SELECT cp.*, o.name as org_name
+      FROM consultant_profiles cp
+      JOIN organizations o ON o.id = cp.org_id
+      WHERE cp.slug = ${slug} AND cp.is_published = true
+    `) as any;
+    const profile = (profileRows.rows || [])[0];
+    if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
+
+    const oosRows = await db.execute(sql`
+      SELECT f.*, o.name as org_name FROM oos_files f
+      JOIN organizations o ON o.id = f.org_id
+      WHERE f.org_id = ${profile.org_id} AND f.status = 'published' AND f.workspace_id IS NULL
+      ORDER BY f.created_at DESC
+    `) as any;
+
+    return reply.view('pages/expert-profile', {
+      title: profile.display_name + ' - AI Coordination Expert - OTP',
+      description: profile.bio ? profile.bio.substring(0, 160) : 'AI coordination expert on OTP.',
+      canonical: BASE_URL + '/expert/' + slug,
+      breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }, { name: profile.display_name, url: BASE_URL + '/expert/' + slug }),
+      profile,
+      oosFiles: oosRows.rows || [],
+    });
+  });
+
+  // Expert contact form
+  app.get('/expert/:slug/contact', async (request, reply) => {
+    const { slug } = request.params as { slug: string };
+    const profileRows = await db.execute(sql`
+      SELECT cp.*, o.name as org_name FROM consultant_profiles cp
+      JOIN organizations o ON o.id = cp.org_id
+      WHERE cp.slug = ${slug} AND cp.is_published = true
+    `) as any;
+    const profile = (profileRows.rows || [])[0];
+    if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
+
+    return reply.view('pages/expert-contact', {
+      title: 'Contact ' + profile.display_name + ' - OTP',
+      description: 'Send an inquiry to ' + profile.display_name + ', an AI coordination expert on OTP.',
+      canonical: BASE_URL + '/expert/' + slug + '/contact',
+      profile,
+    });
+  });
+
+  // Dashboard: Consultant profile management
+  app.get('/dashboard/consultant', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+
+    const profileRows = await db.execute(sql`SELECT * FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
+    return reply.view('pages/dashboard-consultant', {
+      title: 'Consultant Profile - Dashboard - OTP',
+      profile: (profileRows.rows || [])[0] || null,
+    });
+  });
+
+  // Dashboard: Workspaces
+  app.get('/dashboard/workspaces', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+
+    const wsRows = await db.execute(sql`
+      SELECT w.*, wm.role,
+        (SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count,
+        (SELECT COUNT(*) FROM oos_files WHERE workspace_id = w.id) as oos_count
+      FROM workspaces w
+      JOIN workspace_members wm ON wm.workspace_id = w.id AND wm.org_id = ${org.id}
+      ORDER BY w.created_at DESC
+    `) as any;
+
+    return reply.view('pages/dashboard-workspaces', {
+      title: 'Workspaces - Dashboard - OTP',
+      workspaces: wsRows.rows || [],
+    });
+  });
+
+  // Dashboard: Workspace detail
+  app.get('/dashboard/workspace/:id', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+    const { id } = request.params as { id: string };
+
+    const wsRows = await db.execute(sql`SELECT w.* FROM workspaces w JOIN workspace_members wm ON wm.workspace_id = w.id AND wm.org_id = ${org.id} WHERE w.id = ${id}`) as any;
+    const workspace = (wsRows.rows || [])[0];
+    if (!workspace) return reply.status(404).view('pages/home', { title: 'Workspace Not Found' });
+
+    const memberRows = await db.execute(sql`SELECT * FROM workspace_members WHERE workspace_id = ${id} ORDER BY invited_at`) as any;
+    const oosRows = await db.execute(sql`SELECT f.*, o.name as org_name FROM oos_files f JOIN organizations o ON o.id = f.org_id WHERE f.workspace_id = ${id} ORDER BY f.created_at DESC`) as any;
+
+    return reply.view('pages/dashboard-workspace-detail', {
+      title: workspace.name + ' - Workspace - OTP',
+      workspace,
+      members: memberRows.rows || [],
+      oosFiles: oosRows.rows || [],
+    });
+  });
+
+  // Dashboard: Source documents
+  app.get('/dashboard/source-documents', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+
+    const docRows = await db.execute(sql`SELECT * FROM source_documents WHERE org_id = ${org.id} ORDER BY created_at DESC`) as any;
+    return reply.view('pages/dashboard-source-docs', {
+      title: 'Source Documents - Dashboard - OTP',
+      documents: docRows.rows || [],
+    });
+  });
+
+  // Dashboard: Source document detail
+  app.get('/dashboard/source-documents/:id', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+    const { id } = request.params as { id: string };
+
+    const docRows = await db.execute(sql`SELECT * FROM source_documents WHERE id = ${id} AND org_id = ${org.id}`) as any;
+    const document = (docRows.rows || [])[0];
+    if (!document) return reply.status(404).view('pages/home', { title: 'Document Not Found' });
+
+    const oosRows = await db.execute(sql`SELECT f.* FROM oos_files f WHERE f.source_document_id = ${id} ORDER BY f.created_at DESC`) as any;
+    return reply.view('pages/dashboard-source-doc-detail', {
+      title: document.title + ' - Source Document - OTP',
+      document,
+      oosFiles: oosRows.rows || [],
+    });
+  });
+
+  // Dashboard: Inquiries
+  app.get('/dashboard/inquiries', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+
+    const profileRows = await db.execute(sql`SELECT id FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
+    const profile = (profileRows.rows || [])[0];
+    if (!profile) return reply.redirect('/dashboard/consultant');
+
+    const inqRows = await db.execute(sql`SELECT * FROM inquiries WHERE consultant_profile_id = ${profile.id} ORDER BY created_at DESC`) as any;
+    return reply.view('pages/dashboard-inquiries', {
+      title: 'Inquiries - Dashboard - OTP',
+      inquiries: inqRows.rows || [],
+    });
+  });
+
   // Investors page
   app.get('/investors', async (request, reply) => {
     return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });

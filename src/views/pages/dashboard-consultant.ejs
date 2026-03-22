@@ -1,0 +1,138 @@
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <a href="/dashboard" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <h1 class="text-2xl font-bold mb-2"><%= (typeof profile !== 'undefined' && profile) ? 'Edit' : 'Create' %> Consultant Profile</h1>
+  <p class="text-gray-500 text-sm mb-8">Set up your public expert profile so others can find and contact you.</p>
+
+  <form id="consultant-form" class="space-y-6">
+    <!-- Slug -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Profile Slug</label>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-400">/expert/</span>
+        <input type="text" name="slug" value="<%= (typeof profile !== 'undefined' && profile && profile.slug) ? profile.slug : '' %>" required class="flex-1 border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="your-name" pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, and hyphens only">
+      </div>
+      <p class="text-xs text-gray-400 mt-1">Lowercase letters, numbers, and hyphens only. This is your public URL.</p>
+    </div>
+
+    <!-- Display Name -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+      <input type="text" name="display_name" value="<%= (typeof profile !== 'undefined' && profile && profile.display_name) ? profile.display_name : '' %>" required class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="Your Name">
+    </div>
+
+    <!-- Photo URL -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Photo URL</label>
+      <input type="url" name="photo_url" value="<%= (typeof profile !== 'undefined' && profile && profile.photo_url) ? profile.photo_url : '' %>" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="https://example.com/photo.jpg">
+      <p class="text-xs text-gray-400 mt-1">Direct link to your profile photo. Leave blank to show your initials.</p>
+    </div>
+
+    <!-- Bio -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+      <textarea name="bio" rows="4" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="Tell people about your expertise, experience, and what you help organizations with."><%= (typeof profile !== 'undefined' && profile && profile.bio) ? profile.bio : '' %></textarea>
+    </div>
+
+    <!-- Expertise Tags -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Expertise Tags</label>
+      <input type="text" name="expertise_tags" value="<%= (typeof profile !== 'undefined' && profile && profile.expertise_tags) ? profile.expertise_tags.join(', ') : '' %>" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="AI Agents, Digital Marketing, Operations">
+      <p class="text-xs text-gray-400 mt-1">Comma-separated. These appear as filterable tags on your profile.</p>
+    </div>
+
+    <!-- Contact Email -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+      <input type="email" name="contact_email" value="<%= (typeof profile !== 'undefined' && profile && profile.contact_email) ? profile.contact_email : '' %>" required class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="you@company.com">
+      <p class="text-xs text-gray-400 mt-1">Where inquiries from the contact form will be sent. Not displayed publicly.</p>
+    </div>
+
+    <!-- Links -->
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+        <input type="url" name="website_url" value="<%= (typeof profile !== 'undefined' && profile && profile.website_url) ? profile.website_url : '' %>" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="https://yoursite.com">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
+        <input type="url" name="linkedin_url" value="<%= (typeof profile !== 'undefined' && profile && profile.linkedin_url) ? profile.linkedin_url : '' %>" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="https://linkedin.com/in/yourname">
+      </div>
+    </div>
+
+    <!-- Publish Toggle -->
+    <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
+      <input type="checkbox" name="published" id="published" class="w-4 h-4 text-otp-500 border-gray-300 rounded focus:ring-otp-500" <%= (typeof profile !== 'undefined' && profile && profile.published) ? 'checked' : '' %>>
+      <label for="published" class="text-sm font-medium text-gray-700">Publish profile</label>
+      <span class="text-xs text-gray-400">When enabled, your profile is visible in the expert directory.</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-between pt-2">
+      <div id="form-status" class="text-sm"></div>
+      <button type="submit" id="save-btn" class="px-6 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">
+        <%= (typeof profile !== 'undefined' && profile) ? 'Save Changes' : 'Create Profile' %>
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.getElementById('consultant-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('save-btn');
+  var status = document.getElementById('form-status');
+  var form = this;
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  status.textContent = '';
+  status.className = 'text-sm';
+
+  var tagsRaw = form.expertise_tags.value;
+  var tags = tagsRaw ? tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+  var payload = {
+    slug: form.slug.value.trim(),
+    display_name: form.display_name.value.trim(),
+    photo_url: form.photo_url.value.trim() || null,
+    bio: form.bio.value.trim() || null,
+    expertise_tags: tags,
+    contact_email: form.contact_email.value.trim(),
+    website_url: form.website_url.value.trim() || null,
+    linkedin_url: form.linkedin_url.value.trim() || null,
+    published: form.published.checked
+  };
+
+  var isEdit = <%= (typeof profile !== 'undefined' && profile) ? 'true' : 'false' %>;
+  var method = isEdit ? 'PUT' : 'POST';
+  var url = isEdit ? '/api/v1/experts/<%= (typeof profile !== 'undefined' && profile && profile.slug) ? profile.slug : '' %>' : '/api/v1/experts';
+
+  try {
+    var res = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      status.textContent = 'Saved successfully.';
+      status.className = 'text-sm text-green-600';
+      if (!isEdit) {
+        window.location.href = '/dashboard/consultant';
+      }
+    } else {
+      var data = await res.json().catch(function() { return {}; });
+      throw new Error(data.error || 'Failed to save.');
+    }
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'text-sm text-red-600';
+  }
+  btn.disabled = false;
+  btn.textContent = isEdit ? 'Save Changes' : 'Create Profile';
+});
+</script>

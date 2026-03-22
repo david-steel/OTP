@@ -1,0 +1,109 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <a href="/dashboard" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-2xl font-bold">Workspaces</h1>
+      <p class="text-gray-500 text-sm mt-1">Collaborate on OOS files with your team.</p>
+    </div>
+    <button type="button" id="create-ws-toggle" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors cursor-pointer">Create Workspace</button>
+  </div>
+
+  <!-- Create Workspace Form (hidden by default) -->
+  <div id="create-ws-form" class="hidden bg-white rounded-xl border p-6 mb-6">
+    <h3 class="font-semibold mb-4">New Workspace</h3>
+    <form id="ws-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Workspace Name</label>
+        <input type="text" name="name" required class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none" placeholder="e.g. Marketing Team">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-gray-400 font-normal">(optional)</span></label>
+        <textarea name="description" rows="2" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-otp-500 focus:ring-1 focus:ring-otp-500 outline-none resize-none" placeholder="What is this workspace for?"></textarea>
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="submit" id="ws-submit" class="px-5 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Create</button>
+        <button type="button" onclick="document.getElementById('create-ws-form').classList.add('hidden')" class="px-5 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+        <span id="ws-status" class="text-sm"></span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Workspace Cards -->
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% if (typeof workspaces !== 'undefined' && workspaces.length > 0) { %>
+      <% workspaces.forEach(function(ws) { %>
+        <a href="/dashboard/workspaces/<%= ws.id %>" class="bg-white p-5 rounded-lg border claim-card block">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="font-semibold text-gray-900"><%= ws.name %></h3>
+            <span class="text-xs px-2 py-0.5 rounded capitalize
+              <% if (ws.role === 'owner') { %>bg-otp-50 text-otp-700<% } else { %>bg-gray-100 text-gray-600<% } %>
+            "><%= ws.role %></span>
+          </div>
+          <% if (ws.description) { %>
+            <p class="text-sm text-gray-500 mb-3 line-clamp-2"><%= ws.description %></p>
+          <% } %>
+          <div class="flex gap-4 text-xs text-gray-400">
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <%= ws.member_count || 0 %> members
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <%= ws.oos_count || 0 %> OOS files
+            </span>
+          </div>
+        </a>
+      <% }); %>
+    <% } else { %>
+      <div class="col-span-full text-center py-16 text-gray-400 bg-white rounded-lg border">
+        <p class="text-lg mb-2">No workspaces yet.</p>
+        <p class="text-sm">Create a workspace to collaborate with your team on OOS files.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+document.getElementById('create-ws-toggle').addEventListener('click', function() {
+  document.getElementById('create-ws-form').classList.toggle('hidden');
+});
+
+document.getElementById('ws-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('ws-submit');
+  var status = document.getElementById('ws-status');
+  var form = this;
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+  status.textContent = '';
+
+  try {
+    var res = await fetch('/api/v1/workspaces', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name.value.trim(),
+        description: form.description.value.trim() || null
+      })
+    });
+    if (res.ok) {
+      var data = await res.json();
+      window.location.href = '/dashboard/workspaces/' + data.id;
+    } else {
+      var err = await res.json().catch(function() { return {}; });
+      throw new Error(err.error || 'Failed to create workspace.');
+    }
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'text-sm text-red-600';
+    btn.disabled = false;
+    btn.textContent = 'Create';
+  }
+});
+</script>

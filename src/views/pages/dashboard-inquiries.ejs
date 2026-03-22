@@ -1,0 +1,145 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <a href="/dashboard" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <h1 class="text-2xl font-bold mb-2">Inquiries</h1>
+  <p class="text-gray-500 text-sm mb-8">Messages from people who contacted you through your expert profile.</p>
+
+  <% if (typeof inquiries !== 'undefined' && inquiries.length > 0) { %>
+    <div class="bg-white rounded-lg border overflow-hidden">
+      <!-- Table Header -->
+      <div class="hidden sm:grid sm:grid-cols-12 gap-4 px-5 py-3 bg-gray-50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <div class="col-span-2">Sender</div>
+        <div class="col-span-2">Email</div>
+        <div class="col-span-1">Org</div>
+        <div class="col-span-3">Message</div>
+        <div class="col-span-2">Status</div>
+        <div class="col-span-2">Date</div>
+      </div>
+
+      <!-- Rows -->
+      <div class="divide-y">
+        <% inquiries.forEach(function(inq, idx) { %>
+          <div class="inquiry-row">
+            <!-- Summary Row (clickable) -->
+            <div class="grid sm:grid-cols-12 gap-4 px-5 py-4 items-center cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleInquiry(<%= idx %>)">
+              <div class="sm:col-span-2">
+                <span class="text-sm font-medium text-gray-900"><%= inq.sender_name %></span>
+              </div>
+              <div class="sm:col-span-2">
+                <a href="mailto:<%= inq.sender_email %>" class="text-sm text-otp-500 hover:text-otp-400 truncate block" onclick="event.stopPropagation()"><%= inq.sender_email %></a>
+              </div>
+              <div class="sm:col-span-1">
+                <span class="text-sm text-gray-500 truncate block"><%= inq.sender_org || '-' %></span>
+              </div>
+              <div class="sm:col-span-3">
+                <span class="text-sm text-gray-600 truncate block"><%= (inq.message || '').substring(0, 80) %><%= (inq.message || '').length > 80 ? '...' : '' %></span>
+              </div>
+              <div class="sm:col-span-2">
+                <%
+                  var badgeClass = 'bg-blue-100 text-blue-700';
+                  if (inq.status === 'read') badgeClass = 'bg-gray-100 text-gray-600';
+                  if (inq.status === 'replied') badgeClass = 'bg-green-100 text-green-700';
+                  if (inq.status === 'closed') badgeClass = 'bg-red-100 text-red-600';
+                %>
+                <span class="text-xs px-2 py-0.5 rounded capitalize <%= badgeClass %>"><%= inq.status || 'new' %></span>
+              </div>
+              <div class="sm:col-span-2 flex items-center justify-between">
+                <span class="text-xs text-gray-400"><%= new Date(inq.created_at).toLocaleDateString() %></span>
+                <svg class="w-4 h-4 text-gray-300 transition-transform inquiry-chevron" id="chevron-<%= idx %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </div>
+
+            <!-- Expanded Detail (hidden by default) -->
+            <div class="hidden px-5 pb-5 pt-1 bg-gray-50 border-t border-dashed" id="detail-<%= idx %>">
+              <div class="max-w-2xl">
+                <div class="text-xs text-gray-500 mb-2 flex items-center gap-4">
+                  <span>From: <strong><%= inq.sender_name %></strong> &lt;<%= inq.sender_email %>&gt;</span>
+                  <% if (inq.sender_org) { %>
+                    <span>Org: <strong><%= inq.sender_org %></strong></span>
+                  <% } %>
+                </div>
+                <div class="bg-white border rounded-lg p-4 mb-3">
+                  <p class="text-sm text-gray-700 whitespace-pre-wrap"><%= inq.message %></p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <label class="text-xs text-gray-500">Status:</label>
+                  <select class="text-xs border rounded px-2 py-1 focus:ring-1 focus:ring-otp-500 focus:border-otp-500 outline-none" onchange="updateStatus('<%= inq.id %>', this.value)">
+                    <option value="new" <%= inq.status === 'new' ? 'selected' : '' %>>New</option>
+                    <option value="read" <%= inq.status === 'read' ? 'selected' : '' %>>Read</option>
+                    <option value="replied" <%= inq.status === 'replied' ? 'selected' : '' %>>Replied</option>
+                    <option value="closed" <%= inq.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                  </select>
+                  <a href="mailto:<%= inq.sender_email %>" class="text-xs text-otp-500 hover:text-otp-400 ml-2">Reply via email</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <%
+      var countNew = 0, countRead = 0, countReplied = 0, countClosed = 0;
+      inquiries.forEach(function(inq) {
+        if (inq.status === 'new') countNew++;
+        else if (inq.status === 'read') countRead++;
+        else if (inq.status === 'replied') countReplied++;
+        else if (inq.status === 'closed') countClosed++;
+      });
+    %>
+    <div class="grid grid-cols-4 gap-4 mt-6">
+      <div class="bg-white p-3 border rounded-lg text-center">
+        <div class="text-lg font-bold text-blue-600"><%= countNew %></div>
+        <div class="text-xs text-gray-500">New</div>
+      </div>
+      <div class="bg-white p-3 border rounded-lg text-center">
+        <div class="text-lg font-bold text-gray-600"><%= countRead %></div>
+        <div class="text-xs text-gray-500">Read</div>
+      </div>
+      <div class="bg-white p-3 border rounded-lg text-center">
+        <div class="text-lg font-bold text-green-600"><%= countReplied %></div>
+        <div class="text-xs text-gray-500">Replied</div>
+      </div>
+      <div class="bg-white p-3 border rounded-lg text-center">
+        <div class="text-lg font-bold text-red-500"><%= countClosed %></div>
+        <div class="text-xs text-gray-500">Closed</div>
+      </div>
+    </div>
+
+  <% } else { %>
+    <div class="text-center py-16 text-gray-400 bg-white rounded-lg border">
+      <p class="text-lg mb-2">No inquiries yet.</p>
+      <p class="text-sm">When someone contacts you through your expert profile, their messages will appear here.</p>
+    </div>
+  <% } %>
+</div>
+
+<script>
+function toggleInquiry(idx) {
+  var detail = document.getElementById('detail-' + idx);
+  var chevron = document.getElementById('chevron-' + idx);
+  detail.classList.toggle('hidden');
+  chevron.classList.toggle('rotate-180');
+}
+
+async function updateStatus(inquiryId, status) {
+  try {
+    var res = await fetch('/api/v1/inquiries/' + inquiryId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: status })
+    });
+    if (!res.ok) {
+      alert('Failed to update status.');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+</script>

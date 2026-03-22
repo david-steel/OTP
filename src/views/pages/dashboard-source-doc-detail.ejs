@@ -1,0 +1,145 @@
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <a href="/dashboard/source-docs" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Source Documents
+    </a>
+  </div>
+
+  <!-- Document Header -->
+  <div class="bg-white p-6 rounded-lg border mb-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-2xl font-bold"><%= document.title %></h1>
+          <%
+            var statusColor = 'bg-gray-100 text-gray-600';
+            if (document.status === 'processing') statusColor = 'bg-yellow-100 text-yellow-700';
+            if (document.status === 'completed') statusColor = 'bg-green-100 text-green-700';
+            if (document.status === 'failed') statusColor = 'bg-red-100 text-red-700';
+          %>
+          <span class="text-xs px-2.5 py-1 rounded capitalize <%= statusColor %>"><%= document.status %></span>
+        </div>
+        <div class="text-sm text-gray-400">
+          Uploaded <%= new Date(document.created_at).toLocaleDateString() %>
+          <% if (document.section_count) { %>
+            &middot; <%= document.section_count %> sections extracted
+          <% } %>
+        </div>
+      </div>
+      <% if (document.status === 'completed' || document.status === 'failed') { %>
+        <button type="button" id="reprocess-btn" onclick="reprocessDoc()" class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
+          Reprocess
+        </button>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Processing Status -->
+  <% if (document.status === 'processing') { %>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+      <svg class="w-5 h-5 text-yellow-600 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+      <div>
+        <p class="text-sm font-medium text-yellow-800">Processing in progress</p>
+        <p class="text-xs text-yellow-600">Your document is being analyzed and OOS files are being extracted. This may take a few minutes.</p>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (document.status === 'failed') { %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+      <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div>
+        <p class="text-sm font-medium text-red-800">Processing failed</p>
+        <p class="text-xs text-red-600">Something went wrong during extraction. You can try reprocessing the document.</p>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Raw Text Preview -->
+  <% if (document.raw_text) { %>
+    <details class="bg-white rounded-lg border mb-6 group">
+      <summary class="px-6 py-4 cursor-pointer font-medium text-sm flex items-center justify-between">
+        Raw Text Preview
+        <svg class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="px-6 pb-4">
+        <pre class="text-xs text-gray-600 bg-gray-50 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto"><%= document.raw_text.substring(0, 500) %><% if (document.raw_text.length > 500) { %>...
+
+<span class="text-gray-400">[<%= document.raw_text.length - 500 %> more characters]</span><% } %></pre>
+      </div>
+    </details>
+  <% } %>
+
+  <!-- Generated OOS Files -->
+  <h2 class="font-semibold mb-3">Generated OOS Files</h2>
+  <% if (typeof oosFiles !== 'undefined' && oosFiles.length > 0) { %>
+    <div class="grid gap-4">
+      <% oosFiles.forEach(function(oos) { %>
+        <a href="/oos/<%= oos.id %>" class="bg-white p-5 rounded-lg border claim-card flex items-start gap-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-semibold"><%= oos.org_name %></span>
+              <% if (oos.badge === 'founding') { %>
+                <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding</span>
+              <% } %>
+              <% if (oos.quality_tier) { %>
+                <span class="badge-<%= oos.quality_tier %> text-white text-xs px-2 py-0.5 rounded"><%= oos.quality_tier %></span>
+              <% } %>
+              <% if (oos.agentic_level) { %>
+                <span class="badge-level badge-level-<%= oos.agentic_level %>" title="Agentic Level">L<%= oos.agentic_level %></span>
+              <% } %>
+            </div>
+            <div class="text-sm text-gray-500 mb-2">
+              <%= oos.industry %> &middot; <%= oos.size %> &middot; v<%= oos.version %>
+            </div>
+            <div class="flex gap-4 text-xs text-gray-400">
+              <span><%= oos.claim_count %> claims</span>
+              <span class="px-2 py-0.5 bg-gray-100 rounded"><%= oos.template.replace('_', ' ') %></span>
+              <span>Published <%= new Date(oos.published_at).toLocaleDateString() %></span>
+            </div>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% } else { %>
+    <div class="text-center py-12 text-gray-400 bg-white rounded-lg border">
+      <% if (document.status === 'processing') { %>
+        <p class="text-lg mb-1">Still processing...</p>
+        <p class="text-sm">OOS files will appear here once extraction completes.</p>
+      <% } else if (document.status === 'failed') { %>
+        <p class="text-lg mb-1">No OOS files generated.</p>
+        <p class="text-sm">Processing failed. Try reprocessing the document.</p>
+      <% } else { %>
+        <p class="text-lg mb-1">No OOS files generated.</p>
+        <p class="text-sm">No extractable coordination intelligence was found in this document.</p>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+async function reprocessDoc() {
+  var btn = document.getElementById('reprocess-btn');
+  if (!confirm('Reprocess this document? Existing generated files will not be affected.')) return;
+  btn.disabled = true;
+  btn.textContent = 'Reprocessing...';
+
+  try {
+    var res = await fetch('/api/v1/source-docs/<%= document.id %>/reprocess', {
+      method: 'POST'
+    });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      alert('Reprocess failed. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Reprocess';
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Reprocess';
+  }
+}
+</script>

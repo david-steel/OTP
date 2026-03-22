@@ -69,6 +69,8 @@ export const oosFiles = pgTable('oos_files', {
   frontmatter: jsonb('frontmatter').notNull(),
   confidenceDistribution: jsonb('confidence_distribution'),
   evidenceDistribution: jsonb('evidence_distribution'),
+  sourceDocumentId: uuid('source_document_id'),
+  workspaceId: uuid('workspace_id'),
   publishedAt: timestamp('published_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -160,4 +162,107 @@ export const auditLogs = pgTable('audit_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   orgTimeIdx: index('audit_org_time_idx').on(table.orgId, table.createdAt),
+}));
+
+// ---- Consultant Ecosystem Enums ----
+
+export const workspaceRoleEnum = pgEnum('workspace_role', ['owner', 'consultant', 'client']);
+export const sourceDocStatusEnum = pgEnum('source_doc_status', ['processing', 'processed', 'completed', 'failed']);
+export const inquiryStatusEnum = pgEnum('inquiry_status', ['new', 'read', 'replied', 'closed']);
+
+// ---- Consultant Ecosystem Tables ----
+
+export const consultantProfiles = pgTable('consultant_profiles', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  displayName: varchar('display_name', { length: 255 }).notNull(),
+  headline: varchar('headline', { length: 255 }),
+  photoUrl: text('photo_url'),
+  avatarUrl: text('avatar_url'),
+  bio: text('bio'),
+  expertiseTags: text('expertise_tags').array(),
+  contactEmail: varchar('contact_email', { length: 255 }),
+  website: text('website'),
+  websiteUrl: text('website_url'),
+  linkedinUrl: text('linkedin_url'),
+  published: boolean('published').notNull().default(false),
+  isPublished: boolean('is_published').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('cp_org_idx').on(table.orgId),
+  slugIdx: uniqueIndex('cp_slug_idx').on(table.slug),
+  publishedIdx: index('cp_published_idx').on(table.published),
+}));
+
+export const workspaces = pgTable('workspaces', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  consultantOrgId: uuid('consultant_org_id').references(() => organizations.id).notNull(),
+  ownerId: uuid('owner_id').references(() => organizations.id).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  consultantOrgIdx: index('ws_consultant_org_idx').on(table.consultantOrgId),
+  ownerIdx: index('ws_owner_idx').on(table.ownerId),
+  slugIdx: uniqueIndex('ws_slug_idx').on(table.slug),
+}));
+
+export const workspaceMembers = pgTable('workspace_members', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+  orgId: uuid('org_id').references(() => organizations.id),
+  email: varchar('email', { length: 255 }).notNull(),
+  role: workspaceRoleEnum('role').notNull(),
+  invitedAt: timestamp('invited_at').defaultNow().notNull(),
+  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+  acceptedAt: timestamp('accepted_at'),
+}, (table) => ({
+  workspaceIdx: index('wm_workspace_idx').on(table.workspaceId),
+  orgIdx: index('wm_org_idx').on(table.orgId),
+  emailIdx: index('wm_email_idx').on(table.email),
+}));
+
+export const sourceDocuments = pgTable('source_documents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id).notNull(),
+  title: varchar('title', { length: 500 }).notNull(),
+  originalFilename: varchar('original_filename', { length: 500 }),
+  storageKey: varchar('storage_key', { length: 1000 }),
+  rawText: text('raw_text'),
+  rawContent: text('raw_content'),
+  wordCount: integer('word_count').notNull().default(0),
+  status: sourceDocStatusEnum('status').notNull().default('processing'),
+  sectionCount: integer('section_count').notNull().default(0),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('sd_org_idx').on(table.orgId),
+  statusIdx: index('sd_status_idx').on(table.status),
+}));
+
+export const inquiries = pgTable('inquiries', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  consultantProfileId: uuid('consultant_profile_id').references(() => consultantProfiles.id, { onDelete: 'cascade' }).notNull(),
+  orgId: uuid('org_id').references(() => organizations.id),
+  senderName: varchar('sender_name', { length: 255 }).notNull(),
+  senderEmail: varchar('sender_email', { length: 255 }).notNull(),
+  senderOrg: varchar('sender_org', { length: 255 }),
+  senderCompany: varchar('sender_company', { length: 255 }),
+  subject: varchar('subject', { length: 500 }),
+  message: text('message').notNull(),
+  notes: text('notes'),
+  status: inquiryStatusEnum('status').notNull().default('new'),
+  readAt: timestamp('read_at'),
+  repliedAt: timestamp('replied_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  profileIdx: index('inq_profile_idx').on(table.consultantProfileId),
+  orgIdx: index('inq_org_idx').on(table.orgId),
+  statusIdx: index('inq_status_idx').on(table.status),
 }));

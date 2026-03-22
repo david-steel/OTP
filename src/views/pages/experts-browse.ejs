@@ -1,0 +1,111 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold">Expert Directory</h1>
+    <a href="/dashboard/consultant" class="px-4 py-2 bg-otp-500 text-white rounded hover:bg-otp-400 text-sm font-medium">Create Your Profile</a>
+  </div>
+
+  <p class="text-gray-600 mb-6 max-w-3xl">Browse consultants who publish coordination intelligence on OTP. Each expert brings domain knowledge, published OOS files, and real operational experience. Filter by expertise to find the right consultant for your needs.</p>
+
+  <!-- Filters -->
+  <div class="bg-white p-4 rounded-lg border mb-6 flex gap-4 flex-wrap items-center">
+    <div class="flex-1 min-w-[200px]">
+      <input type="text" id="filter-search" placeholder="Search by name or bio..." class="w-full text-sm border rounded px-3 py-1.5 focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none">
+    </div>
+    <select id="filter-expertise" class="text-sm border rounded px-3 py-1.5">
+      <option value="">All Expertise</option>
+    </select>
+    <select id="filter-sort" class="text-sm border rounded px-3 py-1.5">
+      <option value="newest">Newest</option>
+      <option value="most-oos">Most OOS Files</option>
+      <option value="name">Name A-Z</option>
+    </select>
+  </div>
+
+  <!-- Expert Cards -->
+  <div id="experts-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% if (typeof experts !== 'undefined' && experts.length > 0) { %>
+      <%
+        var allTags = [];
+        experts.forEach(function(e) {
+          if (e.expertise_tags) {
+            e.expertise_tags.forEach(function(t) {
+              if (allTags.indexOf(t) === -1) allTags.push(t);
+            });
+          }
+        });
+      %>
+      <% experts.forEach(function(expert) { %>
+        <a href="/expert/<%= expert.slug %>" class="bg-white p-5 rounded-lg border claim-card block" data-tags="<%= (expert.expertise_tags || []).join(',') %>" data-name="<%= (expert.display_name || '').toLowerCase() %>" data-bio="<%= (expert.bio || '').toLowerCase() %>" data-oos="<%= expert.oos_count || 0 %>">
+          <div class="flex items-start gap-4">
+            <% if (expert.photo_url) { %>
+              <img src="<%= expert.photo_url %>" alt="<%= expert.display_name %>" class="w-14 h-14 rounded-full object-cover shrink-0">
+            <% } else { %>
+              <div class="w-14 h-14 rounded-full bg-otp-500 text-white flex items-center justify-center text-lg font-bold shrink-0">
+                <%= (expert.display_name || '?').charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-gray-900 truncate"><%= expert.display_name %></div>
+              <p class="text-sm text-gray-500 mt-1 line-clamp-2"><%= (expert.bio || '').substring(0, 100) %><%= (expert.bio || '').length > 100 ? '...' : '' %></p>
+            </div>
+          </div>
+
+          <% if (expert.expertise_tags && expert.expertise_tags.length > 0) { %>
+            <div class="flex flex-wrap gap-1.5 mt-3">
+              <% expert.expertise_tags.slice(0, 4).forEach(function(tag) { %>
+                <span class="text-xs px-2 py-0.5 bg-otp-50 text-otp-700 rounded-full"><%= tag %></span>
+              <% }); %>
+              <% if (expert.expertise_tags.length > 4) { %>
+                <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">+<%= expert.expertise_tags.length - 4 %></span>
+              <% } %>
+            </div>
+          <% } %>
+
+          <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
+            <span><%= expert.oos_count || 0 %> OOS files</span>
+          </div>
+        </a>
+      <% }); %>
+    <% } else { %>
+      <div class="col-span-full text-center py-16 text-gray-400">
+        <p class="text-lg mb-2">No published experts yet.</p>
+        <p class="text-sm">Be the first to <a href="/dashboard/consultant" class="text-otp-500 hover:underline">create your expert profile</a>.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Populate expertise filter from actual tags
+  var select = document.getElementById('filter-expertise');
+  var cards = document.querySelectorAll('#experts-grid [data-tags]');
+  var tagSet = {};
+  cards.forEach(function(c) {
+    var tags = c.getAttribute('data-tags');
+    if (tags) tags.split(',').forEach(function(t) { if (t) tagSet[t] = true; });
+  });
+  Object.keys(tagSet).sort().forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    select.appendChild(opt);
+  });
+
+  function filterCards() {
+    var search = document.getElementById('filter-search').value.toLowerCase();
+    var expertise = document.getElementById('filter-expertise').value;
+    cards.forEach(function(card) {
+      var name = card.getAttribute('data-name') || '';
+      var bio = card.getAttribute('data-bio') || '';
+      var tags = card.getAttribute('data-tags') || '';
+      var matchSearch = !search || name.indexOf(search) !== -1 || bio.indexOf(search) !== -1;
+      var matchTag = !expertise || tags.split(',').indexOf(expertise) !== -1;
+      card.style.display = (matchSearch && matchTag) ? '' : 'none';
+    });
+  }
+
+  document.getElementById('filter-search').addEventListener('input', filterCards);
+  document.getElementById('filter-expertise').addEventListener('change', filterCards);
+})();
+</script>
