@@ -163,6 +163,13 @@
       <div class="event-time">+0.3 hrs/day saved</div>
     </div>
 
+    <div class="event major" style="border-color: #f59e0b80;">
+      <div class="event-date" style="color: #f59e0b;">Mar 7-8, 2026 — THE MOMENT</div>
+      <div class="event-title">First Cross-Org OOS Ingestion</div>
+      <div class="event-desc">Plugged another organization's OOS into the agent army. The AI agents read it, compared it against Sneeze It's own coordination rules, and told David what the other organization did better. First proof that organizational AI intelligence is transferable. This is the moment OTP went from an idea to a proven concept.</div>
+      <div class="event-time" style="background: #f59e0b20; border-color: #f59e0b30; color: #f59e0b;">The birth of OTP</div>
+    </div>
+
     <div class="event major">
       <div class="event-date">Mar 11, 2026</div>
       <div class="event-title">Arin - AI Call Center Manager</div>
@@ -210,6 +217,7 @@ var agents = [
   { date: '2026-02-24', name: 'Dan + Pepper v0.2', hours: 0.5 },
   { date: '2026-02-28', name: 'Neil', hours: 0.2 },
   { date: '2026-03-04', name: 'Dirk v0.2', hours: 0.3 },
+  { date: '2026-03-08', name: 'OOS Ingestion', hours: 0.5 },
   { date: '2026-03-11', name: 'Arin', hours: 0.75 },
   { date: '2026-03-13', name: 'Bassim + L8 Bus', hours: 0.1 },
   { date: '2026-03-20', name: 'Dirk L8 Auto', hours: 0.5 },
@@ -230,24 +238,25 @@ for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
   while (agentIdx < agents.length && dateStr >= agents[agentIdx].date) {
     cumulative += agents[agentIdx].hours;
 
+    var isOOS = agents[agentIdx].name === 'OOS Ingestion';
     annotations['a' + annotationIdx] = {
       type: 'line',
       xMin: labels.length - 1,
       xMax: labels.length - 1,
-      borderColor: '#f59e0b40',
-      borderWidth: 1,
-      borderDash: [4, 4],
+      borderColor: isOOS ? '#f59e0b90' : '#f59e0b40',
+      borderWidth: isOOS ? 2 : 1,
+      borderDash: isOOS ? [] : [4, 4],
       label: {
         display: true,
-        content: agents[agentIdx].name,
+        content: isOOS ? 'OOS INGESTION — OTP BORN' : agents[agentIdx].name,
         position: 'start',
-        backgroundColor: '#f59e0b20',
+        backgroundColor: isOOS ? '#f59e0b40' : '#f59e0b20',
         color: '#f59e0b',
-        font: { size: 9, weight: 'bold' },
+        font: { size: isOOS ? 10 : 9, weight: 'bold' },
         padding: { top: 2, bottom: 2, left: 4, right: 4 },
         borderRadius: 4,
         rotation: -90,
-        yAdjust: -20,
+        yAdjust: isOOS ? -30 : -20,
       }
     };
     annotationIdx++;
