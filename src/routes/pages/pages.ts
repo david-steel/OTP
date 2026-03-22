@@ -664,7 +664,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Browse consultants and coaches who specialize in AI agent coordination. Contact experts, view their published intelligence, and hire them for your team.',
       canonical: BASE_URL + '/experts',
       breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }),
-      profiles: profileRows.rows || [],
+      experts: profileRows.rows || [],
     });
   });
 
