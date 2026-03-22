@@ -98,19 +98,19 @@ document.getElementById('consultant-form').addEventListener('submit', async func
 
   var payload = {
     slug: form.slug.value.trim(),
-    display_name: form.display_name.value.trim(),
-    photo_url: form.photo_url.value.trim() || null,
-    bio: form.bio.value.trim() || null,
-    expertise_tags: tags,
-    contact_email: form.contact_email.value.trim(),
-    website_url: form.website_url.value.trim() || null,
-    linkedin_url: form.linkedin_url.value.trim() || null,
+    displayName: form.display_name.value.trim(),
+    avatarUrl: form.photo_url.value.trim() || undefined,
+    bio: form.bio.value.trim() || undefined,
+    expertiseTags: tags,
+    contactEmail: form.contact_email.value.trim() || undefined,
+    website: form.website_url.value.trim() || undefined,
+    linkedinUrl: form.linkedin_url.value.trim() || undefined,
     published: form.published.checked
   };
 
   var isEdit = <%= (typeof profile !== 'undefined' && profile) ? 'true' : 'false' %>;
   var method = isEdit ? 'PUT' : 'POST';
-  var url = isEdit ? '/api/v1/experts/<%= (typeof profile !== 'undefined' && profile && profile.slug) ? profile.slug : '' %>' : '/api/v1/experts';
+  var url = '/api/v1/consultants/profile';
 
   try {
     var res = await fetch(url, {
