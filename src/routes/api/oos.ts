@@ -645,4 +645,73 @@ export default async function oosRoutes(app: FastifyInstance) {
       updateHistory,
     };
   });
+
+  // POST /api/v1/oos/rescan-similarities -- Recompute all similarities (admin only)
+  app.post('/oos/rescan-similarities', async (request, reply) => {
+    // Get all published OOS claims
+    const allClaims = await db.select({
+      dbId: claims.id,
+      oosFileId: claims.oosFileId,
+      claimId: claims.claimId,
+      section: claims.section,
+      displayOrder: claims.displayOrder,
+      rule: claims.rule,
+      why: claims.why,
+      failureMode: claims.failureMode,
+      confidence: claims.confidence,
+      evidence: claims.evidence,
+      scope: claims.scope,
+    }).from(claims)
+      .innerJoin(oosFiles, eq(claims.oosFileId, oosFiles.id))
+      .where(eq(oosFiles.status, 'published'));
+
+    if (allClaims.length === 0) {
+      return { message: 'No published claims found', similarities: 0 };
+    }
+
+    // Clear existing similarities
+    await db.delete(claimSimilarities);
+
+    // Get all unique OOS file IDs
+    const oosIds = [...new Set(allClaims.map(c => c.oosFileId))];
+
+    let totalPairs = 0;
+
+    // For each OOS, compute similarities against all others
+    for (const oosId of oosIds) {
+      const newClaims = allClaims
+        .filter(c => c.oosFileId === oosId)
+        .map(c => ({ ...c, dbId: c.dbId }));
+
+      const existingClaims = allClaims
+        .filter(c => c.oosFileId !== oosId)
+        .map(c => ({ ...c, dbId: c.dbId }));
+
+      const pairs = computeAllSimilarities(
+        newClaims as any,
+        oosId,
+        existingClaims as any
+      );
+
+      // Deduplicate: only keep pairs where oosA < oosB to avoid double counting
+      const uniquePairs = pairs.filter(p => p.oosAId < p.oosBId);
+
+      if (uniquePairs.length > 0) {
+        await db.insert(claimSimilarities).values(
+          uniquePairs.map(p => ({
+            claimAId: p.claimAId,
+            claimBId: p.claimBId,
+            oosAId: p.oosAId,
+            oosBId: p.oosBId,
+            similarityScore: p.score,
+            classification: p.classification,
+            sectionMatch: p.sectionMatch,
+          }))
+        );
+        totalPairs += uniquePairs.length;
+      }
+    }
+
+    return { message: 'Rescan complete', oosFilesScanned: oosIds.length, claimsCompared: allClaims.length, similaritiesFound: totalPairs };
+  });
 }
