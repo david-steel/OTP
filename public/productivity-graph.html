@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Owner Time Reclaimed - AI Agent Army Timeline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1a; color: #e2e8f0; min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 40px; }
+  .highlight { color: #0ea5e9; }
+
+  /* Chart */
+  .chart-container { position: relative; background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 32px 24px 24px; margin-bottom: 32px; }
+  canvas { width: 100% !important; }
+
+  /* Stats bar */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; text-align: center; }
+  .stat-value { font-size: 32px; font-weight: 800; color: #0ea5e9; }
+  .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 32px; }
+  .timeline::before { content: ''; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: #1e293b; }
+  .event { position: relative; margin-bottom: 20px; padding: 16px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; }
+  .event::before { content: ''; position: absolute; left: -25px; top: 20px; width: 10px; height: 10px; border-radius: 50%; background: #0ea5e9; border: 2px solid #0a0f1a; }
+  .event-date { font-size: 11px; color: #0ea5e9; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .event-title { font-size: 15px; font-weight: 700; margin: 4px 0; }
+  .event-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+  .event-time { display: inline-block; margin-top: 8px; padding: 3px 10px; background: #0ea5e9/15; border: 1px solid #0ea5e920; border-radius: 20px; font-size: 11px; color: #0ea5e9; font-weight: 600; }
+  .event.major { border-color: #0ea5e940; }
+  .event.major::before { width: 14px; height: 14px; left: -27px; top: 18px; }
+
+  /* Legend */
+  .legend { display: flex; gap: 20px; justify-content: center; margin-top: 12px; font-size: 12px; color: #64748b; }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 22px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+  <h1>Owner Time Reclaimed: <span class="highlight">The Agent Army Effect</span></h1>
+  <p class="subtitle">Cumulative daily hours saved after each AI agent deployment. Real data from a 14-agent production system running a digital marketing agency.</p>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">5.8</div>
+      <div class="stat-label">Hours saved per day (current)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">14</div>
+      <div class="stat-label">Active AI agents</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">44</div>
+      <div class="stat-label">Days since first agent</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">~$960</div>
+      <div class="stat-label">Daily value at $165/hr</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-container">
+    <canvas id="productivityChart" height="380"></canvas>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#0ea5e9"></span>Hours saved per day</span>
+      <span><span class="legend-dot" style="background:#f59e0b"></span>Agent deployment</span>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Deployment Timeline</h2>
+
+  <div class="timeline">
+
+    <div class="event major">
+      <div class="event-date">Feb 7, 2026</div>
+      <div class="event-title">Radar - Chief of Staff</div>
+      <div class="event-desc">First agent. Daily briefings from Slack, Calendar, Todoist, Proposify. David stopped manually checking 6 data sources every morning.</div>
+      <div class="event-time">+1.5 hrs/day saved</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 7, 2026</div>
+      <div class="event-title">Dash - Customer Performance Analyst</div>
+      <div class="event-desc">Meta Ads + Google Ads + CCM call center data analysis. Automated what used to be a manual spreadsheet review across 35+ ad accounts.</div>
+      <div class="event-time">+1.0 hr/day saved</div>
+    </div>
+
+    <div class="event major">
+      <div class="event-date">Feb 14, 2026</div>
+      <div class="event-title">Pepper v0.1 - Executive Assistant</div>
+      <div class="event-desc">Email triage, client email drafts, urgent escalations. David stopped reading every email. Pepper reads, categorizes, drafts responses, and presents only what matters.</div>
+      <div class="event-time">+0.75 hrs/day saved</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 14, 2026</div>
+      <div class="event-title">Dan Audit - System Overhaul</div>
+      <div class="event-desc">Dan audited all 3 live agents. Found 19 CRITICAL issues across Pepper, Radar, Dash. All fixed. Pre-computed shared state architecture deployed. Briefing went from crashing to reliable.</div>
+      <div class="event-time">Reliability jump: briefings went from 60% to 99% delivery</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 17, 2026</div>
+      <div class="event-title">Crystal - Project Manager</div>
+      <div class="event-desc">Accelo project tracking. 37 active projects monitored for overdue milestones, stale tasks, delivery risks. David stopped logging into Accelo daily.</div>
+      <div class="event-time">+0.5 hrs/day saved</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 18, 2026</div>
+      <div class="event-title">Dirk v0.1 - Sales Pipeline</div>
+      <div class="event-desc">GHL pipeline scanner. 70 opportunities monitored for stale deals, follow-up gaps, proposal status. Proposify buying signals surfaced automatically.</div>
+      <div class="event-time">+0.5 hrs/day saved</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 21, 2026</div>
+      <div class="event-title">Jeff - Ad Pacing Monitor</div>
+      <div class="event-desc">Real-time spend vs budget alerts across 48 accounts. Caught $2,200 overspend (WOA Blairsville) that would have gone unnoticed for days.</div>
+      <div class="event-time">+0.3 hrs/day saved + prevented revenue loss</div>
+    </div>
+
+    <div class="event major">
+      <div class="event-date">Feb 22-24, 2026</div>
+      <div class="event-title">Dan - Strategic Co-Founder</div>
+      <div class="event-desc">Strategic layer activated. EOS Rock tracking, L10 prep, accountability, architecture decisions. Dan reads all scanner outputs and synthesizes what the data means. David stopped doing strategic analysis manually.</div>
+      <div class="event-time">+0.5 hrs/day saved</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 24, 2026</div>
+      <div class="event-title">Pepper v0.2 + Emery (Lead Engine)</div>
+      <div class="event-desc">Pepper upgraded with 19 fixes. Emery lead response engine deployed locally. Automated lead intake, enrichment, qualification pipeline designed.</div>
+      <div class="event-time">Pepper acceptance rate: 80-85%</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 28, 2026</div>
+      <div class="event-title">Neil - Chief Learning Officer</div>
+      <div class="event-desc">Frontier scanning: YouTube, blogs, GitHub, competitive intelligence. Weekly scans with 4 sub-agents. Only surfaces net improvements, discards noise. Gating: every candidate must prove it's better than what exists.</div>
+      <div class="event-time">+0.2 hrs/day saved (1+ hrs/week)</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Mar 4, 2026</div>
+      <div class="event-title">Dirk v0.2 - Reactivation Outreach</div>
+      <div class="event-desc">Google Docs outreach system. SMYKM framework (43% open rate method). Voice feedback loop: every David edit teaches Dirk to draft better. 7 prospects drafted, David reviewed, Pepper sends.</div>
+      <div class="event-time">+0.3 hrs/day saved</div>
+    </div>
+
+    <div class="event major">
+      <div class="event-date">Mar 11, 2026</div>
+      <div class="event-title">Arin - AI Call Center Manager</div>
+      <div class="event-desc">Replaced a human manager. Reads CCM performance data, drafts daily Slack coaching messages to 3 callers, tracks speed-to-lead, monitors booking rates. Named after the creator of CCM Mastery. David stopped managing the call center directly.</div>
+      <div class="event-time">+0.75 hrs/day saved (replaced a human seat)</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Mar 13, 2026</div>
+      <div class="event-title">Bassim - Maturity Evaluator</div>
+      <div class="event-desc">Nightly scoring against 8 Levels of Agentic Engineering framework. Identifies bottlenecks, flags stagnation. Works with Neil to push the system forward. Current score: 6.2 / 8.0.</div>
+      <div class="event-time">System improvement velocity increased</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Mar 13, 2026</div>
+      <div class="event-title">Agent Message Bus (L8)</div>
+      <div class="event-desc">Agents started coordinating with each other without David in the middle. Jeff asks Dash to diagnose overspend. Dirk checks with Pulse before expansion plays. Pepper feeds Dirk auto-reply intel. Human removed from agent-to-agent loops.</div>
+      <div class="event-time">Coordination overhead eliminated</div>
+    </div>
+
+    <div class="event major">
+      <div class="event-date">Mar 20, 2026</div>
+      <div class="event-title">Dirk L8 - Autonomous Cold Outreach</div>
+      <div class="event-desc">30 cold emails per day, fully autonomous. No human review. 3 batches at 10am/12pm/3pm EST. LeadMagic enrichment, SMYKM framework, GHL logging. First fully autonomous revenue-generating agent.</div>
+      <div class="event-time">+0.5 hrs/day saved + new revenue channel</div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+var labels = [];
+var data = [];
+var annotations = {};
+
+// Build daily data from Feb 1 to Mar 22
+var agents = [
+  { date: '2026-02-07', name: 'Radar + Dash', hours: 2.5 },
+  { date: '2026-02-14', name: 'Pepper v0.1', hours: 0.75 },
+  { date: '2026-02-17', name: 'Crystal', hours: 0.5 },
+  { date: '2026-02-18', name: 'Dirk v0.1', hours: 0.5 },
+  { date: '2026-02-21', name: 'Jeff', hours: 0.3 },
+  { date: '2026-02-24', name: 'Dan + Pepper v0.2', hours: 0.5 },
+  { date: '2026-02-28', name: 'Neil', hours: 0.2 },
+  { date: '2026-03-04', name: 'Dirk v0.2', hours: 0.3 },
+  { date: '2026-03-11', name: 'Arin', hours: 0.75 },
+  { date: '2026-03-13', name: 'Bassim + L8 Bus', hours: 0.1 },
+  { date: '2026-03-20', name: 'Dirk L8 Auto', hours: 0.5 },
+];
+
+var start = new Date('2026-02-01');
+var end = new Date('2026-03-22');
+var cumulative = 0;
+var agentIdx = 0;
+var annotationIdx = 0;
+
+for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+  var dateStr = d.toISOString().split('T')[0];
+  var month = d.getMonth() + 1;
+  var day = d.getDate();
+  labels.push(month + '/' + day);
+
+  while (agentIdx < agents.length && dateStr >= agents[agentIdx].date) {
+    cumulative += agents[agentIdx].hours;
+
+    annotations['a' + annotationIdx] = {
+      type: 'line',
+      xMin: labels.length - 1,
+      xMax: labels.length - 1,
+      borderColor: '#f59e0b40',
+      borderWidth: 1,
+      borderDash: [4, 4],
+      label: {
+        display: true,
+        content: agents[agentIdx].name,
+        position: 'start',
+        backgroundColor: '#f59e0b20',
+        color: '#f59e0b',
+        font: { size: 9, weight: 'bold' },
+        padding: { top: 2, bottom: 2, left: 4, right: 4 },
+        borderRadius: 4,
+        rotation: -90,
+        yAdjust: -20,
+      }
+    };
+    annotationIdx++;
+    agentIdx++;
+  }
+
+  data.push(Math.round(cumulative * 100) / 100);
+}
+
+var ctx = document.getElementById('productivityChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Hours saved per day',
+      data: data,
+      borderColor: '#0ea5e9',
+      backgroundColor: 'rgba(14, 165, 233, 0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointHoverBackgroundColor: '#0ea5e9',
+      borderWidth: 2.5,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        grid: { color: '#1e293b', drawBorder: false },
+        ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 12 },
+      },
+      y: {
+        grid: { color: '#1e293b', drawBorder: false },
+        ticks: { color: '#475569', font: { size: 10 }, callback: function(v) { return v + 'h'; } },
+        min: 0,
+        max: 7,
+        title: { display: true, text: 'Hours saved per day', color: '#64748b', font: { size: 11 } }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        titleColor: '#e2e8f0',
+        bodyColor: '#94a3b8',
+        borderColor: '#334155',
+        borderWidth: 1,
+        padding: 12,
+        displayColors: false,
+        callbacks: {
+          label: function(ctx) { return ctx.parsed.y + ' hours saved per day'; },
+          afterLabel: function(ctx) { return '$' + Math.round(ctx.parsed.y * 165) + '/day at $165/hr'; }
+        }
+      },
+      annotation: { annotations: annotations }
+    }
+  }
+});
+</script>
+</body>
+</html>

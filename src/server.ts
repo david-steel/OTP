@@ -10,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = Fastify({
   logger: true,
+  ignoreTrailingSlash: true,
 });
 
 // Rate limiting
@@ -352,6 +353,17 @@ await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
+
+// Custom 404 handler -- return HTML instead of Fastify's default JSON
+app.setNotFoundHandler(async (request, reply) => {
+  reply.status(404);
+  return reply.view('pages/home', {
+    title: 'Page Not Found - OTP',
+    description: 'The page you are looking for does not exist.',
+    canonical: 'https://orgtp.com/',
+    noindex: true,
+  });
+});
 
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
