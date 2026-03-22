@@ -647,6 +647,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // For Coaches landing page
+  app.get('/for-coaches', async (request, reply) => {
+    return reply.view('pages/for-coaches', {
+      title: 'For Coaches and Consultants - OTP',
+      description: 'Stop giving advice. Start installing systems. Your clients get 2.5 hours back on Day 1. You get data across every client that makes your coaching sharper with every engagement.',
+      canonical: BASE_URL + '/for-coaches',
+      breadcrumbs: bc({ name: 'For Coaches', url: BASE_URL + '/for-coaches' }),
+    });
+  });
+
   // ---- Consultant Ecosystem Pages ----
 
   // Browse experts
@@ -724,10 +734,15 @@ export default async function pageRoutes(app: FastifyInstance) {
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
 
-    const profileRows = await db.execute(sql`SELECT * FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
+    const isAdmin = (request as any).isSuperAdmin;
+    const profileRows = isAdmin
+      ? await db.execute(sql`SELECT cp.*, o.name as org_name FROM consultant_profiles cp JOIN organizations o ON o.id = cp.org_id ORDER BY cp.created_at DESC`) as any
+      : await db.execute(sql`SELECT * FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
     return reply.view('pages/dashboard-consultant', {
       title: 'Consultant Profile - Dashboard - OTP',
       profile: (profileRows.rows || [])[0] || null,
+      allProfiles: isAdmin ? (profileRows.rows || []) : null,
+      isSuperAdmin: isAdmin,
     });
   });
 
