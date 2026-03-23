@@ -48,6 +48,13 @@ await app.register(fastifyView, {
   },
 });
 
+// Super admin detection -- makes isSuperAdmin available to all page routes
+import { isSuperAdmin } from './middleware/super-admin.js';
+app.decorateRequest('isSuperAdmin', false);
+app.addHook('preHandler', async (request) => {
+  (request as any).isSuperAdmin = isSuperAdmin(request);
+});
+
 // Security headers
 app.addHook('onSend', async (request, reply) => {
   reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
