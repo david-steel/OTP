@@ -683,6 +683,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Radar -- AI Chief of Staff product page
+  app.get('/radar', async (request, reply) => {
+    return reply.view('pages/radar', {
+      title: 'Radar -- AI Chief of Staff | 2.5 Hours Back on Day 1',
+      description: 'Radar is an AI Chief of Staff built on Claude Code. One command launches 11 parallel scanners, compiles a daily briefing, and presents an action queue. 2.5 hours saved on Day 1.',
+      canonical: BASE_URL + '/radar',
+      breadcrumbs: bc({ name: 'Radar', url: BASE_URL + '/radar' }),
+    });
+  });
+
   // For Coaches landing page
   app.get('/for-coaches', async (request, reply) => {
     return reply.view('pages/for-coaches', {
