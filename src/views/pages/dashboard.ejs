@@ -1,5 +1,11 @@
 <% if (typeof authState !== 'undefined' && authState === 'unauthenticated') { %>
-  <div class="max-w-xl mx-auto px-4 py-20 text-center">
+  <div class="max-w-xl mx-auto px-4 py-20 text-center" id="dashboard-loading">
+    <div class="animate-pulse">
+      <h1 class="text-2xl font-bold mb-4">Publisher Dashboard</h1>
+      <p class="text-gray-500 mb-8">Loading your account...</p>
+    </div>
+  </div>
+  <div class="max-w-xl mx-auto px-4 py-20 text-center hidden" id="dashboard-signin">
     <h1 class="text-2xl font-bold mb-4">Publisher Dashboard</h1>
     <p class="text-gray-500 mb-8">Sign in to view your dashboard, manage your OOS files, and track your publisher stats.</p>
     <button id="dashboard-sign-in" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400">
@@ -7,14 +13,34 @@
     </button>
   </div>
   <script>
-    window.addEventListener('clerk-loaded', () => {
-      const btn = document.getElementById('dashboard-sign-in');
-      if (btn && window.__clerk) {
-        btn.addEventListener('click', () => {
-          window.__clerk.openSignIn({ redirectUrl: '/dashboard' });
-        });
+    window.addEventListener('clerk-loaded', function(e) {
+      var loadingEl = document.getElementById('dashboard-loading');
+      var signinEl = document.getElementById('dashboard-signin');
+      var btn = document.getElementById('dashboard-sign-in');
+
+      if (window.__clerk && window.__clerk.user) {
+        // User is signed in but server did not see the session -- reload to pick up the cookie
+        window.location.reload();
+      } else {
+        // Not signed in -- show the sign-in prompt
+        loadingEl.classList.add('hidden');
+        signinEl.classList.remove('hidden');
+        if (btn && window.__clerk) {
+          btn.addEventListener('click', function() {
+            window.__clerk.openSignIn({ redirectUrl: '/dashboard' });
+          });
+        }
       }
     });
+    // Fallback: if Clerk takes too long, show sign-in after 3 seconds
+    setTimeout(function() {
+      var loadingEl = document.getElementById('dashboard-loading');
+      var signinEl = document.getElementById('dashboard-signin');
+      if (loadingEl && !loadingEl.classList.contains('hidden')) {
+        loadingEl.classList.add('hidden');
+        signinEl.classList.remove('hidden');
+      }
+    }, 3000);
   </script>
 <% } else { %>
   <div class="max-w-6xl mx-auto px-4 py-8">

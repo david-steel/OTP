@@ -640,9 +640,34 @@ textarea.addEventListener('input', function() {
 });
 
 function handleAuthError(data, status) {
-  if (status === 401) { if (window.__clerk) { window.__clerk.openSignIn({ redirectUrl: '/publish' }); } else { alert('Please sign in to publish.'); } return true; }
-  if (data.error && data.error.code === 'ORG_NOT_FOUND') { window.location.href = '/dashboard'; return true; }
+  if (status === 401) {
+    // Check if user is signed in but has no publisher profile
+    if (window.__clerk && window.__clerk.user) {
+      showAuthBanner('You need a publisher profile before you can publish. It takes 30 seconds.', '/dashboard', 'Create Publisher Profile');
+    } else if (window.__clerk) {
+      window.__clerk.openSignIn({ redirectUrl: '/publish' });
+    } else {
+      showAuthBanner('Please sign in to publish your OOS.', '#', 'Sign In');
+    }
+    return true;
+  }
+  if (data.error && data.error.code === 'ORG_NOT_FOUND') {
+    showAuthBanner('You need a publisher profile before you can publish. It takes 30 seconds.', '/dashboard', 'Create Publisher Profile');
+    return true;
+  }
   return false;
+}
+
+function showAuthBanner(message, href, linkText) {
+  var existing = document.getElementById('auth-banner');
+  if (existing) existing.remove();
+  var banner = document.createElement('div');
+  banner.id = 'auth-banner';
+  banner.className = 'bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6';
+  banner.innerHTML = '<div class="flex items-center justify-between gap-4"><p class="text-sm text-blue-800">' + message + '</p><a href="' + href + '" class="shrink-0 px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400">' + linkText + '</a></div>';
+  var results = document.getElementById('validation-results');
+  results.parentElement.insertBefore(banner, results);
+  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function publishOOS() {
