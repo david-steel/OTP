@@ -1,0 +1,188 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+      <p class="text-gray-500 text-sm">Platform-wide stats and management.</p>
+    </div>
+    <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase">Super Admin</span>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= stats.totalOrgs %></div>
+      <div class="text-xs text-gray-500">Organizations</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= stats.publishedOos %></div>
+      <div class="text-xs text-gray-500">Published OOS</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= stats.totalClaims %></div>
+      <div class="text-xs text-gray-500">Total Claims</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= stats.totalSimilarities %></div>
+      <div class="text-xs text-gray-500">Similarities</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= stats.openTickets %></div>
+      <div class="text-xs text-gray-500">Open Tickets</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-600"><%= stats.apiKeys %></div>
+      <div class="text-xs text-gray-500">API Keys</div>
+    </div>
+  </div>
+
+  <!-- Recent Activity + Organizations side by side -->
+  <div class="grid lg:grid-cols-2 gap-6 mb-8">
+
+    <!-- Organizations -->
+    <div>
+      <h3 class="font-semibold mb-3">Organizations (<%= orgs.length %>)</h3>
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-left text-xs text-gray-500">
+            <tr>
+              <th class="px-4 py-2">Name</th>
+              <th class="px-4 py-2">Industry</th>
+              <th class="px-4 py-2">Quality</th>
+              <th class="px-4 py-2">Level</th>
+              <th class="px-4 py-2">Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% orgs.forEach(function(org) { %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-4 py-2">
+                  <a href="/org/<%= org.id %>" class="text-otp-600 hover:underline font-medium"><%= org.name %></a>
+                  <% if (org.badge) { %><span class="ml-1 text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 capitalize"><%= org.badge %></span><% } %>
+                </td>
+                <td class="px-4 py-2 text-gray-500 capitalize"><%= org.industry %></td>
+                <td class="px-4 py-2">
+                  <% if (org.quality_tier) { %>
+                    <span class="text-xs px-1.5 py-0.5 rounded capitalize
+                      <% if (org.quality_tier === 'platinum') { %>bg-purple-100 text-purple-700<% } %>
+                      <% if (org.quality_tier === 'gold') { %>bg-yellow-100 text-yellow-700<% } %>
+                      <% if (org.quality_tier === 'silver') { %>bg-gray-100 text-gray-600<% } %>
+                      <% if (org.quality_tier === 'bronze') { %>bg-orange-100 text-orange-700<% } %>
+                    "><%= org.quality_tier %></span>
+                  <% } else { %>
+                    <span class="text-gray-300">--</span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-2 text-gray-500"><%= org.agentic_level ? 'L' + org.agentic_level : '--' %></td>
+                <td class="px-4 py-2 text-gray-400 text-xs"><%= new Date(org.created_at).toLocaleDateString() %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Audit Logs -->
+    <div>
+      <h3 class="font-semibold mb-3">Recent Activity</h3>
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-left text-xs text-gray-500">
+            <tr>
+              <th class="px-4 py-2">Action</th>
+              <th class="px-4 py-2">Org</th>
+              <th class="px-4 py-2">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% auditLogs.forEach(function(log) { %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-4 py-2">
+                  <span class="text-xs font-mono px-1.5 py-0.5 rounded
+                    <% if (log.action.includes('published')) { %>bg-green-100 text-green-700<% } else if (log.action.includes('created')) { %>bg-blue-100 text-blue-700<% } else { %>bg-gray-100 text-gray-600<% } %>
+                  "><%= log.action %></span>
+                </td>
+                <td class="px-4 py-2 text-gray-500 text-xs"><%= log.org_name || '--' %></td>
+                <td class="px-4 py-2 text-gray-400 text-xs"><%= new Date(log.created_at).toLocaleString() %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Published OOS Files -->
+  <h3 class="font-semibold mb-3">All Published OOS Files</h3>
+  <div class="bg-white border rounded-lg overflow-hidden mb-8">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-xs text-gray-500">
+        <tr>
+          <th class="px-4 py-2">Organization</th>
+          <th class="px-4 py-2">Template</th>
+          <th class="px-4 py-2">Version</th>
+          <th class="px-4 py-2">Claims</th>
+          <th class="px-4 py-2">Words</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Published</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% oosFiles.forEach(function(f) { %>
+          <tr class="border-t hover:bg-gray-50">
+            <td class="px-4 py-2">
+              <a href="/oos/<%= f.id %>" class="text-otp-600 hover:underline"><%= f.org_name %></a>
+            </td>
+            <td class="px-4 py-2 text-gray-500 capitalize"><%= f.template.replace('_', ' ') %></td>
+            <td class="px-4 py-2 text-gray-500">v<%= f.version %></td>
+            <td class="px-4 py-2 text-gray-500"><%= f.claim_count %></td>
+            <td class="px-4 py-2 text-gray-500"><%= f.word_count %></td>
+            <td class="px-4 py-2">
+              <span class="text-xs px-1.5 py-0.5 rounded capitalize
+                <% if (f.status === 'published') { %>bg-green-100 text-green-700<% } %>
+                <% if (f.status === 'draft') { %>bg-yellow-100 text-yellow-700<% } %>
+                <% if (f.status === 'archived') { %>bg-gray-100 text-gray-500<% } %>
+              "><%= f.status %></span>
+            </td>
+            <td class="px-4 py-2 text-gray-400 text-xs"><%= f.published_at ? new Date(f.published_at).toLocaleDateString() : '--' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Open Tickets -->
+  <% if (tickets.length > 0) { %>
+  <h3 class="font-semibold mb-3">Open Tickets (<%= tickets.length %>)</h3>
+  <div class="bg-white border rounded-lg overflow-hidden mb-8">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-xs text-gray-500">
+        <tr>
+          <th class="px-4 py-2">Title</th>
+          <th class="px-4 py-2">Category</th>
+          <th class="px-4 py-2">Priority</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% tickets.forEach(function(t) { %>
+          <tr class="border-t hover:bg-gray-50">
+            <td class="px-4 py-2 font-medium"><%= t.title %></td>
+            <td class="px-4 py-2 text-gray-500 capitalize"><%= t.category %></td>
+            <td class="px-4 py-2">
+              <span class="text-xs px-1.5 py-0.5 rounded capitalize
+                <% if (t.priority === 'critical') { %>bg-red-100 text-red-700<% } %>
+                <% if (t.priority === 'high') { %>bg-orange-100 text-orange-700<% } %>
+                <% if (t.priority === 'medium') { %>bg-yellow-100 text-yellow-700<% } %>
+                <% if (t.priority === 'low') { %>bg-gray-100 text-gray-500<% } %>
+              "><%= t.priority %></span>
+            </td>
+            <td class="px-4 py-2 capitalize text-gray-500"><%= t.status.replace('_', ' ') %></td>
+            <td class="px-4 py-2 text-gray-400 text-xs"><%= new Date(t.created_at).toLocaleDateString() %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>

@@ -683,6 +683,65 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Super Admin Dashboard
+  app.get('/admin', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin;
+    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+
+    // All orgs
+    const orgsRes = await db.execute(sql`SELECT * FROM organizations ORDER BY created_at DESC`) as any;
+    const orgs = orgsRes.rows || [];
+
+    // Published OOS files with org names
+    const oosRes = await db.execute(sql`
+      SELECT f.*, o.name AS org_name
+      FROM oos_files f JOIN organizations o ON f.org_id = o.id
+      ORDER BY f.created_at DESC
+    `) as any;
+    const oosFilesList = oosRes.rows || [];
+
+    // Stats
+    const statsRes = await db.execute(sql`
+      SELECT
+        (SELECT COUNT(*) FROM organizations) AS total_orgs,
+        (SELECT COUNT(*) FROM oos_files WHERE status = 'published') AS published_oos,
+        (SELECT COUNT(*) FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')) AS total_claims,
+        (SELECT COUNT(*) FROM claim_similarities) AS total_similarities,
+        (SELECT COUNT(*) FROM tickets WHERE status IN ('open', 'in_progress')) AS open_tickets,
+        (SELECT COUNT(*) FROM api_keys WHERE revoked_at IS NULL) AS api_keys
+    `) as any;
+    const row = (statsRes.rows || [])[0] || {};
+
+    // Recent audit logs with org names
+    const auditRes = await db.execute(sql`
+      SELECT a.*, o.name AS org_name
+      FROM audit_logs a LEFT JOIN organizations o ON a.org_id = o.id
+      ORDER BY a.created_at DESC LIMIT 30
+    `) as any;
+
+    // Open tickets
+    const ticketsRes = await db.execute(sql`
+      SELECT * FROM tickets WHERE status IN ('open', 'in_progress') ORDER BY priority DESC, created_at DESC
+    `) as any;
+
+    return reply.view('pages/admin', {
+      title: 'Admin Dashboard - OTP',
+      noindex: true,
+      stats: {
+        totalOrgs: parseInt(row.total_orgs || '0', 10),
+        publishedOos: parseInt(row.published_oos || '0', 10),
+        totalClaims: parseInt(row.total_claims || '0', 10),
+        totalSimilarities: parseInt(row.total_similarities || '0', 10),
+        openTickets: parseInt(row.open_tickets || '0', 10),
+        apiKeys: parseInt(row.api_keys || '0', 10),
+      },
+      orgs,
+      oosFiles: oosFilesList,
+      auditLogs: auditRes.rows || [],
+      tickets: ticketsRes.rows || [],
+    });
+  });
+
   // Radar -- AI Chief of Staff product page
   app.get('/radar', async (request, reply) => {
     return reply.view('pages/radar', {
