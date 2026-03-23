@@ -171,23 +171,60 @@
       </div>
     </div>
     <div id="phase2-cta" class="hidden">
-      <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
         <div class="flex items-center gap-2 mb-2">
           <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           <span class="font-semibold text-green-800">All items reviewed!</span>
         </div>
-        <p class="text-sm text-green-700 mb-3">Automated merge execution is coming in Phase 2. For now, here is what to do next:</p>
-        <ol class="text-sm text-green-700 space-y-1 list-decimal list-inside">
-          <li>Copy your accepted claims below</li>
-          <li>Open your OOS in the <a href="/publish" class="underline font-medium">editor</a></li>
-          <li>Paste and adapt the claims into your OOS</li>
-          <li>Re-publish to update your live OOS</li>
-        </ol>
+        <p class="text-sm text-green-700">Choose how you want to apply your accepted claims to your platform.</p>
       </div>
-      <button type="button" onclick="copyAcceptedClaims()" id="copy-btn" class="w-full px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors">Copy Accepted Claims to Clipboard</button>
-      <p id="copy-confirm" class="text-xs text-green-600 text-center mt-2 hidden">Copied to clipboard!</p>
+
+      <!-- Option 1: Download Markdown -->
+      <div class="bg-white border rounded-lg p-5 mb-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-otp-50 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-5 h-5 text-otp-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-semibold text-sm mb-1">Download Merge File</h4>
+            <p class="text-xs text-gray-500 mb-3">Downloads a .md file with your accepted claims formatted as OOS entries, plus instructions your AI can follow to merge them into your system.</p>
+            <button type="button" onclick="downloadMergeFile()" class="w-full px-4 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">Download .md File</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option 2: Push via API/MCP -->
+      <div class="bg-white border rounded-lg p-5 mb-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-semibold text-sm mb-1">Push via MCP or API</h4>
+            <p class="text-xs text-gray-500 mb-3">If your AI platform has the OTP MCP server installed, paste the command below. Or use the API endpoint with your API key.</p>
+            <div class="bg-gray-900 rounded-lg p-3 mb-2 relative group">
+              <code id="mcp-command" class="text-xs text-green-400 font-mono break-all block"></code>
+              <button type="button" onclick="copyMcpCommand()" class="absolute top-2 right-2 p-1 bg-gray-700 rounded text-gray-400 hover:text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+            </div>
+            <details class="text-xs text-gray-500">
+              <summary class="cursor-pointer hover:text-gray-700">API alternative</summary>
+              <div class="mt-2 bg-gray-50 border rounded p-3">
+                <p class="mb-2">POST your updated OOS via the API:</p>
+                <code class="text-xs font-mono text-gray-600 block break-all">curl -X POST https://orgtp.com/api/v1/oos \<br>&nbsp; -H "Authorization: Bearer YOUR_API_KEY" \<br>&nbsp; -H "Content-Type: application/json" \<br>&nbsp; -d '{"template":"agent_army","rawContent":"..."}'</code>
+                <p class="mt-2"><a href="/settings/api" class="text-otp-500 hover:underline">Get your API key</a> from Settings.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option 3: Copy to clipboard (fallback) -->
+      <div class="text-center">
+        <button type="button" onclick="copyAcceptedClaims()" class="text-sm text-otp-500 hover:text-otp-400 underline underline-offset-4">Or just copy accepted claims to clipboard</button>
+        <p id="copy-confirm" class="text-xs text-green-600 mt-1 hidden">Copied to clipboard!</p>
+      </div>
     </div>
-    <p id="phase2-hint" class="text-xs text-gray-400 mt-2">Automated merge is coming soon. Your decisions here will carry over.</p>
+    <p id="phase2-hint" class="text-xs text-gray-400 mt-2">Decide on all items above to see your export options.</p>
   </div>
 </div>
 
@@ -238,6 +275,7 @@ function setDecision(btn) {
   if (decided >= totalItems) {
     document.getElementById('phase2-cta').classList.remove('hidden');
     document.getElementById('phase2-hint').classList.add('hidden');
+    updateMcpCommand();
     document.getElementById('decision-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
   } else {
     document.getElementById('phase2-cta').classList.add('hidden');
@@ -245,32 +283,122 @@ function setDecision(btn) {
   }
 }
 
-// Store candidate data for clipboard copy
+// Store full candidate data for export
 const candidateData = <%- JSON.stringify(preview.candidates.reduce(function(acc, mc) {
-  acc[mc.id] = { label: mc.source.label, section: mc.source.type, confidence: mc.source.confidence || '', evidence: mc.source.evidence || '' };
+  acc[mc.id] = {
+    label: mc.source.label,
+    section: mc.source.type,
+    confidence: mc.source.confidence || '',
+    evidence: mc.source.evidence || '',
+    rule: mc.source.content && mc.source.content.rule ? mc.source.content.rule : mc.source.label,
+    why: mc.source.content && mc.source.content.why ? mc.source.content.why : '',
+    failureMode: mc.source.content && mc.source.content.failureMode ? mc.source.content.failureMode : '',
+    scope: mc.source.content && mc.source.content.scope ? mc.source.content.scope : '',
+    category: mc.category,
+  };
   return acc;
 }, {})) %>;
 
-function copyAcceptedClaims() {
-  var lines = [];
+const sourceOrgName = '<%= preview.sourceOrg.name.replace(/'/g, "\\'") %>';
+
+function buildAcceptedClaimsMd() {
+  var accepted = [];
+  var adapted = [];
+  var cid = 1;
   Object.keys(decisions).forEach(function(id) {
-    if (decisions[id] === 'accept' && candidateData[id]) {
-      var d = candidateData[id];
-      lines.push('- ' + d.label + (d.confidence ? ' [' + d.confidence + ']' : ''));
-    }
+    var d = candidateData[id];
+    if (!d) return;
+    if (decisions[id] === 'accept') accepted.push(d);
+    if (decisions[id] === 'adapt') adapted.push(d);
   });
-  if (lines.length === 0) {
-    lines.push('No claims were accepted.');
-  } else {
-    lines.unshift('## Accepted Claims from ' + '<%= preview.sourceOrg.name %>');
-    lines.push('');
-    lines.push('Paste these into your OOS and adjust for your context.');
+
+  var md = '# OTP Merge Instructions\n\n';
+  md += '> Generated from merge preview: ' + sourceOrgName + '\n';
+  md += '> Date: ' + new Date().toISOString().split('T')[0] + '\n\n';
+
+  md += '## Instructions for Your AI\n\n';
+  md += 'The claims below were reviewed and selected from another organization\'s OOS on OTP.\n';
+  md += 'To apply them:\n\n';
+  md += '1. Read your current OOS file (your Organizational Operating System)\n';
+  md += '2. For each ACCEPTED claim below, add it to the matching section of your OOS\n';
+  md += '3. For each ADAPT claim, rewrite it to fit your organization\'s context before adding\n';
+  md += '4. Assign imported claims LOW confidence until you validate them in your environment\n';
+  md += '5. Re-publish your updated OOS to OTP using the `publish_oos` MCP tool or the API\n\n';
+
+  if (accepted.length > 0) {
+    md += '## Accepted Claims (' + accepted.length + ')\n\n';
+    md += 'Add these directly to your OOS:\n\n';
+    accepted.forEach(function(d) {
+      md += '**[C' + String(cid++).padStart(3, '0') + ']** ' + (d.section || 'imported') + '\n';
+      md += '- **Rule:** ' + d.rule + '\n';
+      if (d.why) md += '- **Why:** ' + d.why + '\n';
+      if (d.failureMode) md += '- **Failure mode:** ' + d.failureMode + '\n';
+      md += '- **Confidence:** LOW (imported, not yet validated)\n';
+      md += '- **Evidence:** ' + (d.evidence || 'INFERENCE') + '\n';
+      if (d.scope) md += '- **Scope:** ' + d.scope + '\n';
+      md += '- **Source:** ' + sourceOrgName + ' via OTP merge\n\n';
+    });
   }
-  navigator.clipboard.writeText(lines.join('\n')).then(function() {
+
+  if (adapted.length > 0) {
+    md += '## Claims to Adapt (' + adapted.length + ')\n\n';
+    md += 'Rewrite these for your context before adding:\n\n';
+    adapted.forEach(function(d) {
+      md += '**[ADAPT-' + String(cid++).padStart(3, '0') + ']** ' + (d.section || 'imported') + '\n';
+      md += '- **Original rule:** ' + d.rule + '\n';
+      if (d.why) md += '- **Original reasoning:** ' + d.why + '\n';
+      md += '- **Action needed:** Rewrite this claim for your organization. Change agent names, authority levels, and scope to match your setup.\n\n';
+    });
+  }
+
+  var rejected = Object.values(decisions).filter(function(d) { return d === 'reject'; }).length;
+  md += '## Summary\n\n';
+  md += '| Decision | Count |\n|---|---|\n';
+  md += '| Accepted | ' + accepted.length + ' |\n';
+  md += '| Adapt | ' + adapted.length + ' |\n';
+  md += '| Rejected | ' + rejected + ' |\n';
+
+  return md;
+}
+
+function downloadMergeFile() {
+  var md = buildAcceptedClaimsMd();
+  var blob = new Blob([md], { type: 'text/markdown' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'otp-merge-' + sourceOrgName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + new Date().toISOString().split('T')[0] + '.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function copyMcpCommand() {
+  var el = document.getElementById('mcp-command');
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    el.style.color = '#86efac';
+    setTimeout(function() { el.style.color = ''; }, 1500);
+  });
+}
+
+function copyAcceptedClaims() {
+  var md = buildAcceptedClaimsMd();
+  navigator.clipboard.writeText(md).then(function() {
     var confirm = document.getElementById('copy-confirm');
     confirm.classList.remove('hidden');
     setTimeout(function() { confirm.classList.add('hidden'); }, 3000);
   });
+}
+
+// Populate MCP command when phase2-cta is shown
+function updateMcpCommand() {
+  var accepted = [];
+  Object.keys(decisions).forEach(function(id) {
+    if (decisions[id] === 'accept' && candidateData[id]) accepted.push(candidateData[id]);
+  });
+  var cmd = 'Use the OTP MCP tool: review_recommendation to accept ' + accepted.length + ' claims from ' + sourceOrgName + ', then publish_oos to re-publish your updated OOS.';
+  document.getElementById('mcp-command').textContent = cmd;
 }
 
 function filterMerge() {
