@@ -472,6 +472,42 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 23
+  app.get('/blog/coach-dilemma-ai-frameworks', async (request, reply) => {
+    return reply.view('pages/blog-post-23', {
+      title: 'The Coach\'s Dilemma: AI Can Run Your Frameworks. It Can\'t Replace What You Actually Do. - OTP',
+      description: 'EOS and Scaling Up playbooks are getting automated. The coaches who survive will encode what the playbook can\'t capture.',
+      canonical: BASE_URL + '/blog/coach-dilemma-ai-frameworks',
+      ogType: 'article',
+      datePublished: '2026-03-23',
+      jsonLd: blogJsonLd('The Coach\'s Dilemma: AI Can Run Your Frameworks. It Can\'t Replace What You Actually Do.', 'coach-dilemma-ai-frameworks', '2026-03-23', 2400)
+    });
+  });
+
+  // Blog post 24
+  app.get('/blog/asaas-desktop-ai-coaching', async (request, reply) => {
+    return reply.view('pages/blog-post-24', {
+      title: 'ASaaS, Desktop AI, and the End of Software You Log Into - OTP',
+      description: 'SaaS gave everyone the same tool. ASaaS gives everyone a different team. The coaching model has to change with it.',
+      canonical: BASE_URL + '/blog/asaas-desktop-ai-coaching',
+      ogType: 'article',
+      datePublished: '2026-03-23',
+      jsonLd: blogJsonLd('ASaaS, Desktop AI, and the End of Software You Log Into', 'asaas-desktop-ai-coaching', '2026-03-23', 2600)
+    });
+  });
+
+  // Blog post 25
+  app.get('/blog/unlock-20-years-coaching-experience', async (request, reply) => {
+    return reply.view('pages/blog-post-25', {
+      title: '20 Years of Coaching, Locked in Your Head. Here\'s How to Unlock It. - OTP',
+      description: 'Most coaching businesses are one-to-one, time-limited, and die when you stop. OTP turns your experience into a scalable intelligence asset.',
+      canonical: BASE_URL + '/blog/unlock-20-years-coaching-experience',
+      ogType: 'article',
+      datePublished: '2026-03-23',
+      jsonLd: blogJsonLd('20 Years of Coaching, Locked in Your Head. Here\'s How to Unlock It.', 'unlock-20-years-coaching-experience', '2026-03-23', 2800)
+    });
+  });
+
   // Orchestra Kit (design system)
   app.get('/orchestra-kit', async (request, reply) => {
     return reply.sendFile('orchestra-kit.html');
