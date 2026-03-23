@@ -6,9 +6,9 @@ FROM base AS deps
 COPY package.json package-lock.json* ./
 RUN npm ci --production=false
 
-# Build (v2 - cache bust 2026-03-15)
+# Build (v3 - cache bust 2026-03-23)
 FROM base AS builder
-RUN echo "build-version-2026-03-15-1630" > /tmp/.build-id
+RUN echo "build-version-2026-03-23-1915" > /tmp/.build-id
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
