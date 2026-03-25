@@ -1,12 +1,15 @@
 <style>
   @keyframes dash-flow { to { stroke-dashoffset: -24; } }
-  .org-edges path { animation: dash-flow 1.5s linear infinite; }
   #graph-page footer { display: none; }
   #graph-container {
     background-color: #ffffff;
     background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
     background-size: 24px 24px;
   }
+  /* Slider styling */
+  .sim-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: #e5e7eb; outline: none; }
+  .sim-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #6366f1; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .sim-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #6366f1; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 </style>
 <div class="bg-white min-h-screen -mt-[65px] pt-[65px]" id="graph-page">
   <!-- Top Stats Bar -->
@@ -186,6 +189,19 @@
           </label>
         </div>
 
+        <!-- Similarity slider -->
+        <div id="sim-slider-section" class="border-t border-gray-100 px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold">Min Similarity</span>
+            <span class="text-gray-900 text-xs font-semibold" id="sim-slider-value">0.50</span>
+          </div>
+          <input type="range" id="sim-slider" class="sim-slider" min="0.3" max="1.0" step="0.05" value="0.5">
+          <div class="flex justify-between text-[9px] text-gray-400 mt-1">
+            <span>0.30</span>
+            <span>1.00</span>
+          </div>
+        </div>
+
         <!-- Section legend (shown when sections layer active) -->
         <div id="section-legend" class="hidden border-t border-gray-100 px-4 py-3">
           <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">Section Colors</div>
@@ -275,10 +291,10 @@
   }
 
   function efficiencyColor(eff) {
-    if (eff >= 5) return '#059669'; // green
-    if (eff >= 2) return '#3b82f6'; // blue
-    if (eff >= 1) return '#d97706'; // amber
-    return '#ef4444'; // red
+    if (eff >= 5) return '#059669';
+    if (eff >= 2) return '#3b82f6';
+    if (eff >= 1) return '#d97706';
+    return '#ef4444';
   }
 
   function efficiencyLabel(eff) {
@@ -291,13 +307,19 @@
   // ---- State ----
   var graphData = null;
   var simulation = null;
-  var claimNodes = [];
-  var claimEdges = [];
-  var orgNodeElems = null;
-  var claimNodeElems = null;
-  var orgEdgeElems = null;
-  var claimEdgeElems = null;
+  var expandedOrgs = {};      // orgId -> true if expanded
+  var minSimilarity = 0.5;    // Slider value
+  var orgGroups = {};          // orgId -> { nodes: [...], oosIds: [...], claims: [...], ... }
+  var aggEdges = [];           // Aggregated org-to-org edges
+  var claimSimEdges = [];      // Individual claim-to-claim similarities
+
+  // D3 selections
   var gMain = null;
+  var orgEdgeLayer = null;
+  var claimEdgeLayer = null;
+  var claimNodeLayer = null;
+  var orgNodeLayer = null;
+  var orgNodeElems = null;
 
   // Layer states
   var layers = {
@@ -338,6 +360,9 @@
 
       document.getElementById('graph-loading').classList.add('hidden');
       document.getElementById('layer-panel').classList.remove('hidden');
+
+      // Build org groups from nodes (group by orgId)
+      buildOrgGroups(data);
       renderGraph(data);
     } catch (e) {
       document.getElementById('graph-loading').innerHTML =
@@ -345,14 +370,103 @@
     }
   }
 
-  // ---- Curved path helper ----
-  function curvedPath(d) {
-    var dx = d.target.x - d.source.x;
-    var dy = d.target.y - d.source.y;
-    var dr = Math.sqrt(dx * dx + dy * dy) * 0.5;
-    return 'M' + d.source.x + ',' + d.source.y +
-           'A' + dr + ',' + dr + ' 0 0,1 ' +
-           d.target.x + ',' + d.target.y;
+  // ---- Build Org Groups ----
+  // Group OOS file nodes by orgId to create org-level super-nodes
+  function buildOrgGroups(data) {
+    orgGroups = {};
+    data.nodes.forEach(function(n) {
+      var oid = n.orgId || n.id;
+      if (!orgGroups[oid]) {
+        orgGroups[oid] = {
+          orgId: oid,
+          orgName: n.orgName,
+          template: n.template,
+          industry: n.industry,
+          qualityTier: n.qualityTier,
+          badge: n.badge,
+          oosIds: [],
+          totalClaims: 0,
+          claims: []
+        };
+      }
+      orgGroups[oid].oosIds.push(n.id);
+      orgGroups[oid].totalClaims += n.claimCount;
+      // Collect claims for this OOS file
+      var fileClaims = data.claims ? data.claims[n.id] || [] : [];
+      fileClaims.forEach(function(c) {
+        orgGroups[oid].claims.push({
+          oosId: n.id,
+          claimId: c.claimId,
+          section: c.section,
+          confidence: c.confidence,
+          evidence: c.evidence,
+          rule: c.rule
+        });
+      });
+    });
+  }
+
+  // ---- Build Aggregated Edges ----
+  // From raw similarities, build org-to-org aggregated edges filtered by minSimilarity
+  function buildAggEdges() {
+    var sims = graphData.similarities || [];
+    // Map oosId -> orgId
+    var oosToOrg = {};
+    graphData.nodes.forEach(function(n) {
+      oosToOrg[n.id] = n.orgId || n.id;
+    });
+
+    // Group similarities by org pair
+    var pairMap = {};
+    claimSimEdges = [];
+
+    sims.forEach(function(s) {
+      if (s.score < minSimilarity) return;
+      var orgA = oosToOrg[s.oosAId];
+      var orgB = oosToOrg[s.oosBId];
+      if (!orgA || !orgB || orgA === orgB) return;
+
+      var key = [orgA, orgB].sort().join(':');
+      if (!pairMap[key]) {
+        pairMap[key] = {
+          sourceOrg: orgA < orgB ? orgA : orgB,
+          targetOrg: orgA < orgB ? orgB : orgA,
+          pairs: [],
+          totalScore: 0
+        };
+      }
+      pairMap[key].pairs.push({
+        oosA: s.oosAId,
+        oosB: s.oosBId,
+        claimA: s.claimARule,
+        claimB: s.claimBRule,
+        score: s.score
+      });
+      pairMap[key].totalScore += s.score;
+
+      // Also store for claim-level edges
+      claimSimEdges.push({
+        oosA: s.oosAId,
+        oosB: s.oosBId,
+        orgA: orgA,
+        orgB: orgB,
+        claimA: s.claimARule,
+        claimB: s.claimBRule,
+        score: s.score
+      });
+    });
+
+    aggEdges = [];
+    Object.keys(pairMap).forEach(function(key) {
+      var p = pairMap[key];
+      aggEdges.push({
+        sourceOrg: p.sourceOrg,
+        targetOrg: p.targetOrg,
+        count: p.pairs.length,
+        avgScore: p.totalScore / p.pairs.length,
+        topClaims: p.pairs.sort(function(a, b) { return b.score - a.score; }).slice(0, 3)
+      });
+    });
   }
 
   // ---- Render ----
@@ -363,10 +477,14 @@
     var svg = d3.select('#graph-svg');
     svg.selectAll('*').remove();
 
-    // Defs for drop shadow filter (replaces glow)
+    // Defs for drop shadow
     var defs = svg.append('defs');
     var shadow = defs.append('filter').attr('id', 'drop-shadow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
-    shadow.append('feDropShadow').attr('dx', '0').attr('dy', '2').attr('stdDeviation', '4').attr('flood-color', '#000000').attr('flood-opacity', '0.1');
+    shadow.append('feDropShadow').attr('dx', '0').attr('dy', '2').attr('stdDeviation', '4').attr('flood-color', '#000000').attr('flood-opacity', '0.08');
+
+    // Outer glow for selected org
+    var glow = defs.append('filter').attr('id', 'org-glow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+    glow.append('feDropShadow').attr('dx', '0').attr('dy', '0').attr('stdDeviation', '8').attr('flood-color', '#6366f1').attr('flood-opacity', '0.3');
 
     gMain = svg.append('g').attr('class', 'graph-main');
 
@@ -375,214 +493,43 @@
       gMain.attr('transform', event.transform);
     });
     svg.call(zoom);
-    // Initial zoom to center
     svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.9).translate(-width / 2, -height / 2));
 
-    // Build claim nodes from the claims data
-    claimNodes = [];
-    claimEdges = [];
+    // Create layers in draw order
+    orgEdgeLayer = gMain.append('g').attr('class', 'org-edges');
+    claimEdgeLayer = gMain.append('g').attr('class', 'claim-edges');
+    claimNodeLayer = gMain.append('g').attr('class', 'claim-nodes');
+    orgNodeLayer = gMain.append('g').attr('class', 'org-nodes');
 
-    if (data.claims) {
-      var claimIndex = 0;
-      data.nodes.forEach(function(orgNode) {
-        var orgClaims = data.claims[orgNode.id] || [];
-        orgClaims.forEach(function(c, ci) {
-          var angle = (2 * Math.PI * ci) / Math.max(orgClaims.length, 1);
-          var radius = 60 + Math.random() * 30;
-          claimNodes.push({
-            id: 'claim-' + orgNode.id + '-' + ci,
-            orgId: orgNode.id,
-            orgIndex: data.nodes.indexOf(orgNode),
-            claimId: c.claimId,
-            section: c.section,
-            confidence: c.confidence,
-            evidence: c.evidence,
-            rule: c.rule,
-            // Offset from org node
-            offsetX: Math.cos(angle) * radius,
-            offsetY: Math.sin(angle) * radius,
-            x: 0,
-            y: 0
-          });
-          claimIndex++;
-        });
-      });
-    }
+    // Build aggregated edges
+    buildAggEdges();
 
-    // Org-level edges (claim similarity connections) -- now curved paths
-    var orgEdgeLayer = gMain.append('g').attr('class', 'org-edges');
-    orgEdgeElems = orgEdgeLayer.selectAll('path')
-      .data(data.edges)
-      .join('path')
-      .attr('fill', 'none')
-      .attr('stroke', '#8b5cf6')
-      .attr('stroke-width', function(d) { return Math.min(Math.max(d.weight || 1, 1), 6); })
-      .attr('stroke-opacity', 0.4)
-      .attr('stroke-dasharray', '8,4')
-      .style('cursor', 'pointer')
-      .on('click', function(event, d) {
-        var srcId = d.source.id || d.source;
-        var tgtId = d.target.id || d.target;
-        window.location.href = '/compare/' + srcId + '/' + tgtId;
-      })
-      .on('mouseenter', function(event, d) {
-        d3.select(this).attr('stroke-opacity', 0.7);
-        showTooltip(event, '<div class="text-gray-900 font-medium mb-1">' + (d.weight || 1) + ' similar claim' + ((d.weight || 1) > 1 ? 's' : '') + '</div>' +
-          (d.topClaims ? d.topClaims.slice(0, 2).map(function(tc) {
-            return '<div class="text-gray-500 text-[11px] truncate mb-0.5">"' + truncate(tc.claimA, 40) + '"</div>';
-          }).join('') : '') +
-          '<div class="text-gray-400 text-[10px] mt-1">Click to compare</div>');
-      })
-      .on('mouseleave', function() {
-        d3.select(this).attr('stroke-opacity', 0.4);
-        hideTooltip();
-      });
+    // Create org-level simulation data
+    var orgArray = Object.values(orgGroups);
+    orgArray.forEach(function(o, i) {
+      o.x = width / 2 + (Math.cos(2 * Math.PI * i / orgArray.length) * 200);
+      o.y = height / 2 + (Math.sin(2 * Math.PI * i / orgArray.length) * 200);
+    });
 
-    // Claim edge layer (between individual claim dots -- only when connections layer is on)
-    var claimEdgeLayer = gMain.append('g').attr('class', 'claim-edges');
-
-    // Claim node layer
-    var claimNodeLayer = gMain.append('g').attr('class', 'claim-nodes');
-    claimNodeElems = claimNodeLayer.selectAll('circle')
-      .data(claimNodes)
-      .join('circle')
-      .attr('r', 3)
-      .attr('fill', function(d) { return getClaimColor(d); })
-      .attr('fill-opacity', 0.7)
-      .attr('stroke', 'none')
-      .style('cursor', 'pointer')
-      .on('mouseenter', function(event, d) {
-        d3.select(this).attr('r', 5).attr('fill-opacity', 1);
-        showTooltip(event, '<div class="text-gray-900 font-medium mb-1">' + d.claimId + '</div>' +
-          '<div class="text-gray-500 text-[11px] mb-1">' + formatSection(d.section) + '</div>' +
-          '<div class="text-gray-500 text-[10px] leading-relaxed">' + truncate(d.rule, 120) + '</div>' +
-          '<div class="flex gap-3 mt-2">' +
-          '<span class="text-[10px]" style="color:' + (confidenceColors[d.confidence] || '#9ca3af') + '">' + d.confidence + '</span>' +
-          '<span class="text-[10px]" style="color:' + (evidenceColors[d.evidence] || '#9ca3af') + '">' + formatEvidence(d.evidence) + '</span>' +
-          '</div>');
-      })
-      .on('mouseleave', function(event, d) {
-        d3.select(this).attr('r', 3).attr('fill-opacity', 0.7);
-        hideTooltip();
-      });
-
-    // Initially hide claim nodes (they appear when a section/confidence/evidence layer is toggled)
-    claimNodeElems.style('display', 'none');
-
-    // Org nodes layer (on top)
-    var orgNodeLayer = gMain.append('g').attr('class', 'org-nodes');
-
-    // Force simulation for org nodes
-    simulation = d3.forceSimulation(data.nodes)
-      .force('link', d3.forceLink(data.edges).id(function(d) { return d.id; }).distance(200))
-      .force('charge', d3.forceManyBody().strength(-400))
+    // Force simulation for org nodes only
+    simulation = d3.forceSimulation(orgArray)
+      .force('charge', d3.forceManyBody().strength(-1000))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(function(d) { return getOrgRadius(d) + 40; }));
+      .force('collision', d3.forceCollide().radius(function(d) { return getOrgRadius(d) + 60; }))
+      .force('link', d3.forceLink(aggEdges.map(function(e) {
+        return {
+          source: orgArray.find(function(o) { return o.orgId === e.sourceOrg; }),
+          target: orgArray.find(function(o) { return o.orgId === e.targetOrg; })
+        };
+      }).filter(function(e) { return e.source && e.target; })).distance(300).strength(0.3));
 
-    // Org node groups
-    orgNodeElems = orgNodeLayer.selectAll('g')
-      .data(data.nodes)
-      .join('g')
-      .style('cursor', 'pointer')
-      .call(d3.drag()
-        .on('start', function(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-        .on('drag', function(event, d) { d.fx = event.x; d.fy = event.y; })
-        .on('end', function(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
-      );
+    // Draw everything
+    drawOrgEdges();
+    drawOrgNodes(orgArray);
 
-    // Org main circle -- flat fill, white stroke, drop shadow
-    orgNodeElems.append('circle')
-      .attr('r', function(d) { return getOrgRadius(d); })
-      .attr('fill', function(d) { return templateColors[d.template] || '#6b7280'; })
-      .attr('stroke', '#ffffff')
-      .attr('stroke-width', 2.5)
-      .attr('filter', 'url(#drop-shadow)');
-
-    // Org label
-    orgNodeElems.append('text')
-      .text(function(d) { return d.orgName; })
-      .attr('dy', function(d) { return getOrgRadius(d) + 18; })
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .attr('font-weight', '600')
-      .attr('fill', '#374151')
-      .attr('paint-order', 'stroke')
-      .attr('stroke', '#ffffff')
-      .attr('stroke-width', '3px');
-
-    // Claim count inside org node
-    orgNodeElems.append('text')
-      .text(function(d) { return d.claimCount; })
-      .attr('text-anchor', 'middle')
-      .attr('dy', '0.35em')
-      .attr('font-size', '13px')
-      .attr('font-weight', '700')
-      .attr('fill', '#fff');
-
-    // Badge indicator (founding)
-    orgNodeElems.filter(function(d) { return d.badge === 'founding'; })
-      .append('g')
-      .attr('transform', function(d) {
-        var r = getOrgRadius(d);
-        return 'translate(' + (r * 0.7) + ',' + (-r * 0.7) + ')';
-      })
-      .each(function() {
-        d3.select(this).append('circle').attr('r', 6).attr('fill', '#f59e0b').attr('stroke', '#ffffff').attr('stroke-width', 2);
-        d3.select(this).append('text').text('\u2605').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '7px').attr('fill', '#fff');
-      });
-
-    // Quality tier ring
-    orgNodeElems.filter(function(d) { return d.qualityTier; })
-      .append('circle')
-      .attr('r', function(d) { return getOrgRadius(d) + 4; })
-      .attr('fill', 'none')
-      .attr('stroke', function(d) {
-        var tierColors = { platinum: '#a78bfa', gold: '#fbbf24', silver: '#d1d5db', bronze: '#d97706' };
-        return tierColors[d.qualityTier] || 'transparent';
-      })
-      .attr('stroke-width', 2)
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-dasharray', '4,3');
-
-    // Org node interaction
-    orgNodeElems
-      .on('click', function(event, d) {
-        event.stopPropagation();
-        showDetailPanel(d);
-      })
-      .on('mouseenter', function(event, d) {
-        d3.select(this).select('circle:first-child').attr('stroke-width', 3.5);
-        showTooltip(event, '<div class="text-gray-900 font-semibold mb-1">' + d.orgName + '</div>' +
-          '<div class="flex items-center gap-2 mb-1">' +
-          '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
-          (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
-          '</div>' +
-          '<div class="text-gray-600 text-[11px]">' + d.claimCount + ' claims</div>' +
-          (function() { var eff = calcOrgEfficiency(d.id, graphData); return '<div class="text-[10px] mt-1" style="color:' + efficiencyColor(eff) + '">Token Efficiency: ' + eff.toFixed(1) + 'x ' + efficiencyLabel(eff) + '</div>'; })() +
-          (d.qualityTier ? '<div class="text-gray-500 text-[10px] capitalize">' + d.qualityTier + ' tier</div>' : '') +
-          '<div class="text-gray-400 text-[10px] mt-1">Click for details</div>');
-      })
-      .on('mouseleave', function(event, d) {
-        d3.select(this).select('circle:first-child').attr('stroke-width', 2.5);
-        hideTooltip();
-      });
-
-    // Tick -- uses curvedPath for org edges
+    // Tick
     simulation.on('tick', function() {
-      orgEdgeElems.attr('d', curvedPath);
-
-      orgNodeElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
-
-      // Position claim nodes relative to their org
-      claimNodeElems
-        .attr('cx', function(d) {
-          var orgNode = data.nodes[d.orgIndex];
-          return orgNode ? orgNode.x + d.offsetX : 0;
-        })
-        .attr('cy', function(d) {
-          var orgNode = data.nodes[d.orgIndex];
-          return orgNode ? orgNode.y + d.offsetY : 0;
-        });
+      updatePositions();
     });
 
     // Click background to deselect
@@ -594,9 +541,428 @@
     updateLayers();
   }
 
+  // ---- Draw Org-to-Org Aggregated Edges ----
+  function drawOrgEdges() {
+    orgEdgeLayer.selectAll('*').remove();
+
+    if (!layers.connections) return;
+
+    var orgArray = Object.values(orgGroups);
+
+    aggEdges.forEach(function(edge) {
+      var srcOrg = orgArray.find(function(o) { return o.orgId === edge.sourceOrg; });
+      var tgtOrg = orgArray.find(function(o) { return o.orgId === edge.targetOrg; });
+      if (!srcOrg || !tgtOrg) return;
+
+      // Determine thickness: 1-3 thin(1.5), 4-7 medium(3), 8+ thick(5)
+      var thickness = edge.count <= 3 ? 1.5 : (edge.count <= 7 ? 3 : 5);
+      var isDashed = edge.avgScore < 0.5;
+      // Color intensity based on avg score
+      var opacity = 0.2 + (edge.avgScore * 0.5);
+
+      var g = orgEdgeLayer.append('g').attr('class', 'agg-edge');
+
+      // The path
+      g.append('path')
+        .attr('class', 'agg-edge-path')
+        .datum({ srcOrg: srcOrg, tgtOrg: tgtOrg, edge: edge })
+        .attr('fill', 'none')
+        .attr('stroke', '#8b5cf6')
+        .attr('stroke-width', thickness)
+        .attr('stroke-opacity', opacity)
+        .attr('stroke-dasharray', isDashed ? '6,4' : 'none')
+        .style('cursor', 'pointer')
+        .on('mouseenter', function(event) {
+          d3.select(this).attr('stroke-opacity', Math.min(opacity + 0.3, 0.9));
+          showTooltip(event, '<div class="text-gray-900 font-medium mb-1">' + edge.count + ' similar claim' + (edge.count > 1 ? 's' : '') + '</div>' +
+            '<div class="text-gray-500 text-[11px] mb-1">Avg score: ' + edge.avgScore.toFixed(2) + '</div>' +
+            edge.topClaims.slice(0, 2).map(function(tc) {
+              return '<div class="text-gray-500 text-[10px] truncate mb-0.5">"' + truncate(tc.claimA, 40) + '"</div>';
+            }).join('') +
+            '<div class="text-gray-400 text-[10px] mt-1">Click to compare</div>');
+        })
+        .on('mouseleave', function() {
+          d3.select(this).attr('stroke-opacity', opacity);
+          hideTooltip();
+        })
+        .on('click', function(event) {
+          event.stopPropagation();
+          // Navigate to compare using first OOS IDs
+          var srcOos = srcOrg.oosIds[0];
+          var tgtOos = tgtOrg.oosIds[0];
+          if (srcOos && tgtOos) {
+            window.location.href = '/compare/' + srcOos + '/' + tgtOos;
+          }
+        });
+
+      // Edge label
+      g.append('text')
+        .attr('class', 'agg-edge-label')
+        .datum({ srcOrg: srcOrg, tgtOrg: tgtOrg, edge: edge })
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10px')
+        .attr('fill', '#8b5cf6')
+        .attr('fill-opacity', 0.7)
+        .attr('dy', '-6')
+        .text(edge.count + ' similarit' + (edge.count === 1 ? 'y' : 'ies'));
+    });
+  }
+
+  // ---- Draw Claim-Level Edges ----
+  function drawClaimEdges() {
+    claimEdgeLayer.selectAll('*').remove();
+
+    // Only draw when both connected orgs are expanded
+    claimSimEdges.forEach(function(sim) {
+      var bothExpanded = expandedOrgs[sim.orgA] && expandedOrgs[sim.orgB];
+      if (!bothExpanded) return;
+
+      // Find matching claim nodes
+      var srcClaim = findClaimNode(sim.orgA, sim.claimA);
+      var tgtClaim = findClaimNode(sim.orgB, sim.claimB);
+      if (!srcClaim || !tgtClaim) return;
+
+      claimEdgeLayer.append('line')
+        .attr('class', 'claim-sim-line')
+        .datum({ src: srcClaim, tgt: tgtClaim })
+        .attr('stroke', '#c084fc')
+        .attr('stroke-width', 1)
+        .attr('stroke-opacity', 0.4)
+        .attr('stroke-dasharray', '3,2');
+    });
+  }
+
+  // Find a claim node DOM data by orgId and rule text
+  function findClaimNode(orgId, ruleText) {
+    var org = orgGroups[orgId];
+    if (!org || !org.claimPositions) return null;
+    for (var i = 0; i < org.claims.length; i++) {
+      if (org.claims[i].rule === ruleText && org.claimPositions[i]) {
+        return { x: org.claimPositions[i].x, y: org.claimPositions[i].y };
+      }
+    }
+    return null;
+  }
+
+  // ---- Draw Org Nodes ----
+  function drawOrgNodes(orgArray) {
+    orgNodeLayer.selectAll('*').remove();
+
+    orgNodeElems = orgNodeLayer.selectAll('g.org-group')
+      .data(orgArray, function(d) { return d.orgId; })
+      .join('g')
+      .attr('class', 'org-group')
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', function(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', function(event, d) { d.fx = event.x; d.fy = event.y; })
+        .on('end', function(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+      );
+
+    // Org main circle
+    orgNodeElems.append('circle')
+      .attr('class', 'org-circle')
+      .attr('r', function(d) { return getOrgRadius(d); })
+      .attr('fill', function(d) {
+        if (layers.efficiency) return efficiencyColor(calcOrgGroupEfficiency(d));
+        return templateColors[d.template] || '#6b7280';
+      })
+      .attr('fill-opacity', 0.85)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2.5)
+      .attr('filter', 'url(#drop-shadow)');
+
+    // Quality tier ring
+    orgNodeElems.filter(function(d) { return d.qualityTier; })
+      .append('circle')
+      .attr('class', 'tier-ring')
+      .attr('r', function(d) { return getOrgRadius(d) + 4; })
+      .attr('fill', 'none')
+      .attr('stroke', function(d) {
+        var tierColors = { platinum: '#a78bfa', gold: '#fbbf24', silver: '#d1d5db', bronze: '#d97706' };
+        return tierColors[d.qualityTier] || 'transparent';
+      })
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-dasharray', '4,3');
+
+    // Org name (centered inside node)
+    orgNodeElems.append('text')
+      .attr('class', 'org-name')
+      .text(function(d) { return truncate(d.orgName, 16); })
+      .attr('text-anchor', 'middle')
+      .attr('dy', '-0.2em')
+      .attr('font-size', '13px')
+      .attr('font-weight', '600')
+      .attr('fill', '#fff')
+      .attr('paint-order', 'stroke')
+      .attr('stroke', 'rgba(0,0,0,0.15)')
+      .attr('stroke-width', '2px');
+
+    // Stats line (claim count + tier)
+    orgNodeElems.append('text')
+      .attr('class', 'org-stats')
+      .text(function(d) {
+        var parts = [d.totalClaims + ' claims'];
+        if (d.qualityTier) parts.push(d.qualityTier);
+        return parts.join(' / ');
+      })
+      .attr('text-anchor', 'middle')
+      .attr('dy', '1.2em')
+      .attr('font-size', '10px')
+      .attr('fill', 'rgba(255,255,255,0.8)');
+
+    // Badge indicator (founding)
+    orgNodeElems.filter(function(d) { return d.badge === 'founding'; })
+      .append('g')
+      .attr('class', 'badge-founding')
+      .attr('transform', function(d) {
+        var r = getOrgRadius(d);
+        return 'translate(' + (r * 0.7) + ',' + (-r * 0.7) + ')';
+      })
+      .each(function() {
+        d3.select(this).append('circle').attr('r', 8).attr('fill', '#f59e0b').attr('stroke', '#ffffff').attr('stroke-width', 2);
+        d3.select(this).append('text').text('\u2605').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '8px').attr('fill', '#fff');
+      });
+
+    // Expand/collapse indicator
+    orgNodeElems.append('text')
+      .attr('class', 'expand-indicator')
+      .text(function(d) { return expandedOrgs[d.orgId] ? '\u2212' : '+'; })
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return getOrgRadius(d) + 16; })
+      .attr('font-size', '12px')
+      .attr('font-weight', '700')
+      .attr('fill', '#9ca3af');
+
+    // Org node interaction
+    orgNodeElems
+      .on('click', function(event, d) {
+        event.stopPropagation();
+        toggleOrgExpand(d);
+      })
+      .on('mouseenter', function(event, d) {
+        d3.select(this).select('.org-circle').attr('stroke-width', 3.5).attr('filter', 'url(#org-glow)');
+        var eff = calcOrgGroupEfficiency(d);
+        showTooltip(event, '<div class="text-gray-900 font-semibold mb-1">' + d.orgName + '</div>' +
+          '<div class="flex items-center gap-2 mb-1">' +
+          '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
+          (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
+          '</div>' +
+          '<div class="text-gray-600 text-[11px]">' + d.totalClaims + ' claims across ' + d.oosIds.length + ' OOS file' + (d.oosIds.length > 1 ? 's' : '') + '</div>' +
+          '<div class="text-[10px] mt-1" style="color:' + efficiencyColor(eff) + '">Token Efficiency: ' + eff.toFixed(1) + 'x ' + efficiencyLabel(eff) + '</div>' +
+          (d.qualityTier ? '<div class="text-gray-500 text-[10px] capitalize">' + d.qualityTier + ' tier</div>' : '') +
+          '<div class="text-gray-400 text-[10px] mt-1">Click to ' + (expandedOrgs[d.orgId] ? 'collapse' : 'expand claims') + '</div>');
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('.org-circle').attr('stroke-width', 2.5).attr('filter', 'url(#drop-shadow)');
+        hideTooltip();
+      })
+      .on('dblclick', function(event, d) {
+        event.stopPropagation();
+        showDetailPanel(d);
+      });
+  }
+
+  // ---- Toggle Org Expand/Collapse ----
+  function toggleOrgExpand(orgData) {
+    var oid = orgData.orgId;
+    if (expandedOrgs[oid]) {
+      expandedOrgs[oid] = false;
+    } else {
+      expandedOrgs[oid] = true;
+    }
+    updateClaimNodes();
+    drawClaimEdges();
+    drawOrgEdges();
+    updatePositions();
+
+    // Update expand indicator
+    orgNodeElems.select('.expand-indicator')
+      .text(function(d) { return expandedOrgs[d.orgId] ? '\u2212' : '+'; });
+  }
+
+  // ---- Update Claim Nodes (radial layout around expanded orgs) ----
+  function updateClaimNodes() {
+    claimNodeLayer.selectAll('*').remove();
+
+    var orgArray = Object.values(orgGroups);
+    var showClaimColors = layers.sections || layers.confidence || layers.evidence;
+
+    orgArray.forEach(function(org) {
+      if (!expandedOrgs[org.orgId]) {
+        org.claimPositions = null;
+        return;
+      }
+
+      var claims = org.claims;
+      if (claims.length === 0) {
+        org.claimPositions = null;
+        return;
+      }
+
+      // Compute radial positions around org center
+      var baseRadius = getOrgRadius(org) + 25;
+      var positions = [];
+      var rings = Math.ceil(claims.length / 12);
+
+      claims.forEach(function(c, i) {
+        var ring = Math.floor(i / 12);
+        var posInRing = i % 12;
+        var ringCount = Math.min(12, claims.length - ring * 12);
+        var angle = (2 * Math.PI * posInRing) / ringCount - Math.PI / 2;
+        var r = baseRadius + ring * 18;
+        positions.push({
+          x: org.x + Math.cos(angle) * r,
+          y: org.y + Math.sin(angle) * r,
+          angle: angle,
+          radius: r
+        });
+      });
+
+      org.claimPositions = positions;
+
+      // Draw claim dots
+      var claimG = claimNodeLayer.selectAll('.claim-' + org.orgId.replace(/[^a-zA-Z0-9]/g, ''))
+        .data(claims)
+        .join('circle')
+        .attr('class', 'claim-dot claim-' + org.orgId.replace(/[^a-zA-Z0-9]/g, ''))
+        .attr('cx', function(d, i) { return positions[i].x; })
+        .attr('cy', function(d, i) { return positions[i].y; })
+        .attr('r', 0)
+        .attr('fill', function(d) { return getClaimColor(d); })
+        .attr('fill-opacity', 0.8)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 0.5)
+        .style('cursor', 'pointer')
+        .on('mouseenter', function(event, d) {
+          d3.select(this).attr('r', 6).attr('fill-opacity', 1);
+          showTooltip(event, '<div class="text-gray-900 font-medium mb-1">' + d.claimId + '</div>' +
+            '<div class="text-gray-500 text-[11px] mb-1">' + formatSection(d.section) + '</div>' +
+            '<div class="text-gray-500 text-[10px] leading-relaxed">' + truncate(d.rule, 120) + '</div>' +
+            '<div class="flex gap-3 mt-2">' +
+            '<span class="text-[10px]" style="color:' + (confidenceColors[d.confidence] || '#9ca3af') + '">' + d.confidence + '</span>' +
+            '<span class="text-[10px]" style="color:' + (evidenceColors[d.evidence] || '#9ca3af') + '">' + formatEvidence(d.evidence) + '</span>' +
+            '</div>');
+        })
+        .on('mouseleave', function() {
+          d3.select(this).attr('r', 4).attr('fill-opacity', 0.8);
+          hideTooltip();
+        });
+
+      // Animate claim dots expanding outward
+      claimG.transition().duration(300).ease(d3.easeCubicOut)
+        .attr('r', 4);
+
+      // Draw radial connector lines from org center to each claim
+      claims.forEach(function(c, i) {
+        claimNodeLayer.append('line')
+          .attr('class', 'claim-connector claim-' + org.orgId.replace(/[^a-zA-Z0-9]/g, ''))
+          .attr('x1', org.x)
+          .attr('y1', org.y)
+          .attr('x2', positions[i].x)
+          .attr('y2', positions[i].y)
+          .attr('stroke', '#e5e7eb')
+          .attr('stroke-width', 0.5)
+          .attr('stroke-opacity', 0)
+          .lower()
+          .transition().duration(300)
+          .attr('stroke-opacity', 0.4);
+      });
+    });
+  }
+
+  // ---- Update Positions (called on tick) ----
+  function updatePositions() {
+    if (!orgNodeElems) return;
+
+    orgNodeElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+
+    // Update aggregated edge paths
+    orgEdgeLayer.selectAll('.agg-edge-path').each(function(d) {
+      if (!d) return;
+      var sx = d.srcOrg.x, sy = d.srcOrg.y, tx = d.tgtOrg.x, ty = d.tgtOrg.y;
+      var dx = tx - sx, dy = ty - sy;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      var dr = dist * 0.6;
+      d3.select(this).attr('d', 'M' + sx + ',' + sy + 'A' + dr + ',' + dr + ' 0 0,1 ' + tx + ',' + ty);
+    });
+
+    // Update edge labels
+    orgEdgeLayer.selectAll('.agg-edge-label').each(function(d) {
+      if (!d) return;
+      var mx = (d.srcOrg.x + d.tgtOrg.x) / 2;
+      var my = (d.srcOrg.y + d.tgtOrg.y) / 2;
+      // Offset label slightly above the midpoint of the arc
+      var dx = d.tgtOrg.x - d.srcOrg.x;
+      var dy = d.tgtOrg.y - d.srcOrg.y;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / len * 15;
+      var ny = dx / len * 15;
+      d3.select(this).attr('x', mx + nx).attr('y', my + ny);
+    });
+
+    // Update claim node positions if expanded
+    var orgArray = Object.values(orgGroups);
+    orgArray.forEach(function(org) {
+      if (!expandedOrgs[org.orgId] || !org.claimPositions) return;
+
+      var baseRadius = getOrgRadius(org) + 25;
+      var claims = org.claims;
+
+      // Recompute positions relative to current org position
+      claims.forEach(function(c, i) {
+        var ring = Math.floor(i / 12);
+        var posInRing = i % 12;
+        var ringCount = Math.min(12, claims.length - ring * 12);
+        var angle = (2 * Math.PI * posInRing) / ringCount - Math.PI / 2;
+        var r = baseRadius + ring * 18;
+        org.claimPositions[i].x = org.x + Math.cos(angle) * r;
+        org.claimPositions[i].y = org.y + Math.sin(angle) * r;
+      });
+
+      // Update claim dot positions
+      var safeClass = org.orgId.replace(/[^a-zA-Z0-9]/g, '');
+      claimNodeLayer.selectAll('circle.claim-' + safeClass)
+        .attr('cx', function(d, i) { return org.claimPositions[i] ? org.claimPositions[i].x : org.x; })
+        .attr('cy', function(d, i) { return org.claimPositions[i] ? org.claimPositions[i].y : org.y; });
+
+      // Update connector lines
+      var connectors = claimNodeLayer.selectAll('line.claim-' + safeClass);
+      var ci = 0;
+      connectors.each(function() {
+        if (org.claimPositions[ci]) {
+          d3.select(this)
+            .attr('x1', org.x).attr('y1', org.y)
+            .attr('x2', org.claimPositions[ci].x).attr('y2', org.claimPositions[ci].y);
+        }
+        ci++;
+      });
+    });
+
+    // Update claim-to-claim edges
+    claimEdgeLayer.selectAll('.claim-sim-line').each(function(d) {
+      if (!d) return;
+      d3.select(this)
+        .attr('x1', d.src.x).attr('y1', d.src.y)
+        .attr('x2', d.tgt.x).attr('y2', d.tgt.y);
+    });
+  }
+
   // ---- Helpers ----
   function getOrgRadius(d) {
-    return Math.sqrt(d.claimCount || 10) * 4 + 12;
+    return Math.sqrt(d.totalClaims || d.claimCount || 10) * 5 + 20;
+  }
+
+  function calcOrgGroupEfficiency(orgData) {
+    if (!graphData) return 0;
+    var totalEff = 0;
+    var count = 0;
+    orgData.oosIds.forEach(function(oosId) {
+      var eff = calcOrgEfficiency(oosId, graphData);
+      if (eff > 0) { totalEff += eff; count++; }
+    });
+    return count > 0 ? totalEff / count : 0;
   }
 
   function getClaimColor(d) {
@@ -638,7 +1004,6 @@
     var x = event.clientX - rect.left + 15;
     var y = event.clientY - rect.top - 10;
 
-    // Keep in bounds
     if (x + 280 > rect.width) x = event.clientX - rect.left - 295;
     if (y + 150 > rect.height) y = rect.height - 160;
     if (y < 10) y = 10;
@@ -653,12 +1018,13 @@
 
   // ---- Detail Panel ----
   function buildCompareDropdown(d) {
-    if (!graphData || !graphData.nodes || graphData.nodes.length < 2) return '';
-    var others = graphData.nodes.filter(function(n) { return n.id !== d.id; });
+    var orgArray = Object.values(orgGroups);
+    if (orgArray.length < 2) return '';
+    var others = orgArray.filter(function(o) { return o.orgId !== d.orgId; });
     if (others.length === 0) return '';
 
-    var options = others.map(function(n) {
-      return '<option value="' + n.id + '">' + n.orgName + ' (' + n.claimCount + ' claims)</option>';
+    var options = others.map(function(o) {
+      return '<option value="' + o.oosIds[0] + '">' + o.orgName + ' (' + o.totalClaims + ' claims)</option>';
     }).join('');
 
     return '<div class="mt-3">' +
@@ -667,11 +1033,10 @@
       '<select id="compare-target" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 text-xs focus:border-otp-500 focus:outline-none appearance-none" style="background-image:url(\'data:image/svg+xml;utf8,<svg fill=\"%239ca3af\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" d=\"M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\" clip-rule=\"evenodd\"/></svg>\'); background-repeat:no-repeat; background-position:right 8px center; background-size:14px; padding-right:28px;">' +
       options +
       '</select>' +
-      '<button onclick="goCompare(\'' + d.id + '\')" class="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-medium hover:bg-purple-100 transition-colors whitespace-nowrap border border-purple-200">Compare</button>' +
+      '<button onclick="goCompare(\'' + d.oosIds[0] + '\')" class="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-medium hover:bg-purple-100 transition-colors whitespace-nowrap border border-purple-200">Compare</button>' +
       '</div></div>';
   }
 
-  // Expose goCompare globally so onclick in dynamically generated HTML can call it
   window.goCompare = function(sourceId) {
     var sel = document.getElementById('compare-target');
     if (sel && sel.value) {
@@ -685,7 +1050,7 @@
     panel.classList.remove('hidden');
     document.getElementById('detail-title').textContent = d.orgName;
 
-    var claims = graphData.claims ? graphData.claims[d.id] || [] : [];
+    var claims = d.claims || [];
     var sectionCounts = {};
     claims.forEach(function(c) {
       sectionCounts[c.section] = (sectionCounts[c.section] || 0) + 1;
@@ -703,26 +1068,25 @@
       badgeHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">\u2605 Founding</span>';
     }
 
+    var eff = calcOrgGroupEfficiency(d);
+
     document.getElementById('detail-content').innerHTML =
       '<div class="flex items-center gap-2 mb-3">' +
       '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
       (d.industry ? '<span class="text-gray-500 text-[10px]">' + d.industry + '</span>' : '') +
       tierBadge + badgeHtml +
       '</div>' +
-      (function() {
-        var eff = calcOrgEfficiency(d.id, graphData);
-        return '<div class="grid grid-cols-3 gap-2 mb-4">' +
-          '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.claimCount + '</div><div class="text-gray-400 text-[10px]">Claims</div></div>' +
-          '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold capitalize">' + (d.qualityTier || '--') + '</div><div class="text-gray-400 text-[10px]">Quality</div></div>' +
-          '<div class="rounded-lg px-3 py-2 border" style="background:' + efficiencyColor(eff) + '10; border-color:' + efficiencyColor(eff) + '30"><div class="text-lg font-bold" style="color:' + efficiencyColor(eff) + '">' + eff.toFixed(1) + 'x</div><div class="text-[10px]" style="color:' + efficiencyColor(eff) + '">' + efficiencyLabel(eff) + '</div></div>' +
-          '</div>';
-      })() +
+      '<div class="grid grid-cols-3 gap-2 mb-4">' +
+      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.totalClaims + '</div><div class="text-gray-400 text-[10px]">Claims</div></div>' +
+      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold capitalize">' + (d.qualityTier || '--') + '</div><div class="text-gray-400 text-[10px]">Quality</div></div>' +
+      '<div class="rounded-lg px-3 py-2 border" style="background:' + efficiencyColor(eff) + '10; border-color:' + efficiencyColor(eff) + '30"><div class="text-lg font-bold" style="color:' + efficiencyColor(eff) + '">' + eff.toFixed(1) + 'x</div><div class="text-[10px]" style="color:' + efficiencyColor(eff) + '">' + efficiencyLabel(eff) + '</div></div>' +
+      '</div>' +
       (topSections.length > 0 ? '<div class="mb-4"><div class="text-gray-400 text-[10px] uppercase tracking-wide mb-2">Top Sections</div>' +
       topSections.map(function(s) {
         return '<div class="flex items-center justify-between py-1"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:' + (sectionColors[s[0]] || '#6b7280') + '"></div><span class="text-gray-700 text-[11px]">' + formatSection(s[0]) + '</span></div><span class="text-gray-400 text-[11px]">' + s[1] + '</span></div>';
       }).join('') + '</div>' : '') +
       '<div class="flex gap-2 mt-3">' +
-      '<a href="/oos/' + d.id + '" class="flex-1 text-center px-3 py-2 bg-otp-500/10 text-otp-500 rounded-lg text-xs font-medium hover:bg-otp-500/20 transition-colors border border-otp-500/20">View OOS</a>' +
+      '<a href="/oos/' + d.oosIds[0] + '" class="flex-1 text-center px-3 py-2 bg-otp-500/10 text-otp-500 rounded-lg text-xs font-medium hover:bg-otp-500/20 transition-colors border border-otp-500/20">View OOS</a>' +
       '</div>' +
       buildCompareDropdown(d);
   }
@@ -742,43 +1106,26 @@
     layers.evidence = document.getElementById('layer-evidence').checked;
     layers.efficiency = document.getElementById('layer-efficiency').checked;
 
-    // When efficiency layer is active, recolor org nodes by efficiency
-    if (orgNodeElems && graphData) {
-      orgNodeElems.select('circle:first-child')
+    // When efficiency layer is active, recolor org nodes
+    if (orgNodeElems) {
+      orgNodeElems.select('.org-circle')
         .transition().duration(400)
         .attr('fill', function(d) {
-          if (layers.efficiency) {
-            return efficiencyColor(calcOrgEfficiency(d.id, graphData));
-          }
+          if (layers.efficiency) return efficiencyColor(calcOrgGroupEfficiency(d));
           return templateColors[d.template] || '#6b7280';
         });
     }
 
-    // Org edges always visible, connections toggle controls emphasis
-    if (orgEdgeElems) {
-      orgEdgeElems.transition().duration(300)
-        .attr('stroke-opacity', layers.connections ? 0.5 : 0.15)
-        .attr('stroke-width', function(d) {
-          var base = Math.min(Math.max(d.weight || 1, 1), 6);
-          return layers.connections ? base + 1 : base;
-        });
-    }
+    // Redraw edges (connections toggle controls visibility)
+    drawOrgEdges();
 
-    // Show/hide claim nodes based on any claim-level layer being active
-    var showClaims = layers.sections || layers.confidence || layers.evidence;
-    if (claimNodeElems) {
-      claimNodeElems
-        .style('display', showClaims ? 'block' : 'none')
-        .transition().duration(300)
-        .attr('fill', function(d) { return getClaimColor(d); })
-        .attr('fill-opacity', showClaims ? 0.7 : 0);
-    }
+    // Update claim colors if any claims are expanded
+    claimNodeLayer.selectAll('.claim-dot')
+      .transition().duration(300)
+      .attr('fill', function(d) { return getClaimColor(d); });
 
     // Section legend
     document.getElementById('section-legend').classList.toggle('hidden', !layers.sections);
-
-    // When sections active, force sections mode even if confidence/evidence also on
-    // Priority: confidence > evidence > sections > default
   }
 
   // Wire up layer toggles
@@ -787,7 +1134,7 @@
     if (el) el.addEventListener('change', updateLayers);
   });
 
-  // Only allow one claim-coloring layer at a time (sections, confidence, evidence)
+  // Only allow one claim-coloring layer at a time
   ['layer-sections', 'layer-confidence', 'layer-evidence'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) {
@@ -806,9 +1153,10 @@
   document.getElementById('layer-collapse').addEventListener('click', function() {
     var list = document.getElementById('layer-list');
     var legend = document.getElementById('section-legend');
+    var slider = document.getElementById('sim-slider-section');
     list.classList.toggle('hidden');
+    slider.classList.toggle('hidden');
     if (!layers.sections) legend.classList.add('hidden');
-    // Flip chevron
     this.querySelector('svg').style.transform = list.classList.contains('hidden') ? 'rotate(180deg)' : '';
   });
 
@@ -816,6 +1164,24 @@
   document.getElementById('detail-close').addEventListener('click', function(e) {
     e.stopPropagation();
     hideDetailPanel();
+  });
+
+  // ---- Similarity Slider ----
+  var simSlider = document.getElementById('sim-slider');
+  var simSliderValue = document.getElementById('sim-slider-value');
+  simSlider.addEventListener('input', function() {
+    minSimilarity = parseFloat(this.value);
+    simSliderValue.textContent = minSimilarity.toFixed(2);
+
+    // Rebuild edges with new threshold
+    buildAggEdges();
+    drawOrgEdges();
+    drawClaimEdges();
+
+    // Update connection count in stats bar
+    var totalConnections = 0;
+    aggEdges.forEach(function(e) { totalConnections += e.count; });
+    document.getElementById('stat-connections').textContent = totalConnections;
   });
 
   // ---- Init ----

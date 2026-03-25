@@ -15,7 +15,8 @@ import { buildGraph } from '../../graph/graph-builder.js';
 export default async function graphRoutes(app: FastifyInstance) {
 
   // GET /api/v1/graph -- Full Intelligence Graph (nodes + edges + claims for visualization)
-  app.get('/graph', async (request, reply) => {
+  app.get<{ Querystring: { min_score?: string } }>('/graph', async (request, reply) => {
+    const minScore = parseFloat(request.query.min_score || '0');
     const publishedFiles = await db.select({
       id: oosFiles.id,
       orgId: oosFiles.orgId,
@@ -47,7 +48,12 @@ export default async function graphRoutes(app: FastifyInstance) {
       score: parseFloat(r.score),
     }));
 
-    const graph = buildGraph(publishedFiles, simRows);
+    // Apply min_score filter if provided
+    const filteredSims = minScore > 0
+      ? simRows.filter(s => s.score >= minScore)
+      : simRows;
+
+    const graph = buildGraph(publishedFiles, filteredSims);
 
     // Fetch claim-level data for all published OOS files (for layer controls)
     const oosIds = publishedFiles.map(f => f.id);
@@ -99,6 +105,7 @@ export default async function graphRoutes(app: FastifyInstance) {
       nodes: graph.nodes,
       edges: graph.edges,
       claims: claimsMap,
+      similarities: simRows,
       stats: {
         publishers: publishedFiles.length,
         totalClaims,

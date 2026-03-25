@@ -6,6 +6,7 @@ import type { GraphData, GraphNode, GraphEdge } from '../shared/types.js';
 
 interface OOSRecord {
   id: string;
+  orgId: string;
   orgName: string;
   template: string;
   industry: string;
@@ -29,6 +30,7 @@ export function buildGraph(
   // Nodes: one per published OOS file
   const nodes: GraphNode[] = oosFiles.map(oos => ({
     id: oos.id,
+    orgId: oos.orgId,
     orgName: oos.orgName,
     template: oos.template as GraphNode['template'],
     industry: oos.industry,
@@ -63,10 +65,10 @@ export function buildGraph(
     });
   }
 
-  // Convert to edges, filtering for minimum 2 similar claims
+  // Convert to edges, filtering for minimum 1 similar claim
   const edges: GraphEdge[] = [];
   for (const [, edge] of edgeMap) {
-    if (edge.pairs.length < 1) continue; // At least 1 similar claim to form an edge
+    if (edge.pairs.length < 1) continue;
 
     // Sort pairs by score descending, take top 3 for tooltip
     const sortedPairs = edge.pairs.sort((a, b) => b.score - a.score);

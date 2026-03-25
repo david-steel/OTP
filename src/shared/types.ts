@@ -109,6 +109,7 @@ export interface DiffResult {
 
 export interface GraphNode {
   id: string;
+  orgId: string;
   orgName: string;
   template: TemplateType;
   industry: string;
