@@ -512,10 +512,23 @@
     });
 
     // Force simulation for org nodes only
+    // Track which orgs have connections for gravity weighting
+    var connectedOrgIds = {};
+    aggEdges.forEach(function(e) {
+      connectedOrgIds[e.sourceOrg] = true;
+      connectedOrgIds[e.targetOrg] = true;
+    });
+
+    var maxRadius = Math.min(width, height) * 0.35;
+
     simulation = d3.forceSimulation(orgArray)
       .force('charge', d3.forceManyBody().strength(-1000))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(function(d) { return getOrgRadius(d) + 60; }))
+      .force('radial', d3.forceRadial(
+        function(d) { return connectedOrgIds[d.orgId] ? maxRadius : maxRadius * 0.6; },
+        width / 2, height / 2
+      ).strength(function(d) { return connectedOrgIds[d.orgId] ? 0.05 : 0.3; }))
       .force('link', d3.forceLink(aggEdges.map(function(e) {
         return {
           source: orgArray.find(function(o) { return o.orgId === e.sourceOrg; }),
