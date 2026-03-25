@@ -244,6 +244,31 @@
     org_chart: '#f97316'
   };
 
+  // Per-industry color overrides (gives visual variety beyond template)
+  var industryColors = {
+    business_coaching: '#e65100',
+    consulting: '#e65100',
+    healthcare: '#00897b',
+    finance: '#5c6bc0',
+    real_estate: '#8d6e63',
+    legal: '#546e7a',
+    education: '#7b1fa2'
+  };
+
+  // Get node color: industry override > template default
+  function getNodeColor(d) {
+    if (layers.efficiency) return efficiencyColor(calcOrgGroupEfficiency(d));
+    return industryColors[d.industry] || templateColors[d.template] || '#6b7280';
+  }
+
+  // Generate initials from org name (max 3 chars)
+  function getInitials(name) {
+    if (!name) return '?';
+    var words = name.trim().split(/\s+/);
+    if (words.length === 1) return words[0].substring(0, 3).toUpperCase();
+    return words.slice(0, 3).map(function(w) { return w[0]; }).join('').toUpperCase();
+  }
+
   var sectionColors = {
     core_operating_rules: '#3b82f6',
     agent_roles_and_authority: '#8b5cf6',
@@ -676,11 +701,8 @@
     orgNodeElems.append('circle')
       .attr('class', 'org-circle')
       .attr('r', function(d) { return getOrgRadius(d); })
-      .attr('fill', function(d) {
-        if (layers.efficiency) return efficiencyColor(calcOrgGroupEfficiency(d));
-        return templateColors[d.template] || '#6b7280';
-      })
-      .attr('fill-opacity', 0.85)
+      .attr('fill', function(d) { return getNodeColor(d); })
+      .attr('fill-opacity', 0.9)
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 2.5)
       .attr('filter', 'url(#drop-shadow)');
@@ -699,31 +721,38 @@
       .attr('stroke-opacity', 0.6)
       .attr('stroke-dasharray', '4,3');
 
-    // Org name (centered inside node)
+    // Initials (large, always visible)
     orgNodeElems.append('text')
-      .attr('class', 'org-name')
-      .text(function(d) { return truncate(d.orgName, 16); })
+      .attr('class', 'org-initials')
+      .text(function(d) { return getInitials(d.orgName); })
       .attr('text-anchor', 'middle')
-      .attr('dy', '-0.2em')
-      .attr('font-size', '13px')
-      .attr('font-weight', '600')
+      .attr('dy', '0.1em')
+      .attr('font-size', function(d) { return Math.max(14, getOrgRadius(d) * 0.5) + 'px'; })
+      .attr('font-weight', '700')
       .attr('fill', '#fff')
-      .attr('paint-order', 'stroke')
-      .attr('stroke', 'rgba(0,0,0,0.15)')
-      .attr('stroke-width', '2px');
+      .attr('letter-spacing', '1px')
+      .attr('pointer-events', 'none');
 
-    // Stats line (claim count + tier)
+    // Claim count below initials
     orgNodeElems.append('text')
       .attr('class', 'org-stats')
-      .text(function(d) {
-        var parts = [d.totalClaims + ' claims'];
-        if (d.qualityTier) parts.push(d.qualityTier);
-        return parts.join(' / ');
-      })
+      .text(function(d) { return d.totalClaims + ' claims'; })
       .attr('text-anchor', 'middle')
-      .attr('dy', '1.2em')
-      .attr('font-size', '10px')
-      .attr('fill', 'rgba(255,255,255,0.8)');
+      .attr('dy', function(d) { return (getOrgRadius(d) * 0.35 + 12) + 'px'; })
+      .attr('font-size', '9px')
+      .attr('fill', 'rgba(255,255,255,0.75)')
+      .attr('pointer-events', 'none');
+
+    // Full name label BELOW the circle (always visible, small)
+    orgNodeElems.append('text')
+      .attr('class', 'org-label')
+      .text(function(d) { return d.orgName; })
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return (getOrgRadius(d) + 18) + 'px'; })
+      .attr('font-size', '11px')
+      .attr('font-weight', '500')
+      .attr('fill', '#374151')
+      .attr('pointer-events', 'none');
 
     // Badge indicator (founding)
     orgNodeElems.filter(function(d) { return d.badge === 'founding'; })
@@ -1123,10 +1152,7 @@
     if (orgNodeElems) {
       orgNodeElems.select('.org-circle')
         .transition().duration(400)
-        .attr('fill', function(d) {
-          if (layers.efficiency) return efficiencyColor(calcOrgGroupEfficiency(d));
-          return templateColors[d.template] || '#6b7280';
-        });
+        .attr('fill', function(d) { return getNodeColor(d); });
     }
 
     // Redraw edges (connections toggle controls visibility)
