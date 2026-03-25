@@ -743,17 +743,6 @@
       .attr('fill', 'rgba(255,255,255,0.75)')
       .attr('pointer-events', 'none');
 
-    // Full name label BELOW the circle (always visible, small)
-    orgNodeElems.append('text')
-      .attr('class', 'org-label')
-      .text(function(d) { return d.orgName; })
-      .attr('text-anchor', 'middle')
-      .attr('dy', function(d) { return (getOrgRadius(d) + 18) + 'px'; })
-      .attr('font-size', '11px')
-      .attr('font-weight', '500')
-      .attr('fill', '#374151')
-      .attr('pointer-events', 'none');
-
     // Badge indicator (founding)
     orgNodeElems.filter(function(d) { return d.badge === 'founding'; })
       .append('g')
@@ -767,15 +756,16 @@
         d3.select(this).append('text').text('\u2605').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '8px').attr('fill', '#fff');
       });
 
-    // Expand/collapse indicator
+    // Expand/collapse indicator (larger, positioned at bottom of circle)
     orgNodeElems.append('text')
       .attr('class', 'expand-indicator')
       .text(function(d) { return expandedOrgs[d.orgId] ? '\u2212' : '+'; })
       .attr('text-anchor', 'middle')
-      .attr('dy', function(d) { return getOrgRadius(d) + 16; })
-      .attr('font-size', '12px')
+      .attr('dy', function(d) { return getOrgRadius(d) + 20; })
+      .attr('font-size', '20px')
       .attr('font-weight', '700')
-      .attr('fill', '#9ca3af');
+      .attr('fill', '#6b7280')
+      .attr('pointer-events', 'none');
 
     // Org node interaction
     orgNodeElems
