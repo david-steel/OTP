@@ -1118,6 +1118,8 @@
 
     // Redraw edges (connections toggle controls visibility)
     drawOrgEdges();
+    // Force position update since simulation may have settled (tick no longer firing)
+    updatePositions();
 
     // Update claim colors if any claims are expanded
     claimNodeLayer.selectAll('.claim-dot')
