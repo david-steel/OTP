@@ -18,6 +18,10 @@ export const updateOOSSchema = z.object({
   rawContent: z.string().min(100),
 });
 
+export const renameOOSSchema = z.object({
+  name: z.string().min(1).max(255),
+});
+
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(500),
   template: z.enum(TEMPLATE_TYPES).optional(),

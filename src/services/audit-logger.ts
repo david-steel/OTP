@@ -19,6 +19,9 @@ export const AUDIT_ACTIONS = {
   OOS_UPDATED: 'oos.updated',
   OOS_PUBLISHED: 'oos.published',
   OOS_ARCHIVED: 'oos.archived',
+  OOS_RENAMED: 'oos.renamed',
+  OOS_DELETED: 'oos.deleted',
+  OOS_NEW_VERSION: 'oos.new_version',
 
   // PII
   PII_SCAN_CLEAN: 'pii.scan.clean',

@@ -59,6 +59,7 @@ export const organizations = pgTable('organizations', {
 export const oosFiles = pgTable('oos_files', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id).notNull(),
+  name: varchar('name', { length: 255 }),
   template: templateEnum('template').notNull(),
   version: integer('version').notNull().default(1),
   status: oosStatusEnum('status').notNull().default('draft'),

@@ -3,7 +3,7 @@ import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, count } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, auditLogs } from '../../db/schema.js';
-import { createOOSSchema, updateOOSSchema } from '../../shared/validation.js';
+import { createOOSSchema, updateOOSSchema, renameOOSSchema } from '../../shared/validation.js';
 import { parseOOS } from '../../services/claim-parser.js';
 import { validateOOS } from '../../services/format-validator.js';
 import { scanOOSContent } from '../../services/pii-scanner.js';
@@ -518,6 +518,147 @@ export default async function oosRoutes(app: FastifyInstance) {
     );
 
     return { oosFile: archived };
+  });
+
+  // ============================================================
+  // PATCH /api/v1/oos/:id/rename -- Rename an OOS file
+  // ============================================================
+  app.patch<{ Params: { id: string } }>('/oos/:id/rename', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const { id } = request.params;
+    const body = renameOOSSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid name', details: body.error.issues } });
+    }
+
+    const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
+    if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
+
+    const [updated] = await db.update(oosFiles)
+      .set({ name: body.data.name, updatedAt: new Date() })
+      .where(eq(oosFiles.id, id))
+      .returning();
+
+    await db.insert(auditLogs).values(
+      createAuditEntry(AUDIT_ACTIONS.OOS_RENAMED, 'oos_file', {
+        orgId: org.id, entityId: id,
+        details: { oldName: oosFile.name, newName: body.data.name },
+      })
+    );
+
+    return { oosFile: updated };
+  });
+
+  // ============================================================
+  // DELETE /api/v1/oos/:id -- Delete an OOS file (owner only)
+  // ============================================================
+  app.delete<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const { id } = request.params;
+    const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
+    if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
+
+    // Delete graph data (not managed by Drizzle cascade)
+    await db.execute(sql`DELETE FROM graph_edges WHERE oos_file_id = ${id}`);
+    await db.execute(sql`DELETE FROM graph_nodes WHERE oos_file_id = ${id}`);
+
+    // Delete OOS file (claims + claim_similarities cascade via FK)
+    await db.delete(oosFiles).where(eq(oosFiles.id, id));
+
+    await db.insert(auditLogs).values(
+      createAuditEntry(AUDIT_ACTIONS.OOS_DELETED, 'oos_file', {
+        orgId: org.id, entityId: id,
+        details: { version: oosFile.version, template: oosFile.template, status: oosFile.status },
+      })
+    );
+
+    return { deleted: true, id };
+  });
+
+  // ============================================================
+  // POST /api/v1/oos/:id/new-version -- Create new draft from existing file
+  // ============================================================
+  app.post<{ Params: { id: string } }>('/oos/:id/new-version', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const { id } = request.params;
+    const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
+    if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
+
+    // Use provided rawContent or copy from source
+    const body = request.body as { rawContent?: string } | undefined;
+    const rawContent = body?.rawContent && typeof body.rawContent === 'string' && body.rawContent.length >= 100
+      ? body.rawContent
+      : oosFile.rawContent;
+
+    // Get next version number for this org
+    const [latestVersion] = await db.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
+      .from(oosFiles)
+      .where(eq(oosFiles.orgId, org.id));
+    const nextVersion = (latestVersion?.maxVersion || 0) + 1;
+
+    // Parse the content
+    const parsed = parseOOS(rawContent, oosFile.template as TemplateType);
+
+    // Create new draft
+    const [newOosFile] = await db.insert(oosFiles).values({
+      orgId: org.id,
+      name: oosFile.name,
+      template: oosFile.template,
+      version: nextVersion,
+      status: 'draft',
+      visibilityDefault: oosFile.visibilityDefault,
+      wordCount: parsed.wordCount,
+      claimCount: parsed.claims.length,
+      rawContent,
+      frontmatter: parsed.frontmatter as any,
+      confidenceDistribution: parsed.claims.reduce((acc, c) => {
+        const key = c.confidence.toLowerCase();
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) as any,
+      evidenceDistribution: parsed.claims.reduce((acc, c) => {
+        const key = c.evidence.toLowerCase();
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) as any,
+    }).returning();
+
+    // Insert parsed claims
+    if (parsed.claims.length > 0) {
+      await db.insert(claims).values(
+        parsed.claims.map(c => ({
+          oosFileId: newOosFile.id,
+          claimId: c.claimId,
+          section: c.section,
+          displayOrder: c.displayOrder,
+          rule: c.rule,
+          why: c.why,
+          failureMode: c.failureMode,
+          confidence: c.confidence,
+          evidence: c.evidence,
+          scope: c.scope,
+        }))
+      );
+    }
+
+    await db.insert(auditLogs).values(
+      createAuditEntry(AUDIT_ACTIONS.OOS_NEW_VERSION, 'oos_file', {
+        orgId: org.id, entityId: newOosFile.id,
+        details: { sourceId: id, sourceVersion: oosFile.version, newVersion: nextVersion, claimCount: parsed.claims.length },
+      })
+    );
+
+    return reply.status(201).send({
+      oosFile: newOosFile,
+      claimCount: parsed.claims.length,
+      sourceId: id,
+    });
   });
 
   // ============================================================

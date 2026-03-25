@@ -111,31 +111,34 @@
     </div>
   </div>
 
-  <!-- Published OOS Files -->
-  <h3 class="font-semibold mb-3">All Published OOS Files</h3>
+  <!-- OOS Files -->
+  <h3 class="font-semibold mb-3">All OOS Files (<%= oosFiles.length %>)</h3>
   <div class="bg-white border rounded-lg overflow-hidden mb-8">
     <table class="w-full text-sm">
       <thead class="bg-gray-50 text-left text-xs text-gray-500">
         <tr>
+          <th class="px-4 py-2">Name</th>
           <th class="px-4 py-2">Organization</th>
           <th class="px-4 py-2">Template</th>
           <th class="px-4 py-2">Version</th>
           <th class="px-4 py-2">Claims</th>
-          <th class="px-4 py-2">Words</th>
           <th class="px-4 py-2">Status</th>
-          <th class="px-4 py-2">Published</th>
+          <th class="px-4 py-2">Created</th>
+          <th class="px-4 py-2">Actions</th>
         </tr>
       </thead>
       <tbody>
         <% oosFiles.forEach(function(f) { %>
-          <tr class="border-t hover:bg-gray-50">
+          <tr class="border-t hover:bg-gray-50" id="admin-oos-row-<%= f.id %>">
             <td class="px-4 py-2">
-              <a href="/oos/<%= f.id %>" class="text-otp-600 hover:underline"><%= f.org_name %></a>
+              <a href="/oos/<%= f.id %>" class="text-otp-600 hover:underline">
+                <span class="admin-oos-name"><%= f.name || (f.template.replace('_', ' ') + ' OOS') %></span>
+              </a>
             </td>
+            <td class="px-4 py-2 text-gray-500"><%= f.org_name %></td>
             <td class="px-4 py-2 text-gray-500 capitalize"><%= f.template.replace('_', ' ') %></td>
             <td class="px-4 py-2 text-gray-500">v<%= f.version %></td>
             <td class="px-4 py-2 text-gray-500"><%= f.claim_count %></td>
-            <td class="px-4 py-2 text-gray-500"><%= f.word_count %></td>
             <td class="px-4 py-2">
               <span class="text-xs px-1.5 py-0.5 rounded capitalize
                 <% if (f.status === 'published') { %>bg-green-100 text-green-700<% } %>
@@ -143,7 +146,17 @@
                 <% if (f.status === 'archived') { %>bg-gray-100 text-gray-500<% } %>
               "><%= f.status %></span>
             </td>
-            <td class="px-4 py-2 text-gray-400 text-xs"><%= f.published_at ? new Date(f.published_at).toLocaleDateString() : '--' %></td>
+            <td class="px-4 py-2 text-gray-400 text-xs"><%= new Date(f.created_at).toLocaleDateString() %></td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-1">
+                <button onclick="adminRenameOos('<%= f.id %>')" class="text-gray-400 hover:text-otp-600 p-1" title="Rename">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                </button>
+                <button onclick="adminDeleteOos('<%= f.id %>', '<%= (f.name || f.template.replace('_', ' ') + ' OOS').replace(/'/g, "\\'") %>')" class="text-gray-400 hover:text-red-600 p-1" title="Delete">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </td>
           </tr>
         <% }); %>
       </tbody>
@@ -186,3 +199,46 @@
   </div>
   <% } %>
 </div>
+
+<script>
+  async function adminRenameOos(id) {
+    var currentName = document.querySelector('#admin-oos-row-' + id + ' .admin-oos-name');
+    var newName = prompt('Enter a new name for this OOS file:', currentName ? currentName.textContent.trim() : '');
+    if (!newName || !newName.trim()) return;
+
+    try {
+      var res = await fetch('/api/v1/admin/oos/' + id + '/rename', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      if (!res.ok) {
+        var err = await res.json();
+        alert('Rename failed: ' + (err.error?.message || 'Unknown error'));
+        return;
+      }
+      if (currentName) currentName.textContent = newName.trim();
+    } catch (e) {
+      alert('Rename failed: ' + e.message);
+    }
+  }
+
+  async function adminDeleteOos(id, name) {
+    if (!confirm('ADMIN DELETE: Are you sure you want to delete "' + name + '"? This cannot be undone.')) return;
+
+    try {
+      var res = await fetch('/api/v1/admin/oos/' + id, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        var err = await res.json();
+        alert('Delete failed: ' + (err.error?.message || 'Unknown error'));
+        return;
+      }
+      var row = document.getElementById('admin-oos-row-' + id);
+      if (row) row.remove();
+    } catch (e) {
+      alert('Delete failed: ' + e.message);
+    }
+  }
+</script>

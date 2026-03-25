@@ -361,6 +361,7 @@ await app.register(import('./routes/api/consultants.js'), { prefix: '/api/v1' })
 await app.register(import('./routes/api/workspaces.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/source-documents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/inquiries.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/admin.js'), { prefix: '/api/v1' });
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
