@@ -26,6 +26,7 @@ export default async function graphRoutes(app: FastifyInstance) {
       claimCount: oosFiles.claimCount,
       qualityTier: organizations.qualityTier,
       badge: organizations.badge,
+      frontmatter: oosFiles.frontmatter,
     })
       .from(oosFiles)
       .innerJoin(organizations, eq(oosFiles.orgId, organizations.id))
@@ -101,11 +102,37 @@ export default async function graphRoutes(app: FastifyInstance) {
       // Materialized view may not be refreshed yet
     }
 
+    // Extract platform data from frontmatter for Infrastructure mode
+    const nodePlatforms: Record<string, string[]> = {};
+    const platformOrgMap: Record<string, Set<string>> = {};
+    let totalConnections = 0;
+
+    for (const f of publishedFiles) {
+      const fm = f.frontmatter as any;
+      const platforms: string[] = (fm?.platforms && Array.isArray(fm.platforms)) ? fm.platforms : [];
+      nodePlatforms[f.id] = platforms;
+      for (const p of platforms) {
+        const pLower = p.toLowerCase();
+        if (!platformOrgMap[pLower]) platformOrgMap[pLower] = new Set();
+        platformOrgMap[pLower].add(f.orgId);
+        totalConnections++;
+      }
+    }
+
+    const platformStats = {
+      platforms: Object.entries(platformOrgMap)
+        .map(([name, orgs]) => ({ name, orgCount: orgs.size }))
+        .sort((a, b) => b.orgCount - a.orgCount),
+      totalConnections,
+    };
+
     return {
       nodes: graph.nodes,
       edges: graph.edges,
       claims: claimsMap,
       similarities: simRows,
+      nodePlatforms,
+      platformStats,
       stats: {
         publishers: publishedFiles.length,
         totalClaims,

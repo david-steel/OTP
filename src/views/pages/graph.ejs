@@ -47,6 +47,24 @@
     </div>
   </div>
 
+  <!-- Mode Switcher -->
+  <div class="border-b border-gray-200 bg-white">
+    <div class="max-w-[1600px] mx-auto px-4 py-2 flex items-center justify-center">
+      <div class="inline-flex items-center bg-gray-100 rounded-full p-0.5">
+        <button id="mode-intelligence" class="mode-tab px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-otp-500 text-white" data-mode="intelligence">
+          Intelligence
+        </button>
+        <button id="mode-infrastructure" class="mode-tab px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-transparent text-gray-600 hover:text-gray-900" data-mode="infrastructure">
+          Infrastructure
+        </button>
+        <button id="mode-economy" class="mode-tab px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-transparent text-gray-300 cursor-default" data-mode="economy" title="Coming Q3 2026">
+          Economy
+          <span class="ml-1 text-[9px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-400 font-normal">soon</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Graph Container -->
   <div id="graph-container" style="height: calc(100vh - 200px); position: relative; overflow: hidden;">
     <!-- Loading state -->
@@ -73,6 +91,20 @@
         <p class="text-gray-900 text-lg font-medium mb-2">No published OOS files yet</p>
         <p class="text-gray-500 text-sm mb-4">The intelligence graph forms as organizations publish their coordination protocols.</p>
         <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg text-sm font-medium transition-colors">Be the first publisher</a>
+      </div>
+    </div>
+
+    <!-- Economy placeholder -->
+    <div id="graph-economy" class="absolute inset-0 flex items-center justify-center z-10 hidden">
+      <div class="text-center max-w-md">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <p class="text-gray-900 text-lg font-medium mb-2">Economy Graph</p>
+        <p class="text-gray-500 text-sm mb-4">Visualize the economic relationships between organizations, consultants, and revenue flows.</p>
+        <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-400 rounded-lg text-sm font-medium">Coming Q3 2026</span>
       </div>
     </div>
 
@@ -202,6 +234,63 @@
           </div>
         </div>
 
+        <!-- Infrastructure mode layers (hidden by default) -->
+        <div id="infra-layer-list" class="px-3 py-2 flex flex-col gap-1 hidden">
+          <!-- Layer: Organizations -->
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <div class="relative">
+              <input type="checkbox" id="infra-layer-orgs" checked disabled class="sr-only peer">
+              <div class="w-8 h-4 bg-otp-500/30 rounded-full peer-checked:bg-otp-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-gray-900 text-xs font-medium">Organizations</div>
+              <div class="text-gray-400 text-[10px]">Publisher nodes</div>
+            </div>
+            <div class="w-2.5 h-2.5 rounded-full bg-otp-500 flex-shrink-0"></div>
+          </label>
+
+          <!-- Layer: Platforms -->
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <div class="relative">
+              <input type="checkbox" id="infra-layer-platforms" checked class="sr-only peer">
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-purple-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-gray-900 text-xs font-medium">Platforms</div>
+              <div class="text-gray-400 text-[10px]">AI/MCP platform nodes</div>
+            </div>
+            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 flex-shrink-0"></div>
+          </label>
+
+          <!-- Layer: Connections -->
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <div class="relative">
+              <input type="checkbox" id="infra-layer-connections" checked class="sr-only peer">
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-indigo-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-gray-900 text-xs font-medium">Connections</div>
+              <div class="text-gray-400 text-[10px]">Org-to-platform edges</div>
+            </div>
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 flex-shrink-0"></div>
+          </label>
+        </div>
+
+        <!-- Platform legend (shown in Infrastructure mode) -->
+        <div id="platform-legend" class="hidden border-t border-gray-100 px-4 py-3">
+          <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">Platform Colors</div>
+          <div class="flex flex-col gap-1.5 text-[11px]">
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#c084fc"></div><span class="text-gray-600">Claude</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#10b981"></div><span class="text-gray-600">GPT / OpenAI</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#3b82f6"></div><span class="text-gray-600">Gemini</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#6b7280"></div><span class="text-gray-600">Custom</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#9ca3af"></div><span class="text-gray-600">Other</span></div>
+          </div>
+        </div>
+
         <!-- Section legend (shown when sections layer active) -->
         <div id="section-legend" class="hidden border-t border-gray-100 px-4 py-3">
           <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">Section Colors</div>
@@ -254,6 +343,22 @@
     legal: '#546e7a',
     education: '#7b1fa2'
   };
+
+  // Platform colors for Infrastructure mode
+  var platformColors = {
+    claude: '#c084fc',
+    custom: '#6b7280',
+    gpt: '#10b981',
+    chatgpt: '#10b981',
+    openai: '#10b981',
+    gemini: '#3b82f6',
+    'google gemini': '#3b82f6',
+  };
+
+  function getPlatformColor(name) {
+    var lower = (name || '').toLowerCase();
+    return platformColors[lower] || '#9ca3af';
+  }
 
   // Get node color: industry override > template default
   function getNodeColor(d) {
@@ -337,6 +442,8 @@
   var orgGroups = {};          // orgId -> { nodes: [...], oosIds: [...], claims: [...], ... }
   var aggEdges = [];           // Aggregated org-to-org edges
   var claimSimEdges = [];      // Individual claim-to-claim similarities
+  var currentMode = 'intelligence';  // 'intelligence' | 'infrastructure' | 'economy'
+  var infraSimulation = null;  // Separate simulation for infrastructure mode
 
   // D3 selections
   var gMain = null;
@@ -1225,6 +1332,542 @@
     var totalConnections = 0;
     aggEdges.forEach(function(e) { totalConnections += e.count; });
     document.getElementById('stat-connections').textContent = totalConnections;
+  });
+
+  // ---- Mode Switching ----
+  function switchMode(mode) {
+    if (mode === 'economy') return; // Disabled
+    if (mode === currentMode) return;
+    currentMode = mode;
+
+    // Update page title
+    var titles = { intelligence: 'Intelligence Graph', infrastructure: 'Infrastructure Graph', economy: 'Economy Graph' };
+    var titleEl = document.querySelector('#graph-page h1');
+    if (titleEl) titleEl.textContent = titles[mode] || 'Intelligence Graph';
+
+    // Update tab styling
+    document.querySelectorAll('.mode-tab').forEach(function(tab) {
+      var m = tab.getAttribute('data-mode');
+      if (m === 'economy') return; // Economy always stays grey
+      if (m === mode) {
+        tab.classList.remove('bg-transparent', 'text-gray-600');
+        tab.classList.add('bg-otp-500', 'text-white');
+      } else {
+        tab.classList.remove('bg-otp-500', 'text-white');
+        tab.classList.add('bg-transparent', 'text-gray-600');
+      }
+    });
+
+    // Show/hide appropriate UI
+    var economyPlaceholder = document.getElementById('graph-economy');
+    var svgCanvas = document.getElementById('graph-svg');
+    var layerPanel = document.getElementById('layer-panel');
+
+    if (mode === 'economy') {
+      economyPlaceholder.classList.remove('hidden');
+      svgCanvas.style.display = 'none';
+      layerPanel.classList.add('hidden');
+      return;
+    }
+
+    economyPlaceholder.classList.add('hidden');
+    svgCanvas.style.display = '';
+
+    // Toggle layer lists based on mode
+    var intelligenceLayers = document.getElementById('layer-list');
+    var infraLayers = document.getElementById('infra-layer-list');
+    var simSliderSection = document.getElementById('sim-slider-section');
+    var sectionLegend = document.getElementById('section-legend');
+    var platformLegend = document.getElementById('platform-legend');
+
+    if (mode === 'intelligence') {
+      intelligenceLayers.classList.remove('hidden');
+      infraLayers.classList.add('hidden');
+      simSliderSection.classList.remove('hidden');
+      platformLegend.classList.add('hidden');
+      sectionLegend.classList.toggle('hidden', !layers.sections);
+    } else if (mode === 'infrastructure') {
+      intelligenceLayers.classList.add('hidden');
+      infraLayers.classList.remove('hidden');
+      simSliderSection.classList.add('hidden');
+      sectionLegend.classList.add('hidden');
+      platformLegend.classList.remove('hidden');
+    }
+
+    // Stop previous simulation
+    if (simulation) { simulation.stop(); simulation = null; }
+    if (infraSimulation) { infraSimulation.stop(); infraSimulation = null; }
+
+    // Clear and rebuild
+    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) return;
+
+    hideDetailPanel();
+
+    // Update stats bar
+    updateStatsBar(mode);
+
+    if (mode === 'intelligence') {
+      buildOrgGroups(graphData);
+      expandedOrgs = {};
+      renderGraph(graphData);
+    } else if (mode === 'infrastructure') {
+      renderInfrastructureGraph(graphData);
+    }
+  }
+
+  function updateStatsBar(mode) {
+    if (!graphData) return;
+
+    var statLabels = {
+      intelligence: [
+        { id: 'stat-publishers', label: 'Publishers', value: graphData.stats?.publishers || 0 },
+        { id: 'stat-claims', label: 'Claims', value: graphData.stats?.totalClaims || 0 },
+        { id: 'stat-connections', label: 'Connections', value: graphData.stats?.connections || 0 },
+        { id: 'stat-patterns', label: 'Patterns', value: graphData.stats?.patterns || 0 },
+      ],
+      infrastructure: [
+        { id: 'stat-publishers', label: 'Publishers', value: graphData.stats?.publishers || 0 },
+        { id: 'stat-claims', label: 'Platforms', value: graphData.platformStats ? graphData.platformStats.platforms.length : 0 },
+        { id: 'stat-connections', label: 'Connections', value: graphData.platformStats ? graphData.platformStats.totalConnections : 0 },
+        { id: 'stat-patterns', label: 'Most Used', value: graphData.platformStats && graphData.platformStats.platforms.length > 0 ? graphData.platformStats.platforms[0].name : '--' },
+      ],
+    };
+
+    var stats = statLabels[mode] || statLabels.intelligence;
+    stats.forEach(function(s) {
+      var el = document.getElementById(s.id);
+      if (el) {
+        el.textContent = s.value;
+        el.style.color = '';
+      }
+      // Update the label too
+      var labelEl = el ? el.previousElementSibling : null;
+      if (labelEl) labelEl.textContent = s.label;
+    });
+
+    // Reset efficiency stat
+    var effEl = document.getElementById('stat-efficiency');
+    if (mode === 'infrastructure') {
+      effEl.textContent = '--';
+      effEl.style.color = '';
+      var effLabel = effEl.previousElementSibling;
+      if (effLabel) effLabel.textContent = 'Avg Efficiency';
+    } else {
+      // Recalculate efficiency for intelligence mode
+      if (graphData.nodes && graphData.nodes.length > 0) {
+        var totalEff = 0;
+        graphData.nodes.forEach(function(n) { totalEff += calcOrgEfficiency(n.id, graphData); });
+        var avgEff = totalEff / graphData.nodes.length;
+        effEl.textContent = avgEff.toFixed(1) + 'x';
+        effEl.style.color = efficiencyColor(avgEff);
+      }
+    }
+  }
+
+  // ---- Infrastructure Mode ----
+  function renderInfrastructureGraph(data) {
+    var container = document.getElementById('graph-container');
+    var width = container.clientWidth;
+    var height = container.clientHeight;
+    var svg = d3.select('#graph-svg');
+    svg.selectAll('*').remove();
+
+    // Defs
+    var defs = svg.append('defs');
+    var shadow = defs.append('filter').attr('id', 'drop-shadow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+    shadow.append('feDropShadow').attr('dx', '0').attr('dy', '2').attr('stdDeviation', '4').attr('flood-color', '#000000').attr('flood-opacity', '0.08');
+
+    var glow = defs.append('filter').attr('id', 'org-glow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+    glow.append('feDropShadow').attr('dx', '0').attr('dy', '0').attr('stdDeviation', '8').attr('flood-color', '#6366f1').attr('flood-opacity', '0.3');
+
+    var infraMain = svg.append('g').attr('class', 'infra-main');
+
+    // Zoom
+    var zoom = d3.zoom().scaleExtent([0.2, 5]).on('zoom', function(event) {
+      infraMain.attr('transform', event.transform);
+    });
+    svg.call(zoom);
+    svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.9).translate(-width / 2, -height / 2));
+
+    // Create layers
+    var edgeLayer = infraMain.append('g').attr('class', 'infra-edges');
+    var platformNodeLayer = infraMain.append('g').attr('class', 'infra-platform-nodes');
+    var orgNodeLayerInfra = infraMain.append('g').attr('class', 'infra-org-nodes');
+
+    // Build node data
+    var nodePlatforms = data.nodePlatforms || {};
+    var platformStatsData = data.platformStats || { platforms: [], totalConnections: 0 };
+
+    // Build org nodes (reuse orgGroups)
+    buildOrgGroups(data);
+    var orgArray = Object.values(orgGroups);
+
+    // Build platform nodes
+    var platformNodes = platformStatsData.platforms.map(function(p) {
+      return {
+        id: 'platform-' + p.name,
+        name: p.name,
+        orgCount: p.orgCount,
+        isPlatform: true,
+      };
+    });
+
+    // Build edges: org -> platform
+    var infraEdges = [];
+    orgArray.forEach(function(org) {
+      // Gather all platforms used by this org
+      var orgPlatforms = {};
+      org.oosIds.forEach(function(oosId) {
+        var platforms = nodePlatforms[oosId] || [];
+        platforms.forEach(function(p) {
+          orgPlatforms[p.toLowerCase()] = true;
+        });
+      });
+      Object.keys(orgPlatforms).forEach(function(pName) {
+        infraEdges.push({
+          sourceOrg: org.orgId,
+          targetPlatform: 'platform-' + pName,
+          platformName: pName,
+        });
+      });
+    });
+
+    // Check layer states
+    var showPlatforms = document.getElementById('infra-layer-platforms').checked;
+    var showConnections = document.getElementById('infra-layer-connections').checked;
+
+    // Combine all nodes for simulation
+    var allNodes = [];
+    orgArray.forEach(function(o) {
+      o._infraType = 'org';
+      o._infraId = o.orgId;
+      allNodes.push(o);
+    });
+    platformNodes.forEach(function(p) {
+      p._infraType = 'platform';
+      p._infraId = p.id;
+      allNodes.push(p);
+    });
+
+    // Initial positions
+    allNodes.forEach(function(n, i) {
+      if (n._infraType === 'platform') {
+        // Platforms in center cluster
+        var angle = (2 * Math.PI * i) / Math.max(platformNodes.length, 1);
+        n.x = width / 2 + Math.cos(angle) * 80;
+        n.y = height / 2 + Math.sin(angle) * 80;
+      } else {
+        // Orgs around the outside
+        var angle = (2 * Math.PI * i) / Math.max(orgArray.length, 1);
+        n.x = width / 2 + Math.cos(angle) * 250;
+        n.y = height / 2 + Math.sin(angle) * 250;
+      }
+    });
+
+    // Build simulation links
+    var simLinks = infraEdges.map(function(e) {
+      return {
+        source: allNodes.find(function(n) { return n._infraId === e.sourceOrg; }),
+        target: allNodes.find(function(n) { return n._infraId === e.targetPlatform; }),
+        edge: e,
+      };
+    }).filter(function(l) { return l.source && l.target; });
+
+    // Force simulation
+    infraSimulation = d3.forceSimulation(allNodes)
+      .force('charge', d3.forceManyBody().strength(function(d) {
+        return d._infraType === 'platform' ? -400 : -600;
+      }))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(function(d) {
+        if (d._infraType === 'platform') return getInfraPlatformRadius(d) + 30;
+        return getOrgRadius(d) + 40;
+      }))
+      .force('link', d3.forceLink(simLinks).distance(200).strength(0.4))
+      .force('radial', d3.forceRadial(
+        function(d) {
+          return d._infraType === 'platform' ? 0 : Math.min(width, height) * 0.3;
+        },
+        width / 2, height / 2
+      ).strength(function(d) {
+        return d._infraType === 'platform' ? 0.3 : 0.05;
+      }));
+
+    // Draw edges
+    var edgeElems = edgeLayer.selectAll('line.infra-edge')
+      .data(simLinks)
+      .join('line')
+      .attr('class', 'infra-edge')
+      .attr('stroke', function(d) { return getPlatformColor(d.edge.platformName); })
+      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', showConnections ? 0.3 : 0)
+      .attr('stroke-dasharray', '4,3');
+
+    // Draw platform nodes (diamonds)
+    var platformElems = platformNodeLayer.selectAll('g.platform-node')
+      .data(platformNodes)
+      .join('g')
+      .attr('class', 'platform-node')
+      .style('cursor', 'pointer')
+      .style('display', showPlatforms ? null : 'none')
+      .call(d3.drag()
+        .on('start', function(event, d) { if (!event.active) infraSimulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', function(event, d) { d.fx = event.x; d.fy = event.y; })
+        .on('end', function(event, d) { if (!event.active) infraSimulation.alphaTarget(0); d.fx = null; d.fy = null; })
+      );
+
+    // Diamond shape (rotated square)
+    platformElems.append('rect')
+      .attr('class', 'platform-diamond')
+      .attr('width', function(d) { return getInfraPlatformRadius(d) * 2; })
+      .attr('height', function(d) { return getInfraPlatformRadius(d) * 2; })
+      .attr('x', function(d) { return -getInfraPlatformRadius(d); })
+      .attr('y', function(d) { return -getInfraPlatformRadius(d); })
+      .attr('rx', 3)
+      .attr('transform', 'rotate(45)')
+      .attr('fill', function(d) { return getPlatformColor(d.name); })
+      .attr('fill-opacity', 0.85)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2)
+      .attr('filter', 'url(#drop-shadow)');
+
+    // Platform label below
+    platformElems.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return getInfraPlatformRadius(d) + 16; })
+      .attr('font-size', '10px')
+      .attr('font-weight', '600')
+      .attr('fill', function(d) { return getPlatformColor(d.name); })
+      .text(function(d) { return d.name; });
+
+    // Platform count inside diamond
+    platformElems.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .attr('font-size', function(d) { return Math.max(9, getInfraPlatformRadius(d) * 0.6) + 'px'; })
+      .attr('font-weight', '700')
+      .attr('fill', '#fff')
+      .attr('pointer-events', 'none')
+      .text(function(d) { return d.orgCount; });
+
+    // Platform tooltips
+    platformElems
+      .on('mouseenter', function(event, d) {
+        d3.select(this).select('.platform-diamond').attr('stroke-width', 3).attr('filter', 'url(#org-glow)');
+        // Find orgs using this platform
+        var connectedOrgs = infraEdges
+          .filter(function(e) { return e.targetPlatform === d.id; })
+          .map(function(e) {
+            var org = orgArray.find(function(o) { return o.orgId === e.sourceOrg; });
+            return org ? org.orgName : '';
+          })
+          .filter(function(n) { return n; });
+        showTooltip(event,
+          '<div class="text-gray-900 font-semibold mb-1">' + d.name + '</div>' +
+          '<div class="text-gray-500 text-[11px] mb-2">' + d.orgCount + ' organization' + (d.orgCount !== 1 ? 's' : '') + '</div>' +
+          '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1">Used by</div>' +
+          connectedOrgs.slice(0, 6).map(function(n) {
+            return '<div class="text-gray-600 text-[11px]">' + n + '</div>';
+          }).join('') +
+          (connectedOrgs.length > 6 ? '<div class="text-gray-400 text-[10px] mt-1">+' + (connectedOrgs.length - 6) + ' more</div>' : '')
+        );
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('.platform-diamond').attr('stroke-width', 2).attr('filter', 'url(#drop-shadow)');
+        hideTooltip();
+      })
+      .on('click', function(event, d) {
+        event.stopPropagation();
+        showPlatformDetailPanel(d, orgArray, infraEdges);
+      });
+
+    // Draw org nodes (circles, same as intelligence mode)
+    var orgElems = orgNodeLayerInfra.selectAll('g.infra-org-group')
+      .data(orgArray, function(d) { return d.orgId; })
+      .join('g')
+      .attr('class', 'infra-org-group')
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', function(event, d) { if (!event.active) infraSimulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', function(event, d) { d.fx = event.x; d.fy = event.y; })
+        .on('end', function(event, d) { if (!event.active) infraSimulation.alphaTarget(0); d.fx = null; d.fy = null; })
+      );
+
+    orgElems.append('circle')
+      .attr('class', 'org-circle')
+      .attr('r', function(d) { return getOrgRadius(d); })
+      .attr('fill', function(d) { return industryColors[d.industry] || templateColors[d.template] || '#6b7280'; })
+      .attr('fill-opacity', 0.9)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2.5)
+      .attr('filter', 'url(#drop-shadow)');
+
+    orgElems.filter(function(d) { return d.qualityTier; })
+      .append('circle')
+      .attr('class', 'tier-ring')
+      .attr('r', function(d) { return getOrgRadius(d) + 4; })
+      .attr('fill', 'none')
+      .attr('stroke', function(d) {
+        var tierColors = { platinum: '#a78bfa', gold: '#fbbf24', silver: '#d1d5db', bronze: '#d97706' };
+        return tierColors[d.qualityTier] || 'transparent';
+      })
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-dasharray', '4,3');
+
+    orgElems.append('text')
+      .attr('class', 'org-initials')
+      .text(function(d) { return getInitials(d.orgName); })
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.1em')
+      .attr('font-size', function(d) { return Math.max(14, getOrgRadius(d) * 0.5) + 'px'; })
+      .attr('font-weight', '700')
+      .attr('fill', '#fff')
+      .attr('letter-spacing', '1px')
+      .attr('pointer-events', 'none');
+
+    orgElems.append('text')
+      .attr('class', 'org-stats')
+      .text(function(d) {
+        var pCount = 0;
+        d.oosIds.forEach(function(oosId) {
+          var platforms = nodePlatforms[oosId] || [];
+          pCount += platforms.length;
+        });
+        return pCount + ' platform' + (pCount !== 1 ? 's' : '');
+      })
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return (getOrgRadius(d) * 0.35 + 12) + 'px'; })
+      .attr('font-size', '9px')
+      .attr('fill', 'rgba(255,255,255,0.75)')
+      .attr('pointer-events', 'none');
+
+    // Badge indicator
+    orgElems.filter(function(d) { return d.badge === 'founding'; })
+      .append('g')
+      .attr('class', 'badge-founding')
+      .attr('transform', function(d) {
+        var r = getOrgRadius(d);
+        return 'translate(' + (r * 0.7) + ',' + (-r * 0.7) + ')';
+      })
+      .each(function() {
+        d3.select(this).append('circle').attr('r', 8).attr('fill', '#f59e0b').attr('stroke', '#ffffff').attr('stroke-width', 2);
+        d3.select(this).append('text').text('\u2605').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '8px').attr('fill', '#fff');
+      });
+
+    orgElems
+      .on('mouseenter', function(event, d) {
+        d3.select(this).select('.org-circle').attr('stroke-width', 3.5).attr('filter', 'url(#org-glow)');
+        // Find platforms used by this org
+        var orgPlatformNames = [];
+        d.oosIds.forEach(function(oosId) {
+          var platforms = nodePlatforms[oosId] || [];
+          platforms.forEach(function(p) {
+            if (orgPlatformNames.indexOf(p) === -1) orgPlatformNames.push(p);
+          });
+        });
+        showTooltip(event,
+          '<div class="text-gray-900 font-semibold mb-1">' + d.orgName + '</div>' +
+          '<div class="flex items-center gap-2 mb-1">' +
+          '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
+          '</div>' +
+          '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1">Platforms</div>' +
+          orgPlatformNames.map(function(p) {
+            return '<div class="flex items-center gap-1.5 text-[11px]"><div class="w-2 h-2 rounded-sm rotate-45" style="background:' + getPlatformColor(p) + '"></div><span class="text-gray-600">' + p + '</span></div>';
+          }).join('')
+        );
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('.org-circle').attr('stroke-width', 2.5).attr('filter', 'url(#drop-shadow)');
+        hideTooltip();
+      })
+      .on('click', function(event, d) {
+        event.stopPropagation();
+        showDetailPanel(d);
+      });
+
+    // Tick handler
+    infraSimulation.on('tick', function() {
+      edgeElems
+        .attr('x1', function(d) { return d.source.x; })
+        .attr('y1', function(d) { return d.source.y; })
+        .attr('x2', function(d) { return d.target.x; })
+        .attr('y2', function(d) { return d.target.y; });
+
+      platformElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+      orgElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+    });
+
+    // Click background to deselect
+    svg.on('click', function() {
+      hideDetailPanel();
+    });
+
+    // Show layer panel
+    document.getElementById('layer-panel').classList.remove('hidden');
+
+    // Wire up infra layer toggles
+    var infraPlatformsCb = document.getElementById('infra-layer-platforms');
+    var infraConnCb = document.getElementById('infra-layer-connections');
+
+    function updateInfraLayers() {
+      var showP = infraPlatformsCb.checked;
+      var showC = infraConnCb.checked;
+      platformElems.style('display', showP ? null : 'none');
+      edgeElems.attr('stroke-opacity', showC ? 0.3 : 0);
+      document.getElementById('platform-legend').classList.toggle('hidden', !showP);
+    }
+
+    infraPlatformsCb.onchange = updateInfraLayers;
+    infraConnCb.onchange = updateInfraLayers;
+  }
+
+  function getInfraPlatformRadius(d) {
+    // Scale from 15 to 30 based on org count
+    return Math.max(15, Math.min(30, 12 + d.orgCount * 4));
+  }
+
+  function showPlatformDetailPanel(d, orgArray, infraEdges) {
+    document.getElementById('layer-panel').classList.add('hidden');
+    var panel = document.getElementById('detail-panel');
+    panel.classList.remove('hidden');
+    document.getElementById('detail-title').textContent = d.name + ' Platform';
+
+    var connectedOrgs = infraEdges
+      .filter(function(e) { return e.targetPlatform === d.id; })
+      .map(function(e) {
+        return orgArray.find(function(o) { return o.orgId === e.sourceOrg; });
+      })
+      .filter(function(o) { return o; });
+
+    document.getElementById('detail-content').innerHTML =
+      '<div class="flex items-center gap-2 mb-3">' +
+      '<div class="w-5 h-5 rounded-sm rotate-45" style="background:' + getPlatformColor(d.name) + '"></div>' +
+      '<span class="text-gray-500 text-[10px]">AI / MCP Platform</span>' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2 mb-4">' +
+      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.orgCount + '</div><div class="text-gray-400 text-[10px]">Organizations</div></div>' +
+      '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + Math.round(d.orgCount / Math.max(orgArray.length, 1) * 100) + '%</div><div class="text-gray-400 text-[10px]">Adoption</div></div>' +
+      '</div>' +
+      '<div class="mb-3"><div class="text-gray-400 text-[10px] uppercase tracking-wide mb-2">Organizations using ' + d.name + '</div>' +
+      connectedOrgs.map(function(o) {
+        return '<div class="flex items-center justify-between py-1">' +
+          '<div class="flex items-center gap-2">' +
+          '<div class="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style="background:' + (industryColors[o.industry] || templateColors[o.template] || '#6b7280') + '">' + getInitials(o.orgName).charAt(0) + '</div>' +
+          '<span class="text-gray-700 text-[11px]">' + o.orgName + '</span>' +
+          '</div>' +
+          '<span class="text-gray-400 text-[10px]">' + o.totalClaims + ' claims</span>' +
+          '</div>';
+      }).join('') +
+      '</div>';
+  }
+
+  // Wire up mode tabs
+  document.querySelectorAll('.mode-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var mode = this.getAttribute('data-mode');
+      switchMode(mode);
+    });
   });
 
   // ---- Init ----
