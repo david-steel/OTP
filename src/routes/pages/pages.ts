@@ -1185,4 +1185,34 @@ export default async function pageRoutes(app: FastifyInstance) {
       breadcrumbs: bc({ name: "What's New", url: BASE_URL + '/whats-new' }),
     });
   });
+
+  // Agent Onboarding
+  app.get('/agent-onboarding', async (request, reply) => {
+    return reply.view('pages/agent-onboarding', {
+      title: 'Agent Onboarding Framework - OTP',
+      description: 'Your OOS is your agent\'s day-one onboarding packet. Organizational intelligence is as critical for AI agents as employee handbooks are for humans.',
+      canonical: BASE_URL + '/agent-onboarding',
+      breadcrumbs: bc({ name: 'Agent Onboarding', url: BASE_URL + '/agent-onboarding' }),
+    });
+  });
+
+  // Machine Commerce
+  app.get('/machine-commerce', async (request, reply) => {
+    return reply.view('pages/machine-commerce', {
+      title: 'Machine Commerce Discovery - OTP',
+      description: 'OTP is the discovery layer for the emerging agent-to-agent economy. Published OOS files become machine-readable trust profiles for autonomous agent transactions.',
+      canonical: BASE_URL + '/machine-commerce',
+      breadcrumbs: bc({ name: 'Machine Commerce', url: BASE_URL + '/machine-commerce' }),
+    });
+  });
+
+  // MCP Integration Hub
+  app.get('/mcp', async (request, reply) => {
+    return reply.view('pages/mcp-hub', {
+      title: 'MCP Integration Hub - OTP',
+      description: 'Connect any AI agent to organizational intelligence via the Model Context Protocol. Browse, search, compare, and publish OOS files programmatically.',
+      canonical: BASE_URL + '/mcp',
+      breadcrumbs: bc({ name: 'MCP Hub', url: BASE_URL + '/mcp' }),
+    });
+  });
 }
