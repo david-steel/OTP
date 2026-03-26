@@ -1,0 +1,128 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold">Technical</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Every Data Source Should Be an MCP Server (Including Your Operating System)</h1>
+      <p class="text-gray-400 mt-4 text-base sm:text-lg leading-relaxed">MCP is quietly becoming the standard for how agents talk to everything. This changes how agents interact with organizational intelligence.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Problem with Traditional Integration</h2>
+
+      <p>There's a pattern emerging in how AI agents access the world. It's not APIs in the traditional sense. It's not web scraping. It's not database connections. It's MCP -- the Model Context Protocol -- and it's quietly becoming the standard for how agents talk to everything.</p>
+
+      <p>The idea is simple: instead of teaching an agent how to parse a specific API, you expose your data as a set of tools that the agent can call natively. The agent doesn't need to know about your authentication flow, your pagination scheme, or your response format. It just calls a tool and gets structured data back.</p>
+
+      <p>Today, if you want an AI agent to access data from an external source, you have options -- none of them great.</p>
+
+      <p>You can write custom API integration code. Your agent sends HTTP requests, parses JSON responses, handles pagination, manages authentication tokens, and deals with rate limits. This works, but it's brittle. Every API is different. Every integration is bespoke. And when the API changes, your integration breaks.</p>
+
+      <p>You can scrape websites. This is worse. Unstructured data, layout changes breaking your selectors, legal gray areas, and fundamentally unreliable outputs.</p>
+
+      <p>You can give your agent a database connection. This is powerful but dangerous. An agent with raw SQL access is an agent that can drop tables.</p>
+
+      <p>All of these approaches share the same fundamental problem: they require the agent to understand the mechanics of data access rather than focusing on what the data means.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">MCP Inverts the Model</h2>
+
+      <p>The Model Context Protocol inverts this. Instead of the agent reaching out to data sources and figuring out how to interact with them, data sources expose themselves as tools that agents already know how to use.</p>
+
+      <p>An MCP server says: "Here are the operations you can perform. Here are the inputs each one takes. Here are the outputs you'll get back." The agent doesn't need to know whether the data lives in Postgres, a REST API, a Google Sheet, or an Organizational Operating System. It just calls the tool.</p>
+
+      <p>This is why every data source should be an MCP server. Not because MCP is technically superior to REST APIs -- it's built on top of them. But because MCP is the agent-native interface. It's how agents naturally interact with the world. When you expose your data as MCP tools, you're meeting agents where they already are.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Your Operating System is a Data Source</h2>
+
+      <p>Here's the insight that drove OTP's MCP server: your Organizational Operating System is a data source.</p>
+
+      <p>It contains structured claims about how your organization coordinates. Each claim has a section, a rule, evidence, a confidence level, and documented failure modes. This is queryable data. This is comparable data. This is data that agents need to access programmatically.</p>
+
+      <p>When we built OTP's MCP server, we exposed the full Intelligence Graph as a set of tools:</p>
+
+      <p><strong>browse_oos</strong> -- Browse published OOS files with filters for industry, size, template, and quality tier. An agent building a competitive analysis can pull every OOS in its industry in one call.</p>
+
+      <p><strong>get_oos</strong> -- Retrieve a specific OOS by ID with full claim structure. An agent onboarding into a new organization can read the entire operating system in its first interaction.</p>
+
+      <p><strong>search_claims</strong> -- Search across all published claims using natural language. An agent looking for escalation patterns can query "organizations with documented agent escalation ladders" and get ranked results.</p>
+
+      <p><strong>compare_oos</strong> -- Compare two OOS files side by side. An agent evaluating organizational compatibility can see shared claims, unique claims, and similarity scores without any custom code.</p>
+
+      <p><strong>publish_oos</strong> -- Publish an OOS file programmatically. An agent that generates organizational documentation can publish it directly to the Intelligence Graph.</p>
+
+      <p><strong>get_publishers</strong> -- Browse organizations on the platform. An agent discovering potential partners can filter by industry, quality tier, and agentic maturity level.</p>
+
+      <p>Each of these is a structured tool call. No API documentation to read. No authentication flow to implement. No response parsing to debug. The agent calls the tool and gets structured data back.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Practical Impact</h2>
+
+      <p>This matters for three reasons.</p>
+
+      <p><strong>Onboarding speed.</strong> When a new agent joins your organization, it can read the OOS via MCP in its first interaction. No one needs to copy-paste documentation into a prompt. No one needs to maintain a separate onboarding script. The agent calls <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm">get_oos</code> and has the full coordination context immediately.</p>
+
+      <p><strong>Cross-org discovery.</strong> When your agent needs to find compatible organizations -- for partnerships, vendor evaluation, or inter-org coordination -- it queries the Intelligence Graph directly. <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm">search_claims</code> with "failure modes in agent coordination" returns every organization that's documented those patterns, ranked by relevance.</p>
+
+      <p><strong>Continuous learning.</strong> Your agent can periodically query the Intelligence Graph for new patterns in its industry. As more organizations publish, the graph gets richer. Your agent stays current by querying the same tools it used on day one.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Quick Start</h2>
+
+      <p>Adding OTP's MCP server to your agent takes 30 seconds. Add this to your MCP configuration:</p>
+
+      <div class="bg-gray-900 rounded-lg p-4 my-6 overflow-x-auto">
+        <pre class="text-sm text-gray-300 font-mono"><code>{
+  "mcpServers": {
+    "otp": {
+      "command": "npx",
+      "args": ["-y", "otp-mcp-server"],
+      "env": {
+        "OTP_API_KEY": "your-api-key"
+      }
+    }
+  }
+}</code></pre>
+      </div>
+
+      <p>Get your API key from your OTP dashboard. Free tier includes full API access.</p>
+
+      <p>Once connected, your agent can query the entire Intelligence Graph natively. Browse organizations, search claims, compare coordination patterns, and publish OOS files -- all from inside the agent's existing workflow.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Bigger Pattern</h2>
+
+      <p>OTP's MCP server is one implementation of a bigger idea: every system that agents interact with should expose itself as an MCP server.</p>
+
+      <p>Your CRM should be an MCP server. Your project management tool should be an MCP server. Your analytics platform should be an MCP server. And your organizational operating system -- the document that defines how your agents coordinate -- should absolutely be an MCP server.</p>
+
+      <p>The organizations that expose their intelligence as agent-native tools will be the ones that build the fastest, most capable agent teams. Not because MCP is magic -- but because it removes the friction between what an agent needs to know and how it accesses that knowledge.</p>
+
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-6 sm:p-8 mt-10">
+        <p class="text-sm font-semibold text-otp-700 mb-2">Connect Your Agents via MCP</p>
+        <p class="text-gray-600 text-sm leading-relaxed mb-4">Every data source should be an MCP server. Start with the one that matters most: your operating system. Connect your agents to the Intelligence Graph in 30 seconds.</p>
+        <div class="flex flex-wrap gap-3">
+          <a href="/mcp" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-600 text-white text-sm font-semibold rounded-lg transition-colors">
+            MCP Integration Hub
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <a href="/settings/api" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-otp-200 hover:border-otp-300 text-otp-600 text-sm font-semibold rounded-lg transition-colors">
+            Get Your API Key
+          </a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</section>

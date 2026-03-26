@@ -178,7 +178,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Graph page
   app.get('/graph', async (request, reply) => {
-    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the Intelligence Graph showing how AI coordination patterns connect across organizations.', canonical: BASE_URL + '/graph', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
+    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore how AI coordination patterns connect across organizations. The Intelligence Graph maps claim similarities, shared operational truths, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: BASE_URL + '/public/og-image.png', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
   });
 
   // Guide page
@@ -1104,7 +1104,9 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!auth.userId) {
       // Not signed in -- show prompt to sign in (handled client-side by Clerk JS)
       return reply.view('pages/dashboard', {
-        title: 'Dashboard - OTP',
+        title: 'Publisher Dashboard - OTP',
+        description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
+        ogImage: BASE_URL + '/public/og-image.png',
         noindex: true,
         authState: 'unauthenticated',
         dashboard: {
@@ -1149,7 +1151,9 @@ export default async function pageRoutes(app: FastifyInstance) {
     `);
 
     return reply.view('pages/dashboard', {
-      title: 'Dashboard - OTP',
+      title: 'Publisher Dashboard - OTP',
+      description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
+      ogImage: BASE_URL + '/public/og-image.png',
       noindex: true,
       authState: 'authenticated',
       dashboard: {
@@ -1169,9 +1173,10 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Generate OOS from Description
   app.get('/generate', async (request, reply) => {
     return reply.view('pages/generate', {
-      title: 'Generate Your OOS from a Description - OTP',
-      description: 'Describe your AI operations in plain English. OTP generates a structured OOS file ready to publish. No technical formatting required.',
+      title: 'Generate Your OOS - OTP',
+      description: 'Describe your AI operations in plain English and get a structured Organizational Operating System ready to publish. No technical formatting required.',
       canonical: BASE_URL + '/generate',
+      ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: 'Generate', url: BASE_URL + '/generate' }),
     });
   });
@@ -1179,9 +1184,10 @@ export default async function pageRoutes(app: FastifyInstance) {
   // What's New
   app.get('/whats-new', async (request, reply) => {
     return reply.view('pages/whats-new', {
-      title: "What's New - OTP",
-      description: 'Platform updates, new features, and improvements to the Organization Transport Protocol.',
+      title: "What's New on OTP - Latest Platform Updates",
+      description: 'Latest platform updates, features, and improvements to OTP. See what is new in the coordination intelligence layer for AI-native organizations.',
       canonical: BASE_URL + '/whats-new',
+      ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: "What's New", url: BASE_URL + '/whats-new' }),
     });
   });
@@ -1190,8 +1196,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/agent-onboarding', async (request, reply) => {
     return reply.view('pages/agent-onboarding', {
       title: 'Agent Onboarding Framework - OTP',
-      description: 'Your OOS is your agent\'s day-one onboarding packet. Organizational intelligence is as critical for AI agents as employee handbooks are for humans.',
+      description: 'Your OOS is every AI agent\'s day-one onboarding packet. Accountability charts, authority boundaries, coordination protocols, failure modes, and escalation paths -- structured and machine-readable.',
       canonical: BASE_URL + '/agent-onboarding',
+      ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: 'Agent Onboarding', url: BASE_URL + '/agent-onboarding' }),
     });
   });
@@ -1200,8 +1207,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/machine-commerce', async (request, reply) => {
     return reply.view('pages/machine-commerce', {
       title: 'Machine Commerce Discovery - OTP',
-      description: 'OTP is the discovery layer for the emerging agent-to-agent economy. Published OOS files become machine-readable trust profiles for autonomous agent transactions.',
+      description: 'OTP is the discovery layer for the agent-to-agent economy. Published OOS files become machine-readable trust profiles that agents query before transacting.',
       canonical: BASE_URL + '/machine-commerce',
+      ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: 'Machine Commerce', url: BASE_URL + '/machine-commerce' }),
     });
   });
@@ -1212,7 +1220,73 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'MCP Integration Hub - OTP',
       description: 'Connect any AI agent to organizational intelligence via the Model Context Protocol. Browse, search, compare, and publish OOS files programmatically.',
       canonical: BASE_URL + '/mcp',
+      ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: 'MCP Hub', url: BASE_URL + '/mcp' }),
+    });
+  });
+
+  // Blog post 26 - Agent Onboarding
+  app.get('/blog/agent-onboarding', async (request, reply) => {
+    return reply.view('pages/blog-post-26', {
+      title: 'Your Operating System is Your Agent\'s Day-One Onboarding - OTP',
+      description: 'The same five things every new hire needs are the same five things every AI agent needs. Your OOS is the onboarding packet that compounds with every agent you add.',
+      canonical: BASE_URL + '/blog/agent-onboarding',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('Your Operating System is Your Agent\'s Day-One Onboarding', 'agent-onboarding', '2026-03-26', 2200)
+    });
+  });
+
+  // Blog post 27 - Machine Commerce
+  app.get('/blog/machine-commerce', async (request, reply) => {
+    return reply.view('pages/blog-post-27', {
+      title: 'When Agents Are the Customer: The Machine Commerce Discovery Layer - OTP',
+      description: 'Tomorrow, AI agents will evaluate vendors autonomously at scale in seconds. Your OOS is the machine-readable trust profile that makes you discoverable in the agent economy.',
+      canonical: BASE_URL + '/blog/machine-commerce',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('When Agents Are the Customer: The Machine Commerce Discovery Layer', 'machine-commerce', '2026-03-26', 2400)
+    });
+  });
+
+  // Blog post 28 - MCP Everything
+  app.get('/blog/mcp-everything', async (request, reply) => {
+    return reply.view('pages/blog-post-28', {
+      title: 'Every Data Source Should Be an MCP Server (Including Your Operating System) - OTP',
+      description: 'MCP is becoming the standard for how agents talk to everything. Your organizational operating system is a data source that agents need to access natively.',
+      canonical: BASE_URL + '/blog/mcp-everything',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('Every Data Source Should Be an MCP Server (Including Your Operating System)', 'mcp-everything', '2026-03-26', 2600)
+    });
+  });
+
+  // Blog post 29 - Machine Micropayments
+  app.get('/blog/machine-micropayments', async (request, reply) => {
+    return reply.view('pages/blog-post-29', {
+      title: 'Machine Micropayments: When AI Agents Have Wallets - OTP',
+      description: 'When agents can spend money, your published operational intelligence becomes an economic asset. The OOS is the trust profile machines query before sending you money.',
+      canonical: BASE_URL + '/blog/machine-micropayments',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('Machine Micropayments: When AI Agents Have Wallets', 'machine-micropayments', '2026-03-26', 2800)
+    });
+  });
+
+  // Blog post 30 - Connected Member
+  app.get('/blog/connected-member', async (request, reply) => {
+    return reply.view('pages/blog-post-30', {
+      title: 'The Connected Member: AI is Rewriting Membership Sales and Nobody\'s Ready - OTP',
+      description: 'When a member\'s AI agent evaluates your gym at 2 AM, what will it find? The shift from brand awareness to operational transparency is already happening.',
+      canonical: BASE_URL + '/blog/connected-member',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('The Connected Member: AI is Rewriting Membership Sales and Nobody\'s Ready', 'connected-member', '2026-03-26', 3000)
     });
   });
 }
