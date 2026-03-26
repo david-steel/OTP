@@ -102,28 +102,45 @@ export default async function graphRoutes(app: FastifyInstance) {
       // Materialized view may not be refreshed yet
     }
 
-    // Extract platform data from frontmatter for Infrastructure mode
-    const nodePlatforms: Record<string, string[]> = {};
+    // Extract platform + MCP server data from frontmatter for Infrastructure mode
+    const AI_PLATFORMS = new Set(['claude', 'gpt', 'chatgpt', 'openai', 'gemini', 'google gemini', 'custom']);
+    const nodePlatforms: Record<string, { platforms: string[]; mcpServers: string[] }> = {};
     const platformOrgMap: Record<string, Set<string>> = {};
+    const mcpOrgMap: Record<string, Set<string>> = {};
     let totalConnections = 0;
 
     for (const f of publishedFiles) {
       const fm = f.frontmatter as any;
       const platforms: string[] = (fm?.platforms && Array.isArray(fm.platforms)) ? fm.platforms : [];
-      nodePlatforms[f.id] = platforms;
+      const mcpServers: string[] = (fm?.mcp_servers && Array.isArray(fm.mcp_servers)) ? fm.mcp_servers : [];
+      nodePlatforms[f.id] = { platforms, mcpServers };
+
       for (const p of platforms) {
         const pLower = p.toLowerCase();
         if (!platformOrgMap[pLower]) platformOrgMap[pLower] = new Set();
         platformOrgMap[pLower].add(f.orgId);
         totalConnections++;
       }
+      for (const m of mcpServers) {
+        const mLower = m.toLowerCase();
+        if (!mcpOrgMap[mLower]) mcpOrgMap[mLower] = new Set();
+        mcpOrgMap[mLower].add(f.orgId);
+        totalConnections++;
+      }
     }
 
-    const platformStats = {
-      platforms: Object.entries(platformOrgMap)
-        .map(([name, orgs]) => ({ name, orgCount: orgs.size }))
-        .sort((a, b) => b.orgCount - a.orgCount),
+    const platformStats = [
+      ...Object.entries(platformOrgMap)
+        .map(([name, orgs]) => ({ name, type: 'platform' as const, orgCount: orgs.size })),
+      ...Object.entries(mcpOrgMap)
+        .map(([name, orgs]) => ({ name, type: 'mcp' as const, orgCount: orgs.size })),
+    ].sort((a, b) => b.orgCount - a.orgCount);
+
+    const platformStatsResponse = {
+      platforms: platformStats,
       totalConnections,
+      aiPlatformCount: Object.keys(platformOrgMap).length,
+      mcpServerCount: Object.keys(mcpOrgMap).length,
     };
 
     return {
@@ -132,7 +149,7 @@ export default async function graphRoutes(app: FastifyInstance) {
       claims: claimsMap,
       similarities: simRows,
       nodePlatforms,
-      platformStats,
+      platformStats: platformStatsResponse,
       stats: {
         publishers: publishedFiles.length,
         totalClaims,

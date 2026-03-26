@@ -11,6 +11,7 @@ export interface OOSFrontmatter {
   template: TemplateType;
   agent_count: number;
   platforms: string[];
+  mcp_servers?: string[];
   generated_at: string;
   version: number;
   parent_version: number | null;

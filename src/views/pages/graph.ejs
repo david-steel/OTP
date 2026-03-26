@@ -250,7 +250,7 @@
             <div class="w-2.5 h-2.5 rounded-full bg-otp-500 flex-shrink-0"></div>
           </label>
 
-          <!-- Layer: Platforms -->
+          <!-- Layer: AI Platforms -->
           <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
             <div class="relative">
               <input type="checkbox" id="infra-layer-platforms" checked class="sr-only peer">
@@ -258,10 +258,24 @@
               <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-gray-900 text-xs font-medium">Platforms</div>
-              <div class="text-gray-400 text-[10px]">AI/MCP platform nodes</div>
+              <div class="text-gray-900 text-xs font-medium">AI Platforms</div>
+              <div class="text-gray-400 text-[10px]">Claude, GPT, Gemini, Custom</div>
             </div>
-            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 flex-shrink-0"></div>
+            <div class="w-2.5 h-2.5 rounded-sm rotate-45 bg-purple-500 flex-shrink-0"></div>
+          </label>
+
+          <!-- Layer: MCP Servers -->
+          <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <div class="relative">
+              <input type="checkbox" id="infra-layer-mcp" checked class="sr-only peer">
+              <div class="w-8 h-4 bg-gray-200 rounded-full peer-checked:bg-cyan-500 transition-colors"></div>
+              <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-gray-900 text-xs font-medium">MCP Servers</div>
+              <div class="text-gray-400 text-[10px]">Slack, Gmail, Todoist, etc.</div>
+            </div>
+            <div class="w-2.5 h-2.5 rounded-full bg-cyan-500 flex-shrink-0" style="border-radius: 3px;"></div>
           </label>
 
           <!-- Layer: Connections -->
@@ -280,14 +294,25 @@
         </div>
 
         <!-- Platform legend (shown in Infrastructure mode) -->
-        <div id="platform-legend" class="hidden border-t border-gray-100 px-4 py-3">
-          <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">Platform Colors</div>
-          <div class="flex flex-col gap-1.5 text-[11px]">
+        <div id="platform-legend" class="hidden border-t border-gray-100 px-4 py-3" style="max-height: 260px; overflow-y: auto;">
+          <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">AI Platforms</div>
+          <div class="flex flex-col gap-1.5 text-[11px] mb-3">
             <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#c084fc"></div><span class="text-gray-600">Claude</span></div>
             <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#10b981"></div><span class="text-gray-600">GPT / OpenAI</span></div>
             <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#3b82f6"></div><span class="text-gray-600">Gemini</span></div>
             <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#6b7280"></div><span class="text-gray-600">Custom</span></div>
-            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm rotate-45" style="background:#9ca3af"></div><span class="text-gray-600">Other</span></div>
+          </div>
+          <div class="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-2">MCP Servers</div>
+          <div class="flex flex-col gap-1.5 text-[11px]">
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#4A154B; border-radius:3px;"></div><span class="text-gray-600">Slack</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#EA4335; border-radius:3px;"></div><span class="text-gray-600">Gmail</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#4285F4; border-radius:3px;"></div><span class="text-gray-600">Google Workspace</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#E44332; border-radius:3px;"></div><span class="text-gray-600">Todoist</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#FBBC04; border-radius:3px;"></div><span class="text-gray-600">Google Ads</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#0081FB; border-radius:3px;"></div><span class="text-gray-600">Meta Ads</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#2BB673; border-radius:3px;"></div><span class="text-gray-600">GHL</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#7C3AED; border-radius:3px;"></div><span class="text-gray-600">Obsidian</span></div>
+            <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-sm" style="background:#9CA3AF; border-radius:3px;"></div><span class="text-gray-600">Other</span></div>
           </div>
         </div>
 
@@ -344,7 +369,7 @@
     education: '#7b1fa2'
   };
 
-  // Platform colors for Infrastructure mode
+  // Platform colors for Infrastructure mode (AI Platforms)
   var platformColors = {
     claude: '#c084fc',
     custom: '#6b7280',
@@ -355,9 +380,57 @@
     'google gemini': '#3b82f6',
   };
 
+  // MCP Server colors by category
+  var mcpServerColors = {
+    // Communication
+    slack: '#4A154B',
+    gmail: '#EA4335',
+    'google-workspace': '#4285F4',
+    'google-calendar': '#4285F4',
+    whatsapp: '#25D366',
+    // Productivity
+    todoist: '#E44332',
+    obsidian: '#7C3AED',
+    n8n: '#FF6D5A',
+    // Data/Analytics
+    'google-ads': '#FBBC04',
+    'meta-ads': '#0081FB',
+    'meta-ad-library': '#0081FB',
+    'search-atlas': '#10B981',
+    // CRM/Business
+    ghl: '#2BB673',
+    accelo: '#FF6B35',
+    calendly: '#006BFF',
+    quickbooks: '#2CA01C',
+    // Infrastructure
+    playwright: '#2EAD33',
+    fireflies: '#6366F1',
+    // AI services (when listed as MCP)
+    openai: '#10b981',
+    nanobanana: '#F59E0B',
+    claude: '#c084fc',
+  };
+
+  // Known AI platform names (used to distinguish platform vs MCP)
+  var AI_PLATFORM_NAMES = ['claude', 'gpt', 'chatgpt', 'openai', 'gemini', 'google gemini', 'custom'];
+
+  function isAIPlatform(name) {
+    return AI_PLATFORM_NAMES.indexOf((name || '').toLowerCase()) !== -1;
+  }
+
   function getPlatformColor(name) {
     var lower = (name || '').toLowerCase();
     return platformColors[lower] || '#9ca3af';
+  }
+
+  function getMcpColor(name) {
+    var lower = (name || '').toLowerCase();
+    return mcpServerColors[lower] || '#9CA3AF';
+  }
+
+  function getInfraColor(name, type) {
+    if (type === 'mcp') return getMcpColor(name);
+    return getPlatformColor(name);
   }
 
   // Get node color: industry override > template default
@@ -1300,13 +1373,21 @@
 
   // Layer panel collapse toggle
   document.getElementById('layer-collapse').addEventListener('click', function() {
-    var list = document.getElementById('layer-list');
-    var legend = document.getElementById('section-legend');
-    var slider = document.getElementById('sim-slider-section');
-    list.classList.toggle('hidden');
-    slider.classList.toggle('hidden');
-    if (!layers.sections) legend.classList.add('hidden');
-    this.querySelector('svg').style.transform = list.classList.contains('hidden') ? 'rotate(180deg)' : '';
+    if (currentMode === 'infrastructure') {
+      var infraList = document.getElementById('infra-layer-list');
+      var pLegend = document.getElementById('platform-legend');
+      infraList.classList.toggle('hidden');
+      pLegend.classList.toggle('hidden');
+      this.querySelector('svg').style.transform = infraList.classList.contains('hidden') ? 'rotate(180deg)' : '';
+    } else {
+      var list = document.getElementById('layer-list');
+      var legend = document.getElementById('section-legend');
+      var slider = document.getElementById('sim-slider-section');
+      list.classList.toggle('hidden');
+      slider.classList.toggle('hidden');
+      if (!layers.sections) legend.classList.add('hidden');
+      this.querySelector('svg').style.transform = list.classList.contains('hidden') ? 'rotate(180deg)' : '';
+    }
   });
 
   // Detail panel close
@@ -1427,9 +1508,9 @@
       ],
       infrastructure: [
         { id: 'stat-publishers', label: 'Publishers', value: graphData.stats?.publishers || 0 },
-        { id: 'stat-claims', label: 'Platforms', value: graphData.platformStats ? graphData.platformStats.platforms.length : 0 },
-        { id: 'stat-connections', label: 'Connections', value: graphData.platformStats ? graphData.platformStats.totalConnections : 0 },
-        { id: 'stat-patterns', label: 'Most Used', value: graphData.platformStats && graphData.platformStats.platforms.length > 0 ? graphData.platformStats.platforms[0].name : '--' },
+        { id: 'stat-claims', label: 'AI Platforms', value: graphData.platformStats ? (graphData.platformStats.aiPlatformCount || 0) : 0 },
+        { id: 'stat-connections', label: 'MCP Servers', value: graphData.platformStats ? (graphData.platformStats.mcpServerCount || 0) : 0 },
+        { id: 'stat-patterns', label: 'Total Connections', value: graphData.platformStats ? graphData.platformStats.totalConnections : 0 },
       ],
     };
 
@@ -1491,10 +1572,11 @@
 
     // Create layers
     var edgeLayer = infraMain.append('g').attr('class', 'infra-edges');
+    var mcpNodeLayer = infraMain.append('g').attr('class', 'infra-mcp-nodes');
     var platformNodeLayer = infraMain.append('g').attr('class', 'infra-platform-nodes');
     var orgNodeLayerInfra = infraMain.append('g').attr('class', 'infra-org-nodes');
 
-    // Build node data
+    // Build node data -- new format: nodePlatforms[oosId] = { platforms: [...], mcpServers: [...] }
     var nodePlatforms = data.nodePlatforms || {};
     var platformStatsData = data.platformStats || { platforms: [], totalConnections: 0 };
 
@@ -1502,38 +1584,67 @@
     buildOrgGroups(data);
     var orgArray = Object.values(orgGroups);
 
-    // Build platform nodes
-    var platformNodes = platformStatsData.platforms.map(function(p) {
+    // Separate platform stats into AI platforms and MCP servers
+    var aiPlatformStats = (platformStatsData.platforms || []).filter(function(p) { return p.type === 'platform'; });
+    var mcpServerStats = (platformStatsData.platforms || []).filter(function(p) { return p.type === 'mcp'; });
+
+    // Build AI platform nodes (diamond shape)
+    var platformNodes = aiPlatformStats.map(function(p) {
       return {
         id: 'platform-' + p.name,
         name: p.name,
         orgCount: p.orgCount,
-        isPlatform: true,
+        _infraType: 'platform',
+        _infraId: 'platform-' + p.name,
       };
     });
 
-    // Build edges: org -> platform
+    // Build MCP server nodes (pill/rounded-rect shape)
+    var mcpNodes = mcpServerStats.map(function(p) {
+      return {
+        id: 'mcp-' + p.name,
+        name: p.name,
+        orgCount: p.orgCount,
+        _infraType: 'mcp',
+        _infraId: 'mcp-' + p.name,
+      };
+    });
+
+    // Build edges: org -> platform and org -> mcp
     var infraEdges = [];
     orgArray.forEach(function(org) {
-      // Gather all platforms used by this org
-      var orgPlatforms = {};
+      var orgPlatformSet = {};
+      var orgMcpSet = {};
       org.oosIds.forEach(function(oosId) {
-        var platforms = nodePlatforms[oosId] || [];
-        platforms.forEach(function(p) {
-          orgPlatforms[p.toLowerCase()] = true;
-        });
+        var nodeData = nodePlatforms[oosId];
+        if (!nodeData) return;
+        // Handle both old format (array) and new format (object with platforms + mcpServers)
+        var platforms = Array.isArray(nodeData) ? nodeData : (nodeData.platforms || []);
+        var mcpServers = Array.isArray(nodeData) ? [] : (nodeData.mcpServers || []);
+        platforms.forEach(function(p) { orgPlatformSet[p.toLowerCase()] = true; });
+        mcpServers.forEach(function(m) { orgMcpSet[m.toLowerCase()] = true; });
       });
-      Object.keys(orgPlatforms).forEach(function(pName) {
+      Object.keys(orgPlatformSet).forEach(function(pName) {
         infraEdges.push({
           sourceOrg: org.orgId,
-          targetPlatform: 'platform-' + pName,
-          platformName: pName,
+          targetId: 'platform-' + pName,
+          name: pName,
+          type: 'platform',
+        });
+      });
+      Object.keys(orgMcpSet).forEach(function(mName) {
+        infraEdges.push({
+          sourceOrg: org.orgId,
+          targetId: 'mcp-' + mName,
+          name: mName,
+          type: 'mcp',
         });
       });
     });
 
     // Check layer states
     var showPlatforms = document.getElementById('infra-layer-platforms').checked;
+    var showMcp = document.getElementById('infra-layer-mcp').checked;
     var showConnections = document.getElementById('infra-layer-connections').checked;
 
     // Combine all nodes for simulation
@@ -1543,24 +1654,31 @@
       o._infraId = o.orgId;
       allNodes.push(o);
     });
-    platformNodes.forEach(function(p) {
-      p._infraType = 'platform';
-      p._infraId = p.id;
-      allNodes.push(p);
-    });
+    platformNodes.forEach(function(p) { allNodes.push(p); });
+    mcpNodes.forEach(function(m) { allNodes.push(m); });
 
-    // Initial positions
-    allNodes.forEach(function(n, i) {
+    // Initial positions: platforms center, MCP outer ring, orgs outside
+    var platformCount = platformNodes.length;
+    var mcpCount = mcpNodes.length;
+    var orgCount = orgArray.length;
+    var pIdx = 0, mIdx = 0, oIdx = 0;
+
+    allNodes.forEach(function(n) {
       if (n._infraType === 'platform') {
-        // Platforms in center cluster
-        var angle = (2 * Math.PI * i) / Math.max(platformNodes.length, 1);
-        n.x = width / 2 + Math.cos(angle) * 80;
-        n.y = height / 2 + Math.sin(angle) * 80;
+        var angle = (2 * Math.PI * pIdx) / Math.max(platformCount, 1);
+        n.x = width / 2 + Math.cos(angle) * 60;
+        n.y = height / 2 + Math.sin(angle) * 60;
+        pIdx++;
+      } else if (n._infraType === 'mcp') {
+        var angle = (2 * Math.PI * mIdx) / Math.max(mcpCount, 1);
+        n.x = width / 2 + Math.cos(angle) * 180;
+        n.y = height / 2 + Math.sin(angle) * 180;
+        mIdx++;
       } else {
-        // Orgs around the outside
-        var angle = (2 * Math.PI * i) / Math.max(orgArray.length, 1);
-        n.x = width / 2 + Math.cos(angle) * 250;
-        n.y = height / 2 + Math.sin(angle) * 250;
+        var angle = (2 * Math.PI * oIdx) / Math.max(orgCount, 1);
+        n.x = width / 2 + Math.cos(angle) * 320;
+        n.y = height / 2 + Math.sin(angle) * 320;
+        oIdx++;
       }
     });
 
@@ -1568,7 +1686,7 @@
     var simLinks = infraEdges.map(function(e) {
       return {
         source: allNodes.find(function(n) { return n._infraId === e.sourceOrg; }),
-        target: allNodes.find(function(n) { return n._infraId === e.targetPlatform; }),
+        target: allNodes.find(function(n) { return n._infraId === e.targetId; }),
         edge: e,
       };
     }).filter(function(l) { return l.source && l.target; });
@@ -1576,21 +1694,31 @@
     // Force simulation
     infraSimulation = d3.forceSimulation(allNodes)
       .force('charge', d3.forceManyBody().strength(function(d) {
-        return d._infraType === 'platform' ? -400 : -600;
+        if (d._infraType === 'platform') return -300;
+        if (d._infraType === 'mcp') return -200;
+        return -500;
       }))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(function(d) {
-        if (d._infraType === 'platform') return getInfraPlatformRadius(d) + 30;
-        return getOrgRadius(d) + 40;
+        if (d._infraType === 'platform') return getInfraPlatformRadius(d) + 25;
+        if (d._infraType === 'mcp') return getInfraMcpWidth(d) / 2 + 15;
+        return getOrgRadius(d) + 35;
       }))
-      .force('link', d3.forceLink(simLinks).distance(200).strength(0.4))
+      .force('link', d3.forceLink(simLinks).distance(function(d) {
+        // Shorter links for platform connections, longer for MCP
+        return d.edge.type === 'platform' ? 160 : 200;
+      }).strength(0.3))
       .force('radial', d3.forceRadial(
         function(d) {
-          return d._infraType === 'platform' ? 0 : Math.min(width, height) * 0.3;
+          if (d._infraType === 'platform') return 0;
+          if (d._infraType === 'mcp') return Math.min(width, height) * 0.18;
+          return Math.min(width, height) * 0.35;
         },
         width / 2, height / 2
       ).strength(function(d) {
-        return d._infraType === 'platform' ? 0.3 : 0.05;
+        if (d._infraType === 'platform') return 0.4;
+        if (d._infraType === 'mcp') return 0.15;
+        return 0.05;
       }));
 
     // Draw edges
@@ -1598,12 +1726,12 @@
       .data(simLinks)
       .join('line')
       .attr('class', 'infra-edge')
-      .attr('stroke', function(d) { return getPlatformColor(d.edge.platformName); })
-      .attr('stroke-width', 1.5)
+      .attr('stroke', function(d) { return getInfraColor(d.edge.name, d.edge.type); })
+      .attr('stroke-width', function(d) { return d.edge.type === 'mcp' ? 1 : 1.5; })
       .attr('stroke-opacity', showConnections ? 0.3 : 0)
-      .attr('stroke-dasharray', '4,3');
+      .attr('stroke-dasharray', function(d) { return d.edge.type === 'mcp' ? '3,2' : '4,3'; });
 
-    // Draw platform nodes (diamonds)
+    // Draw AI platform nodes (diamonds)
     var platformElems = platformNodeLayer.selectAll('g.platform-node')
       .data(platformNodes)
       .join('g')
@@ -1654,9 +1782,8 @@
     platformElems
       .on('mouseenter', function(event, d) {
         d3.select(this).select('.platform-diamond').attr('stroke-width', 3).attr('filter', 'url(#org-glow)');
-        // Find orgs using this platform
         var connectedOrgs = infraEdges
-          .filter(function(e) { return e.targetPlatform === d.id; })
+          .filter(function(e) { return e.targetId === d.id; })
           .map(function(e) {
             var org = orgArray.find(function(o) { return o.orgId === e.sourceOrg; });
             return org ? org.orgName : '';
@@ -1664,6 +1791,7 @@
           .filter(function(n) { return n; });
         showTooltip(event,
           '<div class="text-gray-900 font-semibold mb-1">' + d.name + '</div>' +
+          '<div class="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 inline-block mb-2">AI Platform</div>' +
           '<div class="text-gray-500 text-[11px] mb-2">' + d.orgCount + ' organization' + (d.orgCount !== 1 ? 's' : '') + '</div>' +
           '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1">Used by</div>' +
           connectedOrgs.slice(0, 6).map(function(n) {
@@ -1678,7 +1806,76 @@
       })
       .on('click', function(event, d) {
         event.stopPropagation();
-        showPlatformDetailPanel(d, orgArray, infraEdges);
+        showInfraDetailPanel(d, 'platform', orgArray, infraEdges);
+      });
+
+    // Draw MCP server nodes (rounded rectangles / pills)
+    var mcpElems = mcpNodeLayer.selectAll('g.mcp-node')
+      .data(mcpNodes)
+      .join('g')
+      .attr('class', 'mcp-node')
+      .style('cursor', 'pointer')
+      .style('display', showMcp ? null : 'none')
+      .call(d3.drag()
+        .on('start', function(event, d) { if (!event.active) infraSimulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', function(event, d) { d.fx = event.x; d.fy = event.y; })
+        .on('end', function(event, d) { if (!event.active) infraSimulation.alphaTarget(0); d.fx = null; d.fy = null; })
+      );
+
+    // Pill/rounded-rect shape for MCP servers
+    mcpElems.append('rect')
+      .attr('class', 'mcp-pill')
+      .attr('width', function(d) { return getInfraMcpWidth(d); })
+      .attr('height', function(d) { return getInfraMcpHeight(d); })
+      .attr('x', function(d) { return -getInfraMcpWidth(d) / 2; })
+      .attr('y', function(d) { return -getInfraMcpHeight(d) / 2; })
+      .attr('rx', function(d) { return getInfraMcpHeight(d) / 2; })
+      .attr('ry', function(d) { return getInfraMcpHeight(d) / 2; })
+      .attr('fill', function(d) { return getMcpColor(d.name); })
+      .attr('fill-opacity', 0.85)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1.5)
+      .attr('filter', 'url(#drop-shadow)');
+
+    // MCP server name inside pill
+    mcpElems.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .attr('font-size', '9px')
+      .attr('font-weight', '600')
+      .attr('fill', '#fff')
+      .attr('pointer-events', 'none')
+      .text(function(d) { return formatMcpName(d.name); });
+
+    // MCP tooltips
+    mcpElems
+      .on('mouseenter', function(event, d) {
+        d3.select(this).select('.mcp-pill').attr('stroke-width', 2.5).attr('filter', 'url(#org-glow)');
+        var connectedOrgs = infraEdges
+          .filter(function(e) { return e.targetId === d.id; })
+          .map(function(e) {
+            var org = orgArray.find(function(o) { return o.orgId === e.sourceOrg; });
+            return org ? org.orgName : '';
+          })
+          .filter(function(n) { return n; });
+        showTooltip(event,
+          '<div class="text-gray-900 font-semibold mb-1">' + d.name + '</div>' +
+          '<div class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-600 inline-block mb-2">MCP Server</div>' +
+          '<div class="text-gray-500 text-[11px] mb-2">' + d.orgCount + ' organization' + (d.orgCount !== 1 ? 's' : '') + '</div>' +
+          '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1">Used by</div>' +
+          connectedOrgs.slice(0, 6).map(function(n) {
+            return '<div class="text-gray-600 text-[11px]">' + n + '</div>';
+          }).join('') +
+          (connectedOrgs.length > 6 ? '<div class="text-gray-400 text-[10px] mt-1">+' + (connectedOrgs.length - 6) + ' more</div>' : '')
+        );
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('.mcp-pill').attr('stroke-width', 1.5).attr('filter', 'url(#drop-shadow)');
+        hideTooltip();
+      })
+      .on('click', function(event, d) {
+        event.stopPropagation();
+        showInfraDetailPanel(d, 'mcp', orgArray, infraEdges);
       });
 
     // Draw org nodes (circles, same as intelligence mode)
@@ -1730,10 +1927,16 @@
       .attr('class', 'org-stats')
       .text(function(d) {
         var pCount = 0;
+        var mCount = 0;
         d.oosIds.forEach(function(oosId) {
-          var platforms = nodePlatforms[oosId] || [];
+          var nodeData = nodePlatforms[oosId];
+          if (!nodeData) return;
+          var platforms = Array.isArray(nodeData) ? nodeData : (nodeData.platforms || []);
+          var mcpServers = Array.isArray(nodeData) ? [] : (nodeData.mcpServers || []);
           pCount += platforms.length;
+          mCount += mcpServers.length;
         });
+        if (mCount > 0) return pCount + ' plat + ' + mCount + ' MCP';
         return pCount + ' platform' + (pCount !== 1 ? 's' : '');
       })
       .attr('text-anchor', 'middle')
@@ -1758,23 +1961,34 @@
     orgElems
       .on('mouseenter', function(event, d) {
         d3.select(this).select('.org-circle').attr('stroke-width', 3.5).attr('filter', 'url(#org-glow)');
-        // Find platforms used by this org
+        // Find platforms and MCP servers used by this org
         var orgPlatformNames = [];
+        var orgMcpNames = [];
         d.oosIds.forEach(function(oosId) {
-          var platforms = nodePlatforms[oosId] || [];
-          platforms.forEach(function(p) {
-            if (orgPlatformNames.indexOf(p) === -1) orgPlatformNames.push(p);
-          });
+          var nodeData = nodePlatforms[oosId];
+          if (!nodeData) return;
+          var platforms = Array.isArray(nodeData) ? nodeData : (nodeData.platforms || []);
+          var mcpServers = Array.isArray(nodeData) ? [] : (nodeData.mcpServers || []);
+          platforms.forEach(function(p) { if (orgPlatformNames.indexOf(p) === -1) orgPlatformNames.push(p); });
+          mcpServers.forEach(function(m) { if (orgMcpNames.indexOf(m) === -1) orgMcpNames.push(m); });
         });
+        var platformHtml = orgPlatformNames.length > 0 ?
+          '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1 mt-1">AI Platforms</div>' +
+          orgPlatformNames.map(function(p) {
+            return '<div class="flex items-center gap-1.5 text-[11px]"><div class="w-2 h-2 rounded-sm rotate-45" style="background:' + getPlatformColor(p) + '"></div><span class="text-gray-600">' + p + '</span></div>';
+          }).join('') : '';
+        var mcpHtml = orgMcpNames.length > 0 ?
+          '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1 mt-1">MCP Servers</div>' +
+          orgMcpNames.slice(0, 8).map(function(m) {
+            return '<div class="flex items-center gap-1.5 text-[11px]"><div class="w-2 h-2 rounded-sm" style="background:' + getMcpColor(m) + '; border-radius:2px;"></div><span class="text-gray-600">' + m + '</span></div>';
+          }).join('') +
+          (orgMcpNames.length > 8 ? '<div class="text-gray-400 text-[10px] mt-0.5">+' + (orgMcpNames.length - 8) + ' more</div>' : '') : '';
         showTooltip(event,
           '<div class="text-gray-900 font-semibold mb-1">' + d.orgName + '</div>' +
           '<div class="flex items-center gap-2 mb-1">' +
           '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:' + (templateColors[d.template] || '#6b7280') + '18; color:' + (templateColors[d.template] || '#6b7280') + '">' + formatTemplate(d.template) + '</span>' +
           '</div>' +
-          '<div class="text-gray-400 text-[10px] uppercase tracking-wide mb-1">Platforms</div>' +
-          orgPlatformNames.map(function(p) {
-            return '<div class="flex items-center gap-1.5 text-[11px]"><div class="w-2 h-2 rounded-sm rotate-45" style="background:' + getPlatformColor(p) + '"></div><span class="text-gray-600">' + p + '</span></div>';
-          }).join('')
+          platformHtml + mcpHtml
         );
       })
       .on('mouseleave', function() {
@@ -1795,6 +2009,7 @@
         .attr('y2', function(d) { return d.target.y; });
 
       platformElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+      mcpElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
       orgElems.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
     });
 
@@ -1808,17 +2023,29 @@
 
     // Wire up infra layer toggles
     var infraPlatformsCb = document.getElementById('infra-layer-platforms');
+    var infraMcpCb = document.getElementById('infra-layer-mcp');
     var infraConnCb = document.getElementById('infra-layer-connections');
 
     function updateInfraLayers() {
       var showP = infraPlatformsCb.checked;
+      var showM = infraMcpCb.checked;
       var showC = infraConnCb.checked;
       platformElems.style('display', showP ? null : 'none');
-      edgeElems.attr('stroke-opacity', showC ? 0.3 : 0);
-      document.getElementById('platform-legend').classList.toggle('hidden', !showP);
+      mcpElems.style('display', showM ? null : 'none');
+      edgeElems.each(function(d) {
+        var isVisible = showC;
+        if (isVisible) {
+          // Also check if the target node type is visible
+          if (d.edge.type === 'platform' && !showP) isVisible = false;
+          if (d.edge.type === 'mcp' && !showM) isVisible = false;
+        }
+        d3.select(this).attr('stroke-opacity', isVisible ? 0.3 : 0);
+      });
+      document.getElementById('platform-legend').classList.toggle('hidden', !showP && !showM);
     }
 
     infraPlatformsCb.onchange = updateInfraLayers;
+    infraMcpCb.onchange = updateInfraLayers;
     infraConnCb.onchange = updateInfraLayers;
   }
 
@@ -1827,23 +2054,50 @@
     return Math.max(15, Math.min(30, 12 + d.orgCount * 4));
   }
 
-  function showPlatformDetailPanel(d, orgArray, infraEdges) {
+  function getInfraMcpWidth(d) {
+    // Scale pill width based on name length and org count
+    var nameLen = formatMcpName(d.name).length;
+    return Math.max(50, Math.min(90, nameLen * 6 + 20));
+  }
+
+  function getInfraMcpHeight(d) {
+    return 22;
+  }
+
+  function formatMcpName(name) {
+    if (!name) return '';
+    // Capitalize and clean up hyphenated names
+    return name.split('-').map(function(w) {
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ');
+  }
+
+  function showInfraDetailPanel(d, type, orgArray, infraEdges) {
     document.getElementById('layer-panel').classList.add('hidden');
     var panel = document.getElementById('detail-panel');
     panel.classList.remove('hidden');
-    document.getElementById('detail-title').textContent = d.name + ' Platform';
+
+    var typeLabel = type === 'mcp' ? 'MCP Server' : 'AI Platform';
+    var color = type === 'mcp' ? getMcpColor(d.name) : getPlatformColor(d.name);
+    var badgeClass = type === 'mcp' ? 'bg-cyan-50 text-cyan-600' : 'bg-purple-50 text-purple-600';
+
+    document.getElementById('detail-title').textContent = d.name;
 
     var connectedOrgs = infraEdges
-      .filter(function(e) { return e.targetPlatform === d.id; })
+      .filter(function(e) { return e.targetId === d.id; })
       .map(function(e) {
         return orgArray.find(function(o) { return o.orgId === e.sourceOrg; });
       })
       .filter(function(o) { return o; });
 
+    var shapeHtml = type === 'mcp'
+      ? '<div class="w-5 h-3 rounded-full" style="background:' + color + '"></div>'
+      : '<div class="w-5 h-5 rounded-sm rotate-45" style="background:' + color + '"></div>';
+
     document.getElementById('detail-content').innerHTML =
       '<div class="flex items-center gap-2 mb-3">' +
-      '<div class="w-5 h-5 rounded-sm rotate-45" style="background:' + getPlatformColor(d.name) + '"></div>' +
-      '<span class="text-gray-500 text-[10px]">AI / MCP Platform</span>' +
+      shapeHtml +
+      '<span class="text-[10px] px-1.5 py-0.5 rounded ' + badgeClass + '">' + typeLabel + '</span>' +
       '</div>' +
       '<div class="grid grid-cols-2 gap-2 mb-4">' +
       '<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"><div class="text-gray-900 text-lg font-bold">' + d.orgCount + '</div><div class="text-gray-400 text-[10px]">Organizations</div></div>' +

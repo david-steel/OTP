@@ -53,6 +53,7 @@ export const oosFrontmatterSchema = z.object({
   template: z.enum(TEMPLATE_TYPES),
   agent_count: z.number().int().positive(),
   platforms: z.array(z.string()).min(1),
+  mcp_servers: z.array(z.string()).optional(),
   generated_at: z.string().refine((val) => !isNaN(new Date(val).getTime()), { message: 'Invalid date. Use ISO 8601 format (e.g. 2026-03-16T12:00:00Z)' }),
   version: z.number().int().positive(),
   parent_version: z.number().int().positive().nullable(),
