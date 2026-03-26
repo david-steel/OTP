@@ -1165,4 +1165,24 @@ export default async function pageRoutes(app: FastifyInstance) {
       },
     });
   });
+
+  // Generate OOS from Description
+  app.get('/generate', async (request, reply) => {
+    return reply.view('pages/generate', {
+      title: 'Generate Your OOS from a Description - OTP',
+      description: 'Describe your AI operations in plain English. OTP generates a structured OOS file ready to publish. No technical formatting required.',
+      canonical: BASE_URL + '/generate',
+      breadcrumbs: bc({ name: 'Generate', url: BASE_URL + '/generate' }),
+    });
+  });
+
+  // What's New
+  app.get('/whats-new', async (request, reply) => {
+    return reply.view('pages/whats-new', {
+      title: "What's New - OTP",
+      description: 'Platform updates, new features, and improvements to the Organization Transport Protocol.',
+      canonical: BASE_URL + '/whats-new',
+      breadcrumbs: bc({ name: "What's New", url: BASE_URL + '/whats-new' }),
+    });
+  });
 }

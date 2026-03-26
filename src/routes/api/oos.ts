@@ -70,6 +70,199 @@ export default async function oosRoutes(app: FastifyInstance) {
   });
 
   // ============================================================
+  // POST /api/v1/oos/generate -- Generate OOS from description (no auth required)
+  // ============================================================
+  app.post('/oos/generate', async (request, reply) => {
+    const body = request.body as { description?: string; template?: string };
+    if (!body?.description || typeof body.description !== 'string' || body.description.trim().length < 20) {
+      return reply.status(400).send({ error: { code: 'MISSING_DESCRIPTION', message: 'description is required (at least 20 characters)' } });
+    }
+
+    const description = body.description.trim();
+    const template = (body.template || 'agent_army') as TemplateType;
+
+    // ---- Template-based OOS generation from natural language ----
+
+    // Extract agent names: look for patterns like "AgentName is..." or "**AgentName**" or "AgentName -"
+    const agentPatterns = [
+      /(?:^|\n)\s*(?:\*\*)?([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)(?:\*\*)?\s+(?:is\s+(?:our|the|a|an)\s+)/gm,
+      /(?:^|\n)\s*(?:\*\*)?([A-Z][a-z]+)(?:\*\*)?\s*[-:]\s*(?:Chief|Lead|Manager|Analyst|Assistant|Engineer|Coordinator|Director|Officer|Strategist|Monitor|Scout|Agent)/gm,
+      /(?:^|\n)\s*###?\s*(?:\*\*)?([A-Z][a-z]+)(?:\*\*)?\s*[-:]/gm,
+    ];
+    const agentNames = new Set<string>();
+    for (const pattern of agentPatterns) {
+      let match;
+      while ((match = pattern.exec(description)) !== null) {
+        const name = match[1].trim();
+        // Filter out common false positives
+        const stopWords = ['The', 'Our', 'We', 'This', 'That', 'Each', 'Every', 'All', 'Any', 'Some', 'New', 'Rules', 'Tools', 'Industry', 'Size', 'Example', 'Note', 'Step', 'Day', 'Week', 'Month'];
+        if (!stopWords.includes(name) && name.length > 1 && name.length < 30) {
+          agentNames.add(name);
+        }
+      }
+    }
+
+    // Extract rules: lines starting with "- " or numbered items or lines with "must", "never", "always"
+    const rules: string[] = [];
+    const lines = description.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Bullet points or numbered lists that look like rules
+      if (/^[-*]\s+.{10,}/.test(trimmed)) {
+        const ruleText = trimmed.replace(/^[-*]\s+/, '');
+        rules.push(ruleText);
+      } else if (/^\d+[.)]\s+.{10,}/.test(trimmed)) {
+        const ruleText = trimmed.replace(/^\d+[.)]\s+/, '');
+        rules.push(ruleText);
+      } else if (/\b(must|never|always|shall|required|forbidden|prohibited)\b/i.test(trimmed) && trimmed.length > 20 && trimmed.length < 300) {
+        if (!rules.includes(trimmed)) {
+          rules.push(trimmed);
+        }
+      }
+    }
+
+    // Extract tools/platforms
+    const toolPatterns = /\b(Slack|Gmail|Google Calendar|Todoist|Meta Ads|Google Ads|Accelo|GHL|HubSpot|Salesforce|Zapier|Make|n8n|Notion|Asana|Jira|Monday|Airtable|Stripe|QuickBooks|Xero|Calendly|Twilio|SendGrid|Hubstaff|Proposify|GitHub|GitLab|Confluence|Linear|ClickUp|Intercom|Zendesk|Freshdesk|Mailchimp|ActiveCampaign|Shopify|BigCommerce|WooCommerce|Webflow|WordPress|Figma|Miro|Loom|Zoom|Teams|Discord|Trello)\b/gi;
+    const tools = new Set<string>();
+    let toolMatch;
+    while ((toolMatch = toolPatterns.exec(description)) !== null) {
+      tools.add(toolMatch[1]);
+    }
+
+    // Extract industry
+    const industryPatterns = /\b(?:industry|sector|business|company|agency|firm|practice|studio|clinic|shop)[\s:]*([A-Za-z\s]+?)(?:\.|,|\n|$)/i;
+    const industryMatch = description.match(industryPatterns);
+    let industry = '';
+    if (industryMatch) {
+      industry = industryMatch[1].trim().substring(0, 50);
+    }
+    // Also check for "Industry: X" pattern
+    const industryLabel = description.match(/industry\s*[:=]\s*(.+?)(?:\n|$)/i);
+    if (industryLabel) {
+      industry = industryLabel[1].trim().substring(0, 50);
+    }
+
+    // Extract size
+    let size = 'small';
+    if (/\b(?:solo|solopreneur|one.?person|freelancer)\b/i.test(description)) size = 'solo';
+    else if (/\b(?:enterprise|10[0-9]{2,}|thousand|corporate)\b/i.test(description)) size = 'enterprise';
+    else if (/\b(?:large|[5-9]\d{1,2}\s*(?:employee|people|staff))\b/i.test(description)) size = 'large';
+    else if (/\b(?:medium|[2-4]\d\s*(?:employee|people|staff)|50\s*(?:employee|people|staff))\b/i.test(description)) size = 'medium';
+
+    // Extract agent count
+    const agentCountMatch = description.match(/(\d+)\s*(?:AI\s+)?agents?\b/i);
+    const agentCount = agentCountMatch ? parseInt(agentCountMatch[1], 10) : agentNames.size || 1;
+
+    // Extract org name
+    const orgNameMatch = description.match(/(?:we\s+(?:run|are|operate)\s+)([A-Z][A-Za-z\s&]+?)(?:\s+with|\s+and|\.|,)/);
+    const orgPseudonym = orgNameMatch ? orgNameMatch[1].trim().substring(0, 50) : 'My Organization';
+
+    // Extract paragraphs for agent descriptions (to generate claims from)
+    const agentDescriptions: Record<string, string> = {};
+    for (const name of agentNames) {
+      const descPattern = new RegExp(`(?:^|\\n)\\s*(?:\\*\\*)?${name}(?:\\*\\*)?\\s+(?:is|[-:])\\s*(.+?)(?=\\n\\s*(?:\\*\\*)?[A-Z][a-z]+(?:\\*\\*)?\\s+(?:is|[-:])|\\n\\s*(?:Rules|Tools|Industry)|$)`, 'si');
+      const descMatch = description.match(descPattern);
+      if (descMatch) {
+        agentDescriptions[name] = descMatch[1].trim().replace(/\n/g, ' ').substring(0, 300);
+      }
+    }
+
+    // ---- Build OOS markdown ----
+    const claimSections: string[] = [];
+    let claimNum = 1;
+
+    // Generate claims from rules
+    if (rules.length > 0) {
+      claimSections.push('## core_operating_rules\n');
+      for (const rule of rules) {
+        const cid = String(claimNum).padStart(3, '0');
+        claimSections.push(`**[C${cid}]** core_operating_rules`);
+        claimSections.push(`- **Rule:** ${rule}`);
+        claimSections.push(`- **Why:** Defined as an operational rule for the organization.`);
+        claimSections.push(`- **Failure mode:** Rule is violated, leading to coordination breakdown or inconsistent behavior.`);
+        claimSections.push(`- **Confidence:** MEDIUM`);
+        claimSections.push(`- **Evidence:** HUMAN_DEFINED_RULE`);
+        claimSections.push(`- **Scope:** org-wide\n`);
+        claimNum++;
+      }
+    }
+
+    // Generate claims from agent descriptions
+    if (agentNames.size > 0) {
+      claimSections.push('## agent_definitions\n');
+      for (const name of agentNames) {
+        const cid = String(claimNum).padStart(3, '0');
+        const desc = agentDescriptions[name] || `${name} is a defined agent in the organization.`;
+        claimSections.push(`**[C${cid}]** agent_definitions`);
+        claimSections.push(`- **Rule:** ${name}: ${desc}`);
+        claimSections.push(`- **Why:** Each agent has a defined role and clear boundaries to prevent overlap and ensure accountability.`);
+        claimSections.push(`- **Failure mode:** Without a clear role definition, ${name} may overlap with other agents or miss responsibilities.`);
+        claimSections.push(`- **Confidence:** MEDIUM`);
+        claimSections.push(`- **Evidence:** HUMAN_DEFINED_RULE`);
+        claimSections.push(`- **Scope:** ${name.toLowerCase()}\n`);
+        claimNum++;
+      }
+    }
+
+    // If no claims were generated, create a minimal set
+    if (claimNum === 1) {
+      // Extract sentences from the description as generic claims
+      const sentences = description.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20 && s.length < 300);
+      claimSections.push('## core_operating_rules\n');
+      for (const sentence of sentences.slice(0, 10)) {
+        const cid = String(claimNum).padStart(3, '0');
+        claimSections.push(`**[C${cid}]** core_operating_rules`);
+        claimSections.push(`- **Rule:** ${sentence}.`);
+        claimSections.push(`- **Why:** Operational practice described by the organization.`);
+        claimSections.push(`- **Failure mode:** Practice is not followed, leading to degraded coordination.`);
+        claimSections.push(`- **Confidence:** MEDIUM`);
+        claimSections.push(`- **Evidence:** HUMAN_DEFINED_RULE`);
+        claimSections.push(`- **Scope:** org-wide\n`);
+        claimNum++;
+      }
+    }
+
+    const totalClaims = claimNum - 1;
+    const toolsArr = Array.from(tools);
+    const platformStr = toolsArr.length > 0 ? toolsArr.join(', ') : 'Not specified';
+
+    const oos = `---
+oos_version: "1.0"
+org_pseudonym: "${orgPseudonym.replace(/"/g, '\\"')}"
+template: "${template}"
+industry: "${industry.replace(/"/g, '\\"') || 'Not specified'}"
+org_size: "${size}"
+agent_count: ${agentCount}
+platforms: "${platformStr}"
+total_claims: ${totalClaims}
+---
+
+${claimSections.join('\n')}`.trim();
+
+    // Run through auto-fixer to clean up any issues
+    const fixResult = autoFixOOS(oos, template);
+
+    // Parse and validate
+    const parsed = parseOOS(fixResult.fixed, template);
+    const validation = validateOOS(parsed, template);
+
+    return {
+      generated: fixResult.fixed,
+      claimCount: parsed.claims.length || totalClaims,
+      template,
+      validation,
+      extracted: {
+        agentNames: Array.from(agentNames),
+        ruleCount: rules.length,
+        tools: toolsArr,
+        industry,
+        size,
+        agentCount,
+      },
+    };
+  });
+
+  // ============================================================
   // POST /api/v1/oos -- Create new OOS (draft)
   // ============================================================
   app.post('/oos', async (request, reply) => {
