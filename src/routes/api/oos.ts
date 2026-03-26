@@ -16,6 +16,33 @@ import { extractGraph } from '../../graph/graph-extractor.js';
 import { autoFixOOS } from '../../services/auto-fixer.js';
 import { resolveApiKey } from '../../middleware/api-key-auth.js';
 import type { TemplateType } from '../../shared/enums.js';
+import { TEMPLATE_TYPES } from '../../shared/enums.js';
+import { z } from 'zod';
+
+// Simple per-IP rate limiter for unauthenticated endpoints
+const ipLimiter = new Map<string, { count: number; resetAt: number }>();
+function checkRateLimit(ip: string, maxPerMin: number): boolean {
+  const now = Date.now();
+  const entry = ipLimiter.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipLimiter.set(ip, { count: 1, resetAt: now + 60000 });
+    return true;
+  }
+  if (entry.count >= maxPerMin) return false;
+  entry.count++;
+  return true;
+}
+
+// Zod schemas for unauthenticated endpoints
+const fixOOSSchema = z.object({
+  rawContent: z.string().min(1).max(50000),
+  template: z.enum(TEMPLATE_TYPES).optional(),
+});
+
+const generateOOSSchema = z.object({
+  description: z.string().min(20).max(10000),
+  template: z.enum(TEMPLATE_TYPES).optional().default('agent_army'),
+});
 
 // Helper: get org from authenticated user (Clerk session OR API key)
 async function getAuthOrg(request: FastifyRequest) {
@@ -42,13 +69,17 @@ export default async function oosRoutes(app: FastifyInstance) {
   // POST /api/v1/oos/fix -- Auto-fix OOS content (no auth required)
   // ============================================================
   app.post('/oos/fix', async (request, reply) => {
-    const body = request.body as { rawContent?: string; template?: string };
-    if (!body?.rawContent || typeof body.rawContent !== 'string') {
-      return reply.status(400).send({ error: { code: 'MISSING_CONTENT', message: 'rawContent is required' } });
+    if (!checkRateLimit(request.ip, 10)) {
+      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
-    const template = (body.template || undefined) as TemplateType | undefined;
-    const result = autoFixOOS(body.rawContent, template);
+    const bodyResult = fixOOSSchema.safeParse(request.body);
+    if (!bodyResult.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: bodyResult.error.issues } });
+    }
+
+    const template = bodyResult.data.template;
+    const result = autoFixOOS(bodyResult.data.rawContent, template);
 
     // Run validation on the fixed content to show remaining issues
     const parsed = parseOOS(result.fixed, template || 'agent_army');
@@ -73,13 +104,17 @@ export default async function oosRoutes(app: FastifyInstance) {
   // POST /api/v1/oos/generate -- Generate OOS from description (no auth required)
   // ============================================================
   app.post('/oos/generate', async (request, reply) => {
-    const body = request.body as { description?: string; template?: string };
-    if (!body?.description || typeof body.description !== 'string' || body.description.trim().length < 20) {
-      return reply.status(400).send({ error: { code: 'MISSING_DESCRIPTION', message: 'description is required (at least 20 characters)' } });
+    if (!checkRateLimit(request.ip, 10)) {
+      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
-    const description = body.description.trim();
-    const template = (body.template || 'agent_army') as TemplateType;
+    const bodyResult = generateOOSSchema.safeParse(request.body);
+    if (!bodyResult.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: bodyResult.error.issues } });
+    }
+
+    const description = bodyResult.data.description.trim();
+    const template = bodyResult.data.template as TemplateType;
 
     // ---- Template-based OOS generation from natural language ----
 

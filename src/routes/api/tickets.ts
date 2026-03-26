@@ -7,6 +7,20 @@ import { resolveApiKey } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { z } from 'zod';
 
+// Simple per-IP rate limiter for unauthenticated endpoints
+const ipLimiter = new Map<string, { count: number; resetAt: number }>();
+function checkRateLimit(ip: string, maxPerMin: number): boolean {
+  const now = Date.now();
+  const entry = ipLimiter.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipLimiter.set(ip, { count: 1, resetAt: now + 60000 });
+    return true;
+  }
+  if (entry.count >= maxPerMin) return false;
+  entry.count++;
+  return true;
+}
+
 const createTicketSchema = z.object({
   title: z.string().min(5).max(500),
   description: z.string().min(10),
@@ -40,6 +54,10 @@ export default async function ticketRoutes(app: FastifyInstance) {
 
   // POST /api/v1/tickets -- Create a ticket (auth optional)
   app.post('/tickets', async (request, reply) => {
+    if (!checkRateLimit(request.ip, 10)) {
+      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
+    }
+
     const body = createTicketSchema.safeParse(request.body);
     if (!body.success) {
       return reply.status(400).send({

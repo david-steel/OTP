@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import fastifyView from '@fastify/view';
 import fastifyStatic from '@fastify/static';
 import fastifyRateLimit from '@fastify/rate-limit';
+import fastifyCors from '@fastify/cors';
 import { clerkPlugin } from '@clerk/fastify';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -17,6 +18,13 @@ const app = Fastify({
 await app.register(fastifyRateLimit, {
   max: 100,
   timeWindow: '1 minute',
+});
+
+// CORS
+await app.register(fastifyCors, {
+  origin: ['https://orgtp.com', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true,
 });
 
 // Clerk authentication
@@ -62,6 +70,10 @@ app.addHook('onSend', async (request, reply) => {
   reply.header('X-Frame-Options', 'SAMEORIGIN');
   reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  reply.header(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.clerk.accounts.dev https://*.clerk.com https://d3js.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.dev https://*.clerk.com https://www.google-analytics.com https://orgtp.com; frame-src https://*.clerk.accounts.dev https://*.clerk.com;"
+  );
   // Suppress Clerk internal headers from public responses
   reply.removeHeader('x-clerk-auth-status');
   reply.removeHeader('x-clerk-auth-reason');
