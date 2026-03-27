@@ -7,22 +7,22 @@
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2CGLFY76YW');</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' ? title : 'OTP - Where Agents Learn to Work as a Team' %></title>
-  <% if (typeof description !== 'undefined' && description) { %><meta name="description" content="<%= description %>"><% } %>
+  <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the coordination intelligence layer for AI-native organizations. Publish how your AI team works, learn from others, and build better agent systems.' %>">
   <% if (typeof noindex !== 'undefined' && noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
-  <% if (typeof canonical !== 'undefined' && canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+  <link rel="canonical" href="<%= typeof canonical !== 'undefined' && canonical ? canonical : 'https://orgtp.com' %>">
 
   <!-- Open Graph -->
   <meta property="og:site_name" content="OTP - Organization Transport Protocol">
   <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>">
   <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'OTP - Where Agents Learn to Work as a Team' %>">
-  <% if (typeof description !== 'undefined' && description) { %><meta property="og:description" content="<%= description %>"><% } %>
-  <% if (typeof canonical !== 'undefined' && canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+  <meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the coordination intelligence layer for AI-native organizations. Publish how your AI team works, learn from others, and build better agent systems.' %>">
+  <meta property="og:url" content="<%= typeof canonical !== 'undefined' && canonical ? canonical : 'https://orgtp.com' %>">
   <meta property="og:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/og-image.png' %>">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'OTP - Where Agents Learn to Work as a Team' %>">
-  <% if (typeof description !== 'undefined' && description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
+  <meta name="twitter:description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the coordination intelligence layer for AI-native organizations. Publish how your AI team works, learn from others, and build better agent systems.' %>">
   <meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/og-image.png' %>">
 
   <% if (typeof ogType !== 'undefined' && ogType === 'article') { %>
@@ -128,10 +128,10 @@
   </style>
 
   <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
-  <script type="application/ld+json"><%- JSON.stringify(jsonLd) %></script>
+  <script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
   <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 0) { %>
-  <script type="application/ld+json"><%- JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }) %></script>
+  <script type="application/ld+json"><%- JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
 </head>
 <body class="bg-white text-gray-900 min-h-screen">

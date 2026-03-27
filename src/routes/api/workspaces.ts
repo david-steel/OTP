@@ -1,9 +1,8 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, sql, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, consultantProfiles, workspaces, workspaceMembers } from '../../db/schema.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { oosFiles, consultantProfiles, workspaces, workspaceMembers } from '../../db/schema.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { z } from 'zod';
 
@@ -16,23 +15,6 @@ const inviteMemberSchema = z.object({
   email: z.string().email(),
   role: z.enum(['consultant', 'viewer']).optional().default('consultant'),
 });
-
-// Helper: get org from authenticated user (Clerk session OR API key)
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-
-  const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
-  }
-
-  return null;
-}
 
 // Helper: check if org has a consultant profile
 async function getConsultantProfile(orgId: string) {

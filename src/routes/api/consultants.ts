@@ -1,9 +1,8 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, sql, ilike } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, consultantProfiles } from '../../db/schema.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { z } from 'zod';
 
@@ -32,22 +31,6 @@ const updateProfileSchema = z.object({
   published: z.boolean().optional(),
 });
 
-// Helper: get org from authenticated user (Clerk session OR API key)
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-
-  const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
-  }
-
-  return null;
-}
 
 export default async function consultantRoutes(app: FastifyInstance) {
 

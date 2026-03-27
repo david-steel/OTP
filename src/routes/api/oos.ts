@@ -14,9 +14,11 @@ import { computeDiff } from '../../services/diff-engine.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { extractGraph } from '../../graph/graph-extractor.js';
 import { autoFixOOS } from '../../services/auto-fixer.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import type { TemplateType } from '../../shared/enums.js';
 import { TEMPLATE_TYPES } from '../../shared/enums.js';
+import { requireUuidParam } from '../../shared/param-validation.js';
 import { z } from 'zod';
 
 // Simple per-IP rate limiter for unauthenticated endpoints
@@ -33,6 +35,16 @@ function checkRateLimit(ip: string, maxPerMin: number): boolean {
   return true;
 }
 
+// Cleanup expired rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of ipLimiter.entries()) {
+    if (now > value.resetAt) {
+      ipLimiter.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 // Zod schemas for unauthenticated endpoints
 const fixOOSSchema = z.object({
   rawContent: z.string().min(1).max(50000),
@@ -44,23 +56,17 @@ const generateOOSSchema = z.object({
   template: z.enum(TEMPLATE_TYPES).optional().default('agent_army'),
 });
 
-// Helper: get org from authenticated user (Clerk session OR API key)
-async function getAuthOrg(request: FastifyRequest) {
-  // Try Clerk auth first
+// Helper: check API key scope for write operations
+// Returns true if request uses Clerk auth (no scope restriction) or API key has required scope
+async function checkApiKeyScope(request: FastifyRequest, reply: any, requiredScope: string): Promise<boolean> {
   const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-
-  // Fall back to API key auth
+  if (auth.userId) return true; // Clerk auth -- no scope restriction
   const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
+  if (apiKeyCtx && !requireScope(apiKeyCtx, requiredScope)) {
+    reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: `API key requires '${requiredScope}' scope for this operation` } });
+    return false;
   }
-
-  return null;
+  return true;
 }
 
 export default async function oosRoutes(app: FastifyInstance) {
@@ -301,6 +307,7 @@ ${claimSections.join('\n')}`.trim();
   // POST /api/v1/oos -- Create new OOS (draft)
   // ============================================================
   app.post('/oos', async (request, reply) => {
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
@@ -317,34 +324,49 @@ ${claimSections.join('\n')}`.trim();
     // Validate format
     const validation = validateOOS(parsed, body.data.template);
 
-    // Get next version number for this org
-    const [latestVersion] = await db.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
-      .from(oosFiles)
-      .where(eq(oosFiles.orgId, org.id));
-    const nextVersion = (latestVersion?.maxVersion || 0) + 1;
+    // Get next version number and create draft atomically to avoid race conditions
+    let oosFile: typeof oosFiles.$inferSelect = undefined as any;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        oosFile = await db.transaction(async (tx) => {
+          const [latestVersion] = await tx.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
+            .from(oosFiles)
+            .where(eq(oosFiles.orgId, org.id));
+          const nextVersion = (latestVersion?.maxVersion || 0) + 1;
 
-    // Create draft OOS file
-    const [oosFile] = await db.insert(oosFiles).values({
-      orgId: org.id,
-      template: body.data.template,
-      version: nextVersion,
-      status: 'draft',
-      visibilityDefault: 'free',
-      wordCount: parsed.wordCount,
-      claimCount: parsed.claims.length,
-      rawContent: body.data.rawContent,
-      frontmatter: parsed.frontmatter as any,
-      confidenceDistribution: parsed.claims.reduce((acc, c) => {
-        const key = c.confidence.toLowerCase();
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) as any,
-      evidenceDistribution: parsed.claims.reduce((acc, c) => {
-        const key = c.evidence.toLowerCase();
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) as any,
-    }).returning();
+          const [created] = await tx.insert(oosFiles).values({
+            orgId: org.id,
+            template: body.data.template,
+            version: nextVersion,
+            status: 'draft',
+            visibilityDefault: 'free',
+            wordCount: parsed.wordCount,
+            claimCount: parsed.claims.length,
+            rawContent: body.data.rawContent,
+            frontmatter: parsed.frontmatter as any,
+            confidenceDistribution: parsed.claims.reduce((acc, c) => {
+              const key = c.confidence.toLowerCase();
+              acc[key] = (acc[key] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>) as any,
+            evidenceDistribution: parsed.claims.reduce((acc, c) => {
+              const key = c.evidence.toLowerCase();
+              acc[key] = (acc[key] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>) as any,
+          }).returning();
+          return created;
+        });
+        break;
+      } catch (err: any) {
+        if (err.code === '23505' && retries > 1) {
+          retries--;
+          continue;
+        }
+        throw err;
+      }
+    }
 
     // Insert parsed claims
     if (parsed.claims.length > 0) {
@@ -368,7 +390,7 @@ ${claimSections.join('\n')}`.trim();
     await db.insert(auditLogs).values(
       createAuditEntry(AUDIT_ACTIONS.OOS_CREATED, 'oos_file', {
         orgId: org.id, entityId: oosFile.id,
-        details: { template: body.data.template, version: nextVersion, claimCount: parsed.claims.length },
+        details: { template: body.data.template, version: oosFile!.version, claimCount: parsed.claims.length },
       })
     );
 
@@ -383,10 +405,12 @@ ${claimSections.join('\n')}`.trim();
   // PUT /api/v1/oos/:id -- Update draft OOS
   // ============================================================
   app.put<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const body = updateOOSSchema.safeParse(request.body);
     if (!body.success) {
       return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid data', details: body.error.issues } });
@@ -457,10 +481,12 @@ ${claimSections.join('\n')}`.trim();
   // POST /api/v1/oos/:id/publish -- Publish OOS
   // ============================================================
   app.post<{ Params: { id: string } }>('/oos/:id/publish', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
     if (oosFile.status === 'published') return reply.status(409).send({ error: { code: 'ALREADY_PUBLISHED', message: 'Already published. Create a new version to update.' } });
@@ -651,7 +677,8 @@ ${claimSections.join('\n')}`.trim();
   // GET /api/v1/oos/:id -- Get OOS file
   // ============================================================
   app.get<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
 
@@ -677,7 +704,8 @@ ${claimSections.join('\n')}`.trim();
   app.get<{ Params: { id: string }; Querystring: { section?: string; confidence?: string; evidence?: string } }>(
     '/oos/:id/claims',
     async (request, reply) => {
-      const { id } = request.params;
+      const id = requireUuidParam(request, reply);
+      if (!id) return;
       const { section, confidence, evidence } = request.query;
 
       let query = db.select().from(claims).where(eq(claims.oosFileId, id));
@@ -699,7 +727,8 @@ ${claimSections.join('\n')}`.trim();
   // GET /api/v1/oos/:id/versions -- Version history
   // ============================================================
   app.get<{ Params: { id: string } }>('/oos/:id/versions', async (request, reply) => {
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
 
     // Get the org for this OOS file
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
@@ -726,10 +755,12 @@ ${claimSections.join('\n')}`.trim();
   // POST /api/v1/oos/:id/archive -- Archive a published OOS
   // ============================================================
   app.post<{ Params: { id: string } }>('/oos/:id/archive', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
 
@@ -752,10 +783,12 @@ ${claimSections.join('\n')}`.trim();
   // PATCH /api/v1/oos/:id/rename -- Rename an OOS file
   // ============================================================
   app.patch<{ Params: { id: string } }>('/oos/:id/rename', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const body = renameOOSSchema.safeParse(request.body);
     if (!body.success) {
       return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid name', details: body.error.issues } });
@@ -783,10 +816,12 @@ ${claimSections.join('\n')}`.trim();
   // DELETE /api/v1/oos/:id -- Delete an OOS file (owner only)
   // ============================================================
   app.delete<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
 
@@ -811,51 +846,71 @@ ${claimSections.join('\n')}`.trim();
   // POST /api/v1/oos/:id/new-version -- Create new draft from existing file
   // ============================================================
   app.post<{ Params: { id: string } }>('/oos/:id/new-version', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const [oosFile] = await db.select().from(oosFiles).where(and(eq(oosFiles.id, id), eq(oosFiles.orgId, org.id))).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
 
     // Use provided rawContent or copy from source
-    const body = request.body as { rawContent?: string } | undefined;
-    const rawContent = body?.rawContent && typeof body.rawContent === 'string' && body.rawContent.length >= 100
-      ? body.rawContent
+    const newVersionSchema = z.object({
+      rawContent: z.string().min(100).optional(),
+    });
+    const newVersionBody = newVersionSchema.safeParse(request.body || {});
+    const rawContent = newVersionBody.success && newVersionBody.data.rawContent
+      ? newVersionBody.data.rawContent
       : oosFile.rawContent;
-
-    // Get next version number for this org
-    const [latestVersion] = await db.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
-      .from(oosFiles)
-      .where(eq(oosFiles.orgId, org.id));
-    const nextVersion = (latestVersion?.maxVersion || 0) + 1;
 
     // Parse the content
     const parsed = parseOOS(rawContent, oosFile.template as TemplateType);
 
-    // Create new draft
-    const [newOosFile] = await db.insert(oosFiles).values({
-      orgId: org.id,
-      name: oosFile.name,
-      template: oosFile.template,
-      version: nextVersion,
-      status: 'draft',
-      visibilityDefault: oosFile.visibilityDefault,
-      wordCount: parsed.wordCount,
-      claimCount: parsed.claims.length,
-      rawContent,
-      frontmatter: parsed.frontmatter as any,
-      confidenceDistribution: parsed.claims.reduce((acc, c) => {
-        const key = c.confidence.toLowerCase();
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) as any,
-      evidenceDistribution: parsed.claims.reduce((acc, c) => {
-        const key = c.evidence.toLowerCase();
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) as any,
-    }).returning();
+    // Get next version number and create draft atomically to avoid race conditions
+    let newOosFile: typeof oosFiles.$inferSelect = undefined as any;
+    let newVersionRetries = 3;
+    while (newVersionRetries > 0) {
+      try {
+        newOosFile = await db.transaction(async (tx) => {
+          const [latestVersion] = await tx.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
+            .from(oosFiles)
+            .where(eq(oosFiles.orgId, org.id));
+          const nextVersion = (latestVersion?.maxVersion || 0) + 1;
+
+          const [created] = await tx.insert(oosFiles).values({
+            orgId: org.id,
+            name: oosFile.name,
+            template: oosFile.template,
+            version: nextVersion,
+            status: 'draft',
+            visibilityDefault: oosFile.visibilityDefault,
+            wordCount: parsed.wordCount,
+            claimCount: parsed.claims.length,
+            rawContent,
+            frontmatter: parsed.frontmatter as any,
+            confidenceDistribution: parsed.claims.reduce((acc, c) => {
+              const key = c.confidence.toLowerCase();
+              acc[key] = (acc[key] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>) as any,
+            evidenceDistribution: parsed.claims.reduce((acc, c) => {
+              const key = c.evidence.toLowerCase();
+              acc[key] = (acc[key] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>) as any,
+          }).returning();
+          return created;
+        });
+        break;
+      } catch (err: any) {
+        if (err.code === '23505' && newVersionRetries > 1) {
+          newVersionRetries--;
+          continue;
+        }
+        throw err;
+      }
+    }
 
     // Insert parsed claims
     if (parsed.claims.length > 0) {
@@ -878,7 +933,7 @@ ${claimSections.join('\n')}`.trim();
     await db.insert(auditLogs).values(
       createAuditEntry(AUDIT_ACTIONS.OOS_NEW_VERSION, 'oos_file', {
         orgId: org.id, entityId: newOosFile.id,
-        details: { sourceId: id, sourceVersion: oosFile.version, newVersion: nextVersion, claimCount: parsed.claims.length },
+        details: { sourceId: id, sourceVersion: oosFile.version, newVersion: newOosFile!.version, claimCount: parsed.claims.length },
       })
     );
 
@@ -895,7 +950,10 @@ ${claimSections.join('\n')}`.trim();
   app.get<{ Params: { id: string; otherId: string } }>(
     '/oos/:id/compare/:otherId',
     async (request, reply) => {
-      const { id, otherId } = request.params;
+      const id = requireUuidParam(request, reply, 'id');
+      if (!id) return;
+      const otherId = requireUuidParam(request, reply, 'otherId');
+      if (!otherId) return;
 
       // Fetch both OOS files and their claims
       const [oosA] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);

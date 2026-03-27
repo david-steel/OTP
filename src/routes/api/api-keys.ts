@@ -1,17 +1,12 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, and, isNull, desc } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '../../config/database.js';
-import { organizations, apiKeys, auditLogs } from '../../db/schema.js';
+import { apiKeys, auditLogs } from '../../db/schema.js';
 import { generateApiKey } from '../../middleware/api-key-auth.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
-
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (!auth.userId) return null;
-  const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-  return org || null;
-}
+import { requireUuidParam } from '../../shared/param-validation.js';
 
 export default async function apiKeyRoutes(app: FastifyInstance) {
 
@@ -42,9 +37,16 @@ export default async function apiKeyRoutes(app: FastifyInstance) {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
 
-    const body = request.body as { name?: string; scopes?: string[] } || {};
-    const name = body.name || 'Default';
-    const scopes = body.scopes || ['read', 'write'];
+    const createKeySchema = z.object({
+      name: z.string().min(1).max(100).optional().default('Default'),
+      scopes: z.array(z.enum(['read', 'write'])).min(1).optional().default(['read', 'write']),
+    });
+    const parsed = createKeySchema.safeParse(request.body || {});
+    if (!parsed.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: parsed.error.issues } });
+    }
+    const name = parsed.data.name;
+    const scopes = parsed.data.scopes;
 
     // Limit to 5 active keys per org
     const activeKeys = await db
@@ -90,10 +92,11 @@ export default async function apiKeyRoutes(app: FastifyInstance) {
 
   // DELETE /api/v1/api-keys/:id -- Revoke an API key
   app.delete<{ Params: { id: string } }>('/api-keys/:id', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
-
-    const { id } = request.params;
 
     const [existing] = await db
       .select()

@@ -1,9 +1,8 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, consultantProfiles, inquiries } from '../../db/schema.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { consultantProfiles, inquiries } from '../../db/schema.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { z } from 'zod';
 
@@ -20,23 +19,6 @@ const updateInquirySchema = z.object({
   status: z.enum(['new', 'read', 'replied', 'closed']),
   notes: z.string().max(2000).optional(),
 });
-
-// Helper: get org from authenticated user (Clerk session OR API key)
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-
-  const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
-  }
-
-  return null;
-}
 
 // Simple in-memory rate limiter for public inquiry submission
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();

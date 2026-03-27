@@ -297,7 +297,7 @@ const candidateData = <%- JSON.stringify(preview.candidates.reduce(function(acc,
     category: mc.category,
   };
   return acc;
-}, {})) %>;
+}, {})).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %>;
 
 const sourceOrgName = '<%= preview.sourceOrg.name.replace(/'/g, "\\'") %>';
 

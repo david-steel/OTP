@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { eq, and, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, auditLogs } from '../../db/schema.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -21,19 +22,33 @@ function dbClaimToParsed(c: any): ParsedClaim {
   };
 }
 
+const mergePreviewSchema = z.object({
+  sourceOosId: z.string().uuid(),
+  targetOosId: z.string().uuid(),
+});
+
+const mergeDecisionsSchema = z.object({
+  sourceOosId: z.string().uuid(),
+  targetOosId: z.string().uuid(),
+  decisions: z.array(z.object({
+    candidateId: z.string(),
+    decision: z.enum(['accept', 'reject', 'adapt']),
+  })).min(1),
+});
+
 export default async function mergeRoutes(app: FastifyInstance) {
 
   // POST /api/v1/merge/preview -- Generate merge preview (READ ONLY)
   app.post<{
     Body: { sourceOosId: string; targetOosId: string };
   }>('/merge/preview', async (request, reply) => {
-    const { sourceOosId, targetOosId } = request.body as any;
-
-    if (!sourceOosId || !targetOosId) {
+    const parsed = mergePreviewSchema.safeParse(request.body);
+    if (!parsed.success) {
       return reply.status(400).send({
-        error: { code: 'MISSING_PARAMS', message: 'Both sourceOosId and targetOosId are required' },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: parsed.error.issues },
       });
     }
+    const { sourceOosId, targetOosId } = parsed.data;
 
     if (sourceOosId === targetOosId) {
       return reply.status(400).send({
@@ -116,17 +131,17 @@ export default async function mergeRoutes(app: FastifyInstance) {
     // It returns a summary of what would happen if the merge were applied.
     // Actual merge execution ships in Phase 2.
 
-    const { sourceOosId, targetOosId, decisions } = request.body as any;
-
-    if (!sourceOosId || !targetOosId || !decisions) {
+    const parsed = mergeDecisionsSchema.safeParse(request.body);
+    if (!parsed.success) {
       return reply.status(400).send({
-        error: { code: 'MISSING_PARAMS', message: 'sourceOosId, targetOosId, and decisions are required' },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: parsed.error.issues },
       });
     }
+    const { sourceOosId, targetOosId, decisions } = parsed.data;
 
-    const accepted = decisions.filter((d: any) => d.decision === 'accept').length;
-    const rejected = decisions.filter((d: any) => d.decision === 'reject').length;
-    const adapted = decisions.filter((d: any) => d.decision === 'adapt').length;
+    const accepted = decisions.filter(d => d.decision === 'accept').length;
+    const rejected = decisions.filter(d => d.decision === 'reject').length;
+    const adapted = decisions.filter(d => d.decision === 'adapt').length;
 
     return {
       status: 'preview_only',

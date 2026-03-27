@@ -19,6 +19,16 @@ function checkRateLimit(ip: string, maxPerMin: number): boolean {
   return true;
 }
 
+// Cleanup expired rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of ipLimiter.entries()) {
+    if (now > value.resetAt) {
+      ipLimiter.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 const scannerInputSchema = z.object({
   orgName: z.string().min(1).max(200),
   industry: z.string().max(100).optional().default('unknown'),
@@ -110,26 +120,60 @@ export default async function scannerRoutes(app: FastifyInstance) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
-    const body = request.body as Partial<ScannerInput>;
+    const quickScanSchema = z.object({
+      orgName: z.string().min(1).max(200),
+      industry: z.string().max(100).optional(),
+      orgSize: z.enum(['solo', 'small', 'medium', 'large', 'enterprise']).optional(),
+      systems: z.array(z.object({
+        name: z.string().min(1).max(100),
+        category: z.enum(['ai_model', 'automation', 'saas_platform', 'internal_tool', 'communication', 'database']),
+        description: z.string().max(500).optional(),
+      })).max(50).optional(),
+      roles: z.array(z.object({
+        name: z.string().min(1).max(100),
+        type: z.enum(['ai_agent', 'automation', 'human_operator', 'human_decision_maker']),
+        system: z.string().max(100).optional(),
+        responsibilities: z.array(z.string().max(300)).max(20),
+        authority: z.enum(['autonomous', 'semi_autonomous', 'supervised', 'advisory']),
+      })).min(1).max(50),
+      workflows: z.array(z.object({
+        name: z.string().min(1).max(200),
+        trigger: z.string().max(200),
+        steps: z.array(z.object({
+          actor: z.string().max(100),
+          action: z.string().max(500),
+          handoff_to: z.string().max(100).optional(),
+        })).max(30),
+      })).max(20).optional(),
+      oversight: z.object({
+        uncertainty_handler: z.string().max(200),
+        error_handler: z.string().max(200),
+        override_authority: z.string().max(200),
+        review_frequency: z.enum(['real_time', 'daily', 'weekly', 'none']),
+        human_approval_required: z.array(z.string().max(200)).max(20),
+      }).optional(),
+    });
 
-    if (!body.orgName || !body.roles || body.roles.length === 0) {
+    const parsed = quickScanSchema.safeParse(request.body);
+    if (!parsed.success) {
       return reply.status(400).send({
         error: {
-          code: 'INVALID_INPUT',
-          message: 'orgName and at least one role required for quick scan.',
+          code: 'VALIDATION_FAILED',
+          message: 'Invalid quick scan input',
+          details: parsed.error.issues,
         },
       });
     }
 
     // Fill in defaults for missing fields
     const input: ScannerInput = {
-      orgName: body.orgName,
-      industry: body.industry || 'unknown',
-      orgSize: body.orgSize || 'small',
-      systems: body.systems || [],
-      roles: body.roles,
-      workflows: body.workflows || [],
-      oversight: body.oversight || {
+      orgName: parsed.data.orgName,
+      industry: parsed.data.industry || 'unknown',
+      orgSize: parsed.data.orgSize || 'small',
+      systems: parsed.data.systems || [],
+      roles: parsed.data.roles,
+      workflows: parsed.data.workflows || [],
+      oversight: parsed.data.oversight || {
         uncertainty_handler: '',
         error_handler: '',
         override_authority: '',

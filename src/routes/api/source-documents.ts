@@ -1,9 +1,8 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, sourceDocuments } from '../../db/schema.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { oosFiles, sourceDocuments } from '../../db/schema.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { z } from 'zod';
 
@@ -13,23 +12,6 @@ const createSourceDocSchema = z.object({
   template: z.enum(['agent_army', 'value_chain', 'org_chart']).optional().default('agent_army'),
   autoSplit: z.boolean().optional().default(true),
 });
-
-// Helper: get org from authenticated user (Clerk session OR API key)
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-
-  const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
-  }
-
-  return null;
-}
 
 /**
  * Split source document content by H2 headings.
@@ -124,26 +106,42 @@ export default async function sourceDocumentRoutes(app: FastifyInstance) {
       for (const section of sections) {
         const sectionWordCount = section.content.split(/\s+/).filter(w => w.length > 0).length;
 
-        // Get next version number
-        const [latestVersion] = await db.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
-          .from(oosFiles)
-          .where(eq(oosFiles.orgId, org.id));
-        const nextVersion = (latestVersion?.maxVersion || 0) + 1;
+        // Get next version number and insert atomically to avoid race conditions
+        let oosFile: typeof oosFiles.$inferSelect = undefined as any;
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            oosFile = await db.transaction(async (tx) => {
+              const [latestVersion] = await tx.select({ maxVersion: sql<number>`MAX(${oosFiles.version})` })
+                .from(oosFiles)
+                .where(eq(oosFiles.orgId, org.id));
+              const nextVersion = (latestVersion?.maxVersion || 0) + 1;
 
-        const [oosFile] = await db.insert(oosFiles).values({
-          orgId: org.id,
-          template: body.data.template,
-          version: nextVersion,
-          status: 'draft',
-          visibilityDefault: 'free',
-          wordCount: sectionWordCount,
-          claimCount: 0,
-          rawContent: section.content,
-          frontmatter: { title: section.title, sourceDocumentId: sourceDoc.id } as any,
-        }).returning();
+              const [created] = await tx.insert(oosFiles).values({
+                orgId: org.id,
+                template: body.data.template,
+                version: nextVersion,
+                status: 'draft',
+                visibilityDefault: 'free',
+                wordCount: sectionWordCount,
+                claimCount: 0,
+                rawContent: section.content,
+                frontmatter: { title: section.title, sourceDocumentId: sourceDoc.id } as any,
+              }).returning();
+              return created;
+            });
+            break;
+          } catch (err: any) {
+            if (err.code === '23505' && retries > 1) {
+              retries--;
+              continue;
+            }
+            throw err;
+          }
+        }
 
         createdOosFiles.push({
-          id: oosFile.id,
+          id: oosFile!.id,
           title: section.title,
           wordCount: sectionWordCount,
         });

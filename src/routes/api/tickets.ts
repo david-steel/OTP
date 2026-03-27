@@ -1,10 +1,11 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, tickets, auditLogs } from '../../db/schema.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { tickets, auditLogs } from '../../db/schema.js';
+import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { requireUuidParam } from '../../shared/param-validation.js';
 import { z } from 'zod';
 
 // Simple per-IP rate limiter for unauthenticated endpoints
@@ -21,6 +22,16 @@ function checkRateLimit(ip: string, maxPerMin: number): boolean {
   return true;
 }
 
+// Cleanup expired rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of ipLimiter.entries()) {
+    if (now > value.resetAt) {
+      ipLimiter.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 const createTicketSchema = z.object({
   title: z.string().min(5).max(500),
   description: z.string().min(10),
@@ -35,20 +46,6 @@ const updateTicketSchema = z.object({
   resolution: z.string().optional(),
   agentNotes: z.string().optional(),
 });
-
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-  const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
-  }
-  return null;
-}
 
 export default async function ticketRoutes(app: FastifyInstance) {
 
@@ -87,10 +84,19 @@ export default async function ticketRoutes(app: FastifyInstance) {
     return reply.status(201).send({ ticket });
   });
 
+  // Strip sensitive fields from ticket for unauthenticated access
+  function stripSensitiveFields(ticket: Record<string, unknown>) {
+    const { agentNotes, reporterEmail, ...safe } = ticket;
+    return safe;
+  }
+
   // GET /api/v1/tickets -- List tickets
   app.get<{ Querystring: { status?: string; category?: string; limit?: string } }>(
     '/tickets',
     async (request, reply) => {
+      const org = await getAuthOrg(request);
+      const isAuthed = !!org;
+
       const { status, category, limit: limitStr } = request.query;
       const limit = Math.min(parseInt(limitStr || '50', 10), 100);
 
@@ -99,24 +105,36 @@ export default async function ticketRoutes(app: FastifyInstance) {
       if (status) results = results.filter(t => t.status === status);
       if (category) results = results.filter(t => t.category === category);
 
-      return { tickets: results, total: results.length };
+      const sanitized = isAuthed ? results : results.map(t => stripSensitiveFields(t as unknown as Record<string, unknown>));
+      return { tickets: sanitized, total: results.length };
     }
   );
 
   // GET /api/v1/tickets/:id -- Get single ticket
   app.get<{ Params: { id: string } }>('/tickets/:id', async (request, reply) => {
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const org = await getAuthOrg(request);
+    const isAuthed = !!org;
+
     const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
     if (!ticket) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
-    return { ticket };
+    return { ticket: isAuthed ? ticket : stripSensitiveFields(ticket as unknown as Record<string, unknown>) };
   });
 
   // PUT /api/v1/tickets/:id -- Update ticket (admin/agent)
   app.put<{ Params: { id: string } }>('/tickets/:id', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+
+    // Check API key scope for write operations
+    const apiKeyCtx = await resolveApiKey(request);
+    if (apiKeyCtx && !requireScope(apiKeyCtx, 'write')) {
+      return reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope for this operation" } });
+    }
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-
-    const { id } = request.params;
     const body = updateTicketSchema.safeParse(request.body);
     if (!body.success) {
       return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid data', details: body.error.issues } });

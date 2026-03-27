@@ -1,28 +1,11 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
+import type { FastifyInstance } from 'fastify';
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations } from '../../db/schema.js';
-import { resolveApiKey } from '../../middleware/api-key-auth.js';
+import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { discoverRecommendations } from '../../services/recommendation-engine.js';
-
-// Helper: get org from authenticated user (Clerk session OR API key)
-// Same pattern as oos.ts
-async function getAuthOrg(request: FastifyRequest) {
-  const auth = getAuth(request);
-  if (auth.userId) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (orgArr[0]) return orgArr[0];
-  }
-
-  const apiKeyCtx = await resolveApiKey(request);
-  if (apiKeyCtx) {
-    const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
-    return orgArr[0] || null;
-  }
-
-  return null;
-}
+import { requireUuidParam } from '../../shared/param-validation.js';
+import { z } from 'zod';
 
 export default async function recommendationRoutes(app: FastifyInstance) {
 
@@ -30,11 +13,23 @@ export default async function recommendationRoutes(app: FastifyInstance) {
   // POST /api/v1/recommendations/discover -- Run the scout
   // ============================================================
   app.post('/recommendations/discover', async (request, reply) => {
+    // Check API key scope for write operations
+    const discoverApiCtx = await resolveApiKey(request);
+    if (discoverApiCtx && !requireScope(discoverApiCtx, 'write')) {
+      return reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope for this operation" } });
+    }
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const body = request.body as { limit?: number } | undefined;
-    const maxResults = body?.limit || 20;
+    const discoverSchema = z.object({
+      limit: z.number().int().positive().max(100).optional().default(20),
+    });
+    const discoverBody = discoverSchema.safeParse(request.body || {});
+    if (!discoverBody.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: discoverBody.error.issues } });
+    }
+    const maxResults = discoverBody.data.limit;
 
     // Run recommendation engine
     const candidates = await discoverRecommendations(org.id, maxResults);
@@ -143,22 +138,31 @@ export default async function recommendationRoutes(app: FastifyInstance) {
   // POST /api/v1/recommendations/:id/review -- Accept/reject/adapt
   // ============================================================
   app.post<{ Params: { id: string } }>('/recommendations/:id/review', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+
+    // Check API key scope for write operations
+    const reviewApiCtx = await resolveApiKey(request);
+    if (reviewApiCtx && !requireScope(reviewApiCtx, 'write')) {
+      return reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope for this operation" } });
+    }
+
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const { id } = request.params;
-    const body = request.body as {
-      action: 'accept' | 'reject' | 'adapt';
-      notes?: string;
-      adapted_rule?: string;
-      adapted_why?: string;
-    };
-
-    if (!body?.action || !['accept', 'reject', 'adapt'].includes(body.action)) {
+    const reviewSchema = z.object({
+      action: z.enum(['accept', 'reject', 'adapt']),
+      notes: z.string().max(2000).optional(),
+      adapted_rule: z.string().max(2000).optional(),
+      adapted_why: z.string().max(2000).optional(),
+    });
+    const reviewBody = reviewSchema.safeParse(request.body);
+    if (!reviewBody.success) {
       return reply.status(400).send({
-        error: { code: 'INVALID_ACTION', message: 'action must be one of: accept, reject, adapt' },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: reviewBody.error.issues },
       });
     }
+    const body = reviewBody.data;
 
     // Verify the recommendation belongs to this org
     const existing = await db.execute(sql`

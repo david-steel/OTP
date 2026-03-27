@@ -62,6 +62,10 @@ export async function resolveApiKey(request: FastifyRequest): Promise<ApiKeyCont
   };
 }
 
+export function requireScope(ctx: { scopes: string[] }, requiredScope: string): boolean {
+  return ctx.scopes.includes(requiredScope);
+}
+
 export async function requireApiKey(
   request: FastifyRequest,
   reply: FastifyReply

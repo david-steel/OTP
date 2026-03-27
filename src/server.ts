@@ -22,7 +22,9 @@ await app.register(fastifyRateLimit, {
 
 // CORS
 await app.register(fastifyCors, {
-  origin: ['https://orgtp.com', 'http://localhost:3000'],
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://orgtp.com']
+    : ['https://orgtp.com', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
 });

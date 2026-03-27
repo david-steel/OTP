@@ -98,7 +98,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         pagination.total = results.length;
       }
 
-      return reply.view('pages/search', { title: q ? `"${q}" - Search - OTP` : 'Search - OTP', description: 'Search knowledge claims across published Organizational Operating Systems on OTP.', canonical: BASE_URL + '/search', breadcrumbs: bc({ name: 'Search', url: BASE_URL + '/search' }), q, confidence, evidence, template, industry, results, pagination });
+      return reply.view('pages/search', { title: q ? `"${q}" - Search - OTP` : 'Search - OTP', description: q ? `Search results for "${q}" across organizational intelligence claims on OTP.` : 'Search across organizational intelligence claims. Find proven coordination patterns, agent roles, and operational rules from real AI teams.', canonical: BASE_URL + '/search', breadcrumbs: bc({ name: 'Search', url: BASE_URL + '/search' }), q, confidence, evidence, template, industry, results, pagination });
     }
   );
 
@@ -133,7 +133,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       { id: idB, orgName: orgB?.name || 'B', claims: claimsB }
     );
 
-    return reply.view('pages/compare', { title: 'Compare - OTP', diff });
+    return reply.view('pages/compare', { title: `Compare ${orgA?.name || 'A'} vs ${orgB?.name || 'B'} - OTP`, description: `Side-by-side comparison of coordination intelligence between ${orgA?.name || 'Organization A'} and ${orgB?.name || 'Organization B'} on OTP.`, canonical: BASE_URL + '/compare/' + idA + '/' + idB, noindex: true, diff });
   });
 
   // Merge Preview
@@ -154,7 +154,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       { id: targetId, name: targetOrg?.name || 'Target', wordCount: targetOos.wordCount, entities: (targetOos.frontmatter as any)?.entities || null, claims: targetClaims }
     );
 
-    return reply.view('pages/merge-preview', { title: 'Merge Preview - OTP', preview });
+    return reply.view('pages/merge-preview', { title: 'Merge Preview - OTP', description: 'Preview a merge of two Organizational Operating Systems on OTP.', canonical: BASE_URL + '/merge/' + sourceId + '/' + targetId, noindex: true, preview });
   });
 
   // Org Profile
@@ -178,12 +178,12 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Graph page
   app.get('/graph', async (request, reply) => {
-    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore how AI coordination patterns connect across organizations. The Intelligence Graph maps claim similarities, shared operational truths, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: BASE_URL + '/public/og-image.png', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
+    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the OTP intelligence network. Visualize how AI organizations connect through shared coordination patterns, operational claims, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: BASE_URL + '/public/og-image.png', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
   });
 
   // Guide page
   app.get('/guide', async (request, reply) => {
-    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Step-by-step guide to generating and publishing your Organizational Operating System on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
+    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
   // Blog index
@@ -726,6 +726,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     return reply.view('pages/admin', {
       title: 'Admin Dashboard - OTP',
+      description: 'OTP platform administration dashboard.',
       noindex: true,
       stats: {
         totalOrgs: parseInt(row.total_orgs || '0', 10),
@@ -845,6 +846,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       : await db.execute(sql`SELECT * FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
     return reply.view('pages/dashboard-consultant', {
       title: 'Consultant Profile - Dashboard - OTP',
+      description: 'Manage your consultant profile on OTP.',
+      noindex: true,
       profile: (profileRows.rows || [])[0] || null,
       allProfiles: isAdmin ? (profileRows.rows || []) : null,
       isSuperAdmin: isAdmin,
@@ -870,6 +873,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     return reply.view('pages/dashboard-workspaces', {
       title: 'Workspaces - Dashboard - OTP',
+      description: 'Manage your OTP workspaces and team collaboration.',
+      noindex: true,
       workspaces: wsRows.rows || [],
     });
   });
@@ -892,6 +897,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     return reply.view('pages/dashboard-workspace-detail', {
       title: workspace.name + ' - Workspace - OTP',
+      description: 'Workspace details and members on OTP.',
+      noindex: true,
       workspace,
       members: memberRows.rows || [],
       oosFiles: oosRows.rows || [],
@@ -909,6 +916,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     const docRows = await db.execute(sql`SELECT * FROM source_documents WHERE org_id = ${org.id} ORDER BY created_at DESC`) as any;
     return reply.view('pages/dashboard-source-docs', {
       title: 'Source Documents - Dashboard - OTP',
+      description: 'Manage your uploaded source documents on OTP.',
+      noindex: true,
       documents: docRows.rows || [],
     });
   });
@@ -929,6 +938,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     const oosRows = await db.execute(sql`SELECT f.* FROM oos_files f WHERE f.source_document_id = ${id} ORDER BY f.created_at DESC`) as any;
     return reply.view('pages/dashboard-source-doc-detail', {
       title: document.title + ' - Source Document - OTP',
+      description: 'Source document details and generated OOS files on OTP.',
+      noindex: true,
       document,
       oosFiles: oosRows.rows || [],
     });
@@ -949,6 +960,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     const inqRows = await db.execute(sql`SELECT * FROM inquiries WHERE consultant_profile_id = ${profile.id} ORDER BY created_at DESC`) as any;
     return reply.view('pages/dashboard-inquiries', {
       title: 'Inquiries - Dashboard - OTP',
+      description: 'View and manage client inquiries on OTP.',
+      noindex: true,
       inquiries: inqRows.rows || [],
     });
   });
@@ -1128,6 +1141,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       // Signed in but no org -- show registration form
       return reply.view('pages/register', {
         title: 'Complete Your Profile - OTP',
+        description: 'Complete your publisher profile to start publishing coordination intelligence on OTP.',
         noindex: true,
       });
     }
