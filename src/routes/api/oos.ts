@@ -546,55 +546,65 @@ ${claimSections.join('\n')}`.trim();
       .set({ qualityTier: qualityResult.tier, agenticLevel: agenticResult.level, updatedAt: now })
       .where(eq(organizations.id, org.id));
 
-    // Step 5: Compute similarities (background-ish -- runs inline for Phase 1)
-    const oosClaimsWithIds = await db.select().from(claims).where(eq(claims.oosFileId, id));
-    const allOtherClaims = await db.select().from(claims)
-      .where(sql`${claims.oosFileId} != ${id} AND ${claims.oosFileId} IN (
-        SELECT id FROM oos_files WHERE status = 'published'
-      )`);
+    // Step 5: Compute similarities (BACKGROUND -- does not block publish response)
+    // Fire-and-forget: similarity computation runs async after the response is sent.
+    // This prevents O(n*m) comparisons from blocking the publish request as the platform scales.
+    const oosIdForSim = id;
+    setImmediate(async () => {
+      try {
+        const oosClaimsWithIds = await db.select().from(claims).where(eq(claims.oosFileId, oosIdForSim));
+        const allOtherClaims = await db.select().from(claims)
+          .where(sql`${claims.oosFileId} != ${oosIdForSim} AND ${claims.oosFileId} IN (
+            SELECT id FROM oos_files WHERE status = 'published'
+          )`);
 
-    const newClaimsForSim = oosClaimsWithIds.map(c => ({
-      dbId: c.id,
-      claimId: c.claimId,
-      section: c.section,
-      displayOrder: c.displayOrder,
-      rule: c.rule,
-      why: c.why,
-      failureMode: c.failureMode,
-      confidence: c.confidence as any,
-      evidence: c.evidence as any,
-      scope: c.scope,
-    }));
+        const newClaimsForSim = oosClaimsWithIds.map(c => ({
+          dbId: c.id,
+          claimId: c.claimId,
+          section: c.section,
+          displayOrder: c.displayOrder,
+          rule: c.rule,
+          why: c.why,
+          failureMode: c.failureMode,
+          confidence: c.confidence as any,
+          evidence: c.evidence as any,
+          scope: c.scope,
+        }));
 
-    const existingForSim = allOtherClaims.map(c => ({
-      dbId: c.id,
-      oosFileId: c.oosFileId,
-      claimId: c.claimId,
-      section: c.section,
-      displayOrder: c.displayOrder,
-      rule: c.rule,
-      why: c.why,
-      failureMode: c.failureMode,
-      confidence: c.confidence as any,
-      evidence: c.evidence as any,
-      scope: c.scope,
-    }));
+        const existingForSim = allOtherClaims.map(c => ({
+          dbId: c.id,
+          oosFileId: c.oosFileId,
+          claimId: c.claimId,
+          section: c.section,
+          displayOrder: c.displayOrder,
+          rule: c.rule,
+          why: c.why,
+          failureMode: c.failureMode,
+          confidence: c.confidence as any,
+          evidence: c.evidence as any,
+          scope: c.scope,
+        }));
 
-    const simPairs = computeAllSimilarities(newClaimsForSim, id, existingForSim);
+        const simPairs = computeAllSimilarities(newClaimsForSim, oosIdForSim, existingForSim);
 
-    if (simPairs.length > 0) {
-      await db.insert(claimSimilarities).values(
-        simPairs.map(p => ({
-          claimAId: p.claimAId,
-          claimBId: p.claimBId,
-          oosAId: p.oosAId,
-          oosBId: p.oosBId,
-          similarityScore: p.score,
-          classification: p.classification,
-          sectionMatch: p.sectionMatch,
-        }))
-      );
-    }
+        if (simPairs.length > 0) {
+          await db.insert(claimSimilarities).values(
+            simPairs.map(p => ({
+              claimAId: p.claimAId,
+              claimBId: p.claimBId,
+              oosAId: p.oosAId,
+              oosBId: p.oosBId,
+              similarityScore: p.score,
+              classification: p.classification,
+              sectionMatch: p.sectionMatch,
+            }))
+          );
+        }
+        console.log(`[similarity] Background computation complete for OOS ${oosIdForSim}: ${simPairs.length} pairs found`);
+      } catch (err) {
+        console.error(`[similarity] Background computation failed for OOS ${oosIdForSim}:`, err);
+      }
+    });
 
     // Step 6: Extract graph nodes and edges
     const entities = (oosFile.frontmatter as any)?.entities || null;
@@ -656,7 +666,7 @@ ${claimSections.join('\n')}`.trim();
           claimCount: parsed.claims.length,
           qualityTier: qualityResult.tier,
           qualityScore: qualityResult.score,
-          similaritiesFound: simPairs.length,
+          similaritiesFound: 'computing_async',
         },
       })
     );
@@ -667,7 +677,7 @@ ${claimSections.join('\n')}`.trim();
       qualityScore: qualityResult.score,
       agenticLevel: agenticResult.level,
       agenticLabel: agenticResult.label,
-      similaritiesFound: simPairs.length,
+      similaritiesFound: 'computing_async',
       validation,
       piiScan: { clean: true },
     };
