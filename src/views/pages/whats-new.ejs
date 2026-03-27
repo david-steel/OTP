@@ -18,6 +18,50 @@
       </h2>
 
       <div class="space-y-6">
+        <!-- Mar 27: Security Hardening -->
+        <div class="relative pl-8 border-l-2 border-otp-200">
+          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
+            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Security</span>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 mb-1">Platform Security Hardening</h3>
+          <p class="text-sm text-gray-500 leading-relaxed mb-2">Comprehensive security review and hardening pass across the entire platform. UUID validation on all route parameters, XSS prevention in template rendering, API key scope enforcement (read-only keys can no longer perform write operations), Zod input validation on every endpoint, and CORS tightened for production. Draft OOS content is now properly access-controlled, and ticket data is scoped to authenticated organizations.</p>
+        </div>
+
+        <!-- Mar 27: Background Similarity Engine -->
+        <div class="relative pl-8 border-l-2 border-otp-200">
+          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
+            <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Performance</span>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 mb-1">Background Similarity Computation</h3>
+          <p class="text-sm text-gray-500 leading-relaxed mb-2">Claim similarity analysis now runs asynchronously after publishing. Previously, the O(n*m) comparison blocked the publish response as the network grew. Publishing is now instant regardless of how many claims exist across the platform, while similarities still compute and store in the background.</p>
+        </div>
+
+        <!-- Mar 27: SEO + Discoverability -->
+        <div class="relative pl-8 border-l-2 border-otp-200">
+          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
+            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">SEO</span>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 mb-1">Search Engine Discoverability</h3>
+          <p class="text-sm text-gray-500 leading-relaxed mb-2">Every page now has proper meta descriptions, canonical URLs, and Open Graph tags with fallback defaults. Dashboard and admin pages are marked noindex to keep private content out of search results. The platform is now fully optimized for Google indexing and AI search engine citability.</p>
+        </div>
+
+        <!-- Mar 27: Shared Infrastructure -->
+        <div class="relative pl-8 border-l-2 border-otp-200">
+          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
+            <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Infrastructure</span>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 mb-1">Code Quality and Architecture Improvements</h3>
+          <p class="text-sm text-gray-500 leading-relaxed mb-2">Extracted shared authentication helper (single source of truth across all routes), consolidated rate limiting into a reusable module, added transactional version numbering with retry logic to prevent race conditions during concurrent publishes, and fixed pagination totals on intelligence search and publisher endpoints. Version history and draft claims now respect access control.</p>
+        </div>
+
         <!-- Mar 26: MCP Server Infrastructure on the Graph -->
         <div class="relative pl-8 border-l-2 border-otp-200">
           <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
