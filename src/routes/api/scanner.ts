@@ -27,7 +27,7 @@ setInterval(() => {
       ipLimiter.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 const scannerInputSchema = z.object({
   orgName: z.string().min(1).max(200),

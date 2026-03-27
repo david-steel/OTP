@@ -30,7 +30,7 @@ setInterval(() => {
       ipLimiter.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 const createTicketSchema = z.object({
   title: z.string().min(5).max(500),
@@ -91,22 +91,36 @@ export default async function ticketRoutes(app: FastifyInstance) {
   }
 
   // GET /api/v1/tickets -- List tickets
-  app.get<{ Querystring: { status?: string; category?: string; limit?: string } }>(
+  app.get<{ Querystring: { status?: string; category?: string; limit?: string; page?: string } }>(
     '/tickets',
     async (request, reply) => {
       const org = await getAuthOrg(request);
       const isAuthed = !!org;
 
-      const { status, category, limit: limitStr } = request.query;
+      const { status, category, limit: limitStr, page: pageStr } = request.query;
       const limit = Math.min(parseInt(limitStr || '50', 10), 100);
+      const page = Math.max(1, parseInt(pageStr || '1', 10));
 
-      let results = await db.select().from(tickets).orderBy(desc(tickets.createdAt)).limit(limit);
+      const conditions = [];
+      if (status) conditions.push(eq(tickets.status, status as 'open' | 'in_progress' | 'resolved' | 'closed'));
+      if (category) conditions.push(eq(tickets.category, category as 'bug' | 'feature' | 'question' | 'other'));
 
-      if (status) results = results.filter(t => t.status === status);
-      if (category) results = results.filter(t => t.category === category);
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const results = await db.select().from(tickets)
+        .where(whereClause)
+        .orderBy(desc(tickets.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit);
+
+      const [countResult] = await db.select({ total: sql<number>`cast(count(*) as int)` })
+        .from(tickets)
+        .where(whereClause);
+
+      const total = countResult?.total || 0;
 
       const sanitized = isAuthed ? results : results.map(t => stripSensitiveFields(t as unknown as Record<string, unknown>));
-      return { tickets: sanitized, total: results.length };
+      return { tickets: sanitized, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
   );
 

@@ -8,6 +8,7 @@ import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
 import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
+import { validateUuidParam } from '../../shared/param-validation.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -104,7 +105,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // OOS Detail
   app.get<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
-    const { id } = request.params;
+    const id = validateUuidParam(request.params.id);
+    if (!id) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
     if (!oosFile) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
@@ -117,7 +119,9 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Compare
   app.get<{ Params: { idA: string; idB: string } }>('/compare/:idA/:idB', async (request, reply) => {
-    const { idA, idB } = request.params;
+    const idA = validateUuidParam(request.params.idA);
+    const idB = validateUuidParam(request.params.idB);
+    if (!idA || !idB) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
     const [oosA] = await db.select().from(oosFiles).where(eq(oosFiles.id, idA)).limit(1);
     const [oosB] = await db.select().from(oosFiles).where(eq(oosFiles.id, idB)).limit(1);
     if (!oosA || !oosB) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
@@ -138,7 +142,9 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Merge Preview
   app.get<{ Params: { sourceId: string; targetId: string } }>('/merge/:sourceId/:targetId', async (request, reply) => {
-    const { sourceId, targetId } = request.params;
+    const sourceId = validateUuidParam(request.params.sourceId);
+    const targetId = validateUuidParam(request.params.targetId);
+    if (!sourceId || !targetId) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
     const [sourceOos] = await db.select().from(oosFiles).where(eq(oosFiles.id, sourceId)).limit(1);
     const [targetOos] = await db.select().from(oosFiles).where(eq(oosFiles.id, targetId)).limit(1);
     if (!sourceOos || !targetOos) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
@@ -159,7 +165,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Org Profile
   app.get<{ Params: { id: string } }>('/org/:id', async (request, reply) => {
-    const { id } = request.params;
+    const id = validateUuidParam(request.params.id);
+    if (!id) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
     const [org] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
     if (!org) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 

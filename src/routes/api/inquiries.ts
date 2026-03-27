@@ -4,6 +4,7 @@ import { db } from '../../config/database.js';
 import { consultantProfiles, inquiries } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { requireUuidParam } from '../../shared/param-validation.js';
 import { z } from 'zod';
 
 const createInquirySchema = z.object({
@@ -50,7 +51,7 @@ setInterval(() => {
       rateLimitMap.delete(ip);
     }
   }
-}, 5 * 60 * 1000); // Clean up every 5 minutes
+}, 5 * 60 * 1000).unref(); // Clean up every 5 minutes
 
 export default async function inquiryRoutes(app: FastifyInstance) {
 
@@ -190,7 +191,8 @@ export default async function inquiryRoutes(app: FastifyInstance) {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
 
     const body = updateInquirySchema.safeParse(request.body);
     if (!body.success) {

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
 import { createOrgSchema } from '../../shared/validation.js';
@@ -45,8 +45,8 @@ export default async function authRoutes(app: FastifyInstance) {
     }
 
     // Determine badge (founding for first 50)
-    const orgCount = await db.select().from(organizations);
-    const badge = orgCount.length < 50 ? 'founding' as const : null;
+    const [{ count }] = await db.select({ count: sql<number>`cast(count(*) as int)` }).from(organizations);
+    const badge = count < 50 ? 'founding' as const : count < 200 ? 'early' as const : null;
 
     // Create organization
     const [org] = await db.insert(organizations).values({

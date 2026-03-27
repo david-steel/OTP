@@ -6,6 +6,7 @@ import { oosFiles, auditLogs } from '../../db/schema.js';
 import { renameOOSSchema } from '../../shared/validation.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { isSuperAdmin } from '../../middleware/super-admin.js';
+import { requireUuidParam } from '../../shared/param-validation.js';
 
 function requireSuperAdmin(request: FastifyRequest) {
   return isSuperAdmin(request);
@@ -38,7 +39,8 @@ export default async function adminRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Super admin access required' } });
     }
 
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
 
@@ -68,7 +70,8 @@ export default async function adminRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Super admin access required' } });
     }
 
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
     const body = renameOOSSchema.safeParse(request.body);
     if (!body.success) {
       return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid name', details: body.error.issues } });

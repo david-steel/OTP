@@ -4,6 +4,7 @@ import { db } from '../../config/database.js';
 import { oosFiles, consultantProfiles, workspaces, workspaceMembers } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { requireUuidParam } from '../../shared/param-validation.js';
 import { z } from 'zod';
 
 const createWorkspaceSchema = z.object({
@@ -128,7 +129,8 @@ export default async function workspaceRoutes(app: FastifyInstance) {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
 
     // Verify membership
     const membership = await getWorkspaceMembership(id, org.id);
@@ -169,7 +171,8 @@ export default async function workspaceRoutes(app: FastifyInstance) {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
 
     // Verify caller is owner or consultant in this workspace
     const membership = await getWorkspaceMembership(id, org.id);
@@ -225,7 +228,10 @@ export default async function workspaceRoutes(app: FastifyInstance) {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const { id, memberId } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const memberId = requireUuidParam(request, reply, 'memberId');
+    if (!memberId) return;
 
     // Verify caller is owner of this workspace
     const membership = await getWorkspaceMembership(id, org.id);
@@ -269,7 +275,8 @@ export default async function workspaceRoutes(app: FastifyInstance) {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
-    const { id } = request.params;
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
     const { status } = request.query;
 
     // Verify membership

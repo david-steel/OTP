@@ -43,7 +43,7 @@ setInterval(() => {
       ipLimiter.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 // Zod schemas for unauthenticated endpoints
 const fixOOSSchema = z.object({

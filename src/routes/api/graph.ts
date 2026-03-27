@@ -11,6 +11,7 @@ import {
   getAuthorityMap,
 } from '../../graph/graph-queries.js';
 import { buildGraph } from '../../graph/graph-builder.js';
+import { validateUuidParam } from '../../shared/param-validation.js';
 
 export default async function graphRoutes(app: FastifyInstance) {
 
@@ -160,15 +161,20 @@ export default async function graphRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/graph/org/:orgId -- Subgraph for a single organization
-  app.get<{ Params: { orgId: string } }>('/graph/org/:orgId', async (request) => {
-    const { orgId } = request.params;
+  app.get<{ Params: { orgId: string } }>('/graph/org/:orgId', async (request, reply) => {
+    const orgId = validateUuidParam(request.params.orgId);
+    if (!orgId) return reply.status(400).send({ error: { code: 'INVALID_PARAM', message: 'Invalid orgId: must be a valid UUID' } });
     const subgraph = await getOrgSubgraph(db, orgId);
     return subgraph;
   });
 
   // GET /api/v1/graph/conflicts -- Find all agent conflict protocols
-  app.get<{ Querystring: { orgId?: string } }>('/graph/conflicts', async (request) => {
+  app.get<{ Querystring: { orgId?: string } }>('/graph/conflicts', async (request, reply) => {
     const { orgId } = request.query;
+    if (orgId) {
+      const validated = validateUuidParam(orgId);
+      if (!validated) return reply.status(400).send({ error: { code: 'INVALID_PARAM', message: 'Invalid orgId: must be a valid UUID' } });
+    }
     const conflicts = await findAgentConflicts(db, orgId);
     return {
       count: conflicts.length,
@@ -179,9 +185,10 @@ export default async function graphRoutes(app: FastifyInstance) {
   // GET /api/v1/graph/escalation/:nodeId -- Find escalation path from a node
   app.get<{ Params: { nodeId: string }; Querystring: { maxDepth?: string } }>(
     '/graph/escalation/:nodeId',
-    async (request) => {
-      const { nodeId } = request.params;
-      const maxDepth = parseInt(request.query.maxDepth || '10', 10);
+    async (request, reply) => {
+      const nodeId = validateUuidParam(request.params.nodeId);
+      if (!nodeId) return reply.status(400).send({ error: { code: 'INVALID_PARAM', message: 'Invalid nodeId: must be a valid UUID' } });
+      const maxDepth = Math.min(parseInt(request.query.maxDepth || '10', 10), 20);
       const path = await findEscalationPath(db, nodeId, maxDepth);
       return path;
     }
@@ -197,7 +204,12 @@ export default async function graphRoutes(app: FastifyInstance) {
           error: { code: 'MISSING_PARAMS', message: 'Both orgA and orgB query params required' },
         });
       }
-      const comparison = await compareOrganizations(db, orgA, orgB);
+      const validA = validateUuidParam(orgA);
+      const validB = validateUuidParam(orgB);
+      if (!validA || !validB) {
+        return reply.status(400).send({ error: { code: 'INVALID_PARAM', message: 'orgA and orgB must be valid UUIDs' } });
+      }
+      const comparison = await compareOrganizations(db, validA, validB);
       return comparison;
     }
   );
@@ -214,8 +226,9 @@ export default async function graphRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/graph/authority/:orgId -- Authority map for an organization
-  app.get<{ Params: { orgId: string } }>('/graph/authority/:orgId', async (request) => {
-    const { orgId } = request.params;
+  app.get<{ Params: { orgId: string } }>('/graph/authority/:orgId', async (request, reply) => {
+    const orgId = validateUuidParam(request.params.orgId);
+    if (!orgId) return reply.status(400).send({ error: { code: 'INVALID_PARAM', message: 'Invalid orgId: must be a valid UUID' } });
     const authority = await getAuthorityMap(db, orgId);
     return authority;
   });
