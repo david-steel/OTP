@@ -5,6 +5,7 @@ import { consultantProfiles, inquiries } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
+import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
 
 const createInquirySchema = z.object({
@@ -21,37 +22,7 @@ const updateInquirySchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-// Simple in-memory rate limiter for public inquiry submission
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
-const RATE_LIMIT_MAX = 10; // 10 inquiries per hour per IP
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return false;
-  }
-
-  entry.count++;
-  return true;
-}
-
-// Periodically clean up expired rate limit entries
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of rateLimitMap) {
-    if (now > entry.resetAt) {
-      rateLimitMap.delete(ip);
-    }
-  }
-}, 5 * 60 * 1000).unref(); // Clean up every 5 minutes
+const checkRateLimit = createRateLimiter({ windowMs: 3600000, maxRequests: 10 });
 
 export default async function inquiryRoutes(app: FastifyInstance) {
 

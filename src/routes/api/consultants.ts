@@ -25,6 +25,7 @@ const updateProfileSchema = z.object({
   bio: z.string().max(2000).optional(),
   headline: z.string().max(255).optional(),
   expertiseTags: z.array(z.string().max(50)).max(20).optional(),
+  contactEmail: z.string().email().nullable().optional(),
   website: z.string().url().nullable().optional(),
   linkedinUrl: z.string().url().nullable().optional(),
   avatarUrl: z.string().url().nullable().optional(),
@@ -116,6 +117,7 @@ export default async function consultantRoutes(app: FastifyInstance) {
     if (body.data.bio !== undefined) updates.bio = body.data.bio;
     if (body.data.headline !== undefined) updates.headline = body.data.headline;
     if (body.data.expertiseTags !== undefined) updates.expertiseTags = body.data.expertiseTags;
+    if (body.data.contactEmail !== undefined) updates.contactEmail = body.data.contactEmail;
     if (body.data.website !== undefined) updates.website = body.data.website;
     if (body.data.linkedinUrl !== undefined) updates.linkedinUrl = body.data.linkedinUrl;
     if (body.data.avatarUrl !== undefined) updates.avatarUrl = body.data.avatarUrl;

@@ -49,8 +49,9 @@ export async function ensureUniqueSlug(
 
   // Extract the highest numeric suffix
   let maxSuffix = 1;
+  const escapedSlug = baseSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   for (const row of conflicts) {
-    const match = row.slug.match(new RegExp(`^${baseSlug}-(\\d+)$`));
+    const match = row.slug.match(new RegExp(`^${escapedSlug}-(\\d+)$`));
     if (match) {
       const num = parseInt(match[1], 10);
       if (num > maxSuffix) {

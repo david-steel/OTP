@@ -13,9 +13,7 @@ export default async function browseRoutes(app: FastifyInstance) {
     Querystring: {
       q?: string;
       industry?: string;
-      agentType?: string;     // filter by agent authority level
       section?: string;       // core_operating_rules, failure_patterns, etc.
-      workflow?: string;      // search within workflow-related claims
       confidence?: string;    // HIGH, MEDIUM, LOW
       evidence?: string;      // MEASURED_RESULT, OBSERVED_REPEATEDLY, etc.
       minQuality?: string;    // platinum, gold, silver, bronze
@@ -26,7 +24,7 @@ export default async function browseRoutes(app: FastifyInstance) {
     };
   }>('/intelligence/search', async (request) => {
     const {
-      q, industry, agentType, section, workflow,
+      q, industry, section,
       confidence, evidence, minQuality, template, orgId,
     } = request.query;
     const page = parseInt(request.query.page || '1', 10);
@@ -128,10 +126,36 @@ export default async function browseRoutes(app: FastifyInstance) {
       facetGroups[row.facet_type].push({ value: row.facet_value, count: parseInt(row.count, 10) });
     }
 
+    // Get total count for pagination
+    const countResult = await db.execute(sql`
+      SELECT COUNT(*) AS total
+      FROM claims c
+      JOIN oos_files f ON c.oos_file_id = f.id
+      JOIN organizations o ON f.org_id = o.id
+      WHERE f.status = 'published'
+        ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
+        ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
+        ${section ? sql`AND c.section = ${section}` : sql``}
+        ${confidence ? sql`AND c.confidence = ${confidence}` : sql``}
+        ${evidence ? sql`AND c.evidence = ${evidence}` : sql``}
+        ${template ? sql`AND f.template = ${template}` : sql``}
+        ${orgId ? sql`AND o.id = ${orgId}` : sql``}
+        ${minQuality ? sql`AND (
+          CASE o.quality_tier
+            WHEN 'platinum' THEN 1
+            WHEN 'gold' THEN 2
+            WHEN 'silver' THEN 3
+            WHEN 'bronze' THEN 4
+            ELSE 5
+          END
+        ) <= ${minQualityRank}` : sql``}
+    `);
+    const total = parseInt((countResult.rows as any[])[0]?.total || '0', 10);
+
     return {
       data: results.rows || [],
       facets: facetGroups,
-      pagination: { page, limit, total: (results.rows || []).length },
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   });
 
@@ -218,9 +242,26 @@ export default async function browseRoutes(app: FastifyInstance) {
       LIMIT ${limit} OFFSET ${offset}
     `);
 
+    // Get total count for pagination
+    const publisherCount = await db.execute(sql`
+      SELECT COUNT(DISTINCT o.id) AS total
+      FROM organizations o
+      JOIN oos_files f ON f.org_id = o.id AND f.status = 'published'
+      WHERE TRUE
+        ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
+        ${template ? sql`AND f.template = ${template}` : sql``}
+        ${minQuality ? sql`AND (
+          CASE o.quality_tier
+            WHEN 'platinum' THEN 1 WHEN 'gold' THEN 2
+            WHEN 'silver' THEN 3 WHEN 'bronze' THEN 4 ELSE 5
+          END
+        ) <= ${minRank}` : sql``}
+    `);
+    const total = parseInt((publisherCount.rows as any[])[0]?.total || '0', 10);
+
     return {
       data: publishers.rows || [],
-      pagination: { page, limit },
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   });
 }

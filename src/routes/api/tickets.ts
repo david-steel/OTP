@@ -6,31 +6,10 @@ import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
+import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
 
-// Simple per-IP rate limiter for unauthenticated endpoints
-const ipLimiter = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(ip: string, maxPerMin: number): boolean {
-  const now = Date.now();
-  const entry = ipLimiter.get(ip);
-  if (!entry || now > entry.resetAt) {
-    ipLimiter.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-  if (entry.count >= maxPerMin) return false;
-  entry.count++;
-  return true;
-}
-
-// Cleanup expired rate limit entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of ipLimiter.entries()) {
-    if (now > value.resetAt) {
-      ipLimiter.delete(key);
-    }
-  }
-}, 5 * 60 * 1000).unref();
+const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
 
 const createTicketSchema = z.object({
   title: z.string().min(5).max(500),
@@ -51,7 +30,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
 
   // POST /api/v1/tickets -- Create a ticket (auth optional)
   app.post('/tickets', async (request, reply) => {
-    if (!checkRateLimit(request.ip, 10)) {
+    if (!checkRateLimit(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
@@ -90,22 +69,22 @@ export default async function ticketRoutes(app: FastifyInstance) {
     return safe;
   }
 
-  // GET /api/v1/tickets -- List tickets
+  // GET /api/v1/tickets -- List tickets (requires authentication, scoped to org)
   app.get<{ Querystring: { status?: string; category?: string; limit?: string; page?: string } }>(
     '/tickets',
     async (request, reply) => {
       const org = await getAuthOrg(request);
-      const isAuthed = !!org;
+      if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required to list tickets' } });
 
       const { status, category, limit: limitStr, page: pageStr } = request.query;
       const limit = Math.min(parseInt(limitStr || '50', 10), 100);
       const page = Math.max(1, parseInt(pageStr || '1', 10));
 
-      const conditions = [];
+      const conditions = [eq(tickets.orgId, org.id)];
       if (status) conditions.push(eq(tickets.status, status as 'open' | 'in_progress' | 'resolved' | 'closed'));
       if (category) conditions.push(eq(tickets.category, category as 'bug' | 'feature' | 'question' | 'other'));
 
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+      const whereClause = and(...conditions);
 
       const results = await db.select().from(tickets)
         .where(whereClause)
@@ -119,8 +98,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
 
       const total = countResult?.total || 0;
 
-      const sanitized = isAuthed ? results : results.map(t => stripSensitiveFields(t as unknown as Record<string, unknown>));
-      return { tickets: sanitized, total, page, limit, totalPages: Math.ceil(total / limit) };
+      return { tickets: results, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
   );
 

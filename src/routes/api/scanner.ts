@@ -3,31 +3,10 @@ import { db } from '../../config/database.js';
 import { auditLogs } from '../../db/schema.js';
 import { runScan, type ScannerInput } from '../../services/scanner.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
 
-// Simple per-IP rate limiter for unauthenticated endpoints
-const ipLimiter = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(ip: string, maxPerMin: number): boolean {
-  const now = Date.now();
-  const entry = ipLimiter.get(ip);
-  if (!entry || now > entry.resetAt) {
-    ipLimiter.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-  if (entry.count >= maxPerMin) return false;
-  entry.count++;
-  return true;
-}
-
-// Cleanup expired rate limit entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of ipLimiter.entries()) {
-    if (now > value.resetAt) {
-      ipLimiter.delete(key);
-    }
-  }
-}, 5 * 60 * 1000).unref();
+const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
 
 const scannerInputSchema = z.object({
   orgName: z.string().min(1).max(200),
@@ -73,7 +52,7 @@ export default async function scannerRoutes(app: FastifyInstance) {
 
   // POST /api/v1/scanner/scan -- Run the Agent Coordination Scanner
   app.post<{ Body: ScannerInput }>('/scanner/scan', async (request, reply) => {
-    if (!checkRateLimit(request.ip, 10)) {
+    if (!checkRateLimit(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
@@ -116,7 +95,7 @@ export default async function scannerRoutes(app: FastifyInstance) {
   // POST /api/v1/scanner/quick -- Minimal scan for fastest possible insight
   // Only requires: orgName, systems, and roles. No workflows or oversight needed.
   app.post('/scanner/quick', async (request, reply) => {
-    if (!checkRateLimit(request.ip, 10)) {
+    if (!checkRateLimit(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 

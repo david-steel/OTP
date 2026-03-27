@@ -19,31 +19,10 @@ import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import type { TemplateType } from '../../shared/enums.js';
 import { TEMPLATE_TYPES } from '../../shared/enums.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
+import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
 
-// Simple per-IP rate limiter for unauthenticated endpoints
-const ipLimiter = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(ip: string, maxPerMin: number): boolean {
-  const now = Date.now();
-  const entry = ipLimiter.get(ip);
-  if (!entry || now > entry.resetAt) {
-    ipLimiter.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-  if (entry.count >= maxPerMin) return false;
-  entry.count++;
-  return true;
-}
-
-// Cleanup expired rate limit entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of ipLimiter.entries()) {
-    if (now > value.resetAt) {
-      ipLimiter.delete(key);
-    }
-  }
-}, 5 * 60 * 1000).unref();
+const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
 
 // Zod schemas for unauthenticated endpoints
 const fixOOSSchema = z.object({
@@ -75,7 +54,7 @@ export default async function oosRoutes(app: FastifyInstance) {
   // POST /api/v1/oos/fix -- Auto-fix OOS content (no auth required)
   // ============================================================
   app.post('/oos/fix', async (request, reply) => {
-    if (!checkRateLimit(request.ip, 10)) {
+    if (!checkRateLimit(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
@@ -110,7 +89,7 @@ export default async function oosRoutes(app: FastifyInstance) {
   // POST /api/v1/oos/generate -- Generate OOS from description (no auth required)
   // ============================================================
   app.post('/oos/generate', async (request, reply) => {
-    if (!checkRateLimit(request.ip, 10)) {
+    if (!checkRateLimit(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
     }
 
@@ -716,6 +695,18 @@ ${claimSections.join('\n')}`.trim();
     async (request, reply) => {
       const id = requireUuidParam(request, reply);
       if (!id) return;
+
+      // Check if the OOS file exists and handle draft access control
+      const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
+      if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
+
+      if (oosFile.status === 'draft') {
+        const org = await getAuthOrg(request);
+        if (!org || org.id !== oosFile.orgId) {
+          return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
+        }
+      }
+
       const { section, confidence, evidence } = request.query;
 
       let query = db.select().from(claims).where(eq(claims.oosFileId, id));
@@ -744,7 +735,15 @@ ${claimSections.join('\n')}`.trim();
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
     if (!oosFile) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS file not found' } });
 
-    // Get all versions for this org
+    // Check if the authenticated user owns the org
+    const org = await getAuthOrg(request);
+    const isOwner = org && org.id === oosFile.orgId;
+
+    // Get versions -- unauthenticated users only see published versions
+    const versionConditions = isOwner
+      ? eq(oosFiles.orgId, oosFile.orgId)
+      : and(eq(oosFiles.orgId, oosFile.orgId), eq(oosFiles.status, 'published'));
+
     const versions = await db.select({
       id: oosFiles.id,
       version: oosFiles.version,
@@ -755,7 +754,7 @@ ${claimSections.join('\n')}`.trim();
       createdAt: oosFiles.createdAt,
     })
       .from(oosFiles)
-      .where(eq(oosFiles.orgId, oosFile.orgId))
+      .where(versionConditions)
       .orderBy(desc(oosFiles.version));
 
     return { versions };
