@@ -1,0 +1,102 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold">Technical</span>
+        <span>March 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">The System Prompt is Simpler Than You Think</h1>
+      <p class="text-gray-400 mt-4 text-base sm:text-lg leading-relaxed">People overcomplicate system prompts. They write novels, embed entire knowledge bases, and try to anticipate every edge case. The best system prompts are short, clear, and point to external context.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Prompt is the Job Description. The Knowledge Base is the Employee Handbook.</h2>
+
+      <p>I have reviewed hundreds of system prompts. The bad ones all share the same mistake: they try to be everything. The role definition, the rules, the knowledge base, the edge case handler, the style guide, the escalation protocol, and the personality all crammed into one massive block of text.</p>
+
+      <p>The good ones are short. Shockingly short.</p>
+
+      <p>A system prompt should do three things: define the role, set the boundaries, and point to the context. That is it. Everything else should live outside the prompt in structured documents the agent can access when it needs them.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Why Long Prompts Break</h2>
+
+      <p>Long system prompts create fragile agents. Here is why.</p>
+
+      <p>Every instruction you add increases the chance of conflicting directives. "Always be concise" and "always provide thorough context" cannot both be true. The more rules you stack, the more the agent has to choose between them. Sometimes it chooses wrong.</p>
+
+      <p>Every embedded knowledge chunk reduces the agent's ability to reason about its core task. The model has finite attention. If 80% of that attention is spent processing a knowledge dump it might not even need for the current task, only 20% is left for actually doing the work.</p>
+
+      <p>Every edge case you try to preempt creates a new edge case you did not anticipate. The prompt grows. The conflicts multiply. The agent gets slower, less predictable, and harder to debug.</p>
+
+      <p>I have watched teams iterate on prompts for weeks, adding more and more text, and the agent gets worse with every iteration. More text does not mean more capability. It means more confusion.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Pattern That Works</h2>
+
+      <p>The architecture is simple. Three layers.</p>
+
+      <p><strong>Layer 1: Short prompt.</strong> Role, rules, and pointers. This is the job description. "You are the Chief of Staff. You compile daily briefings. You read these files for context. You never send messages without approval. When in doubt, escalate." Twenty lines, maybe thirty. Never more.</p>
+
+      <p><strong>Layer 2: Structured knowledge files.</strong> Your OOS, SOPs, reference docs, client lists, configuration files. These live outside the prompt. The agent accesses them when it needs them. They are maintained independently. Updated without touching the prompt.</p>
+
+      <p><strong>Layer 3: Tools.</strong> MCP servers, APIs, databases. The capabilities the agent can use to take action. Defined separately from the prompt, connected through the runtime.</p>
+
+      <p>This mirrors good management. You do not give a new VP a 50-page instruction manual and say "memorize this before doing anything." You give them a clear mandate, point them to the resources, and let them figure out the details. The good ones thrive. The bad ones ask too many questions. But neither one needs the entire company knowledge base crammed into their hiring letter.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What This Looks Like in Production</h2>
+
+      <p>At Sneeze It, every agent has a short system prompt that defines its role and rules. The organizational operating system is a separate file. The agent reads it at startup. Client lists, reference data, channel configurations, all live in separate files.</p>
+
+      <p>When we need to change a rule, we update the operating system file. Every agent picks up the change on the next run. We do not touch 14 different prompts. We touch one document.</p>
+
+      <p>When we need to add a new agent, the prompt takes 10 minutes to write. The hard work was already done when we structured the operating system. The new agent reads the same files as every other agent. It knows the rules. It knows the boundaries. It knows the team.</p>
+
+      <p>Compare this to the alternative: a 2,000-line prompt that embeds everything, is impossible to maintain, conflicts with itself in subtle ways, and breaks every time someone updates a policy that is buried on line 847.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Maintenance Argument</h2>
+
+      <p>Here is the argument that convinces the skeptics. Ask about maintenance.</p>
+
+      <p>With long prompts: every organizational change requires editing the prompt, testing for regressions, and deploying. If you have multiple agents, you are editing multiple prompts. Changes are slow, error-prone, and hard to coordinate.</p>
+
+      <p>With short prompts plus external knowledge: update the knowledge file once. Every agent gets the update. No prompt editing. No regression testing. No deployment. The prompt is stable. The knowledge evolves.</p>
+
+      <p>This is not a marginal improvement. This is the difference between a system that gets harder to maintain every month and a system that gets easier. The prompt stays clean. The intelligence stays structured. Updates flow without friction.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What OTP Enables</h2>
+
+      <p>The OOS is the structured knowledge layer that makes simple prompts powerful. Instead of cramming operational context into every prompt, point the agent to the OOS. It knows what the organization does, how it operates, and what the rules are. The prompt stays clean. The intelligence stays structured.</p>
+
+      <p>This is why OTP exists. Not to help you write better prompts. To help you structure the knowledge that makes prompts irrelevant. The more of your organizational intelligence lives in a structured, shareable, machine-readable format, the less your prompt has to do. The less your prompt does, the better your agent performs.</p>
+
+      <p>The best system prompt is the one that trusts the knowledge layer to do the heavy lifting.</p>
+
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-6 sm:p-8 mt-10">
+        <p class="text-sm font-semibold text-otp-700 mb-2">Simplify Your Prompts</p>
+        <p class="text-gray-600 text-sm leading-relaxed mb-4">Take your longest system prompt. Cut it to 20 lines. Move everything else to a structured reference file. Watch your agent get better, not worse. Then publish that reference file as your OOS.</p>
+        <div class="flex flex-wrap gap-3">
+          <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-600 text-white text-sm font-semibold rounded-lg transition-colors">
+            Publish Your OOS
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <a href="/browse" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-otp-200 hover:border-otp-300 text-otp-600 text-sm font-semibold rounded-lg transition-colors">
+            See Who's Publishing
+          </a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</section>

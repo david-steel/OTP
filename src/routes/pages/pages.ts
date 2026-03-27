@@ -1310,4 +1310,56 @@ export default async function pageRoutes(app: FastifyInstance) {
       jsonLd: blogJsonLd('The Connected Member: AI is Rewriting Membership Sales and Nobody\'s Ready', 'connected-member', '2026-03-26', 3000)
     });
   });
+
+  // Blog post 31 - The Blessed Path
+  app.get('/blog/blessed-path-documentation', async (request, reply) => {
+    return reply.view('pages/blog-post-31', {
+      title: 'The Blessed Path: Why 90% of Agent Success is Documentation You Already Wrote - OTP',
+      description: 'The single biggest predictor of AI agent success is not the model. It is documentation. The blessed path is where agents thrive. Everything else is a hallucination waiting to happen.',
+      canonical: BASE_URL + '/blog/blessed-path-documentation',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('The Blessed Path: Why 90% of Agent Success is Documentation You Already Wrote', 'blessed-path-documentation', '2026-03-26', 2400)
+    });
+  });
+
+  // Blog post 32 - Agent Onboarding OOS
+  app.get('/blog/operating-system-agent-onboarding', async (request, reply) => {
+    return reply.view('pages/blog-post-32', {
+      title: 'Your Operating System is Your Agent\'s Day-One Onboarding - OTP',
+      description: 'When you hire an employee, you give them an onboarding packet. When you deploy an agent, what do you give it? Your OOS is the onboarding that compounds with every agent you add.',
+      canonical: BASE_URL + '/blog/operating-system-agent-onboarding',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('Your Operating System is Your Agent\'s Day-One Onboarding', 'operating-system-agent-onboarding', '2026-03-26', 2600)
+    });
+  });
+
+  // Blog post 33 - Activation Energy
+  app.get('/blog/activation-energy-bottleneck', async (request, reply) => {
+    return reply.view('pages/blog-post-33', {
+      title: 'Activation Energy is the Real Bottleneck (Not Execution) - OTP',
+      description: 'Most teams think their problem is execution speed. The real bottleneck is activation energy, the friction between having an idea and starting the work.',
+      canonical: BASE_URL + '/blog/activation-energy-bottleneck',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('Activation Energy is the Real Bottleneck (Not Execution)', 'activation-energy-bottleneck', '2026-03-26', 2500)
+    });
+  });
+
+  // Blog post 34 - System Prompt Simplicity
+  app.get('/blog/system-prompt-simpler', async (request, reply) => {
+    return reply.view('pages/blog-post-34', {
+      title: 'The System Prompt is Simpler Than You Think - OTP',
+      description: 'People overcomplicate system prompts. The best ones are short, clear, and point to external context. The prompt is the job description. The knowledge base is the employee handbook.',
+      canonical: BASE_URL + '/blog/system-prompt-simpler',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-03-26',
+      jsonLd: blogJsonLd('The System Prompt is Simpler Than You Think', 'system-prompt-simpler', '2026-03-26', 2300)
+    });
+  });
 }
