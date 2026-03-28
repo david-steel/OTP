@@ -1,0 +1,102 @@
+<!-- Post header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+      <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Blog
+    </a>
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Strategy</span>
+        <span>February 2026</span>
+        <span>&middot;</span>
+        <span>David Steel</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Coordination Cost Will Kill You Before Execution Speed Saves You</h1>
+      <p class="text-gray-400 mt-4 text-base sm:text-lg leading-relaxed">Everyone optimizes for execution speed. Faster tools, better talent, tighter sprints. But the thing that actually kills teams is coordination cost. You can have the fastest team in the world and still lose if alignment eats 60% of their time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Post body -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Speed Trap</h2>
+
+      <p>Every performance conversation I hear is about speed. Faster models. Faster deployments. Faster sprints. More output per person per day.</p>
+
+      <p>Speed is not the problem. It never was.</p>
+
+      <p>The problem is coordination cost. The invisible overhead of getting people aligned, informed, and unblocked so they can actually start doing the work. I have watched teams with world-class talent produce mediocre results because 60% of their time went to figuring out who should do what, when, with what context.</p>
+
+      <p>That is not a talent problem. That is an organizational architecture problem.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Coordination Scales Non-Linearly</h2>
+
+      <p>Here is the math that most leaders ignore. Add one person to a team of five and you do not add 20% more coordination overhead. You add exponentially more communication paths. Five people have 10 unique pairwise connections. Six people have 15. Ten people have 45.</p>
+
+      <p>Every new node in the network multiplies the coordination burden on every existing node. This is why "just hire more people" eventually stops working. At some point, you are paying more for alignment than for execution.</p>
+
+      <p>Agent teams hit this wall even faster than human teams. An agent that can write code in seconds is useless if it takes 10 minutes of context-loading and three approval steps before it can start. The execution is instant. The coordination is the bottleneck.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Alignment Tax</h2>
+
+      <p>I track coordination cost explicitly at Sneeze It. Here is what it looks like in practice.</p>
+
+      <p>Before we built shared operating context for our agent team, every task required a briefing phase. Load the context. Check the state of other agents. Verify nothing has changed since last run. Confirm the scope. That briefing phase often took longer than the actual work.</p>
+
+      <p>After we implemented pre-computed shared state files, where each agent writes its outputs to a known location and other agents read from those locations, the briefing phase collapsed. Not reduced. Collapsed. Agents that used to spend minutes loading context now read a single file and start working.</p>
+
+      <p>The work itself did not get faster. The coordination got cheaper. That was the multiplier.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Shared Context is the Fix</h2>
+
+      <p>The solution is not fewer people or fewer agents. It is shared operating context. When everyone, human and machine, reads from the same structured knowledge base, coordination cost drops dramatically.</p>
+
+      <p>This is not a new idea. Military organizations have operated this way for centuries. Shared doctrine, standard operating procedures, common operating pictures. Everyone starts from the same context. Nobody wastes time explaining the basics.</p>
+
+      <p>What is new is applying this to agent teams. When your sales agent, your analytics agent, and your project management agent all read from the same structured operating system, they do not need to ask each other what is going on. They already know. The coordination cost approaches zero.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Unexpected Dividend</h2>
+
+      <p>Companies running large-scale agent deployments are reporting something surprising. The biggest ROI comes not from the agents themselves but from the structured documentation they had to create to make agents work.</p>
+
+      <p>Think about that. The documentation is more valuable than the automation.</p>
+
+      <p>Because the documentation reduces coordination cost for everyone. Not just the agents. The human team benefits too. New hires onboard faster. Cross-functional projects align faster. Decision-making improves because everyone is working from the same information.</p>
+
+      <p>The agents forced the discipline. The discipline paid dividends across the entire organization.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Measure It</h2>
+
+      <p>Here is a challenge. For one week, track how your team actually spends its time. Not what they produce. How they spend the hours. Break it into two categories: doing the work, and getting aligned to do the work.</p>
+
+      <p>Most organizations discover that alignment consumes 40-60% of total working hours. Meetings about what to build. Slack threads about who owns what. Email chains clarifying scope. Status updates that exist only because there is no shared source of truth.</p>
+
+      <p>That is your coordination cost. Every percentage point you reduce it is pure capacity unlocked.</p>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What OTP Enables</h2>
+
+      <p>OTP's entire thesis is that coordination cost is the dominant cost in modern organizations, and the fix is structured, shareable operational intelligence. An OOS does not just document how your organization works. It eliminates the coordination tax on every interaction.</p>
+
+      <p>When your operating context is published, structured, and machine-readable, every agent, every new hire, and every partner can start working without the alignment dance. That is not an efficiency gain. That is an architectural shift.</p>
+
+      <div class="bg-otp-50 border border-otp-100 rounded-xl p-6 sm:p-8 mt-10">
+        <p class="text-sm font-semibold text-otp-700 mb-2">Cut Your Coordination Cost</p>
+        <p class="text-gray-600 text-sm leading-relaxed mb-4">Track your coordination cost for one week. How many hours did your team spend getting aligned vs. doing the actual work? Publish your OOS and cut that number in half.</p>
+        <div class="flex flex-wrap gap-3">
+          <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-600 text-white text-sm font-semibold rounded-lg transition-colors">
+            Publish Your OOS
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <a href="/browse" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-otp-200 hover:border-otp-300 text-otp-600 text-sm font-semibold rounded-lg transition-colors">
+            See Who's Publishing
+          </a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</section>

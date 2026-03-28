@@ -1362,4 +1362,108 @@ export default async function pageRoutes(app: FastifyInstance) {
       jsonLd: blogJsonLd('The System Prompt is Simpler Than You Think', 'system-prompt-simpler', '2026-03-26', 2300)
     });
   });
+
+  // Blog post 35 - Coordination Cost
+  app.get('/blog/coordination-cost-kills', async (request, reply) => {
+    return reply.view('pages/blog-post-35', {
+      title: 'Coordination Cost Will Kill You Before Execution Speed Saves You - OTP',
+      description: 'Everyone optimizes for execution speed. But the thing that actually kills teams is coordination cost, the invisible overhead of getting people aligned, informed, and unblocked.',
+      canonical: BASE_URL + '/blog/coordination-cost-kills',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-02-14',
+      jsonLd: blogJsonLd('Coordination Cost Will Kill You Before Execution Speed Saves You', 'coordination-cost-kills', '2026-02-14', 1100)
+    });
+  });
+
+  // Blog post 36 - Everyone Ships Code
+  app.get('/blog/everyone-ships-code', async (request, reply) => {
+    return reply.view('pages/blog-post-36', {
+      title: 'When Everyone Can Ship Code, What Changes? - OTP',
+      description: 'Non-engineers can now ship production code. The bottleneck is no longer writing code. It is knowing what should be built and why. That shift changes everything.',
+      canonical: BASE_URL + '/blog/everyone-ships-code',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-02-18',
+      jsonLd: blogJsonLd('When Everyone Can Ship Code, What Changes?', 'everyone-ships-code', '2026-02-18', 1100)
+    });
+  });
+
+  // Blog post 37 - One Agent Never Enough
+  app.get('/blog/one-agent-never-enough', async (request, reply) => {
+    return reply.view('pages/blog-post-37', {
+      title: 'Why One Agent Will Never Be Enough - OTP',
+      description: 'The first instinct is to build one super-agent that does everything. It never works. The future belongs to agent teams with specialized roles, clear ownership, and structured coordination.',
+      canonical: BASE_URL + '/blog/one-agent-never-enough',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-02-22',
+      jsonLd: blogJsonLd('Why One Agent Will Never Be Enough', 'one-agent-never-enough', '2026-02-22', 1100)
+    });
+  });
+
+  // Blog post 38 - Sandboxed Operations
+  app.get('/blog/sandboxed-operations', async (request, reply) => {
+    return reply.view('pages/blog-post-38', {
+      title: 'Isolated Agents, Isolated Failures: The Case for Sandboxed Operations - OTP',
+      description: 'When an agent makes a mistake, the blast radius matters more than the mistake itself. The single most important architectural decision in agent deployment is isolation.',
+      canonical: BASE_URL + '/blog/sandboxed-operations',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-02-26',
+      jsonLd: blogJsonLd('Isolated Agents, Isolated Failures: The Case for Sandboxed Operations', 'sandboxed-operations', '2026-02-26', 1100)
+    });
+  });
+
+  // Blog post 39 - AI Team Budget
+  app.get('/blog/ai-team-budget', async (request, reply) => {
+    return reply.view('pages/blog-post-39', {
+      title: 'What Happens When Your AI Team Has a Budget - OTP',
+      description: 'Constraints create accountability. Without budgets, agents waste resources and never learn efficiency. With budgets, they optimize. The budget is the architecture.',
+      canonical: BASE_URL + '/blog/ai-team-budget',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-03',
+      jsonLd: blogJsonLd('What Happens When Your AI Team Has a Budget', 'ai-team-budget', '2026-04-03', 1100)
+    });
+  });
+
+  // Blog post 40 - API-First Agent Consumers
+  app.get('/blog/api-first-agent-consumers', async (request, reply) => {
+    return reply.view('pages/blog-post-40', {
+      title: 'API-First Businesses Built for Agent Consumers - OTP',
+      description: 'The next generation of businesses will be built API-first, designed for agent consumers from day one. The interface is the API. The documentation is the product. The customer is a machine.',
+      canonical: BASE_URL + '/blog/api-first-agent-consumers',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-10',
+      jsonLd: blogJsonLd('API-First Businesses Built for Agent Consumers', 'api-first-agent-consumers', '2026-04-10', 1100)
+    });
+  });
+
+  // Blog post 41 - Agents Are the Customer
+  app.get('/blog/agents-are-the-customer', async (request, reply) => {
+    return reply.view('pages/blog-post-41', {
+      title: 'When Agents Are the Customer - OTP',
+      description: 'Agents are already making purchasing decisions. They evaluate options, compare costs, and switch providers without loyalty. The companies that design for this customer first will own the next era.',
+      canonical: BASE_URL + '/blog/agents-are-the-customer',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-17',
+      jsonLd: blogJsonLd('When Agents Are the Customer', 'agents-are-the-customer', '2026-04-17', 1100)
+    });
+  });
+
+  // Blog post 42 - Who Reviews the Robot's Work
+  app.get('/blog/who-reviews-robots-work', async (request, reply) => {
+    return reply.view('pages/blog-post-42', {
+      title: 'Who Reviews the Robot\'s Work? - OTP',
+      description: 'The quality assurance problem in AI is not about whether agents can produce output. It is about whether anyone is verifying that output meets the standard. Most organizations have not solved this.',
+      canonical: BASE_URL + '/blog/who-reviews-robots-work',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-24',
+      jsonLd: blogJsonLd('Who Reviews the Robot\'s Work?', 'who-reviews-robots-work', '2026-04-24', 1100)
+    });
+  });
 }
