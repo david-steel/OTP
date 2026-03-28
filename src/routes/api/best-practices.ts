@@ -7,6 +7,7 @@ import {
   oosFiles,
   claims,
   consultantProfiles,
+  organizations,
 } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { jaccardSimilarity } from '../../services/similarity.js';
@@ -65,8 +66,11 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
       sourceUrl: bestPractices.sourceUrl,
       canonicalUrl: bestPractices.canonicalUrl,
       publisherProfileId: bestPractices.publisherProfileId,
+      publisherName: consultantProfiles.displayName,
+      publisherSlug: consultantProfiles.slug,
     })
       .from(bestPractices)
+      .leftJoin(consultantProfiles, eq(bestPractices.publisherProfileId, consultantProfiles.id))
       .where(whereClause)
       .orderBy(bestPractices.term)
       .limit(limit)
@@ -480,4 +484,149 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
       },
     };
   });
+
+  // ============================================================
+  // GET /api/v1/best-practices/:slug/implementing-orgs -- Orgs implementing a best practice
+  // ============================================================
+  app.get<{ Params: { slug: string } }>(
+    '/best-practices/:slug/implementing-orgs',
+    async (request, reply) => {
+      // Find the best practice by slug
+      const [practice] = await db.select({ id: bestPractices.id })
+        .from(bestPractices)
+        .where(eq(bestPractices.slug, request.params.slug))
+        .limit(1);
+
+      if (!practice) {
+        return reply.status(404).send({
+          error: { code: 'NOT_FOUND', message: 'Best practice not found' },
+        });
+      }
+
+      // Query matches joined with OOS files and organizations, filtered to published OOS only
+      const rows = await db.select({
+        orgName: organizations.name,
+        orgId: organizations.id,
+        industry: organizations.industry,
+        badge: organizations.badge,
+        qualityTier: organizations.qualityTier,
+        agenticLevel: organizations.agenticLevel,
+        oosId: oosFiles.id,
+        claimCount: oosFiles.claimCount,
+        relevanceScore: oosBestPracticeMatches.relevanceScore,
+      })
+        .from(oosBestPracticeMatches)
+        .innerJoin(oosFiles, eq(oosBestPracticeMatches.oosFileId, oosFiles.id))
+        .innerJoin(organizations, eq(oosFiles.orgId, organizations.id))
+        .where(
+          and(
+            eq(oosBestPracticeMatches.bestPracticeId, practice.id),
+            eq(oosFiles.status, 'published')
+          )
+        )
+        .orderBy(desc(oosBestPracticeMatches.relevanceScore));
+
+      return {
+        slug: request.params.slug,
+        bestPracticeId: practice.id,
+        orgCount: rows.length,
+        orgs: rows,
+      };
+    }
+  );
+
+  // ============================================================
+  // POST /api/v1/best-practices/:slug/ingest/:oosId -- Ingest a best practice as a claim
+  // ============================================================
+  app.post<{ Params: { slug: string; oosId: string } }>(
+    '/best-practices/:slug/ingest/:oosId',
+    async (request, reply) => {
+      const org = await getAuthOrg(request);
+      if (!org) {
+        return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+      }
+
+      const { slug, oosId } = request.params;
+
+      // Get the best practice
+      const [practice] = await db.select()
+        .from(bestPractices)
+        .where(eq(bestPractices.slug, slug))
+        .limit(1);
+
+      if (!practice) {
+        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Best practice not found' } });
+      }
+
+      // Get the user's OOS (prefer draft, fall back to published)
+      let [oos] = await db.select()
+        .from(oosFiles)
+        .where(and(eq(oosFiles.id, oosId), eq(oosFiles.orgId, org.id)))
+        .limit(1);
+
+      if (!oos) {
+        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS not found' } });
+      }
+
+      // If OOS is published (not draft), create a new draft version
+      if (oos.status === 'published') {
+        const [newDraft] = await db.insert(oosFiles).values({
+          orgId: org.id,
+          name: oos.name,
+          template: oos.template,
+          version: oos.version + 1,
+          status: 'draft',
+          visibilityDefault: oos.visibilityDefault,
+          wordCount: oos.wordCount,
+          claimCount: oos.claimCount,
+          rawContent: oos.rawContent,
+          frontmatter: oos.frontmatter,
+          confidenceDistribution: oos.confidenceDistribution,
+          evidenceDistribution: oos.evidenceDistribution,
+        }).returning();
+        oos = newDraft;
+      }
+
+      // Generate the new claim
+      const existingClaimCount = oos.claimCount || 0;
+      const newClaimId = 'C' + String(existingClaimCount + 1).padStart(3, '0');
+
+      // Build the claim markdown
+      const claimMarkdown = `\n\n### ${newClaimId}\n- **Confidence:** MEDIUM\n- **Evidence:** INFERENCE\n- **Section:** operational_heuristics\n- **Rule:** ${practice.term}: ${practice.definition.substring(0, 300)}\n- **Why:** Identified as a relevant best practice from the OTP Best Practices Library (source: McFadyen Digital).\n- **Failure mode:** Not implementing this practice may leave a gap in the organization's operational maturity.\n- **Scope:** organization-wide`;
+
+      // Append to raw content
+      const updatedContent = oos.rawContent + claimMarkdown;
+
+      await db.update(oosFiles)
+        .set({
+          rawContent: updatedContent,
+          claimCount: existingClaimCount + 1,
+          wordCount: updatedContent.split(/\s+/).length,
+          updatedAt: new Date(),
+        })
+        .where(eq(oosFiles.id, oos.id));
+
+      // Also insert into claims table
+      await db.insert(claims).values({
+        oosFileId: oos.id,
+        claimId: newClaimId,
+        section: 'operational_heuristics',
+        displayOrder: existingClaimCount + 1,
+        rule: `${practice.term}: ${practice.definition.substring(0, 500)}`,
+        why: 'Identified as a relevant best practice from the OTP Best Practices Library (source: McFadyen Digital).',
+        failureMode: 'Not implementing this practice may leave a gap in the organization\'s operational maturity.',
+        confidence: 'MEDIUM',
+        evidence: 'INFERENCE',
+        scope: 'organization-wide',
+      });
+
+      return {
+        success: true,
+        claimId: newClaimId,
+        oosId: oos.id,
+        oosVersion: oos.version,
+        message: `Ingested "${practice.term}" as ${newClaimId} in your OOS (v${oos.version} draft)`,
+      };
+    }
+  );
 }

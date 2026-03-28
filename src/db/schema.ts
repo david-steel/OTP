@@ -189,6 +189,11 @@ export const consultantProfiles = pgTable('consultant_profiles', {
   linkedinUrl: text('linkedin_url'),
   published: boolean('published').notNull().default(false),
   isPublished: boolean('is_published').notNull().default(false),
+  profileType: varchar('profile_type', { length: 20 }).notNull().default('consultant'),
+  contentSourceUrl: text('content_source_url'),
+  contentCount: integer('content_count').notNull().default(0),
+  publisherDescription: text('publisher_description'),
+  lastSyncedAt: timestamp('last_synced_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({

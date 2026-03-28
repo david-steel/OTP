@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -114,7 +114,24 @@ export default async function pageRoutes(app: FastifyInstance) {
     const claimRows = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
 
     const orgData = org ? { ...org, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' } : {};
-    return reply.view('pages/oos-detail', { title: `${org?.name || 'OOS'} - OTP`, description: `View the Organizational Operating System published by ${org?.name || 'this organization'} on OTP. ${oosFile.claimCount} coordination claims.`, canonical: BASE_URL + '/oos/' + id, oosFile, org: orgData, claims: claimRows });
+
+    const bpMatches = await db.select({
+      term: bestPractices.term,
+      slug: bestPractices.slug,
+      category: bestPractices.category,
+      sourceUrl: bestPractices.sourceUrl,
+      relevanceScore: oosBestPracticeMatches.relevanceScore,
+      publisherName: consultantProfiles.displayName,
+      publisherSlug: consultantProfiles.slug,
+    })
+      .from(oosBestPracticeMatches)
+      .innerJoin(bestPractices, eq(oosBestPracticeMatches.bestPracticeId, bestPractices.id))
+      .leftJoin(consultantProfiles, eq(bestPractices.publisherProfileId, consultantProfiles.id))
+      .where(eq(oosBestPracticeMatches.oosFileId, id))
+      .orderBy(desc(oosBestPracticeMatches.relevanceScore))
+      .limit(12);
+
+    return reply.view('pages/oos-detail', { title: `${org?.name || 'OOS'} - OTP`, description: `View the Organizational Operating System published by ${org?.name || 'this organization'} on OTP. ${oosFile.claimCount} coordination claims.`, canonical: BASE_URL + '/oos/' + id, oosFile, org: orgData, claims: claimRows, bestPracticeMatches: bpMatches });
   });
 
   // Compare

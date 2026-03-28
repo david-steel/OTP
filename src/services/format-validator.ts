@@ -36,22 +36,22 @@ export function validateOOS(parsed: ParseResult, template: TemplateType): Valida
   const warnings: ValidationWarning[] = [];
 
   // 1. Word count range
-  if (parsed.wordCount < 1800) {
+  if (parsed.wordCount < 500) {
     errors.push({
       code: 'WORD_COUNT_BELOW_MINIMUM',
       field: 'wordCount',
-      message: `Word count is ${parsed.wordCount}. Minimum is 1800.`,
+      message: `Word count is ${parsed.wordCount}. Minimum is 500.`,
       value: parsed.wordCount,
-      expected: 1800,
+      expected: 500,
     });
   }
-  if (parsed.wordCount > 5000) {
+  if (parsed.wordCount > 15000) {
     errors.push({
       code: 'WORD_COUNT_ABOVE_MAXIMUM',
       field: 'wordCount',
-      message: `Word count is ${parsed.wordCount}. Maximum is 5000.`,
+      message: `Word count is ${parsed.wordCount}. Maximum is 15000.`,
       value: parsed.wordCount,
-      expected: 5000,
+      expected: 15000,
     });
   }
 

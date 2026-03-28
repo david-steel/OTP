@@ -130,14 +130,14 @@ export const CLAIM_SECTIONS = [
 
 // Max claims per section
 export const SECTION_CLAIM_LIMITS: Record<string, number> = {
-  core_operating_rules: 10,
-  failure_patterns: 10,
-  human_ai_boundary_conditions: 5,
-  agent_roles_and_authority: 15,
-  coordination_patterns: 10,
-  operational_heuristics: 15,
-  value_chain_stages: 15,
-  stage_handoffs: 10,
-  department_ai_capabilities: 15,
-  cross_department_interfaces: 10,
+  core_operating_rules: 30,
+  failure_patterns: 30,
+  human_ai_boundary_conditions: 20,
+  agent_roles_and_authority: 40,
+  coordination_patterns: 30,
+  operational_heuristics: 40,
+  value_chain_stages: 40,
+  stage_handoffs: 30,
+  department_ai_capabilities: 40,
+  cross_department_interfaces: 30,
 };

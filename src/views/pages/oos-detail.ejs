@@ -95,6 +95,34 @@
     </div>
   </div>
 
+  <% if (typeof bestPracticeMatches !== 'undefined' && bestPracticeMatches && bestPracticeMatches.length > 0) { %>
+  <div class="mb-8">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      Relevant Best Practices
+      <span class="text-xs font-normal text-gray-400">(<%= bestPracticeMatches.length %> matched)</span>
+    </h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <% bestPracticeMatches.forEach(function(bp) { %>
+        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-600 border border-indigo-100"><%= bp.category %></span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-600"><%= Math.round((bp.relevance_score || bp.relevanceScore || 0) * 100) %>% match</span>
+          </div>
+          <h3 class="text-sm font-semibold text-gray-900 mb-1"><%= bp.term %></h3>
+          <div class="flex items-center justify-between mt-2">
+            <% if (bp.publisher_name || bp.publisherName) { %>
+              <a href="/expert/<%= bp.publisher_slug || bp.publisherSlug %>" class="text-[10px] text-gray-400 hover:text-otp-500">by <%= bp.publisher_name || bp.publisherName %></a>
+            <% } else { %>
+              <span></span>
+            <% } %>
+            <a href="<%= bp.source_url || bp.sourceUrl %>" target="_blank" rel="noopener" class="text-[10px] text-otp-500 hover:underline">View source</a>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+  <% } %>
+
   <!-- Filters -->
   <div class="flex gap-3 mb-4">
     <select id="filter-section" class="text-sm border rounded px-3 py-1.5" onchange="filterClaims()">

@@ -26,7 +26,7 @@ const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
 
 // Zod schemas for unauthenticated endpoints
 const fixOOSSchema = z.object({
-  rawContent: z.string().min(1).max(50000),
+  rawContent: z.string().min(1).max(200000),
   template: z.enum(TEMPLATE_TYPES).optional(),
 });
 
