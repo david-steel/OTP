@@ -2667,6 +2667,14 @@
       });
   }
 
+  // Expose functions to global scope for onclick/onchange in dynamic HTML
+  window.openImplementPanel = openImplementPanel;
+  window.closeImplementPanel = closeImplementPanel;
+  window.ingestBestPractice = ingestBestPractice;
+  window.toggleIngestQueue = toggleIngestQueue;
+  window.ingestSelected = ingestSelected;
+  window.updateIngestBar = updateIngestBar;
+
   // Implement button click handler (event delegation)
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('.bp-implement-btn');
