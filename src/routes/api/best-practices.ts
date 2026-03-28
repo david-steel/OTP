@@ -9,6 +9,7 @@ import {
   consultantProfiles,
 } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { jaccardSimilarity } from '../../services/similarity.js';
 
 export default async function bestPracticesRoutes(app: FastifyInstance) {
 
@@ -234,7 +235,86 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
         category: bestPractices.category,
       }).from(bestPractices);
 
-      // Keyword-based relevance matching
+      // --- Semantic matching using Jaccard + concept synonyms ---
+      // Same approach as OTP's claim similarity engine
+
+      const STOP_WORDS = new Set([
+        'the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'but', 'in',
+        'with', 'to', 'for', 'of', 'not', 'no', 'can', 'will', 'do', 'does',
+        'should', 'must', 'this', 'that', 'it', 'its', 'are', 'was', 'were',
+        'be', 'been', 'being', 'have', 'has', 'had', 'having', 'from', 'by',
+        'all', 'each', 'every', 'any', 'if', 'when', 'than', 'then', 'into',
+        'also', 'only', 'very', 'just', 'about', 'such', 'through', 'after',
+        'before', 'between', 'both', 'same', 'other', 'more', 'most', 'some',
+        'used', 'describe', 'important', 'concept', 'within', 'high', 'level',
+        'refers', 'how', 'organizations', 'make', 'technology', 'more', 'useful',
+        'term', 'glossary', 'meaning', 'generally', 'represents', 'building',
+        'block', 'helps', 'teams', 'understand', 'designed', 'managed', 'applied',
+        'real', 'world', 'settings', 'context', 'especially', 'relevant', 'because',
+        'modern', 'expected', 'rather', 'merely', 'therefore', 'closely', 'tied',
+      ]);
+
+      const CONCEPT_GROUPS: Record<string, string> = {
+        'human': 'human_review', 'review': 'human_review', 'approval': 'human_review',
+        'approve': 'human_review', 'gate': 'human_review', 'oversight': 'human_review',
+        'escalation': 'human_review', 'override': 'human_review', 'validate': 'human_review',
+        'authority': 'authority_boundary', 'boundary': 'authority_boundary',
+        'owner': 'authority_boundary', 'ownership': 'authority_boundary',
+        'permission': 'authority_boundary', 'autonomous': 'authority_boundary',
+        'scope': 'authority_boundary', 'responsible': 'authority_boundary',
+        'shared': 'shared_state', 'state': 'shared_state', 'file': 'shared_state',
+        'source': 'shared_state', 'truth': 'shared_state', 'record': 'shared_state',
+        'audit': 'shared_state', 'trail': 'shared_state', 'log': 'shared_state',
+        'iteration': 'iteration_loop', 'iterate': 'iteration_loop', 'loop': 'iteration_loop',
+        'feedback': 'iteration_loop', 'cycle': 'iteration_loop', 'refine': 'iteration_loop',
+        'agent': 'ai_system', 'agents': 'ai_system', 'system': 'ai_system',
+        'bot': 'ai_system', 'automation': 'ai_system', 'automated': 'ai_system',
+        'failure': 'failure_pattern', 'error': 'failure_pattern', 'fail': 'failure_pattern',
+        'risk': 'failure_pattern', 'conflict': 'failure_pattern',
+        'test': 'testing', 'testing': 'testing', 'hypothesis': 'testing',
+        'criteria': 'testing', 'measure': 'testing',
+        'email': 'external_comms', 'send': 'external_comms', 'publish': 'external_comms',
+        'client': 'external_comms', 'customer': 'external_comms',
+        'generate': 'ai_generates', 'output': 'ai_generates', 'draft': 'ai_generates',
+        'data': 'data_ops', 'database': 'data_ops', 'analytics': 'data_ops',
+        'pipeline': 'data_ops', 'warehouse': 'data_ops', 'query': 'data_ops',
+        'security': 'security', 'privacy': 'security', 'encryption': 'security',
+        'compliance': 'security', 'governance': 'security', 'access': 'security',
+        'prompt': 'prompt_eng', 'prompting': 'prompt_eng', 'instruction': 'prompt_eng',
+        'template': 'prompt_eng', 'context': 'prompt_eng',
+        'model': 'ml_model', 'training': 'ml_model', 'inference': 'ml_model',
+        'prediction': 'ml_model', 'learning': 'ml_model', 'neural': 'ml_model',
+        'deploy': 'deployment', 'deployment': 'deployment', 'production': 'deployment',
+        'staging': 'deployment', 'release': 'deployment', 'rollout': 'deployment',
+        'monitor': 'observability', 'monitoring': 'observability', 'observability': 'observability',
+        'alert': 'observability', 'dashboard': 'observability', 'metric': 'observability',
+        'schedule': 'scheduling', 'scheduled': 'scheduling', 'cron': 'scheduling',
+        'nightly': 'scheduling', 'daily': 'scheduling', 'recurring': 'scheduling',
+        'coordinate': 'coordination', 'coordination': 'coordination', 'orchestrate': 'coordination',
+        'orchestration': 'coordination', 'handoff': 'coordination', 'delegation': 'coordination',
+      };
+
+      function tokenize(text: string): string[] {
+        return text.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/)
+          .filter(t => t.length > 2).filter(t => !STOP_WORDS.has(t));
+      }
+
+      function expandWithConcepts(tokens: string[]): string[] {
+        const expanded = [...tokens];
+        const added = new Set<string>();
+        for (const t of tokens) {
+          const c = CONCEPT_GROUPS[t];
+          if (c && !added.has(c)) { expanded.push('__' + c); added.add(c); }
+        }
+        return expanded;
+      }
+
+      // Pre-tokenize all OOS claims
+      const claimTokenSets = oosClaims.map(c => ({
+        claimId: c.claimId,
+        tokens: expandWithConcepts(tokenize(`${c.section} ${c.rule}`)),
+      }));
+
       const matches: Array<{
         bestPracticeId: string;
         relevanceScore: number;
@@ -242,45 +322,39 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
       }> = [];
 
       for (const practice of allPractices) {
-        const termWords = practice.term.toLowerCase().split(/\s+/);
-        const defWords = practice.definition.toLowerCase().split(/\s+/).slice(0, 50);
-        const practiceKeywords = new Set([...termWords, ...defWords].filter(w => w.length > 3));
+        // Tokenize the best practice (term weighted 3x by repetition)
+        const practiceText = `${practice.term} ${practice.term} ${practice.term} ${practice.definition}`;
+        const practiceTokens = expandWithConcepts(tokenize(practiceText));
 
-        let totalScore = 0;
-        const matched: string[] = [];
+        if (practiceTokens.length === 0) continue;
 
-        for (const claim of oosClaims) {
-          const claimText = `${claim.section} ${claim.rule}`.toLowerCase();
-          let claimScore = 0;
+        // Score against each OOS claim, keep the best matches
+        const claimScores: Array<{ claimId: string; score: number }> = [];
 
-          // Term name match (high weight)
-          if (claimText.includes(practice.term.toLowerCase())) {
-            claimScore += 0.5;
-          }
-
-          // Keyword overlap
-          let keywordHits = 0;
-          for (const kw of practiceKeywords) {
-            if (claimText.includes(kw)) keywordHits++;
-          }
-          if (practiceKeywords.size > 0) {
-            claimScore += (keywordHits / practiceKeywords.size) * 0.5;
-          }
-
-          if (claimScore > 0.1) {
-            totalScore += claimScore;
-            matched.push(claim.claimId);
+        for (const cs of claimTokenSets) {
+          if (cs.tokens.length === 0) continue;
+          const score = jaccardSimilarity(practiceTokens, cs.tokens);
+          if (score > 0.05) {
+            claimScores.push({ claimId: cs.claimId, score });
           }
         }
 
-        // Normalize score to 0-1 range
-        const normalizedScore = Math.min(1, totalScore / Math.max(1, oosClaims.length * 0.3));
+        if (claimScores.length === 0) continue;
 
-        if (normalizedScore > 0.05 && matched.length > 0) {
+        // Sort by score descending
+        claimScores.sort((a, b) => b.score - a.score);
+
+        // Overall relevance = best claim match (60%) + breadth bonus (40%)
+        // Breadth: how many claims connect (normalized)
+        const bestScore = claimScores[0].score;
+        const breadth = Math.min(claimScores.length / Math.max(oosClaims.length * 0.2, 1), 1);
+        const relevanceScore = bestScore * 0.6 + breadth * 0.4;
+
+        if (relevanceScore > 0.06) {
           matches.push({
             bestPracticeId: practice.id,
-            relevanceScore: Math.round(normalizedScore * 1000) / 1000,
-            matchedClaims: matched.slice(0, 10),
+            relevanceScore: Math.round(relevanceScore * 1000) / 1000,
+            matchedClaims: claimScores.slice(0, 10).map(cs => cs.claimId),
           });
         }
       }
