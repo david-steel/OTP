@@ -1,0 +1,362 @@
+{
+  "source": {
+    "name": "Google Rules of Machine Learning",
+    "publisher": "Google (Martin Zinkevich)",
+    "url": "https://developers.google.com/machine-learning/guides/rules-of-ml",
+    "attribution": "Content sourced from Google Developers, authored by Martin Zinkevich. All rules link back to original source."
+  },
+  "scrapedAt": "2026-03-28T21:00:00.000Z",
+  "termCount": 43,
+  "categories": [
+    "Before Machine Learning",
+    "ML Phase I: Your First Pipeline",
+    "ML Phase II: Feature Engineering",
+    "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models"
+  ],
+  "terms": [
+    {
+      "slug": "rule-1-dont-be-afraid-to-launch-without-ml",
+      "term": "Rule 1: Don't be afraid to launch a product without machine learning",
+      "definition": "Machine learning is cool, but it requires data. Start with heuristics; don't implement ML until you have sufficient data and clear evidence it's needed for your product.",
+      "category": "Before Machine Learning",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_1_don%E2%80%99t_be_afraid_to_launch_a_product_without_machine_learning"
+    },
+    {
+      "slug": "rule-2-design-and-implement-metrics",
+      "term": "Rule 2: First, design and implement metrics",
+      "definition": "Before formalizing what your machine learning system will do, track as much as possible in your current system. Establish comprehensive measurement infrastructure early, including experiment frameworks for user bucketing and statistical aggregation.",
+      "category": "Before Machine Learning",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_2_first_design_and_implement_metrics"
+    },
+    {
+      "slug": "rule-3-choose-ml-over-complex-heuristic",
+      "term": "Rule 3: Choose machine learning over a complex heuristic",
+      "definition": "A simple heuristic can get your product out the door. A complex heuristic is unmaintainable. Once you have data, transition to ML models because they're easier to update and maintain than intricate rule-based systems.",
+      "category": "Before Machine Learning",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_3_choose_machine_learning_over_a_complex_heuristic"
+    },
+    {
+      "slug": "rule-4-keep-first-model-simple",
+      "term": "Rule 4: Keep the first model simple and get the infrastructure right",
+      "definition": "The first model provides the biggest boost to your product, so it doesn't need to be fancy. Prioritize resolving infrastructure challenges: getting examples to the algorithm, defining quality criteria, and integrating models into applications.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_4_keep_the_first_model_simple_and_get_the_infrastructure_right"
+    },
+    {
+      "slug": "rule-5-test-infrastructure-independently",
+      "term": "Rule 5: Test the infrastructure independently from the machine learning",
+      "definition": "Make sure that the infrastructure is testable, and that the learning parts of the system are encapsulated. Verify data flows correctly, validate model outputs match between training and serving environments, and inspect data quality.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_5_test_the_infrastructure_independently_from_the_machine_learning"
+    },
+    {
+      "slug": "rule-6-be-careful-about-dropped-data",
+      "term": "Rule 6: Be careful about dropped data when copying pipelines",
+      "definition": "Often we create a pipeline by copying an existing pipeline, and the old pipeline drops data that we need. Verify that data relevant to your new problem isn't being filtered out by inherited pipeline logic.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_6_be_careful_about_dropped_data_when_copying_pipelines"
+    },
+    {
+      "slug": "rule-7-turn-heuristics-into-features",
+      "term": "Rule 7: Turn heuristics into features, or handle them externally",
+      "definition": "These same heuristics can give you a lift when tweaked with machine learning. Preserve valuable domain knowledge by converting existing rules into features, preprocessing steps, or ensemble components rather than discarding them.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_7_turn_heuristics_into_features_or_handle_them_externally"
+    },
+    {
+      "slug": "rule-8-know-freshness-requirements",
+      "term": "Rule 8: Know the freshness requirements of your system",
+      "definition": "How much does performance degrade if you have a model that is a day old? A week old? Understanding update frequency needs helps prioritize monitoring and establishes appropriate model deployment schedules.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_8_know_the_freshness_requirements_of_your_system"
+    },
+    {
+      "slug": "rule-9-detect-problems-before-exporting-models",
+      "term": "Rule 9: Detect problems before exporting models",
+      "definition": "If there is an issue with an exported model, it is a user-facing issue. Perform sanity checks and validate performance on held-out data before deploying models to production.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_9_detect_problems_before_exporting_models"
+    },
+    {
+      "slug": "rule-10-watch-for-silent-failures",
+      "term": "Rule 10: Watch for silent failures",
+      "definition": "Suppose that a particular table that is being joined is no longer being updated. Behavior will continue to be reasonably good, decaying gradually. Monitor data staleness and feature coverage changes to catch degradation that occurs incrementally.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_10_watch_for_silent_failures"
+    },
+    {
+      "slug": "rule-11-give-feature-columns-owners",
+      "term": "Rule 11: Give feature columns owners and documentation",
+      "definition": "If the system is large, and there are many feature columns, know who created or is maintaining each feature column. Assign ownership and maintain detailed descriptions of features, their origins, and intended purposes.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_11_give_feature_columns_owners_and_documentation"
+    },
+    {
+      "slug": "rule-12-dont-overthink-objective",
+      "term": "Rule 12: Don't overthink which objective you choose to directly optimize",
+      "definition": "You want to make money, make your users happy. Early in the machine learning process, you will notice them all going up. Keep objectives simple initially; correlated metrics often improve together, simplifying early optimization decisions.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_12_don%E2%80%99t_overthink_which_objective_you_choose_to_directly_optimize"
+    },
+    {
+      "slug": "rule-13-choose-simple-observable-metric",
+      "term": "Rule 13: Choose a simple, observable and attributable metric for your first objective",
+      "definition": "The ML objective should be something that is easy to measure and is a proxy for the true objective. Optimize directly observable user actions (clicks, downloads, forwards) over indirect effects (visits, time spent, DAU).",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_13_choose_a_simple_observable_and_attributable_metric_for_your_first_objective"
+    },
+    {
+      "slug": "rule-14-starting-with-interpretable-model",
+      "term": "Rule 14: Starting with an interpretable model makes debugging easier",
+      "definition": "Linear regression, logistic regression, and Poisson regression are directly motivated by a probabilistic model. Probabilistic models enable easier debugging through calibration checks and deviation analysis compared to black-box classifiers.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_14_starting_with_an_interpretable_model_makes_debugging_easier"
+    },
+    {
+      "slug": "rule-15-separate-spam-filtering-and-quality-ranking",
+      "term": "Rule 15: Separate Spam Filtering and Quality Ranking in a Policy Layer",
+      "definition": "Quality ranking is a fine art, but spam filtering is a war. Handle spam detection separately with rapidly-updated models, while quality ranking focuses on good-faith content using stable signals.",
+      "category": "ML Phase I: Your First Pipeline",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_15_separate_spam_filtering_and_quality_ranking_in_a_policy_layer"
+    },
+    {
+      "slug": "rule-16-plan-to-launch-and-iterate",
+      "term": "Rule 16: Plan to launch and iterate",
+      "definition": "Don't expect that the model you are working on now will be the last one that you will launch. Design for easy feature addition/removal and parallel pipeline versions to enable frequent model refreshes.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_16_plan_to_launch_and_iterate"
+    },
+    {
+      "slug": "rule-17-start-with-directly-observed-features",
+      "term": "Rule 17: Start with directly observed and reported features as opposed to learned features",
+      "definition": "A learned feature is a feature generated either by an external system or by the learner itself. Both of these can be useful, but they can have a lot of issues. Begin with direct observations; add unsupervised features or deep learning only after establishing strong baseline performance.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_17_start_with_directly_observed_and_reported_features_as_opposed_to_learned_features"
+    },
+    {
+      "slug": "rule-18-explore-with-generalizable-content-features",
+      "term": "Rule 18: Explore with features of content that generalize across contexts",
+      "definition": "Often a machine learning system is a small part of a much bigger picture. Leverage engagement statistics from other contexts (plus-ones, reshares, comments) to surface new content effectively in current contexts.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_18_explore_with_features_of_content_that_generalize_across_contexts"
+    },
+    {
+      "slug": "rule-19-use-very-specific-features",
+      "term": "Rule 19: Use very specific features when you can",
+      "definition": "With tons of data, it is simpler to learn millions of simple features than a few complex features. Employ document identifiers and specific features with limited coverage when overall feature coverage exceeds 90%.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_19_use_very_specific_features_when_you_can"
+    },
+    {
+      "slug": "rule-20-combine-and-modify-existing-features",
+      "term": "Rule 20: Combine and modify existing features to create new features in human-understandable ways",
+      "definition": "Discretization consists of taking a continuous feature and creating many discrete features. Crosses combine two or more feature columns. Apply discretization and crosses intelligently; use basic quantiles and avoid excessive cross-dimensionality.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_20_combine_and_modify_existing_features_to_create_new_features_in_human­understandable_ways"
+    },
+    {
+      "slug": "rule-21-feature-weights-proportional-to-data",
+      "term": "Rule 21: The number of feature weights you can learn in a linear model is roughly proportional to the amount of data you have",
+      "definition": "Scale your learning to the size of your data: 1000 examples, a dozen features; a million examples, maybe a hundred thousand features; billions of examples, 10 million features. Match model complexity to data volume through appropriate feature engineering strategies.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_21_the_number_of_feature_weights_you_can_learn_in_a_linear_model_is_roughly_proportional_to_the_amount_of_data_you_have"
+    },
+    {
+      "slug": "rule-22-clean-up-unused-features",
+      "term": "Rule 22: Clean up features you are no longer using",
+      "definition": "Unused features create technical debt. Remove unused features to maintain clean infrastructure and enable faster experimentation with promising signals.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_22_clean_up_features_you_are_no_longer_using"
+    },
+    {
+      "slug": "rule-23-you-are-not-a-typical-end-user",
+      "term": "Rule 23: You are not a typical end user",
+      "definition": "While there are a lot of benefits to fishfooding and dogfooding, employees should look at whether the performance is correct. Use crowdsourcing platforms and A/B tests with real users rather than relying on internal team evaluation.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_23_you_are_not_a_typical_end_user"
+    },
+    {
+      "slug": "rule-24-measure-delta-between-models",
+      "term": "Rule 24: Measure the delta between models",
+      "definition": "Calculate just how different the new results are from production. Looking over queries where the symmetric difference is high can help you understand qualitatively what the change was like. Compare model outputs before deployment to identify meaningful differences.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_24_measure_the_delta_between_models"
+    },
+    {
+      "slug": "rule-25-utilitarian-performance-trumps-predictive-power",
+      "term": "Rule 25: When choosing models, utilitarian performance trumps predictive power",
+      "definition": "Your model may try to predict click-through rate, but the key question is what you do with that prediction. Prioritize system performance over raw prediction metrics when they diverge.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_25_when_choosing_models_utilitarian_performance_trumps_predictive_power"
+    },
+    {
+      "slug": "rule-26-look-for-patterns-in-measured-errors",
+      "term": "Rule 26: Look for patterns in the measured errors, and create new features",
+      "definition": "If you give the model a feature that allows it to fix the error, the model will try to use it. Analyze systematic errors to identify missing signals; add flexible feature families rather than narrowly-targeted features.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_26_look_for_patterns_in_the_measured_errors_and_create_new_features"
+    },
+    {
+      "slug": "rule-27-quantify-observed-undesirable-behavior",
+      "term": "Rule 27: Try to quantify observed undesirable behavior",
+      "definition": "They should do whatever it takes to turn their gripes into solid numbers. Measure concerns before optimization; convert qualitative feedback into metrics, labels, or objectives for machine learning.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_27_try_to_quantify_observed_undesirable_behavior"
+    },
+    {
+      "slug": "rule-28-identical-short-term-not-identical-long-term",
+      "term": "Rule 28: Be aware that identical short-term behavior does not imply identical long-term behavior",
+      "definition": "Imagine that you have a new system that looks at every doc_id and exact_query. However, you notice that no new apps are being shown. Train models on data collected when the live model was active to understand long-term behavioral consequences.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_28_be_aware_that_identical_short­term_behavior_does_not_imply_identical_long­term_behavior"
+    },
+    {
+      "slug": "rule-29-save-serving-features-for-training",
+      "term": "Rule 29: The best way to make sure that you train like you serve is to save the set of features used at serving time, and then pipe those features to a log to use them at training time",
+      "definition": "Even if you can't do this for every example, do it for a small fraction. Log serving-time features for training validation to detect training-serving skew early.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_29_the_best_way_to_make_sure_that_you_train_like_you_serve_is_to_save_the_set_of_features_used_at_serving_time_and_then_pipe_those_features_to_a_log_to_use_them_at_training_time"
+    },
+    {
+      "slug": "rule-30-importance-weight-sampled-data",
+      "term": "Rule 30: Importance-weight sampled data, don't arbitrarily drop it",
+      "definition": "Importance weighting means that if you decide that you are going to sample example X with a 30% probability, then give it a weight of 10/3. Apply importance weighting to maintain calibration properties when subsampling data.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_30_importance­weight_sampled_data_don%E2%80%99t_arbitrarily_drop_it"
+    },
+    {
+      "slug": "rule-31-beware-table-data-may-change",
+      "term": "Rule 31: Beware that if you join data from a table at training and serving time, the data in the table may change",
+      "definition": "Between training and serving time, features in the table may be changed. Snapshot tables regularly or log features at serving time to mitigate inconsistency between training and production.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_31_beware_that_if_you_join_data_from_a_table_at_training_and_serving_time_the_data_in_the_table_may_change"
+    },
+    {
+      "slug": "rule-32-reuse-code-between-pipelines",
+      "term": "Rule 32: Re-use code between your training pipeline and your serving pipeline whenever possible",
+      "definition": "This eliminates a source of training-serving skew. Create shared objects and methods bridging human-readable system representations and ML-expected formats across training and serving.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_32_re­use_code_between_your_training_pipeline_and_your_serving_pipeline_whenever_possible"
+    },
+    {
+      "slug": "rule-33-test-model-on-future-data",
+      "term": "Rule 33: If you produce a model based on the data until January 5th, test the model on the data from January 6th and after",
+      "definition": "You will expect that the performance will not be as good on the new data, but it shouldn't be radically worse. Validate models on post-training data to detect temporal performance degradation.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_33_if_you_produce_a_model_based_on_the_data_until_january_5th_test_the_model_on_the_data_from_january_6th_and_after"
+    },
+    {
+      "slug": "rule-34-sacrifice-short-term-for-clean-data",
+      "term": "Rule 34: In binary classification for filtering, make small short-term sacrifices in performance for very clean data",
+      "definition": "You can gather cleaner data if instead during serving you label 1% of all traffic as held out. These held out examples can become your training data. Hold out random traffic samples to collect unbiased negative examples.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_34_in_binary_classification_for_filtering_make_small_short­term_sacrifices_in_performance_for_very_clean_data"
+    },
+    {
+      "slug": "rule-35-beware-inherent-skew-in-ranking",
+      "term": "Rule 35: Beware of the inherent skew in ranking problems",
+      "definition": "When you switch your ranking algorithm radically enough that different results show up, you have effectively changed the data. Apply regularization, constrain feature weights, and avoid document-only features to manage ranking feedback loops.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_35_beware_of_the_inherent_skew_in_ranking_problems"
+    },
+    {
+      "slug": "rule-36-avoid-feedback-loops-with-positional-features",
+      "term": "Rule 36: Avoid feedback loops with positional features",
+      "definition": "The position of content dramatically affects how likely the user is to interact with it. Keep positional features separate from content features; don't cross them, and don't apply positional information at serving time.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_36_avoid_feedback_loops_with_positional_features"
+    },
+    {
+      "slug": "rule-37-measure-training-serving-skew",
+      "term": "Rule 37: Measure Training/Serving Skew",
+      "definition": "Divide it into several parts: training vs. holdout performance, holdout vs. next-day performance, next-day vs. live performance. Track skew across multiple temporal boundaries to detect engineering errors or time-sensitive feature degradation.",
+      "category": "ML Phase II: Feature Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_37_measure_training_serving_skew"
+    },
+    {
+      "slug": "rule-38-dont-waste-time-on-new-features-if-objectives-misaligned",
+      "term": "Rule 38: Don't waste time on new features if unaligned objectives have become the issue",
+      "definition": "As your measurements plateau, your team will start to look at issues that are outside the scope of the objectives of your current machine learning system. Modify objectives rather than adding features when performance goals conflict.",
+      "category": "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_38_don%E2%80%99t_waste_time_on_new_features_if_unaligned_objectives_have_become_the_issue"
+    },
+    {
+      "slug": "rule-39-launch-decisions-are-proxy-for-long-term-goals",
+      "term": "Rule 39: Launch decisions are a proxy for long-term product goals",
+      "definition": "The only easy launch decisions are when all metrics get better (or at least do not get worse). Balance multiple metrics using human judgment; prioritize long-term user satisfaction over short-term objective improvements.",
+      "category": "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_39_launch_decisions_are_a_proxy_for_long­term_product_goals"
+    },
+    {
+      "slug": "rule-40-keep-ensembles-simple",
+      "term": "Rule 40: Keep ensembles simple",
+      "definition": "Each model should either be an ensemble only taking the input of other models, or a base model taking many features, but not both. Use simple ensemble models combining base model outputs; enforce monotonicity and semantic interpretability constraints.",
+      "category": "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_40_keep_ensembles_simple"
+    },
+    {
+      "slug": "rule-41-look-for-new-information-sources-when-plateaued",
+      "term": "Rule 41: When performance plateaus, look for qualitatively new sources of information to add rather than refining existing signals",
+      "definition": "It is time to start building the infrastructure for radically different features, such as the history of documents. Use wikidata entities. Use deep learning. Explore novel data sources, external knowledge graphs, and advanced techniques when traditional optimization stalls.",
+      "category": "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_41_when_performance_plateaus_look_for_qualitatively_new_sources_of_information_to_add_rather_than_refining_existing_signals"
+    },
+    {
+      "slug": "rule-42-dont-expect-diversity-personalization-relevance-correlated-with-popularity",
+      "term": "Rule 42: Don't expect diversity, personalization, or relevance to be as correlated with popularity as you think they are",
+      "definition": "The ordinary tends to be hard to beat. These properties may require separate objectives or post-processing rather than direct ML optimization of popularity-based signals.",
+      "category": "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_42_don%E2%80%99t_expect_diversity_personalization_or_relevance_to_be_as_correlated_with_popularity_as_you_think_they_are"
+    },
+    {
+      "slug": "rule-43-friends-same-across-products-interests-not",
+      "term": "Rule 43: Your friends tend to be the same across different products. Your interests tend not to be",
+      "definition": "Your friends are who they are. What has sometimes worked is using raw data from one property to predict behavior on another. Transfer connection models across products; avoid directly transferring personalization features across product boundaries.",
+      "category": "ML Phase III: Slowed Growth, Optimization Refinement, and Complex Models",
+      "relatedTerms": [],
+      "sourceUrl": "https://developers.google.com/machine-learning/guides/rules-of-ml#rule_43_your_friends_tend_to_be_the_same_across_different_products_your_interests_tend_not_to_be"
+    }
+  ]
+}

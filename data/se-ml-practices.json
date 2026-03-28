@@ -1,0 +1,336 @@
+{
+  "source": {
+    "name": "Engineering Best Practices for Machine Learning",
+    "publisher": "SE-ML",
+    "publisherUrl": "https://se-ml.github.io",
+    "siteUrl": "https://se-ml.github.io/practices/",
+    "attribution": "Content sourced from SE-ML Engineering Best Practices for Machine Learning. All practices link back to original source."
+  },
+  "scrapedAt": "2026-03-28T00:00:00.000Z",
+  "termCount": 46,
+  "categories": ["Coding", "Data", "Deployment", "Governance", "Team", "Training"],
+  "terms": [
+    {
+      "slug": "use-sanity-checks-for-all-external-data-sources",
+      "term": "Use Sanity Checks for All External Data Sources",
+      "definition": "Avoid invalid or incomplete data being processed. Data is at the heart of any machine learning model, so avoiding data errors is crucial for model quality. When utilizing external data sources or collecting data that may be incomplete or poorly formatted, verify data quality by validating data types, missing values, minimum/maximum values, and histograms of continuous values. Data gaps can be addressed through statistical imputation methods such as zero imputation, mean/median substitution, or random value insertion. Ensure that data verification processes are reusable and can be incorporated into any processing pipeline.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "check-that-input-data-is-complete-balanced-and-well-distributed",
+      "term": "Check that Input Data is Complete, Balanced and Well Distributed",
+      "definition": "Continuously validate input datasets across their lifecycle to prevent invalid or incomplete data from being processed. Data generation processes evolve over time, necessitating regular checks to ensure distributions remain appropriate and completeness is maintained. Monitor for data evolution by verifying that features are still present in enough examples and that input data distribution did not shift. Since many ML algorithms rely on the independent and identically distributed assumption, validation pipelines should include checks across training, testing, and production data to prevent distribution drift. Implement dashboards for continuous monitoring and alert systems for anomaly detection.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "test-for-social-bias-in-training-data",
+      "term": "Test for Social Bias in Training Data",
+      "definition": "Detect and counteract social bias present in training datasets. Bias in data is one of the main sources of unfairness in machine learning applications, making continuous testing essential for responsible AI development. This applies whenever ML systems process personal information or user-related data. Seemingly neutral attributes like location, names, or hobbies can implicitly encode social characteristics and introduce latent bias. Analyze training data distributions to identify imbalances across social attributes such as gender, ethnicity, or group membership. Build demographically and professionally diverse teams to strengthen bias detection. Scrutinize proxy variables correlated with sensitive attributes, as they may propagate hidden discrimination.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "write-reusable-scripts-for-data-cleaning-and-merging",
+      "term": "Write Reusable Scripts for Data Cleaning and Merging",
+      "definition": "Avoid untidy data wrangling scripts, reuse code, and increase reproducibility. Data cleaning and merging are inherently exploratory processes that often lack proper structure, involving manual steps or poorly organized code unsuitable for reuse or pipeline integration. During the exploratory phase, teams frequently develop unstructured code or perform manual steps to format data and merge sources, especially in notebook environments where code depends on previously stored variables. Convert exploratory code into callable, testable methods before moving to model training. This enables code reuse and facilitates integration into processing pipelines, establishing better traceability and maintainability.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "ensure-data-labelling-is-performed-in-a-strictly-controlled-process",
+      "term": "Ensure Data Labelling is Performed in a Strictly Controlled Process",
+      "definition": "Establish strict oversight of data annotation to prevent invalid or incomplete labels that compromise supervised learning model performance. Label quality directly drives algorithm effectiveness. The labeling process presents two primary challenges: managing large data volumes and addressing the subjective nature of annotation, which introduces bias and noise. Poor label quality cascades through the entire ML pipeline. A mature labeling process includes peer-review by a second team member to validate all annotations. When label quality issues cannot be resolved despite implementing controls, document and communicate these limitations within your team.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "prevent-discriminatory-data-attributes-used-as-model-features",
+      "term": "Prevent Discriminatory Data Attributes Used As Model Features",
+      "definition": "Avoid building discriminatory practices into machine learning applications by preventing models from making decisions based on sensitive characteristics like gender or ethnicity. Simply removing sensitive attributes is not sufficient, because a combination of features that are not considered discriminatory by themselves can be used by a machine learning algorithm to reconstruct a discriminatory attribute. Employ a hybrid strategy: remove discriminatory attributes from training data, test for latent factors that might reconstruct hidden sensitive information, and continuously monitor for other bias types including social and subgroup bias. This applies to applications with direct or indirect human impact such as banking, criminal justice, hiring, and healthcare.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "use-privacy-preserving-machine-learning-techniques",
+      "term": "Use Privacy-Preserving Machine Learning Techniques",
+      "definition": "Provide privacy protection for individuals whose data is used in the development of machine learning applications. ML systems may reveal crucial information about training data through attacks like membership inference. Data pooling from multiple sources and dataset sharing amplify exposure risks. Established mitigation methods include anonymization, pseudonymization, differential privacy, federated learning, and cryptographic approaches such as homomorphic encryption. Robust tools are available including Opacus, CrypTen, and PySyft. Adopt privacy-preserving techniques in any ML project processing personally identifiable information, aligning with regulatory requirements like GDPR.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "make-data-sets-available-on-shared-infrastructure",
+      "term": "Make Data Sets Available on Shared Infrastructure",
+      "definition": "Avoid data duplication, data bottlenecks, or unnecessary transfer of large data sets by centralizing data access through shared infrastructure. ML applications handle substantially larger data volumes than traditional software systems, making centralization particularly important. Shared data infrastructure supports access control policies, data versioning and maintenance, data freshness and consistency, and elimination of wasteful duplication. Use standard naming conventions for data sets to reflect the version. Whether using S3 buckets, mountable disks, or similar solutions, centralized data access with audit logging prevents inefficiencies that emerge when teams independently manage large datasets.",
+      "category": "Data",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "share-a-clearly-defined-training-objective-within-the-team",
+      "term": "Share a Clearly Defined Training Objective within the Team",
+      "definition": "Avoid misunderstandings between multi-disciplinary team members by clearly communicating training objectives within the team. In diverse teams, members with different professional backgrounds risk misinterpreting training objectives. Understanding each member's background and role prevents miscommunications. Different team members may fail to agree on true objectives or misinterpret them entirely. This practice assumes training objectives can converge across team members through discipline-specific language and terminology, preventing wasted effort on futile activities, enhancing team communication and efficiency, and ensuring training outcomes can be correctly evaluated.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "capture-the-training-objective-in-a-metric-that-is-easy-to-measure-and-understand",
+      "term": "Capture the Training Objective in a Metric that is Easy to Measure and Understand",
+      "definition": "Ensure machine learning objectives are captured in straightforward, comprehensible metrics that serve as reliable proxies for true business goals. The objective may be hard to capture in a metric, and the objective evolves over time. Rather than over-engineering complex measurements, prioritize simple, observable metrics that enhance interpretability and facilitate communication. Collaborate with business and data analysts to align measurements with actual business values, avoiding entangled measurements that obscure rather than clarify performance. Simplicity in metric design leads to better transparency and more effective optimization toward genuine business outcomes.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "test-all-feature-extraction-code",
+      "term": "Test all Feature Extraction Code",
+      "definition": "Avoid bugs in the feature extraction code. Since features often merge multiple data attributes or apply custom transformations, testing ensures no errors compromise model training. This applies when features are manually engineered rather than automatically extracted through deep learning approaches. Custom code to merge data attributes into new features requires unit testing to prevent both functional bugs and data consistency issues. Such bugs are particularly dangerous because they involve multiple data sources and remain difficult to detect. Verify that extracted features match expected values and maintain consistency to prevent unintended bugs with severe downstream impacts on model performance.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "assign-an-owner-to-each-feature-and-document-its-rationale",
+      "term": "Assign an Owner to Each Feature and Document its Rationale",
+      "definition": "Enhance feature development, understanding, and maintenance by establishing clear ownership and documentation structures for manually engineered features. As datasets grow with numerous composed features, tracking becomes increasingly difficult. Designating owners and documenting rationale facilitates comprehension and ensures maintainability across team transitions. Assign specific individuals responsible for each feature's information and documentation. Beyond descriptive naming conventions, capture the reasoning behind feature creation to enable team-wide knowledge transfer. When feature owners depart, transfer their responsibilities to remaining team members to preserve institutional knowledge.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "actively-remove-or-archive-features-that-are-not-used",
+      "term": "Actively Remove or Archive Features That are Not Used",
+      "definition": "Avoid technical debt caused by unused features in machine learning data pipelines. Keeping unused features introduces clutter that hampers pipeline efficiency, similar to retaining dead code in traditional software development. Removing dormant features streamlines experimentation and interpretation by focusing only on relevant data, and enhances debugging and maintenance. Features with low coverage that are rarely present in datasets are prime candidates for elimination. When features are no longer useful, actively remove them rather than leaving them dormant. If retention is necessary, ensure their documentation clearly reflects their inactive status.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "employ-interpretable-models-when-possible",
+      "term": "Employ Interpretable Models When Possible",
+      "definition": "Choose machine learning models that developers, users, and auditors can understand and explain, even when performance gains from black-box alternatives are available. Interpretable models facilitate trust, transparency, and accountability in ML systems, enabling developers to comprehend decision-making processes, learn about underlying problems, and diagnose failure modes. The trade-off between interpretability and performance is contextual. While some applications genuinely benefit from complex, opaque models, interpretable alternatives should be preferred whenever they offer competitive results. Accept performance trade-offs when interpretable models are viable, but acknowledge that certain domains genuinely require non-interpretable approaches.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "peer-review-training-scripts",
+      "term": "Peer Review Training Scripts",
+      "definition": "Apply peer review to machine learning training scripts to avoid development errors and bugs. This quality assurance technique from standard software development involves team members systematically reviewing code to enhance overall quality and catch errors before deployment. Peer review helps teams identify defects, facilitate debugging, improve incident response, and distribute knowledge across members. Training scripts should consistently undergo peer review as part of the development workflow. Maximize this practice by adopting collaborative platforms like GitHub that feature mature peer review capabilities.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "enable-parallel-training-experiments",
+      "term": "Enable Parallel Training Experiments",
+      "definition": "Avoid deadlocks during experimentation by planning for parallel processing from the start. Machine learning development differs from traditional software engineering because much experimental code is discarded after failed tests. Despite this throwaway nature, the code must still be managed effectively to enable rapid, concurrent experimentation. Prepare infrastructure supporting concurrent processing and deployment, use proper code encapsulation to isolate experiments, eliminate hidden dependencies between components, and employ containerization tools like Docker for reproducibility. These measures prevent infrastructure conflicts and allow multiple team members to run experiments simultaneously.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "automate-feature-generation-and-selection",
+      "term": "Automate Feature Generation and Selection",
+      "definition": "Reduce human effort required to develop and select features through automation. Feature engineering is inherently time-consuming, and automation can accelerate discovery of superior feature combinations while decreasing manual experimentation. Automation enables teams to explore vastly more feature possibilities than manual approaches. However, automation is not a substitute for human judgment. Carefully monitor performance metrics and thoroughly assess generated features for potential biases. Automatically created features may inadvertently amplify existing data biases or exploit subtle patterns. Follow best practices like assigning ownership and documenting rationale for automatically generated features.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "automate-hyper-parameter-optimisation",
+      "term": "Automate Hyper-Parameter Optimisation",
+      "definition": "Enhance experimentation, performance, and fair comparisons between algorithms by automating hyper-parameter search and model selection. Manual hyper-parameter tuning and model selection are time-consuming. Automated methods now provide great off-the-shelf tool support, enabling teams to experiment faster and achieve better performance through systematic optimization. Since the performance of machine learning models depends on the choice of hyper-parameters, automation standardizes this process. Deploy automated search tools to explore parameter spaces more thoroughly and identify optimal model configurations. Ensure models are peer-reviewed and assessed by team members before deployment to production.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "automate-configuration-of-algorithms-or-model-structure",
+      "term": "Automate Configuration of Algorithms or Model Structure",
+      "definition": "Improve algorithm and model performance by automatically optimizing their structures. Manual configuration is time-consuming and often suboptimal. Predicting which algorithm architectures will perform well is inherently difficult. Using programming by optimization approaches, teams can expose more configuration variables such as layer types in neural architecture search, yielding better-performing models than manual experimentation alone. Any machine learning application can benefit, particularly across diverse data types including tabular data, text, images, audio, time series, and graphs. Automatically configured models require careful assessment and peer review before production deployment.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "continuously-measure-model-quality-and-performance",
+      "term": "Continuously Measure Model Quality and Performance",
+      "definition": "Detect errors early and improve experimentation agility by systematically tracking model behavior throughout development. Early detection prevents wasted computational resources and enables faster iteration cycles. Establish continuous monitoring systems that track model quality across benchmarks matching production environments. Key components include early error detection in long-running training processes, performance tracking on relevant datasets, early stopping capabilities to halt unproductive experiments, model versioning through regular snapshots enabling rollback and retraining, and experiment documentation maintaining detailed logs of configurations and results.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "assess-and-manage-subgroup-bias",
+      "term": "Assess and Manage Subgroup Bias",
+      "definition": "Avoid bias and unfair decisions within subgroups by systematically testing, assessing, and calibrating machine learning models across all identifiable subpopulations. Efforts to eliminate bias between major groups can inadvertently introduce disparities within subgroups. Dividing data based on location may result in one location being predominantly female and the other male, creating hidden demographic imbalances that perpetuate social bias. Follow established fairness testing methodologies to identify and calibrate models for equitable performance across every distinguishable sub-population within grouped datasets. This proactive auditing prevents fairness interventions from inadvertently creating new inequities.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "use-versioning-for-data-model-configurations-and-training-scripts",
+      "term": "Use Versioning for Data, Model, Configurations and Training Scripts",
+      "definition": "Improve reproducibility, traceability, and compliance by systematically managing all components that influence model outcomes. Unlike conventional software where versioning code suffices, ML projects must also track training and testing datasets, configuration files, and final model artifacts. Reproducing previous experiments demands more than executable code. Version data, models, and configurations alongside code to enable experiment re-assessment, support auditing requirements, and establish backward compatibility chains. Link data versions to code artifacts using unique identifiers and timestamps. Document features comprehensively, implement tests for data processing workflows, and include deployment scripts.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "share-status-and-outcomes-of-experiments-within-the-team",
+      "term": "Share Status and Outcomes of Experiments Within the Team",
+      "definition": "Facilitate knowledge transfer, peer review, and model assessment by enabling teams to collectively monitor training outcomes rather than maintaining isolated documentation approaches. Team members typically manage experiments differently, creating visibility gaps. A unified logging approach ensures all stakeholders can access and evaluate experimental results consistently, enables peer feedback, accelerates learning, and supports informed model assessment decisions. Adopt collaborative experiment tracking tools such as Sacred or W&B that centralize result logging, integrating seamlessly with existing workflows while remaining accessible to all team members.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "use-the-most-efficient-models",
+      "term": "Use The Most Efficient Models",
+      "definition": "Avoid overparametrized or energy-inefficient models by prioritizing computational efficiency in all ML applications. Oversized models waste resources unnecessarily. Smaller, optimized models reduce costs, energy usage, and environmental impact without sacrificing performance quality. Start by testing simpler architectures: if a Random Forest matches a neural network's performance, use the simpler option for better interpretability and speed. When only large models suit your task, employ compression techniques such as pruning, distillation, or compression to substantially reduce parameters while preserving effectiveness. Test simpler alternatives first, then apply optimization techniques only when necessary.",
+      "category": "Training",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "run-automated-regression-tests",
+      "term": "Run Automated Regression Tests",
+      "definition": "Avoid the introduction of bugs in code through automated regression testing. When developers modify existing code, new defects can inadvertently emerge not just in changed sections but throughout the codebase. Automated testing catches these issues immediately, allowing teams to focus on innovation. Regression testing applies universally across all code types and programming languages, with frameworks like JUnit, unittest, and testthat providing structured approaches. Write new tests alongside new code, adopt test-driven development, measure test effectiveness through coverage tools like Codecov, and use advanced techniques such as mutation testing to verify test suite quality.",
+      "category": "Coding",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "use-continuous-integration",
+      "term": "Use Continuous Integration",
+      "definition": "Catch any code integration problems as early as possible by automatically building and testing code each time changes are committed to a version control repository. When developers commit code changes, these modifications can introduce problems throughout the software system. Configure a CI server such as TravisCI, CircleCI, or Appveyor that triggers automatically when code is committed, executing compilation checks, automated regression tests, and static analysis tools to assess code quality. This enables teams to detect integration problems, compilation errors, runtime defects, and code quality issues rapidly.",
+      "category": "Coding",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "use-static-analysis-to-check-code-quality",
+      "term": "Use Static Analysis to Check Code Quality",
+      "definition": "Avoid the introduction of code that is difficult to test, maintain, or extend by leveraging automated static analysis tools. High-quality code is easier to understand, test, maintain, reuse, and extend. Three primary approaches exist: linters integrated into editors or IDEs that flag problematic patterns in real time, quality gates as automated checks during build/commit processes that can reject substandard code, and quality dashboards providing shared visibility into quality metrics. Teams must establish shared quality expectations, address root causes not just symptoms, and allocate time for quality improvements while avoiding false positives that waste developer attention.",
+      "category": "Coding",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "assure-application-security",
+      "term": "Assure Application Security",
+      "definition": "Prevent attackers from stealing or corrupting data, or disrupting application availability. Security incidents can lead to public data leaks, financial losses, or disrupted availability. ML systems face both traditional cyber threats and ML-specific vulnerabilities. Training-time attacks include data poisoning where attackers alter training data to induce malicious behavior. Inference attacks involve adding perturbations to test data (adversarial attacks), model reverse engineering, or membership inference testing. Since security is an arms race with attackers constantly improving their techniques, adopt proactive mechanisms including security code reviews, security analysis tools, penetration testing, and red teaming exercises.",
+      "category": "Coding",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "automate-model-deployment",
+      "term": "Automate Model Deployment",
+      "definition": "Increase the ability to release models on demand by automating packaging and delivery to production servers, enhancing availability and scalability while reducing manual intervention errors. Rather than manually packaging and delivering models, automation handles this process systematically. Use virtualization abstractions like Docker and Kubeflow, combined with continuous deployment tools such as GitLab CI/CD, Shipyard, and Travis to automatically pack models with their dependencies. Automation saves time, improves reliability, and enables on-demand scaling, spinning up multiple instances when demand increases and reducing instances when demand drops.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "enable-shadow-deployment",
+      "term": "Enable Shadow Deployment",
+      "definition": "Evaluate model performance on live production data before full deployment without impacting active services or end-user experience. Production environments reveal data patterns that training datasets often miss. Run a candidate model alongside the existing production model, where the established model continues handling all decisions while the shadow model accumulates metrics for assessment. Once the shadow model demonstrates acceptable performance metrics, it can be promoted to production status. While this approach adds deployment infrastructure complexity, mature tooling now supports canary and shadow deployment patterns effectively.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "continuously-monitor-the-behaviour-of-deployed-models",
+      "term": "Continuously Monitor the Behaviour of Deployed Models",
+      "definition": "Track and understand how machine learning models perform in production, where model performance often diverges significantly between training environments and real-world deployment. Implement continuous monitoring systems to detect unintended model behavior and maintain visibility into model health. Monitor performance metrics, data quality indicators, distribution shifts, fairness-related metrics, model interpretability outputs such as LIME explanations, and business-level impact measures including user engagement and conversion metrics. This supports operational agility by enabling rapid issue detection and response, and enhances component traceability for understanding model behavior.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "perform-checks-to-detect-skew-between-models",
+      "term": "Perform Checks to Detect Skew between Models",
+      "definition": "Establish systematic checks to identify and prevent performance degradation caused by distribution mismatches between training and production environments. Models that perform well during development often underperform when deployed to production. Monitor three critical areas: performance differences between training and validation datasets, distribution changes in data across consecutive time periods, and discrepancies between production data and training data. Without continuous validation, misalignments can persist undetected, leading to degraded predictions and business impact. Implement skew detection in any production-level machine learning application.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "enable-automatic-roll-backs-for-production-models",
+      "term": "Enable Automatic Roll Backs for Production Models",
+      "definition": "Avoid sub-optimal models in production by automatically reverting underperforming deployed models to previously stable versions. Manual rollback processes are tedious and time-consuming. Automating this workflow reduces the duration that poorly-performing models remain live, protecting system reliability and user experience. When models encounter data distribution shifts or undetected performance issues, automated recovery mechanisms detect when deployed models underperform and automatically revert to earlier, better-performing versions. This bridges the gap between detection and recovery, substantially decreasing the window of degraded service.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "log-production-predictions-with-the-models-version-and-input-data",
+      "term": "Log Production Predictions with the Model's Version and Input Data",
+      "definition": "Maintain complete traceability of model decisions by systematically logging predictions alongside the model version and input data used to generate them. This enhances debugging capabilities, enables reproducibility by connecting model versions to training data repositories, and strengthens compliance and incident management through a comprehensive audit trail. Tracing decisions back to the input data and the model's version can be difficult without comprehensive logging mechanisms. Without this information, diagnosing production failures becomes nearly impossible. Effective prediction logging captures the output, the specific model iteration, and the exact features or data that influenced each decision.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "provide-audit-trails",
+      "term": "Provide Audit Trails",
+      "definition": "Enable post-mortem analysis of machine learning application behavior through comprehensive audit trails. Regulations like EU GDPR demand the right to an explanation for automated decisions, requiring organizations to design systems that support auditing from inception. Develop a comprehensive auditing strategy integrated into development lifecycles: preserve audit trails documenting past decisions, record development lifecycle data including design rationales and known failure modes, maintain production logs linking decisions to specific models and training datasets, and automate artifact generation like compliance reports. This transforms auditing from a post-deployment burden into an embedded operational practice.",
+      "category": "Deployment",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "use-a-collaborative-development-platform",
+      "term": "Use A Collaborative Development Platform",
+      "definition": "Leverage a shared development platform to enable teams to collaborate more effectively by centralizing access to code, data, tools, and information. These platforms facilitate asynchronous and remote teamwork while maintaining shared context, enabling teams to document decisions, track progress, and stay informed across distributed environments. Common platforms include GitHub, GitLab, BitBucket, and Azure DevOps Server. Standard features encompass version control, issue tracking, search, notifications, discussions, continuous integration, and developer plugins. Specialized variants support data-science-specific capabilities like large dataset versioning, experiment management, and model deployment.",
+      "category": "Team",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "work-against-a-shared-backlog",
+      "term": "Work Against a Shared Backlog",
+      "definition": "Avoid misunderstandings on the content, priority, and status of tasks by maintaining an actively updated list of agreed-upon work items in an issue tracker. A backlog is a list of work items, typically described concisely and recorded in an issue tracker. Items are selected from this list for active development and placed on planning or tracking boards. Typically maintained by a product owner, the backlog serves as a communication bridge between stakeholders and team members, documenting decisions about content, priority, and effort estimates. This enables coordinating work within teams and with external parties, planning future efforts, and conducting retrospective reviews.",
+      "category": "Team",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "communicate-align-and-collaborate-with-others",
+      "term": "Communicate, Align, and Collaborate With Others",
+      "definition": "Maintain alignment across development teams, management, and external stakeholders to ensure cohesive organizational functioning. Development teams operate within larger organizational ecosystems where multiple teams interface with each other, requiring coordination with infrastructure teams, business functions, and management. Maintain broader organizational alignment through three mechanisms: frequent communication gathering external information and keeping stakeholders informed, direct collaboration partnering with other teams possessing specialized expertise, and integrated operations aligning methods and tools with other teams to reduce friction at organizational boundaries.",
+      "category": "Team",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "decide-trade-offs-through-defined-team-process",
+      "term": "Decide Trade-Offs through Defined Team Process",
+      "definition": "Establish standardized methodologies for generating, evaluating, prioritizing, and selecting solution alternatives. Software development inherently involves multiple objectives and constraints, uncertainty and incomplete information. Machine learning amplifies these challenges by introducing additional quality attributes. This encompasses both conventional architectural decisions and ML-specific trade-offs such as choosing interpretable models over black-box alternatives or establishing rollback procedures. Defining a shared team process empowers members to make informed decisions independently, even when decision-makers are unavailable. Formalize trade-off processes to ensure consistency across the organization.",
+      "category": "Team",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "establish-responsible-ai-values",
+      "term": "Establish Responsible AI Values",
+      "definition": "Explicitly align stakeholders on ethical values and constraints for machine learning applications. Machine learning applications can severely impact human lives, making it essential to establish common ground on responsible AI principles before deployment. Adopt or create a code of conduct referencing frameworks like Google's Responsible AI practices, Microsoft's AI principles, or the European Commission's ethical guidelines for trustworthy AI. The specific governance objectives depend on the type of data processed, the usage context, and organizational requirements. Defining a code of conduct builds trust with users and enhances the auditability of development processes and applications.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "perform-risk-assessments",
+      "term": "Perform Risk Assessments",
+      "definition": "Identify and mitigate possible unintended negative impact of machine learning applications through structured evaluations. Conduct at least one comprehensive assessment before going live, with more frequent evaluations for higher-stakes applications. Follow four phases: scoping to define artifacts and criteria, discovery to probe applications and stakeholder perspectives, analysis to surface risks and formulate mitigation strategies, and reporting to document and communicate findings. Assessments require diverse perspectives combining core development team members with individuals possessing different skills, backgrounds, and relative independence. Supplement with third-party audits and red team exercises.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "enforce-fairness-and-privacy",
+      "term": "Enforce Fairness and Privacy",
+      "definition": "Prevent irresponsible ML deployment and decisions causing societal harm by addressing privacy protection and algorithmic fairness. Machine learning is a data-driven process where performance improves with more data, creating privacy risks when handling sensitive information. ML models making consequential decisions such as automated loan approvals must undergo fairness assessments to ensure equitable treatment across all demographic groups using clear and interpretable features. Assess personal data usage for privacy compliance, implement privacy-preserving techniques like differential privacy, define and monitor bias and fairness metrics, integrate security considerations, and continuously track deployed model behavior.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "inform-users-on-machine-learning-usage",
+      "term": "Inform Users on Machine Learning Usage",
+      "definition": "Make users aware that machine learning powers the application, what purposes it serves, and what its constraints are. Users have a fundamental right to know they are interacting with a machine learning system. AI systems must be identifiable as such, and users should receive knowledge and tools to comprehend and interact with AI systems. Machine learning can influence human behavior through mechanisms that may be difficult to detect. Organizations can inform users through informational labels identifying ML usage and public documentation like model cards that describe system characteristics, capabilities, and limitations. Users should retain the option to request human interaction when necessary.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "explain-results-and-decisions-to-users",
+      "term": "Explain Results and Decisions to Users",
+      "definition": "Allow users to critically assess the results and decisions of ML applications by providing clear explanations of how systems reach their conclusions. Users deserve to comprehend the reasoning behind decisions affecting them, a requirement reflected in regulations like EU GDPR and US credit scoring laws that mandate the right to an explanation. ML systems involve intricate interactions between data, algorithms, and models that resist straightforward understanding. When users grasp the basis for automated decisions, they are more likely to accept outcomes and more capable of raising concerns when explanations seem inadequate. This feedback loop helps organizations refine both decisions and explanatory methods.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "provide-safe-channels-to-raise-concerns",
+      "term": "Provide Safe Channels to Raise Concerns",
+      "definition": "Establish communication pathways between users and developers to discuss ethical concerns about machine learning systems. The goal is to obtain honest feedback, allowing timely remediation, rather than giving rise to conflict. Users can identify and report issues like perceived bias or decision-making concerns. Offer multiple accessible channels such as mailing lists, blogs, or phone numbers for concern reporting. Crucially, these channels must include anonymization options to protect user privacy and ensure inclusivity. Rather than allowing problems to fester or escalate, safe channels enable timely issue resolution and demonstrate organizational commitment to responsible AI deployment.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    },
+    {
+      "slug": "have-your-application-audited",
+      "term": "Have Your Application Audited",
+      "definition": "Obtain an independent assessment of the strengths and weaknesses of your application and engineering processes by engaging external auditors. Conducting audits provides new perspectives on your development lifecycle while establishing credibility with users and stakeholders. Work with trustworthy external evaluators to examine your system comprehensively. Document findings and develop strategies to address identified issues. Publishing audit outcomes and remediation plans demonstrates commitment to responsible AI development and regulatory compliance, particularly important for organizations subject to EU accountability guidelines.",
+      "category": "Governance",
+      "sourceUrl": "https://se-ml.github.io/practices/"
+    }
+  ]
+}
