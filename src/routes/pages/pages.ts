@@ -1118,6 +1118,15 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   // Dashboard -- requires auth, shows registration if no org
+  // Sign In page
+  app.get('/sign-in', async (request, reply) => {
+    return reply.view('pages/sign-in', {
+      title: 'Sign In - OTP',
+      description: 'Sign in to access your OTP dashboard, publish OOS files, and explore best practices.',
+      noindex: true,
+    });
+  });
+
   app.get('/dashboard', async (request, reply) => {
     const auth = getAuth(request);
 
