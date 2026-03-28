@@ -57,6 +57,9 @@
         <button id="mode-infrastructure" class="mode-tab px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-transparent text-gray-600 hover:text-gray-900" data-mode="infrastructure">
           Infrastructure
         </button>
+        <button id="mode-bestpractices" class="mode-tab px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-transparent text-gray-600 hover:text-gray-900" data-mode="bestpractices">
+          Best Practices
+        </button>
         <button id="mode-economy" class="mode-tab px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-transparent text-gray-300 cursor-default" data-mode="economy" title="Coming Q3 2026">
           Economy
           <span class="ml-1 text-[9px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-400 font-normal">soon</span>
@@ -91,6 +94,51 @@
         <p class="text-gray-900 text-lg font-medium mb-2">No published OOS files yet</p>
         <p class="text-gray-500 text-sm mb-4">The intelligence graph forms as organizations publish their coordination protocols.</p>
         <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg text-sm font-medium transition-colors">Be the first publisher</a>
+      </div>
+    </div>
+
+    <!-- Best Practices auth gate -->
+    <div id="graph-bestpractices-auth" class="absolute inset-0 flex items-center justify-center z-10 hidden">
+      <div class="text-center max-w-md">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-50 flex items-center justify-center">
+          <svg class="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <p class="text-gray-900 text-lg font-medium mb-2">Best Practices Library</p>
+        <p class="text-gray-500 text-sm mb-4">Sign in to see best practices matched to your OOS. External knowledge sources linked to your coordination intelligence.</p>
+        <a href="/register" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg text-sm font-medium transition-colors">Sign in to access</a>
+      </div>
+    </div>
+
+    <!-- Best Practices graph container -->
+    <div id="graph-bestpractices" class="absolute inset-0 z-10 hidden overflow-auto">
+      <div class="max-w-[1400px] mx-auto px-6 py-6">
+        <div id="bp-loading" class="text-center py-12">
+          <div class="inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-gray-50 border border-gray-200">
+            <svg class="animate-spin h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-gray-500 text-sm">Loading best practices...</span>
+          </div>
+        </div>
+        <div id="bp-content" class="hidden">
+          <!-- Category filter -->
+          <div class="flex items-center gap-3 mb-6 flex-wrap">
+            <span class="text-xs text-gray-500 font-medium">Filter:</span>
+            <button class="bp-cat-filter px-3 py-1 rounded-full text-xs font-medium bg-otp-500 text-white" data-category="all">All</button>
+            <div id="bp-category-filters" class="flex gap-2 flex-wrap"></div>
+          </div>
+          <!-- Search -->
+          <div class="mb-6">
+            <input type="text" id="bp-search" placeholder="Search best practices..." class="w-full max-w-md text-sm border rounded-lg px-4 py-2 focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none">
+          </div>
+          <!-- Grid -->
+          <div id="bp-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+          <!-- Stats footer -->
+          <div id="bp-stats" class="mt-6 text-center text-xs text-gray-400"></div>
+        </div>
       </div>
     </div>
 
@@ -1416,13 +1464,17 @@
   });
 
   // ---- Mode Switching ----
+  // ---- Best Practices State ----
+  var bpData = null;
+  var bpActiveCategory = 'all';
+
   function switchMode(mode) {
     if (mode === 'economy') return; // Disabled
     if (mode === currentMode) return;
     currentMode = mode;
 
     // Update page title
-    var titles = { intelligence: 'Intelligence Graph', infrastructure: 'Infrastructure Graph', economy: 'Economy Graph' };
+    var titles = { intelligence: 'Intelligence Graph', infrastructure: 'Infrastructure Graph', bestpractices: 'Best Practices', economy: 'Economy Graph' };
     var titleEl = document.querySelector('#graph-page h1');
     if (titleEl) titleEl.textContent = titles[mode] || 'Intelligence Graph';
 
@@ -1441,8 +1493,15 @@
 
     // Show/hide appropriate UI
     var economyPlaceholder = document.getElementById('graph-economy');
+    var bpAuthGate = document.getElementById('graph-bestpractices-auth');
+    var bpContainer = document.getElementById('graph-bestpractices');
     var svgCanvas = document.getElementById('graph-svg');
     var layerPanel = document.getElementById('layer-panel');
+
+    // Hide all overlays first
+    economyPlaceholder.classList.add('hidden');
+    bpAuthGate.classList.add('hidden');
+    bpContainer.classList.add('hidden');
 
     if (mode === 'economy') {
       economyPlaceholder.classList.remove('hidden');
@@ -1451,7 +1510,20 @@
       return;
     }
 
-    economyPlaceholder.classList.add('hidden');
+    if (mode === 'bestpractices') {
+      svgCanvas.style.display = 'none';
+      layerPanel.classList.add('hidden');
+      // Check if user is authenticated
+      if (window.__clerk && window.__clerk.user) {
+        bpContainer.classList.remove('hidden');
+        loadBestPractices();
+      } else {
+        bpAuthGate.classList.remove('hidden');
+      }
+      updateStatsBar(mode);
+      return;
+    }
+
     svgCanvas.style.display = '';
 
     // Toggle layer lists based on mode
@@ -1511,6 +1583,12 @@
         { id: 'stat-claims', label: 'AI Platforms', value: graphData.platformStats ? (graphData.platformStats.aiPlatformCount || 0) : 0 },
         { id: 'stat-connections', label: 'MCP Servers', value: graphData.platformStats ? (graphData.platformStats.mcpServerCount || 0) : 0 },
         { id: 'stat-patterns', label: 'Total Connections', value: graphData.platformStats ? graphData.platformStats.totalConnections : 0 },
+      ],
+      bestpractices: [
+        { id: 'stat-publishers', label: 'Practices', value: bpData ? bpData.pagination.total : '--' },
+        { id: 'stat-claims', label: 'Categories', value: bpData ? bpData.categories.length : '--' },
+        { id: 'stat-connections', label: 'Sources', value: '1' },
+        { id: 'stat-patterns', label: 'Matched', value: bpData ? bpData.practices.filter(function(p) { return p._matched; }).length : '--' },
       ],
     };
 
@@ -2115,6 +2193,151 @@
       }).join('') +
       '</div>';
   }
+
+  // ---- Best Practices Functions ----
+  var bpCategoryColors = {
+    'AI Models & Technology': '#6366f1',
+    'General AI': '#8b5cf6',
+    'Data & Infrastructure': '#0ea5e9',
+    'Commerce & Retail': '#f59e0b',
+    'Security & Governance': '#ef4444',
+    'Prompt Engineering': '#10b981',
+    'AI Agents': '#ec4899',
+    'Software Development': '#64748b',
+    'Marketing & Growth': '#f97316',
+    'Supply Chain & Fulfillment': '#14b8a6',
+  };
+
+  function loadBestPractices() {
+    if (bpData) { renderBestPractices(); return; }
+    var loadEl = document.getElementById('bp-loading');
+    var contentEl = document.getElementById('bp-content');
+    loadEl.classList.remove('hidden');
+    contentEl.classList.add('hidden');
+
+    fetch('/api/v1/best-practices?limit=200')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        bpData = data;
+        loadEl.classList.add('hidden');
+        contentEl.classList.remove('hidden');
+        buildCategoryFilters(data.categories);
+        renderBestPractices();
+        updateStatsBar('bestpractices');
+      })
+      .catch(function(err) {
+        loadEl.innerHTML = '<div class="text-red-500 text-sm">Failed to load best practices. Sign in required.</div>';
+      });
+  }
+
+  function buildCategoryFilters(categories) {
+    var container = document.getElementById('bp-category-filters');
+    container.innerHTML = '';
+    categories.forEach(function(cat) {
+      var btn = document.createElement('button');
+      btn.className = 'bp-cat-filter px-3 py-1 rounded-full text-xs font-medium border transition-colors';
+      btn.setAttribute('data-category', cat.category);
+      var color = bpCategoryColors[cat.category] || '#6b7280';
+      btn.style.borderColor = color + '40';
+      btn.style.color = color;
+      btn.style.backgroundColor = color + '08';
+      btn.textContent = cat.category + ' (' + cat.count + ')';
+      btn.addEventListener('click', function() {
+        bpActiveCategory = cat.category;
+        updateCategoryFilterStyles();
+        renderBestPractices();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function updateCategoryFilterStyles() {
+    document.querySelectorAll('.bp-cat-filter').forEach(function(btn) {
+      var cat = btn.getAttribute('data-category');
+      if (cat === bpActiveCategory || (bpActiveCategory === 'all' && cat === 'all')) {
+        btn.classList.add('bg-otp-500', 'text-white', 'border-otp-500');
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+      } else {
+        btn.classList.remove('bg-otp-500', 'text-white', 'border-otp-500');
+        if (cat !== 'all') {
+          var color = bpCategoryColors[cat] || '#6b7280';
+          btn.style.borderColor = color + '40';
+          btn.style.color = color;
+          btn.style.backgroundColor = color + '08';
+        }
+      }
+    });
+    // Reset "All" button
+    var allBtn = document.querySelector('.bp-cat-filter[data-category="all"]');
+    if (allBtn) {
+      if (bpActiveCategory === 'all') {
+        allBtn.className = 'bp-cat-filter px-3 py-1 rounded-full text-xs font-medium bg-otp-500 text-white';
+      } else {
+        allBtn.className = 'bp-cat-filter px-3 py-1 rounded-full text-xs font-medium border text-gray-500 bg-white';
+      }
+    }
+  }
+
+  function renderBestPractices() {
+    if (!bpData) return;
+    var grid = document.getElementById('bp-grid');
+    var searchInput = document.getElementById('bp-search');
+    var query = (searchInput ? searchInput.value : '').toLowerCase();
+
+    var filtered = bpData.practices.filter(function(p) {
+      var catMatch = bpActiveCategory === 'all' || p.category === bpActiveCategory;
+      var searchMatch = !query || p.term.toLowerCase().indexOf(query) > -1 || p.definition.toLowerCase().indexOf(query) > -1;
+      return catMatch && searchMatch;
+    });
+
+    grid.innerHTML = filtered.map(function(p) {
+      var color = bpCategoryColors[p.category] || '#6b7280';
+      var defPreview = p.definition.substring(0, 180) + (p.definition.length > 180 ? '...' : '');
+      return '<div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow claim-card">' +
+        '<div class="flex items-start justify-between mb-3">' +
+          '<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background:' + color + '10;color:' + color + ';border:1px solid ' + color + '25">' + p.category + '</span>' +
+          '<a href="' + (p.canonicalUrl || p.sourceUrl) + '" target="_blank" rel="noopener" class="text-gray-400 hover:text-otp-500 transition-colors" title="View on source site">' +
+            '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>' +
+          '</a>' +
+        '</div>' +
+        '<h3 class="text-gray-900 font-semibold text-sm mb-2">' + p.term + '</h3>' +
+        '<p class="text-gray-500 text-xs leading-relaxed mb-3">' + defPreview + '</p>' +
+        (p.relatedTerms && p.relatedTerms.length > 0 ?
+          '<div class="flex flex-wrap gap-1">' +
+            p.relatedTerms.slice(0, 3).map(function(rt) {
+              return '<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">' + rt + '</span>';
+            }).join('') +
+            (p.relatedTerms.length > 3 ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">+' + (p.relatedTerms.length - 3) + '</span>' : '') +
+          '</div>' : '') +
+        '</div>';
+    }).join('');
+
+    // Stats
+    var statsEl = document.getElementById('bp-stats');
+    statsEl.textContent = 'Showing ' + filtered.length + ' of ' + bpData.practices.length + ' best practices from McFadyen Digital';
+
+    // Attribution link
+    statsEl.innerHTML += ' &middot; <a href="https://ai-best-practices.com" target="_blank" rel="noopener" class="text-otp-500 hover:underline">Visit source</a>';
+  }
+
+  // Best practices search handler
+  var bpSearchTimer;
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'bp-search') {
+      clearTimeout(bpSearchTimer);
+      bpSearchTimer = setTimeout(renderBestPractices, 200);
+    }
+  });
+
+  // "All" category filter
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.matches('.bp-cat-filter[data-category="all"]')) {
+      bpActiveCategory = 'all';
+      updateCategoryFilterStyles();
+      renderBestPractices();
+    }
+  });
 
   // Wire up mode tabs
   document.querySelectorAll('.mode-tab').forEach(function(tab) {

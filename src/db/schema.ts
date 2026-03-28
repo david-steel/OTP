@@ -246,6 +246,41 @@ export const sourceDocuments = pgTable('source_documents', {
   statusIdx: index('sd_status_idx').on(table.status),
 }));
 
+// ---- Best Practices & Publisher Ecosystem ----
+
+export const bestPractices = pgTable('best_practices', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  publisherProfileId: uuid('publisher_profile_id').references(() => consultantProfiles.id, { onDelete: 'cascade' }),
+  slug: varchar('slug', { length: 255 }).notNull(),
+  term: varchar('term', { length: 500 }).notNull(),
+  definition: text('definition').notNull(),
+  category: varchar('category', { length: 255 }).notNull().default('General'),
+  relatedTerms: text('related_terms').array(),
+  sourceUrl: text('source_url').notNull(),
+  canonicalUrl: text('canonical_url'),
+  lastUpdatedAt: timestamp('last_updated_at'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  publisherIdx: index('bp_publisher_idx').on(table.publisherProfileId),
+  categoryIdx: index('bp_category_idx').on(table.category),
+  termIdx: index('bp_term_idx').on(table.term),
+}));
+
+export const oosBestPracticeMatches = pgTable('oos_best_practice_matches', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  oosFileId: uuid('oos_file_id').references(() => oosFiles.id, { onDelete: 'cascade' }).notNull(),
+  bestPracticeId: uuid('best_practice_id').references(() => bestPractices.id, { onDelete: 'cascade' }).notNull(),
+  relevanceScore: real('relevance_score').notNull().default(0),
+  matchedClaims: text('matched_claims').array(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  oosIdx: index('obpm_oos_idx').on(table.oosFileId),
+  bpIdx: index('obpm_bp_idx').on(table.bestPracticeId),
+  scoreIdx: index('obpm_score_idx').on(table.relevanceScore),
+}));
+
 export const inquiries = pgTable('inquiries', {
   id: uuid('id').defaultRandom().primaryKey(),
   consultantProfileId: uuid('consultant_profile_id').references(() => consultantProfiles.id, { onDelete: 'cascade' }).notNull(),
