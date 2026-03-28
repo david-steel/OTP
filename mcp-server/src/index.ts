@@ -474,6 +474,231 @@ server.tool(
 );
 
 // ============================================================
+// TOOL: get_best_practices
+// Browse and search the best practices library
+// ============================================================
+server.tool(
+  "get_best_practices",
+  "Browse OTP's best practices library -- 1,500+ actionable rules from 9 publishers (Google, AWS, Deloitte, Accenture, etc.). Search by keyword, filter by category or publisher. Each practice is a prescriptive rule with why and failure mode. Requires API key.",
+  {
+    q: z.string().optional().describe("Search query (e.g. 'prompt engineering', 'data governance', 'agent coordination')"),
+    category: z.string().optional().describe("Filter by category (e.g. 'Machine Learning', 'MLOps', 'AI Strategy', 'Prompt Engineering', 'AI Governance')"),
+    publisher: z.string().optional().describe("Filter by publisher profile ID"),
+    limit: z.number().optional().describe("Results per page (default 50, max 200)"),
+    page: z.number().optional().describe("Page number (default 1)"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return { content: [{ type: "text" as const, text: "Error: OTP_API_KEY required. Get yours at https://orgtp.com/settings/api" }] };
+    }
+    const query = new URLSearchParams();
+    if (params.q) query.set("q", params.q);
+    if (params.category) query.set("category", params.category);
+    if (params.publisher) query.set("publisher", params.publisher);
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.page) query.set("page", String(params.page));
+
+    const result = await otpFetch(`/best-practices?${query}`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ============================================================
+// TOOL: get_my_rules
+// Get your OOS claims + matched best practices as agent-ready rules
+// ============================================================
+server.tool(
+  "get_my_rules",
+  "Get your organization's operational rules from OTP -- your published OOS claims PLUS matched best practices from the library. Returns rules in a format agents can directly use for coordination. This is the bridge between OTP and your agent army. Requires API key.",
+  {
+    include_best_practices: z.boolean().optional().describe("Include matched best practices alongside OOS claims (default true)"),
+    section: z.string().optional().describe("Filter by section (e.g. 'core_operating_rules', 'coordination_patterns')"),
+    min_confidence: z.enum(["HIGH", "MEDIUM", "LOW"]).optional().describe("Minimum confidence level (default: all)"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return { content: [{ type: "text" as const, text: "Error: OTP_API_KEY required. Get yours at https://orgtp.com/settings/api" }] };
+    }
+
+    // Get the user's latest published OOS
+    const mineResult = await otpFetch("/oos/mine");
+    if (!mineResult.oosFile) {
+      return { content: [{ type: "text" as const, text: "No published OOS found. Publish one at https://orgtp.com/publish" }] };
+    }
+    const latestOos = mineResult.oosFile;
+    const dashboard = { org: mineResult.org };
+
+    // Get claims
+    const claimQuery = new URLSearchParams();
+    if (params.section) claimQuery.set("section", params.section);
+    if (params.min_confidence) claimQuery.set("confidence", params.min_confidence);
+    const claimQs = claimQuery.toString();
+    const claims = await otpFetch(`/oos/${latestOos.id}/claims${claimQs ? `?${claimQs}` : ""}`);
+
+    // Get matched best practices
+    let bestPractices: any[] = [];
+    if (params.include_best_practices !== false) {
+      try {
+        const bpResult = await otpFetch(`/best-practices/for-oos/${latestOos.id}?min_score=0.05`);
+        bestPractices = bpResult.matches || [];
+      } catch {
+        // Best practices matching may not be computed yet
+      }
+    }
+
+    // Format as agent-ready rules
+    const rules: any[] = [];
+
+    // OOS claims first
+    if (claims.claims) {
+      for (const claim of claims.claims) {
+        rules.push({
+          source: "oos",
+          id: claim.claimId,
+          section: claim.section,
+          rule: claim.rule,
+          why: claim.why,
+          failure_mode: claim.failureMode,
+          confidence: claim.confidence,
+          evidence: claim.evidence,
+          scope: claim.scope,
+        });
+      }
+    }
+
+    // Best practices
+    for (const bp of bestPractices) {
+      rules.push({
+        source: "best_practice",
+        id: bp.slug,
+        section: "best_practices",
+        rule: bp.term + ": " + bp.definition?.split("\n")[0],
+        why: bp.definition?.match(/Why: (.*)/)?.[1] || "Matched from OTP best practices library",
+        failure_mode: bp.definition?.match(/Failure mode: (.*)/)?.[1] || "Not following this practice may create operational gaps",
+        confidence: "MEDIUM",
+        evidence: "INFERENCE",
+        scope: "organization-wide",
+        relevance_score: bp.relevanceScore,
+        publisher: bp.publisherName || "OTP Library",
+      });
+    }
+
+    return {
+      content: [{
+        type: "text" as const,
+        text: JSON.stringify({
+          org: dashboard.org.name,
+          oos_version: latestOos.version,
+          oos_id: latestOos.id,
+          total_rules: rules.length,
+          oos_claims: rules.filter(r => r.source === "oos").length,
+          best_practices: rules.filter(r => r.source === "best_practice").length,
+          rules,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ============================================================
+// TOOL: sync_rules_to_file
+// Export your OTP rules to a local file for agent consumption
+// ============================================================
+server.tool(
+  "sync_rules_to_file",
+  "Export your OTP rules (OOS claims + matched best practices) to a local markdown file that agents can read at startup. This bridges OTP intelligence into your local agent army. Requires API key.",
+  {
+    output_path: z.string().optional().describe("File path to write rules to (default: ~/.claude/otp-rules.md)"),
+    include_best_practices: z.boolean().optional().describe("Include matched best practices (default true)"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return { content: [{ type: "text" as const, text: "Error: OTP_API_KEY required." }] };
+    }
+
+    // Get the user's org and latest OOS
+    const dashboard = await otpFetch("/auth/me");
+    if (!dashboard.org) {
+      return { content: [{ type: "text" as const, text: "No organization found." }] };
+    }
+
+    const browseResult = await otpFetch(`/browse?orgId=${dashboard.org.id}&limit=1`);
+    const latestOos = browseResult.oosFiles?.[0];
+    if (!latestOos) {
+      return { content: [{ type: "text" as const, text: "No published OOS found." }] };
+    }
+
+    const claims = await otpFetch(`/oos/${latestOos.id}/claims`);
+
+    let bestPractices: any[] = [];
+    if (params.include_best_practices !== false) {
+      try {
+        const bpResult = await otpFetch(`/best-practices/for-oos/${latestOos.id}?min_score=0.05`);
+        bestPractices = bpResult.matches || [];
+      } catch {}
+    }
+
+    // Build markdown
+    const lines: string[] = [
+      `# OTP Rules for ${dashboard.org.name}`,
+      `> Auto-synced from orgtp.com | OOS v${latestOos.version} | ${new Date().toISOString().split("T")[0]}`,
+      `> ${claims.claims?.length || 0} OOS claims + ${bestPractices.length} matched best practices`,
+      "",
+      "## OOS Claims",
+      "",
+    ];
+
+    const sections: Record<string, any[]> = {};
+    for (const claim of claims.claims || []) {
+      if (!sections[claim.section]) sections[claim.section] = [];
+      sections[claim.section].push(claim);
+    }
+
+    for (const [section, sectionClaims] of Object.entries(sections)) {
+      lines.push(`### ${section.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}`);
+      lines.push("");
+      for (const claim of sectionClaims) {
+        lines.push(`**${claim.claimId}** [${claim.confidence}/${claim.evidence}]`);
+        lines.push(`- **Rule:** ${claim.rule}`);
+        lines.push(`- **Why:** ${claim.why}`);
+        lines.push(`- **Failure mode:** ${claim.failureMode}`);
+        lines.push("");
+      }
+    }
+
+    if (bestPractices.length > 0) {
+      lines.push("## Matched Best Practices");
+      lines.push("");
+      for (const bp of bestPractices) {
+        const firstLine = bp.definition?.split("\n")[0] || bp.term;
+        lines.push(`**${bp.term}** [${Math.round(bp.relevanceScore * 100)}% match]`);
+        lines.push(`- ${firstLine}`);
+        lines.push("");
+      }
+    }
+
+    const markdown = lines.join("\n");
+    const outputPath = params.output_path || "~/.claude/otp-rules.md";
+
+    // We return the content for the agent to write -- MCP tools can't write files directly
+    return {
+      content: [{
+        type: "text" as const,
+        text: JSON.stringify({
+          status: "generated",
+          suggested_path: outputPath,
+          oos_claims: claims.claims?.length || 0,
+          best_practices: bestPractices.length,
+          content_length: markdown.length,
+          content: markdown,
+          instruction: `Write this content to ${outputPath} to make it available to your agent army at startup.`,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ============================================================
 // TOOL: submit_ticket
 // Report a bug or request a feature
 // ============================================================
@@ -565,6 +790,12 @@ server.tool(
 // -- Start --
 
 async function main() {
+  // If called with "init", hand off to the init script
+  if (process.argv[2] === "init") {
+    await import("./init.js");
+    return;
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("OTP MCP Server running on stdio");

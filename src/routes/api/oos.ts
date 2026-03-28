@@ -663,6 +663,35 @@ ${claimSections.join('\n')}`.trim();
   });
 
   // ============================================================
+  // GET /api/v1/oos/mine -- Get the authenticated user's latest published OOS
+  // ============================================================
+  app.get('/oos/mine', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const [latest] = await db.select({
+      id: oosFiles.id,
+      version: oosFiles.version,
+      template: oosFiles.template,
+      status: oosFiles.status,
+      claimCount: oosFiles.claimCount,
+      wordCount: oosFiles.wordCount,
+      frontmatter: oosFiles.frontmatter,
+      publishedAt: oosFiles.publishedAt,
+    })
+      .from(oosFiles)
+      .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
+      .orderBy(desc(oosFiles.version))
+      .limit(1);
+
+    if (!latest) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No published OOS found' } });
+    }
+
+    return { org: { id: org.id, name: org.name }, oosFile: latest };
+  });
+
+  // ============================================================
   // GET /api/v1/oos/:id -- Get OOS file
   // ============================================================
   app.get<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
