@@ -124,6 +124,18 @@
           </div>
         </div>
         <div id="bp-content" class="hidden">
+          <!-- View toggle: Matched vs All -->
+          <div class="flex items-center gap-4 mb-4">
+            <div class="inline-flex items-center bg-gray-100 rounded-full p-0.5">
+              <button id="bp-view-matched" class="bp-view-tab px-4 py-1.5 rounded-full text-xs font-medium bg-otp-500 text-white" data-view="matched">
+                Matched to My OOS
+              </button>
+              <button id="bp-view-all" class="bp-view-tab px-4 py-1.5 rounded-full text-xs font-medium bg-transparent text-gray-600 hover:text-gray-900" data-view="all">
+                Browse All
+              </button>
+            </div>
+            <span id="bp-match-count" class="text-xs text-gray-400"></span>
+          </div>
           <!-- Category filter -->
           <div class="flex items-center gap-3 mb-6 flex-wrap">
             <span class="text-xs text-gray-500 font-medium">Filter:</span>
@@ -2208,6 +2220,10 @@
     'Supply Chain & Fulfillment': '#14b8a6',
   };
 
+  var bpOosMatches = {}; // bestPracticeId -> { score, claimIds }
+  var bpUserOosId = null;
+  var bpViewMode = 'matched'; // 'matched' or 'all'
+
   function loadBestPractices() {
     if (bpData) { renderBestPractices(); return; }
     var loadEl = document.getElementById('bp-loading');
@@ -2215,18 +2231,65 @@
     loadEl.classList.remove('hidden');
     contentEl.classList.add('hidden');
 
+    // Step 1: Load all best practices
     fetch('/api/v1/best-practices?limit=200')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         bpData = data;
+        // Step 2: Load user's OOS graph data to find their published OOS
+        return fetch('/api/v1/best-practices/graph');
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(graphData) {
+        if (graphData.nodes && graphData.nodes.userOos && graphData.nodes.userOos.length > 0) {
+          bpUserOosId = graphData.nodes.userOos[0].id;
+          // Step 3: Compute matches for their OOS
+          return fetch('/api/v1/best-practices/compute-matches/' + bpUserOosId, { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(matchData) {
+              // Step 4: Load the matches
+              return fetch('/api/v1/best-practices/for-oos/' + bpUserOosId + '?min_score=0.01');
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(matchResult) {
+              // Index matches by bestPracticeId
+              if (matchResult.matches) {
+                matchResult.matches.forEach(function(m) {
+                  bpOosMatches[m.bestPracticeId] = { score: m.relevanceScore, claims: m.matchedClaims || [] };
+                });
+              }
+              // Tag practices with match info
+              bpData.practices.forEach(function(p) {
+                var match = bpOosMatches[p.id];
+                if (match) {
+                  p._matched = true;
+                  p._score = match.score;
+                  p._matchedClaims = match.claims;
+                } else {
+                  p._matched = false;
+                  p._score = 0;
+                }
+              });
+            });
+        }
+      })
+      .then(function() {
         loadEl.classList.add('hidden');
         contentEl.classList.remove('hidden');
-        buildCategoryFilters(data.categories);
+        buildCategoryFilters(bpData.categories);
         renderBestPractices();
         updateStatsBar('bestpractices');
       })
       .catch(function(err) {
-        loadEl.innerHTML = '<div class="text-red-500 text-sm">Failed to load best practices. Sign in required.</div>';
+        // Still show all practices even if matching fails
+        if (bpData) {
+          loadEl.classList.add('hidden');
+          contentEl.classList.remove('hidden');
+          buildCategoryFilters(bpData.categories);
+          renderBestPractices();
+        } else {
+          loadEl.innerHTML = '<div class="text-red-500 text-sm">Failed to load best practices. Sign in required.</div>';
+        }
       });
   }
 
@@ -2288,16 +2351,59 @@
     var filtered = bpData.practices.filter(function(p) {
       var catMatch = bpActiveCategory === 'all' || p.category === bpActiveCategory;
       var searchMatch = !query || p.term.toLowerCase().indexOf(query) > -1 || p.definition.toLowerCase().indexOf(query) > -1;
-      return catMatch && searchMatch;
+      // In matched mode, only show matched practices
+      var viewMatch = bpViewMode === 'all' || p._matched;
+      return catMatch && searchMatch && viewMatch;
+    });
+
+    // Sort: matched first (by score desc), then alphabetical
+    filtered.sort(function(a, b) {
+      if (a._matched && !b._matched) return -1;
+      if (!a._matched && b._matched) return 1;
+      if (a._matched && b._matched) return (b._score || 0) - (a._score || 0);
+      return a.term.localeCompare(b.term);
+    });
+
+    // Update match count
+    var matchCount = bpData.practices.filter(function(p) { return p._matched; }).length;
+    var matchCountEl = document.getElementById('bp-match-count');
+    if (matchCountEl) {
+      matchCountEl.textContent = matchCount > 0
+        ? matchCount + ' practices matched to your OOS'
+        : bpUserOosId ? 'No matches found -- try Browse All' : 'Publish an OOS to see matched practices';
+    }
+
+    // Update view toggle styling
+    document.querySelectorAll('.bp-view-tab').forEach(function(tab) {
+      if (tab.getAttribute('data-view') === bpViewMode) {
+        tab.classList.remove('bg-transparent', 'text-gray-600');
+        tab.classList.add('bg-otp-500', 'text-white');
+      } else {
+        tab.classList.remove('bg-otp-500', 'text-white');
+        tab.classList.add('bg-transparent', 'text-gray-600');
+      }
     });
 
     grid.innerHTML = filtered.map(function(p) {
       var color = bpCategoryColors[p.category] || '#6b7280';
       var defPreview = p.definition.substring(0, 180) + (p.definition.length > 180 ? '...' : '');
-      return '<div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow claim-card">' +
+      var matchBadge = '';
+      if (p._matched) {
+        var pct = Math.round((p._score || 0) * 100);
+        var matchColor = pct >= 30 ? '#059669' : pct >= 15 ? '#d97706' : '#6b7280';
+        matchBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full font-semibold" style="background:' + matchColor + '15;color:' + matchColor + '">' +
+          pct + '% match' +
+          (p._matchedClaims && p._matchedClaims.length > 0 ? ' (' + p._matchedClaims.length + ' claims)' : '') +
+          '</span>';
+      }
+      var borderStyle = p._matched ? 'border-otp-300 bg-otp-50/30' : 'border-gray-200';
+      return '<div class="bg-white rounded-xl border ' + borderStyle + ' p-5 hover:shadow-md transition-shadow claim-card">' +
         '<div class="flex items-start justify-between mb-3">' +
-          '<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background:' + color + '10;color:' + color + ';border:1px solid ' + color + '25">' + p.category + '</span>' +
-          '<a href="' + (p.canonicalUrl || p.sourceUrl) + '" target="_blank" rel="noopener" class="text-gray-400 hover:text-otp-500 transition-colors" title="View on source site">' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background:' + color + '10;color:' + color + ';border:1px solid ' + color + '25">' + p.category + '</span>' +
+            matchBadge +
+          '</div>' +
+          '<a href="' + p.sourceUrl + '" target="_blank" rel="noopener" class="text-gray-400 hover:text-otp-500 transition-colors flex-shrink-0" title="View on source site">' +
             '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>' +
           '</a>' +
         '</div>' +
@@ -2313,12 +2419,16 @@
         '</div>';
     }).join('');
 
+    if (filtered.length === 0 && bpViewMode === 'matched') {
+      grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><p class="mb-2">No matched practices yet.</p><p class="text-sm">Switch to <strong>Browse All</strong> to explore the full library, or publish an OOS to see personalized matches.</p></div>';
+    }
+
     // Stats
     var statsEl = document.getElementById('bp-stats');
-    statsEl.textContent = 'Showing ' + filtered.length + ' of ' + bpData.practices.length + ' best practices from McFadyen Digital';
-
-    // Attribution link
-    statsEl.innerHTML += ' &middot; <a href="https://ai-best-practices.com" target="_blank" rel="noopener" class="text-otp-500 hover:underline">Visit source</a>';
+    var showingText = bpViewMode === 'matched'
+      ? 'Showing ' + filtered.length + ' matched practices'
+      : 'Showing ' + filtered.length + ' of ' + bpData.practices.length + ' practices';
+    statsEl.innerHTML = showingText + ' from McFadyen Digital &middot; <a href="https://ai-best-practices-dev.mcfadyen-digital.workers.dev" target="_blank" rel="noopener" class="text-otp-500 hover:underline">Visit source</a>';
   }
 
   // Best practices search handler
@@ -2327,6 +2437,15 @@
     if (e.target && e.target.id === 'bp-search') {
       clearTimeout(bpSearchTimer);
       bpSearchTimer = setTimeout(renderBestPractices, 200);
+    }
+  });
+
+  // View toggle (Matched vs All)
+  document.addEventListener('click', function(e) {
+    var tab = e.target.closest && e.target.closest('.bp-view-tab');
+    if (tab) {
+      bpViewMode = tab.getAttribute('data-view');
+      renderBestPractices();
     }
   });
 
