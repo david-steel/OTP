@@ -1,0 +1,1903 @@
+{
+  "source": {
+    "name": "DAIR.AI Prompt Engineering Guide",
+    "publisher": "DAIR.AI",
+    "url": "https://www.promptingguide.ai",
+    "attribution": "Content sourced from DAIR.AI. All terms link back to original source."
+  },
+  "scrapedAt": "2026-03-28T17:53:18.009Z",
+  "termCount": 236,
+  "categories": [
+    "Prompt Engineering"
+  ],
+  "terms": [
+    {
+      "slug": "activepromptca",
+      "term": "Activeprompt.ca",
+      "definition": "Les mètodes de cadena de pensament (CoT) es basen en un conjunt fix d'exemplars anotats per humans. El problema d'això és que els exemplars podrien no ser els exemples més eficaços per a les diferents tasques. Per abordar això, [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) van proposar recentment un nou enfocament de prompts anomenat Active-Prompt per adaptar els LLMs a diferents exemples de tasques específiques (anotats amb raonament CoT dissenyat per humans). A continuació es mostra una il·lustració de l'enfocament. El primer pas és consultar el LLM amb o sense alguns exemples de CoT. Es generen *k* respostes possibles per a un conjunt de preguntes d'entrenament. Es calcula una mètrica d'incertesa basada en les *k* respostes (es fa servir el desacord). Les preguntes més incertes es seleccionen per a ser anotades per humans. Els nous exemplars anotats s'utilitzen llavors per inferir cada pregunta. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.ca"
+    },
+    {
+      "slug": "activepromptde",
+      "term": "Activeprompt.de",
+      "definition": "Chain-of-thought (CoT)-Methoden basieren auf einem festen Satz von menschen-annotierten Beispielen. Das Problem dabei ist, dass diese Beispiele möglicherweise nicht die effektivsten für die unterschiedlichen Aufgaben sind. Um diesem Problem zu begegnen, schlugen [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) kürzlich einen neuen Prompting-Ansatz vor, der als Active-Prompt bezeichnet wird, um LLMs an verschiedene aufgabenspezifische Beispiel-Prompts (mit menschengestaltetem CoT-Reasoning annotiert) anzupassen. Unten ist eine Illustration des Ansatzes dargestellt. Im ersten Schritt wird das LLM mit oder ohne ein paar CoT-Beispiele abgefragt. *k* mögliche Antworten werden für einen Satz von Trainingsfragen generiert. Basierend auf den *k* Antworten wird eine Unsicherheitsmetrik berechnet (es wird die Uneinigkeit verwendet). Die unsichersten Fragen werden für die Annotation durch Menschen ausgewählt. Die neuen annotierten Beispiele werden dann verwendet, um jede Frage zu erschließen. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.de"
+    },
+    {
+      "slug": "activeprompten",
+      "term": "Activeprompt.en",
+      "definition": "Chain-of-thought (CoT) methods rely on a fixed set of human-annotated exemplars. The problem with this is that the exemplars might not be the most effective examples for the different tasks. To address this, [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) recently proposed a new prompting approach called Active-Prompt to adapt LLMs to different task-specific example prompts (annotated with human-designed CoT reasoning). Below is an illustration of the approach. The first step is to query the LLM with or without a few CoT examples. *k* possible answers are generated for a set of training questions. An uncertainty metric is calculated based on the *k* answers (disagreement used). The most uncertain questions are selected for annotation by humans. The new annotated exemplars are then used to infer each question.  <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.en"
+    },
+    {
+      "slug": "activepromptes",
+      "term": "Activeprompt.es",
+      "definition": "Los métodos de Cadena de Pensamiento (CoT) se basan en un conjunto fijo de ejemplos humanamente anotados. El problema con esto es que los ejemplos pueden no ser los más efectivos para diferentes tareas. Para abordar esto, [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) propusieron recientemente un nuevo enfoque de sugerencias llamado Prompt activo (Active-Prompt) para adaptar LLMs a diferentes sugerencias de ejemplos específicos de tareas (anotados con razonamiento CoT diseñado por humanos). A continuación se muestra una ilustración del enfoque. El primer paso es hacer una consulta al LLM con o sin algunos ejemplos de CoT. Se generan k posibles respuestas para un conjunto de preguntas de entrenamiento. Se calcula una métrica de incertidumbre basada en las k respuestas (se utiliza el desacuerdo). Las preguntas más inciertas son seleccionadas para su anotación por humanos. Los nuevos ejemplos anotados se utilizan luego para inferir cada pregunta. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.es"
+    },
+    {
+      "slug": "activepromptfi",
+      "term": "Activeprompt.fi",
+      "definition": "Ajatusketjuun (CoT) perustuvat menetelmät perustuvat tiettyyn joukkoon ihmisten tekemiä esimerkkejä. Ongelmana on, että esimerkit eivät välttämättä ole tehokkaita erilaisissa tehtävissä. Tämän ongelman ratkaisemiseksi, [Diao ym., (2023)](https://arxiv.org/pdf/2302.12246.pdf) ehdottivat äskettäin uutta kehotetekniikkaa nimeltä Aktiiviohje (Active-Prompt), joka mukauttaa LLM:ää eri tehtävakohtaisten esimerkkiohjeiden mukaan (ihmisten suodattaman CoT-päättelyn avulla). Alla on esitys lähestymistavasta. Ensimmäinen vaihe on kysyä LLM:ltä joko muutamilla CoT-esimerkeillä tai ilman niitä. *k* mahdollista vastausta tuotetaan joukolle koulutuskysymyksiä. Epävarmuusmääre lasketaan perustuen *k* vastaukseen. Epävarmimmat kysymykset valitaan ihmisten annotointia varten. Uusia annotoituja esimerkkejä käytetään sitten kunkin kysymyksen päättelemiseen. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.fi"
+    },
+    {
+      "slug": "activepromptfr",
+      "term": "Activeprompt.fr",
+      "definition": "Les méthodes de chaîne de pensée (CoT) reposent sur un ensemble fixe d'exemplaires annotés par l'homme. Le problème avec cela est que les exemplaires peuvent ne pas être les exemples les plus efficaces pour les différentes tâches. Pour résoudre ce problème, [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) ont récemment proposé une nouvelle approche d'incitation appelée Active-Prompt pour adapter les LLM à différents exemples d'invites spécifiques à une tâche ( annoté avec un raisonnement CoT conçu par l'homme). Vous trouverez ci-dessous une illustration de l'approche. La première étape consiste à interroger le LLM avec ou sans quelques exemples CoT. *k* réponses possibles sont générées pour un ensemble de questions de formation. Une métrique d'incertitude est calculée sur la base des *k* réponses (désaccord utilisé). Les questions les plus incertaines sont sélectionnées pour être annotées par des humains. Les nouveaux exemples annotés sont ensuite utilisés pour déduire chaque question. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.fr"
+    },
+    {
+      "slug": "activepromptit",
+      "term": "Activeprompt.it",
+      "definition": "I metodi Chain-of-thought (CoT, a catena del pensiero) si basano su un insieme fisso di esempi annotati manualmente da umani. Il problema è che gli esempi potrebbero non essere i più efficaci per i diversi compiti. Per ovviare a questo problema, [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) hanno recentemente proposto un nuovo approccio di prompting chiamato Active-Prompt, per adattare i LLM a diversi prompt di esempio specifici per i vari compiti (progettati manualmente con ragionamenti CoT). Di seguito viene illustrato l'approccio. Il primo passo consiste nell'interrogare l'LLM con o senza alcuni esempi CoT. Vengono generate *k* possibili risposte per un insieme di domande di addestramento. Sulla base delle *k* risposte viene calcolata una metrica di incertezza (viene utilizzato il disaccordo). Le domande più incerte vengono selezionate per l'annotazione manuale da parte di umani. I nuovi esempi annotati vengono poi utilizzati per dedurre ogni domanda. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.it"
+    },
+    {
+      "slug": "activepromptjp",
+      "term": "Activeprompt.jp",
+      "definition": "Chain-of-thought (CoT)メソッドは、固定された人間による注釈付きの例のセットに依存しています。これには、例が異なるタスクに対して最も効果的なものでない可能性があるという問題があります。[Diaoら(2023)](https://arxiv.org/pdf/2302.12246.pdf)は、最近、異なるタスク固有の例のプロンプト(人間によるCoT推論で注釈付けされたもの)に適応するための新しいプロンプトアプローチであるActive-Promptを提案しました。 以下は、このアプローチの概要図です。最初のステップは、LLMに対してCoT例をいくつか含めて問い合わせます。一連のトレーニング質問に対して、*k*個の可能な回答が生成されます。*k*個の回答に基づいて不確実性メトリックが計算されます(不一致を使用)。最も不確実な質問が人間によって注釈付けされます。新しい注釈付きの例は、それぞれの質問の推論に使用されます。 <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.jp"
+    },
+    {
+      "slug": "activepromptkr",
+      "term": "Activeprompt.kr",
+      "definition": "Chain-of-thought (CoT) 방법은 사람이 만든 고정된 규범을 의존합니다. 이 규범의 문제점은 다양한 작업에 대해 가장 효과적인 예시가 아닐 수 있다는 것입니다. 이 문제를 해결하기 위해 [Diao 외, (2023)](https://arxiv.org/pdf/2302.12246.pdf)는 최근 Active-Prompt라는 새로운 프롬프트 접근 방식을 제안하여 LLMs을 다양한 작업별 예시 프롬프트(사람이 설계한 CoT 추론으로 라벨링)에 적용했습니다. 아래는 제안 방식에 대한 개요도입니다. 첫 번째 단계는 몇 가지 CoT 예제를 포함하거나 포함하지 않고 LLM에 질문하는 것입니다. 일련의 학습 질문에 대해 *k* 개의 가능한 답변이 생성됩니다. 불확실성 메트릭은 *k*개의 답변(불일치 사용)을 기반으로 계산됩니다. 가장 불확실한 질문은 사람이 주석을 달기 위해 선택합니다. 그런 다음 주석이 달린 새로운 예제를 사용하여 각 질문을 추론합니다. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.kr"
+    },
+    {
+      "slug": "activepromptpt",
+      "term": "Activeprompt.pt",
+      "definition": "Os métodos de cadeia de pensamento (CoT) dependem de um conjunto fixo de exemplares anotados por humanos. O problema com isso é que os exemplares podem não ser os exemplos mais eficazes para as diferentes tarefas. Para resolver isso, [Diao et al., (2023)](https://arxiv.org/pdf/2302.12246.pdf) propôs recentemente uma nova abordagem de prompting chamada Active-Prompt para adaptar LLMs a diferentes prompts de exemplo específicos da tarefa ( anotado com raciocínio CoT projetado por humanos). Abaixo está uma ilustração da abordagem. A primeira etapa é consultar o LLM com ou sem alguns exemplos de CoT. *k* respostas possíveis são geradas para um conjunto de perguntas de treinamento. Uma métrica de incerteza é calculada com base nas respostas *k* (discordância usada). As questões mais incertas são selecionadas para anotação por humanos. Os novos exemplares anotados são então usados para inferir cada pergunta. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.pt"
+    },
+    {
+      "slug": "activepromptru",
+      "term": "Activeprompt.ru",
+      "definition": "Методы цепочки мыслей (CoT) полагаются на фиксированный набор аннотированных человеком образцов. Проблема заключается в том, что эти образцы могут оказаться не наиболее эффективными примерами для различных задач. Чтобы решить эту проблему, [Diao и др., (2023)](https://arxiv.org/pdf/2302.12246.pdf) недавно предложили новый подход к формулировке запросов, называемый Active-Prompt, который позволяет адаптировать LLM к различным задачам с использованием специфичных примеров (аннотированных с использованием человеком разработанной цепочки мыслей). Ниже приведена иллюстрация данного подхода. Первый шаг заключается в запросе LLM с несколькими примерами CoT или без них. Для набора обучающих вопросов генерируется *k* возможных ответов. Вычисляется метрика неопределенности на основе этих *k* ответов (используется показатель расхождения). Наиболее неопределенные вопросы выбираются для аннотации людьми. Затем новые аннотированные образцы используются для вывода каждого вопроса. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.ru"
+    },
+    {
+      "slug": "activeprompttr",
+      "term": "Activeprompt.tr",
+      "definition": "Düşünce Zinciri (CoT) yöntemleri, sabit bir set insan tarafından biçimlendirilmiş örnekler üzerine dayanır. Buradaki problem, bu örneklerin farklı görevler için en etkili örnekler olmayabileceğidir. Bu durumu çözmek için, [Diao ve diğerleri, (2023)](https://arxiv.org/pdf/2302.12246.pdf) yakın zamanda, farklı görev özelindeki örnek istemlere (insan tasarımı CoT mantığıyla biçimlendirilmiş) LLM'leri uyumlandırmak için Aktif-İstem adlı yeni bir istem yaklaşımı önermiştir. Aşağıda yaklaşımın bir örneği bulunmaktadır. İlk adım, LLM'yi birkaç CoT örneğiyle veya birkaç CoT örneği olmadan sorgulamaktır. *k* bir dizi eğitim sorusu için olası yanıtlar oluşturulur. *k* yanıtlara (kullanılan anlaşmazlık) dayalı olarak bir belirsizlik ölçüsü hesaplanır. En belirsiz sorular insanlar tarafından ek açıklama için seçilir. Yeni açıklamalı örnekler daha sonra her soruyu anlamak için kullanılır. <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.tr"
+    },
+    {
+      "slug": "activepromptzh",
+      "term": "Activeprompt.zh",
+      "definition": "思维链（CoT）方法依赖于一组固定的人工注释范例。问题在于，这些范例可能不是不同任务的最有效示例。为了解决这个问题，[Diao 等人（2023）](https://arxiv.org/pdf/2302.12246.pdf)最近提出了一种新的提示方法，称为 Active-Prompt，以适应 LLMs 到不同的任务特定示例提示（用人类设计的 CoT 推理进行注释）。 下面是该方法的说明。第一步是使用或不使用少量 CoT 示例查询 LLM。对一组训练问题生成 *k* 个可能的答案。基于 *k* 个答案计算不确定度度量（使用不一致性）。选择最不确定的问题由人类进行注释。然后使用新的注释范例来推断每个问题。 <Screenshot src={ACTIVE} alt=\"ACTIVE\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/activeprompt.zh"
+    },
+    {
+      "slug": "apeca",
+      "term": "Ape.ca",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Font de la imatge: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) proposen un enginyer automàtic de prompts (APE), un marc per a la generació i selecció automàtica d'instruccions. El problema de generació d'instruccions es planteja com a síntesi de llenguatge natural i es tracta com a un problema d'optimització de caixa negra utilitzant LLMs per generar i buscar solucions candidates.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.ca"
+    },
+    {
+      "slug": "apede",
+      "term": "Ape.de",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Bildquelle: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) schlagen den Automatischen Prompt Ingenieur (_Automatic Prompt Engineer_, kurz APE) vor, ein Framework für die automatische Erstellung und Auswahl von Instruktionen. Das Problem der Instruktionsgenerierung wird als Synthese natürlicher Sprache konzipiert, adressiert als ein Black-Box-Optimierungsproblem, unter Verwendung von LLMs, um Kandidatenlösungen zu generieren und zu suchen.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.de"
+    },
+    {
+      "slug": "apeen",
+      "term": "Ape.en",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Image Source: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) propose automatic prompt engineer (APE) a framework for automatic instruction generation and selection. The instruction generation problem is framed as natural language synthesis addressed as a black-box optimization problem using LLMs to generate and search over candidate solutions.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.en"
+    },
+    {
+      "slug": "apees",
+      "term": "Ape.es",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Fuente: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) proponen el marco de trabajo \"Automatic Prompt Engineer\" (APE) para la generación y selección automática de instrucciones. El problema de generación de instrucciones se plantea como una síntesis de lenguaje natural, abordado como un problema de optimización de caja negra mediante el uso de LLMs para generar y buscar soluciones candidatas.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.es"
+    },
+    {
+      "slug": "apefi",
+      "term": "Ape.fi",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Kuvan lähde: [Zhou ym. (2022)](https://arxiv.org/abs/2211.01910) [Zhou ym. (2022)](https://arxiv.org/abs/2211.01910)-artikkelissa käsitellään automoitua kehotesuunnittelua (Automatic Prompt Engineer, APE). Ohjeiden luomisen haasteena on luonnollisen kielen synteesi, joka ratkaistaan mustan laatikon optimointiongelmana käyttäen LLM:ää ehdokasratkaisujen luomiseen ja etsimiseen.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.fi"
+    },
+    {
+      "slug": "apefr",
+      "term": "Ape.fr",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Image Source: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) propose Automatic Prompt Engineer (APE), un cadre pour la génération et la sélection automatiques d'instructions. Le problème de génération d'instructions est présenté comme une synthèse de langage naturel abordée comme un problème d'optimisation en boîte noire en utilisant des LLM pour générer et rechercher des solutions candidates. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.fr"
+    },
+    {
+      "slug": "apeit",
+      "term": "Ape.it",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Fonte immagine: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) propone automatic prompt engineer (APE), un framework per la generazione e la selezione automatica delle istruzioni. Il problema della generazione delle istruzioni viene inquadrato come sintesi del linguaggio naturale e affrontato come un problema di ottimizzazione black-box che utilizza gli LLM per generare e ricercare le soluzioni candidate.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.it"
+    },
+    {
+      "slug": "apejp",
+      "term": "Ape.jp",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> 画像出典：[Zhou et al.,（2022年）](https://arxiv.org/abs/2211.01910) [Zhou et al.,（2022年）](https://arxiv.org/abs/2211.01910)は、自動指示生成と選択のためのフレームワークである自動プロンプトエンジニア（APE）を提案しています。指示生成問題は、LVMを使用して候補解を生成して検索することで、ブラックボックス最適化問題としてアドレスされる自然言語合成としてフレームされます。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.jp"
+    },
+    {
+      "slug": "apekr",
+      "term": "Ape.kr",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> 이미지 출처: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910)은 명령의 자동 생성 및 선택을 위한 프레임워크인 자동 프롬프트 엔지니어(APE)를 제안합니다. 명령 생성 문제는 LLM을 사용하여 솔루션 후보를 생성하고 검색하는 블랙 박스 최적화 문제로 해결된 자연어 합성으로 프레임화됩니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.kr"
+    },
+    {
+      "slug": "apept",
+      "term": "Ape.pt",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Fonte da imagem: [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) [Zhou et al., (2022)](https://arxiv.org/abs/2211.01910) propõem um engenheiro de prompt automático (APE) uma estrutura para geração e seleção automática de instruções. O problema de geração de instruções é enquadrado como uma síntese de linguagem natural abordada como um problema de otimização de caixa preta usando LLMs para gerar e pesquisar soluções candidatas.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.pt"
+    },
+    {
+      "slug": "aperu",
+      "term": "Ape.ru",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Источник изображения: [Zhou и др., (2022)](https://arxiv.org/abs/2211.01910) [Zhou и др., (2022)](https://arxiv.org/abs/2211.01910) предлагают Automatic Prompt Engineer (APE) – фреймворк для автоматической генерации и выбора инструкций. Проблема генерации инструкций формулируется как синтез естественного языка, решаемая как задача оптимизации в черном ящике с использованием LLM для генерации и поиска вариантов решений.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.ru"
+    },
+    {
+      "slug": "apetr",
+      "term": "Ape.tr",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> Resim Kaynağı: [Zhou ve diğerleri, (2022)](https://arxiv.org/abs/2211.01910) [Zhou ve diğerleri, (2022)](https://arxiv.org/abs/2211.01910) otomatik istem mühendisliğini (APE) otomatik talimat oluşturma ve seçim için bir çerçeve olarak önerir. Talimat oluşturma problemi, büyük dil modelini kullanarak aday çözümler üzerinde oluşturma ve arama yapılmasıyla ele alınan doğal dil oluşumu olarak çerçevelenir.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.tr"
+    },
+    {
+      "slug": "apezh",
+      "term": "Ape.zh",
+      "definition": "<Screenshot src={APE} alt=\"APE\" /> 图片来源：[Zhou等人，（2022）](https://arxiv.org/abs/2211.01910) [Zhou等人，（2022）](https://arxiv.org/abs/2211.01910) 提出了自动提示工程师 （APE），这是一个用于自动指令生成和选择的框架。指令生成问题被构建为自然语言合成问题，使用 LLMs 作为黑盒优化问题的解决方案来生成和搜索候选解。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/ape.zh"
+    },
+    {
+      "slug": "artca",
+      "term": "Art.ca",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.ca"
+    },
+    {
+      "slug": "artde",
+      "term": "Art.de",
+      "definition": "Die Kombination von CoT-Prompting und Werkzeugeinsatz in einer verzahnten Art und Weise hat sich als starker und robuster Ansatz erwiesen, um viele Aufgaben mit LLMs zu behandeln. Diese Ansätze erfordern in der Regel handgefertigte, aufgabenspezifische Demonstrationen und sorgfältig skriptgesteuertes Verzahnen von Modellgenerierungen mit Werkzeugnutzung. [Paranjape et al., (2023)](https://arxiv.org/abs/2303.09014) schlagen einen neuen Rahmen vor, der ein eingefrorenes LLM nutzt, um automatisch Zwischenschritte im Schlussfolgern als ein Programm zu generieren. - zuerst werden für eine neue Aufgabe Demonstrationen von mehrschrittigem Schlussfolgern und Werkzeugnutzung aus einer Aufgabenbibliothek ausgewählt - zur Laufzeit setzt es die Generierung aus, sobald externe Werkzeuge aufgerufen werden, und integriert deren Ausgabe, bevor die Generierung wieder aufgenommen wird",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.de"
+    },
+    {
+      "slug": "arten",
+      "term": "Art.en",
+      "definition": "Combining CoT prompting and tools in an interleaved manner has shown to be a strong and robust approach to address many tasks with LLMs. These approaches typically require hand-crafting task-specific demonstrations and carefully scripted interleaving of model generations with tool use. [Paranjape et al., (2023)](https://arxiv.org/abs/2303.09014) propose a new framework that uses a frozen LLM to automatically generate intermediate reasoning steps as a program. - given a new task, it select demonstrations of multi-step reasoning and tool use from a task library  - at test time, it pauses generation whenever external tools are called, and integrate their output before resuming generation",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.en"
+    },
+    {
+      "slug": "artes",
+      "term": "Art.es",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.es"
+    },
+    {
+      "slug": "artfi",
+      "term": "Art.fi",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.fi"
+    },
+    {
+      "slug": "artfr",
+      "term": "Art.fr",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.fr"
+    },
+    {
+      "slug": "artit",
+      "term": "Art.it",
+      "definition": "Combinare il prompting Chain of Thought (CoT) e l'uso di strumenti in modo alternato si è dimostrato un approccio forte e robusto per affrontare molti compiti con gli LLM. Questi approcci richiedono tipicamente la creazione manuale di dimostrazioni specifiche per il compito ed una programmazione attenta della combinazione dei modelli generativi con l'uso di strumenti. [Paranjape et al., (2023)](https://arxiv.org/abs/2303.09014) propongono un nuovo framework che utilizza un LLM congelato per generare automaticamente passaggi di ragionamento intermedi sotto forma di programma. ART funziona nel modo seguente: - dato un nuovo compito, seleziona dimostrazioni di ragionamento a più passi e l'uso di strumenti da una libreria di compiti",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.it"
+    },
+    {
+      "slug": "artjp",
+      "term": "Art.jp",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.jp"
+    },
+    {
+      "slug": "artkr",
+      "term": "Art.kr",
+      "definition": "생각의 사슬(chain-of-thought; CoT) 프롬프팅과 도구를 교차적으로 결합하는 것은 대규모언어모델로 많은 작업을 처리하는 강력하고 견고한 접근 방식인 것으로 밝혀졌습니다. 이러한 접근법들은 일반적으로 작업 특정 시연을 수작업으로 제작하고, 주의 깊게 교차하여 모델을 생성하고 도구를 사용해야 합니다. [Paranjape et al., (2023)](https://arxiv.org/abs/2303.09014)은 프로그램으로 중간 추론 단계를 자동 생성하기 위해 frozen 대규모언어모델을 사용하는 새로운 프레임워크를 제안합니다. - 새로운 작업이 주어지면 작업 라이브러리에서 다단계의 추론 및 도구 사용 시연을 선택합니다. - 테스트 시에는 외부 도구가 호출될 때마다 생성을 일시 중단하고, 생성을 재개하기 전에 그 출력들을 통합합니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.kr"
+    },
+    {
+      "slug": "artpt",
+      "term": "Art.pt",
+      "definition": "A combinação de estímulo CoT (Cadeia de Pensamento) e o uso de ferramentas de maneira intercalada tem se mostrado uma abordagem sólida e robusta para abordar muitas tarefas com modelos de linguagem de grande porte (LLMs). Essas abordagens geralmente exigem demonstrações específicas da tarefa feitas manualmente e uma intercalação cuidadosamente elaborada entre gerações do modelo e uso de ferramentas. [Paranjape et al., (2023)](https://arxiv.org/abs/2303.09014) propõem uma nova estrutura que utiliza um LLM congelado para gerar automaticamente etapas intermediárias de raciocínio como um programa. O ART funciona da seguinte forma: - Dada uma nova tarefa, ele seleciona demonstrações de raciocínio de múltiplas etapas e uso de ferramentas de uma biblioteca de tarefas.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.pt"
+    },
+    {
+      "slug": "artru",
+      "term": "Art.ru",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.ru"
+    },
+    {
+      "slug": "arttr",
+      "term": "Art.tr",
+      "definition": "CoT yönlendirmeyi ve araçları birbirine sıralı bir şekilde entegre etmek, LLM'ler ile birçok görevi ele almak için güçlü ve sağlam bir yaklaşım olduğunu kanıtlamıştır. Bu yöntemler genellikle görev özelinde elle oluşturulan gösterimler ve model üretimlerinin araç kullanımı ile dikkatlice senaryolaştırılmış birleştirmesi gerektirir. [Paranjape ve diğerleri, (2023)](https://arxiv.org/abs/2303.09014) dondurulmuş bir LLM'yi kullanarak bir program olarak ara akıl yürütme adımlarını otomatik olarak oluşturan yeni bir çerçeve önermektedir. - yeni bir görev verildiğinde, görev kütüphanesinden çoklu adım akıl yürütme ve araç kullanımı gösterimlerini seçer - test zamanında, dış araçlar çağrıldığında üretimi duraklatır ve üretimi yeniden başlatmadan önce çıktılarını entegre eder",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.tr"
+    },
+    {
+      "slug": "artzh",
+      "term": "Art.zh",
+      "definition": "使用 LLM 完成任务时，交替运用 CoT 提示和工具已经被证明是一种即强大又稳健的方法。这类方法通常需要针对特定任务手写示范，还需要精心编写交替使用生成模型和工具的脚本。[Paranjape et al., (2023)](https://arxiv.org/abs/2303.09014)提出了一个新框架，该框架使用冻结的 LLM 来自动生成包含中间推理步骤的程序。 ART（Automatic Reasoning and Tool-use）的工作原理如下： - 接到一个新任务的时候，从任务库中选择多步推理和使用工具的示范。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/art.zh"
+    },
+    {
+      "slug": "consistencyca",
+      "term": "Consistency.ca",
+      "definition": "Potser una de les tècniques més avançades en enginyeria de prompts és l'autoconsistència. Proposada per [Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf), l'autoconsistència té com a objectiu \"substituir la descodificació ingènua i àvida utilitzada en la motivació de la cadena de pensament\". La idea és mostrejar múltiples camins de raonament diversos mitjançant pocs trets de CoT i utilitzar les generacions per seleccionar la resposta més consistent. Això ajuda a augmentar el rendiment de la motivació de CoT en tasques que impliquen raonament aritmètic i de sentit comú. Provem el següent exemple per al raonament aritmètic: Quan tenia 6 anys, la meva germana tenia la meitat de la meva edat. Ara tinc 70 anys, quants anys té la meva germana?",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.ca"
+    },
+    {
+      "slug": "consistencyde",
+      "term": "Consistency.de",
+      "definition": "Vielleicht ist eine der fortgeschrittensten Techniken im Bereich des Prompt-Engineerings die Selbstkonsistenz. Vorgeschlagen von [Wang et al. (2022)](https://arxiv.org/abs/2203.11171), zielt Selbstkonsistenz darauf ab, \"das naive gierige Decoding, das beim Chain-of-Thought Prompting verwendet wird, zu ersetzen\". Die Idee ist es, mehrere unterschiedliche Argumentationswege durch wenig-shot CoT zu erzeugen und die Generierungen zu nutzen, um die konsistenteste Antwort auszuwählen. Dies hilft dabei, die Leistung von CoT-Prompting bei Aufgaben zu erhöhen, die arithmetisches und alltagslogisches Denken erfordern. Versuchen wir das folgende Beispiel für arithmetisches Denken: Als ich 6 war, war meine Schwester halb so alt wie ich. Jetzt",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.de"
+    },
+    {
+      "slug": "consistencyen",
+      "term": "Consistency.en",
+      "definition": "Perhaps one of the more advanced techniques out there for prompt engineering is self-consistency. Proposed by [Wang et al. (2022)](https://arxiv.org/abs/2203.11171), self-consistency aims \"to replace the naive greedy decoding used in chain-of-thought prompting\". The idea is to sample multiple, diverse reasoning paths through few-shot CoT, and use the generations to select the most consistent answer. This helps to boost the performance of CoT prompting on tasks involving arithmetic and commonsense reasoning. Let's try the following example for arithmetic reasoning: When I was 6 my sister was half my age. Now",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.en"
+    },
+    {
+      "slug": "consistencyes",
+      "term": "Consistency.es",
+      "definition": "Quizás una de las técnicas más avanzadas para la ingeniería de consignas es la autoconsistencia. Propuesta por [Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf), la autoconsistencia tiene como objetivo \"reemplazar la decodificación codiciosa ingenua utilizada en la generación de cadenas de pensamiento\". La idea es muestrear múltiples caminos de razonamiento diversos a través de pocos ejemplos de la generación de cadenas de pensamiento, y usar las generaciones para seleccionar la respuesta más consistente. Esto ayuda a mejorar el rendimiento de la generación de cadenas de pensamiento en tareas que implican razonamiento aritmético y sentido común. Probemos el siguiente ejemplo para el razonamiento aritmético: Cuando tenía 6 años, mi hermana tenía la mitad de mi edad. Ahora tengo 70 años, ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.es"
+    },
+    {
+      "slug": "consistencyfi",
+      "term": "Consistency.fi",
+      "definition": "Itsejohdonmukaisuus on ehkä yksi kehittyneimmistä kehotesuunnittelutekniikoista. [Wang ym. (2022)](https://arxiv.org/pdf/2203.11171.pdf), ehdottama itsejohdonmukaisuus pyrkii \"korvaamaan naiivin ahneen dekoodauksen, jota käytetään ajatusketjukehotteissa\". Ajatus on ottaa näytteitä useista erilaisista päättelypoluista vähäisen ohjauksen CoT:lla ja valita tuotosten joukosta johdonmukaisin vastaus. Tämä auttaa parantamaan CoT-kehoteen suorituskykyä tehtävissä, jotka vaativat aritmetiikkaa ja maalaisjärkeä. Kokeillaan seuraavaa esimerkkiä aritmeettiselle päättelylle: Kun olin 6, siskoni oli puolet ikäisestäni. Nyt",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.fi"
+    },
+    {
+      "slug": "consistencyfr",
+      "term": "Consistency.fr",
+      "definition": "L'auto-cohérence (self-consistency) est peut-être l'une des techniques les plus avancées pour l'ingénierie rapide. Proposé par [Wang et al. (2022)] (https://arxiv.org/pdf/2203.11171.pdf), le self-consistency vise \"à remplacer le décodage cupide naïf utilisé dans l'incitation à la chaîne de pensée\". L'idée est d'échantillonner plusieurs chemins de raisonnement divers à travers un CoT à quelques prises de vue et d'utiliser les générations pour sélectionner la réponse la plus cohérente. Cela permet d'améliorer les performances de l'incitation CoT sur les tâches impliquant un raisonnement arithmétique et de bon sens. Essayons l'exemple suivant pour le raisonnement arithmétique : Quand j'avais 6 ans, ma sœur avait la moitié de mon âge. Maintenant",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.fr"
+    },
+    {
+      "slug": "consistencyit",
+      "term": "Consistency.it",
+      "definition": "Forse una delle tecniche più avanzate per l'ingegneria del prompt è l'autoconsistenza. Proposta da [Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf), l'autoconsistenza mira a \"sostituire l'ingenua decodifica avida utilizzata nel prompt a catena di pensieri\". L'idea è quella di campionare percorsi di ragionamento multipli e diversificati attraverso la few-shot CoT e di utilizzare le generazioni per selezionare la risposta più coerente. Questo aiuta a migliorare le prestazioni dei prompt CoT su compiti che coinvolgono l'aritmetica e il ragionamento di senso comune. Proviamo il seguente esempio di ragionamento aritmetico: Quando avevo 6 anni mia sorella aveva la metà dei miei anni. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.it"
+    },
+    {
+      "slug": "consistencyjp",
+      "term": "Consistency.jp",
+      "definition": "プロンプトエンジニアリングのより高度な技術の1つであるSelf-Consistency（自己整合性）は、[Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf)によって提唱され、「連想思考プロンプティングで使用される単純な貪欲復号化を置き換えることを目的としています」と述べています。アイデアは、few-shot CoTを通じて複数の多様な推論パスをサンプリングし、生成物を使用して最も整合的な回答を選択することです。これにより、算術および常識的推論を必要とするタスクにおけるCoTプロンプティングのパフォーマンスが向上します。 私が6歳のとき、妹は私の半分の年齢でした。今、私は70歳です。私の妹は何歳ですか？ 出力が間違っています！自己整合性を使ってこれを改善するにはどうすればよいでしょうか？それでは、Wang et al. 2022（表17）のfew-shotエグザンプラーを使用してみましょう。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.jp"
+    },
+    {
+      "slug": "consistencykr",
+      "term": "Consistency.kr",
+      "definition": "프롬프트 엔지니어링을 위한 더 진보된 기법 중 하나로 자기 일관성(self-consistency)이 있습니다. [Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf)에서 제안한 자기 일관성은 \"생각의 사슬 프롬프팅에 사용되는 일반적인 탐욕 알고리즘 디코딩을 대체하는 것\"을 목표로 합니다. 이 아이디어는 퓨샷 생각의 사슬(few-shot CoT)을 통해 여러 가지 다양한 추론 경로를 샘플링하고, 여러 번의 프롬프트 생성 과정을 거쳐 가장 일관된 답을 선택하는 것입니다. 이를 통해 산술 및 상식적인 추론과 관련된 작업에서 생각의 사슬 프롬프트의 성능을 향상시킬 수 있습니다. 내가 6살이었을 때 내 여동생은 내 나이의 절반인 나이였어. 지금 결과가 틀렸습니다. 자기 일관성을 이용해 이 문제를 어떻게 개선할 수 있을까요? 한번 해봅시다. [Wang et al. 2022] 논문의 (Table 17) 퓨샷 예제를 이용해 보겠습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.kr"
+    },
+    {
+      "slug": "consistencypt",
+      "term": "Consistency.pt",
+      "definition": "Talvez uma das técnicas mais avançadas disponíveis para engenharia imediata seja a autoconsistência. Proposto por [Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf), a autoconsistência visa \"substituir a decodificação ingênua e gananciosa usada na solicitação de cadeia de pensamento\". A ideia é experimentar caminhos de raciocínio múltiplos e diversos por meio de CoT de poucas tomadas e usar as gerações para selecionar a resposta mais consistente. Isso ajuda a aumentar o desempenho do prompt do CoT em tarefas que envolvem raciocínio aritmético e de bom senso. Vamos tentar o seguinte exemplo para raciocínio aritmético: Quando eu tinha 6 anos, minha irmã tinha metade da minha idade. Agora",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.pt"
+    },
+    {
+      "slug": "consistencyru",
+      "term": "Consistency.ru",
+      "definition": "Одним из более продвинутых методов оптимизации запросов является метод самосогласованности. Предложенный в [Wang et al. (2022)](https://arxiv.org/pdf/2203.11171.pdf), метод самосогласованности стремится \"заменить простую жадную декодировку, используемую в методе few-shot CoT\". Идея заключается в выборе нескольких различных путей рассуждения через метод few-shot CoT, а затем использовании генераций для выбора наиболее согласованного ответа. Это помогает улучшить производительность CoT-метода в задачах, связанных с арифметикой и здравым смыслом. Давайте попробуем следующий пример для арифметического рассуждения: When I was 6 my sister was half my age. Now",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.ru"
+    },
+    {
+      "slug": "consistencytr",
+      "term": "Consistency.tr",
+      "definition": "Belki de istem mühendisliği için oradaki daha ileri tekniklerden biri öz-tutarlılıktır. [Wang ve diğerleri (2022)](https://arxiv.org/abs/2203.11171) tarafından önerilen öz-tutarlılık, \"düşünce zinciri istemlemede kullanılan naif açgözlü çözümlemeyi değiştirmeyi\" hedefler. Fikir, az numaralı CoT (Chain of Thought - Düşünce Zinciri) aracılığıyla çeşitli ve çeşitli geliş yollarını örneklemek ve en tutarlı yanıtı seçmek için üretimleri kullanmaktır. Bu, aritmetik ve sağduyu akıl yürütme görevlerini içeren CoT istemleme performansını artırmaya yardımcı olur. Aşağıdaki örneği aritmetik akıl yürütme için deneyelim: 6 yaşında iken kız kardeşim benim yaşımın yarısıydı. Şimdi",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.tr"
+    },
+    {
+      "slug": "consistencyzh",
+      "term": "Consistency.zh",
+      "definition": "也许在提示工程中更高级的技术之一是自我一致性。由 [Wang等人（2022）](https://arxiv.org/pdf/2203.11171.pdf) 提出，自我一致性旨在“替换链式思维提示中使用的天真贪婪解码方法”。其想法是通过少样本 CoT 采样多个不同的推理路径，并使用生成结果选择最一致的答案。这有助于提高 CoT 提示在涉及算术和常识推理的任务中的性能。 当我6岁时，我的妹妹是我的一半年龄。现在我70岁了，我的妹妹多大？ 输出是错误的！我们如何通过自我一致性来改进这个问题？让我们试试。我们将使用 Wang 等人 2022 年的少量样本范例（表 17 ）：",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/consistency.zh"
+    },
+    {
+      "slug": "cotca",
+      "term": "Cot.ca",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Font de la imatge: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Introduït a [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), la cadena de pensament (CoT) prompting permet habilitats de raonament complex a través de passos intermedis de raonament. Podeu combinar-ho amb el prompting de pocs exemples per obtenir resultats més precisos en tasques més complexes que requereixen raonament abans de respondre.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.ca"
+    },
+    {
+      "slug": "cotde",
+      "term": "Cot.de",
+      "definition": "<Screenshot src={COT} alt=\"CoT\" /> Bildquelle: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Eingeführt in [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), ermöglicht Chain-of-Thought (CoT) Prompting komplexe Schlussfolgerungsfähigkeiten durch Zwischenschritte im Denkprozess. Sie können es mit Few-Shot-Prompting kombinieren, um bessere Ergebnisse bei komplexeren Aufgaben zu erzielen, die eine Schlussfolgerung vor der Beantwortung erfordern.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.de"
+    },
+    {
+      "slug": "coten",
+      "term": "Cot.en",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Image Source: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Introduced in [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), chain-of-thought (CoT) prompting enables complex reasoning capabilities through intermediate reasoning steps. You can combine it with few-shot prompting to get better results on more complex tasks that require reasoning before responding.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.en"
+    },
+    {
+      "slug": "cotes",
+      "term": "Cot.es",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Fuente de la imagen: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Introducido en [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), el prompt por cadena de pensamientos (CoT) permite capacidades de razonamiento complejas a través de pasos de razonamiento intermedios. Puedes combinarlo con prompts de pocas muestras (few-shot) para obtener mejores resultados en tareas más complejas que requieren razonamiento antes de responder.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.es"
+    },
+    {
+      "slug": "cotfi",
+      "term": "Cot.fi",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Kuvan lähde: [Wei ym. (2022)](https://arxiv.org/abs/2201.11903) [Wei ym. (2022)](https://arxiv.org/abs/2201.11903) julkaisussa esitelty ajatusketjua hyödyntävä kehotesuunnittelu (CoT) mahdollistaa monimutkaisemman päättelyn välillisten päättelyvaiheiden avulla. Sen avulla voidaan yhdistää vähäisen ohjauksen kehottaminen parempien tulosten saamiseksi monimutkaisemmissa tehtävissä, jotka vaativat päättelyä ennen vastaamista.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.fi"
+    },
+    {
+      "slug": "cotfr",
+      "term": "Cot.fr",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Image Source: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Introduit dans [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), le prompt \"chain-of-thought\" (CoT) permet des capacités de raisonnement complexes grâce à des étapes de raisonnement intermédiaires. Vous pouvez le combiner avec des prompts à quelques exemples pour obtenir de meilleurs résultats sur des tâches plus complexes qui nécessitent un raisonnement avant de répondre.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.fr"
+    },
+    {
+      "slug": "cotit",
+      "term": "Cot.it",
+      "definition": "<Screenshot src={COT} alt=\"CoT\" /> Fonte immagine: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Introdotto in [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), il prompt a catena di pensieri (CoT) consente di ottenere capacità di ragionamento complesse attraverso fasi di ragionamento intermedie. Si può combinare con il prompt few-shot per ottenere risultati migliori su compiti più complessi che richiedono un ragionamento prima di rispondere.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.it"
+    },
+    {
+      "slug": "cotjp",
+      "term": "Cot.jp",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> [Wei et al. (2022)](https://arxiv.org/abs/2201.11903)で紹介されたchain-of-thought (CoT)プロンプティングは、中間的な推論ステップを介して複雑な推論能力を可能にします。few-shot promptingと組み合わせることで、推論が必要なより複雑なタスクでより良い結果を得ることができます。 このグループの奇数を合計すると偶数になります。: 4、8、9、15、12、2、1。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.jp"
+    },
+    {
+      "slug": "cotkr",
+      "term": "Cot.kr",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> 이미지 출처: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) [Wei et al. (2022)](https://arxiv.org/abs/2201.11903)에서 소개된 생각의 사슬(chain-of-thought, CoT) 프롬프트는 중간 추론 단계를 통해 복잡한 추론을 가능하게 합니다. 이를 단답형 프롬프트와 결합하면 응답하기 전에 추론이 필요한 복잡한 작업에서 더 나은 결과를 얻을 수 있습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.kr"
+    },
+    {
+      "slug": "cotpt",
+      "term": "Cot.pt",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Fonte da imagem: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Introduzido em [Wei et al. (2022)](https://arxiv.org/abs/2201.11903), a solicitação de cadeia de pensamento (CoT) permite recursos de raciocínio complexos por meio de etapas intermediárias de raciocínio. Você pode combiná-lo com prompts de poucos tiros para obter melhores resultados em tarefas mais complexas que exigem raciocínio antes de responder.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.pt"
+    },
+    {
+      "slug": "cotru",
+      "term": "Cot.ru",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> Источник изображения: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) Введенная в [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) техника формулировки промптов \"цепочка мыслей\" (CoT) позволяет выполнять сложные рассуждения с помощью промежуточных шагов рассуждения. Вы можете комбинировать ее с few-shot, чтобы получить лучшие результаты в более сложных задачах, требующих рассуждения перед ответом.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.ru"
+    },
+    {
+      "slug": "cottr",
+      "term": "Cot.tr",
+      "definition": "<Screenshot src={COT} alt=\"COT\"/> Resim Kaynağı: [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) [Wei et al. (2022)](https://arxiv.org/abs/2201.11903) tarafından tanıtılan düşünceler zinciri (CoT) istemleri, ara aşamalı akıl yürütme yoluyla karmaşık akıl yürütme yeteneklerini sağlar. Daha karmaşık görevlerde, yanıt vermeden önce akıl yürütme gerektiren görevlerde, daha iyi sonuçlar elde etmek için az-örnekli istemlerle birleştirebilirsiniz.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.tr"
+    },
+    {
+      "slug": "cotzh",
+      "term": "Cot.zh",
+      "definition": "<Screenshot src={COT} alt=\"COT\" /> 图片来源：[Wei等人（2022）](https://arxiv.org/abs/2201.11903) 在 [Wei等人（2022）](https://arxiv.org/abs/2201.11903) 中引入的链式思考（CoT）提示通过中间推理步骤实现了复杂的推理能力。您可以将其与少样本提示相结合，以获得更好的结果，以便在回答之前进行推理的更复杂的任务。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/cot.zh"
+    },
+    {
+      "slug": "dspca",
+      "term": "Dsp.ca",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) proposen una nova tècnica d'estimulació per guiar millor el LLM en la generació del resum desitjat. Es forma un LM de política ajustable per generar l'estímul/suggeriment. S'observa un ús més ampli de RL per optimitzar els LLM. La figura de sota mostra com l'Estimulació d'Estímuls Directius es compara amb l'estimulació estàndard. El LM de política pot ser petit i optimitzat per generar les pistes que guien un LLM congelat de caixa negra.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.ca"
+    },
+    {
+      "slug": "dspde",
+      "term": "Dsp.de",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) schlagen eine neue Prompting-Technik vor, um den LLM bei der Erzeugung der gewünschten Zusammenfassung besser zu leiten. Ein abstimmbarer Policy-LM wird trainiert, um den Stimulus/Hinweis zu generieren. Man sieht einen vermehrten Einsatz von RL, um LLMs zu optimieren. Die untenstehende Abbildung zeigt, wie sich Directional Stimulus Prompting im Vergleich zum standard Prompting verhält. Der Policy-LM kann klein sein und optimiert werden, um die Hinweise zu generieren, die einen Black-Box gefrorenen LLM leiten.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.de"
+    },
+    {
+      "slug": "dspen",
+      "term": "Dsp.en",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) proposes a new prompting technique to better guide the LLM in generating the desired summary. A tuneable policy LM is trained to generate the stimulus/hint. Seeing more use of RL to optimize LLMs. The figure below shows how Directional Stimulus Prompting compares with standard prompting. The policy LM can be small and optimized to generate the hints that guide a black-box frozen LLM.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.en"
+    },
+    {
+      "slug": "dspes",
+      "term": "Dsp.es",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) propone una nueva técnica de alineación para guiar mejor al LLM en la generación del resumen deseado. Se entrena un LM de política ajustable para generar el estímulo/pista. Se está viendo un mayor uso de RL para optimizar LLM. La figura a continuación muestra cómo el prompt de estímulo direccional se compara con el alineamiento estándar. El LM puede ser pequeño y optimizado para generar las pistas que guían a un LLM congelado de caja negra.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.es"
+    },
+    {
+      "slug": "dspfi",
+      "term": "Dsp.fi",
+      "definition": "[Li ym., (2023)](https://arxiv.org/abs/2302.11520) ehdottaa uutta kehotetekniikkaa, joka ohjaa LLM:ää paremmin halutun yhteenvedon tuottamiseen. Säädettävä menettelytapa kielimalli koulutetaan tuottamaan vihjeitä/kannusteita. Kielimallien optimointiin käytetään yhä enemmän vahvistusoppimista (Reinforcement Learning, RL). Alla oleva kuva näyttää, miten suuntaa antava kehotetekniikka vertautuu tavanomaiseen kehotetekniikkaan. Menettelytapa-kielimalli voi olla pieni ja optimoitu tuottamaan vihjeitä, jotka ohjaavat \"mustaan laatikkoon jäädytettyä\" LLM:ää.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.fi"
+    },
+    {
+      "slug": "dspfr",
+      "term": "Dsp.fr",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) propose une nouvelle technique d'incitation pour mieux guider le LLM dans la génération du résumé souhaité. Une politique accordable LM est entraînée pour générer le stimulus/indice. Voir plus d'utilisation de RL pour optimiser les LLM. La figure ci-dessous montre comment un prompt de stimulation directionnelle se compare à un prompt standard. Le LM de politique peut être petit et optimisé pour générer les conseils qui guident un LLM gelé en boîte noire.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.fr"
+    },
+    {
+      "slug": "dspit",
+      "term": "Dsp.it",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) propone una nuova tecnica di prompting per guidare meglio il LLM nella generazione del riassunto desiderato. Un LM con linea di condotta regolabile viene addestrato per generare lo stimolo/suggerimento. Si vede un maggiore uso di RL per ottimizzare gli LLM. La figura seguente mostra come il Directional Stimulus Prompting (Prompt di Stimolo Direzionale) si confronta con il prompt standard. Un LM con linea di condotta può essere piccolo e ottimizzato per generare i suggerimenti che guidano un LLM congelato black-box.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.it"
+    },
+    {
+      "slug": "dspjp",
+      "term": "Dsp.jp",
+      "definition": "[Li et al.、(2023)](https://arxiv.org/abs/2302.11520)は、望ましい要約を生成するためにLLMをより適切に誘導するための新しいプロンプティング技術を提案しています。 調整可能なポリシーLMは、刺激/ヒントを生成するためにトレーニングされます。RLの使用がLLMの最適化により多く見られるようになっています。 以下の図は、方向性刺激プロンプティング（Directional Stimulus Prompting）が標準的なプロンプティングと比較した場合の様子を示しています。ポリシーLMは小さく、ブラックボックスの凍結LLMを誘導するヒントを生成するために最適化されます。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.jp"
+    },
+    {
+      "slug": "dspkr",
+      "term": "Dsp.kr",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) 에서는 원하는 요약을 생성하는 데 있어 대규모언어모델을 더 잘 안내하는 새로운 프롬프팅 기법을 제안합니다. 조정 가능한 정책 언어모델\\(Tuneable policy LM\\)은 자극\\(stimulus\\)/힌트\\(hint\\)를 생성하도록 훈련됩니다. 대규모언어모델을 최적화하기 위해 강화 학습\\(RL\\)을 더 많이 사용하고 있습니다. 아래 그림은 방향 자극 프롬프팅(directional stimulus prompting)이 표준 프롬프팅과 어떻게 비교되는지 보여줍니다. 정책 언어모델은 블랙박스 고정 대규모언어모델\\(black-box frozen LLM\\)을 안내하는 힌트를 생성하기 위해 작게 최적화될 수 있습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.kr"
+    },
+    {
+      "slug": "dsppt",
+      "term": "Dsp.pt",
+      "definition": "[Li et al., (2023)](https://arxiv.org/abs/2302.11520) propõe uma nova técnica de solicitação para orientar melhor o LLM na geração do resumo desejado. Um LM de política sintonizável é treinado para gerar o estímulo/dica. Vendo mais uso de RL para otimizar LLMs. A figura abaixo mostra como o Prompt de Estímulo Direcional se compara ao prompt padrão. A política LM pode ser pequena e otimizada para gerar as dicas que orientam um LLM congelado em caixa preta.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.pt"
+    },
+    {
+      "slug": "dspru",
+      "term": "Dsp.ru",
+      "definition": "[Li и др., (2023)](https://arxiv.org/abs/2302.11520) предлагают новую технику формулировки запросов для более эффективного направления работы LLM при генерации желаемого саммари. Обучается настраиваемая модель языковой политики для генерации стимулов/подсказок. Заметно увеличение использования обучения с подкреплением для оптимизации LLM. На приведенном ниже изображении показано сравнение направленной стимулирующей формулировки запросов с обычной. LM может быть небольшой и оптимизирована для генерации подсказок, направляющих работу черного ящика LM.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.ru"
+    },
+    {
+      "slug": "dsptr",
+      "term": "Dsp.tr",
+      "definition": "[Li ve diğerleri., (2023)](https://arxiv.org/abs/2302.11520), LLM'nin istenen özeti oluşturmasını daha iyi yönlendiren yeni bir istem tekniği önerir. Ayarlanabilir bir politika LM'i, uyarıyı/ipucunu oluşturmak üzere eğitilir. RL'nin, LLM'leri optimize etmek için daha fazla kullanıldığını görüyoruz. Aşağıdaki şekil, Yönlendirici Uyarı İstemi'nin standart istem ile nasıl karşılaştırıldığını gösterir. Politika LM'i küçük olabilir ve bir siyah kutu dondurulmuş LLM'yi yönlendiren ipuçlarını oluşturmak üzere optimize edilebilir.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.tr"
+    },
+    {
+      "slug": "dspzh",
+      "term": "Dsp.zh",
+      "definition": "[Li 等人，（2023）](https://arxiv.org/abs/2302.11520)提出了一种新的提示技术，以更好地指导 LLM 生成所需的摘要。 训练了一个可调节的策略 LM 来生成刺激/提示。越来越多地使用RL来优化 LLM。 下图显示了方向性刺激提示与标准提示的比较。策略 LM 可以很小，并且可以优化以生成指导黑盒冻结 LLM 的提示。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/dsp.zh"
+    },
+    {
+      "slug": "fewshotca",
+      "term": "Fewshot.ca",
+      "definition": "Encara que els grans models de llenguatge demostrin capacitats notables en situacions de zero trets, encara no són suficients en tasques més complexes utilitzant aquesta configuració. L'estimulació de pocs trets es pot utilitzar com a tècnica per permetre l'aprenentatge en context, on proporcionem demostracions en l'estímul per dirigir el model cap a un millor rendiment. Les demostracions serveixen com a condicionament per als exemples posteriors on volem que el model generi una resposta. Segons [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf), les propietats de pocs trets van aparèixer primer quan els models es van escalar a una mida suficient [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361). Anem a demostrar l'estimulació de pocs trets mitjançant un exemple presentat a [Brown et al. 2020](https://arxiv.org/abs/2005.14165). En l'exemple, la tasca és utilitzar correctament una paraula nova en una frase.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.ca"
+    },
+    {
+      "slug": "fewshotde",
+      "term": "Fewshot.de",
+      "definition": "Obwohl Großsprachmodelle bemerkenswerte Fähigkeiten im Zero-Shot-Setting demonstrieren, weisen sie dennoch bei komplexeren Aufgaben Schwächen auf, wenn sie im Zero-Shot-Modus verwendet werden. Few-Shot Prompting kann als Technik eingesetzt werden, um das Lernen im Kontext zu ermöglichen, indem wir Demonstrationen im Prompt bereitstellen, um das Modell zu einer besseren Leistung zu lenken. Die Demonstrationen dienen als Konditionierung für nachfolgende Beispiele, bei denen wir möchten, dass das Modell eine Antwort generiert. Gemäß [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) traten Few-Shot-Eigenschaften zum ersten Mal auf, als die Modelle auf eine ausreichende Größe skaliert wurden [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361). Lassen Sie uns Few-Shot Prompting anhand eines Beispiels demonstrieren, das in [Brown et al. 2020](https://arxiv.org/abs/2005.14165) präsentiert wurde. In dem Beispiel geht es darum, ein neues Wort korrekt in einem Satz zu verwenden.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.de"
+    },
+    {
+      "slug": "fewshoten",
+      "term": "Fewshot.en",
+      "definition": "  src=\"https://www.youtube.com/embed/ojtbHUqw1LA?si=DPHurHTzZXm22vcN\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" While large-language models demonstrate remarkable zero-shot capabilities, they still fall short on more complex tasks when using the zero-shot setting. Few-shot prompting can be used as a technique to enable in-context learning where we provide demonstrations in the prompt to steer the model to better performance. The demonstrations serve as conditioning for subsequent examples where we would like the model to generate a response. According to [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) few shot properties first appeared when models were scaled to a sufficient size [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361).",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.en"
+    },
+    {
+      "slug": "fewshotes",
+      "term": "Fewshot.es",
+      "definition": "Si bien los modelos de lenguaje grandes demuestran capacidades notables sin entrenamiento previo (zero-shot), todavía tienen deficiencias usando esta configuración en tareas más complejas. Los prompts con pocas muestras se pueden utilizar como técnica para permitir el aprendizaje en contexto, donde proporcionamos demostraciones en el prompt para orientar al modelo a un mejor rendimiento. Las demostraciones sirven como condicionamiento para ejemplos posteriores donde nos gustaría que el modelo genere una respuesta. Según [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) este tipo de prompt apareció por primera vez cuando los modelos se escalaron a un tamaño suficiente [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361). Demostraremos los prompts con pocas muestras a través de un ejemplo que se presentó en [Brown et al. 2020](https://arxiv.org/abs/2005.14165). En el ejemplo, la tarea es usar correctamente una nueva palabra en una oración.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.es"
+    },
+    {
+      "slug": "fewshotfi",
+      "term": "Fewshot.fi",
+      "definition": "Vaikka suurten kielimallien nollakehottamisen kyvyt ovat huomattavia, ne eivät vielä pärjää monimutkaisemmissa tehtävissä käyttäen vain nollakehottamista. Vähäisen ohjauksen kehotteiden avulla voidaan mahdollistaa kontekstissa tapahtuva oppiminen tarjoamalla kehotteessa esimerkkejä mallin suorituskyvyn parantamiseksi. Esimerkit toimivat ehtona seuraaville askelille, joiden mukaisesti haluamme mallin tuottavan vastauksen. [Touvron ym. 2023](https://arxiv.org/pdf/2302.13971.pdf) mukaan vähäisen ohjauksen ominaisuudet tulivat esiin ensimmäisen kerran, kun malleja skaalattiin riittävän suuriksi [(Kaplan ym., 2020)](https://arxiv.org/abs/2001.08361). Demonstroimme vähäisen ohjauksen oppimista esimerkin avulla, joka esiteltiin [Brown et al. 2020](https://arxiv.org/abs/2005.14165) julkaisussa. Esimerkissä tehtävänä on käyttää uutta sanaa oikein lauseessa.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.fi"
+    },
+    {
+      "slug": "fewshotfr",
+      "term": "Fewshot.fr",
+      "definition": "Les modèles de langage à grande échelle démontrent des capacités impressionnantes en mode zero-shot, mais ils restent limités sur des tâches plus complexes lorsqu'ils utilisent ce mode. Le few-shot prompting peut être utilisé comme une technique pour permettre un apprentissage en contexte où nous fournissons des démonstrations dans le prompt pour orienter le modèle vers de meilleures performances. Les démonstrations servent de conditionnement pour les exemples suivants où nous aimerions que le modèle génère une réponse. Selon [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) quelques propriétés de tir sont apparues pour la première fois lorsque les modèles ont été mis à l'échelle à une taille suffisante [(Kaplan et al., 2020)](https://arxiv.org/abs /2001.08361). Montrons comment fonctionne le few-shot prompting en utilisant un exemple présenté dans [Brown et al. 2020](https://arxiv.org/abs/2005.14165).  Dans cet exemple, la tâche consiste à utiliser correctement un nouveau mot dans une phrase.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.fr"
+    },
+    {
+      "slug": "fewshotit",
+      "term": "Fewshot.it",
+      "definition": "Sebbene i modelli di grandi dimensioni dimostrino notevoli capacità di apprendimento zero-shot, non sono ancora all'altezza di compiti più complessi quando si utilizza questa impostazione. Il prompt few-shot può essere utilizzato come tecnica per consentire l'apprendimento in contesto, in cui forniamo dimostrazioni nel prompt per guidare il modello verso prestazioni migliori. Le dimostrazioni servono come condizionamento per gli esempi successivi in cui vorremmo che il modello generasse una risposta. Secondo [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) l'uso di poche proprietà appaiono per la prima volta quando i modelli vengono scalati a una dimensione sufficiente [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361). Mostriamo il prompt few-shot con un esempio presentato da [Brown et al. 2020](https://arxiv.org/abs/2005.14165). Nell'esempio, il compito consiste nell'utilizzare correttamente una nuova parola in una frase.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.it"
+    },
+    {
+      "slug": "fewshotjp",
+      "term": "Fewshot.jp",
+      "definition": "大規模言語モデルは、驚くべきゼロショット能力を示していますが、ゼロショット設定を使用した場合には、より複雑なタスクで不十分になることがあります。Few-shot promptingは、プロンプト内のデモを提供してモデルをより高い性能に導く文脈学習を可能にするテクニックとして使用できます。このデモンストレーションは、その後のモデルに反応を起こさせる例のための条件付けとなります。 [ブラウンら（2020）](https://arxiv.org/abs/2005.14165)で提示された例を用いて、few-shot promptingを実証してみましょう。この例では、新しい単語を文で正しく使用することが課題となっています。 「whatpu」とはタンザニア固有の小さくて毛皮のある動物です。 「whatpu」という言葉を使った文の例は次のとおりです。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.jp"
+    },
+    {
+      "slug": "fewshotkr",
+      "term": "Fewshot.kr",
+      "definition": "대규모언어모델은 뛰어난 제로샷(zero-shot) 기능을 보여 주지만, 복잡한 작업에서는 여전히 개선이 필요합니다. 퓨샷(few-shot) 프롬프트는 프롬프트에서 데모를 제공하여 모델이 더 나은 성능을 발휘하도록 유도하는 문맥 내 학습을 가능하게 하는 기술로 사용할 수 있습니다. 이 데모는 모델이 응답을 생성하기를 원하는 후속 예제에 대한 조건부 역할을 합니다. [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf)에 따르면 모델이 충분한 크기로 커졌을 때 [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361)에 처음으로 퓨샷 속성이 나타났습니다. [Brown et al. 2020](https://arxiv.org/abs/2005.14165)에 제시된 예제를 통해 퓨샷 프롬프트를 시연해 보겠습니다. 이 예제에서는 문장에서 새로운 단어를 올바르게 사용하는 것이 과제입니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.kr"
+    },
+    {
+      "slug": "fewshotpt",
+      "term": "Fewshot.pt",
+      "definition": "Embora os modelos de linguagem grande demonstrem recursos notáveis de disparo zero, eles ainda ficam aquém em tarefas mais complexas ao usar a configuração de disparo zero. O prompt de poucos disparos pode ser usado como uma técnica para permitir o aprendizado no contexto, onde fornecemos demonstrações no prompt para direcionar o modelo para um melhor desempenho. As demonstrações servem de condicionamento para exemplos subsequentes onde gostaríamos que o modelo gerasse uma resposta. De acordo com [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) poucas propriedades de tiro apareceram pela primeira vez quando os modelos foram dimensionados para um tamanho suficiente [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361). Vamos demonstrar a solicitação de poucos disparos por meio de um exemplo apresentado em [Brown et al. 2020](https://arxiv.org/abs/2005.14165). No exemplo, a tarefa é usar corretamente uma nova palavra em uma frase.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.pt"
+    },
+    {
+      "slug": "fewshotru",
+      "term": "Fewshot.ru",
+      "definition": "Большие языковые модели продемонстрировали впечатляющие возможности zero-shot промптинга, однако они все еще ограничены в более сложных задачах при использовании zero-shot настроек. Few-shot промптинг может использоваться в качестве техники для обеспечения контекстного обучения, когда мы предоставляем демонстрации в запросе, чтобы направить модель на более высокую производительность. Демонстрации служат в качестве контекста для последующих примеров, в которых мы хотим, чтобы модель генерировала ответ. Согласно исследованию [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf), few-shot свойства впервые появились, когда модели были масштабированы до достаточного размера [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361). Давайте продемонстрируем few-shot на примере, представленном в [Brown et al. 2020](https://arxiv.org/abs/2005.14165). В данном примере задача состоит в правильном использовании нового слова в предложении.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.ru"
+    },
+    {
+      "slug": "fewshottr",
+      "term": "Fewshot.tr",
+      "definition": "Büyük dil modelleri, sıfır örnekleme yeteneklerini göstermekte olağanüstü bir başarı sergilese de, sıfır örnekli ayarları kullanırken daha karmaşık görevlerde yetersiz kalabilirler. Az örnekli istem kullanımı, modele daha iyi bir performans için yol göstermek üzere istemde gösterimler sağlayarak duruma özgü öğrenmeyi sağlama tekniği olarak kullanılabilir. Gösterimler, modelin bir yanıt oluşturmasını istediğimiz sonraki örnekler için koşul oluşturur. [Touvron ve diğerleri 2023](https://arxiv.org/pdf/2302.13971.pdf) 'e göre, az örnekleme özellikleri, modeller yeterli boyuta ölçeklendiğinde ilk ortaya çıktı [(Kaplan ve diğerleri., 2020)](https://arxiv.org/abs/2001.08361). Az örnekli istemin kullanımını, [Brown ve diğerleri. 2020](https://arxiv.org/abs/2005.14165) 'de sunulan bir örnekle gösterelim. Bu örnekte, görev bir kelimeyi cümlede doğru şekilde kullanmaktır",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.tr"
+    },
+    {
+      "slug": "fewshotzh",
+      "term": "Fewshot.zh",
+      "definition": "虽然大型语言模型展示了惊人的零样本能力，但在使用零样本设置时，它们在更复杂的任务上仍然表现不佳。少样本提示可以作为一种技术，以启用上下文学习，我们在提示中提供演示以引导模型实现更好的性能。演示作为后续示例的条件，我们希望模型生成响应。 根据 [Touvron et al. 2023](https://arxiv.org/pdf/2302.13971.pdf) 等人的在 2023 年的论文，当模型规模足够大时，小样本提示特性开始出现 [(Kaplan et al., 2020)](https://arxiv.org/abs/2001.08361)。 让我们通过[Brown等人2020年](https://arxiv.org/abs/2005.14165)提出的一个例子来演示少样本提示。在这个例子中，任务是在句子中正确使用一个新词。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/fewshot.zh"
+    },
+    {
+      "slug": "graphca",
+      "term": "Graph.ca",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) introdueix GraphPrompt, un nou marc d'estímuls per a gràfics per millorar el rendiment en tasques de riu avall.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.ca"
+    },
+    {
+      "slug": "graphde",
+      "term": "Graph.de",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) stellen GraphPrompt vor, ein neues Prompting-Framework für Graphen, um die Leistung bei nachgelagerten Aufgaben zu verbessern.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.de"
+    },
+    {
+      "slug": "graphen",
+      "term": "Graph.en",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) introduces GraphPrompt, a new prompting framework for graphs to improve performance on downstream tasks. <CoursesSection title=\"Related Learning\">     title=\"Prompt Engineering for LLMs\"",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.en"
+    },
+    {
+      "slug": "graphes",
+      "term": "Graph.es",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) intrroduce GraphPrompt, un nuevo framework de prompt para grafos para mejorar el rendimiento en tareas posteriores.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.es"
+    },
+    {
+      "slug": "graphfi",
+      "term": "Graph.fi",
+      "definition": "[Liu ym., 2023](https://arxiv.org/abs/2302.08043) esittelee GraphPromptin, uuden kehoterakenteen graafeille, joka parantaa suorituskykyä johdannaisissa tehtävissä.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.fi"
+    },
+    {
+      "slug": "graphfr",
+      "term": "Graph.fr",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) présente GraphPrompt, un nouveau cadre d'incitation pour les graphes afin d'améliorer les performances sur les tâches en aval.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.fr"
+    },
+    {
+      "slug": "graphit",
+      "term": "Graph.it",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) presenta GraphPrompt, un nuovo framework di prompting per i grafi per migliorare le prestazioni dei compiti a valle.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.it"
+    },
+    {
+      "slug": "graphjp",
+      "term": "Graph.jp",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043)は、グラフのための新しいプロンプティングフレームワークであるGraphPromptを紹介し、下流タスクのパフォーマンスを向上させます。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.jp"
+    },
+    {
+      "slug": "graphkr",
+      "term": "Graph.kr",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043)에서는 다운스트림 작업의 성능을 개선하기 위해 그래프를 위한 새로운 프롬프팅 프레임워크인 GraphPrompt를 소개합니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.kr"
+    },
+    {
+      "slug": "graphpt",
+      "term": "Graph.pt",
+      "definition": "[Liu et al., 2023](https://arxiv.org/abs/2302.08043) introduces GraphPrompt, a new prompting framework for graphs to improve performance on downstream tasks.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.pt"
+    },
+    {
+      "slug": "graphru",
+      "term": "Graph.ru",
+      "definition": "[Liu и др., 2023](https://arxiv.org/abs/2302.08043) представляют GraphPrompt, новый фреймворк для формулировки запросов для графов, с целью повышения производительности на задачах в последующем этапе. Больше информации скоро будет представлено!",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.ru"
+    },
+    {
+      "slug": "graphtr",
+      "term": "Graph.tr",
+      "definition": "[Liu ve diğerleri, 2023](https://arxiv.org/abs/2302.08043) GraphPrompt'ı tanıtır, bu yeni bir çerçeve olup grafikler için istemleri geliştirerek ilerleyen görevlerdeki performansı artırmayı hedefler.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.tr"
+    },
+    {
+      "slug": "graphzh",
+      "term": "Graph.zh",
+      "definition": "[Liu等人，2023](https://arxiv.org/abs/2302.08043)介绍了GraphPrompt，一种新的图形提示框架，用于提高下游任务的性能。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph.zh"
+    },
+    {
+      "slug": "knowledgeca",
+      "term": "Knowledge.ca",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Font de la imatge: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Els LLM continuen millorant i una tècnica popular inclou la capacitat d'incorporar coneixement o informació per ajudar el model a fer prediccions més precises.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.ca"
+    },
+    {
+      "slug": "knowledgede",
+      "term": "Knowledge.de",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Bildquelle: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Große Sprachmodelle (LLMs) werden kontinuierlich verbessert, und eine beliebte Technik beinhaltet die Fähigkeit, Wissen oder Informationen einzubinden, um dem Modell zu helfen, genauere Vorhersagen zu treffen. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.de"
+    },
+    {
+      "slug": "knowledgeen",
+      "term": "Knowledge.en",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Image Source: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) LLMs continue to be improved and one popular technique includes the ability to incorporate knowledge or information to help the model make more accurate predictions. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.en"
+    },
+    {
+      "slug": "knowledgees",
+      "term": "Knowledge.es",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Fuente de la imagen: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Los LMs siguen siendo mejorados y una técnica popular incluye la capacidad de incorporar conocimiento o información para ayudar al modelo a hacer predicciones más precisas.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.es"
+    },
+    {
+      "slug": "knowledgefi",
+      "term": "Knowledge.fi",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Kuvan lähde: [Liu ym. 2022](https://arxiv.org/pdf/2110.08387.pdf) LLM:t kehittyvät jatkuvasti, ja yksi suosittu tekniikka on tietojen tai informaation sisällyttäminen, mikä auttaa mallia tekemään tarkempia ennusteita.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.fi"
+    },
+    {
+      "slug": "knowledgefr",
+      "term": "Knowledge.fr",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Image Source: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Les LLM continuent d'être améliorés et une technique populaire inclut la capacité d'incorporer des connaissances ou des informations pour aider le modèle à faire des prédictions plus précises.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.fr"
+    },
+    {
+      "slug": "knowledgeit",
+      "term": "Knowledge.it",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Fonte immagine: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Gli LLM continuano a essere migliorati ed una tecnica popolare include la capacità di incorporare conoscenze o informazioni per aiutare il modello a fare previsioni più accurate. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.it"
+    },
+    {
+      "slug": "knowledgejp",
+      "term": "Knowledge.jp",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> 画像ソース：[Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) LLMは引き続き改良されており、より正確な予測を行うために知識や情報を組み込む能力を持つことが一般的なテクニックの1つです。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.jp"
+    },
+    {
+      "slug": "knowledgekr",
+      "term": "Knowledge.kr",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Image Source: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) 대규모언어모델은 계속해서 개선되고 있고 인기 있는 기법 중 하나로 모델이 더 정확한 예측을 할 수 있도록 지식이나 정보를 통합하는 방법을 포함합니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.kr"
+    },
+    {
+      "slug": "knowledgept",
+      "term": "Knowledge.pt",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Image Source: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Os LLMs continuam a ser aprimorados e uma técnica popular inclui a capacidade de incorporar conhecimento ou informações para ajudar o modelo a fazer previsões mais precisas.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.pt"
+    },
+    {
+      "slug": "knowledgeru",
+      "term": "Knowledge.ru",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Источник изображения: [Liu et al. 2022](https://arxiv.org/pdf/2110.08387.pdf) Большие языковые модели постоянно совершенствуются, и одной из популярных техник является возможность интегрировать знания или информацию, чтобы помочь модели делать более точные прогнозы.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.ru"
+    },
+    {
+      "slug": "knowledgetr",
+      "term": "Knowledge.tr",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> Görsel Kaynak: [Liu ve diğerleri 2022](https://arxiv.org/pdf/2110.08387.pdf) LLM'ler geliştirilmeye devam ederken, bir teknik popüler hale geliyor: Modelin daha doğru tahminler yapabilmesi için bilgi ya da bilgiyi entegre etme yetisi. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.tr"
+    },
+    {
+      "slug": "knowledgezh",
+      "term": "Knowledge.zh",
+      "definition": "<Screenshot src={GENKNOW} alt=\"GENKNOW\" /> 图片来源：[Liu 等人 2022](https://arxiv.org/pdf/2110.08387.pdf) LLM 继续得到改进，其中一种流行的技术是能够融合知识或信息，以帮助模型做出更准确的预测。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/knowledge.zh"
+    },
+    {
+      "slug": "meta-promptingen",
+      "term": "Meta Prompting.en",
+      "definition": "Meta Prompting is an advanced prompting technique that focuses on the structural and syntactical aspects of tasks and problems rather than their specific content details. This goal with meta prompting is to construct a more abstract, structured way of interacting with large language models (LLMs), emphasizing the form and pattern of information over traditional content-centric methods. According to [Zhang et al. (2024)](https://arxiv.org/abs/2311.11482), the key characteristics of meta prompting can be summarized as follows: **1. Structure-oriented**: Prioritizes the format and pattern of problems and solutions over specific content.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/meta-prompting.en"
+    },
+    {
+      "slug": "multimodalcotca",
+      "term": "Multimodalcot.ca",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923) van proposar recentment una aproximació de prompt multimodal en cadena de pensament (CoT). El CoT tradicional es centra en la modalitat del llenguatge. En contrast, el CoT multimodal incorpora text i visió en un marc de treball de dos etapes. El primer pas implica la generació de raonaments basats en informació multimodal. Això és seguit per la segona fase, inferència de respostes, que aprofita els raonaments informatius generats. El model multimodal CoT (1B) supera el GPT-3.5 en el banc de proves ScienceQA. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.ca"
+    },
+    {
+      "slug": "multimodalcotde",
+      "term": "Multimodalcot.de",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923) schlugen kürzlich einen multimodalen Ansatz für Chain-of-Thought (CoT) Prompting vor. Traditionelles CoT konzentriert sich auf die Sprachmodalität. Im Gegensatz dazu bezieht Multimodales CoT Text und Vision in einen zweistufigen Rahmen mit ein. Der erste Schritt beinhaltet die Generierung von Begründungen basierend auf multimodalen Informationen. Darauf folgt die zweite Phase, die Inferenz der Antwort, welche die informativen generierten Begründungen nutzt. Das multimodale CoT-Modell (1B) übertrifft GPT-3.5 im ScienceQA-Benchmark. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.de"
+    },
+    {
+      "slug": "multimodalcoten",
+      "term": "Multimodalcot.en",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923) recently proposed a multimodal chain-of-thought prompting approach. Traditional CoT focuses on the language modality. In contrast, Multimodal CoT incorporates text and vision into a two-stage framework. The first step involves rationale generation based on multimodal information. This is followed by the second phase, answer inference, which leverages the informative generated rationales. The multimodal CoT model (1B) outperforms GPT-3.5 on the ScienceQA benchmark. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.en"
+    },
+    {
+      "slug": "multimodalcotes",
+      "term": "Multimodalcot.es",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923) propusieron recientemente un enfoque de generación de cadenas de pensamiento multimodales. El CoT tradicional se centra en la modalidad del lenguaje. En cambio, el CoT multimodal incorpora texto y visión en un marco de dos etapas. El primer paso implica la generación de razones basadas en información multimodal. Esto es seguido por la segunda fase, la inferencia de respuestas, que aprovecha las razones generadas informativas. El modelo CoT multimodal (1B) supera al GPT-3.5 en el banco de pruebas de ScienceQA. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.es"
+    },
+    {
+      "slug": "multimodalcotfi",
+      "term": "Multimodalcot.fi",
+      "definition": "Perinteisen ajatusketjun sijaan, joka keskittyy kieli-ilmaisuun,[Zhang ym. (2023)](https://arxiv.org/abs/2302.00923) esittivät äskettäin monimuotoinen ajatusketjukehotteen lähestymistavan. Tämä yhdistää tekstin ja näköhavainnon kaksivaiheiseen kehykseen. Ensimmäinen vaihe sisältää järjellisten perustelujen tuottamisen monimuotoisen tiedon perusteella, minkä jälkeen seuraa toinen vaihe – vastauksen päätteleminen, jossa hyödynnetään tuotettuja informatiivisia perusteluja. Monimuotoinen CoT-malli (1B) on osoittautunut tehokkaammaksi kuin GPT-3.5, erityisesti ScienceQA-vertailussa, jossa se suoriutui paremmin. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.fi"
+    },
+    {
+      "slug": "multimodalcotfr",
+      "term": "Multimodalcot.fr",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923) ont récemment proposé une approche multimodale d'incitation à la chaîne de pensée. Le CoT traditionnel se concentre sur la modalité linguistique. En revanche, le CoT multimodal intègre le texte et la vision dans un cadre en deux étapes. La première étape consiste à générer une justification basée sur des informations multimodales. Ceci est suivi par la deuxième phase, l'inférence de réponse, qui exploite les justifications informatives générées. Le modèle multimodal CoT (1B) surpasse GPT-3.5 sur le benchmark ScienceQA. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.fr"
+    },
+    {
+      "slug": "multimodalcotit",
+      "term": "Multimodalcot.it",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923) ha recentemente proposto un approccio multimodale di suggerimento a catena di pensiero. Il CoT tradizionale si concentra sulla modalità linguistica. Al contrario, Multimodal CoT incorpora testo e visione in un quadro a due fasi. Il primo passo prevede la generazione di motivazioni basate su informazioni multimodali. Questa è seguita dalla seconda fase, l'inferenza della risposta, che sfrutta le motivazioni informative generate. Il modello CoT multimodale (1B) supera GPT-3.5 sul benchmark ScienceQA. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.it"
+    },
+    {
+      "slug": "multimodalcotjp",
+      "term": "Multimodalcot.jp",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923)は、最近、マルチモーダルの思考連鎖プロンプティングアプローチを提案しました。従来のCoTは言語モダリティに焦点を当てています。対照的に、マルチモーダルCoTは、テキストとビジョンを2段階のフレームワークに組み込んでいます。最初のステップは、マルチモーダル情報に基づく理由生成です。これに続いて、情報量の多い生成された理由を活用した回答推論が行われます。 マルチモーダルCoTモデル（1B）は、ScienceQAベンチマークでGPT-3.5を上回る性能を発揮しています。 <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.jp"
+    },
+    {
+      "slug": "multimodalcotkr",
+      "term": "Multimodalcot.kr",
+      "definition": "[Zhang et al. (2023)](https://arxiv.org/abs/2302.00923)은 최근 멀티모달 생각의 사슬 프롬프팅\\(multimodal chain-of-thought prompting\\) 접근 방식을 제안했습니다. 기존의 CoT는 언어 양식\\(language modality\\)에 중점을 둡니다. 반면, 멀티모달 CoT는 텍스트와 이미지를 2단계 프레임워크에 통합합니다. 첫 번째 단계에서는 멀티모달 정보를 기반으로 근거 생성\\(rationale generation\\)을 포함합니다. 그 다음에는 두 번째 단계인 답변 추론이 이어지며, 이 단계에서는 생성된 정보적 근거들\\(informative generated rationales\\)을 활용하여 답변을 도출합니다. 멀티모달 CoT 모델(1B)은 ScienceQA 벤치마크에서 GPT-3.5보다 성능이 뛰어났습니다. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.kr"
+    },
+    {
+      "slug": "multimodalcotpt",
+      "term": "Multimodalcot.pt",
+      "definition": "[Zhang et ai. (2023)](https://arxiv.org/abs/2302.00923) propôs recentemente uma abordagem de solicitação de cadeia de pensamento multimodal. O CoT tradicional foca na modalidade de linguagem. Em contraste, o Multimodal CoT incorpora texto e visão em uma estrutura de dois estágios. A primeira etapa envolve a geração de raciocínio com base em informações multimodais. Isso é seguido pela segunda fase, inferência de respostas, que aproveita os fundamentos informativos gerados. O modelo CoT multimodal (1B) supera o GPT-3.5 no benchmark ScienceQA. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.pt"
+    },
+    {
+      "slug": "multimodalcotru",
+      "term": "Multimodalcot.ru",
+      "definition": "[Zhang и др. (2023)](https://arxiv.org/abs/2302.00923) недавно предложили подход мультимодальной формулировки цепочки мыслей (Multimodal CoT). Традиционная цепочка мыслей сосредоточена на языковой модальности. В отличие от этого, мультимодальная цепочка мыслей объединяет текст и визуальную информацию в двухэтапной структуре. Первый шаг включает генерацию обоснований на основе мультимодальной информации. Затем следует второй этап – вывод ответа, в котором используются информативные созданные обоснования. Модель мультимодальной цепочки мыслей (1B) превосходит GPT-3.5 на бенчмарке ScienceQA. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.ru"
+    },
+    {
+      "slug": "multimodalcottr",
+      "term": "Multimodalcot.tr",
+      "definition": "[Zhang ve diğerleri (2023)](https://arxiv.org/abs/2302.00923) yakın zamanda bir çok modlu düşünce zinciri istemleme yaklaşımı önerdi. Geleneksel CoT dil modalitesine odaklanır. Buna karşın, Çok Modlu CoT metni ve görüntüyü iki aşamalı bir çerçeve içine alır. İlk adım, çok modlu bilgilere dayalı olarak mantıklı bir dayanak oluşturmaktır. Bunu, bilgi içeren üretilmiş dayanakları kullanmanın avantajlarından yararlanan ikinci aşama, yanıt çıkarımı, takip eder. Çok modlu CoT modeli (1B), ScienceQA benchmark'ında GPT-3.5'ı geride bırakır. <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.tr"
+    },
+    {
+      "slug": "multimodalcotzh",
+      "term": "Multimodalcot.zh",
+      "definition": "最近，[Zhang等人（2023）](https://arxiv.org/abs/2302.00923)提出了一种多模态思维链提示方法。传统的思维链提示方法侧重于语言模态。相比之下，多模态思维链提示将文本和视觉融入到一个两阶段框架中。第一步涉及基于多模态信息的理性生成。接下来是第二阶段的答案推断，它利用生成的理性信息。 多模态CoT模型（1B）在ScienceQA基准测试中的表现优于GPT-3.5。 <Screenshot src={MCOT} alt=\"MCOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodalcot.zh"
+    },
+    {
+      "slug": "palca",
+      "term": "Pal.ca",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) presenta un mètode que utilitza LLMs per llegir problemes en llenguatge natural i generar programes com a passos intermedis de raonament. Anomenats models de llenguatge assistits per programa (PAL), difereix de l'encadenament de pensaments en el sentit que, en lloc d'utilitzar text de forma lliure per obtenir una solució, delega el pas de la solució a un temps d'execució programàtic, com un intèrpret de Python. <Screenshot src={PAL} alt=\"PAL\" /> Font de la imatge: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.ca"
+    },
+    {
+      "slug": "palde",
+      "term": "Pal.de",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) präsentieren eine Methode, die LLMs verwendet, um natürlichsprachliche Probleme zu lesen und Programme als Zwischenschritte des Reasonings zu erzeugen. Diese als Program-Aided Language Models (PAL) bezeichneten Modelle unterscheiden sich vom Chain-of-Thought Prompting darin, dass sie anstelle von frei formuliertem Text einen programmierten Laufzeitumgebung, wie etwa einen Python-Interpreter, zur Lösungsfindung heranziehen. <Screenshot src={PAL} alt=\"PAL\" /> Bildquelle: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.de"
+    },
+    {
+      "slug": "palen",
+      "term": "Pal.en",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) presents a method that uses LLMs to read natural language problems and generate programs as the intermediate reasoning steps. Coined, program-aided language models (PAL), it differs from chain-of-thought prompting in that instead of using free-form text to obtain solution it offloads the solution step to a programmatic runtime such as a Python interpreter. <Screenshot src={PAL} alt=\"PAL\" /> Image Source: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.en"
+    },
+    {
+      "slug": "pales",
+      "term": "Pal.es",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) presenta un método que utiliza LLMs para leer problemas en lenguaje natural y generar programas como pasos intermedios de razonamiento. Llamado modelos de lenguaje asistidos por programa (PAL), difiere del prompting en cadena de pensamiento en que, en lugar de utilizar texto libre para obtener una solución, desplaza el paso de la solución a un tiempo de ejecución programático, como un intérprete de Python. <Screenshot src={PAL} alt=\"PAL\" /> Image Source: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.es"
+    },
+    {
+      "slug": "palfi",
+      "term": "Pal.fi",
+      "definition": "[Gao ym., (2022)](https://arxiv.org/abs/2211.10435) esittelee menetelmän, joka käyttää LLM:ää luonnollisen kielen ongelmien lukemiseen ja hyödyntää ohjelmistoja välivaiheen päättelyn generointiin. Ratkaisua kutsututaan ohjelma-avusteiseksi kielimalliksi (Program-Aided Language Model, PAL), ja se eroaa ajatusketjukehotteesta siten, että sen sijaan että se käyttää vapaamuotoista tekstiä ratkaisun saamiseksi, se siirtävää ratkaisuvaiheen ohjelmalliselle suoritusympäristölle, kuten Python-tulkille. <Screenshot src={PAL} alt=\"PAL\" /> Kuvan lähde: [Gao ym., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.fi"
+    },
+    {
+      "slug": "palfr",
+      "term": "Pal.fr",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) présente une méthode qui utilise des LLM pour lire des problèmes en langage naturel et générer des programmes en tant qu'étapes de raisonnement intermédiaires. Appelé modèles de langage assistés par programme (PAL), cela diffère de la stimulation de la chaîne de pensée dans la mesure où, au lieu d'utiliser du texte libre pour obtenir une solution, il décharge l'étape de solution vers un environnement d'exécution programmable tel qu'un interpréteur Python. <Screenshot src={PAL} alt=\"PAL\" /> Image Source: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.fr"
+    },
+    {
+      "slug": "palit",
+      "term": "Pal.it",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) presenta un metodo che utilizza gli LLM per leggere problemi in linguaggio naturale e generare programmi come passaggi di ragionamento intermedi. Denominato PAL (Program-Aided Language Model), si differenzia dal prompt a catena di pensiero (CoT) perché, invece di utilizzare testo in forma libera per ottenere la soluzione, delega il passo della soluzione a un runtime programmatico come un interprete Python. <Screenshot src={PAL} alt=\"PAL\" /> Fonte immagine: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.it"
+    },
+    {
+      "slug": "paljp",
+      "term": "Pal.jp",
+      "definition": "[Gao et al.,（2022）](https://arxiv.org/abs/2211.10435)は、自然言語の問題を読み取り、プログラムを中間推論ステップとして生成するためにLLMを使用する方法を示しています。プログラム支援言語モデル（PAL）と呼ばれ、解決策を取得するための自由形式テキストの代わりに、Pythonインタプリタのようなプログラム実行時に解決ステップをオフロードします。 <Screenshot src={PAL} alt=\"PAL\" /> Image Source: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.jp"
+    },
+    {
+      "slug": "palkr",
+      "term": "Pal.kr",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435)는 LLM을 이용하여 자연어 문제를 읽고 중간 추론 단계로서의 프로그램을 생성하는 방법을 제시합니다. 그 방법은 프로그램지원언어모델(program-aided language models; PAL)이라고 이름 붙었으며, 해답을 얻기 위해 자유 형식 텍스트를 사용하는 대신 Python 인터프리터와 같은 프로그래밍 방식의 런타임을 통해 단계적으로 해결해 나간다는 점에서 생각의 사슬(chain-of-thought) 프롬프팅과 차이가 있습니다. <Screenshot src={PAL} alt=\"PAL\" /> 이미지 출처: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.kr"
+    },
+    {
+      "slug": "palpt",
+      "term": "Pal.pt",
+      "definition": "[Gao et al., (2022)](https://arxiv.org/abs/2211.10435) apresenta um método que usa LLMs para ler problemas de linguagem natural e gerar programas como etapas intermediárias de raciocínio. Modelos de linguagem auxiliados por programa (PAL) cunhados, diferem da solicitação de cadeia de pensamento porque, em vez de usar texto de formato livre para obter a solução, transfere a etapa da solução para um tempo de execução programático, como um interpretador Python. <Screenshot src={PAL} alt=\"PAL\" /> Fonte da imagem: [Gao et al., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.pt"
+    },
+    {
+      "slug": "palru",
+      "term": "Pal.ru",
+      "definition": "[Gao и др., (2022)](https://arxiv.org/abs/2211.10435) представляют метод, который использует LLM-модели для чтения проблем естественного языка и генерации программ в качестве промежуточных шагов рассуждения. Названные \"program-aided language models\" (PAL), они отличаются от цепочки мыслей в том, что вместо использования свободного текста для получения решения они передают этот шаг решения в программное окружение, такое как интерпретатор Python. <Screenshot src={PAL} alt=\"PAL\" /> Источник изображения: [Gao и др., (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.ru"
+    },
+    {
+      "slug": "paltr",
+      "term": "Pal.tr",
+      "definition": "[Gao ve ekibi, (2022)](https://arxiv.org/abs/2211.10435), doğal dil problemlerini okumak ve ara adım olarak önermeleri oluşturmak için LLM'leri kullanan bir metod sunmuştur. Program destekli dil modelleri (PAL) olarak adlandırılan bu yöntem, çözümü Python yorumlayıcısı gibi programlamaya dayalı bir çalışma zamanına devrederek, düşünce zinciri isteminin serbest formatta çözüm elde etme yönteminden farklıdır.  <Screenshot src={PAL} alt=\"PAL\" /> Resim Kaynağı: [Gao ve ekibi, (2022)](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.tr"
+    },
+    {
+      "slug": "palzh",
+      "term": "Pal.zh",
+      "definition": "[Gao 等人（2022）](https://arxiv.org/abs/2211.10435)提出了一种使用 LLMs 读取自然语言问题并生成程序作为中间推理步骤的方法。被称为程序辅助语言模型（PAL），它与思维链提示不同，因为它不是使用自由形式文本来获得解决方案，而是将解决步骤卸载到类似 Python 解释器的编程运行时中。 <Screenshot src={PAL} alt=\"PAL\" /> 图片来源：[Gao 等人（2022）](https://arxiv.org/abs/2211.10435)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/pal.zh"
+    },
+    {
+      "slug": "prompt_chainingca",
+      "term": "Prompt_chaining.ca",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.ca"
+    },
+    {
+      "slug": "prompt_chainingde",
+      "term": "Prompt_chaining.de",
+      "definition": "Um die Zuverlässigkeit und Leistung von LLMs zu verbessern, ist eine der wichtigen Techniken des Promptings, Aufgaben in ihre Unteraufgaben zu zerlegen. Nachdem diese Unteraufgaben identifiziert wurden, wird das LLM mit einer Unteraufgabe gepromptet und seine Antwort dann als Input für ein weiteres Prompt verwendet. Dies wird als Prompt-Verkettung bezeichnet, bei der eine Aufgabe in Unteraufgaben aufgeteilt wird mit der Idee, eine Kette von Prompt-Operationen zu erstellen. Die Prompt-Verkettung ist nützlich, um komplexe Aufgaben zu bewältigen, bei denen ein LLM Schwierigkeiten haben könnte, wenn es mit einem sehr detaillierten Prompt konfrontiert wird. Bei der Prompt-Verkettung führen kettengebundene Prompts Transformationen oder zusätzliche Prozesse an den generierten Antworten durch, bevor ein endgültiger gewünschter Zustand erreicht wird. Neben der Erzielung besserer Leistung hilft die Prompt-Verkettung dabei, die Transparenz Ihrer LLM-Anwendung zu steigern, die Kontrollierbarkeit und Zuverlässigkeit zu erhöhen. Das bedeutet, dass Sie Probleme mit Modellantworten viel leichter debuggen und die Leistung in den verschiedenen Stadien, die Verbesserung benötigen, analysieren und verbessern können.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.de"
+    },
+    {
+      "slug": "prompt_chainingen",
+      "term": "Prompt_chaining.en",
+      "definition": "  src=\"https://www.youtube.com/embed/CKZC5RigYEc?si=EG1kHf83ceawWdHX\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" To improve the reliability and performance of LLMs, one of the important prompt engineering techniques is to break tasks into its subtasks. Once those subtasks have been identified, the LLM is prompted with a subtask and then its response is used as input to another prompt. This is what's referred to as prompt chaining, where a task is split into subtasks with the idea to create a chain of prompt operations. Prompt chaining is useful to accomplish complex tasks which an LLM might struggle to address if prompted with a very detailed prompt. In prompt chaining, chain prompts perform transformations or additional processes on the generated responses before reaching a final desired state. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.en"
+    },
+    {
+      "slug": "prompt_chaininges",
+      "term": "Prompt_chaining.es",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.es"
+    },
+    {
+      "slug": "prompt_chainingfi",
+      "term": "Prompt_chaining.fi",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.fi"
+    },
+    {
+      "slug": "prompt_chainingfr",
+      "term": "Prompt_chaining.fr",
+      "definition": "Pour améliorer la fiabilité et les performances des LLMs, l'une des techniques de prompt engineering les plus importantes consiste à diviser les tâches en sous-tâches. Une fois les sous-tâches identifiées, le LLM est d'abord confronté à une sous-tâche puis la réponse générée est utilisée dans une autre prompt. Cette méthode est appelée prompt chaining, où une tâche est divisée en sous-tâches dans le but de créer une chaîne d'opérations de prompts. Le prompt chaining est utile pour accomplir des tâches complexes qu'un LLM pourrait avoir du mal à traiter s'il lui était donné une prompt très détaillée. Dans le prompt chaining, les chaines de prompts effectuent des transformations ou des processus additionnels sur les réponses générées avant d'atteindre l'état final désiré.  En plus d'atteindre de meilleures performances, le prompt chaining aide à rendre les LLM plus transparents, augmente leur contrôlabilité et leur fiabilité. Cela signifie que vous pouvez débugger des problèmes avec les réponses de ces modèles plus facilement ainsi qu'analyser et améliorer les performances dans les différentes étapes qui en ont besoin.  ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.fr"
+    },
+    {
+      "slug": "prompt_chainingit",
+      "term": "Prompt_chaining.it",
+      "definition": "Per migliorare l'affidabilità e le prestazioni degli LLM, una delle principali tecniche di prompting consiste nel suddividere i compiti in sottocompiti. Una volta identificati i sottocompiti, all'LLM viene dato un prompt per il sottocompito e poi la sua risposta viene utilizzata come input per un altro prompt. Si tratta del cosiddetto prompt chaining (concatenamento di prompt), in cui un compito viene suddiviso in sottocompiti con l'idea di creare una catena di operazioni di prompt. Il concatenamento dei prompt è utile per realizzare compiti complessi che un LLM potrebbe faticare ad affrontare se sollecitato con un prompt molto dettagliato. Nel concatenamento di prompt, i prompt della catena eseguono trasformazioni o processi aggiuntivi sulle risposte generate prima di raggiungere lo stato finale desiderato.  Oltre a ottenere prestazioni migliori, il concatenamento di prompt contribuisce a migliorare la trasparenza della vostra applicazione LLM, aumentando la controllabilità e l'affidabilità. Ciò significa che è possibile eseguire il debug dei problemi con le risposte del modello in modo molto più semplice e analizzare e migliorare le prestazioni nelle diverse fasi che necessitano di miglioramenti.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.it"
+    },
+    {
+      "slug": "prompt_chainingjp",
+      "term": "Prompt_chaining.jp",
+      "definition": "LLMの信頼性と性能を向上させるために、重要な手法の一つとして、タスクを複数のサブタスクに分割することがあります。これらのサブタスクが特定されると、LLMはそれぞれに対してプロンプトを出し、その回答を次のプロンプトの入力として利用します。これをプロンプト・チェイニングと呼び、タスクをサブタスクに分割してプロンプトの連鎖を作ることが目的です。 この方法は、LLMが一度に扱うには複雑すぎる詳細なプロンプトに対処する際に有効です。プロンプトを連鎖させることで、望ましい最終結果に到達する前に、生成された応答に対して変更や追加の処理を行うことができます。プロンプトの連鎖はパフォーマンスを向上させるだけでなく、LLMアプリケーションの透明性を高め、より良い制御性と信頼性を実現するのに役立ちます。これにより、モデルの応答に関する問題を簡単にデバッグし、改善が必要な各段階のパフォーマンスを分析して改善することが可能になります。特に、LLMを使った会話アシスタントを構築し、アプリケーションのパーソナライズとユーザーエクスペリエンスを向上させる際にプロンプト・チェイニングは有効です。 プロンプト・チェイニングは、さまざまな操作や変換を伴うシナリオで利用可能です。例として、LLMの一般的な用途のひとつに、長い文章に基づいた質問に答えることがあります。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.jp"
+    },
+    {
+      "slug": "prompt_chainingkr",
+      "term": "Prompt_chaining.kr",
+      "definition": "LLM의 안정성과 성능을 개선하기 위해 중요한 프롬프트 엔지니어링 기법 중 하나는 작업을 하위 작업으로 분할하는 것입니다. 이러한 하위 작업이 식별되면 LLM에 하위 작업에 대한 프롬프트가 표시되고 그 응답이 다른 프롬프트의 입력으로 사용됩니다. 프롬프트 연쇄라는 개념으로 작업을 하위 작업으로 분할하여 프롬프트 작업의 연쇄를 만드는 것을 프롬프트 체이닝 이라고 합니다. 프롬프트 체이닝은 매우 상세한 프롬프트로 프롬프트를 보낼 경우 LLM이 처리하기 어려울 수 있는 복잡한 작업을 수행하는 데 유용합니다. 프롬프트 체이닝에서 프롬프트는 최종 원하는 상태에 도달하기 전에 생성된 응답에 대해 변환 또는 추가 프로세스를 수행합니다.  프롬프트 체이닝은 더 나은 성능을 달성하는 것 외에도 LLM 애플리케이션의 투명성을 높이고 제어 가능성 및 안정성을 높이는 데 도움이 됩니다. 즉, 모델 응답의 문제를 훨씬 쉽게 디버그하고 개선이 필요한 여러 단계의 성능을 분석하고 개선할 수 있습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.kr"
+    },
+    {
+      "slug": "prompt_chainingpt",
+      "term": "Prompt_chaining.pt",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.pt"
+    },
+    {
+      "slug": "prompt_chainingru",
+      "term": "Prompt_chaining.ru",
+      "definition": "Для повышения надежности и производительности LLM, одним из важных приемов промпт-инжиниринга является разбиение задачи на подзадачи. После того как эти подзадачи определены, для LLM предлогаются подзадачи, а затем ее ответ используется в качестве входных данных для другого запроса. Это то, что называется Создание цепочек промптов, когда задача разбивается на подзадачи с целью создания цепочки операций промптов. Создание цепочек промтов полезно для решения сложных задач, которые LLM может с трудом решить, если будет предложен очень большой промпт. При создание цепочки промптов, цепочки промптов выполняют преобразования или дополнительные процессы над сгенерированными ответами, прежде чем достичь конечного желаемой формы. Помимо повышения производительности, цепочки промптов помогают повысить прозрачность вашего применения LLM, повышает управляемость и надежность. Это означает, что вы можете гораздо проще отлаживать проблемы с ответами модели, а также анализировать и улучшать производительность на различных этапах, которые нуждаются в улучшении.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.ru"
+    },
+    {
+      "slug": "prompt_chainingtr",
+      "term": "Prompt_chaining.tr",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.tr"
+    },
+    {
+      "slug": "prompt_chainingzh",
+      "term": "Prompt_chaining.zh",
+      "definition": "为了提高大语言模型的性能使其更可靠，一个重要的提示工程技术是将任务分解为许多子任务。 确定子任务后，将子任务的提示词提供给语言模型，得到的结果作为新的提示词的一部分。 这就是所谓的链式提示（prompt chaining），一个任务被分解为多个子任务，根据子任务创建一系列提示操作。   src=\"https://www.youtube.com/embed/CKZC5RigYEc?si=EG1kHf83ceawWdHX\"    allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\"",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/prompt_chaining.zh"
+    },
+    {
+      "slug": "ragca",
+      "term": "Rag.ca",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.ca"
+    },
+    {
+      "slug": "ragde",
+      "term": "Rag.de",
+      "definition": "Allgemeine Sprachmodelle können feinabgestimmt werden, um mehrere gängige Aufgaben wie Sentiment-Analyse und Erkennung von Entitäten zu realisieren. Diese Aufgaben erfordern in der Regel kein zusätzliches Hintergrundwissen. Für komplexere und wissensintensive Aufgaben ist es möglich, ein auf Sprachmodellen basierendes System zu entwickeln, das Zugang zu externen Wissensquellen hat, um Aufgaben zu vervollständigen. Dies ermöglicht eine höhere faktische Konsistenz, verbessert die Zuverlässigkeit generierter Antworten und hilft, das Problem der \"Halluzination\" abzumildern. Meta AI-Forscher haben eine Methode namens [Retrieval Augmented Generation (RAG)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) eingeführt, um solche wissensintensiven Aufgaben anzugehen. RAG kombiniert eine Informationsabrufkomponente mit einem Textgenerator-Modell. RAG kann feinabgestimmt und sein internes Wissen kann auf effiziente Weise und ohne Neutraining des gesamten Modells geändert werden.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.de"
+    },
+    {
+      "slug": "ragen",
+      "term": "Rag.en",
+      "definition": "General-purpose language models can be fine-tuned to achieve several common tasks such as sentiment analysis and named entity recognition. These tasks generally don't require additional background knowledge. For more complex and knowledge-intensive tasks, it's possible to build a language model-based system that accesses external knowledge sources to complete tasks. This enables more factual consistency, improves reliability of the generated responses, and helps to mitigate the problem of \"hallucination\".  Meta AI researchers introduced a method called [Retrieval Augmented Generation (RAG)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) to address such knowledge-intensive tasks. RAG combines an information retrieval component with a text generator model. RAG can be fine-tuned and its internal knowledge can be modified in an efficient manner and without needing retraining of the entire model. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.en"
+    },
+    {
+      "slug": "rages",
+      "term": "Rag.es",
+      "definition": "Los modelos de lenguaje de propósito general pueden ajustarse para realizar varias tareas comunes, como el análisis de sentimientos y el reconocimiento de entidades nombradas. Por lo general, estas tareas no requieren conocimientos adicionales de fondo. Para tareas más complejas y que requieren un mayor conocimiento, es posible construir un sistema basado en un modelo de lenguaje que acceda a fuentes de conocimiento externas para completar las tareas. Esto permite una mayor consistencia factual, mejora la fiabilidad de las respuestas generadas y ayuda a mitigar el problema de la \"alucinación\". Los investigadores de Inteligencia Artificial de Meta introdujeron un método llamado [Generación de Recuperación Aumentada (RAG, por sus siglas en inglés)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) para abordar estas tareas que requieren un mayor conocimiento. RAG combina un componente de recuperación de información con un modelo generador de texto. RAG puede ajustarse con precisión y su conocimiento interno puede modificarse de manera eficiente sin necesidad de volver a entrenar todo el modelo.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.es"
+    },
+    {
+      "slug": "ragfi",
+      "term": "Rag.fi",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.fi"
+    },
+    {
+      "slug": "ragfr",
+      "term": "Rag.fr",
+      "definition": "En anglais : \"Retrieval Augmented Generation\", communément abrégé en RAG Les modèles de langage polyvalents peuvent être affinés pour réaliser plusieurs tâches courantes telles que l'analyse de sentiments et la reconnaissance d'entités nommées. Ces tâches ne nécessitent généralement pas de connaissances supplémentaires. Pour des tâches plus complexes et exigeantes en connaissances, il est possible de construire un système basé sur un modèle de langage qui accède à des sources de connaissances externes pour compléter les tâches. Cela permet une plus grande cohérence factuelle, améliore la fiabilité des réponses générées et aide à atténuer le problème des \"hallucinations\".",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.fr"
+    },
+    {
+      "slug": "ragit",
+      "term": "Rag.it",
+      "definition": "I modelli di linguaggio di uso generale possono essere messi a punto per svolgere diversi compiti comuni come l'analisi del sentimento e il riconoscimento delle entità denominate. Questi compiti generalmente non richiedono conoscenze di base aggiuntive. Per compiti più complessi e che richiedono molte conoscenze, è possibile costruire un sistema basato su un modello di linguaggio che acceda a fonti di conoscenza esterne per completare i compiti. Questo consente una maggiore coerenza dei fatti, migliora l'affidabilità delle risposte generate e aiuta a mitigare il problema dell'\"allucinazione\". I ricercatori di Meta AI hanno introdotto un metodo chiamato [Generazione potenziata dal recupero (RAG)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) per affrontare tali compiti che richiedono molte conoscenze. RAG combina una componente di recupero delle informazioni con un modello generatore di testo. RAG può essere perfezionato e la sua conoscenza interna può essere modificata in modo efficiente e senza la necessità di riaddestrare l'intero modello.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.it"
+    },
+    {
+      "slug": "ragjp",
+      "term": "Rag.jp",
+      "definition": "汎用の言語モデルは、感情分析や名前付きエンティティ認識など、いくつかの一般的なタスクを達成するためにファインチューニングすることができます。これらのタスクは一般的に、追加の背景知識を必要としません。 より複雑で知識集約的なタスクの場合、タスクを完遂するために外部の知識ソースにアクセスする言語モデルベースのシステムを構築することができます。これによって、より事実との整合性を向上させ、生成される回答の信頼性が向上し、「幻覚(hallucination)」の問題を軽減することができます。 Meta AI の研究者は、このような知識集約型のタスクに対処するために、[RAG（Retrieval Augmented Generation）](https://ai.meta.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/)と呼ばれる手法を考案しました。RAG は情報検索コンポーネントとテキスト生成モデルを組み合わせたものです RAG はファインチューニングが可能で、モデル全体の再トレーニングを必要とせず、効率的な方法で内部の知識を変更することができます。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.jp"
+    },
+    {
+      "slug": "ragkr",
+      "term": "Rag.kr",
+      "definition": "General-purpose 언어 모델은 일반적인 작업을 달성하도록 감정 분석 및 명명된 엔티티 인식을 미세 조정 할 수 있습니다. 이러한 작업에는 일반적으로 추가적인 배경지식이 필요하지 않습니다. 더 복잡한 지식을 모아 요약하는 작업의 경우 외부 지식 소스에 액세스하여 완료하는 언어 모델 기반 시스템을 구축할 수 있습니다. 이를 통해 사실적 일관성을 높이고, 생성된 응답의 신뢰성을 향상시키며, \"환각\" 문제를 완화하는 데 도움이 됩니다. Meta AI 연구원들은 이러한 지식을 모아 요약하는 작업을 해결하기 위해 [Retrieval Augmented Generation (RAG)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) 라는 방법을 도입했습니다. RAG는 정보 구성 요소를 글자 생성기 모델과 결합합니다. RAG는 미세 조정이 가능하며 전체 모델을 재교육할 필요 없이 내부 지식을 효율적으로 수정할 수 있습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.kr"
+    },
+    {
+      "slug": "ragpt",
+      "term": "Rag.pt",
+      "definition": "Os modelos de linguagem de uso geral podem ser ajustados para alcançar várias tarefas comuns, como análise de sentimento e reconhecimento de entidades nomeadas. Essas tarefas geralmente não exigem conhecimento adicional. Para tarefas mais complexas e intensivas em conhecimento, é possível construir um sistema baseado em modelo de linguagem que acessa fontes de conhecimento externas para concluir tarefas. Isso possibilita maior consistência factual, melhora a confiabilidade das respostas geradas e ajuda a mitigar o problema de \"alucinação\". Pesquisadores de Meta IA introduziram um método chamado [Geração com Recuperação Aprimorada (RAG)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) para lidar com tarefas intensivas em conhecimento. O RAG combina um componente de recuperação de informações com um modelo gerador de texto. O RAG pode ser ajustado e seu conhecimento interno pode ser modificado de maneira eficiente e sem a necessidade de re-treinar todo o modelo.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.pt"
+    },
+    {
+      "slug": "ragru",
+      "term": "Rag.ru",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.ru"
+    },
+    {
+      "slug": "ragtr",
+      "term": "Rag.tr",
+      "definition": "Genel amaçlı dil modelleri, duygu analizi ve isimli varlık tanıma gibi birçok ortak görevi gerçekleştirmek için ince ayar yapılabilir. Bu görevler genellikle ek bilgi gerektirmez. Daha karmaşık ve bilgi yoğun görevler için, görevleri tamamlamak amacıyla dış bilgi kaynaklarına erişen bir dil modeli tabanlı sistem oluşturmak mümkün olabilir. Bu durum, daha fazla gerçeklik tutarlılığı sağlar, oluşturulan yanıtların güvenilirliğini artırır ve \"halüsinasyon\" sorununu hafifletmeye yardımcı olur. Meta AI araştırmacıları, bu tür bilgi yoğun görevleri ele almak amacıyla [Veri Alımı Artırılmış Üretim (RAG)](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/) adlı bir yöntem tanıttılar. RAG, bir bilgi alma bileşenini bir metin üreteci modeli ile birleştirir. RAG'ın ince ayarı yapılabilir ve iç bilgisi, tüm modelin yeniden eğitimine gerek kalmadan verimli bir şekilde değiştirilebilir.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.tr"
+    },
+    {
+      "slug": "ragzh",
+      "term": "Rag.zh",
+      "definition": "通用语言模型通过微调就可以完成几类常见任务，比如分析情绪和识别命名实体。这些任务不需要额外的背景知识就可以完成。 要完成更复杂和知识密集型的任务，可以基于语言模型构建一个系统，访问外部知识源来做到。这样的实现与事实更加一性，生成的答案更可靠，还有助于缓解“幻觉”问题。 Meta AI 的研究人员引入了一种叫做[检索增强生成（Retrieval Augmented Generation，RAG）](https://ai.facebook.com/blog/retrieval-augmented-generation-streamlining-the-creation-of-intelligent-natural-language-processing-models/)的方法来完成这类知识密集型的任务。RAG 把一个信息检索组件和文本生成模型结合在一起。RAG 可以微调，其内部知识的修改方式很高效，不需要对整个模型进行重新训练。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/rag.zh"
+    },
+    {
+      "slug": "reactca",
+      "term": "React.ca",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) van presentar un marc anomenat ReAct on els LLMs s'utilitzen per generar tant *rastres de raonament* com *accions específiques de la tasca* de manera entrellaçada. Generar rastres de raonament permet al model induir, seguir i actualitzar els plans d'acció, i fins i tot gestionar les excepcions. El pas d'acció permet interactuar amb i obtenir informació de fonts externes, com ara bases de coneixement o entorns. El marc ReAct pot permetre que els LLMs interactuïn amb eines externes per recuperar informació addicional que condueix a respostes més fiables i basades en fets.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.ca"
+    },
+    {
+      "slug": "reactde",
+      "term": "React.de",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) stellten ein Framework namens ReAct vor, bei dem LLMs zur Erzeugung von *Reasoning Traces* (Denkpfaden) und *task-spezifischen Aktionen* in einer verzahnten Weise verwendet werden. Das Erzeugen von Reasoning Traces ermöglicht es dem Modell, Handlungspläne zu induzieren, zu verfolgen, zu aktualisieren und sogar Ausnahmen zu behandeln. Der Aktionsschritt ermöglicht es, Schnittstellen mit externen Quellen, wie Wissensdatenbanken oder Umgebungen, zu nutzen und Informationen von dort zu sammeln. Das ReAct Framework kann es LLMs ermöglichen, mit externen Werkzeugen zu interagieren, um zusätzliche Informationen abzurufen, die zu verlässlicheren und faktischeren Antworten führen.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.de"
+    },
+    {
+      "slug": "reacten",
+      "term": "React.en",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) introduced a framework named ReAct where LLMs are used to generate both *reasoning traces* and *task-specific actions* in an interleaved manner.  Generating reasoning traces allow the model to induce, track, and update action plans, and even handle exceptions. The action step allows to interface with and gather information from external sources such as knowledge bases or environments. The ReAct framework can allow LLMs to interact with external tools to retrieve additional information that leads to more reliable and factual responses.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.en"
+    },
+    {
+      "slug": "reactes",
+      "term": "React.es",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) presentón un framework donde los LLM se utilizan para generar trazas de razonamiento y acciones específicas de la tarea de manera intercalada. La generación de trazas de razonamiento permite que el modelo induzca, haga seguimiento y actualice planes de acción, incluso manejar excepciones. El paso de acción permite interactuar y recopilar información de fuentes externas, como bases de conocimiento o entornos El framework ReAct framework permite a los LLMs interactuar con herramientas externals para recuperar información adicional que produzca respuestas mas fiables y fácticas. <Screenshot src={REACT} alt=\"REACT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.es"
+    },
+    {
+      "slug": "reactfi",
+      "term": "React.fi",
+      "definition": "[Yao ym., 2022](https://arxiv.org/abs/2210.03629) esittelevät ReAct-nimisen kehyksen, jossa LLM:ää käytetään sekä päättelyketjujen että tehtäväkohtaisten toimintojen tuottamiseen lomittain.  Päättelyketjujen tuottaminen mahdollistaa mallin toimintasuunnitelmien induktion, seurannan ja päivittämisen sekä jopa poikkeusten käsittelyn. Toimintavaihe mahdollistaa tiedon keräämisen ulkoisista lähteistä, kuten tietokannoista tai muista ympäristöistä. ReAct-kehys voi mahdollistaa LLM:ien vuorovaikutuksen ulkoisten työkalujen kanssa lisätiedon hankkimiseksi, mikä johtaa luotettavampiin ja tosiasiallisempiin vastauksiin.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.fi"
+    },
+    {
+      "slug": "reactfr",
+      "term": "React.fr",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) a introduit un cadre dans lequel les LLM sont utilisées pour générer à la fois des traces de raisonnement et des actions spécifiques à une tâche de manière entrelacée. La génération de traces de raisonnement permet au modèle d'induire, de suivre et de mettre à jour des plans d'action, et même de gérer des exceptions. L'étape d'action permet de s'interfacer et de recueillir des informations provenant de sources externes telles que des bases de connaissances ou des environnements. Le cadre ReAct peut permettre aux LLM d'interagir avec des outils externes pour récupérer des informations supplémentaires qui conduisent à des réponses plus fiables et factuelles. <Screenshot src={REACT} alt=\"REACT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.fr"
+    },
+    {
+      "slug": "reactit",
+      "term": "React.it",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) ha introdotto un framework in cui gli LLM vengono utilizzati per generare sia tracce di ragionamento che azioni specifiche dell'attività in modo intercalato. La generazione di tracce di ragionamento consente al modello di indurre, tenere traccia e aggiornare i piani d'azione e persino di gestire le eccezioni. La fase di azione consente di interfacciarsi e raccogliere informazioni da fonti esterne come basi di conoscenza o ambienti. Il framework ReAct può consentire agli LLM di interagire con strumenti esterni per recuperare informazioni aggiuntive che portano a risposte più affidabili e concrete. <Screenshot src={REACT} alt=\"REACT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.it"
+    },
+    {
+      "slug": "reactjp",
+      "term": "React.jp",
+      "definition": "[Yao et al.、2022](https://arxiv.org/abs/2210.03629)は、LLMが交互に推論トレースとタスク固有のアクションを生成するフレームワークを紹介しました。推論トレースの生成により、モデルはアクション計画を誘導、追跡、更新し、例外を処理することができます。アクションステップにより、知識ベースや環境などの外部ソースとのインターフェースや情報収集が可能になります。 ReActフレームワークは、LLMが外部ツールと対話して追加情報を取得し、より信頼性の高い事実に基づく回答を生成することができます。 <Screenshot src={REACT} alt=\"REACT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.jp"
+    },
+    {
+      "slug": "reactkr",
+      "term": "React.kr",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629)에서는 대규모언어모델을 사용하여 *추론 추적*과 *작업별 행동*을 인터리브 방식으로 생성하는 ReAct라는 프레임워크를 소개했습니다.  추론 추적을 생성하면 모델이 행동 계획을 유도, 추적, 업데이트하고 예외를 처리할 수 있습니다. 행동 단계\\(action step\\)에서는 지식 기반이나 환경과 같은 외부 소스와 상호 작용하고 정보를 수집할 수 있습니다. ReAct 프레임워크를 사용하면 대규모언어모델이 외부 도구와 상호 작용하여 보다 신뢰할 수 있고 사실적인 응답으로 이어지는 추가 정보를 검색할 수 있습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.kr"
+    },
+    {
+      "slug": "reactpt",
+      "term": "React.pt",
+      "definition": "[Yao et al., 2022](https://arxiv.org/abs/2210.03629) introduziu uma estrutura em que LLMs são usados para gerar rastros de raciocínio e ações específicas de tarefas de maneira intercalada. A geração de rastros de raciocínio permite que o modelo induza, rastreie e atualize planos de ação e até mesmo trate de exceções. A etapa de ação permite interagir e coletar informações de fontes externas, como bases de conhecimento ou ambientes. A estrutura ReAct pode permitir que os LLMs interajam com ferramentas externas para recuperar informações adicionais que levam a respostas mais confiáveis e factuais. <Screenshot src={REACT} alt=\"REACT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.pt"
+    },
+    {
+      "slug": "reactru",
+      "term": "React.ru",
+      "definition": "[Yao и др., 2022](https://arxiv.org/abs/2210.03629) представили фреймворк под названием ReAct, в котором использовались LLM для генерации *следов рассуждений* и *задачно-специфичных действий* в интерактивной манере. Генерация следов рассуждений позволяет модели создавать, отслеживать и обновлять планы действий, а также обрабатывать исключительные ситуации. Действия позволяют взаимодействовать с внешними источниками информации, такими как базы знаний или окружения. Фреймворк ReAct позволяет LLM взаимодействовать с внешними инструментами для получения дополнительной информации, что приводит к более надежным и фактическим ответам.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.ru"
+    },
+    {
+      "slug": "reacttr",
+      "term": "React.tr",
+      "definition": "[Yao ve diğerleri, 2022](https://arxiv.org/abs/2210.03629), LLM'lerin hem *mantıksal izleri* hem de *görev özel eylemleri* üretmek için kullanıldığı ReAct adlı bir çerçeve tanıttı.  Mantıksal izler oluşturmak, modelin eylem planlarını teşvik etmeye, takip etmeye ve güncellemeye ve hatta istisnaları ele almaya olanak sağlar. Eylem adımı, bilgi tabanları veya çevreler gibi dış kaynaklardan bilgi toplamak için bir arayüz sağlar. ReAct çerçevesi, LLM'lerin daha güvenilir ve gerçekçi yanıtlar yol açacak ekstra bilgi almak için dış araçlarla etkileşim kurmasına izin verir.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.tr"
+    },
+    {
+      "slug": "reactzh",
+      "term": "React.zh",
+      "definition": "从 [Yao 等人，2022](https://arxiv.org/abs/2210.03629) 引入了一个框架，其中 LLMs 以交错的方式生成 *推理轨迹* 和 *任务特定操作* 。 生成推理轨迹使模型能够诱导、跟踪和更新操作计划，甚至处理异常情况。操作步骤允许与外部源（如知识库或环境）进行交互并且收集信息。 ReAct 框架允许 LLMs 与外部工具交互来获取额外信息，从而给出更可靠和实际的回应。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react.zh"
+    },
+    {
+      "slug": "reflexionca",
+      "term": "Reflexion.ca",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.ca"
+    },
+    {
+      "slug": "reflexionde",
+      "term": "Reflexion.de",
+      "definition": "Reflexion ist ein Framework zur Verstärkung sprachbasierter Agenten durch linguistisches Feedback. Laut [Shinn et al. (2023)](https://arxiv.org/pdf/2303.11366.pdf), \"stellt Reflexion ein neues Paradigma für ‚verbale‘ Verstärkung dar, das ein Regelwerk als die Gedächtniskodierung eines Agenten zusammen mit einer Auswahl von LLM-Parametern parametrisiert.\" Auf hoher Ebene konvertiert Reflexion Feedback (entweder in Form von freier Sprache oder als Skalar) aus der Umgebung in linguistisches Feedback, auch bekannt als **Selbstreflexion**, welches als Kontext für einen LLM-Agenten im nächsten Durchgang bereitgestellt wird. Dies hilft dem Agenten, schnell und effektiv aus vorherigen Fehlern zu lernen und die Leistung bei vielen fortgeschrittenen Aufgaben zu verbessern. ![\"Reflexion Framework\"](../../img/research/reflexion.png)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.de"
+    },
+    {
+      "slug": "reflexionen",
+      "term": "Reflexion.en",
+      "definition": "Reflexion is a framework to reinforce language-based agents through linguistic feedback. According to [Shinn et al. (2023)](https://arxiv.org/pdf/2303.11366.pdf), \"Reflexion is a new paradigm for ‘verbal‘ reinforcement that parameterizes a policy as an agent’s memory encoding paired with a choice of LLM parameters.\"  At a high level, Reflexion converts feedback (either free-form language or scalar) from the environment into linguistic feedback, also referred to as **self-reflection**, which is provided as context for an LLM agent in the next episode. This helps the agent rapidly and effectively learn from prior mistakes leading to performance improvements on many advanced tasks.   ![\"Reflexion Framework\"](../../img/research/reflexion.png)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.en"
+    },
+    {
+      "slug": "reflexiones",
+      "term": "Reflexion.es",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.es"
+    },
+    {
+      "slug": "reflexionfi",
+      "term": "Reflexion.fi",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.fi"
+    },
+    {
+      "slug": "reflexionfr",
+      "term": "Reflexion.fr",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.fr"
+    },
+    {
+      "slug": "reflexionit",
+      "term": "Reflexion.it",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.it"
+    },
+    {
+      "slug": "reflexionjp",
+      "term": "Reflexion.jp",
+      "definition": "リフレクションは、言語的フィードバックを通じて言語ベースのエージェントを強化するためのフレームワークです。[Shinn et al. (2023)](https://arxiv.org/pdf/2303.11366.pdf)によると、「リフレクションは、エージェントの記憶エンコーディングとLLMパラメータの選択をパラメータ化することにより、“言葉による”強化を行う新しいパラダイムです。」 概念的には、リフレクションは環境からのフィードバック（自由形式の言語またはスカラー）を言語的フィードバックに変換し、これを自己反省とも呼ばれるものとして次のエピソードでLLMエージェントのコンテキストとして提供します。これにより、エージェントは過去の間違いから迅速かつ効果的に学び、多くの高度なタスクでのパフォーマンスが向上します。 ![\"Reflexion Framework\"](../../img/research/reflexion.png)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.jp"
+    },
+    {
+      "slug": "reflexionkr",
+      "term": "Reflexion.kr",
+      "definition": "Reflexion은 언어 피드백을 통해 언어 기반 에이전트를 강화하는 프레임워크입니다. [Shinn et al. (2023)](https://arxiv.org/pdf/2303.11366.pdf)에 따르면, \"Reflexion은 LLM 매개변수의 선택과 쌍을 이루는 에이전트의 메모리 인코딩으로 정책을 매개변수화하여 이루어 낸 '언어적' 강화 패러다임입니다.\" 고차원적으로, Reflexion은 환경 피드백(free-form language 또는 scalar)을 **자기 성찰**이라고도 하는 언어 피드백으로 변환합니다. 이는 다음 에피소드에서 LLM 에이전트의 컨텍스트로 제공합니다. 이 과정을 통해 에이전트는 이전의 실수로부터 빠르고 효과적으로 학습하여 다양하고 어려운 작업의 성능을 향상시킵니다. ![\"Reflexion 프레임워크\"](../../img/research/reflexion.png)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.kr"
+    },
+    {
+      "slug": "reflexionpt",
+      "term": "Reflexion.pt",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.pt"
+    },
+    {
+      "slug": "reflexionru",
+      "term": "Reflexion.ru",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.ru"
+    },
+    {
+      "slug": "reflexiontr",
+      "term": "Reflexion.tr",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.tr"
+    },
+    {
+      "slug": "reflexionzh",
+      "term": "Reflexion.zh",
+      "definition": "自我反思是一个通过语言反馈来强化基于语言的智能体的框架。根据 [Shinn et al. (2023)](https://arxiv.org/pdf/2303.11366.pdf)，“自我反思是一种‘口头’强化的新范例，它将策略参数化为智能体的记忆编码与 LLM 的参数选择配对。” 在高层次上，自我反思将来自环境的反馈（自由形式的语言或者标量）转换为语言反馈，也被称作 **self-reflection**，为下一轮中 LLM 智能体提供上下文。这有助于智能体快速有效地从之前的错误中学习，进而提升许多高级任务的性能。 ![\"自我反思框架\"](../../img/research/reflexion.png)",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion.zh"
+    },
+    {
+      "slug": "totca",
+      "term": "Tot.ca",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.ca"
+    },
+    {
+      "slug": "totde",
+      "term": "Tot.de",
+      "definition": "Bei komplexen Aufgaben, die Erkundung oder strategische Vorausschau erfordern, stoßen traditionelle oder einfache Prompting-Techniken an ihre Grenzen. [Yao et al. (2023)](https://arxiv.org/abs/2305.10601) und [Long (2023)](https://arxiv.org/abs/2305.08291) haben kürzlich den Rahmen \"Tree of Thoughts\" (ToT) vorgeschlagen, der das Chain-of-Thought Prompting generalisiert und das Erkunden von Gedanken fördert, die als Zwischenschritte zur allgemeinen Problemlösung mit Sprachmodellen dienen. ToT erhält einen Baum von Gedanken, bei dem Gedanken kohärente Sprachsequenzen darstellen, die als Zwischenschritte zur Lösung eines Problems dienen. Dieser Ansatz ermöglicht es einem Sprachmodell (LM), den Fortschritt von Zwischengedanken in Bezug auf die Problemlösung durch einen bewussten Denkprozess selbst zu bewerten. Die Fähigkeit des LM, Gedanken zu generieren und zu evaluieren, wird dann mit Suchalgorithmen (z.B. Breitensuche und Tiefensuche) kombiniert, um eine systematische Erkundung von Gedanken mit Vorausschau und Rückverfolgung zu ermöglichen. Das ToT-Framework wird unten illustriert:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.de"
+    },
+    {
+      "slug": "toten",
+      "term": "Tot.en",
+      "definition": "For complex tasks that require exploration or strategic lookahead, traditional or simple prompting techniques fall short. [Yao et el. (2023)](https://arxiv.org/abs/2305.10601) and [Long (2023)](https://arxiv.org/abs/2305.08291) recently proposed Tree of Thoughts (ToT), a framework that generalizes over chain-of-thought prompting and encourages exploration over thoughts that serve as intermediate steps for general problem solving with language models. ToT maintains a tree of thoughts, where thoughts represent coherent language sequences that serve as intermediate steps toward solving a problem. This approach enables an LM to self-evaluate the progress through intermediate thoughts made towards solving a problem through a deliberate reasoning process. The LM's ability to generate and evaluate thoughts is then combined with search algorithms (e.g., breadth-first search and depth-first search) to enable systematic exploration of thoughts with lookahead and backtracking. The ToT framework is illustrated below:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.en"
+    },
+    {
+      "slug": "totes",
+      "term": "Tot.es",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.es"
+    },
+    {
+      "slug": "totfi",
+      "term": "Tot.fi",
+      "definition": "This page needs a translation! Feel free to contribute a translation by clicking the `Edit this page` button on the right side.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.fi"
+    },
+    {
+      "slug": "totfr",
+      "term": "Tot.fr",
+      "definition": "Pour des tâches complexes qui nécessitent une exploration ou une anticipation stratégique, les techniques de prompt traditionnelles ou simples sont insuffisantes. [Yao et al. (2023)](https://arxiv.org/abs/2305.10601) et [Long (2023)](https://arxiv.org/abs/2305.08291) ont récemment proposé \"Tree of Thoughts\" (ToT), un framework qui généralise le prompt \"chain-of-thought\" et encourage l'exploration à travers des pensées qui servent d'étapes intermédiaires pour la résolution de problèmes généraux avec des modèles de langage. ToT maintient un arbre de pensées, où les pensées représentent des séquences de langage cohérentes qui servent d'étapes intermédiaires vers la résolution d'un problème. Cette approche permet à un LLM d'auto-évaluer les progrès à travers les pensées intermédiaires réalisées vers la résolution d'un problème grâce à un processus de raisonnement délibéré. La capacité du LLM à générer et évaluer les pensées est ensuite combinée avec des algorithmes de recherche (par exemple, recherche en largeur et recherche en profondeur) pour permettre une exploration systématique des pensées avec anticipation et retour en arrière. Le framework ToT est illustré ci-dessous :",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.fr"
+    },
+    {
+      "slug": "totit",
+      "term": "Tot.it",
+      "definition": "Per i compiti complessi che richiedono un'esplorazione o una visione strategica in avanti, le tecniche di prompting tradizionali o semplici non sono all'altezza. [Yao et el. (2023)](https://arxiv.org/abs/2305.10601) e [Long (2023)](https://arxiv.org/abs/2305.08291) hanno recentemente proposto Tree of Thoughts (ToT, albero dei pensieri), un framework che generalizza la richiesta di catene di pensieri e incoraggia l'esplorazione di pensieri che servono come passi intermedi per la risoluzione di problemi generali con modelli linguistici. La tecnica ToT crea un albero di pensieri, dove i pensieri sono sequenze linguistiche coerenti che servono come passi intermedi per raggiungere la risoluzione del problema. Questo approccio permette ad un LM di valutare i suoi stessi progressi intermedi verso la risoluzione del problema. L'abilità dell'LM di generare e valutare i pensieri viene combinata con algoritmi di ricerca (es.: breadth-first search e depth-first search), in modo da esplorare sistematicamente i pensieri con lookahead e backtracking. La tecnica ToT è illustrata nella seguente immagine:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.it"
+    },
+    {
+      "slug": "totjp",
+      "term": "Tot.jp",
+      "definition": "複雑な課題に対して、探索や戦略的な先読みが必要な場合、従来の単純なプロンプト技術では不十分です。[Yao et el. (2023)](https://arxiv.org/abs/2305.10601)と[Long (2023)](https://arxiv.org/abs/2305.08291)は最近、思考の木（Tree of Thoughts、ToT）というフレームワークを提案しました。これは、言語モデルを用いた一般的な問題解決のための中間ステップとして機能する思考の探求を促進するものです。 ToTは、思考が問題解決への中間ステップとなる一貫した言語の連続を表す思考の木を保持します。このアプローチにより、LMは熟考プロセスを通じて中間の思考の達成度を自己評価することが可能です。思考の生成と評価能力は、探索アルゴリズム（例：幅優先探索や深さ優先探索）と組み合わされ、先読みとバックトラッキングを伴う思考の系統的な探求を可能にします。 <Screenshot src={TOT} alt=\"TOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.jp"
+    },
+    {
+      "slug": "totkr",
+      "term": "Tot.kr",
+      "definition": "탐구나 전략적인 예측이 필요한 복잡한 작업들을 해결하기 위해서는 기존의 단순한 프롬프팅 기법으로는 부족합니다. [Yao et el. (2023)](https://arxiv.org/abs/2305.10601)와 [Long (2023)](https://arxiv.org/abs/2305.08291)는 최근 Tree of Thoughts(ToT)의 개념을 제안했는데, 이 프레임워크는 '생각의 사슬(chain-of-thought)' 프롬프팅 기법을 일반화하며, 언어모델을 사용하여 일반적인 문제 해결을 위한 중간 단계 역할을 하는 생각에 대한 탐색을 촉진합니다. ToT는 문제를 해결하기 위한 중간 단계로서 일관된 언어 시퀀스를 나타내는 Tree of Thoughts를 유지합니다. 이 접근법을 통해 언어모델은 신중한 추론 과정을 거쳐 문제를 해결하기 위한 중간 생각들이 문제를 해결해나가는 과정을 자체적으로 평가할 수 있게 됩니다. 그리고 이 언어모델이 생각을 생성하고 평가하는 능력은 탐색 알고리즘(예: 너비 우선 탐색과 깊이 우선 탐색(DFS))과 결합되어, 선제적 탐색과 백트래킹이 가능한 생각의 체계적인 탐색을 가능하게 합니다. <Screenshot src={TOT} alt=\"TOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.kr"
+    },
+    {
+      "slug": "totpt",
+      "term": "Tot.pt",
+      "definition": "Para tarefas complexas que exigem exploração ou planejamento estratégico, técnicas tradicionais ou simples de estímulo são insuficientes. [Yao et el. (2023)](https://arxiv.org/abs/2305.10601) e [Long (2023)](https://arxiv.org/abs/2305.08291) propuseram recentemente a \"Tree of Thoughts\" (ToT), uma estrutura que generaliza o estímulo de cadeia de pensamento e incentiva a exploração de pensamentos que servem como etapas intermediárias para a resolução de problemas gerais com modelos de linguagem. A ToT mantém uma árvore de pensamentos, onde os pensamentos representam sequências coerentes de linguagem que servem como etapas intermediárias para a resolução de um problema. Essa abordagem permite que um modelo de linguagem (LM) avalie o progresso dos pensamentos intermediários em direção à resolução de um problema por meio de um processo de raciocínio deliberado. A capacidade do LM de gerar e avaliar pensamentos é combinada com algoritmos de busca (por exemplo, busca em largura e busca em profundidade) para permitir a exploração sistemática de pensamentos com planejamento de lookahead e retrocesso. A estrutura ToT é ilustrada abaixo:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.pt"
+    },
+    {
+      "slug": "totru",
+      "term": "Tot.ru",
+      "definition": "Для сложных задач, которые требуют исследования или стратегического планирования, традиционные или простые методы создания промптов оказываются недостаточными.  [Yao et el. (2023)](https://arxiv.org/abs/2305.10601) and [Long (2023)](https://arxiv.org/abs/2305.08291) недавно предложили Tree of Thoughts (ToT), фреймворк, который обобщает метод цепочки мыслей и поощряет исследование мыслей, которые служат промежуточными шагами для общего решения проблем с помощью языковых моделей. ToT поддерживает дерево мыслей, где мысли представляют собой последовательности связной речи, которые служат промежуточными шагами к решению проблемы. Этот подход позволяет лингвистической модели самооценить прогресс промежуточных мыслей в решении проблемы через обдуманный процесс рассуждения. Затем способность лингвистической модели генерировать и оценивать мысли объединяется с алгоритмами поиска (например, поиск в ширину и поиск в глубину), чтобы обеспечить систематическое исследование мыслей с опережением и возвратом назад. Фреймворк ToT проиллюстрирован ниже:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.ru"
+    },
+    {
+      "slug": "tottr",
+      "term": "Tot.tr",
+      "definition": "Keşif veya stratejik öngörü gerektiren karmaşık görevlerde, geleneksel veya basit istem teknikleri yetersiz kalır. [Yao ve diğerleri (2023)](https://arxiv.org/abs/2305.10601) ve [Long (2023)](https://arxiv.org/abs/2305.08291) son zamanlarda Düşünce Ağacı (ToT) adlı bir çerçeve önermiştir. Bu çerçeve, dil modelleri ile genel problem çözme adımlarına hizmet eden düşünceler üzerinde keşif yapmayı teşvik eden düşünce zinciri istemine genel bir bakış sağlar. ToT, düşüncelerin bir problemi çözmeye yönelik ara tutamak adımlar olarak hizmet eden tutarlı dil dizilerini temsil ettiği bir düşünce ağacını sürdürür. Bu yaklaşım, bir LM'in bir problemi çözmeye yönelik ara düşüncelerdeki ilerlemeyi dikkatli bir akıl yürütme süreci ile değerlendirmesine olanak sağlar. LM'in düşünceleri oluşturma ve değerlendirme yeteneği, öngörü ve geriye gitme ile düşüncelerin sistematik keşfine olanak sağlamak için arama algoritmaları (ör. genişlik-öncelikli arama ve derinlik-öncelikli arama) ile birleştirilir. ToT çerçevesi aşağıda gösterilmiştir:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.tr"
+    },
+    {
+      "slug": "totzh",
+      "term": "Tot.zh",
+      "definition": "对于需要探索或预判战略的复杂任务来说，传统或简单的提示技巧是不够的。最近，[Yao et el. (2023)](https://arxiv.org/abs/2305.10601) 提出了思维树（Tree of Thoughts，ToT）框架，该框架基于思维链提示进行了总结，引导语言模型探索把思维作为中间步骤来解决通用问题。 ToT 维护着一棵思维树，思维由连贯的语言序列表示，这个序列就是解决问题的中间步骤。使用这种方法，LM 能够自己对严谨推理过程的中间思维进行评估。LM 将生成及评估思维的能力与搜索算法（如广度优先搜索和深度优先搜索）相结合，在系统性探索思维的时候可以向前验证和回溯。 <Screenshot src={TOT} alt=\"TOT\" />",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tot.zh"
+    },
+    {
+      "slug": "zeroshotca",
+      "term": "Zeroshot.ca",
+      "definition": "Els grans LLMs d'avui dia, com GPT-3, estan ajustats per seguir instruccions i estan entrenats amb grans quantitats de dades; per tant, són capaços de realitzar algunes tasques de \"zero-shot\". Vam provar alguns exemples de zero-shot a la secció anterior. Aquí teniu un dels exemples que vam utilitzar: Classifica el text en neutral, negatiu o positiu.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.ca"
+    },
+    {
+      "slug": "zeroshotde",
+      "term": "Zeroshot.de",
+      "definition": "  src=\"https://www.youtube.com/embed/ZTaHqdkxUMs?si=EDLjgAxuFxFcrSM3\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" Große LLMs (Language-Modelle) wie beispielsweise GPT-3.5 Turbo, GPT-4 und Claude 3 sind heute darauf abgestimmt, Anweisungen zu befolgen, und wurden mit großen Datenmengen trainiert. Groß angelegtes Training ermöglicht es diesen Modellen, einige Aufgaben auf  \"Zero-Shot\"-Weise auszuführen. Zero-Shot-Prompting bedeutet, dass der Prompt, der verwendet wird, um mit dem Modell zu interagieren, keine Beispiele oder Demonstrationen enthält. Der Zero-Shot-Prompt instruiert das Modell direkt, eine Aufgabe ohne zusätzliche Beispiele auszuführen, um es zu lenken.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.de"
+    },
+    {
+      "slug": "zeroshoten",
+      "term": "Zeroshot.en",
+      "definition": "  src=\"https://www.youtube.com/embed/ZTaHqdkxUMs?si=EDLjgAxuFxFcrSM3\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" Large language models (LLMs) today, such as GPT-3.5 Turbo, GPT-4, and Claude 3, are tuned to follow instructions and are trained on large amounts of data. Large-scale training makes these models capable of performing some tasks in a \"zero-shot\" manner. Zero-shot prompting means that the prompt used to interact with the model won't contain examples or demonstrations. The zero-shot prompt directly instructs the model to perform a task without any additional examples to steer it. We tried a few zero-shot examples in the previous section. Here is one of the examples (ie., text classification) we used:",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.en"
+    },
+    {
+      "slug": "zeroshotes",
+      "term": "Zeroshot.es",
+      "definition": "Los LLMs de hoy en día entrenados con grandes cantidades de datos y ajustados para seguir instrucciones, son capaces de realizar tareas sin necesidad de entrenamiento. Probamos algunos ejemplos de cero entrenamiento en la sección anterior. Aquí hay uno de los ejemplos que usamos: Clasifica el texto en neutral, negativo o positivo.  Texto: Creo que las vacaciones están bien.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.es"
+    },
+    {
+      "slug": "zeroshotfi",
+      "term": "Zeroshot.fi",
+      "definition": "Nykyiset suuret LLM:t, kuten GPT-3, on viritetty seuraamaan ohjeita ja niitä on koulutettu suurilla datamäärillä, joten ne pystyvät suorittamaan joitakin tehtäviä \"nollaoppimisen\" avulla. Kokeilimme muutamia nollaoppimisen esimerkkejä edellisessä osiossa. Tässä yksi käyttämistämme esimerkeistä: Luokittele teksti neutraaliksi, negatiiviseksi tai positiiviseksi. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.fi"
+    },
+    {
+      "slug": "zeroshotfr",
+      "term": "Zeroshot.fr",
+      "definition": "Les LLM d'aujourd'hui, formés sur de grandes quantités de données et ajustés pour suivre des instructions, sont capables d'effectuer des tâches en \"zero-shot\". Nous avons essayé quelques exemples de \"zero-shot\" dans la section précédente. Voici l'un des exemples que nous avons utilisés : Classe le texte en neutre, négatif ou positif. Texte : Je pense que les vacances vont bien.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.fr"
+    },
+    {
+      "slug": "zeroshotit",
+      "term": "Zeroshot.it",
+      "definition": "I grandi LLM di oggi, come GPT-3, sono regolati per seguire le istruzioni e sono addestrati su grandi quantità di dati; quindi sono in grado di eseguire alcuni compiti \"zero-shot\". Nella sezione precedente abbiamo provato alcuni esempi zero-shot. Ecco uno degli esempi utilizzati: Classificare il testo in neutro, negativo o positivo. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.it"
+    },
+    {
+      "slug": "zeroshotjp",
+      "term": "Zeroshot.jp",
+      "definition": "大量のデータでトレーニングされ、指示に従うように調整されたLLMは、ゼロショットでタスクを実行することができます。前のセクションでいくつかのゼロショットの例を試しました。以下は、使用した例の1つです。 上記のプロンプトでは、モデルに任意の例を提供していないことに注意してください。これがゼロショットの機能です。 指示のチューニングは、ゼロショット学習の改善を示しています[Wei et al. (2022)](https://arxiv.org/pdf/2109.01652.pdf)。指示の説明に従って説明されたデータセットでモデルを微調整することが、指示のチューニングの本質です。さらに、[RLHF](https://arxiv.org/abs/1706.03741)（人間のフィードバックからの強化学習）が指示のチューニングの拡大に採用されており、モデルが人間の好みにより適合するように調整されています。この最近の開発により、ChatGPTのようなモデルが強化されています。これらのアプローチと方法については、次のセクションで説明します。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.jp"
+    },
+    {
+      "slug": "zeroshotkr",
+      "term": "Zeroshot.kr",
+      "definition": "대량의 데이터를 학습하고 지침을 따르도록 튜닝된 오늘날의 머신러닝은 제로샷(zero-shot)으로 작업을 수행할 수 있습니다. 이전 장에서 몇 가지 제로샷 예제를 시도해 보았습니다. 다음은 우리가 사용한 예제 중 하나입니다. 위의 프롬프트에서는 모델에 예제를 제공하지 않았습니다. 이는 제로샷으로 동작된 것을 알 수 있습니다. 명령어 튜닝(Instruction tuning)은 제로샷(zero-shot) 학습을 개선한다고 다음의 논문에서 보고되었습니다. [Wei et al. (2022)](https://arxiv.org/pdf/2109.01652.pdf). 명령어 튜닝은 본질적으로 명령어를 통해 설명된 데이터 세트에 대한 모델을 미세 조정 하는 개념입니다. 또한, [RLHF](https://arxiv.org/abs/1706.03741) (사람의 피드백을 통한 강화 학습)는 모델이 사람이 원하는 결과에 더 잘 맞도록 조정되는 명령어 튜닝을 확장하는 데 사용되었습니다. 이러한 개발 방식은 ChatGPT와 같은 모델에서 사용되었습니다. 다음 장에서 이러한 모든 접근 방식과 방법에 대해 설명하겠습니다.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.kr"
+    },
+    {
+      "slug": "zeroshotpt",
+      "term": "Zeroshot.pt",
+      "definition": "Os LLMs hoje treinados em grandes quantidades de dados e sintonizados para seguir instruções são capazes de executar tarefas de tiro zero. Tentamos alguns exemplos de tiro zero na seção anterior. Aqui está um dos exemplos que usamos: Classifique o texto em neutro, negativo ou positivo. Texto: Acho que as férias estão boas.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.pt"
+    },
+    {
+      "slug": "zeroshotru",
+      "term": "Zeroshot.ru",
+      "definition": "Большие языковые модели (LLMs), такие как GPT-3, настроены на следование инструкциям и обучаются на больших объемах данных, поэтому они способны выполнять некоторые задачи \"нулевой разметки\". Мы протестировали несколько примеров нулевой разметки в предыдущем разделе. Вот один из примеров, которые мы использовали: Classify the text into neutral, negative or positive. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.ru"
+    },
+    {
+      "slug": "zeroshottr",
+      "term": "Zeroshot.tr",
+      "definition": "Bugünkü büyük LLM'ler, örneğin GPT-3, talimatlara uyma konusunda ayarlanmış ve büyük miktarda veri ile eğitilmiştir; bu yüzden bazı görevleri \"sıfır örnekli\" olarak gerçekleştirme yeteneğine sahiptirler. Önceki bölümde birkaç sıfır-örnekli örnek denedik. İşte kullandığımız örneklerden biri: Metni tarafsız, olumsuz ya da olumlu olarak sınıflandırın. ",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.tr"
+    },
+    {
+      "slug": "zeroshotzh",
+      "term": "Zeroshot.zh",
+      "definition": "如今，经过大量数据训练并调整指令的LLM能够执行零样本任务。我们在前一节中尝试了一些零样本示例。以下是我们使用的一个示例： 请注意，在上面的提示中，我们没有向模型提供任何示例——这就是零样本能力的作用。 指令调整已被证明可以改善零样本学习[Wei等人（2022）](https://arxiv.org/pdf/2109.01652.pdf)。指令调整本质上是在通过指令描述的数据集上微调模型的概念。此外，[RLHF](https://arxiv.org/abs/1706.03741)（来自人类反馈的强化学习）已被采用以扩展指令调整，其中模型被调整以更好地适应人类偏好。这一最新发展推动了像ChatGPT这样的模型。我们将在接下来的章节中讨论所有这些方法和方法。",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zeroshot.zh"
+    },
+    {
+      "slug": "zero-shot-prompting",
+      "term": "Zero-Shot Prompting",
+      "definition": "Prompt engineering technique: Zero-Shot Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/zero-shot-prompting"
+    },
+    {
+      "slug": "few-shot-prompting",
+      "term": "Few-Shot Prompting",
+      "definition": "Prompt engineering technique: Few-Shot Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/few-shot-prompting"
+    },
+    {
+      "slug": "chain-of-thought-prompting",
+      "term": "Chain-of-Thought Prompting",
+      "definition": "Prompt engineering technique: Chain-of-Thought Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/chain-of-thought-prompting"
+    },
+    {
+      "slug": "self-consistency",
+      "term": "Self-Consistency",
+      "definition": "Prompt engineering technique: Self-Consistency. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/self-consistency"
+    },
+    {
+      "slug": "tree-of-thoughts",
+      "term": "Tree of Thoughts",
+      "definition": "Prompt engineering technique: Tree of Thoughts. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/tree-of-thoughts"
+    },
+    {
+      "slug": "retrieval-augmented-generation",
+      "term": "Retrieval Augmented Generation",
+      "definition": "Prompt engineering technique: Retrieval Augmented Generation. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/retrieval-augmented-generation"
+    },
+    {
+      "slug": "automatic-prompt-engineer",
+      "term": "Automatic Prompt Engineer",
+      "definition": "Prompt engineering technique: Automatic Prompt Engineer. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/automatic-prompt-engineer"
+    },
+    {
+      "slug": "active-prompt",
+      "term": "Active Prompt",
+      "definition": "Prompt engineering technique: Active Prompt. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/active-prompt"
+    },
+    {
+      "slug": "directional-stimulus-prompting",
+      "term": "Directional Stimulus Prompting",
+      "definition": "Prompt engineering technique: Directional Stimulus Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/directional-stimulus-prompting"
+    },
+    {
+      "slug": "react-prompting",
+      "term": "ReAct Prompting",
+      "definition": "Prompt engineering technique: ReAct Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/react-prompting"
+    },
+    {
+      "slug": "reflexion",
+      "term": "Reflexion",
+      "definition": "Prompt engineering technique: Reflexion. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/reflexion"
+    },
+    {
+      "slug": "multimodal-cot-prompting",
+      "term": "Multimodal CoT Prompting",
+      "definition": "Prompt engineering technique: Multimodal CoT Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/multimodal-cot-prompting"
+    },
+    {
+      "slug": "graph-prompting",
+      "term": "Graph Prompting",
+      "definition": "Prompt engineering technique: Graph Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/graph-prompting"
+    },
+    {
+      "slug": "meta-prompting",
+      "term": "Meta Prompting",
+      "definition": "Prompt engineering technique: Meta Prompting. A method for structuring prompts to improve AI model outputs.",
+      "category": "Prompt Engineering",
+      "relatedTerms": [],
+      "sourceUrl": "https://www.promptingguide.ai/techniques/meta-prompting"
+    }
+  ]
+}
