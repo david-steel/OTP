@@ -2477,12 +2477,55 @@
       grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><p class="mb-2">No matched practices yet.</p><p class="text-sm">Switch to <strong>Browse All</strong> to explore the full library, or publish an OOS to see personalized matches.</p></div>';
     }
 
+    // In matched mode, also show "You might also explore" section with unmatched practices
+    if (bpViewMode === 'matched' && filtered.length > 0) {
+      var matchedCategories = {};
+      filtered.forEach(function(p) { matchedCategories[p.category] = true; });
+
+      // Get unmatched practices from the same categories, plus top practices from other categories
+      var explore = bpData.practices.filter(function(p) {
+        var catMatch = bpActiveCategory === 'all' || p.category === bpActiveCategory;
+        var searchMatch = !query || p.term.toLowerCase().indexOf(query) > -1;
+        return !p._matched && catMatch && searchMatch;
+      }).slice(0, 12);
+
+      if (explore.length > 0) {
+        grid.innerHTML += '<div class="col-span-full mt-6 pt-4 border-t border-gray-200">' +
+          '<h3 class="text-sm font-semibold text-gray-500 mb-3">You might also explore</h3></div>';
+        grid.innerHTML += explore.map(function(p) {
+          var color = bpCategoryColors[p.category] || '#6b7280';
+          var defPreview = p.definition.substring(0, 120) + (p.definition.length > 120 ? '...' : '');
+          return '<div class="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow opacity-80">' +
+            '<div class="flex items-center gap-2 mb-2">' +
+              '<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background:' + color + '10;color:' + color + ';border:1px solid ' + color + '25">' + p.category + '</span>' +
+            '</div>' +
+            '<h3 class="text-gray-800 font-medium text-sm mb-1">' + p.term + '</h3>' +
+            '<p class="text-gray-400 text-xs leading-relaxed mb-2">' + defPreview + '</p>' +
+            (p.publisherName ? '<span class="text-[10px] text-gray-400">by ' + p.publisherName + '</span>' : '') +
+            '<div class="mt-2 flex items-center gap-2">' +
+              '<label class="flex items-center gap-1.5 cursor-pointer flex-1 py-1.5 px-3 rounded-lg border border-gray-200 hover:border-otp-300 transition-colors text-xs text-gray-500">' +
+                '<input type="checkbox" class="bp-select-check accent-otp-500 cursor-pointer" data-bp-slug="' + p.slug + '" onchange="toggleIngestQueue(\'' + p.slug + '\')">' +
+                'Select' +
+              '</label>' +
+              '<button class="bp-implement-btn flex-1 text-center text-xs font-medium py-1.5 rounded-lg border border-otp-300 text-otp-600 hover:bg-otp-50 transition-colors cursor-pointer" ' +
+                'data-bp-id="' + p.id + '" data-bp-slug="' + p.slug + '" data-bp-term="' + p.term.replace(/\'/g, "&#39;") + '">Implement</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
     // Stats
     var statsEl = document.getElementById('bp-stats');
     var showingText = bpViewMode === 'matched'
       ? 'Showing ' + filtered.length + ' matched practices'
       : 'Showing ' + filtered.length + ' of ' + bpData.practices.length + ' practices';
-    statsEl.innerHTML = showingText + ' from McFadyen Digital &middot; <a href="https://ai-best-practices-dev.mcfadyen-digital.workers.dev" target="_blank" rel="noopener" class="text-otp-500 hover:underline">Visit source</a>';
+    // Count distinct publishers
+    var publishers = {};
+    bpData.practices.forEach(function(p) { if (p.publisherName) publishers[p.publisherName] = true; });
+    var pubCount = Object.keys(publishers).length;
+    var pubText = pubCount > 0 ? ' from ' + pubCount + ' publisher' + (pubCount > 1 ? 's' : '') : '';
+    statsEl.innerHTML = showingText + pubText;
   }
 
   // ---- Implement Panel ----
