@@ -298,11 +298,98 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
     fixes.push({ code: 'AGENT_COUNT_DEFAULTED', description: 'Defaulted agent_count to 1', field: 'frontmatter.agent_count', before: '(missing)', after: '1' });
   }
 
-  // Fix platforms
-  if (!fm.platforms || !Array.isArray(fm.platforms) || fm.platforms.length === 0) {
-    fm.platforms = ['claude'];
+  // Fix platforms AND mcp_servers -- extract from content using known-tools dictionary
+  const allText = raw.toLowerCase();
+
+  // Known AI platforms (the model/runtime, not the tool)
+  const KNOWN_PLATFORMS: Record<string, string> = {
+    'claude': 'Claude', 'anthropic': 'Claude',
+    'gpt': 'GPT', 'openai': 'GPT', 'chatgpt': 'GPT',
+    'gemini': 'Gemini', 'google gemini': 'Gemini',
+    'copilot': 'Copilot', 'github copilot': 'Copilot',
+    'cursor': 'Cursor', 'windsurf': 'Windsurf',
+    'mistral': 'Mistral', 'llama': 'Llama',
+    'custom': 'Custom',
+  };
+
+  // Known MCP servers / integrations / tools
+  const KNOWN_MCP_SERVERS: Record<string, string> = {
+    'slack': 'Slack', 'gmail': 'Gmail', 'google workspace': 'Google Workspace',
+    'google calendar': 'Google Calendar', 'google drive': 'Google Drive',
+    'google ads': 'Google Ads', 'google sheets': 'Google Sheets',
+    'meta ads': 'Meta Ads', 'facebook ads': 'Meta Ads',
+    'todoist': 'Todoist', 'accelo': 'Accelo',
+    'ghl': 'GoHighLevel', 'gohighlevel': 'GoHighLevel', 'highlevel': 'GoHighLevel',
+    'fireflies': 'Fireflies', 'obsidian': 'Obsidian',
+    'calendly': 'Calendly', 'proposify': 'Proposify',
+    'zapier': 'Zapier', 'make': 'Make', 'n8n': 'n8n',
+    'playwright': 'Playwright', 'whatsapp': 'WhatsApp',
+    'quickbooks': 'QuickBooks', 'qbo': 'QuickBooks',
+    'stripe': 'Stripe', 'hubspot': 'HubSpot',
+    'salesforce': 'Salesforce', 'jira': 'Jira',
+    'confluence': 'Confluence', 'github': 'GitHub',
+    'linear': 'Linear', 'notion': 'Notion', 'airtable': 'Airtable',
+    'twilio': 'Twilio', 'sendgrid': 'SendGrid',
+    'intercom': 'Intercom', 'zendesk': 'Zendesk',
+    'shopify': 'Shopify', 'wordpress': 'WordPress',
+    'search atlas': 'Search Atlas', 'semrush': 'Semrush',
+    'linkedin': 'LinkedIn Ads', 'tiktok ads': 'TikTok Ads',
+    'microsoft ads': 'Microsoft Ads',
+  };
+
+  // Extract platforms from content
+  const detectedPlatforms = new Set<string>();
+  for (const [keyword, name] of Object.entries(KNOWN_PLATFORMS)) {
+    if (allText.includes(keyword)) detectedPlatforms.add(name);
+  }
+  // Merge with existing declared platforms
+  const existingPlatforms = (fm.platforms && Array.isArray(fm.platforms))
+    ? fm.platforms.map((p: any) => String(p))
+    : [];
+  for (const p of existingPlatforms) {
+    // Normalize existing entries
+    const normalized = KNOWN_PLATFORMS[p.toLowerCase()];
+    detectedPlatforms.add(normalized || p);
+  }
+  if (detectedPlatforms.size === 0) detectedPlatforms.add('Claude');
+
+  const newPlatforms = [...detectedPlatforms].sort();
+  const oldPlatforms = JSON.stringify(fm.platforms || []);
+  if (JSON.stringify(newPlatforms) !== oldPlatforms) {
+    fm.platforms = newPlatforms;
     fmChanged = true;
-    fixes.push({ code: 'PLATFORMS_DEFAULTED', description: 'Defaulted platforms to ["claude"]', field: 'frontmatter.platforms', before: '(missing)', after: '["claude"]' });
+    fixes.push({ code: 'PLATFORMS_ENRICHED', description: `Detected platforms from content: ${newPlatforms.join(', ')}`, field: 'frontmatter.platforms', before: oldPlatforms, after: JSON.stringify(newPlatforms) });
+  }
+
+  // Extract MCP servers from content
+  const detectedMcp = new Set<string>();
+  for (const [keyword, name] of Object.entries(KNOWN_MCP_SERVERS)) {
+    // Use word boundary-ish matching to avoid false positives (e.g. "make" as a verb)
+    // For short keywords, require them near tool-related context
+    if (keyword.length <= 4) {
+      // Short keywords: require capitalized form or near "mcp", "server", "integration", "api", "tool"
+      const capitalizedForm = name.charAt(0).toUpperCase() + name.slice(1);
+      if (raw.includes(capitalizedForm) || raw.includes(name)) {
+        detectedMcp.add(name);
+      }
+    } else {
+      if (allText.includes(keyword)) detectedMcp.add(name);
+    }
+  }
+  // Merge with existing declared mcp_servers
+  const existingMcp = (fm.mcp_servers && Array.isArray(fm.mcp_servers))
+    ? fm.mcp_servers.map((m: any) => String(m))
+    : [];
+  for (const m of existingMcp) {
+    detectedMcp.add(m);
+  }
+
+  const newMcp = [...detectedMcp].sort();
+  const oldMcp = JSON.stringify(fm.mcp_servers || []);
+  if (newMcp.length > 0 && JSON.stringify(newMcp) !== oldMcp) {
+    fm.mcp_servers = newMcp;
+    fmChanged = true;
+    fixes.push({ code: 'MCP_SERVERS_ENRICHED', description: `Detected MCP servers from content: ${newMcp.join(', ')}`, field: 'frontmatter.mcp_servers', before: oldMcp, after: JSON.stringify(newMcp) });
   }
 
   // Fix generated_at -- normalize any parseable date to strict ISO 8601
@@ -490,6 +577,7 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
       template: fm.template,
       agent_count: fm.agent_count,
       platforms: fm.platforms,
+      mcp_servers: fm.mcp_servers || [],
       generated_at: fm.generated_at,
       version: fm.version,
       parent_version: fm.parent_version,

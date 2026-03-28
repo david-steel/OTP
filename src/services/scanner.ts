@@ -567,6 +567,7 @@ function buildFrontmatter(input: ScannerInput, claims: GeneratedClaim[], templat
     template,
     agent_count: input.roles.filter(r => r.type === 'ai_agent').length,
     platforms: [...new Set(input.systems.filter(s => s.category === 'ai_model').map(s => s.name))],
+    mcp_servers: [...new Set(input.systems.filter(s => s.category !== 'ai_model').map(s => s.name))],
     generated_at: new Date().toISOString(),
     version: 1,
     parent_version: null,
