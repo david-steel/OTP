@@ -196,7 +196,7 @@
         <a href="/whats-new" class="text-gray-300 hover:text-white transition-colors">What's New</a>
         <a href="/tickets" class="text-gray-300 hover:text-white transition-colors">Issues</a>
         <div id="auth-nav" class="flex items-center gap-3">
-          <a href="#" id="signin-link" onclick="return false" class="text-gray-300 hover:text-white transition-colors">Sign In</a>
+          <a href="https://<%= clerkInstance %>/sign-in?redirect_url=https://orgtp.com/dashboard" class="text-gray-300 hover:text-white transition-colors">Sign In</a>
           <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
         </div>
       </div>
@@ -226,7 +226,7 @@
         <a href="/whats-new" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors mt-1">What's New</a>
         <a href="/tickets" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Issues</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
-          <a href="#" id="signin-link-mobile" onclick="return false" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors text-center">Sign In</a>
+          <a href="https://<%= clerkInstance %>/sign-in?redirect_url=https://orgtp.com/dashboard" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors text-center">Sign In</a>
           <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
         </div>
       </div>
@@ -238,37 +238,6 @@
       document.getElementById('mobile-menu').classList.toggle('hidden');
     });
 
-    // Sign In buttons -- use Clerk directly
-    function handleSignInClick(e) {
-      e.preventDefault();
-      // Try __clerk (fully loaded) first, then Clerk (SDK loaded but not yet .load()'d)
-      if (window.__clerk) {
-        window.__clerk.openSignIn({ redirectUrl: window.location.href });
-      } else if (window.Clerk) {
-        // Clerk SDK loaded but .load() may not have finished -- load and open
-        window.Clerk.load().then(function() {
-          window.Clerk.openSignIn({ redirectUrl: window.location.href });
-        });
-      } else {
-        // Clerk not loaded at all yet -- poll for it
-        var attempts = 0;
-        var poll = setInterval(function() {
-          attempts++;
-          if (window.Clerk) {
-            clearInterval(poll);
-            window.Clerk.load().then(function() {
-              window.Clerk.openSignIn({ redirectUrl: window.location.href });
-            });
-          } else if (attempts > 50) {
-            clearInterval(poll);
-          }
-        }, 100);
-      }
-    }
-    var signinLink = document.getElementById('signin-link');
-    if (signinLink) signinLink.addEventListener('click', handleSignInClick);
-    var signinLinkMobile = document.getElementById('signin-link-mobile');
-    if (signinLinkMobile) signinLinkMobile.addEventListener('click', handleSignInClick);
   </script>
 
   <main class="pt-[65px]">
