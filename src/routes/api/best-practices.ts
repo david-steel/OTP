@@ -536,96 +536,116 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
   );
 
   // ============================================================
-  // POST /api/v1/best-practices/:slug/ingest/:oosId -- Ingest a best practice as a claim
+  // POST /api/v1/best-practices/ingest -- Ingest one or more best practices as claims
+  // Body: { slugs: string[] } or { slug: string }
+  // Auto-finds the user's latest OOS. Creates a draft if only published exists.
   // ============================================================
-  app.post<{ Params: { slug: string; oosId: string } }>(
-    '/best-practices/:slug/ingest/:oosId',
+  app.post<{ Body: { slugs?: string[]; slug?: string } }>(
+    '/best-practices/ingest',
     async (request, reply) => {
       const org = await getAuthOrg(request);
       if (!org) {
-        return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+        return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in to ingest best practices' } });
       }
 
-      const { slug, oosId } = request.params;
+      const body = request.body as any;
+      const slugs: string[] = body.slugs || (body.slug ? [body.slug] : []);
+      if (slugs.length === 0) {
+        return reply.status(400).send({ error: { code: 'NO_SLUGS', message: 'Provide slugs or slug in the request body' } });
+      }
 
-      // Get the best practice
-      const [practice] = await db.select()
+      // Get the practices
+      const practices = await db.select()
         .from(bestPractices)
-        .where(eq(bestPractices.slug, slug))
-        .limit(1);
+        .where(sql`${bestPractices.slug} IN (${sql.join(slugs.map(s => sql`${s}`), sql`, `)})`);
 
-      if (!practice) {
-        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Best practice not found' } });
+      if (practices.length === 0) {
+        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No best practices found for the given slugs' } });
       }
 
-      // Get the user's OOS (prefer draft, fall back to published)
+      // Find the user's latest OOS -- prefer draft, fall back to published
       let [oos] = await db.select()
         .from(oosFiles)
-        .where(and(eq(oosFiles.id, oosId), eq(oosFiles.orgId, org.id)))
+        .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'draft')))
+        .orderBy(desc(oosFiles.version))
         .limit(1);
 
       if (!oos) {
-        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'OOS not found' } });
-      }
+        // No draft -- find latest published
+        const [published] = await db.select()
+          .from(oosFiles)
+          .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
+          .orderBy(desc(oosFiles.version))
+          .limit(1);
 
-      // If OOS is published (not draft), create a new draft version
-      if (oos.status === 'published') {
+        if (!published) {
+          return reply.status(404).send({ error: { code: 'NO_OOS', message: 'You need at least one OOS file. Go to /publish to create one.' } });
+        }
+
+        // Create a new draft from the published version
         const [newDraft] = await db.insert(oosFiles).values({
           orgId: org.id,
-          name: oos.name,
-          template: oos.template,
-          version: oos.version + 1,
+          name: published.name,
+          template: published.template,
+          version: published.version + 1,
           status: 'draft',
-          visibilityDefault: oos.visibilityDefault,
-          wordCount: oos.wordCount,
-          claimCount: oos.claimCount,
-          rawContent: oos.rawContent,
-          frontmatter: oos.frontmatter,
-          confidenceDistribution: oos.confidenceDistribution,
-          evidenceDistribution: oos.evidenceDistribution,
+          visibilityDefault: published.visibilityDefault,
+          wordCount: published.wordCount,
+          claimCount: published.claimCount,
+          rawContent: published.rawContent,
+          frontmatter: published.frontmatter,
+          confidenceDistribution: published.confidenceDistribution,
+          evidenceDistribution: published.evidenceDistribution,
         }).returning();
         oos = newDraft;
       }
 
-      // Generate the new claim
-      const existingClaimCount = oos.claimCount || 0;
-      const newClaimId = 'C' + String(existingClaimCount + 1).padStart(3, '0');
+      // Ingest each practice as a claim
+      const ingested: Array<{ claimId: string; term: string }> = [];
+      let currentClaimCount = oos.claimCount || 0;
+      let currentContent = oos.rawContent;
 
-      // Build the claim markdown
-      const claimMarkdown = `\n\n### ${newClaimId}\n- **Confidence:** MEDIUM\n- **Evidence:** INFERENCE\n- **Section:** operational_heuristics\n- **Rule:** ${practice.term}: ${practice.definition.substring(0, 300)}\n- **Why:** Identified as a relevant best practice from the OTP Best Practices Library (source: McFadyen Digital).\n- **Failure mode:** Not implementing this practice may leave a gap in the organization's operational maturity.\n- **Scope:** organization-wide`;
+      for (const practice of practices) {
+        currentClaimCount++;
+        const newClaimId = 'C' + String(currentClaimCount).padStart(3, '0');
 
-      // Append to raw content
-      const updatedContent = oos.rawContent + claimMarkdown;
+        const claimMarkdown = `\n\n### ${newClaimId}\n- **Confidence:** MEDIUM\n- **Evidence:** INFERENCE\n- **Section:** operational_heuristics\n- **Rule:** ${practice.term}: ${practice.definition.substring(0, 300)}\n- **Why:** Identified as a relevant best practice from the OTP Best Practices Library (source: McFadyen Digital).\n- **Failure mode:** Not implementing this practice may leave a gap in the organization's operational maturity.\n- **Scope:** organization-wide`;
 
+        currentContent += claimMarkdown;
+
+        await db.insert(claims).values({
+          oosFileId: oos.id,
+          claimId: newClaimId,
+          section: 'operational_heuristics',
+          displayOrder: currentClaimCount,
+          rule: `${practice.term}: ${practice.definition.substring(0, 500)}`,
+          why: 'Identified as a relevant best practice from the OTP Best Practices Library (source: McFadyen Digital).',
+          failureMode: 'Not implementing this practice may leave a gap in the organization\'s operational maturity.',
+          confidence: 'MEDIUM',
+          evidence: 'INFERENCE',
+          scope: 'organization-wide',
+        });
+
+        ingested.push({ claimId: newClaimId, term: practice.term });
+      }
+
+      // Update the OOS file
       await db.update(oosFiles)
         .set({
-          rawContent: updatedContent,
-          claimCount: existingClaimCount + 1,
-          wordCount: updatedContent.split(/\s+/).length,
+          rawContent: currentContent,
+          claimCount: currentClaimCount,
+          wordCount: currentContent.split(/\s+/).length,
           updatedAt: new Date(),
         })
         .where(eq(oosFiles.id, oos.id));
 
-      // Also insert into claims table
-      await db.insert(claims).values({
-        oosFileId: oos.id,
-        claimId: newClaimId,
-        section: 'operational_heuristics',
-        displayOrder: existingClaimCount + 1,
-        rule: `${practice.term}: ${practice.definition.substring(0, 500)}`,
-        why: 'Identified as a relevant best practice from the OTP Best Practices Library (source: McFadyen Digital).',
-        failureMode: 'Not implementing this practice may leave a gap in the organization\'s operational maturity.',
-        confidence: 'MEDIUM',
-        evidence: 'INFERENCE',
-        scope: 'organization-wide',
-      });
-
       return {
         success: true,
-        claimId: newClaimId,
         oosId: oos.id,
         oosVersion: oos.version,
-        message: `Ingested "${practice.term}" as ${newClaimId} in your OOS (v${oos.version} draft)`,
+        ingestedCount: ingested.length,
+        ingested,
+        message: `Ingested ${ingested.length} practice(s) into your OOS (v${oos.version} draft)`,
       };
     }
   );
