@@ -563,39 +563,45 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No best practices found for the given slugs' } });
       }
 
-      // Find the user's latest OOS -- prefer draft, fall back to published
+      // Find the user's latest published OOS, then check for a newer draft
+      const [latestPublished] = await db.select()
+        .from(oosFiles)
+        .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
+        .orderBy(desc(oosFiles.version))
+        .limit(1);
+
+      if (!latestPublished) {
+        return reply.status(404).send({ error: { code: 'NO_OOS', message: 'You need at least one published OOS file. Go to /publish to create one.' } });
+      }
+
+      // Look for a draft that's NEWER than the latest published version
       let [oos] = await db.select()
         .from(oosFiles)
-        .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'draft')))
+        .where(
+          and(
+            eq(oosFiles.orgId, org.id),
+            eq(oosFiles.status, 'draft'),
+            sql`${oosFiles.version} > ${latestPublished.version}`
+          )
+        )
         .orderBy(desc(oosFiles.version))
         .limit(1);
 
       if (!oos) {
-        // No draft -- find latest published
-        const [published] = await db.select()
-          .from(oosFiles)
-          .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
-          .orderBy(desc(oosFiles.version))
-          .limit(1);
-
-        if (!published) {
-          return reply.status(404).send({ error: { code: 'NO_OOS', message: 'You need at least one OOS file. Go to /publish to create one.' } });
-        }
-
-        // Create a new draft from the published version
+        // No recent draft -- create one from the latest published version
         const [newDraft] = await db.insert(oosFiles).values({
           orgId: org.id,
-          name: published.name,
-          template: published.template,
-          version: published.version + 1,
+          name: latestPublished.name,
+          template: latestPublished.template,
+          version: latestPublished.version + 1,
           status: 'draft',
-          visibilityDefault: published.visibilityDefault,
-          wordCount: published.wordCount,
-          claimCount: published.claimCount,
-          rawContent: published.rawContent,
-          frontmatter: published.frontmatter,
-          confidenceDistribution: published.confidenceDistribution,
-          evidenceDistribution: published.evidenceDistribution,
+          visibilityDefault: latestPublished.visibilityDefault,
+          wordCount: latestPublished.wordCount,
+          claimCount: latestPublished.claimCount,
+          rawContent: latestPublished.rawContent,
+          frontmatter: latestPublished.frontmatter,
+          confidenceDistribution: latestPublished.confidenceDistribution,
+          evidenceDistribution: latestPublished.evidenceDistribution,
         }).returning();
         oos = newDraft;
       }
