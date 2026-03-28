@@ -238,21 +238,29 @@
       document.getElementById('mobile-menu').classList.toggle('hidden');
     });
 
-    // Sign In buttons -- wait for Clerk then open sign-in modal
-    function handleSignInClick() {
+    // Sign In buttons -- use Clerk directly
+    function handleSignInClick(e) {
+      e.preventDefault();
+      // Try __clerk (fully loaded) first, then Clerk (SDK loaded but not yet .load()'d)
       if (window.__clerk) {
         window.__clerk.openSignIn({ redirectUrl: window.location.href });
+      } else if (window.Clerk) {
+        // Clerk SDK loaded but .load() may not have finished -- load and open
+        window.Clerk.load().then(function() {
+          window.Clerk.openSignIn({ redirectUrl: window.location.href });
+        });
       } else {
-        // Clerk not loaded yet -- poll until ready
+        // Clerk not loaded at all yet -- poll for it
         var attempts = 0;
         var poll = setInterval(function() {
           attempts++;
-          if (window.__clerk) {
+          if (window.Clerk) {
             clearInterval(poll);
-            window.__clerk.openSignIn({ redirectUrl: window.location.href });
-          } else if (attempts > 100) {
+            window.Clerk.load().then(function() {
+              window.Clerk.openSignIn({ redirectUrl: window.location.href });
+            });
+          } else if (attempts > 50) {
             clearInterval(poll);
-            alert('Authentication service is loading. Please try again in a moment.');
           }
         }, 100);
       }
