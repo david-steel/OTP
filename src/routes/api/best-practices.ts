@@ -544,6 +544,31 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
   );
 
   // ============================================================
+  // POST /api/v1/best-practices/dismiss -- Mark a practice as not coordination intelligence
+  // ============================================================
+  app.post<{ Body: { id: string } }>('/best-practices/dismiss', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) {
+      return reply.status(401).send({
+        error: { code: 'AUTH_REQUIRED', message: 'Auth required' },
+      });
+    }
+
+    const { id } = request.body as any;
+    if (!id) {
+      return reply.status(400).send({
+        error: { code: 'MISSING_ID', message: 'Provide practice id' },
+      });
+    }
+
+    await db.update(bestPractices)
+      .set({ isCoordination: false })
+      .where(eq(bestPractices.id, id));
+
+    return { success: true, message: 'Practice dismissed' };
+  });
+
+  // ============================================================
   // POST /api/v1/best-practices/ingest -- Ingest one or more best practices as claims
   // Body: { slugs: string[] } or { slug: string }
   // Auto-finds the user's latest OOS. Creates a draft if only published exists.

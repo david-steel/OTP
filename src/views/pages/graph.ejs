@@ -2469,6 +2469,10 @@
           '</label>' +
           '<button class="bp-implement-btn flex-1 text-center text-xs font-medium py-2 rounded-lg border border-otp-300 text-otp-600 hover:bg-otp-50 transition-colors cursor-pointer" ' +
             'data-bp-id="' + p.id + '" data-bp-slug="' + p.slug + '" data-bp-term="' + p.term.replace(/'/g, '&#39;') + '">Implement</button>' +
+          '<button class="bp-dismiss-btn text-gray-300 hover:text-red-500 transition-colors cursor-pointer p-1" ' +
+            'data-bp-id="' + p.id + '" title="Not relevant">' +
+            '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+          '</button>' +
         '</div>' +
         '</div>';
     }).join('');
@@ -2509,6 +2513,10 @@
               '</label>' +
               '<button class="bp-implement-btn flex-1 text-center text-xs font-medium py-1.5 rounded-lg border border-otp-300 text-otp-600 hover:bg-otp-50 transition-colors cursor-pointer" ' +
                 'data-bp-id="' + p.id + '" data-bp-slug="' + p.slug + '" data-bp-term="' + p.term.replace(/\'/g, "&#39;") + '">Implement</button>' +
+              '<button class="bp-dismiss-btn text-gray-300 hover:text-red-500 transition-colors cursor-pointer p-1" ' +
+                'data-bp-id="' + p.id + '" title="Not relevant">' +
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+              '</button>' +
             '</div>' +
           '</div>';
         }).join('');
@@ -2667,6 +2675,44 @@
       });
   }
 
+  function dismissPractice(id) {
+    fetch('/api/v1/best-practices/dismiss', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.success) {
+        // Remove the card from the DOM
+        var cards = document.querySelectorAll('.bp-dismiss-btn[data-bp-id="' + id + '"]');
+        cards.forEach(function(btn) {
+          var card = btn.closest('.claim-card') || btn.closest('[class*="rounded-xl"]');
+          if (card) {
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(function() { card.remove(); }, 300);
+          }
+        });
+        // Also remove from bpData so it doesn't reappear on re-render
+        if (bpData && bpData.practices) {
+          bpData.practices = bpData.practices.filter(function(p) { return p.id !== id; });
+        }
+        // Brief "Dismissed" toast
+        var toast = document.createElement('div');
+        toast.textContent = 'Dismissed';
+        toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg z-50';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; }, 1500);
+        setTimeout(function() { toast.remove(); }, 1800);
+      }
+    })
+    .catch(function(err) {
+      console.error('Dismiss failed:', err);
+    });
+  }
+
   // Expose functions to global scope for onclick/onchange in dynamic HTML
   window.openImplementPanel = openImplementPanel;
   window.closeImplementPanel = closeImplementPanel;
@@ -2674,11 +2720,18 @@
   window.toggleIngestQueue = toggleIngestQueue;
   window.ingestSelected = ingestSelected;
   window.updateIngestBar = updateIngestBar;
+  window.dismissPractice = dismissPractice;
 
   // Implement button click handler (event delegation)
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('.bp-implement-btn');
     if (btn) openImplementPanel(btn.dataset.bpSlug);
+  });
+
+  // Dismiss button click handler (event delegation)
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.bp-dismiss-btn');
+    if (btn) dismissPractice(btn.dataset.bpId);
   });
 
   // Best practices search handler
