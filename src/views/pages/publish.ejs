@@ -957,8 +957,8 @@ async function scanAndReview() {
     // Step 2: Store the OOS content for the scan results page
     localStorage.setItem('otp_generated_oos', content);
 
-    // Step 3: Try the quick scan endpoint (builds ScannerInput from text)
-    var scanResp = await fetch('/api/v1/scanner/quick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: content }) });
+    // Step 3: Parse the text into structured scanner input and get coordination score
+    var scanResp = await fetch('/api/v1/scanner/from-text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: content }) });
     var scanData = await scanResp.json();
 
     if (scanData.score) {
@@ -967,9 +967,14 @@ async function scanAndReview() {
       return;
     }
 
-    // Fallback: if quick scan doesn't return a score, go straight to publish
-    btn.textContent = 'Scan & Review Coordination Score'; btn.disabled = false;
-    alert('Scanner could not analyze this content. You can publish directly.');
+    // Fallback: if scan failed, still allow publishing directly
+    if (scanData.error) {
+      btn.textContent = 'Scan & Review Coordination Score'; btn.disabled = false;
+      if (confirm('Scanner could not fully analyze this content (' + (scanData.error.message || 'unknown error') + '). Publish directly?')) {
+        publishOOS();
+      }
+      return;
+    }
   } catch (e) {
     btn.textContent = 'Scan & Review Coordination Score'; btn.disabled = false;
     alert('Scan failed: ' + e.message);

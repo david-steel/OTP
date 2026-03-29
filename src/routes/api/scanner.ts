@@ -93,6 +93,142 @@ export default async function scannerRoutes(app: FastifyInstance) {
     return result;
   });
 
+  // POST /api/v1/scanner/from-text -- Parse raw CLAUDE.md or OOS markdown into a scan
+  // Extracts agents, systems, workflows, oversight from unstructured text
+  app.post('/scanner/from-text', async (request, reply) => {
+    const body = request.body as any;
+    const text = body.text || '';
+    if (!text || text.length < 50) {
+      return reply.status(400).send({ error: { code: 'TOO_SHORT', message: 'Text must be at least 50 characters' } });
+    }
+
+    const lower = text.toLowerCase();
+
+    // Extract org name from frontmatter or first heading
+    let orgName = 'Unknown Organization';
+    const orgMatch = text.match(/org_pseudonym:\s*"?([^"\n]+)/i) || text.match(/^#\s+(.+)/m);
+    if (orgMatch) orgName = orgMatch[1].trim().replace(/"/g, '');
+
+    // Extract agents from patterns like "### AGENT_NAME" or "**Agent Name** - Role"
+    const roles: any[] = [];
+    const agentPatterns = [
+      /###\s+([A-Z][A-Z\s]+)\s*[-–]\s*(.+)/g,  // ### RADAR - Chief of Staff
+      /\*\*([A-Z][a-zA-Z\s]+)\*\*\s*[-–]\s*(.+)/g,  // **Radar** - Chief of Staff
+      /\|\s*\*\*([A-Za-z]+)\*\*\s*\|\s*([^|]+)/g,  // | **Agent** | Role |
+    ];
+    const seenAgents = new Set<string>();
+    for (const pattern of agentPatterns) {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const name = match[1].trim();
+        if (name.length > 1 && name.length < 30 && !seenAgents.has(name.toLowerCase())) {
+          seenAgents.add(name.toLowerCase());
+          const desc = match[2]?.trim() || '';
+          const isHuman = /ceo|coo|founder|owner|manager|director|human/i.test(desc);
+          roles.push({
+            name,
+            type: isHuman ? 'human_decision_maker' : 'ai_agent',
+            responsibilities: [desc.substring(0, 200)],
+            authority: /autonomous|auto/i.test(lower) && !isHuman ? 'autonomous' :
+                       /supervised|approval/i.test(desc) ? 'supervised' : 'semi_autonomous',
+          });
+        }
+      }
+    }
+
+    // If no agents found from patterns, look for "agent_count:" in frontmatter
+    if (roles.length === 0) {
+      const countMatch = text.match(/agent_count:\s*(\d+)/i);
+      const agentCount = countMatch ? parseInt(countMatch[1]) : 1;
+      for (let i = 0; i < Math.min(agentCount, 5); i++) {
+        roles.push({
+          name: `Agent ${i + 1}`,
+          type: 'ai_agent',
+          responsibilities: ['AI agent operations'],
+          authority: 'semi_autonomous',
+        });
+      }
+      // Add a human
+      roles.push({
+        name: 'Founder',
+        type: 'human_decision_maker',
+        responsibilities: ['Strategic decisions', 'Override authority'],
+        authority: 'autonomous',
+      });
+    }
+
+    // Extract systems/platforms
+    const systems: any[] = [];
+    const knownPlatforms: Record<string, string> = {
+      'claude': 'ai_model', 'gpt': 'ai_model', 'gemini': 'ai_model',
+      'slack': 'communication', 'gmail': 'communication', 'email': 'communication',
+      'todoist': 'saas_platform', 'accelo': 'saas_platform', 'ghl': 'saas_platform',
+      'google ads': 'saas_platform', 'meta ads': 'saas_platform',
+      'obsidian': 'internal_tool', 'github': 'internal_tool',
+      'zapier': 'automation', 'make': 'automation', 'n8n': 'automation',
+    };
+    const seenSystems = new Set<string>();
+    for (const [keyword, category] of Object.entries(knownPlatforms)) {
+      if (lower.includes(keyword) && !seenSystems.has(keyword)) {
+        seenSystems.add(keyword);
+        systems.push({ name: keyword.charAt(0).toUpperCase() + keyword.slice(1), category });
+      }
+    }
+    if (systems.length === 0) {
+      systems.push({ name: 'Claude', category: 'ai_model' });
+    }
+
+    // Extract oversight patterns
+    const hasApproval = /approval|approve|human.*(review|check|sign.off)/i.test(text);
+    const hasEscalation = /escalat|override|fallback/i.test(text);
+    const hasMonitoring = /monitor|alert|staleness|stale/i.test(text);
+
+    const oversight = {
+      uncertainty_handler: hasEscalation ? 'Escalate to human decision maker' : '',
+      error_handler: hasMonitoring ? 'Log error and alert' : 'Manual review',
+      override_authority: roles.find(r => r.type === 'human_decision_maker')?.name || 'Founder',
+      review_frequency: (hasMonitoring ? 'daily' : hasApproval ? 'weekly' : 'none') as 'daily' | 'weekly' | 'none',
+      human_approval_required: hasApproval ? ['External communications', 'Strategic decisions'] : [],
+    };
+
+    // Extract workflows from patterns
+    const workflows: any[] = [];
+    const wfMatch = text.match(/briefing|pipeline|workflow|daily.*scan|morning/gi);
+    if (wfMatch && roles.length >= 2) {
+      workflows.push({
+        name: 'Primary Workflow',
+        trigger: 'daily schedule',
+        steps: roles.slice(0, 3).map((r, i) => ({
+          actor: r.name,
+          action: r.responsibilities[0] || 'Process',
+          handoff_to: roles[i + 1]?.name,
+        })).filter(s => s.actor),
+      });
+    }
+
+    // Determine industry and size
+    const industry = text.match(/industry:\s*"?([^"\n]+)/i)?.[1]?.trim() || 'technology';
+    const sizeMatch = text.match(/org_size:\s*"?([^"\n]+)/i)?.[1]?.trim();
+    const orgSize = (sizeMatch as any) || 'small';
+
+    const input: ScannerInput = { orgName, industry, orgSize, systems, roles, workflows, oversight };
+    const result = runScan(input);
+
+    return {
+      score: result.score,
+      insights: result.insights,
+      graph: result.graph,
+      oos: result.oos,
+      extracted: {
+        orgName,
+        agentCount: roles.filter(r => r.type === 'ai_agent').length,
+        humanCount: roles.filter(r => r.type.includes('human')).length,
+        systemCount: systems.length,
+        workflowCount: workflows.length,
+      },
+    };
+  });
+
   // POST /api/v1/scanner/quick -- Minimal scan for fastest possible insight
   // Only requires: orgName, systems, and roles. No workflows or oversight needed.
   app.post('/scanner/quick', async (request, reply) => {
