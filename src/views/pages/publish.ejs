@@ -3,16 +3,24 @@
   <!-- Header -->
   <div class="mb-6">
     <h1 class="text-2xl font-bold mb-2">Publish Your OOS</h1>
-    <p class="text-gray-500 text-sm">Answer a few questions about how your AI works. We build the OOS for you.</p>
+    <p class="text-gray-500 text-sm">Upload your CLAUDE.md, paste your existing OOS, or build one from scratch.</p>
   </div>
 
-  <!-- Power User Escape -->
-  <div class="mb-6">
-    <button type="button" onclick="togglePowerUser()" id="power-user-toggle" class="text-sm text-otp-500 hover:text-otp-400 underline underline-offset-4 cursor-pointer">Already have an OOS? Paste it directly.</button>
+  <!-- Two paths: Import (primary) vs Build (secondary) -->
+  <div class="mb-8">
+    <div class="inline-flex items-center bg-gray-100 rounded-full p-1 w-full sm:w-auto">
+      <button type="button" onclick="showImportPath()" id="path-import-btn" class="flex-1 sm:flex-none px-6 py-2.5 rounded-full text-sm font-semibold transition-colors bg-otp-500 text-white">
+        Import File
+      </button>
+      <button type="button" onclick="showWizardPath()" id="path-wizard-btn" class="flex-1 sm:flex-none px-6 py-2.5 rounded-full text-sm font-semibold transition-colors bg-transparent text-gray-600 hover:text-gray-900">
+        Build from Scratch
+      </button>
+    </div>
+    <p class="text-xs text-gray-400 mt-2" id="path-hint">Upload your CLAUDE.md or paste an existing OOS file. We'll scan it and show your Coordination Score.</p>
   </div>
 
   <!-- ==================== WIZARD ==================== -->
-  <div id="wizard-container">
+  <div id="wizard-container" class="hidden">
 
     <!-- Progress Bar -->
     <div class="flex items-center gap-0 mb-2" id="progress-bar">
@@ -284,19 +292,24 @@ We had all agents writing to one shared file. Within a week, data was getting co
   </div>
 
   <!-- ==================== POWER USER MODE ==================== -->
-  <div id="power-user-container" class="hidden">
+  <div id="power-user-container">
     <div class="bg-white p-6 rounded-lg border mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <label class="font-semibold text-sm text-gray-700">Paste Your OOS</label>
-        <div class="flex items-center gap-3">
-          <button type="button" onclick="loadExample()" class="text-xs px-3 py-1.5 bg-otp-50 text-otp-600 rounded-lg hover:bg-otp-100 font-medium transition-colors cursor-pointer">Load Example</button>
-          <label class="text-xs px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 font-medium transition-colors cursor-pointer">
-            Upload File
-            <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden">
-          </label>
-        </div>
+      <!-- Upload hero -->
+      <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-4 hover:border-otp-400 transition-colors" id="drop-zone">
+        <svg class="w-10 h-10 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        <label class="px-6 py-3 bg-otp-500 text-white rounded-lg text-sm font-semibold hover:bg-otp-400 transition-colors cursor-pointer inline-block">
+          Upload CLAUDE.md or OOS File
+          <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden">
+        </label>
+        <p class="text-xs text-gray-400 mt-3">Drop your file here, or click to browse. Accepts .md, .txt files up to 2MB.</p>
       </div>
-      <textarea id="oos-content" rows="24" class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500 resize-y" placeholder="Paste your OOS markdown here..."></textarea>
+
+      <!-- Or paste -->
+      <div class="flex items-center justify-between mb-3">
+        <label class="font-semibold text-sm text-gray-700">Or paste your content</label>
+        <button type="button" onclick="loadExample()" class="text-xs px-3 py-1.5 bg-otp-50 text-otp-600 rounded-lg hover:bg-otp-100 font-medium transition-colors cursor-pointer">Load Example</button>
+      </div>
+      <textarea id="oos-content" rows="16" class="w-full font-mono text-sm border rounded-lg p-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500 resize-y" placeholder="Paste your CLAUDE.md, OOS markdown, or any structured coordination document here..."></textarea>
       <div class="flex justify-between mt-2 text-xs text-gray-400">
         <span id="word-count">0 words</span>
         <span id="claim-count">0 claims</span>
@@ -318,7 +331,7 @@ We had all agents writing to one shared file. Within a week, data was getting co
       </div>
     </details>
 
-    <button type="button" onclick="publishOOS()" id="publish-btn-power" class="w-full px-6 py-4 bg-otp-500 text-white rounded-xl font-semibold text-base hover:bg-otp-400 transition-colors">Publish to OTP</button>
+    <button type="button" onclick="scanAndReview()" id="publish-btn-power" class="w-full px-6 py-4 bg-otp-500 text-white rounded-xl font-semibold text-base hover:bg-otp-400 transition-colors">Scan & Review Coordination Score</button>
   </div>
 
   <!-- ==================== RESULTS (shared) ==================== -->
@@ -837,26 +850,55 @@ var textarea = document.getElementById('oos-content');
 var fileInput = document.getElementById('file-input');
 
 function togglePowerUser() {
-  var wizard = document.getElementById('wizard-container');
-  var power = document.getElementById('power-user-container');
-  var btn = document.getElementById('power-user-toggle');
-  var isWizard = !wizard.classList.contains('hidden');
-  wizard.classList.toggle('hidden');
-  power.classList.toggle('hidden');
-  btn.textContent = isWizard ? 'Use the guided wizard instead' : 'Already have an OOS? Paste it directly.';
+  showImportPath();
 }
 
-fileInput.addEventListener('change', function(e) {
-  var file = e.target.files[0];
+function showImportPath() {
+  document.getElementById('wizard-container').classList.add('hidden');
+  document.getElementById('power-user-container').classList.remove('hidden');
+  document.getElementById('path-import-btn').classList.add('bg-otp-500', 'text-white');
+  document.getElementById('path-import-btn').classList.remove('bg-transparent', 'text-gray-600');
+  document.getElementById('path-wizard-btn').classList.remove('bg-otp-500', 'text-white');
+  document.getElementById('path-wizard-btn').classList.add('bg-transparent', 'text-gray-600');
+  document.getElementById('path-hint').textContent = 'Upload your CLAUDE.md or paste an existing OOS file. We\'ll scan it and show your Coordination Score.';
+}
+
+function showWizardPath() {
+  document.getElementById('power-user-container').classList.add('hidden');
+  document.getElementById('wizard-container').classList.remove('hidden');
+  document.getElementById('path-wizard-btn').classList.add('bg-otp-500', 'text-white');
+  document.getElementById('path-wizard-btn').classList.remove('bg-transparent', 'text-gray-600');
+  document.getElementById('path-import-btn').classList.remove('bg-otp-500', 'text-white');
+  document.getElementById('path-import-btn').classList.add('bg-transparent', 'text-gray-600');
+  document.getElementById('path-hint').textContent = 'Answer a few questions about your AI setup. We\'ll generate your OOS and show your Coordination Score.';
+}
+
+function handleFileUpload(file) {
   if (!file) return;
   if (file.size > 2097152) { alert('File too large (max 2MB).'); return; }
   var reader = new FileReader();
   reader.onload = function(ev) {
     textarea.value = ev.target.result.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
     textarea.dispatchEvent(new Event('input'));
+    // Auto-trigger scan after upload
+    document.getElementById('drop-zone').innerHTML = '<div class="text-sm text-green-600 font-medium py-2">File loaded: ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)</div>';
   };
   reader.readAsText(file);
-});
+}
+
+fileInput.addEventListener('change', function(e) { handleFileUpload(e.target.files[0]); });
+
+// Drag and drop
+var dropZone = document.getElementById('drop-zone');
+if (dropZone) {
+  dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('border-otp-500', 'bg-otp-50'); });
+  dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('border-otp-500', 'bg-otp-50'); });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-otp-500', 'bg-otp-50');
+    if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files[0]);
+  });
+}
 
 textarea.addEventListener('input', function() {
   var text = textarea.value;
@@ -897,6 +939,41 @@ function showAuthBanner(message, href, linkText) {
   var results = document.getElementById('validation-results');
   results.parentElement.insertBefore(banner, results);
   banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function scanAndReview() {
+  var btn = document.getElementById('publish-btn-power');
+  var rawContent = textarea.value.trim();
+  if (!rawContent) { alert('Upload or paste your OOS content first.'); return; }
+  btn.textContent = 'Scanning...'; btn.disabled = true;
+
+  try {
+    // Step 1: Auto-fix the content
+    var fixResp = await fetch('/api/v1/oos/fix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rawContent: rawContent, template: 'agent_army' }) });
+    var fixData = await fixResp.json();
+    var content = fixData.fixed || rawContent;
+    if (fixData.fixCount > 0) { textarea.value = content; }
+
+    // Step 2: Store the OOS content for the scan results page
+    localStorage.setItem('otp_generated_oos', content);
+
+    // Step 3: Try the quick scan endpoint (builds ScannerInput from text)
+    var scanResp = await fetch('/api/v1/scanner/quick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: content }) });
+    var scanData = await scanResp.json();
+
+    if (scanData.score) {
+      localStorage.setItem('otp_scan_result', JSON.stringify(scanData));
+      window.location.href = '/scan-results';
+      return;
+    }
+
+    // Fallback: if quick scan doesn't return a score, go straight to publish
+    btn.textContent = 'Scan & Review Coordination Score'; btn.disabled = false;
+    alert('Scanner could not analyze this content. You can publish directly.');
+  } catch (e) {
+    btn.textContent = 'Scan & Review Coordination Score'; btn.disabled = false;
+    alert('Scan failed: ' + e.message);
+  }
 }
 
 async function publishOOS() {
