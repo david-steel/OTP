@@ -11,6 +11,7 @@ import {
 } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { jaccardSimilarity } from '../../services/similarity.js';
+import { isCoordinationIntelligence } from '../../services/coordination-filter.js';
 
 export default async function bestPracticesRoutes(app: FastifyInstance) {
 
@@ -24,6 +25,7 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
       category?: string;
       q?: string;
       publisher?: string;
+      all?: string;
     };
   }>('/best-practices', async (request, reply) => {
     const org = await getAuthOrg(request);
@@ -37,8 +39,14 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
     const limit = Math.min(Math.max(1, parseInt(request.query.limit || '50', 10)), 200);
     const offset = (page - 1) * limit;
     const { category, q, publisher } = request.query;
+    const showAll = request.query.all === 'true';
 
     const conditions: any[] = [];
+
+    // Default: show only coordination-tagged practices unless ?all=true
+    if (!showAll) {
+      conditions.push(eq(bestPractices.isCoordination, true));
+    }
 
     if (category) {
       conditions.push(eq(bestPractices.category, category));
@@ -561,6 +569,23 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
 
       if (practices.length === 0) {
         return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No best practices found for the given slugs' } });
+      }
+
+      // Coordination intelligence gate: reject practices that are not about coordination
+      const nonCoordination = practices.filter(p => {
+        const result = isCoordinationIntelligence(p.term, p.definition);
+        return !result.passes;
+      });
+
+      if (nonCoordination.length > 0) {
+        const rejected = nonCoordination.map(p => p.term).join(', ');
+        return reply.status(422).send({
+          error: {
+            code: 'NOT_COORDINATION_INTELLIGENCE',
+            message: 'This practice does not appear to be about coordination intelligence. OTP focuses on how agents, systems, and humans coordinate.',
+            rejectedTerms: rejected,
+          },
+        });
       }
 
       // Find the user's latest published OOS, then check for a newer draft

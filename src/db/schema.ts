@@ -93,6 +93,7 @@ export const claims = pgTable('claims', {
   evidence: evidenceEnum('evidence').notNull(),
   scope: text('scope').notNull(),
   visibilityOverride: visibilityEnum('visibility_override'),
+  isCanonical: boolean('is_canonical').default(false),
   // search_vector is managed by a database trigger, not Drizzle
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -263,6 +264,7 @@ export const bestPractices = pgTable('best_practices', {
   relatedTerms: text('related_terms').array(),
   sourceUrl: text('source_url').notNull(),
   canonicalUrl: text('canonical_url'),
+  isCoordination: boolean('is_coordination'),
   lastUpdatedAt: timestamp('last_updated_at'),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -271,6 +273,7 @@ export const bestPractices = pgTable('best_practices', {
   publisherIdx: index('bp_publisher_idx').on(table.publisherProfileId),
   categoryIdx: index('bp_category_idx').on(table.category),
   termIdx: index('bp_term_idx').on(table.term),
+  isCoordinationIdx: index('bp_is_coordination_idx').on(table.isCoordination),
 }));
 
 export const oosBestPracticeMatches = pgTable('oos_best_practice_matches', {
