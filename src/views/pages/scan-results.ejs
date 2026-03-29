@@ -87,13 +87,14 @@
 
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-      <a href="/publish?step=review" id="continue-btn" class="flex-1 text-center px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors">
-        Continue to Publish
-      </a>
+      <button type="button" onclick="publishNow()" id="continue-btn" class="flex-1 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors cursor-pointer">
+        Publish to OTP Network
+      </button>
       <button type="button" onclick="scrollToIssues()" id="fix-btn" class="hidden flex-1 px-6 py-3 border border-red-200 text-red-700 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors cursor-pointer">
         Fix Issues First
       </button>
     </div>
+    <p class="text-xs text-gray-400 text-center mt-2" id="publish-status"></p>
   </div>
 </div>
 
@@ -409,6 +410,80 @@
       });
     }
   });
+
+  window.publishNow = async function() {
+    var btn = document.getElementById('continue-btn');
+    var status = document.getElementById('publish-status');
+    var content = localStorage.getItem('otp_generated_oos');
+    if (!content) {
+      status.textContent = 'No OOS content found. Go back to the publish page.';
+      status.style.color = '#dc2626';
+      return;
+    }
+
+    btn.textContent = 'Publishing...';
+    btn.disabled = true;
+    status.textContent = '';
+
+    try {
+      // Step 1: Auto-fix
+      var fixResp = await fetch('/api/v1/oos/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawContent: content, template: 'agent_army' }),
+      });
+      var fixData = await fixResp.json();
+      var fixedContent = fixData.fixed || content;
+
+      // Step 2: Create OOS
+      var createResp = await fetch('/api/v1/oos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template: 'agent_army', rawContent: fixedContent }),
+      });
+      var createData = await createResp.json();
+
+      if (!createResp.ok) {
+        status.textContent = createData.error?.message || 'Failed to create OOS. Try publishing from the publish page.';
+        status.style.color = '#dc2626';
+        btn.textContent = 'Publish to OTP Network';
+        btn.disabled = false;
+        return;
+      }
+
+      // Step 3: Publish
+      var pubResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
+      var pubData = await pubResp.json();
+
+      if (!pubResp.ok) {
+        status.textContent = pubData.error?.message || 'Failed to publish. Try from the publish page.';
+        status.style.color = '#dc2626';
+        btn.textContent = 'Publish to OTP Network';
+        btn.disabled = false;
+        return;
+      }
+
+      // Success!
+      localStorage.removeItem('otp_generated_oos');
+      localStorage.removeItem('otp_scan_result');
+      btn.textContent = 'Published!';
+      btn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
+      btn.classList.add('bg-green-600');
+      status.textContent = 'Your OOS is live on the network.';
+      status.style.color = '#059669';
+
+      // Redirect to OOS detail after 2 seconds
+      setTimeout(function() {
+        window.location.href = '/oos/' + createData.oosFile.id;
+      }, 2000);
+
+    } catch (e) {
+      status.textContent = 'Network error: ' + e.message;
+      status.style.color = '#dc2626';
+      btn.textContent = 'Publish to OTP Network';
+      btn.disabled = false;
+    }
+  };
 
   function updateResolvedCounter() {
     if (!totalActionable) {
