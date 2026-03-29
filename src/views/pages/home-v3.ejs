@@ -9,26 +9,31 @@
   <div class="absolute top-[40%] left-[50%] w-[400px] h-[400px] bg-otp-400/8 rounded-full blur-[120px] pointer-events-none"></div>
 
   <div class="relative w-full max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-24">
-    <!-- Centered tagline -->
-    <div class="text-center mb-12 sm:mb-16">
-      <div class="animate-fade-in-up mb-6">
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
-          <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-          <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+      <!-- Left: Tagline -->
+      <div class="text-center lg:text-left">
+        <div class="animate-fade-in-up mb-6">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
+            <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+            <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
+          </div>
         </div>
+
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 animate-fade-in-up delay-100 tracking-tight">
+          Your agents just became <span class="gradient-text">your best hire.</span>
+        </h1>
+
+        <p class="text-xl sm:text-2xl text-otp-400 font-medium mb-6 animate-fade-in-up delay-200 tracking-wide">
+          Plug in. Turn on. Breathe.
+        </p>
+
+        <p class="text-sm text-gray-500 animate-fade-in-up delay-300 max-w-md mx-auto lg:mx-0 leading-relaxed">
+          Upload your CLAUDE.md and get your Coordination Score in 60 seconds. See what you've been missing.
+        </p>
       </div>
 
-      <h1 class="text-5xl sm:text-6xl lg:text-8xl font-extrabold text-white leading-[1.05] mb-6 animate-fade-in-up delay-100 tracking-tight">
-        Your agents just became<br><span class="gradient-text">your best hire.</span>
-      </h1>
-
-      <p class="text-xl sm:text-2xl text-otp-400 font-medium animate-fade-in-up delay-200 tracking-wide">
-        Plug in. Turn on. Breathe.
-      </p>
-    </div>
-
-    <!-- Upload zone centered below -->
-    <div class="animate-fade-in-up delay-300 max-w-2xl mx-auto">
+      <!-- Right: Upload zone -->
+      <div class="animate-fade-in-up delay-300">
         <div id="upload-zone" class="relative group cursor-pointer">
           <!-- Glow ring -->
           <div class="absolute -inset-1 bg-gradient-to-r from-otp-500/30 via-purple-500/30 to-otp-500/30 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -391,8 +396,8 @@
   <div class="absolute bottom-[-200px] right-[20%] w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[140px] pointer-events-none"></div>
 
   <div class="relative max-w-3xl mx-auto px-4 sm:px-6 text-center reveal">
-    <h2 class="text-4xl sm:text-6xl font-extrabold text-white mb-4 leading-tight tracking-tight">Your agents<br>work here now.</h2>
-    <p class="text-xl text-otp-400 font-medium mb-12 tracking-wide">Plug in. Turn on.</p>
+    <h2 class="text-4xl sm:text-6xl font-extrabold text-white mb-4 leading-tight tracking-tight">Your agents just became<br><span class="gradient-text">your best hire.</span></h2>
+    <p class="text-xl text-otp-400 font-medium mb-12 tracking-wide">Plug in. Turn on. Breathe.</p>
 
     <a href="#" id="bottom-cta" class="group relative inline-flex items-center gap-3">
       <!-- Glow -->
