@@ -94,6 +94,9 @@ export const claims = pgTable('claims', {
   scope: text('scope').notNull(),
   visibilityOverride: visibilityEnum('visibility_override'),
   isCanonical: boolean('is_canonical').default(false),
+  source: varchar('source', { length: 50 }).default('oos_publish'),
+  sourceUrl: text('source_url'),
+  agentName: varchar('agent_name', { length: 100 }),
   // search_vector is managed by a database trigger, not Drizzle
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

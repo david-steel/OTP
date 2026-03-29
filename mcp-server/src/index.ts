@@ -699,6 +699,62 @@ server.tool(
 );
 
 // ============================================================
+// TOOL: capture_learning
+// The core OTP loop: agent fails → human corrects → learning becomes intelligence
+// ============================================================
+server.tool(
+  "capture_learning",
+  "Capture an operational learning when an agent fails or you discover a better approach. This is the core OTP feedback loop: agent fails → you correct → correction becomes coordination intelligence → all agents improve. The learning is saved as a claim in your draft OOS and will be available via get_my_rules.",
+  {
+    what_failed: z.string().describe("What went wrong. E.g. 'Dash gave bad Meta Ads analysis -- used wrong date range and missed spend anomalies'"),
+    what_to_do: z.string().describe("The rule/fix. E.g. 'Always validate date ranges against the campaign's actual active period before running spend analysis'"),
+    why: z.string().optional().describe("Why this matters. E.g. 'Without date validation, the analysis includes pre-launch zeros that skew averages down'"),
+    agent: z.string().optional().describe("Which agent failed. E.g. 'Dash', 'Pepper', 'Dirk'"),
+    source_url: z.string().optional().describe("URL to a better approach, repo, or reference. E.g. 'https://github.com/user/better-meta-analysis'"),
+    section: z.enum([
+      "failure_patterns", "operational_heuristics", "core_operating_rules",
+      "coordination_patterns", "human_ai_boundary_conditions", "agent_roles_and_authority"
+    ]).optional().describe("Which OOS section this belongs in (auto-detected if not specified)"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return { content: [{ type: "text" as const, text: "Error: OTP_API_KEY required." }] };
+    }
+
+    const result = await otpFetch("/oos/learn", {
+      method: "POST",
+      body: JSON.stringify({
+        what_failed: params.what_failed,
+        what_to_do: params.what_to_do,
+        why: params.why,
+        agent: params.agent,
+        source_url: params.source_url,
+        section: params.section,
+      }),
+    });
+
+    return {
+      content: [{
+        type: "text" as const,
+        text: JSON.stringify({
+          captured: true,
+          claim_id: result.claimId,
+          section: result.section,
+          oos_version: result.oosVersion,
+          message: result.message,
+          next_steps: [
+            "This learning is now in your draft OOS",
+            "Run 'get_my_rules' to see it alongside your other rules",
+            "Publish the draft when ready to share with the network",
+            "Other agents will pick this up via the MCP bridge",
+          ],
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ============================================================
 // TOOL: submit_ticket
 // Report a bug or request a feature
 // ============================================================

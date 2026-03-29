@@ -663,6 +663,138 @@ ${claimSections.join('\n')}`.trim();
   });
 
   // ============================================================
+  // POST /api/v1/oos/learn -- Capture an operational learning as a claim
+  // The fast loop: agent fails → human corrects → correction becomes intelligence
+  // ============================================================
+  app.post<{ Body: {
+    what_failed: string;
+    what_to_do: string;
+    why: string;
+    agent?: string;
+    source_url?: string;
+    section?: string;
+    confidence?: string;
+    evidence?: string;
+  } }>('/oos/learn', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const body = request.body as any;
+    if (!body.what_failed || !body.what_to_do) {
+      return reply.status(400).send({
+        error: { code: 'MISSING_FIELDS', message: 'Provide at least what_failed and what_to_do' },
+      });
+    }
+
+    // Find or create a draft OOS to add the learning to
+    const [latestPublished] = await db.select()
+      .from(oosFiles)
+      .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
+      .orderBy(desc(oosFiles.version))
+      .limit(1);
+
+    if (!latestPublished) {
+      return reply.status(404).send({
+        error: { code: 'NO_OOS', message: 'Publish an OOS first at https://orgtp.com/publish' },
+      });
+    }
+
+    // Find a draft newer than published, or create one
+    let [draft] = await db.select()
+      .from(oosFiles)
+      .where(and(
+        eq(oosFiles.orgId, org.id),
+        eq(oosFiles.status, 'draft'),
+        sql`${oosFiles.version} > ${latestPublished.version}`
+      ))
+      .orderBy(desc(oosFiles.version))
+      .limit(1);
+
+    if (!draft) {
+      [draft] = await db.insert(oosFiles).values({
+        orgId: org.id,
+        name: latestPublished.name,
+        template: latestPublished.template,
+        version: latestPublished.version + 1,
+        status: 'draft',
+        visibilityDefault: latestPublished.visibilityDefault,
+        wordCount: latestPublished.wordCount,
+        claimCount: latestPublished.claimCount,
+        rawContent: latestPublished.rawContent,
+        frontmatter: latestPublished.frontmatter,
+        confidenceDistribution: latestPublished.confidenceDistribution,
+        evidenceDistribution: latestPublished.evidenceDistribution,
+      }).returning();
+    }
+
+    // Determine section based on what was provided
+    const isFailure = body.section === 'failure_patterns' ||
+      body.what_failed.toLowerCase().includes('failed') ||
+      body.what_failed.toLowerCase().includes('broke') ||
+      body.what_failed.toLowerCase().includes('wrong') ||
+      body.what_failed.toLowerCase().includes('bad');
+    const section = body.section || (isFailure ? 'failure_patterns' : 'operational_heuristics');
+
+    // Generate claim
+    const claimCount = (draft.claimCount || 0) + 1;
+    const claimId = 'L' + String(claimCount).padStart(3, '0'); // L for Learning
+
+    const rule = body.what_to_do;
+    const why = body.why || body.what_failed;
+    const failureMode = body.what_failed;
+    const confidence = (body.confidence as any) || 'MEDIUM';
+    const evidence = (body.evidence as any) || 'OBSERVED_ONCE';
+
+    // Insert the claim
+    const [newClaim] = await db.insert(claims).values({
+      oosFileId: draft.id,
+      claimId,
+      section,
+      displayOrder: claimCount,
+      rule,
+      why,
+      failureMode,
+      confidence,
+      evidence,
+      scope: body.agent ? `agent:${body.agent}` : 'organization-wide',
+      isCanonical: false,
+      source: 'learning',
+      sourceUrl: body.source_url || null,
+      agentName: body.agent || null,
+    }).returning();
+
+    // Append to raw content
+    const claimMarkdown = `\n\n### ${claimId}\n- **Confidence:** ${confidence}\n- **Evidence:** ${evidence}\n- **Section:** ${section}\n- **Rule:** ${rule}\n- **Why:** ${why}\n- **Failure mode:** ${failureMode}\n- **Scope:** ${body.agent ? `agent:${body.agent}` : 'organization-wide'}`;
+
+    await db.update(oosFiles)
+      .set({
+        rawContent: draft.rawContent + claimMarkdown,
+        claimCount,
+        wordCount: (draft.rawContent + claimMarkdown).split(/\s+/).length,
+        updatedAt: new Date(),
+      })
+      .where(eq(oosFiles.id, draft.id));
+
+    return {
+      success: true,
+      claimId,
+      section,
+      oosId: draft.id,
+      oosVersion: draft.version,
+      message: `Learning captured as ${claimId} in draft OOS v${draft.version}`,
+      claim: {
+        rule,
+        why,
+        failureMode,
+        confidence,
+        evidence,
+        agent: body.agent,
+        sourceUrl: body.source_url,
+      },
+    };
+  });
+
+  // ============================================================
   // GET /api/v1/oos/mine -- Get the authenticated user's latest published OOS
   // ============================================================
   app.get('/oos/mine', async (request, reply) => {
