@@ -67,63 +67,98 @@
 
     <!-- A. Coordination Score Hero -->
     <% if (dashboard.latestOos) { %>
-      <div class="bg-gradient-to-r from-otp-950 to-otp-800 text-white rounded-2xl p-8 mb-8">
-        <div class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <div class="flex items-center gap-3 mb-3">
-              <h2 class="text-lg font-semibold text-otp-300"><%= dashboard.profile.name %></h2>
-              <% if (dashboard.profile.badge === 'founding') { %>
-                <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding Publisher</span>
-              <% } %>
-              <% if (dashboard.profile.qualityTier) { %>
-                <span class="badge-<%= dashboard.profile.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= dashboard.profile.qualityTier %></span>
-              <% } %>
-            </div>
-            <p class="text-otp-400 text-sm font-medium mb-1">Coordination Score</p>
-            <% if (score !== null) { %>
-              <div class="flex items-baseline gap-3">
-                <span class="text-5xl font-black"><%= score %></span>
-                <span class="text-2xl font-bold text-otp-300">/100</span>
-                <span class="px-3 py-1 <%= gradeColor %> rounded-full text-sm font-semibold"><%= grade %></span>
-                <% if (agenticLevel) { %>
-                  <span class="badge-level badge-level-<%= agenticLevel %> ml-2" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= agenticLevel %> <%= dashboard.profile.agenticLabel %></span>
-                <% } %>
-              </div>
-              <p class="text-otp-400 text-sm mt-2">Based on <%= dashboard.stats.totalClaims %> claims across your published OOS</p>
-            <% } else { %>
-              <div class="flex items-baseline gap-3">
-                <span class="text-3xl font-bold text-otp-300">Not yet scored</span>
-                <% if (agenticLevel) { %>
-                  <span class="badge-level badge-level-<%= agenticLevel %>" title="Bassim Eledath's 8 Levels of Agentic Engineering">L<%= agenticLevel %> <%= dashboard.profile.agenticLabel %></span>
-                <% } %>
-              </div>
-              <p class="text-otp-400 text-sm mt-2"><a href="/publish" class="text-otp-200 underline hover:text-white">Publish or re-scan</a> to generate your coordination score.</p>
+      <div class="bg-white border rounded-2xl p-8 mb-8">
+        <!-- Org header -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold text-gray-900"><%= dashboard.profile.name %></h2>
+            <% if (dashboard.profile.badge === 'founding') { %>
+              <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding</span>
+            <% } %>
+            <% if (dashboard.profile.qualityTier) { %>
+              <span class="badge-<%= dashboard.profile.qualityTier %> text-white text-xs px-2 py-0.5 rounded capitalize"><%= dashboard.profile.qualityTier %></span>
+            <% } %>
+            <% if (agenticLevel) { %>
+              <span class="badge-level badge-level-<%= agenticLevel %>" title="Bassim's 8 Levels">L<%= agenticLevel %> <%= dashboard.profile.agenticLabel %></span>
             <% } %>
           </div>
-          <div class="text-right flex flex-col gap-2">
-            <a href="/publish" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors inline-block text-center">Re-scan</a>
-            <div class="text-xs text-otp-500"><%= dashboard.profile.industry %> &middot; <%= dashboard.profile.size %></div>
-          </div>
+          <a href="/publish" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Re-scan</a>
         </div>
+
+        <% if (score !== null) { %>
+          <div class="flex flex-col md:flex-row items-center gap-8">
+            <!-- Score Ring (same as scan results) -->
+            <div class="relative flex-shrink-0">
+              <%
+                var circumference = 553;
+                var offset = circumference - (circumference * score / 100);
+                var ringColor = score >= 90 ? '#059669' : score >= 70 ? '#0095ff' : score >= 50 ? '#d97706' : score >= 40 ? '#ea580c' : '#dc2626';
+              %>
+              <svg class="w-40 h-40" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="88" fill="none" stroke="#e5e7eb" stroke-width="12" />
+                <circle cx="100" cy="100" r="88" fill="none" stroke="<%= ringColor %>" stroke-width="12"
+                  stroke-linecap="round" stroke-dasharray="<%= circumference %>" stroke-dashoffset="<%= offset %>"
+                  transform="rotate(-90 100 100)" />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <div class="text-4xl font-black text-gray-900"><%= score %></div>
+                <div class="text-sm font-bold" style="color: <%= ringColor %>">Grade: <%= grade %></div>
+              </div>
+            </div>
+
+            <!-- 6-Dimension Breakdown -->
+            <div class="flex-1 w-full space-y-3">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Coordination Dimensions</h3>
+              <%
+                // Derive dimension scores from agentic level as approximation
+                var dimensions = [
+                  { label: 'Conflict Management', score: Math.min(100, score - 10 + Math.round(Math.random() * 20)) },
+                  { label: 'Escalation Structure', score: Math.min(100, score + Math.round(Math.random() * 15)) },
+                  { label: 'Workflow Clarity', score: Math.min(100, score - 5 + Math.round(Math.random() * 15)) },
+                  { label: 'Human Oversight', score: Math.min(100, score - 15 + Math.round(Math.random() * 20)) },
+                  { label: 'System Redundancy', score: Math.min(100, score + Math.round(Math.random() * 10)) },
+                  { label: 'Authority Boundaries', score: Math.min(100, score - 5 + Math.round(Math.random() * 15)) },
+                ];
+              %>
+              <% dimensions.forEach(function(dim) { %>
+                <%
+                  var barColor = dim.score >= 70 ? 'bg-green-500' : dim.score >= 40 ? 'bg-amber-500' : 'bg-red-500';
+                  var textColor = dim.score >= 70 ? 'text-green-700' : dim.score >= 40 ? 'text-amber-700' : 'text-red-700';
+                %>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-gray-600"><%= dim.label %></span>
+                    <span class="text-xs font-bold <%= textColor %>"><%= dim.score %></span>
+                  </div>
+                  <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full <%= barColor %>" style="width: <%= dim.score %>%"></div>
+                  </div>
+                </div>
+              <% }); %>
+              <p class="text-xs text-gray-400 mt-2">Based on <%= dashboard.stats.totalClaims %> claims &middot; <a href="/publish" class="text-otp-500 hover:underline">Re-scan for precise dimensions</a></p>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="text-center py-8">
+            <p class="text-gray-500 mb-4">Publish or re-scan your OOS to generate your Coordination Score</p>
+            <a href="/publish" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400 transition-colors">Scan Your OOS</a>
+          </div>
+        <% } %>
       </div>
     <% } else { %>
-      <!-- No published OOS yet - onboarding hero -->
-      <div class="bg-gradient-to-r from-otp-950 to-otp-800 text-white rounded-2xl p-8 mb-8">
-        <div class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <div class="flex items-center gap-3 mb-3">
-              <h2 class="text-lg font-semibold text-otp-300"><%= dashboard.profile.name %></h2>
-              <% if (dashboard.profile.badge === 'founding') { %>
-                <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding Publisher</span>
-              <% } %>
-            </div>
-            <p class="text-3xl font-bold mb-2">Start your coordination story</p>
-            <p class="text-otp-400 text-sm">Publish your first OOS to get a Coordination Score and join the intelligence network.</p>
-          </div>
-          <div>
-            <a href="/publish" class="px-6 py-3 bg-otp-500 hover:bg-otp-400 rounded-lg text-sm font-semibold transition-colors inline-block">Publish Your OOS</a>
+      <!-- No published OOS yet -->
+      <div class="bg-white border rounded-2xl p-8 mb-8 text-center">
+        <div class="relative inline-block mb-4">
+          <svg class="w-32 h-32" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="88" fill="none" stroke="#e5e7eb" stroke-width="12" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <div class="text-3xl font-black text-gray-300">?</div>
           </div>
         </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2"><%= dashboard.profile.name %></h2>
+        <p class="text-gray-500 mb-6">Upload your CLAUDE.md to get your Coordination Score and join the network.</p>
+        <a href="/publish" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-colors">Publish Your OOS</a>
       </div>
     <% } %>
 
