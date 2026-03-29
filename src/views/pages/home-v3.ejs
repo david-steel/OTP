@@ -8,32 +8,27 @@
   <div class="absolute bottom-[-200px] right-[-250px] w-[700px] h-[700px] bg-purple-500/15 rounded-full blur-[160px] pointer-events-none"></div>
   <div class="absolute top-[40%] left-[50%] w-[400px] h-[400px] bg-otp-400/8 rounded-full blur-[120px] pointer-events-none"></div>
 
-  <div class="relative w-full max-w-6xl mx-auto px-4 sm:px-6 pt-28 sm:pt-36 pb-20 sm:pb-28">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-      <!-- Left: Tagline -->
-      <div class="text-center lg:text-left">
-        <div class="animate-fade-in-up mb-6">
-          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
-            <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-            <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
-          </div>
+  <div class="relative w-full max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-24">
+    <!-- Centered tagline -->
+    <div class="text-center mb-12 sm:mb-16">
+      <div class="animate-fade-in-up mb-6">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
+          <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+          <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
         </div>
-
-        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6 animate-fade-in-up delay-100 tracking-tight">
-          Your agents<br>work here now.
-        </h1>
-
-        <p class="text-xl sm:text-2xl text-otp-400 font-medium mb-8 animate-fade-in-up delay-200 tracking-wide">
-          Plug in. Turn on.
-        </p>
-
-        <p class="text-sm text-gray-500 animate-fade-in-up delay-300 max-w-md mx-auto lg:mx-0 leading-relaxed">
-          Upload your CLAUDE.md and see your Coordination Score in 60 seconds. Six dimensions. One number. The gaps you didn't know you had.
-        </p>
       </div>
 
-      <!-- Right: Upload zone -->
-      <div class="animate-fade-in-up delay-300">
+      <h1 class="text-5xl sm:text-6xl lg:text-8xl font-extrabold text-white leading-[1.05] mb-6 animate-fade-in-up delay-100 tracking-tight">
+        Your agents just became<br><span class="gradient-text">your best hire.</span>
+      </h1>
+
+      <p class="text-xl sm:text-2xl text-otp-400 font-medium animate-fade-in-up delay-200 tracking-wide">
+        Plug in. Turn on. Breathe.
+      </p>
+    </div>
+
+    <!-- Upload zone centered below -->
+    <div class="animate-fade-in-up delay-300 max-w-2xl mx-auto">
         <div id="upload-zone" class="relative group cursor-pointer">
           <!-- Glow ring -->
           <div class="absolute -inset-1 bg-gradient-to-r from-otp-500/30 via-purple-500/30 to-otp-500/30 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -98,45 +93,67 @@
 </section>
 
 
-<!-- THE ARC: 3 bold statements, no icons, maximum impact -->
-<section class="bg-white py-24 sm:py-36">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6">
-    <div class="space-y-24 sm:space-y-32">
+<!-- THE ARC: zigzag layout, text/image alternating, tight -->
+<section class="bg-white py-16 sm:py-24">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-12 sm:space-y-16">
 
-      <!-- Statement 1 -->
-      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        <div>
-          <span class="text-otp-500 text-sm font-bold uppercase tracking-widest">Step One</span>
-          <h3 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mt-3 leading-[1.1]">Start by saving<br>2.5 hours a day.</h3>
-        </div>
-        <p class="text-lg sm:text-xl text-gray-500 leading-relaxed lg:pl-8">Your first agent handles the tasks you repeat every morning. The briefings, the inbox, the data pulls. That's 2.5 hours back on day one.</p>
+    <!-- Row 1: Text LEFT, Image RIGHT -->
+    <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div>
+        <span class="text-otp-500 text-sm font-bold uppercase tracking-widest">Step One</span>
+        <h3 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mt-3 mb-4 leading-[1.1]">Start by saving<br>2.5 hours a day.</h3>
+        <p class="text-base sm:text-lg text-gray-500 leading-relaxed">Your first agent handles the tasks you repeat every morning. The briefings, the inbox, the data pulls. That's 2.5 hours back on day one.</p>
       </div>
-
-      <!-- Divider -->
-      <div class="w-16 h-px bg-gray-200 mx-auto"></div>
-
-      <!-- Statement 2 -->
-      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        <div>
-          <span class="text-purple-500 text-sm font-bold uppercase tracking-widest">Step Two</span>
-          <h3 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mt-3 leading-[1.1]">Stop hiring.<br>Start deploying.</h3>
+      <div class="bg-gradient-to-br from-otp-50 to-purple-50 rounded-2xl p-8 flex items-center justify-center min-h-[260px]">
+        <div class="text-center">
+          <div class="text-7xl sm:text-8xl font-black text-otp-500 leading-none">2.5</div>
+          <div class="text-lg font-bold text-gray-400 mt-2">hours back / day</div>
         </div>
-        <p class="text-lg sm:text-xl text-gray-500 leading-relaxed lg:pl-8">Your second and third agents don't need salaries, benefits, or onboarding. They need your OOS. Plug them in and they're running.</p>
       </div>
-
-      <!-- Divider -->
-      <div class="w-16 h-px bg-gray-200 mx-auto"></div>
-
-      <!-- Statement 3 -->
-      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        <div>
-          <span class="text-amber-500 text-sm font-bold uppercase tracking-widest">The Unlock</span>
-          <h3 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mt-3 leading-[1.1]">Every agent runs<br>on your instinct.</h3>
-        </div>
-        <p class="text-lg sm:text-xl text-gray-500 leading-relaxed lg:pl-8">Your CLAUDE.md captures years of decisions, corrections, and hard-won lessons. OTP turns that instinct into something every agent inherits.</p>
-      </div>
-
     </div>
+
+    <!-- Row 2: Image LEFT, Text RIGHT -->
+    <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div class="order-2 lg:order-1 bg-gradient-to-br from-purple-50 to-otp-50 rounded-2xl p-8 flex items-center justify-center min-h-[260px]">
+        <div class="text-center">
+          <div class="text-6xl sm:text-7xl font-black text-gray-300 line-through decoration-red-400 decoration-4 leading-none">$85k</div>
+          <div class="text-4xl sm:text-5xl font-black text-purple-500 mt-2 leading-none">$0</div>
+          <div class="text-sm font-bold text-gray-400 mt-3">next hire vs. next agent</div>
+        </div>
+      </div>
+      <div class="order-1 lg:order-2">
+        <span class="text-purple-500 text-sm font-bold uppercase tracking-widest">Step Two</span>
+        <h3 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mt-3 mb-4 leading-[1.1]">Stop hiring.<br>Start deploying.</h3>
+        <p class="text-base sm:text-lg text-gray-500 leading-relaxed">Your second and third agents don't need salaries, benefits, or onboarding. They need your OOS. Plug them in and they're running.</p>
+      </div>
+    </div>
+
+    <!-- Row 3: Text LEFT, Image RIGHT -->
+    <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div>
+        <span class="text-amber-500 text-sm font-bold uppercase tracking-widest">The Unlock</span>
+        <h3 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mt-3 mb-4 leading-[1.1]">Every agent runs<br>on your instinct.</h3>
+        <p class="text-base sm:text-lg text-gray-500 leading-relaxed">Your CLAUDE.md captures years of decisions, corrections, and hard-won lessons. OTP turns that instinct into something every agent inherits.</p>
+      </div>
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-8 flex items-center justify-center min-h-[260px]">
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border">
+            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span class="text-sm font-mono text-gray-700">CLAUDE.md</span>
+          </div>
+          <div class="text-amber-400">
+            <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          </div>
+          <div class="flex items-center gap-2 justify-center">
+            <div class="px-3 py-1.5 bg-white rounded-lg shadow-sm border text-xs font-medium text-gray-600">Agent 1</div>
+            <div class="px-3 py-1.5 bg-white rounded-lg shadow-sm border text-xs font-medium text-gray-600">Agent 2</div>
+            <div class="px-3 py-1.5 bg-white rounded-lg shadow-sm border text-xs font-medium text-gray-600">Agent 3</div>
+          </div>
+          <div class="text-xs font-semibold text-amber-600">All running on your instinct</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
