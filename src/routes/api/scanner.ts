@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../../config/database.js';
 import { auditLogs } from '../../db/schema.js';
-import { runScan, type ScannerInput } from '../../services/scanner.js';
+import { runScan, type ScannerInput, type GeneratedClaim } from '../../services/scanner.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
+import type { Confidence, EvidenceType } from '../../shared/enums.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
 
@@ -171,4 +172,155 @@ export default async function scannerRoutes(app: FastifyInstance) {
       message: 'Quick scan complete. Run a full scan with workflows and oversight data for deeper analysis.',
     };
   });
+
+  // POST /api/v1/scanner/resolve-insight -- Generate a new claim from an insight resolution
+  const resolveInsightSchema = z.object({
+    insight_id: z.string().min(1).max(50),
+    insight_title: z.string().min(1).max(500),
+    insight_description: z.string().max(2000).optional().default(''),
+    resolution: z.string().min(1).max(2000),
+    oos_content: z.string().max(500000),
+  });
+
+  app.post('/scanner/resolve-insight', async (request, reply) => {
+    if (!checkRateLimit(request.ip)) {
+      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests. Max 10 per minute.' } });
+    }
+
+    const parsed = resolveInsightSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: {
+          code: 'VALIDATION_FAILED',
+          message: 'Invalid resolve-insight input',
+          details: parsed.error.issues,
+        },
+      });
+    }
+
+    const { insight_id, insight_title, insight_description, resolution, oos_content } = parsed.data;
+
+    // Infer the section from the insight title keywords
+    const section = inferSectionFromInsight(insight_title);
+
+    // Generate a claim ID by finding the highest existing claim number and incrementing
+    const claimIdMatch = oos_content.match(/\[C(\d+)\]/g);
+    let nextNum = 1;
+    if (claimIdMatch) {
+      const nums = claimIdMatch.map(m => parseInt(m.replace('[C', '').replace(']', ''), 10));
+      nextNum = Math.max(...nums) + 1;
+    }
+    const claimId = `C${String(nextNum).padStart(3, '0')}`;
+
+    // Build the failure mode from the insight context
+    const failureMode = insight_description
+      ? `Without this rule: ${insight_description}`
+      : `Without this rule, the issue identified by ${insight_id} remains unresolved and may cause coordination failures.`;
+
+    const newClaim: GeneratedClaim = {
+      claimId,
+      section,
+      rule: resolution,
+      why: `Resolves ${insight_id}: ${insight_title}`,
+      failureMode,
+      confidence: 'MEDIUM' as Confidence,
+      evidence: 'HUMAN_DEFINED_RULE' as EvidenceType,
+      scope: `Addresses insight ${insight_id}.`,
+    };
+
+    // Format the claim as markdown
+    const claimMarkdown = formatClaimMarkdown(newClaim);
+
+    // Append to the OOS content
+    // Try to find the matching section header and append there
+    const sectionTitle = section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    let updatedContent: string;
+
+    const sectionHeaderRegex = new RegExp(`^## ${escapeRegex(sectionTitle)}\\s*$`, 'm');
+    if (sectionHeaderRegex.test(oos_content)) {
+      // Find the section and append the claim at the end of that section (before the next ## or end of file)
+      const sectionIdx = oos_content.search(sectionHeaderRegex);
+      const afterSection = oos_content.slice(sectionIdx);
+      const nextSectionMatch = afterSection.match(/\n## (?!.*$)/m);
+
+      if (nextSectionMatch && nextSectionMatch.index !== undefined) {
+        // Insert before the next section
+        const insertPoint = sectionIdx + nextSectionMatch.index;
+        updatedContent = oos_content.slice(0, insertPoint) + claimMarkdown + '\n' + oos_content.slice(insertPoint);
+      } else {
+        // Append at the end
+        updatedContent = oos_content + '\n' + claimMarkdown;
+      }
+    } else {
+      // Section does not exist -- create it and append at the end
+      updatedContent = oos_content + `\n## ${sectionTitle}\n\n` + claimMarkdown;
+    }
+
+    // Audit log
+    await db.insert(auditLogs).values(
+      createAuditEntry('scanner.resolve_insight', 'scanner', {
+        actorType: 'user',
+        details: {
+          insightId: insight_id,
+          insightTitle: insight_title,
+          claimId: newClaim.claimId,
+          section: newClaim.section,
+        },
+      })
+    );
+
+    return {
+      claim: newClaim,
+      claimMarkdown,
+      updatedOosContent: updatedContent,
+      section,
+      sectionTitle,
+    };
+  });
+}
+
+// ---- Helpers for resolve-insight ----
+
+function inferSectionFromInsight(title: string): string {
+  const lower = title.toLowerCase();
+
+  // Map keywords to OOS sections
+  if (lower.includes('conflict') || lower.includes('priority') || lower.includes('competing')) {
+    return 'core_operating_rules';
+  }
+  if (lower.includes('escalation') || lower.includes('handoff') || lower.includes('dead-end')) {
+    return 'coordination_patterns';
+  }
+  if (lower.includes('oversight') || lower.includes('human') || lower.includes('approval') || lower.includes('override')) {
+    return 'human_ai_boundary_conditions';
+  }
+  if (lower.includes('single point') || lower.includes('failure') || lower.includes('redundancy')) {
+    return 'failure_patterns';
+  }
+  if (lower.includes('authority') || lower.includes('autonomous') || lower.includes('role')) {
+    return 'agent_roles_and_authority';
+  }
+  if (lower.includes('workflow') || lower.includes('trigger') || lower.includes('sequence')) {
+    return 'coordination_patterns';
+  }
+
+  // Default to core operating rules for anything that doesn't match
+  return 'core_operating_rules';
+}
+
+function formatClaimMarkdown(claim: GeneratedClaim): string {
+  const lines: string[] = [];
+  lines.push(`**[${claim.claimId}]** ${claim.section}`);
+  lines.push(`- **Rule:** ${claim.rule}`);
+  lines.push(`- **Why:** ${claim.why}`);
+  lines.push(`- **Failure mode:** ${claim.failureMode}`);
+  lines.push(`- **Confidence:** ${claim.confidence}`);
+  lines.push(`- **Evidence:** ${claim.evidence}`);
+  lines.push(`- **Scope:** ${claim.scope}`);
+  lines.push('');
+  return lines.join('\n');
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

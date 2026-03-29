@@ -400,12 +400,30 @@ function goToStep(n) {
   document.getElementById('step-label').textContent = 'Step ' + n + ' of 5';
   updateProgressBar(n);
 
-  if (n === 5) generateOOSFromWizard();
+  if (n === 5) {
+    // If returning from scan-results, restore the OOS from localStorage
+    var storedOOS = localStorage.getItem('otp_generated_oos');
+    if (storedOOS) {
+      generatedOOS = storedOOS;
+      document.getElementById('oos-preview').textContent = generatedOOS;
+      document.getElementById('oos-edit').value = generatedOOS;
+      var words = generatedOOS.replace(/^---[\s\S]*?---\n/, '').trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+      var claimMatches = generatedOOS.match(/\*\*\[C\d+\]\*\*/g);
+      document.getElementById('preview-stats').textContent = words + ' words | ' + (claimMatches ? claimMatches.length : 0) + ' claims | Template: agent_army';
+    } else {
+      generateOOSFromWizard();
+    }
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function nextStep() {
   if (!validateStep(currentStep)) return;
+  if (currentStep === 4) {
+    // Generate OOS, run scanner, redirect to scan-results
+    runScanAndRedirect();
+    return;
+  }
   goToStep(currentStep + 1);
 }
 
@@ -618,6 +636,143 @@ function generateOOSFromWizard() {
 
 var generatedOOS = '';
 
+async function runScanAndRedirect() {
+  // Disable the button and show loading state
+  var btn = document.querySelector('#wizard-step-4 .bg-otp-500');
+  var origText = btn.textContent;
+  btn.textContent = 'Scanning...';
+  btn.disabled = true;
+
+  // First, generate the OOS markdown so it is stored for publish
+  generateOOSFromWizard();
+  localStorage.setItem('otp_generated_oos', generatedOOS);
+
+  // Build scanner input from wizard data
+  var orgName = document.getElementById('w-orgName').value.trim();
+  var industry = document.getElementById('w-industry').value;
+  var teamSize = document.getElementById('w-teamSize').value;
+  var platforms = Array.from(document.querySelectorAll('.w-platform:checked')).map(function(cb) { return cb.value; });
+  var mcpServers = Array.from(document.querySelectorAll('.w-mcp-server:checked')).map(function(cb) { return cb.value; });
+  var mcpOther = (document.getElementById('w-mcpOther').value || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+  mcpServers = mcpServers.concat(mcpOther);
+  var aiSetup = document.getElementById('w-aiSetup').value.trim();
+  var rules = document.getElementById('w-rules').value.trim().split('\n').filter(function(l) { return l.trim().length > 0; });
+  var humanOnly = document.getElementById('w-humanOnly').value.trim();
+
+  // Build systems array from platforms and MCP servers
+  var systems = [];
+  platforms.forEach(function(p) {
+    systems.push({ name: p, category: 'ai_model', description: p + ' AI platform' });
+  });
+  mcpServers.forEach(function(s) {
+    systems.push({ name: s, category: 'saas_platform', description: s + ' integration' });
+  });
+
+  // Build roles from AI setup text (parse agent-like descriptions)
+  var roles = [];
+  // Always add a human decision maker
+  roles.push({
+    name: 'Founder',
+    type: 'human_decision_maker',
+    responsibilities: ['Final approval on all external communications', 'Strategic decisions', 'Override authority'],
+    authority: 'autonomous'
+  });
+
+  // Try to extract agent names/roles from the setup text
+  var agentLines = aiSetup.split(/[.\n]/).filter(function(l) { return l.trim().length > 10; });
+  var agentCount = parseInt(document.getElementById('w-agentCount').value) || 3;
+  var addedAgents = 0;
+
+  agentLines.forEach(function(line) {
+    if (addedAgents >= agentCount) return;
+    line = line.trim();
+    // Look for patterns like "X handles Y" or "X for Y" or "use X to Y"
+    var match = line.match(/(?:^|\b)([\w\s]+?)(?:\s+(?:handles?|manages?|does|runs?|for|to)\s+)(.*)/i);
+    if (match) {
+      roles.push({
+        name: match[1].trim().substring(0, 100),
+        type: 'ai_agent',
+        responsibilities: [match[2].trim().substring(0, 300)],
+        authority: 'supervised'
+      });
+      addedAgents++;
+    }
+  });
+
+  // If we did not parse enough agents, add generic ones
+  if (addedAgents === 0) {
+    roles.push({
+      name: 'AI Assistant',
+      type: 'ai_agent',
+      responsibilities: [aiSetup.substring(0, 300)],
+      authority: 'supervised'
+    });
+  }
+
+  // Build oversight from rules and human-only items
+  var humanApproval = [];
+  if (humanOnly) {
+    humanOnly.split(/[,\n]/).filter(function(l) { return l.trim(); }).forEach(function(item) {
+      humanApproval.push(item.trim().substring(0, 200));
+    });
+  }
+
+  var scanInput = {
+    orgName: orgName,
+    industry: industry,
+    orgSize: teamSize,
+    systems: systems.length > 0 ? systems : [{ name: 'AI Platform', category: 'ai_model' }],
+    roles: roles,
+    workflows: [],
+    oversight: {
+      uncertainty_handler: 'Founder',
+      error_handler: 'Founder',
+      override_authority: 'Founder',
+      review_frequency: humanApproval.length > 0 ? 'daily' : 'none',
+      human_approval_required: humanApproval
+    }
+  };
+
+  try {
+    var resp = await fetch('/api/v1/scanner/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scanInput)
+    });
+
+    if (resp.ok) {
+      var scanResult = await resp.json();
+      localStorage.setItem('otp_scan_result', JSON.stringify(scanResult));
+      window.location.href = '/scan-results';
+      return;
+    }
+
+    // If scan fails, try quick scan as fallback
+    var quickResp = await fetch('/api/v1/scanner/quick', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scanInput)
+    });
+
+    if (quickResp.ok) {
+      var quickResult = await quickResp.json();
+      localStorage.setItem('otp_scan_result', JSON.stringify(quickResult));
+      window.location.href = '/scan-results';
+      return;
+    }
+
+    // If both fail, skip scan results and go to review
+    console.warn('Scanner failed, skipping to review');
+    goToStep(5);
+  } catch (e) {
+    console.warn('Scanner error, skipping to review:', e);
+    goToStep(5);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
 function toggleEditMode() {
   var preview = document.getElementById('oos-preview').parentElement;
   var editor = document.getElementById('edit-container');
@@ -793,4 +948,12 @@ function loadExample() {
   // Switch to power user mode to show the example
   if (!document.getElementById('wizard-container').classList.contains('hidden')) togglePowerUser();
 }
+
+// Handle ?step=review -- returning from scan-results page
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('step') === 'review') {
+    goToStep(5);
+  }
+})();
 </script>

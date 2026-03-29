@@ -1,0 +1,304 @@
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+  <!-- Loading State -->
+  <div id="loading-state" class="text-center py-20">
+    <div class="inline-block w-12 h-12 border-4 border-gray-200 border-t-otp-500 rounded-full animate-spin mb-4"></div>
+    <p class="text-gray-500 text-sm">Loading your scan results...</p>
+  </div>
+
+  <!-- No Data State -->
+  <div id="no-data-state" class="hidden text-center py-20">
+    <p class="text-gray-500 mb-4">No scan data found. Run the wizard first.</p>
+    <a href="/publish" class="inline-block px-6 py-2.5 bg-otp-500 text-white rounded-lg font-medium text-sm hover:bg-otp-400 transition-colors">Go to Publish Wizard</a>
+  </div>
+
+  <!-- Results Container -->
+  <div id="results-container" class="hidden">
+
+    <!-- Back Link -->
+    <div class="mb-6">
+      <a href="/publish" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">&larr; Back to wizard</a>
+    </div>
+
+    <!-- Coordination Score Hero -->
+    <div class="text-center py-10 mb-8">
+      <div class="relative inline-block mb-4">
+        <svg id="score-ring" class="w-48 h-48" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#e5e7eb" stroke-width="12" />
+          <circle id="score-arc" cx="100" cy="100" r="88" fill="none" stroke="#0095ff" stroke-width="12"
+            stroke-linecap="round" stroke-dasharray="553" stroke-dashoffset="553"
+            transform="rotate(-90 100 100)" style="transition: stroke-dashoffset 1.5s ease-out, stroke 0.5s ease;" />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="text-5xl font-black text-gray-900" id="score-value">--</div>
+          <div class="text-lg font-bold mt-1" id="score-grade" style="color: #0095ff;">--</div>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm font-medium tracking-wide uppercase">Coordination Score</p>
+      <p class="text-gray-500 text-xs mt-2 max-w-md mx-auto" id="score-tagline"></p>
+    </div>
+
+    <!-- 6-Dimension Breakdown -->
+    <div class="bg-white border rounded-xl p-6 mb-8">
+      <h2 class="text-lg font-bold mb-5">Breakdown</h2>
+      <div class="space-y-4" id="dimension-bars"></div>
+    </div>
+
+    <!-- Insights Section -->
+    <div id="insights-section" class="mb-8">
+      <h2 class="text-lg font-bold mb-5">Insights</h2>
+
+      <!-- Critical -->
+      <div id="insights-critical" class="hidden mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+          <h3 class="text-sm font-semibold text-red-700" id="critical-label">Critical</h3>
+        </div>
+        <div class="space-y-3" id="critical-cards"></div>
+      </div>
+
+      <!-- Warnings -->
+      <div id="insights-warning" class="hidden mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
+          <h3 class="text-sm font-semibold text-amber-700" id="warning-label">Warnings</h3>
+        </div>
+        <div class="space-y-3" id="warning-cards"></div>
+      </div>
+
+      <!-- Info -->
+      <div id="insights-info" class="hidden mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+          <h3 class="text-sm font-semibold text-blue-700" id="info-label">Info</h3>
+        </div>
+        <div class="space-y-3" id="info-cards"></div>
+      </div>
+
+      <!-- Positive -->
+      <div id="insights-positive" class="hidden mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+          <h3 class="text-sm font-semibold text-green-700" id="positive-label">Strengths</h3>
+        </div>
+        <div class="space-y-3" id="positive-cards"></div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+      <a href="/publish?step=review" id="continue-btn" class="flex-1 text-center px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors">
+        Continue to Publish
+      </a>
+      <button type="button" onclick="scrollToIssues()" id="fix-btn" class="hidden flex-1 px-6 py-3 border border-red-200 text-red-700 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors cursor-pointer">
+        Fix Issues First
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var DIMENSION_LABELS = {
+    conflictManagement: 'Conflict Management',
+    escalationStructure: 'Escalation Structure',
+    workflowClarity: 'Workflow Clarity',
+    humanOversight: 'Human Oversight',
+    systemRedundancy: 'System Redundancy',
+    authorityBoundaries: 'Authority Boundaries'
+  };
+
+  var GRADE_COLORS = {
+    A: '#059669',
+    B: '#0095ff',
+    C: '#d97706',
+    D: '#ea580c',
+    F: '#dc2626'
+  };
+
+  var GRADE_TAGLINES = {
+    A: 'Your AI coordination is well-structured. Small refinements ahead.',
+    B: 'Solid foundation with clear improvement opportunities.',
+    C: 'Functional but exposed. Several gaps need attention.',
+    D: 'Significant coordination gaps. Address critical issues before scaling.',
+    F: 'Your AI agents are operating without meaningful coordination. Start here.'
+  };
+
+  function init() {
+    var raw = localStorage.getItem('otp_scan_result');
+    var loading = document.getElementById('loading-state');
+    var noData = document.getElementById('no-data-state');
+    var container = document.getElementById('results-container');
+
+    if (!raw) {
+      loading.classList.add('hidden');
+      noData.classList.remove('hidden');
+      return;
+    }
+
+    var data;
+    try { data = JSON.parse(raw); } catch(e) {
+      loading.classList.add('hidden');
+      noData.classList.remove('hidden');
+      return;
+    }
+
+    loading.classList.add('hidden');
+    container.classList.remove('hidden');
+
+    renderScore(data.score);
+    renderDimensions(data.score.breakdown);
+    renderInsights(data.insights || []);
+  }
+
+  function renderScore(score) {
+    var value = score.overall;
+    var grade = score.grade;
+    var color = GRADE_COLORS[grade] || '#0095ff';
+
+    // Animate the number
+    var el = document.getElementById('score-value');
+    animateNumber(el, 0, value, 1200);
+
+    // Set grade
+    var gradeEl = document.getElementById('score-grade');
+    gradeEl.textContent = 'Grade: ' + grade;
+    gradeEl.style.color = color;
+
+    // Set tagline
+    document.getElementById('score-tagline').textContent = GRADE_TAGLINES[grade] || '';
+
+    // Animate the ring
+    var arc = document.getElementById('score-arc');
+    var circumference = 553; // 2 * PI * 88
+    var offset = circumference - (circumference * value / 100);
+    arc.setAttribute('stroke', color);
+    setTimeout(function() {
+      arc.style.strokeDashoffset = offset;
+    }, 100);
+  }
+
+  function animateNumber(el, from, to, duration) {
+    var start = performance.now();
+    function tick(now) {
+      var progress = Math.min((now - start) / duration, 1);
+      // Ease out cubic
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(from + (to - from) * eased);
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function renderDimensions(breakdown) {
+    var container = document.getElementById('dimension-bars');
+    var keys = ['conflictManagement', 'escalationStructure', 'workflowClarity', 'humanOversight', 'systemRedundancy', 'authorityBoundaries'];
+
+    keys.forEach(function(key, index) {
+      var val = breakdown[key] || 0;
+      var label = DIMENSION_LABELS[key] || key;
+      var barColor = val >= 70 ? 'bg-green-500' : val >= 40 ? 'bg-amber-500' : 'bg-red-500';
+      var textColor = val >= 70 ? 'text-green-700' : val >= 40 ? 'text-amber-700' : 'text-red-700';
+
+      var row = document.createElement('div');
+      row.innerHTML =
+        '<div class="flex items-center justify-between mb-1.5">' +
+          '<span class="text-sm font-medium text-gray-700">' + escapeHtml(label) + '</span>' +
+          '<span class="text-sm font-bold ' + textColor + '">' + val + '</span>' +
+        '</div>' +
+        '<div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">' +
+          '<div class="h-full rounded-full transition-all duration-1000 ease-out ' + barColor + '" style="width: 0%;" data-target="' + val + '"></div>' +
+        '</div>';
+
+      container.appendChild(row);
+
+      // Animate bar width
+      setTimeout(function() {
+        var bar = row.querySelector('[data-target]');
+        bar.style.width = val + '%';
+      }, 200 + (index * 100));
+    });
+  }
+
+  function renderInsights(insights) {
+    var groups = { critical: [], warning: [], info: [], positive: [] };
+    insights.forEach(function(ins) {
+      if (groups[ins.severity]) groups[ins.severity].push(ins);
+    });
+
+    var hasCritical = groups.critical.length > 0;
+
+    renderInsightGroup('critical', groups.critical, 'border-red-200 bg-red-50', 'bg-red-100 text-red-800');
+    renderInsightGroup('warning', groups.warning, 'border-amber-200 bg-amber-50', 'bg-amber-100 text-amber-800');
+    renderInsightGroup('info', groups.info, 'border-blue-200 bg-blue-50', 'bg-blue-100 text-blue-800');
+    renderInsightGroup('positive', groups.positive, 'border-green-200 bg-green-50', 'bg-green-100 text-green-800');
+
+    // Show "Fix Issues First" button if there are critical insights
+    if (hasCritical) {
+      document.getElementById('fix-btn').classList.remove('hidden');
+    }
+
+    // Update labels with counts
+    if (groups.critical.length) document.getElementById('critical-label').textContent = 'Critical (' + groups.critical.length + ')';
+    if (groups.warning.length) document.getElementById('warning-label').textContent = 'Warnings (' + groups.warning.length + ')';
+    if (groups.info.length) document.getElementById('info-label').textContent = 'Info (' + groups.info.length + ')';
+    if (groups.positive.length) document.getElementById('positive-label').textContent = 'Strengths (' + groups.positive.length + ')';
+  }
+
+  function renderInsightGroup(severity, items, cardClasses, badgeClasses) {
+    if (items.length === 0) return;
+    var section = document.getElementById('insights-' + severity);
+    var container = document.getElementById(severity + '-cards');
+    section.classList.remove('hidden');
+
+    items.forEach(function(ins) {
+      var card = document.createElement('div');
+      card.className = 'border rounded-lg p-4 ' + cardClasses;
+
+      var html =
+        '<div class="flex items-start gap-3">' +
+          '<div class="flex-1">' +
+            '<div class="flex items-center gap-2 mb-1">' +
+              '<span class="text-xs font-semibold px-2 py-0.5 rounded-full ' + badgeClasses + '">' + severity.charAt(0).toUpperCase() + severity.slice(1) + '</span>' +
+              '<h4 class="text-sm font-bold text-gray-900">' + escapeHtml(ins.title) + '</h4>' +
+            '</div>' +
+            '<p class="text-sm text-gray-700 mb-2">' + escapeHtml(ins.description) + '</p>';
+
+      if (ins.recommendation) {
+        html += '<p class="text-xs text-gray-600"><span class="font-semibold">Recommendation:</span> ' + escapeHtml(ins.recommendation) + '</p>';
+      }
+
+      if (ins.affectedEntities && ins.affectedEntities.length > 0) {
+        html += '<div class="flex flex-wrap gap-1.5 mt-2">';
+        ins.affectedEntities.forEach(function(entity) {
+          html += '<span class="text-xs px-2 py-0.5 bg-white/70 border rounded-full text-gray-600">' + escapeHtml(entity) + '</span>';
+        });
+        html += '</div>';
+      }
+
+      html += '</div></div>';
+      card.innerHTML = html;
+      container.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  window.scrollToIssues = function() {
+    var critical = document.getElementById('insights-critical');
+    if (critical && !critical.classList.contains('hidden')) {
+      critical.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

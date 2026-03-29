@@ -89,9 +89,17 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="mt-4 flex gap-3">
+    <div class="mt-4 flex gap-3 items-center">
       <button onclick="document.getElementById('compare-modal').classList.remove('hidden')" class="px-4 py-2 bg-otp-500 text-white rounded text-sm hover:bg-otp-400">Compare with Another OOS</button>
       <a href="/org/<%= org.id %>" class="px-4 py-2 border rounded text-sm hover:bg-gray-50">View Publisher Profile</a>
+      <div class="relative">
+        <button onclick="copyAsSystemPrompt()" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+          Copy as System Prompt
+        </button>
+        <span id="copy-confirm" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity duration-300 pointer-events-none whitespace-nowrap">Copied!</span>
+      </div>
+      <span class="text-xs text-gray-400 ml-1"><%= tokenEfficiencyIndex.toFixed(1) %>x TEI</span>
     </div>
   </div>
 
@@ -225,6 +233,79 @@
 </div>
 
 <script>
+// Claims data for system prompt export
+var oosClaimsData = <%- JSON.stringify(claims.map(function(c) { return { id: c.claimId, section: c.section, rule: c.rule }; })) %>;
+var oosOrgName = <%- JSON.stringify(org.name) %>;
+var oosVersion = <%- JSON.stringify(oosFile.version) %>;
+var oosClaimCount = <%= oosFile.claimCount %>;
+var oosId = <%- JSON.stringify(oosFile.id) %>;
+var oosTEI = <%- JSON.stringify(tokenEfficiencyIndex.toFixed(1)) %>;
+
+function copyAsSystemPrompt() {
+  // Group claims by section
+  var sectionMap = {};
+  var sectionOrder = [];
+  oosClaimsData.forEach(function(c) {
+    if (!sectionMap[c.section]) {
+      sectionMap[c.section] = [];
+      sectionOrder.push(c.section);
+    }
+    sectionMap[c.section].push(c);
+  });
+
+  // Section display name mapping
+  var sectionLabels = {
+    'agent_roles': 'Agent Roles and Authority',
+    'coordination': 'Coordination Patterns',
+    'failure_modes': 'Failure Patterns (avoid these)',
+    'human_ai_boundaries': 'Human-AI Boundaries',
+    'core_rules': 'Core Operating Rules',
+    'escalation': 'Escalation Protocols',
+    'data_architecture': 'Data Architecture',
+    'communication': 'Communication Protocols',
+    'decision_rights': 'Decision Rights',
+    'quality_standards': 'Quality Standards',
+    'security': 'Security and Compliance',
+    'performance': 'Performance Standards'
+  };
+
+  var lines = [];
+  lines.push('# Coordination Rules for ' + oosOrgName);
+  lines.push('# OOS v' + oosVersion + ' | ' + oosClaimCount + ' claims | TEI: ' + oosTEI + 'x');
+  lines.push('# Source: https://orgtp.com/oos/' + oosId);
+  lines.push('');
+
+  sectionOrder.forEach(function(section) {
+    var label = sectionLabels[section] || section.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+    lines.push('## ' + label);
+    sectionMap[section].forEach(function(c) {
+      lines.push('- ' + c.id + ': ' + c.rule);
+    });
+    lines.push('');
+  });
+
+  var prompt = lines.join('\n').trim();
+
+  navigator.clipboard.writeText(prompt).then(function() {
+    var confirm = document.getElementById('copy-confirm');
+    confirm.style.opacity = '1';
+    setTimeout(function() { confirm.style.opacity = '0'; }, 2000);
+  }).catch(function() {
+    // Fallback for older browsers
+    var ta = document.createElement('textarea');
+    ta.value = prompt;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    var confirm = document.getElementById('copy-confirm');
+    confirm.style.opacity = '1';
+    setTimeout(function() { confirm.style.opacity = '0'; }, 2000);
+  });
+}
+
 function filterClaims() {
   var section = document.getElementById('filter-section').value;
   var confidence = document.getElementById('filter-confidence').value;

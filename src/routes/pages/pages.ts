@@ -1134,6 +1134,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/publish', { title: 'Publish Your OOS - OTP', description: 'Publish your Organizational Operating System on OTP. Capture and share your AI coordination intelligence.', canonical: BASE_URL + '/publish' });
   });
 
+  // Scan Results page -- shows coordination score after wizard generates OOS
+  app.get('/scan-results', async (request, reply) => {
+    return reply.view('pages/scan-results', { title: 'Scan Results - OTP', description: 'Your AI coordination score and insights. See how well your agent team is structured.', canonical: BASE_URL + '/scan-results', noindex: true });
+  });
+
   // Dashboard -- requires auth, shows registration if no org
   // Sign In page
   app.get('/sign-in', async (request, reply) => {
