@@ -8,28 +8,32 @@
   <div class="absolute bottom-[-200px] right-[-250px] w-[700px] h-[700px] bg-purple-500/15 rounded-full blur-[160px] pointer-events-none"></div>
   <div class="absolute top-[40%] left-[50%] w-[400px] h-[400px] bg-otp-400/8 rounded-full blur-[120px] pointer-events-none"></div>
 
-  <div class="relative w-full max-w-5xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-20 sm:pb-32">
-    <div class="text-center">
-      <!-- Live badge -->
-      <div class="animate-fade-in-up mb-8">
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
-          <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-          <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
+  <div class="relative w-full max-w-6xl mx-auto px-4 sm:px-6 pt-28 sm:pt-36 pb-20 sm:pb-28">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <!-- Left: Tagline -->
+      <div class="text-center lg:text-left">
+        <div class="animate-fade-in-up mb-6">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
+            <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+            <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
+          </div>
         </div>
+
+        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6 animate-fade-in-up delay-100 tracking-tight">
+          Your agents<br>work here now.
+        </h1>
+
+        <p class="text-xl sm:text-2xl text-otp-400 font-medium mb-8 animate-fade-in-up delay-200 tracking-wide">
+          Plug in. Turn on.
+        </p>
+
+        <p class="text-sm text-gray-500 animate-fade-in-up delay-300 max-w-md mx-auto lg:mx-0 leading-relaxed">
+          Upload your CLAUDE.md and see your Coordination Score in 60 seconds. Six dimensions. One number. The gaps you didn't know you had.
+        </p>
       </div>
 
-      <!-- Tagline -->
-      <h1 class="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-[1.05] mb-6 animate-fade-in-up delay-100 tracking-tight">
-        Your agents<br>work here now.
-      </h1>
-
-      <!-- Subline -->
-      <p class="text-xl sm:text-2xl text-otp-400 font-medium mb-16 animate-fade-in-up delay-200 tracking-wide">
-        Plug in. Turn on.
-      </p>
-
-      <!-- Upload zone -->
-      <div class="animate-fade-in-up delay-300 max-w-2xl mx-auto">
+      <!-- Right: Upload zone -->
+      <div class="animate-fade-in-up delay-300">
         <div id="upload-zone" class="relative group cursor-pointer">
           <!-- Glow ring -->
           <div class="absolute -inset-1 bg-gradient-to-r from-otp-500/30 via-purple-500/30 to-otp-500/30 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -94,48 +98,42 @@
 </section>
 
 
-<!-- THE ARC: 3 bold statements -->
-<section class="bg-white py-20 sm:py-32">
+<!-- THE ARC: 3 bold statements, no icons, maximum impact -->
+<section class="bg-white py-24 sm:py-36">
   <div class="max-w-6xl mx-auto px-4 sm:px-6">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+    <div class="space-y-24 sm:space-y-32">
 
-      <!-- Card 1 -->
-      <div class="reveal group">
-        <div class="mb-6">
-          <div class="w-12 h-12 rounded-2xl bg-otp-50 border border-otp-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 text-otp-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
+      <!-- Statement 1 -->
+      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <span class="text-otp-500 text-sm font-bold uppercase tracking-widest">Step One</span>
+          <h3 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mt-3 leading-[1.1]">Start by saving<br>2.5 hours a day.</h3>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 leading-tight">Start by saving<br>2.5 hours a day.</h3>
-        <p class="text-gray-500 leading-relaxed">Your first agent handles the tasks you repeat every morning. The briefings, the inbox, the data pulls. That's 2.5 hours back on day one.</p>
+        <p class="text-lg sm:text-xl text-gray-500 leading-relaxed lg:pl-8">Your first agent handles the tasks you repeat every morning. The briefings, the inbox, the data pulls. That's 2.5 hours back on day one.</p>
       </div>
 
-      <!-- Card 2 -->
-      <div class="reveal delay-200 group">
-        <div class="mb-6">
-          <div class="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </div>
+      <!-- Divider -->
+      <div class="w-16 h-px bg-gray-200 mx-auto"></div>
+
+      <!-- Statement 2 -->
+      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <span class="text-purple-500 text-sm font-bold uppercase tracking-widest">Step Two</span>
+          <h3 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mt-3 leading-[1.1]">Stop hiring.<br>Start deploying.</h3>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 leading-tight">Stop hiring.<br>Start deploying.</h3>
-        <p class="text-gray-500 leading-relaxed">Your second and third agents don't need salaries, benefits, or onboarding. They need your OOS. Plug them in and they're running.</p>
+        <p class="text-lg sm:text-xl text-gray-500 leading-relaxed lg:pl-8">Your second and third agents don't need salaries, benefits, or onboarding. They need your OOS. Plug them in and they're running.</p>
       </div>
 
-      <!-- Card 3 -->
-      <div class="reveal delay-400 group">
-        <div class="mb-6">
-          <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-          </div>
+      <!-- Divider -->
+      <div class="w-16 h-px bg-gray-200 mx-auto"></div>
+
+      <!-- Statement 3 -->
+      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <span class="text-amber-500 text-sm font-bold uppercase tracking-widest">The Unlock</span>
+          <h3 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mt-3 leading-[1.1]">Every agent runs<br>on your instinct.</h3>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 leading-tight">Every agent runs<br>on your instinct.</h3>
-        <p class="text-gray-500 leading-relaxed">Your CLAUDE.md captures years of decisions, corrections, and hard-won lessons. OTP turns that instinct into something every agent inherits.</p>
+        <p class="text-lg sm:text-xl text-gray-500 leading-relaxed lg:pl-8">Your CLAUDE.md captures years of decisions, corrections, and hard-won lessons. OTP turns that instinct into something every agent inherits.</p>
       </div>
 
     </div>
@@ -579,10 +577,33 @@
 
   if (!zone || !fileInput || !pasteArea || !scanBtn) return;
 
-  function processContent(content) {
+  async function processContent(content) {
     if (!content || !content.trim()) return;
-    try { localStorage.setItem('otp_claude_md', content); } catch(e) {}
-    window.location.href = '/publish?source=scan';
+    try { localStorage.setItem('otp_generated_oos', content); } catch(e) {}
+
+    // Show scanning state
+    scanBtn.textContent = 'Scanning...';
+    scanBtn.disabled = true;
+    if (defaultState) defaultState.querySelector('p.text-lg').textContent = 'Scanning your file...';
+
+    try {
+      // Call the from-text scanner directly
+      var resp = await fetch('/api/v1/scanner/from-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content }),
+      });
+      var data = await resp.json();
+
+      if (data.score) {
+        localStorage.setItem('otp_scan_result', JSON.stringify(data));
+        window.location.href = '/scan-results';
+        return;
+      }
+    } catch(e) {}
+
+    // Fallback if scanner fails
+    window.location.href = '/publish';
   }
 
   // Drag and drop
