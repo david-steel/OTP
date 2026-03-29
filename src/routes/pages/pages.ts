@@ -1202,6 +1202,43 @@ export default async function pageRoutes(app: FastifyInstance) {
          OR oos_b_id IN (SELECT id FROM oos_files WHERE org_id = ${org.id})
     `);
 
+    // Get Coordination Score from latest published OOS frontmatter
+    const latestPublished = orgOosFiles.find(f => f.status === 'published');
+    const coordinationScore = latestPublished?.frontmatter ? (latestPublished.frontmatter as any).coordination_score : null;
+
+    // Get best practice matches count
+    let bestPracticeMatchCount = 0;
+    if (latestPublished) {
+      const [bpCount] = await db.select({ count: sql<number>`COUNT(*)` })
+        .from(oosBestPracticeMatches)
+        .where(eq(oosBestPracticeMatches.oosFileId, latestPublished.id));
+      bestPracticeMatchCount = Number(bpCount?.count || 0);
+    }
+
+    // Get learnings count (claims with source='learning')
+    let learningsCount = 0;
+    if (latestPublished) {
+      const [lCount] = await db.select({ count: sql<number>`COUNT(*)` })
+        .from(claims)
+        .where(and(eq(claims.oosFileId, latestPublished.id), eq(claims.source, 'learning')));
+      learningsCount = Number(lCount?.count || 0);
+    }
+
+    // Get network learnings (from other orgs)
+    let networkLearnings: any[] = [];
+    try {
+      const nlResult = await db.execute(sql`
+        SELECT c.rule, c.why, c.failure_mode, c.agent_name, o.name as org_name,
+               c.created_at
+        FROM claims c
+        JOIN oos_files f ON c.oos_file_id = f.id
+        JOIN organizations o ON f.org_id = o.id
+        WHERE c.source = 'learning' AND f.status = 'published' AND f.org_id != ${org.id}
+        ORDER BY c.created_at DESC LIMIT 5
+      `);
+      networkLearnings = (nlResult.rows as any[]) || [];
+    } catch {}
+
     return reply.view('pages/dashboard', {
       title: 'Publisher Dashboard - OTP',
       description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
@@ -1218,6 +1255,11 @@ export default async function pageRoutes(app: FastifyInstance) {
         },
         oosFiles: orgOosFiles,
         updateHistory: orgOosFiles,
+        coordinationScore,
+        bestPracticeMatchCount,
+        learningsCount,
+        networkLearnings,
+        latestOos: latestPublished || null,
       },
     });
   });
