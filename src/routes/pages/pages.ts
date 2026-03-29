@@ -23,6 +23,21 @@ function bc(...items: Array<{ name: string; url: string }>) {
 export default async function pageRoutes(app: FastifyInstance) {
 
   // Homepage
+  // Homepage v3 preview (not live -- for review only)
+  app.get('/home-v3', async (request, reply) => {
+    const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
+    const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
+    return reply.view('pages/home-v3', {
+      title: 'OTP - Your Agents Work Here Now',
+      description: 'Your agents work here now. Plug in. Turn on. OTP is how organizations teach their AI teams to coordinate.',
+      canonical: BASE_URL + '/',
+      noindex: true,
+      publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
+      claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
+      templateCount: 3,
+    });
+  });
+
   app.get('/', async (request, reply) => {
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;

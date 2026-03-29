@@ -1,0 +1,671 @@
+<!-- HERO: Full viewport, dark, commanding -->
+<section class="relative overflow-hidden bg-otp-950 min-h-screen flex items-center">
+  <!-- Canvas particle network -->
+  <canvas id="hero-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.5;"></canvas>
+
+  <!-- Gradient orbs -->
+  <div class="absolute top-[-300px] left-[-200px] w-[800px] h-[800px] bg-otp-500/20 rounded-full blur-[180px] pointer-events-none"></div>
+  <div class="absolute bottom-[-200px] right-[-250px] w-[700px] h-[700px] bg-purple-500/15 rounded-full blur-[160px] pointer-events-none"></div>
+  <div class="absolute top-[40%] left-[50%] w-[400px] h-[400px] bg-otp-400/8 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <div class="relative w-full max-w-5xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-20 sm:pb-32">
+    <div class="text-center">
+      <!-- Live badge -->
+      <div class="animate-fade-in-up mb-8">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
+          <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+          <span><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations live</span>
+        </div>
+      </div>
+
+      <!-- Tagline -->
+      <h1 class="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-[1.05] mb-6 animate-fade-in-up delay-100 tracking-tight">
+        Your agents<br>work here now.
+      </h1>
+
+      <!-- Subline -->
+      <p class="text-xl sm:text-2xl text-otp-400 font-medium mb-16 animate-fade-in-up delay-200 tracking-wide">
+        Plug in. Turn on.
+      </p>
+
+      <!-- Upload zone -->
+      <div class="animate-fade-in-up delay-300 max-w-2xl mx-auto">
+        <div id="upload-zone" class="relative group cursor-pointer">
+          <!-- Glow ring -->
+          <div class="absolute -inset-1 bg-gradient-to-r from-otp-500/30 via-purple-500/30 to-otp-500/30 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+          <div class="relative bg-otp-900/80 border border-white/10 rounded-2xl p-8 sm:p-10 backdrop-blur-sm hover:border-otp-500/30 transition-all duration-500">
+            <!-- Drag/drop state -->
+            <div id="upload-default" class="space-y-4">
+              <div class="flex justify-center">
+                <div class="w-14 h-14 rounded-2xl bg-otp-500/10 border border-otp-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg class="w-7 h-7 text-otp-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <p class="text-lg sm:text-xl font-semibold text-white mb-1">Upload your CLAUDE.md</p>
+                <p class="text-sm text-gray-500">See what you've been missing.</p>
+              </div>
+              <div class="flex items-center gap-3 justify-center text-xs text-gray-600">
+                <span>Drop a file</span>
+                <span class="w-1 h-1 bg-gray-700 rounded-full"></span>
+                <span>Paste below</span>
+                <span class="w-1 h-1 bg-gray-700 rounded-full"></span>
+                <span>Free. 60 seconds.</span>
+              </div>
+            </div>
+
+            <!-- Drag-over state -->
+            <div id="upload-hover" class="hidden space-y-3">
+              <div class="flex justify-center">
+                <div class="w-14 h-14 rounded-2xl bg-otp-500/20 border border-otp-500/40 flex items-center justify-center animate-pulse">
+                  <svg class="w-7 h-7 text-otp-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-lg font-semibold text-otp-400">Drop it right here</p>
+            </div>
+
+            <!-- Hidden file input -->
+            <input type="file" id="file-input" accept=".md,.txt" class="hidden">
+
+            <!-- Textarea for paste -->
+            <div class="mt-6">
+              <textarea id="paste-area" rows="3" placeholder="Or paste your CLAUDE.md content here..." class="w-full bg-otp-950/60 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-otp-500/30 focus:ring-1 focus:ring-otp-500/20 resize-none font-mono transition-all"></textarea>
+              <button id="scan-btn" class="mt-3 px-8 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                Scan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-fade-in delay-600">
+    <div class="w-5 h-9 border border-white/20 rounded-full flex justify-center pt-2">
+      <div class="w-1 h-2 bg-white/40 rounded-full" style="animation: float 2s ease-in-out infinite;"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- THE ARC: 3 bold statements -->
+<section class="bg-white py-20 sm:py-32">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+
+      <!-- Card 1 -->
+      <div class="reveal group">
+        <div class="mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-otp-50 border border-otp-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-otp-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 leading-tight">Start by saving<br>2.5 hours a day.</h3>
+        <p class="text-gray-500 leading-relaxed">Your first agent handles the tasks you repeat every morning. The briefings, the inbox, the data pulls. That's 2.5 hours back on day one.</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="reveal delay-200 group">
+        <div class="mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 leading-tight">Stop hiring.<br>Start deploying.</h3>
+        <p class="text-gray-500 leading-relaxed">Your second and third agents don't need salaries, benefits, or onboarding. They need your OOS. Plug them in and they're running.</p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="reveal delay-400 group">
+        <div class="mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 leading-tight">Every agent runs<br>on your instinct.</h3>
+        <p class="text-gray-500 leading-relaxed">Your CLAUDE.md captures years of decisions, corrections, and hard-won lessons. OTP turns that instinct into something every agent inherits.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- THE SCORE: Coordination Score -->
+<section class="relative overflow-hidden bg-otp-950 py-20 sm:py-32">
+  <div class="absolute inset-0 bg-grid opacity-30"></div>
+  <div class="absolute top-[-150px] right-[-100px] w-[500px] h-[500px] bg-otp-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+      <!-- Left: Score ring visualization -->
+      <div class="reveal flex justify-center lg:justify-start">
+        <div class="relative">
+          <!-- Outer glow -->
+          <div class="absolute -inset-8 bg-otp-500/5 rounded-full blur-3xl"></div>
+
+          <div class="relative w-[300px] h-[300px] sm:w-[360px] sm:h-[360px]">
+            <!-- SVG Score Ring -->
+            <svg class="w-full h-full" viewBox="0 0 360 360">
+              <!-- Background ring -->
+              <circle cx="180" cy="180" r="140" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="20"/>
+              <!-- Score arc (82/100 = ~295 degrees) -->
+              <circle cx="180" cy="180" r="140" fill="none" stroke="url(#scoreGradient)" stroke-width="20" stroke-linecap="round"
+                stroke-dasharray="879.6" stroke-dashoffset="158.3"
+                transform="rotate(-90 180 180)"
+                class="score-ring"/>
+              <!-- Gradient definition -->
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0095ff"/>
+                  <stop offset="50%" stop-color="#7c3aed"/>
+                  <stop offset="100%" stop-color="#0095ff"/>
+                </linearGradient>
+              </defs>
+              <!-- Center score -->
+              <text x="180" y="170" text-anchor="middle" fill="white" font-size="72" font-weight="800" font-family="Inter, sans-serif">82</text>
+              <text x="180" y="200" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="14" font-weight="500" font-family="Inter, sans-serif">Coordination Score</text>
+            </svg>
+
+            <!-- Dimension bars around the ring -->
+            <div class="absolute bottom-[-40px] left-1/2 -translate-x-1/2 flex gap-2">
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-8 h-20 bg-white/5 rounded-md overflow-hidden flex flex-col-reverse"><div class="bg-otp-500/70 rounded-sm" style="height: 85%"></div></div>
+                <span class="text-[8px] text-gray-600 font-medium">CF</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-8 h-20 bg-white/5 rounded-md overflow-hidden flex flex-col-reverse"><div class="bg-purple-500/70 rounded-sm" style="height: 90%"></div></div>
+                <span class="text-[8px] text-gray-600 font-medium">ES</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-8 h-20 bg-white/5 rounded-md overflow-hidden flex flex-col-reverse"><div class="bg-otp-400/70 rounded-sm" style="height: 75%"></div></div>
+                <span class="text-[8px] text-gray-600 font-medium">WC</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-8 h-20 bg-white/5 rounded-md overflow-hidden flex flex-col-reverse"><div class="bg-green-500/70 rounded-sm" style="height: 80%"></div></div>
+                <span class="text-[8px] text-gray-600 font-medium">HO</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-8 h-20 bg-white/5 rounded-md overflow-hidden flex flex-col-reverse"><div class="bg-amber-500/70 rounded-sm" style="height: 70%"></div></div>
+                <span class="text-[8px] text-gray-600 font-medium">SR</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-8 h-20 bg-white/5 rounded-md overflow-hidden flex flex-col-reverse"><div class="bg-red-400/70 rounded-sm" style="height: 88%"></div></div>
+                <span class="text-[8px] text-gray-600 font-medium">AB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Copy -->
+      <div class="reveal delay-200">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-6 leading-tight">Your Coordination Score</h2>
+        <p class="text-gray-400 text-lg leading-relaxed mb-10">See how well your agent team is structured. Six dimensions. One number. The gaps you didn't know you had.</p>
+
+        <div class="space-y-4 mb-10">
+          <div class="flex items-center gap-4 group">
+            <div class="w-10 h-10 rounded-xl bg-otp-500/10 border border-otp-500/20 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-otp-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">Conflict Management</div>
+              <div class="text-xs text-gray-500">How agents handle overlapping responsibilities</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 group">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">Escalation Structure</div>
+              <div class="text-xs text-gray-500">Clear paths when agents need human decisions</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 group">
+            <div class="w-10 h-10 rounded-xl bg-otp-400/10 border border-otp-400/20 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-otp-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">Workflow Clarity</div>
+              <div class="text-xs text-gray-500">Defined processes, inputs, outputs for each agent</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 group">
+            <div class="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">Human Oversight</div>
+              <div class="text-xs text-gray-500">Approval gates and audit trails that work</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 group">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">System Redundancy</div>
+              <div class="text-xs text-gray-500">Fallbacks when agents or systems go down</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 group">
+            <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">Authority Boundaries</div>
+              <div class="text-xs text-gray-500">Who can do what. No ambiguity.</div>
+            </div>
+          </div>
+        </div>
+
+        <a href="#" id="score-cta" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm group">
+          Scan yours free
+          <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- THE PROOF: Sneeze It case study -->
+<section class="bg-white py-20 sm:py-32">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="reveal text-center mb-16">
+      <p class="text-sm font-semibold text-otp-500 uppercase tracking-widest mb-4">The origin story</p>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 leading-tight">We built this because we needed it.</h2>
+      <p class="text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto">Sneeze It runs 14 AI agents in daily operations. Our Coordination Score was 68 when we first scanned. We found 6 gaps we didn't know existed. We fixed them. Score: 91. Our agents haven't stepped on each other since.</p>
+    </div>
+
+    <!-- Before/After rings -->
+    <div class="reveal delay-200 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16">
+      <!-- Before -->
+      <div class="text-center">
+        <div class="relative w-[180px] h-[180px] mx-auto mb-4">
+          <svg class="w-full h-full" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#f3f4f6" stroke-width="12"/>
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#d1d5db" stroke-width="12" stroke-linecap="round"
+              stroke-dasharray="439.8" stroke-dashoffset="140.7"
+              transform="rotate(-90 90 90)"/>
+            <text x="90" y="85" text-anchor="middle" fill="#6b7280" font-size="40" font-weight="800" font-family="Inter, sans-serif">68</text>
+            <text x="90" y="105" text-anchor="middle" fill="#9ca3af" font-size="10" font-weight="500" font-family="Inter, sans-serif">Before</text>
+          </svg>
+        </div>
+        <p class="text-sm text-gray-400">6 hidden gaps</p>
+      </div>
+
+      <!-- Arrow -->
+      <div class="flex items-center">
+        <svg class="w-12 h-12 text-otp-500 rotate-90 sm:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
+      </div>
+
+      <!-- After -->
+      <div class="text-center">
+        <div class="relative w-[180px] h-[180px] mx-auto mb-4">
+          <svg class="w-full h-full" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#f3f4f6" stroke-width="12"/>
+            <circle cx="90" cy="90" r="70" fill="none" stroke="url(#afterGradient)" stroke-width="12" stroke-linecap="round"
+              stroke-dasharray="439.8" stroke-dashoffset="39.6"
+              transform="rotate(-90 90 90)"/>
+            <defs>
+              <linearGradient id="afterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0095ff"/>
+                <stop offset="100%" stop-color="#7c3aed"/>
+              </linearGradient>
+            </defs>
+            <text x="90" y="85" text-anchor="middle" fill="#111827" font-size="40" font-weight="800" font-family="Inter, sans-serif">91</text>
+            <text x="90" y="105" text-anchor="middle" fill="#6b7280" font-size="10" font-weight="500" font-family="Inter, sans-serif">After</text>
+          </svg>
+        </div>
+        <p class="text-sm text-otp-500 font-medium">Zero coordination failures</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- THE NETWORK -->
+<section class="bg-gray-50 py-20 sm:py-28 border-t border-gray-100">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+    <div class="reveal">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">You're not figuring this out alone.</h2>
+      <p class="text-lg text-gray-500 max-w-2xl mx-auto mb-12 leading-relaxed">
+        <span class="font-semibold text-gray-700"><%= typeof publisherCount !== 'undefined' ? publisherCount : '9' %> publishers</span>.
+        <span class="font-semibold text-gray-700"><%= typeof claimCount !== 'undefined' ? claimCount : '55' %> coordination practices</span>.
+        A growing network of organizations sharing what they've learned about making AI teams work.
+      </p>
+    </div>
+
+    <!-- Publisher logos/names -->
+    <div class="reveal delay-200 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">Google</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">AWS</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">McFadyen Digital</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">Hopsworks</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">DAIR.AI</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">SE-ML</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">Deloitte</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">Accenture</span>
+      <span class="text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors">Bain</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- BOTTOM CTA: Cinematic close -->
+<section class="relative overflow-hidden bg-otp-950 py-24 sm:py-36">
+  <canvas id="bottom-canvas" class="absolute inset-0 w-full h-full" style="opacity: 0.4;"></canvas>
+  <div class="absolute top-[-200px] left-[30%] w-[600px] h-[600px] bg-otp-500/15 rounded-full blur-[160px] pointer-events-none"></div>
+  <div class="absolute bottom-[-200px] right-[20%] w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 text-center reveal">
+    <h2 class="text-4xl sm:text-6xl font-extrabold text-white mb-4 leading-tight tracking-tight">Your agents<br>work here now.</h2>
+    <p class="text-xl text-otp-400 font-medium mb-12 tracking-wide">Plug in. Turn on.</p>
+
+    <a href="#" id="bottom-cta" class="group relative inline-flex items-center gap-3">
+      <!-- Glow -->
+      <span class="absolute -inset-2 bg-otp-500/20 rounded-2xl blur-xl group-hover:bg-otp-500/30 transition-all duration-500"></span>
+      <span class="relative px-10 py-4 bg-otp-500 text-white rounded-xl font-semibold text-lg hover:bg-otp-400 transition-all hover:shadow-2xl hover:shadow-otp-500/30">
+        Upload your CLAUDE.md
+      </span>
+    </a>
+
+    <p class="text-sm text-gray-600 mt-6">Free. 60 seconds. No account required for the scan.</p>
+  </div>
+</section>
+
+
+<!-- ============================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================ -->
+
+<!-- Hero particle network canvas -->
+<script>
+(function() {
+  var canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var W, H;
+  var particles = [];
+  var mouse = { x: null, y: null };
+  var particleCount = 80;
+  var connectionDistance = 150;
+
+  function resize() {
+    var r = canvas.parentElement.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function init() {
+    particles = [];
+    for (var i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r: 1 + Math.random() * 1.5,
+        color: Math.random() > 0.5 ? '0,149,255' : '124,58,237'
+      });
+    }
+  }
+
+  resize(); init();
+  window.addEventListener('resize', function() { resize(); init(); });
+
+  canvas.parentElement.addEventListener('mousemove', function(e) {
+    var r = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - r.left;
+    mouse.y = e.clientY - r.top;
+  });
+  canvas.parentElement.addEventListener('mouseleave', function() {
+    mouse.x = null; mouse.y = null;
+  });
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+
+      // Mouse attraction
+      if (mouse.x !== null) {
+        var mdx = mouse.x - p.x;
+        var mdy = mouse.y - p.y;
+        var md = Math.sqrt(mdx * mdx + mdy * mdy);
+        if (md < 200) {
+          p.vx += (mdx / md) * 0.02;
+          p.vy += (mdy / md) * 0.02;
+        }
+      }
+
+      // Speed limit
+      var speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (speed > 0.8) {
+        p.vx = (p.vx / speed) * 0.8;
+        p.vy = (p.vy / speed) * 0.8;
+      }
+
+      // Draw connections
+      for (var j = i + 1; j < particles.length; j++) {
+        var q = particles[j];
+        var dx = p.x - q.x;
+        var dy = p.y - q.y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < connectionDistance) {
+          var alpha = (1 - d / connectionDistance) * 0.15;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = 'rgba(' + p.color + ',' + alpha + ')';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+
+      // Draw particle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + p.color + ',0.5)';
+      ctx.fill();
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + p.color + ',0.05)';
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
+<!-- Bottom CTA canvas (subtle version) -->
+<script>
+(function() {
+  var canvas = document.getElementById('bottom-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var W, H, particles = [];
+
+  function resize() {
+    var r = canvas.parentElement.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function init() {
+    particles = [];
+    for (var i = 0; i < 40; i++) {
+      particles.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+        r: 0.8 + Math.random() * 1,
+        color: Math.random() > 0.5 ? '0,149,255' : '124,58,237'
+      });
+    }
+  }
+
+  resize(); init();
+  window.addEventListener('resize', function() { resize(); init(); });
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+      for (var j = i + 1; j < particles.length; j++) {
+        var q = particles[j];
+        var dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 120) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = 'rgba(' + p.color + ',' + ((1 - d / 120) * 0.1) + ')';
+          ctx.lineWidth = 0.5; ctx.stroke();
+        }
+      }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28);
+      ctx.fillStyle = 'rgba(' + p.color + ',0.4)'; ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
+<!-- Upload zone interaction -->
+<script>
+(function() {
+  var zone = document.getElementById('upload-zone');
+  var defaultState = document.getElementById('upload-default');
+  var hoverState = document.getElementById('upload-hover');
+  var fileInput = document.getElementById('file-input');
+  var pasteArea = document.getElementById('paste-area');
+  var scanBtn = document.getElementById('scan-btn');
+  var scoreCta = document.getElementById('score-cta');
+  var bottomCta = document.getElementById('bottom-cta');
+
+  if (!zone || !fileInput || !pasteArea || !scanBtn) return;
+
+  function processContent(content) {
+    if (!content || !content.trim()) return;
+    try { localStorage.setItem('otp_claude_md', content); } catch(e) {}
+    window.location.href = '/publish?source=scan';
+  }
+
+  // Drag and drop
+  zone.addEventListener('dragover', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (defaultState) defaultState.classList.add('hidden');
+    if (hoverState) hoverState.classList.remove('hidden');
+  });
+  zone.addEventListener('dragleave', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (defaultState) defaultState.classList.remove('hidden');
+    if (hoverState) hoverState.classList.add('hidden');
+  });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (defaultState) defaultState.classList.remove('hidden');
+    if (hoverState) hoverState.classList.add('hidden');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) { processContent(ev.target.result); };
+      reader.readAsText(file);
+    }
+  });
+
+  // Click to upload
+  zone.addEventListener('click', function(e) {
+    if (e.target === pasteArea || e.target === scanBtn || pasteArea.contains(e.target)) return;
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', function() {
+    var file = fileInput.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) { processContent(ev.target.result); };
+      reader.readAsText(file);
+    }
+  });
+
+  // Paste area enable/disable scan button
+  pasteArea.addEventListener('input', function() {
+    scanBtn.disabled = !pasteArea.value.trim();
+  });
+  scanBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    processContent(pasteArea.value);
+  });
+
+  // Score CTA and bottom CTA scroll to upload zone
+  if (scoreCta) {
+    scoreCta.addEventListener('click', function(e) {
+      e.preventDefault();
+      zone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(function() { pasteArea.focus(); }, 600);
+    });
+  }
+  if (bottomCta) {
+    bottomCta.addEventListener('click', function(e) {
+      e.preventDefault();
+      zone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(function() { pasteArea.focus(); }, 600);
+    });
+  }
+})();
+</script>
+
+<!-- Score ring animation on scroll -->
+<script>
+(function() {
+  var ring = document.querySelector('.score-ring');
+  if (!ring) return;
+  var animated = false;
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !animated) {
+      animated = true;
+      ring.style.transition = 'stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1)';
+      ring.style.strokeDashoffset = '158.3';
+      observer.unobserve(ring);
+    }
+  }, { threshold: 0.3 });
+
+  // Start with full offset (hidden)
+  ring.style.strokeDashoffset = '879.6';
+  observer.observe(ring);
+})();
+</script>
