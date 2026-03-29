@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { getAuth } from '@clerk/fastify';
-import { eq, and, desc, sql, count } from 'drizzle-orm';
+import { eq, and, desc, ne, sql, count, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, auditLogs } from '../../db/schema.js';
 import { createOOSSchema, updateOOSSchema, renameOOSSchema } from '../../shared/validation.js';
@@ -686,7 +686,8 @@ ${claimSections.join('\n')}`.trim();
       });
     }
 
-    // Find or create a draft OOS to add the learning to
+    // Auto-publish: learnings go directly to the published OOS (no draft step)
+    // This is the live flywheel -- corrections become network intelligence immediately
     const [latestPublished] = await db.select()
       .from(oosFiles)
       .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
@@ -699,33 +700,8 @@ ${claimSections.join('\n')}`.trim();
       });
     }
 
-    // Find a draft newer than published, or create one
-    let [draft] = await db.select()
-      .from(oosFiles)
-      .where(and(
-        eq(oosFiles.orgId, org.id),
-        eq(oosFiles.status, 'draft'),
-        sql`${oosFiles.version} > ${latestPublished.version}`
-      ))
-      .orderBy(desc(oosFiles.version))
-      .limit(1);
-
-    if (!draft) {
-      [draft] = await db.insert(oosFiles).values({
-        orgId: org.id,
-        name: latestPublished.name,
-        template: latestPublished.template,
-        version: latestPublished.version + 1,
-        status: 'draft',
-        visibilityDefault: latestPublished.visibilityDefault,
-        wordCount: latestPublished.wordCount,
-        claimCount: latestPublished.claimCount,
-        rawContent: latestPublished.rawContent,
-        frontmatter: latestPublished.frontmatter,
-        confidenceDistribution: latestPublished.confidenceDistribution,
-        evidenceDistribution: latestPublished.evidenceDistribution,
-      }).returning();
-    }
+    // Write directly to the published OOS -- no draft, no delay
+    const draft = latestPublished;
 
     // Determine section based on what was provided
     const isFailure = body.section === 'failure_patterns' ||
@@ -821,6 +797,161 @@ ${claimSections.join('\n')}`.trim();
     }
 
     return { org: { id: org.id, name: org.name }, oosFile: latest };
+  });
+
+  // ============================================================
+  // GET /api/v1/oos/network-learnings -- Cross-org learning notifications
+  // When any org publishes a learning that matches your OOS patterns, surface it.
+  // ============================================================
+  app.get<{ Querystring: { limit?: string; agent?: string } }>('/oos/network-learnings', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const maxResults = Math.min(parseInt(request.query.limit || '20', 10) || 20, 100);
+    const agentFilter = request.query.agent || null;
+
+    // Find the user's latest published OOS
+    const [latestOos] = await db.select()
+      .from(oosFiles)
+      .where(and(eq(oosFiles.orgId, org.id), eq(oosFiles.status, 'published')))
+      .orderBy(desc(oosFiles.version))
+      .limit(1);
+
+    if (!latestOos) {
+      return reply.status(404).send({ error: { code: 'NO_OOS', message: 'Publish an OOS first to see network learnings' } });
+    }
+
+    // Get the user's claim IDs
+    const userClaims = await db.select({ id: claims.id, rule: claims.rule, section: claims.section })
+      .from(claims)
+      .where(eq(claims.oosFileId, latestOos.id));
+
+    if (userClaims.length === 0) {
+      return { learnings: [], total: 0, message: 'No claims in your OOS yet' };
+    }
+
+    const userClaimIds = userClaims.map(c => c.id);
+
+    // Try similarity-based approach first: find learnings from other orgs
+    // that have similarity scores against our claims
+    const similarityResults = await db.select({
+      claimId: claims.id,
+      claimClaimId: claims.claimId,
+      rule: claims.rule,
+      why: claims.why,
+      failureMode: claims.failureMode,
+      agentName: claims.agentName,
+      sourceUrl: claims.sourceUrl,
+      confidence: claims.confidence,
+      evidence: claims.evidence,
+      section: claims.section,
+      scope: claims.scope,
+      createdAt: claims.createdAt,
+      orgName: organizations.name,
+      orgIndustry: organizations.industry,
+      similarityScore: claimSimilarities.similarityScore,
+      matchedClaimAId: claimSimilarities.claimAId,
+      matchedClaimBId: claimSimilarities.claimBId,
+    })
+      .from(claims)
+      .innerJoin(oosFiles, eq(claims.oosFileId, oosFiles.id))
+      .innerJoin(organizations, eq(oosFiles.orgId, organizations.id))
+      .innerJoin(claimSimilarities, or(
+        eq(claimSimilarities.claimAId, claims.id),
+        eq(claimSimilarities.claimBId, claims.id),
+      ))
+      .where(and(
+        eq(claims.source, 'learning'),
+        eq(oosFiles.status, 'published'),
+        ne(oosFiles.orgId, org.id),
+        or(
+          inArray(claimSimilarities.claimAId, userClaimIds),
+          inArray(claimSimilarities.claimBId, userClaimIds),
+        ),
+        ...(agentFilter ? [eq(claims.agentName, agentFilter)] : []),
+      ))
+      .orderBy(desc(claimSimilarities.similarityScore))
+      .limit(maxResults);
+
+    if (similarityResults.length > 0) {
+      // Build a lookup for user claim rules
+      const userClaimMap = new Map(userClaims.map(c => [c.id, c]));
+
+      const learnings = similarityResults.map(r => {
+        // Figure out which of our claims this matched against
+        const matchedUserClaimId = userClaimIds.includes(r.matchedClaimAId) ? r.matchedClaimAId : r.matchedClaimBId;
+        const matchedUserClaim = userClaimMap.get(matchedUserClaimId);
+
+        return {
+          orgName: r.orgName,
+          orgIndustry: r.orgIndustry,
+          rule: r.rule,
+          why: r.why,
+          failureMode: r.failureMode,
+          agentName: r.agentName,
+          sourceUrl: r.sourceUrl,
+          confidence: r.confidence,
+          evidence: r.evidence,
+          section: r.section,
+          similarityScore: r.similarityScore,
+          relatedToClaim: matchedUserClaim ? {
+            rule: matchedUserClaim.rule,
+            section: matchedUserClaim.section,
+          } : null,
+          createdAt: r.createdAt,
+        };
+      });
+
+      return { learnings, total: learnings.length, source: 'similarity_matched' };
+    }
+
+    // Fallback: no similarity matches yet, return all learnings from other orgs, newest first
+    let fallbackQuery = db.select({
+      claimId: claims.id,
+      rule: claims.rule,
+      why: claims.why,
+      failureMode: claims.failureMode,
+      agentName: claims.agentName,
+      sourceUrl: claims.sourceUrl,
+      confidence: claims.confidence,
+      evidence: claims.evidence,
+      section: claims.section,
+      scope: claims.scope,
+      createdAt: claims.createdAt,
+      orgName: organizations.name,
+      orgIndustry: organizations.industry,
+    })
+      .from(claims)
+      .innerJoin(oosFiles, eq(claims.oosFileId, oosFiles.id))
+      .innerJoin(organizations, eq(oosFiles.orgId, organizations.id))
+      .where(and(
+        eq(claims.source, 'learning'),
+        eq(oosFiles.status, 'published'),
+        ne(oosFiles.orgId, org.id),
+        ...(agentFilter ? [eq(claims.agentName, agentFilter)] : []),
+      ))
+      .orderBy(desc(claims.createdAt))
+      .limit(maxResults);
+
+    const fallbackResults = await fallbackQuery;
+
+    const learnings = fallbackResults.map(r => ({
+      orgName: r.orgName,
+      orgIndustry: r.orgIndustry,
+      rule: r.rule,
+      why: r.why,
+      failureMode: r.failureMode,
+      agentName: r.agentName,
+      sourceUrl: r.sourceUrl,
+      confidence: r.confidence,
+      evidence: r.evidence,
+      section: r.section,
+      similarityScore: null,
+      relatedToClaim: null,
+      createdAt: r.createdAt,
+    }));
+
+    return { learnings, total: learnings.length, source: 'recent_fallback' };
   });
 
   // ============================================================

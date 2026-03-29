@@ -755,6 +755,80 @@ server.tool(
 );
 
 // ============================================================
+// TOOL: get_network_learnings
+// See what other organizations on the OTP network have learned recently
+// ============================================================
+server.tool(
+  "get_network_learnings",
+  "See what other organizations on the OTP network have learned recently. Shows operational corrections and coordination discoveries from other agent teams. This is how your agents learn from the entire network, not just your own experience.",
+  {
+    limit: z.number().optional().describe("Max results (default 20)"),
+    agent: z.string().optional().describe("Filter by agent name to see learnings relevant to a specific agent"),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: OTP_API_KEY environment variable is required to see network learnings. Get your API key at https://orgtp.com/settings/api",
+        }],
+      };
+    }
+
+    const query = new URLSearchParams();
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.agent) query.set("agent", params.agent);
+
+    const qs = query.toString();
+    const result = await otpFetch(`/oos/network-learnings${qs ? `?${qs}` : ""}`);
+
+    // Format learnings for agent consumption
+    const learnings = result.learnings || [];
+    if (learnings.length === 0) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            status: "no_learnings",
+            message: "No network learnings found yet. As other organizations capture operational corrections, they will appear here.",
+            total: 0,
+          }, null, 2),
+        }],
+      };
+    }
+
+    const formatted = learnings.map((l: any, i: number) => ({
+      rank: i + 1,
+      org: l.orgName,
+      industry: l.orgIndustry,
+      rule: l.rule,
+      why: l.why,
+      failure_mode: l.failureMode,
+      agent: l.agentName,
+      source_url: l.sourceUrl,
+      confidence: l.confidence,
+      evidence: l.evidence,
+      section: l.section,
+      similarity_score: l.similarityScore,
+      related_to_your_claim: l.relatedToClaim,
+      captured_at: l.createdAt,
+    }));
+
+    return {
+      content: [{
+        type: "text" as const,
+        text: JSON.stringify({
+          status: "ok",
+          total: result.total,
+          source: result.source,
+          learnings: formatted,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ============================================================
 // TOOL: submit_ticket
 // Report a bug or request a feature
 // ============================================================
