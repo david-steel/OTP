@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { db } from '../../config/database.js';
 import { auditLogs } from '../../db/schema.js';
 import { runScan, type ScannerInput, type GeneratedClaim } from '../../services/scanner.js';
+import { scanOOSContent } from '../../services/pii-scanner.js';
+import { calculateFoundationScore } from '../../services/foundation-scorer.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
@@ -214,11 +216,19 @@ export default async function scannerRoutes(app: FastifyInstance) {
     const input: ScannerInput = { orgName, industry, orgSize, systems, roles, workflows, oversight };
     const result = runScan(input);
 
+    // Vulnerability scan -- catches secrets, PII, financial data before publish
+    const vulnerabilityScan = scanOOSContent(text);
+
+    // Foundation Score -- critical structural issues that need fixing right now
+    const foundationScore = calculateFoundationScore(text);
+
     return {
       score: result.score,
       insights: result.insights,
       graph: result.graph,
       oos: result.oos,
+      vulnerabilityScan,
+      foundationScore,
       extracted: {
         orgName,
         agentCount: roles.filter(r => r.type === 'ai_agent').length,

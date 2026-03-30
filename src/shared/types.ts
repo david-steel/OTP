@@ -69,17 +69,53 @@ export interface ValidationResult {
 
 // ---- PII Types ----
 
+export type VulnerabilityType =
+  | 'email' | 'phone' | 'name' | 'company' | 'pricing' | 'url' | 'account_id'
+  | 'credit_card' | 'ssn' | 'bank_account' | 'revenue' | 'salary'
+  | 'api_key' | 'password' | 'database_url' | 'ip_address' | 'private_path'
+  | 'employee_info' | 'client_data' | 'competitive_intel';
+
+export type VulnerabilitySeverity = 'critical' | 'high' | 'medium' | 'low';
+
 export interface PIIFlag {
-  type: 'email' | 'phone' | 'name' | 'company' | 'pricing' | 'url' | 'account_id';
+  type: VulnerabilityType;
   text: string;
   location: string;
   confidence: number;
   suggestion: string;
+  severity: VulnerabilitySeverity;
+  category: 'financial' | 'personal' | 'credentials' | 'infrastructure' | 'business';
 }
 
 export interface PIIScanResult {
   clean: boolean;
   flags: PIIFlag[];
+  summary: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    total: number;
+  };
+}
+
+// Foundation Score types
+export interface FoundationCheck {
+  id: string;
+  name: string;
+  passed: boolean;
+  severity: 'critical' | 'warning' | 'info';
+  message: string;
+  fix: string;
+}
+
+export interface FoundationScoreResult {
+  score: number;           // 0-100
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  checks: FoundationCheck[];
+  criticalCount: number;
+  warningCount: number;
+  passedCount: number;
 }
 
 // ---- Diff Types ----

@@ -38,9 +38,73 @@
       <p class="text-gray-500 text-xs mt-2 max-w-md mx-auto" id="score-tagline"></p>
     </div>
 
+    <!-- Vulnerability Scan (pre-publish gate) -->
+    <div id="vuln-section" class="hidden mb-8">
+      <div id="vuln-blocked" class="hidden bg-red-50 border-2 border-red-300 rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-red-800">Vulnerability Scan</h2>
+            <p class="text-sm text-red-600" id="vuln-subtitle">Sensitive data detected. Fix before publishing.</p>
+          </div>
+        </div>
+        <div class="space-y-2" id="vuln-flags"></div>
+        <p class="text-xs text-red-500 mt-4">Remove or redact all flagged items before publishing to the OTP network.</p>
+      </div>
+      <div id="vuln-clean" class="hidden bg-green-50 border border-green-200 rounded-xl p-4">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <p class="text-sm font-medium text-green-800">Vulnerability scan clean. No sensitive data detected.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Foundation Score -->
+    <div id="foundation-section" class="hidden mb-8">
+      <div class="bg-white border rounded-xl p-6">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3">
+            <h2 class="text-lg font-bold">Foundation Score</h2>
+            <span id="foundation-badge" class="text-xs font-bold px-2.5 py-1 rounded-full"></span>
+          </div>
+          <div class="text-right">
+            <div class="text-3xl font-black" id="foundation-value">--</div>
+            <div class="text-xs text-gray-500">/ 100</div>
+          </div>
+        </div>
+        <p class="text-sm text-gray-500 mb-4" id="foundation-tagline"></p>
+        <!-- Critical fixes -->
+        <div id="foundation-critical" class="hidden mb-4">
+          <h3 class="text-sm font-semibold text-red-700 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+            <span id="foundation-critical-label">Fix Now</span>
+          </h3>
+          <div class="space-y-2" id="foundation-critical-list"></div>
+        </div>
+        <!-- Warnings -->
+        <div id="foundation-warnings" class="hidden mb-4">
+          <h3 class="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
+            <span id="foundation-warning-label">Should Fix</span>
+          </h3>
+          <div class="space-y-2" id="foundation-warning-list"></div>
+        </div>
+        <!-- Passed -->
+        <div id="foundation-passed" class="hidden">
+          <h3 class="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span id="foundation-passed-label">Looking Good</span>
+          </h3>
+          <div class="space-y-1" id="foundation-passed-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 6-Dimension Breakdown -->
     <div class="bg-white border rounded-xl p-6 mb-8">
-      <h2 class="text-lg font-bold mb-5">Breakdown</h2>
+      <h2 class="text-lg font-bold mb-5">Coordination Breakdown</h2>
       <div class="space-y-4" id="dimension-bars"></div>
     </div>
 
@@ -90,11 +154,57 @@
       <button type="button" onclick="publishNow()" id="continue-btn" class="flex-1 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold text-sm hover:bg-otp-400 transition-colors cursor-pointer">
         Publish to OTP Network
       </button>
+      <button type="button" onclick="shareScore()" id="share-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-otp-500 text-white rounded-lg font-semibold text-sm hover:from-purple-500 hover:to-otp-400 transition-all cursor-pointer flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        Share Your Score
+      </button>
       <button type="button" onclick="scrollToIssues()" id="fix-btn" class="hidden flex-1 px-6 py-3 border border-red-200 text-red-700 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors cursor-pointer">
         Fix Issues First
       </button>
     </div>
     <p class="text-xs text-gray-400 text-center mt-2" id="publish-status"></p>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold">Share Your Score</h3>
+          <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Score preview card -->
+        <div id="share-card" class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 mb-4 text-center">
+          <p class="text-xs text-gray-400 uppercase tracking-widest mb-2">My AI Coordination Score</p>
+          <div class="text-6xl font-black text-white mb-1" id="share-score-val">--</div>
+          <div class="text-sm font-bold mb-3" id="share-grade" style="color: #0095ff;">--</div>
+          <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <span>Scanned by</span>
+            <span class="text-otp-400 font-semibold">orgtp.com</span>
+          </div>
+        </div>
+
+        <!-- Share text -->
+        <textarea id="share-text" rows="3" class="w-full border rounded-lg p-3 text-sm resize-none mb-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500"></textarea>
+
+        <!-- Platform buttons -->
+        <div class="flex gap-2">
+          <button onclick="shareToX()" class="flex-1 px-4 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Post on X
+          </button>
+          <button onclick="shareToLinkedIn()" class="flex-1 px-4 py-2.5 bg-[#0A66C2] text-white rounded-lg text-sm font-medium hover:bg-[#004182] transition-colors cursor-pointer flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            Share on LinkedIn
+          </button>
+          <button onclick="copyShareText()" id="copy-btn" class="px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -148,6 +258,8 @@
     container.classList.remove('hidden');
 
     renderScore(data.score);
+    renderVulnerabilityScan(data.vulnerabilityScan);
+    renderFoundationScore(data.foundationScore);
     renderDimensions(data.score.breakdown);
     renderInsights(data.insights || []);
   }
@@ -308,6 +420,227 @@
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+
+  // ---- Vulnerability Scan ----
+  function renderVulnerabilityScan(scan) {
+    if (!scan) return;
+    var section = document.getElementById('vuln-section');
+    section.classList.remove('hidden');
+
+    if (scan.clean) {
+      document.getElementById('vuln-clean').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('vuln-blocked').classList.remove('hidden');
+    var subtitle = document.getElementById('vuln-subtitle');
+    subtitle.textContent = scan.summary.critical + ' critical, ' + scan.summary.high + ' high, ' + scan.summary.medium + ' medium, ' + scan.summary.low + ' low';
+
+    var container = document.getElementById('vuln-flags');
+    var SEVERITY_STYLES = {
+      critical: 'bg-red-100 border-red-300 text-red-900',
+      high: 'bg-orange-50 border-orange-200 text-orange-900',
+      medium: 'bg-amber-50 border-amber-200 text-amber-900',
+      low: 'bg-gray-50 border-gray-200 text-gray-700',
+    };
+    var SEVERITY_BADGES = {
+      critical: 'bg-red-600 text-white',
+      high: 'bg-orange-500 text-white',
+      medium: 'bg-amber-500 text-white',
+      low: 'bg-gray-400 text-white',
+    };
+    var CATEGORY_ICONS = {
+      financial: '$',
+      personal: 'person',
+      credentials: 'key',
+      infrastructure: 'server',
+      business: 'briefcase',
+    };
+
+    // Sort by severity
+    var order = { critical: 0, high: 1, medium: 2, low: 3 };
+    var sorted = (scan.flags || []).slice().sort(function(a, b) { return (order[a.severity] || 4) - (order[b.severity] || 4); });
+
+    sorted.forEach(function(flag) {
+      var div = document.createElement('div');
+      div.className = 'border rounded-lg p-3 ' + (SEVERITY_STYLES[flag.severity] || SEVERITY_STYLES.low);
+      div.innerHTML =
+        '<div class="flex items-start gap-3">' +
+          '<span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ' + (SEVERITY_BADGES[flag.severity] || '') + '">' + flag.severity.toUpperCase() + '</span>' +
+          '<div class="flex-1 min-w-0">' +
+            '<div class="flex items-center gap-2 mb-1">' +
+              '<span class="text-xs font-semibold uppercase opacity-70">' + escapeHtml(flag.type.replace(/_/g, ' ')) + '</span>' +
+              '<span class="text-xs opacity-50">' + escapeHtml(flag.category) + '</span>' +
+            '</div>' +
+            '<p class="text-sm font-mono break-all mb-1">' + escapeHtml(flag.text) + '</p>' +
+            '<p class="text-xs opacity-75">' + escapeHtml(flag.suggestion) + '</p>' +
+          '</div>' +
+        '</div>';
+      container.appendChild(div);
+    });
+
+    // If critical vulnerabilities, disable publish button
+    if (scan.summary.critical > 0 || scan.summary.high > 0) {
+      var publishBtn = document.getElementById('continue-btn');
+      publishBtn.disabled = true;
+      publishBtn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
+      publishBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+      publishBtn.textContent = 'Fix Vulnerabilities Before Publishing';
+    }
+  }
+
+  // ---- Foundation Score ----
+  function renderFoundationScore(fs) {
+    if (!fs) return;
+    var section = document.getElementById('foundation-section');
+    section.classList.remove('hidden');
+
+    // Score + badge
+    var valueEl = document.getElementById('foundation-value');
+    animateNumber(valueEl, 0, fs.score, 800);
+
+    var badge = document.getElementById('foundation-badge');
+    var BADGE_STYLES = {
+      A: 'bg-green-100 text-green-800',
+      B: 'bg-blue-100 text-blue-800',
+      C: 'bg-amber-100 text-amber-800',
+      D: 'bg-orange-100 text-orange-800',
+      F: 'bg-red-100 text-red-800',
+    };
+    badge.textContent = fs.grade;
+    badge.className = 'text-xs font-bold px-2.5 py-1 rounded-full ' + (BADGE_STYLES[fs.grade] || BADGE_STYLES.C);
+
+    var TAGLINES = {
+      A: 'Your foundation is solid. Minor refinements possible.',
+      B: 'Good structural foundation. A few things to tighten up.',
+      C: 'Functional but exposed. Fix the critical items below.',
+      D: 'Significant structural gaps. Address these before scaling.',
+      F: 'Your AI system is missing fundamental safety structures. Fix these now.',
+    };
+    document.getElementById('foundation-tagline').textContent = TAGLINES[fs.grade] || '';
+
+    // Render checks by category
+    var critical = (fs.checks || []).filter(function(c) { return !c.passed && c.severity === 'critical'; });
+    var warnings = (fs.checks || []).filter(function(c) { return !c.passed && c.severity === 'warning'; });
+    var passed = (fs.checks || []).filter(function(c) { return c.passed; });
+
+    if (critical.length > 0) {
+      document.getElementById('foundation-critical').classList.remove('hidden');
+      document.getElementById('foundation-critical-label').textContent = 'Fix Now (' + critical.length + ')';
+      var cList = document.getElementById('foundation-critical-list');
+      critical.forEach(function(c) {
+        var div = document.createElement('div');
+        div.className = 'bg-red-50 border border-red-200 rounded-lg p-3';
+        div.innerHTML =
+          '<div class="flex items-start gap-2">' +
+            '<span class="text-xs font-mono text-red-400 flex-shrink-0 mt-0.5">' + escapeHtml(c.id) + '</span>' +
+            '<div>' +
+              '<p class="text-sm font-medium text-red-800">' + escapeHtml(c.message) + '</p>' +
+              '<p class="text-xs text-red-600 mt-1">' + escapeHtml(c.fix) + '</p>' +
+            '</div>' +
+          '</div>';
+        cList.appendChild(div);
+      });
+    }
+
+    if (warnings.length > 0) {
+      document.getElementById('foundation-warnings').classList.remove('hidden');
+      document.getElementById('foundation-warning-label').textContent = 'Should Fix (' + warnings.length + ')';
+      var wList = document.getElementById('foundation-warning-list');
+      warnings.forEach(function(c) {
+        var div = document.createElement('div');
+        div.className = 'bg-amber-50 border border-amber-200 rounded-lg p-3';
+        div.innerHTML =
+          '<div class="flex items-start gap-2">' +
+            '<span class="text-xs font-mono text-amber-400 flex-shrink-0 mt-0.5">' + escapeHtml(c.id) + '</span>' +
+            '<div>' +
+              '<p class="text-sm font-medium text-amber-800">' + escapeHtml(c.message) + '</p>' +
+              '<p class="text-xs text-amber-600 mt-1">' + escapeHtml(c.fix) + '</p>' +
+            '</div>' +
+          '</div>';
+        wList.appendChild(div);
+      });
+    }
+
+    if (passed.length > 0) {
+      document.getElementById('foundation-passed').classList.remove('hidden');
+      document.getElementById('foundation-passed-label').textContent = 'Looking Good (' + passed.length + ')';
+      var pList = document.getElementById('foundation-passed-list');
+      passed.forEach(function(c) {
+        var div = document.createElement('div');
+        div.className = 'flex items-center gap-2 py-1';
+        div.innerHTML =
+          '<svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' +
+          '<span class="text-sm text-gray-600">' + escapeHtml(c.name) + '</span>';
+        pList.appendChild(div);
+      });
+    }
+
+    // Color the foundation score value
+    valueEl.style.color = fs.score >= 80 ? '#059669' : fs.score >= 50 ? '#d97706' : '#dc2626';
+  }
+
+  // ---- Share ----
+  var shareData = {};
+
+  window.shareScore = function() {
+    var raw = localStorage.getItem('otp_scan_result');
+    if (!raw) return;
+    var data;
+    try { data = JSON.parse(raw); } catch(e) { return; }
+
+    var score = data.score.overall;
+    var grade = data.score.grade;
+    var agents = data.extracted ? data.extracted.agentCount : '?';
+    var fs = data.foundationScore;
+
+    shareData = { score: score, grade: grade, agents: agents, foundationScore: fs ? fs.score : null };
+
+    document.getElementById('share-score-val').textContent = score;
+    var gradeEl = document.getElementById('share-grade');
+    gradeEl.textContent = 'Grade: ' + grade;
+    var color = GRADE_COLORS[grade] || '#0095ff';
+    gradeEl.style.color = color;
+
+    var text = 'Just scanned my AI agent system on OTP.\n\n';
+    text += 'Coordination Score: ' + score + '/100 (Grade: ' + grade + ')\n';
+    if (fs) text += 'Foundation Score: ' + fs.score + '/100\n';
+    text += agents + ' AI agents working together.\n\n';
+    text += "What's your score? Scan yours free at orgtp.com";
+
+    document.getElementById('share-text').value = text;
+    document.getElementById('share-modal').classList.remove('hidden');
+  };
+
+  window.closeShareModal = function() {
+    document.getElementById('share-modal').classList.add('hidden');
+  };
+
+  window.shareToX = function() {
+    var text = document.getElementById('share-text').value;
+    var url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(text);
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  window.shareToLinkedIn = function() {
+    var text = document.getElementById('share-text').value;
+    var url = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent('https://orgtp.com') + '&summary=' + encodeURIComponent(text);
+    window.open(url, '_blank', 'width=600,height=500');
+  };
+
+  window.copyShareText = function() {
+    var text = document.getElementById('share-text').value;
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg> Copy'; }, 2000);
+    });
+  };
+
+  // Close share modal on backdrop click
+  document.getElementById('share-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeShareModal();
+  });
 
   window.scrollToIssues = function() {
     var critical = document.getElementById('insights-critical');

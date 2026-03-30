@@ -82,7 +82,15 @@
               <span class="badge-level badge-level-<%= agenticLevel %>" title="Bassim's 8 Levels">L<%= agenticLevel %> <%= dashboard.profile.agenticLabel %></span>
             <% } %>
           </div>
-          <a href="/publish" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Re-scan</a>
+          <div class="flex items-center gap-2">
+            <% if (score !== null) { %>
+              <button onclick="shareScore(<%= score %>, '<%= grade %>', <%= dashboard.stats.totalClaims %>)" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-otp-500 text-white rounded-lg text-sm font-medium hover:from-purple-500 hover:to-otp-400 transition-all flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share
+              </button>
+            <% } %>
+            <a href="/publish" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Re-scan</a>
+          </div>
         </div>
 
         <% if (score !== null) { %>
@@ -429,6 +437,44 @@
       } catch (e) {
         alert('Failed to create new version: ' + e.message);
       }
+    }
+
+    // ---- Share Score ----
+    function shareScore(score, grade, claimCount) {
+      var text = 'Just checked my AI agent coordination score on OTP.\n\n';
+      text += 'Coordination Score: ' + score + '/100 (Grade: ' + grade + ')\n';
+      text += claimCount + ' coordination claims published.\n\n';
+      text += "What's your score? Scan yours free at orgtp.com";
+
+      // Create modal
+      var modal = document.createElement('div');
+      modal.id = 'share-modal';
+      modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML =
+        '<div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">' +
+          '<div class="flex items-center justify-between mb-4">' +
+            '<h3 class="text-lg font-bold">Share Your Score</h3>' +
+            '<button onclick="document.getElementById(\'share-modal\').remove()" class="text-gray-400 hover:text-gray-600 cursor-pointer">' +
+              '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 mb-4 text-center">' +
+            '<p class="text-xs text-gray-400 uppercase tracking-widest mb-2">My AI Coordination Score</p>' +
+            '<div class="text-6xl font-black text-white mb-1">' + score + '</div>' +
+            '<div class="text-sm font-bold" style="color: ' + (score >= 80 ? '#059669' : score >= 65 ? '#0095ff' : score >= 50 ? '#d97706' : '#dc2626') + '">Grade: ' + grade + '</div>' +
+            '<div class="flex items-center justify-center gap-2 text-xs text-gray-500 mt-3">' +
+              '<span>Scanned by</span><span class="text-otp-400 font-semibold">orgtp.com</span>' +
+            '</div>' +
+          '</div>' +
+          '<textarea id="dash-share-text" rows="3" class="w-full border rounded-lg p-3 text-sm resize-none mb-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500">' + text.replace(/</g, '&lt;') + '</textarea>' +
+          '<div class="flex gap-2">' +
+            '<button onclick="window.open(\'https://x.com/intent/tweet?text=\' + encodeURIComponent(document.getElementById(\'dash-share-text\').value), \'_blank\', \'width=600,height=400\')" class="flex-1 px-4 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer">Post on X</button>' +
+            '<button onclick="window.open(\'https://www.linkedin.com/sharing/share-offsite/?url=\' + encodeURIComponent(\'https://orgtp.com\'), \'_blank\', \'width=600,height=500\')" class="flex-1 px-4 py-2.5 bg-[#0A66C2] text-white rounded-lg text-sm font-medium hover:bg-[#004182] transition-colors cursor-pointer">Share on LinkedIn</button>' +
+            '<button onclick="navigator.clipboard.writeText(document.getElementById(\'dash-share-text\').value).then(function(){this.textContent=\'Copied!\'}.bind(this))" class="px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer">Copy</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
   </script>
 <% } %>
