@@ -444,6 +444,12 @@
       var createData = await createResp.json();
 
       if (!createResp.ok) {
+        if (createResp.status === 401 || createData.error?.code === 'AUTH_REQUIRED') {
+          // Not signed in -- redirect to sign in, then come back
+          localStorage.setItem('otp_return_after_signin', '/scan-results');
+          window.location.href = '/sign-in';
+          return;
+        }
         status.textContent = createData.error?.message || 'Failed to create OOS. Try publishing from the publish page.';
         status.style.color = '#dc2626';
         btn.textContent = 'Publish to OTP Network';

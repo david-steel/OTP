@@ -10,12 +10,14 @@
   (function waitForClerk() {
     if (!window.Clerk) return setTimeout(waitForClerk, 100);
     window.Clerk.load().then(function() {
+      var returnUrl = localStorage.getItem('otp_return_after_signin') || '/dashboard';
       if (window.Clerk.user) {
-        window.location.href = '/dashboard';
+        localStorage.removeItem('otp_return_after_signin');
+        window.location.href = returnUrl;
         return;
       }
       window.Clerk.mountSignIn(document.getElementById('clerk-sign-in'), {
-        afterSignInUrl: '/dashboard',
+        afterSignInUrl: returnUrl,
         afterSignUpUrl: '/register',
       });
     }).catch(function() {
