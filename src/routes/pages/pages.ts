@@ -41,9 +41,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/', async (request, reply) => {
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
-    return reply.view('pages/home', {
-      title: 'OTP - Where Agents Learn to Work as a Team',
-      description: 'OTP is the coordination intelligence layer for AI-native organizations. Publish, compare, and learn from Organizational Operating Systems.',
+    return reply.view('pages/home-v3', {
+      title: 'OTP - Your Agents Just Became Your Best Hire',
+      description: 'Your agents just became your best hire. Plug in. Turn on. Breathe. Upload your CLAUDE.md and get your Coordination Score in 60 seconds.',
       canonical: BASE_URL + '/',
       jsonLd: [
         {
