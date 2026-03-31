@@ -491,9 +491,10 @@
     var order = { critical: 0, high: 1, medium: 2, low: 3 };
     var sorted = (scan.flags || []).slice().sort(function(a, b) { return (order[a.severity] || 4) - (order[b.severity] || 4); });
 
-    sorted.forEach(function(flag) {
+    sorted.forEach(function(flag, idx) {
       var div = document.createElement('div');
-      div.className = 'border rounded-lg p-3 ' + (SEVERITY_STYLES[flag.severity] || SEVERITY_STYLES.low);
+      div.className = 'vuln-flag border rounded-lg p-3 ' + (SEVERITY_STYLES[flag.severity] || SEVERITY_STYLES.low);
+      div.setAttribute('data-vuln-idx', idx);
       div.innerHTML =
         '<div class="flex items-start gap-3">' +
           '<span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ' + (SEVERITY_BADGES[flag.severity] || '') + '">' + flag.severity.toUpperCase() + '</span>' +
@@ -502,9 +503,10 @@
               '<span class="text-xs font-semibold uppercase opacity-70">' + escapeHtml(flag.type.replace(/_/g, ' ')) + '</span>' +
               '<span class="text-xs opacity-50">' + escapeHtml(flag.category) + '</span>' +
             '</div>' +
-            '<p class="text-sm font-mono break-all mb-1">' + escapeHtml(flag.text) + '</p>' +
+            '<p class="text-sm font-mono break-all mb-1 vuln-text">' + escapeHtml(flag.text) + '</p>' +
             '<p class="text-xs opacity-75">' + escapeHtml(flag.suggestion) + '</p>' +
           '</div>' +
+          '<button class="vuln-remove flex-shrink-0 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors cursor-pointer" data-flag-text="' + escapeHtml(flag.text) + '" data-flag-type="' + escapeHtml(flag.type) + '">Remove</button>' +
         '</div>';
       container.appendChild(div);
     });
@@ -513,6 +515,65 @@
     if (scan.flags && scan.flags.length > 0) {
       document.getElementById('vuln-btn').classList.remove('hidden');
     }
+
+    // Track removed count
+    var vulnRemovedCount = 0;
+    var vulnTotalCount = sorted.length;
+
+    // Handle remove button clicks
+    container.addEventListener('click', function(e) {
+      var removeBtn = e.target.closest('.vuln-remove');
+      if (!removeBtn) return;
+
+      var flagText = removeBtn.getAttribute('data-flag-text');
+      var flagType = removeBtn.getAttribute('data-flag-type');
+      var card = removeBtn.closest('.vuln-flag');
+
+      // Remove the flagged text from the stored OOS content
+      var scanRaw = localStorage.getItem('otp_scan_result');
+      if (scanRaw) {
+        try {
+          var scanObj = JSON.parse(scanRaw);
+          if (scanObj.oos && scanObj.oos.rawMarkdown) {
+            scanObj.oos.rawMarkdown = scanObj.oos.rawMarkdown.split(flagText).join('[REDACTED]');
+            localStorage.setItem('otp_scan_result', JSON.stringify(scanObj));
+          }
+        } catch(ex) {}
+      }
+
+      // Also update otp_generated_oos
+      var oosContent = localStorage.getItem('otp_generated_oos');
+      if (oosContent) {
+        localStorage.setItem('otp_generated_oos', oosContent.split(flagText).join('[REDACTED]'));
+      }
+
+      // Mark card as resolved
+      card.style.opacity = '0.4';
+      card.style.pointerEvents = 'none';
+      removeBtn.textContent = 'Removed';
+      removeBtn.disabled = true;
+      removeBtn.className = 'flex-shrink-0 px-3 py-1.5 bg-green-100 border border-green-300 text-green-700 rounded-lg text-xs font-medium';
+
+      vulnRemovedCount++;
+
+      // Update subtitle
+      var remaining = vulnTotalCount - vulnRemovedCount;
+      subtitle.textContent = remaining > 0
+        ? remaining + ' remaining (' + vulnRemovedCount + ' removed)'
+        : 'All items resolved!';
+
+      // If all resolved, update styling to green
+      if (remaining === 0) {
+        var blocked = document.getElementById('vuln-blocked');
+        blocked.className = 'bg-green-50 border-2 border-green-300 rounded-xl p-6';
+        blocked.querySelector('h2').className = 'text-lg font-bold text-green-800';
+        blocked.querySelector('h2').textContent = 'Vulnerability Scan Complete';
+        var footer = document.getElementById('vuln-footer');
+        footer.className = 'text-xs text-green-500 mt-4';
+        footer.textContent = 'All flagged items have been redacted. Safe to publish.';
+        document.getElementById('vuln-btn').classList.add('hidden');
+      }
+    });
   }
 
   // ---- Foundation Score ----
