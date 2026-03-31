@@ -257,6 +257,11 @@
     loading.classList.add('hidden');
     container.classList.remove('hidden');
 
+    // Store the generated OOS markdown (not the raw CLAUDE.md) for publishing
+    if (data.oos && data.oos.rawMarkdown) {
+      localStorage.setItem('otp_generated_oos', data.oos.rawMarkdown);
+    }
+
     renderScore(data.score);
     renderVulnerabilityScan(data.vulnerabilityScan);
     renderFoundationScore(data.foundationScore);
@@ -762,6 +767,16 @@
       return;
     }
 
+    // Get template from scan result
+    var scanRaw = localStorage.getItem('otp_scan_result');
+    var template = 'agent_army';
+    if (scanRaw) {
+      try {
+        var scanData = JSON.parse(scanRaw);
+        if (scanData.oos && scanData.oos.template) template = scanData.oos.template;
+      } catch(e) {}
+    }
+
     btn.textContent = 'Publishing...';
     btn.disabled = true;
     status.textContent = '';
@@ -771,7 +786,7 @@
       var fixResp = await fetch('/api/v1/oos/fix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawContent: content, template: 'agent_army' }),
+        body: JSON.stringify({ rawContent: content, template: template }),
       });
       var fixData = await fixResp.json();
       var fixedContent = fixData.fixed || content;
@@ -780,7 +795,7 @@
       var createResp = await fetch('/api/v1/oos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ template: 'agent_army', rawContent: fixedContent }),
+        body: JSON.stringify({ template: template, rawContent: fixedContent }),
       });
       var createData = await createResp.json();
 
