@@ -257,38 +257,10 @@
     loading.classList.add('hidden');
     container.classList.remove('hidden');
 
-    // Store the generated OOS with frontmatter (not the raw CLAUDE.md) for publishing
-    if (data.oos && data.oos.rawMarkdown) {
-      var oosContent = data.oos.rawMarkdown;
-      // Prepend YAML frontmatter if the scan generated it
-      if (data.oos.frontmatter) {
-        var fm = data.oos.frontmatter;
-        var yaml = '---\n';
-        yaml += 'oos_version: "' + (fm.oos_version || '1.0') + '"\n';
-        yaml += 'org_pseudonym: "' + (fm.org_pseudonym || 'Unknown') + '"\n';
-        yaml += 'industry: "' + (fm.industry || 'technology') + '"\n';
-        yaml += 'org_size: ' + (fm.org_size || 'small') + '\n';
-        yaml += 'template: ' + (fm.template || 'agent_army') + '\n';
-        yaml += 'agent_count: ' + (fm.agent_count || 0) + '\n';
-        yaml += 'platforms: [' + (fm.platforms || []).map(function(p) { return '"' + p + '"'; }).join(', ') + ']\n';
-        yaml += 'mcp_servers: [' + (fm.mcp_servers || []).map(function(s) { return '"' + s + '"'; }).join(', ') + ']\n';
-        yaml += 'generated_at: "' + (fm.generated_at || new Date().toISOString()) + '"\n';
-        yaml += 'version: ' + (fm.version || 1) + '\n';
-        yaml += 'parent_version: null\n';
-        yaml += 'word_count: ' + (oosContent.split(/\s+/).length) + '\n';
-        yaml += 'claim_count: ' + (fm.claim_count || 0) + '\n';
-        yaml += 'confidence_distribution:\n';
-        var cd = fm.confidence_distribution || { high: 0, medium: 0, low: 0 };
-        yaml += '  high: ' + (cd.high || 0) + '\n';
-        yaml += '  medium: ' + (cd.medium || 0) + '\n';
-        yaml += '  low: ' + (cd.low || 0) + '\n';
-        yaml += 'evidence_distribution:\n';
-        var ed = fm.evidence_distribution || {};
-        for (var ek in ed) { yaml += '  ' + ek + ': ' + ed[ek] + '\n'; }
-        yaml += '---\n\n';
-        oosContent = yaml + oosContent;
-      }
-      localStorage.setItem('otp_generated_oos', oosContent);
+    // Build and cache the complete OOS document for the resolve-insight flow
+    var built = buildOOSFromScanResult();
+    if (built) {
+      localStorage.setItem('otp_generated_oos', built.content);
     }
 
     renderScore(data.score);
@@ -786,24 +758,58 @@
     }
   });
 
+  // Build a complete OOS document from scan result data
+  function buildOOSFromScanResult() {
+    var scanRaw = localStorage.getItem('otp_scan_result');
+    if (!scanRaw) return null;
+    var scanData;
+    try { scanData = JSON.parse(scanRaw); } catch(e) { return null; }
+    if (!scanData.oos || !scanData.oos.rawMarkdown) return null;
+
+    var fm = scanData.oos.frontmatter || {};
+    var body = scanData.oos.rawMarkdown;
+    var template = scanData.oos.template || 'agent_army';
+
+    var yaml = '---\n';
+    yaml += 'oos_version: "' + (fm.oos_version || '1.0') + '"\n';
+    yaml += 'org_pseudonym: "' + (fm.org_pseudonym || 'Unknown') + '"\n';
+    yaml += 'industry: "' + (fm.industry || 'technology') + '"\n';
+    yaml += 'org_size: ' + (fm.org_size || 'small') + '\n';
+    yaml += 'template: ' + template + '\n';
+    yaml += 'agent_count: ' + (fm.agent_count || 0) + '\n';
+    yaml += 'platforms: [' + (fm.platforms || []).map(function(p) { return '"' + p + '"'; }).join(', ') + ']\n';
+    yaml += 'mcp_servers: [' + (fm.mcp_servers || []).map(function(s) { return '"' + s + '"'; }).join(', ') + ']\n';
+    yaml += 'generated_at: "' + (fm.generated_at || new Date().toISOString()) + '"\n';
+    yaml += 'version: ' + (fm.version || 1) + '\n';
+    yaml += 'parent_version: null\n';
+    yaml += 'word_count: ' + (body.split(/\s+/).length) + '\n';
+    yaml += 'claim_count: ' + (fm.claim_count || 0) + '\n';
+    yaml += 'confidence_distribution:\n';
+    var cd = fm.confidence_distribution || { high: 0, medium: 0, low: 0 };
+    yaml += '  high: ' + (cd.high || 0) + '\n';
+    yaml += '  medium: ' + (cd.medium || 0) + '\n';
+    yaml += '  low: ' + (cd.low || 0) + '\n';
+    yaml += 'evidence_distribution:\n';
+    var ed = fm.evidence_distribution || {};
+    for (var ek in ed) { yaml += '  ' + ek + ': ' + ed[ek] + '\n'; }
+    yaml += '---\n\n';
+
+    return { content: yaml + body, template: template };
+  }
+
   window.publishNow = async function() {
     var btn = document.getElementById('continue-btn');
     var status = document.getElementById('publish-status');
-    var content = localStorage.getItem('otp_generated_oos');
+
+    // Build OOS from scan result (always fresh, never stale localStorage)
+    var built = buildOOSFromScanResult();
+    var content = built ? built.content : localStorage.getItem('otp_generated_oos');
+    var template = built ? built.template : 'agent_army';
+
     if (!content) {
-      status.textContent = 'No OOS content found. Go back to the publish page.';
+      status.textContent = 'No OOS content found. Go back to the homepage and re-upload.';
       status.style.color = '#dc2626';
       return;
-    }
-
-    // Get template from scan result
-    var scanRaw = localStorage.getItem('otp_scan_result');
-    var template = 'agent_army';
-    if (scanRaw) {
-      try {
-        var scanData = JSON.parse(scanRaw);
-        if (scanData.oos && scanData.oos.template) template = scanData.oos.template;
-      } catch(e) {}
     }
 
     btn.textContent = 'Publishing...';
