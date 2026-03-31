@@ -493,23 +493,8 @@
       container.appendChild(div);
     });
 
-    // Only hard-block on critical (API keys, passwords, CC#s, SSNs, database URLs)
-    // High/medium/low get a warning but user can acknowledge and proceed
-    if (scan.summary.critical > 0) {
-      var publishBtn = document.getElementById('continue-btn');
-      publishBtn.disabled = true;
-      publishBtn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
-      publishBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-      publishBtn.textContent = 'Remove Critical Vulnerabilities Before Publishing';
-    } else if (scan.summary.high > 0 || scan.summary.medium > 0) {
-      // Show acknowledge button -- warn but don't block
-      var publishBtn = document.getElementById('continue-btn');
-      var originalOnclick = publishBtn.getAttribute('onclick');
-      publishBtn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
-      publishBtn.classList.add('bg-amber-500', 'hover:bg-amber-400');
-      publishBtn.textContent = 'I Understand the Risks -- Publish Anyway';
-      publishBtn.disabled = false;
-    }
+    // Vulnerability scan is informational only on this page.
+    // The backend publish endpoint enforces the actual PII gate.
   }
 
   // ---- Foundation Score ----
