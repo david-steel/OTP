@@ -158,6 +158,10 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
         Share Your Score
       </button>
+      <button type="button" onclick="scrollToVulnerabilities()" id="vuln-btn" class="hidden flex-1 px-6 py-3 border border-amber-300 text-amber-700 rounded-lg font-medium text-sm hover:bg-amber-50 transition-colors cursor-pointer flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+        Review Vulnerabilities
+      </button>
       <button type="button" onclick="scrollToIssues()" id="fix-btn" class="hidden flex-1 px-6 py-3 border border-red-200 text-red-700 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors cursor-pointer">
         Fix Issues First
       </button>
@@ -268,6 +272,12 @@
     renderFoundationScore(data.foundationScore);
     renderDimensions(data.score.breakdown);
     renderInsights(data.insights || []);
+
+    // Auto-publish if returning from sign-in
+    if (localStorage.getItem('otp_auto_publish') === 'true') {
+      localStorage.removeItem('otp_auto_publish');
+      setTimeout(function() { publishNow(); }, 1000);
+    }
   }
 
   function renderScore(score) {
@@ -499,8 +509,10 @@
       container.appendChild(div);
     });
 
-    // Vulnerability scan is informational only on this page.
-    // The backend publish endpoint enforces the actual PII gate.
+    // Show "Review Vulnerabilities" button if there are findings
+    if (scan.flags && scan.flags.length > 0) {
+      document.getElementById('vuln-btn').classList.remove('hidden');
+    }
   }
 
   // ---- Foundation Score ----
@@ -655,6 +667,13 @@
   document.getElementById('share-modal').addEventListener('click', function(e) {
     if (e.target === this) closeShareModal();
   });
+
+  window.scrollToVulnerabilities = function() {
+    var section = document.getElementById('vuln-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   window.scrollToIssues = function() {
     var critical = document.getElementById('insights-critical');
@@ -862,8 +881,9 @@
 
       if (!createResp.ok) {
         if (createResp.status === 401 || createData.error?.code === 'AUTH_REQUIRED') {
-          // Not signed in -- redirect to sign in, then come back
+          // Not signed in -- flag auto-publish, redirect to sign in, come back and retry
           localStorage.setItem('otp_return_after_signin', '/scan-results');
+          localStorage.setItem('otp_auto_publish', 'true');
           window.location.href = '/sign-in';
           return;
         }
