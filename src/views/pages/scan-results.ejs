@@ -257,9 +257,38 @@
     loading.classList.add('hidden');
     container.classList.remove('hidden');
 
-    // Store the generated OOS markdown (not the raw CLAUDE.md) for publishing
+    // Store the generated OOS with frontmatter (not the raw CLAUDE.md) for publishing
     if (data.oos && data.oos.rawMarkdown) {
-      localStorage.setItem('otp_generated_oos', data.oos.rawMarkdown);
+      var oosContent = data.oos.rawMarkdown;
+      // Prepend YAML frontmatter if the scan generated it
+      if (data.oos.frontmatter) {
+        var fm = data.oos.frontmatter;
+        var yaml = '---\n';
+        yaml += 'oos_version: "' + (fm.oos_version || '1.0') + '"\n';
+        yaml += 'org_pseudonym: "' + (fm.org_pseudonym || 'Unknown') + '"\n';
+        yaml += 'industry: "' + (fm.industry || 'technology') + '"\n';
+        yaml += 'org_size: ' + (fm.org_size || 'small') + '\n';
+        yaml += 'template: ' + (fm.template || 'agent_army') + '\n';
+        yaml += 'agent_count: ' + (fm.agent_count || 0) + '\n';
+        yaml += 'platforms: [' + (fm.platforms || []).map(function(p) { return '"' + p + '"'; }).join(', ') + ']\n';
+        yaml += 'mcp_servers: [' + (fm.mcp_servers || []).map(function(s) { return '"' + s + '"'; }).join(', ') + ']\n';
+        yaml += 'generated_at: "' + (fm.generated_at || new Date().toISOString()) + '"\n';
+        yaml += 'version: ' + (fm.version || 1) + '\n';
+        yaml += 'parent_version: null\n';
+        yaml += 'word_count: ' + (oosContent.split(/\s+/).length) + '\n';
+        yaml += 'claim_count: ' + (fm.claim_count || 0) + '\n';
+        yaml += 'confidence_distribution:\n';
+        var cd = fm.confidence_distribution || { high: 0, medium: 0, low: 0 };
+        yaml += '  high: ' + (cd.high || 0) + '\n';
+        yaml += '  medium: ' + (cd.medium || 0) + '\n';
+        yaml += '  low: ' + (cd.low || 0) + '\n';
+        yaml += 'evidence_distribution:\n';
+        var ed = fm.evidence_distribution || {};
+        for (var ek in ed) { yaml += '  ' + ek + ': ' + ed[ek] + '\n'; }
+        yaml += '---\n\n';
+        oosContent = yaml + oosContent;
+      }
+      localStorage.setItem('otp_generated_oos', oosContent);
     }
 
     renderScore(data.score);
