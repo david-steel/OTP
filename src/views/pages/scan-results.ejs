@@ -51,7 +51,7 @@
           </div>
         </div>
         <div class="space-y-2" id="vuln-flags"></div>
-        <p class="text-xs text-red-500 mt-4">Remove or redact all flagged items before publishing to the OTP network.</p>
+        <p class="text-xs text-red-500 mt-4" id="vuln-footer">Remove or redact flagged items before publishing to the OTP network.</p>
       </div>
       <div id="vuln-clean" class="hidden bg-green-50 border border-green-200 rounded-xl p-4">
         <div class="flex items-center gap-3">
@@ -436,6 +436,20 @@
     var subtitle = document.getElementById('vuln-subtitle');
     subtitle.textContent = scan.summary.critical + ' critical, ' + scan.summary.high + ' high, ' + scan.summary.medium + ' medium, ' + scan.summary.low + ' low';
 
+    // If no critical items, soften the styling to amber warning instead of red block
+    if (scan.summary.critical === 0) {
+      var blocked = document.getElementById('vuln-blocked');
+      blocked.className = 'bg-amber-50 border-2 border-amber-300 rounded-xl p-6';
+      subtitle.textContent = 'Sensitive data detected. Review before publishing.';
+      subtitle.className = 'text-sm text-amber-600';
+      blocked.querySelector('h2').className = 'text-lg font-bold text-amber-800';
+      blocked.querySelector('.w-10').className = 'w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0';
+      blocked.querySelector('svg').className = 'w-5 h-5 text-amber-600';
+      var footer = document.getElementById('vuln-footer');
+      footer.className = 'text-xs text-amber-500 mt-4';
+      footer.textContent = 'These items are flagged for review. You can still publish, but consider redacting sensitive data first.';
+    }
+
     var container = document.getElementById('vuln-flags');
     var SEVERITY_STYLES = {
       critical: 'bg-red-100 border-red-300 text-red-900',
@@ -479,13 +493,22 @@
       container.appendChild(div);
     });
 
-    // If critical vulnerabilities, disable publish button
-    if (scan.summary.critical > 0 || scan.summary.high > 0) {
+    // Only hard-block on critical (API keys, passwords, CC#s, SSNs, database URLs)
+    // High/medium/low get a warning but user can acknowledge and proceed
+    if (scan.summary.critical > 0) {
       var publishBtn = document.getElementById('continue-btn');
       publishBtn.disabled = true;
       publishBtn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
       publishBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-      publishBtn.textContent = 'Fix Vulnerabilities Before Publishing';
+      publishBtn.textContent = 'Remove Critical Vulnerabilities Before Publishing';
+    } else if (scan.summary.high > 0 || scan.summary.medium > 0) {
+      // Show acknowledge button -- warn but don't block
+      var publishBtn = document.getElementById('continue-btn');
+      var originalOnclick = publishBtn.getAttribute('onclick');
+      publishBtn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
+      publishBtn.classList.add('bg-amber-500', 'hover:bg-amber-400');
+      publishBtn.textContent = 'I Understand the Risks -- Publish Anyway';
+      publishBtn.disabled = false;
     }
   }
 
