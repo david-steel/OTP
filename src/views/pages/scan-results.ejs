@@ -761,10 +761,11 @@
   // Build a complete OOS document from scan result data
   function buildOOSFromScanResult() {
     var scanRaw = localStorage.getItem('otp_scan_result');
-    if (!scanRaw) return null;
+    if (!scanRaw) { console.log('[OTP] No scan result in localStorage'); return null; }
     var scanData;
-    try { scanData = JSON.parse(scanRaw); } catch(e) { return null; }
-    if (!scanData.oos || !scanData.oos.rawMarkdown) return null;
+    try { scanData = JSON.parse(scanRaw); } catch(e) { console.log('[OTP] Failed to parse scan result'); return null; }
+    if (!scanData.oos) { console.log('[OTP] No oos in scan data'); return null; }
+    if (!scanData.oos.rawMarkdown) { console.log('[OTP] No rawMarkdown in oos'); return null; }
 
     var fm = scanData.oos.frontmatter || {};
     var body = scanData.oos.rawMarkdown;
@@ -794,6 +795,7 @@
     for (var ek in ed) { yaml += '  ' + ek + ': ' + ed[ek] + '\n'; }
     yaml += '---\n\n';
 
+    console.log('[OTP] Built OOS: ' + (yaml + body).length + ' chars, template=' + template);
     return { content: yaml + body, template: template };
   }
 
@@ -803,11 +805,35 @@
 
     // Build OOS from scan result (always fresh, never stale localStorage)
     var built = buildOOSFromScanResult();
-    var content = built ? built.content : localStorage.getItem('otp_generated_oos');
+    var content = built ? built.content : null;
     var template = built ? built.template : 'agent_army';
 
+    // Fallback: if build failed, try re-scanning the raw text on the fly
     if (!content) {
-      status.textContent = 'No OOS content found. Go back to the homepage and re-upload.';
+      console.log('[OTP] buildOOSFromScanResult returned null, trying raw re-scan');
+      var rawOos = localStorage.getItem('otp_generated_oos');
+      if (rawOos && rawOos.length > 50) {
+        status.textContent = 'Preparing your OOS...';
+        status.style.color = '#6b7280';
+        try {
+          var scanResp = await fetch('/api/v1/scanner/from-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: rawOos }),
+          });
+          var scanData = await scanResp.json();
+          if (scanData.oos && scanData.oos.rawMarkdown) {
+            localStorage.setItem('otp_scan_result', JSON.stringify(scanData));
+            built = buildOOSFromScanResult();
+            content = built ? built.content : null;
+            template = built ? built.template : 'agent_army';
+          }
+        } catch(e) { console.log('[OTP] Re-scan failed:', e); }
+      }
+    }
+
+    if (!content) {
+      status.textContent = 'Could not build OOS. Go to the homepage and re-upload your CLAUDE.md.';
       status.style.color = '#dc2626';
       return;
     }
