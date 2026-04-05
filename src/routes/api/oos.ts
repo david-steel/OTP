@@ -20,6 +20,7 @@ import type { TemplateType } from '../../shared/enums.js';
 import { TEMPLATE_TYPES } from '../../shared/enums.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
+import { notifyNewPublisher } from '../../services/notification-engine.js';
 import { z } from 'zod';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
@@ -580,6 +581,13 @@ ${claimSections.join('\n')}`.trim();
           );
         }
         console.log(`[similarity] Background computation complete for OOS ${oosIdForSim}: ${simPairs.length} pairs found`);
+
+        // Step 5b: Notify publisher about matching skills from other orgs (fire-and-forget)
+        try {
+          await notifyNewPublisher(org.id, oosIdForSim);
+        } catch (notifyErr) {
+          console.error(`[notification] Failed for OOS ${oosIdForSim}:`, notifyErr);
+        }
       } catch (err) {
         console.error(`[similarity] Background computation failed for OOS ${oosIdForSim}:`, err);
       }
