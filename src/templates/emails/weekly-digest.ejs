@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>This week on OTP</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #0a0f1e; padding: 32px 40px; border-radius: 12px 12px 0 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="color: #0095ff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">OTP</span>
+                    <span style="color: #7cc4fe; font-size: 14px; font-weight: 400; margin-left: 8px;">Weekly Digest</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 12px;">
+                    <span style="color: #5a6577; font-size: 13px;"><%= dateRangeStart %> - <%= dateRangeEnd %></span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px;">
+
+              <!-- Greeting -->
+              <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0a0f1e; line-height: 1.3;">
+                This week on OTP
+              </h1>
+              <p style="margin: 0 0 28px 0; font-size: 15px; color: #5a6577; line-height: 1.6;">
+                Here's what happened on the network since your last digest.
+              </p>
+
+              <!-- Network Stats Bar -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+                <tr>
+                  <td style="background-color: #0a0f1e; border-radius: 8px; padding: 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center" style="width: 33%;">
+                          <span style="font-size: 24px; font-weight: 700; color: #0095ff; display: block;"><%= newOrgCount %></span>
+                          <span style="font-size: 12px; color: #7cc4fe; text-transform: uppercase; letter-spacing: 0.5px;">New Org<%= newOrgCount === 1 ? '' : 's' %></span>
+                        </td>
+                        <td align="center" style="width: 33%; border-left: 1px solid #1a2035; border-right: 1px solid #1a2035;">
+                          <span style="font-size: 24px; font-weight: 700; color: #0095ff; display: block;"><%= newOOSCount %></span>
+                          <span style="font-size: 12px; color: #7cc4fe; text-transform: uppercase; letter-spacing: 0.5px;">New Skill<%= newOOSCount === 1 ? '' : 's' %></span>
+                        </td>
+                        <td align="center" style="width: 33%;">
+                          <span style="font-size: 24px; font-weight: 700; color: #0095ff; display: block;"><%= newBestPracticeCount %></span>
+                          <span style="font-size: 12px; color: #7cc4fe; text-transform: uppercase; letter-spacing: 0.5px;">Best Practice<%= newBestPracticeCount === 1 ? '' : 's' %></span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <% if (newOrgs.length > 0) { %>
+              <!-- New Organizations -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0a0f1e; text-transform: uppercase; letter-spacing: 0.5px;">
+                      New Organizations
+                    </h2>
+                  </td>
+                </tr>
+                <% for (const org of newOrgs) { %>
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color: #f0f7ff; border: 1px solid #b9dffe; border-radius: 8px; padding: 16px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td>
+                                <span style="font-size: 15px; font-weight: 600; color: #0a0f1e;"><%= org.name %></span>
+                                <% if (org.badge) { %>
+                                <span style="display: inline-block; background-color: #0095ff; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; margin-left: 8px; vertical-align: middle;"><%= org.badge %></span>
+                                <% } %>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding-top: 4px;">
+                                <span style="font-size: 13px; color: #5a6577;"><%= org.industry %></span>
+                                <span style="font-size: 12px; color: #7c8a9c; margin-left: 8px;">Welcome to the network.</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <% } %>
+              </table>
+              <% } %>
+
+              <% if (newOOSFiles.length > 0) { %>
+              <!-- New Skills Published -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0a0f1e; text-transform: uppercase; letter-spacing: 0.5px;">
+                      New Skills Published
+                    </h2>
+                  </td>
+                </tr>
+                <% for (const oos of newOOSFiles) { %>
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; border-left: 3px solid #0095ff;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td>
+                                <span style="font-size: 15px; font-weight: 600; color: #0a0f1e;"><%= oos.orgName %></span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding-top: 6px;">
+                                <span style="display: inline-block; background-color: #e0effe; color: #005899; padding: 2px 8px; border-radius: 4px; font-weight: 500; font-size: 11px;"><%= oos.template.replace(/_/g, ' ') %></span>
+                                <span style="font-size: 12px; color: #5a6577; margin-left: 8px;"><%= oos.claimCount %> claim<%= oos.claimCount === 1 ? '' : 's' %></span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <% } %>
+              </table>
+              <% } %>
+
+              <% if (trendingClaims.length > 0) { %>
+              <!-- Trending Connections -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #0a0f1e; text-transform: uppercase; letter-spacing: 0.5px;">
+                      Trending Connections
+                    </h2>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #7c8a9c; line-height: 1.5;">
+                      These skills are being matched across multiple organizations.
+                    </p>
+                  </td>
+                </tr>
+                <% for (const claim of trendingClaims) { %>
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color: #f0f7ff; border-radius: 8px; padding: 16px; border-left: 3px solid #0076cc;">
+                          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #0a0f1e; line-height: 1.4;">
+                            <%= claim.rule.length > 120 ? claim.rule.substring(0, 120) + '...' : claim.rule %>
+                          </p>
+                          <p style="margin: 0; font-size: 12px; color: #5a6577;">
+                            From <span style="font-weight: 600; color: #0076cc;"><%= claim.orgName %></span>
+                            <span style="margin-left: 8px; color: #7c8a9c;"><%= claim.matchCount %> connection<%= claim.matchCount === 1 ? '' : 's' %></span>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <% } %>
+              </table>
+              <% } %>
+
+              <!-- CTA -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://orgtp.com/browse" style="display: inline-block; background-color: #0095ff; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                      Explore the network
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; font-size: 13px; color: #7c8a9c; text-align: center; line-height: 1.5;">
+                <%= newClaimCount %> new claim<%= newClaimCount === 1 ? '' : 's' %> added to the coordination intelligence network this week.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f4f6f9; padding: 24px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #7c8a9c; line-height: 1.5;">
+                OTP - Organization Transport Protocol<br>
+                <a href="https://orgtp.com" style="color: #0076cc; text-decoration: none;">orgtp.com</a>
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #a0aab8; line-height: 1.5;">
+                You're receiving this because you published on OTP.<br>
+                <a href="https://orgtp.com/settings" style="color: #7c8a9c; text-decoration: underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
