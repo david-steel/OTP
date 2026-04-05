@@ -1,0 +1,76 @@
+<!-- Practices Index Header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Playbooks</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">AI Coordination Playbooks by Industry</h1>
+      <p class="text-gray-400 mt-4 max-w-lg">Battle-tested coordination practices for AI agent teams. Pick your industry, download a CLAUDE.md, and your agents start working better today.</p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <% if (industries.length > 0) { %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <% industries.forEach(function(ind) { %>
+          <a href="/practices/<%= ind.slug %>" class="block p-6 rounded-xl border border-gray-100 card-hover group">
+            <div class="text-lg font-bold text-gray-900 group-hover:text-otp-600 transition-colors"><%= ind.name %></div>
+            <div class="text-sm text-gray-500 mt-2">
+              <strong><%= ind.practiceCount %></strong> coordination practices
+            </div>
+            <div class="mt-3 text-xs text-otp-500 font-medium group-hover:underline">View playbook &rarr;</div>
+          </a>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-12 text-gray-400">Practice packs coming soon. <a href="/publish" class="text-otp-500">Be the first to contribute.</a></div>
+    <% } %>
+
+    <div class="mt-12 p-6 bg-gray-50 rounded-xl border border-gray-100">
+      <h2 class="text-lg font-bold text-gray-900 mb-2">Your industry not listed?</h2>
+      <p class="text-gray-600 mb-4">We're adding new industry playbooks every week. Subscribe to get notified when yours is ready.</p>
+      <form id="newsletter-form" class="flex flex-col sm:flex-row gap-3 max-w-md">
+        <input type="email" name="email" required placeholder="your@email.com"
+               class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-otp-500 focus:ring-1 focus:ring-otp-500 text-sm">
+        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+        <button type="submit" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all text-sm whitespace-nowrap">Notify Me</button>
+      </form>
+      <p id="newsletter-result" class="text-sm mt-2 hidden"></p>
+    </div>
+  </div>
+</section>
+
+<script>
+document.getElementById('newsletter-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const email = form.email.value;
+  const honeypot = form.website.value;
+  const resultEl = document.getElementById('newsletter-result');
+  if (honeypot) return;
+  try {
+    const res = await fetch('/api/v1/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source: 'practices_index' }),
+    });
+    const data = await res.json();
+    resultEl.classList.remove('hidden');
+    if (res.ok) {
+      resultEl.className = 'text-sm mt-2 text-green-600';
+      resultEl.textContent = data.message || "You're in! Check your email to confirm.";
+      form.email.value = '';
+    } else {
+      resultEl.className = 'text-sm mt-2 text-red-600';
+      resultEl.textContent = data.error?.message || 'Something went wrong.';
+    }
+  } catch (e) {
+    resultEl.classList.remove('hidden');
+    resultEl.className = 'text-sm mt-2 text-red-600';
+    resultEl.textContent = 'Network error. Please try again.';
+  }
+});
+</script>

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -1102,6 +1102,152 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // ============================================================
+  // Practice Packs by Industry (PUBLIC, no auth)
+  // ============================================================
+
+  // Practice Packs Index
+  app.get('/practices', async (request, reply) => {
+    const result = await db.select({
+      industry: bestPractices.industry,
+      count: sql<number>`COUNT(*)`,
+    })
+      .from(bestPractices)
+      .where(and(
+        eq(bestPractices.isOriginal, true),
+        eq(bestPractices.isCoordination, true),
+      ))
+      .groupBy(bestPractices.industry)
+      .orderBy(desc(sql`COUNT(*)`));
+
+    const industries = result.filter(r => r.industry).map(r => ({
+      slug: r.industry,
+      name: r.industry!.charAt(0).toUpperCase() + r.industry!.slice(1),
+      practiceCount: Number(r.count),
+    }));
+
+    return reply.view('pages/practices-index', {
+      title: 'AI Coordination Playbooks by Industry - OTP',
+      description: 'Battle-tested coordination practices for AI agent teams, organized by industry. Download a CLAUDE.md for your industry in 60 seconds.',
+      canonical: BASE_URL + '/practices',
+      jsonLd: [{
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'AI Coordination Playbooks by Industry',
+        description: 'Industry-specific best practices for coordinating AI agent teams.',
+        url: BASE_URL + '/practices',
+      }],
+      industries,
+    });
+  });
+
+  // Practice Pack by Industry
+  app.get<{ Params: { industry: string }; Querystring: { category?: string } }>('/practices/:industry', async (request, reply) => {
+    const { industry } = request.params;
+    const { category } = request.query;
+
+    const conditions: any[] = [
+      eq(bestPractices.industry, industry),
+      eq(bestPractices.isOriginal, true),
+      eq(bestPractices.isCoordination, true),
+    ];
+    if (category) {
+      conditions.push(eq(bestPractices.category, category));
+    }
+
+    const rows = await db.select({
+      id: bestPractices.id,
+      slug: bestPractices.slug,
+      term: bestPractices.term,
+      definition: bestPractices.definition,
+      category: bestPractices.category,
+      metadata: bestPractices.metadata,
+    })
+      .from(bestPractices)
+      .where(and(...conditions))
+      .orderBy(bestPractices.category, bestPractices.term);
+
+    if (rows.length === 0 && !category) {
+      return reply.status(404).view('pages/404', {
+        title: '404 - OTP',
+        description: 'Page not found',
+      });
+    }
+
+    const categories = await db.select({
+      category: bestPractices.category,
+      count: sql<number>`COUNT(*)`,
+    })
+      .from(bestPractices)
+      .where(and(
+        eq(bestPractices.industry, industry),
+        eq(bestPractices.isOriginal, true),
+      ))
+      .groupBy(bestPractices.category)
+      .orderBy(desc(sql`COUNT(*)`));
+
+    // Vote scores
+    const votesResult = await db.execute(sql`
+      SELECT pv.best_practice_id, SUM(pv.vote) AS score
+      FROM practice_votes pv
+      JOIN best_practices bp ON bp.id = pv.best_practice_id
+      WHERE bp.industry = ${industry}
+      GROUP BY pv.best_practice_id
+    `) as any;
+    const voteMap: Record<string, number> = {};
+    for (const row of (votesResult.rows || [])) {
+      voteMap[row.best_practice_id] = Number(row.score);
+    }
+
+    const practices = rows.map(r => ({
+      ...r,
+      failureMode: (r.metadata as any)?.failureMode || null,
+      evidence: (r.metadata as any)?.evidence || null,
+      votes: { score: voteMap[r.id] || 0 },
+    }));
+
+    const industryName = industry.charAt(0).toUpperCase() + industry.slice(1);
+    const industryDescription = (rows[0]?.metadata as any)?.industryMeta?.description ||
+      `Coordination practices for ${industryName} AI agent teams.`;
+
+    return reply.view('pages/practices-industry', {
+      title: `${industryName} AI Coordination Playbook - OTP`,
+      description: `${practices.length} battle-tested coordination practices for ${industryName} AI agent teams. Download a CLAUDE.md in 60 seconds.`,
+      canonical: BASE_URL + '/practices/' + industry,
+      jsonLd: [{
+        '@context': 'https://schema.org',
+        '@type': 'HowTo',
+        name: `${industryName} AI Agent Coordination Playbook`,
+        description: industryDescription,
+        step: practices.slice(0, 10).map((p, i) => ({
+          '@type': 'HowToStep',
+          position: i + 1,
+          name: p.term,
+          text: p.definition,
+        })),
+      }],
+      industrySlug: industry,
+      industryName,
+      industryDescription,
+      practiceCount: practices.length,
+      categories,
+      practices,
+      activeCategory: category || null,
+    });
+  });
+
+  // CLAUDE.md Generator page
+  app.get<{ Querystring: { industry?: string } }>('/generate', async (request, reply) => {
+    const preselectedIndustry = request.query.industry || '';
+    return reply.view('pages/generate', {
+      title: 'Generate Your CLAUDE.md - OTP',
+      description: 'AI-powered CLAUDE.md generator. Tell us your industry, team size, and agent count. Get a complete coordination document in 60 seconds.',
+      canonical: BASE_URL + '/generate',
+      noindex: true,
+      preselectedIndustry,
+    });
+  });
+
   // Industries Index
   app.get('/industries', async (request, reply) => {
     const rows = await db.execute(sql`
@@ -1276,17 +1422,6 @@ export default async function pageRoutes(app: FastifyInstance) {
         networkLearnings,
         latestOos: latestPublished || null,
       },
-    });
-  });
-
-  // Generate OOS from Description
-  app.get('/generate', async (request, reply) => {
-    return reply.view('pages/generate', {
-      title: 'Generate Your OOS - OTP',
-      description: 'Describe your AI operations in plain English and get a structured Organizational Operating System ready to publish. No technical formatting required.',
-      canonical: BASE_URL + '/generate',
-      ogImage: BASE_URL + '/public/og-image.png',
-      breadcrumbs: bc({ name: 'Generate', url: BASE_URL + '/generate' }),
     });
   });
 

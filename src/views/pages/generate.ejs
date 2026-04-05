@@ -1,206 +1,200 @@
-<!-- Hero -->
-<section class="bg-otp-950 py-12 sm:py-16">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
-      <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-      Natural Language Publishing
+<!-- Generator Header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <a href="/practices" class="hover:text-white transition-colors">Practices</a>
+        <span>/</span>
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Generator</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Generate Your CLAUDE.md</h1>
+      <p class="text-gray-400 mt-4 max-w-lg">Tell us about your team. Get a complete coordination document your agents can follow from day one.</p>
     </div>
-    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Generate Your OOS from a Description</h1>
-    <p class="text-gray-400 max-w-xl mx-auto leading-relaxed">Describe how your AI agents work in plain English. OTP generates a structured OOS file ready to publish. No technical formatting required.</p>
   </div>
 </section>
 
-<!-- Generator -->
-<section class="bg-gray-50 py-12 sm:py-16">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <!-- Form -->
-      <div class="p-6 sm:p-8">
-        <label for="description" class="block text-sm font-semibold text-gray-900 mb-2">Describe how your AI agents work</label>
-        <textarea
-          id="description"
-          rows="12"
-          class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-otp-500/30 focus:border-otp-400 transition-colors resize-y"
-          placeholder="Example:
+<!-- Generator Form -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <form id="generate-form" class="space-y-6">
+      <!-- Industry -->
+      <div>
+        <label for="industry" class="block text-sm font-semibold text-gray-700 mb-2">Industry</label>
+        <select id="industry" name="industry" required
+                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 focus:outline-none focus:border-otp-500 focus:ring-1 focus:ring-otp-500">
+          <option value="">Select your industry...</option>
+          <option value="agency" <%= typeof preselectedIndustry !== 'undefined' && preselectedIndustry === 'agency' ? 'selected' : '' %>>Digital Marketing Agency</option>
+          <option value="fitness" <%= typeof preselectedIndustry !== 'undefined' && preselectedIndustry === 'fitness' ? 'selected' : '' %>>Fitness / Franchise</option>
+          <option value="healthcare" <%= typeof preselectedIndustry !== 'undefined' && preselectedIndustry === 'healthcare' ? 'selected' : '' %>>Healthcare</option>
+          <option value="saas" <%= typeof preselectedIndustry !== 'undefined' && preselectedIndustry === 'saas' ? 'selected' : '' %>>SaaS</option>
+          <option value="professional-services" <%= typeof preselectedIndustry !== 'undefined' && preselectedIndustry === 'professional-services' ? 'selected' : '' %>>Professional Services</option>
+          <option value="ecommerce" <%= typeof preselectedIndustry !== 'undefined' && preselectedIndustry === 'ecommerce' ? 'selected' : '' %>>E-commerce</option>
+        </select>
+      </div>
 
-We run a digital agency with 14 AI agents built in Claude Code.
-
-Radar is our Chief of Staff. It scans Slack, email, calendar, CRM, and ad platforms every morning and compiles a daily briefing.
-
-Dash is our ad performance analyst. It monitors Meta Ads and Google Ads spend across 39+ accounts and flags anomalies.
-
-Pepper is our executive assistant. It triages email, drafts responses in the CEO's voice, and escalates urgent client emails.
-
-Rules:
-- Every agent writes to a shared state file. No agent reads data sources directly.
-- One seat, one owner. No agent does two jobs. No two agents do the same job.
-- Agents flag and recommend. The CEO decides. Exception: agent-to-agent coordination via message bus.
-- All Slack messages require approval before sending.
-
-Tools: Slack, Gmail, Google Calendar, Todoist, Meta Ads API, Google Ads API, Accelo, GHL CRM
-
-Industry: Digital Marketing Agency
-Size: Small (10-50 employees)"
-        ></textarea>
-
-        <div class="flex flex-col sm:flex-row gap-4 mt-6">
-          <div class="flex-1">
-            <label for="template" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Template</label>
-            <select id="template" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-otp-500/30 focus:border-otp-400 transition-colors">
-              <option value="agent_army" selected>Agent Army</option>
-              <option value="value_chain">Value Chain</option>
-              <option value="org_chart">Org Chart</option>
-            </select>
-          </div>
-          <div class="flex items-end">
-            <button
-              id="generate-btn"
-              class="px-8 py-2.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Generate OOS
-            </button>
-          </div>
+      <!-- Team Size + Agent Count -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="teamSize" class="block text-sm font-semibold text-gray-700 mb-2">Team size (people)</label>
+          <input type="number" id="teamSize" name="teamSize" min="1" max="500" value="10" required
+                 class="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 focus:outline-none focus:border-otp-500 focus:ring-1 focus:ring-otp-500">
+        </div>
+        <div>
+          <label for="agentCount" class="block text-sm font-semibold text-gray-700 mb-2">AI agents</label>
+          <input type="number" id="agentCount" name="agentCount" min="1" max="50" value="5" required
+                 class="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 focus:outline-none focus:border-otp-500 focus:ring-1 focus:ring-otp-500">
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div id="loading-state" class="hidden px-6 sm:px-8 pb-6">
-        <div class="flex items-center gap-3 text-sm text-gray-500">
-          <svg class="animate-spin h-4 w-4 text-otp-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Generating your OOS...
-        </div>
+      <!-- Focus (optional) -->
+      <div>
+        <label for="focus" class="block text-sm font-semibold text-gray-700 mb-2">Special focus <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input type="text" id="focus" name="focus" maxlength="500" placeholder="e.g., client communication, data pipeline, sales automation..."
+               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-otp-500 focus:ring-1 focus:ring-otp-500">
       </div>
 
-      <!-- Error State -->
-      <div id="error-state" class="hidden px-6 sm:px-8 pb-6">
-        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-            <div>
-              <div class="text-sm font-semibold text-red-800">Generation failed</div>
-              <div id="error-message" class="text-sm text-red-600 mt-1"></div>
-            </div>
-          </div>
+      <!-- Submit -->
+      <button type="submit" id="generate-btn"
+              class="w-full px-6 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-base disabled:opacity-50 disabled:cursor-not-allowed">
+        Generate CLAUDE.md
+      </button>
+    </form>
+
+    <!-- Loading state -->
+    <div id="generate-loading" class="hidden mt-8 text-center">
+      <div class="inline-flex items-center gap-3 px-6 py-4 bg-otp-50 rounded-xl">
+        <svg class="animate-spin w-5 h-5 text-otp-500" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-otp-700 font-medium">Generating your CLAUDE.md...</span>
+      </div>
+      <p class="text-sm text-gray-400 mt-3">This takes 5-10 seconds. Using your industry's coordination practices as context.</p>
+    </div>
+
+    <!-- Result -->
+    <div id="generate-result" class="hidden mt-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Your CLAUDE.md</h2>
+          <p id="result-meta" class="text-sm text-gray-500"></p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="copyResult()" id="copy-btn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">Copy</button>
+          <button onclick="downloadResult()" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Download</button>
         </div>
       </div>
+      <div class="relative">
+        <pre id="result-content" class="bg-gray-50 border border-gray-200 rounded-xl p-5 text-sm text-gray-800 font-mono whitespace-pre-wrap overflow-x-auto max-h-[600px] overflow-y-auto leading-relaxed"></pre>
+      </div>
 
-      <!-- Result -->
-      <div id="result-section" class="hidden border-t border-gray-100">
-        <div class="px-6 sm:px-8 py-4 bg-gray-50 flex items-center justify-between">
-          <div class="text-sm font-semibold text-gray-700">Generated OOS</div>
-          <div class="flex items-center gap-2">
-            <span id="claim-count-badge" class="text-xs bg-otp-100 text-otp-700 px-2.5 py-1 rounded-full font-semibold"></span>
-            <button
-              id="copy-btn"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-              Copy
-            </button>
-            <a
-              id="publish-btn"
-              href="/publish"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-otp-500 rounded-lg text-xs font-semibold text-white hover:bg-otp-400 transition-colors"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-              Publish
-            </a>
-          </div>
-        </div>
-        <div class="px-6 sm:px-8 py-6">
-          <pre id="oos-output" class="bg-otp-950 text-gray-300 rounded-xl p-5 text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-[600px] overflow-y-auto"></pre>
-        </div>
+      <!-- Follow-up CTA -->
+      <div class="mt-6 p-5 bg-otp-50 rounded-xl border border-otp-100">
+        <p class="text-sm text-otp-800 font-medium mb-2">What's next?</p>
+        <ul class="text-sm text-otp-700 space-y-1.5">
+          <li>1. Paste this into your project as <code class="bg-white px-1.5 py-0.5 rounded text-xs">CLAUDE.md</code></li>
+          <li>2. Customize the agent names and roles for your team</li>
+          <li>3. <a href="/practices" class="text-otp-500 underline">Browse practices</a> to add industry-specific rules</li>
+          <li>4. <a href="/publish" class="text-otp-500 underline">Publish your OOS</a> when you're ready to share back</li>
+        </ul>
       </div>
     </div>
 
-    <!-- Tips -->
-    <div class="mt-8 grid sm:grid-cols-3 gap-4">
-      <div class="bg-white rounded-xl border border-gray-100 p-5">
-        <div class="text-xs font-semibold text-otp-500 uppercase tracking-wider mb-2">Tip 1</div>
-        <div class="text-sm font-semibold text-gray-900 mb-1">List your agents</div>
-        <p class="text-xs text-gray-500 leading-relaxed">Name each agent and describe its role. The generator will create a section for each one.</p>
-      </div>
-      <div class="bg-white rounded-xl border border-gray-100 p-5">
-        <div class="text-xs font-semibold text-purple-500 uppercase tracking-wider mb-2">Tip 2</div>
-        <div class="text-sm font-semibold text-gray-900 mb-1">Include your rules</div>
-        <p class="text-xs text-gray-500 leading-relaxed">Coordination rules, escalation patterns, and boundaries become individual claims in your OOS.</p>
-      </div>
-      <div class="bg-white rounded-xl border border-gray-100 p-5">
-        <div class="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">Tip 3</div>
-        <div class="text-sm font-semibold text-gray-900 mb-1">Mention your tools</div>
-        <p class="text-xs text-gray-500 leading-relaxed">Platforms and tools your agents use get captured in the frontmatter and help match you with similar organizations.</p>
-      </div>
+    <!-- Error state -->
+    <div id="generate-error" class="hidden mt-8 p-5 bg-red-50 border border-red-100 rounded-xl">
+      <p class="text-sm text-red-700 font-medium">Generation failed</p>
+      <p id="error-message" class="text-sm text-red-600 mt-1"></p>
+      <button onclick="resetGenerator()" class="mt-3 text-sm text-red-500 underline">Try again</button>
     </div>
   </div>
 </section>
 
 <script>
-(function() {
-  var descEl = document.getElementById('description');
-  var templateEl = document.getElementById('template');
-  var generateBtn = document.getElementById('generate-btn');
-  var loadingState = document.getElementById('loading-state');
-  var errorState = document.getElementById('error-state');
-  var errorMessage = document.getElementById('error-message');
-  var resultSection = document.getElementById('result-section');
-  var oosOutput = document.getElementById('oos-output');
-  var copyBtn = document.getElementById('copy-btn');
-  var claimCountBadge = document.getElementById('claim-count-badge');
+let generatedMarkdown = '';
+let generatedIndustry = '';
 
-  generateBtn.addEventListener('click', async function() {
-    var description = descEl.value.trim();
-    if (!description) {
-      descEl.focus();
+document.getElementById('generate-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const btn = document.getElementById('generate-btn');
+  const loading = document.getElementById('generate-loading');
+  const result = document.getElementById('generate-result');
+  const errorEl = document.getElementById('generate-error');
+
+  result.classList.add('hidden');
+  errorEl.classList.add('hidden');
+
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  loading.classList.remove('hidden');
+
+  const body = {
+    industry: form.industry.value,
+    teamSize: parseInt(form.teamSize.value, 10),
+    agentCount: parseInt(form.agentCount.value, 10),
+    focus: form.focus.value || undefined,
+  };
+
+  try {
+    const res = await fetch('/api/v1/public/generate-claudemd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Generate CLAUDE.md';
+
+    if (!res.ok) {
+      errorEl.classList.remove('hidden');
+      document.getElementById('error-message').textContent = data.error?.message || 'Something went wrong.';
       return;
     }
 
-    // Reset states
-    loadingState.classList.remove('hidden');
-    errorState.classList.add('hidden');
-    resultSection.classList.add('hidden');
-    generateBtn.disabled = true;
+    generatedMarkdown = data.markdown;
+    generatedIndustry = data.industry;
 
-    try {
-      var resp = await fetch('/api/v1/oos/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          description: description,
-          template: templateEl.value
-        })
-      });
+    document.getElementById('result-content').textContent = data.markdown;
+    document.getElementById('result-meta').textContent =
+      (data.source === 'ai' ? 'AI-generated' : 'Template-based') +
+      (data.practiceCount > 0 ? ' | ' + data.practiceCount + ' practices used as context' : '');
 
-      var data = await resp.json();
+    result.classList.remove('hidden');
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      if (!resp.ok) {
-        throw new Error(data.error?.message || 'Generation failed');
-      }
+  } catch (err) {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Generate CLAUDE.md';
+    errorEl.classList.remove('hidden');
+    document.getElementById('error-message').textContent = 'Network error. Please check your connection and try again.';
+  }
+});
 
-      // Show result
-      oosOutput.textContent = data.generated;
-      claimCountBadge.textContent = data.claimCount + ' claims';
-      resultSection.classList.remove('hidden');
-
-    } catch (err) {
-      errorMessage.textContent = err.message || 'Something went wrong. Please try again.';
-      errorState.classList.remove('hidden');
-    } finally {
-      loadingState.classList.add('hidden');
-      generateBtn.disabled = false;
-    }
+function copyResult() {
+  navigator.clipboard.writeText(generatedMarkdown).then(function() {
+    var btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
   });
+}
 
-  // Copy button
-  copyBtn.addEventListener('click', function() {
-    var text = oosOutput.textContent;
-    navigator.clipboard.writeText(text).then(function() {
-      var orig = copyBtn.innerHTML;
-      copyBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!';
-      setTimeout(function() { copyBtn.innerHTML = orig; }, 2000);
-    });
-  });
-})();
+function downloadResult() {
+  var blob = new Blob([generatedMarkdown], { type: 'text/markdown' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'CLAUDE-' + (generatedIndustry || 'coordination') + '.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetGenerator() {
+  document.getElementById('generate-error').classList.add('hidden');
+  document.getElementById('generate-result').classList.add('hidden');
+}
 </script>

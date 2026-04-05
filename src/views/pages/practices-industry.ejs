@@ -1,0 +1,168 @@
+<!-- Industry Practice Pack Header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <a href="/practices" class="hover:text-white transition-colors">Practices</a>
+        <span>/</span>
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold"><%= industryName %></span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight"><%= industryName %> AI Coordination Playbook</h1>
+      <p class="text-gray-400 mt-4 max-w-lg"><%= industryDescription %></p>
+      <div class="flex items-center gap-4 mt-6 text-sm text-gray-400">
+        <span><strong class="text-white"><%= practiceCount %></strong> practices</span>
+        <span><strong class="text-white"><%= categories.length %></strong> categories</span>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <a href="/api/v1/public/practices/<%= industrySlug %>?format=claudemd"
+           class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all text-sm"
+           download>
+          Download CLAUDE.md
+        </a>
+        <a href="/generate?industry=<%= industrySlug %>"
+           class="px-5 py-2.5 bg-white/5 text-white border border-white/10 rounded-lg font-semibold hover:bg-white/10 transition-all text-sm">
+          Generate Custom CLAUDE.md
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Category Filter -->
+<section class="bg-white border-b border-gray-100 sticky top-0 z-10">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3">
+    <div class="flex flex-wrap gap-2">
+      <a href="/practices/<%= industrySlug %>"
+         class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors <%= !activeCategory ? 'bg-otp-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' %>">
+        All (<%= practiceCount %>)
+      </a>
+      <% categories.forEach(function(cat) { %>
+        <a href="/practices/<%= industrySlug %>?category=<%= encodeURIComponent(cat.category) %>"
+           class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors <%= activeCategory === cat.category ? 'bg-otp-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' %>">
+          <%= cat.category %> (<%= cat.count %>)
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<!-- Practice Cards -->
+<section class="bg-white py-8 sm:py-12">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="space-y-4">
+      <% practices.forEach(function(p) { %>
+        <div class="p-5 sm:p-6 rounded-xl border border-gray-100 hover:border-otp-200 transition-colors group" id="<%= p.slug %>">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"><%= p.category %></span>
+                <% if (p.evidence) { %>
+                  <span class="px-2 py-0.5 rounded text-xs font-medium
+                    <%= p.evidence === 'MEASURED_RESULT' ? 'bg-green-50 text-green-700' :
+                       p.evidence === 'OBSERVED_REPEATEDLY' ? 'bg-blue-50 text-blue-700' :
+                       'bg-purple-50 text-purple-700' %>">
+                    <%= p.evidence === 'MEASURED_RESULT' ? 'Measured' :
+                       p.evidence === 'OBSERVED_REPEATEDLY' ? 'Observed' : 'Rule' %>
+                  </span>
+                <% } %>
+              </div>
+              <h3 class="text-lg font-bold text-gray-900 group-hover:text-otp-600 transition-colors"><%= p.term %></h3>
+              <p class="text-gray-600 mt-2 leading-relaxed"><%= p.definition %></p>
+              <% if (p.failureMode) { %>
+                <div class="mt-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                  <div class="text-xs font-semibold text-red-700 mb-1">What goes wrong without this:</div>
+                  <p class="text-sm text-red-600"><%= p.failureMode %></p>
+                </div>
+              <% } %>
+            </div>
+            <!-- Vote buttons -->
+            <div class="flex flex-col items-center gap-1 shrink-0">
+              <button onclick="votePractice('<%= p.id %>', 1, this)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-green-50 text-gray-300 hover:text-green-500 transition-colors" title="Useful">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg>
+              </button>
+              <span class="text-sm font-bold text-gray-400 vote-score" data-id="<%= p.id %>"><%= p.votes?.score || 0 %></span>
+              <button onclick="votePractice('<%= p.id %>', -1, this)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors" title="Not useful">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <% if (practices.length === 0) { %>
+      <div class="text-center py-12 text-gray-400">
+        No practices found for this category. <a href="/practices/<%= industrySlug %>" class="text-otp-500">View all practices</a>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<!-- Newsletter Signup -->
+<section class="bg-otp-950 py-12">
+  <div class="max-w-xl mx-auto px-4 sm:px-6 text-center">
+    <h2 class="text-xl font-bold text-white mb-2">Stay in the loop</h2>
+    <p class="text-gray-400 mb-6">Get weekly coordination intelligence updates. No account required.</p>
+    <form id="newsletter-form" class="flex flex-col sm:flex-row gap-3">
+      <input type="email" name="email" required placeholder="your@email.com"
+             class="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-otp-500 focus:ring-1 focus:ring-otp-500">
+      <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+      <button type="submit"
+              class="px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all whitespace-nowrap">
+        Subscribe
+      </button>
+    </form>
+    <p id="newsletter-result" class="text-sm mt-3 hidden"></p>
+  </div>
+</section>
+
+<!-- Voting Script -->
+<script>
+async function votePractice(practiceId, vote, btn) {
+  try {
+    const res = await fetch('/api/v1/public/practices/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bestPracticeId: practiceId, vote }),
+    });
+    const data = await res.json();
+    if (data.score !== undefined) {
+      document.querySelector(`.vote-score[data-id="${practiceId}"]`).textContent = data.score;
+    }
+  } catch (e) {
+    console.error('Vote failed:', e);
+  }
+}
+
+document.getElementById('newsletter-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const email = form.email.value;
+  const honeypot = form.website.value;
+  const resultEl = document.getElementById('newsletter-result');
+
+  if (honeypot) return; // Bot detected
+
+  try {
+    const res = await fetch('/api/v1/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source: 'practice_page' }),
+    });
+    const data = await res.json();
+    resultEl.classList.remove('hidden');
+    if (res.ok) {
+      resultEl.className = 'text-sm mt-3 text-green-400';
+      resultEl.textContent = data.message || "You're in! Check your email to confirm.";
+      form.email.value = '';
+    } else {
+      resultEl.className = 'text-sm mt-3 text-red-400';
+      resultEl.textContent = data.error?.message || 'Something went wrong. Try again.';
+    }
+  } catch (e) {
+    resultEl.classList.remove('hidden');
+    resultEl.className = 'text-sm mt-3 text-red-400';
+    resultEl.textContent = 'Network error. Please try again.';
+  }
+});
+</script>

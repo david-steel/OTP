@@ -264,6 +264,8 @@ export const bestPractices = pgTable('best_practices', {
   term: varchar('term', { length: 500 }).notNull(),
   definition: text('definition').notNull(),
   category: varchar('category', { length: 255 }).notNull().default('General'),
+  industry: varchar('industry', { length: 100 }),
+  isOriginal: boolean('is_original').default(false),
   relatedTerms: text('related_terms').array(),
   sourceUrl: text('source_url').notNull(),
   canonicalUrl: text('canonical_url'),
@@ -275,6 +277,7 @@ export const bestPractices = pgTable('best_practices', {
 }, (table) => ({
   publisherIdx: index('bp_publisher_idx').on(table.publisherProfileId),
   categoryIdx: index('bp_category_idx').on(table.category),
+  industryIdx: index('bp_industry_idx').on(table.industry),
   termIdx: index('bp_term_idx').on(table.term),
   isCoordinationIdx: index('bp_is_coordination_idx').on(table.isCoordination),
 }));
@@ -312,4 +315,31 @@ export const inquiries = pgTable('inquiries', {
   profileIdx: index('inq_profile_idx').on(table.consultantProfileId),
   orgIdx: index('inq_org_idx').on(table.orgId),
   statusIdx: index('inq_status_idx').on(table.status),
+}));
+
+// ---- Newsletter & Engagement ----
+
+export const newsletterSubscribers = pgTable('newsletter_subscribers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  source: varchar('source', { length: 50 }).notNull().default('homepage'),
+  doubleOptInConfirmed: boolean('double_opt_in_confirmed').notNull().default(false),
+  confirmToken: varchar('confirm_token', { length: 64 }),
+  tokenExpiresAt: timestamp('token_expires_at'),
+  subscribedAt: timestamp('subscribed_at').defaultNow().notNull(),
+  unsubscribedAt: timestamp('unsubscribed_at'),
+}, (table) => ({
+  emailIdx: uniqueIndex('ns_email_idx').on(table.email),
+  confirmedIdx: index('ns_confirmed_idx').on(table.doubleOptInConfirmed),
+}));
+
+export const practiceVotes = pgTable('practice_votes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  bestPracticeId: uuid('best_practice_id').references(() => bestPractices.id, { onDelete: 'cascade' }).notNull(),
+  voterIp: varchar('voter_ip', { length: 45 }).notNull(),
+  vote: integer('vote').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  practiceIdx: index('pv_practice_idx').on(table.bestPracticeId),
+  uniqueVoteIdx: uniqueIndex('pv_unique_vote_idx').on(table.bestPracticeId, table.voterIp),
 }));
