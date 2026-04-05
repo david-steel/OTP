@@ -1292,12 +1292,14 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // What's New
   app.get('/whats-new', async (request, reply) => {
+    const { changelog } = await import('../../data/changelog.js');
     return reply.view('pages/whats-new', {
       title: "What's New on OTP - Latest Platform Updates",
       description: 'Latest platform updates, features, and improvements to OTP. See what is new in the coordination intelligence layer for AI-native organizations.',
       canonical: BASE_URL + '/whats-new',
       ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: "What's New", url: BASE_URL + '/whats-new' }),
+      changelog,
     });
   });
 

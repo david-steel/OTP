@@ -10,289 +10,64 @@
 <section class="bg-white py-12 sm:py-16">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
 
-    <!-- March 2026 -->
+<%
+  // Group entries by month
+  const months = {};
+  for (const entry of changelog) {
+    const d = new Date(entry.date + 'T12:00:00');
+    const key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthNum = String(d.getMonth() + 1).padStart(2, '0');
+    if (!months[key]) months[key] = { monthNum, entries: [] };
+    months[key].entries.push(entry);
+  }
+%>
+
+<% for (const [monthLabel, group] of Object.entries(months)) { %>
     <div class="mb-12">
       <h2 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-3">
-        <span class="w-8 h-8 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center text-xs font-bold">03</span>
-        March 2026
+        <span class="w-8 h-8 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center text-xs font-bold"><%= group.monthNum %></span>
+        <%= monthLabel %>
       </h2>
 
       <div class="space-y-6">
-        <!-- Mar 30: Vulnerability Scanner + Foundation Score + Share -->
+        <% for (const entry of group.entries) { %>
+        <%
+          const entryDate = new Date(entry.date + 'T12:00:00');
+          const dateLabel = entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const isRecent = (new Date() - entryDate) < 7 * 24 * 60 * 60 * 1000;
+        %>
         <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
+          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full <%= isRecent ? 'bg-otp-500' : 'bg-gray-300' %>"></div>
           <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 30</span>
-            <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">Core</span>
-            <span class="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Security</span>
+            <span class="text-xs font-semibold <%= isRecent ? 'text-otp-600 bg-otp-50' : 'text-gray-500 bg-gray-100' %> px-2 py-0.5 rounded-full"><%= dateLabel %></span>
+            <% for (const tag of entry.tags) { %>
+            <%
+              let tClass = 'text-gray-600 bg-gray-50';
+              if (tag === 'Core') tClass = 'text-rose-600 bg-rose-50';
+              else if (tag === 'Security') tClass = 'text-red-600 bg-red-50';
+              else if (tag === 'Quality') tClass = 'text-purple-600 bg-purple-50';
+              else if (tag === 'Major') tClass = 'text-amber-600 bg-amber-50';
+              else if (tag === 'Improvement') tClass = 'text-emerald-600 bg-emerald-50';
+              else if (tag === 'Performance') tClass = 'text-blue-600 bg-blue-50';
+              else if (tag === 'SEO') tClass = 'text-purple-600 bg-purple-50';
+              else if (tag === 'Infrastructure') tClass = 'text-amber-600 bg-amber-50';
+            %>
+            <span class="text-xs font-semibold <%= tClass %> px-2 py-0.5 rounded-full"><%= tag %></span>
+            <% } %>
           </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Vulnerability Scanner, Foundation Score, and Share Your Score</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Three new features that make uploading your CLAUDE.md safer, more actionable, and more fun.</p>
-          <ul class="text-sm text-gray-500 leading-relaxed mb-2 list-disc pl-5 space-y-1">
-            <li><strong>Vulnerability Scanner:</strong> Before you can publish, OTP now scans your entire system prompt for sensitive data -- API keys, passwords, database URLs, credit card numbers, SSNs, revenue figures, salary data, employee names, Slack IDs, internal file paths, billing rates, and more. 20+ detection patterns across 5 categories (credentials, financial, personal, infrastructure, business). Critical and high-severity findings block publishing until resolved. Your secrets stay secret.</li>
-            <li><strong>Foundation Score (0-100):</strong> Instant structural triage on upload. 15 checks surface the critical fixes that need attention right now -- not nuanced best practices, but the stuff that's obviously broken. No human override authority? No escalation paths? No error handling? Agents with no clear responsibilities? The Foundation Score catches it immediately and tells you exactly how to fix each one. Critical failures cap your score regardless of everything else.</li>
-            <li><strong>Share Your Score:</strong> New share button on both the scan results page and the dashboard. One click opens a modal with your score card, pre-generated social text, and share to X, LinkedIn, or clipboard. Designed for virality -- "Just scanned my AI agent system. Coordination Score: 82/100. What's yours?" Every share is an ad for OTP.</li>
-          </ul>
-          <p class="text-sm text-gray-500 leading-relaxed">The vulnerability scanner is a trust prerequisite -- it removes the fear barrier to sharing your operating system. The Foundation Score gives instant value on first upload. And the share button turns every scan into a growth opportunity.</p>
-        </div>
-
-        <!-- Mar 30: The Creation Experience -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 30</span>
-            <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">Core</span>
+          <h3 class="text-base font-bold text-gray-900 mb-1"><%= entry.title %></h3>
+          <% if (entry.details) { %>
+          <div class="changelog-details text-sm text-gray-500 leading-relaxed [&>p]:mb-2 [&>ul]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:space-y-1">
+            <%- entry.details %>
           </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">The Coordination Score: Your AI Team's Health Dashboard</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">OTP now scores your AI coordination maturity on a 0-100 scale across 6 dimensions: Conflict Management, Escalation Structure, Workflow Clarity, Human Oversight, System Redundancy, and Authority Boundaries. The score is the product.</p>
-          <ul class="text-sm text-gray-500 leading-relaxed mb-2 list-disc pl-5 space-y-1">
-            <li><strong>Scan Results Page:</strong> Animated score ring (Lighthouse-style), 6-dimension breakdown bars with color coding, and insight cards grouped by severity. This is the "aha moment" -- upload your CLAUDE.md and see what the scanner finds.</li>
-            <li><strong>Fix Issues Inline:</strong> Each critical/warning insight has a "Resolve This" button. Type your resolution, it generates a claim, your score ticks up in real time. The scan page IS the diagnostic session.</li>
-            <li><strong>One-Click Publish:</strong> After fixing issues, "Publish to OTP Network" does everything in one click -- auto-fix, create OOS, publish, redirect to your live page. No confusing intermediate steps.</li>
-            <li><strong>Dashboard Overhaul:</strong> Your dashboard now shows the same score ring and dimension bars. Quick stats (claims, best practices matched, learnings, connected orgs), quick actions (Capture Learning, System Prompt, Re-scan), network activity from other orgs, and OOS file management.</li>
-            <li><strong>Import-First Publish:</strong> The publish page now leads with "Upload File" (drag-drop zone for CLAUDE.md) instead of hiding it as a "power user" option. The wizard is secondary for people starting from scratch.</li>
-            <li><strong>CLAUDE.md Parser:</strong> New <code>/scanner/from-text</code> endpoint extracts agents, systems, workflows, and oversight patterns from raw CLAUDE.md files. No more "Scanner could not analyze this content" errors.</li>
-            <li><strong>Copy as System Prompt:</strong> One button on any OOS detail page formats your claims into a compact, token-efficient block for pasting into CLAUDE.md. Shows Token Efficiency Index.</li>
-          </ul>
-          <p class="text-sm text-gray-500 leading-relaxed">The creation experience is now the product. You don't need the network to get value from OTP -- the score alone tells you where your agent coordination is strong and where it's exposed.</p>
+          <% } else { %>
+          <p class="text-sm text-gray-500 leading-relaxed"><%= entry.summary %></p>
+          <% } %>
         </div>
-
-        <!-- Mar 29: Live Learning Loop -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 29</span>
-            <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">Core</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">The Live Learning Loop: Agent Fails, Network Learns</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">OTP is now a living system. When an agent in your team makes a mistake and you correct it, that correction becomes coordination intelligence on the network -- immediately, automatically, for every organization to learn from.</p>
-          <ul class="text-sm text-gray-500 leading-relaxed mb-2 list-disc pl-5 space-y-1">
-            <li><strong>Auto-capture:</strong> When you correct an agent's output, the agent automatically calls <code>capture_learning</code> with what failed, what to do instead, and why. Every correction is a learning. No manual step.</li>
-            <li><strong>Auto-publish:</strong> Learnings go directly to your published OOS and the OTP network. No draft step, no delay. Your correction is available to the entire network within seconds.</li>
-            <li><strong>Auto-pull:</strong> Before executing their main task, agents check OTP for relevant learnings: "Has anyone (including other orgs) learned something about what I'm about to do?" If yes, they follow the learning instead of repeating the mistake.</li>
-            <li><strong>Cross-org learning:</strong> When another organization discovers a coordination failure that matches your agent setup, OTP surfaces it. Their failure becomes your prevention.</li>
-          </ul>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">This is the OTP flywheel: <strong>agents operate &rarr; humans correct &rarr; corrections become intelligence &rarr; all agents improve &rarr; fewer corrections needed</strong>. Sneeze It is the first organization running this loop live.</p>
-        </div>
-
-        <!-- Mar 29: Coordination Filter -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 29</span>
-            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Quality</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Coordination Intelligence Filter</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">OTP now enforces a content standard: only claims about how agents, systems, and humans coordinate belong on the platform. Generic AI definitions (activation functions, batch normalization) are archived. The ingest pipeline rejects non-coordination content at the gate. 404 coordination-relevant practices remain from 9 publishers; 1,120 generic terms archived. This keeps OTP focused on its identity: where agents learn to work as a team.</p>
-        </div>
-
-        <!-- Mar 28: Multi-Publisher Best Practices -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 28</span>
-            <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Major</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">1,554 Best Practices from 8 Publishers -- Google, AWS, Deloitte, Accenture, and More</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">OTP is now a multi-publisher best practices platform. We scraped, structured, and indexed AI knowledge from <strong>8 authoritative sources</strong>: Google (686 ML terms), Amazon Web Services (254 cloud AI terms), DAIR.AI (236 prompt engineering techniques), McFadyen Digital (209 commerce AI practices), Hopsworks (152 MLOps terms), Accenture (8 enterprise case studies), Deloitte (7 AI use cases), and Bain & Company (2 strategy frameworks). Each publisher gets a profile with attribution, and every practice links back to its source.</p>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">OTP now supports external knowledge sources with a full publisher ecosystem. The first integration: <strong>209 AI best practices</strong> from McFadyen Digital's "AI Best Practices for Commerce" across 10 categories. Sign in to browse, search, and filter on the new <strong>Best Practices tab</strong> on the Intelligence Graph.</p>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2"><strong>What's new in this release:</strong></p>
-          <ul class="text-sm text-gray-500 leading-relaxed mb-2 list-disc pl-5 space-y-1">
-            <li><strong>Publisher profiles:</strong> A new expert type. McFadyen Digital is the first publisher with a full profile, 209 linked best practices, and attribution on every card.</li>
-            <li><strong>OOS-connected matching:</strong> Best practices are matched to your OOS using Jaccard similarity with concept synonyms. The "Matched to My OOS" view shows only practices relevant to your coordination patterns, sorted by relevance score.</li>
-            <li><strong>Implement and Ingest:</strong> Click "Implement" on any best practice to see the full definition, publisher credit, and which organizations align with that pattern. Click "Ingest into my OOS" to add it as a claim to your draft OOS.</li>
-            <li><strong>Best practices on OOS detail:</strong> Each published OOS now shows a "Relevant Best Practices" section with matched practices, scores, and source links.</li>
-            <li><strong>Bidirectional matching:</strong> When viewing a best practice, see which organizations implement that pattern -- creating a two-way discovery network between publishers and practitioners.</li>
-          </ul>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">This introduces a new expert type: <strong>Publisher</strong>. While Consultants help you implement, Publishers contribute knowledge databases that enrich the platform for everyone. Publishers get a profile, their content appears on the graph, and users discover them through relevance to their OOS.</p>
-          <a href="/graph" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-xs hover:text-otp-400 transition-colors group">
-            View at /graph (switch to Best Practices tab)
-            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- Mar 28: OOS Limits + MCP Tools + Agentic Calculator -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 28</span>
-            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Improvement</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Richer OOS Files, MCP Tool Detection, and Agentic Level v2</h3>
-          <ul class="text-sm text-gray-500 leading-relaxed mb-2 list-disc pl-5 space-y-1">
-            <li><strong>OOS limits raised 3x:</strong> Maximum word count increased from 5,000 to 15,000 words. Section claim caps tripled (e.g. 10 to 30). Upload limit raised to 2MB. Minimum lowered to 500 words for starter OOS files.</li>
-            <li><strong>MCP server auto-detection:</strong> The auto-fixer now scans OOS content against 30+ known tools (Slack, Gmail, Google Ads, Meta Ads, Todoist, etc.) and populates the Infrastructure Graph automatically. All published OOS files have been enriched.</li>
-            <li><strong>Publish wizard: tool collection:</strong> Step 2 now includes checkboxes for 20 common MCP servers/integrations alongside AI platforms. Select what your agents connect to -- it goes straight into the Infrastructure Graph.</li>
-            <li><strong>Agentic Level Calculator v2:</strong> Expanded from rigid exact-match keywords to 100+ semantic patterns. Checks frontmatter metadata (platforms, MCP servers). All orgs rescored -- most jumped from L2 to L5-L8.</li>
-            <li><strong>Sign In page:</strong> Dedicated /sign-in page with Clerk integration. Sign In button now visible in the navigation for all visitors.</li>
-          </ul>
-        </div>
-
-        <!-- Mar 27: Security Hardening -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
-            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Security</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Platform Security Hardening</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Comprehensive security review and hardening pass across the entire platform. UUID validation on all route parameters, XSS prevention in template rendering, API key scope enforcement (read-only keys can no longer perform write operations), Zod input validation on every endpoint, and CORS tightened for production. Draft OOS content is now properly access-controlled, and ticket data is scoped to authenticated organizations.</p>
-        </div>
-
-        <!-- Mar 27: Background Similarity Engine -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
-            <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Performance</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Background Similarity Computation</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Claim similarity analysis now runs asynchronously after publishing. Previously, the O(n*m) comparison blocked the publish response as the network grew. Publishing is now instant regardless of how many claims exist across the platform, while similarities still compute and store in the background.</p>
-        </div>
-
-        <!-- Mar 27: SEO + Discoverability -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
-            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">SEO</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Search Engine Discoverability</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Every page now has proper meta descriptions, canonical URLs, and Open Graph tags with fallback defaults. Dashboard and admin pages are marked noindex to keep private content out of search results. The platform is now fully optimized for Google indexing and AI search engine citability.</p>
-        </div>
-
-        <!-- Mar 27: Shared Infrastructure -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 27</span>
-            <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Infrastructure</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Code Quality and Architecture Improvements</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Extracted shared authentication helper (single source of truth across all routes), consolidated rate limiting into a reusable module, added transactional version numbering with retry logic to prevent race conditions during concurrent publishes, and fixed pagination totals on intelligence search and publisher endpoints. Version history and draft claims now respect access control.</p>
-        </div>
-
-        <!-- Mar 26: MCP Server Infrastructure on the Graph -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">MCP Server Infrastructure on the Graph</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">The Infrastructure graph now shows real MCP connections -- Slack, Gmail, Google Ads, Meta Ads, Todoist, and more. See which tools organizations actually use, not just which AI models they run.</p>
-          <a href="/graph" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-xs hover:text-otp-400 transition-colors group">
-            View at /graph (switch to Infrastructure tab)
-            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- Mar 26: Agent Onboarding Framework -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Agent Onboarding Framework</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Your OOS is your agent's day-one onboarding packet. New page explains why organizational intelligence is as critical for AI agents as employee handbooks are for humans.</p>
-          <a href="/agent-onboarding" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-xs hover:text-otp-400 transition-colors group">
-            Read more at /agent-onboarding
-            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- Mar 26: Machine Commerce Discovery -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Machine Commerce Discovery</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">OTP positioned as the discovery layer for the emerging agent-to-agent economy. Published OOS files become machine-readable trust profiles.</p>
-          <a href="/machine-commerce" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-xs hover:text-otp-400 transition-colors group">
-            Read more at /machine-commerce
-            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- Mar 26: MCP Integration Hub -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">MCP Integration Hub</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Full documentation for OTP's MCP server. Connect any AI agent to organizational intelligence via the Model Context Protocol.</p>
-          <a href="/mcp" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-xs hover:text-otp-400 transition-colors group">
-            Read more at /mcp
-            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- Mar 26: NL OOS Generation -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Natural Language OOS Generation</h3>
-          <p class="text-sm text-gray-500 leading-relaxed mb-2">Describe your AI operations in plain English. OTP generates a structured OOS file ready to publish. No technical formatting required.</p>
-          <a href="/generate" class="inline-flex items-center gap-1 text-otp-500 font-semibold text-xs hover:text-otp-400 transition-colors group">
-            Try it at /generate
-            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-
-        <!-- Mar 26: OOS File Management -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">OOS File Management</h3>
-          <p class="text-sm text-gray-500 leading-relaxed">Rename, edit, and delete your OOS files directly from the dashboard. Admins get full platform-wide management.</p>
-        </div>
-
-        <!-- Mar 26: Intelligence Graph Redesign -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-otp-500"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-otp-600 bg-otp-50 px-2 py-0.5 rounded-full">Mar 26</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Intelligence Graph Redesign</h3>
-          <p class="text-sm text-gray-500 leading-relaxed">Wiz-inspired org-first hierarchy. Clean org nodes with initials, aggregated weighted edges, similarity score slider, click-to-expand claims. No more hairball.</p>
-        </div>
-
-        <!-- Mar 25: Industry Color Coding -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-gray-300"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Mar 25</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Industry Color Coding</h3>
-          <p class="text-sm text-gray-500 leading-relaxed">Organizations now display in industry-specific colors on the Intelligence Graph. Business coaching (dark orange), healthcare (teal), finance (indigo), and more.</p>
-        </div>
-
-        <!-- Mar 25: MCP Server -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-gray-300"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Mar 25</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">MCP Server for OOS</h3>
-          <p class="text-sm text-gray-500 leading-relaxed">Query organizational intelligence programmatically. Any AI agent can search, browse, and compare OOS files via the OTP MCP protocol.</p>
-        </div>
-
-        <!-- Mar 24: Expert Coach Template -->
-        <div class="relative pl-8 border-l-2 border-otp-200">
-          <div class="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-gray-300"></div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Mar 24</span>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-1">Expert Coach OOS Template</h3>
-          <p class="text-sm text-gray-500 leading-relaxed">First coaching-industry OOS published. 8-pillar framework with 22 structured claims mapping Direction, Structure, Signals, Priorities, Execution, Friction, Cadence, and Learning agents.</p>
-        </div>
+        <% } %>
       </div>
     </div>
+<% } %>
 
   </div>
 </section>

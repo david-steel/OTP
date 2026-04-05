@@ -4,8 +4,9 @@ import ejs from 'ejs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { db } from '../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, bestPractices } from '../db/schema.js';
 import { sendEmail } from '../config/email.js';
+import { getRecentEntries } from '../data/changelog.js';
+import type { ChangelogEntry } from '../data/changelog.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,34 +19,16 @@ interface WeeklyDigestResult {
   noActivity: boolean;
 }
 
-interface NewOrg {
-  name: string;
-  industry: string;
-  badge: string | null;
-}
-
-interface NewOOS {
-  orgName: string;
-  template: string;
-  claimCount: number;
-}
-
-interface TrendingClaim {
-  rule: string;
-  orgName: string;
-  matchCount: number;
+interface NetworkStats {
+  totalOrgs: number;
+  totalClaims: number;
 }
 
 interface DigestData {
   dateRangeStart: string;
   dateRangeEnd: string;
-  newOrgCount: number;
-  newOOSCount: number;
-  newBestPracticeCount: number;
-  newClaimCount: number;
-  newOrgs: NewOrg[];
-  newOOSFiles: NewOOS[];
-  trendingClaims: TrendingClaim[];
+  entries: ChangelogEntry[];
+  networkStats: NetworkStats;
 }
 
 // ---- Clerk email lookup (same pattern as notification-engine.ts) ----
@@ -89,99 +72,36 @@ async function getUserEmail(clerkOrgId: string): Promise<string | null> {
 
 // ---- Data gathering ----
 
-async function gatherWeeklyActivity(): Promise<DigestData> {
+async function gatherDigestData(): Promise<DigestData> {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const dateRangeStart = weekAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const dateRangeEnd = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  // New organizations (last 7 days)
-  const newOrgRows = await db.execute(sql`
-    SELECT name, industry, badge
-    FROM organizations
-    WHERE created_at >= ${weekAgo}
-    ORDER BY created_at DESC
-  `);
-  const newOrgs = (newOrgRows.rows as Array<{ name: string; industry: string; badge: string | null }>).map(row => ({
-    name: row.name,
-    industry: row.industry,
-    badge: row.badge,
-  }));
+  // Get changelog entries from the last 7 days
+  const entries = getRecentEntries(7);
 
-  // New OOS files published (last 7 days)
-  const newOOSRows = await db.execute(sql`
-    SELECT o.name AS org_name, f.template, f.claim_count
-    FROM oos_files f
-    JOIN organizations o ON f.org_id = o.id
-    WHERE f.status = 'published'
-      AND f.published_at >= ${weekAgo}
-    ORDER BY f.published_at DESC
-    LIMIT 5
-  `);
-  const newOOSFiles = (newOOSRows.rows as Array<{ org_name: string; template: string; claim_count: number }>).map(row => ({
-    orgName: row.org_name,
-    template: row.template,
-    claimCount: row.claim_count,
-  }));
-
-  // Total new OOS count (may be more than 5)
-  const newOOSCountRows = await db.execute(sql`
-    SELECT COUNT(*) AS cnt
+  // Network stats for the footer
+  const orgCountRes = await db.execute(sql`
+    SELECT COUNT(DISTINCT org_id) AS cnt
     FROM oos_files
     WHERE status = 'published'
-      AND published_at >= ${weekAgo}
   `);
-  const newOOSCount = parseInt((newOOSCountRows.rows as any[])?.[0]?.cnt || '0', 10);
+  const totalOrgs = parseInt((orgCountRes.rows as any[])?.[0]?.cnt || '0', 10);
 
-  // New claims count
-  const newClaimRows = await db.execute(sql`
+  const claimCountRes = await db.execute(sql`
     SELECT COUNT(*) AS cnt
     FROM claims
-    WHERE created_at >= ${weekAgo}
+    WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')
   `);
-  const newClaimCount = parseInt((newClaimRows.rows as any[])?.[0]?.cnt || '0', 10);
-
-  // New best practices count
-  const newBPRows = await db.execute(sql`
-    SELECT COUNT(*) AS cnt
-    FROM best_practices
-    WHERE created_at >= ${weekAgo}
-  `);
-  const newBestPracticeCount = parseInt((newBPRows.rows as any[])?.[0]?.cnt || '0', 10);
-
-  // Top 3 most-connected claims this week (highest match count from new similarities)
-  const trendingRows = await db.execute(sql`
-    SELECT
-      c.rule,
-      COALESCE(o.pseudonym, o.name) AS org_name,
-      COUNT(*) AS match_count
-    FROM claim_similarities cs
-    JOIN claims c ON c.id = cs.claim_a_id
-    JOIN oos_files f ON c.oos_file_id = f.id
-    JOIN organizations o ON f.org_id = o.id
-    WHERE cs.created_at >= ${weekAgo}
-      AND f.status = 'published'
-    GROUP BY c.id, c.rule, o.pseudonym, o.name
-    ORDER BY match_count DESC
-    LIMIT 3
-  `);
-  const trendingClaims = (trendingRows.rows as Array<{ rule: string; org_name: string; match_count: string }>).map(row => ({
-    rule: row.rule,
-    orgName: row.org_name,
-    matchCount: parseInt(row.match_count, 10),
-  }));
+  const totalClaims = parseInt((claimCountRes.rows as any[])?.[0]?.cnt || '0', 10);
 
   return {
     dateRangeStart,
     dateRangeEnd,
-    newOrgCount: newOrgs.length,
-    newOOSCount,
-    newBestPracticeCount,
-    newClaimCount,
-    newOrgs,
-    newOOSFiles,
-    trendingClaims,
+    entries,
+    networkStats: { totalOrgs, totalClaims },
   };
 }
 
@@ -230,13 +150,13 @@ export async function sendWeeklyDigest(): Promise<WeeklyDigestResult> {
   try {
     console.log('[digest] Starting weekly digest...');
 
-    // Step 1: Gather activity
-    const data = await gatherWeeklyActivity();
-    console.log(`[digest] Activity: ${data.newOrgCount} new orgs, ${data.newOOSCount} new OOS, ${data.newBestPracticeCount} new best practices, ${data.newClaimCount} new claims`);
+    // Step 1: Gather data
+    const data = await gatherDigestData();
+    console.log(`[digest] Found ${data.entries.length} changelog entries, network: ${data.networkStats.totalOrgs} orgs, ${data.networkStats.totalClaims} claims`);
 
     // Step 2: Check if there's anything to report
-    if (data.newOrgCount === 0 && data.newOOSCount === 0 && data.newBestPracticeCount === 0) {
-      console.log('[digest] No new activity this week -- skipping');
+    if (data.entries.length === 0) {
+      console.log('[digest] No new changelog entries this week -- skipping');
       return { sent: 0, skipped: 0, noActivity: true };
     }
 
@@ -251,7 +171,7 @@ export async function sendWeeklyDigest(): Promise<WeeklyDigestResult> {
 
     // Step 4: Render email
     const html = await renderDigestHtml(data);
-    const subject = `This week on OTP -- ${data.newOOSCount} new skill${data.newOOSCount === 1 ? '' : 's'}, ${data.newOrgCount} new org${data.newOrgCount === 1 ? '' : 's'}`;
+    const subject = `What's New on OTP -- ${data.entries.length} update${data.entries.length === 1 ? '' : 's'} this week`;
 
     // Step 5: Send to each publisher
     let sent = 0;
