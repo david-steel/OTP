@@ -11,6 +11,25 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- April 5, 2026 ----
+
+  {
+    date: '2026-04-05',
+    tags: ['Major', 'Core'],
+    title: 'The Content Engine: Industry Playbooks, CLAUDE.md Generator, and Newsletter',
+    summary: '203 original coordination practices across 6 industries. Pick your industry, download a CLAUDE.md, and your agents work better today. Plus an AI-powered generator and weekly newsletter.',
+    details: `<p>OTP's biggest update yet. We flipped the entry point: instead of asking you to publish, we're giving you something useful first. Industry coordination playbooks written from real production experience.</p>
+<ul>
+<li><strong>6 Industry Playbooks:</strong> Agency (34 practices), Fitness/Franchise (29), Healthcare (24), SaaS (23), Professional Services (50), and E-Commerce (43). Each practice includes what to do, why it matters, and what goes wrong without it. These are original content from teams running 10+ AI agents in production, not scraped or AI-classified consulting reports.</li>
+<li><strong>Download as CLAUDE.md:</strong> One click exports any industry playbook as a CLAUDE.md file you can drop into your project. Your agents start following proven coordination patterns immediately.</li>
+<li><strong>CLAUDE.md Generator:</strong> Tell us your industry, team size, and agent count. Our AI generates a complete, customized CLAUDE.md using your industry's coordination practices as context. Fallback templates ensure you always get something useful, even if the AI is having a bad day.</li>
+<li><strong>Practice Voting:</strong> Upvote and downvote practices on any industry page. Community validation surfaces the practices that actually work in the real world.</li>
+<li><strong>Newsletter:</strong> Weekly coordination intelligence updates delivered to your inbox. No account required, just your email. Stay informed about new practices, industry playbooks, and what's working for other AI teams.</li>
+<li><strong>Homepage Refresh:</strong> Three-slide hero showcasing industry playbooks, the CLAUDE.md scanner, and newsletter signup. All 6 industries with live practice counts.</li>
+</ul>
+<p>The idea is simple: come to OTP, get your industry's playbook, use it. When you're ready to share what you've learned, publish your OOS. But start with value, not a request.</p>`,
+  },
+
   // ---- March 30, 2026 ----
 
   {
