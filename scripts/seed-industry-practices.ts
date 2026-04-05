@@ -6,6 +6,11 @@
  */
 
 import { AGENCY_PRACTICES, AGENCY_INDUSTRY_META } from '../src/data/industry-practices-agency.js';
+import { FITNESS_PRACTICES, FITNESS_INDUSTRY_META } from '../src/data/industry-practices-fitness.js';
+import { HEALTHCARE_PRACTICES, HEALTHCARE_INDUSTRY_META } from '../src/data/industry-practices-healthcare.js';
+import { SAAS_PRACTICES, SAAS_INDUSTRY_META } from '../src/data/industry-practices-saas.js';
+import { PROFESSIONAL_SERVICES_PRACTICES, PROFESSIONAL_SERVICES_INDUSTRY_META } from '../src/data/industry-practices-professional-services.js';
+import { ECOMMERCE_PRACTICES, ECOMMERCE_INDUSTRY_META } from '../src/data/industry-practices-ecommerce.js';
 
 function slugify(term: string): string {
   return term
@@ -35,6 +40,11 @@ async function seed(industryFilter?: string) {
 
   const industries = [
     { meta: AGENCY_INDUSTRY_META, practices: AGENCY_PRACTICES },
+    { meta: FITNESS_INDUSTRY_META, practices: FITNESS_PRACTICES },
+    { meta: HEALTHCARE_INDUSTRY_META, practices: HEALTHCARE_PRACTICES },
+    { meta: SAAS_INDUSTRY_META, practices: SAAS_PRACTICES },
+    { meta: PROFESSIONAL_SERVICES_INDUSTRY_META, practices: PROFESSIONAL_SERVICES_PRACTICES },
+    { meta: ECOMMERCE_INDUSTRY_META, practices: ECOMMERCE_PRACTICES },
   ];
 
   for (const { meta, practices } of industries) {
