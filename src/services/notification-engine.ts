@@ -101,18 +101,42 @@ function groupByOrg(matches: MatchedClaim[]): MatchGroup[] {
 }
 
 /**
- * Get the user's email from Clerk using their userId (stored as clerkOrgId).
+ * Get the user's email from Clerk.
+ * clerkOrgId may be a real Clerk user ID (user_xxx), a Clerk org ID (org_xxx),
+ * or a seed/publisher ID (string without prefix). Handles all cases gracefully.
  */
-async function getUserEmail(clerkUserId: string): Promise<string | null> {
+async function getUserEmail(clerkOrgId: string): Promise<string | null> {
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) {
     console.warn('[notification] CLERK_SECRET_KEY not set -- cannot look up user email');
     return null;
   }
 
+  // Seed/publisher orgs don't have real Clerk accounts
+  if (!clerkOrgId.startsWith('user_') && !clerkOrgId.startsWith('org_')) {
+    console.log(`[notification] Clerk ID "${clerkOrgId}" is a seed ID -- no email lookup possible`);
+    return null;
+  }
+
   try {
     const clerk = createClerkClient({ secretKey });
-    const user = await clerk.users.getUser(clerkUserId);
+
+    // If it's a user ID, look up directly
+    if (clerkOrgId.startsWith('user_')) {
+      const user = await clerk.users.getUser(clerkOrgId);
+      const primary = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId);
+      return primary?.emailAddress || user.emailAddresses[0]?.emailAddress || null;
+    }
+
+    // If it's an org ID, look up org members
+    const members = await clerk.organizations.getOrganizationMembershipList({
+      organizationId: clerkOrgId,
+      limit: 10,
+    });
+    const admin = members.data.find(m => m.role === 'org:admin') || members.data[0];
+    if (!admin?.publicUserData?.userId) return null;
+
+    const user = await clerk.users.getUser(admin.publicUserData.userId);
     const primary = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId);
     return primary?.emailAddress || user.emailAddresses[0]?.emailAddress || null;
   } catch (err) {
