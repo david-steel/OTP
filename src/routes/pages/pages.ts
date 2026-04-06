@@ -1243,7 +1243,6 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Generate Your CLAUDE.md - OTP',
       description: 'AI-powered CLAUDE.md generator. Tell us your industry, team size, and agent count. Get a complete coordination document in 60 seconds.',
       canonical: BASE_URL + '/generate',
-      noindex: true,
       preselectedIndustry,
     });
   });

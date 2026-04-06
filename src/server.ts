@@ -35,10 +35,12 @@ await app.register(clerkPlugin, {
   secretKey: process.env.CLERK_SECRET_KEY,
 });
 
-// Static files
+// Static files (1 year cache for immutable assets)
 await app.register(fastifyStatic, {
   root: path.join(__dirname, '..', 'public'),
   prefix: '/public/',
+  maxAge: 31536000000,
+  immutable: true,
 });
 
 // Derive Clerk frontend API domain from publishable key

@@ -50,12 +50,15 @@
 <section class="bg-white py-8 sm:py-12">
   <div class="max-w-4xl mx-auto px-4 sm:px-6">
     <div class="space-y-4">
+      <% var lastCategory = ''; %>
       <% practices.forEach(function(p) { %>
+        <% if (p.category !== lastCategory) { lastCategory = p.category; %>
+          <h2 class="text-xl font-bold text-gray-900 pt-6 pb-2 border-b border-gray-100" id="cat-<%= p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') %>"><%= p.category %></h2>
+        <% } %>
         <div class="p-5 sm:p-6 rounded-xl border border-gray-100 hover:border-otp-200 transition-colors group" id="<%= p.slug %>">
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"><%= p.category %></span>
                 <% if (p.evidence) { %>
                   <span class="px-2 py-0.5 rounded text-xs font-medium
                     <%= p.evidence === 'MEASURED_RESULT' ? 'bg-green-50 text-green-700' :
