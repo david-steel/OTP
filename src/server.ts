@@ -342,15 +342,35 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/claims/operational_heuristics', priority: '0.7', changefreq: 'weekly' },
     { loc: '/claims/failure_patterns', priority: '0.7', changefreq: 'weekly' },
     { loc: '/claims/human_ai_boundary_conditions', priority: '0.7', changefreq: 'weekly' },
+    { loc: '/practices', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/generate', priority: '0.8', changefreq: 'monthly' },
     { loc: '/industries', priority: '0.7', changefreq: 'weekly' },
     { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.8', changefreq: 'monthly' },
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },
+    { loc: '/whats-new', priority: '0.7', changefreq: 'weekly' },
   ];
 
-  // Dynamic pages: published OOS files and org profiles
+  const today = new Date().toISOString().split('T')[0];
+
+  // Dynamic pages: industry practice packs, published OOS files, org profiles
   let dynamicUrls = '';
   try {
+    // Industry practice pages (high priority -- these are the Content Engine)
+    const industryRows = await database.execute(sql`
+      SELECT industry, COUNT(*) AS count, MAX(created_at) AS latest
+      FROM best_practices
+      WHERE industry IS NOT NULL AND is_original = true AND is_coordination = true
+      GROUP BY industry
+      ORDER BY count DESC
+    `) as any;
+
+    for (const row of (industryRows.rows || [])) {
+      const lastmod = row.latest ? new Date(row.latest).toISOString().split('T')[0] : today;
+      dynamicUrls += `  <url><loc>${BASE}/practices/${row.industry}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>\n`;
+    }
+
+    // Published OOS files and org profiles
     const oosRows = await database.execute(sql`
       SELECT f.id AS oos_id, o.id AS org_id, f.published_at
       FROM oos_files f JOIN organizations o ON f.org_id = o.id
@@ -373,7 +393,7 @@ app.get('/sitemap.xml', async (request, reply) => {
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticPages.map(p => `  <url><loc>${BASE}${p.loc}</loc><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`).join('\n')}
+${staticPages.map(p => `  <url><loc>${BASE}${p.loc}</loc><lastmod>${today}</lastmod><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`).join('\n')}
 ${dynamicUrls}</urlset>`;
 
   reply.header('Content-Type', 'application/xml');
