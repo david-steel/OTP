@@ -81,14 +81,15 @@
               <% } %>
             </div>
             <!-- Vote buttons -->
-            <div class="flex flex-col items-center gap-1 shrink-0">
-              <button onclick="votePractice('<%= p.id %>', 1, this)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-green-50 text-gray-300 hover:text-green-500 transition-colors" title="Useful">
+            <div class="flex flex-col items-center gap-0.5 shrink-0" title="Is this practice useful? Vote to help others prioritize.">
+              <button onclick="votePractice('<%= p.id %>', 1, this)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-green-50 text-gray-300 hover:text-green-500 transition-colors" aria-label="This practice is useful">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg>
               </button>
               <span class="text-sm font-bold text-gray-400 vote-score" data-id="<%= p.id %>"><%= p.votes?.score || 0 %></span>
-              <button onclick="votePractice('<%= p.id %>', -1, this)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors" title="Not useful">
+              <button onclick="votePractice('<%= p.id %>', -1, this)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors" aria-label="This practice is not useful">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
               </button>
+              <span class="text-[10px] text-gray-300 mt-0.5">useful?</span>
             </div>
           </div>
         </div>
