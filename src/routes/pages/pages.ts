@@ -1678,6 +1678,32 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 45 - What Happens When the Maestro Quits
+  app.get('/blog/when-the-maestro-quits', async (request, reply) => {
+    return reply.view('pages/blog-post-45', {
+      title: 'What Happens When the Maestro Quits? - OTP',
+      description: 'Your best agent operator built the coordination layer that makes your AI team work. They documented nothing structured. They just gave two weeks notice. Everything they learned is about to walk out the door.',
+      canonical: BASE_URL + '/blog/when-the-maestro-quits',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-07',
+      jsonLd: blogJsonLd('What Happens When the Maestro Quits?', 'when-the-maestro-quits', '2026-04-07', 1800)
+    });
+  });
+
+  // Blog post 44 - The Maestro's Resume Doesn't Exist Yet
+  app.get('/blog/maestro-resume', async (request, reply) => {
+    return reply.view('pages/blog-post-44', {
+      title: 'The Maestro\'s Resume Does Not Exist Yet - OTP',
+      description: 'The most important role in AI is not on any job board. No university teaches it. No resume format captures it. Companies are hiring engineers when they should be hiring operators.',
+      canonical: BASE_URL + '/blog/maestro-resume',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-07',
+      jsonLd: blogJsonLd('The Maestro\'s Resume Does Not Exist Yet', 'maestro-resume', '2026-04-07', 1600)
+    });
+  });
+
   // Blog post 43 - The Maestro Problem
   app.get('/blog/the-maestro-problem', async (request, reply) => {
     return reply.view('pages/blog-post-43', {
