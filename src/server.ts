@@ -67,6 +67,15 @@ app.addHook('preHandler', async (request) => {
   (request as any).isSuperAdmin = isSuperAdmin(request);
 });
 
+// Redirect www to apex domain
+app.addHook('onRequest', async (request, reply) => {
+  const host = request.hostname;
+  if (host === 'www.orgtp.com') {
+    const url = `https://orgtp.com${request.url}`;
+    return reply.status(301).redirect(url);
+  }
+});
+
 // Security headers
 app.addHook('onSend', async (request, reply) => {
   reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -428,7 +437,7 @@ await app.register(import('./routes/pages/pages.js'));
 // Custom 404 handler -- return HTML instead of Fastify's default JSON
 app.setNotFoundHandler(async (request, reply) => {
   reply.status(404);
-  return reply.view('pages/home', {
+  return reply.view('pages/home-v3', {
     title: 'Page Not Found - OTP',
     description: 'The page you are looking for does not exist.',
     canonical: 'https://orgtp.com/',
