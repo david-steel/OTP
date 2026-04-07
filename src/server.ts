@@ -85,7 +85,7 @@ app.addHook('onSend', async (request, reply) => {
   reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   reply.header(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.clerk.accounts.dev https://*.clerk.com https://d3js.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://www.google-analytics.com https://orgtp.com; frame-src https://*.clerk.accounts.dev https://*.clerk.com;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.clerk.accounts.dev https://*.clerk.com https://d3js.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://www.google-analytics.com https://orgtp.com; frame-src https://*.clerk.accounts.dev https://*.clerk.com https://www.youtube.com;"
   );
   // Suppress Clerk internal headers from public responses
   reply.removeHeader('x-clerk-auth-status');
