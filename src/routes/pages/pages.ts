@@ -1678,6 +1678,19 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post 43 - The Maestro Problem
+  app.get('/blog/the-maestro-problem', async (request, reply) => {
+    return reply.view('pages/blog-post-43', {
+      title: 'The Maestro Problem: Chamath Is Right About the Job. He Is Wrong About the Hard Part. - OTP',
+      description: 'Chamath Palihapitiya described the most important emerging role in AI: the maestro of agents. He is right about the role. He is missing the hard part. The challenge is not building agents. It is getting them to work as a team.',
+      canonical: BASE_URL + '/blog/the-maestro-problem',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-07',
+      jsonLd: blogJsonLd('The Maestro Problem: Chamath Is Right About the Job. He Is Wrong About the Hard Part.', 'the-maestro-problem', '2026-04-07', 1500)
+    });
+  });
+
   // Blog post 42 - Who Reviews the Robot's Work
   app.get('/blog/who-reviews-robots-work', async (request, reply) => {
     return reply.view('pages/blog-post-42', {
