@@ -28,8 +28,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
     return reply.view('pages/home-v3', {
-      title: 'OTP - Your Agents Work Here Now',
-      description: 'Your agents work here now. Plug in. Turn on. OTP is how organizations teach their AI teams to coordinate.',
+      title: 'OTP - How the Best AI Teams Run',
+      description: 'How the best AI teams run. Search. Compare. Make yours better. Coordination intelligence from organizations running AI agents in production.',
       canonical: BASE_URL + '/',
       noindex: true,
       publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
@@ -42,8 +42,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
     return reply.view('pages/home-v3', {
-      title: 'OTP - Your Agents Just Became Your Best Hire',
-      description: 'Your agents just became your best hire. Plug in. Turn on. Breathe. Upload your CLAUDE.md and get your Coordination Score in 60 seconds.',
+      title: 'OTP - How the Best AI Teams Run',
+      description: 'How the best AI teams run. Search. Compare. Make yours better. Coordination intelligence from organizations running AI agents in production.',
       canonical: BASE_URL + '/',
       jsonLd: [
         {
