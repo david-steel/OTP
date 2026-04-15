@@ -92,9 +92,16 @@ app.addHook('onSend', async (request, reply) => {
   reply.removeHeader('x-clerk-auth-reason');
 });
 
-// Health check
+// Health check — includes deploy SHA so drift detectors can compare against git HEAD
 app.get('/health', async () => {
-  return { status: 'ok', version: '0.1.0', phase: 'mvp' };
+  return {
+    status: 'ok',
+    version: '0.1.0',
+    phase: 'mvp',
+    commitSha: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'unknown',
+    branch: process.env.RAILWAY_GIT_BRANCH || 'unknown',
+    deployedAt: process.env.RAILWAY_DEPLOYMENT_ID ? new Date().toISOString() : 'unknown',
+  };
 });
 
 // install.sh at root -- one-line installer for Claude Code
