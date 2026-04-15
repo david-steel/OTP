@@ -356,6 +356,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/practices', priority: '0.9', changefreq: 'weekly' },
     { loc: '/generate', priority: '0.8', changefreq: 'monthly' },
     { loc: '/industries', priority: '0.7', changefreq: 'weekly' },
+    { loc: '/experts', priority: '0.8', changefreq: 'weekly' },
     { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.8', changefreq: 'monthly' },
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },
@@ -397,6 +398,29 @@ app.get('/sitemap.xml', async (request, reply) => {
         seenOrgs.add(row.org_id);
         dynamicUrls += `  <url><loc>${BASE}/org/${row.org_id}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<changefreq>weekly</changefreq><priority>0.5</priority></url>\n`;
       }
+    }
+
+    // Published expert (consultant) profiles
+    const expertRows = await database.execute(sql`
+      SELECT slug, updated_at FROM consultant_profiles WHERE published = true ORDER BY created_at DESC
+    `) as any;
+    for (const row of (expertRows.rows || [])) {
+      if (!row.slug) continue;
+      const lastmod = row.updated_at ? new Date(row.updated_at).toISOString().split('T')[0] : today;
+      dynamicUrls += `  <url><loc>${BASE}/expert/${row.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>\n`;
+    }
+
+    // Industry detail pages -- one per distinct industry with published OOS files
+    const industryDetailRows = await database.execute(sql`
+      SELECT DISTINCT o.industry
+      FROM organizations o
+      JOIN oos_files f ON f.org_id = o.id
+      WHERE f.status = 'published' AND o.industry IS NOT NULL AND o.industry != ''
+    `) as any;
+    for (const row of (industryDetailRows.rows || [])) {
+      if (!row.industry) continue;
+      const encoded = encodeURIComponent(row.industry);
+      dynamicUrls += `  <url><loc>${BASE}/industry/${encoded}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>\n`;
     }
   } catch {
     // If DB unavailable, serve static pages only
