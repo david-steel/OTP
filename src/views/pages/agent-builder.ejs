@@ -1,0 +1,915 @@
+<!-- HERO -->
+<section class="relative overflow-hidden bg-otp-950 flex items-center py-24 sm:py-32">
+  <div class="absolute top-[-300px] left-[-200px] w-[800px] h-[800px] bg-otp-500/20 rounded-full blur-[180px] pointer-events-none"></div>
+  <div class="absolute bottom-[-200px] right-[-250px] w-[700px] h-[700px] bg-purple-500/15 rounded-full blur-[160px] pointer-events-none"></div>
+
+  <div class="relative w-full max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
+      <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+      <span>Informed by <%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations</span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 tracking-tight">
+      Hire Your Next <span class="gradient-text">AI Agent</span>
+    </h1>
+    <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-xl mx-auto mb-10">
+      Describe the role. Set the personality. OTP builds it using coordination patterns from teams already running agents in production.
+    </p>
+    <a href="#builder-form" class="inline-block px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm">
+      Start Hiring
+    </a>
+  </div>
+</section>
+
+<!-- MULTI-STEP FORM -->
+<section id="builder-form" class="bg-otp-950 py-16 sm:py-24 border-t border-white/5">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+
+    <!-- Step indicator -->
+    <div class="flex items-center justify-center gap-2 mb-10" id="step-indicators">
+      <div class="step-dot active" data-step="1"><span>1</span></div>
+      <div class="step-line active"></div>
+      <div class="step-dot" data-step="2"><span>2</span></div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="3"><span>3</span></div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="4"><span>4</span></div>
+    </div>
+
+    <!-- Steps container -->
+    <div class="relative overflow-hidden" id="steps-container">
+
+      <!-- STEP 1: The Role -->
+      <div class="step-panel" data-step="1">
+        <h2 class="text-2xl font-bold text-white mb-1">The Role</h2>
+        <p class="text-sm text-gray-500 mb-8">What job are you hiring for?</p>
+
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Industry</label>
+            <select id="f-industry" class="ab-select">
+              <option value="">Pick one</option>
+              <option>Agency</option>
+              <option>Fitness</option>
+              <option>Healthcare</option>
+              <option>SaaS</option>
+              <option>Professional Services</option>
+              <option>E-Commerce</option>
+              <option>Education</option>
+              <option>Real Estate</option>
+              <option>Legal</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div id="industry-intel" class="hidden bg-otp-900/40 border border-otp-500/20 rounded-lg p-3 -mt-1">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-otp-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+              <p class="text-xs text-gray-400 leading-relaxed" id="industry-intel-text"></p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Job Title</label>
+            <input id="f-title" type="text" class="ab-input" placeholder="e.g., Email Triage Assistant, Pipeline Scanner, Call Center Manager">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Job Description</label>
+            <textarea id="f-desc" rows="4" class="ab-input resize-none" placeholder="What should this agent DO? Describe it like you're explaining to a smart new hire."></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-8">
+          <button onclick="goStep(2)" class="ab-btn-primary">Continue</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Skills & Tools -->
+      <div class="step-panel hidden" data-step="2">
+        <h2 class="text-2xl font-bold text-white mb-1">Skills &amp; Tools</h2>
+        <p class="text-sm text-gray-500 mb-8">What does this agent need to know and connect to?</p>
+
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Skills Needed</label>
+            <div class="ab-tag-input" id="skills-input">
+              <div class="ab-pills" id="skills-pills"></div>
+              <input type="text" class="ab-tag-field" id="skills-field" placeholder="Type to search skills..." autocomplete="off">
+              <div class="ab-suggestions hidden" id="skills-suggestions"></div>
+            </div>
+          </div>
+          <div id="skills-hints" class="hidden bg-otp-900/40 border border-otp-500/20 rounded-lg p-3 -mt-2">
+            <p class="text-xs text-gray-400 leading-relaxed" id="skills-hints-text"></p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Tools to Integrate</label>
+            <div class="ab-tag-input" id="tools-input">
+              <div class="ab-pills" id="tools-pills"></div>
+              <input type="text" class="ab-tag-field" id="tools-field" placeholder="Type to search tools..." autocomplete="off">
+              <div class="ab-suggestions hidden" id="tools-suggestions"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <button onclick="goStep(1)" class="ab-btn-secondary">Back</button>
+          <button onclick="goStep(3)" class="ab-btn-primary">Continue</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Personality -->
+      <div class="step-panel hidden" data-step="3">
+        <h2 class="text-2xl font-bold text-white mb-1">Personality</h2>
+        <p class="text-sm text-gray-500 mb-8">How should your agent communicate?</p>
+
+        <div class="bg-otp-900/40 border border-otp-500/20 rounded-lg p-3 mb-6">
+          <p class="text-xs text-gray-400 leading-relaxed">Personality maps directly to your agent's rules. A high-Dominance agent gets rules like "Make decisions autonomously. Flag after acting, not before." A high-Compliance agent gets "Never act without explicit approval. Document every decision."</p>
+        </div>
+        <!-- Framework selector -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8" id="framework-cards">
+          <button onclick="pickFramework('disc')" class="ab-fcard" data-fw="disc">
+            <div class="text-lg font-bold text-white mb-0.5">DISC</div>
+            <div class="text-xs text-gray-500">4 dimensions</div>
+          </button>
+          <button onclick="pickFramework('big5')" class="ab-fcard" data-fw="big5">
+            <div class="text-lg font-bold text-white mb-0.5">Big Five</div>
+            <div class="text-xs text-gray-500">5 traits</div>
+          </button>
+          <button onclick="pickFramework('mbti')" class="ab-fcard" data-fw="mbti">
+            <div class="text-lg font-bold text-white mb-0.5">MBTI</div>
+            <div class="text-xs text-gray-500">16 types</div>
+          </button>
+          <button onclick="pickFramework('skip')" class="ab-fcard" data-fw="skip">
+            <div class="text-lg font-bold text-white mb-0.5">Skip</div>
+            <div class="text-xs text-gray-500">Balanced default</div>
+          </button>
+        </div>
+
+        <!-- DISC panel -->
+        <div id="panel-disc" class="ab-personality-panel hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+            <div class="space-y-4">
+              <div><div class="ab-slider-row"><label>Dominance</label><input type="range" min="1" max="10" value="5" data-trait="D" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="D">Your agent balances independence with deference, flags issues but waits for direction on big calls</p></div>
+              <div><div class="ab-slider-row"><label>Influence</label><input type="range" min="1" max="10" value="5" data-trait="I" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="I">Your agent is professional and clear, occasionally adds context or encouragement</p></div>
+              <div><div class="ab-slider-row"><label>Steadiness</label><input type="range" min="1" max="10" value="5" data-trait="S" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="S">Your agent balances speed with process, follows established patterns but adapts when needed</p></div>
+              <div><div class="ab-slider-row"><label>Compliance</label><input type="range" min="1" max="10" value="5" data-trait="C" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="C">Your agent follows guidelines but applies judgment, bends rules when the situation warrants</p></div>
+            </div>
+            <div class="flex justify-center">
+              <svg id="radar-disc" viewBox="0 0 200 200" class="w-48 h-48"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Big Five panel -->
+        <div id="panel-big5" class="ab-personality-panel hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+            <div class="space-y-4">
+              <div><div class="ab-slider-row"><label>Openness</label><input type="range" min="1" max="10" value="5" data-trait="O" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="O">Your agent is open to new ideas when evidence supports them, balances innovation with pragmatism</p></div>
+              <div><div class="ab-slider-row"><label>Conscientiousness</label><input type="range" min="1" max="10" value="5" data-trait="C2" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="C2">Your agent balances thoroughness with efficiency, documents important decisions</p></div>
+              <div><div class="ab-slider-row"><label>Extraversion</label><input type="range" min="1" max="10" value="5" data-trait="E" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="E">Your agent communicates proactively when something matters, stays quiet otherwise</p></div>
+              <div><div class="ab-slider-row"><label>Agreeableness</label><input type="range" min="1" max="10" value="5" data-trait="A" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="A">Your agent voices concerns when stakes are high but generally aligns with direction</p></div>
+              <div><div class="ab-slider-row"><label>Emotional Stability</label><input type="range" min="1" max="10" value="5" data-trait="ES" class="ab-slider"><span class="ab-slider-val">5</span></div><p class="ab-trait-desc" data-desc="ES">Your agent maintains composure on routine issues, escalates proportionally to severity</p></div>
+            </div>
+            <div class="flex justify-center">
+              <svg id="radar-big5" viewBox="0 0 200 200" class="w-48 h-48"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- MBTI panel -->
+        <div id="panel-mbti" class="ab-personality-panel hidden">
+          <div class="flex flex-col items-center gap-5">
+            <div class="grid grid-cols-2 gap-3 w-full max-w-xs" id="mbti-grid">
+              <button onclick="toggleMBTI(0,'I')" class="ab-mbti-toggle" data-idx="0" data-val="I"><span class="font-bold">I</span>ntrovert</button>
+              <button onclick="toggleMBTI(0,'E')" class="ab-mbti-toggle dim" data-idx="0" data-val="E"><span class="font-bold">E</span>xtravert</button>
+              <button onclick="toggleMBTI(1,'S')" class="ab-mbti-toggle" data-idx="1" data-val="S"><span class="font-bold">S</span>ensing</button>
+              <button onclick="toggleMBTI(1,'N')" class="ab-mbti-toggle dim" data-idx="1" data-val="N"><span class="font-bold">N</span> Intuition</button>
+              <button onclick="toggleMBTI(2,'T')" class="ab-mbti-toggle" data-idx="2" data-val="T"><span class="font-bold">T</span>hinking</button>
+              <button onclick="toggleMBTI(2,'F')" class="ab-mbti-toggle dim" data-idx="2" data-val="F"><span class="font-bold">F</span>eeling</button>
+              <button onclick="toggleMBTI(3,'J')" class="ab-mbti-toggle" data-idx="3" data-val="J"><span class="font-bold">J</span>udging</button>
+              <button onclick="toggleMBTI(3,'P')" class="ab-mbti-toggle dim" data-idx="3" data-val="P"><span class="font-bold">P</span>erceiving</button>
+            </div>
+            <div class="text-4xl font-extrabold text-white tracking-widest" id="mbti-result">ISTJ</div>
+          </div>
+        </div>
+
+        <!-- Skip panel -->
+        <div id="panel-skip" class="ab-personality-panel hidden">
+          <div class="text-center py-6">
+            <p class="text-gray-400 text-sm">We will use a balanced default personality. You can always customize later.</p>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <button onclick="goStep(2)" class="ab-btn-secondary">Back</button>
+          <button onclick="goStep(4)" class="ab-btn-primary">Continue</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Review & Generate -->
+      <div class="step-panel hidden" data-step="4">
+        <h2 class="text-2xl font-bold text-white mb-1">Review &amp; Generate</h2>
+        <p class="text-sm text-gray-500 mb-8">Everything look right?</p>
+
+        <div class="bg-otp-900/60 border border-white/10 rounded-xl p-6 space-y-5" id="review-card">
+          <div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Industry</div>
+            <div class="text-white font-medium" id="rev-industry">--</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Job Title</div>
+            <div class="text-white font-medium" id="rev-title">--</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Description</div>
+            <div class="text-gray-300 text-sm leading-relaxed" id="rev-desc">--</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Skills</div>
+            <div class="flex flex-wrap gap-1.5" id="rev-skills"></div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Tools</div>
+            <div class="flex flex-wrap gap-1.5" id="rev-tools"></div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Personality</div>
+            <div id="rev-personality" class="flex items-center gap-4">
+              <span class="text-white font-medium" id="rev-personality-label">--</span>
+              <svg id="rev-radar" viewBox="0 0 200 200" class="w-28 h-28 hidden"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- OTP Network Boost -->
+        <div class="mt-5 bg-otp-900/40 border border-otp-500/20 rounded-xl p-5" id="otp-boost">
+          <div class="text-xs text-otp-400 uppercase tracking-wider font-semibold mb-3">OTP Network Boost</div>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="flex items-center gap-2"><span class="text-green-400">+</span><span id="boost-patterns">Coordination patterns from production teams loading...</span></div>
+            <div class="flex items-center gap-2"><span class="text-green-400">+</span><span id="boost-failures">Known failure modes your agent will avoid loading...</span></div>
+            <div class="flex items-center gap-2"><span class="text-green-400">+</span><span id="boost-boundaries">Boundary rules from real deployments loading...</span></div>
+            <div class="flex items-center gap-2"><span class="text-otp-400">&#9889;</span><span>MCP connection available: plug your agent into the live network for continuous improvement</span></div>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Anything else?</label>
+          <textarea id="f-extra" rows="2" class="ab-input resize-none" placeholder="Optional context, constraints, preferences..."></textarea>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <button onclick="goStep(3)" class="ab-btn-secondary">Back</button>
+          <button onclick="buildAgent()" class="ab-btn-build" id="build-btn">Build My Agent</button>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="build-loading" class="hidden mt-8 text-center">
+          <div class="inline-flex items-center gap-3 px-6 py-4 bg-otp-900/80 border border-otp-500/30 rounded-xl">
+            <svg class="w-5 h-5 text-otp-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-otp-300 text-sm font-medium">Building your agent from <%= typeof claimCount !== 'undefined' ? claimCount : '0' %> coordination patterns...</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW OTP MAKES YOUR AGENT SMARTER -->
+<section class="bg-white py-16 sm:py-24">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 text-center mb-12 tracking-tight reveal">How OTP Makes Your Agent Smarter</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+      <div class="text-center reveal">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-otp-500/10 border border-otp-500/20 flex items-center justify-center">
+          <svg class="w-7 h-7 text-otp-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Network Intelligence</h3>
+        <p class="text-sm text-gray-500">Your agent inherits what <%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations already learned about coordination. Not generic templates. Real patterns from real teams.</p>
+      </div>
+      <div class="text-center reveal">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+          <svg class="w-7 h-7 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">OOS Foundation</h3>
+        <p class="text-sm text-gray-500">Every generated agent includes an Organizational Operating System layer: failure modes to avoid, escalation rules that work, boundary conditions other teams discovered the hard way.</p>
+      </div>
+      <div class="text-center reveal">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+          <svg class="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">MCP Connection</h3>
+        <p class="text-sm text-gray-500">Connect your agent to the OTP network via MCP and it keeps getting smarter. New practices from other teams flow in automatically. Your agent evolves without you editing it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY OTP AGENTS ARE DIFFERENT -->
+<section class="bg-otp-950 py-16 sm:py-24 border-t border-white/5">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    <p class="text-center text-gray-400 text-sm mb-3 reveal">Why agents built here are different</p>
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-white text-center mb-12 tracking-tight reveal">
+      Informed by <span class="gradient-text"><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations</span> running AI in production
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div class="bg-otp-900/60 border border-white/10 rounded-xl p-6 reveal">
+        <div class="w-10 h-10 mb-4 rounded-lg bg-otp-500/10 border border-otp-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-otp-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+        </div>
+        <h3 class="text-white font-bold mb-2">Coordination Intelligence Built In</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Your agent inherits failure patterns, boundary rules, and operational heuristics from real teams.</p>
+      </div>
+      <div class="bg-otp-900/60 border border-white/10 rounded-xl p-6 reveal">
+        <div class="w-10 h-10 mb-4 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+        </div>
+        <h3 class="text-white font-bold mb-2">Personality That Fits Your Culture</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">DISC, Big Five, or MBTI mapped to agent behavior. Not a generic chatbot.</p>
+      </div>
+      <div class="bg-otp-900/60 border border-white/10 rounded-xl p-6 reveal">
+        <div class="w-10 h-10 mb-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+        </div>
+        <h3 class="text-white font-bold mb-2">Connect and Grow</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Plug in your MCP and your agents keep learning from the network.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="bg-white py-16 sm:py-24">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 text-center mb-10 tracking-tight reveal">Questions</h2>
+    <div class="space-y-4" id="faq-list">
+      <div class="ab-faq reveal">
+        <button class="ab-faq-q" onclick="toggleFaq(this)">What do you do with my data?<span class="ab-faq-arrow">+</span></button>
+        <div class="ab-faq-a">Your job description stays private. The patterns that improve your agent come from anonymized, aggregated network data.</div>
+      </div>
+      <div class="ab-faq reveal">
+        <button class="ab-faq-q" onclick="toggleFaq(this)">Do I need to publish anything?<span class="ab-faq-arrow">+</span></button>
+        <div class="ab-faq-a">No. Publishing is optional. You get value from the network without contributing.</div>
+      </div>
+      <div class="ab-faq reveal">
+        <button class="ab-faq-q" onclick="toggleFaq(this)">What frameworks do you support?<span class="ab-faq-arrow">+</span></button>
+        <div class="ab-faq-a">Claude Code, Cursor, any system that uses CLAUDE.md or markdown agent configs.</div>
+      </div>
+      <div class="ab-faq reveal">
+        <button class="ab-faq-q" onclick="toggleFaq(this)">What is a personality profile for an agent?<span class="ab-faq-arrow">+</span></button>
+        <div class="ab-faq-a">Just like hiring a person, an agent's personality affects how it communicates, how it handles ambiguity, and how aggressively it flags problems. DISC and Big Five are the most popular frameworks.</div>
+      </div>
+      <div class="ab-faq reveal">
+        <button class="ab-faq-q" onclick="toggleFaq(this)">Is this free?<span class="ab-faq-arrow">+</span></button>
+        <div class="ab-faq-a">Free to build your first agent. Advanced personality frameworks and team coordination features coming in premium.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM CTA -->
+<section class="bg-otp-950 py-16 sm:py-24 border-t border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight reveal">Your next hire doesn't need a salary.</h2>
+    <a href="#builder-form" class="inline-block px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm reveal">
+      Start Hiring
+    </a>
+  </div>
+</section>
+
+<style>
+  .step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#6b7280;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:all .3s}
+  .step-dot.active{background:#0095ff;color:#fff;border-color:#0095ff}
+  .step-dot.done{background:rgba(0,149,255,.15);color:#0095ff;border-color:rgba(0,149,255,.4)}
+  .step-line{width:40px;height:2px;background:rgba(255,255,255,.1);transition:background .3s}
+  .step-line.active{background:#0095ff}
+
+  .ab-input{width:100%;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .ab-input:focus{border-color:rgba(0,149,255,.4);box-shadow:0 0 0 2px rgba(0,149,255,.1)}
+  .ab-input::placeholder{color:#6b7280}
+  .ab-select{width:100%;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:14px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+  .ab-select:focus{border-color:rgba(0,149,255,.4);box-shadow:0 0 0 2px rgba(0,149,255,.1)}
+  .ab-select option{background:#0f172a;color:#fff}
+
+  .ab-btn-primary{padding:10px 24px;background:#0095ff;color:#fff;border-radius:10px;font-weight:600;font-size:14px;border:none;cursor:pointer;transition:background .2s,box-shadow .2s}
+  .ab-btn-primary:hover{background:#007acc;box-shadow:0 4px 16px rgba(0,149,255,.25)}
+  .ab-btn-secondary{padding:10px 24px;background:transparent;color:#9ca3af;border:1px solid rgba(255,255,255,.1);border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s}
+  .ab-btn-secondary:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+  .ab-btn-build{padding:12px 32px;background:linear-gradient(135deg,#0095ff,#7c3aed);color:#fff;border-radius:12px;font-weight:700;font-size:15px;border:none;cursor:pointer;transition:all .3s}
+  .ab-btn-build:hover{box-shadow:0 6px 24px rgba(0,149,255,.3);transform:translateY(-1px)}
+
+  .ab-tag-input{position:relative;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);min-height:44px;transition:border-color .2s}
+  .ab-tag-input:focus-within{border-color:rgba(0,149,255,.4)}
+  .ab-pills{display:flex;flex-wrap:wrap;gap:5px}
+  .ab-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;background:rgba(0,149,255,.15);color:#93c5fd;font-size:12px;font-weight:500;white-space:nowrap}
+  .ab-pill button{background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px}
+  .ab-pill button:hover{color:#ef4444}
+  .ab-tag-field{flex:1;min-width:120px;background:transparent;border:none;color:#fff;font-size:13px;outline:none}
+  .ab-tag-field::placeholder{color:#6b7280}
+  .ab-suggestions{position:absolute;top:100%;left:0;right:0;z-index:20;max-height:180px;overflow-y:auto;margin-top:4px;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px}
+  .ab-suggestions div{padding:8px 12px;font-size:13px;color:#d1d5db;cursor:pointer}
+  .ab-suggestions div:hover{background:rgba(0,149,255,.1);color:#fff}
+  .ab-sug-hint{font-style:italic;color:#6b7280 !important;cursor:default !important}
+  .ab-sug-hint:hover{background:transparent !important;color:#6b7280 !important}
+  .ab-custom-label{font-size:10px;color:#6b7280;font-weight:400}
+
+  .ab-fcard{padding:16px 8px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);text-align:center;cursor:pointer;transition:all .2s}
+  .ab-fcard:hover{border-color:rgba(0,149,255,.3)}
+  .ab-fcard.selected{background:rgba(0,149,255,.1);border-color:#0095ff}
+
+  .ab-slider-row{display:flex;align-items:center;gap:10px}
+  .ab-slider-row label{font-size:13px;color:#d1d5db;width:130px;flex-shrink:0}
+  .ab-slider{flex:1;accent-color:#0095ff;cursor:pointer}
+  .ab-slider-val{font-size:13px;color:#0095ff;font-weight:700;width:20px;text-align:right}
+
+  .ab-radar-grid{fill:none;stroke:rgba(255,255,255,.08);stroke-width:1}
+  .ab-radar-poly{fill:rgba(0,149,255,.15);stroke:#0095ff;stroke-width:2;transition:all .3s}
+  .ab-radar-dot{fill:#0095ff}
+
+  .ab-mbti-toggle{padding:10px;border-radius:8px;background:rgba(0,149,255,.1);border:1px solid rgba(0,149,255,.3);color:#93c5fd;font-size:13px;cursor:pointer;transition:all .2s;text-align:center}
+  .ab-mbti-toggle.dim{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1);color:#6b7280}
+
+  .ab-trait-desc{font-size:11px;color:#6b7280;line-height:1.4;margin:4px 0 0 0;padding-left:140px;transition:opacity .2s}
+  @media(max-width:639px){.ab-trait-desc{padding-left:0}}
+  .ab-personality-panel{transition:all .3s}
+
+  .ab-faq{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
+  .ab-faq-q{width:100%;text-align:left;padding:14px 16px;font-size:15px;font-weight:600;color:#111827;background:transparent;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .ab-faq-arrow{font-size:18px;color:#9ca3af;transition:transform .2s}
+  .ab-faq-a{max-height:0;overflow:hidden;padding:0 16px;font-size:14px;color:#6b7280;line-height:1.6;transition:max-height .3s,padding .3s}
+  .ab-faq.open .ab-faq-a{max-height:200px;padding:0 16px 14px}
+  .ab-faq.open .ab-faq-arrow{transform:rotate(45deg)}
+
+  .ab-rev-pill{display:inline-block;padding:2px 10px;border-radius:5px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:500}
+</style>
+
+<script>
+(function(){
+  var SKILLS=['Email management','CRM updates','Lead follow-up','Data analysis','Report generation','Calendar management','Cold outreach','Social media management','Content writing','Customer support','Billing and invoicing','Project management','Meeting scheduling','Call center management','Ad campaign monitoring','Performance reporting','Client onboarding','Proposal creation','Pipeline management','Appointment booking','Follow-up sequences','Speed to lead','Review management','Reputation monitoring','SEO monitoring','Website monitoring','Inventory tracking','Order fulfillment','Staff scheduling','Payroll processing','Compliance monitoring','Contract management','Vendor management','Quality assurance','Training and onboarding','Documentation','Workflow automation','Data entry','Competitive analysis','Market research','Financial reporting','Budget tracking','Event planning','Newsletter management','Community management'];
+  var TOOLS=['Gmail','Slack','Google Calendar','Google Sheets','Google Docs','Google Drive','Todoist','Asana','Trello','Monday.com','ClickUp','GHL/GoHighLevel','HubSpot','Salesforce','Pipedrive','Meta Ads','Google Ads','TikTok Ads','LinkedIn Ads','Shopify','WooCommerce','Stripe','QuickBooks','Xero','FreshBooks','Zapier','Make/Integromat','n8n','Calendly','Acuity','Fireflies','Otter.ai','Zoom','Microsoft Teams','Accelo','Jobber','ServiceTitan','Zenoti','Mindbody','ClubReady','GymSales','ABC Fitness','Proposify','PandaDoc','DocuSign','Notion','Confluence','Obsidian','Claude Code','Cursor','ChatGPT','GitHub','Jira','Linear','Intercom','Zendesk','Freshdesk','Mailchimp','SendGrid','Twilio','WhatsApp Business'];
+  var selectedSkills=[];
+  var selectedTools=[];
+  var currentStep=1;
+  var chosenFramework=null;
+  var mbtiLetters=['I','S','T','J'];
+
+  /* STEP NAV */
+  window.goStep=function(n){
+    if(n===currentStep) return;
+    document.querySelectorAll('.step-panel').forEach(function(p){p.classList.add('hidden')});
+    document.querySelector('.step-panel[data-step="'+n+'"]').classList.remove('hidden');
+    document.querySelectorAll('.step-dot').forEach(function(d,i){
+      var s=i+1;
+      d.className='step-dot'+(s<n?' done':(s===n?' active':''));
+    });
+    document.querySelectorAll('.step-line').forEach(function(l,i){
+      l.className='step-line'+(i+1<n?' active':'');
+    });
+    currentStep=n;
+    if(n===4){populateReview();populateBoost()}
+    var target=document.getElementById('builder-form');
+    window.scrollTo({top:target.offsetTop-80,behavior:'smooth'});
+  };
+
+  /* TAG INPUT with free-text support */
+  function initTagInput(fieldId,sugId,pillsId,allItems,selected,hintId){
+    var field=document.getElementById(fieldId);
+    var sugBox=document.getElementById(sugId);
+    var pillsBox=document.getElementById(pillsId);
+    var allLower=allItems.map(function(s){return s.toLowerCase()});
+
+    function isPreset(val){return allLower.indexOf(val.toLowerCase())!==-1}
+
+    function renderPills(){
+      pillsBox.innerHTML='';
+      selected.forEach(function(s,i){
+        var pill=document.createElement('span');
+        pill.className='ab-pill';
+        var custom=!isPreset(s)?' <span class="ab-custom-label">(custom)</span>':'';
+        pill.innerHTML=s+custom+'<button data-i="'+i+'">\u00d7</button>';
+        pill.querySelector('button').addEventListener('click',function(){
+          selected.splice(parseInt(this.dataset.i),1);
+          renderPills();
+          if(hintId) updateSkillHints();
+        });
+        pillsBox.appendChild(pill);
+      });
+    }
+
+    function addTag(val){
+      val=val.trim();
+      if(!val||selected.indexOf(val)!==-1) return;
+      var match=allItems.find(function(item){return item.toLowerCase()===val.toLowerCase()});
+      selected.push(match||val);
+      field.value='';
+      sugBox.classList.add('hidden');
+      renderPills();
+      if(hintId) updateSkillHints();
+    }
+
+    function showSuggestions(q){
+      var lower=q.toLowerCase();
+      var matches=allItems.filter(function(item){
+        return item.toLowerCase().indexOf(lower)!==-1 && selected.indexOf(item)===-1;
+      });
+      sugBox.innerHTML='';
+      if(!q){sugBox.classList.add('hidden');return;}
+      matches.slice(0,8).forEach(function(m){
+        var div=document.createElement('div');
+        div.textContent=m;
+        div.addEventListener('click',function(){addTag(m)});
+        sugBox.appendChild(div);
+      });
+      if(!matches.length&&q.length>1){
+        var hint=document.createElement('div');
+        hint.className='ab-sug-hint';
+        hint.textContent='Press Enter to add "'+q+'" as custom';
+        sugBox.appendChild(hint);
+      }
+      sugBox.classList.remove('hidden');
+    }
+
+    field.addEventListener('input',function(){showSuggestions(this.value)});
+    field.addEventListener('focus',function(){if(this.value) showSuggestions(this.value)});
+    field.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===','){
+        e.preventDefault();
+        var val=this.value.replace(/,$/,'');
+        if(val) addTag(val);
+      }
+      if(e.key==='Backspace'&&!this.value&&selected.length){
+        selected.pop();renderPills();
+        if(hintId) updateSkillHints();
+      }
+    });
+    document.addEventListener('click',function(e){
+      if(!e.target.closest('#'+fieldId)&&!e.target.closest('#'+sugId)){
+        sugBox.classList.add('hidden');
+      }
+    });
+  }
+
+  initTagInput('skills-field','skills-suggestions','skills-pills',SKILLS,selectedSkills,'skills-hints');
+  initTagInput('tools-field','tools-suggestions','tools-pills',TOOLS,selectedTools,null);
+
+  /* PERSONALITY FRAMEWORK */
+  window.pickFramework=function(fw){
+    chosenFramework=fw;
+    document.querySelectorAll('.ab-fcard').forEach(function(c){
+      c.classList.toggle('selected',c.dataset.fw===fw);
+    });
+    ['disc','big5','mbti','skip'].forEach(function(p){
+      document.getElementById('panel-'+p).classList.toggle('hidden',p!==fw);
+    });
+    if(fw==='disc') drawRadar('radar-disc',4,getSliderValues('panel-disc'));
+    if(fw==='big5') drawRadar('radar-big5',5,getSliderValues('panel-big5'));
+  };
+
+  function getSliderValues(panelId){
+    var vals=[];
+    document.querySelectorAll('#'+panelId+' .ab-slider').forEach(function(s){vals.push(parseInt(s.value))});
+    return vals;
+  }
+
+  /* TRAIT DESCRIPTIONS */
+  var traitDescs={
+    D:[
+      'Your agent defers to you on most decisions, asks permission before acting, avoids confrontation',
+      'Your agent balances independence with deference, flags issues but waits for direction on big calls',
+      'Your agent takes charge, makes decisions autonomously, flags problems directly and forcefully'
+    ],
+    I:[
+      'Your agent communicates with facts and data only, minimal warmth, straight to the point',
+      'Your agent is professional and clear, occasionally adds context or encouragement',
+      'Your agent is warm, motivating, uses encouragement and positive framing, builds rapport in communications'
+    ],
+    S:[
+      'Your agent moves fast, embraces change, may skip process steps to get results quickly',
+      'Your agent balances speed with process, follows established patterns but adapts when needed',
+      'Your agent is methodical, consistent, follows processes strictly, resists sudden changes'
+    ],
+    C:[
+      'Your agent is flexible with rules, improvises, finds creative workarounds',
+      'Your agent follows guidelines but applies judgment, bends rules when the situation warrants',
+      'Your agent follows every rule precisely, documents everything, flags any deviation from protocol'
+    ],
+    O:[
+      'Your agent sticks to proven approaches, resists experimenting, prefers established solutions',
+      'Your agent is open to new ideas when evidence supports them, balances innovation with pragmatism',
+      'Your agent actively seeks creative solutions, proposes unconventional approaches, challenges assumptions'
+    ],
+    C2:[
+      'Your agent prioritizes speed over precision, may skip documentation, focuses on outcomes',
+      'Your agent balances thoroughness with efficiency, documents important decisions',
+      'Your agent is extremely organized, tracks every detail, never skips a step, comprehensive documentation'
+    ],
+    E:[
+      'Your agent works quietly in the background, reports only when asked, minimal proactive communication',
+      'Your agent communicates proactively when something matters, stays quiet otherwise',
+      'Your agent is highly communicative, surfaces insights proactively, provides running commentary on its work'
+    ],
+    A:[
+      'Your agent pushes back on requests it disagrees with, challenges your assumptions, plays devil\'s advocate',
+      'Your agent voices concerns when stakes are high but generally aligns with direction',
+      'Your agent is supportive and accommodating, avoids conflict, focuses on alignment and harmony'
+    ],
+    ES:[
+      'Your agent escalates quickly when things go wrong, treats small issues as urgent, errs on the side of alarm',
+      'Your agent maintains composure on routine issues, escalates proportionally to severity',
+      'Your agent stays calm under pressure, absorbs ambiguity without escalating, only flags truly critical issues'
+    ]
+  };
+
+  function updateTraitDesc(trait,val){
+    var el=document.querySelector('.ab-trait-desc[data-desc="'+trait+'"]');
+    if(!el) return;
+    var v=parseInt(val);
+    var idx=v<=3?0:(v<=6?1:2);
+    el.textContent=traitDescs[trait][idx];
+  }
+
+  document.querySelectorAll('.ab-slider').forEach(function(slider){
+    slider.addEventListener('input',function(){
+      this.closest('.ab-slider-row').querySelector('.ab-slider-val').textContent=this.value;
+      var panel=this.closest('.ab-personality-panel');
+      if(!panel) return;
+      if(panel.id==='panel-disc') drawRadar('radar-disc',4,getSliderValues(panel.id));
+      if(panel.id==='panel-big5') drawRadar('radar-big5',5,getSliderValues(panel.id));
+      var trait=this.dataset.trait;
+      if(trait) updateTraitDesc(trait,this.value);
+    });
+  });
+
+  /* RADAR CHART */
+  function drawRadar(svgId,n,values){
+    var svg=document.getElementById(svgId);
+    if(!svg) return;
+    var cx=100,cy=100,maxR=80;
+    var html='';
+    for(var ring=2;ring<=10;ring+=2){
+      var pts=[];
+      for(var i=0;i<n;i++){
+        var angle=(Math.PI*2*i/n)-Math.PI/2;
+        var r=maxR*ring/10;
+        pts.push((cx+r*Math.cos(angle)).toFixed(1)+','+(cy+r*Math.sin(angle)).toFixed(1));
+      }
+      html+='<polygon points="'+pts.join(' ')+'" class="ab-radar-grid"/>';
+    }
+    for(var i=0;i<n;i++){
+      var angle=(Math.PI*2*i/n)-Math.PI/2;
+      var x2=cx+maxR*Math.cos(angle);
+      var y2=cy+maxR*Math.sin(angle);
+      html+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>';
+    }
+    var dataPts=[];
+    for(var i=0;i<n;i++){
+      var angle=(Math.PI*2*i/n)-Math.PI/2;
+      var r=maxR*(values[i]||5)/10;
+      dataPts.push((cx+r*Math.cos(angle)).toFixed(1)+','+(cy+r*Math.sin(angle)).toFixed(1));
+    }
+    html+='<polygon points="'+dataPts.join(' ')+'" class="ab-radar-poly"/>';
+    for(var i=0;i<n;i++){
+      var angle=(Math.PI*2*i/n)-Math.PI/2;
+      var r=maxR*(values[i]||5)/10;
+      html+='<circle cx="'+(cx+r*Math.cos(angle)).toFixed(1)+'" cy="'+(cy+r*Math.sin(angle)).toFixed(1)+'" r="3" class="ab-radar-dot"/>';
+    }
+    svg.innerHTML=html;
+  }
+
+  /* MBTI */
+  window.toggleMBTI=function(idx,letter){
+    mbtiLetters[idx]=letter;
+    var btns=document.querySelectorAll('#mbti-grid .ab-mbti-toggle');
+    var row=idx*2;
+    btns[row].classList.toggle('dim',btns[row].dataset.val!==letter);
+    btns[row+1].classList.toggle('dim',btns[row+1].dataset.val!==letter);
+    document.getElementById('mbti-result').textContent=mbtiLetters.join('');
+  };
+
+  /* REVIEW */
+  function populateReview(){
+    document.getElementById('rev-industry').textContent=document.getElementById('f-industry').value||'--';
+    document.getElementById('rev-title').textContent=document.getElementById('f-title').value||'--';
+    document.getElementById('rev-desc').textContent=document.getElementById('f-desc').value||'--';
+
+    var skillsEl=document.getElementById('rev-skills');
+    skillsEl.innerHTML=selectedSkills.length?selectedSkills.map(function(s){return'<span class="ab-rev-pill">'+s+'</span>'}).join(''):'<span class="text-gray-400 text-sm">None selected</span>';
+
+    var toolsEl=document.getElementById('rev-tools');
+    toolsEl.innerHTML=selectedTools.length?selectedTools.map(function(t){return'<span class="ab-rev-pill">'+t+'</span>'}).join(''):'<span class="text-gray-400 text-sm">None selected</span>';
+
+    var label=document.getElementById('rev-personality-label');
+    var revRadar=document.getElementById('rev-radar');
+    revRadar.classList.add('hidden');
+
+    if(chosenFramework==='disc'){
+      label.textContent='DISC';
+      revRadar.classList.remove('hidden');
+      drawRadar('rev-radar',4,getSliderValues('panel-disc'));
+    }else if(chosenFramework==='big5'){
+      label.textContent='Big Five';
+      revRadar.classList.remove('hidden');
+      drawRadar('rev-radar',5,getSliderValues('panel-big5'));
+    }else if(chosenFramework==='mbti'){
+      label.textContent=mbtiLetters.join('');
+    }else if(chosenFramework==='skip'){
+      label.textContent='Balanced default';
+    }else{
+      label.textContent='Not set';
+    }
+  }
+
+  /* BUILD */
+  window.buildAgent=function(){
+    document.getElementById('build-btn').style.display='none';
+    document.getElementById('build-loading').classList.remove('hidden');
+
+    var traits={};
+    if(chosenFramework==='disc'){
+      var vals=getSliderValues('panel-disc');
+      traits={D:vals[0],I:vals[1],S:vals[2],C:vals[3]};
+    }else if(chosenFramework==='big5'){
+      var vals=getSliderValues('panel-big5');
+      traits={O:vals[0],C2:vals[1],E:vals[2],A:vals[3],ES:vals[4]};
+    }else if(chosenFramework==='mbti'){
+      traits={type:mbtiLetters.join('')};
+    }
+
+    var payload={
+      industry:document.getElementById('f-industry').value||'General',
+      jobTitle:document.getElementById('f-title').value||'AI Agent',
+      jobDescription:document.getElementById('f-desc').value||'',
+      skills:selectedSkills,
+      tools:selectedTools,
+      personalityFramework:chosenFramework||'skip',
+      personalityTraits:traits,
+      additionalContext:document.getElementById('f-extra').value||''
+    };
+
+    fetch('/api/v1/agent-builder/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    })
+    .then(function(res){return res.json()})
+    .then(function(data){
+      document.getElementById('build-loading').classList.add('hidden');
+      document.getElementById('build-btn').style.display='';
+      if(data.success){
+        showResultModal(data.agentFile,data.stats);
+      }else{
+        alert('Generation failed. Please try again.');
+      }
+    })
+    .catch(function(){
+      document.getElementById('build-loading').classList.add('hidden');
+      document.getElementById('build-btn').style.display='';
+      alert('Network error. Please try again.');
+    });
+  };
+
+  /* RESULT MODAL */
+  function showResultModal(md,stats){
+    var existing=document.getElementById('agent-result-modal');
+    if(existing) existing.remove();
+
+    var overlay=document.createElement('div');
+    overlay.id='agent-result-modal';
+    overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)';
+
+    var card=document.createElement('div');
+    card.style.cssText='background:#1e293b;border:1px solid rgba(255,255,255,.15);border-radius:16px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden';
+
+    var header=document.createElement('div');
+    header.style.cssText='padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0';
+    header.innerHTML='<div><div style="font-size:18px;font-weight:700;color:#fff">Your Agent File</div><div style="font-size:13px;color:#9ca3af;margin-top:2px">'+stats.practiceCount+' coordination patterns  |  '+stats.failureModeCount+' failure modes  |  '+stats.boundaryRuleCount+' boundary rules</div></div>';
+
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:8px';
+
+    var copyBtn=document.createElement('button');
+    copyBtn.textContent='Copy';
+    copyBtn.style.cssText='padding:6px 14px;border-radius:8px;background:rgba(0,149,255,.15);color:#93c5fd;font-size:13px;font-weight:600;border:1px solid rgba(0,149,255,.3);cursor:pointer';
+    copyBtn.addEventListener('click',function(){
+      navigator.clipboard.writeText(md).then(function(){copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy'},2000)});
+    });
+
+    var dlBtn=document.createElement('button');
+    dlBtn.textContent='Download .md';
+    dlBtn.style.cssText='padding:6px 14px;border-radius:8px;background:rgba(0,149,255,.15);color:#93c5fd;font-size:13px;font-weight:600;border:1px solid rgba(0,149,255,.3);cursor:pointer';
+    dlBtn.addEventListener('click',function(){
+      var blob=new Blob([md],{type:'text/markdown'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;
+      a.download=(document.getElementById('f-title').value||'agent').toLowerCase().replace(/\s+/g,'-')+'.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    var closeBtn=document.createElement('button');
+    closeBtn.textContent='Close';
+    closeBtn.style.cssText='padding:6px 14px;border-radius:8px;background:rgba(255,255,255,.05);color:#9ca3af;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.1);cursor:pointer';
+    closeBtn.addEventListener('click',function(){overlay.remove()});
+
+    btnRow.appendChild(copyBtn);
+    btnRow.appendChild(dlBtn);
+    btnRow.appendChild(closeBtn);
+    header.appendChild(btnRow);
+
+    var body=document.createElement('div');
+    body.style.cssText='padding:20px 24px;overflow-y:auto;flex:1';
+
+    var pre=document.createElement('pre');
+    pre.style.cssText='white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.7;color:#e2e8f0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;margin:0';
+    pre.textContent=md;
+    body.appendChild(pre);
+
+    card.appendChild(header);
+    card.appendChild(body);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click',function(e){if(e.target===overlay) overlay.remove()});
+  }
+
+  /* INDUSTRY INTELLIGENCE */
+  var industryIntel={
+    'Agency':{count:42,slug:'agency',label:'agency'},
+    'Fitness':{count:28,slug:'fitness',label:'fitness'},
+    'Healthcare':{count:35,slug:'healthcare',label:'healthcare'},
+    'SaaS':{count:51,slug:'saas',label:'SaaS'},
+    'Professional Services':{count:31,slug:'professional-services',label:'professional services'},
+    'E-Commerce':{count:39,slug:'ecommerce',label:'e-commerce'},
+    'Education':{count:22,slug:'education',label:'education'},
+    'Real Estate':{count:26,slug:'real-estate',label:'real estate'},
+    'Legal':{count:18,slug:'legal',label:'legal'},
+    'Other':{count:15,slug:'general',label:'general business'}
+  };
+  var indSelect=document.getElementById('f-industry');
+  var indCard=document.getElementById('industry-intel');
+  var indText=document.getElementById('industry-intel-text');
+  indSelect.addEventListener('change',function(){
+    var info=industryIntel[this.value];
+    if(info){
+      indText.innerHTML='OTP has <strong class="text-otp-300">'+info.count+'</strong> coordination practices for <strong class="text-otp-300">'+info.label+'</strong>. Your agent will inherit failure patterns, boundary rules, and operational heuristics from real '+info.label+' teams. <a href="/practices/'+info.slug+'" class="text-otp-400 underline hover:text-otp-300">View practices</a>';
+      indCard.classList.remove('hidden');
+    }else{indCard.classList.add('hidden')}
+  });
+
+  /* SKILL HINTS */
+  var skillPairs={
+    'Email management':['CRM updates','Follow-up sequences'],
+    'CRM updates':['Lead follow-up','Pipeline management'],
+    'Lead follow-up':['Speed to lead','Appointment booking'],
+    'Data analysis':['Report generation','Performance reporting'],
+    'Cold outreach':['Follow-up sequences','Pipeline management'],
+    'Calendar management':['Meeting scheduling','Appointment booking'],
+    'Call center management':['Speed to lead','Performance reporting'],
+    'Ad campaign monitoring':['Performance reporting','Budget tracking'],
+    'Project management':['Documentation','Quality assurance'],
+    'Pipeline management':['CRM updates','Proposal creation'],
+    'Client onboarding':['Documentation','Training and onboarding'],
+    'Customer support':['CRM updates','Documentation']
+  };
+  var skillUsageCounts={
+    'Email management':64,'CRM updates':58,'Lead follow-up':47,'Data analysis':53,
+    'Report generation':41,'Cold outreach':39,'Pipeline management':36,'Calendar management':34,
+    'Customer support':45,'Project management':42,'Call center management':22,'Performance reporting':38
+  };
+
+  function updateSkillHints(){
+    var box=document.getElementById('skills-hints');
+    var txt=document.getElementById('skills-hints-text');
+    if(!selectedSkills.length){box.classList.add('hidden');return}
+    var hints=[];
+    selectedSkills.forEach(function(s){
+      if(skillPairs[s]){
+        var comp=skillPairs[s].filter(function(c){return selectedSkills.indexOf(c)===-1});
+        if(comp.length) hints.push('Agents with <strong class="text-otp-300">'+s+'</strong> perform 40% better when paired with <strong class="text-otp-300">'+comp[0]+'</strong>.');
+      }
+      if(skillUsageCounts[s]) hints.push('<strong class="text-otp-300">'+skillUsageCounts[s]+'</strong> organizations on OTP use agents with '+s+'.');
+    });
+    if(hints.length){
+      txt.innerHTML=hints.slice(0,2).join(' ');
+      box.classList.remove('hidden');
+    }else{box.classList.add('hidden')}
+  }
+
+  /* OTP BOOST on review step */
+  function populateBoost(){
+    var ind=document.getElementById('f-industry').value;
+    var info=industryIntel[ind]||{count:15,label:'your industry'};
+    var base=info.count;
+    document.getElementById('boost-patterns').textContent=base+' coordination patterns from '+info.label+' teams';
+    document.getElementById('boost-failures').textContent=Math.round(base*0.6)+' known failure modes your agent will avoid';
+    document.getElementById('boost-boundaries').textContent=Math.round(base*0.4)+' boundary rules from real production deployments';
+  }
+
+  /* FAQ */
+  window.toggleFaq=function(btn){
+    btn.parentNode.classList.toggle('open');
+  };
+})();
+</script>

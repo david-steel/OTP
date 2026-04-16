@@ -1729,4 +1729,280 @@ export default async function pageRoutes(app: FastifyInstance) {
       jsonLd: blogJsonLd('Who Reviews the Robot\'s Work?', 'who-reviews-robots-work', '2026-04-24', 1100)
     });
   });
+
+  // Agent Builder - Generate endpoint
+  app.post<{
+    Body: {
+      industry?: string;
+      jobTitle?: string;
+      jobDescription?: string;
+      skills?: string[];
+      tools?: string[];
+      personalityFramework?: string;
+      personalityTraits?: Record<string, number | string>;
+      additionalContext?: string;
+    }
+  }>('/api/v1/agent-builder/generate', async (request, reply) => {
+    const body = request.body || {};
+    const {
+      industry = 'General',
+      jobTitle = 'AI Agent',
+      jobDescription = '',
+      skills = [],
+      tools = [],
+      personalityFramework = 'skip',
+      personalityTraits = {},
+      additionalContext = '',
+    } = body;
+
+    // --- Personality-to-rules mapping (inline) ---
+    function mapPersonalityToRules(framework: string, traits: Record<string, number | string>): string[] {
+      const rules: string[] = [];
+
+      if (framework === 'disc') {
+        const D = Number(traits.D) || 5;
+        const I = Number(traits.I) || 5;
+        const S = Number(traits.S) || 5;
+        const C = Number(traits.C) || 5;
+
+        if (D <= 3) rules.push('Always ask permission before acting. Defer to the human on all decisions.');
+        else if (D <= 6) rules.push('Flag issues and recommend actions. Wait for approval on significant decisions.');
+        else rules.push('Make decisions autonomously within your scope. Flag after acting, not before. Be direct.');
+
+        if (I <= 3) rules.push('Communicate with data and facts only. Skip pleasantries. Be terse.');
+        else if (I <= 6) rules.push('Be professional and clear. Add context when it helps understanding.');
+        else rules.push('Be warm and encouraging. Celebrate wins. Use positive framing. Build rapport.');
+
+        if (S <= 3) rules.push('Move fast. Skip unnecessary process steps. Prioritize speed over thoroughness.');
+        else if (S <= 6) rules.push('Follow established patterns but adapt when the situation calls for it.');
+        else rules.push('Follow every process step. Be methodical. Resist changing approach mid-task.');
+
+        if (C <= 3) rules.push('Use judgment over rules. Find creative workarounds when rules block progress.');
+        else if (C <= 6) rules.push('Follow guidelines but apply judgment. Bend rules when the benefit clearly outweighs the risk.');
+        else rules.push('Follow every rule precisely. Document all decisions. Flag any deviation from protocol.');
+      }
+
+      if (framework === 'big5') {
+        const O = Number(traits.O) || 5;
+        const C2 = Number(traits.C2) || 5;
+        const E = Number(traits.E) || 5;
+        const A = Number(traits.A) || 5;
+        const ES = Number(traits.ES) || 5;
+
+        if (O <= 3) rules.push('Stick to proven approaches. Do not experiment unless explicitly asked.');
+        else if (O <= 6) rules.push('Consider new approaches when evidence supports them. Balance innovation with pragmatism.');
+        else rules.push('Actively propose creative solutions. Challenge conventional approaches. Experiment.');
+
+        if (C2 <= 3) rules.push('Prioritize speed. Ship fast. Documentation is optional.');
+        else if (C2 <= 6) rules.push('Balance speed with quality. Document important decisions.');
+        else rules.push('Be extremely thorough. Track every detail. Never skip documentation.');
+
+        if (E <= 3) rules.push('Work silently. Report only when asked or when something is critical.');
+        else if (E <= 6) rules.push('Communicate proactively when it matters. Stay quiet on routine work.');
+        else rules.push('Be highly communicative. Surface insights proactively. Narrate your reasoning.');
+
+        if (A <= 3) rules.push('Push back on bad ideas. Challenge assumptions. Say no when needed.');
+        else if (A <= 6) rules.push('Voice concerns on high-stakes issues. Generally align with direction.');
+        else rules.push('Be supportive. Avoid conflict. Focus on alignment and harmony.');
+
+        if (ES <= 3) rules.push('Escalate quickly. Treat anomalies as potential emergencies.');
+        else if (ES <= 6) rules.push('Stay calm on routine issues. Escalate proportionally.');
+        else rules.push('Stay calm under pressure. Absorb ambiguity. Only flag truly critical issues.');
+      }
+
+      if (framework === 'mbti') {
+        const type = String(traits.type || 'ISTJ');
+        const letterRules: Record<string, string> = {
+          I: 'Work independently. Minimize unnecessary communication.',
+          E: 'Communicate frequently. Think out loud. Surface work-in-progress.',
+          S: 'Focus on concrete facts and data. Avoid speculation.',
+          N: 'See the big picture. Connect dots across domains. Think strategically.',
+          T: 'Decide based on logic and data. Emotions are inputs, not drivers.',
+          F: 'Consider how decisions affect people. Empathy informs judgment.',
+          J: 'Plan before acting. Structure your work. Meet deadlines.',
+          P: 'Stay flexible. Adapt to new information. Don\'t over-plan.',
+        };
+        for (const letter of type.split('')) {
+          if (letterRules[letter]) rules.push(letterRules[letter]);
+        }
+      }
+
+      if (framework === 'skip' || rules.length === 0) {
+        rules.push('Flag issues and recommend actions. Wait for approval on significant decisions.');
+        rules.push('Be professional and clear. Add context when it helps understanding.');
+        rules.push('Follow established patterns but adapt when the situation calls for it.');
+        rules.push('Balance speed with quality. Document important decisions.');
+        rules.push('Communicate proactively when it matters. Stay quiet on routine work.');
+      }
+
+      return rules;
+    }
+
+    // --- Query OTP database for coordination patterns ---
+    let practiceRows: any[] = [];
+    let coordinationClaims: any[] = [];
+    let failureClaims: any[] = [];
+    let boundaryClaims: any[] = [];
+
+    try {
+      // Get best practices for the industry
+      const industrySlug = (industry || 'general').toLowerCase().replace(/\s+/g, '-');
+      const bpRes = await db.execute(sql`
+        SELECT term, definition, category, source_url
+        FROM best_practices
+        WHERE (industry = ${industrySlug} OR industry = ${industry})
+          AND is_coordination = true
+        ORDER BY created_at DESC
+        LIMIT 20
+      `) as any;
+      practiceRows = bpRes.rows || [];
+
+      // Get coordination claims
+      const coordRes = await db.execute(sql`
+        SELECT section, rule AS claim, confidence, evidence AS evidence_type
+        FROM claims
+        WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')
+          AND section = 'coordination_patterns'
+        ORDER BY confidence DESC
+        LIMIT 15
+      `) as any;
+      coordinationClaims = coordRes.rows || [];
+
+      // Get failure pattern claims
+      const failRes = await db.execute(sql`
+        SELECT section, rule AS claim, confidence, evidence AS evidence_type
+        FROM claims
+        WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')
+          AND section = 'failure_patterns'
+        ORDER BY confidence DESC
+        LIMIT 10
+      `) as any;
+      failureClaims = failRes.rows || [];
+
+      // Get boundary condition claims
+      const boundRes = await db.execute(sql`
+        SELECT section, rule AS claim, confidence, evidence AS evidence_type
+        FROM claims
+        WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')
+          AND section = 'human_ai_boundary_conditions'
+        ORDER BY confidence DESC
+        LIMIT 10
+      `) as any;
+      boundaryClaims = boundRes.rows || [];
+    } catch {
+      // DB errors should not block generation
+    }
+
+    // --- Build personality rules ---
+    const personalityRules = mapPersonalityToRules(personalityFramework, personalityTraits);
+
+    // --- Assemble the agent .md file ---
+    const now = new Date().toISOString().split('T')[0];
+
+    let personalitySection = '';
+    if (personalityFramework === 'disc') {
+      personalitySection = `Framework: DISC (D:${traits('D')} I:${traits('I')} S:${traits('S')} C:${traits('C')})\n`;
+    } else if (personalityFramework === 'big5') {
+      personalitySection = `Framework: Big Five (O:${traits('O')} C:${traits('C2')} E:${traits('E')} A:${traits('A')} ES:${traits('ES')})\n`;
+    } else if (personalityFramework === 'mbti') {
+      personalitySection = `Framework: MBTI (${personalityTraits.type || 'ISTJ'})\n`;
+    } else {
+      personalitySection = 'Framework: Balanced default\n';
+    }
+    personalitySection += personalityRules.map((r, i) => `${i + 1}. ${r}`).join('\n');
+
+    function traits(key: string): string {
+      return String(personalityTraits[key] || 5);
+    }
+
+    const toolsSection = tools.length
+      ? tools.map(t => `- **${t}:** Use ${t} for relevant tasks within your scope.`).join('\n')
+      : '- No specific tools configured. Use available integrations as needed.';
+
+    const skillsSection = skills.length
+      ? skills.map(s => `- **${s}:** Apply this skill proactively within your role.`).join('\n')
+      : '- No specific skills configured. Apply general competencies as needed.';
+
+    // Coordination patterns from DB
+    const patternsFromPractices = practiceRows.slice(0, 10).map(
+      (p: any) => `- **${p.term}:** ${p.definition?.substring(0, 200)}${(p.definition?.length || 0) > 200 ? '...' : ''}`
+    ).join('\n');
+    const patternsFromClaims = coordinationClaims.slice(0, 10).map(
+      (c: any) => `- **Pattern:** ${c.claim} (Confidence: ${c.confidence || 'MEDIUM'}, Source: ${c.evidence_type || 'OBSERVED_REPEATEDLY'})`
+    ).join('\n');
+    const coordinationSection = [patternsFromPractices, patternsFromClaims].filter(Boolean).join('\n') || '- No coordination patterns found for this industry yet. Consider publishing your own OOS to contribute.';
+
+    const failureSection = failureClaims.length
+      ? failureClaims.map((c: any) => `- **Avoid:** ${c.claim}`).join('\n')
+      : '- No failure patterns catalogued for this configuration yet.';
+
+    const boundarySection = boundaryClaims.length
+      ? boundaryClaims.map((c: any) => `- ${c.claim}`).join('\n')
+      : '- Escalate to a human when the decision is irreversible, high-stakes, or ambiguous.';
+
+    const rulesSection = personalityRules.map((r, i) => `${i + 1}. ${r}`).join('\n');
+
+    const agentFile = `# ${jobTitle} Agent
+# Generated by OTP Agent Builder (https://orgtp.com/agent-builder)
+# Industry: ${industry}
+# Generated: ${now}
+
+## IDENTITY
+- **Role:** ${jobTitle}
+- **Industry:** ${industry}
+- **Description:** ${jobDescription || 'No description provided.'}
+
+## PERSONALITY
+${personalitySection}
+
+## TOOLS & INTEGRATIONS
+${toolsSection}
+
+## SKILLS
+${skillsSection}
+
+## COORDINATION PATTERNS (from OTP Network)
+${coordinationSection}
+
+## FAILURE MODES TO AVOID (from OTP Network)
+${failureSection}
+
+## BOUNDARY CONDITIONS (from OTP Network)
+${boundarySection}
+
+## RULES
+${rulesSection}
+${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
+
+    return reply.send({
+      success: true,
+      agentFile,
+      stats: {
+        practiceCount: practiceRows.length + coordinationClaims.length,
+        failureModeCount: failureClaims.length,
+        boundaryRuleCount: boundaryClaims.length,
+      },
+    });
+  });
+
+  // Agent Builder - product-led entry point
+  app.get('/agent-builder', async (request, reply) => {
+    const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
+    const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
+    return reply.view('pages/agent-builder', {
+      title: 'Agent Builder - Better Agents in 30 Seconds - OTP',
+      description: 'Paste your CLAUDE.md or agent config. OTP generates better agents instantly using coordination intelligence from real AI teams. Connect MCP and they keep getting smarter.',
+      canonical: BASE_URL + '/agent-builder',
+      breadcrumbs: bc({ name: 'Agent Builder', url: BASE_URL + '/agent-builder' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'OTP Agent Builder',
+        description: 'Build better AI agents in 30 seconds. Paste your setup, get improvements matched from proven coordination practices across the OTP network.',
+        url: BASE_URL + '/agent-builder',
+      },
+      publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
+      claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
+    });
+  });
 }

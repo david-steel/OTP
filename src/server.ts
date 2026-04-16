@@ -361,6 +361,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/claims/failure_patterns', priority: '0.7', changefreq: 'weekly' },
     { loc: '/claims/human_ai_boundary_conditions', priority: '0.7', changefreq: 'weekly' },
     { loc: '/practices', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/agent-builder', priority: '0.9', changefreq: 'weekly' },
     { loc: '/generate', priority: '0.8', changefreq: 'monthly' },
     { loc: '/industries', priority: '0.7', changefreq: 'weekly' },
     { loc: '/experts', priority: '0.8', changefreq: 'weekly' },
@@ -468,7 +469,7 @@ await app.register(import('./routes/pages/pages.js'));
 // Custom 404 handler -- return HTML instead of Fastify's default JSON
 app.setNotFoundHandler(async (request, reply) => {
   reply.status(404);
-  return reply.view('pages/home-v3', {
+  return reply.view('pages/404', {
     title: 'Page Not Found - OTP',
     description: 'The page you are looking for does not exist.',
     canonical: 'https://orgtp.com/',
