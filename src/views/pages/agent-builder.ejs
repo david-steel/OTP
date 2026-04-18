@@ -911,5 +911,19 @@
   window.toggleFaq=function(btn){
     btn.parentNode.classList.toggle('open');
   };
+
+  /* Pre-fill from homepage redirect */
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('industry')) {
+    var industrySelect = document.getElementById('f-industry');
+    if (industrySelect) {
+      industrySelect.value = params.get('industry');
+      industrySelect.dispatchEvent(new Event('change'));
+    }
+  }
+  if (params.get('title')) {
+    var titleInput = document.getElementById('f-title');
+    if (titleInput) titleInput.value = decodeURIComponent(params.get('title'));
+  }
 })();
 </script>

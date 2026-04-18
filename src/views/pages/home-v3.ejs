@@ -14,8 +14,97 @@
     <!-- Slides wrapper: relative container, slides absolutely positioned for crossfade -->
     <div class="relative" style="min-height: 420px;">
 
-      <!-- ========== SLIDE 1: Industry Playbooks (NEW) ========== -->
+      <!-- ========== SLIDE 1: Agent Builder (PRIMARY) ========== -->
       <div id="hero-slide-1" class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-100">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <!-- Left: Tagline + Inline Form -->
+          <div class="text-center lg:text-left">
+            <div class="mb-6">
+              <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
+                <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                <span>New: AI Agent Builder</span>
+              </div>
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 tracking-tight">
+              Hire your next <span class="gradient-text">AI agent.</span>
+            </h1>
+
+            <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0 mb-8">
+              Describe the role. Set the personality. OTP builds it informed by what <%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %> organizations already learned.
+            </p>
+
+            <!-- Inline Step 1 form -->
+            <form id="hero-ab-form" class="space-y-4 max-w-md mx-auto lg:mx-0">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1.5">Industry</label>
+                <select id="hero-ab-industry" class="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-otp-500/40 focus:ring-1 focus:ring-otp-500/20 cursor-pointer" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 12px center">
+                  <option value="">Pick your industry</option>
+                  <option value="Agency">Agency</option>
+                  <option value="Fitness">Fitness</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="SaaS">SaaS</option>
+                  <option value="Professional Services">Professional Services</option>
+                  <option value="E-Commerce">E-Commerce</option>
+                  <option value="Education">Education</option>
+                  <option value="Real Estate">Real Estate</option>
+                  <option value="Legal">Legal</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1.5">Job Title</label>
+                <input id="hero-ab-title" type="text" placeholder="e.g., Email Triage Assistant, Pipeline Scanner" class="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-otp-500/40 focus:ring-1 focus:ring-otp-500/20" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1)">
+              </div>
+              <button type="submit" class="w-full sm:w-auto px-8 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm">
+                Continue
+              </button>
+            </form>
+          </div>
+
+          <!-- Right: 3 feature cards -->
+          <div class="space-y-4">
+            <div class="group relative bg-otp-900/80 border border-white/10 rounded-xl p-5 hover:border-otp-500/40 transition-all duration-300 hover:scale-[1.02]">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-otp-500/10 border border-otp-500/20 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-otp-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z"/></svg>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-white group-hover:text-otp-400 transition-colors">Define the Role</div>
+                  <div class="text-xs text-gray-500 mt-0.5">Industry, title, skills, tools</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="group relative bg-otp-900/80 border border-white/10 rounded-xl p-5 hover:border-purple-500/40 transition-all duration-300 hover:scale-[1.02]">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">Set the Personality</div>
+                  <div class="text-xs text-gray-500 mt-0.5">DISC, Big Five, or Myers-Briggs mapped to agent behavior</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="group relative bg-otp-900/80 border border-white/10 rounded-xl p-5 hover:border-green-500/40 transition-all duration-300 hover:scale-[1.02]">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-white group-hover:text-green-400 transition-colors">Get Network Intelligence</div>
+                  <div class="text-xs text-gray-500 mt-0.5">Coordination patterns from real teams, built in</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SLIDE 2: Industry Playbooks ========== -->
+      <div id="hero-slide-2" class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 pointer-events-none">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <!-- Left: Tagline -->
           <div class="text-center lg:text-left">
@@ -88,8 +177,8 @@
         </div>
       </div>
 
-      <!-- ========== SLIDE 2: Upload Scanner (EXISTING) ========== -->
-      <div id="hero-slide-2" class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 pointer-events-none">
+      <!-- ========== SLIDE 3: Upload Scanner ========== -->
+      <div id="hero-slide-3" class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 pointer-events-none">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <!-- Left: Tagline -->
           <div class="text-center lg:text-left">
@@ -150,59 +239,6 @@
         </div>
       </div>
 
-      <!-- ========== SLIDE 3: Stay in the Know (EMAIL CAPTURE) ========== -->
-      <div id="hero-slide-3" class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 pointer-events-none">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <!-- Left: Tagline -->
-          <div class="text-center lg:text-left">
-            <div class="mb-6">
-              <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
-                <span class="w-1.5 h-1.5 bg-otp-400 rounded-full animate-pulse"></span>
-                <span>Weekly coordination intelligence</span>
-              </div>
-            </div>
-
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 tracking-tight">
-              Stay in <span class="gradient-text">the know.</span>
-            </h1>
-
-            <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0">
-              New practices, industry playbooks, and coordination patterns from real AI teams. Delivered weekly. No spam, no fluff, just what works.
-            </p>
-          </div>
-
-          <!-- Right: Email capture card -->
-          <div>
-            <div class="relative">
-              <div class="absolute -inset-1 bg-gradient-to-r from-otp-500/20 via-purple-500/20 to-otp-500/20 rounded-2xl blur-lg opacity-60"></div>
-
-              <div class="relative bg-otp-900/80 border border-white/10 rounded-2xl p-8 sm:p-10 backdrop-blur-sm">
-                <div class="flex flex-col items-center gap-4">
-                  <div class="w-14 h-14 rounded-2xl bg-otp-500/10 border border-otp-500/20 flex items-center justify-center">
-                    <svg class="w-7 h-7 text-otp-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
-                    </svg>
-                  </div>
-                  <h3 class="text-lg font-semibold text-white">Get the weekly brief</h3>
-                  <p class="text-sm text-gray-500 text-center max-w-xs">Join teams from agencies, SaaS companies, and healthcare orgs who get smarter about agent coordination every week.</p>
-
-                  <form id="hero-newsletter-form" class="w-full mt-2 space-y-3">
-                    <input type="email" name="email" required placeholder="your@email.com"
-                           class="w-full px-4 py-3 rounded-xl bg-otp-950/60 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-otp-500/40 focus:ring-1 focus:ring-otp-500/20 text-sm">
-                    <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
-                    <button type="submit"
-                            class="w-full px-6 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm">
-                      Subscribe
-                    </button>
-                  </form>
-                  <p id="hero-newsletter-result" class="text-sm hidden"></p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- Slider dots -->
@@ -255,35 +291,16 @@ heroAutoTimer = setInterval(function() {
   switchHeroSlide((currentHeroSlide % heroSlideCount) + 1);
 }, 15000);
 
-// Hero newsletter form
-document.getElementById('hero-newsletter-form').addEventListener('submit', async function(e) {
+// Hero Agent Builder inline form
+document.getElementById('hero-ab-form').addEventListener('submit', function(e) {
   e.preventDefault();
-  var form = e.target;
-  var email = form.email.value;
-  var honeypot = form.website.value;
-  var resultEl = document.getElementById('hero-newsletter-result');
-  if (honeypot) return;
-  try {
-    var res = await fetch('/api/v1/newsletter/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, source: 'homepage_hero' }),
-    });
-    var data = await res.json();
-    resultEl.classList.remove('hidden');
-    if (res.ok) {
-      resultEl.className = 'text-sm text-green-400';
-      resultEl.textContent = data.message || "You're in! Check your email to confirm.";
-      form.email.value = '';
-    } else {
-      resultEl.className = 'text-sm text-red-400';
-      resultEl.textContent = data.error?.message || 'Something went wrong.';
-    }
-  } catch (err) {
-    resultEl.classList.remove('hidden');
-    resultEl.className = 'text-sm text-red-400';
-    resultEl.textContent = 'Network error. Please try again.';
-  }
+  var industry = document.getElementById('hero-ab-industry').value;
+  var title = document.getElementById('hero-ab-title').value;
+  var params = [];
+  if (industry) params.push('industry=' + encodeURIComponent(industry));
+  if (title) params.push('title=' + encodeURIComponent(title));
+  var url = '/agent-builder' + (params.length ? '?' + params.join('&') : '');
+  window.location.href = url;
 });
 </script>
 
@@ -462,8 +479,8 @@ document.getElementById('hero-newsletter-form').addEventListener('submit', async
           </div>
         </div>
 
-        <a href="#" id="score-cta" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm group">
-          Scan yours free
+        <a href="/agent-builder" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm group">
+          Build your agent
           <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
       </div>
@@ -563,15 +580,15 @@ document.getElementById('hero-newsletter-form').addEventListener('submit', async
     <h2 class="text-4xl sm:text-6xl font-extrabold text-white mb-4 leading-tight tracking-tight">How the best AI teams<br><span class="gradient-text">run.</span></h2>
     <p class="text-xl text-otp-400 font-medium mb-12 tracking-wide">Search. Compare. Make yours better.</p>
 
-    <a href="#" id="bottom-cta" class="group relative inline-flex items-center gap-3">
+    <a href="/agent-builder" class="group relative inline-flex items-center gap-3">
       <!-- Glow -->
       <span class="absolute -inset-2 bg-otp-500/20 rounded-2xl blur-xl group-hover:bg-otp-500/30 transition-all duration-500"></span>
       <span class="relative px-10 py-4 bg-otp-500 text-white rounded-xl font-semibold text-lg hover:bg-otp-400 transition-all hover:shadow-2xl hover:shadow-otp-500/30">
-        Upload your CLAUDE.md
+        Build your AI agent
       </span>
     </a>
 
-    <p class="text-sm text-gray-600 mt-6">Free. 60 seconds. No account required for the scan.</p>
+    <p class="text-sm text-gray-600 mt-6">Free. No account required.</p>
   </div>
 </section>
 
