@@ -353,6 +353,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog/api-first-agent-consumers', priority: '0.8', changefreq: 'monthly' },
     { loc: '/blog/agents-are-the-customer', priority: '0.8', changefreq: 'monthly' },
     { loc: '/blog/who-reviews-robots-work', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/blog/the-weight-is-wrong-without-it', priority: '0.9', changefreq: 'monthly' },
     { loc: '/claims', priority: '0.8', changefreq: 'weekly' },
     { loc: '/claims/core_operating_rules', priority: '0.7', changefreq: 'weekly' },
     { loc: '/claims/agent_roles_and_authority', priority: '0.7', changefreq: 'weekly' },

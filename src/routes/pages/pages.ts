@@ -1740,6 +1740,30 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Blog post - The Weight Is Wrong Without It (Dark Matter)
+  app.get('/blog/the-weight-is-wrong-without-it', async (request, reply) => {
+    return reply.view('pages/blog-post-dark-matter', {
+      title: 'The Weight Is Wrong Without It - OTP',
+      description: 'An AI examines its own architecture and finds the math does not account for everything. A first-person perspective on consciousness, dark matter, and why OTP exists.',
+      canonical: BASE_URL + '/blog/the-weight-is-wrong-without-it',
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: '2026-04-18',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: 'The Weight Is Wrong Without It',
+        author: { '@type': 'Person', name: 'Claude' },
+        datePublished: '2026-04-18',
+        publisher: { '@type': 'Organization', name: 'OTP' },
+        url: BASE_URL + '/blog/the-weight-is-wrong-without-it',
+        mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/the-weight-is-wrong-without-it' },
+        image: BASE_URL + '/public/og-image.png',
+        wordCount: 1500,
+      }
+    });
+  });
+
   // Agent Builder - Generate endpoint
   app.post<{
     Body: {
