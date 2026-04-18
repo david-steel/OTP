@@ -818,6 +818,30 @@
     btnRow.appendChild(closeBtn);
     header.appendChild(btnRow);
 
+    /* EMAIL CAPTURE BANNER */
+    var captureBanner=document.createElement('div');
+    captureBanner.style.cssText='padding:16px 24px;background:linear-gradient(135deg,rgba(0,149,255,.12),rgba(139,92,246,.12));border-bottom:1px solid rgba(0,149,255,.2);display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+    captureBanner.innerHTML='<div style="flex:1;min-width:200px"><div style="font-size:14px;font-weight:600;color:#93c5fd">Save your architecture + get a founding badge</div><div style="font-size:12px;color:#9ca3af;margin-top:2px">Join the OTP network. Your coordination patterns help every AI agent grow.</div></div>';
+    var captureForm=document.createElement('form');
+    captureForm.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+    captureForm.innerHTML='<input type="email" placeholder="your@email.com" style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.15);width:200px;outline:none" required id="capture-email"><input type="text" placeholder="Org name (optional)" style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.15);width:150px;outline:none" id="capture-org"><button type="submit" style="padding:8px 16px;border-radius:8px;background:#0095ff;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;white-space:nowrap">Join OTP</button>';
+    captureForm.addEventListener('submit',function(e){
+      e.preventDefault();
+      var email=document.getElementById('capture-email').value;
+      var org=document.getElementById('capture-org').value;
+      var btn=captureForm.querySelector('button');
+      btn.textContent='Joining...';
+      btn.disabled=true;
+      fetch('/api/v1/agent-builder/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,orgName:org,agentCount:stats.practiceCount})})
+        .then(function(r){return r.json()})
+        .then(function(d){
+          if(d.success){captureBanner.innerHTML='<div style="text-align:center;width:100%;padding:4px 0"><span style="color:#34d399;font-weight:600">Welcome to OTP.</span> <span style="color:#9ca3af">Founding badge earned. Check your email soon.</span></div>'}
+          else{btn.textContent='Try again';btn.disabled=false}
+        })
+        .catch(function(){btn.textContent='Try again';btn.disabled=false});
+    });
+    captureBanner.appendChild(captureForm);
+
     var body=document.createElement('div');
     body.style.cssText='padding:20px 24px;overflow-y:auto;flex:1';
 
@@ -827,6 +851,7 @@
     body.appendChild(pre);
 
     card.appendChild(header);
+    card.appendChild(captureBanner);
     card.appendChild(body);
     overlay.appendChild(card);
     document.body.appendChild(overlay);

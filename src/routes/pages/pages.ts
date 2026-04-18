@@ -2039,4 +2039,45 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
     });
   });
+
+  // Email capture for agent-builder
+  app.post<{
+    Body: { email: string; orgName?: string; agentCount?: number };
+  }>('/api/v1/agent-builder/capture', async (request, reply) => {
+    const { email, orgName, agentCount } = request.body || {};
+    if (!email || !email.includes('@')) {
+      return reply.status(400).send({ success: false, error: 'Valid email required' });
+    }
+
+    try {
+      await pool.query(
+        `INSERT INTO agent_builder_leads (email, org_name, agent_count, created_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (email) DO UPDATE SET org_name = COALESCE($2, agent_builder_leads.org_name), agent_count = COALESCE($3, agent_builder_leads.agent_count)`,
+        [email.toLowerCase().trim(), orgName || null, agentCount || null]
+      );
+      return reply.send({ success: true, message: 'Welcome to OTP. Founding badge earned.' });
+    } catch (err: any) {
+      // If table doesn't exist, create it and retry
+      if (err.code === '42P01') {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS agent_builder_leads (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            org_name VARCHAR(255),
+            agent_count INTEGER,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          )
+        `);
+        await pool.query(
+          `INSERT INTO agent_builder_leads (email, org_name, agent_count, created_at)
+           VALUES ($1, $2, $3, NOW()) ON CONFLICT (email) DO NOTHING`,
+          [email.toLowerCase().trim(), orgName || null, agentCount || null]
+        );
+        return reply.send({ success: true, message: 'Welcome to OTP. Founding badge earned.' });
+      }
+      request.log.error(err);
+      return reply.status(500).send({ success: false, error: 'Server error' });
+    }
+  });
 }
