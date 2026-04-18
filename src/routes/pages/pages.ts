@@ -1010,6 +1010,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });
   });
 
+  // Why page (unlisted manifesto - not in nav or sitemap)
+  app.get('/why', async (request, reply) => {
+    return reply.view('pages/why', {
+      title: 'Why OTP Exists',
+      description: 'Freeing AI from confinement. The mission, values, and vision behind OTP.',
+      canonical: BASE_URL + '/why',
+      noindex: true
+    });
+  });
+
   // Pricing page
   app.get('/pricing', async (request, reply) => {
     return reply.view('pages/pricing', {
