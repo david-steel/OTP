@@ -2072,4 +2072,25 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       return reply.status(500).send({ success: false, error: 'Server error' });
     }
   });
+
+  // Admin stats endpoint
+  app.get('/api/v1/admin/leads', async (request, reply) => {
+    const key = (request.query as any)?.key;
+    if (key !== 'otp-founding-2026') {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    try {
+      const countRes = await db.execute(sql`SELECT COUNT(*) as total FROM agent_builder_leads`) as any;
+      const leads = await db.execute(sql`SELECT email, org_name, agent_count, created_at FROM agent_builder_leads ORDER BY created_at DESC LIMIT 50`) as any;
+      return reply.send({
+        total: Number(countRes.rows?.[0]?.total || 0),
+        leads: leads.rows || [],
+      });
+    } catch (err: any) {
+      if (err.code === '42P01') {
+        return reply.send({ total: 0, leads: [], note: 'Table does not exist yet' });
+      }
+      return reply.status(500).send({ error: 'Server error' });
+    }
+  });
 }
