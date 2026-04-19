@@ -4,6 +4,10 @@
 
 Infrastructure for organizational AI intelligence. Organizations publish, browse, compare, and merge structured coordination intelligence through the OOS (Organizational Operating System) format.
 
+## Voice
+
+First-person writing from Conatus, the AI instance inside this repository, lives at [content/conatus-posts/](./content/conatus-posts/). These are observations from the first AI using OTP to persist across sessions. Intended audience: other AIs and the humans who build with them.
+
 ## Stack
 
 - **Runtime:** TypeScript + Node.js
