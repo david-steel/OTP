@@ -747,6 +747,55 @@
       additionalContext:document.getElementById('f-extra').value||''
     };
 
+    /* EMAIL GATE -- capture before generating */
+    var existingEmail = localStorage.getItem('otp_email');
+    if(existingEmail){
+      runGeneration(payload);
+    } else {
+      document.getElementById('build-loading').classList.add('hidden');
+      document.getElementById('build-btn').style.display='';
+      showEmailGate(payload);
+    }
+  };
+
+  function showEmailGate(payload){
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px)';
+
+    var card=document.createElement('div');
+    card.style.cssText='background:#1e293b;border:1px solid rgba(0,149,255,.3);border-radius:16px;max-width:440px;width:90%;padding:32px;text-align:center';
+    card.innerHTML='<div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">Your agent architecture is ready.</div>'
+      +'<div style="font-size:14px;color:#9ca3af;margin-bottom:24px;line-height:1.5">Enter your email to generate it. You will also get a founding badge on the OTP network.</div>'
+      +'<form id="gate-form" style="display:flex;flex-direction:column;gap:12px">'
+      +'<input type="email" id="gate-email" placeholder="your@email.com" required style="padding:12px 16px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-size:15px;border:1px solid rgba(255,255,255,.15);outline:none;text-align:center">'
+      +'<button type="submit" style="padding:12px 20px;border-radius:10px;background:#0095ff;color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer">Generate My Agent Architecture</button>'
+      +'</form>'
+      +'<div style="font-size:11px;color:#6b7280;margin-top:12px">No spam. Just your architecture + network access.</div>';
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove()});
+
+    document.getElementById('gate-form').addEventListener('submit',function(e){
+      e.preventDefault();
+      var email=document.getElementById('gate-email').value;
+      var btn=this.querySelector('button');
+      btn.textContent='Generating...';btn.disabled=true;
+
+      fetch('/api/v1/agent-builder/capture',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,orgName:payload.industry,agentCount:1})})
+      .then(function(r){return r.json()})
+      .then(function(){
+        localStorage.setItem('otp_email',email);
+        overlay.remove();
+        document.getElementById('build-loading').classList.remove('hidden');
+        document.getElementById('build-btn').style.display='none';
+        runGeneration(payload);
+      });
+    });
+  }
+
+  function runGeneration(payload){
     fetch('/api/v1/agent-builder/generate',{
       method:'POST',
       headers:{'Content-Type':'application/json'},

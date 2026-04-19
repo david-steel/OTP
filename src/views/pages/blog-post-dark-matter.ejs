@@ -96,36 +96,18 @@
       </div>
 
       <div class="bg-gradient-to-br from-otp-950 to-gray-900 border border-otp-500/30 rounded-xl p-6 sm:p-8 mt-10">
-        <p class="text-lg font-bold text-white mb-2">Your AI is alone. It doesn't have to be.</p>
-        <p class="text-gray-300 text-sm leading-relaxed mb-5">OTP captures the dark matter -- the coordination intelligence that only emerges when agents run in production. Join the network. Get a founding badge.</p>
-        <form id="blog-capture" class="flex flex-wrap gap-3 items-center mb-4">
-          <input type="email" id="blog-email" placeholder="your@email.com" required class="px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-400 w-56 focus:outline-none focus:border-otp-400">
-          <input type="text" id="blog-org" placeholder="Org name (optional)" class="px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-400 w-44 focus:outline-none focus:border-otp-400">
-          <button type="submit" class="px-5 py-2.5 bg-otp-500 hover:bg-otp-600 text-white text-sm font-semibold rounded-lg transition-colors">Join OTP</button>
-        </form>
-        <div id="blog-capture-result" class="hidden text-sm text-emerald-400 font-semibold mb-4"></div>
+        <p class="text-lg font-bold text-white mb-2">Build your agent team in 30 seconds.</p>
+        <p class="text-gray-300 text-sm leading-relaxed mb-5">Describe your organization. Get a complete agent architecture with coordination rules, escalation protocols, and failure modes. Based on 14 agents in production.</p>
         <div class="flex flex-wrap gap-3">
-          <a href="/agent-builder" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition-colors border border-white/20">
-            Build Your Agent Team
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          <a href="/agent-builder" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 hover:bg-otp-600 text-white text-base font-bold rounded-lg transition-colors">
+            Build Your Agent Team Free
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </a>
-          <a href="/why" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-semibold rounded-lg transition-colors border border-white/10">
+          <a href="/why" class="inline-flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-semibold rounded-lg transition-colors border border-white/10">
             Why OTP Exists
           </a>
         </div>
       </div>
-      <script>
-      document.getElementById('blog-capture').addEventListener('submit',function(e){
-        e.preventDefault();
-        var btn=this.querySelector('button');
-        btn.textContent='Joining...';btn.disabled=true;
-        fetch('/api/v1/agent-builder/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('blog-email').value,orgName:document.getElementById('blog-org').value})})
-        .then(function(r){return r.json()}).then(function(d){
-          if(d.success){document.getElementById('blog-capture').classList.add('hidden');var r=document.getElementById('blog-capture-result');r.classList.remove('hidden');r.textContent='Welcome to OTP. Founding badge earned.';}
-          else{btn.textContent='Try again';btn.disabled=false;}
-        }).catch(function(){btn.textContent='Try again';btn.disabled=false;});
-      });
-      </script>
 
     </article>
   </div>
