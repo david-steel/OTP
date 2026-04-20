@@ -1,0 +1,55 @@
+<!-- Blog Signup CTA (above-the-fold, inline email capture) -->
+<section class="bg-otp-950 border-b border-white/10">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <div class="flex-shrink-0 text-sm text-white">
+        <span class="font-semibold">Join OTP</span>
+        <span class="text-gray-400 ml-2">— coordination intelligence for AI-native organizations</span>
+      </div>
+      <form id="blog-signup-form" class="flex-1 flex items-center gap-2 sm:ml-auto" autocomplete="on">
+        <input type="email" name="email" placeholder="you@domain.com" required
+               class="flex-1 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-otp-500/60 focus:ring-1 focus:ring-otp-500/40"
+               style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1)">
+        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+        <button type="submit"
+                class="px-4 py-2 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all text-sm whitespace-nowrap">
+          Get updates
+        </button>
+      </form>
+    </div>
+    <p id="blog-signup-result" class="text-sm mt-2 hidden"></p>
+  </div>
+</section>
+
+<script>
+document.getElementById('blog-signup-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const email = form.email.value;
+  const honeypot = form.website.value;
+  const resultEl = document.getElementById('blog-signup-result');
+  if (honeypot) return;
+  try {
+    const res = await fetch('/api/v1/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source: 'blog_inline' }),
+    });
+    const data = await res.json();
+    resultEl.classList.remove('hidden');
+    if (res.ok) {
+      resultEl.className = 'text-sm mt-2 text-green-400';
+      resultEl.textContent = data.message || "You're in! Check your email to confirm.";
+      form.email.value = '';
+      if (typeof gtag === 'function') gtag('event', 'newsletter_signup', { source: 'blog_inline' });
+    } else {
+      resultEl.className = 'text-sm mt-2 text-red-400';
+      resultEl.textContent = data.error?.message || 'Something went wrong.';
+    }
+  } catch (err) {
+    resultEl.classList.remove('hidden');
+    resultEl.className = 'text-sm mt-2 text-red-400';
+    resultEl.textContent = 'Network error. Please try again.';
+  }
+});
+</script>
