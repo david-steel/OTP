@@ -1,10 +1,32 @@
 import type { FastifyInstance } from 'fastify';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import ejs from 'ejs';
 import { db } from '../../config/database.js';
 import { newsletterSubscribers, practiceVotes, bestPractices } from '../../db/schema.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
+import { sendEmail } from '../../config/email.js';
 import crypto from 'crypto';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function sendWelcomeEmail(email: string): Promise<void> {
+  try {
+    const templatePath = path.resolve(__dirname, '../../templates/emails/newsletter-welcome.ejs');
+    const html = await ejs.renderFile(templatePath, { email });
+    await sendEmail({
+      to: email,
+      subject: "You're in -- welcome to OTP",
+      html,
+      from: 'David Steel <notifications@orgtp.com>',
+    });
+  } catch (err) {
+    console.error('[newsletter] Welcome email failed to send:', err);
+  }
+}
 
 const subscribeRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 3 });
 const voteRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 30 });
@@ -50,33 +72,32 @@ export default async function newsletterRoutes(app: FastifyInstance) {
 
     if (existing) {
       if (existing.unsubscribedAt) {
-        // Re-subscribe
+        // Re-subscribe (single opt-in, welcome email)
         await db.update(newsletterSubscribers)
           .set({
             unsubscribedAt: null,
-            doubleOptInConfirmed: false,
-            confirmToken: crypto.randomBytes(32).toString('hex'),
-            tokenExpiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            doubleOptInConfirmed: true,
+            confirmToken: null,
+            tokenExpiresAt: null,
           })
           .where(eq(newsletterSubscribers.id, existing.id));
-        // TODO: Send confirmation email via Resend
-        return { message: "Welcome back! Check your email to confirm your subscription." };
+        await sendWelcomeEmail(email.toLowerCase());
+        return { message: "Welcome back -- check your inbox." };
       }
-      return { message: "You're already subscribed!" };
+      return { message: "You're already subscribed." };
     }
-
-    const confirmToken = crypto.randomBytes(32).toString('hex');
 
     await db.insert(newsletterSubscribers).values({
       email: email.toLowerCase(),
       source,
-      confirmToken,
-      tokenExpiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      doubleOptInConfirmed: true,
+      confirmToken: null,
+      tokenExpiresAt: null,
     });
 
-    // TODO: Send confirmation email via Resend with link to /api/v1/newsletter/confirm/:token
+    await sendWelcomeEmail(email.toLowerCase());
 
-    return { message: "You're in! Check your email to confirm your subscription." };
+    return { message: "You're in -- check your inbox." };
   });
 
   // ============================================================
