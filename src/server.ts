@@ -44,22 +44,46 @@ app.get('/health', async () => {
   };
 });
 
-// Clerk authentication — boot-resilient. If Clerk plugin fails to register
-// (network hang, key validation failure, etc.) the server still boots and
-// the healthcheck passes. Auth-dependent routes will 500 until resolved.
+// Clerk authentication — boot-resilient. Clerk uses fastify-plugin which
+// breaks encapsulation, so its preHandler hook runs on EVERY route (including
+// /health). If the publishable key is malformed, Clerk throws "Publishable key
+// not valid" on every request → healthcheck fails → Railway rolls back.
+// We pre-validate the key format before registering so a bad key skips
+// Clerk entirely rather than taking down the whole site.
 {
-  const pk = process.env.CLERK_PUBLISHABLE_KEY || '';
-  const sk = process.env.CLERK_SECRET_KEY || '';
-  console.log('[startup][clerk] pk present:', !!pk, 'prefix:', pk.slice(0, 8), 'len:', pk.length);
-  console.log('[startup][clerk] sk present:', !!sk, 'prefix:', sk.slice(0, 8), 'len:', sk.length);
-  try {
-    await Promise.race([
-      app.register(clerkPlugin, { publishableKey: pk, secretKey: sk }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Clerk plugin register timeout 10s')), 10000)),
-    ]);
-    console.log('[startup][clerk] plugin registered OK');
-  } catch (err) {
-    console.error('[startup][clerk] FAILED to register Clerk plugin — server will boot without auth:', err);
+  const pkRaw = process.env.CLERK_PUBLISHABLE_KEY || '';
+  const skRaw = process.env.CLERK_SECRET_KEY || '';
+  const pk = pkRaw.trim();
+  const sk = skRaw.trim();
+  console.log('[startup][clerk] pk present:', !!pk, 'prefix:', pk.slice(0, 8), 'len:', pk.length, 'raw_len:', pkRaw.length);
+  console.log('[startup][clerk] sk present:', !!sk, 'prefix:', sk.slice(0, 8), 'len:', sk.length, 'raw_len:', skRaw.length);
+
+  const isValidPk = (k: string): boolean => {
+    try {
+      if (!k.startsWith('pk_live_') && !k.startsWith('pk_test_')) return false;
+      const parts = k.split('_');
+      if (parts.length !== 3 || !parts[2]) return false;
+      const decoded = Buffer.from(parts[2], 'base64').toString();
+      if (!decoded.endsWith('$')) return false;
+      const domain = decoded.slice(0, -1);
+      return domain.includes('.') && !domain.includes('$');
+    } catch {
+      return false;
+    }
+  };
+
+  if (!isValidPk(pk)) {
+    console.error('[startup][clerk] Publishable key failed format validation — SKIPPING clerkPlugin registration. Auth disabled until fixed.');
+  } else {
+    try {
+      await Promise.race([
+        app.register(clerkPlugin, { publishableKey: pk, secretKey: sk }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Clerk plugin register timeout 10s')), 10000)),
+      ]);
+      console.log('[startup][clerk] plugin registered OK');
+    } catch (err) {
+      console.error('[startup][clerk] FAILED to register Clerk plugin — server will boot without auth:', err);
+    }
   }
 }
 
