@@ -29,6 +29,21 @@ await app.register(fastifyCors, {
   credentials: true,
 });
 
+// Healthcheck — registered BEFORE Clerk plugin so Clerk's global preHandler
+// does not run on /health. Otherwise, if Clerk rejects the key
+// ("Publishable key not valid"), every request including /health returns 500
+// and Railway rolls back the deploy.
+app.get('/health', async () => {
+  return {
+    status: 'ok',
+    version: '0.1.0',
+    phase: 'mvp',
+    commitSha: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'unknown',
+    branch: process.env.RAILWAY_GIT_BRANCH || 'unknown',
+    deployedAt: process.env.RAILWAY_DEPLOYMENT_ID ? new Date().toISOString() : 'unknown',
+  };
+});
+
 // Clerk authentication — boot-resilient. If Clerk plugin fails to register
 // (network hang, key validation failure, etc.) the server still boots and
 // the healthcheck passes. Auth-dependent routes will 500 until resolved.
@@ -103,18 +118,6 @@ app.addHook('onSend', async (request, reply) => {
   // Suppress Clerk internal headers from public responses
   reply.removeHeader('x-clerk-auth-status');
   reply.removeHeader('x-clerk-auth-reason');
-});
-
-// Health check — includes deploy SHA so drift detectors can compare against git HEAD
-app.get('/health', async () => {
-  return {
-    status: 'ok',
-    version: '0.1.0',
-    phase: 'mvp',
-    commitSha: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'unknown',
-    branch: process.env.RAILWAY_GIT_BRANCH || 'unknown',
-    deployedAt: process.env.RAILWAY_DEPLOYMENT_ID ? new Date().toISOString() : 'unknown',
-  };
 });
 
 // install.sh at root -- one-line installer for Claude Code
