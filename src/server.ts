@@ -29,11 +29,24 @@ await app.register(fastifyCors, {
   credentials: true,
 });
 
-// Clerk authentication
-await app.register(clerkPlugin, {
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-  secretKey: process.env.CLERK_SECRET_KEY,
-});
+// Clerk authentication — boot-resilient. If Clerk plugin fails to register
+// (network hang, key validation failure, etc.) the server still boots and
+// the healthcheck passes. Auth-dependent routes will 500 until resolved.
+{
+  const pk = process.env.CLERK_PUBLISHABLE_KEY || '';
+  const sk = process.env.CLERK_SECRET_KEY || '';
+  console.log('[startup][clerk] pk present:', !!pk, 'prefix:', pk.slice(0, 8), 'len:', pk.length);
+  console.log('[startup][clerk] sk present:', !!sk, 'prefix:', sk.slice(0, 8), 'len:', sk.length);
+  try {
+    await Promise.race([
+      app.register(clerkPlugin, { publishableKey: pk, secretKey: sk }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Clerk plugin register timeout 10s')), 10000)),
+    ]);
+    console.log('[startup][clerk] plugin registered OK');
+  } catch (err) {
+    console.error('[startup][clerk] FAILED to register Clerk plugin — server will boot without auth:', err);
+  }
+}
 
 // Static files (1 year cache for immutable assets)
 await app.register(fastifyStatic, {
