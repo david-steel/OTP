@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { createHash } from 'crypto';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import { db } from '../config/database.js';
 import { apiKeys, organizations } from '../db/schema.js';
 
@@ -48,9 +48,9 @@ export async function resolveApiKey(request: FastifyRequest): Promise<ApiKeyCont
   // Check expiry
   if (row.expiresAt && row.expiresAt < new Date()) return null;
 
-  // Update last_used_at (fire and forget)
+  // Update last_used_at + increment use_count (fire and forget)
   db.update(apiKeys)
-    .set({ lastUsedAt: new Date() })
+    .set({ lastUsedAt: new Date(), useCount: sql`${apiKeys.useCount} + 1` })
     .where(eq(apiKeys.id, row.id))
     .execute()
     .catch(() => {});

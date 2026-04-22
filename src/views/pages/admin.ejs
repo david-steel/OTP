@@ -44,35 +44,52 @@
 
   <!-- Users table -->
   <div class="mb-8">
-    <h3 class="font-semibold mb-3">Users (<%= users.length %>)</h3>
+    <div class="flex items-baseline justify-between mb-3">
+      <h3 class="font-semibold">Users (<%= users.length %>)</h3>
+      <a href="/admin/users.csv" class="text-xs text-otp-600 hover:underline">Download CSV</a>
+    </div>
     <div class="bg-white border rounded-lg overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-left text-xs text-gray-500">
           <tr>
+            <th class="px-4 py-2"></th>
             <th class="px-4 py-2">Email</th>
             <th class="px-4 py-2">Signed up</th>
             <th class="px-4 py-2">Last login</th>
             <th class="px-4 py-2">Org</th>
-            <th class="px-4 py-2 text-center">MCP</th>
-            <th class="px-4 py-2 text-center">Published</th>
+            <th class="px-4 py-2 text-right">MCP calls</th>
+            <th class="px-4 py-2 text-right">Published</th>
             <th class="px-4 py-2 text-center">Onboarding</th>
           </tr>
         </thead>
         <tbody>
           <% if (users.length === 0) { %>
-            <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400 text-xs">No users yet. Once someone signs up through Clerk, they'll show here.</td></tr>
+            <tr><td colspan="8" class="px-4 py-6 text-center text-gray-400 text-xs">No users yet. Once someone signs up through Clerk, they'll show here.</td></tr>
           <% } else { %>
             <% users.forEach(function(u) { %>
-              <tr class="border-t hover:bg-gray-50">
+              <tr class="border-t hover:bg-gray-50 cursor-pointer" onclick="toggleUserActivity('<%= u.clerkUserId %>')">
+                <td class="px-4 py-2 text-center">
+                  <svg class="w-3.5 h-3.5 text-gray-400 transition-transform" id="user-chevron-<%= u.clerkUserId %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </td>
                 <td class="px-4 py-2">
                   <div class="font-medium"><%= u.email || '--' %></div>
                   <% if (u.name) { %><div class="text-xs text-gray-400"><%= u.name %></div><% } %>
                 </td>
-                <td class="px-4 py-2 text-gray-500 text-xs"><%= u.signUpAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></td>
-                <td class="px-4 py-2 text-xs <%= u.hasReturned ? 'text-gray-700' : 'text-gray-400' %>">
+                <td class="px-4 py-2 text-gray-500 text-xs"><%= u.signUpAt.toLocaleString('en-US', { month: 'short', day: 'numeric' }) %></td>
+                <td class="px-4 py-2 text-xs">
                   <% if (u.lastSignInAt) { %>
-                    <%= u.lastSignInAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %>
-                    <% if (u.hasReturned) { %><span class="text-green-600 ml-1">●</span><% } %>
+                    <% if (u.daysSinceLastLogin === 0) { %>
+                      <span class="text-green-600 font-medium">today</span>
+                    <% } else if (u.daysSinceLastLogin === 1) { %>
+                      <span class="text-gray-700">yesterday</span>
+                    <% } else if (u.daysSinceLastLogin < 7) { %>
+                      <span class="text-gray-700"><%= u.daysSinceLastLogin %>d ago</span>
+                    <% } else if (u.daysSinceLastLogin < 30) { %>
+                      <span class="text-gray-500"><%= u.daysSinceLastLogin %>d ago</span>
+                    <% } else { %>
+                      <span class="text-red-500"><%= u.daysSinceLastLogin %>d ago</span>
+                    <% } %>
+                    <% if (u.hasReturned) { %><span class="text-green-600 ml-1" title="Returned after signup">●</span><% } %>
                   <% } else { %>
                     <span class="text-gray-300">never</span>
                   <% } %>
@@ -80,14 +97,14 @@
                 <td class="px-4 py-2 text-gray-500 text-xs">
                   <% if (u.orgName) { %><%= u.orgName %><% } else { %><span class="text-gray-300">--</span><% } %>
                 </td>
-                <td class="px-4 py-2 text-center">
-                  <% if (u.mcpActive) { %>
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                <td class="px-4 py-2 text-right text-xs">
+                  <% if (u.mcpCallCount > 0) { %>
+                    <span class="text-otp-600 font-semibold"><%= u.mcpCallCount %></span>
                   <% } else { %>
-                    <span class="inline-block w-2 h-2 rounded-full bg-gray-200"></span>
+                    <span class="text-gray-300">0</span>
                   <% } %>
                 </td>
-                <td class="px-4 py-2 text-center text-xs">
+                <td class="px-4 py-2 text-right text-xs">
                   <% if (u.publishedOos > 0) { %>
                     <span class="text-otp-600 font-semibold"><%= u.publishedOos %></span>
                   <% } else { %>
@@ -102,12 +119,48 @@
                   <% } %>
                 </td>
               </tr>
+              <tr class="hidden bg-gray-50" id="user-activity-<%= u.clerkUserId %>">
+                <td colspan="8" class="px-6 py-4 border-t">
+                  <div class="text-xs text-gray-500 mb-2">Recent activity (<%= u.orgName ? u.orgName : 'no org yet' %>)</div>
+                  <% if (u.activity && u.activity.length > 0) { %>
+                    <ul class="space-y-1">
+                      <% u.activity.forEach(function(a) { %>
+                        <li class="flex items-center gap-3 text-xs">
+                          <span class="text-gray-400 w-24 flex-shrink-0"><%= a.createdAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></span>
+                          <span class="font-mono px-1.5 py-0.5 rounded
+                            <% if (a.action.includes('published')) { %>bg-green-100 text-green-700<% } else if (a.action.includes('created')) { %>bg-blue-100 text-blue-700<% } else { %>bg-gray-100 text-gray-600<% } %>
+                          "><%= a.action %></span>
+                          <span class="text-gray-400"><%= a.entityType %></span>
+                        </li>
+                      <% }); %>
+                    </ul>
+                  <% } else { %>
+                    <div class="text-xs text-gray-400 italic">No activity yet. <%= u.orgName ? 'Has org but has not done anything in it.' : 'No org created yet.' %></div>
+                  <% } %>
+                  <div class="text-xs text-gray-400 mt-3 pt-3 border-t">
+                    Clerk user ID: <span class="font-mono"><%= u.clerkUserId %></span>
+                    <% if (u.lastMcpUsedAt) { %>
+                      · Last MCP call: <%= u.lastMcpUsedAt.toLocaleString() %>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
             <% }); %>
           <% } %>
         </tbody>
       </table>
     </div>
   </div>
+
+  <script>
+    function toggleUserActivity(userId) {
+      var row = document.getElementById('user-activity-' + userId);
+      var chevron = document.getElementById('user-chevron-' + userId);
+      if (!row) return;
+      row.classList.toggle('hidden');
+      if (chevron) chevron.style.transform = row.classList.contains('hidden') ? '' : 'rotate(90deg)';
+    }
+  </script>
 
   <!-- Stats Grid -->
   <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">

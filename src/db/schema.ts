@@ -130,6 +130,7 @@ export const apiKeys = pgTable('api_keys', {
   keyHash: varchar('key_hash', { length: 64 }).notNull(),
   scopes: text('scopes').array().notNull(),
   lastUsedAt: timestamp('last_used_at'),
+  useCount: integer('use_count').notNull().default(0),
   expiresAt: timestamp('expires_at'),
   revokedAt: timestamp('revoked_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

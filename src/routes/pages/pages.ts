@@ -737,23 +737,42 @@ export default async function pageRoutes(app: FastifyInstance) {
         const clerk = createClerkClient({ secretKey });
         const { data: clerkUsers } = await clerk.users.getUserList({ limit: 100, orderBy: '-created_at' });
 
+        const now = Date.now();
         users = await Promise.all(clerkUsers.map(async (u) => {
           const email = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
             || u.emailAddresses[0]?.emailAddress || null;
           const signUpAtMs = u.createdAt;
           const lastSignInAtMs = u.lastSignInAt || null;
           const hasReturned = lastSignInAtMs !== null && (lastSignInAtMs - signUpAtMs) > 60_000;
+          const daysSinceLastLogin = lastSignInAtMs !== null
+            ? Math.floor((now - lastSignInAtMs) / (1000 * 60 * 60 * 24))
+            : null;
 
           const orgRes = await db.execute(sql`SELECT id, name FROM organizations WHERE clerk_org_id = ${u.id} LIMIT 1`) as any;
           const org = orgRes.rows[0] || null;
 
           let publishedOos = 0;
           let lastMcpUsedAt: Date | null = null;
+          let mcpCallCount = 0;
+          let activity: Array<{ action: string; entityType: string; createdAt: Date }> = [];
           if (org) {
             const oosRes = await db.execute(sql`SELECT COUNT(*)::int AS n FROM oos_files WHERE org_id = ${org.id} AND status = 'published'`) as any;
             publishedOos = Number(oosRes.rows[0]?.n || 0);
-            const keyRes = await db.execute(sql`SELECT MAX(last_used_at) AS last_used FROM api_keys WHERE org_id = ${org.id}`) as any;
+            const keyRes = await db.execute(sql`SELECT MAX(last_used_at) AS last_used, COALESCE(SUM(use_count), 0)::int AS total FROM api_keys WHERE org_id = ${org.id}`) as any;
             lastMcpUsedAt = keyRes.rows[0]?.last_used || null;
+            mcpCallCount = Number(keyRes.rows[0]?.total || 0);
+            const actRes = await db.execute(sql`
+              SELECT action, entity_type, created_at
+              FROM audit_logs
+              WHERE org_id = ${org.id}
+              ORDER BY created_at DESC
+              LIMIT 10
+            `) as any;
+            activity = (actRes.rows || []).map((r: any) => ({
+              action: r.action,
+              entityType: r.entity_type,
+              createdAt: new Date(r.created_at),
+            }));
           }
 
           const onbRes = await db.execute(sql`
@@ -768,11 +787,14 @@ export default async function pageRoutes(app: FastifyInstance) {
             name: [u.firstName, u.lastName].filter(Boolean).join(' ') || null,
             signUpAt: new Date(signUpAtMs),
             lastSignInAt: lastSignInAtMs ? new Date(lastSignInAtMs) : null,
+            daysSinceLastLogin,
             hasReturned,
             orgName: org?.name || null,
             publishedOos,
-            mcpActive: !!lastMcpUsedAt,
+            mcpActive: mcpCallCount > 0,
+            mcpCallCount,
             lastMcpUsedAt,
+            activity,
             onboardingStage: onb ? [onb.email_1_sent_at, onb.email_2_sent_at, onb.email_3_sent_at].filter(Boolean).length : 0,
             unsubscribed: !!onb?.unsubscribed_at,
           };
@@ -845,6 +867,78 @@ export default async function pageRoutes(app: FastifyInstance) {
       users,
       userStats,
     });
+  });
+
+  // Super Admin: Users CSV export
+  app.get('/admin/users.csv', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin;
+    if (!isAdmin) return reply.status(404).send('Not Found');
+
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) return reply.status(500).send('Clerk not configured');
+
+    const { createClerkClient } = await import('@clerk/backend');
+    const clerk = createClerkClient({ secretKey });
+    const { data: clerkUsers } = await clerk.users.getUserList({ limit: 500, orderBy: '-created_at' });
+
+    const rows: string[] = [
+      'email,name,signed_up_at,last_sign_in_at,days_since_login,returned,org_name,published_oos,mcp_calls,last_mcp_used_at,onboarding_stage,unsubscribed,clerk_user_id',
+    ];
+
+    const now = Date.now();
+    for (const u of clerkUsers) {
+      const email = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
+        || u.emailAddresses[0]?.emailAddress || '';
+      const name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+      const signUpIso = new Date(u.createdAt).toISOString();
+      const lastSignInIso = u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : '';
+      const returned = u.lastSignInAt !== null && (u.lastSignInAt - u.createdAt) > 60_000;
+      const daysSinceLogin = u.lastSignInAt !== null
+        ? Math.floor((now - u.lastSignInAt) / (1000 * 60 * 60 * 24))
+        : '';
+
+      const orgRes = await db.execute(sql`SELECT id, name FROM organizations WHERE clerk_org_id = ${u.id} LIMIT 1`) as any;
+      const org = orgRes.rows[0] || null;
+
+      let orgName = '';
+      let publishedOos = 0;
+      let mcpCalls = 0;
+      let lastMcpUsedIso = '';
+      if (org) {
+        orgName = org.name;
+        const oosRes = await db.execute(sql`SELECT COUNT(*)::int AS n FROM oos_files WHERE org_id = ${org.id} AND status = 'published'`) as any;
+        publishedOos = Number(oosRes.rows[0]?.n || 0);
+        const keyRes = await db.execute(sql`SELECT MAX(last_used_at) AS last_used, COALESCE(SUM(use_count), 0)::int AS total FROM api_keys WHERE org_id = ${org.id}`) as any;
+        mcpCalls = Number(keyRes.rows[0]?.total || 0);
+        const lastUsed = keyRes.rows[0]?.last_used;
+        if (lastUsed) lastMcpUsedIso = new Date(lastUsed).toISOString();
+      }
+
+      const onbRes = await db.execute(sql`
+        SELECT email_1_sent_at, email_2_sent_at, email_3_sent_at, unsubscribed_at
+        FROM onboarding_sequence WHERE clerk_user_id = ${u.id} LIMIT 1
+      `) as any;
+      const onb = onbRes.rows[0] || null;
+      const onboardingStage = onb ? [onb.email_1_sent_at, onb.email_2_sent_at, onb.email_3_sent_at].filter(Boolean).length : 0;
+      const unsubscribed = !!onb?.unsubscribed_at;
+
+      const csvEscape = (s: string | number | boolean) => {
+        const str = String(s);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+
+      rows.push([
+        email, name, signUpIso, lastSignInIso, daysSinceLogin, returned,
+        orgName, publishedOos, mcpCalls, lastMcpUsedIso, onboardingStage, unsubscribed, u.id,
+      ].map(csvEscape).join(','));
+    }
+
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="otp-users-${new Date().toISOString().slice(0, 10)}.csv"`);
+    return reply.send(rows.join('\n'));
   });
 
   // Radar -- AI Chief of Staff product page
