@@ -71,7 +71,8 @@
 
     <!-- CTA -->
     <div>
-      <button
+      <a
+        href="/sign-up"
         id="founders-claim-btn"
         class="group inline-flex items-center gap-3 px-8 py-4 bg-otp-500 hover:bg-otp-400 text-white rounded-xl font-semibold transition-all hover:shadow-2xl hover:shadow-otp-500/30 text-base"
       >
@@ -79,7 +80,7 @@
         <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
         </svg>
-      </button>
+      </a>
       <div class="mt-4 text-xs text-gray-400">
         Free. No credit card. Founding spots are limited to the first 50 organizations.
       </div>
@@ -98,14 +99,6 @@
       if (!btn) return;
       btn.addEventListener('click', function() {
         try { localStorage.setItem('otp_signup_source', 'founders'); } catch (e) {}
-        function tryOpen() {
-          if (window.Clerk && typeof window.Clerk.openSignUp === 'function') {
-            window.Clerk.openSignUp({ redirectUrl: '/publish' });
-          } else {
-            setTimeout(tryOpen, 150);
-          }
-        }
-        tryOpen();
       });
     })();
   </script>

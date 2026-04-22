@@ -951,6 +951,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Sign-up page (dedicated, mounts Clerk SignUp directly)
+  app.get('/sign-up', async (request, reply) => {
+    return reply.view('pages/sign-up', {
+      title: 'Create your OTP account',
+      description: 'Create an OTP account and claim your founding spot.',
+      canonical: BASE_URL + '/sign-up',
+      noindex: true,
+    });
+  });
+
   // Radar -- AI Chief of Staff product page
   app.get('/radar', async (request, reply) => {
     return reply.view('pages/radar', {
