@@ -343,3 +343,19 @@ export const practiceVotes = pgTable('practice_votes', {
   practiceIdx: index('pv_practice_idx').on(table.bestPracticeId),
   uniqueVoteIdx: uniqueIndex('pv_unique_vote_idx').on(table.bestPracticeId, table.voterIp),
 }));
+
+export const onboardingSequence = pgTable('onboarding_sequence', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull().unique(),
+  email: varchar('email', { length: 255 }).notNull(),
+  signupAt: timestamp('signup_at').defaultNow().notNull(),
+  email1SentAt: timestamp('email_1_sent_at'),
+  email2SentAt: timestamp('email_2_sent_at'),
+  email3SentAt: timestamp('email_3_sent_at'),
+  unsubscribedAt: timestamp('unsubscribed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  clerkUserIdx: uniqueIndex('onb_clerk_user_idx').on(table.clerkUserId),
+  emailIdx: index('onb_email_idx').on(table.email),
+  signupIdx: index('onb_signup_idx').on(table.signupAt),
+}));

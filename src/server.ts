@@ -503,6 +503,7 @@ await app.register(import('./routes/api/admin.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/best-practices.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/digest.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/newsletter.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' });
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
@@ -525,6 +526,11 @@ const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
 try {
   await app.listen({ port, host });
   app.log.info(`OTP Platform running at http://${host}:${port}`);
+
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_ONBOARDING_SCHEDULER === 'true') {
+    const { startOnboardingScheduler } = await import('./services/onboarding-scheduler.js');
+    startOnboardingScheduler();
+  }
 } catch (err) {
   app.log.error(err);
   process.exit(1);
