@@ -183,7 +183,7 @@ export async function sendWeeklyDigest(): Promise<WeeklyDigestResult> {
           to: publisher.email,
           subject,
           html,
-          from: 'OTP <notifications@orgtp.com>',
+          from: 'OTP <notifications@mail.orgtp.com>',
         });
 
         if (success) {

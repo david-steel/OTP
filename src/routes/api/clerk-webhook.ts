@@ -41,7 +41,7 @@ export async function sendOnboardingEmail1(email: string): Promise<boolean> {
       to: email,
       subject: "You're in -- welcome to OTP",
       html,
-      from: 'David Steel <notifications@orgtp.com>',
+      from: 'David Steel <notifications@mail.orgtp.com>',
     });
   } catch (err) {
     console.error('[clerk-webhook] Email #1 render/send failed:', err);

@@ -31,7 +31,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
 
   try {
     const { error } = await client.emails.send({
-      from: options.from || 'OTP <notifications@orgtp.com>',
+      from: options.from || 'OTP <notifications@mail.orgtp.com>',
       to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
       html: options.html,

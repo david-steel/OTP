@@ -36,7 +36,7 @@ async function renderAndSend(email: string, tpl: EmailTemplate): Promise<boolean
       to: email,
       subject: tpl.subject,
       html,
-      from: 'David Steel <notifications@orgtp.com>',
+      from: 'David Steel <notifications@mail.orgtp.com>',
     });
   } catch (err) {
     console.error(`[onboarding-scheduler] Failed to render/send ${tpl.templateFile}:`, err);

@@ -6,7 +6,6 @@
 //
 // Requires env: CLERK_SECRET_KEY, RESEND_API_KEY, DATABASE_URL
 
-import 'dotenv/config';
 import { createClerkClient } from '@clerk/backend';
 import { eq } from 'drizzle-orm';
 import { db } from '../src/config/database.js';

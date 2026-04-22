@@ -21,7 +21,7 @@ async function sendWelcomeEmail(email: string): Promise<void> {
       to: email,
       subject: "You're in -- welcome to OTP",
       html,
-      from: 'David Steel <notifications@orgtp.com>',
+      from: 'David Steel <notifications@mail.orgtp.com>',
     });
   } catch (err) {
     console.error('[newsletter] Welcome email failed to send:', err);
