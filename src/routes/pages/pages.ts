@@ -727,6 +727,69 @@ export default async function pageRoutes(app: FastifyInstance) {
     const isAdmin = (request as any).isSuperAdmin;
     if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
+    // ---- Users (funnel: signup -> return -> org -> MCP -> publish) ----
+    const { createClerkClient } = await import('@clerk/backend');
+    let users: any[] = [];
+    let userStats = { total: 0, returned: 0, withOrg: 0, mcpActive: 0, publishers: 0 };
+    try {
+      const secretKey = process.env.CLERK_SECRET_KEY;
+      if (secretKey) {
+        const clerk = createClerkClient({ secretKey });
+        const { data: clerkUsers } = await clerk.users.getUserList({ limit: 100, orderBy: '-created_at' });
+
+        users = await Promise.all(clerkUsers.map(async (u) => {
+          const email = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
+            || u.emailAddresses[0]?.emailAddress || null;
+          const signUpAtMs = u.createdAt;
+          const lastSignInAtMs = u.lastSignInAt || null;
+          const hasReturned = lastSignInAtMs !== null && (lastSignInAtMs - signUpAtMs) > 60_000;
+
+          const orgRes = await db.execute(sql`SELECT id, name FROM organizations WHERE clerk_org_id = ${u.id} LIMIT 1`) as any;
+          const org = orgRes.rows[0] || null;
+
+          let publishedOos = 0;
+          let lastMcpUsedAt: Date | null = null;
+          if (org) {
+            const oosRes = await db.execute(sql`SELECT COUNT(*)::int AS n FROM oos_files WHERE org_id = ${org.id} AND status = 'published'`) as any;
+            publishedOos = Number(oosRes.rows[0]?.n || 0);
+            const keyRes = await db.execute(sql`SELECT MAX(last_used_at) AS last_used FROM api_keys WHERE org_id = ${org.id}`) as any;
+            lastMcpUsedAt = keyRes.rows[0]?.last_used || null;
+          }
+
+          const onbRes = await db.execute(sql`
+            SELECT email_1_sent_at, email_2_sent_at, email_3_sent_at, unsubscribed_at
+            FROM onboarding_sequence WHERE clerk_user_id = ${u.id} LIMIT 1
+          `) as any;
+          const onb = onbRes.rows[0] || null;
+
+          return {
+            clerkUserId: u.id,
+            email,
+            name: [u.firstName, u.lastName].filter(Boolean).join(' ') || null,
+            signUpAt: new Date(signUpAtMs),
+            lastSignInAt: lastSignInAtMs ? new Date(lastSignInAtMs) : null,
+            hasReturned,
+            orgName: org?.name || null,
+            publishedOos,
+            mcpActive: !!lastMcpUsedAt,
+            lastMcpUsedAt,
+            onboardingStage: onb ? [onb.email_1_sent_at, onb.email_2_sent_at, onb.email_3_sent_at].filter(Boolean).length : 0,
+            unsubscribed: !!onb?.unsubscribed_at,
+          };
+        }));
+
+        userStats = {
+          total: users.length,
+          returned: users.filter(u => u.hasReturned).length,
+          withOrg: users.filter(u => u.orgName).length,
+          mcpActive: users.filter(u => u.mcpActive).length,
+          publishers: users.filter(u => u.publishedOos > 0).length,
+        };
+      }
+    } catch (err) {
+      request.log.error({ err }, '[admin] failed to fetch users');
+    }
+
     // All orgs
     const orgsRes = await db.execute(sql`SELECT * FROM organizations ORDER BY created_at DESC`) as any;
     const orgs = orgsRes.rows || [];
@@ -779,6 +842,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       oosFiles: oosFilesList,
       auditLogs: auditRes.rows || [],
       tickets: ticketsRes.rows || [],
+      users,
+      userStats,
     });
   });
 

@@ -7,6 +7,108 @@
     <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase">Super Admin</span>
   </div>
 
+  <!-- Two goals scoreboard: USERS and USAGE -->
+  <div class="mb-8">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide">The two goals: users and usage</h2>
+      <span class="text-xs text-gray-400">goal: 50 users</span>
+    </div>
+    <div class="grid grid-cols-5 gap-3">
+      <div class="bg-white p-4 border rounded-lg text-center">
+        <div class="text-3xl font-bold text-otp-600"><%= userStats.total %></div>
+        <div class="text-xs text-gray-500 mt-1">Users</div>
+        <div class="text-xs text-gray-400 mt-1"><%= 50 - userStats.total %> to goal</div>
+      </div>
+      <div class="bg-white p-4 border rounded-lg text-center">
+        <div class="text-3xl font-bold <%= userStats.returned > 0 ? 'text-otp-600' : 'text-gray-300' %>"><%= userStats.returned %></div>
+        <div class="text-xs text-gray-500 mt-1">Returned</div>
+        <div class="text-xs text-gray-400 mt-1">signed in again</div>
+      </div>
+      <div class="bg-white p-4 border rounded-lg text-center">
+        <div class="text-3xl font-bold <%= userStats.withOrg > 0 ? 'text-otp-600' : 'text-gray-300' %>"><%= userStats.withOrg %></div>
+        <div class="text-xs text-gray-500 mt-1">Has Org</div>
+        <div class="text-xs text-gray-400 mt-1">created workspace</div>
+      </div>
+      <div class="bg-white p-4 border rounded-lg text-center">
+        <div class="text-3xl font-bold <%= userStats.mcpActive > 0 ? 'text-otp-600' : 'text-gray-300' %>"><%= userStats.mcpActive %></div>
+        <div class="text-xs text-gray-500 mt-1">Using MCP</div>
+        <div class="text-xs text-gray-400 mt-1">called API</div>
+      </div>
+      <div class="bg-white p-4 border rounded-lg text-center">
+        <div class="text-3xl font-bold <%= userStats.publishers > 0 ? 'text-otp-600' : 'text-gray-300' %>"><%= userStats.publishers %></div>
+        <div class="text-xs text-gray-500 mt-1">Published</div>
+        <div class="text-xs text-gray-400 mt-1">shipped an OOS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users table -->
+  <div class="mb-8">
+    <h3 class="font-semibold mb-3">Users (<%= users.length %>)</h3>
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs text-gray-500">
+          <tr>
+            <th class="px-4 py-2">Email</th>
+            <th class="px-4 py-2">Signed up</th>
+            <th class="px-4 py-2">Last login</th>
+            <th class="px-4 py-2">Org</th>
+            <th class="px-4 py-2 text-center">MCP</th>
+            <th class="px-4 py-2 text-center">Published</th>
+            <th class="px-4 py-2 text-center">Onboarding</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (users.length === 0) { %>
+            <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400 text-xs">No users yet. Once someone signs up through Clerk, they'll show here.</td></tr>
+          <% } else { %>
+            <% users.forEach(function(u) { %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-4 py-2">
+                  <div class="font-medium"><%= u.email || '--' %></div>
+                  <% if (u.name) { %><div class="text-xs text-gray-400"><%= u.name %></div><% } %>
+                </td>
+                <td class="px-4 py-2 text-gray-500 text-xs"><%= u.signUpAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></td>
+                <td class="px-4 py-2 text-xs <%= u.hasReturned ? 'text-gray-700' : 'text-gray-400' %>">
+                  <% if (u.lastSignInAt) { %>
+                    <%= u.lastSignInAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %>
+                    <% if (u.hasReturned) { %><span class="text-green-600 ml-1">●</span><% } %>
+                  <% } else { %>
+                    <span class="text-gray-300">never</span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-2 text-gray-500 text-xs">
+                  <% if (u.orgName) { %><%= u.orgName %><% } else { %><span class="text-gray-300">--</span><% } %>
+                </td>
+                <td class="px-4 py-2 text-center">
+                  <% if (u.mcpActive) { %>
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                  <% } else { %>
+                    <span class="inline-block w-2 h-2 rounded-full bg-gray-200"></span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-2 text-center text-xs">
+                  <% if (u.publishedOos > 0) { %>
+                    <span class="text-otp-600 font-semibold"><%= u.publishedOos %></span>
+                  <% } else { %>
+                    <span class="text-gray-300">0</span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-2 text-center text-xs">
+                  <% if (u.unsubscribed) { %>
+                    <span class="text-red-500">unsub</span>
+                  <% } else { %>
+                    <span class="text-gray-500"><%= u.onboardingStage %>/3</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Stats Grid -->
   <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
     <div class="bg-white p-4 border rounded-lg text-center">
