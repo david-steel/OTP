@@ -941,6 +941,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.send(rows.join('\n'));
   });
 
+  // Founders -- invite-only landing page (not in main nav, noindex)
+  app.get('/founders', async (request, reply) => {
+    return reply.view('pages/founders', {
+      title: "You've been invited — OTP Founding Circle",
+      description: 'Invitation-only access to the OTP founding circle. First 50 organizations shape the protocol.',
+      canonical: BASE_URL + '/founders',
+      noindex: true,
+    });
+  });
+
   // Radar -- AI Chief of Staff product page
   app.get('/radar', async (request, reply) => {
     return reply.view('pages/radar', {
