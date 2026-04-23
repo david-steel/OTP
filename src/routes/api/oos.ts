@@ -304,6 +304,23 @@ ${claimSections.join('\n')}`.trim();
     // Validate format
     const validation = validateOOS(parsed, body.data.template);
 
+    // Detect existing published OOS of the same template for this org.
+    // If one exists, this POST is effectively a new version of that OOS, and the
+    // audit log should reflect that linkage (OOS_NEW_VERSION, not OOS_CREATED).
+    // Version chain linkage lives in audit_logs.details, queryable for timeline display.
+    const [existingPublished] = await db.select({
+      id: oosFiles.id,
+      version: oosFiles.version,
+    })
+      .from(oosFiles)
+      .where(and(
+        eq(oosFiles.orgId, org.id),
+        eq(oosFiles.status, 'published'),
+        eq(oosFiles.template, body.data.template),
+      ))
+      .orderBy(desc(oosFiles.version))
+      .limit(1);
+
     // Get next version number and create draft atomically to avoid race conditions
     let oosFile: typeof oosFiles.$inferSelect = undefined as any;
     let retries = 3;
@@ -366,18 +383,35 @@ ${claimSections.join('\n')}`.trim();
       );
     }
 
-    // Audit
-    await db.insert(auditLogs).values(
-      createAuditEntry(AUDIT_ACTIONS.OOS_CREATED, 'oos_file', {
-        orgId: org.id, entityId: oosFile.id,
-        details: { template: body.data.template, version: oosFile!.version, claimCount: parsed.claims.length },
-      })
-    );
+    // Audit: OOS_NEW_VERSION if this extends an existing published OOS, else OOS_CREATED
+    if (existingPublished) {
+      await db.insert(auditLogs).values(
+        createAuditEntry(AUDIT_ACTIONS.OOS_NEW_VERSION, 'oos_file', {
+          orgId: org.id, entityId: oosFile.id,
+          details: {
+            sourceId: existingPublished.id,
+            sourceVersion: existingPublished.version,
+            newVersion: oosFile!.version,
+            template: body.data.template,
+            claimCount: parsed.claims.length,
+            trigger: 'post_oos_auto_linked',
+          },
+        })
+      );
+    } else {
+      await db.insert(auditLogs).values(
+        createAuditEntry(AUDIT_ACTIONS.OOS_CREATED, 'oos_file', {
+          orgId: org.id, entityId: oosFile.id,
+          details: { template: body.data.template, version: oosFile!.version, claimCount: parsed.claims.length },
+        })
+      );
+    }
 
     return reply.status(201).send({
       oosFile,
       claimCount: parsed.claims.length,
       validation,
+      linkedToSource: existingPublished ? { id: existingPublished.id, version: existingPublished.version } : null,
     });
   });
 
