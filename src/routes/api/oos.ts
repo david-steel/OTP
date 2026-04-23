@@ -305,12 +305,14 @@ ${claimSections.join('\n')}`.trim();
     const validation = validateOOS(parsed, body.data.template);
 
     // Detect existing published OOS of the same template for this org.
-    // If one exists, this POST is effectively a new version of that OOS, and the
-    // audit log should reflect that linkage (OOS_NEW_VERSION, not OOS_CREATED).
-    // Version chain linkage lives in audit_logs.details, queryable for timeline display.
+    // If one exists, we MERGE incoming content into source rather than wholesale-replace.
+    // Source's content is preserved; incoming claims get appended with renumbered L-IDs,
+    // deduped against source by rule text. This is the "don't lose accumulated state" guarantee.
+    // Version chain linkage is recorded in audit_logs (OOS_NEW_VERSION with sourceId, sourceVersion).
     const [existingPublished] = await db.select({
       id: oosFiles.id,
       version: oosFiles.version,
+      rawContent: oosFiles.rawContent,
     })
       .from(oosFiles)
       .where(and(
@@ -320,6 +322,45 @@ ${claimSections.join('\n')}`.trim();
       ))
       .orderBy(desc(oosFiles.version))
       .limit(1);
+
+    // Compute the effective content for the new version.
+    // Default: incoming content as-is. If merging with source: source.rawContent + renumbered new claims.
+    let effectiveRawContent = body.data.rawContent;
+    let effectiveParsed = parsed;
+    let mergeStats: { added: number; skipped: number; sourceClaimCount: number } | null = null;
+
+    if (existingPublished) {
+      const sourceClaimRows = await db.select({ rule: claims.rule, claimId: claims.claimId })
+        .from(claims)
+        .where(eq(claims.oosFileId, existingPublished.id));
+
+      const maxL = sourceClaimRows
+        .map(c => c.claimId.match(/^L(\d+)$/))
+        .filter((m): m is RegExpMatchArray => m !== null)
+        .reduce((mx, m) => Math.max(mx, parseInt(m[1], 10)), 0);
+      let nextL = maxL + 1;
+
+      const sourceRuleSet = new Set(sourceClaimRows.map(c => c.rule.trim().toLowerCase()));
+      let merged = existingPublished.rawContent;
+      let added = 0;
+      let skipped = 0;
+
+      for (const c of parsed.claims) {
+        if (sourceRuleSet.has(c.rule.trim().toLowerCase())) {
+          skipped++;
+          continue;
+        }
+        const newId = 'L' + String(nextL).padStart(3, '0');
+        const scope = c.scope || 'organization-wide';
+        merged += `\n\n### ${newId}\n- **Confidence:** ${c.confidence}\n- **Evidence:** ${c.evidence}\n- **Section:** ${c.section}\n- **Rule:** ${c.rule}\n- **Why:** ${c.why}\n- **Failure mode:** ${c.failureMode}\n- **Scope:** ${scope}`;
+        nextL++;
+        added++;
+      }
+
+      effectiveRawContent = merged;
+      effectiveParsed = parseOOS(merged, body.data.template);
+      mergeStats = { added, skipped, sourceClaimCount: sourceClaimRows.length };
+    }
 
     // Get next version number and create draft atomically to avoid race conditions
     let oosFile: typeof oosFiles.$inferSelect = undefined as any;
@@ -338,16 +379,16 @@ ${claimSections.join('\n')}`.trim();
             version: nextVersion,
             status: 'draft',
             visibilityDefault: 'free',
-            wordCount: parsed.wordCount,
-            claimCount: parsed.claims.length,
-            rawContent: body.data.rawContent,
-            frontmatter: parsed.frontmatter as any,
-            confidenceDistribution: parsed.claims.reduce((acc, c) => {
+            wordCount: effectiveParsed.wordCount,
+            claimCount: effectiveParsed.claims.length,
+            rawContent: effectiveRawContent,
+            frontmatter: effectiveParsed.frontmatter as any,
+            confidenceDistribution: effectiveParsed.claims.reduce((acc, c) => {
               const key = c.confidence.toLowerCase();
               acc[key] = (acc[key] || 0) + 1;
               return acc;
             }, {} as Record<string, number>) as any,
-            evidenceDistribution: parsed.claims.reduce((acc, c) => {
+            evidenceDistribution: effectiveParsed.claims.reduce((acc, c) => {
               const key = c.evidence.toLowerCase();
               acc[key] = (acc[key] || 0) + 1;
               return acc;
@@ -365,10 +406,10 @@ ${claimSections.join('\n')}`.trim();
       }
     }
 
-    // Insert parsed claims
-    if (parsed.claims.length > 0) {
+    // Insert parsed claims (from the effective merged content, if merge occurred)
+    if (effectiveParsed.claims.length > 0) {
       await db.insert(claims).values(
-        parsed.claims.map(c => ({
+        effectiveParsed.claims.map(c => ({
           oosFileId: oosFile.id,
           claimId: c.claimId,
           section: c.section,
@@ -393,8 +434,9 @@ ${claimSections.join('\n')}`.trim();
             sourceVersion: existingPublished.version,
             newVersion: oosFile!.version,
             template: body.data.template,
-            claimCount: parsed.claims.length,
-            trigger: 'post_oos_auto_linked',
+            claimCount: effectiveParsed.claims.length,
+            merge: mergeStats,
+            trigger: 'post_oos_auto_merged',
           },
         })
       );
@@ -409,9 +451,11 @@ ${claimSections.join('\n')}`.trim();
 
     return reply.status(201).send({
       oosFile,
-      claimCount: parsed.claims.length,
+      claimCount: effectiveParsed.claims.length,
       validation,
-      linkedToSource: existingPublished ? { id: existingPublished.id, version: existingPublished.version } : null,
+      linkedToSource: existingPublished
+        ? { id: existingPublished.id, version: existingPublished.version, merge: mergeStats }
+        : null,
     });
   });
 
