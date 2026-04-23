@@ -23,6 +23,9 @@ export const AUDIT_ACTIONS = {
   OOS_DELETED: 'oos.deleted',
   OOS_NEW_VERSION: 'oos.new_version',
 
+  // Claim lifecycle (Phase B: MCP instrumentation)
+  CLAIM_CAPTURED: 'claim.captured',
+
   // PII
   PII_SCAN_CLEAN: 'pii.scan.clean',
   PII_SCAN_FLAGGED: 'pii.scan.flagged',

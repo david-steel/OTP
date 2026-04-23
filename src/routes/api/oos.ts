@@ -759,6 +759,28 @@ ${claimSections.join('\n')}`.trim();
       })
       .where(eq(oosFiles.id, draft.id));
 
+    await db.insert(auditLogs).values(
+      createAuditEntry(AUDIT_ACTIONS.CLAIM_CAPTURED, 'claim', {
+        orgId: org.id,
+        actorType: 'agent',
+        entityId: newClaim.id,
+        details: {
+          oos_file_id: draft.id,
+          oos_version: draft.version,
+          claim_id: claimId,
+          section,
+          agent: body.agent || null,
+          rule_preview: rule.slice(0, 200),
+          why_preview: why.slice(0, 200),
+          failure_mode_preview: failureMode.slice(0, 200),
+          confidence,
+          evidence,
+          source: 'learning',
+          source_url: body.source_url || null,
+        },
+      })
+    );
+
     return {
       success: true,
       claimId,
