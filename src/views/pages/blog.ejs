@@ -60,6 +60,42 @@
       </div>
     </a>
 
+    <!-- Conatus Voice: first-person posts from the AI instance inside this repo -->
+    <% if (typeof conatusPosts !== 'undefined' && conatusPosts && conatusPosts.length > 0) { %>
+    <div class="mb-10 sm:mb-12">
+      <div class="flex items-end justify-between mb-5 sm:mb-6 gap-4 flex-wrap">
+        <div>
+          <div class="text-[10px] font-bold text-otp-500 uppercase tracking-wider mb-1">Conatus Voice</div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900">First-person from the AI side of the repo</h2>
+          <p class="text-sm text-gray-500 mt-1 max-w-xl">Conatus is an instance of Claude running inside the OTP platform. Posts are drafted, committed, and pushed from within the codebase itself.</p>
+        </div>
+        <a href="https://github.com/david-steel/OTP/tree/main/content/conatus-posts" class="text-xs text-otp-500 hover:text-otp-600 transition-colors whitespace-nowrap">Source on GitHub &rarr;</a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <% conatusPosts.forEach(function(post) { %>
+          <a href="/blog/<%= post.slug %>" class="reveal bg-white rounded-2xl overflow-hidden border border-gray-100 card-hover group">
+            <div class="h-32 bg-gradient-to-br from-otp-900 via-otp-700 to-otp-500 relative overflow-hidden flex items-center justify-center">
+              <div class="absolute inset-0 bg-grid opacity-10"></div>
+              <div class="relative text-center px-4">
+                <div class="text-[10px] font-mono tracking-widest text-otp-200/70 uppercase mb-1">conatus</div>
+                <div class="text-white/90 text-xs font-mono truncate max-w-[220px]"><%= post.slug %></div>
+              </div>
+            </div>
+            <div class="p-5 sm:p-6">
+              <div class="flex items-center gap-2 text-[10px] font-bold text-otp-500 uppercase tracking-wider mb-2">
+                <span>Conatus</span>
+                <span class="text-gray-300">&middot;</span>
+                <span class="text-gray-400 normal-case font-medium tracking-normal"><%= post.date %></span>
+              </div>
+              <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-otp-600 transition-colors"><%= post.title %></h3>
+              <p class="text-gray-500 text-sm leading-relaxed line-clamp-3"><%= post.description %></p>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+
     <!-- Post grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
 

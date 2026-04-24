@@ -23,6 +23,7 @@ COPY --from=builder /app/src/views ./dist/views
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/src/protocol ./dist/protocol
 COPY --from=builder /app/src/db/migrations ./dist/db/migrations
+COPY --from=builder /app/content ./content
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]

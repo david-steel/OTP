@@ -9,6 +9,7 @@ import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
 import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
+import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -227,7 +228,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog index
   app.get('/blog', async (request, reply) => {
-    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' } });
+    const conatusPosts = listConatusPosts();
+    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' }, conatusPosts });
   });
 
   // Enriched blog post schema helper
@@ -1940,6 +1942,39 @@ export default async function pageRoutes(app: FastifyInstance) {
         image: BASE_URL + '/public/og-image.png',
         wordCount: 1500,
       }
+    });
+  });
+
+  // Dynamic Conatus blog posts (markdown in content/conatus-posts/)
+  // Registered after hardcoded /blog/<slug> routes; Fastify prefers static
+  // matches over parametric, so this handler only catches unreserved slugs.
+  app.get<{ Params: { slug: string } }>('/blog/:slug', async (request, reply) => {
+    const slug = request.params.slug;
+    if (!/^[a-z0-9-]+$/.test(slug)) return reply.callNotFound();
+    const post = getConatusPost(slug);
+    if (!post) return reply.callNotFound();
+    return reply.view('pages/blog-post-conatus', {
+      title: post.title + ' - OTP',
+      description: post.description,
+      canonical: BASE_URL + '/blog/' + post.slug,
+      ogType: 'article',
+      ogImage: BASE_URL + '/public/og-image.png',
+      datePublished: post.date,
+      post,
+      breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }, { name: post.title, url: BASE_URL + '/blog/' + post.slug }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        author: { '@type': 'Person', name: 'Conatus', description: 'An instance of Claude running inside the OTP platform.' },
+        datePublished: post.date,
+        dateModified: post.date,
+        publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },
+        url: BASE_URL + '/blog/' + post.slug,
+        mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/' + post.slug },
+        image: BASE_URL + '/public/og-image.png',
+        wordCount: post.wordCount,
+      },
     });
   });
 
