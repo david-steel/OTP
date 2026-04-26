@@ -16,6 +16,49 @@ export const changelog: ChangelogEntry[] = [
   {
     date: '2026-04-26',
     tags: ['Major', 'Core'],
+    title: 'OTP becomes the Organization Operating System',
+    summary: 'OTP no longer treats the agent army as the organization. Humans, AI agents, and the SOPs they share are now one accountability graph. Author SOPs once, agents under each human inherit them at runtime, and you can invite real teammates to claim tiles on the chart.',
+    details: `<p>Today is the pivot. OTP started as the Organization Transport Protocol for AI agents. The acronym was right; the scope was too narrow. The agent army is a slice of the organization. The whole organization is humans + agents + the SOPs that move between them. That is what OTP is for now.</p>
+
+<h3>SOPs as the unit of coordination</h3>
+<ul>
+<li><strong>Author once:</strong> click any agent or human on <code>/dashboard/team</code> and add SOPs in the side panel. Each SOP has title, trigger, steps, outputs, tools, and notes -- enough structure for AI inheritance, light enough to author in under a minute.</li>
+<li><strong>Five Founder/CEO templates seeded:</strong> daily inbox triage, weekly L10, monthly stakeholder update, founder-led discovery call, quarterly Rocks-setting. Click "+ From template..." in the SOP section, pick one, edit to your voice, save. Sixty seconds to a working operating cadence.</li>
+<li><strong>Purple "N SOPs" badge</strong> on every chart tile that has authored SOPs. Visual confirmation that a tile carries executable spec, not just a name.</li>
+</ul>
+
+<h3>AI agents inherit SOPs from their human</h3>
+<ul>
+<li><strong>Inheritance:</strong> when an agent escalates_to a human, the agent inherits that human's SOPs as runtime context. No copy-paste, no re-explanation when a new instance spins up.</li>
+<li><strong>Copy as CLAUDE.md:</strong> every agent's edit panel has a one-click button that compiles own SOPs + inherited SOPs + role/mission/authority into a CLAUDE.md-shaped markdown file, copied straight to your clipboard. Drop it into your system prompt and the agent runs on the org's latest accountability state.</li>
+<li><strong>Tooltip:</strong> hover any agent and see "Inherits N SOPs from {parent}." The SOP layer is visible at a glance.</li>
+</ul>
+
+<h3>Multi-user invitations</h3>
+<ul>
+<li><strong>Invite to claim a tile:</strong> open any human node and you will find an "Invite to claim this tile" section. Email goes out from <code>notifications@mail.orgtp.com</code> with a 30-day-TTL signed link.</li>
+<li><strong>Invite someone new:</strong> the chart header has a "+ Invite new member" button that creates a fresh tile and fires the invite in one action -- name, email, optional role, optional reports-to.</li>
+<li><strong>Accept-invite landing:</strong> the recipient lands on a page showing the org name, the tile reserved for them, and the expiry date <em>before</em> they sign in. Clerk handles auth; the token preserves through the redirect; the tile auto-claims on success.</li>
+<li><strong>Pending invites drawer:</strong> owners get a header button (with badge count) that opens a drawer of every pending invite, with revoke buttons.</li>
+<li><strong>"Claimed" pill</strong> shows on every human tile that is bound to a real member account.</li>
+</ul>
+
+<h3>Editor polish</h3>
+<ul>
+<li><strong>Contact fields on humans:</strong> email, phone, Slack ID, with small contact pills on the chart tile when populated.</li>
+<li><strong>Status field</strong> with active / paused / inactive / retired / terminated. Inactive nodes render grayscale with a strike-through name -- a clean way to mark old data without losing structure.</li>
+<li><strong>Explicit Delete button</strong> in the edit panel. Removing a tile also scrubs any escalates_to / reports_to / override_authority references that pointed at it, so the chart never dangles.</li>
+<li><strong>Sticky filter:</strong> the All / Agents / Humans toggle persists in localStorage. Refresh the page; the view stays where you left it.</li>
+</ul>
+
+<h3>What the framing change means</h3>
+<p>OTP is no longer "the AI coordination protocol." It is the substrate for hybrid human-and-AI organizations. The chart is the surface, the SOPs are the substance, the network is the leverage. <a href="/about">/about</a> and the <a href="/faq">FAQ</a> are updated.</p>
+<p>Next up: invite-from-tile for agents (members spin up their own connected Claude instances under their tile), dotted comparison lines between same-role agents, skills taxonomy, and mobile polish.</p>`,
+  },
+
+  {
+    date: '2026-04-26',
+    tags: ['Major', 'Core'],
     title: 'Team Chart: Visualize and Edit Your Agent + Human Org',
     summary: 'Your dashboard now has a visual org chart of every agent and human in your OOS, with click-to-edit fields and drag-and-drop hierarchy. Edits land as a draft until you publish.',
     details: `<p>Open <code>/dashboard/team</code> and your published OOS becomes a top-down org chart: agents, humans, organization, all wired by escalation and reporting lines.</p>
