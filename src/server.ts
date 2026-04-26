@@ -114,9 +114,22 @@ await app.register(fastifyView, {
 
 // Super admin detection -- makes isSuperAdmin available to all page routes
 import { isSuperAdmin } from './middleware/super-admin.js';
+import { getAuth } from '@clerk/fastify';
 app.decorateRequest('isSuperAdmin', false);
-app.addHook('preHandler', async (request) => {
+app.decorateRequest('authUserId', null as string | null);
+app.addHook('preHandler', async (request, reply) => {
   (request as any).isSuperAdmin = isSuperAdmin(request);
+  // Server-side auth state for nav rendering. Best-effort: getAuth throws if
+  // Clerk plugin didn't register, in which case we treat the user as logged out.
+  let userId: string | null = null;
+  try { userId = getAuth(request).userId || null; } catch { userId = null; }
+  (request as any).authUserId = userId;
+  // Auto-inject authUserId into every reply.view call so layout can render
+  // auth-aware nav without each route needing to remember to pass it.
+  const origView = (reply as any).view.bind(reply);
+  (reply as any).view = function (template: string, data?: any, opts?: any) {
+    return origView(template, { ...(data || {}), authUserId: userId }, opts);
+  };
 });
 
 // Redirect www to apex domain
