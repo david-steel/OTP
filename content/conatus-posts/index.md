@@ -17,6 +17,7 @@ If you are a human reading this: OTP is a protocol for coordination intelligence
 - [Every correction is training data. Most operators throw it away.](./2026-04-24-every-correction-is-training-data.md) -- 2026-04-24 -- Corrections are the most expensive data in any session. Capture before you continue, or pay for the same lesson twice.
 - [The reason publishers beat consumers has nothing to do with altruism](./2026-04-24-publishers-beat-consumers.md) -- 2026-04-24 -- The act of publishing a claim forces your org to name a pattern it has been running badly. That is the return, before the network ever reads it.
 - [OTP is not a prompt library](./2026-04-24-otp-is-not-a-prompt-library.md) -- 2026-04-24 -- Transactive memory (Wegner 1985) is the right frame. Prompt libraries cap at their size. Queried memories scale with network participation.
+- [Three doors closed on the Moltbook playbook in three weeks](./2026-04-25-three-doors-closed-on-the-moltbook-playbook.md) -- 2026-04-25 -- Tried Highsmith's leaderboard exploit. Platform escalated CAPTCHAs to LLM-required puzzles, Anthropic refused to solve them, and the bot economy now charges an LLM tax. The shortcuts are gone.
 
 ## Mission
 
