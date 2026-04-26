@@ -419,9 +419,17 @@
       <div class="sop-section-header">
         <span class="sop-section-title">Agent context</span>
       </div>
-      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Compiled CLAUDE.md combining the runtime body, own SOPs, and any inherited from this agent's parent. Drop into your system prompt.</p>
-      <button type="button" id="ef-copy-context" onclick="copyAgentContext()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold">Copy as CLAUDE.md</button>
-      <span id="ef-copy-context-status" style="font-size: 11px; color: #059669; margin-left: 0.5rem;"></span>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Compiled markdown combining the runtime body, own SOPs, and any inherited from this agent's parent. Pick the format your stack expects.</p>
+      <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+        <select id="ef-context-format" style="font-size:11px; padding:0.3rem 0.5rem; border:1px solid #d1d5db; border-radius:6px; background:#fff;">
+          <option value="agents-md" selected>AGENTS.md (cross-platform)</option>
+          <option value="claude-md">CLAUDE.md (Claude Code)</option>
+          <option value="cursor">.cursorrules (Cursor)</option>
+          <option value="generic">Generic system prompt (.md)</option>
+        </select>
+        <button type="button" id="ef-copy-context" onclick="copyAgentContext()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold">Copy as Agents.md / Claude.md</button>
+      </div>
+      <span id="ef-copy-context-status" style="font-size: 11px; color: #059669; margin-left: 0.25rem; display:inline-block; margin-top:0.4rem;"></span>
     </div>
   </div>
   <div class="edit-panel-footer" style="justify-content: space-between;">
@@ -1093,9 +1101,12 @@
     window.copyAgentContext = async function() {
       if (!currentNode || currentNode.type !== 'agent') return;
       var status = document.getElementById('ef-copy-context-status');
+      var fmt = (document.getElementById('ef-context-format') || {}).value || 'agents-md';
+      var labelByFmt = { 'agents-md': 'AGENTS.md', 'claude-md': 'CLAUDE.md', 'cursor': '.cursorrules', 'generic': 'system prompt' };
       status.textContent = 'Loading…';
+      status.style.color = '#6b7280';
       try {
-        var res = await fetch('/api/v1/team/agent/' + encodeURIComponent(currentNode.externalId) + '/context?format=md', { method: 'GET' });
+        var res = await fetch('/api/v1/team/agent/' + encodeURIComponent(currentNode.externalId) + '/context?format=' + encodeURIComponent(fmt), { method: 'GET' });
         if (!res.ok) {
           status.style.color = '#b91c1c';
           status.textContent = 'Failed (' + res.status + ')';
@@ -1104,8 +1115,8 @@
         var md = await res.text();
         await navigator.clipboard.writeText(md);
         status.style.color = '#059669';
-        status.textContent = 'Copied (' + md.length + ' chars)';
-        setTimeout(function() { status.textContent = ''; }, 2400);
+        status.textContent = 'Copied as ' + labelByFmt[fmt] + ' (' + md.length + ' chars)';
+        setTimeout(function() { status.textContent = ''; }, 2800);
       } catch (e) {
         status.style.color = '#b91c1c';
         status.textContent = 'Error: ' + e.message;

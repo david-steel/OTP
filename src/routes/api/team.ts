@@ -192,12 +192,19 @@ export default async function teamRoutes(app: FastifyInstance) {
         return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
       }
 
-      const ctx = await buildAgentContext(org.id, externalId, { orgName: org.name });
+      const fmtQuery = String(request.query.format || '').toLowerCase();
+      const wantsJson = fmtQuery === 'json';
+      const validFormats = ['agents-md', 'claude-md', 'cursor', 'generic'];
+      const format = (validFormats.includes(fmtQuery) ? fmtQuery : 'agents-md') as
+        'agents-md' | 'claude-md' | 'cursor' | 'generic';
+
+      const ctx = await buildAgentContext(org.id, externalId, { orgName: org.name, format });
       if (!ctx) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Agent not found in your latest OOS' } });
 
-      const format = request.query.format === 'json' ? 'json' : 'md';
-      if (format === 'json') return ctx;
+      if (wantsJson) return ctx;
       reply.header('Content-Type', 'text/markdown; charset=utf-8');
+      reply.header('Content-Disposition', `inline; filename="${ctx.filename}"`);
+      reply.header('X-OTP-Filename', ctx.filename);
       return ctx.markdown;
     }
   );

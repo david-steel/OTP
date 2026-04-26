@@ -209,9 +209,17 @@ export function computeAgentComparisonPairs(nodes: TeamNode[]): ComparisonPair[]
 }
 
 // ---------- Agent context: compile own SOPs + inherited SOPs into markdown ----------
+//
+// Supports multiple output formats so users on different agent platforms can
+// pick the convention they want. The body content is essentially identical
+// across formats; the differences are in the title, frontmatter, and the
+// suggested filename in Content-Disposition.
+
+export type AgentContextFormat = 'agents-md' | 'claude-md' | 'cursor' | 'generic';
 
 interface AgentContextOptions {
   orgName: string;
+  format?: AgentContextFormat;
 }
 
 export interface AgentContextResult {
@@ -221,6 +229,8 @@ export interface AgentContextResult {
   inheritedFromName: string | null;
   inheritedSopCount: number;
   markdown: string;
+  format: AgentContextFormat;
+  filename: string;
 }
 
 function renderSopMarkdown(sop: any, prefix: string): string {
@@ -275,17 +285,49 @@ export async function buildAgentContext(
   const ownSops: any[] = Array.isArray(agent.sops) ? agent.sops : [];
   const inheritedSops: any[] = parent && Array.isArray(parent.sops) ? parent.sops : [];
 
+  const format: AgentContextFormat = opts.format || 'agents-md';
+  const agentSlug = String(agent.name || agentExternalId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'agent';
+  const filenameByFormat: Record<AgentContextFormat, string> = {
+    'agents-md': 'AGENTS.md',
+    'claude-md': 'CLAUDE.md',
+    'cursor':    `.cursorrules`,
+    'generic':   `${agentSlug}-context.md`,
+  };
+
   const lines: string[] = [];
-  lines.push(`# ${agent.name || agentExternalId} -- agent context`);
+
+  // Header varies by format. AGENTS.md uses a frontmatter-style block plus a
+  // platform-neutral title. CLAUDE.md uses the prior single-title shape.
+  if (format === 'agents-md') {
+    lines.push('---');
+    lines.push(`agent: ${agent.name || agentExternalId}`);
+    if (agent.role) lines.push(`role: ${agent.role}`);
+    lines.push(`organization: ${opts.orgName}`);
+    if (parent) lines.push(`reports_to: ${parent.name || agent.escalates_to}`);
+    lines.push(`source: OTP team chart`);
+    lines.push('---');
+    lines.push('');
+    lines.push(`# ${agent.name || agentExternalId}`);
+  } else if (format === 'cursor') {
+    lines.push(`# Cursor rules for ${agent.name || agentExternalId}`);
+  } else if (format === 'generic') {
+    lines.push(`# ${agent.name || agentExternalId} -- system prompt`);
+  } else {
+    // claude-md (legacy default)
+    lines.push(`# ${agent.name || agentExternalId} -- agent context`);
+  }
   lines.push('');
-  lines.push(`**Organization:** ${opts.orgName}`);
-  if (agent.role) lines.push(`**Role:** ${agent.role}`);
+
+  if (format !== 'agents-md') {
+    lines.push(`**Organization:** ${opts.orgName}`);
+    if (agent.role) lines.push(`**Role:** ${agent.role}`);
+  }
   if (agent.mission) lines.push(`**Mission:** ${agent.mission}`);
   if (agent.authority_level) lines.push(`**Authority:** ${agent.authority_level}`);
   if (agent.platform) lines.push(`**Platform:** ${agent.platform}`);
   if (agent.status) lines.push(`**Status:** ${agent.status}`);
   if (Array.isArray(agent.skills) && agent.skills.length) lines.push(`**Skills:** ${agent.skills.join(', ')}`);
-  if (parent) lines.push(`**Reports to:** ${parent.name || agent.escalates_to} (${parentType})`);
+  if (parent && format !== 'agents-md') lines.push(`**Reports to:** ${parent.name || agent.escalates_to} (${parentType})`);
   lines.push('');
 
   // Connected runtime body (the operator's own CLAUDE.md / system prompt
@@ -335,6 +377,8 @@ export async function buildAgentContext(
     inheritedFromName: parent ? (parent.name || agent.escalates_to) : null,
     inheritedSopCount: inheritedSops.length,
     markdown: lines.join('\n'),
+    format,
+    filename: filenameByFormat[format],
   };
 }
 

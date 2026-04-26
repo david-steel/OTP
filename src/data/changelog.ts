@@ -30,7 +30,7 @@ export const changelog: ChangelogEntry[] = [
 <h3>AI agents inherit SOPs from their human</h3>
 <ul>
 <li><strong>Inheritance:</strong> when an agent escalates_to a human, the agent inherits that human's SOPs as runtime context. No copy-paste, no re-explanation when a new instance spins up.</li>
-<li><strong>Copy as CLAUDE.md:</strong> every agent's edit panel has a one-click button that compiles own SOPs + inherited SOPs + role/mission/authority into a CLAUDE.md-shaped markdown file, copied straight to your clipboard. Drop it into your system prompt and the agent runs on the org's latest accountability state.</li>
+<li><strong>Copy as Agents.md / Claude.md:</strong> every agent's edit panel has a one-click button that compiles own SOPs + inherited SOPs + role/mission/authority into a markdown file, copied straight to your clipboard. Pick the format your stack expects -- AGENTS.md (cross-platform default), CLAUDE.md (Claude Code), .cursorrules (Cursor), or generic system prompt. Drop it into your runtime and the agent runs on the org's latest accountability state.</li>
 <li><strong>Tooltip:</strong> hover any agent and see "Inherits N SOPs from {parent}." The SOP layer is visible at a glance.</li>
 </ul>
 
