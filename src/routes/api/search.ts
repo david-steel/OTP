@@ -101,7 +101,8 @@ export default async function searchRoutes(app: FastifyInstance) {
       SELECT
         f.id, f.template, f.version, f.claim_count, f.word_count,
         f.confidence_distribution, f.evidence_distribution, f.published_at,
-        o.id AS org_id, o.name AS org_name, o.industry, o.size, o.badge, o.quality_tier
+        o.id AS org_id, o.name AS org_name, o.industry, o.size, o.badge, o.quality_tier,
+        (o.clerk_id LIKE 'template_%') AS is_template
       FROM oos_files f
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
@@ -162,6 +163,7 @@ export default async function searchRoutes(app: FastifyInstance) {
         badge: org.badge,
         qualityTier: org.qualityTier,
         memberSince: org.createdAt,
+        isTemplate: typeof org.clerkOrgId === 'string' && org.clerkOrgId.startsWith('template_'),
       },
       stats: {
         publishedFiles: publishedFiles.length,
