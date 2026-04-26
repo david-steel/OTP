@@ -1,0 +1,209 @@
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  .team-canvas { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-radius: 1rem; }
+  .node-agent { fill: #0ea5e9; }
+  .node-human { fill: #f59e0b; }
+  .node-organization { fill: #1e293b; }
+  .node-label { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; fill: #1f2937; pointer-events: none; }
+  .node-label-strong { font-weight: 700; }
+  .edge-line { stroke: #cbd5e1; stroke-width: 1.5px; fill: none; }
+  .edge-line.escalates_to { stroke: #f59e0b; stroke-dasharray: 4 3; }
+  .edge-line.overrides { stroke: #dc2626; }
+  .edge-line.delegates_to { stroke: #0ea5e9; }
+  .node-circle { cursor: pointer; transition: stroke-width 120ms ease, transform 120ms ease; }
+  .node-circle:hover { stroke-width: 4px; }
+  .node-circle.dimmed { opacity: 0.2; }
+  .node-label.dimmed { opacity: 0.2; }
+  .edge-line.dimmed { opacity: 0.1; }
+  .node-tooltip { position: absolute; pointer-events: none; background: rgba(15, 23, 42, 0.95); color: #f1f5f9; padding: 0.625rem 0.875rem; border-radius: 0.5rem; font-size: 12px; line-height: 1.5; max-width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 50; opacity: 0; transition: opacity 120ms ease; }
+  .node-tooltip.visible { opacity: 1; }
+  .node-tooltip .ttl { font-weight: 700; color: #fff; margin-bottom: 0.25rem; }
+  .node-tooltip .row { color: #cbd5e1; }
+  .node-tooltip .row strong { color: #fff; font-weight: 600; }
+</style>
+
+<section class="bg-white border-b border-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-6">
+    <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+      <a href="/dashboard" class="hover:text-otp-600">Dashboard</a>
+      <span>/</span>
+      <span class="text-gray-700 font-medium">Team</span>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Team</h1>
+        <p class="text-sm text-gray-500 mt-1">Live view of your agents and humans, derived from your published OOS. <span class="text-gray-400">Editing in Phase 2.</span></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 text-xs font-medium" role="group">
+          <button data-filter="all" class="filter-btn px-3 py-1.5 rounded-md bg-gray-900 text-white">All <span class="opacity-70 ml-1"><%= counts.agents + counts.humans %></span></button>
+          <button data-filter="agent" class="filter-btn px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900">Agents <span class="opacity-70 ml-1"><%= counts.agents %></span></button>
+          <button data-filter="human" class="filter-btn px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900">Humans <span class="opacity-70 ml-1"><%= counts.humans %></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bg-gray-50 py-6 sm:py-8 min-h-[60vh]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <% if (teamNodes.length <= 1) { %>
+      <!-- Empty state: only the org node, no agents/humans yet -->
+      <div class="bg-white rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
+        <div class="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 0a4 4 0 11-8 0 4 4 0 018 0zm6-4a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </div>
+        <h2 class="text-lg font-bold text-gray-900 mb-1">No agents or humans on the chart yet</h2>
+        <p class="text-sm text-gray-500 max-w-md mx-auto mb-5">Publish an OOS with an `agents` or `humans` section and they'll appear here automatically.</p>
+        <a href="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold text-sm transition-colors">
+          Back to Dashboard
+        </a>
+      </div>
+    <% } else { %>
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden relative" style="height: 70vh; min-height: 520px;">
+        <svg id="team-svg" class="team-canvas w-full h-full"></svg>
+        <div id="team-tooltip" class="node-tooltip"></div>
+        <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 px-3 py-2 text-[10px] text-gray-600 flex items-center gap-3 shadow-sm">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>Agent</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Human</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-800"></span>Org</span>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<% if (teamNodes.length > 1) { %>
+<script>
+  (function() {
+    var nodes = <%- JSON.stringify(teamNodes) %>;
+    var edges = <%- JSON.stringify(teamEdges) %>;
+
+    var byId = {};
+    nodes.forEach(function(n) { byId[n.id] = n; });
+
+    var simNodes = nodes.map(function(n) { return Object.assign({}, n); });
+    var simEdges = edges.filter(function(e) { return byId[e.sourceId] && byId[e.targetId]; }).map(function(e) {
+      return { source: e.sourceId, target: e.targetId, type: e.type };
+    });
+
+    var svg = d3.select('#team-svg');
+    var svgEl = svg.node();
+    var width = svgEl.clientWidth;
+    var height = svgEl.clientHeight;
+    var g = svg.append('g');
+
+    svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', function(ev) { g.attr('transform', ev.transform); }));
+
+    var radiusFor = function(d) { return d.type === 'organization' ? 22 : (d.type === 'human' ? 14 : 11); };
+    var fillFor   = function(d) { return d.type === 'organization' ? '#1e293b' : (d.type === 'human' ? '#f59e0b' : '#0ea5e9'); };
+
+    var link = g.append('g').selectAll('line').data(simEdges).enter().append('line')
+      .attr('class', function(d) { return 'edge-line ' + d.type; });
+
+    var node = g.append('g').selectAll('g.node').data(simNodes).enter().append('g').attr('class', 'node');
+    node.append('circle')
+      .attr('class', 'node-circle')
+      .attr('r', radiusFor)
+      .attr('fill', fillFor)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2);
+
+    node.append('text')
+      .attr('class', 'node-label node-label-strong')
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return radiusFor(d) + 14; })
+      .text(function(d) { return d.label.length > 28 ? d.label.slice(0, 26) + '…' : d.label; });
+
+    node.append('text')
+      .attr('class', 'node-label')
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return radiusFor(d) + 28; })
+      .attr('fill', '#6b7280')
+      .text(function(d) {
+        var p = d.properties || {};
+        return d.type === 'organization' ? '' : (p.role || p.authorityLevel || d.type);
+      });
+
+    var tooltip = d3.select('#team-tooltip');
+    node.on('mouseenter', function(ev, d) {
+      var p = d.properties || {};
+      var html = '<div class="ttl">' + escapeHtml(d.label) + '</div>';
+      html += '<div class="row"><strong>Type:</strong> ' + d.type + '</div>';
+      if (p.role) html += '<div class="row"><strong>Role:</strong> ' + escapeHtml(String(p.role)) + '</div>';
+      if (p.mission) html += '<div class="row"><strong>Mission:</strong> ' + escapeHtml(String(p.mission)) + '</div>';
+      if (p.authorityLevel) html += '<div class="row"><strong>Authority:</strong> ' + escapeHtml(String(p.authorityLevel)) + '</div>';
+      if (p.platform) html += '<div class="row"><strong>Platform:</strong> ' + escapeHtml(String(p.platform)) + '</div>';
+      if (p.status) html += '<div class="row"><strong>Status:</strong> ' + escapeHtml(String(p.status)) + '</div>';
+      tooltip.html(html);
+      var rect = svgEl.getBoundingClientRect();
+      tooltip.style('left', (ev.clientX - rect.left + 14) + 'px').style('top', (ev.clientY - rect.top + 14) + 'px');
+      tooltip.classed('visible', true);
+    }).on('mousemove', function(ev) {
+      var rect = svgEl.getBoundingClientRect();
+      tooltip.style('left', (ev.clientX - rect.left + 14) + 'px').style('top', (ev.clientY - rect.top + 14) + 'px');
+    }).on('mouseleave', function() {
+      tooltip.classed('visible', false);
+    });
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+
+    var sim = d3.forceSimulation(simNodes)
+      .force('charge', d3.forceManyBody().strength(-340))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(function(d) { return radiusFor(d) + 18; }))
+      .force('link', d3.forceLink(simEdges).id(function(d) { return d.id; }).distance(function(d) {
+        return d.type === 'part_of' ? 90 : 130;
+      }).strength(0.6))
+      .on('tick', function() {
+        link
+          .attr('x1', function(d) { return d.source.x; })
+          .attr('y1', function(d) { return d.source.y; })
+          .attr('x2', function(d) { return d.target.x; })
+          .attr('y2', function(d) { return d.target.y; });
+        node.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+      });
+
+    node.call(d3.drag()
+      .on('start', function(ev, d) { if (!ev.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  function(ev, d) { d.fx = ev.x; d.fy = ev.y; })
+      .on('end',   function(ev, d) { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+    document.querySelectorAll('.filter-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var f = btn.getAttribute('data-filter');
+        document.querySelectorAll('.filter-btn').forEach(function(b) {
+          b.classList.remove('bg-gray-900','text-white');
+          b.classList.add('text-gray-600');
+        });
+        btn.classList.add('bg-gray-900','text-white');
+        btn.classList.remove('text-gray-600');
+
+        node.classed('dimmed', false);
+        link.classed('dimmed', false);
+        if (f === 'all') {
+          node.select('circle').classed('dimmed', false);
+          node.selectAll('text').classed('dimmed', false);
+          link.classed('dimmed', false);
+        } else {
+          var keep = function(d) { return d.type === f || d.type === 'organization'; };
+          node.select('circle').classed('dimmed', function(d) { return !keep(d); });
+          node.selectAll('text').classed('dimmed', function(d) { return !keep(d); });
+          link.classed('dimmed', function(d) {
+            var src = typeof d.source === 'object' ? d.source : byId[d.source];
+            var tgt = typeof d.target === 'object' ? d.target : byId[d.target];
+            return !(src && tgt && keep(src) && keep(tgt));
+          });
+        }
+      });
+    });
+
+    window.addEventListener('resize', function() {
+      var w = svgEl.clientWidth;
+      var h = svgEl.clientHeight;
+      sim.force('center', d3.forceCenter(w / 2, h / 2));
+      sim.alpha(0.3).restart();
+    });
+  })();
+</script>
+<% } %>

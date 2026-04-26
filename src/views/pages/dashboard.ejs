@@ -245,13 +245,19 @@
     </div>
 
     <!-- D. Your OOS Files -->
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
       <h3 class="font-semibold text-lg">Your OOS Files</h3>
-      <% if (dashboard.staleDraftCount && dashboard.staleDraftCount > 0) { %>
-        <button onclick="cleanStaleDrafts()" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-colors">
-          Clean <%= dashboard.staleDraftCount %> stale draft<%= dashboard.staleDraftCount === 1 ? '' : 's' %>
-        </button>
-      <% } %>
+      <div class="flex items-center gap-2">
+        <a href="/dashboard/team" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors inline-flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 0a4 4 0 11-8 0 4 4 0 018 0zm6-4a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          Team chart
+        </a>
+        <% if (dashboard.staleDraftCount && dashboard.staleDraftCount > 0) { %>
+          <button onclick="cleanStaleDrafts()" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-colors">
+            Clean <%= dashboard.staleDraftCount %> stale draft<%= dashboard.staleDraftCount === 1 ? '' : 's' %>
+          </button>
+        <% } %>
+      </div>
     </div>
     <% if (dashboard.oosFiles.length > 0) { %>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
