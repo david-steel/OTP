@@ -30,6 +30,21 @@
   .org-node .contacts { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; }
   .org-node .contact-pill { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 9px; color: #6b7280; background: #f3f4f6; padding: 0.05rem 0.3rem; border-radius: 999px; }
 
+  /* Claimed-by badge: shown when a human tile is bound to a member */
+  .org-node.claimed { border-color: #34d399; box-shadow: 0 0 0 1px rgba(52,211,153,0.30); }
+  .org-node .claimed-badge { display: inline-flex; align-items: center; gap: 0.15rem; font-size: 9px; font-weight: 700; color: #047857; background: #d1fae5; border: 1px solid #6ee7b7; padding: 0.05rem 0.3rem; border-radius: 999px; flex-shrink: 0; margin-left: 0.25rem; }
+
+  /* Pending-invites drawer */
+  .invites-drawer { position: fixed; top: 0; right: 0; height: 100vh; width: 100%; max-width: 420px; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -10px 0 30px rgba(15,23,42,0.08); z-index: 65; transform: translateX(100%); transition: transform 200ms ease; display: flex; flex-direction: column; }
+  .invites-drawer.open { transform: translateX(0); }
+  .invites-drawer-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .invites-drawer-body { padding: 1rem 1.5rem; overflow-y: auto; flex: 1; }
+  .invite-row { padding: 0.75rem 0; border-bottom: 1px dashed #e5e7eb; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+  .invite-row:last-child { border-bottom: none; }
+  .invite-row .meta { font-size: 11px; color: #6b7280; margin-top: 0.15rem; }
+  .invite-row .actions button { font-size: 11px; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; cursor: pointer; }
+  .invite-row .actions button:hover { background: #fee2e2; }
+
   /* SOP authoring section in edit panel */
   .sop-section { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #f3f4f6; }
   .sop-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
@@ -117,6 +132,17 @@
         <% } else if (teamMeta.hasPublished) { %>
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
         <% } %>
+        <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
+          <button onclick="openInvitesDrawer()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+            Pending invites
+            <% if (typeof pendingInvites !== 'undefined' && pendingInvites && pendingInvites.length > 0) { %>
+              <span class="ml-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold"><%= pendingInvites.length %></span>
+            <% } %>
+          </button>
+        <% } %>
+        <% if (typeof memberCount !== 'undefined' && memberCount > 1) { %>
+          <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium"><%= memberCount %> members</span>
+        <% } %>
         <div class="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 text-xs font-medium" role="group">
           <button data-filter="all" class="filter-btn px-3 py-1.5 rounded-md bg-gray-900 text-white">All <span class="opacity-70 ml-1"><%= counts.agents + counts.humans %></span></button>
           <button data-filter="agent" class="filter-btn px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900">Agents <span class="opacity-70 ml-1"><%= counts.agents %></span></button>
@@ -157,6 +183,40 @@
 
 <div id="org-tooltip" class="org-tooltip"></div>
 
+<% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
+<aside id="invites-drawer" class="invites-drawer" aria-hidden="true">
+  <div class="invites-drawer-header">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-1">Pending invitations</div>
+      <div class="text-base font-bold text-gray-900">Invitations sent, not yet accepted</div>
+    </div>
+    <button onclick="closeInvitesDrawer()" class="text-gray-400 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="invites-drawer-body" id="invites-drawer-body">
+    <% if (!pendingInvites || pendingInvites.length === 0) { %>
+      <div style="text-align:center; padding: 2rem 0; color: #9ca3af; font-size: 13px;">No pending invitations.<br/>Open a human tile and click "Invite to claim" to send one.</div>
+    <% } else { %>
+      <% pendingInvites.forEach(function(inv) { %>
+        <div class="invite-row" data-invite-id="<%= inv.id %>">
+          <div>
+            <div class="font-semibold text-sm text-gray-900"><%= inv.email %></div>
+            <div class="meta">
+              <% if (inv.claimedEntityId) { %>Tile: <code class="text-[10px] bg-gray-100 px-1 rounded"><%= inv.claimedEntityId %></code> &middot; <% } %>
+              Expires <%= new Date(inv.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+            </div>
+          </div>
+          <div class="actions">
+            <button onclick="revokeInvite('<%= inv.id %>')">Revoke</button>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+</aside>
+<% } %>
+
 <!-- Edit panel (unchanged) -->
 <div id="edit-overlay" class="edit-overlay" onclick="closeEdit()"></div>
 <aside id="edit-panel" class="edit-panel" aria-hidden="true">
@@ -194,6 +254,19 @@
     <div class="edit-field" id="ef-escalates-wrap"><label for="ef-escalates">Escalates to</label><select id="ef-escalates"><option value="">(none)</option></select><div class="hint">Pick an agent or human this one escalates to.</div></div>
     <div class="edit-field" id="ef-reportsto-wrap"><label for="ef-reportsto">Reports to</label><select id="ef-reportsto"><option value="">(none)</option></select><div class="hint">Pick the manager this person reports to.</div></div>
     <div class="edit-field"><label for="ef-skills">Skills</label><input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" /><div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div></div>
+
+    <div class="sop-section" id="ef-invite-section" style="display:none">
+      <div class="sop-section-header">
+        <span class="sop-section-title">Invite to claim this tile</span>
+      </div>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Send an email link. The recipient signs in and claims this exact tile. They become a member with edit rights on their tile and the AI agents under it.</p>
+      <div id="ef-invite-claimed-by" style="font-size: 11px; color: #047857; margin-bottom: 0.5rem; display:none;"></div>
+      <div style="display:flex; gap:0.4rem; align-items:flex-start;">
+        <input id="ef-invite-email" type="email" placeholder="name@company.com" style="flex:1; padding:0.5rem 0.625rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:13px;" />
+        <button id="ef-invite-btn" type="button" onclick="sendInvite()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Send invite</button>
+      </div>
+      <div id="ef-invite-status" style="font-size: 11px; margin-top: 0.5rem;"></div>
+    </div>
 
     <div class="sop-section" id="ef-sop-section">
       <div class="sop-section-header">
@@ -248,6 +321,9 @@
   (function() {
     var nodes = <%- JSON.stringify(teamNodes) %>;
     var edges = <%- JSON.stringify(teamEdges) %>;
+    var claimedTileMap = <%- JSON.stringify(typeof claimedTileMap !== 'undefined' ? claimedTileMap : {}) %>;
+    var viewerRole = <%- JSON.stringify(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
+    var viewerClaimedEntityId = <%- JSON.stringify(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
 
     var byId = {};
     nodes.forEach(function(n) { byId[n.id] = n; });
@@ -391,8 +467,9 @@
         var p2 = n.properties || {};
         var statusLower = String(p2.status || '').toLowerCase();
         var isInactive = ['inactive', 'retired', 'terminated'].indexOf(statusLower) !== -1;
+        var isClaimed = (n.type === 'human' && claimedTileMap[n.externalId]);
         var box = document.createElement('div');
-        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '');
+        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '') + (isClaimed ? ' claimed' : '');
         box.style.left = x + 'px';
         box.style.top  = y + 'px';
         box.style.width  = NODE_W + 'px';
@@ -408,7 +485,8 @@
         if (n.type !== 'organization') {
           var typePill = '<div class="badge-type">' + typeLabel + '</div>';
           var sopPill = sopCount > 0 ? '<div class="sop-badge" title="' + sopCount + ' SOP' + (sopCount === 1 ? '' : 's') + '">' + sopCount + ' SOP' + (sopCount === 1 ? '' : 's') + '</div>' : '';
-          inner += '<div style="display:flex; align-items:center; gap:0.25rem; flex-shrink:0;">' + sopPill + typePill + '</div>';
+          var claimPill = isClaimed ? '<div class="claimed-badge" title="Claimed by member">claimed</div>' : '';
+          inner += '<div style="display:flex; align-items:center; gap:0.25rem; flex-shrink:0;">' + claimPill + sopPill + typePill + '</div>';
         }
         inner += '</div>';
         if (p.role) inner += '<div class="role" title="' + escapeHtml(String(p.role)) + '">' + escapeHtml(String(p.role)) + '</div>';
@@ -791,6 +869,27 @@
       document.getElementById('ef-contact-phone-wrap').style.display = (d.type === 'human' ? '' : 'none');
       document.getElementById('ef-slackid-wrap').style.display = (d.type === 'human' ? '' : 'none');
 
+      // Invite section: only visible to owner viewing a human tile
+      var inviteSection = document.getElementById('ef-invite-section');
+      if (inviteSection) {
+        var canInvite = (viewerRole === 'owner' && d.type === 'human');
+        inviteSection.style.display = canInvite ? '' : 'none';
+        if (canInvite) {
+          var claimedByEl = document.getElementById('ef-invite-claimed-by');
+          var existing = claimedTileMap[d.externalId];
+          if (existing) {
+            claimedByEl.style.display = '';
+            claimedByEl.textContent = 'Already claimed by member ' + existing.clerkUserId + '. New invitations would replace nothing -- you can revoke pending invites from the drawer.';
+            document.getElementById('ef-invite-email').value = (p.contactEmail || '');
+          } else {
+            claimedByEl.style.display = 'none';
+            // Pre-fill with the tile's contact email if known
+            document.getElementById('ef-invite-email').value = (p.contactEmail || '');
+          }
+          document.getElementById('ef-invite-status').textContent = '';
+        }
+      }
+
       var fillSelect = function(selectEl, currentValue) {
         selectEl.innerHTML = '<option value="">(none)</option>';
         nodes.forEach(function(n) {
@@ -888,7 +987,80 @@
         btn.disabled = false; btn.textContent = 'Save to draft';
       }
     };
-    document.addEventListener('keydown', function(ev) { if (ev.key === 'Escape') closeEdit(); });
+    document.addEventListener('keydown', function(ev) {
+      if (ev.key === 'Escape') {
+        closeEdit();
+        if (typeof closeInvitesDrawer === 'function') closeInvitesDrawer();
+      }
+    });
+
+    window.openInvitesDrawer = function() {
+      var d = document.getElementById('invites-drawer');
+      if (d) { d.classList.add('open'); d.setAttribute('aria-hidden', 'false'); }
+    };
+    window.closeInvitesDrawer = function() {
+      var d = document.getElementById('invites-drawer');
+      if (d) { d.classList.remove('open'); d.setAttribute('aria-hidden', 'true'); }
+    };
+
+    window.sendInvite = async function() {
+      if (!currentNode || currentNode.type !== 'human') return;
+      var emailInput = document.getElementById('ef-invite-email');
+      var btn = document.getElementById('ef-invite-btn');
+      var status = document.getElementById('ef-invite-status');
+      var email = (emailInput.value || '').trim();
+      if (!email) { status.style.color = '#b91c1c'; status.textContent = 'Email required.'; return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      status.style.color = '#6b7280';
+      status.textContent = '';
+      try {
+        var res = await fetch('/api/v1/team/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, claimedEntityId: currentNode.externalId, role: 'member' }),
+        });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          status.style.color = '#b91c1c';
+          status.textContent = (err.error && err.error.message) || ('Send failed (' + res.status + ')');
+          btn.disabled = false; btn.textContent = 'Send invite';
+          return;
+        }
+        var data = await res.json();
+        status.style.color = '#059669';
+        status.textContent = 'Invite sent to ' + data.email + '. Expires ' + new Date(data.expiresAt).toLocaleDateString() + '.';
+        emailInput.value = '';
+        btn.disabled = false; btn.textContent = 'Send invite';
+        // Soft refresh after 2.5s so the pending-invites drawer reflects reality
+        setTimeout(function() { window.location.reload(); }, 2500);
+      } catch (e) {
+        status.style.color = '#b91c1c';
+        status.textContent = 'Network error: ' + e.message;
+        btn.disabled = false; btn.textContent = 'Send invite';
+      }
+    };
+
+    window.revokeInvite = async function(invitationId) {
+      if (!confirm('Revoke this invitation? The link in the email stops working immediately.')) return;
+      try {
+        var res = await fetch('/api/v1/team/invitations/' + invitationId, { method: 'DELETE' });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          alert('Revoke failed: ' + ((err.error && err.error.message) || res.status));
+          return;
+        }
+        // Remove the row visually
+        var row = document.querySelector('.invite-row[data-invite-id="' + invitationId + '"]');
+        if (row) row.remove();
+        // If empty now, soft-reload to update the count badge in header
+        var body = document.getElementById('invites-drawer-body');
+        if (body && body.querySelectorAll('.invite-row').length === 0) {
+          window.location.reload();
+        }
+      } catch (e) {
+        alert('Network error: ' + e.message);
+      }
+    };
 
     window.deleteCurrentEntity = async function() {
       if (!currentNode) return;

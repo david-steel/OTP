@@ -1068,6 +1068,17 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
+    const { listMembers, listPendingInvites } = await import('../../services/membership.js');
+    const members = await listMembers(org.id);
+    const pendingInvites = role === 'owner' ? await listPendingInvites(org.id) : [];
+
+    // claimedTileMap: externalId -> { name, role } for "claimed by" badges
+    const claimedTileMap: Record<string, { clerkUserId: string; role: string }> = {};
+    for (const m of members) {
+      if (m.claimedEntityId) {
+        claimedTileMap[m.claimedEntityId] = { clerkUserId: m.clerkUserId, role: m.role };
+      }
+    }
 
     return reply.view('pages/dashboard-team', {
       title: 'Team - Dashboard - OTP',
@@ -1090,6 +1101,9 @@ export default async function pageRoutes(app: FastifyInstance) {
         humans: team.nodes.filter(n => n.type === 'human').length,
       },
       sopTemplateGroups: SOP_TEMPLATE_GROUPS,
+      claimedTileMap,
+      pendingInvites,
+      memberCount: members.length,
     });
   });
 
