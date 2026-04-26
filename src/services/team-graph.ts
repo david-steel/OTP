@@ -297,9 +297,14 @@ export async function patchTeamEntity(
     if (blocking) throw new TeamMutationError('REASSEMBLE_FAILED', `Patched OOS no longer parses: ${blocking.message}`, 500);
   }
 
+  // IMPORTANT: parsed.frontmatter is Zod-stripped (oosFrontmatterSchema does
+  // not declare `entities`), so using it as the JSONB column would erase the
+  // very fields the team chart reads. We persist the YAML-parsed object we
+  // mutated directly. wordCount + claimCount still come from parsed since
+  // those are derived from the body, not the frontmatter.
   await db.update(oosFiles).set({
     rawContent: newRaw,
-    frontmatter: parsed.frontmatter as any,
+    frontmatter: fm as any,
     wordCount: parsed.wordCount,
     claimCount: parsed.claims.length,
     updatedAt: new Date(),
