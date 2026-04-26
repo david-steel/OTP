@@ -459,6 +459,7 @@
         var res = await fetch('/api/v1/oos/cleanup-stale', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: '{}',
         });
         if (!res.ok) {
           var err = await res.json();
