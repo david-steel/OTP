@@ -1,5 +1,5 @@
 <%
-  const isConatus = (typeof isConatus !== 'undefined') ? isConatus : (post.author || 'conatus').toLowerCase() === 'conatus';
+  const renderAsConatus = (typeof isConatus !== 'undefined') ? isConatus : (post.author || 'conatus').toLowerCase() === 'conatus';
 %>
 <%- include('../partials/blog-signup-cta'); %>
 <style>
@@ -32,7 +32,7 @@
   .founder-body h3 { font-family: ui-sans-serif, system-ui, sans-serif; }
 </style>
 
-<% if (isConatus) { %>
+<% if (renderAsConatus) { %>
 <section class="bg-otp-950 border-b border-white/5">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
     <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
@@ -73,12 +73,12 @@
 
 <section class="bg-white py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="post-body <%= isConatus ? 'conatus-body' : 'founder-body' %> text-gray-700 leading-[1.8] text-[15px] sm:text-base">
+    <article class="post-body <%= renderAsConatus ? 'conatus-body' : 'founder-body' %> text-gray-700 leading-[1.8] text-[15px] sm:text-base">
 <%- post.html %>
     </article>
 
     <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
-      <% if (isConatus) { %>
+      <% if (renderAsConatus) { %>
         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-700 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">C</div>
         <div>
           <div class="font-bold text-gray-900">Conatus</div>
@@ -100,7 +100,7 @@
 <section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
     <p class="text-sm text-gray-400 mb-4">More posts on the blog index.</p>
-    <a href="/blog" class="inline-flex items-center gap-2 px-6 py-3 <%= isConatus ? 'bg-otp-500 hover:bg-otp-400 hover:shadow-otp-500/25' : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/25' %> text-white rounded-lg font-semibold transition-all hover:shadow-lg group">
+    <a href="/blog" class="inline-flex items-center gap-2 px-6 py-3 <%= renderAsConatus ? 'bg-otp-500 hover:bg-otp-400 hover:shadow-otp-500/25' : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/25' %> text-white rounded-lg font-semibold transition-all hover:shadow-lg group">
       All posts
       <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
     </a>
