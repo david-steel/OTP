@@ -1065,6 +1065,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!org) return reply.redirect('/dashboard');
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
 
     return reply.view('pages/dashboard-team', {
       title: 'Team - Dashboard - OTP',
@@ -1084,6 +1085,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         agents: team.nodes.filter(n => n.type === 'agent').length,
         humans: team.nodes.filter(n => n.type === 'human').length,
       },
+      sopTemplateGroups: SOP_TEMPLATE_GROUPS,
     });
   });
 

@@ -176,7 +176,21 @@
     <div class="sop-section" id="ef-sop-section">
       <div class="sop-section-header">
         <span class="sop-section-title">SOPs <span id="ef-sop-count" style="color:#9ca3af; font-weight: 500;"></span></span>
-        <button type="button" class="sop-section-add" onclick="addSop()">+ Add SOP</button>
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <select id="ef-sop-template-picker" onchange="insertTemplate(this.value); this.value='';" style="font-size:11px; padding:0.25rem 0.5rem; border:1px dashed #c7d2fe; border-radius:6px; background:#eef2ff; color:#3730a3; cursor:pointer;">
+            <option value="">+ From template…</option>
+            <% if (typeof sopTemplateGroups !== 'undefined' && sopTemplateGroups) { %>
+              <% sopTemplateGroups.forEach(function(group) { %>
+                <optgroup label="<%= group.role %>">
+                  <% group.templates.forEach(function(t) { %>
+                    <option value="<%= group.roleId %>:<%= t.id %>"><%= t.title %></option>
+                  <% }); %>
+                </optgroup>
+              <% }); %>
+            <% } %>
+          </select>
+          <button type="button" class="sop-section-add" onclick="addSop()">+ Add blank</button>
+        </div>
       </div>
       <div id="ef-sop-list" class="sop-list"></div>
     </div>
@@ -551,6 +565,24 @@
 
     window.addSop = function() {
       currentSops.push({ id: genSopId('new-sop'), title: '', trigger: '', steps: [], outputs: [], tools: [], notes: '' });
+      editingSopIdx = currentSops.length - 1;
+      renderSopList();
+    };
+
+    var SOP_TEMPLATE_GROUPS = <%- JSON.stringify(typeof sopTemplateGroups !== 'undefined' ? sopTemplateGroups : []) %>;
+    window.insertTemplate = function(value) {
+      if (!value) return;
+      var parts = value.split(':');
+      if (parts.length !== 2) return;
+      var roleId = parts[0], templateId = parts[1];
+      var group = SOP_TEMPLATE_GROUPS.find(function(g) { return g.roleId === roleId; });
+      if (!group) return;
+      var tpl = group.templates.find(function(t) { return t.id === templateId; });
+      if (!tpl) return;
+      // Deep copy + assign a fresh runtime id so the SOP is unique on save
+      var copy = JSON.parse(JSON.stringify(tpl));
+      copy.id = genSopId(tpl.title);
+      currentSops.push(copy);
       editingSopIdx = currentSops.length - 1;
       renderSopList();
     };
