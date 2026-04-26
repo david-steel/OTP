@@ -384,6 +384,74 @@ async function getOrCreateEditableDraft(orgId: string): Promise<typeof oosFiles.
   });
 }
 
+export interface CreateEntityInput {
+  type: EntityType;
+  name: string;
+  role?: string;
+  contactEmail?: string;
+  reportsTo?: string;     // for human
+  escalatesTo?: string;   // for agent
+  authorityLevel?: string;
+}
+
+export async function createTeamEntity(
+  orgId: string,
+  input: CreateEntityInput
+): Promise<{ ok: true; externalId: string; oosFileId: string; type: EntityType }> {
+  if (input.type !== 'agent' && input.type !== 'human') {
+    throw new TeamMutationError('INVALID_TYPE', 'Type must be "agent" or "human"');
+  }
+  const name = String(input.name || '').trim();
+  if (!name) throw new TeamMutationError('MISSING_NAME', 'Name is required');
+
+  const draft = await getOrCreateEditableDraft(orgId);
+  const { fmText, body } = splitFrontmatter(draft.rawContent);
+  const fm: any = parseYAML(fmText) || {};
+  fm.entities = fm.entities || {};
+  const listKey = input.type === 'agent' ? 'agents' : 'humans';
+  if (!Array.isArray(fm.entities[listKey])) fm.entities[listKey] = [];
+
+  const prefix = input.type === 'agent' ? 'AGT_' : 'HUM_';
+  const slug = name.replace(/[^A-Za-z0-9]/g, '').toUpperCase() || 'TILE';
+  let externalId = prefix + slug;
+  let suffix = 0;
+  // Check uniqueness across BOTH lists since externalIds reference each other
+  const allIds = new Set<string>([
+    ...((fm.entities.agents || []).map((e: any) => String(e.id || ''))),
+    ...((fm.entities.humans || []).map((e: any) => String(e.id || ''))),
+  ]);
+  while (allIds.has(externalId)) {
+    suffix++;
+    externalId = `${prefix}${slug}_${suffix}`;
+  }
+
+  const newEntity: any = { id: externalId, name };
+  if (input.role) newEntity.role = String(input.role).trim();
+  if (input.authorityLevel) newEntity.authority_level = String(input.authorityLevel).trim();
+  if (input.contactEmail && input.type === 'human') newEntity.contact_email = String(input.contactEmail).trim().toLowerCase();
+  if (input.reportsTo && input.type === 'human') newEntity.reports_to = input.reportsTo;
+  if (input.escalatesTo && input.type === 'agent') newEntity.escalates_to = input.escalatesTo;
+
+  fm.entities[listKey].push(newEntity);
+
+  const newRaw = reassembleRaw(fm, body);
+  const parsed = parseOOS(newRaw, draft.template as TemplateType);
+  if (parsed.errors.length > 0) {
+    const blocking = parsed.errors.find(e => e.code === 'MISSING_FRONTMATTER' || e.code === 'FRONTMATTER_PARSE_ERROR');
+    if (blocking) throw new TeamMutationError('REASSEMBLE_FAILED', `OOS no longer parses: ${blocking.message}`, 500);
+  }
+
+  await db.update(oosFiles).set({
+    rawContent: newRaw,
+    frontmatter: fm as any,
+    wordCount: parsed.wordCount,
+    claimCount: parsed.claims.length,
+    updatedAt: new Date(),
+  }).where(and(eq(oosFiles.id, draft.id), eq(oosFiles.orgId, orgId)));
+
+  return { ok: true, externalId, oosFileId: draft.id, type: input.type };
+}
+
 export async function deleteTeamEntity(
   orgId: string,
   entityType: EntityType,

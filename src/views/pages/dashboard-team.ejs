@@ -133,6 +133,10 @@
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
         <% } %>
         <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
+          <button onclick="openInviteNewModal()" class="text-xs px-3 py-1.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold inline-flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Invite new member
+          </button>
           <button onclick="openInvitesDrawer()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
             Pending invites
             <% if (typeof pendingInvites !== 'undefined' && pendingInvites && pendingInvites.length > 0) { %>
@@ -184,6 +188,28 @@
 <div id="org-tooltip" class="org-tooltip"></div>
 
 <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
+
+<!-- Invite-new-member modal -->
+<div id="invite-new-overlay" class="edit-overlay" onclick="closeInviteNewModal()"></div>
+<div id="invite-new-modal" role="dialog" aria-hidden="true" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) scale(0.96); opacity:0; pointer-events:none; transition: transform 200ms ease, opacity 200ms ease; z-index: 70; background:#fff; border:1px solid #e5e7eb; border-radius:14px; box-shadow: 0 30px 80px rgba(15,23,42,0.20); width: 92%; max-width: 460px;">
+  <div style="padding:1.25rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #f3f4f6;">
+    <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#6b7280; font-weight:700; margin-bottom: 0.2rem;">Invite new member</div>
+    <h3 style="font-size:18px; font-weight:800; color:#0f172a; margin:0;">Create a tile and send the invite</h3>
+    <p style="font-size:12px; color:#6b7280; margin:0.5rem 0 0 0;">A new human tile will be added to the chart with this name and role. The recipient will claim it on signup.</p>
+  </div>
+  <div style="padding:1rem 1.5rem;">
+    <div class="edit-field" style="margin-bottom: 0.75rem;"><label for="inv-new-name">Name <span style="color:#ef4444;">*</span></label><input id="inv-new-name" type="text" placeholder="Jane Doe" /></div>
+    <div class="edit-field" style="margin-bottom: 0.75rem;"><label for="inv-new-email">Email <span style="color:#ef4444;">*</span></label><input id="inv-new-email" type="email" placeholder="jane@company.com" /></div>
+    <div class="edit-field" style="margin-bottom: 0.75rem;"><label for="inv-new-role">Role</label><input id="inv-new-role" type="text" placeholder="e.g. Marketing Lead, Sales Engineer" /></div>
+    <div class="edit-field" style="margin-bottom: 0.75rem;"><label for="inv-new-reportsto">Reports to (optional)</label><select id="inv-new-reportsto"><option value="">(no parent assigned)</option></select></div>
+    <div id="inv-new-status" style="font-size:12px; margin-top: 0.75rem; min-height: 1em;"></div>
+  </div>
+  <div style="padding:0.75rem 1.5rem 1.25rem 1.5rem; border-top: 1px solid #f3f4f6; display:flex; gap:0.5rem; justify-content:flex-end;">
+    <button onclick="closeInviteNewModal()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
+    <button id="inv-new-submit" onclick="submitInviteNew()" class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Create tile &amp; send invite</button>
+  </div>
+</div>
+
 <aside id="invites-drawer" class="invites-drawer" aria-hidden="true">
   <div class="invites-drawer-header">
     <div>
@@ -1001,6 +1027,109 @@
     window.closeInvitesDrawer = function() {
       var d = document.getElementById('invites-drawer');
       if (d) { d.classList.remove('open'); d.setAttribute('aria-hidden', 'true'); }
+    };
+
+    window.openInviteNewModal = function() {
+      var modal = document.getElementById('invite-new-modal');
+      var overlay = document.getElementById('invite-new-overlay');
+      if (!modal) return;
+      // Reset
+      ['inv-new-name','inv-new-email','inv-new-role'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+      var status = document.getElementById('inv-new-status');
+      if (status) { status.textContent = ''; status.style.color = '#6b7280'; }
+      // Populate reports-to dropdown with all current humans
+      var sel = document.getElementById('inv-new-reportsto');
+      if (sel) {
+        sel.innerHTML = '<option value="">(no parent assigned)</option>';
+        nodes.forEach(function(n) {
+          if (n.type !== 'human') return;
+          var opt = document.createElement('option');
+          opt.value = n.externalId;
+          opt.textContent = n.label + ' (human)';
+          sel.appendChild(opt);
+        });
+      }
+      modal.style.opacity = '1';
+      modal.style.pointerEvents = 'auto';
+      modal.style.transform = 'translate(-50%, -50%) scale(1)';
+      modal.setAttribute('aria-hidden', 'false');
+      if (overlay) overlay.classList.add('open');
+      var nameInput = document.getElementById('inv-new-name'); if (nameInput) setTimeout(function(){ nameInput.focus(); }, 100);
+    };
+    window.closeInviteNewModal = function() {
+      var modal = document.getElementById('invite-new-modal');
+      var overlay = document.getElementById('invite-new-overlay');
+      if (!modal) return;
+      modal.style.opacity = '0';
+      modal.style.pointerEvents = 'none';
+      modal.style.transform = 'translate(-50%, -50%) scale(0.96)';
+      modal.setAttribute('aria-hidden', 'true');
+      if (overlay) overlay.classList.remove('open');
+    };
+
+    window.submitInviteNew = async function() {
+      var nameEl = document.getElementById('inv-new-name');
+      var emailEl = document.getElementById('inv-new-email');
+      var roleEl = document.getElementById('inv-new-role');
+      var reportsEl = document.getElementById('inv-new-reportsto');
+      var btn = document.getElementById('inv-new-submit');
+      var status = document.getElementById('inv-new-status');
+
+      var name = (nameEl.value || '').trim();
+      var email = (emailEl.value || '').trim();
+      var role = (roleEl.value || '').trim();
+      var reportsTo = (reportsEl.value || '').trim();
+
+      if (!name) { status.style.color = '#b91c1c'; status.textContent = 'Name required.'; return; }
+      if (!email) { status.style.color = '#b91c1c'; status.textContent = 'Email required.'; return; }
+
+      btn.disabled = true; btn.textContent = 'Creating tile…';
+      status.style.color = '#6b7280';
+      status.textContent = '';
+
+      try {
+        // Step 1: create the human tile in the draft
+        var createBody = { type: 'human', name: name, contactEmail: email };
+        if (role) createBody.role = role;
+        if (reportsTo) createBody.reportsTo = reportsTo;
+        var createRes = await fetch('/api/v1/team/entity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createBody),
+        });
+        if (!createRes.ok) {
+          var ce = await createRes.json().catch(function() { return {}; });
+          status.style.color = '#b91c1c';
+          status.textContent = 'Tile creation failed: ' + ((ce.error && ce.error.message) || createRes.status);
+          btn.disabled = false; btn.textContent = 'Create tile & send invite';
+          return;
+        }
+        var created = await createRes.json();
+
+        // Step 2: issue the invitation tied to the new tile
+        btn.textContent = 'Sending invite…';
+        var inviteRes = await fetch('/api/v1/team/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, claimedEntityId: created.externalId, role: 'member' }),
+        });
+        if (!inviteRes.ok) {
+          var ie = await inviteRes.json().catch(function() { return {}; });
+          status.style.color = '#b91c1c';
+          status.textContent = 'Tile created but invite failed: ' + ((ie.error && ie.error.message) || inviteRes.status) + '. You can resend from the tile.';
+          btn.disabled = false; btn.textContent = 'Create tile & send invite';
+          // Don't reload yet -- let the owner read the message
+          return;
+        }
+        var invited = await inviteRes.json();
+        status.style.color = '#059669';
+        status.textContent = 'Tile created and invite sent to ' + invited.email + '. Reloading…';
+        setTimeout(function() { window.location.reload(); }, 1500);
+      } catch (e) {
+        status.style.color = '#b91c1c';
+        status.textContent = 'Network error: ' + e.message;
+        btn.disabled = false; btn.textContent = 'Create tile & send invite';
+      }
     };
 
     window.sendInvite = async function() {

@@ -13,7 +13,7 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
-import { patchTeamEntity, deleteTeamEntity, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
+import { patchTeamEntity, deleteTeamEntity, createTeamEntity, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
 import type { EntityType } from '../../services/team-graph.js';
 import {
   issueInvite,
@@ -107,6 +107,35 @@ export default async function teamRoutes(app: FastifyInstance) {
       }
       request.log.error(e);
       return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to patch entity' } });
+    }
+  });
+
+  // ============================================================
+  // POST /api/v1/team/entity -- create a new agent or human in the latest draft
+  // ============================================================
+  app.post('/team/entity', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const createSchema = z.object({
+      type: z.enum(['agent', 'human']),
+      name: z.string().min(1).max(255),
+      role: z.string().min(1).max(255).optional(),
+      contactEmail: z.string().email().max(200).optional(),
+      reportsTo: z.string().max(120).optional(),
+      escalatesTo: z.string().max(120).optional(),
+      authorityLevel: z.string().max(120).optional(),
+    });
+    const body = createSchema.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
+
+    try {
+      return await createTeamEntity(org.id, body.data);
+    } catch (e) {
+      if (e instanceof TeamMutationError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to create entity' } });
     }
   });
 
