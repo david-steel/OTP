@@ -1,0 +1,88 @@
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8 sm:pb-10">
+    <div class="text-xs uppercase tracking-wider text-otp-400 font-bold mb-3">Team invitation</div>
+    <% if (state === 'pending') { %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight"><%= orgName %> invited you to OTP</h1>
+      <p class="text-gray-400 mt-3 max-w-xl">Sign in (or create an account) and you will be added to the org chart with edit rights on the tile held for you. AI agents under your tile will inherit the SOPs you author.</p>
+    <% } else if (state === 'accepted') { %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">You are in.</h1>
+      <p class="text-gray-400 mt-3 max-w-xl">Welcome to <%= orgName %>. Open the team chart to claim your tile and start authoring SOPs.</p>
+    <% } else if (state === 'expired') { %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">This invitation has expired</h1>
+      <p class="text-gray-400 mt-3 max-w-xl"><%= message %></p>
+    <% } else if (state === 'revoked') { %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Invitation revoked</h1>
+      <p class="text-gray-400 mt-3 max-w-xl"><%= message %></p>
+    <% } else if (state === 'accepted_already' || state === 'accepted') { %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Already accepted</h1>
+      <p class="text-gray-400 mt-3 max-w-xl"><%= message %></p>
+    <% } else { %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Invitation</h1>
+      <p class="text-gray-400 mt-3 max-w-xl"><%= typeof message !== 'undefined' ? message : 'This invitation is no longer usable.' %></p>
+    <% } %>
+  </div>
+</section>
+
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+
+    <% if (state === 'pending') { %>
+      <div class="bg-gray-50 rounded-xl border border-gray-200 p-6 mb-6">
+        <div class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Invitation details</div>
+        <div class="text-sm text-gray-700 leading-relaxed space-y-1">
+          <div><span class="text-gray-500">Org:</span> <strong class="text-gray-900"><%= orgName %></strong></div>
+          <div><span class="text-gray-500">Sent to:</span> <strong class="text-gray-900"><%= invitedEmail %></strong></div>
+          <% if (typeof claimedEntityId !== 'undefined' && claimedEntityId) { %>
+            <div><span class="text-gray-500">Tile reserved:</span> <code class="text-xs bg-white border border-gray-200 px-1.5 py-0.5 rounded"><%= claimedEntityId %></code></div>
+          <% } %>
+          <% if (typeof expiresAt !== 'undefined' && expiresAt) { %>
+            <div><span class="text-gray-500">Expires:</span> <%= new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+          <% } %>
+        </div>
+      </div>
+
+      <div id="invite-cta" class="flex flex-col sm:flex-row gap-3">
+        <button id="invite-signup-btn" class="px-5 py-3 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold transition-colors">Create account &amp; accept</button>
+        <button id="invite-signin-btn" class="px-5 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">Sign in &amp; accept</button>
+      </div>
+      <p class="text-xs text-gray-400 mt-4">After signing in, you will land on the team chart with your tile claimed automatically.</p>
+
+      <script>
+        (function() {
+          var redirectUrl = window.location.href; // /accept-invite?token=... preserved
+          function tryClerk(action) {
+            if (!window.__clerk) {
+              alert('Sign-in is loading. Please try again in a moment.');
+              return;
+            }
+            if (action === 'signup') window.__clerk.openSignUp({ redirectUrl: redirectUrl, afterSignUpUrl: redirectUrl });
+            else window.__clerk.openSignIn({ redirectUrl: redirectUrl, afterSignInUrl: redirectUrl });
+          }
+          document.getElementById('invite-signup-btn').addEventListener('click', function() { tryClerk('signup'); });
+          document.getElementById('invite-signin-btn').addEventListener('click', function() { tryClerk('signin'); });
+        })();
+      </script>
+
+    <% } else if (state === 'accepted') { %>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-6">
+        <div class="font-semibold text-emerald-800 mb-1">Welcome aboard.</div>
+        <% if (typeof claimedEntityId !== 'undefined' && claimedEntityId) { %>
+          <p class="text-sm text-emerald-700">You have been bound to tile <code class="bg-white border border-emerald-200 px-1.5 py-0.5 rounded text-xs"><%= claimedEntityId %></code>. The org chart will mark it claimed by you.</p>
+        <% } else { %>
+          <p class="text-sm text-emerald-700">You are now a member of the org. Open the team chart to author SOPs and connect your AI agents.</p>
+        <% } %>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="<%= dashboardUrl || '/dashboard/team' %>" class="px-5 py-3 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold text-center transition-colors">Open the team chart</a>
+        <a href="/dashboard" class="px-5 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold text-center hover:bg-gray-50 transition-colors">Go to dashboard</a>
+      </div>
+
+    <% } else { %>
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+        <p class="text-sm text-gray-700"><%= typeof message !== 'undefined' ? message : 'No further action available.' %></p>
+        <a href="/" class="text-sm text-otp-600 hover:text-otp-700 mt-3 inline-block">Back to home &rarr;</a>
+      </div>
+    <% } %>
+
+  </div>
+</section>

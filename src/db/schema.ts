@@ -360,3 +360,46 @@ export const onboardingSequence = pgTable('onboarding_sequence', {
   emailIdx: index('onb_email_idx').on(table.email),
   signupIdx: index('onb_signup_idx').on(table.signupAt),
 }));
+
+// ---- Org membership (Phase 4.6 multi-user invitations) ----
+
+export const orgMemberRoleEnum = pgEnum('org_member_role', ['owner', 'member']);
+export const orgMemberStatusEnum = pgEnum('org_member_status', ['active', 'revoked']);
+export const orgInvitationStatusEnum = pgEnum('org_invitation_status', ['pending', 'accepted', 'revoked', 'expired']);
+
+export const orgMembers = pgTable('org_members', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull(),
+  role: orgMemberRoleEnum('role').notNull().default('member'),
+  claimedEntityId: varchar('claimed_entity_id', { length: 120 }), // tile they claimed (HUM_X)
+  status: orgMemberStatusEnum('status').notNull().default('active'),
+  invitedByUserId: varchar('invited_by_user_id', { length: 255 }),
+  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgUserIdx: uniqueIndex('org_members_org_user_idx').on(table.orgId, table.clerkUserId),
+  orgIdx: index('org_members_org_idx').on(table.orgId),
+  userIdx: index('org_members_user_idx').on(table.clerkUserId),
+}));
+
+export const orgInvitations = pgTable('org_invitations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  email: varchar('email', { length: 200 }).notNull(),
+  role: orgMemberRoleEnum('role').notNull().default('member'),
+  claimedEntityId: varchar('claimed_entity_id', { length: 120 }),
+  tokenHash: varchar('token_hash', { length: 100 }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdByUserId: varchar('created_by_user_id', { length: 255 }).notNull(),
+  status: orgInvitationStatusEnum('status').notNull().default('pending'),
+  acceptedAt: timestamp('accepted_at'),
+  acceptedByUserId: varchar('accepted_by_user_id', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  tokenIdx: uniqueIndex('org_invitations_token_idx').on(table.tokenHash),
+  orgIdx: index('org_invitations_org_idx').on(table.orgId),
+  statusIdx: index('org_invitations_status_idx').on(table.status),
+  emailIdx: index('org_invitations_email_idx').on(table.email),
+}));

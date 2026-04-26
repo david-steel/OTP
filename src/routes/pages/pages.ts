@@ -12,6 +12,8 @@ import { validateUuidParam } from '../../shared/param-validation.js';
 import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph } from '../../services/team-graph.js';
+import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
+import { createHash } from 'crypto';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -1060,9 +1062,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/');
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
-    if (!org) return reply.redirect('/dashboard');
+    const resolved = await resolveOrgForUser(auth.userId);
+    if (!resolved) return reply.redirect('/dashboard');
+    const { org, role, claimedEntityId } = resolved;
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
@@ -1072,6 +1074,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Visual org chart of your AI agents and humans. Edit live; changes save to a draft until you publish.',
       noindex: true,
       org,
+      viewerRole: role,
+      viewerClaimedEntityId: claimedEntityId,
       teamNodes: team.nodes,
       teamEdges: team.edges,
       teamMeta: {
@@ -1086,6 +1090,96 @@ export default async function pageRoutes(app: FastifyInstance) {
         humans: team.nodes.filter(n => n.type === 'human').length,
       },
       sopTemplateGroups: SOP_TEMPLATE_GROUPS,
+    });
+  });
+
+  // Accept-invite landing page
+  app.get<{ Querystring: { token?: string } }>('/accept-invite', async (request, reply) => {
+    const token = String(request.query.token || '').trim();
+    if (!token || !/^[A-Za-z0-9_\-]{16,128}$/.test(token)) {
+      return reply.view('pages/accept-invite', {
+        title: 'Accept invitation - OTP',
+        noindex: true,
+        state: 'invalid',
+        message: 'This invitation link is missing or malformed.',
+      });
+    }
+    const auth = getAuth(request);
+    // Look up the invitation (read-only) so the page can show context BEFORE acceptance.
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const invRows = await db.execute(sql`
+      SELECT i.email, i.claimed_entity_id, i.expires_at, i.status, o.name AS org_name
+      FROM org_invitations i
+      JOIN organizations o ON o.id = i.org_id
+      WHERE i.token_hash = ${tokenHash}
+      LIMIT 1
+    `);
+    const invRow = (invRows.rows || [])[0] as any;
+    if (!invRow) {
+      return reply.view('pages/accept-invite', {
+        title: 'Accept invitation - OTP',
+        noindex: true,
+        state: 'invalid',
+        message: 'This invitation could not be found. It may have already been accepted or revoked.',
+      });
+    }
+    if (invRow.status !== 'pending') {
+      return reply.view('pages/accept-invite', {
+        title: 'Accept invitation - OTP',
+        noindex: true,
+        state: invRow.status,
+        message: `This invitation has already been ${invRow.status}.`,
+        invitedEmail: invRow.email,
+        orgName: invRow.org_name,
+      });
+    }
+    if (new Date(invRow.expires_at) < new Date()) {
+      return reply.view('pages/accept-invite', {
+        title: 'Accept invitation - OTP',
+        noindex: true,
+        state: 'expired',
+        message: 'This invitation has expired. Ask the org owner to resend it.',
+        invitedEmail: invRow.email,
+        orgName: invRow.org_name,
+      });
+    }
+
+    if (auth.userId) {
+      try {
+        const result = await acceptInvite(token, auth.userId, null);
+        return reply.view('pages/accept-invite', {
+          title: 'Welcome - OTP',
+          noindex: true,
+          state: 'accepted',
+          orgName: invRow.org_name,
+          claimedEntityId: result.claimedEntityId,
+          dashboardUrl: '/dashboard/team',
+        });
+      } catch (e) {
+        if (e instanceof MembershipError) {
+          return reply.view('pages/accept-invite', {
+            title: 'Accept invitation - OTP',
+            noindex: true,
+            state: 'error',
+            message: e.message,
+            orgName: invRow.org_name,
+          });
+        }
+        throw e;
+      }
+    }
+
+    // Not logged in: render the landing page with sign-in / sign-up CTAs that
+    // preserve the token in the redirect.
+    return reply.view('pages/accept-invite', {
+      title: 'Accept invitation - OTP',
+      noindex: true,
+      state: 'pending',
+      orgName: invRow.org_name,
+      invitedEmail: invRow.email,
+      claimedEntityId: invRow.claimed_entity_id,
+      expiresAt: invRow.expires_at,
+      token,
     });
   });
 
