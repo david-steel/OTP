@@ -11,7 +11,7 @@ import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
 import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
-import { getOrgTeamGraph } from '../../services/team-graph.js';
+import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
 import { createHash } from 'crypto';
 
@@ -1104,6 +1104,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       claimedTileMap,
       pendingInvites,
       memberCount: members.length,
+      comparisonPairs: computeAgentComparisonPairs(team.nodes),
     });
   });
 

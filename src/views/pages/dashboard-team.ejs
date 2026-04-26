@@ -10,6 +10,30 @@
   .org-connector.reports_to { stroke: #94a3b8; }
   .org-connector.dimmed { opacity: 0.15; }
 
+  /* Same-role comparison curves between agents */
+  .org-comparison { stroke: #a855f7; stroke-width: 1.5; stroke-dasharray: 2 4; fill: none; opacity: 0.45; cursor: pointer; transition: opacity 120ms ease, stroke-width 120ms ease; }
+  .org-comparison:hover { opacity: 0.95; stroke-width: 2.25; }
+  .org-comparison.dimmed { opacity: 0.1; }
+
+  /* Compare modal */
+  .compare-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 65; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
+  .compare-modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .compare-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); opacity: 0; pointer-events: none; transition: transform 200ms ease, opacity 200ms ease; z-index: 70; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 30px 80px rgba(15,23,42,0.20); width: 95%; max-width: 920px; max-height: 88vh; display: flex; flex-direction: column; }
+  .compare-modal.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+  .compare-modal-header { padding: 1.1rem 1.5rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+  .compare-modal-body { padding: 1rem 1.5rem; overflow-y: auto; flex: 1; }
+  .compare-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .compare-col { border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.9rem 1rem; background: #fafafa; }
+  .compare-col h4 { font-weight: 700; font-size: 14px; color: #111827; margin: 0 0 0.25rem 0; }
+  .compare-col .role { font-size: 11px; color: #6b7280; margin-bottom: 0.5rem; }
+  .compare-col .sop-list-mini { display: flex; flex-direction: column; gap: 0.4rem; }
+  .compare-col .sop-mini { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 0.4rem 0.55rem; font-size: 12px; }
+  .compare-col .sop-mini .t { font-weight: 600; color: #1f2937; }
+  .compare-col .sop-mini .tr { color: #6b7280; font-size: 10.5px; margin-top: 0.1rem; }
+  .compare-col.match { background: #f3e8ff; border-color: #d8b4fe; }
+  .compare-empty { font-size: 12px; color: #9ca3af; padding: 0.5rem; text-align: center; }
+  @media (max-width: 720px) { .compare-cols { grid-template-columns: 1fr; } }
+
   /* Drag-and-drop visuals */
   .org-node[draggable="true"] { cursor: grab; }
   .org-node.dragging { opacity: 0.4; cursor: grabbing; }
@@ -187,6 +211,23 @@
 
 <div id="org-tooltip" class="org-tooltip"></div>
 
+<!-- Compare-agents modal (Phase 4.8) -->
+<div id="compare-overlay" class="compare-modal-overlay" onclick="closeCompare()"></div>
+<div id="compare-modal" class="compare-modal" role="dialog" aria-hidden="true">
+  <div class="compare-modal-header">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-purple-600 font-bold mb-0.5">Same-role comparison</div>
+      <div class="text-base font-bold text-gray-900" id="compare-title">&mdash;</div>
+    </div>
+    <button onclick="closeCompare()" class="text-gray-400 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="compare-modal-body">
+    <div id="compare-cols" class="compare-cols"></div>
+  </div>
+</div>
+
 <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
 
 <!-- Invite-new-member modal -->
@@ -350,6 +391,7 @@
     var claimedTileMap = <%- JSON.stringify(typeof claimedTileMap !== 'undefined' ? claimedTileMap : {}) %>;
     var viewerRole = <%- JSON.stringify(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
     var viewerClaimedEntityId = <%- JSON.stringify(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
+    var comparisonPairs = <%- JSON.stringify(typeof comparisonPairs !== 'undefined' ? comparisonPairs : []) %>;
 
     var byId = {};
     nodes.forEach(function(n) { byId[n.id] = n; });
@@ -482,6 +524,41 @@
         else edgeType = 'escalates_to';
         path.setAttribute('d', 'M ' + px + ',' + py + ' L ' + px + ',' + midY + ' L ' + cx + ',' + midY + ' L ' + cx + ',' + cy);
         path.setAttribute('class', 'org-connector ' + edgeType);
+        svg.appendChild(path);
+      });
+
+      // ---- Same-role comparison curves (Phase 4.8) ----
+      // Map node ids to layout coordinates for paired lookups.
+      var coordsById = {};
+      root.each(function(d) {
+        if (d.data.id === '__VIRT__') return;
+        coordsById[d.data.id] = { x: d.x + offsetX, y: d.y + pad };
+      });
+      comparisonPairs.forEach(function(pair) {
+        var a = coordsById[pair.a];
+        var b = coordsById[pair.b];
+        if (!a || !b) return;
+        var ax = a.x + NODE_W / 2;
+        var ay = a.y + NODE_H / 2;
+        var bx = b.x + NODE_W / 2;
+        var by = b.y + NODE_H / 2;
+        // Curved bezier above the midpoint -- distinguishes from orthogonal connectors
+        var midX = (ax + bx) / 2;
+        var topY = Math.min(ay, by) - Math.max(60, Math.abs(bx - ax) / 4);
+        var path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', 'M ' + ax + ',' + ay + ' Q ' + midX + ',' + topY + ' ' + bx + ',' + by);
+        path.setAttribute('class', 'org-comparison');
+        path.dataset.pairA = pair.a;
+        path.dataset.pairB = pair.b;
+        path.dataset.reason = pair.reason || '';
+        path.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          openCompare(pair.a, pair.b, pair.reason);
+        });
+        path.addEventListener('mouseenter', function(ev) {
+          showTooltip(ev, { label: 'Compare these agents', type: 'comparison', properties: { role: pair.reason } });
+        });
+        path.addEventListener('mouseleave', function() { hideTooltip(); });
         svg.appendChild(path);
       });
 
@@ -1017,8 +1094,76 @@
       if (ev.key === 'Escape') {
         closeEdit();
         if (typeof closeInvitesDrawer === 'function') closeInvitesDrawer();
+        if (typeof closeCompare === 'function') closeCompare();
       }
     });
+
+    function renderSopMini(sop, isMatch) {
+      var lines = [];
+      lines.push('<div class="sop-mini' + (isMatch ? '' : '') + '">');
+      lines.push('<div class="t">' + escapeHtml(sop.title || '(untitled)') + '</div>');
+      if (sop.trigger) lines.push('<div class="tr">' + escapeHtml(String(sop.trigger)) + '</div>');
+      lines.push('</div>');
+      return lines.join('');
+    }
+
+    function renderCompareCol(node, otherTitleSet) {
+      var p = node.properties || {};
+      var sops = Array.isArray(p.sops) ? p.sops : [];
+      var html = '';
+      html += '<div class="compare-col">';
+      html += '<h4>' + escapeHtml(node.label) + '</h4>';
+      html += '<div class="role">' + escapeHtml(String(p.role || '(no role)')) + '</div>';
+      if (p.mission) html += '<div class="role" style="font-style:italic;">' + escapeHtml(String(p.mission)) + '</div>';
+      html += '<div class="sop-list-mini">';
+      if (sops.length === 0) {
+        html += '<div class="compare-empty">No SOPs authored yet.</div>';
+      } else {
+        sops.forEach(function(s) {
+          var titleNorm = String(s.title || '').toLowerCase().trim();
+          var isMatch = otherTitleSet.has(titleNorm);
+          html += renderSopMini(s, isMatch);
+        });
+      }
+      html += '</div>';
+      // Inherited section if present
+      var parentExtId = p.escalatesTo;
+      var parent = parentExtId ? nodes.find(function(n) { return n.externalId === String(parentExtId); }) : null;
+      var inherited = parent && Array.isArray((parent.properties || {}).sops) ? parent.properties.sops : [];
+      if (inherited.length) {
+        html += '<div style="margin-top:0.6rem; padding-top:0.6rem; border-top:1px dashed #e5e7eb;">';
+        html += '<div class="role" style="margin-bottom:0.3rem;">Inherits from ' + escapeHtml(parent.label) + ' (' + inherited.length + ')</div>';
+        html += '<div class="sop-list-mini">';
+        inherited.forEach(function(s) { html += renderSopMini(s, false); });
+        html += '</div></div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    window.openCompare = function(idA, idB, reason) {
+      var a = nodes.find(function(n) { return n.id === idA; });
+      var b = nodes.find(function(n) { return n.id === idB; });
+      if (!a || !b) return;
+      document.getElementById('compare-title').textContent = a.label + ' vs ' + b.label + (reason ? ' — ' + reason : '');
+      var aSops = Array.isArray((a.properties || {}).sops) ? (a.properties || {}).sops : [];
+      var bSops = Array.isArray((b.properties || {}).sops) ? (b.properties || {}).sops : [];
+      var aTitles = new Set(aSops.map(function(s) { return String(s.title || '').toLowerCase().trim(); }));
+      var bTitles = new Set(bSops.map(function(s) { return String(s.title || '').toLowerCase().trim(); }));
+      var cols = document.getElementById('compare-cols');
+      cols.innerHTML = renderCompareCol(a, bTitles) + renderCompareCol(b, aTitles);
+      document.getElementById('compare-overlay').classList.add('open');
+      var modal = document.getElementById('compare-modal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    };
+
+    window.closeCompare = function() {
+      document.getElementById('compare-overlay').classList.remove('open');
+      var modal = document.getElementById('compare-modal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    };
 
     window.openInvitesDrawer = function() {
       var d = document.getElementById('invites-drawer');

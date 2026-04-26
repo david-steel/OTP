@@ -153,6 +153,60 @@ export function buildTeamGraph(
   return { nodes, edges };
 }
 
+// ---------- Comparison pairs: same-role agents within an org ----------
+//
+// Cheap heuristic: normalize the role string, take the first two words,
+// group agents by that key. Any group with 2+ agents becomes pairs. This
+// surfaces the "two of these agents are doing similar work" signal that
+// David asked for as dotted comparison lines on the chart.
+
+export interface ComparisonPair {
+  a: string;          // node id (externalId)
+  b: string;          // node id
+  reason: string;     // short label, e.g. "shared role: customer success"
+  score: number;      // 0..1, currently 1.0 for word-key match
+}
+
+function normalizeRoleKey(role: string | undefined | null): string | null {
+  if (!role) return null;
+  const cleaned = String(role).toLowerCase().replace(/[^\w\s]/g, ' ').trim().replace(/\s+/g, ' ');
+  if (!cleaned) return null;
+  const words = cleaned.split(' ').filter(w => w.length > 1); // drop single-letter noise
+  if (words.length === 0) return null;
+  // First two words (or one if only one) -- captures "customer success", "outbound sales"
+  return words.slice(0, 2).join(' ');
+}
+
+export function computeAgentComparisonPairs(nodes: TeamNode[]): ComparisonPair[] {
+  const agents = nodes.filter(n => n.type === 'agent');
+  const groups = new Map<string, TeamNode[]>();
+  for (const a of agents) {
+    const key = normalizeRoleKey((a.properties as any).role);
+    if (!key) continue;
+    const list = groups.get(key) || [];
+    list.push(a);
+    groups.set(key, list);
+  }
+  const pairs: ComparisonPair[] = [];
+  for (const [key, group] of groups.entries()) {
+    if (group.length < 2) continue;
+    // pair every combination within the group; cap groups at 4 to avoid an
+    // O(n^2) line explosion on large charts
+    const capped = group.slice(0, 4);
+    for (let i = 0; i < capped.length; i++) {
+      for (let j = i + 1; j < capped.length; j++) {
+        pairs.push({
+          a: capped[i].id,
+          b: capped[j].id,
+          reason: `shared role: ${key}`,
+          score: 1.0,
+        });
+      }
+    }
+  }
+  return pairs;
+}
+
 // ---------- Agent context: compile own SOPs + inherited SOPs into markdown ----------
 
 interface AgentContextOptions {
