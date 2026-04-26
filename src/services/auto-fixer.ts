@@ -298,6 +298,18 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
     fixes.push({ code: 'AGENT_COUNT_DEFAULTED', description: 'Defaulted agent_count to 1', field: 'frontmatter.agent_count', before: '(missing)', after: '1' });
   }
 
+  // Migrate common alternate platform field names -> platforms
+  const PLATFORM_ALIASES = ['platforms_used', 'platform', 'tech_stack', 'tools', 'tools_used'];
+  for (const alias of PLATFORM_ALIASES) {
+    if (!fm.platforms && fm[alias]) {
+      fm.platforms = fm[alias];
+      delete fm[alias];
+      fmChanged = true;
+      fixes.push({ code: 'PLATFORMS_RENAMED', description: `Renamed ${alias} to platforms`, field: 'frontmatter.platforms', before: alias, after: 'platforms' });
+      break;
+    }
+  }
+
   // Fix platforms AND mcp_servers -- extract from content using known-tools dictionary
   const allText = raw.toLowerCase();
 
