@@ -406,11 +406,20 @@
       <div id="ef-inherited-list" class="sop-list"></div>
     </div>
 
+    <div id="ef-runtime-section" class="sop-section" style="display:none">
+      <div class="sop-section-header">
+        <span class="sop-section-title">Connected runtime body</span>
+      </div>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Paste your existing CLAUDE.md or system prompt here. It will be included at the top of this agent's compiled context, alongside any inherited SOPs from its parent. Up to 50,000 characters.</p>
+      <textarea id="ef-runtime-body" rows="8" placeholder="# My agent\n\nYou are an instance of...\n\n## Rules\n\n1. ..." style="width:100%; padding:0.5rem 0.625rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:#111827; background:#fff; min-height: 140px;"></textarea>
+      <div class="hint">Saved with the agent's draft. Pull the merged result via "Copy as CLAUDE.md" below.</div>
+    </div>
+
     <div id="ef-context-section" class="sop-section" style="display:none">
       <div class="sop-section-header">
         <span class="sop-section-title">Agent context</span>
       </div>
-      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Compiled CLAUDE.md combining own SOPs and any inherited from this agent's parent. Drop into your system prompt.</p>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Compiled CLAUDE.md combining the runtime body, own SOPs, and any inherited from this agent's parent. Drop into your system prompt.</p>
       <button type="button" id="ef-copy-context" onclick="copyAgentContext()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold">Copy as CLAUDE.md</button>
       <span id="ef-copy-context-status" style="font-size: 11px; color: #059669; margin-left: 0.5rem;"></span>
     </div>
@@ -1111,6 +1120,8 @@
       renderSopList();
       renderInheritedFor(d);
       document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
+      document.getElementById('ef-runtime-section').style.display = (d.type === 'agent' ? '' : 'none');
+      document.getElementById('ef-runtime-body').value = (d.type === 'agent' ? (p.runtimeBody || '') : '');
       document.getElementById('edit-type-label').textContent = (d.type === 'agent' ? 'Edit agent' : 'Edit human');
       document.getElementById('edit-name-display').textContent = d.label + ' (' + d.externalId + ')';
       document.getElementById('ef-name').value = d.label || '';
@@ -1201,6 +1212,8 @@
         setIfPresent('status',         document.getElementById('ef-status').value.trim());
         var esc = document.getElementById('ef-escalates').value.trim();
         patch.escalates_to = esc === '' ? null : esc;
+        var rb = (document.getElementById('ef-runtime-body').value || '').trim();
+        patch.runtime_body = rb === '' ? null : rb;
       } else if (currentNode.type === 'human') {
         setIfPresent('job_description', document.getElementById('ef-jobdesc').value.trim());
         var rep = document.getElementById('ef-reportsto').value.trim();

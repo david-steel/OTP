@@ -52,6 +52,7 @@ const patchSchema = z.object({
     contact_email: z.string().email().max(200).nullable().optional(),
     contact_phone: z.string().max(40).nullable().optional(),
     slack_id: z.string().max(40).nullable().optional(),
+    runtime_body: z.string().max(50000).nullable().optional(),
   }).refine(p => Object.keys(p).length > 0, { message: 'patch must contain at least one field' }),
 });
 

@@ -100,6 +100,7 @@ export function buildTeamGraph(
         skills: a.skills,
         escalatesTo: a.escalates_to,
         sops: Array.isArray(a.sops) ? a.sops : [],
+        runtimeBody: a.runtime_body || null,
       },
     });
     edges.push({ sourceId: id, targetId: 'ORG', type: 'part_of', properties: {} });
@@ -287,6 +288,18 @@ export async function buildAgentContext(
   if (parent) lines.push(`**Reports to:** ${parent.name || agent.escalates_to} (${parentType})`);
   lines.push('');
 
+  // Connected runtime body (the operator's own CLAUDE.md / system prompt
+  // pasted into this agent's tile). Lands first so the org-level frame above
+  // gives it scope, but the body's own structure stays intact below.
+  if (agent.runtime_body && String(agent.runtime_body).trim()) {
+    lines.push('## Connected runtime body');
+    lines.push('');
+    lines.push('*This block is the runtime body the operator pasted into this agent. It runs alongside the inherited SOPs below.*');
+    lines.push('');
+    lines.push(String(agent.runtime_body).trim());
+    lines.push('');
+  }
+
   if (ownSops.length > 0) {
     lines.push('## Own SOPs');
     lines.push('');
@@ -378,9 +391,10 @@ export interface EntityPatch {
   contact_email?: string | null;
   contact_phone?: string | null;
   slack_id?: string | null;
+  runtime_body?: string | null;  // raw CLAUDE.md / system-prompt for an agent
 }
 
-const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to', 'sops'];
+const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to', 'sops', 'runtime_body'];
 const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'status', 'job_description', 'skills', 'reports_to', 'sops', 'contact_email', 'contact_phone', 'slack_id'];
 
 export interface MutationResult {
