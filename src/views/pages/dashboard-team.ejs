@@ -1,23 +1,43 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-  .team-canvas { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-radius: 1rem; }
-  .node-label { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; fill: #1f2937; pointer-events: none; }
-  .node-label-strong { font-weight: 700; }
-  .edge-line { stroke: #cbd5e1; stroke-width: 1.5px; fill: none; }
-  .edge-line.escalates_to { stroke: #f59e0b; stroke-dasharray: 4 3; }
-  .edge-line.overrides { stroke: #dc2626; }
-  .node-circle { cursor: pointer; transition: stroke-width 120ms ease, transform 120ms ease; }
-  .node-circle:hover { stroke-width: 4px; }
-  .node-circle.selected { stroke: #0ea5e9; stroke-width: 4px; }
-  .node-circle.dimmed { opacity: 0.2; }
-  .node-label.dimmed { opacity: 0.2; }
-  .edge-line.dimmed { opacity: 0.1; }
-  .node-tooltip { position: absolute; pointer-events: none; background: rgba(15, 23, 42, 0.95); color: #f1f5f9; padding: 0.625rem 0.875rem; border-radius: 0.5rem; font-size: 12px; line-height: 1.5; max-width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 50; opacity: 0; transition: opacity 120ms ease; }
-  .node-tooltip.visible { opacity: 1; }
-  .node-tooltip .ttl { font-weight: 700; color: #fff; margin-bottom: 0.25rem; }
-  .node-tooltip .row { color: #cbd5e1; }
-  .node-tooltip .row strong { color: #fff; font-weight: 600; }
+  /* Org chart container */
+  .org-chart-shell { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-radius: 1rem; overflow: auto; position: relative; }
+  .org-chart-stage { position: relative; }
 
+  /* Connector lines */
+  .org-connector { stroke: #cbd5e1; stroke-width: 1.5; fill: none; }
+  .org-connector.escalates_to { stroke: #f59e0b; stroke-dasharray: 4 3; }
+  .org-connector.dimmed { opacity: 0.15; }
+
+  /* Boxes */
+  .org-node { position: absolute; box-sizing: border-box; background: #fff; border: 1px solid #e5e7eb; border-radius: 0.625rem; padding: 0.6rem 0.7rem 0.6rem 0.85rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: box-shadow 120ms ease, border-color 120ms ease, transform 120ms ease; cursor: pointer; user-select: none; overflow: hidden; }
+  .org-node:hover { box-shadow: 0 4px 14px rgba(15,23,42,0.10); border-color: #94a3b8; transform: translateY(-1px); }
+  .org-node.selected { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.18); }
+  .org-node.dimmed { opacity: 0.25; }
+  .org-node .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #cbd5e1; border-radius: 0.625rem 0 0 0.625rem; }
+  .org-node.type-agent .stripe { background: #0ea5e9; }
+  .org-node.type-human .stripe { background: #f59e0b; }
+  .org-node.type-organization { background: #0f172a; color: #f1f5f9; border-color: #0f172a; padding-left: 0.85rem; }
+  .org-node.type-organization .stripe { display: none; }
+  .org-node .row-top { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+  .org-node .name { font-weight: 700; font-size: 13px; color: #111827; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .org-node.type-organization .name { color: #f1f5f9; }
+  .org-node .badge-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; padding: 0.1rem 0.35rem; border: 1px solid #e2e8f0; border-radius: 999px; flex-shrink: 0; }
+  .org-node.type-agent .badge-type { color: #0369a1; border-color: #bae6fd; background: #f0f9ff; }
+  .org-node.type-human .badge-type { color: #b45309; border-color: #fde68a; background: #fffbeb; }
+  .org-node .role { margin-top: 0.2rem; font-size: 11px; color: #6b7280; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .org-node.type-organization .role { color: #cbd5e1; }
+  .org-node .meta { margin-top: 0.3rem; font-size: 10px; color: #9ca3af; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .org-node.type-organization .meta { color: #94a3b8; }
+
+  /* Tooltip on hover (smaller, lighter than before) */
+  .org-tooltip { position: fixed; pointer-events: none; background: rgba(15,23,42,0.96); color: #f1f5f9; padding: 0.5rem 0.7rem; border-radius: 0.5rem; font-size: 11.5px; line-height: 1.5; max-width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 50; opacity: 0; transition: opacity 120ms ease; }
+  .org-tooltip.visible { opacity: 1; }
+  .org-tooltip .ttl { font-weight: 700; color: #fff; margin-bottom: 0.2rem; }
+  .org-tooltip .row { color: #cbd5e1; }
+  .org-tooltip .row strong { color: #fff; font-weight: 600; }
+
+  /* Edit panel (unchanged from prior) */
   .edit-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 100%; max-width: 420px; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -10px 0 30px rgba(15,23,42,0.08); z-index: 60; transform: translateX(100%); transition: transform 200ms ease; display: flex; flex-direction: column; }
   .edit-panel.open { transform: translateX(0); }
   .edit-panel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -46,7 +66,7 @@
         <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Team</h1>
         <p class="text-sm text-gray-500 mt-1">Click any agent or human to edit. Edits save to a draft until you publish.</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <% if (teamMeta.hasDraft) { %>
           <span class="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">Draft v<%= teamMeta.oosVersion %> &middot; unpublished</span>
         <% } else if (teamMeta.hasPublished) { %>
@@ -76,20 +96,23 @@
         </a>
       </div>
     <% } else { %>
-      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden relative" style="height: 70vh; min-height: 520px;">
-        <svg id="team-svg" class="team-canvas w-full h-full"></svg>
-        <div id="team-tooltip" class="node-tooltip"></div>
-        <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 px-3 py-2 text-[10px] text-gray-600 flex items-center gap-3 shadow-sm">
-          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>Agent</span>
-          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Human</span>
-          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-800"></span>Org</span>
-        </div>
+      <div id="org-shell" class="org-chart-shell border border-gray-200" style="height: 75vh; min-height: 540px;">
+        <div id="org-stage" class="org-chart-stage"></div>
+      </div>
+      <div class="mt-3 text-[11px] text-gray-500 flex items-center gap-4 flex-wrap">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-sm bg-sky-500"></span>Agent</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-sm bg-amber-500"></span>Human</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-sm bg-slate-900"></span>Organization</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-6 h-0.5 bg-amber-500" style="background-image:linear-gradient(to right, #f59e0b 50%, transparent 50%); background-size: 6px 2px;"></span>escalation</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-6 h-0.5 bg-gray-300"></span>part of</span>
       </div>
     <% } %>
   </div>
 </section>
 
-<!-- Edit panel (Phase 2) -->
+<div id="org-tooltip" class="org-tooltip"></div>
+
+<!-- Edit panel (unchanged) -->
 <div id="edit-overlay" class="edit-overlay" onclick="closeEdit()"></div>
 <aside id="edit-panel" class="edit-panel" aria-hidden="true">
   <div class="edit-panel-header">
@@ -103,44 +126,15 @@
   </div>
   <div class="edit-panel-body">
     <div id="edit-banner" class="edit-banner" style="display:none"></div>
-    <div class="edit-field">
-      <label for="ef-name">Name</label>
-      <input id="ef-name" type="text" />
-    </div>
-    <div class="edit-field">
-      <label for="ef-role">Role</label>
-      <input id="ef-role" type="text" />
-    </div>
-    <div class="edit-field" id="ef-mission-wrap">
-      <label for="ef-mission">Mission</label>
-      <textarea id="ef-mission" rows="3"></textarea>
-    </div>
-    <div class="edit-field" id="ef-jobdesc-wrap">
-      <label for="ef-jobdesc">Job description</label>
-      <textarea id="ef-jobdesc" rows="3"></textarea>
-    </div>
-    <div class="edit-field">
-      <label for="ef-authority">Authority level</label>
-      <input id="ef-authority" type="text" placeholder="e.g. autonomous, advisory, full_override" />
-    </div>
-    <div class="edit-field" id="ef-platform-wrap">
-      <label for="ef-platform">Platform</label>
-      <input id="ef-platform" type="text" placeholder="e.g. claude-code, n8n, custom" />
-    </div>
-    <div class="edit-field" id="ef-status-wrap">
-      <label for="ef-status">Status</label>
-      <input id="ef-status" type="text" placeholder="e.g. active, paused, retired" />
-    </div>
-    <div class="edit-field" id="ef-escalates-wrap">
-      <label for="ef-escalates">Escalates to</label>
-      <select id="ef-escalates"><option value="">(none)</option></select>
-      <div class="hint">Pick an agent or human this one escalates to.</div>
-    </div>
-    <div class="edit-field">
-      <label for="ef-skills">Skills</label>
-      <input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" />
-      <div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div>
-    </div>
+    <div class="edit-field"><label for="ef-name">Name</label><input id="ef-name" type="text" /></div>
+    <div class="edit-field"><label for="ef-role">Role</label><input id="ef-role" type="text" /></div>
+    <div class="edit-field" id="ef-mission-wrap"><label for="ef-mission">Mission</label><textarea id="ef-mission" rows="3"></textarea></div>
+    <div class="edit-field" id="ef-jobdesc-wrap"><label for="ef-jobdesc">Job description</label><textarea id="ef-jobdesc" rows="3"></textarea></div>
+    <div class="edit-field"><label for="ef-authority">Authority level</label><input id="ef-authority" type="text" placeholder="e.g. autonomous, advisory, full_override" /></div>
+    <div class="edit-field" id="ef-platform-wrap"><label for="ef-platform">Platform</label><input id="ef-platform" type="text" placeholder="e.g. claude-code, n8n, custom" /></div>
+    <div class="edit-field" id="ef-status-wrap"><label for="ef-status">Status</label><input id="ef-status" type="text" placeholder="e.g. active, paused, retired" /></div>
+    <div class="edit-field" id="ef-escalates-wrap"><label for="ef-escalates">Escalates to</label><select id="ef-escalates"><option value="">(none)</option></select><div class="hint">Pick an agent or human this one escalates to.</div></div>
+    <div class="edit-field"><label for="ef-skills">Skills</label><input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" /><div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div></div>
   </div>
   <div class="edit-panel-footer">
     <button onclick="closeEdit()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
@@ -157,102 +151,205 @@
     var byId = {};
     nodes.forEach(function(n) { byId[n.id] = n; });
 
-    var simNodes = nodes.map(function(n) { return Object.assign({}, n); });
-    var simEdges = edges.filter(function(e) { return byId[e.sourceId] && byId[e.targetId]; }).map(function(e) {
-      return { source: e.sourceId, target: e.targetId, type: e.type };
-    });
+    // ---- Build parent map from escalation edges + sensible defaults ----
+    function computeParents(filterFn) {
+      var parent = {};
+      var allowed = {};
+      nodes.forEach(function(n) { if (filterFn(n)) allowed[n.id] = true; });
 
-    var svg = d3.select('#team-svg');
-    var svgEl = svg.node();
-    var width = svgEl.clientWidth;
-    var height = svgEl.clientHeight;
-    var g = svg.append('g');
-
-    svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', function(ev) { g.attr('transform', ev.transform); }));
-
-    var radiusFor = function(d) { return d.type === 'organization' ? 22 : (d.type === 'human' ? 14 : 11); };
-    var fillFor   = function(d) { return d.type === 'organization' ? '#1e293b' : (d.type === 'human' ? '#f59e0b' : '#0ea5e9'); };
-
-    var link = g.append('g').selectAll('line').data(simEdges).enter().append('line')
-      .attr('class', function(d) { return 'edge-line ' + d.type; });
-
-    var node = g.append('g').selectAll('g.node').data(simNodes).enter().append('g').attr('class', 'node');
-    node.append('circle')
-      .attr('class', 'node-circle')
-      .attr('r', radiusFor)
-      .attr('fill', fillFor)
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2);
-
-    node.append('text')
-      .attr('class', 'node-label node-label-strong')
-      .attr('text-anchor', 'middle')
-      .attr('dy', function(d) { return radiusFor(d) + 14; })
-      .text(function(d) { return d.label.length > 28 ? d.label.slice(0, 26) + '…' : d.label; });
-
-    node.append('text')
-      .attr('class', 'node-label')
-      .attr('text-anchor', 'middle')
-      .attr('dy', function(d) { return radiusFor(d) + 28; })
-      .attr('fill', '#6b7280')
-      .text(function(d) {
-        var p = d.properties || {};
-        return d.type === 'organization' ? '' : (p.role || p.authorityLevel || d.type);
+      // explicit escalates_to edges (child -> parent)
+      edges.forEach(function(e) {
+        if (e.type !== 'escalates_to') return;
+        if (!allowed[e.sourceId] || !allowed[e.targetId]) return;
+        parent[e.sourceId] = e.targetId;
       });
 
-    var tooltip = d3.select('#team-tooltip');
-    node.on('mouseenter', function(ev, d) {
-      var p = d.properties || {};
-      var html = '<div class="ttl">' + escapeHtml(d.label) + '</div>';
-      html += '<div class="row"><strong>Type:</strong> ' + d.type + '</div>';
+      // Find a CEO-ish human to anchor unparented nodes
+      var ceo = null, coo = null;
+      nodes.forEach(function(n) {
+        if (!allowed[n.id]) return;
+        if (n.type !== 'human') return;
+        var p = n.properties || {};
+        if (p.authorityLevel === 'full' || /CEO|founder/i.test(p.role || '')) { if (!ceo) ceo = n.id; }
+        if (p.authorityLevel === 'executive' || /COO/i.test(p.role || '')) { if (!coo) coo = n.id; }
+      });
+      var orgNode = nodes.find(function(n) { return n.type === 'organization' && allowed[n.id]; });
+      var orgId = orgNode ? orgNode.id : null;
+
+      // For everyone without a parent (other than the org node itself) wire to:
+      //   CEO if found, else ORG. Operators-without-parent prefer COO if present.
+      nodes.forEach(function(n) {
+        if (!allowed[n.id]) return;
+        if (n.id === orgId) return;
+        if (parent[n.id]) return;
+        var p = n.properties || {};
+        if (n.type === 'human') {
+          if (n.id === ceo) {
+            parent[n.id] = orgId; // CEO is direct child of organization
+          } else if (n.id === coo) {
+            parent[n.id] = ceo || orgId;
+          } else {
+            // operator humans: prefer COO, else CEO, else ORG
+            parent[n.id] = coo || ceo || orgId;
+          }
+        } else if (n.type === 'agent') {
+          parent[n.id] = ceo || orgId;
+        }
+      });
+
+      // Org node has no parent (it is the root)
+      return { parent: parent, rootId: orgId };
+    }
+
+    // ---- Layout + render ----
+    var NODE_W = 200;
+    var NODE_H = 80;
+    var H_GAP  = 18;
+    var V_GAP  = 56;
+
+    function buildHierarchy(filterFn) {
+      var pm = computeParents(filterFn);
+      var allowedNodes = nodes.filter(filterFn);
+      // d3.stratify needs a single rooted tree
+      try {
+        return d3.stratify().id(function(d) { return d.id; }).parentId(function(d) { return d.id === pm.rootId ? null : pm.parent[d.id]; })(allowedNodes);
+      } catch (e) {
+        // Fallback: synthesize a virtual root if multiple roots exist
+        var data = allowedNodes.slice();
+        var virtId = '__VIRT__';
+        data.unshift({ id: virtId, externalId: virtId, type: 'organization', label: 'Team', properties: {} });
+        var pm2 = pm.parent;
+        return d3.stratify().id(function(d) { return d.id; }).parentId(function(d) {
+          if (d.id === virtId) return null;
+          return pm2[d.id] || virtId;
+        })(data);
+      }
+    }
+
+    var stage = document.getElementById('org-stage');
+    var shell = document.getElementById('org-shell');
+    var tooltip = document.getElementById('org-tooltip');
+
+    function renderChart(filterFn) {
+      stage.innerHTML = '';
+      var root;
+      try { root = buildHierarchy(filterFn); }
+      catch (e) { stage.innerHTML = '<div style="padding:2rem;color:#6b7280;font-size:14px;">Could not build hierarchy: ' + e.message + '</div>'; return; }
+
+      var layout = d3.tree().nodeSize([NODE_W + H_GAP, NODE_H + V_GAP]);
+      layout(root);
+
+      var minX = Infinity, maxX = -Infinity, maxY = 0;
+      root.each(function(d) {
+        if (d.x < minX) minX = d.x;
+        if (d.x > maxX) maxX = d.x;
+        if (d.y > maxY) maxY = d.y;
+      });
+      var pad = 24;
+      var offsetX = -minX + pad;
+      var totalWidth  = (maxX - minX) + NODE_W + pad * 2;
+      var totalHeight = maxY + NODE_H + pad * 2;
+      stage.style.width  = totalWidth  + 'px';
+      stage.style.height = totalHeight + 'px';
+
+      // SVG layer for connectors
+      var svgNS = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('width', totalWidth);
+      svg.setAttribute('height', totalHeight);
+      svg.style.position = 'absolute';
+      svg.style.inset = '0';
+      svg.style.pointerEvents = 'none';
+      stage.appendChild(svg);
+
+      root.each(function(d) {
+        if (!d.parent) return;
+        var px = d.parent.x + offsetX + NODE_W / 2;
+        var py = d.parent.y + NODE_H + pad;
+        var cx = d.x + offsetX + NODE_W / 2;
+        var cy = d.y + pad;
+        var midY = py + (cy - py) / 2;
+        var path = document.createElementNS(svgNS, 'path');
+        var edgeType = (d.parent.data.id === '__VIRT__') ? 'part_of' : 'escalates_to';
+        path.setAttribute('d', 'M ' + px + ',' + py + ' L ' + px + ',' + midY + ' L ' + cx + ',' + midY + ' L ' + cx + ',' + cy);
+        path.setAttribute('class', 'org-connector ' + edgeType);
+        svg.appendChild(path);
+      });
+
+      root.each(function(d) {
+        if (d.data.id === '__VIRT__') return;
+        var x = d.x + offsetX;
+        var y = d.y + pad;
+        var n = d.data;
+        var box = document.createElement('div');
+        box.className = 'org-node type-' + n.type;
+        box.style.left = x + 'px';
+        box.style.top  = y + 'px';
+        box.style.width  = NODE_W + 'px';
+        box.style.height = NODE_H + 'px';
+
+        var inner = '';
+        if (n.type !== 'organization') inner += '<div class="stripe"></div>';
+        var p = n.properties || {};
+        var typeLabel = n.type === 'agent' ? 'Agent' : (n.type === 'human' ? 'Human' : 'Org');
+        inner += '<div class="row-top">';
+        inner += '<div class="name" title="' + escapeHtml(n.label) + '">' + escapeHtml(n.label) + '</div>';
+        if (n.type !== 'organization') inner += '<div class="badge-type">' + typeLabel + '</div>';
+        inner += '</div>';
+        if (p.role) inner += '<div class="role" title="' + escapeHtml(String(p.role)) + '">' + escapeHtml(String(p.role)) + '</div>';
+        var meta = [];
+        if (p.authorityLevel) meta.push(escapeHtml(String(p.authorityLevel)));
+        if (p.platform) meta.push(escapeHtml(String(p.platform)));
+        if (p.status) meta.push(escapeHtml(String(p.status)));
+        if (meta.length) inner += '<div class="meta">' + meta.map(function(m) { return '<span>' + m + '</span>'; }).join('') + '</div>';
+        box.innerHTML = inner;
+
+        box.addEventListener('mouseenter', function(ev) { showTooltip(ev, n); });
+        box.addEventListener('mousemove',  function(ev) { positionTooltip(ev); });
+        box.addEventListener('mouseleave', function() { hideTooltip(); });
+        if (n.type !== 'organization') {
+          box.addEventListener('click', function(ev) {
+            ev.stopPropagation();
+            document.querySelectorAll('.org-node.selected').forEach(function(el) { el.classList.remove('selected'); });
+            box.classList.add('selected');
+            openEditPanel(n);
+          });
+        }
+
+        stage.appendChild(box);
+      });
+    }
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+    function showTooltip(ev, n) {
+      var p = n.properties || {};
+      var html = '<div class="ttl">' + escapeHtml(n.label) + '</div>';
+      html += '<div class="row"><strong>Type:</strong> ' + n.type + '</div>';
       if (p.role) html += '<div class="row"><strong>Role:</strong> ' + escapeHtml(String(p.role)) + '</div>';
       if (p.mission) html += '<div class="row"><strong>Mission:</strong> ' + escapeHtml(String(p.mission)) + '</div>';
       if (p.authorityLevel) html += '<div class="row"><strong>Authority:</strong> ' + escapeHtml(String(p.authorityLevel)) + '</div>';
-      if (p.platform) html += '<div class="row"><strong>Platform:</strong> ' + escapeHtml(String(p.platform)) + '</div>';
-      if (p.status) html += '<div class="row"><strong>Status:</strong> ' + escapeHtml(String(p.status)) + '</div>';
       if (Array.isArray(p.skills) && p.skills.length) html += '<div class="row"><strong>Skills:</strong> ' + escapeHtml(p.skills.join(', ')) + '</div>';
-      if (d.type !== 'organization') html += '<div class="row" style="margin-top:0.25rem; color:#94a3b8;">Click to edit</div>';
-      tooltip.html(html);
-      var rect = svgEl.getBoundingClientRect();
-      tooltip.style('left', (ev.clientX - rect.left + 14) + 'px').style('top', (ev.clientY - rect.top + 14) + 'px');
-      tooltip.classed('visible', true);
-    }).on('mousemove', function(ev) {
-      var rect = svgEl.getBoundingClientRect();
-      tooltip.style('left', (ev.clientX - rect.left + 14) + 'px').style('top', (ev.clientY - rect.top + 14) + 'px');
-    }).on('mouseleave', function() {
-      tooltip.classed('visible', false);
-    });
+      if (n.type !== 'organization') html += '<div class="row" style="margin-top:0.25rem; color:#94a3b8;">Click to edit</div>';
+      tooltip.innerHTML = html;
+      tooltip.classList.add('visible');
+      positionTooltip(ev);
+    }
+    function positionTooltip(ev) {
+      var x = ev.clientX + 14;
+      var y = ev.clientY + 14;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }
+    function hideTooltip() { tooltip.classList.remove('visible'); }
 
-    node.on('click', function(ev, d) {
-      if (d.type === 'organization') return;
-      ev.stopPropagation();
-      openEditPanel(d);
-      d3.selectAll('.node-circle').classed('selected', false);
-      d3.select(this).select('.node-circle').classed('selected', true);
-    });
-
-    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
-
-    var sim = d3.forceSimulation(simNodes)
-      .force('charge', d3.forceManyBody().strength(-340))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(function(d) { return radiusFor(d) + 18; }))
-      .force('link', d3.forceLink(simEdges).id(function(d) { return d.id; }).distance(function(d) {
-        return d.type === 'part_of' ? 90 : 130;
-      }).strength(0.6))
-      .on('tick', function() {
-        link
-          .attr('x1', function(d) { return d.source.x; })
-          .attr('y1', function(d) { return d.source.y; })
-          .attr('x2', function(d) { return d.target.x; })
-          .attr('y2', function(d) { return d.target.y; });
-        node.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
-      });
-
-    node.call(d3.drag()
-      .on('start', function(ev, d) { if (!ev.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on('drag',  function(ev, d) { d.fx = ev.x; d.fy = ev.y; })
-      .on('end',   function(ev, d) { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+    // ---- Initial render ----
+    var currentFilter = 'all';
+    var filterFns = {
+      all:   function(n) { return true; },
+      agent: function(n) { return n.type === 'agent' || n.type === 'organization' || (n.type === 'human' && (n.properties || {}).authorityLevel === 'full'); },
+      human: function(n) { return n.type === 'human' || n.type === 'organization'; },
+    };
+    renderChart(filterFns[currentFilter]);
 
     document.querySelectorAll('.filter-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
@@ -263,40 +360,20 @@
         });
         btn.classList.add('bg-gray-900','text-white');
         btn.classList.remove('text-gray-600');
-
-        if (f === 'all') {
-          node.select('circle').classed('dimmed', false);
-          node.selectAll('text').classed('dimmed', false);
-          link.classed('dimmed', false);
-        } else {
-          var keep = function(d) { return d.type === f || d.type === 'organization'; };
-          node.select('circle').classed('dimmed', function(d) { return !keep(d); });
-          node.selectAll('text').classed('dimmed', function(d) { return !keep(d); });
-          link.classed('dimmed', function(d) {
-            var src = typeof d.source === 'object' ? d.source : byId[d.source];
-            var tgt = typeof d.target === 'object' ? d.target : byId[d.target];
-            return !(src && tgt && keep(src) && keep(tgt));
-          });
-        }
+        currentFilter = f;
+        renderChart(filterFns[f]);
       });
     });
 
-    window.addEventListener('resize', function() {
-      var w = svgEl.clientWidth;
-      var h = svgEl.clientHeight;
-      sim.force('center', d3.forceCenter(w / 2, h / 2));
-      sim.alpha(0.3).restart();
-    });
+    window.addEventListener('resize', function() { /* no-op for now; layout stays fixed */ });
 
     // ---- Edit panel wiring ----
     var currentNode = null;
-
     window.openEditPanel = function(d) {
       currentNode = d;
       var p = d.properties || {};
       document.getElementById('edit-type-label').textContent = (d.type === 'agent' ? 'Edit agent' : 'Edit human');
       document.getElementById('edit-name-display').textContent = d.label + ' (' + d.externalId + ')';
-
       document.getElementById('ef-name').value = d.label || '';
       document.getElementById('ef-role').value = p.role || '';
       document.getElementById('ef-mission').value = p.mission || '';
@@ -305,18 +382,14 @@
       document.getElementById('ef-platform').value = p.platform || '';
       document.getElementById('ef-status').value = p.status || '';
       document.getElementById('ef-skills').value = Array.isArray(p.skills) ? p.skills.join(', ') : (p.skills || '');
-
-      // Field visibility per type
       document.getElementById('ef-mission-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-jobdesc-wrap').style.display = (d.type === 'human' ? '' : 'none');
       document.getElementById('ef-platform-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-status-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-escalates-wrap').style.display = (d.type === 'agent' ? '' : 'none');
-
-      // Populate escalates_to dropdown with all editable nodes (excluding self and ORG)
       var sel = document.getElementById('ef-escalates');
       sel.innerHTML = '<option value="">(none)</option>';
-      simNodes.forEach(function(n) {
+      nodes.forEach(function(n) {
         if (n.type === 'organization') return;
         if (n.id === d.id) return;
         var opt = document.createElement('option');
@@ -325,31 +398,26 @@
         if (p.escalatesTo && String(p.escalatesTo) === n.externalId) opt.selected = true;
         sel.appendChild(opt);
       });
-
       document.getElementById('edit-banner').style.display = 'none';
       document.getElementById('edit-panel').classList.add('open');
       document.getElementById('edit-overlay').classList.add('open');
       document.getElementById('edit-panel').setAttribute('aria-hidden', 'false');
     };
-
     window.closeEdit = function() {
       document.getElementById('edit-panel').classList.remove('open');
       document.getElementById('edit-overlay').classList.remove('open');
       document.getElementById('edit-panel').setAttribute('aria-hidden', 'true');
-      d3.selectAll('.node-circle').classed('selected', false);
+      document.querySelectorAll('.org-node.selected').forEach(function(el) { el.classList.remove('selected'); });
       currentNode = null;
     };
-
     window.saveEdit = async function() {
       if (!currentNode) return;
       var btn = document.getElementById('ef-save');
       var banner = document.getElementById('edit-banner');
       banner.style.display = 'none';
       banner.classList.remove('error');
-
       var skillsRaw = (document.getElementById('ef-skills').value || '').trim();
       var skills = skillsRaw === '' ? undefined : skillsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
-
       var patch = {};
       var setIfPresent = function(key, val) { if (val !== undefined && val !== null) patch[key] = val; };
       setIfPresent('name',           document.getElementById('ef-name').value.trim());
@@ -365,7 +433,6 @@
         setIfPresent('job_description', document.getElementById('ef-jobdesc').value.trim());
       }
       if (skills !== undefined) patch.skills = skills;
-
       btn.disabled = true; btn.textContent = 'Saving…';
       try {
         var res = await fetch('/api/v1/team/entity', {
@@ -381,7 +448,6 @@
           btn.disabled = false; btn.textContent = 'Save to draft';
           return;
         }
-        // Reload to reflect latest draft
         window.location.reload();
       } catch (e) {
         banner.textContent = 'Network error: ' + e.message;
@@ -390,7 +456,6 @@
         btn.disabled = false; btn.textContent = 'Save to draft';
       }
     };
-
     document.addEventListener('keydown', function(ev) { if (ev.key === 'Escape') closeEdit(); });
   })();
 </script>
