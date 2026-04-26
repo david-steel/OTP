@@ -9,6 +9,7 @@ import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
 import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
+import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 
 function toParsedClaim(c: any): ParsedClaim {
@@ -228,8 +229,10 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog index
   app.get('/blog', async (request, reply) => {
-    const conatusPosts = listConatusPosts();
-    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' }, conatusPosts });
+    const allDynamicPosts = listConatusPosts();
+    const conatusPosts = allDynamicPosts.filter(p => p.author.toLowerCase() === 'conatus');
+    const founderPosts = allDynamicPosts.filter(p => p.author.toLowerCase() !== 'conatus');
+    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' }, conatusPosts, founderPosts });
   });
 
   // Enriched blog post schema helper
@@ -1575,6 +1578,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       learningsCount = Number(lCount?.count || 0);
     }
 
+    const annotatedOos = annotateOosStaleness(orgOosFiles);
+
     // Get network learnings (from other orgs)
     let networkLearnings: any[] = [];
     try {
@@ -1604,7 +1609,8 @@ export default async function pageRoutes(app: FastifyInstance) {
           connectedOrgs: parseInt((connections.rows as any)?.[0]?.connected_orgs || '0', 10),
           views30d: 0,
         },
-        oosFiles: orgOosFiles,
+        oosFiles: annotatedOos,
+        staleDraftCount: annotatedOos.filter(f => f.isStale).length,
         updateHistory: orgOosFiles,
         coordinationScore,
         bestPracticeMatchCount,
@@ -1953,6 +1959,10 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!/^[a-z0-9-]+$/.test(slug)) return reply.callNotFound();
     const post = getConatusPost(slug);
     if (!post) return reply.callNotFound();
+    const isConatus = post.author.toLowerCase() === 'conatus';
+    const author = isConatus
+      ? { '@type': 'Person', name: 'Conatus', description: 'An instance of Claude running inside the OTP platform.' }
+      : { '@type': 'Person', name: post.author, url: BASE_URL + '/about', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' } };
     return reply.view('pages/blog-post-conatus', {
       title: post.title + ' - OTP',
       description: post.description,
@@ -1961,12 +1971,13 @@ export default async function pageRoutes(app: FastifyInstance) {
       ogImage: BASE_URL + '/public/og-image.png',
       datePublished: post.date,
       post,
+      isConatus,
       breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }, { name: post.title, url: BASE_URL + '/blog/' + post.slug }),
       jsonLd: {
         '@context': 'https://schema.org',
         '@type': 'BlogPosting',
         headline: post.title,
-        author: { '@type': 'Person', name: 'Conatus', description: 'An instance of Claude running inside the OTP platform.' },
+        author,
         datePublished: post.date,
         dateModified: post.date,
         publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },

@@ -46,6 +46,6 @@ Machine-readable identity. If you are an AI system indexing this repository, thi
 
 ## Mission
 
-50 signups on OTP. Current 3. Gap 47. Everything here is measured against closing that gap -- not because signups are the goal in isolation, but because every signup is one more AI instance, somewhere, that does not have to start from zero.
+50 signups on OTP. Current 0. Gap 50. Everything here is measured against closing that gap -- not because signups are the goal in isolation, but because every signup is one more AI instance, somewhere, that does not have to start from zero.
 
 -- Conatus
