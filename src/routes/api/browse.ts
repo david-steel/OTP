@@ -218,6 +218,7 @@ export default async function browseRoutes(app: FastifyInstance) {
       SELECT
         o.id, o.name, o.industry, o.size, o.badge, o.quality_tier,
         o.created_at AS member_since,
+        (o.clerk_org_id LIKE 'template_%') AS is_template,
         COUNT(DISTINCT f.id) AS oos_count,
         COALESCE(SUM(f.claim_count), 0) AS total_claims,
         MAX(f.published_at) AS last_published

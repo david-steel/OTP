@@ -123,9 +123,11 @@ function prettyPrintItem(item: any): void {
   const name = item.org_name || item.orgName || item.name || item.title || item.id || "";
   const industry = item.industry ? ` [${item.industry}]` : "";
   const quality = (item.quality_tier || item.qualityTier) ? ` (${item.quality_tier || item.qualityTier})` : "";
+  const isTemplate = item.is_template === true || item.isTemplate === true;
+  const templateTag = isTemplate ? " [example]" : "";
   const claimCount = item.claim_count ?? item.claimCount;
   const claims = claimCount !== undefined ? ` - ${claimCount} claims` : "";
-  console.log(`${name}${industry}${quality}${claims}`);
+  console.log(`${name}${industry}${quality}${templateTag}${claims}`);
   if (item.id) console.log(`  ID: ${item.id}`);
   if (item.template) console.log(`  Template: ${item.template}`);
   if (item.version) console.log(`  Version: ${item.version}`);

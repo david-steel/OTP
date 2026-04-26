@@ -102,7 +102,7 @@ export default async function searchRoutes(app: FastifyInstance) {
         f.id, f.template, f.version, f.claim_count, f.word_count,
         f.confidence_distribution, f.evidence_distribution, f.published_at,
         o.id AS org_id, o.name AS org_name, o.industry, o.size, o.badge, o.quality_tier,
-        (o.clerk_id LIKE 'template_%') AS is_template
+        (o.clerk_org_id LIKE 'template_%') AS is_template
       FROM oos_files f
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
