@@ -11,7 +11,7 @@ import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
 import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
-import { getOrgSubgraph } from '../../graph/graph-queries.js';
+import { getOrgTeamGraph } from '../../services/team-graph.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -1056,7 +1056,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Dashboard: Team org chart (Phase 1: read-only visualization)
+  // Dashboard: Team org chart (live derivation from latest draft or published OOS)
   app.get('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/');
@@ -1064,25 +1064,25 @@ export default async function pageRoutes(app: FastifyInstance) {
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
 
-    const subgraph = await getOrgSubgraph(db, org.id);
-    const teamNodes = subgraph.nodes.filter(n => n.type === 'agent' || n.type === 'human' || n.type === 'organization');
-    const teamNodeIds = new Set(teamNodes.map(n => n.id));
-    const teamEdges = subgraph.edges.filter(e =>
-      teamNodeIds.has(e.sourceId) &&
-      teamNodeIds.has(e.targetId) &&
-      (e.type === 'escalates_to' || e.type === 'overrides' || e.type === 'delegates_to' || e.type === 'part_of')
-    );
+    const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
 
     return reply.view('pages/dashboard-team', {
       title: 'Team - Dashboard - OTP',
-      description: 'Visual org chart of your AI agents and humans, derived from your published OOS.',
+      description: 'Visual org chart of your AI agents and humans. Edit live; changes save to a draft until you publish.',
       noindex: true,
       org,
-      teamNodes,
-      teamEdges,
+      teamNodes: team.nodes,
+      teamEdges: team.edges,
+      teamMeta: {
+        oosFileId: team.oosFileId,
+        oosStatus: team.oosStatus,
+        oosVersion: team.oosVersion,
+        hasDraft: team.hasDraft,
+        hasPublished: team.hasPublished,
+      },
       counts: {
-        agents: teamNodes.filter(n => n.type === 'agent').length,
-        humans: teamNodes.filter(n => n.type === 'human').length,
+        agents: team.nodes.filter(n => n.type === 'agent').length,
+        humans: team.nodes.filter(n => n.type === 'human').length,
       },
     });
   });

@@ -1,17 +1,14 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
   .team-canvas { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-radius: 1rem; }
-  .node-agent { fill: #0ea5e9; }
-  .node-human { fill: #f59e0b; }
-  .node-organization { fill: #1e293b; }
   .node-label { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; fill: #1f2937; pointer-events: none; }
   .node-label-strong { font-weight: 700; }
   .edge-line { stroke: #cbd5e1; stroke-width: 1.5px; fill: none; }
   .edge-line.escalates_to { stroke: #f59e0b; stroke-dasharray: 4 3; }
   .edge-line.overrides { stroke: #dc2626; }
-  .edge-line.delegates_to { stroke: #0ea5e9; }
   .node-circle { cursor: pointer; transition: stroke-width 120ms ease, transform 120ms ease; }
   .node-circle:hover { stroke-width: 4px; }
+  .node-circle.selected { stroke: #0ea5e9; stroke-width: 4px; }
   .node-circle.dimmed { opacity: 0.2; }
   .node-label.dimmed { opacity: 0.2; }
   .edge-line.dimmed { opacity: 0.1; }
@@ -20,6 +17,21 @@
   .node-tooltip .ttl { font-weight: 700; color: #fff; margin-bottom: 0.25rem; }
   .node-tooltip .row { color: #cbd5e1; }
   .node-tooltip .row strong { color: #fff; font-weight: 600; }
+
+  .edit-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 100%; max-width: 420px; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -10px 0 30px rgba(15,23,42,0.08); z-index: 60; transform: translateX(100%); transition: transform 200ms ease; display: flex; flex-direction: column; }
+  .edit-panel.open { transform: translateX(0); }
+  .edit-panel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .edit-panel-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
+  .edit-panel-footer { padding: 1rem 1.5rem; border-top: 1px solid #f3f4f6; display: flex; gap: 0.5rem; justify-content: flex-end; }
+  .edit-field { margin-bottom: 1rem; }
+  .edit-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; font-weight: 600; margin-bottom: 0.375rem; }
+  .edit-field input, .edit-field textarea, .edit-field select { width: 100%; padding: 0.5rem 0.625rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 14px; color: #111827; background: #fff; }
+  .edit-field input:focus, .edit-field textarea:focus, .edit-field select:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+  .edit-field .hint { font-size: 11px; color: #9ca3af; margin-top: 0.25rem; }
+  .edit-banner { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 12px; margin-bottom: 1rem; }
+  .edit-banner.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .edit-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.3); z-index: 55; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
+  .edit-overlay.open { opacity: 1; pointer-events: auto; }
 </style>
 
 <section class="bg-white border-b border-gray-100">
@@ -32,9 +44,14 @@
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Team</h1>
-        <p class="text-sm text-gray-500 mt-1">Live view of your agents and humans, derived from your published OOS. <span class="text-gray-400">Editing in Phase 2.</span></p>
+        <p class="text-sm text-gray-500 mt-1">Click any agent or human to edit. Edits save to a draft until you publish.</p>
       </div>
       <div class="flex items-center gap-2">
+        <% if (teamMeta.hasDraft) { %>
+          <span class="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">Draft v<%= teamMeta.oosVersion %> &middot; unpublished</span>
+        <% } else if (teamMeta.hasPublished) { %>
+          <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
+        <% } %>
         <div class="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 text-xs font-medium" role="group">
           <button data-filter="all" class="filter-btn px-3 py-1.5 rounded-md bg-gray-900 text-white">All <span class="opacity-70 ml-1"><%= counts.agents + counts.humans %></span></button>
           <button data-filter="agent" class="filter-btn px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900">Agents <span class="opacity-70 ml-1"><%= counts.agents %></span></button>
@@ -48,7 +65,6 @@
 <section class="bg-gray-50 py-6 sm:py-8 min-h-[60vh]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
     <% if (teamNodes.length <= 1) { %>
-      <!-- Empty state: only the org node, no agents/humans yet -->
       <div class="bg-white rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
         <div class="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 0a4 4 0 11-8 0 4 4 0 018 0zm6-4a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -72,6 +88,65 @@
     <% } %>
   </div>
 </section>
+
+<!-- Edit panel (Phase 2) -->
+<div id="edit-overlay" class="edit-overlay" onclick="closeEdit()"></div>
+<aside id="edit-panel" class="edit-panel" aria-hidden="true">
+  <div class="edit-panel-header">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-1" id="edit-type-label">Edit</div>
+      <div class="text-base font-bold text-gray-900" id="edit-name-display">&mdash;</div>
+    </div>
+    <button onclick="closeEdit()" class="text-gray-400 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="edit-panel-body">
+    <div id="edit-banner" class="edit-banner" style="display:none"></div>
+    <div class="edit-field">
+      <label for="ef-name">Name</label>
+      <input id="ef-name" type="text" />
+    </div>
+    <div class="edit-field">
+      <label for="ef-role">Role</label>
+      <input id="ef-role" type="text" />
+    </div>
+    <div class="edit-field" id="ef-mission-wrap">
+      <label for="ef-mission">Mission</label>
+      <textarea id="ef-mission" rows="3"></textarea>
+    </div>
+    <div class="edit-field" id="ef-jobdesc-wrap">
+      <label for="ef-jobdesc">Job description</label>
+      <textarea id="ef-jobdesc" rows="3"></textarea>
+    </div>
+    <div class="edit-field">
+      <label for="ef-authority">Authority level</label>
+      <input id="ef-authority" type="text" placeholder="e.g. autonomous, advisory, full_override" />
+    </div>
+    <div class="edit-field" id="ef-platform-wrap">
+      <label for="ef-platform">Platform</label>
+      <input id="ef-platform" type="text" placeholder="e.g. claude-code, n8n, custom" />
+    </div>
+    <div class="edit-field" id="ef-status-wrap">
+      <label for="ef-status">Status</label>
+      <input id="ef-status" type="text" placeholder="e.g. active, paused, retired" />
+    </div>
+    <div class="edit-field" id="ef-escalates-wrap">
+      <label for="ef-escalates">Escalates to</label>
+      <select id="ef-escalates"><option value="">(none)</option></select>
+      <div class="hint">Pick an agent or human this one escalates to.</div>
+    </div>
+    <div class="edit-field">
+      <label for="ef-skills">Skills</label>
+      <input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" />
+      <div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div>
+    </div>
+  </div>
+  <div class="edit-panel-footer">
+    <button onclick="closeEdit()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
+    <button id="ef-save" onclick="saveEdit()" class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Save to draft</button>
+  </div>
+</aside>
 
 <% if (teamNodes.length > 1) { %>
 <script>
@@ -135,6 +210,8 @@
       if (p.authorityLevel) html += '<div class="row"><strong>Authority:</strong> ' + escapeHtml(String(p.authorityLevel)) + '</div>';
       if (p.platform) html += '<div class="row"><strong>Platform:</strong> ' + escapeHtml(String(p.platform)) + '</div>';
       if (p.status) html += '<div class="row"><strong>Status:</strong> ' + escapeHtml(String(p.status)) + '</div>';
+      if (Array.isArray(p.skills) && p.skills.length) html += '<div class="row"><strong>Skills:</strong> ' + escapeHtml(p.skills.join(', ')) + '</div>';
+      if (d.type !== 'organization') html += '<div class="row" style="margin-top:0.25rem; color:#94a3b8;">Click to edit</div>';
       tooltip.html(html);
       var rect = svgEl.getBoundingClientRect();
       tooltip.style('left', (ev.clientX - rect.left + 14) + 'px').style('top', (ev.clientY - rect.top + 14) + 'px');
@@ -144,6 +221,14 @@
       tooltip.style('left', (ev.clientX - rect.left + 14) + 'px').style('top', (ev.clientY - rect.top + 14) + 'px');
     }).on('mouseleave', function() {
       tooltip.classed('visible', false);
+    });
+
+    node.on('click', function(ev, d) {
+      if (d.type === 'organization') return;
+      ev.stopPropagation();
+      openEditPanel(d);
+      d3.selectAll('.node-circle').classed('selected', false);
+      d3.select(this).select('.node-circle').classed('selected', true);
     });
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
@@ -179,8 +264,6 @@
         btn.classList.add('bg-gray-900','text-white');
         btn.classList.remove('text-gray-600');
 
-        node.classed('dimmed', false);
-        link.classed('dimmed', false);
         if (f === 'all') {
           node.select('circle').classed('dimmed', false);
           node.selectAll('text').classed('dimmed', false);
@@ -204,6 +287,111 @@
       sim.force('center', d3.forceCenter(w / 2, h / 2));
       sim.alpha(0.3).restart();
     });
+
+    // ---- Edit panel wiring ----
+    var currentNode = null;
+
+    window.openEditPanel = function(d) {
+      currentNode = d;
+      var p = d.properties || {};
+      document.getElementById('edit-type-label').textContent = (d.type === 'agent' ? 'Edit agent' : 'Edit human');
+      document.getElementById('edit-name-display').textContent = d.label + ' (' + d.externalId + ')';
+
+      document.getElementById('ef-name').value = d.label || '';
+      document.getElementById('ef-role').value = p.role || '';
+      document.getElementById('ef-mission').value = p.mission || '';
+      document.getElementById('ef-jobdesc').value = p.jobDescription || '';
+      document.getElementById('ef-authority').value = p.authorityLevel || '';
+      document.getElementById('ef-platform').value = p.platform || '';
+      document.getElementById('ef-status').value = p.status || '';
+      document.getElementById('ef-skills').value = Array.isArray(p.skills) ? p.skills.join(', ') : (p.skills || '');
+
+      // Field visibility per type
+      document.getElementById('ef-mission-wrap').style.display = (d.type === 'agent' ? '' : 'none');
+      document.getElementById('ef-jobdesc-wrap').style.display = (d.type === 'human' ? '' : 'none');
+      document.getElementById('ef-platform-wrap').style.display = (d.type === 'agent' ? '' : 'none');
+      document.getElementById('ef-status-wrap').style.display = (d.type === 'agent' ? '' : 'none');
+      document.getElementById('ef-escalates-wrap').style.display = (d.type === 'agent' ? '' : 'none');
+
+      // Populate escalates_to dropdown with all editable nodes (excluding self and ORG)
+      var sel = document.getElementById('ef-escalates');
+      sel.innerHTML = '<option value="">(none)</option>';
+      simNodes.forEach(function(n) {
+        if (n.type === 'organization') return;
+        if (n.id === d.id) return;
+        var opt = document.createElement('option');
+        opt.value = n.externalId;
+        opt.textContent = n.label + ' (' + n.type + ')';
+        if (p.escalatesTo && String(p.escalatesTo) === n.externalId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      document.getElementById('edit-banner').style.display = 'none';
+      document.getElementById('edit-panel').classList.add('open');
+      document.getElementById('edit-overlay').classList.add('open');
+      document.getElementById('edit-panel').setAttribute('aria-hidden', 'false');
+    };
+
+    window.closeEdit = function() {
+      document.getElementById('edit-panel').classList.remove('open');
+      document.getElementById('edit-overlay').classList.remove('open');
+      document.getElementById('edit-panel').setAttribute('aria-hidden', 'true');
+      d3.selectAll('.node-circle').classed('selected', false);
+      currentNode = null;
+    };
+
+    window.saveEdit = async function() {
+      if (!currentNode) return;
+      var btn = document.getElementById('ef-save');
+      var banner = document.getElementById('edit-banner');
+      banner.style.display = 'none';
+      banner.classList.remove('error');
+
+      var skillsRaw = (document.getElementById('ef-skills').value || '').trim();
+      var skills = skillsRaw === '' ? undefined : skillsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+
+      var patch = {};
+      var setIfPresent = function(key, val) { if (val !== undefined && val !== null) patch[key] = val; };
+      setIfPresent('name',           document.getElementById('ef-name').value.trim());
+      setIfPresent('role',           document.getElementById('ef-role').value.trim());
+      setIfPresent('authority_level', document.getElementById('ef-authority').value.trim());
+      if (currentNode.type === 'agent') {
+        setIfPresent('mission',        document.getElementById('ef-mission').value.trim());
+        setIfPresent('platform',       document.getElementById('ef-platform').value.trim());
+        setIfPresent('status',         document.getElementById('ef-status').value.trim());
+        var esc = document.getElementById('ef-escalates').value.trim();
+        patch.escalates_to = esc === '' ? null : esc;
+      } else if (currentNode.type === 'human') {
+        setIfPresent('job_description', document.getElementById('ef-jobdesc').value.trim());
+      }
+      if (skills !== undefined) patch.skills = skills;
+
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        var res = await fetch('/api/v1/team/entity', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: currentNode.type, externalId: currentNode.externalId, patch: patch }),
+        });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          banner.textContent = (err.error && err.error.message) || ('Save failed (' + res.status + ')');
+          banner.classList.add('error');
+          banner.style.display = '';
+          btn.disabled = false; btn.textContent = 'Save to draft';
+          return;
+        }
+        // Reload to reflect latest draft
+        window.location.reload();
+      } catch (e) {
+        banner.textContent = 'Network error: ' + e.message;
+        banner.classList.add('error');
+        banner.style.display = '';
+        btn.disabled = false; btn.textContent = 'Save to draft';
+      }
+    };
+
+    document.addEventListener('keydown', function(ev) { if (ev.key === 'Escape') closeEdit(); });
   })();
 </script>
 <% } %>
