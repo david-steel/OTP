@@ -11,6 +11,24 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- April 26, 2026 ----
+
+  {
+    date: '2026-04-26',
+    tags: ['Major', 'Core'],
+    title: 'Team Chart: Visualize and Edit Your Agent + Human Org',
+    summary: 'Your dashboard now has a visual org chart of every agent and human in your OOS, with click-to-edit fields and drag-and-drop hierarchy. Edits land as a draft until you publish.',
+    details: `<p>Open <code>/dashboard/team</code> and your published OOS becomes a top-down org chart: agents, humans, organization, all wired by escalation and reporting lines.</p>
+<ul>
+<li><strong>Live derivation from your OOS:</strong> the chart reads <code>entities.agents</code> and <code>entities.humans</code> from your latest draft (preferred) or published file. No new schema, no separate database. Your OOS is still the source of truth.</li>
+<li><strong>Click any node to edit:</strong> a side panel opens with name, role, mission or job description, authority level, platform and status (agents), skills, and the escalates_to or reports_to dropdown. Saving creates a draft if you do not already have one.</li>
+<li><strong>Drag and drop to restructure:</strong> drag any agent or human onto another box and it becomes the new child. Cycle prevention rejects drops that would create loops. The PATCH writes back to your OOS draft and the chart re-renders.</li>
+<li><strong>Type filter:</strong> the All / Agents / Humans toggle re-lays out the tree to show just what you care about.</li>
+<li><strong>Status banner:</strong> shows whether you are looking at a draft (with version number) or your published file. Edits never touch your published file until you republish.</li>
+</ul>
+<p>If your OOS does not have <code>entities.agents</code> or <code>entities.humans</code> populated yet, the chart will look empty. Reach out and we can help you migrate. Next up: skills taxonomy, mobile polish, and add/delete nodes.</p>`,
+  },
+
   // ---- April 5, 2026 ----
 
   {
