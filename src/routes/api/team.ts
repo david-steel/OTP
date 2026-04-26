@@ -13,7 +13,7 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
-import { patchTeamEntity, TeamMutationError } from '../../services/team-graph.js';
+import { patchTeamEntity, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
 import type { EntityType } from '../../services/team-graph.js';
 
 const patchSchema = z.object({
@@ -93,4 +93,34 @@ export default async function teamRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to patch entity' } });
     }
   });
+
+  // ============================================================
+  // GET /api/v1/team/agent/:externalId/context -- compiled CLAUDE.md context
+  // ============================================================
+  // Returns markdown that combines an agent's own SOPs with SOPs inherited
+  // from its escalation parent. Drop into a system prompt or CLAUDE.md.
+  // Auth: Clerk session OR API key. Format: ?format=md (default) or json.
+  app.get<{ Params: { externalId: string }; Querystring: { format?: string } }>(
+    '/team/agent/:externalId/context',
+    async (request, reply) => {
+      // Read scope is implicit: any signed-in member of the org can fetch
+      // their own org's agent context. We rely on getAuth for session and
+      // fall back to API key resolution for programmatic access.
+      const org = await getOrg(request);
+      if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+      const { externalId } = request.params;
+      if (!/^[A-Z0-9_\-]{1,120}$/i.test(externalId)) {
+        return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
+      }
+
+      const ctx = await buildAgentContext(org.id, externalId, { orgName: org.name });
+      if (!ctx) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Agent not found in your latest OOS' } });
+
+      const format = request.query.format === 'json' ? 'json' : 'md';
+      if (format === 'json') return ctx;
+      reply.header('Content-Type', 'text/markdown; charset=utf-8');
+      return ctx.markdown;
+    }
+  );
 }

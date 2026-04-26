@@ -180,6 +180,23 @@
       </div>
       <div id="ef-sop-list" class="sop-list"></div>
     </div>
+
+    <div class="sop-section" id="ef-inherited-section" style="display:none">
+      <div class="sop-section-header">
+        <span class="sop-section-title">Inherited SOPs <span id="ef-inherited-count" style="color:#9ca3af; font-weight: 500;"></span></span>
+      </div>
+      <div id="ef-inherited-source" style="font-size: 11px; color: #6b7280; margin-bottom: 0.5rem;"></div>
+      <div id="ef-inherited-list" class="sop-list"></div>
+    </div>
+
+    <div id="ef-context-section" class="sop-section" style="display:none">
+      <div class="sop-section-header">
+        <span class="sop-section-title">Agent context</span>
+      </div>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Compiled CLAUDE.md combining own SOPs and any inherited from this agent's parent. Drop into your system prompt.</p>
+      <button type="button" id="ef-copy-context" onclick="copyAgentContext()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold">Copy as CLAUDE.md</button>
+      <span id="ef-copy-context-status" style="font-size: 11px; color: #059669; margin-left: 0.5rem;"></span>
+    </div>
   </div>
   <div class="edit-panel-footer">
     <button onclick="closeEdit()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
@@ -478,6 +495,12 @@
       if (p.mission) html += '<div class="row"><strong>Mission:</strong> ' + escapeHtml(String(p.mission)) + '</div>';
       if (p.authorityLevel) html += '<div class="row"><strong>Authority:</strong> ' + escapeHtml(String(p.authorityLevel)) + '</div>';
       if (Array.isArray(p.skills) && p.skills.length) html += '<div class="row"><strong>Skills:</strong> ' + escapeHtml(p.skills.join(', ')) + '</div>';
+      var ownSops = Array.isArray(p.sops) ? p.sops.length : 0;
+      if (ownSops > 0) html += '<div class="row"><strong>SOPs:</strong> ' + ownSops + '</div>';
+      if (n.type === 'agent') {
+        var inh = getInheritedFor(n);
+        if (inh && inh.sops.length > 0) html += '<div class="row"><strong>Inherits:</strong> ' + inh.sops.length + ' SOP' + (inh.sops.length === 1 ? '' : 's') + ' from ' + escapeHtml(inh.parent.label) + '</div>';
+      }
       if (n.type !== 'organization') html += '<div class="row" style="margin-top:0.25rem; color:#94a3b8;">Click to edit</div>';
       tooltip.innerHTML = html;
       tooltip.classList.add('visible');
@@ -590,12 +613,78 @@
       });
     }
 
+    function getInheritedFor(d) {
+      if (d.type !== 'agent') return null;
+      var p = d.properties || {};
+      var parentExtId = p.escalatesTo;
+      if (!parentExtId) return null;
+      var parent = nodes.find(function(n) { return n.externalId === String(parentExtId); });
+      if (!parent) return null;
+      var pp = parent.properties || {};
+      var sops = Array.isArray(pp.sops) ? pp.sops : [];
+      return { parent: parent, sops: sops };
+    }
+
+    function renderInheritedFor(d) {
+      var section = document.getElementById('ef-inherited-section');
+      var inh = getInheritedFor(d);
+      if (!inh || inh.sops.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = '';
+      document.getElementById('ef-inherited-count').textContent = '(' + inh.sops.length + ')';
+      document.getElementById('ef-inherited-source').textContent = 'Inherited from ' + inh.parent.label + ' (' + inh.parent.type + ')';
+      var list = document.getElementById('ef-inherited-list');
+      list.innerHTML = '';
+      inh.sops.forEach(function(sop) {
+        var card = document.createElement('div');
+        card.className = 'sop-card';
+        var titleSafe = escapeHtml(sop.title || '(untitled SOP)');
+        var bodyParts = [];
+        if (sop.trigger) bodyParts.push('<div class="sop-field"><label>Trigger</label><div style="font-size:12px;color:#374151;">' + escapeHtml(sop.trigger) + '</div></div>');
+        if (Array.isArray(sop.steps) && sop.steps.length) {
+          bodyParts.push('<div class="sop-field"><label>Steps</label><ol style="margin:0;padding-left:1.25rem;font-size:12px;color:#374151;">' + sop.steps.map(function(s) { return '<li>' + escapeHtml(String(s)) + '</li>'; }).join('') + '</ol></div>');
+        }
+        if (Array.isArray(sop.outputs) && sop.outputs.length) {
+          bodyParts.push('<div class="sop-field"><label>Outputs</label><ul style="margin:0;padding-left:1.25rem;font-size:12px;color:#374151;">' + sop.outputs.map(function(o) { return '<li>' + escapeHtml(String(o)) + '</li>'; }).join('') + '</ul></div>');
+        }
+        card.innerHTML = '<div class="sop-card-header" style="cursor:default;"><div class="sop-card-title">' + titleSafe + '</div></div>'
+          + (bodyParts.length ? '<div class="sop-card-body" style="display:block;">' + bodyParts.join('') + '</div>' : '');
+        list.appendChild(card);
+      });
+    }
+
+    window.copyAgentContext = async function() {
+      if (!currentNode || currentNode.type !== 'agent') return;
+      var status = document.getElementById('ef-copy-context-status');
+      status.textContent = 'Loading…';
+      try {
+        var res = await fetch('/api/v1/team/agent/' + encodeURIComponent(currentNode.externalId) + '/context?format=md', { method: 'GET' });
+        if (!res.ok) {
+          status.style.color = '#b91c1c';
+          status.textContent = 'Failed (' + res.status + ')';
+          return;
+        }
+        var md = await res.text();
+        await navigator.clipboard.writeText(md);
+        status.style.color = '#059669';
+        status.textContent = 'Copied (' + md.length + ' chars)';
+        setTimeout(function() { status.textContent = ''; }, 2400);
+      } catch (e) {
+        status.style.color = '#b91c1c';
+        status.textContent = 'Error: ' + e.message;
+      }
+    };
+
     window.openEditPanel = function(d) {
       currentNode = d;
       var p = d.properties || {};
       currentSops = Array.isArray(p.sops) ? JSON.parse(JSON.stringify(p.sops)) : [];
       editingSopIdx = -1;
       renderSopList();
+      renderInheritedFor(d);
+      document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('edit-type-label').textContent = (d.type === 'agent' ? 'Edit agent' : 'Edit human');
       document.getElementById('edit-name-display').textContent = d.label + ' (' + d.externalId + ')';
       document.getElementById('ef-name').value = d.label || '';

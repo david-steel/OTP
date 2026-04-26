@@ -149,6 +149,124 @@ export function buildTeamGraph(
   return { nodes, edges };
 }
 
+// ---------- Agent context: compile own SOPs + inherited SOPs into markdown ----------
+
+interface AgentContextOptions {
+  orgName: string;
+}
+
+export interface AgentContextResult {
+  agentName: string;
+  agentRole: string;
+  ownSopCount: number;
+  inheritedFromName: string | null;
+  inheritedSopCount: number;
+  markdown: string;
+}
+
+function renderSopMarkdown(sop: any, prefix: string): string {
+  const lines: string[] = [];
+  lines.push(`${prefix} ${sop.title || '(untitled SOP)'}`);
+  if (sop.trigger) lines.push(`**Trigger:** ${sop.trigger}`);
+  if (Array.isArray(sop.steps) && sop.steps.length) {
+    lines.push('**Steps:**');
+    sop.steps.forEach((s: string, i: number) => lines.push(`${i + 1}. ${s}`));
+  }
+  if (Array.isArray(sop.outputs) && sop.outputs.length) {
+    lines.push('**Outputs:**');
+    sop.outputs.forEach((o: string) => lines.push(`- ${o}`));
+  }
+  if (Array.isArray(sop.tools) && sop.tools.length) {
+    lines.push(`**Tools:** ${sop.tools.join(', ')}`);
+  }
+  if (sop.notes) lines.push(sop.notes);
+  return lines.join('\n');
+}
+
+export async function buildAgentContext(
+  orgId: string,
+  agentExternalId: string,
+  opts: AgentContextOptions
+): Promise<AgentContextResult | null> {
+  const { draft, published } = await loadOrgTeamFiles(orgId);
+  const source = draft || published;
+  if (!source) return null;
+
+  const fm: any = source.frontmatter || {};
+  const ents = (fm && fm.entities) || {};
+  const agents: any[] = Array.isArray(ents.agents) ? ents.agents : [];
+  const humans: any[] = Array.isArray(ents.humans) ? ents.humans : [];
+
+  const agent = agents.find(a => String(a.id || a.external_id || '') === agentExternalId);
+  if (!agent) return null;
+
+  // Resolve inheritance: look at escalates_to and follow the chain until we
+  // hit a human or run out. Inherit only the immediate-target's SOPs for
+  // MVP -- multi-level chain inheritance can come later.
+  let parent: any = null;
+  let parentType: 'agent' | 'human' | null = null;
+  if (agent.escalates_to) {
+    parent = humans.find(h => String(h.id || h.external_id || '') === agent.escalates_to);
+    if (parent) parentType = 'human';
+    else {
+      parent = agents.find(a => String(a.id || a.external_id || '') === agent.escalates_to);
+      if (parent) parentType = 'agent';
+    }
+  }
+  const ownSops: any[] = Array.isArray(agent.sops) ? agent.sops : [];
+  const inheritedSops: any[] = parent && Array.isArray(parent.sops) ? parent.sops : [];
+
+  const lines: string[] = [];
+  lines.push(`# ${agent.name || agentExternalId} -- agent context`);
+  lines.push('');
+  lines.push(`**Organization:** ${opts.orgName}`);
+  if (agent.role) lines.push(`**Role:** ${agent.role}`);
+  if (agent.mission) lines.push(`**Mission:** ${agent.mission}`);
+  if (agent.authority_level) lines.push(`**Authority:** ${agent.authority_level}`);
+  if (agent.platform) lines.push(`**Platform:** ${agent.platform}`);
+  if (agent.status) lines.push(`**Status:** ${agent.status}`);
+  if (Array.isArray(agent.skills) && agent.skills.length) lines.push(`**Skills:** ${agent.skills.join(', ')}`);
+  if (parent) lines.push(`**Reports to:** ${parent.name || agent.escalates_to} (${parentType})`);
+  lines.push('');
+
+  if (ownSops.length > 0) {
+    lines.push('## Own SOPs');
+    lines.push('');
+    for (const sop of ownSops) {
+      lines.push(renderSopMarkdown(sop, '###'));
+      lines.push('');
+    }
+  }
+
+  if (inheritedSops.length > 0 && parent) {
+    lines.push(`## Inherited SOPs from ${parent.name || agent.escalates_to}`);
+    lines.push('');
+    lines.push(`*These SOPs come from your reporting parent. When the parent updates them, you inherit the change automatically. Follow them unless explicitly overridden.*`);
+    lines.push('');
+    for (const sop of inheritedSops) {
+      lines.push(renderSopMarkdown(sop, '###'));
+      lines.push('');
+    }
+  }
+
+  if (ownSops.length === 0 && inheritedSops.length === 0) {
+    lines.push('_No SOPs authored yet for this agent or its parent. Add some via /dashboard/team._');
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('_Generated from OTP team chart. Source of truth: the org\'s OOS draft._');
+
+  return {
+    agentName: agent.name || agentExternalId,
+    agentRole: agent.role || '',
+    ownSopCount: ownSops.length,
+    inheritedFromName: parent ? (parent.name || agent.escalates_to) : null,
+    inheritedSopCount: inheritedSops.length,
+    markdown: lines.join('\n'),
+  };
+}
+
 export async function getOrgTeamGraph(orgId: string, orgLabel: string): Promise<TeamGraph> {
   const { draft, published } = await loadOrgTeamFiles(orgId);
   const source = draft || published;
