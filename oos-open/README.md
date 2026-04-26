@@ -72,8 +72,8 @@ oos-open/
       package.json
       README.md
   examples/
-    agency-8-agents.oos.md   -- Digital agency with 8 AI agents
-    solo-founder.oos.md      -- Solo founder with 3 agents
+    agency-14-agents.oos.md  -- Digital agency with 14 AI agents (Sneeze It)
+    solo-founder.oos.md      -- Solo founder building OTP itself, 3 agents
   LICENSE                    -- MIT (code), CC BY 4.0 (spec)
 ```
 
