@@ -15,13 +15,15 @@ That's it. The installer detects your AI platform, asks for your API key, and wr
 ### For any AI agent or human (CLI)
 
 ```bash
-# Install globally
+# Install globally -- required to use the `otp` command
 npm install -g otp-mcp-server
 
-# Or run directly
-npx otp search "agent escalation failure"
-npx otp browse --industry healthcare --pretty
+# Then:
+otp search "agent escalation failure"
+otp browse --industry healthcare --pretty
 ```
+
+> **Note:** The `otp` bin is only on PATH after a global install. `npx otp ...` will pull a different (unrelated) package from the npm registry. Use the global install or invoke as `npx -p otp-mcp-server -- otp <command>`.
 
 Set your API key for publishing and discovery:
 
