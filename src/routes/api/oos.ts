@@ -16,6 +16,7 @@ import { extractGraph } from '../../graph/graph-extractor.js';
 import { autoFixOOS } from '../../services/auto-fixer.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { getStaleDraftIds } from '../../services/oos-staleness.js';
 import type { TemplateType } from '../../shared/enums.js';
 import { TEMPLATE_TYPES } from '../../shared/enums.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
@@ -1249,6 +1250,36 @@ ${claimSections.join('\n')}`.trim();
     );
 
     return { deleted: true, id };
+  });
+
+  // ============================================================
+  // POST /api/v1/oos/cleanup-stale -- Delete this org's stale drafts
+  // ============================================================
+  app.post('/oos/cleanup-stale', async (request, reply) => {
+    if (!(await checkApiKeyScope(request, reply, 'write'))) return;
+
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const orgFiles = await db.select().from(oosFiles).where(eq(oosFiles.orgId, org.id));
+    const staleIds = getStaleDraftIds(orgFiles as any);
+
+    if (staleIds.length === 0) {
+      return { deletedCount: 0, deletedIds: [] };
+    }
+
+    await db.execute(sql`DELETE FROM graph_edges WHERE oos_file_id IN (${sql.join(staleIds.map(id => sql`${id}::uuid`), sql`, `)})`);
+    await db.execute(sql`DELETE FROM graph_nodes WHERE oos_file_id IN (${sql.join(staleIds.map(id => sql`${id}::uuid`), sql`, `)})`);
+    await db.execute(sql`DELETE FROM oos_files WHERE id IN (${sql.join(staleIds.map(id => sql`${id}::uuid`), sql`, `)}) AND org_id = ${org.id}::uuid AND status = 'draft'`);
+
+    await db.insert(auditLogs).values(
+      createAuditEntry(AUDIT_ACTIONS.OOS_DELETED, 'oos_file', {
+        orgId: org.id,
+        details: { cleanup: 'stale', deletedCount: staleIds.length, deletedIds: staleIds },
+      })
+    );
+
+    return { deletedCount: staleIds.length, deletedIds: staleIds };
   });
 
   // ============================================================

@@ -245,25 +245,39 @@
     </div>
 
     <!-- D. Your OOS Files -->
-    <h3 class="font-semibold text-lg mb-4">Your OOS Files</h3>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-lg">Your OOS Files</h3>
+      <% if (dashboard.staleDraftCount && dashboard.staleDraftCount > 0) { %>
+        <button onclick="cleanStaleDrafts()" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-colors">
+          Clean <%= dashboard.staleDraftCount %> stale draft<%= dashboard.staleDraftCount === 1 ? '' : 's' %>
+        </button>
+      <% } %>
+    </div>
     <% if (dashboard.oosFiles.length > 0) { %>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
         <% dashboard.oosFiles.forEach(function(oos) { %>
-          <div class="bg-white rounded-xl border hover:shadow-md transition-shadow p-5" id="oos-row-<%= oos.id %>">
+          <div class="bg-white rounded-xl border hover:shadow-md transition-shadow p-5 <%= oos.isStale ? 'border-amber-300' : '' %>" id="oos-row-<%= oos.id %>">
             <div class="flex items-start justify-between mb-3">
               <a href="/oos/<%= oos.id %>" class="font-semibold text-otp-600 hover:text-otp-500 capitalize text-sm">
                 <span class="oos-name"><%= oos.name || (oos.template.replace('_', ' ') + ' OOS') %></span>
               </a>
-              <span class="text-xs px-2 py-1 rounded-full capitalize font-medium
-                <% if (oos.status === 'published') { %>bg-emerald-100 text-emerald-700<% } %>
-                <% if (oos.status === 'draft') { %>bg-amber-100 text-amber-700<% } %>
-                <% if (oos.status === 'archived') { %>bg-gray-100 text-gray-500<% } %>
-              "><%= oos.status %></span>
+              <div class="flex items-center gap-1.5">
+                <% if (oos.isStale) { %>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-600 border border-amber-200" title="<%= oos.staleReason %>">stale</span>
+                <% } %>
+                <span class="text-xs px-2 py-1 rounded-full capitalize font-medium
+                  <% if (oos.status === 'published') { %>bg-emerald-100 text-emerald-700<% } %>
+                  <% if (oos.status === 'draft') { %>bg-amber-100 text-amber-700<% } %>
+                  <% if (oos.status === 'archived') { %>bg-gray-100 text-gray-500<% } %>
+                "><%= oos.status %></span>
+              </div>
             </div>
-            <div class="flex items-center gap-4 text-xs text-gray-500 mb-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-4">
               <span>v<%= oos.version %></span>
               <span><%= oos.claimCount %> claims</span>
-              <span><%= oos.publishedAt ? new Date(oos.publishedAt).toLocaleDateString() : 'Not published' %></span>
+              <span title="Published">pub: <%= oos.publishedAt ? new Date(oos.publishedAt).toLocaleDateString() : '—' %></span>
+              <span title="Created">created: <%= new Date(oos.createdAt).toLocaleDateString() %></span>
+              <span title="Last updated (MCP activity updates this)">updated: <%= new Date(oos.updatedAt).toLocaleDateString() %></span>
             </div>
             <div class="flex items-center gap-2 border-t pt-3">
               <button onclick="renameOos('<%= oos.id %>')" class="text-gray-400 hover:text-otp-600 p-1.5 rounded-lg hover:bg-otp-50 transition-colors" title="Rename">
@@ -436,6 +450,26 @@
         window.location.href = '/publish?edit=' + data.oosFile.id;
       } catch (e) {
         alert('Failed to create new version: ' + e.message);
+      }
+    }
+
+    async function cleanStaleDrafts() {
+      if (!confirm('Delete all stale drafts? This removes empty drafts and exact duplicates. Drafts with real content are kept.')) return;
+      try {
+        var res = await fetch('/api/v1/oos/cleanup-stale', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) {
+          var err = await res.json();
+          alert('Failed to clean stale drafts: ' + (err.error?.message || 'Unknown error'));
+          return;
+        }
+        var data = await res.json();
+        alert('Cleaned ' + data.deletedCount + ' stale draft' + (data.deletedCount === 1 ? '' : 's') + '.');
+        window.location.reload();
+      } catch (e) {
+        alert('Failed to clean stale drafts: ' + e.message);
       }
     }
 
