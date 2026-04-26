@@ -21,6 +21,15 @@
   /* SOP count badge on chart nodes */
   .org-node .sop-badge { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 9px; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 999px; background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; flex-shrink: 0; margin-left: 0.25rem; }
 
+  /* Inactive nodes (status=inactive|retired|terminated) */
+  .org-node.inactive { filter: grayscale(0.85); opacity: 0.7; }
+  .org-node.inactive .name { text-decoration: line-through; }
+  .org-node.inactive::after { content: ''; }
+
+  /* Contact icon row on humans */
+  .org-node .contacts { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; }
+  .org-node .contact-pill { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 9px; color: #6b7280; background: #f3f4f6; padding: 0.05rem 0.3rem; border-radius: 999px; }
+
   /* SOP authoring section in edit panel */
   .sop-section { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #f3f4f6; }
   .sop-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
@@ -168,7 +177,20 @@
     <div class="edit-field" id="ef-jobdesc-wrap"><label for="ef-jobdesc">Job description</label><textarea id="ef-jobdesc" rows="3"></textarea></div>
     <div class="edit-field"><label for="ef-authority">Authority level</label><input id="ef-authority" type="text" placeholder="e.g. autonomous, advisory, full_override" /></div>
     <div class="edit-field" id="ef-platform-wrap"><label for="ef-platform">Platform</label><input id="ef-platform" type="text" placeholder="e.g. claude-code, n8n, custom" /></div>
-    <div class="edit-field" id="ef-status-wrap"><label for="ef-status">Status</label><input id="ef-status" type="text" placeholder="e.g. active, paused, retired" /></div>
+    <div class="edit-field" id="ef-status-wrap"><label for="ef-status">Status</label>
+      <select id="ef-status">
+        <option value="">(default: active)</option>
+        <option value="active">active</option>
+        <option value="paused">paused</option>
+        <option value="inactive">inactive</option>
+        <option value="retired">retired</option>
+        <option value="terminated">terminated</option>
+      </select>
+      <div class="hint">Inactive / retired / terminated nodes render grayscale on the chart.</div>
+    </div>
+    <div class="edit-field" id="ef-contact-email-wrap"><label for="ef-contact-email">Contact email</label><input id="ef-contact-email" type="email" placeholder="name@company.com" /></div>
+    <div class="edit-field" id="ef-contact-phone-wrap"><label for="ef-contact-phone">Phone</label><input id="ef-contact-phone" type="tel" placeholder="+1 555 123 4567" /></div>
+    <div class="edit-field" id="ef-slackid-wrap"><label for="ef-slackid">Slack ID</label><input id="ef-slackid" type="text" placeholder="U0XXXXXXXXX" /></div>
     <div class="edit-field" id="ef-escalates-wrap"><label for="ef-escalates">Escalates to</label><select id="ef-escalates"><option value="">(none)</option></select><div class="hint">Pick an agent or human this one escalates to.</div></div>
     <div class="edit-field" id="ef-reportsto-wrap"><label for="ef-reportsto">Reports to</label><select id="ef-reportsto"><option value="">(none)</option></select><div class="hint">Pick the manager this person reports to.</div></div>
     <div class="edit-field"><label for="ef-skills">Skills</label><input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" /><div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div></div>
@@ -212,9 +234,12 @@
       <span id="ef-copy-context-status" style="font-size: 11px; color: #059669; margin-left: 0.5rem;"></span>
     </div>
   </div>
-  <div class="edit-panel-footer">
-    <button onclick="closeEdit()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
-    <button id="ef-save" onclick="saveEdit()" class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Save to draft</button>
+  <div class="edit-panel-footer" style="justify-content: space-between;">
+    <button id="ef-delete" onclick="deleteCurrentEntity()" class="px-3 py-1.5 text-sm text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-lg transition-colors">Delete</button>
+    <div style="display:flex; gap:0.5rem;">
+      <button onclick="closeEdit()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
+      <button id="ef-save" onclick="saveEdit()" class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Save to draft</button>
+    </div>
   </div>
 </aside>
 
@@ -363,8 +388,11 @@
         var x = d.x + offsetX;
         var y = d.y + pad;
         var n = d.data;
+        var p2 = n.properties || {};
+        var statusLower = String(p2.status || '').toLowerCase();
+        var isInactive = ['inactive', 'retired', 'terminated'].indexOf(statusLower) !== -1;
         var box = document.createElement('div');
-        box.className = 'org-node type-' + n.type;
+        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '');
         box.style.left = x + 'px';
         box.style.top  = y + 'px';
         box.style.width  = NODE_W + 'px';
@@ -389,6 +417,15 @@
         if (p.platform) meta.push(escapeHtml(String(p.platform)));
         if (p.status) meta.push(escapeHtml(String(p.status)));
         if (meta.length) inner += '<div class="meta">' + meta.map(function(m) { return '<span>' + m + '</span>'; }).join('') + '</div>';
+
+        if (n.type === 'human') {
+          var contacts = [];
+          if (p.contactEmail) contacts.push('<span class="contact-pill" title="' + escapeHtml(String(p.contactEmail)) + '">@</span>');
+          if (p.contactPhone) contacts.push('<span class="contact-pill" title="' + escapeHtml(String(p.contactPhone)) + '">tel</span>');
+          if (p.slackId) contacts.push('<span class="contact-pill" title="Slack: ' + escapeHtml(String(p.slackId)) + '">slack</span>');
+          if (contacts.length) inner += '<div class="contacts">' + contacts.join('') + '</div>';
+        }
+
         box.innerHTML = inner;
 
         box.addEventListener('mouseenter', function(ev) { showTooltip(ev, n); });
@@ -529,24 +566,38 @@
     function hideTooltip() { tooltip.classList.remove('visible'); }
 
     // ---- Initial render ----
-    var currentFilter = 'all';
+    var FILTER_STORAGE_KEY = 'otp-team-chart-filter';
+    var savedFilter = (function() {
+      try { return localStorage.getItem(FILTER_STORAGE_KEY); } catch (e) { return null; }
+    })();
+    var currentFilter = (savedFilter && ['all','agent','human'].indexOf(savedFilter) !== -1) ? savedFilter : 'all';
     var filterFns = {
       all:   function(n) { return true; },
       agent: function(n) { return n.type === 'agent' || n.type === 'organization' || (n.type === 'human' && (n.properties || {}).authorityLevel === 'full'); },
       human: function(n) { return n.type === 'human' || n.type === 'organization'; },
     };
+
+    function setActiveFilterBtn(f) {
+      document.querySelectorAll('.filter-btn').forEach(function(b) {
+        if (b.getAttribute('data-filter') === f) {
+          b.classList.add('bg-gray-900','text-white');
+          b.classList.remove('text-gray-600');
+        } else {
+          b.classList.remove('bg-gray-900','text-white');
+          b.classList.add('text-gray-600');
+        }
+      });
+    }
+
+    setActiveFilterBtn(currentFilter);
     renderChart(filterFns[currentFilter]);
 
     document.querySelectorAll('.filter-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var f = btn.getAttribute('data-filter');
-        document.querySelectorAll('.filter-btn').forEach(function(b) {
-          b.classList.remove('bg-gray-900','text-white');
-          b.classList.add('text-gray-600');
-        });
-        btn.classList.add('bg-gray-900','text-white');
-        btn.classList.remove('text-gray-600');
         currentFilter = f;
+        try { localStorage.setItem(FILTER_STORAGE_KEY, f); } catch (e) {}
+        setActiveFilterBtn(f);
         renderChart(filterFns[f]);
       });
     });
@@ -727,12 +778,18 @@
       document.getElementById('ef-platform').value = p.platform || '';
       document.getElementById('ef-status').value = p.status || '';
       document.getElementById('ef-skills').value = Array.isArray(p.skills) ? p.skills.join(', ') : (p.skills || '');
+      document.getElementById('ef-contact-email').value = p.contactEmail || '';
+      document.getElementById('ef-contact-phone').value = p.contactPhone || '';
+      document.getElementById('ef-slackid').value = p.slackId || '';
       document.getElementById('ef-mission-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-jobdesc-wrap').style.display = (d.type === 'human' ? '' : 'none');
       document.getElementById('ef-platform-wrap').style.display = (d.type === 'agent' ? '' : 'none');
-      document.getElementById('ef-status-wrap').style.display = (d.type === 'agent' ? '' : 'none');
+      document.getElementById('ef-status-wrap').style.display = '';
       document.getElementById('ef-escalates-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-reportsto-wrap').style.display = (d.type === 'human' ? '' : 'none');
+      document.getElementById('ef-contact-email-wrap').style.display = (d.type === 'human' ? '' : 'none');
+      document.getElementById('ef-contact-phone-wrap').style.display = (d.type === 'human' ? '' : 'none');
+      document.getElementById('ef-slackid-wrap').style.display = (d.type === 'human' ? '' : 'none');
 
       var fillSelect = function(selectEl, currentValue) {
         selectEl.innerHTML = '<option value="">(none)</option>';
@@ -783,7 +840,15 @@
         setIfPresent('job_description', document.getElementById('ef-jobdesc').value.trim());
         var rep = document.getElementById('ef-reportsto').value.trim();
         patch.reports_to = rep === '' ? null : rep;
+        var ce = document.getElementById('ef-contact-email').value.trim();
+        var cp = document.getElementById('ef-contact-phone').value.trim();
+        var sid = document.getElementById('ef-slackid').value.trim();
+        patch.contact_email = ce === '' ? null : ce;
+        patch.contact_phone = cp === '' ? null : cp;
+        patch.slack_id = sid === '' ? null : sid;
       }
+      var statusVal = document.getElementById('ef-status').value.trim();
+      if (statusVal) patch.status = statusVal;
       if (skills !== undefined) patch.skills = skills;
 
       // Send the full SOP array. Drop SOPs without a title (incomplete adds).
@@ -824,6 +889,28 @@
       }
     };
     document.addEventListener('keydown', function(ev) { if (ev.key === 'Escape') closeEdit(); });
+
+    window.deleteCurrentEntity = async function() {
+      if (!currentNode) return;
+      if (currentNode.type === 'organization') return;
+      if (!confirm('Delete ' + currentNode.label + ' from your draft? This removes the entity from the OOS YAML and clears any references to it (escalates_to, reports_to, override_authority).')) return;
+      var btn = document.getElementById('ef-delete');
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      try {
+        var qs = '?type=' + encodeURIComponent(currentNode.type) + '&externalId=' + encodeURIComponent(currentNode.externalId);
+        var res = await fetch('/api/v1/team/entity' + qs, { method: 'DELETE' });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          alert('Delete failed: ' + ((err.error && err.error.message) || res.status));
+          btn.disabled = false; btn.textContent = 'Delete';
+          return;
+        }
+        window.location.reload();
+      } catch (e) {
+        alert('Network error: ' + e.message);
+        btn.disabled = false; btn.textContent = 'Delete';
+      }
+    };
   })();
 </script>
 <% } %>

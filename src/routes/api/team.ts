@@ -13,7 +13,7 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
-import { patchTeamEntity, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
+import { patchTeamEntity, deleteTeamEntity, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
 import type { EntityType } from '../../services/team-graph.js';
 
 const patchSchema = z.object({
@@ -39,6 +39,9 @@ const patchSchema = z.object({
       tools: z.array(z.string().min(1).max(120)).max(20).optional(),
       notes: z.string().max(2000).optional(),
     })).max(40).optional(),
+    contact_email: z.string().email().max(200).nullable().optional(),
+    contact_phone: z.string().max(40).nullable().optional(),
+    slack_id: z.string().max(40).nullable().optional(),
   }).refine(p => Object.keys(p).length > 0, { message: 'patch must contain at least one field' }),
 });
 
@@ -93,6 +96,38 @@ export default async function teamRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to patch entity' } });
     }
   });
+
+  // ============================================================
+  // DELETE /api/v1/team/entity -- remove an agent or human from the latest draft
+  // ============================================================
+  app.delete<{ Querystring: { type?: string; externalId?: string } }>(
+    '/team/entity',
+    async (request, reply) => {
+      if (!(await checkScope(request, reply, 'write'))) return;
+
+      const org = await getOrg(request);
+      if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+      const type = request.query.type;
+      const externalId = request.query.externalId;
+      if (type !== 'agent' && type !== 'human') {
+        return reply.status(400).send({ error: { code: 'INVALID_TYPE', message: 'type must be agent or human' } });
+      }
+      if (!externalId || !/^[A-Z0-9_\-]{1,120}$/i.test(externalId)) {
+        return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
+      }
+
+      try {
+        return await deleteTeamEntity(org.id, type as EntityType, externalId);
+      } catch (e) {
+        if (e instanceof TeamMutationError) {
+          return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+        }
+        request.log.error(e);
+        return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to delete entity' } });
+      }
+    }
+  );
 
   // ============================================================
   // GET /api/v1/team/agent/:externalId/context -- compiled CLAUDE.md context

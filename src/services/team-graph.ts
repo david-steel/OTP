@@ -131,6 +131,10 @@ export function buildTeamGraph(
         skills: h.skills,
         reportsTo: h.reports_to,
         sops: Array.isArray(h.sops) ? h.sops : [],
+        status: h.status,
+        contactEmail: h.contact_email,
+        contactPhone: h.contact_phone,
+        slackId: h.slack_id,
       },
     });
     edges.push({ sourceId: id, targetId: 'ORG', type: 'part_of', properties: {} });
@@ -317,10 +321,13 @@ export interface EntityPatch {
   escalates_to?: string | null;
   reports_to?: string | null;
   sops?: SOPDef[];
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  slack_id?: string | null;
 }
 
 const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to', 'sops'];
-const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'job_description', 'skills', 'reports_to', 'sops'];
+const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'status', 'job_description', 'skills', 'reports_to', 'sops', 'contact_email', 'contact_phone', 'slack_id'];
 
 export interface MutationResult {
   ok: true;
@@ -375,6 +382,66 @@ async function getOrCreateEditableDraft(orgId: string): Promise<typeof oosFiles.
     }).returning();
     return created;
   });
+}
+
+export async function deleteTeamEntity(
+  orgId: string,
+  entityType: EntityType,
+  externalId: string
+): Promise<{ ok: true; oosFileId: string; status: 'draft'; version: number; removedEntityId: string }> {
+  if (entityType !== 'agent' && entityType !== 'human') {
+    throw new TeamMutationError('INVALID_TYPE', 'Type must be "agent" or "human"');
+  }
+  if (!externalId) throw new TeamMutationError('MISSING_ID', 'externalId is required');
+
+  const draft = await getOrCreateEditableDraft(orgId);
+  const { fmText, body } = splitFrontmatter(draft.rawContent);
+  const fm: any = parseYAML(fmText) || {};
+  fm.entities = fm.entities || {};
+  const listKey = entityType === 'agent' ? 'agents' : 'humans';
+  if (!Array.isArray(fm.entities[listKey])) fm.entities[listKey] = [];
+
+  const list: any[] = fm.entities[listKey];
+  const idx = list.findIndex((e: any) => String(e.id || e.external_id || '') === externalId);
+  if (idx === -1) {
+    throw new TeamMutationError('ENTITY_NOT_FOUND', `${entityType} ${externalId} not in latest draft`, 404);
+  }
+  list.splice(idx, 1);
+  fm.entities[listKey] = list;
+
+  // Also clean up any escalates_to or reports_to references that pointed at the
+  // removed entity, so the chart doesn't dangle.
+  for (const a of (fm.entities.agents || [])) {
+    if (a.escalates_to === externalId) delete a.escalates_to;
+  }
+  for (const h of (fm.entities.humans || [])) {
+    if (h.reports_to === externalId) delete h.reports_to;
+    if (Array.isArray(h.override_authority)) {
+      h.override_authority = h.override_authority.filter((id: string) => id !== externalId);
+      if (h.override_authority.length === 0) delete h.override_authority;
+    }
+    if (Array.isArray(h.receives_escalations_from)) {
+      h.receives_escalations_from = h.receives_escalations_from.filter((id: string) => id !== externalId);
+      if (h.receives_escalations_from.length === 0) delete h.receives_escalations_from;
+    }
+  }
+
+  const newRaw = reassembleRaw(fm, body);
+  const parsed = parseOOS(newRaw, draft.template as TemplateType);
+  if (parsed.errors.length > 0) {
+    const blocking = parsed.errors.find(e => e.code === 'MISSING_FRONTMATTER' || e.code === 'FRONTMATTER_PARSE_ERROR');
+    if (blocking) throw new TeamMutationError('REASSEMBLE_FAILED', `OOS no longer parses after delete: ${blocking.message}`, 500);
+  }
+
+  await db.update(oosFiles).set({
+    rawContent: newRaw,
+    frontmatter: fm as any,
+    wordCount: parsed.wordCount,
+    claimCount: parsed.claims.length,
+    updatedAt: new Date(),
+  }).where(and(eq(oosFiles.id, draft.id), eq(oosFiles.orgId, orgId)));
+
+  return { ok: true, oosFileId: draft.id, status: 'draft', version: draft.version, removedEntityId: externalId };
 }
 
 export async function patchTeamEntity(
