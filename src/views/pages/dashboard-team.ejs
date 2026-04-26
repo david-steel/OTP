@@ -54,6 +54,38 @@
   .org-node .contacts { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; }
   .org-node .contact-pill { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 9px; color: #6b7280; background: #f3f4f6; padding: 0.05rem 0.3rem; border-radius: 999px; }
 
+  /* Skills tag input */
+  .skill-tag-input { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.4rem; background: #fff; min-height: 2.4rem; display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; cursor: text; }
+  .skill-tag-input:focus-within { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+  .skill-tag { display: inline-flex; align-items: center; gap: 0.25rem; background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 11px; font-weight: 600; }
+  .skill-tag.custom { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+  .skill-tag .remove { cursor: pointer; opacity: 0.6; font-weight: 700; padding: 0 0.1rem; }
+  .skill-tag .remove:hover { opacity: 1; }
+  .skill-tag-input input { border: none; outline: none; flex: 1; min-width: 6rem; padding: 0.2rem 0.3rem; font-size: 13px; background: transparent; }
+  .skill-suggestions { position: relative; }
+  .skill-suggestions-list { position: absolute; left: 0; right: 0; top: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 8px 20px rgba(15,23,42,0.10); max-height: 220px; overflow-y: auto; z-index: 10; display: none; margin-top: 0.25rem; }
+  .skill-suggestions-list.open { display: block; }
+  .skill-suggestion-cat { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; padding: 0.5rem 0.75rem 0.25rem 0.75rem; }
+  .skill-suggestion { padding: 0.4rem 0.75rem; font-size: 13px; color: #1f2937; cursor: pointer; }
+  .skill-suggestion.active, .skill-suggestion:hover { background: #f0f9ff; color: #0369a1; }
+  .skill-suggestion.add-custom { color: #92400e; background: #fffbeb; border-top: 1px solid #fde68a; font-weight: 600; }
+  .skill-suggestion.add-custom:hover { background: #fef3c7; }
+
+  /* Mobile polish */
+  @media (max-width: 640px) {
+    .edit-panel, .invites-drawer { max-width: 100%; width: 100%; }
+    .compare-modal { max-height: 92vh; }
+    .compare-modal-body { padding: 0.75rem 1rem; }
+    .compare-cols { grid-template-columns: 1fr; gap: 0.6rem; }
+    .org-chart-shell { height: 65vh !important; }
+    /* Header buttons wrap cleaner */
+    .filter-btn { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    /* Modal nudges to fit narrow viewports */
+    #invite-new-modal { width: 96% !important; max-width: 100% !important; }
+    /* Disable hover-magnify on touch */
+    .org-node:hover { transform: none !important; }
+  }
+
   /* Claimed-by badge: shown when a human tile is bound to a member */
   .org-node.claimed { border-color: #34d399; box-shadow: 0 0 0 1px rgba(52,211,153,0.30); }
   .org-node .claimed-badge { display: inline-flex; align-items: center; gap: 0.15rem; font-size: 9px; font-weight: 700; color: #047857; background: #d1fae5; border: 1px solid #6ee7b7; padding: 0.05rem 0.3rem; border-radius: 999px; flex-shrink: 0; margin-left: 0.25rem; }
@@ -320,7 +352,16 @@
     <div class="edit-field" id="ef-slackid-wrap"><label for="ef-slackid">Slack ID</label><input id="ef-slackid" type="text" placeholder="U0XXXXXXXXX" /></div>
     <div class="edit-field" id="ef-escalates-wrap"><label for="ef-escalates">Escalates to</label><select id="ef-escalates"><option value="">(none)</option></select><div class="hint">Pick an agent or human this one escalates to.</div></div>
     <div class="edit-field" id="ef-reportsto-wrap"><label for="ef-reportsto">Reports to</label><select id="ef-reportsto"><option value="">(none)</option></select><div class="hint">Pick the manager this person reports to.</div></div>
-    <div class="edit-field"><label for="ef-skills">Skills</label><input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" /><div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div></div>
+    <div class="edit-field">
+      <label for="ef-skills">Skills</label>
+      <div class="skill-suggestions">
+        <div id="ef-skills-tag-input" class="skill-tag-input" onclick="document.getElementById('ef-skills-input').focus()">
+          <input id="ef-skills-input" type="text" autocomplete="off" placeholder="Type to search the catalog or add your own..." />
+        </div>
+        <div id="ef-skills-suggestions" class="skill-suggestions-list" role="listbox"></div>
+      </div>
+      <div class="hint">Pick from the catalog or type a custom skill and press Enter. Custom skills are saved as-is.</div>
+    </div>
 
     <div class="sop-section" id="ef-invite-section" style="display:none">
       <div class="sop-section-header">
@@ -392,6 +433,127 @@
     var viewerRole = <%- JSON.stringify(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
     var viewerClaimedEntityId = <%- JSON.stringify(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
     var comparisonPairs = <%- JSON.stringify(typeof comparisonPairs !== 'undefined' ? comparisonPairs : []) %>;
+    var SKILLS_CATALOG = <%- JSON.stringify(typeof skillsCatalog !== 'undefined' ? skillsCatalog : []) %>;
+    var ALL_CATALOG_SKILLS = SKILLS_CATALOG.reduce(function(acc, c) { return acc.concat(c.skills); }, []);
+    var ALL_CATALOG_SKILLS_LOWER = new Set(ALL_CATALOG_SKILLS.map(function(s) { return s.toLowerCase(); }));
+    var currentSkills = []; // working array, edited in the panel
+    var skillSuggestionActive = -1;
+
+    function renderSkillTags() {
+      var box = document.getElementById('ef-skills-tag-input');
+      var input = document.getElementById('ef-skills-input');
+      if (!box || !input) return;
+      // Clear all children except the input
+      Array.from(box.children).forEach(function(c) { if (c !== input) c.remove(); });
+      currentSkills.forEach(function(skill, idx) {
+        var isCustom = !ALL_CATALOG_SKILLS_LOWER.has(String(skill).toLowerCase());
+        var pill = document.createElement('span');
+        pill.className = 'skill-tag' + (isCustom ? ' custom' : '');
+        pill.innerHTML = escapeHtml(skill) + ' <span class="remove" onclick="removeSkill(' + idx + ')" title="Remove">&times;</span>';
+        box.insertBefore(pill, input);
+      });
+    }
+
+    window.removeSkill = function(idx) {
+      currentSkills.splice(idx, 1);
+      renderSkillTags();
+    };
+
+    function addSkillNormalized(raw) {
+      var s = String(raw || '').trim();
+      if (!s) return false;
+      // Match canonical case if it's in the catalog
+      var lower = s.toLowerCase();
+      var canonical = ALL_CATALOG_SKILLS.find(function(x) { return x.toLowerCase() === lower; });
+      var toAdd = canonical || s;
+      // Dedupe (case-insensitive)
+      var has = currentSkills.some(function(x) { return String(x).toLowerCase() === toAdd.toLowerCase(); });
+      if (has) return false;
+      currentSkills.push(toAdd);
+      renderSkillTags();
+      return true;
+    }
+
+    function showSkillSuggestions(query) {
+      var list = document.getElementById('ef-skills-suggestions');
+      var q = String(query || '').trim().toLowerCase();
+      var html = '';
+      var matchCount = 0;
+      SKILLS_CATALOG.forEach(function(cat) {
+        var matches = cat.skills.filter(function(s) {
+          if (currentSkills.some(function(x) { return String(x).toLowerCase() === s.toLowerCase(); })) return false;
+          return q === '' || s.toLowerCase().indexOf(q) !== -1;
+        });
+        if (matches.length === 0) return;
+        html += '<div class="skill-suggestion-cat">' + escapeHtml(cat.category) + '</div>';
+        matches.forEach(function(s) {
+          html += '<div class="skill-suggestion" data-skill="' + escapeHtml(s) + '" onclick="acceptSkillSuggestion(\'' + s.replace(/'/g, "\\'") + '\')">' + escapeHtml(s) + '</div>';
+          matchCount++;
+        });
+      });
+      // Custom-add row when the query is non-empty and not already in catalog
+      if (q && !ALL_CATALOG_SKILLS_LOWER.has(q) && !currentSkills.some(function(x) { return String(x).toLowerCase() === q; })) {
+        html += '<div class="skill-suggestion add-custom" onclick="acceptCustomSkill()">+ Add &quot;' + escapeHtml(q) + '&quot; as a custom skill</div>';
+      }
+      if (html) {
+        list.innerHTML = html;
+        list.classList.add('open');
+        skillSuggestionActive = -1;
+      } else {
+        list.classList.remove('open');
+      }
+    }
+
+    function hideSkillSuggestions() {
+      var list = document.getElementById('ef-skills-suggestions');
+      if (list) list.classList.remove('open');
+      skillSuggestionActive = -1;
+    }
+
+    window.acceptSkillSuggestion = function(skill) {
+      addSkillNormalized(skill);
+      var input = document.getElementById('ef-skills-input');
+      if (input) { input.value = ''; input.focus(); }
+      hideSkillSuggestions();
+    };
+
+    window.acceptCustomSkill = function() {
+      var input = document.getElementById('ef-skills-input');
+      if (!input) return;
+      addSkillNormalized(input.value);
+      input.value = '';
+      input.focus();
+      hideSkillSuggestions();
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var input = document.getElementById('ef-skills-input');
+      if (!input) return;
+      input.addEventListener('input', function() { showSkillSuggestions(input.value); });
+      input.addEventListener('focus', function() { showSkillSuggestions(input.value); });
+      input.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          if (input.value.trim()) {
+            addSkillNormalized(input.value);
+            input.value = '';
+            hideSkillSuggestions();
+          }
+        } else if (ev.key === 'Backspace' && !input.value && currentSkills.length > 0) {
+          currentSkills.pop();
+          renderSkillTags();
+        } else if (ev.key === 'Escape') {
+          hideSkillSuggestions();
+        }
+      });
+      // Close suggestions when clicking outside
+      document.addEventListener('click', function(ev) {
+        var box = document.getElementById('ef-skills-tag-input');
+        var list = document.getElementById('ef-skills-suggestions');
+        if (!box || !list) return;
+        if (!box.contains(ev.target) && !list.contains(ev.target)) hideSkillSuggestions();
+      });
+    });
 
     var byId = {};
     nodes.forEach(function(n) { byId[n.id] = n; });
@@ -958,7 +1120,9 @@
       document.getElementById('ef-authority').value = p.authorityLevel || '';
       document.getElementById('ef-platform').value = p.platform || '';
       document.getElementById('ef-status').value = p.status || '';
-      document.getElementById('ef-skills').value = Array.isArray(p.skills) ? p.skills.join(', ') : (p.skills || '');
+      currentSkills = Array.isArray(p.skills) ? p.skills.slice() : [];
+      renderSkillTags();
+      hideSkillSuggestions();
       document.getElementById('ef-contact-email').value = p.contactEmail || '';
       document.getElementById('ef-contact-phone').value = p.contactPhone || '';
       document.getElementById('ef-slackid').value = p.slackId || '';
@@ -1025,8 +1189,7 @@
       var banner = document.getElementById('edit-banner');
       banner.style.display = 'none';
       banner.classList.remove('error');
-      var skillsRaw = (document.getElementById('ef-skills').value || '').trim();
-      var skills = skillsRaw === '' ? undefined : skillsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+      var skills = (currentSkills && currentSkills.length > 0) ? currentSkills.slice() : [];
       var patch = {};
       var setIfPresent = function(key, val) { if (val !== undefined && val !== null) patch[key] = val; };
       setIfPresent('name',           document.getElementById('ef-name').value.trim());
@@ -1051,7 +1214,7 @@
       }
       var statusVal = document.getElementById('ef-status').value.trim();
       if (statusVal) patch.status = statusVal;
-      if (skills !== undefined) patch.skills = skills;
+      patch.skills = skills;
 
       // Send the full SOP array. Drop SOPs without a title (incomplete adds).
       var cleanSops = currentSops

@@ -1068,6 +1068,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
+    const { SKILLS_CATALOG } = await import('../../data/skills-catalog.js');
     const { listMembers, listPendingInvites } = await import('../../services/membership.js');
     const members = await listMembers(org.id);
     const pendingInvites = role === 'owner' ? await listPendingInvites(org.id) : [];
@@ -1101,6 +1102,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         humans: team.nodes.filter(n => n.type === 'human').length,
       },
       sopTemplateGroups: SOP_TEMPLATE_GROUPS,
+      skillsCatalog: SKILLS_CATALOG,
       claimedTileMap,
       pendingInvites,
       memberCount: members.length,
