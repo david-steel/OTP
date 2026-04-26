@@ -99,6 +99,7 @@ export function buildTeamGraph(
         doesNotOwn: a.does_not_own,
         skills: a.skills,
         escalatesTo: a.escalates_to,
+        sops: Array.isArray(a.sops) ? a.sops : [],
       },
     });
     edges.push({ sourceId: id, targetId: 'ORG', type: 'part_of', properties: {} });
@@ -129,6 +130,7 @@ export function buildTeamGraph(
         jobDescription: h.job_description,
         skills: h.skills,
         reportsTo: h.reports_to,
+        sops: Array.isArray(h.sops) ? h.sops : [],
       },
     });
     edges.push({ sourceId: id, targetId: 'ORG', type: 'part_of', properties: {} });
@@ -175,6 +177,16 @@ export async function getOrgTeamGraph(orgId: string, orgLabel: string): Promise<
 
 // ---------- Mutation: edit one entity in the latest editable OOS ----------
 
+export interface SOPDef {
+  id?: string;
+  title: string;
+  trigger?: string;
+  steps?: string[];
+  outputs?: string[];
+  tools?: string[];
+  notes?: string;
+}
+
 export interface EntityPatch {
   name?: string;
   role?: string;
@@ -186,10 +198,11 @@ export interface EntityPatch {
   skills?: string[];
   escalates_to?: string | null;
   reports_to?: string | null;
+  sops?: SOPDef[];
 }
 
-const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to'];
-const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'job_description', 'skills', 'reports_to'];
+const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to', 'sops'];
+const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'job_description', 'skills', 'reports_to', 'sops'];
 
 export interface MutationResult {
   ok: true;

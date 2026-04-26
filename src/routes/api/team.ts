@@ -30,6 +30,15 @@ const patchSchema = z.object({
     skills: z.array(z.string().min(1).max(80)).max(40).optional(),
     escalates_to: z.string().max(120).nullable().optional(),
     reports_to: z.string().max(120).nullable().optional(),
+    sops: z.array(z.object({
+      id: z.string().min(1).max(80).optional(),
+      title: z.string().min(1).max(200),
+      trigger: z.string().max(500).optional(),
+      steps: z.array(z.string().min(1).max(500)).max(40).optional(),
+      outputs: z.array(z.string().min(1).max(300)).max(20).optional(),
+      tools: z.array(z.string().min(1).max(120)).max(20).optional(),
+      notes: z.string().max(2000).optional(),
+    })).max(40).optional(),
   }).refine(p => Object.keys(p).length > 0, { message: 'patch must contain at least one field' }),
 });
 
