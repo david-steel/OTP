@@ -29,6 +29,7 @@ const patchSchema = z.object({
     job_description: z.string().max(2000).optional(),
     skills: z.array(z.string().min(1).max(80)).max(40).optional(),
     escalates_to: z.string().max(120).nullable().optional(),
+    reports_to: z.string().max(120).nullable().optional(),
   }).refine(p => Object.keys(p).length > 0, { message: 'patch must contain at least one field' }),
 });
 

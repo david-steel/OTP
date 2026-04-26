@@ -28,7 +28,7 @@ export interface TeamNode {
 export interface TeamEdge {
   sourceId: string;
   targetId: string;
-  type: 'escalates_to' | 'overrides' | 'part_of';
+  type: 'escalates_to' | 'overrides' | 'part_of' | 'reports_to';
   properties: Record<string, unknown>;
 }
 
@@ -128,9 +128,13 @@ export function buildTeamGraph(
         receivesEscalationsFrom: h.receives_escalations_from,
         jobDescription: h.job_description,
         skills: h.skills,
+        reportsTo: h.reports_to,
       },
     });
     edges.push({ sourceId: id, targetId: 'ORG', type: 'part_of', properties: {} });
+    if (h.reports_to) {
+      edges.push({ sourceId: id, targetId: String(h.reports_to), type: 'reports_to', properties: {} });
+    }
     for (const target of (h.override_authority || []) as string[]) {
       if (target === 'ALL') continue;
       edges.push({ sourceId: id, targetId: String(target), type: 'overrides', properties: {} });
@@ -181,10 +185,11 @@ export interface EntityPatch {
   job_description?: string;
   skills?: string[];
   escalates_to?: string | null;
+  reports_to?: string | null;
 }
 
 const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to'];
-const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'job_description', 'skills'];
+const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'job_description', 'skills', 'reports_to'];
 
 export interface MutationResult {
   ok: true;

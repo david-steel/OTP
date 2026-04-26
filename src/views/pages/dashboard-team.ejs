@@ -7,7 +7,16 @@
   /* Connector lines */
   .org-connector { stroke: #cbd5e1; stroke-width: 1.5; fill: none; }
   .org-connector.escalates_to { stroke: #f59e0b; stroke-dasharray: 4 3; }
+  .org-connector.reports_to { stroke: #94a3b8; }
   .org-connector.dimmed { opacity: 0.15; }
+
+  /* Drag-and-drop visuals */
+  .org-node[draggable="true"] { cursor: grab; }
+  .org-node.dragging { opacity: 0.4; cursor: grabbing; }
+  .org-node.drop-target { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.20); transform: translateY(-1px); }
+  .org-node.drop-invalid { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,0.20); cursor: not-allowed; }
+  .drag-status { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.92); color: #f1f5f9; padding: 0.5rem 1rem; border-radius: 999px; font-size: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 70; pointer-events: none; opacity: 0; transition: opacity 120ms ease; }
+  .drag-status.visible { opacity: 1; }
 
   /* Boxes */
   .org-node { position: absolute; box-sizing: border-box; background: #fff; border: 1px solid #e5e7eb; border-radius: 0.625rem; padding: 0.6rem 0.7rem 0.6rem 0.85rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: box-shadow 120ms ease, border-color 120ms ease, transform 120ms ease; cursor: pointer; user-select: none; overflow: hidden; }
@@ -134,6 +143,7 @@
     <div class="edit-field" id="ef-platform-wrap"><label for="ef-platform">Platform</label><input id="ef-platform" type="text" placeholder="e.g. claude-code, n8n, custom" /></div>
     <div class="edit-field" id="ef-status-wrap"><label for="ef-status">Status</label><input id="ef-status" type="text" placeholder="e.g. active, paused, retired" /></div>
     <div class="edit-field" id="ef-escalates-wrap"><label for="ef-escalates">Escalates to</label><select id="ef-escalates"><option value="">(none)</option></select><div class="hint">Pick an agent or human this one escalates to.</div></div>
+    <div class="edit-field" id="ef-reportsto-wrap"><label for="ef-reportsto">Reports to</label><select id="ef-reportsto"><option value="">(none)</option></select><div class="hint">Pick the manager this person reports to.</div></div>
     <div class="edit-field"><label for="ef-skills">Skills</label><input id="ef-skills" type="text" placeholder="comma-separated, e.g. javascript, sql, ad creative" /><div class="hint">Free-text for now. Phase 3 will introduce a curated skill taxonomy.</div></div>
   </div>
   <div class="edit-panel-footer">
@@ -157,11 +167,14 @@
       var allowed = {};
       nodes.forEach(function(n) { if (filterFn(n)) allowed[n.id] = true; });
 
-      // explicit escalates_to edges (child -> parent)
+      // explicit hierarchy edges (child -> parent)
       edges.forEach(function(e) {
-        if (e.type !== 'escalates_to') return;
+        if (e.type !== 'escalates_to' && e.type !== 'reports_to') return;
         if (!allowed[e.sourceId] || !allowed[e.targetId]) return;
-        parent[e.sourceId] = e.targetId;
+        // reports_to wins over escalates_to if both present (humans use reports_to)
+        if (e.type === 'reports_to' || !parent[e.sourceId]) {
+          parent[e.sourceId] = e.targetId;
+        }
       });
 
       // Find a CEO-ish human to anchor unparented nodes
@@ -270,7 +283,10 @@
         var cy = d.y + pad;
         var midY = py + (cy - py) / 2;
         var path = document.createElementNS(svgNS, 'path');
-        var edgeType = (d.parent.data.id === '__VIRT__') ? 'part_of' : 'escalates_to';
+        var edgeType;
+        if (d.parent.data.id === '__VIRT__') edgeType = 'part_of';
+        else if (d.data.type === 'human') edgeType = 'reports_to';
+        else edgeType = 'escalates_to';
         path.setAttribute('d', 'M ' + px + ',' + py + ' L ' + px + ',' + midY + ' L ' + cx + ',' + midY + ' L ' + cx + ',' + cy);
         path.setAttribute('class', 'org-connector ' + edgeType);
         svg.appendChild(path);
@@ -314,10 +330,103 @@
             box.classList.add('selected');
             openEditPanel(n);
           });
+
+          // ---- Drag-and-drop hierarchy editing ----
+          box.setAttribute('draggable', 'true');
+          box.dataset.nodeId = n.id;
+          box.dataset.nodeType = n.type;
+          box.dataset.externalId = n.externalId;
+
+          box.addEventListener('dragstart', function(ev) {
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('text/plain', n.id);
+            box.classList.add('dragging');
+            window.__dragSource = { node: n, descendants: collectDescendantIds(d) };
+            hideTooltip();
+            showDragStatus('Drag onto a target to make it the new parent.');
+          });
+          box.addEventListener('dragend', function() {
+            box.classList.remove('dragging');
+            document.querySelectorAll('.org-node.drop-target,.org-node.drop-invalid').forEach(function(el) {
+              el.classList.remove('drop-target','drop-invalid');
+            });
+            window.__dragSource = null;
+            hideDragStatus();
+          });
+          box.addEventListener('dragover', function(ev) {
+            if (!window.__dragSource) return;
+            var src = window.__dragSource;
+            if (n.id === src.node.id) return;
+            ev.preventDefault();
+            var invalid = src.descendants.has(n.id);
+            ev.dataTransfer.dropEffect = invalid ? 'none' : 'move';
+            box.classList.toggle('drop-target', !invalid);
+            box.classList.toggle('drop-invalid', invalid);
+          });
+          box.addEventListener('dragleave', function() {
+            box.classList.remove('drop-target','drop-invalid');
+          });
+          box.addEventListener('drop', function(ev) {
+            ev.preventDefault();
+            box.classList.remove('drop-target','drop-invalid');
+            var src = window.__dragSource;
+            if (!src) return;
+            if (n.id === src.node.id) return;
+            if (src.descendants.has(n.id)) {
+              showDragStatus('Cannot drop ' + src.node.label + ' onto its own descendant.', true);
+              setTimeout(hideDragStatus, 2400);
+              return;
+            }
+            handleHierarchyDrop(src.node, n);
+          });
         }
 
         stage.appendChild(box);
       });
+    }
+
+    function collectDescendantIds(d) {
+      var set = new Set();
+      d.descendants().forEach(function(x) { set.add(x.data.id); });
+      return set;
+    }
+
+    var dragStatusEl = null;
+    function showDragStatus(msg, isError) {
+      if (!dragStatusEl) {
+        dragStatusEl = document.createElement('div');
+        dragStatusEl.className = 'drag-status';
+        document.body.appendChild(dragStatusEl);
+      }
+      dragStatusEl.textContent = msg;
+      dragStatusEl.style.background = isError ? 'rgba(153,27,27,0.95)' : 'rgba(15,23,42,0.92)';
+      dragStatusEl.classList.add('visible');
+    }
+    function hideDragStatus() { if (dragStatusEl) dragStatusEl.classList.remove('visible'); }
+
+    async function handleHierarchyDrop(srcNode, targetNode) {
+      var fieldKey = srcNode.type === 'agent' ? 'escalates_to' : 'reports_to';
+      var patch = {};
+      patch[fieldKey] = targetNode.externalId;
+      showDragStatus('Saving ' + srcNode.label + ' -> ' + targetNode.label + '…');
+      try {
+        var res = await fetch('/api/v1/team/entity', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: srcNode.type, externalId: srcNode.externalId, patch: patch }),
+        });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          showDragStatus('Save failed: ' + ((err.error && err.error.message) || res.status), true);
+          setTimeout(hideDragStatus, 2400);
+          return;
+        }
+        showDragStatus('Saved. Reloading…');
+        window.location.reload();
+      } catch (e) {
+        showDragStatus('Network error: ' + e.message, true);
+        setTimeout(hideDragStatus, 2400);
+      }
     }
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
@@ -387,17 +496,22 @@
       document.getElementById('ef-platform-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-status-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-escalates-wrap').style.display = (d.type === 'agent' ? '' : 'none');
-      var sel = document.getElementById('ef-escalates');
-      sel.innerHTML = '<option value="">(none)</option>';
-      nodes.forEach(function(n) {
-        if (n.type === 'organization') return;
-        if (n.id === d.id) return;
-        var opt = document.createElement('option');
-        opt.value = n.externalId;
-        opt.textContent = n.label + ' (' + n.type + ')';
-        if (p.escalatesTo && String(p.escalatesTo) === n.externalId) opt.selected = true;
-        sel.appendChild(opt);
-      });
+      document.getElementById('ef-reportsto-wrap').style.display = (d.type === 'human' ? '' : 'none');
+
+      var fillSelect = function(selectEl, currentValue) {
+        selectEl.innerHTML = '<option value="">(none)</option>';
+        nodes.forEach(function(n) {
+          if (n.type === 'organization') return;
+          if (n.id === d.id) return;
+          var opt = document.createElement('option');
+          opt.value = n.externalId;
+          opt.textContent = n.label + ' (' + n.type + ')';
+          if (currentValue && String(currentValue) === n.externalId) opt.selected = true;
+          selectEl.appendChild(opt);
+        });
+      };
+      fillSelect(document.getElementById('ef-escalates'), p.escalatesTo);
+      fillSelect(document.getElementById('ef-reportsto'), p.reportsTo);
       document.getElementById('edit-banner').style.display = 'none';
       document.getElementById('edit-panel').classList.add('open');
       document.getElementById('edit-overlay').classList.add('open');
@@ -431,6 +545,8 @@
         patch.escalates_to = esc === '' ? null : esc;
       } else if (currentNode.type === 'human') {
         setIfPresent('job_description', document.getElementById('ef-jobdesc').value.trim());
+        var rep = document.getElementById('ef-reportsto').value.trim();
+        patch.reports_to = rep === '' ? null : rep;
       }
       if (skills !== undefined) patch.skills = skills;
       btn.disabled = true; btn.textContent = 'Saving…';
