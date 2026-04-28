@@ -8,6 +8,7 @@ import { db } from '../../config/database.js';
 import { newsletterSubscribers, practiceVotes, bestPractices } from '../../db/schema.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { sendEmail } from '../../config/email.js';
+import { addContactToAudience, markContactUnsubscribed } from '../../services/resend-audience.js';
 import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -82,20 +83,41 @@ export default async function newsletterRoutes(app: FastifyInstance) {
           })
           .where(eq(newsletterSubscribers.id, existing.id));
         await sendWelcomeEmail(email.toLowerCase());
+
+        // Resync to Resend Audience (clears unsubscribed flag if it existed there).
+        const resendId = await addContactToAudience({
+          email: email.toLowerCase(),
+          name: existing.name,
+          unsubscribed: false,
+        });
+        if (resendId && resendId !== existing.resendContactId) {
+          await db.update(newsletterSubscribers)
+            .set({ resendContactId: resendId })
+            .where(eq(newsletterSubscribers.id, existing.id));
+        }
+
         return { message: "Welcome back -- check your inbox." };
       }
       return { message: "You're already subscribed." };
     }
 
-    await db.insert(newsletterSubscribers).values({
+    const [inserted] = await db.insert(newsletterSubscribers).values({
       email: email.toLowerCase(),
       source,
       doubleOptInConfirmed: true,
       confirmToken: null,
       tokenExpiresAt: null,
-    });
+    }).returning();
 
     await sendWelcomeEmail(email.toLowerCase());
+
+    // Push to Resend Audience for broadcasts. Best-effort: failure logs and continues.
+    const resendId = await addContactToAudience({ email: email.toLowerCase() });
+    if (resendId) {
+      await db.update(newsletterSubscribers)
+        .set({ resendContactId: resendId })
+        .where(eq(newsletterSubscribers.id, inserted.id));
+    }
 
     return { message: "You're in -- check your inbox." };
   });
@@ -145,6 +167,9 @@ export default async function newsletterRoutes(app: FastifyInstance) {
     await db.update(newsletterSubscribers)
       .set({ unsubscribedAt: new Date() })
       .where(eq(newsletterSubscribers.email, email));
+
+    // Mirror to Resend Audience so broadcasts skip them. Best-effort.
+    await markContactUnsubscribed(email);
 
     return reply.redirect('/?unsubscribed=1');
   });
