@@ -323,15 +323,22 @@ export const inquiries = pgTable('inquiries', {
 export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   id: uuid('id').defaultRandom().primaryKey(),
   email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 200 }),
+  notes: text('notes'),
   source: varchar('source', { length: 50 }).notNull().default('homepage'),
   doubleOptInConfirmed: boolean('double_opt_in_confirmed').notNull().default(false),
   confirmToken: varchar('confirm_token', { length: 64 }),
   tokenExpiresAt: timestamp('token_expires_at'),
   subscribedAt: timestamp('subscribed_at').defaultNow().notNull(),
   unsubscribedAt: timestamp('unsubscribed_at'),
+  convertedAt: timestamp('converted_at'),
+  convertedClerkUserId: varchar('converted_clerk_user_id', { length: 255 }),
+  resendContactId: varchar('resend_contact_id', { length: 64 }),
 }, (table) => ({
   emailIdx: uniqueIndex('ns_email_idx').on(table.email),
   confirmedIdx: index('ns_confirmed_idx').on(table.doubleOptInConfirmed),
+  convertedIdx: index('ns_converted_idx').on(table.convertedAt),
+  sourceIdx: index('ns_source_idx').on(table.source),
 }));
 
 export const practiceVotes = pgTable('practice_votes', {

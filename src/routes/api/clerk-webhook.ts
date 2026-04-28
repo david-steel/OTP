@@ -3,10 +3,11 @@ import { Webhook } from 'svix';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import ejs from 'ejs';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { onboardingSequence } from '../../db/schema.js';
+import { onboardingSequence, newsletterSubscribers } from '../../db/schema.js';
 import { sendEmail } from '../../config/email.js';
+import { updateContactInAudience } from '../../services/resend-audience.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,6 +125,34 @@ export default async function clerkWebhookRoutes(app: FastifyInstance) {
       clerkUserId: user.id,
       email: email.toLowerCase(),
     });
+
+    // Mark any pre-signup newsletter subscriber as converted to a real user.
+    // Best-effort: a sync failure does not block onboarding email send.
+    try {
+      const lowered = email.toLowerCase();
+      const updated = await db
+        .update(newsletterSubscribers)
+        .set({
+          convertedAt: new Date(),
+          convertedClerkUserId: user.id,
+        })
+        .where(
+          and(
+            eq(newsletterSubscribers.email, lowered),
+            isNull(newsletterSubscribers.convertedAt),
+          ),
+        )
+        .returning({ id: newsletterSubscribers.id });
+
+      if (updated.length > 0) {
+        console.log(`[clerk-webhook] Pre-signup subscriber converted: ${lowered}`);
+        // Mark unsubscribed in Resend Audience so the onboarding drip takes over
+        // and we do not double-mail this person from broadcast lists.
+        await updateContactInAudience({ email: lowered, unsubscribed: true });
+      }
+    } catch (err) {
+      console.error('[clerk-webhook] Pre-signup conversion check failed:', err);
+    }
 
     const sent = await sendOnboardingEmail1(email);
     if (sent) {
