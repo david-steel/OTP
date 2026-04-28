@@ -355,6 +355,7 @@ app.get('/sitemap.xml', async (request, reply) => {
   // Static pages
   const staticPages = [
     { loc: '/', priority: '1.0', changefreq: 'daily' },
+    { loc: '/protocol', priority: '0.95', changefreq: 'monthly' },
     { loc: '/browse', priority: '0.9', changefreq: 'daily' },
     { loc: '/search', priority: '0.8', changefreq: 'daily' },
     { loc: '/graph', priority: '0.8', changefreq: 'weekly' },

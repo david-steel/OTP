@@ -230,6 +230,56 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
+  // Protocol page (the canonical "OTP is a protocol, not a service" page)
+  app.get('/protocol', async (request, reply) => {
+    return reply.view('pages/protocol', {
+      title: 'OTP is a protocol, not a service',
+      description: 'An OOS file holds the patterns your agents would otherwise relearn every session. Drop it in your repo. Read it locally. No service required. Publish to the network when you want cross-org coordination.',
+      canonical: BASE_URL + '/protocol',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Protocol', url: BASE_URL + '/protocol' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        headline: 'OTP is a protocol, not a service',
+        description: 'The OOS file format for AI agent coordination. Use locally with no dependencies; publish to the network when you want cross-org coordination.',
+        url: BASE_URL + '/protocol',
+      },
+    });
+  });
+
+  // Protocol spec files: serve src/protocol/* with correct content types
+  // These are the canonical OOS schema and example artifacts.
+  {
+    const fs = await import('fs/promises');
+    const pathMod = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = pathMod.dirname(__filename);
+    const protocolDir = pathMod.resolve(__dirname, '../../protocol');
+
+    const specFiles: Array<{ name: string; type: string }> = [
+      { name: 'example.oos.md', type: 'text/markdown; charset=utf-8' },
+      { name: 'example-full.oos.json', type: 'application/json; charset=utf-8' },
+      { name: 'oos-schema.json', type: 'application/json; charset=utf-8' },
+      { name: 'oos-entities-schema.json', type: 'application/json; charset=utf-8' },
+      { name: 'graph-schema.json', type: 'application/json; charset=utf-8' },
+      { name: 'otp-self.oos.md', type: 'text/markdown; charset=utf-8' },
+      { name: 'sneeze-it.oos.md', type: 'text/markdown; charset=utf-8' },
+    ];
+
+    for (const file of specFiles) {
+      app.get(`/spec/${file.name}`, async (_request, reply) => {
+        try {
+          const content = await fs.readFile(pathMod.join(protocolDir, file.name), 'utf-8');
+          return reply.type(file.type).header('Cache-Control', 'public, max-age=300').send(content);
+        } catch (err) {
+          return reply.status(404).send('Not Found');
+        }
+      });
+    }
+  }
+
   // Blog index
   app.get('/blog', async (request, reply) => {
     const allDynamicPosts = listConatusPosts();

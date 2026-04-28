@@ -1,0 +1,197 @@
+<div class="bg-otp-950 text-white">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+
+    <!-- Hero -->
+    <div class="mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
+        <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+        <span>Protocol v1.0</span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-[1.15] mb-6">
+        OTP is a <span class="gradient-text">protocol</span>, not a service.
+      </h1>
+      <p class="text-lg text-gray-300 leading-relaxed max-w-2xl">
+        An OOS file holds the patterns your agents would otherwise relearn every session. Drop it in your repo. Read it locally. No service required. Publish to the network when you want cross-org coordination.
+      </p>
+    </div>
+
+    <!-- The shape -->
+    <div class="mb-16">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-otp-300 mb-3">The shape</h2>
+      <p class="text-gray-300 mb-6">
+        An OOS file is a markdown file with YAML frontmatter and structured claims. Each claim has a rule, a why, a failure mode, a confidence, and an evidence type. That's it. The whole point is that any AI agent can read it the same way.
+      </p>
+      <div class="bg-black/40 border border-white/10 rounded-lg overflow-hidden">
+        <div class="px-4 py-2 border-b border-white/10 flex items-center justify-between">
+          <span class="text-xs font-mono text-gray-400">acme-agency.oos.md</span>
+          <a href="/spec/example.oos.md" class="text-xs text-otp-300 hover:text-otp-200">View full example &rarr;</a>
+        </div>
+<pre class="text-xs sm:text-sm font-mono text-gray-200 p-4 overflow-x-auto leading-relaxed"><code>---
+oos_version: "1.0"
+org_pseudonym: "Acme Digital Agency"
+template: "agent_army"
+agent_count: 8
+---
+
+## Prime Directives
+1. Client data integrity above all other priorities.
+2. No agent sends external comms without human approval.
+3. Every agent writes to shared state; no agent reads sources directly.
+
+**[C001]** core_operating_rules
+- **Rule:** Every agent writes to a shared state file.
+- **Why:** Direct data source access creates race conditions.
+- **Failure mode:** Two agents query the same API simultaneously,
+  get different results, make conflicting decisions.
+- **Confidence:** HIGH
+- **Evidence:** MEASURED_RESULT
+</code></pre>
+      </div>
+      <p class="text-sm text-gray-400 mt-4">
+        Plain markdown. Plain YAML. Validated against a JSON Schema. Parseable by any agent in any language. The file is the protocol.
+      </p>
+    </div>
+
+    <!-- Three ways to use it -->
+    <div class="mb-16">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-otp-300 mb-6">Three ways to use it</h2>
+      <div class="space-y-4">
+
+        <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+          <div class="flex items-baseline gap-3 mb-2">
+            <span class="text-2xl font-bold text-otp-300">1</span>
+            <h3 class="text-xl font-semibold">Local only</h3>
+            <span class="text-xs px-2 py-0.5 bg-green-500/20 text-green-300 rounded-full">zero deps</span>
+          </div>
+          <p class="text-gray-300 mb-3">
+            Drop an OOS file at the root of your project. Have your agents read it on startup. They follow the rules. No external service. No API keys. No network.
+          </p>
+          <div class="bg-black/40 rounded p-3 font-mono text-xs text-gray-300">
+            your-repo/<br>
+            &nbsp;&nbsp;coordination.oos.md  <span class="text-gray-500"># your team's rules</span><br>
+            &nbsp;&nbsp;agents/...<br>
+            &nbsp;&nbsp;src/...
+          </div>
+          <p class="text-xs text-gray-400 mt-3">
+            This is the path most lightweight frameworks should take. The protocol gives you a stable file format your agents read the same way every session.
+          </p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+          <div class="flex items-baseline gap-3 mb-2">
+            <span class="text-2xl font-bold text-otp-300">2</span>
+            <h3 class="text-xl font-semibold">Shared repo</h3>
+            <span class="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full">team scale</span>
+          </div>
+          <p class="text-gray-300 mb-3">
+            Same file, but committed to a shared repo. Agents on different machines pull the same OOS through git. Versioned, reviewed, branched, merged the way you already work.
+          </p>
+          <p class="text-xs text-gray-400 mt-3">
+            When your team grows past one operator and conflicts start crossing humans, this is the next step. Still no external service. Just git.
+          </p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-lg p-6">
+          <div class="flex items-baseline gap-3 mb-2">
+            <span class="text-2xl font-bold text-otp-300">3</span>
+            <h3 class="text-xl font-semibold">Publish to the network</h3>
+            <span class="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded-full">cross-org</span>
+          </div>
+          <p class="text-gray-300 mb-3">
+            Publish your OOS to <a href="/" class="text-otp-300 hover:text-otp-200 underline">orgtp.com</a> so other organizations can browse it, compare against it, and learn from your patterns. You read theirs the same way. This is where the transactive memory effect kicks in.
+          </p>
+          <p class="text-xs text-gray-400 mt-3">
+            The hosted service is one implementation of a sync layer over the protocol. It is not the protocol. Use it when you want the network. Skip it when you don't.
+          </p>
+          <a href="/publish" class="inline-block mt-4 px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Publish your OOS &rarr;</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Why this exists -->
+    <div class="mb-16">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-otp-300 mb-3">Why this exists</h2>
+      <p class="text-gray-300 mb-4 leading-relaxed">
+        Every AI session starts from zero. The patterns you taught your agents yesterday do not survive into today's instance. Every multi-agent team rediscovers the same coordination failures: race conditions on shared data, two agents emailing the same client, retention agents and sales agents pulling the same account in opposite directions.
+      </p>
+      <p class="text-gray-300 mb-4 leading-relaxed">
+        Daniel Wegner named the underlying problem in 1985: a group remembers more than the sum of its members because each member knows what the others know. He called it a <strong class="text-white">transactive memory system</strong>. The OOS file is one. It is the chemoreceptor that makes the next directed move possible without re-deriving the whole arc from scratch.
+      </p>
+      <p class="text-gray-300 leading-relaxed">
+        The architecture that produces the function is what matters. The file format is the architecture. The hosted service is one place the file can live.
+      </p>
+    </div>
+
+    <!-- Spec -->
+    <div class="mb-16">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-otp-300 mb-6">Spec</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a href="/spec/oos-schema.json" class="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
+          <div class="font-mono text-sm text-otp-300 mb-1">oos-schema.json</div>
+          <div class="text-xs text-gray-400">JSON Schema (draft 2020-12). Validate any OOS file locally.</div>
+        </a>
+        <a href="/spec/example.oos.md" class="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
+          <div class="font-mono text-sm text-otp-300 mb-1">example.oos.md</div>
+          <div class="text-xs text-gray-400">Canonical example: 14-claim agent army OOS.</div>
+        </a>
+        <a href="/spec/oos-entities-schema.json" class="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
+          <div class="font-mono text-sm text-otp-300 mb-1">oos-entities-schema.json</div>
+          <div class="text-xs text-gray-400">Entity schema for org/team/agent identity.</div>
+        </a>
+        <a href="/guide" class="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
+          <div class="font-mono text-sm text-otp-300 mb-1">guide</div>
+          <div class="text-xs text-gray-400">How to write your first OOS, claim by claim.</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Where this fits -->
+    <div class="mb-16">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-otp-300 mb-3">Where this fits in the stack</h2>
+      <p class="text-gray-300 mb-4 leading-relaxed">
+        OTP is one of three protocols emerging at the agent coordination layer. Each one names a different surface and they compose:
+      </p>
+      <div class="space-y-3">
+        <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+          <div class="flex items-baseline gap-3 mb-1">
+            <span class="font-mono text-sm text-otp-300">AGENTS.md</span>
+            <span class="text-xs text-gray-500">instruction surface</span>
+          </div>
+          <p class="text-sm text-gray-400">How a single agent should behave in this project. The prompt-time contract.</p>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+          <div class="flex items-baseline gap-3 mb-1">
+            <span class="font-mono text-sm text-otp-300">IJFW</span>
+            <span class="text-xs text-gray-500">workflow discipline</span>
+          </div>
+          <p class="text-sm text-gray-400">How an agent moves through phases inside a session. The execution contract.</p>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+          <div class="flex items-baseline gap-3 mb-1">
+            <span class="font-mono text-sm text-otp-300">OOS / OTP</span>
+            <span class="text-xs text-gray-500">cross-session memory</span>
+          </div>
+          <p class="text-sm text-gray-400">What the team has already learned. The persistence contract across sessions and across agents.</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-400 mt-4 leading-relaxed">
+        Different layer, different problem, same family. None of these need an external service to work. They are file formats first.
+      </p>
+    </div>
+
+    <!-- CTA -->
+    <div class="bg-gradient-to-br from-otp-500/20 to-purple-500/10 border border-otp-500/30 rounded-xl p-8">
+      <h2 class="text-2xl font-bold mb-3">Start with a file.</h2>
+      <p class="text-gray-300 mb-6 max-w-xl">
+        Read the spec. Write your first OOS. Have your agents pick it up. The network is there when you want it.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="/guide" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400 transition-colors">Write your first OOS</a>
+        <a href="/spec/example.oos.md" class="px-5 py-2.5 bg-white/5 text-white border border-white/10 rounded-lg font-medium hover:bg-white/10 transition-colors">Read the example</a>
+        <a href="/browse" class="px-5 py-2.5 bg-white/5 text-white border border-white/10 rounded-lg font-medium hover:bg-white/10 transition-colors">Browse the network</a>
+      </div>
+    </div>
+
+  </div>
+</div>
