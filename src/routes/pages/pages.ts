@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -874,6 +874,38 @@ export default async function pageRoutes(app: FastifyInstance) {
       tickets: ticketsRes.rows || [],
       users,
       userStats,
+    });
+  });
+
+  // Super Admin: Pre-signup subscribers page (founder-add UI + list)
+  app.get('/admin/subscribers', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin;
+    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+
+    const subs = await db
+      .select()
+      .from(newsletterSubscribers)
+      .orderBy(desc(newsletterSubscribers.subscribedAt));
+
+    const total = subs.length;
+    const converted = subs.filter(s => s.convertedAt !== null).length;
+    const unsubscribed = subs.filter(s => s.unsubscribedAt !== null).length;
+    const active = total - unsubscribed;
+    const conversionRate = active > 0 ? Math.round((converted / active) * 1000) / 10 : 0;
+
+    const bySource: Record<string, { count: number; converted: number }> = {};
+    for (const s of subs) {
+      const bucket = bySource[s.source] ?? { count: 0, converted: 0 };
+      bucket.count += 1;
+      if (s.convertedAt) bucket.converted += 1;
+      bySource[s.source] = bucket;
+    }
+
+    return reply.view('pages/admin-subscribers', {
+      title: 'Pre-Signup Subscribers — Admin',
+      noindex: true,
+      stats: { total, active, converted, unsubscribed, conversionRate, bySource },
+      subscribers: subs,
     });
   });
 
