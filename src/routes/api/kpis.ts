@@ -27,6 +27,7 @@ import {
   writeKpiValue,
   deleteKpiValue,
   getScoreboard,
+  recomputeKpi,
   KpiError,
 } from '../../services/kpi.js';
 
@@ -240,6 +241,22 @@ export default async function kpiRoutes(app: FastifyInstance) {
     ownerEntityType: ownerTypeSchema.optional(),
     ownerExternalId: z.string().max(120).optional(),
     groupName: z.string().max(120).optional(),
+  });
+
+  // Force-recompute every period for a formula KPI. Useful after a bulk
+  // import or to clear stale computed values.
+  app.post<{ Params: { id: string } }>('/kpis/:id/recompute', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    try {
+      await recomputeKpi(org.id, request.params.id);
+      return { ok: true };
+    } catch (e) {
+      if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to recompute' } });
+    }
   });
 
   app.get('/kpis/scoreboard', async (request, reply) => {

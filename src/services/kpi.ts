@@ -6,9 +6,10 @@
 // the definition.
 
 import { db } from '../config/database.js';
-import { kpis, kpiValues } from '../db/schema.js';
+import { kpis, kpiValues, kpiDependencies } from '../db/schema.js';
 import { and, eq, isNull, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import { periodFor, bucketPeriods, type KpiTimeGrain as PeriodGrain } from './kpi-periods.js';
+import { parseFormula, extractRefs, evaluate, detectCycle, FormulaError, type Ast } from './kpi-formula.js';
 
 export type KpiOwnerEntityType = 'agent' | 'human';
 export type KpiGoalOperator = 'gte' | 'lte' | 'eq' | 'gt' | 'lt';
@@ -95,6 +96,11 @@ export async function createKpi(orgId: string, input: CreateKpiInput, createdBy:
       createdBy,
     })
     .returning();
+
+  if (input.formula && input.formula.trim()) {
+    await syncKpiFormulaDeps(orgId, row.id, input.formula);
+  }
+
   return row;
 }
 
@@ -125,6 +131,18 @@ export async function updateKpi(orgId: string, kpiId: string, patch: UpdateKpiIn
     .where(and(eq(kpis.id, kpiId), eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
     .returning();
   if (!row) throw new KpiError('NOT_FOUND', 'KPI not found', 404);
+
+  // If the formula changed, re-sync deps and recompute existing periods.
+  if (patch.formula !== undefined) {
+    if (row.formula && row.formula.trim()) {
+      await syncKpiFormulaDeps(orgId, row.id, row.formula);
+      await rebuildComputedValues(orgId, row.id);
+    } else {
+      // Formula cleared: remove deps and any prior computed values.
+      await db.delete(kpiDependencies).where(eq(kpiDependencies.kpiId, row.id));
+      await db.delete(kpiValues).where(and(eq(kpiValues.kpiId, row.id), eq(kpiValues.source, 'computed')));
+    }
+  }
   return row;
 }
 
@@ -210,6 +228,11 @@ export async function writeKpiValue(
       },
     })
     .returning();
+
+  // Cascade: recompute every formula KPI that depends on this one for the
+  // same period. Recursion is bounded by the DAG (cycle detection at save).
+  await recomputeDownstreamForPeriod(orgId, kpi.id, period.start);
+
   return row;
 }
 
@@ -325,4 +348,204 @@ export async function getScoreboard(orgId: string, opts: ScoreboardOptions): Pro
     periods: buckets.map(b => ({ start: b.start.toISOString(), end: b.end.toISOString() })),
     rows,
   };
+}
+
+// ---- Formula sync + cycle detection -------------------------------------
+
+// Parses a formula, validates referenced KPIs exist in the same org and
+// share the same time grain, checks for cycles, and replaces the
+// kpi_dependencies rows for this KPI. Throws KpiError on any failure.
+export async function syncKpiFormulaDeps(orgId: string, kpiId: string, formula: string) {
+  let ast: Ast;
+  try {
+    ast = parseFormula(formula);
+  } catch (e) {
+    if (e instanceof FormulaError) {
+      throw new KpiError('FORMULA_PARSE', `Formula error (${e.code}): ${e.message}`);
+    }
+    throw e;
+  }
+
+  const refs = extractRefs(ast);
+
+  // The formula KPI itself must be loaded so we can compare grain.
+  const [self] = await db
+    .select()
+    .from(kpis)
+    .where(and(eq(kpis.id, kpiId), eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
+    .limit(1);
+  if (!self) throw new KpiError('NOT_FOUND', 'KPI not found', 404);
+
+  if (refs.length === 0) {
+    // Formula has no refs; just clear deps.
+    await db.delete(kpiDependencies).where(eq(kpiDependencies.kpiId, kpiId));
+    return;
+  }
+
+  if (refs.includes(kpiId)) {
+    throw new KpiError('CYCLE_SELF', 'Formula cannot reference itself');
+  }
+
+  // Verify each referenced KPI exists in this org and has the same grain.
+  const refRows = await db
+    .select({ id: kpis.id, grain: kpis.timeGrain })
+    .from(kpis)
+    .where(
+      and(
+        eq(kpis.organizationId, orgId),
+        isNull(kpis.deletedAt),
+        inArray(kpis.id, refs),
+      ),
+    );
+  const found = new Set(refRows.map(r => r.id));
+  const missing = refs.filter(r => !found.has(r));
+  if (missing.length > 0) {
+    throw new KpiError('REF_NOT_FOUND', `Referenced KPI(s) not found: ${missing.join(', ')}`);
+  }
+  const wrongGrain = refRows.filter(r => r.grain !== self.timeGrain).map(r => r.id);
+  if (wrongGrain.length > 0) {
+    throw new KpiError('REF_WRONG_GRAIN', `Referenced KPI(s) must share time grain ${self.timeGrain}: ${wrongGrain.join(', ')}`);
+  }
+
+  // Cycle check across the whole org's existing dependency graph.
+  const orgKpiIds = (
+    await db.select({ id: kpis.id }).from(kpis).where(and(eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
+  ).map(r => r.id);
+  const existingEdges = orgKpiIds.length === 0
+    ? []
+    : await db
+        .select({ kpiId: kpiDependencies.kpiId, dependsOn: kpiDependencies.dependsOnKpiId })
+        .from(kpiDependencies)
+        .where(inArray(kpiDependencies.kpiId, orgKpiIds));
+  const cyclePath = detectCycle(kpiId, refs, existingEdges);
+  if (cyclePath) {
+    throw new KpiError('CYCLE', `Formula creates a cycle: ${cyclePath.join(' -> ')}`);
+  }
+
+  // Replace dependency rows.
+  await db.delete(kpiDependencies).where(eq(kpiDependencies.kpiId, kpiId));
+  if (refs.length > 0) {
+    await db.insert(kpiDependencies).values(refs.map(r => ({ kpiId, dependsOnKpiId: r })));
+  }
+}
+
+// ---- Recompute pipeline -------------------------------------------------
+
+// Look up downstream formula KPIs (those that depend on changedKpiId) and
+// re-evaluate each for a single period. Cascades: if a downstream KPI's new
+// computed value lands, its own downstream KPIs get re-evaluated too.
+async function recomputeDownstreamForPeriod(orgId: string, changedKpiId: string, periodStart: Date) {
+  const visited = new Set<string>();
+  const queue: string[] = [changedKpiId];
+
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+
+    const downstream = await db
+      .select({ kpiId: kpiDependencies.kpiId })
+      .from(kpiDependencies)
+      .where(eq(kpiDependencies.dependsOnKpiId, cur));
+
+    for (const { kpiId: dKpiId } of downstream) {
+      const newValue = await evaluateFormulaKpiForPeriod(orgId, dKpiId, periodStart);
+      // Write computed result (or null) so the cell shows '—' if inputs are missing.
+      await upsertComputedValue(dKpiId, periodStart, newValue);
+      queue.push(dKpiId);
+    }
+  }
+}
+
+async function evaluateFormulaKpiForPeriod(
+  orgId: string,
+  formulaKpiId: string,
+  periodStart: Date,
+): Promise<number | null> {
+  const [k] = await db
+    .select()
+    .from(kpis)
+    .where(and(eq(kpis.id, formulaKpiId), eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
+    .limit(1);
+  if (!k || !k.formula) return null;
+
+  let ast: Ast;
+  try { ast = parseFormula(k.formula); } catch { return null; }
+
+  const refs = extractRefs(ast);
+  if (refs.length === 0) return evaluate(ast, () => null);
+
+  // Resolve each ref's value for the same periodStart.
+  const refValueRows = await db
+    .select({ kpiId: kpiValues.kpiId, value: kpiValues.value })
+    .from(kpiValues)
+    .where(and(inArray(kpiValues.kpiId, refs), eq(kpiValues.periodStart, periodStart)));
+  const valueByRef = new Map<string, number | null>();
+  for (const r of refValueRows) valueByRef.set(r.kpiId, r.value);
+
+  return evaluate(ast, (id) => (valueByRef.has(id) ? valueByRef.get(id)! : null));
+}
+
+async function upsertComputedValue(kpiId: string, periodStart: Date, value: number | null) {
+  // Use the KPI's grain to set periodEnd.
+  const [k] = await db.select().from(kpis).where(eq(kpis.id, kpiId)).limit(1);
+  if (!k) return;
+  const period = periodFor(k.timeGrain as PeriodGrain, periodStart);
+  await db
+    .insert(kpiValues)
+    .values({
+      kpiId,
+      periodStart: period.start,
+      periodEnd: period.end,
+      value,
+      source: 'computed',
+      enteredBy: 'formula-engine',
+    })
+    .onConflictDoUpdate({
+      target: [kpiValues.kpiId, kpiValues.periodStart],
+      set: {
+        periodEnd: period.end,
+        value,
+        source: 'computed',
+        enteredBy: 'formula-engine',
+        enteredAt: new Date(),
+      },
+    });
+}
+
+// Wipe all 'computed' values for a KPI and re-evaluate every period that
+// has at least one input value present. Used when a formula changes.
+export async function rebuildComputedValues(orgId: string, formulaKpiId: string) {
+  await db
+    .delete(kpiValues)
+    .where(and(eq(kpiValues.kpiId, formulaKpiId), eq(kpiValues.source, 'computed')));
+
+  const [k] = await db
+    .select()
+    .from(kpis)
+    .where(and(eq(kpis.id, formulaKpiId), eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
+    .limit(1);
+  if (!k || !k.formula) return;
+
+  let ast: Ast;
+  try { ast = parseFormula(k.formula); } catch { return; }
+  const refs = extractRefs(ast);
+  if (refs.length === 0) return;
+
+  // Find every period_start where at least one input KPI has a value.
+  const periodsRows = await db
+    .selectDistinct({ periodStart: kpiValues.periodStart })
+    .from(kpiValues)
+    .where(inArray(kpiValues.kpiId, refs));
+
+  for (const { periodStart } of periodsRows) {
+    const v = await evaluateFormulaKpiForPeriod(orgId, formulaKpiId, periodStart);
+    await upsertComputedValue(formulaKpiId, periodStart, v);
+  }
+}
+
+// Public: force-recompute every period for a formula KPI. Used by the
+// recompute endpoint and tests.
+export async function recomputeKpi(orgId: string, kpiId: string) {
+  await rebuildComputedValues(orgId, kpiId);
 }
