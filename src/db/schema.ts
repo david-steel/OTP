@@ -497,6 +497,72 @@ export const oosExecutionItems = pgTable('oos_execution_items', {
   priorityIdx: index('ooei_priority_idx').on(table.priority),
 }));
 
+// ---- KPIs (scorecard measurables on org-chart entities) ----
+
+export const kpiOwnerEntityTypeEnum = pgEnum('kpi_owner_entity_type', ['agent', 'human']);
+export const kpiGoalOperatorEnum = pgEnum('kpi_goal_operator', ['gte', 'lte', 'eq', 'gt', 'lt']);
+export const kpiTimeGrainEnum = pgEnum('kpi_time_grain', ['weekly', 'monthly', 'quarterly', 'annual']);
+export const kpiAggregationEnum = pgEnum('kpi_aggregation', ['sum', 'avg', 'last', 'first', 'min', 'max']);
+export const kpiValueSourceEnum = pgEnum('kpi_value_source', ['manual', 'api', 'computed']);
+
+export const kpis = pgTable('kpis', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  ownerEntityType: kpiOwnerEntityTypeEnum('owner_entity_type').notNull(),
+  ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  groupName: varchar('group_name', { length: 120 }),
+  goalOperator: kpiGoalOperatorEnum('goal_operator'),
+  goalValue: real('goal_value'),
+  unit: varchar('unit', { length: 40 }),
+  timeGrain: kpiTimeGrainEnum('time_grain').notNull().default('weekly'),
+  formula: text('formula'),
+  aggregationMethod: kpiAggregationEnum('aggregation_method').notNull().default('sum'),
+  planSectionId: uuid('plan_section_id').references(() => oosOperatingPlanSections.id, { onDelete: 'set null' }),
+  executionItemId: uuid('execution_item_id').references(() => oosExecutionItems.id, { onDelete: 'set null' }),
+  claimId: uuid('claim_id'),
+  isPublished: boolean('is_published').notNull().default(false),
+  createdBy: varchar('created_by', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  orgIdx: index('kpis_org_idx').on(table.organizationId),
+  ownerIdx: index('kpis_owner_idx').on(table.organizationId, table.ownerEntityType, table.ownerExternalId),
+  groupIdx: index('kpis_group_idx').on(table.organizationId, table.groupName),
+  grainIdx: index('kpis_grain_idx').on(table.organizationId, table.timeGrain),
+  sectionIdx: index('kpis_section_idx').on(table.planSectionId),
+  execItemIdx: index('kpis_exec_item_idx').on(table.executionItemId),
+}));
+
+export const kpiValues = pgTable('kpi_values', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  kpiId: uuid('kpi_id').references(() => kpis.id, { onDelete: 'cascade' }).notNull(),
+  periodStart: timestamp('period_start').notNull(),
+  periodEnd: timestamp('period_end').notNull(),
+  value: real('value'),
+  source: kpiValueSourceEnum('source').notNull(),
+  enteredBy: varchar('entered_by', { length: 255 }),
+  enteredAt: timestamp('entered_at').defaultNow().notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  kpiPeriodUk: uniqueIndex('kpi_values_kpi_period_uk').on(table.kpiId, table.periodStart),
+  periodIdx: index('kpi_values_period_idx').on(table.kpiId, table.periodStart, table.periodEnd),
+  sourceIdx: index('kpi_values_source_idx').on(table.source),
+}));
+
+export const kpiDependencies = pgTable('kpi_dependencies', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  kpiId: uuid('kpi_id').references(() => kpis.id, { onDelete: 'cascade' }).notNull(),
+  dependsOnKpiId: uuid('depends_on_kpi_id').references(() => kpis.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uk: uniqueIndex('kpi_deps_uk').on(table.kpiId, table.dependsOnKpiId),
+  dependsOnIdx: index('kpi_deps_depends_on_idx').on(table.dependsOnKpiId),
+}));
+
 // ---- User engagement log (re-engagement nudges, max 4 per 30 days) ----
 
 export const userEngagementLog = pgTable('user_engagement_log', {
