@@ -1198,8 +1198,8 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Dashboard: KPI Scoreboard (Phase 3 of the scorecard build)
-  app.get('/dashboard/kpis', async (request, reply) => {
+  // Dashboard: KPI Scoreboard (Phase 3 + Phase 5)
+  app.get<{ Querystring: { grain?: string; view?: string } }>('/dashboard/kpis', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/');
     const resolved = await resolveOrgForUser(auth.userId);
@@ -1213,11 +1213,23 @@ export default async function pageRoutes(app: FastifyInstance) {
     const allKpis = await listKpis(org.id, {});
     const groupNames = Array.from(new Set(allKpis.map(k => k.groupName).filter((g): g is string => !!g)));
 
+    const grainQ = String(request.query.grain || 'weekly').toLowerCase();
+    const grain = (['weekly', 'monthly', 'quarterly', 'annual'].includes(grainQ) ? grainQ : 'weekly') as
+      'weekly' | 'monthly' | 'quarterly' | 'annual';
+    const viewQ = String(request.query.view || 'grid').toLowerCase();
+    const view = viewQ === 'trends' ? 'trends' : 'grid';
+
+    // Default date range per grain
     const now = new Date();
-    const from = new Date(now.getTime() - 13 * 7 * 86400000);
-    const scoreboard = await getScoreboard(org.id, { timeGrain: 'weekly', from, to: now });
+    let from: Date;
+    if (grain === 'weekly') from = new Date(now.getTime() - 13 * 7 * 86400000);
+    else if (grain === 'monthly') from = new Date(now.getUTCFullYear(), now.getUTCMonth() - 11, 1);
+    else if (grain === 'quarterly') from = new Date(now.getUTCFullYear() - 2, now.getUTCMonth(), 1);
+    else from = new Date(now.getUTCFullYear() - 4, 0, 1);
+
+    const scoreboard = await getScoreboard(org.id, { timeGrain: grain, from, to: now });
     const periodLabels = scoreboard.periods.map(p =>
-      formatPeriodLabel('weekly', { start: new Date(p.start), end: new Date(p.end) }),
+      formatPeriodLabel(grain, { start: new Date(p.start), end: new Date(p.end) }),
     );
 
     return reply.view('pages/dashboard-kpis', {
@@ -1230,6 +1242,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       groupNames,
       scoreboard,
       periodLabels,
+      grain,
+      view,
       isSuperAdmin: (request as any).isSuperAdmin,
     });
   });

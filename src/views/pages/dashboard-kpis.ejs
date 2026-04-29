@@ -32,6 +32,14 @@
   .sb-filter-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
   .sb-filter { padding: 0.45rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; font-size: 12px; color: #374151; cursor: pointer; }
   .sb-period-cell { font-size: 10px; font-weight: 600; color: #6b7280; }
+  .sb-spark { width: 240px; height: 36px; }
+  .sb-spark .line { fill: none; stroke: #ec4899; stroke-width: 1.5; }
+  .sb-spark .area { fill: rgba(236,72,153,0.10); stroke: none; }
+  .sb-spark .goal-line { stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 2 3; }
+  .sb-spark .dot { fill: #ec4899; }
+  .sb-spark .dot.met { fill: #10b981; }
+  .sb-spark .dot.missed { fill: #ef4444; }
+  .sb-spark-summary { font-size: 11px; color: #6b7280; margin-top: 2px; }
 </style>
 
 <section class="bg-white border-b border-gray-100">
@@ -61,19 +69,27 @@
 <section class="bg-gray-50 py-6 sm:py-8 min-h-[60vh]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
 
+    <%
+      const grainLabels = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual' };
+      const rangeLabels = {
+        weekly: 'Last 13 weeks', monthly: 'Last 12 months',
+        quarterly: 'Last 8 quarters', annual: 'Last 5 years',
+      };
+    %>
+
     <div class="sb-tab-strip">
-      <button class="sb-tab disabled" type="button" title="Phase 5">Trends</button>
-      <button class="sb-tab active" type="button">Weekly</button>
-      <button class="sb-tab disabled" type="button" title="Phase 5">Monthly</button>
-      <button class="sb-tab disabled" type="button" title="Phase 5">Quarterly</button>
-      <button class="sb-tab disabled" type="button" title="Phase 5">Annual</button>
+      <a class="sb-tab <%= view === 'trends' ? 'active' : '' %>" href="?grain=<%= grain %>&view=trends">Trends</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'weekly' ? 'active' : '' %>" href="?grain=weekly">Weekly</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'monthly' ? 'active' : '' %>" href="?grain=monthly">Monthly</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'quarterly' ? 'active' : '' %>" href="?grain=quarterly">Quarterly</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'annual' ? 'active' : '' %>" href="?grain=annual">Annual</a>
     </div>
 
     <div class="sb-filter-row">
-      <span class="sb-filter" title="Phase 5: filter by team">Team: All</span>
-      <span class="sb-filter">View by: Week</span>
-      <span class="sb-filter">Date Range: Last 13 weeks</span>
-      <span class="sb-filter" title="Phase 5: group filter">Group: All</span>
+      <span class="sb-filter" title="Phase later: filter by team">Team: All</span>
+      <span class="sb-filter">View by: <%= grainLabels[grain] %></span>
+      <span class="sb-filter">Date Range: <%= rangeLabels[grain] %></span>
+      <span class="sb-filter" title="Phase later: group filter">Group: All</span>
     </div>
 
     <% if (scoreboard.rows.length === 0) { %>
@@ -115,11 +131,16 @@
                   <th>Title</th>
                   <th>Owner</th>
                   <th class="center">Goal</th>
-                  <th class="center">Average</th>
-                  <th class="center">Total</th>
-                  <% periodLabels.forEach(function(label) { %>
-                    <th class="center period-col"><%= label %></th>
-                  <% }); %>
+                  <% if (view === 'trends') { %>
+                    <th class="center">Latest</th>
+                    <th class="center">Trend (<%= rangeLabels[grain] %>)</th>
+                  <% } else { %>
+                    <th class="center">Average</th>
+                    <th class="center">Total</th>
+                    <% periodLabels.forEach(function(label) { %>
+                      <th class="center period-col"><%= label %></th>
+                    <% }); %>
+                  <% } %>
                 </tr>
               </thead>
               <tbody>
@@ -131,6 +152,11 @@
                   const goalText = (k.goalOperator && k.goalValue !== null && k.goalValue !== undefined)
                     ? ({ gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' })[k.goalOperator] + ' ' + k.goalValue + (k.unit ? ' ' + k.unit : '')
                     : '—';
+                  // Latest non-null value (rightmost period with data)
+                  let latestVal = null;
+                  for (let i = row.periods.length - 1; i >= 0; i--) {
+                    if (row.periods[i].value !== null && row.periods[i].value !== undefined) { latestVal = row.periods[i].value; break; }
+                  }
                 %>
                   <tr data-kpi-id="<%= k.id %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>">
                     <td>
@@ -144,15 +170,22 @@
                       </span>
                     </td>
                     <td class="center"><span class="sb-goal-pill"><%= goalText %></span></td>
-                    <td class="center" data-col="avg">—</td>
-                    <td class="center" data-col="total">—</td>
-                    <% row.periods.forEach(function(p) { %>
-                      <td class="center sb-cell" data-period-start="<%= p.periodStart %>">
-                        <input type="number" step="any" value="<%= p.value == null ? '' : p.value %>"
-                               data-orig="<%= p.value == null ? '' : p.value %>"
-                               placeholder="—" />
+                    <% if (view === 'trends') { %>
+                      <td class="center" style="font-weight:600; color:#111827;"><%= latestVal === null ? '—' : (Math.round(latestVal * 100) / 100) + (k.unit ? ' ' + k.unit : '') %></td>
+                      <td class="center">
+                        <div class="sb-spark-wrap" data-periods='<%= JSON.stringify(row.periods.map(p => p.value)) %>' data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>"></div>
                       </td>
-                    <% }); %>
+                    <% } else { %>
+                      <td class="center" data-col="avg">—</td>
+                      <td class="center" data-col="total">—</td>
+                      <% row.periods.forEach(function(p) { %>
+                        <td class="center sb-cell" data-period-start="<%= p.periodStart %>">
+                          <input type="number" step="any" value="<%= p.value == null ? '' : p.value %>"
+                                 data-orig="<%= p.value == null ? '' : p.value %>"
+                                 placeholder="—" />
+                        </td>
+                      <% }); %>
+                    <% } %>
                   </tr>
                 <% }); %>
               </tbody>
@@ -207,7 +240,65 @@
     });
   }
 
+  function renderSpark(wrap) {
+    var values;
+    try { values = JSON.parse(wrap.getAttribute('data-periods') || '[]'); } catch (e) { values = []; }
+    if (!Array.isArray(values) || values.length === 0) { wrap.innerHTML = '<span style="color:#9ca3af; font-size:11px;">no data</span>'; return; }
+    var op = wrap.getAttribute('data-goal-op') || '';
+    var goalVal = wrap.getAttribute('data-goal-value');
+    goalVal = goalVal === '' || goalVal == null ? null : Number(goalVal);
+
+    var W = 240, H = 36, pad = 4;
+    var nums = values.map(function(v) { return v === null || v === undefined ? null : Number(v); });
+    var present = nums.filter(function(v) { return v !== null && !isNaN(v); });
+    if (present.length === 0) { wrap.innerHTML = '<span style="color:#9ca3af; font-size:11px;">no data</span>'; return; }
+    var min = Math.min.apply(null, present);
+    var max = Math.max.apply(null, present);
+    if (goalVal !== null && !isNaN(goalVal)) { min = Math.min(min, goalVal); max = Math.max(max, goalVal); }
+    var range = max - min || 1;
+    var n = nums.length;
+    var x = function(i) { return pad + (i * (W - 2 * pad)) / Math.max(1, n - 1); };
+    var y = function(v) { return H - pad - ((v - min) / range) * (H - 2 * pad); };
+
+    var ptStr = '';
+    var areaPts = [];
+    var dots = '';
+    var lastValid = null;
+    nums.forEach(function(v, i) {
+      if (v === null || isNaN(v)) return;
+      var px = x(i), py = y(v);
+      if (ptStr === '') ptStr = px + ',' + py;
+      else ptStr += ' ' + px + ',' + py;
+      areaPts.push([px, py]);
+      var dotClass = 'dot';
+      if (op && goalVal !== null) {
+        var meets = (op === 'gte' ? v >= goalVal : op === 'lte' ? v <= goalVal : op === 'gt' ? v > goalVal : op === 'lt' ? v < goalVal : op === 'eq' ? v === goalVal : null);
+        if (meets === true) dotClass = 'dot met';
+        else if (meets === false) dotClass = 'dot missed';
+      }
+      dots += '<circle cx="' + px + '" cy="' + py + '" r="2" class="' + dotClass + '"/>';
+      lastValid = { x: px, y: py };
+    });
+    var area = '';
+    if (areaPts.length > 1) {
+      area = 'M ' + areaPts[0][0] + ',' + (H - pad) + ' L ' + areaPts.map(function(p) { return p[0] + ',' + p[1]; }).join(' L ') + ' L ' + areaPts[areaPts.length - 1][0] + ',' + (H - pad) + ' Z';
+    }
+    var goalLine = '';
+    if (goalVal !== null && !isNaN(goalVal)) {
+      var gy = y(goalVal);
+      goalLine = '<line x1="' + pad + '" y1="' + gy + '" x2="' + (W - pad) + '" y2="' + gy + '" class="goal-line"/>';
+    }
+    var svg = '<svg class="sb-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">'
+      + (area ? '<path class="area" d="' + area + '"/>' : '')
+      + goalLine
+      + (ptStr ? '<polyline class="line" points="' + ptStr + '"/>' : '')
+      + dots
+      + '</svg>';
+    wrap.innerHTML = svg;
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.sb-spark-wrap').forEach(renderSpark);
     document.querySelectorAll('tr[data-kpi-id]').forEach(function(tr) {
       recomputeRowSummary(tr);
       paintRowGoals(tr);
