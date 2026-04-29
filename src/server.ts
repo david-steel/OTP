@@ -547,6 +547,11 @@ try {
     const { startOnboardingScheduler } = await import('./services/onboarding-scheduler.js');
     startOnboardingScheduler();
   }
+
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_REENGAGEMENT_SCHEDULER === 'true') {
+    const { startReEngagementScheduler } = await import('./services/re-engagement-scheduler.js');
+    startReEngagementScheduler();
+  }
 } catch (err) {
   app.log.error(err);
   process.exit(1);
