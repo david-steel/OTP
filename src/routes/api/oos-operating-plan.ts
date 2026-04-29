@@ -4,16 +4,21 @@
 // Push-to-OOS (foot-cannon write to load-bearing OOS) is super-admin gated; lives in admin.ts (Phase 6).
 
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import {
   oosOperatingPlans,
   oosOperatingPlanSections,
   oosExecutionItems,
+  oosPlanSyncEvents,
+  claims,
 } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { recalculateAssignments } from '../../services/oos-plan-assignment.js';
+import { buildPreview } from '../../services/oos-plan-claim-builder.js';
+import { isSuperAdmin } from '../../middleware/super-admin.js';
+import { getAuth } from '@clerk/fastify';
 
 // Calendar quarter helper, mirrors the one in pages.ts.
 function quarterLabel(d: Date): string {
@@ -308,6 +313,457 @@ export default async function oosOperatingPlanRoutes(app: FastifyInstance) {
           error: { code: 'RECALCULATE_FAILED', message: err instanceof Error ? err.message : 'unknown' },
         });
       }
+    },
+  );
+
+  // ============================================================
+  // POST /api/v1/oos-operating-plan/:planId/preview-sync
+  // Reads execution items (current quarter, status >= 'accepted' by default,
+  // or explicit itemIds), builds proposed OOS claims, finds matches in the
+  // org's published OOS for diff, saves a sync_event with type='preview',
+  // and returns the diff so the UI can show it. NO write to claims yet.
+  // ============================================================
+  const previewSyncSchema = z.object({
+    itemIds: z.array(z.string().uuid()).optional(),
+    quarter: z.string().regex(/^Q[1-4]-\d{4}$/).optional(),
+    includeProposed: z.boolean().optional(), // include status='proposed' items (default: false)
+  });
+
+  app.post<{ Params: { planId: string } }>('/oos-operating-plan/:planId/preview-sync', async (request, reply) => {
+    const auth = getAuth(request);
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+
+    const plan = await getPlanForOrg(request.params.planId, org.id);
+    if (!plan) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Plan not found' } });
+
+    const parsed = previewSyncSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return reply.status(400).send({ error: { code: 'INVALID_INPUT', details: parsed.error.issues } });
+    }
+    const { itemIds, quarter, includeProposed } = parsed.data;
+    const targetQuarter = quarter ?? quarterLabel(new Date());
+
+    // Resolve which items to preview.
+    let items: typeof oosExecutionItems.$inferSelect[];
+    if (itemIds && itemIds.length > 0) {
+      items = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(and(eq(oosExecutionItems.planId, plan.id)));
+      items = items.filter(i => itemIds.includes(i.id));
+    } else {
+      items = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(and(eq(oosExecutionItems.planId, plan.id), eq(oosExecutionItems.quarter, targetQuarter)));
+      // Default: only items the operator has actively committed to (accepted/in_progress/at_risk).
+      // Pass includeProposed=true to also preview proposed items.
+      const allowedStatuses = includeProposed
+        ? new Set(['proposed', 'accepted', 'in_progress', 'at_risk'])
+        : new Set(['accepted', 'in_progress', 'at_risk']);
+      items = items.filter(i => allowedStatuses.has(i.status));
+    }
+
+    try {
+      const preview = await buildPreview(org.id, plan, items);
+
+      // Persist the preview as a sync_event for audit + UI traceability.
+      // Strip the matchedClaimDbValue (full row) before snapshot so the JSON stays small.
+      const claimsForSnapshot = preview.proposedClaims.map(c => {
+        const { matchedClaimDbValue: _omit, ...rest } = c;
+        return rest;
+      });
+      const [event] = await db
+        .insert(oosPlanSyncEvents)
+        .values({
+          planId: plan.id,
+          organizationId: org.id,
+          syncType: 'preview',
+          pushedBy: auth.userId ?? 'unknown',
+          beforeSnapshotJson: { quarter: targetQuarter, itemCount: items.length },
+          afterSnapshotJson: { proposedClaims: claimsForSnapshot, summary: preview.summary, oosFileId: preview.oosFileId },
+          claimIdsJson: preview.proposedClaims.map(c => c.claimId),
+        })
+        .returning();
+
+      return {
+        syncEventId: event.id,
+        quarter: targetQuarter,
+        itemsPreviewed: items.length,
+        oosFileId: preview.oosFileId,
+        summary: preview.summary,
+        proposedClaims: claimsForSnapshot,
+      };
+    } catch (err) {
+      request.log.error({ err }, '[oos-plan] preview-sync failed');
+      return reply.status(500).send({
+        error: { code: 'PREVIEW_FAILED', message: err instanceof Error ? err.message : 'unknown' },
+      });
+    }
+  });
+
+  // ============================================================
+  // POST /api/v1/oos-operating-plan/:planId/push-to-oos
+  // SUPER-ADMIN GATE — this writes to the OOS, which is load-bearing.
+  // Per Nitay-trim discipline: load-bearing writes get the strictest gate.
+  // ============================================================
+  app.post<{ Params: { planId: string } }>('/oos-operating-plan/:planId/push-to-oos', async (request, reply) => {
+    if (!isSuperAdmin(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Push to OOS requires super-admin authorization (load-bearing write).' } });
+    }
+    const auth = getAuth(request);
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+
+    const plan = await getPlanForOrg(request.params.planId, org.id);
+    if (!plan) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Plan not found' } });
+
+    const parsed = previewSyncSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return reply.status(400).send({ error: { code: 'INVALID_INPUT', details: parsed.error.issues } });
+    }
+    const { itemIds, quarter, includeProposed } = parsed.data;
+    const targetQuarter = quarter ?? quarterLabel(new Date());
+
+    let items: typeof oosExecutionItems.$inferSelect[];
+    if (itemIds && itemIds.length > 0) {
+      const all = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(eq(oosExecutionItems.planId, plan.id));
+      items = all.filter(i => itemIds.includes(i.id));
+    } else {
+      const all = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(and(eq(oosExecutionItems.planId, plan.id), eq(oosExecutionItems.quarter, targetQuarter)));
+      const allowedStatuses = includeProposed
+        ? new Set(['proposed', 'accepted', 'in_progress', 'at_risk'])
+        : new Set(['accepted', 'in_progress', 'at_risk']);
+      items = all.filter(i => allowedStatuses.has(i.status));
+    }
+
+    try {
+      const preview = await buildPreview(org.id, plan, items);
+      if (!preview.oosFileId) {
+        return reply.status(409).send({
+          error: {
+            code: 'NO_OOS_FILE',
+            message: 'This org has no published OOS file yet. Publish an OOS first; push-to-plan claims attach under it.',
+          },
+        });
+      }
+      const oosFileId = preview.oosFileId;
+
+      // Build a beforeSnapshot of the claims we're about to touch (existing rows for updates).
+      const updatesById = new Map<string, typeof claims.$inferSelect>();
+      for (const p of preview.proposedClaims) {
+        if (p.matchedClaimDbValue) updatesById.set(p.matchedClaimDbValue.id, p.matchedClaimDbValue);
+      }
+      const beforeSnapshot = {
+        oosFileId,
+        quarter: targetQuarter,
+        existingClaimsTouched: Array.from(updatesById.values()),
+      };
+
+      // Transaction: per-claim insert/update plus per-item pushedClaimIdsJson update.
+      const result = await db.transaction(async (tx) => {
+        const createdIds: string[] = [];
+        const updatedIds: string[] = [];
+
+        // Resolve next displayOrder per section.
+        const sectionMaxDisplayOrder = new Map<string, number>();
+        for (const p of preview.proposedClaims) {
+          if (sectionMaxDisplayOrder.has(p.section)) continue;
+          const maxRes = await tx
+            .select({ max: sql<number>`COALESCE(MAX(${claims.displayOrder}), 0)` })
+            .from(claims)
+            .where(and(eq(claims.oosFileId, oosFileId), eq(claims.section, p.section)));
+          sectionMaxDisplayOrder.set(p.section, Number(maxRes[0]?.max ?? 0));
+        }
+
+        for (const p of preview.proposedClaims) {
+          if (p.proposedAction === 'update' && p.matchedClaimDbValue) {
+            await tx
+              .update(claims)
+              .set({
+                rule: p.rule,
+                why: p.why,
+                failureMode: p.failureMode,
+                confidence: p.confidence,
+                evidence: p.evidence,
+                scope: p.scope,
+                source: p.source,
+                agentName: p.agentName,
+                updatedAt: new Date(),
+              })
+              .where(eq(claims.id, p.matchedClaimDbValue.id));
+            updatedIds.push(p.matchedClaimDbValue.id);
+
+            // Mirror onto the source execution item's pushedClaimIdsJson.
+            const item = items.find(i => i.id === p.sourceItemId);
+            if (item) {
+              const existing = Array.isArray(item.pushedClaimIdsJson) ? item.pushedClaimIdsJson as string[] : [];
+              if (!existing.includes(p.matchedClaimDbValue.id)) {
+                await tx.update(oosExecutionItems)
+                  .set({
+                    pushedClaimIdsJson: [...existing, p.matchedClaimDbValue.id],
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(oosExecutionItems.id, item.id));
+              }
+            }
+          } else {
+            // Insert
+            const nextOrder = (sectionMaxDisplayOrder.get(p.section) ?? 0) + 1;
+            sectionMaxDisplayOrder.set(p.section, nextOrder);
+            const [inserted] = await tx
+              .insert(claims)
+              .values({
+                oosFileId,
+                claimId: p.claimId,
+                section: p.section,
+                displayOrder: nextOrder,
+                rule: p.rule,
+                why: p.why,
+                failureMode: p.failureMode,
+                confidence: p.confidence,
+                evidence: p.evidence,
+                scope: p.scope,
+                source: p.source,
+                agentName: p.agentName,
+              })
+              .returning({ id: claims.id });
+            createdIds.push(inserted.id);
+
+            const item = items.find(i => i.id === p.sourceItemId);
+            if (item) {
+              const existing = Array.isArray(item.pushedClaimIdsJson) ? item.pushedClaimIdsJson as string[] : [];
+              await tx.update(oosExecutionItems)
+                .set({
+                  pushedClaimIdsJson: [...existing, inserted.id],
+                  updatedAt: new Date(),
+                })
+                .where(eq(oosExecutionItems.id, item.id));
+            }
+          }
+        }
+
+        await tx
+          .update(oosOperatingPlans)
+          .set({ lastSyncedToOosAt: new Date(), updatedAt: new Date() })
+          .where(eq(oosOperatingPlans.id, plan.id));
+
+        return { createdIds, updatedIds };
+      });
+
+      const allClaimIds = [...result.createdIds, ...result.updatedIds];
+      const claimsForSnapshot = preview.proposedClaims.map(c => {
+        const { matchedClaimDbValue: _omit, ...rest } = c;
+        return rest;
+      });
+      const [event] = await db
+        .insert(oosPlanSyncEvents)
+        .values({
+          planId: plan.id,
+          organizationId: org.id,
+          syncType: 'push_to_oos',
+          pushedBy: auth.userId ?? 'unknown',
+          beforeSnapshotJson: beforeSnapshot,
+          afterSnapshotJson: { proposedClaims: claimsForSnapshot, summary: preview.summary, oosFileId },
+          claimIdsJson: allClaimIds,
+        })
+        .returning();
+
+      return {
+        syncEventId: event.id,
+        oosFileId,
+        claimsCreated: result.createdIds.length,
+        claimsUpdated: result.updatedIds.length,
+        claimUuids: allClaimIds,
+      };
+    } catch (err) {
+      request.log.error({ err }, '[oos-plan] push-to-oos failed');
+      return reply.status(500).send({
+        error: { code: 'PUSH_FAILED', message: err instanceof Error ? err.message : 'unknown' },
+      });
+    }
+  });
+
+  // ============================================================
+  // POST /api/v1/oos-operating-plan/:planId/revert
+  // Claim-by-claim selective revert. SUPER-ADMIN gate.
+  // Body: { claimIds: string[] } where each is the claims.id (uuid).
+  // Hard-deletes the claim rows; saves sync_event with the deleted rows in
+  // beforeSnapshotJson for full audit.
+  // ============================================================
+  const revertSchema = z.object({
+    claimIds: z.array(z.string().uuid()).min(1),
+  });
+
+  app.post<{ Params: { planId: string } }>('/oos-operating-plan/:planId/revert', async (request, reply) => {
+    if (!isSuperAdmin(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Revert requires super-admin authorization.' } });
+    }
+    const auth = getAuth(request);
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+
+    const plan = await getPlanForOrg(request.params.planId, org.id);
+    if (!plan) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Plan not found' } });
+
+    const parsed = revertSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: { code: 'INVALID_INPUT', details: parsed.error.issues } });
+    }
+    const { claimIds } = parsed.data;
+
+    try {
+      // Fetch the claims we're about to delete (for audit snapshot + safety check).
+      const targetClaims = await db.select().from(claims).where(inArray(claims.id, claimIds));
+      const targetIds = new Set(targetClaims.map(c => c.id));
+
+      // Confirm every target was actually pushed by this plan (defense-in-depth: never
+      // delete a claim that wasn't sourced from this operating plan).
+      const sourceCheck = targetClaims.filter(c => c.source !== 'operating_plan');
+      if (sourceCheck.length > 0) {
+        return reply.status(403).send({
+          error: {
+            code: 'NOT_PLAN_SOURCED',
+            message: `Refusing to revert ${sourceCheck.length} claim(s) not sourced from operating_plan. Only OOS Operating Plan claims can be reverted via this endpoint.`,
+          },
+        });
+      }
+
+      const result = await db.transaction(async (tx) => {
+        // Pull the source items and unwire the claim ids from pushedClaimIdsJson.
+        const items = await tx.select().from(oosExecutionItems).where(eq(oosExecutionItems.planId, plan.id));
+        for (const item of items) {
+          const existing = Array.isArray(item.pushedClaimIdsJson) ? item.pushedClaimIdsJson as string[] : [];
+          const filtered = existing.filter((cid: string) => !targetIds.has(cid));
+          if (filtered.length !== existing.length) {
+            await tx
+              .update(oosExecutionItems)
+              .set({ pushedClaimIdsJson: filtered, updatedAt: new Date() })
+              .where(eq(oosExecutionItems.id, item.id));
+          }
+        }
+
+        // Hard-delete the claims.
+        await tx.delete(claims).where(inArray(claims.id, claimIds));
+
+        return { deleted: claimIds.length };
+      });
+
+      const [event] = await db
+        .insert(oosPlanSyncEvents)
+        .values({
+          planId: plan.id,
+          organizationId: org.id,
+          syncType: 'rollback',
+          pushedBy: auth.userId ?? 'unknown',
+          beforeSnapshotJson: { deletedClaims: targetClaims },
+          afterSnapshotJson: { count: result.deleted },
+          claimIdsJson: claimIds,
+        })
+        .returning();
+
+      return { syncEventId: event.id, claimsReverted: result.deleted };
+    } catch (err) {
+      request.log.error({ err }, '[oos-plan] revert failed');
+      return reply.status(500).send({
+        error: { code: 'REVERT_FAILED', message: err instanceof Error ? err.message : 'unknown' },
+      });
+    }
+  });
+
+  // ============================================================
+  // GET /api/v1/oos-operating-plan/:planId/agent-context
+  // Read-only context surface for agents querying the operating plan.
+  // Optional ?agentId=AGT-XXX filters items-assigned-to-me to that agent's
+  // externalId. Returns:
+  //   - currentQuarter
+  //   - quarterlyPriorities: current-quarter items grouped by priority
+  //   - blockedAtRisk: items with status='at_risk'
+  //   - itemsAssignedToMe: items assigned to the caller (if agentId given)
+  //   - relevantRules: existing OOS claims under any execution_* section
+  //
+  // No LLM. Pure read. Cheap to call repeatedly.
+  // ============================================================
+  app.get<{ Params: { planId: string }; Querystring: { agentId?: string; quarter?: string } }>(
+    '/oos-operating-plan/:planId/agent-context',
+    async (request, reply) => {
+      const org = await getAuthOrg(request);
+      if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+
+      const plan = await getPlanForOrg(request.params.planId, org.id);
+      if (!plan) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Plan not found' } });
+
+      const targetQuarter = request.query.quarter ?? quarterLabel(new Date());
+      const agentId = request.query.agentId;
+
+      const items = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(and(eq(oosExecutionItems.planId, plan.id), eq(oosExecutionItems.quarter, targetQuarter)));
+
+      const byPriority: Record<string, typeof items> = { critical: [], high: [], medium: [], low: [] };
+      const blockedAtRisk: typeof items = [];
+      const itemsAssignedToMe: typeof items = [];
+
+      for (const it of items) {
+        (byPriority[it.priority] ??= []).push(it);
+        if (it.status === 'at_risk') blockedAtRisk.push(it);
+        if (agentId) {
+          const primary = it.assignedOwnerType === 'agent' && it.assignedOwnerId === agentId;
+          const secondary = it.secondaryOwnerType === 'agent' && it.secondaryOwnerId === agentId;
+          if (primary || secondary) itemsAssignedToMe.push(it);
+        }
+      }
+
+      // Pull relevant claims: any claim under an execution_* section in the org's
+      // most recent published OOS file. These are the cross-session rules the agent
+      // should respect alongside its assigned items.
+      let relevantRules: typeof claims.$inferSelect[] = [];
+      const fileRes = await db.execute(sql`
+        SELECT id FROM oos_files WHERE org_id = ${org.id} AND status = 'published'
+        ORDER BY created_at DESC LIMIT 1
+      `) as { rows: Array<{ id: string }> };
+      const oosFileId = fileRes.rows?.[0]?.id ?? null;
+      if (oosFileId) {
+        relevantRules = await db
+          .select()
+          .from(claims)
+          .where(and(
+            eq(claims.oosFileId, oosFileId),
+            sql`${claims.section} LIKE 'execution_%'`,
+          ));
+      }
+
+      return {
+        plan: {
+          id: plan.id,
+          title: plan.title,
+          status: plan.status,
+          lastSyncedToOosAt: plan.lastSyncedToOosAt,
+        },
+        currentQuarter: targetQuarter,
+        agentId: agentId ?? null,
+        quarterlyPriorities: byPriority,
+        blockedAtRisk,
+        itemsAssignedToMe,
+        relevantRules: relevantRules.map(c => ({
+          claimId: c.claimId,
+          section: c.section,
+          rule: c.rule,
+          why: c.why,
+          confidence: c.confidence,
+          scope: c.scope,
+          agentName: c.agentName,
+        })),
+        oosFileId,
+      };
     },
   );
 
