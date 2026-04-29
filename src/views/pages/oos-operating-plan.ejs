@@ -18,11 +18,36 @@
     <div class="mt-8 bg-white border rounded-lg p-12 text-center">
       <h2 class="text-xl font-semibold mb-2">No operating plan yet</h2>
       <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Create your organization's first OOS Operating Plan. We'll seed the eight standard sections and you can fill them in or auto-generate from your existing OOS.</p>
-      <form method="POST" action="/dashboard/oos-operating-plan/create" class="inline-block">
-        <button type="submit" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-600 text-sm transition-colors">
-          Create OOS Operating Plan
-        </button>
-      </form>
+      <button id="btn-create-plan" type="button" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-600 text-sm transition-colors">
+        Create OOS Operating Plan
+      </button>
+      <div id="create-plan-msg" class="mt-3 text-sm text-gray-500"></div>
+      <script>
+        (function() {
+          var btn = document.getElementById('btn-create-plan');
+          var msg = document.getElementById('create-plan-msg');
+          if (!btn) return;
+          btn.addEventListener('click', async function() {
+            btn.disabled = true;
+            msg.textContent = 'Creating...';
+            try {
+              var res = await fetch('/dashboard/oos-operating-plan/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: '{}',
+              });
+              if (res.redirected) { window.location.href = res.url; return; }
+              if (res.ok) { window.location.reload(); return; }
+              var data = await res.json().catch(function() { return null; });
+              msg.textContent = 'Error: ' + (data && data.error && data.error.message ? data.error.message : ('HTTP ' + res.status));
+              btn.disabled = false;
+            } catch (e) {
+              msg.textContent = 'Error: ' + e.message;
+              btn.disabled = false;
+            }
+          });
+        })();
+      </script>
     </div>
 
   <% } else { %>
