@@ -326,20 +326,26 @@
               <th class="text-left px-3 py-2">Why assigned</th>
               <th class="text-left px-3 py-2">Due</th>
               <th class="text-left px-3 py-2">Status</th>
+              <th class="text-left px-3 py-2">KPI</th>
               <th class="text-left px-3 py-2"></th>
             </tr>
           </thead>
           <tbody>
             <% if (executionItems.length === 0) { %>
               <tr>
-                <td colspan="9" class="px-3 py-12 text-center text-gray-400 text-sm">
+                <td colspan="10" class="px-3 py-12 text-center text-gray-400 text-sm">
                   No execution items yet for <%= currentQuarter %>.<br/>
                   Click <span class="font-semibold">Generate 90-Day Plan</span> to auto-generate from your OOS, agents, employees, and goals (Phase 7).
                 </td>
               </tr>
             <% } %>
             <% executionItems.forEach(function(item) { %>
-              <tr class="border-t hover:bg-gray-50">
+              <tr class="border-t hover:bg-gray-50"
+                  data-item-id="<%= item.id %>"
+                  data-item-title="<%= item.title %>"
+                  data-owner-type="<%= item.assignedOwnerType %>"
+                  data-owner-id="<%= item.assignedOwnerId || '' %>"
+                  data-owner-name="<%= item.assignedOwnerName || '' %>">
                 <td class="px-3 py-2">
                   <div class="font-semibold"><%= item.title %></div>
                   <div class="text-xs">
@@ -370,6 +376,29 @@
                 <td class="px-3 py-2">
                   <% var statusBadge = { proposed: 'bg-gray-100 text-gray-600', accepted: 'bg-blue-100 text-blue-700', in_progress: 'bg-otp-100 text-otp-700', at_risk: 'bg-amber-100 text-amber-700', completed: 'bg-green-100 text-green-700', deferred: 'bg-gray-100 text-gray-500' }[item.status] || 'bg-gray-100 text-gray-600'; %>
                   <span class="px-2 py-0.5 rounded-full text-xs <%= statusBadge %>"><%= item.status.replace('_', ' ') %></span>
+                </td>
+                <td class="px-3 py-2 text-xs">
+                  <% var attached = (typeof kpisByItemId !== 'undefined' && kpisByItemId[item.id]) ? kpisByItemId[item.id] : []; %>
+                  <% if (attached.length === 0) { %>
+                    <button class="text-xs text-pink-600 hover:underline" data-action="attach-kpi" data-item-id="<%= item.id %>">+ Attach KPI</button>
+                  <% } else { %>
+                    <% attached.forEach(function(k) {
+                         var pillClass = k.meetsGoal === true ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                       : k.meetsGoal === false ? 'bg-red-50 text-red-700 border-red-200'
+                                       : 'bg-gray-50 text-gray-600 border-gray-200';
+                         var goalText = (k.goalOperator && k.goalValue !== null) ? ({ gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' })[k.goalOperator] + ' ' + k.goalValue + (k.unit ? ' ' + k.unit : '') : '';
+                         var valText = k.latestValue === null || k.latestValue === undefined ? '—' : k.latestValue + (k.unit ? ' ' + k.unit : '');
+                    %>
+                      <div class="inline-flex flex-col gap-0.5 mb-1 mr-1">
+                        <a href="/dashboard/kpis" class="font-medium text-gray-800 hover:underline" title="View on scoreboard"><%= k.title %></a>
+                        <span class="inline-flex items-center gap-1">
+                          <span class="px-2 py-0.5 rounded-full border text-[10px] <%= pillClass %>"><%= valText %></span>
+                          <% if (goalText) { %><span class="text-[10px] text-gray-400">vs <%= goalText %></span><% } %>
+                        </span>
+                      </div>
+                    <% }) %>
+                    <div><button class="text-[10px] text-pink-600 hover:underline" data-action="attach-kpi" data-item-id="<%= item.id %>">+ Add another</button></div>
+                  <% } %>
                 </td>
                 <td class="px-3 py-2">
                   <button class="text-xs text-otp-600 hover:underline" data-action="edit-item" data-item-id="<%= item.id %>" disabled>Edit</button>
@@ -408,6 +437,50 @@
         var action = btn.getAttribute('data-action');
         var planId = btn.getAttribute('data-plan-id');
         e.preventDefault();
+
+        if (action === 'attach-kpi') {
+          var itemId = btn.getAttribute('data-item-id');
+          var tr = btn.closest('tr[data-item-id]');
+          if (!tr) return;
+          var ownerType = tr.getAttribute('data-owner-type');
+          var ownerId = tr.getAttribute('data-owner-id') || '';
+          var ownerName = tr.getAttribute('data-owner-name') || '';
+          var itemTitle = tr.getAttribute('data-item-title') || 'execution item';
+          if (ownerType === 'unassigned' || !ownerId) {
+            alert('Assign an owner to this execution item first, then you can attach a KPI to that owner.');
+            return;
+          }
+          if (ownerType === 'hybrid') ownerType = 'agent'; // hybrid -> attach to primary as agent
+          var kpiOwnerType = ownerType === 'employee' ? 'human' : 'agent';
+          var defaultTitle = window.prompt('KPI title:', 'KPI for: ' + itemTitle);
+          if (!defaultTitle) return;
+          try {
+            var res = await fetch('/api/v1/kpis', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                ownerEntityType: kpiOwnerType,
+                ownerExternalId: ownerId,
+                title: defaultTitle,
+                description: 'Success metric for ' + itemTitle,
+                groupName: 'Operating Plan',
+                timeGrain: 'weekly',
+                aggregationMethod: 'sum',
+                executionItemId: itemId,
+              }),
+            });
+            if (!res.ok) {
+              var err = await res.json().catch(function() { return {}; });
+              alert('Failed to create KPI: ' + (err.error && err.error.message ? err.error.message : res.status));
+              return;
+            }
+            window.location.reload();
+          } catch (err) {
+            alert('Network error: ' + err.message);
+          }
+          return;
+        }
 
         if (action === 'recalculate') {
           if (!confirm('Recalculate owner assignments for all unassigned and AI-generated items this quarter? Items you have explicitly edited will not be touched.')) return;

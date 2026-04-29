@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
@@ -1406,6 +1406,69 @@ export default async function pageRoutes(app: FastifyInstance) {
         .orderBy(desc(oosExecutionItems.createdAt));
     }
 
+    // KPIs attached to these execution items, plus the latest value for each.
+    const kpisByItemId: Record<string, Array<{
+      id: string;
+      title: string;
+      goalOperator: string | null;
+      goalValue: number | null;
+      unit: string | null;
+      timeGrain: string;
+      latestValue: number | null;
+      latestPeriodStart: string | null;
+      meetsGoal: boolean | null;
+    }>> = {};
+    if (executionItems.length > 0) {
+      const { kpis: kpisTable, kpiValues: kpiValuesTable } = await import('../../db/schema.js');
+      const itemIds = executionItems.map(i => i.id);
+      const kpiRows = await db
+        .select()
+        .from(kpisTable)
+        .where(and(
+          inArray(kpisTable.executionItemId, itemIds),
+          isNull(kpisTable.deletedAt),
+        ));
+      const kpiIds = kpiRows.map(k => k.id);
+      let latestByKpi = new Map<string, { value: number | null; periodStart: Date }>();
+      if (kpiIds.length > 0) {
+        const valueRows = await db
+          .select()
+          .from(kpiValuesTable)
+          .where(inArray(kpiValuesTable.kpiId, kpiIds))
+          .orderBy(desc(kpiValuesTable.periodStart));
+        for (const v of valueRows) {
+          if (!latestByKpi.has(v.kpiId)) {
+            latestByKpi.set(v.kpiId, { value: v.value, periodStart: v.periodStart });
+          }
+        }
+      }
+      function meets(value: number | null, op: string | null, target: number | null): boolean | null {
+        if (value === null || op === null || target === null) return null;
+        if (op === 'gte') return value >= target;
+        if (op === 'lte') return value <= target;
+        if (op === 'gt')  return value > target;
+        if (op === 'lt')  return value < target;
+        if (op === 'eq')  return value === target;
+        return null;
+      }
+      for (const k of kpiRows) {
+        if (!k.executionItemId) continue;
+        const latest = latestByKpi.get(k.id);
+        const arr = kpisByItemId[k.executionItemId] || (kpisByItemId[k.executionItemId] = []);
+        arr.push({
+          id: k.id,
+          title: k.title,
+          goalOperator: k.goalOperator,
+          goalValue: k.goalValue,
+          unit: k.unit,
+          timeGrain: k.timeGrain,
+          latestValue: latest?.value ?? null,
+          latestPeriodStart: latest?.periodStart ? latest.periodStart.toISOString() : null,
+          meetsGoal: meets(latest?.value ?? null, k.goalOperator, k.goalValue),
+        });
+      }
+    }
+
     return reply.view('pages/oos-operating-plan', {
       title: 'OOS Operating Plan - Dashboard - OTP',
       description: 'Turn strategy into accountable execution across humans, agents, and operating rules.',
@@ -1414,6 +1477,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       plan,
       sections,
       executionItems,
+      kpisByItemId,
       currentQuarter: quarterLabel(new Date()),
       isSuperAdmin: (request as any).isSuperAdmin,
     });
