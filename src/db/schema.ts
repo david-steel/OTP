@@ -497,6 +497,27 @@ export const oosExecutionItems = pgTable('oos_execution_items', {
   priorityIdx: index('ooei_priority_idx').on(table.priority),
 }));
 
+// ---- User engagement log (re-engagement nudges, max 4 per 30 days) ----
+
+export const userEngagementLog = pgTable('user_engagement_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userEmail: varchar('user_email', { length: 255 }).notNull(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }),         // NULL for pre-signups
+  lastSignInAtAtSend: timestamp('last_sign_in_at_at_send'),
+  segment: varchar('segment', { length: 50 }).notNull(),
+  templateKey: varchar('template_key', { length: 100 }).notNull(),
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  sendStatus: varchar('send_status', { length: 20 }).notNull().default('sent'),
+  sendError: text('send_error'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index('uel_email_idx').on(table.userEmail),
+  emailSentIdx: index('uel_email_sent_idx').on(table.userEmail, table.sentAt),
+  clerkUserIdx: index('uel_clerk_user_idx').on(table.clerkUserId),
+  segmentIdx: index('uel_segment_idx').on(table.segment),
+  sentAtIdx: index('uel_sent_at_idx').on(table.sentAt),
+}));
+
 export const oosPlanSyncEvents = pgTable('oos_plan_sync_events', {
   id: uuid('id').defaultRandom().primaryKey(),
   planId: uuid('plan_id').references(() => oosOperatingPlans.id, { onDelete: 'cascade' }).notNull(),
