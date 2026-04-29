@@ -233,11 +233,39 @@
 
     // Header action buttons (Generate / Recalculate / Preview / Push / Export)
     document.querySelectorAll('[data-action]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
+      btn.addEventListener('click', async function(e) {
         var action = btn.getAttribute('data-action');
+        var planId = btn.getAttribute('data-plan-id');
         e.preventDefault();
+
+        if (action === 'recalculate') {
+          if (!confirm('Recalculate owner assignments for all unassigned and AI-generated items this quarter? Items you have explicitly edited will not be touched.')) return;
+          showMsg('Recalculating...', 'info');
+          btn.disabled = true;
+          try {
+            var res = await fetch('/api/v1/oos-operating-plan/' + planId + '/recalculate-assignments', { method: 'POST' });
+            var data = await res.json();
+            if (!res.ok || data.error) {
+              showMsg('Error: ' + (data.error?.message || 'recalculate failed'), 'error');
+              btn.disabled = false;
+              return;
+            }
+            showMsg(
+              'Considered ' + data.itemsConsidered + ' items: ' + data.recommended +
+              ' assigned, ' + data.lowConfidence + ' need human review (confidence < 70%), ' +
+              data.unassigned + ' unassignable. Reloading...',
+              'ok'
+            );
+            setTimeout(function() { window.location.reload(); }, 1200);
+          } catch (err) {
+            showMsg('Error: ' + err.message, 'error');
+            btn.disabled = false;
+          }
+          return;
+        }
+
         showMsg('Action "' + action + '" ships in Phase ' + (
-          action === 'generate' || action === 'recalculate' ? '7' :
+          action === 'generate' ? '7' :
           action === 'preview' ? '5' :
           action === 'push' ? '6' :
           action === 'export' ? '3.5' : '?'

@@ -13,6 +13,7 @@ import {
   oosExecutionItems,
 } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { recalculateAssignments } from '../../services/oos-plan-assignment.js';
 
 // Calendar quarter helper, mirrors the one in pages.ts.
 function quarterLabel(d: Date): string {
@@ -280,5 +281,34 @@ export default async function oosOperatingPlanRoutes(app: FastifyInstance) {
 
     return { item: updated };
   });
+
+  // ============================================================
+  // POST /api/v1/oos-operating-plan/:planId/recalculate-assignments
+  // Re-runs the deterministic owner recommender across all eligible
+  // current-quarter items. Items the user has explicitly modified are skipped
+  // (per spec: every auto-assignment must be editable, and once edited, must
+  // not be overwritten silently).
+  // ============================================================
+  app.post<{ Params: { planId: string }; Querystring: { quarter?: string } }>(
+    '/oos-operating-plan/:planId/recalculate-assignments',
+    async (request, reply) => {
+      const org = await getAuthOrg(request);
+      if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+
+      const plan = await getPlanForOrg(request.params.planId, org.id);
+      if (!plan) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Plan not found' } });
+
+      const quarter = request.query.quarter ?? quarterLabel(new Date());
+      try {
+        const result = await recalculateAssignments(org.id, org.name, plan.id, quarter);
+        return { quarter, ...result };
+      } catch (err) {
+        request.log.error({ err }, '[oos-plan] recalculate-assignments failed');
+        return reply.status(500).send({
+          error: { code: 'RECALCULATE_FAILED', message: err instanceof Error ? err.message : 'unknown' },
+        });
+      }
+    },
+  );
 
 }
