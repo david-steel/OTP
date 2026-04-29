@@ -2,7 +2,7 @@
   <div class="flex items-start justify-between mb-2">
     <div>
       <h1 class="text-2xl font-bold">OOS Operating Plan</h1>
-      <p class="text-gray-500 text-sm">Turn strategy into accountable execution across humans, agents, and operating rules.</p>
+      <p class="text-gray-500 text-sm">A live, structured system that turns strategy into execution by aligning people, agents, and operating rules around measurable outcomes.</p>
     </div>
     <% if (plan) { %>
       <div class="flex flex-col items-end gap-1">
@@ -78,33 +78,125 @@
       <div class="mt-3 text-xs text-gray-500" id="preview-event-id"></div>
     </div>
 
+    <!-- Glossary: system-level terms used across the plan -->
+    <details class="mb-6 bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
+      <summary class="px-4 py-2 cursor-pointer hover:bg-blue-100 text-sm font-semibold text-blue-900">
+        Terms used in this plan (click to expand)
+      </summary>
+      <div class="px-4 py-3 border-t border-blue-200 text-xs text-blue-900 space-y-2">
+        <div><strong>Execution Item:</strong> A unit of work tied to a measurable outcome and owned by a specific person or agent.</div>
+        <div><strong>Owner Assignment Engine:</strong> The logic that recommends who should be responsible for execution based on roles, agents, and OOS rules.</div>
+        <div><strong>Hybrid Ownership:</strong> A shared responsibility between a human and an agent. Primary + secondary.</div>
+        <div><strong>OOS Sync:</strong> The process of converting plan elements into structured operating rules and claims inside the Organizational Operating System.</div>
+        <div><strong>Claim (OOS):</strong> A structured, evidence-backed statement about how the organization operates.</div>
+        <div><strong>Confidence Level:</strong> A score indicating how reliable a claim or assignment is based on available data. Below 70% triggers "needs human assignment."</div>
+        <div><strong>Source References:</strong> The data or rules used to justify a recommendation or claim.</div>
+      </div>
+    </details>
+
     <!-- 8 section cards (collapsible) -->
     <div class="mb-8">
       <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide mb-3">Plan sections</h2>
       <div class="space-y-3">
         <%
-          var sectionDescriptions = {
-            foundation: "Why this organization exists. Mission, values, and prime directives that humans and agents both follow. The principles you would refuse to compromise on under pressure.",
-            market_command: "Who you serve, where you stand against alternatives, why someone chooses you. ICP, positioning, differentiation, win themes.",
-            destination: "Where this organization is going over the next 1-3 years. The endpoint that anchors every shorter-horizon decision below it.",
-            annual_game_plan: "The big strategic moves planned for this calendar year. Three to five at most. Each with a name, a why, and a named owner.",
-            ninety_day_engine: "The active quarter of execution. Specific initiatives with confidence-scored owner assignments (humans, agents, or hybrid pairs), due dates, and status. This is what agents query and act on. Edit individual items in the 90-Day table below; the section content here holds quarter-level narrative or generation notes.",
-            performance_scorecard: "How we measure whether we are winning. KPIs and targets that roll up from agent-level and user-level scorecards. Each row: who owns it, what is measured, the target, the current value.",
-            constraints_leverage: "What is holding the organization back, and where small effort produces disproportionate results. Constraints have an impact and an owner. Leverage points have a why and an owner.",
-            alignment_accountability: "How humans and agents stay coordinated. Initiative-to-owner pairs (primary + secondary), meeting cadences, and the alignment rituals that keep everyone reading the same plan."
+          var sectionMeta = {
+            foundation: {
+              tagline: "The non-negotiable identity of the organization: why it exists, how it operates, and who it serves.",
+              fields: [
+                ["Purpose", "The fundamental reason the organization exists beyond profit."],
+                ["Mission", "What the organization does daily to fulfill its purpose."],
+                ["Values", "The standards that guide decisions and behavior."],
+                ["Ideal Customer", "The specific type of customer the organization is built to serve best."],
+              ],
+            },
+            market_command: {
+              tagline: "Defines how the organization positions itself to win in the market.",
+              fields: [
+                ["Category", "The space the organization competes in."],
+                ["Unique Advantage", "What the organization does better or differently than competitors."],
+                ["Brand Promise", "The consistent result customers can expect."],
+                ["Proof Points", "Evidence that validates the organization's claims."],
+              ],
+            },
+            destination: {
+              tagline: "The long-term target that aligns all decisions and execution.",
+              fields: [
+                ["3-5 Year Target", "The measurable future state the organization is building toward."],
+                ["Revenue Goal", "The financial growth target."],
+                ["Profit Goal", "The profitability target."],
+                ["Defining Metric", "The single most important number that indicates success."],
+              ],
+            },
+            annual_game_plan: {
+              tagline: "The strategic focus for the current year.",
+              fields: [
+                ["Primary Objective", "The most important outcome to achieve this year."],
+                ["Strategic Initiatives", "The key efforts required to reach the objective."],
+                ["Key Outcomes", "Specific, measurable results that define success."],
+              ],
+            },
+            ninety_day_engine: {
+              tagline: "The system that converts strategy into immediate, accountable action.",
+              fields: [
+                ["Quarterly Targets", "The outcomes to achieve in the next 90 days."],
+                ["Execution Items", "Specific projects or actions required to hit targets."],
+                ["Owner / Owner Type", "Person, agent, or hybrid accountable for delivery."],
+                ["Confidence Score", "The system's confidence in the assigned owner."],
+                ["Assignment Reason", "Why the owner was selected based on roles, rules, or history."],
+                ["Status", "Current progress (e.g. On Track, At Risk, Off Track)."],
+              ],
+            },
+            performance_scorecard: {
+              tagline: "A real-time measurement system that tracks whether execution is working.",
+              fields: [
+                ["Weekly KPIs", "Core numbers tracked consistently."],
+                ["Leading Indicators", "Predictive metrics that signal future outcomes."],
+                ["Lagging Indicators", "Results that confirm past performance."],
+                ["Benchmarks", "Target ranges used to evaluate performance."],
+              ],
+            },
+            constraints_leverage: {
+              tagline: "Identifies what is slowing the organization down and where it can accelerate.",
+              fields: [
+                ["Bottlenecks", "Points of friction limiting progress."],
+                ["Risks", "Potential issues that could impact outcomes."],
+                ["Required Resources", "What is needed to execute successfully."],
+                ["Opportunities", "Areas where the organization can gain advantage quickly."],
+              ],
+            },
+            alignment_accountability: {
+              tagline: "Ensures clarity, ownership, and forward movement across the organization.",
+              fields: [
+                ["Key Decisions", "Confirmed choices that guide execution."],
+                ["Open Issues", "Unresolved items requiring attention."],
+                ["Ownership Clarity", "Clear accountability for each initiative."],
+                ["Next Review Date", "When progress and alignment will be reassessed."],
+              ],
+            },
           };
         %>
         <% sections.forEach(function(s) { %>
+          <% var meta = sectionMeta[s.sectionKey]; %>
           <details class="bg-white border rounded-lg overflow-hidden">
-            <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-center justify-between">
-              <div class="flex-1 pr-4">
+            <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-start justify-between gap-4">
+              <div class="flex-1">
                 <div class="font-semibold text-sm"><%= s.title %></div>
-                <% if (sectionDescriptions[s.sectionKey]) { %>
-                  <div class="text-xs text-gray-500 mt-0.5 leading-snug"><%= sectionDescriptions[s.sectionKey] %></div>
+                <% if (meta) { %>
+                  <div class="text-xs text-gray-500 mt-0.5 leading-snug"><%= meta.tagline %></div>
                 <% } %>
               </div>
-              <span class="text-xs text-gray-400 font-mono whitespace-nowrap"><%= s.sectionKey %></span>
+              <span class="text-xs text-gray-400 font-mono whitespace-nowrap mt-1"><%= s.sectionKey %></span>
             </summary>
+            <% if (meta && meta.fields && meta.fields.length > 0) { %>
+              <div class="px-4 py-3 border-t bg-blue-50/50 text-xs">
+                <div class="font-semibold text-gray-700 mb-1.5">What goes in this section:</div>
+                <ul class="space-y-1">
+                  <% meta.fields.forEach(function(f) { %>
+                    <li><strong class="text-gray-800"><%= f[0] %>:</strong> <span class="text-gray-600"><%= f[1] %></span></li>
+                  <% }) %>
+                </ul>
+              </div>
+            <% } %>
             <div class="px-4 py-3 border-t bg-gray-50" data-section-row="<%= s.id %>">
               <div data-section-view>
                 <% var hasContent = s.contentJson && Object.keys(s.contentJson).length > 0; %>
