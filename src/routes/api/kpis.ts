@@ -24,6 +24,9 @@ import {
   deleteKpi,
   getKpi,
   listKpis,
+  writeKpiValue,
+  deleteKpiValue,
+  getScoreboard,
   KpiError,
 } from '../../services/kpi.js';
 
@@ -169,5 +172,101 @@ export default async function kpiRoutes(app: FastifyInstance) {
       request.log.error(e);
       return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to delete KPI' } });
     }
+  });
+
+  // ---- Value entry ------------------------------------------------------
+  const valueWriteSchema = z.object({
+    periodStart: z.string().min(8).max(40),
+    value: z.number().finite().nullable(),
+    notes: z.string().max(1000).nullable().optional(),
+  });
+
+  app.post<{ Params: { id: string } }>('/kpis/:id/values', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const body = valueWriteSchema.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
+
+    const periodStart = new Date(body.data.periodStart);
+    if (isNaN(periodStart.getTime())) {
+      return reply.status(400).send({ error: { code: 'INVALID_DATE', message: 'periodStart must be a valid ISO date' } });
+    }
+
+    try {
+      const row = await writeKpiValue(
+        org.id,
+        request.params.id,
+        { periodStart, value: body.data.value, notes: body.data.notes ?? null, source: 'manual' },
+        getCreatedBy(request),
+      );
+      return reply.status(201).send(row);
+    } catch (e) {
+      if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to write value' } });
+    }
+  });
+
+  app.delete<{ Params: { id: string }; Querystring: { periodStart?: string } }>(
+    '/kpis/:id/values',
+    async (request, reply) => {
+      if (!(await checkScope(request, reply, 'write'))) return;
+      const org = await getOrg(request);
+      if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+      const ps = request.query.periodStart;
+      if (!ps) return reply.status(400).send({ error: { code: 'INVALID_QUERY', message: 'periodStart required' } });
+      const periodStart = new Date(ps);
+      if (isNaN(periodStart.getTime())) {
+        return reply.status(400).send({ error: { code: 'INVALID_DATE', message: 'periodStart must be a valid ISO date' } });
+      }
+      try {
+        return await deleteKpiValue(org.id, request.params.id, periodStart);
+      } catch (e) {
+        if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+        request.log.error(e);
+        return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to delete value' } });
+      }
+    },
+  );
+
+  // ---- Scoreboard query -------------------------------------------------
+  const scoreQuerySchema = z.object({
+    timeGrain: grainSchema.optional(),
+    from: z.string().min(8).max(40).optional(),
+    to: z.string().min(8).max(40).optional(),
+    ownerEntityType: ownerTypeSchema.optional(),
+    ownerExternalId: z.string().max(120).optional(),
+    groupName: z.string().max(120).optional(),
+  });
+
+  app.get('/kpis/scoreboard', async (request, reply) => {
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const q = scoreQuerySchema.safeParse(request.query);
+    if (!q.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid query', details: q.error.issues } });
+
+    const grain = q.data.timeGrain ?? 'weekly';
+    const now = new Date();
+    let from = q.data.from ? new Date(q.data.from) : new Date(now);
+    let to = q.data.to ? new Date(q.data.to) : new Date(now);
+    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+      return reply.status(400).send({ error: { code: 'INVALID_DATE', message: 'from/to must be valid ISO dates' } });
+    }
+    // Default range: last 13 weeks (matches Ninety scorecard default)
+    if (!q.data.from) from = new Date(now.getTime() - 13 * 7 * 86400000);
+
+    const data = await getScoreboard(org.id, {
+      timeGrain: grain,
+      from,
+      to,
+      ownerEntityType: q.data.ownerEntityType,
+      ownerExternalId: q.data.ownerExternalId,
+      groupName: q.data.groupName,
+    });
+    return data;
   });
 }

@@ -1198,6 +1198,41 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Dashboard: KPI Scoreboard (Phase 3 of the scorecard build)
+  app.get('/dashboard/kpis', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const resolved = await resolveOrgForUser(auth.userId);
+    if (!resolved) return reply.redirect('/dashboard');
+    const { org, role } = resolved;
+
+    const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const { listKpis, getScoreboard } = await import('../../services/kpi.js');
+    const { formatPeriodLabel } = await import('../../services/kpi-periods.js');
+
+    const allKpis = await listKpis(org.id, {});
+    const groupNames = Array.from(new Set(allKpis.map(k => k.groupName).filter((g): g is string => !!g)));
+
+    const now = new Date();
+    const from = new Date(now.getTime() - 13 * 7 * 86400000);
+    const scoreboard = await getScoreboard(org.id, { timeGrain: 'weekly', from, to: now });
+    const periodLabels = scoreboard.periods.map(p =>
+      formatPeriodLabel('weekly', { start: new Date(p.start), end: new Date(p.end) }),
+    );
+
+    return reply.view('pages/dashboard-kpis', {
+      title: 'KPIs - Dashboard - OTP',
+      description: 'Scoreboard view of every measurable on your org chart.',
+      noindex: true,
+      org,
+      viewerRole: role,
+      teamNodes: team.nodes,
+      groupNames,
+      scoreboard,
+      periodLabels,
+    });
+  });
+
   // Accept-invite landing page
   app.get<{ Querystring: { token?: string } }>('/accept-invite', async (request, reply) => {
     const token = String(request.query.token || '').trim();

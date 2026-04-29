@@ -1,0 +1,247 @@
+<style>
+  .sb-shell { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
+  .sb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .sb-table th { background: #f9fafb; text-align: left; padding: 0.6rem 0.75rem; font-weight: 600; color: #374151; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+  .sb-table th.center, .sb-table td.center { text-align: center; }
+  .sb-table th.period-col { color: #6b7280; }
+  .sb-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  .sb-table tr:hover td { background: #fafafa; }
+  .sb-title { font-weight: 600; color: #111827; }
+  .sb-meta { font-size: 11px; color: #9ca3af; margin-top: 0.1rem; }
+  .sb-owner { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .sb-avatar { width: 22px; height: 22px; border-radius: 999px; background: #e5e7eb; color: #6b7280; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .sb-avatar.agent { background: #ede9fe; color: #6d28d9; }
+  .sb-avatar.human { background: #fce7f3; color: #be185d; }
+  .sb-goal-pill { font-size: 11px; font-weight: 700; color: #1f2937; background: #f3f4f6; padding: 0.2rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+  .sb-fx-pill { font-size: 10px; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0.15rem 0.45rem; border-radius: 999px; margin-left: 0.3rem; }
+  .sb-cell { width: 80px; text-align: center; }
+  .sb-cell input { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid transparent; border-radius: 4px; background: transparent; text-align: center; font-size: 13px; color: #111827; font-family: inherit; }
+  .sb-cell input:focus { outline: none; border-color: #ec4899; background: #fff; box-shadow: 0 0 0 2px rgba(236,72,153,0.12); }
+  .sb-cell.met { background: #ecfdf5; }
+  .sb-cell.missed { background: #fef2f2; }
+  .sb-cell.met input { color: #047857; font-weight: 600; }
+  .sb-cell.missed input { color: #b91c1c; font-weight: 600; }
+  .sb-group-header { padding: 0.85rem 1rem; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+  .sb-group-title { font-weight: 700; font-size: 15px; color: #111827; display: inline-flex; align-items: center; gap: 0.5rem; }
+  .sb-group-count { font-size: 11px; font-weight: 600; color: #6b7280; background: #f3f4f6; padding: 0.15rem 0.55rem; border-radius: 999px; }
+  .sb-empty { padding: 3rem 2rem; text-align: center; color: #6b7280; }
+  .sb-tab-strip { display: inline-flex; gap: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 4px; margin-bottom: 1rem; }
+  .sb-tab { padding: 0.4rem 0.9rem; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; border-radius: 7px; border: none; background: transparent; }
+  .sb-tab.active { background: #111827; color: #fff; }
+  .sb-tab.disabled { color: #d1d5db; cursor: not-allowed; }
+  .sb-filter-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  .sb-filter { padding: 0.45rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; font-size: 12px; color: #374151; cursor: pointer; }
+  .sb-period-cell { font-size: 10px; font-weight: 600; color: #6b7280; }
+</style>
+
+<section class="bg-white border-b border-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-6">
+    <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+      <a href="/dashboard" class="hover:text-otp-600">Dashboard</a>
+      <span>/</span>
+      <span class="text-gray-700 font-medium">KPIs</span>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Scoreboard</h1>
+        <p class="text-sm text-gray-500 mt-1">Every measurable on your org chart, indexed by the seat that owns it. Add new KPIs from the <a href="/dashboard/team" class="text-otp-600 hover:underline">Team chart</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bg-gray-50 py-6 sm:py-8 min-h-[60vh]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <div class="sb-tab-strip">
+      <button class="sb-tab disabled" type="button" title="Phase 5">Trends</button>
+      <button class="sb-tab active" type="button">Weekly</button>
+      <button class="sb-tab disabled" type="button" title="Phase 5">Monthly</button>
+      <button class="sb-tab disabled" type="button" title="Phase 5">Quarterly</button>
+      <button class="sb-tab disabled" type="button" title="Phase 5">Annual</button>
+    </div>
+
+    <div class="sb-filter-row">
+      <span class="sb-filter" title="Phase 5: filter by team">Team: All</span>
+      <span class="sb-filter">View by: Week</span>
+      <span class="sb-filter">Date Range: Last 13 weeks</span>
+      <span class="sb-filter" title="Phase 5: group filter">Group: All</span>
+    </div>
+
+    <% if (scoreboard.rows.length === 0) { %>
+      <div class="sb-shell sb-empty">
+        <p style="font-size:14px; margin-bottom:0.5rem;"><strong>No KPIs yet.</strong></p>
+        <p style="font-size:13px;">Open the <a href="/dashboard/team" class="text-otp-600 hover:underline">Team chart</a>, click any agent or human, scroll to the KPIs section, and click "+ Add KPI".</p>
+      </div>
+    <% } else { %>
+      <%
+        // Group rows by group_name (null -> 'Other')
+        const grouped = new Map();
+        scoreboard.rows.forEach(r => {
+          const g = r.kpi.groupName || 'Other';
+          if (!grouped.has(g)) grouped.set(g, []);
+          grouped.get(g).push(r);
+        });
+        const groupOrder = Array.from(grouped.keys()).sort((a, b) => {
+          if (a === 'Winning Scoreboard') return -1;
+          if (b === 'Winning Scoreboard') return 1;
+          if (a === 'Other') return 1;
+          if (b === 'Other') return -1;
+          return a.localeCompare(b);
+        });
+        // Owner lookup
+        const ownerByExt = new Map();
+        teamNodes.forEach(n => ownerByExt.set(n.externalId, n));
+      %>
+
+      <% groupOrder.forEach(function(group) { %>
+        <% const rows = grouped.get(group); %>
+        <div class="sb-shell" style="margin-bottom: 1.25rem;">
+          <div class="sb-group-header">
+            <div class="sb-group-title"><%= group %> <span class="sb-group-count"><%= rows.length %></span></div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="sb-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Owner</th>
+                  <th class="center">Goal</th>
+                  <th class="center">Average</th>
+                  <th class="center">Total</th>
+                  <% periodLabels.forEach(function(label) { %>
+                    <th class="center period-col"><%= label %></th>
+                  <% }); %>
+                </tr>
+              </thead>
+              <tbody>
+                <% rows.forEach(function(row) {
+                  const k = row.kpi;
+                  const owner = ownerByExt.get(k.ownerExternalId);
+                  const ownerName = owner ? (owner.label || k.ownerExternalId) : k.ownerExternalId;
+                  const ownerInitials = (owner ? (owner.label || '?') : '?').slice(0, 2).toUpperCase();
+                  const goalText = (k.goalOperator && k.goalValue !== null && k.goalValue !== undefined)
+                    ? ({ gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' })[k.goalOperator] + ' ' + k.goalValue + (k.unit ? ' ' + k.unit : '')
+                    : '—';
+                %>
+                  <tr data-kpi-id="<%= k.id %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>">
+                    <td>
+                      <div class="sb-title"><%= k.title %><% if (k.formula) { %><span class="sb-fx-pill">fx</span><% } %></div>
+                      <% if (k.description) { %><div class="sb-meta"><%= k.description.length > 70 ? k.description.slice(0, 70) + '...' : k.description %></div><% } %>
+                    </td>
+                    <td>
+                      <span class="sb-owner">
+                        <span class="sb-avatar <%= k.ownerEntityType %>"><%= ownerInitials %></span>
+                        <span style="font-size:12px; color:#374151;"><%= ownerName %></span>
+                      </span>
+                    </td>
+                    <td class="center"><span class="sb-goal-pill"><%= goalText %></span></td>
+                    <td class="center" data-col="avg">—</td>
+                    <td class="center" data-col="total">—</td>
+                    <% row.periods.forEach(function(p) { %>
+                      <td class="center sb-cell" data-period-start="<%= p.periodStart %>">
+                        <input type="number" step="any" value="<%= p.value == null ? '' : p.value %>"
+                               data-orig="<%= p.value == null ? '' : p.value %>"
+                               placeholder="—" />
+                      </td>
+                    <% }); %>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+
+  </div>
+</section>
+
+<script>
+  function meetsGoal(value, op, target) {
+    if (value === null || value === '' || isNaN(value)) return null;
+    if (!op || target === null || target === '' || isNaN(target)) return null;
+    var v = Number(value), t = Number(target);
+    switch (op) {
+      case 'gte': return v >= t;
+      case 'lte': return v <= t;
+      case 'gt':  return v > t;
+      case 'lt':  return v < t;
+      case 'eq':  return v === t;
+    }
+    return null;
+  }
+
+  function recomputeRowSummary(tr) {
+    var inputs = tr.querySelectorAll('.sb-cell input');
+    var nums = [];
+    inputs.forEach(function(inp) {
+      if (inp.value !== '' && !isNaN(Number(inp.value))) nums.push(Number(inp.value));
+    });
+    var avg = nums.length === 0 ? null : nums.reduce(function(a, b) { return a + b; }, 0) / nums.length;
+    var total = nums.length === 0 ? null : nums.reduce(function(a, b) { return a + b; }, 0);
+    var avgEl = tr.querySelector('[data-col="avg"]');
+    var totalEl = tr.querySelector('[data-col="total"]');
+    if (avgEl) avgEl.textContent = avg === null ? '—' : Math.round(avg * 100) / 100;
+    if (totalEl) totalEl.textContent = total === null ? '—' : Math.round(total * 100) / 100;
+  }
+
+  function paintRowGoals(tr) {
+    var op = tr.getAttribute('data-goal-op');
+    var target = tr.getAttribute('data-goal-value');
+    tr.querySelectorAll('.sb-cell').forEach(function(td) {
+      td.classList.remove('met', 'missed');
+      var inp = td.querySelector('input');
+      if (!inp || inp.value === '') return;
+      var meets = meetsGoal(inp.value, op, target);
+      if (meets === true) td.classList.add('met');
+      else if (meets === false) td.classList.add('missed');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('tr[data-kpi-id]').forEach(function(tr) {
+      recomputeRowSummary(tr);
+      paintRowGoals(tr);
+    });
+
+    document.querySelectorAll('.sb-cell input').forEach(function(inp) {
+      inp.addEventListener('blur', async function() {
+        var tr = inp.closest('tr');
+        var td = inp.closest('.sb-cell');
+        var kpiId = tr.getAttribute('data-kpi-id');
+        var periodStart = td.getAttribute('data-period-start');
+        var orig = inp.getAttribute('data-orig') || '';
+        var newVal = inp.value;
+        if (orig === newVal) return;
+        try {
+          if (newVal === '') {
+            // Delete
+            var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(kpiId) + '/values?periodStart=' + encodeURIComponent(periodStart), {
+              method: 'DELETE',
+              credentials: 'include',
+            });
+            if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Delete failed: ' + (err.error && err.error.message ? err.error.message : resp.status)); inp.value = orig; return; }
+          } else {
+            var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(kpiId) + '/values', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ periodStart: periodStart, value: Number(newVal) }),
+            });
+            if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Save failed: ' + (err.error && err.error.message ? err.error.message : resp.status)); inp.value = orig; return; }
+          }
+          inp.setAttribute('data-orig', newVal);
+          recomputeRowSummary(tr);
+          paintRowGoals(tr);
+        } catch (e) {
+          alert('Network error: ' + e.message);
+          inp.value = orig;
+        }
+      });
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+      });
+    });
+  });
+</script>
