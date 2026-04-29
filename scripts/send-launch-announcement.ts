@@ -168,7 +168,12 @@ async function run() {
   let failed = 0;
   const failures: Array<{ email: string; error: string }> = [];
 
-  for (const r of recipients) {
+  // Throttle to stay under Resend's 5-req/sec cap. 250ms between sends = max 4/sec.
+  const THROTTLE_MS = 250;
+  const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+  for (let i = 0; i < recipients.length; i++) {
+    const r = recipients[i];
     try {
       const html = await renderTemplate(r.email);
       const ok = await sendEmail({ to: r.email, subject, html, from });
@@ -184,6 +189,7 @@ async function run() {
       const msg = err instanceof Error ? err.message : String(err);
       failures.push({ email: r.email, error: msg });
     }
+    if (i < recipients.length - 1) await sleep(THROTTLE_MS);
   }
 
   console.log('---');
