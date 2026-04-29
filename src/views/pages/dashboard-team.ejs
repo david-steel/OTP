@@ -125,6 +125,21 @@
   .sop-card-footer { display: flex; gap: 0.4rem; justify-content: flex-end; margin-top: 0.4rem; }
   .sop-empty { font-size: 11px; color: #9ca3af; padding: 0.6rem; text-align: center; border: 1px dashed #e5e7eb; border-radius: 6px; background: #fafafa; }
 
+  /* KPI section reuses sop-* visual language but adds a goal pill */
+  .kpi-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.6rem 0.75rem; background: #fafafa; }
+  .kpi-card.editing { background: #ffffff; border-color: #f9a8d4; box-shadow: 0 0 0 3px rgba(236,72,153,0.10); }
+  .kpi-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; cursor: pointer; }
+  .kpi-card-title { font-weight: 600; font-size: 13px; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kpi-goal-pill { font-size: 10px; font-weight: 700; color: #be185d; background: #fce7f3; padding: 0.15rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+  .kpi-formula-pill { font-size: 10px; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0.15rem 0.45rem; border-radius: 999px; }
+  .kpi-card-body { display: none; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #e5e7eb; }
+  .kpi-card.editing .kpi-card-body { display: block; }
+  .kpi-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .kpi-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+  .kpi-empty { font-size: 11px; color: #9ca3af; padding: 0.6rem; text-align: center; border: 1px dashed #fbcfe8; border-radius: 6px; background: #fdf2f8; }
+  .kpi-section-add { font-size: 11px; font-weight: 600; color: #be185d; cursor: pointer; padding: 0.25rem 0.6rem; border: 1px dashed #fbcfe8; border-radius: 6px; background: #fdf2f8; }
+  .kpi-section-add:hover { background: #fce7f3; }
+
   /* Boxes */
   .org-node { position: absolute; box-sizing: border-box; background: #fff; border: 1px solid #e5e7eb; border-radius: 0.625rem; padding: 0.6rem 0.7rem 0.6rem 0.85rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: box-shadow 120ms ease, border-color 120ms ease, transform 120ms ease; cursor: pointer; user-select: none; overflow: hidden; }
   .org-node:hover { box-shadow: 0 4px 14px rgba(15,23,42,0.10); border-color: #94a3b8; transform: translateY(-1px); }
@@ -396,6 +411,15 @@
         </div>
       </div>
       <div id="ef-sop-list" class="sop-list"></div>
+    </div>
+
+    <div class="sop-section" id="ef-kpi-section">
+      <div class="sop-section-header">
+        <span class="sop-section-title">KPIs <span id="ef-kpi-count" style="color:#9ca3af; font-weight: 500;"></span></span>
+        <button type="button" class="kpi-section-add" onclick="addKpi()">+ Add KPI</button>
+      </div>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Measurables this seat is accountable for. Goals roll up to the scoreboard. Formulas can reference other KPIs (Phase 4).</p>
+      <div id="ef-kpi-list" class="sop-list"></div>
     </div>
 
     <div class="sop-section" id="ef-inherited-section" style="display:none">
@@ -1068,6 +1092,206 @@
       return { parent: parent, sops: sops };
     }
 
+    // ---- KPI section (Phase 2) ----
+    var currentKpis = [];
+    var editingKpiId = null;
+    var currentEntityForKpi = null; // { type: 'agent'|'human', externalId: string }
+
+    var KPI_GOAL_OPS = [
+      { value: '',    label: '(no goal)' },
+      { value: 'gte', label: '≥' },
+      { value: 'gt',  label: '>' },
+      { value: 'eq',  label: '=' },
+      { value: 'lt',  label: '<' },
+      { value: 'lte', label: '≤' },
+    ];
+    var KPI_GRAINS = [
+      { value: 'weekly', label: 'Weekly' },
+      { value: 'monthly', label: 'Monthly' },
+      { value: 'quarterly', label: 'Quarterly' },
+      { value: 'annual', label: 'Annual' },
+    ];
+    var KPI_AGGS = [
+      { value: 'sum', label: 'Sum' },
+      { value: 'avg', label: 'Average' },
+      { value: 'last', label: 'Last' },
+      { value: 'first', label: 'First' },
+      { value: 'min', label: 'Min' },
+      { value: 'max', label: 'Max' },
+    ];
+
+    function formatGoalDisplay(kpi) {
+      if (!kpi.goalOperator || kpi.goalValue === null || kpi.goalValue === undefined) return '';
+      var opMap = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' };
+      var unit = kpi.unit || '';
+      return opMap[kpi.goalOperator] + ' ' + kpi.goalValue + (unit ? ' ' + unit : '');
+    }
+
+    async function loadKpisForEntity(type, externalId) {
+      currentEntityForKpi = { type: type, externalId: externalId };
+      try {
+        var resp = await fetch('/api/v1/kpis?ownerEntityType=' + encodeURIComponent(type) + '&ownerExternalId=' + encodeURIComponent(externalId), { credentials: 'include' });
+        if (!resp.ok) {
+          currentKpis = [];
+          renderKpiList();
+          return;
+        }
+        var data = await resp.json();
+        currentKpis = Array.isArray(data.kpis) ? data.kpis : [];
+        editingKpiId = null;
+        renderKpiList();
+      } catch (e) {
+        currentKpis = [];
+        renderKpiList();
+      }
+    }
+
+    function selectHtml(name, options, current, onchange) {
+      var html = '<select onchange="' + onchange + '" style="padding: 0.4rem 0.5rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; color: #111827; background: #fff; width: 100%;">';
+      options.forEach(function(o) {
+        var sel = (String(o.value) === String(current === null || current === undefined ? '' : current)) ? ' selected' : '';
+        html += '<option value="' + o.value + '"' + sel + '>' + o.label + '</option>';
+      });
+      html += '</select>';
+      return html;
+    }
+
+    function renderKpiList() {
+      var list = document.getElementById('ef-kpi-list');
+      var countEl = document.getElementById('ef-kpi-count');
+      if (!list) return;
+      countEl.textContent = currentKpis.length === 0 ? '' : '(' + currentKpis.length + ')';
+      if (currentKpis.length === 0) {
+        list.innerHTML = '<div class="kpi-empty">No KPIs yet. Click "+ Add KPI" to define one.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      currentKpis.forEach(function(kpi) {
+        var card = document.createElement('div');
+        var editing = editingKpiId === kpi.id;
+        card.className = 'kpi-card' + (editing ? ' editing' : '');
+        var titleSafe = escapeHtml(kpi.title || '(untitled KPI)');
+        var goal = formatGoalDisplay(kpi);
+        var goalPill = goal ? '<span class="kpi-goal-pill">' + escapeHtml(goal) + '</span>' : '';
+        var fxPill = kpi.formula ? '<span class="kpi-formula-pill">fx</span>' : '';
+        var meta = (kpi.timeGrain || 'weekly') + (kpi.groupName ? ' · ' + kpi.groupName : '');
+
+        var headerHtml = ''
+          + '<div class="kpi-card-header" onclick="toggleKpi(\'' + escapeHtml(kpi.id) + '\')">'
+          +   '<div class="kpi-card-title">' + titleSafe + '<div style="font-size:10px; color:#9ca3af; font-weight:400; margin-top:0.1rem;">' + escapeHtml(meta) + '</div></div>'
+          +   '<div style="display:flex; align-items:center; gap:0.4rem;">' + goalPill + fxPill
+          +     '<button type="button" class="sop-card-btn" onclick="event.stopPropagation(); toggleKpi(\'' + escapeHtml(kpi.id) + '\')">' + (editing ? 'Close' : 'Edit') + '</button>'
+          +   '</div>'
+          + '</div>';
+
+        var bodyHtml = '<div class="kpi-card-body">'
+          + '<div class="sop-field"><label>Title</label><input type="text" value="' + escapeHtml(kpi.title || '') + '" oninput="updateKpiField(\'' + kpi.id + '\', \'title\', this.value)" placeholder="e.g. Weekly net new MRR" /></div>'
+          + '<div class="sop-field"><label>Description</label><textarea rows="2" oninput="updateKpiField(\'' + kpi.id + '\', \'description\', this.value)" placeholder="What this measures and why it matters">' + escapeHtml(kpi.description || '') + '</textarea></div>'
+          + '<div class="kpi-grid-2">'
+          +   '<div class="sop-field"><label>Group</label><input type="text" value="' + escapeHtml(kpi.groupName || '') + '" oninput="updateKpiField(\'' + kpi.id + '\', \'groupName\', this.value)" placeholder="Winning Scoreboard" /></div>'
+          +   '<div class="sop-field"><label>Time grain</label>' + selectHtml('timeGrain', KPI_GRAINS, kpi.timeGrain || 'weekly', 'updateKpiField(\'' + kpi.id + '\', \'timeGrain\', this.value)') + '</div>'
+          + '</div>'
+          + '<div class="kpi-grid-3">'
+          +   '<div class="sop-field"><label>Goal operator</label>' + selectHtml('goalOperator', KPI_GOAL_OPS, kpi.goalOperator || '', 'updateKpiField(\'' + kpi.id + '\', \'goalOperator\', this.value)') + '</div>'
+          +   '<div class="sop-field"><label>Goal value</label><input type="number" step="any" value="' + (kpi.goalValue === null || kpi.goalValue === undefined ? '' : kpi.goalValue) + '" oninput="updateKpiField(\'' + kpi.id + '\', \'goalValue\', this.value)" placeholder="e.g. 30" /></div>'
+          +   '<div class="sop-field"><label>Unit</label><input type="text" value="' + escapeHtml(kpi.unit || '') + '" oninput="updateKpiField(\'' + kpi.id + '\', \'unit\', this.value)" placeholder="%, $, count" /></div>'
+          + '</div>'
+          + '<div class="sop-field"><label>Aggregation (used for cross-grain rollups)</label>' + selectHtml('aggregationMethod', KPI_AGGS, kpi.aggregationMethod || 'sum', 'updateKpiField(\'' + kpi.id + '\', \'aggregationMethod\', this.value)') + '</div>'
+          + '<div class="sop-field"><label>Formula (optional, evaluated in Phase 4)</label><textarea rows="2" oninput="updateKpiField(\'' + kpi.id + '\', \'formula\', this.value)" placeholder="e.g. {{kpi_id_a}} / {{kpi_id_b}} * 100">' + escapeHtml(kpi.formula || '') + '</textarea></div>'
+          + '<div class="sop-card-footer">'
+          +   '<button type="button" class="sop-card-btn delete" onclick="deleteKpi(\'' + kpi.id + '\')">Delete</button>'
+          +   '<button type="button" class="sop-card-btn" style="background:#ec4899; color:#fff;" onclick="saveKpi(\'' + kpi.id + '\')">Save KPI</button>'
+          + '</div>'
+          + '</div>';
+
+        card.innerHTML = headerHtml + bodyHtml;
+        list.appendChild(card);
+      });
+    }
+
+    window.toggleKpi = function(id) {
+      editingKpiId = (editingKpiId === id) ? null : id;
+      renderKpiList();
+    };
+
+    window.updateKpiField = function(id, field, value) {
+      var kpi = currentKpis.find(function(k) { return k.id === id; });
+      if (!kpi) return;
+      if (field === 'goalValue') {
+        kpi[field] = (value === '' || value === null) ? null : Number(value);
+      } else if (field === 'goalOperator' || field === 'groupName' || field === 'unit' || field === 'description' || field === 'formula') {
+        kpi[field] = value === '' ? null : value;
+      } else {
+        kpi[field] = value;
+      }
+    };
+
+    window.addKpi = async function() {
+      if (!currentEntityForKpi) return;
+      var draft = {
+        ownerEntityType: currentEntityForKpi.type,
+        ownerExternalId: currentEntityForKpi.externalId,
+        title: 'New KPI',
+        timeGrain: 'weekly',
+        aggregationMethod: 'sum',
+        groupName: 'Winning Scoreboard',
+      };
+      try {
+        var resp = await fetch('/api/v1/kpis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(draft),
+        });
+        if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Could not create KPI: ' + (err.error && err.error.message ? err.error.message : resp.status)); return; }
+        var created = await resp.json();
+        currentKpis.unshift(created);
+        editingKpiId = created.id;
+        renderKpiList();
+      } catch (e) { alert('Failed to create KPI: ' + e.message); }
+    };
+
+    window.saveKpi = async function(id) {
+      var kpi = currentKpis.find(function(k) { return k.id === id; });
+      if (!kpi) return;
+      var patch = {
+        title: kpi.title || 'New KPI',
+        description: kpi.description || null,
+        groupName: kpi.groupName || null,
+        goalOperator: kpi.goalOperator || null,
+        goalValue: (kpi.goalValue === '' || kpi.goalValue === null || kpi.goalValue === undefined) ? null : Number(kpi.goalValue),
+        unit: kpi.unit || null,
+        timeGrain: kpi.timeGrain || 'weekly',
+        aggregationMethod: kpi.aggregationMethod || 'sum',
+        formula: kpi.formula || null,
+      };
+      try {
+        var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(patch),
+        });
+        if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Could not save: ' + (err.error && err.error.message ? err.error.message : resp.status)); return; }
+        var updated = await resp.json();
+        var idx = currentKpis.findIndex(function(k) { return k.id === id; });
+        if (idx >= 0) currentKpis[idx] = updated;
+        editingKpiId = null;
+        renderKpiList();
+      } catch (e) { alert('Save failed: ' + e.message); }
+    };
+
+    window.deleteKpi = async function(id) {
+      if (!confirm('Delete this KPI? Time-series values will be archived but the definition will be removed from the scorecard.')) return;
+      try {
+        var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include' });
+        if (!resp.ok) { alert('Delete failed: ' + resp.status); return; }
+        currentKpis = currentKpis.filter(function(k) { return k.id !== id; });
+        if (editingKpiId === id) editingKpiId = null;
+        renderKpiList();
+      } catch (e) { alert('Delete failed: ' + e.message); }
+    };
+
     function renderInheritedFor(d) {
       var section = document.getElementById('ef-inherited-section');
       var inh = getInheritedFor(d);
@@ -1130,6 +1354,7 @@
       editingSopIdx = -1;
       renderSopList();
       renderInheritedFor(d);
+      loadKpisForEntity(d.type, d.externalId);
       document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-body').value = (d.type === 'agent' ? (p.runtimeBody || '') : '');
