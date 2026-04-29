@@ -234,7 +234,7 @@ async function logNudge(
 export interface RunOptions {
   dryRun?: boolean;
   limit?: number | null;
-  toEmail?: string | null;     // restrict to a single recipient (testing)
+  toEmail?: string | null;     // redirect ALL sends to this address (self-test). Candidate data still rendered normally.
   throttleMs?: number;
 }
 
@@ -272,9 +272,15 @@ export async function runReEngagement(opts: RunOptions = {}): Promise<RunResult>
   let candidates: Candidate[] = [...clerkCandidates, ...preSignupCandidates];
   result.candidatesFound = candidates.length;
 
+  // Self-test: when toEmail is set, deliver one sample of each unique segment
+  // to the override address so the operator can preview rendering.
   if (opts.toEmail) {
-    const lower = opts.toEmail.toLowerCase();
-    candidates = candidates.filter(c => c.email === lower);
+    const seen = new Set<Segment>();
+    candidates = candidates.filter(c => {
+      if (seen.has(c.segment)) return false;
+      seen.add(c.segment);
+      return true;
+    });
   }
   if (opts.limit !== undefined && opts.limit !== null) {
     candidates = candidates.slice(0, opts.limit);
@@ -316,25 +322,29 @@ export async function runReEngagement(opts: RunOptions = {}): Promise<RunResult>
 
     try {
       const html = await renderTemplate(c.segment, c);
+      const deliverTo = opts.toEmail ?? c.email;
+      const subject = opts.toEmail
+        ? `[TEST -> ${c.email}] ${SUBJECT_BY_SEGMENT[c.segment]}`
+        : SUBJECT_BY_SEGMENT[c.segment];
       const ok = await sendEmail({
-        to: c.email,
-        subject: SUBJECT_BY_SEGMENT[c.segment],
+        to: deliverTo,
+        subject,
         html,
         from: 'David Steel <notifications@mail.orgtp.com>',
       });
       if (ok) {
-        await logNudge(c, templateKey, 'sent', null);
+        if (!opts.toEmail) await logNudge(c, templateKey, 'sent', null);
         result.sent += 1;
         result.details.push({ email: c.email, segment: c.segment, staleDays: c.staleDays, status: 'sent' });
       } else {
-        await logNudge(c, templateKey, 'failed', 'sendEmail returned false');
+        if (!opts.toEmail) await logNudge(c, templateKey, 'failed', 'sendEmail returned false');
         result.failed += 1;
         result.failures.push({ email: c.email, error: 'sendEmail returned false' });
         result.details.push({ email: c.email, segment: c.segment, staleDays: c.staleDays, status: 'failed' });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      await logNudge(c, templateKey, 'failed', msg).catch(() => undefined);
+      if (!opts.toEmail) await logNudge(c, templateKey, 'failed', msg).catch(() => undefined);
       result.failed += 1;
       result.failures.push({ email: c.email, error: msg });
       result.details.push({ email: c.email, segment: c.segment, staleDays: c.staleDays, status: 'failed' });
