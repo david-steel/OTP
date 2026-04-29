@@ -233,16 +233,16 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Protocol page (the canonical "OTP is a protocol, not a service" page)
   app.get('/protocol', async (request, reply) => {
     return reply.view('pages/protocol', {
-      title: 'OTP is a protocol, not a service',
-      description: 'An OOS file holds the patterns your agents would otherwise relearn every session. Drop it in your repo. Read it locally. No service required. Publish to the network when you want cross-org coordination.',
+      title: 'For the first time, your strategy is an artifact your agents can read',
+      description: "An OOS file is where your team's plan and your agents' rules live together. Humans read it. Agents query it. No translation layer between the boardroom and the bot.",
       canonical: BASE_URL + '/protocol',
       ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: 'Protocol', url: BASE_URL + '/protocol' }),
       jsonLd: {
         '@context': 'https://schema.org',
         '@type': 'TechArticle',
-        headline: 'OTP is a protocol, not a service',
-        description: 'The OOS file format for AI agent coordination. Use locally with no dependencies; publish to the network when you want cross-org coordination.',
+        headline: 'For the first time, your strategy is an artifact your agents can read',
+        description: "The OOS file format: where your team's plan and your agents' rules live together. Humans read it, agents query it, no translation layer.",
         url: BASE_URL + '/protocol',
       },
     });
