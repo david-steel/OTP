@@ -84,13 +84,24 @@
         Terms used in this plan (click to expand)
       </summary>
       <div class="px-4 py-3 border-t border-blue-200 text-xs text-blue-900 space-y-2">
-        <div><strong>Execution Item:</strong> A unit of work tied to a measurable outcome and owned by a specific person or agent.</div>
+        <div><strong>OOS (Organizational Operating System):</strong> The shared file that captures how this organization actually works: rules, authority boundaries, escalation paths, and evidence-backed operating practices that humans and agents both read.</div>
+        <div><strong>OOS File:</strong> A single instance of an OOS for one organization. Has a draft and (optionally) a published version.</div>
+        <div><strong>Operating Plan:</strong> This page. The strategy layer above the OOS. Sections capture intent; selected items get pushed into the OOS as durable rules.</div>
+        <div><strong>Claim (OOS):</strong> A structured, evidence-backed statement about how the organization operates. Contains a rule, a why, a failure mode, a confidence level, and an evidence type.</div>
+        <div><strong>Section:</strong> One of the 8 standard parts of the Operating Plan (Core Foundation, Market Command, Destination, Annual Game Plan, 90-Day Execution Engine, Performance Scorecard, Constraints &amp; Leverage Points, Alignment &amp; Accountability).</div>
+        <div><strong>Execution Item:</strong> A unit of work tied to a measurable outcome and owned by a specific person or agent. Lives in the 90-Day Execution Engine table.</div>
         <div><strong>Owner Assignment Engine:</strong> The logic that recommends who should be responsible for execution based on roles, agents, and OOS rules.</div>
-        <div><strong>Hybrid Ownership:</strong> A shared responsibility between a human and an agent. Primary + secondary.</div>
-        <div><strong>OOS Sync:</strong> The process of converting plan elements into structured operating rules and claims inside the Organizational Operating System.</div>
-        <div><strong>Claim (OOS):</strong> A structured, evidence-backed statement about how the organization operates.</div>
-        <div><strong>Confidence Level:</strong> A score indicating how reliable a claim or assignment is based on available data. Below 70% triggers "needs human assignment."</div>
-        <div><strong>Source References:</strong> The data or rules used to justify a recommendation or claim.</div>
+        <div><strong>Owner Type:</strong> Whether responsibility sits with a human, an agent, both (Hybrid), or no one yet (Unassigned).</div>
+        <div><strong>Hybrid Ownership:</strong> A shared responsibility between a human and an agent. Primary owner has authority; secondary backs them up.</div>
+        <div><strong>Confidence Level:</strong> A 0-100 score indicating how reliable a claim or assignment is based on available data. Below 70% triggers "needs human assignment."</div>
+        <div><strong>Assignment Reason:</strong> A plain-English explanation of why a particular owner was recommended for an item.</div>
+        <div><strong>Source References:</strong> The agents, humans, or OOS rules used to justify a recommendation or claim.</div>
+        <div><strong>Quarter Label:</strong> The calendar quarter an execution item belongs to (Q1-2026, Q2-2026, etc.). Items never get deleted at quarter end; they keep their quarter and a status like "completed" or "deferred."</div>
+        <div><strong>Preview Sync:</strong> A read-only diff that shows which OOS claims would be added or updated if you pushed right now. Saves an audit event but writes nothing.</div>
+        <div><strong>Push to OOS / OOS Sync:</strong> The process of converting plan elements into structured operating rules and claims inside the OOS. Super-admin gated because the OOS is load-bearing.</div>
+        <div><strong>Sync Event:</strong> An audit-trail entry recording every preview, push, and rollback. Includes before/after snapshots so any change can be traced or reverted.</div>
+        <div><strong>Claim-by-claim Revert:</strong> Selectively undo a single pushed claim without rolling back the whole sync. Limited to claims sourced from the Operating Plan.</div>
+        <div><strong>KPI Rollup:</strong> Agent-level and user-level KPIs aggregate upward into the Performance Scorecard section. Each owner's metrics show in their own row; the scorecard reads them.</div>
       </div>
     </details>
 
@@ -99,84 +110,85 @@
       <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide mb-3">Plan sections</h2>
       <div class="space-y-3">
         <%
+          // Each field: { label, desc, key (storage), multiline (textarea vs input) }.
+          // The key is the stable storage slot inside content_json; never change it
+          // once data exists, or migrate explicitly.
           var sectionMeta = {
             foundation: {
               tagline: "The non-negotiable identity of the organization: why it exists, how it operates, and who it serves.",
               fields: [
-                ["Purpose", "The fundamental reason the organization exists beyond profit."],
-                ["Mission", "What the organization does daily to fulfill its purpose."],
-                ["Values", "The standards that guide decisions and behavior."],
-                ["Ideal Customer", "The specific type of customer the organization is built to serve best."],
+                { label: "Purpose", desc: "The fundamental reason the organization exists beyond profit.", key: "purpose", multiline: true },
+                { label: "Mission", desc: "What the organization does daily to fulfill its purpose.", key: "mission", multiline: true },
+                { label: "Values", desc: "The standards that guide decisions and behavior. One per line.", key: "values", multiline: true },
+                { label: "Ideal Customer", desc: "The specific type of customer the organization is built to serve best.", key: "ideal_customer", multiline: true },
               ],
             },
             market_command: {
               tagline: "Defines how the organization positions itself to win in the market.",
               fields: [
-                ["Category", "The space the organization competes in."],
-                ["Unique Advantage", "What the organization does better or differently than competitors."],
-                ["Brand Promise", "The consistent result customers can expect."],
-                ["Proof Points", "Evidence that validates the organization's claims."],
+                { label: "Category", desc: "The space the organization competes in.", key: "category", multiline: false },
+                { label: "Unique Advantage", desc: "What the organization does better or differently than competitors.", key: "unique_advantage", multiline: true },
+                { label: "Brand Promise", desc: "The consistent result customers can expect.", key: "brand_promise", multiline: true },
+                { label: "Proof Points", desc: "Evidence that validates the organization's claims. One per line.", key: "proof_points", multiline: true },
               ],
             },
             destination: {
               tagline: "The long-term target that aligns all decisions and execution.",
               fields: [
-                ["3-5 Year Target", "The measurable future state the organization is building toward."],
-                ["Revenue Goal", "The financial growth target."],
-                ["Profit Goal", "The profitability target."],
-                ["Defining Metric", "The single most important number that indicates success."],
+                { label: "3-5 Year Target", desc: "The measurable future state the organization is building toward.", key: "year_target", multiline: true },
+                { label: "Revenue Goal", desc: "The financial growth target.", key: "revenue_goal", multiline: false },
+                { label: "Profit Goal", desc: "The profitability target.", key: "profit_goal", multiline: false },
+                { label: "Defining Metric", desc: "The single most important number that indicates success.", key: "defining_metric", multiline: false },
               ],
             },
             annual_game_plan: {
               tagline: "The strategic focus for the current year.",
               fields: [
-                ["Primary Objective", "The most important outcome to achieve this year."],
-                ["Strategic Initiatives", "The key efforts required to reach the objective."],
-                ["Key Outcomes", "Specific, measurable results that define success."],
+                { label: "Primary Objective", desc: "The most important outcome to achieve this year.", key: "primary_objective", multiline: true },
+                { label: "Strategic Initiatives", desc: "The key efforts required to reach the objective. One per line.", key: "strategic_initiatives", multiline: true },
+                { label: "Key Outcomes", desc: "Specific, measurable results that define success. One per line.", key: "key_outcomes", multiline: true },
               ],
             },
             ninety_day_engine: {
               tagline: "The system that converts strategy into immediate, accountable action.",
               fields: [
-                ["Quarterly Targets", "The outcomes to achieve in the next 90 days."],
-                ["Execution Items", "Specific projects or actions required to hit targets."],
-                ["Owner / Owner Type", "Person, agent, or hybrid accountable for delivery."],
-                ["Confidence Score", "The system's confidence in the assigned owner."],
-                ["Assignment Reason", "Why the owner was selected based on roles, rules, or history."],
-                ["Status", "Current progress (e.g. On Track, At Risk, Off Track)."],
+                { label: "Quarter Narrative", desc: "Plain-English context for this quarter's plan: theme, key bets, where the leverage is. Per-item details (Owner, Confidence, Status, etc.) live in the 90-Day table below.", key: "quarter_narrative", multiline: true },
+                { label: "Quarterly Targets", desc: "The outcomes to achieve in the next 90 days. One per line.", key: "quarterly_targets", multiline: true },
               ],
             },
             performance_scorecard: {
               tagline: "A real-time measurement system that tracks whether execution is working.",
               fields: [
-                ["Weekly KPIs", "Core numbers tracked consistently."],
-                ["Leading Indicators", "Predictive metrics that signal future outcomes."],
-                ["Lagging Indicators", "Results that confirm past performance."],
-                ["Benchmarks", "Target ranges used to evaluate performance."],
+                { label: "Weekly KPIs", desc: "Core numbers tracked consistently. One per line, e.g. 'Dirk: 30 cold emails / day'.", key: "weekly_kpis", multiline: true },
+                { label: "Leading Indicators", desc: "Predictive metrics that signal future outcomes. One per line.", key: "leading_indicators", multiline: true },
+                { label: "Lagging Indicators", desc: "Results that confirm past performance. One per line.", key: "lagging_indicators", multiline: true },
+                { label: "Benchmarks", desc: "Target ranges used to evaluate performance. One per line.", key: "benchmarks", multiline: true },
               ],
             },
             constraints_leverage: {
               tagline: "Identifies what is slowing the organization down and where it can accelerate.",
               fields: [
-                ["Bottlenecks", "Points of friction limiting progress."],
-                ["Risks", "Potential issues that could impact outcomes."],
-                ["Required Resources", "What is needed to execute successfully."],
-                ["Opportunities", "Areas where the organization can gain advantage quickly."],
+                { label: "Bottlenecks", desc: "Points of friction limiting progress. One per line.", key: "bottlenecks", multiline: true },
+                { label: "Risks", desc: "Potential issues that could impact outcomes. One per line.", key: "risks", multiline: true },
+                { label: "Required Resources", desc: "What is needed to execute successfully. One per line.", key: "required_resources", multiline: true },
+                { label: "Opportunities", desc: "Areas where the organization can gain advantage quickly. One per line.", key: "opportunities", multiline: true },
               ],
             },
             alignment_accountability: {
               tagline: "Ensures clarity, ownership, and forward movement across the organization.",
               fields: [
-                ["Key Decisions", "Confirmed choices that guide execution."],
-                ["Open Issues", "Unresolved items requiring attention."],
-                ["Ownership Clarity", "Clear accountability for each initiative."],
-                ["Next Review Date", "When progress and alignment will be reassessed."],
+                { label: "Key Decisions", desc: "Confirmed choices that guide execution. One per line.", key: "key_decisions", multiline: true },
+                { label: "Open Issues", desc: "Unresolved items requiring attention. One per line.", key: "open_issues", multiline: true },
+                { label: "Ownership Clarity", desc: "Clear accountability for each initiative.", key: "ownership_clarity", multiline: true },
+                { label: "Next Review Date", desc: "When progress and alignment will be reassessed.", key: "next_review_date", multiline: false },
               ],
             },
           };
         %>
         <% sections.forEach(function(s) { %>
           <% var meta = sectionMeta[s.sectionKey]; %>
+          <% var content = (s.contentJson && typeof s.contentJson === 'object') ? s.contentJson : {}; %>
+          <% var anyValue = meta && meta.fields ? meta.fields.some(function(f) { var v = content[f.key]; return v !== undefined && v !== null && String(v).trim() !== ''; }) : false; %>
           <details class="bg-white border rounded-lg overflow-hidden">
             <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-start justify-between gap-4">
               <div class="flex-1">
@@ -187,33 +199,47 @@
               </div>
               <span class="text-xs text-gray-400 font-mono whitespace-nowrap mt-1"><%= s.sectionKey %></span>
             </summary>
-            <% if (meta && meta.fields && meta.fields.length > 0) { %>
-              <div class="px-4 py-3 border-t bg-blue-50/50 text-xs">
-                <div class="font-semibold text-gray-700 mb-1.5">What goes in this section:</div>
-                <ul class="space-y-1">
-                  <% meta.fields.forEach(function(f) { %>
-                    <li><strong class="text-gray-800"><%= f[0] %>:</strong> <span class="text-gray-600"><%= f[1] %></span></li>
-                  <% }) %>
-                </ul>
-              </div>
-            <% } %>
             <div class="px-4 py-3 border-t bg-gray-50" data-section-row="<%= s.id %>">
+              <!-- View mode: definition list of stored field values, or empty-state with field guide -->
               <div data-section-view>
-                <% var hasContent = s.contentJson && Object.keys(s.contentJson).length > 0; %>
-                <% if (hasContent) { %>
-                  <pre class="text-xs text-gray-700 whitespace-pre-wrap font-mono bg-white border rounded p-3 max-h-64 overflow-auto"><%= JSON.stringify(s.contentJson, null, 2) %></pre>
+                <% if (anyValue) { %>
+                  <dl class="space-y-3">
+                    <% meta.fields.forEach(function(f) { var v = content[f.key]; if (v !== undefined && v !== null && String(v).trim() !== '') { %>
+                      <div>
+                        <dt class="text-xs font-semibold text-gray-800"><%= f.label %></dt>
+                        <dd class="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap"><%= String(v) %></dd>
+                      </div>
+                    <% } }) %>
+                  </dl>
+                <% } else if (meta && meta.fields && meta.fields.length > 0) { %>
+                  <p class="text-xs text-gray-500 italic mb-2">No content yet. This section captures:</p>
+                  <ul class="text-xs text-gray-600 space-y-1 mb-2">
+                    <% meta.fields.forEach(function(f) { %>
+                      <li><strong class="text-gray-800"><%= f.label %>:</strong> <%= f.desc %></li>
+                    <% }) %>
+                  </ul>
                 <% } else { %>
-                  <p class="text-xs text-gray-400 italic">No content yet. Click Edit to add JSON content.</p>
+                  <p class="text-xs text-gray-400 italic">No content yet.</p>
                 <% } %>
-                <button class="mt-2 text-xs text-otp-600 hover:underline" data-section-edit="<%= s.id %>">Edit</button>
+                <button class="mt-3 px-3 py-1 bg-otp-500 text-white rounded text-xs hover:bg-otp-600" data-section-edit="<%= s.id %>"><%= anyValue ? 'Edit' : 'Add content' %></button>
               </div>
-              <div data-section-editor class="hidden">
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Section content (JSON)</label>
-                <textarea data-section-textarea="<%= s.id %>" rows="10" class="w-full px-3 py-2 border rounded text-xs font-mono focus:outline-none focus:ring-2 focus:ring-otp-500"><%= JSON.stringify(s.contentJson || {}, null, 2) %></textarea>
-                <div class="mt-2 flex gap-2">
-                  <button class="px-3 py-1 bg-otp-500 text-white rounded text-xs hover:bg-otp-600" data-section-save="<%= s.id %>">Save</button>
-                  <button class="px-3 py-1 bg-gray-100 text-gray-700 border rounded text-xs hover:bg-gray-200" data-section-cancel="<%= s.id %>">Cancel</button>
-                  <span class="text-xs text-gray-500" data-section-msg="<%= s.id %>"></span>
+              <!-- Edit mode: labeled inputs per field -->
+              <div data-section-editor class="hidden space-y-3">
+                <% if (meta && meta.fields) { meta.fields.forEach(function(f) { var v = content[f.key] !== undefined && content[f.key] !== null ? String(content[f.key]) : ''; %>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-800 mb-0.5"><%= f.label %></label>
+                    <p class="text-xs text-gray-500 mb-1.5"><%= f.desc %></p>
+                    <% if (f.multiline) { %>
+                      <textarea data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" rows="3" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>"><%= v %></textarea>
+                    <% } else { %>
+                      <input data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" type="text" value="<%= v %>" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>">
+                    <% } %>
+                  </div>
+                <% }) } %>
+                <div class="flex items-center gap-2 pt-1">
+                  <button class="px-3 py-1.5 bg-otp-500 text-white rounded text-xs hover:bg-otp-600 font-medium" data-section-save="<%= s.id %>">Save</button>
+                  <button class="px-3 py-1.5 bg-gray-100 text-gray-700 border rounded text-xs hover:bg-gray-200" data-section-cancel="<%= s.id %>">Cancel</button>
+                  <span class="text-xs" data-section-msg="<%= s.id %>"></span>
                 </div>
               </div>
             </div>
@@ -556,19 +582,26 @@
       btn.addEventListener('click', async function() {
         var id = btn.getAttribute('data-section-save');
         var row = getRow(id);
-        var ta = row.querySelector('[data-section-textarea="' + id + '"]');
         var msgEl = row.querySelector('[data-section-msg="' + id + '"]');
-        var raw = ta.value.trim();
-        var parsed;
-        try { parsed = raw ? JSON.parse(raw) : {}; }
-        catch (err) { msgEl.textContent = 'Invalid JSON: ' + err.message; msgEl.className = 'text-xs text-red-600'; return; }
+
+        // Collect every per-field input/textarea inside this section row.
+        var inputs = row.querySelectorAll('[data-section-input="' + id + '"]');
+        var contentJson = {};
+        inputs.forEach(function(el) {
+          var k = el.getAttribute('data-field-key');
+          var v = el.value;
+          // Store empty string as omitted so view-mode treats it as missing.
+          if (v === null || v === undefined || String(v).trim() === '') return;
+          contentJson[k] = v;
+        });
+
         msgEl.textContent = 'Saving...';
         msgEl.className = 'text-xs text-gray-500';
         try {
           var res = await fetch('/api/v1/oos-operating-plan/sections/' + id, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contentJson: parsed }),
+            body: JSON.stringify({ contentJson: contentJson }),
           });
           var data = await res.json();
           if (!res.ok || data.error) {
