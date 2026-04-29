@@ -66,6 +66,11 @@ function getCreatedBy(request: FastifyRequest): string {
   return 'api-key';
 }
 
+function isApiKeyAuth(request: FastifyRequest): boolean {
+  const auth = getAuth(request);
+  return !auth.userId;
+}
+
 const goalOperatorSchema = z.enum(['gte', 'lte', 'eq', 'gt', 'lt']);
 const ownerTypeSchema = z.enum(['agent', 'human']);
 const grainSchema = z.enum(['weekly', 'monthly', 'quarterly', 'annual']);
@@ -203,10 +208,11 @@ export default async function kpiRoutes(app: FastifyInstance) {
     }
 
     try {
+      const source = isApiKeyAuth(request) ? 'api' : 'manual';
       const row = await writeKpiValue(
         org.id,
         request.params.id,
-        { periodStart, value: body.data.value, notes: body.data.notes ?? null, source: 'manual' },
+        { periodStart, value: body.data.value, notes: body.data.notes ?? null, source },
         getCreatedBy(request),
       );
       return reply.status(201).send(row);
