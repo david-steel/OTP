@@ -1,0 +1,179 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex items-start justify-between mb-2">
+    <div>
+      <h1 class="text-2xl font-bold">OOS Operating Plan</h1>
+      <p class="text-gray-500 text-sm">Turn strategy into accountable execution across humans, agents, and operating rules.</p>
+    </div>
+    <% if (plan) { %>
+      <div class="flex flex-col items-end gap-1">
+        <span class="px-3 py-1 bg-otp-100 text-otp-700 text-xs font-bold rounded-full uppercase"><%= plan.status %></span>
+        <span class="text-xs text-gray-500">Last synced: <%= plan.lastSyncedToOosAt ? new Date(plan.lastSyncedToOosAt).toLocaleString() : 'never' %></span>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (!plan) { %>
+
+    <!-- Empty state: no plan yet -->
+    <div class="mt-8 bg-white border rounded-lg p-12 text-center">
+      <h2 class="text-xl font-semibold mb-2">No operating plan yet</h2>
+      <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Create your organization's first OOS Operating Plan. We'll seed the eight standard sections and you can fill them in or auto-generate from your existing OOS.</p>
+      <form method="POST" action="/dashboard/oos-operating-plan/create" class="inline-block">
+        <button type="submit" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-600 text-sm transition-colors">
+          Create OOS Operating Plan
+        </button>
+      </form>
+    </div>
+
+  <% } else { %>
+
+    <!-- Plan header actions -->
+    <div class="mt-6 mb-6 flex flex-wrap gap-2 text-xs">
+      <button id="btn-generate" class="px-3 py-1.5 bg-otp-50 text-otp-700 border border-otp-200 rounded-lg hover:bg-otp-100 transition-colors" data-action="generate" data-plan-id="<%= plan.id %>">Generate 90-Day Plan</button>
+      <button id="btn-recalc" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" data-action="recalculate" data-plan-id="<%= plan.id %>">Recalculate Assignments</button>
+      <button id="btn-preview" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors" data-action="preview" data-plan-id="<%= plan.id %>">Preview OOS Update</button>
+      <% if (isSuperAdmin) { %>
+        <button id="btn-push" class="px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-300 rounded-lg hover:bg-amber-100 transition-colors font-semibold" data-action="push" data-plan-id="<%= plan.id %>">Push to OOS</button>
+      <% } else { %>
+        <button class="px-3 py-1.5 bg-gray-100 text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed" title="Super admin only">Push to OOS (super-admin)</button>
+      <% } %>
+      <button id="btn-export" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" data-action="export" data-plan-id="<%= plan.id %>">Export / Copy Markdown</button>
+    </div>
+
+    <div id="action-msg" class="hidden mb-4 px-3 py-2 rounded-lg text-sm"></div>
+
+    <!-- 8 section cards (collapsible) -->
+    <div class="mb-8">
+      <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide mb-3">Plan sections</h2>
+      <div class="space-y-3">
+        <% sections.forEach(function(s) { %>
+          <details class="bg-white border rounded-lg overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-center justify-between">
+              <span class="font-semibold text-sm"><%= s.title %></span>
+              <span class="text-xs text-gray-400 font-mono"><%= s.sectionKey %></span>
+            </summary>
+            <div class="px-4 py-3 border-t bg-gray-50">
+              <% var hasContent = s.contentJson && Object.keys(s.contentJson).length > 0; %>
+              <% if (hasContent) { %>
+                <pre class="text-xs text-gray-700 whitespace-pre-wrap font-mono bg-white border rounded p-3 max-h-64 overflow-auto"><%= JSON.stringify(s.contentJson, null, 2) %></pre>
+              <% } else { %>
+                <p class="text-xs text-gray-400 italic">No content yet. Editing UI ships in Phase 3.</p>
+              <% } %>
+              <button class="mt-2 text-xs text-otp-600 hover:underline" data-action="edit-section" data-section-id="<%= s.id %>" disabled>Edit (Phase 3)</button>
+            </div>
+          </details>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- 90-Day Execution Engine table -->
+    <div class="mb-8">
+      <div class="flex items-baseline justify-between mb-3">
+        <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide">90-Day Execution Engine — <%= currentQuarter %></h2>
+        <span class="text-xs text-gray-500"><%= executionItems.length %> item<%= executionItems.length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+            <tr>
+              <th class="text-left px-3 py-2">Priority / Initiative</th>
+              <th class="text-left px-3 py-2">Desired outcome</th>
+              <th class="text-left px-3 py-2">Recommended owner</th>
+              <th class="text-left px-3 py-2">Type</th>
+              <th class="text-left px-3 py-2">Confidence</th>
+              <th class="text-left px-3 py-2">Why assigned</th>
+              <th class="text-left px-3 py-2">Due</th>
+              <th class="text-left px-3 py-2">Status</th>
+              <th class="text-left px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (executionItems.length === 0) { %>
+              <tr>
+                <td colspan="9" class="px-3 py-12 text-center text-gray-400 text-sm">
+                  No execution items yet for <%= currentQuarter %>.<br/>
+                  Click <span class="font-semibold">Generate 90-Day Plan</span> to auto-generate from your OOS, agents, employees, and goals (Phase 7).
+                </td>
+              </tr>
+            <% } %>
+            <% executionItems.forEach(function(item) { %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2">
+                  <div class="font-semibold"><%= item.title %></div>
+                  <div class="text-xs">
+                    <% var prioBadge = { critical: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700', medium: 'bg-blue-100 text-blue-700', low: 'bg-gray-100 text-gray-600' }[item.priority] || 'bg-gray-100 text-gray-600'; %>
+                    <span class="px-2 py-0.5 rounded-full <%= prioBadge %>"><%= item.priority %></span>
+                    <% if (item.createdByAi) { %>
+                      <span class="ml-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">AI</span>
+                    <% } %>
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-xs text-gray-600 max-w-sm"><%= item.outcome || '—' %></td>
+                <td class="px-3 py-2 text-xs"><%= item.assignedOwnerName || '—' %><% if (item.assignedOwnerType === 'hybrid' && item.secondaryOwnerName) { %><br/><span class="text-gray-400">+ <%= item.secondaryOwnerName %></span><% } %></td>
+                <td class="px-3 py-2">
+                  <% var typeBadge = { employee: 'bg-blue-100 text-blue-700', agent: 'bg-purple-100 text-purple-700', hybrid: 'bg-indigo-100 text-indigo-700', unassigned: 'bg-gray-100 text-gray-500' }[item.assignedOwnerType] || 'bg-gray-100 text-gray-500'; %>
+                  <span class="px-2 py-0.5 rounded-full text-xs <%= typeBadge %>"><%= item.assignedOwnerType %></span>
+                </td>
+                <td class="px-3 py-2 text-xs">
+                  <% if (item.confidenceScore !== null && item.confidenceScore !== undefined) { %>
+                    <% var c = Math.round(item.confidenceScore); %>
+                    <% var confColor = c >= 70 ? 'text-green-600' : c >= 40 ? 'text-amber-600' : 'text-red-600'; %>
+                    <span class="font-mono <%= confColor %>"><%= c %>%</span>
+                  <% } else { %>
+                    <span class="text-gray-400">—</span>
+                  <% } %>
+                </td>
+                <td class="px-3 py-2 text-xs text-gray-600 max-w-xs truncate" title="<%= item.assignmentReason || '' %>"><%= item.assignmentReason || '—' %></td>
+                <td class="px-3 py-2 text-xs text-gray-500"><%= item.dueDate ? new Date(item.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—' %></td>
+                <td class="px-3 py-2">
+                  <% var statusBadge = { proposed: 'bg-gray-100 text-gray-600', accepted: 'bg-blue-100 text-blue-700', in_progress: 'bg-otp-100 text-otp-700', at_risk: 'bg-amber-100 text-amber-700', completed: 'bg-green-100 text-green-700', deferred: 'bg-gray-100 text-gray-500' }[item.status] || 'bg-gray-100 text-gray-600'; %>
+                  <span class="px-2 py-0.5 rounded-full text-xs <%= statusBadge %>"><%= item.status.replace('_', ' ') %></span>
+                </td>
+                <td class="px-3 py-2">
+                  <button class="text-xs text-otp-600 hover:underline" data-action="edit-item" data-item-id="<%= item.id %>" disabled>Edit</button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Build status footer -->
+    <div class="mt-12 bg-gray-50 border rounded-lg p-4 text-xs text-gray-500">
+      <strong class="text-gray-700">Build status:</strong> Phase 2 (UI skeleton) live. Phases 3-7 ship next: section editing, execution-item CRUD, owner-assignment recommender, preview-sync, push-to-OOS, agent context endpoint.
+    </div>
+
+  <% } %>
+</div>
+
+<script>
+  (function() {
+    var msg = document.getElementById('action-msg');
+    function showMsg(text, kind) {
+      if (!msg) return;
+      msg.textContent = text;
+      msg.className = 'mb-4 px-3 py-2 rounded-lg text-sm ' + (
+        kind === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+        kind === 'ok' ? 'bg-green-50 text-green-700 border border-green-200' :
+        'bg-blue-50 text-blue-700 border border-blue-200'
+      );
+    }
+
+    document.querySelectorAll('[data-action]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        var action = btn.getAttribute('data-action');
+        if (action === 'edit-section' || action === 'edit-item') return; // disabled in Phase 2
+
+        e.preventDefault();
+        var planId = btn.getAttribute('data-plan-id');
+        showMsg('Action "' + action + '" — not wired yet. Ships Phase ' + (
+          action === 'generate' || action === 'recalculate' ? '7' :
+          action === 'preview' ? '5' :
+          action === 'push' ? '6' :
+          action === 'export' ? '3' : '?'
+        ) + '.', 'info');
+      });
+    });
+  })();
+</script>

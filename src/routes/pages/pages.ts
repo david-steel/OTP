@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -23,6 +23,12 @@ const BASE_URL = 'https://orgtp.com';
 
 function bc(...items: Array<{ name: string; url: string }>) {
   return [{ name: 'Home', url: BASE_URL + '/' }, ...items];
+}
+
+// Calendar-quarter label for OOS execution items: 'Q1-2026', 'Q2-2026', etc.
+function quarterLabel(d: Date): string {
+  const q = Math.floor(d.getMonth() / 3) + 1;
+  return `Q${q}-${d.getFullYear()}`;
 }
 
 export default async function pageRoutes(app: FastifyInstance) {
@@ -1327,6 +1333,105 @@ export default async function pageRoutes(app: FastifyInstance) {
       noindex: true,
       workspaces: wsRows.rows || [],
     });
+  });
+
+  // Dashboard: OOS Operating Plan (strategy -> structured OOS claims)
+  // Page-level access: any authed org member. Push-to-OOS is super-admin gated at the API endpoint (Phase 6).
+  app.get('/dashboard/oos-operating-plan', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/');
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.redirect('/dashboard');
+
+    // One active plan per org (MVP). Future: departmental plans via departmentId.
+    const planArr = await db
+      .select()
+      .from(oosOperatingPlans)
+      .where(and(eq(oosOperatingPlans.organizationId, org.id), eq(oosOperatingPlans.status, 'active')))
+      .orderBy(desc(oosOperatingPlans.createdAt))
+      .limit(1);
+    const plan = planArr[0] || null;
+
+    let sections: typeof oosOperatingPlanSections.$inferSelect[] = [];
+    let executionItems: typeof oosExecutionItems.$inferSelect[] = [];
+
+    if (plan) {
+      sections = await db
+        .select()
+        .from(oosOperatingPlanSections)
+        .where(eq(oosOperatingPlanSections.planId, plan.id))
+        .orderBy(oosOperatingPlanSections.sortOrder);
+
+      const currentQuarter = quarterLabel(new Date());
+      executionItems = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(and(eq(oosExecutionItems.planId, plan.id), eq(oosExecutionItems.quarter, currentQuarter)))
+        .orderBy(desc(oosExecutionItems.createdAt));
+    }
+
+    return reply.view('pages/oos-operating-plan', {
+      title: 'OOS Operating Plan - Dashboard - OTP',
+      description: 'Turn strategy into accountable execution across humans, agents, and operating rules.',
+      noindex: true,
+      org,
+      plan,
+      sections,
+      executionItems,
+      currentQuarter: quarterLabel(new Date()),
+      isSuperAdmin: (request as any).isSuperAdmin,
+    });
+  });
+
+  // Create the org's first OOS Operating Plan (idempotent: returns existing if present).
+  // Seeds the 8 standard sections so the UI has something to render.
+  app.post('/dashboard/oos-operating-plan/create', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
+
+    // Reuse existing active plan if one already exists.
+    const existingArr = await db
+      .select()
+      .from(oosOperatingPlans)
+      .where(and(eq(oosOperatingPlans.organizationId, org.id), eq(oosOperatingPlans.status, 'active')))
+      .limit(1);
+    if (existingArr[0]) return reply.redirect('/dashboard/oos-operating-plan');
+
+    const [newPlan] = await db
+      .insert(oosOperatingPlans)
+      .values({
+        organizationId: org.id,
+        title: org.name + ' Operating Plan',
+        status: 'active',
+        createdBy: auth.userId,
+      })
+      .returning();
+
+    const defaultSections: Array<{ key: typeof oosOperatingPlanSections.$inferInsert['sectionKey']; title: string; sort: number }> = [
+      { key: 'foundation', title: 'Core Foundation', sort: 1 },
+      { key: 'market_command', title: 'Market Command', sort: 2 },
+      { key: 'destination', title: 'Destination', sort: 3 },
+      { key: 'annual_game_plan', title: 'Annual Game Plan', sort: 4 },
+      { key: 'ninety_day_engine', title: '90-Day Execution Engine', sort: 5 },
+      { key: 'performance_scorecard', title: 'Performance Scorecard', sort: 6 },
+      { key: 'constraints_leverage', title: 'Constraints & Leverage Points', sort: 7 },
+      { key: 'alignment_accountability', title: 'Alignment & Accountability', sort: 8 },
+    ];
+    await db.insert(oosOperatingPlanSections).values(
+      defaultSections.map(s => ({
+        planId: newPlan.id,
+        sectionKey: s.key,
+        title: s.title,
+        contentJson: {},
+        sortOrder: s.sort,
+      })),
+    );
+
+    return reply.redirect('/dashboard/oos-operating-plan');
   });
 
   // Dashboard: Workspace detail

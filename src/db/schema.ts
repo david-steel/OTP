@@ -410,3 +410,106 @@ export const orgInvitations = pgTable('org_invitations', {
   statusIdx: index('org_invitations_status_idx').on(table.status),
   emailIdx: index('org_invitations_email_idx').on(table.email),
 }));
+
+// ---- OOS Operating Plan (strategic plan -> structured OOS claims) ----
+
+export const oosPlanStatusEnum = pgEnum('oos_plan_status', ['draft', 'active', 'archived']);
+export const oosPlanSectionKeyEnum = pgEnum('oos_plan_section_key', [
+  'foundation',
+  'market_command',
+  'destination',
+  'annual_game_plan',
+  'ninety_day_engine',
+  'performance_scorecard',
+  'constraints_leverage',
+  'alignment_accountability',
+]);
+export const oosItemPriorityEnum = pgEnum('oos_item_priority', ['critical', 'high', 'medium', 'low']);
+export const oosItemStatusEnum = pgEnum('oos_item_status', [
+  'proposed',
+  'accepted',
+  'in_progress',
+  'at_risk',
+  'completed',
+  'deferred',
+]);
+export const oosOwnerTypeEnum = pgEnum('oos_owner_type', ['employee', 'agent', 'hybrid', 'unassigned']);
+export const oosSyncTypeEnum = pgEnum('oos_sync_type', ['preview', 'push_to_oos', 'rollback']);
+
+export const oosOperatingPlans = pgTable('oos_operating_plans', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  departmentId: uuid('department_id'), // nullable; departmental plans = future release
+  title: varchar('title', { length: 255 }).notNull(),
+  status: oosPlanStatusEnum('status').notNull().default('draft'),
+  createdBy: varchar('created_by', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  lastSyncedToOosAt: timestamp('last_synced_to_oos_at'),
+}, (table) => ({
+  orgIdx: index('oop_org_idx').on(table.organizationId),
+  deptIdx: index('oop_dept_idx').on(table.departmentId),
+  statusIdx: index('oop_status_idx').on(table.status),
+}));
+
+export const oosOperatingPlanSections = pgTable('oos_operating_plan_sections', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  planId: uuid('plan_id').references(() => oosOperatingPlans.id, { onDelete: 'cascade' }).notNull(),
+  sectionKey: oosPlanSectionKeyEnum('section_key').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  contentJson: jsonb('content_json').notNull().default({}),
+  sortOrder: integer('sort_order').notNull().default(0),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  planSectionIdx: uniqueIndex('oops_plan_section_idx').on(table.planId, table.sectionKey),
+  sortIdx: index('oops_sort_idx').on(table.planId, table.sortOrder),
+}));
+
+export const oosExecutionItems = pgTable('oos_execution_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  planId: uuid('plan_id').references(() => oosOperatingPlans.id, { onDelete: 'cascade' }).notNull(),
+  title: varchar('title', { length: 500 }).notNull(),
+  description: text('description'),
+  outcome: text('outcome'),
+  priority: oosItemPriorityEnum('priority').notNull().default('medium'),
+  status: oosItemStatusEnum('status').notNull().default('proposed'),
+  dueDate: timestamp('due_date'),
+  quarter: varchar('quarter', { length: 12 }).notNull(), // 'Q1-2026'
+  assignedOwnerType: oosOwnerTypeEnum('assigned_owner_type').notNull().default('unassigned'),
+  assignedOwnerId: varchar('assigned_owner_id', { length: 255 }),
+  assignedOwnerName: varchar('assigned_owner_name', { length: 255 }),
+  secondaryOwnerType: oosOwnerTypeEnum('secondary_owner_type'),
+  secondaryOwnerId: varchar('secondary_owner_id', { length: 255 }),
+  secondaryOwnerName: varchar('secondary_owner_name', { length: 255 }),
+  confidenceScore: real('confidence_score'),
+  assignmentReason: text('assignment_reason'),
+  sourceReferencesJson: jsonb('source_references_json').default([]),
+  pushedClaimIdsJson: jsonb('pushed_claim_ids_json').default([]),
+  createdByAi: boolean('created_by_ai').notNull().default(false),
+  userModified: boolean('user_modified').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  planIdx: index('ooei_plan_idx').on(table.planId),
+  quarterIdx: index('ooei_quarter_idx').on(table.planId, table.quarter),
+  statusIdx: index('ooei_status_idx').on(table.status),
+  ownerIdx: index('ooei_owner_idx').on(table.assignedOwnerType, table.assignedOwnerId),
+  priorityIdx: index('ooei_priority_idx').on(table.priority),
+}));
+
+export const oosPlanSyncEvents = pgTable('oos_plan_sync_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  planId: uuid('plan_id').references(() => oosOperatingPlans.id, { onDelete: 'cascade' }).notNull(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  syncType: oosSyncTypeEnum('sync_type').notNull(),
+  pushedBy: varchar('pushed_by', { length: 255 }).notNull(),
+  beforeSnapshotJson: jsonb('before_snapshot_json').default({}),
+  afterSnapshotJson: jsonb('after_snapshot_json').default({}),
+  claimIdsJson: jsonb('claim_ids_json').default([]),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  planIdx: index('oopse_plan_idx').on(table.planId),
+  orgIdx: index('oopse_org_idx').on(table.organizationId),
+  typeIdx: index('oopse_type_idx').on(table.syncType),
+  createdIdx: index('oopse_created_idx').on(table.createdAt),
+}));
