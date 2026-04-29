@@ -1230,6 +1230,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       groupNames,
       scoreboard,
       periodLabels,
+      isSuperAdmin: (request as any).isSuperAdmin,
     });
   });
 

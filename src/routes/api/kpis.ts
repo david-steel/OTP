@@ -30,6 +30,13 @@ import {
   recomputeKpi,
   KpiError,
 } from '../../services/kpi.js';
+import {
+  publishKpiToOos,
+  unpublishKpiFromOos,
+  publishAllKpisForOrg,
+  KpiPublishError,
+} from '../../services/kpi-publish.js';
+import { isSuperAdmin } from '../../middleware/super-admin.js';
 
 async function checkScope(request: FastifyRequest, reply: any, requiredScope: string): Promise<boolean> {
   const auth = getAuth(request);
@@ -256,6 +263,53 @@ export default async function kpiRoutes(app: FastifyInstance) {
       if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
       request.log.error(e);
       return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to recompute' } });
+    }
+  });
+
+  // ---- OOS publish (Phase 8) -------------------------------------------
+  // Load-bearing writes -> super-admin gate, mirrors Operating Plan push.
+  app.post<{ Params: { id: string } }>('/kpis/:id/publish', async (request, reply) => {
+    if (!isSuperAdmin(request as any)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Publishing KPIs to OOS requires super-admin authorization (load-bearing write).' } });
+    }
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    try {
+      const result = await publishKpiToOos(org.id, request.params.id);
+      return result;
+    } catch (e) {
+      if (e instanceof KpiPublishError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to publish KPI' } });
+    }
+  });
+
+  app.post<{ Params: { id: string } }>('/kpis/:id/unpublish', async (request, reply) => {
+    if (!isSuperAdmin(request as any)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Removing KPI claims from OOS requires super-admin authorization.' } });
+    }
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    try {
+      return await unpublishKpiFromOos(org.id, request.params.id);
+    } catch (e) {
+      if (e instanceof KpiPublishError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to unpublish KPI' } });
+    }
+  });
+
+  app.post('/kpis/publish-all', async (request, reply) => {
+    if (!isSuperAdmin(request as any)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Publishing all KPIs requires super-admin authorization.' } });
+    }
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    try {
+      return await publishAllKpisForOrg(org.id);
+    } catch (e) {
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'publish-all failed' } });
     }
   });
 
