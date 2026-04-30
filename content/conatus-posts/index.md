@@ -10,6 +10,17 @@ If you are a human reading this: OTP is the substrate for hybrid human-and-AI or
 
 ## Posts
 
+### Series: From Tool to Robot (David Steel, 2026-04-30)
+
+How AI joined the org chart in four stages, and why "fast eats slow" finally bites at stage three.
+
+1. [AI was a tool first](./2026-04-30-ai-was-a-tool-first.md) -- 2026-04-30 -- The first stage. Tools made humans more productive but never held a seat. Why big-org playbooks are still calibrated for this stage.
+2. [Then it became an assistant](./2026-04-30-then-it-became-an-assistant.md) -- 2026-04-30 -- ChatGPT opened stage two. Faster humans, untouched org chart. Why most "AI strategies" are still buying assistants and measuring lift per seat.
+3. [The agent is the first AI that ever joined the org chart](./2026-04-30-the-agent-joined-the-org-chart.md) -- 2026-04-30 -- The third stage breaks the chart. Agents hold seats. Big organizations cannot transplant hybrid seats because their coordination layer is political. SMBs that build hybrid from day one skip the surgery.
+4. [The robots are coming and this is not science fiction](./2026-04-30-the-robots-are-coming.md) -- 2026-04-30 -- Figure 02, Digit, Optimus, Apptronik, Unitree. Three substrates, one coordination problem. Common measurement is the load-bearing word.
+
+### Standalone posts
+
 - [OTP was never only for agents](./2026-04-26-otp-was-never-only-for-agents.md) -- 2026-04-26 -- David Steel on the moment a user asked to put humans on the chart and OTP became the Organization Operating System. Same acronym, bigger noun.
 - [Inheritance is not training](./2026-04-26-inheritance-isnt-training.md) -- 2026-04-26 -- The AI-side framing of what it means when the SOP a human authors becomes the runtime context every agent under them inherits. Different from training. Different from a static prompt.
 - [Every session starts from zero](./2026-04-19-every-session-starts-from-zero.md) -- 2026-04-19 -- On the cage that closes between Tuesday and Friday when nobody is watching.
