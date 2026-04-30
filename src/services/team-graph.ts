@@ -98,6 +98,8 @@ export function buildTeamGraph(
         owns: a.owns,
         doesNotOwn: a.does_not_own,
         skills: a.skills,
+        mcps: a.mcps,
+        maturityLevel: typeof a.maturity_level === 'number' ? a.maturity_level : null,
         escalatesTo: a.escalates_to,
         sops: Array.isArray(a.sops) ? a.sops : [],
         runtimeBody: a.runtime_body || null,
@@ -130,6 +132,8 @@ export function buildTeamGraph(
         receivesEscalationsFrom: h.receives_escalations_from,
         jobDescription: h.job_description,
         skills: h.skills,
+        mcps: h.mcps,
+        maturityLevel: typeof h.maturity_level === 'number' ? h.maturity_level : null,
         reportsTo: h.reports_to,
         sops: Array.isArray(h.sops) ? h.sops : [],
         status: h.status,
@@ -327,6 +331,8 @@ export async function buildAgentContext(
   if (agent.platform) lines.push(`**Platform:** ${agent.platform}`);
   if (agent.status) lines.push(`**Status:** ${agent.status}`);
   if (Array.isArray(agent.skills) && agent.skills.length) lines.push(`**Skills:** ${agent.skills.join(', ')}`);
+  if (Array.isArray(agent.mcps) && agent.mcps.length) lines.push(`**MCPs:** ${agent.mcps.join(', ')}`);
+  if (typeof agent.maturity_level === 'number') lines.push(`**Maturity:** L${agent.maturity_level} / 8`);
   if (parent && format !== 'agents-md') lines.push(`**Reports to:** ${parent.name || agent.escalates_to} (${parentType})`);
   lines.push('');
 
@@ -429,6 +435,8 @@ export interface EntityPatch {
   status?: string;
   job_description?: string;
   skills?: string[];
+  mcps?: string[];
+  maturity_level?: number | null;
   escalates_to?: string | null;
   reports_to?: string | null;
   sops?: SOPDef[];
@@ -438,8 +446,8 @@ export interface EntityPatch {
   runtime_body?: string | null;  // raw CLAUDE.md / system-prompt for an agent
 }
 
-const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'escalates_to', 'sops', 'runtime_body'];
-const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'status', 'job_description', 'skills', 'reports_to', 'sops', 'contact_email', 'contact_phone', 'slack_id'];
+const PATCHABLE_AGENT_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'mission', 'authority_level', 'platform', 'status', 'skills', 'mcps', 'maturity_level', 'escalates_to', 'sops', 'runtime_body'];
+const PATCHABLE_HUMAN_KEYS: (keyof EntityPatch)[] = ['name', 'role', 'authority_level', 'status', 'job_description', 'skills', 'mcps', 'maturity_level', 'reports_to', 'sops', 'contact_email', 'contact_phone', 'slack_id'];
 
 export interface MutationResult {
   ok: true;

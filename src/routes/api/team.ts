@@ -38,6 +38,8 @@ const patchSchema = z.object({
     status: z.string().max(120).optional(),
     job_description: z.string().max(2000).optional(),
     skills: z.array(z.string().min(1).max(80)).max(40).optional(),
+    mcps: z.array(z.string().min(1).max(80)).max(40).optional(),
+    maturity_level: z.number().int().min(1).max(8).nullable().optional(),
     escalates_to: z.string().max(120).nullable().optional(),
     reports_to: z.string().max(120).nullable().optional(),
     sops: z.array(z.object({

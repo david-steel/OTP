@@ -349,7 +349,32 @@
     <div class="edit-field"><label for="ef-role">Role</label><input id="ef-role" type="text" /></div>
     <div class="edit-field" id="ef-mission-wrap"><label for="ef-mission">Mission</label><textarea id="ef-mission" rows="3"></textarea></div>
     <div class="edit-field" id="ef-jobdesc-wrap"><label for="ef-jobdesc">Job description</label><textarea id="ef-jobdesc" rows="3"></textarea></div>
-    <div class="edit-field"><label for="ef-authority">Authority level</label><input id="ef-authority" type="text" placeholder="e.g. autonomous, advisory, full_override" /></div>
+    <div class="edit-field"><label for="ef-authority">Authority level</label>
+      <select id="ef-authority">
+        <option value="">(unset)</option>
+        <option value="view-only">view-only — Reads, never acts</option>
+        <option value="recommend">recommend — Drafts, human approves</option>
+        <option value="execute-with-approval">execute-with-approval — Acts on standing approval (revocable)</option>
+        <option value="autonomous">autonomous — Acts without per-action approval</option>
+        <option value="__custom__">(other / custom...)</option>
+      </select>
+      <input id="ef-authority-custom" type="text" placeholder="custom authority level" style="margin-top:0.4rem; display:none;" />
+      <div class="hint">Aligns with L1-L8 framework. Pick the closest match or use custom for legacy values.</div>
+    </div>
+    <div class="edit-field" id="ef-maturity-wrap"><label for="ef-maturity">Maturity (Bassim L1-L8)</label>
+      <select id="ef-maturity">
+        <option value="">(unset)</option>
+        <option value="1">L1 — Tab Complete</option>
+        <option value="2">L2 — Code Generation</option>
+        <option value="3">L3 — Single-Step Agent</option>
+        <option value="4">L4 — Multi-Step Agent</option>
+        <option value="5">L5 — Tool-Using Agent</option>
+        <option value="6">L6 — Self-Correcting Agent</option>
+        <option value="7">L7 — Continuous-Learning Agent</option>
+        <option value="8">L8 — Autonomous Agent Teams</option>
+      </select>
+      <div class="hint">Where this seat sits on the agentic-engineering progression. Bassim can write this via API.</div>
+    </div>
     <div class="edit-field" id="ef-platform-wrap"><label for="ef-platform">Platform</label><input id="ef-platform" type="text" placeholder="e.g. claude-code, n8n, custom" /></div>
     <div class="edit-field" id="ef-status-wrap"><label for="ef-status">Status</label>
       <select id="ef-status">
@@ -376,6 +401,16 @@
         <div id="ef-skills-suggestions" class="skill-suggestions-list" role="listbox"></div>
       </div>
       <div class="hint">Pick from the catalog or type a custom skill and press Enter. Custom skills are saved as-is.</div>
+    </div>
+
+    <div class="edit-field">
+      <label for="ef-mcps">MCPs / Integrations</label>
+      <div class="skill-suggestions">
+        <div id="ef-mcps-tag-input" class="skill-tag-input" onclick="document.getElementById('ef-mcps-input').focus()" style="border-color:#a7f3d0; background:#ecfdf5;">
+          <input id="ef-mcps-input" type="text" autocomplete="off" placeholder="e.g. gmail, slack, accelo, todoist..." />
+        </div>
+      </div>
+      <div class="hint">Persistent MCP servers / integrations this seat reaches into. Type and press Enter for each.</div>
     </div>
 
     <div class="sop-section" id="ef-invite-section" style="display:none">
@@ -478,6 +513,71 @@
     var ALL_CATALOG_SKILLS = SKILLS_CATALOG.reduce(function(acc, c) { return acc.concat(c.skills); }, []);
     var ALL_CATALOG_SKILLS_LOWER = new Set(ALL_CATALOG_SKILLS.map(function(s) { return s.toLowerCase(); }));
     var currentSkills = []; // working array, edited in the panel
+    var currentMcps = []; // MCP servers / integrations on this seat
+
+    // Show / hide custom authority input based on dropdown choice.
+    document.addEventListener('DOMContentLoaded', function() {
+      var authSel = document.getElementById('ef-authority');
+      var authCustom = document.getElementById('ef-authority-custom');
+      if (authSel && authCustom) {
+        authSel.addEventListener('change', function() {
+          if (authSel.value === '__custom__') {
+            authCustom.style.display = '';
+            authCustom.focus();
+          } else {
+            authCustom.style.display = 'none';
+            authCustom.value = '';
+          }
+        });
+      }
+
+      // MCP tag-input wiring (mirrors skills, no catalog autocomplete).
+      var mcpInput = document.getElementById('ef-mcps-input');
+      if (mcpInput) {
+        mcpInput.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Enter' || ev.key === ',') {
+            ev.preventDefault();
+            addMcp(mcpInput.value);
+            mcpInput.value = '';
+          } else if (ev.key === 'Backspace' && !mcpInput.value && currentMcps.length > 0) {
+            currentMcps.pop();
+            renderMcpTags();
+          }
+        });
+        mcpInput.addEventListener('blur', function() {
+          if (mcpInput.value.trim()) { addMcp(mcpInput.value); mcpInput.value = ''; }
+        });
+      }
+    });
+
+    function renderMcpTags() {
+      var box = document.getElementById('ef-mcps-tag-input');
+      var input = document.getElementById('ef-mcps-input');
+      if (!box || !input) return;
+      // Remove all chips (keep input element only)
+      Array.from(box.querySelectorAll('.skill-chip')).forEach(function(el) { el.remove(); });
+      currentMcps.forEach(function(m, idx) {
+        var chip = document.createElement('span');
+        chip.className = 'skill-chip';
+        chip.style.background = '#d1fae5';
+        chip.style.color = '#065f46';
+        chip.style.borderColor = '#a7f3d0';
+        chip.innerHTML = escapeHtml(m) + ' <button type="button" aria-label="Remove" style="margin-left:0.3rem; cursor:pointer; border:none; background:transparent; color:inherit; font-weight:700;">&times;</button>';
+        chip.querySelector('button').addEventListener('click', function() {
+          currentMcps.splice(idx, 1);
+          renderMcpTags();
+        });
+        box.insertBefore(chip, input);
+      });
+    }
+
+    function addMcp(raw) {
+      var v = String(raw || '').trim().toLowerCase();
+      if (!v) return;
+      if (currentMcps.some(function(x) { return String(x).toLowerCase() === v; })) return;
+      currentMcps.push(v);
+      renderMcpTags();
+    }
     var skillSuggestionActive = -1;
 
     function renderSkillTags() {
@@ -1364,12 +1464,33 @@
       document.getElementById('ef-role').value = p.role || '';
       document.getElementById('ef-mission').value = p.mission || '';
       document.getElementById('ef-jobdesc').value = p.jobDescription || '';
-      document.getElementById('ef-authority').value = p.authorityLevel || '';
+      // Authority dropdown: pick standard option, fall back to custom field for legacy values.
+      var authSelect = document.getElementById('ef-authority');
+      var authCustom = document.getElementById('ef-authority-custom');
+      var authVal = p.authorityLevel || '';
+      var STANDARD_AUTH = ['view-only', 'recommend', 'execute-with-approval', 'autonomous'];
+      if (!authVal) {
+        authSelect.value = '';
+        authCustom.style.display = 'none';
+        authCustom.value = '';
+      } else if (STANDARD_AUTH.indexOf(authVal) >= 0) {
+        authSelect.value = authVal;
+        authCustom.style.display = 'none';
+        authCustom.value = '';
+      } else {
+        authSelect.value = '__custom__';
+        authCustom.style.display = '';
+        authCustom.value = authVal;
+      }
+      document.getElementById('ef-maturity').value = (typeof p.maturityLevel === 'number' && p.maturityLevel >= 1 && p.maturityLevel <= 8) ? String(p.maturityLevel) : '';
+      document.getElementById('ef-maturity-wrap').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-platform').value = p.platform || '';
       document.getElementById('ef-status').value = p.status || '';
       currentSkills = Array.isArray(p.skills) ? p.skills.slice() : [];
       renderSkillTags();
       hideSkillSuggestions();
+      currentMcps = Array.isArray(p.mcps) ? p.mcps.slice() : [];
+      renderMcpTags();
       document.getElementById('ef-contact-email').value = p.contactEmail || '';
       document.getElementById('ef-contact-phone').value = p.contactPhone || '';
       document.getElementById('ef-slackid').value = p.slackId || '';
@@ -1441,7 +1562,20 @@
       var setIfPresent = function(key, val) { if (val !== undefined && val !== null) patch[key] = val; };
       setIfPresent('name',           document.getElementById('ef-name').value.trim());
       setIfPresent('role',           document.getElementById('ef-role').value.trim());
-      setIfPresent('authority_level', document.getElementById('ef-authority').value.trim());
+      // Authority level: dropdown value, or the custom freetext if "__custom__" is selected.
+      var authSelectVal = document.getElementById('ef-authority').value;
+      var authResolved = '';
+      if (authSelectVal === '__custom__') {
+        authResolved = (document.getElementById('ef-authority-custom').value || '').trim();
+      } else if (authSelectVal) {
+        authResolved = authSelectVal;
+      }
+      patch.authority_level = authResolved || null;
+      // Maturity level (1-8) only for agents.
+      if (currentNode.type === 'agent') {
+        var matVal = document.getElementById('ef-maturity').value;
+        patch.maturity_level = matVal === '' ? null : Number(matVal);
+      }
       if (currentNode.type === 'agent') {
         setIfPresent('mission',        document.getElementById('ef-mission').value.trim());
         setIfPresent('platform',       document.getElementById('ef-platform').value.trim());
@@ -1464,6 +1598,7 @@
       var statusVal = document.getElementById('ef-status').value.trim();
       if (statusVal) patch.status = statusVal;
       patch.skills = skills;
+      patch.mcps = (currentMcps && currentMcps.length > 0) ? currentMcps.slice() : [];
 
       // Send the full SOP array. Drop SOPs without a title (incomplete adds).
       var cleanSops = currentSops
