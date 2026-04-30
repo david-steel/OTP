@@ -1,3 +1,4 @@
+<% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
 <!-- HERO -->
 <section class="relative overflow-hidden bg-otp-950 flex items-center py-24 sm:py-32">
   <div class="absolute top-[-300px] left-[-200px] w-[800px] h-[800px] bg-otp-500/20 rounded-full blur-[180px] pointer-events-none"></div>
@@ -20,6 +21,7 @@
     </a>
   </div>
 </section>
+<% } %>
 
 <!-- MULTI-STEP FORM -->
 <section id="builder-form" class="bg-otp-950 py-16 sm:py-24 border-t border-white/5">
@@ -806,6 +808,28 @@
       document.getElementById('build-loading').classList.add('hidden');
       document.getElementById('build-btn').style.display='';
       if(data.success){
+        // Embed mode: post the result back to the parent window (the dashboard-team chart)
+        // so it can populate the create-tile drawer. Skip the result modal.
+        var inEmbed = (window.parent && window.parent !== window);
+        if (inEmbed) {
+          try {
+            window.parent.postMessage({
+              type: 'agent-builder-result',
+              agentFile: data.agentFile,
+              jobTitle: payload.jobTitle || '',
+              jobDescription: payload.jobDescription || '',
+              skills: Array.isArray(payload.skills) ? payload.skills : [],
+              tools: Array.isArray(payload.tools) ? payload.tools : [],
+              industry: payload.industry || '',
+              personalityFramework: payload.personalityFramework || '',
+              personalityTraits: payload.personalityTraits || {},
+              stats: data.stats || null,
+            }, '*');
+            return;
+          } catch (e) {
+            // Fall through to modal if postMessage fails for any reason
+          }
+        }
         showResultModal(data.agentFile,data.stats);
       }else{
         alert('Generation failed. Please try again.');

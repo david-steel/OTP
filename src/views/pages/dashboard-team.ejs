@@ -168,6 +168,50 @@
   .org-tooltip .row { color: #cbd5e1; }
   .org-tooltip .row strong { color: #fff; font-weight: 600; }
 
+  /* Per-tile "+ direct report" button (owner only) */
+  .org-add-child-btn {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.25);
+    opacity: 0;
+    transition: opacity 120ms ease, transform 120ms ease;
+    z-index: 4;
+    padding: 0;
+  }
+  .org-node:hover .org-add-child-btn { opacity: 1; }
+  .org-add-child-btn:hover { transform: scale(1.15); background: #0ea5e9; }
+
+  /* Agent-builder iframe modal */
+  .ab-modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+    z-index: 80; opacity: 0; pointer-events: none; transition: opacity 200ms ease;
+  }
+  .ab-modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .ab-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96);
+    width: 95vw; height: 90vh; max-width: 1200px;
+    background: #0a0e1a; border-radius: 14px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    z-index: 81; opacity: 0; pointer-events: none;
+    transition: transform 200ms ease, opacity 200ms ease;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .ab-modal.open { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+  .ab-modal-header { display:flex; align-items:center; justify-content:space-between; padding: 0.75rem 1rem; background:#0f172a; color:#fff; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .ab-modal-iframe { flex: 1; width: 100%; border: 0; background:#0a0e1a; }
+
   /* Edit panel (unchanged from prior) */
   .edit-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 100%; max-width: 420px; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -10px 0 30px rgba(15,23,42,0.08); z-index: 60; transform: translateX(100%); transition: transform 200ms ease; display: flex; flex-direction: column; }
   .edit-panel.open { transform: translateX(0); }
@@ -213,9 +257,13 @@
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
         <% } %>
         <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
-          <button onclick="openInviteNewModal()" class="text-xs px-3 py-1.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold inline-flex items-center gap-1.5">
+          <button onclick="openCreateDrawer('human')" class="text-xs px-3 py-1.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold inline-flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Invite new member
+            Add to chart
+          </button>
+          <button onclick="openInviteNewModal()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium inline-flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12h2m-2 4h2m-6-8a4 4 0 11-8 0 4 4 0 018 0zM6 14a4 4 0 00-4 4v2h12v-2a4 4 0 00-4-4H6z"/></svg>
+            Invite member
           </button>
           <button onclick="openInvitesDrawer()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
             Pending invites
@@ -266,6 +314,21 @@
 </section>
 
 <div id="org-tooltip" class="org-tooltip"></div>
+
+<!-- Agent Builder iframe modal -->
+<div id="ab-modal-overlay" class="ab-modal-overlay" onclick="closeAgentBuilderModal()"></div>
+<div id="ab-modal" class="ab-modal" role="dialog" aria-hidden="true">
+  <div class="ab-modal-header">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-otp-300 font-bold mb-0.5">Agent Builder</div>
+      <div class="text-sm font-semibold">Generate, then auto-fill the create form</div>
+    </div>
+    <button onclick="closeAgentBuilderModal()" class="text-gray-300 hover:text-white p-1.5 rounded-md hover:bg-white/10" aria-label="Close">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <iframe id="ab-modal-iframe" class="ab-modal-iframe" title="Agent Builder" src="about:blank"></iframe>
+</div>
 
 <!-- Compare-agents modal (Phase 4.8) -->
 <div id="compare-overlay" class="compare-modal-overlay" onclick="closeCompare()"></div>
@@ -354,6 +417,18 @@
   </div>
   <div class="edit-panel-body">
     <div id="edit-banner" class="edit-banner" style="display:none"></div>
+
+    <!-- Create-mode only: type toggle + agent builder launcher -->
+    <div id="ef-create-controls" style="display:none; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f3f4f6;">
+      <div style="display:flex; gap:0.4rem; margin-bottom:0.6rem;">
+        <button type="button" id="ef-create-type-human" onclick="setCreateType('human')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border" style="flex:1;">Human</button>
+        <button type="button" id="ef-create-type-agent" onclick="setCreateType('agent')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border" style="flex:1;">Agent</button>
+      </div>
+      <button type="button" id="ef-open-agent-builder" onclick="openAgentBuilderModal()" class="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-otp-50 text-otp-700 border border-otp-200 hover:bg-otp-100" style="display:none;">
+        ✨ Use Agent Builder to fill this form
+      </button>
+    </div>
+
     <div class="edit-field"><label for="ef-name">Name</label><input id="ef-name" type="text" /></div>
     <div class="edit-field"><label for="ef-role">Role</label><input id="ef-role" type="text" /></div>
     <div class="edit-field" id="ef-mission-wrap"><label for="ef-mission">Mission</label><textarea id="ef-mission" rows="3"></textarea></div>
@@ -965,6 +1040,24 @@
         }
 
         box.innerHTML = inner;
+
+        // Owner-only: append a "+" button that opens the create drawer with this tile preselected as parent.
+        // Clicking the button does not propagate to the tile click (which would open edit).
+        if (viewerRole === 'owner' && n.type !== 'organization') {
+          var addBtn = document.createElement('button');
+          addBtn.type = 'button';
+          addBtn.className = 'org-add-child-btn';
+          addBtn.title = 'Add a tile that reports to / escalates to this one';
+          addBtn.textContent = '+';
+          addBtn.addEventListener('click', function(ev) {
+            ev.stopPropagation();
+            // For human parents, suggest creating an agent under them (the common pattern).
+            // For agent parents, suggest another agent (escalation chain).
+            var suggested = (n.type === 'human') ? 'agent' : 'agent';
+            openCreateDrawer(suggested, n.externalId);
+          });
+          box.appendChild(addBtn);
+        }
 
         box.addEventListener('mouseenter', function(ev) { showTooltip(ev, n); });
         box.addEventListener('mousemove',  function(ev) { positionTooltip(ev); });
@@ -1604,8 +1697,274 @@
       document.getElementById('edit-panel').setAttribute('aria-hidden', 'true');
       document.querySelectorAll('.org-node.selected').forEach(function(el) { el.classList.remove('selected'); });
       currentNode = null;
+      isCreateMode = false;
+      currentCreateType = null;
+      currentCreateParentId = null;
+      // Restore delete + invite-section visibility for next edit
+      var delBtn = document.getElementById('ef-delete');
+      if (delBtn) delBtn.style.display = '';
+      var createControls = document.getElementById('ef-create-controls');
+      if (createControls) createControls.style.display = 'none';
+      var saveBtn = document.getElementById('ef-save');
+      if (saveBtn) saveBtn.textContent = 'Save to draft';
     };
+
+    // ========================================================
+    // CREATE MODE -- "+ Add to chart" / "+ Add direct report"
+    // Opens the same edit panel in create mode: empty fields,
+    // Human/Agent toggle visible, delete hidden, save → POST + PATCH.
+    // ========================================================
+    var isCreateMode = false;
+    var currentCreateType = null;     // 'human' | 'agent'
+    var currentCreateParentId = null; // optional externalId to preselect as parent
+
+    window.openCreateDrawer = function(suggestedType, parentExternalId) {
+      isCreateMode = true;
+      currentNode = null;
+      currentCreateType = (suggestedType === 'agent' ? 'agent' : 'human');
+      currentCreateParentId = parentExternalId || null;
+
+      // Reset SOPs / skills / MCPs state
+      currentSops = [];
+      editingSopIdx = -1;
+      currentSkills = [];
+      currentMcps = [];
+      renderSopList();
+      renderSkillTags();
+      hideSkillSuggestions();
+      renderMcpTags();
+
+      // Show create controls; hide invite section + delete button
+      document.getElementById('ef-create-controls').style.display = '';
+      var inviteSection = document.getElementById('ef-invite-section');
+      if (inviteSection) inviteSection.style.display = 'none';
+      var delBtn = document.getElementById('ef-delete');
+      if (delBtn) delBtn.style.display = 'none';
+      var saveBtn = document.getElementById('ef-save');
+      if (saveBtn) saveBtn.textContent = 'Create tile';
+
+      // Header
+      document.getElementById('edit-type-label').textContent = 'Add to chart';
+      document.getElementById('edit-name-display').textContent = 'New ' + currentCreateType;
+
+      // Clear fields
+      document.getElementById('ef-name').value = '';
+      document.getElementById('ef-role').value = '';
+      document.getElementById('ef-mission').value = '';
+      document.getElementById('ef-jobdesc').value = '';
+      document.getElementById('ef-authority').value = '';
+      document.getElementById('ef-authority-custom').value = '';
+      document.getElementById('ef-authority-custom').style.display = 'none';
+      document.getElementById('ef-maturity').value = '';
+      document.getElementById('ef-platform').value = '';
+      document.getElementById('ef-status').value = '';
+      document.getElementById('ef-contact-email').value = '';
+      document.getElementById('ef-contact-phone').value = '';
+      document.getElementById('ef-slackid').value = '';
+
+      // Hide context/runtime sections that are agent-only and depend on existing entity
+      var ctxSection = document.getElementById('ef-context-section');
+      if (ctxSection) ctxSection.style.display = 'none';
+      var runtimeSection = document.getElementById('ef-runtime-section');
+      if (runtimeSection) runtimeSection.style.display = 'none';
+
+      // Fill reportsTo / escalatesTo selects from nodes; preselect parent if provided
+      var fillSelectEmpty = function(selectEl, preselectExternalId) {
+        selectEl.innerHTML = '<option value="">(none)</option>';
+        nodes.forEach(function(n) {
+          if (n.type === 'organization') return;
+          var opt = document.createElement('option');
+          opt.value = n.externalId;
+          opt.textContent = n.label + ' (' + n.type + ')';
+          if (preselectExternalId && String(preselectExternalId) === n.externalId) opt.selected = true;
+          selectEl.appendChild(opt);
+        });
+      };
+      fillSelectEmpty(document.getElementById('ef-escalates'), currentCreateType === 'agent' ? currentCreateParentId : null);
+      fillSelectEmpty(document.getElementById('ef-reportsto'), currentCreateType === 'human' ? currentCreateParentId : null);
+
+      // Apply type-specific field visibility
+      applyCreateTypeVisibility();
+
+      document.getElementById('edit-banner').style.display = 'none';
+      document.getElementById('edit-panel').classList.add('open');
+      document.getElementById('edit-overlay').classList.add('open');
+      document.getElementById('edit-panel').setAttribute('aria-hidden', 'false');
+      // Focus name field for fast entry
+      setTimeout(function() { document.getElementById('ef-name').focus(); }, 220);
+    };
+
+    window.setCreateType = function(t) {
+      if (!isCreateMode) return;
+      if (t !== 'human' && t !== 'agent') return;
+      currentCreateType = t;
+      document.getElementById('edit-name-display').textContent = 'New ' + t;
+      applyCreateTypeVisibility();
+    };
+
+    function applyCreateTypeVisibility() {
+      var t = currentCreateType;
+      // Active-state styling on type toggle buttons
+      var humanBtn = document.getElementById('ef-create-type-human');
+      var agentBtn = document.getElementById('ef-create-type-agent');
+      if (humanBtn && agentBtn) {
+        if (t === 'human') {
+          humanBtn.style.background = '#f59e0b';
+          humanBtn.style.color = '#fff';
+          humanBtn.style.borderColor = '#f59e0b';
+          agentBtn.style.background = '#fff';
+          agentBtn.style.color = '#0f172a';
+          agentBtn.style.borderColor = '#e5e7eb';
+        } else {
+          agentBtn.style.background = '#0ea5e9';
+          agentBtn.style.color = '#fff';
+          agentBtn.style.borderColor = '#0ea5e9';
+          humanBtn.style.background = '#fff';
+          humanBtn.style.color = '#0f172a';
+          humanBtn.style.borderColor = '#e5e7eb';
+        }
+      }
+
+      // Show "Use Agent Builder" only in agent create mode
+      var aiBtn = document.getElementById('ef-open-agent-builder');
+      if (aiBtn) aiBtn.style.display = (t === 'agent' ? '' : 'none');
+
+      // Field visibility rules (mirror openEditPanel exactly)
+      document.getElementById('ef-mission-wrap').style.display = (t === 'agent' ? '' : 'none');
+      document.getElementById('ef-jobdesc-wrap').style.display = (t === 'human' ? '' : 'none');
+      document.getElementById('ef-maturity-wrap').style.display = (t === 'agent' ? '' : 'none');
+      document.getElementById('ef-platform-wrap').style.display = (t === 'agent' ? '' : 'none');
+      document.getElementById('ef-status-wrap').style.display = '';
+      document.getElementById('ef-escalates-wrap').style.display = (t === 'agent' ? '' : 'none');
+      document.getElementById('ef-reportsto-wrap').style.display = (t === 'human' ? '' : 'none');
+      document.getElementById('ef-contact-email-wrap').style.display = (t === 'human' ? '' : 'none');
+      document.getElementById('ef-contact-phone-wrap').style.display = (t === 'human' ? '' : 'none');
+      document.getElementById('ef-slackid-wrap').style.display = (t === 'human' ? '' : 'none');
+    }
+
+    // submitCreate -- POST then PATCH the new entity
+    async function submitCreate() {
+      var btn = document.getElementById('ef-save');
+      var banner = document.getElementById('edit-banner');
+      banner.style.display = 'none';
+      banner.classList.remove('error');
+
+      var name = (document.getElementById('ef-name').value || '').trim();
+      if (!name) {
+        banner.textContent = 'Name is required.';
+        banner.classList.add('error');
+        banner.style.display = '';
+        return;
+      }
+      var t = currentCreateType;
+      var role = (document.getElementById('ef-role').value || '').trim();
+      var contactEmail = (document.getElementById('ef-contact-email').value || '').trim();
+      var reportsTo = (document.getElementById('ef-reportsto').value || '').trim();
+      var escalatesTo = (document.getElementById('ef-escalates').value || '').trim();
+      var authSelectVal = document.getElementById('ef-authority').value;
+      var authority = '';
+      if (authSelectVal === '__custom__') {
+        authority = (document.getElementById('ef-authority-custom').value || '').trim();
+      } else if (authSelectVal) {
+        authority = authSelectVal;
+      }
+
+      var createBody = { type: t, name: name };
+      if (role) createBody.role = role;
+      if (t === 'human' && contactEmail) createBody.contactEmail = contactEmail;
+      if (t === 'human' && reportsTo) createBody.reportsTo = reportsTo;
+      if (t === 'agent' && escalatesTo) createBody.escalatesTo = escalatesTo;
+      if (authority) createBody.authorityLevel = authority;
+
+      btn.disabled = true; btn.textContent = 'Creating…';
+
+      try {
+        var createRes = await fetch('/api/v1/team/entity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createBody),
+        });
+        if (!createRes.ok) {
+          var ce = await createRes.json().catch(function() { return {}; });
+          banner.textContent = (ce.error && ce.error.message) || ('Create failed (' + createRes.status + ')');
+          banner.classList.add('error');
+          banner.style.display = '';
+          btn.disabled = false; btn.textContent = 'Create tile';
+          return;
+        }
+        var created = await createRes.json();
+        var newExternalId = created.externalId || (created.entity && created.entity.externalId);
+        if (!newExternalId) {
+          banner.textContent = 'Created but external ID missing in response. Reload to see the tile.';
+          banner.classList.add('error');
+          banner.style.display = '';
+          setTimeout(function() { window.location.reload(); }, 1500);
+          return;
+        }
+
+        // Build PATCH for fields the create endpoint does not accept
+        var patch = {};
+        if (t === 'agent') {
+          var mission = (document.getElementById('ef-mission').value || '').trim();
+          var platform = (document.getElementById('ef-platform').value || '').trim();
+          var matVal = document.getElementById('ef-maturity').value;
+          if (mission) patch.mission = mission;
+          if (platform) patch.platform = platform;
+          if (matVal !== '') patch.maturity_level = Number(matVal);
+        } else {
+          var jobdesc = (document.getElementById('ef-jobdesc').value || '').trim();
+          var contactPhone = (document.getElementById('ef-contact-phone').value || '').trim();
+          var slackId = (document.getElementById('ef-slackid').value || '').trim();
+          if (jobdesc) patch.job_description = jobdesc;
+          if (contactPhone) patch.contact_phone = contactPhone;
+          if (slackId) patch.slack_id = slackId;
+        }
+        var statusVal = (document.getElementById('ef-status').value || '').trim();
+        if (statusVal) patch.status = statusVal;
+        if (currentSkills && currentSkills.length > 0) patch.skills = currentSkills.slice();
+        if (currentMcps && currentMcps.length > 0) patch.mcps = currentMcps.slice();
+        var cleanSops = (currentSops || [])
+          .filter(function(s) { return s && String(s.title || '').trim().length > 0; })
+          .map(function(s) {
+            var out = { title: String(s.title).trim() };
+            if (s.id) out.id = s.id;
+            if (s.trigger && s.trigger.trim()) out.trigger = s.trigger.trim();
+            if (Array.isArray(s.steps) && s.steps.length) out.steps = s.steps;
+            if (Array.isArray(s.outputs) && s.outputs.length) out.outputs = s.outputs;
+            if (Array.isArray(s.tools) && s.tools.length) out.tools = s.tools;
+            if (s.notes && s.notes.trim()) out.notes = s.notes.trim();
+            return out;
+          });
+        if (cleanSops.length > 0) patch.sops = cleanSops;
+
+        if (Object.keys(patch).length > 0) {
+          btn.textContent = 'Saving details…';
+          var patchRes = await fetch('/api/v1/team/entity', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: t, externalId: newExternalId, patch: patch }),
+          });
+          if (!patchRes.ok) {
+            var pe = await patchRes.json().catch(function() { return {}; });
+            banner.textContent = 'Tile created but saving details failed: ' + ((pe.error && pe.error.message) || patchRes.status) + '. Reload to edit it.';
+            banner.classList.add('error');
+            banner.style.display = '';
+            setTimeout(function() { window.location.reload(); }, 2000);
+            return;
+          }
+        }
+
+        btn.textContent = 'Created!';
+        setTimeout(function() { window.location.reload(); }, 600);
+      } catch (e) {
+        banner.textContent = 'Network error: ' + e.message;
+        banner.classList.add('error');
+        banner.style.display = '';
+        btn.disabled = false; btn.textContent = 'Create tile';
+      }
+    }
     window.saveEdit = async function() {
+      if (isCreateMode) { return submitCreate(); }
       if (!currentNode) return;
       var btn = document.getElementById('ef-save');
       var banner = document.getElementById('edit-banner');
@@ -1696,7 +2055,72 @@
         closeEdit();
         if (typeof closeInvitesDrawer === 'function') closeInvitesDrawer();
         if (typeof closeCompare === 'function') closeCompare();
+        if (typeof closeAgentBuilderModal === 'function') closeAgentBuilderModal();
       }
+    });
+
+    // ========================================================
+    // Agent Builder modal (iframe) -- populates create drawer
+    // ========================================================
+    window.openAgentBuilderModal = function() {
+      if (!isCreateMode || currentCreateType !== 'agent') return;
+      var iframe = document.getElementById('ab-modal-iframe');
+      // Reload each time so the wizard starts at step 1
+      iframe.src = '/agent-builder?embed=1';
+      document.getElementById('ab-modal-overlay').classList.add('open');
+      document.getElementById('ab-modal').classList.add('open');
+      document.getElementById('ab-modal').setAttribute('aria-hidden', 'false');
+    };
+    window.closeAgentBuilderModal = function() {
+      document.getElementById('ab-modal-overlay').classList.remove('open');
+      document.getElementById('ab-modal').classList.remove('open');
+      document.getElementById('ab-modal').setAttribute('aria-hidden', 'true');
+      var iframe = document.getElementById('ab-modal-iframe');
+      iframe.src = 'about:blank';
+    };
+
+    // Listen for the agent-builder result and populate the create drawer
+    window.addEventListener('message', function(ev) {
+      var data = ev && ev.data;
+      if (!data || data.type !== 'agent-builder-result') return;
+      if (!isCreateMode) return;
+      // Force agent type
+      currentCreateType = 'agent';
+      applyCreateTypeVisibility();
+
+      // Populate fields
+      var jobTitle = String(data.jobTitle || '').trim();
+      var jobDesc = String(data.jobDescription || '').trim();
+      if (jobTitle) {
+        document.getElementById('ef-name').value = jobTitle;
+        document.getElementById('ef-role').value = jobTitle;
+        document.getElementById('edit-name-display').textContent = 'New agent — ' + jobTitle;
+      }
+      if (jobDesc) {
+        // Mission for agents (the agent-only field). Truncate to a reasonable length.
+        var missionEl = document.getElementById('ef-mission');
+        if (missionEl) missionEl.value = jobDesc.length > 1500 ? jobDesc.slice(0, 1500) : jobDesc;
+      }
+      // Skills + MCPs
+      if (Array.isArray(data.skills) && data.skills.length > 0) {
+        currentSkills = data.skills.slice();
+        renderSkillTags();
+      }
+      if (Array.isArray(data.tools) && data.tools.length > 0) {
+        currentMcps = data.tools.slice();
+        renderMcpTags();
+      }
+      // Generated CLAUDE.md becomes a SOP entry titled "Generated CLAUDE.md"
+      if (data.agentFile && typeof data.agentFile === 'string') {
+        var newSop = {
+          title: 'Generated CLAUDE.md',
+          notes: data.agentFile,
+        };
+        currentSops = (currentSops || []).concat([newSop]);
+        renderSopList();
+      }
+
+      closeAgentBuilderModal();
     });
 
     function renderSopMini(sop, isMatch) {

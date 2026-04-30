@@ -2691,7 +2691,8 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
   });
 
   // Agent Builder - product-led entry point
-  app.get('/agent-builder', async (request, reply) => {
+  app.get<{ Querystring: { embed?: string } }>('/agent-builder', async (request, reply) => {
+    const isEmbed = request.query.embed === '1' || request.query.embed === 'true';
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
     return reply.view('pages/agent-builder', {
@@ -2708,6 +2709,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       },
       publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
       claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
+      isEmbed,
     });
   });
 

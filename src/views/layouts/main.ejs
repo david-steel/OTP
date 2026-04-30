@@ -134,7 +134,8 @@
   <script type="application/ld+json"><%- JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
 </head>
-<body class="bg-white text-gray-900 min-h-screen">
+<body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %>">
+  <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
   <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-otp-950/80 text-white border-b border-white/5">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
       <a href="/" class="text-xl font-bold tracking-tight">
@@ -244,6 +245,7 @@
       </div>
     </div>
   </nav>
+  <% } %>
 
   <script>
     document.getElementById('mobile-menu-btn').addEventListener('click', function() {
@@ -256,6 +258,7 @@
     <%- body %>
   </main>
 
+  <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
   <footer class="bg-otp-950 text-gray-400 border-t border-white/5">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       <div class="flex flex-col sm:flex-row justify-between gap-8">
@@ -303,6 +306,7 @@
       </div>
     </div>
   </footer>
+  <% } %>
 
   <!-- Scroll reveal script -->
   <script>
