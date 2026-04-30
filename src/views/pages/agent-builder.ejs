@@ -24,8 +24,8 @@
 <% } %>
 
 <!-- MULTI-STEP FORM -->
-<section id="builder-form" class="bg-otp-950 py-16 sm:py-24 border-t border-white/5">
-  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+<section id="builder-form" class="<%= (typeof isEmbed !== 'undefined' && isEmbed) ? 'bg-white py-6' : 'bg-otp-950 py-16 sm:py-24 border-t border-white/5' %>">
+  <div class="<%= (typeof isEmbed !== 'undefined' && isEmbed) ? 'max-w-full px-4 sm:px-5' : 'max-w-2xl mx-auto px-4 sm:px-6' %>">
 
     <!-- Step indicator -->
     <div class="flex items-center justify-center gap-2 mb-10" id="step-indicators">
@@ -278,6 +278,7 @@
   </div>
 </section>
 
+<% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
 <!-- HOW OTP MAKES YOUR AGENT SMARTER -->
 <section class="bg-white py-16 sm:py-24">
   <div class="max-w-5xl mx-auto px-4 sm:px-6">
@@ -379,6 +380,7 @@
     </a>
   </div>
 </section>
+<% } %>
 
 <style>
   .step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#6b7280;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:all .3s}
@@ -444,6 +446,77 @@
   .ab-faq.open .ab-faq-arrow{transform:rotate(45deg)}
 
   .ab-rev-pill{display:inline-block;padding:2px 10px;border-radius:5px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:500}
+
+  /* ============================================================
+     EMBED MODE -- light theme inside the dashboard-team drawer
+     Activated via body.is-embed (set when ?embed=1 on the URL)
+     ============================================================ */
+  body.is-embed { background: #fff; }
+  body.is-embed #builder-form { background: #fff; border-top: 0; }
+  body.is-embed h2,
+  body.is-embed h3,
+  body.is-embed .text-white { color: #0f172a !important; }
+  body.is-embed .text-gray-300,
+  body.is-embed .text-gray-400 { color: #4b5563 !important; }
+  body.is-embed .ab-input,
+  body.is-embed .ab-select,
+  body.is-embed .ab-tag-input {
+    background: #fff !important;
+    border-color: #d1d5db !important;
+    color: #0f172a !important;
+  }
+  body.is-embed .ab-input::placeholder,
+  body.is-embed .ab-tag-field::placeholder { color: #9ca3af; }
+  body.is-embed .ab-tag-field { color: #0f172a !important; background: transparent; }
+  body.is-embed .ab-select option { background: #fff; color: #0f172a; }
+  body.is-embed .ab-input:focus,
+  body.is-embed .ab-select:focus,
+  body.is-embed .ab-tag-input:focus-within {
+    border-color: rgba(0, 149, 255, .55) !important;
+    box-shadow: 0 0 0 2px rgba(0, 149, 255, .12) !important;
+  }
+  body.is-embed .step-dot {
+    color: #6b7280;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+  }
+  body.is-embed .step-dot.active { background: #0095ff; color: #fff; border-color: #0095ff; }
+  body.is-embed .step-dot.done { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+  body.is-embed .step-line { background: #e5e7eb; }
+  body.is-embed .step-line.active { background: #0095ff; }
+  /* Tinted info / suggestion blocks (industry intel, skill hints, etc.) */
+  body.is-embed [class*="bg-otp-900"] {
+    background: #f9fafb !important;
+    border-color: #e5e7eb !important;
+  }
+  body.is-embed [class*="bg-otp-900"] * { color: #374151 !important; }
+  /* Personality-framework cards (DISC / Big5 / MBTI / skip) */
+  body.is-embed .ab-fcard,
+  body.is-embed [class*="ab-fcard"] {
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #0f172a !important;
+  }
+  body.is-embed .ab-fcard.active,
+  body.is-embed [class*="ab-fcard"][class*="active"] {
+    background: #f0f9ff !important;
+    border-color: #0095ff !important;
+  }
+  body.is-embed .ab-personality-panel { color: #0f172a; }
+  /* Suggestions dropdown */
+  body.is-embed .ab-suggestions {
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #0f172a !important;
+  }
+  /* Pills inside tag inputs */
+  body.is-embed .ab-pills > * {
+    background: #f3f4f6;
+    color: #0f172a;
+    border: 1px solid #e5e7eb;
+  }
+  /* Result modal (kept inside iframe in embed mode) -- already light */
+  /* Bottom CTA / Build button stays its primary color */
 </style>
 
 <script>
