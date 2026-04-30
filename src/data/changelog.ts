@@ -11,6 +11,40 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- April 30, 2026 ----
+
+  {
+    date: '2026-04-30',
+    tags: ['Major', 'Improvement'],
+    title: 'Build agents and humans directly on the chart, with the Agent Builder one click away',
+    summary: 'Two new ways to add to the org chart without sending an invite. A top-of-chart "Add to chart" button and a per-tile "+" button both open the same edit drawer in create mode, with a Human/Agent toggle. In agent mode, the Agent Builder slides in beside the create drawer so you can generate, then auto-fill the form.',
+    details: `<p>Until today, getting a tile onto <code>/dashboard/team</code> meant either authoring an OOS file or sending an invite. That worked when you had real teammates to email, but slowed you down when you wanted to model an agent or place a known human on the chart without bringing them in yet. Two changes fix that.</p>
+
+<h3>Two new entry points to the create flow</h3>
+<ul>
+<li><strong>"Add to chart" button</strong> at the top of the chart, next to "Invite member." Opens the same side drawer you already use for tile editing, but in create mode -- empty fields, a Human / Agent toggle at the top, and a Create button instead of Save.</li>
+<li><strong>Per-tile "+" button</strong> appears in the bottom-right corner when you hover any tile (owners only). Click it and the create drawer opens with the tile you hovered preselected as the parent -- "reports to" for humans, "escalates to" for agents. One click adds a direct report under the seat you are standing on.</li>
+</ul>
+
+<h3>Same drawer, same fields, same SOP section</h3>
+<ul>
+<li>Every field from the edit drawer is available in create mode: role, mission, job description, authority level, agentic maturity, platform, status, contact email/phone, Slack ID, skills, MCPs, SOPs, KPIs.</li>
+<li>The Invite section and Delete button are hidden in create mode -- the rest of the panel is identical, so the visual rhythm of the chart is unchanged.</li>
+<li>Submit creates the tile in your draft and saves all the extra fields in one go. Reload to see it on the chart.</li>
+</ul>
+
+<h3>Agent Builder runs inside the chart now</h3>
+<ul>
+<li>In agent create mode, a "Use Agent Builder" button appears at the top of the drawer. Click it and the Agent Builder slides in from the right -- same rail as the create drawer, white background, light theme.</li>
+<li>Just the wizard. No hero, no marketing sections, no footer. Industry, title, description, skills, tools, personality framework, review.</li>
+<li>On generate, the result populates the create drawer underneath: name, role, mission, skills, MCPs all filled in, with the full generated CLAUDE.md added as a SOP entry titled "Generated CLAUDE.md." The Agent Builder closes; you adjust anything you want and click Create.</li>
+<li>The standalone <code>/agent-builder</code> page is unchanged for visitors who land on it directly.</li>
+</ul>
+
+<h3>Why this matters</h3>
+<p>The seat is the unit of an org chart, not the body. Until you can put a seat down without sending an email, the chart is gated by your willingness to bother people. Now you can model the team you want -- humans you have not invited yet, agents you are still drafting -- and the chart is a working spec from the moment you put a tile on it. The Agent Builder integration closes the loop between "I need an agent for X" and "the agent is on my chart with the right SOPs inherited from its parent." Two minutes from idea to placeable seat.</p>`
+  },
+
   // ---- April 26, 2026 ----
 
   {
