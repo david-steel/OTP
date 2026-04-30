@@ -489,6 +489,17 @@ app.get('/sitemap.xml', async (request, reply) => {
     // If DB unavailable, serve static pages only
   }
 
+  // Conatus blog posts (markdown in content/conatus-posts/)
+  try {
+    const { listConatusPosts } = await import('./services/conatus-posts.js');
+    for (const p of listConatusPosts()) {
+      const lastmod = p.date || today;
+      dynamicUrls += `  <url><loc>${BASE}/blog/${p.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>\n`;
+    }
+  } catch {
+    // If posts dir missing, skip
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticPages.map(p => `  <url><loc>${BASE}${p.loc}</loc><lastmod>${today}</lastmod><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`).join('\n')}
