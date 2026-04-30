@@ -562,19 +562,34 @@ ${claimSections.join('\n')}`.trim();
     // Step 2: PII scan
     const piiResult = scanOOSContent(oosFile.rawContent);
     if (!piiResult.clean) {
+      // Dedupe by (location, text). The scanner can match the same string
+      // against multiple rules (e.g. "$2,000/mo" hits both 'revenue' and
+      // 'pricing'); users care about distinct strings to fix, not rule hits.
+      const seen = new Map<string, typeof piiResult.flags[number] & { types: string[] }>();
+      for (const f of piiResult.flags) {
+        const key = `${f.location}::${f.text}`;
+        const existing = seen.get(key);
+        if (existing) {
+          if (!existing.types.includes(f.type)) existing.types.push(f.type);
+        } else {
+          seen.set(key, { ...f, types: [f.type] });
+        }
+      }
+      const dedup = Array.from(seen.values());
+
       await db.insert(auditLogs).values(
         createAuditEntry(AUDIT_ACTIONS.PII_SCAN_FLAGGED, 'oos_file', {
           orgId: org.id, entityId: id,
-          details: { flagCount: piiResult.flags.length, flags: piiResult.flags },
+          details: { flagCount: dedup.length, rawFlagCount: piiResult.flags.length, flags: piiResult.flags },
         })
       );
       return reply.status(422).send({
         error: {
           code: 'PII_DETECTED',
-          message: `PII scan found ${piiResult.flags.length} issue(s). Resolve before publishing.`,
-          details: piiResult.flags.map(f => ({
+          message: `PII scan found ${dedup.length} issue${dedup.length === 1 ? '' : 's'}. Resolve before publishing.`,
+          details: dedup.map(f => ({
             field: f.location,
-            issue: f.type,
+            issue: f.types.join(' / '),
             value: f.text,
             expected: f.suggestion,
           })),
@@ -586,28 +601,82 @@ ${claimSections.join('\n')}`.trim();
     // Step 3: Calculate quality tier
     const qualityResult = calculateQualityTier(parsed.claims);
 
-    // Step 4: Publish (transaction)
+    // Step 4: Publish — wrap status flip + org update + graph rebuild + audit
+    // in a single transaction so a partial failure (e.g. graph insert error)
+    // rolls everything back instead of leaving the OOS marked published with
+    // a half-built graph.
     const now = new Date();
-    const [published] = await db.update(oosFiles)
-      .set({
-        status: 'published',
-        publishedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(oosFiles.id, id))
-      .returning();
-
-    // Calculate agentic level from claims
     const agenticResult = calculateAgenticLevel(parsed.claims, parsed.frontmatter as unknown as Record<string, unknown>);
+    const entities = (oosFile.frontmatter as any)?.entities || null;
+    const graphData = extractGraph(id, org.id, entities, parsed.claims.map(c => ({
+      claim_id: c.claimId,
+      section: c.section,
+      rule: c.rule,
+      why: c.why,
+      confidence: c.confidence,
+      evidence: c.evidence,
+    })), org.pseudonym || org.name);
 
-    // Update org quality tier and agentic level
-    await db.update(organizations)
-      .set({ qualityTier: qualityResult.tier, agenticLevel: agenticResult.level, updatedAt: now })
-      .where(eq(organizations.id, org.id));
+    const published = await db.transaction(async (tx) => {
+      const [pubRow] = await tx.update(oosFiles)
+        .set({ status: 'published', publishedAt: now, updatedAt: now })
+        .where(eq(oosFiles.id, id))
+        .returning();
 
-    // Step 5: Compute similarities (BACKGROUND -- does not block publish response)
-    // Fire-and-forget: similarity computation runs async after the response is sent.
-    // This prevents O(n*m) comparisons from blocking the publish request as the platform scales.
+      await tx.update(organizations)
+        .set({ qualityTier: qualityResult.tier, agenticLevel: agenticResult.level, updatedAt: now })
+        .where(eq(organizations.id, org.id));
+
+      // Step 6 (now inside tx): Rebuild graph nodes + edges
+      await tx.execute(sql`DELETE FROM graph_edges WHERE oos_file_id = ${id}`);
+      await tx.execute(sql`DELETE FROM graph_nodes WHERE oos_file_id = ${id}`);
+
+      const externalIdToUuid = new Map<string, string>();
+      for (const node of graphData.nodes) {
+        let externalId: string;
+        if (node.type === 'organization') externalId = 'ORG';
+        else if (node.type === 'knowledge_claim') externalId = (node.properties as any).claimId || 'UNKNOWN';
+        else externalId = ((node.properties as any).externalId || 'UNKNOWN') as string;
+
+        const insertResult = await tx.execute(sql`
+          INSERT INTO graph_nodes (external_id, type, label, properties, oos_file_id, org_id)
+          VALUES (${externalId}, ${node.type}::graph_node_type, ${node.label}, ${JSON.stringify(node.properties)}::jsonb, ${node.oosFileId}, ${node.orgId})
+          RETURNING id
+        `);
+        const insertedId = (insertResult.rows as any[])[0]?.id;
+        if (insertedId) externalIdToUuid.set(externalId, insertedId);
+      }
+
+      for (const edge of graphData.edges) {
+        const sourceUuid = externalIdToUuid.get(edge.sourceId);
+        const targetUuid = externalIdToUuid.get(edge.targetId);
+        if (!sourceUuid || !targetUuid) continue;
+        await tx.execute(sql`
+          INSERT INTO graph_edges (source_id, target_id, type, properties, oos_file_id, weight)
+          VALUES (${sourceUuid}, ${targetUuid}, ${edge.type}::graph_edge_type, ${JSON.stringify(edge.properties)}::jsonb, ${id}, ${edge.weight})
+        `);
+      }
+
+      // Audit (inside tx so it rolls back with the rest if anything throws)
+      await tx.insert(auditLogs).values(
+        createAuditEntry(AUDIT_ACTIONS.OOS_PUBLISHED, 'oos_file', {
+          orgId: org.id, entityId: id,
+          details: {
+            version: oosFile.version,
+            claimCount: parsed.claims.length,
+            qualityTier: qualityResult.tier,
+            qualityScore: qualityResult.score,
+            similaritiesFound: 'computing_async',
+          },
+        })
+      );
+
+      return pubRow;
+    });
+
+    // Step 5: Compute similarities + notify (fire-and-forget, OUTSIDE the
+    // transaction so the response returns immediately and a similarity
+    // failure can't roll back the publish).
     const oosIdForSim = id;
     setImmediate(async () => {
       try {
@@ -618,124 +687,32 @@ ${claimSections.join('\n')}`.trim();
           )`);
 
         const newClaimsForSim = oosClaimsWithIds.map(c => ({
-          dbId: c.id,
-          claimId: c.claimId,
-          section: c.section,
-          displayOrder: c.displayOrder,
-          rule: c.rule,
-          why: c.why,
-          failureMode: c.failureMode,
-          confidence: c.confidence as any,
-          evidence: c.evidence as any,
-          scope: c.scope,
+          dbId: c.id, claimId: c.claimId, section: c.section, displayOrder: c.displayOrder,
+          rule: c.rule, why: c.why, failureMode: c.failureMode,
+          confidence: c.confidence as any, evidence: c.evidence as any, scope: c.scope,
         }));
-
         const existingForSim = allOtherClaims.map(c => ({
-          dbId: c.id,
-          oosFileId: c.oosFileId,
-          claimId: c.claimId,
-          section: c.section,
-          displayOrder: c.displayOrder,
-          rule: c.rule,
-          why: c.why,
-          failureMode: c.failureMode,
-          confidence: c.confidence as any,
-          evidence: c.evidence as any,
-          scope: c.scope,
+          dbId: c.id, oosFileId: c.oosFileId, claimId: c.claimId, section: c.section, displayOrder: c.displayOrder,
+          rule: c.rule, why: c.why, failureMode: c.failureMode,
+          confidence: c.confidence as any, evidence: c.evidence as any, scope: c.scope,
         }));
-
         const simPairs = computeAllSimilarities(newClaimsForSim, oosIdForSim, existingForSim);
-
         if (simPairs.length > 0) {
           await db.insert(claimSimilarities).values(
             simPairs.map(p => ({
-              claimAId: p.claimAId,
-              claimBId: p.claimBId,
-              oosAId: p.oosAId,
-              oosBId: p.oosBId,
-              similarityScore: p.score,
-              classification: p.classification,
-              sectionMatch: p.sectionMatch,
+              claimAId: p.claimAId, claimBId: p.claimBId, oosAId: p.oosAId, oosBId: p.oosBId,
+              similarityScore: p.score, classification: p.classification, sectionMatch: p.sectionMatch,
             }))
           );
         }
         console.log(`[similarity] Background computation complete for OOS ${oosIdForSim}: ${simPairs.length} pairs found`);
 
-        // Step 5b: Notify publisher about matching skills from other orgs (fire-and-forget)
-        try {
-          await notifyNewPublisher(org.id, oosIdForSim);
-        } catch (notifyErr) {
-          console.error(`[notification] Failed for OOS ${oosIdForSim}:`, notifyErr);
-        }
+        try { await notifyNewPublisher(org.id, oosIdForSim); }
+        catch (notifyErr) { console.error(`[notification] Failed for OOS ${oosIdForSim}:`, notifyErr); }
       } catch (err) {
         console.error(`[similarity] Background computation failed for OOS ${oosIdForSim}:`, err);
       }
     });
-
-    // Step 6: Extract graph nodes and edges
-    const entities = (oosFile.frontmatter as any)?.entities || null;
-    const graphData = extractGraph(id, org.id, entities, parsed.claims.map(c => ({
-      claim_id: c.claimId,
-      section: c.section,
-      rule: c.rule,
-      why: c.why,
-      confidence: c.confidence,
-      evidence: c.evidence,
-    })), org.pseudonym || org.name);
-    // Delete existing graph data for this OOS file (in case of re-publish)
-    await db.execute(sql`DELETE FROM graph_edges WHERE oos_file_id = ${id}`);
-    await db.execute(sql`DELETE FROM graph_nodes WHERE oos_file_id = ${id}`);
-
-    // Insert graph nodes and collect generated UUIDs
-    const externalIdToUuid = new Map<string, string>();
-
-    for (const node of graphData.nodes) {
-      // Determine external_id: ORG for organization, claimId for knowledge_claims, externalId for entities
-      let externalId: string;
-      if (node.type === 'organization') {
-        externalId = 'ORG';
-      } else if (node.type === 'knowledge_claim') {
-        externalId = (node.properties as any).claimId || 'UNKNOWN';
-      } else {
-        externalId = ((node.properties as any).externalId || 'UNKNOWN') as string;
-      }
-
-      const insertResult = await db.execute(sql`
-        INSERT INTO graph_nodes (external_id, type, label, properties, oos_file_id, org_id)
-        VALUES (${externalId}, ${node.type}::graph_node_type, ${node.label}, ${JSON.stringify(node.properties)}::jsonb, ${node.oosFileId}, ${node.orgId})
-        RETURNING id
-      `);
-      const insertedId = (insertResult.rows as any[])[0]?.id;
-      if (insertedId) {
-        externalIdToUuid.set(externalId, insertedId);
-      }
-    }
-
-    // Insert graph edges with mapped UUIDs
-    for (const edge of graphData.edges) {
-      const sourceUuid = externalIdToUuid.get(edge.sourceId);
-      const targetUuid = externalIdToUuid.get(edge.targetId);
-      if (!sourceUuid || !targetUuid) continue; // Skip edges with unresolved references
-
-      await db.execute(sql`
-        INSERT INTO graph_edges (source_id, target_id, type, properties, oos_file_id, weight)
-        VALUES (${sourceUuid}, ${targetUuid}, ${edge.type}::graph_edge_type, ${JSON.stringify(edge.properties)}::jsonb, ${id}, ${edge.weight})
-      `);
-    }
-
-    // Audit
-    await db.insert(auditLogs).values(
-      createAuditEntry(AUDIT_ACTIONS.OOS_PUBLISHED, 'oos_file', {
-        orgId: org.id, entityId: id,
-        details: {
-          version: oosFile.version,
-          claimCount: parsed.claims.length,
-          qualityTier: qualityResult.tier,
-          qualityScore: qualityResult.score,
-          similaritiesFound: 'computing_async',
-        },
-      })
-    );
 
     return {
       oosFile: published,

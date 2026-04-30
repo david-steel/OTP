@@ -547,7 +547,16 @@
             if (!resp.ok) {
               var msg = (data.error && data.error.message) || ('Publish failed (' + resp.status + ')');
               if (data.error && data.error.code === 'PII_DETECTED' && Array.isArray(data.error.details)) {
-                msg += ' -- ' + data.error.details.length + ' PII flag(s). Resolve before retrying.';
+                var lines = data.error.details.slice(0, 8).map(function(d) {
+                  return '• ' + d.issue + ': "' + (d.value || '') + '" -> ' + (d.expected || 'remove or generalize');
+                });
+                if (data.error.details.length > 8) lines.push('• (...' + (data.error.details.length - 8) + ' more)');
+                if (publishMsg) {
+                  publishMsg.style.color = '#b91c1c';
+                  publishMsg.innerHTML = '<strong>' + msg + '</strong><br/><span style="font-size:11px; line-height:1.6;">' + lines.map(function(l) { return l.replace(/</g, '&lt;'); }).join('<br/>') + '</span>';
+                }
+                publishBtn.disabled = false;
+                return;
               }
               if (publishMsg) { publishMsg.textContent = msg; publishMsg.style.color = '#b91c1c'; }
               publishBtn.disabled = false;
