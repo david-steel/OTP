@@ -200,6 +200,15 @@
       <div class="flex items-center gap-2 flex-wrap">
         <% if (teamMeta.hasDraft) { %>
           <span class="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">Draft v<%= teamMeta.oosVersion %> &middot; unpublished</span>
+          <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner' && teamMeta.oosFileId) { %>
+            <button id="btn-publish-team" data-oos-file-id="<%= teamMeta.oosFileId %>"
+              class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-1.5 transition-colors"
+              title="Publish this draft as the new live OOS for your org.">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Publish draft
+            </button>
+            <span id="publish-team-msg" class="text-xs text-gray-500"></span>
+          <% } %>
         <% } else if (teamMeta.hasPublished) { %>
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
         <% } %>
@@ -517,6 +526,42 @@
 
     // Show / hide custom authority input based on dropdown choice.
     document.addEventListener('DOMContentLoaded', function() {
+      // Publish-draft button (only present when there's an unpublished draft)
+      var publishBtn = document.getElementById('btn-publish-team');
+      var publishMsg = document.getElementById('publish-team-msg');
+      if (publishBtn) {
+        publishBtn.addEventListener('click', async function() {
+          var oosFileId = publishBtn.getAttribute('data-oos-file-id');
+          if (!oosFileId) return;
+          if (!confirm('Publish this team chart draft as the new live OOS for your org? Other agents reading the OOS will see the new structure.')) return;
+          publishBtn.disabled = true;
+          if (publishMsg) { publishMsg.textContent = 'Publishing...'; publishMsg.style.color = '#6b7280'; }
+          try {
+            var resp = await fetch('/api/v1/oos/' + encodeURIComponent(oosFileId) + '/publish', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({}),
+            });
+            var data = await resp.json().catch(function() { return {}; });
+            if (!resp.ok) {
+              var msg = (data.error && data.error.message) || ('Publish failed (' + resp.status + ')');
+              if (data.error && data.error.code === 'PII_DETECTED' && Array.isArray(data.error.details)) {
+                msg += ' -- ' + data.error.details.length + ' PII flag(s). Resolve before retrying.';
+              }
+              if (publishMsg) { publishMsg.textContent = msg; publishMsg.style.color = '#b91c1c'; }
+              publishBtn.disabled = false;
+              return;
+            }
+            if (publishMsg) { publishMsg.textContent = 'Published! Reloading...'; publishMsg.style.color = '#047857'; }
+            setTimeout(function() { window.location.reload(); }, 800);
+          } catch (e) {
+            if (publishMsg) { publishMsg.textContent = 'Network error: ' + e.message; publishMsg.style.color = '#b91c1c'; }
+            publishBtn.disabled = false;
+          }
+        });
+      }
+
       var authSel = document.getElementById('ef-authority');
       var authCustom = document.getElementById('ef-authority-custom');
       if (authSel && authCustom) {
