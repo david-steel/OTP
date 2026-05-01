@@ -917,6 +917,151 @@ server.tool(
   }
 );
 
+// ============================================================
+// TOOL: list_my_kpis
+// See KPIs (scorecard measurables) on the org chart
+// ============================================================
+server.tool(
+  "list_my_kpis",
+  "List KPIs (scorecard measurables) on the org chart, filterable by owner. Use this to see what an agent or human is being measured against, and to find a KPI's id or exact title before pushing a value with update_kpi.",
+  {
+    owner_external_id: z.string().optional().describe("Filter to one owner's KPIs. E.g. 'AGT_DIRK' for the Dirk agent, 'HUM_DAVIDSTEEL' for David."),
+    owner_entity_type: z.enum(["agent", "human"]).optional().describe("Filter by entity type."),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return { content: [{ type: "text" as const, text: "Error: OTP_API_KEY required." }] };
+    }
+    const qs = new URLSearchParams();
+    if (params.owner_external_id) qs.set("ownerExternalId", params.owner_external_id);
+    if (params.owner_entity_type) qs.set("ownerEntityType", params.owner_entity_type);
+    const result = await otpFetch(`/kpis${qs.toString() ? `?${qs.toString()}` : ""}`);
+    const rows = (result.kpis || []).map((k: any) => ({
+      id: k.id,
+      title: k.title,
+      owner: k.ownerExternalId,
+      owner_type: k.ownerEntityType,
+      goal: k.goalValue,
+      goal_operator: k.goalOperator,
+      unit: k.unit,
+      time_grain: k.timeGrain,
+      aggregation: k.aggregationMethod,
+    }));
+    return {
+      content: [{
+        type: "text" as const,
+        text: JSON.stringify({ count: rows.length, kpis: rows }, null, 2),
+      }],
+    };
+  }
+);
+
+// ============================================================
+// TOOL: update_kpi
+// Push a measured value to a KPI. The agent reports its own number.
+// ============================================================
+server.tool(
+  "update_kpi",
+  "Push a KPI value (the actual measured number for a period). This is how an agent reports 'this is what I did this week / this month' to its scorecard. Looks up the KPI by title under a given owner, then writes the value. periodStart defaults to the start of the current period for the KPI's time grain (e.g. start of this week for a weekly KPI).",
+  {
+    owner_external_id: z.string().describe("The agent or human external id that owns the KPI. E.g. 'AGT_DIRK'."),
+    title: z.string().describe("The KPI title (case-insensitive match against the KPI's stored title). E.g. 'Cold emails sent'."),
+    value: z.number().describe("The actual measured value for the period. E.g. 30."),
+    period_start: z.string().optional().describe("ISO date for the period start (YYYY-MM-DD). If omitted, computes start of current period from the KPI's time grain."),
+    notes: z.string().optional().describe("Optional context. E.g. 'after 12pm send wave'."),
+  },
+  async (params) => {
+    if (!OTP_API_KEY) {
+      return { content: [{ type: "text" as const, text: "Error: OTP_API_KEY required." }] };
+    }
+
+    // 1. Look up KPI by owner + title
+    const qs = new URLSearchParams({ ownerExternalId: params.owner_external_id });
+    const list = await otpFetch(`/kpis?${qs.toString()}`);
+    const kpis = list.kpis || [];
+    const titleLc = params.title.toLowerCase();
+    const match = kpis.find((k: any) => String(k.title || "").toLowerCase() === titleLc);
+    if (!match) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            error: "KPI not found",
+            owner: params.owner_external_id,
+            title_searched: params.title,
+            available_titles: kpis.map((k: any) => k.title),
+            hint: "Create the KPI first via /dashboard/team -- open the owner tile, scroll to the KPI section, click '+ Add KPI'.",
+          }, null, 2),
+        }],
+      };
+    }
+
+    // 2. Compute period_start if omitted
+    let periodStart = params.period_start;
+    if (!periodStart) {
+      const now = new Date();
+      const grain = (match.timeGrain || "weekly").toLowerCase();
+      if (grain === "weekly") {
+        // ISO week starts Monday
+        const day = now.getUTCDay(); // 0=Sun, 1=Mon, ...
+        const daysFromMon = (day + 6) % 7;
+        const mon = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysFromMon));
+        periodStart = mon.toISOString().slice(0, 10);
+      } else if (grain === "monthly") {
+        periodStart = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
+      } else if (grain === "quarterly") {
+        const q = Math.floor(now.getUTCMonth() / 3);
+        const startMonth = q * 3 + 1;
+        periodStart = `${now.getUTCFullYear()}-${String(startMonth).padStart(2, "0")}-01`;
+      } else if (grain === "annual") {
+        periodStart = `${now.getUTCFullYear()}-01-01`;
+      } else {
+        periodStart = now.toISOString().slice(0, 10);
+      }
+    }
+
+    // 3. POST value
+    await otpFetch(`/kpis/${match.id}/values`, {
+      method: "POST",
+      body: JSON.stringify({
+        periodStart,
+        value: params.value,
+        notes: params.notes ?? null,
+      }),
+    });
+
+    const goal = match.goalValue;
+    const op = match.goalOperator || "gte";
+    let on_track: boolean | null = null;
+    if (goal != null) {
+      if (op === "gte") on_track = params.value >= goal;
+      else if (op === "gt") on_track = params.value > goal;
+      else if (op === "lte") on_track = params.value <= goal;
+      else if (op === "lt") on_track = params.value < goal;
+      else if (op === "eq") on_track = params.value === goal;
+    }
+
+    return {
+      content: [{
+        type: "text" as const,
+        text: JSON.stringify({
+          ok: true,
+          kpi_id: match.id,
+          title: match.title,
+          owner: params.owner_external_id,
+          period_start: periodStart,
+          value: params.value,
+          goal,
+          goal_operator: op,
+          on_track,
+          progress_pct: goal != null && goal > 0 ? Math.round((params.value / goal) * 100) : null,
+          message: `Updated "${match.title}" for period starting ${periodStart}: ${params.value}${goal != null ? ` (goal ${op} ${goal})` : ""}.`,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
 // -- Start --
 
 async function main() {
