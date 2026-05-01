@@ -13,8 +13,8 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
-import { patchTeamEntity, deleteTeamEntity, createTeamEntity, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
-import type { EntityType } from '../../services/team-graph.js';
+import { patchTeamEntity, deleteTeamEntity, createTeamEntity, bulkImportHumans, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
+import type { EntityType, ImportRow } from '../../services/team-graph.js';
 import {
   issueInvite,
   revokeInvite,
@@ -210,6 +210,78 @@ export default async function teamRoutes(app: FastifyInstance) {
       return ctx.markdown;
     }
   );
+
+  // ============================================================
+  // POST /api/v1/team/import -- bulk import humans from CSV
+  // body: { mode: 'overwrite' | 'addition', rows: ImportRow[] }
+  // ============================================================
+  app.post('/team/import', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const importSchema = z.object({
+      mode: z.enum(['overwrite', 'addition']),
+      rows: z.array(z.object({
+        name: z.string().min(1).max(255),
+        role: z.string().max(255).optional(),
+        contact_email: z.string().max(200).optional(),
+        contact_phone: z.string().max(60).optional(),
+        slack_id: z.string().max(60).optional(),
+        reports_to: z.string().max(255).optional(),
+        job_description: z.string().max(5000).optional(),
+        authority_level: z.string().max(120).optional(),
+        skills: z.string().max(2000).optional(),
+        mcps: z.string().max(2000).optional(),
+        status: z.string().max(60).optional(),
+      })).min(1).max(500),
+    });
+    const parsed = importSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid import payload', details: parsed.error.issues } });
+    }
+
+    try {
+      const result = await bulkImportHumans(org.id, parsed.data.rows as ImportRow[], parsed.data.mode);
+      return result;
+    } catch (e) {
+      if (e instanceof TeamMutationError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Import failed' } });
+    }
+  });
+
+  // ============================================================
+  // GET /api/v1/team/import/template/:variant -- CSV template download
+  // variant = 'simple' | 'full'
+  // ============================================================
+  app.get<{ Params: { variant: string } }>('/team/import/template/:variant', async (request, reply) => {
+    const variant = request.params.variant;
+    let csv = '';
+    let filename = 'otp-humans-template.csv';
+    if (variant === 'simple') {
+      filename = 'otp-humans-simple.csv';
+      csv = [
+        'name,role,reports_to',
+        'Jane Doe,CEO,',
+        'John Smith,COO,Jane Doe',
+        'Sarah Lee,Marketing Lead,John Smith',
+      ].join('\n') + '\n';
+    } else if (variant === 'full') {
+      filename = 'otp-humans-full.csv';
+      csv = [
+        'name,role,contact_email,contact_phone,slack_id,reports_to,job_description,authority_level,skills,mcps,status',
+        'Jane Doe,CEO,jane@example.com,+1 555 0100,U01ABC,,Sets vision and runs the L10,autonomous,"strategy,leadership","gmail,slack",active',
+        'John Smith,COO,john@example.com,,U02DEF,Jane Doe,Owns ops scorecard and weekly L10,execute-with-approval,"operations,EOS","accelo,todoist",active',
+        'Sarah Lee,Marketing Lead,sarah@example.com,,U03GHI,John Smith,Owns brand and demand gen,recommend,"copywriting,paid-ads","ga4,hubspot",active',
+      ].join('\n') + '\n';
+    } else {
+      return reply.status(400).send({ error: { code: 'INVALID_VARIANT', message: 'variant must be "simple" or "full"' } });
+    }
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    return csv;
+  });
 
   // ============================================================
   // POST /api/v1/team/invite -- owner invites someone to claim a tile

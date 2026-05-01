@@ -272,6 +272,10 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12h2m-2 4h2m-6-8a4 4 0 11-8 0 4 4 0 018 0zM6 14a4 4 0 00-4 4v2h12v-2a4 4 0 00-4-4H6z"/></svg>
             Invite member
           </button>
+          <button onclick="openImportDrawer()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium inline-flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Import CSV
+          </button>
           <button onclick="openInvitesDrawer()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
             Pending invites
             <% if (typeof pendingInvites !== 'undefined' && pendingInvites && pendingInvites.length > 0) { %>
@@ -321,6 +325,97 @@
 </section>
 
 <div id="org-tooltip" class="org-tooltip"></div>
+
+<% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
+<!-- CSV Import side drawer -->
+<div id="imp-overlay" class="ab-modal-overlay" onclick="closeImportDrawer()"></div>
+<aside id="imp-drawer" class="ab-modal" role="dialog" aria-hidden="true">
+  <div class="ab-modal-header">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-1">Import</div>
+      <div class="text-base font-bold text-gray-900">Import humans from CSV</div>
+    </div>
+    <button onclick="closeImportDrawer()" class="text-gray-400 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div style="flex:1; overflow-y:auto; padding: 1.25rem 1.5rem;">
+
+    <!-- Step 1: templates -->
+    <div style="margin-bottom: 1.25rem;">
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">1. Download a template</div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <a href="/api/v1/team/import/template/simple" download class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium inline-flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Simple
+        </a>
+        <a href="/api/v1/team/import/template/full" download class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium inline-flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Full
+        </a>
+      </div>
+      <div style="font-size:11px; color:#6b7280; margin-top:0.4rem; line-height:1.5;">
+        <strong>Simple:</strong> name, role, reports_to.<br/>
+        <strong>Full:</strong> contact email/phone, Slack ID, job description, authority level, skills, MCPs, status.<br/>
+        <code>reports_to</code> matches by name (or by external ID like <code>HUM_JANEDOE</code>).
+      </div>
+    </div>
+
+    <!-- Step 2: upload -->
+    <div style="margin-bottom: 1.25rem;">
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">2. Choose a CSV file</div>
+      <input id="imp-file" type="file" accept=".csv,text/csv" onchange="onImportFileChange()" style="font-size:13px;" />
+      <div id="imp-file-status" style="font-size:11px; color:#6b7280; margin-top:0.4rem;"></div>
+    </div>
+
+    <!-- Step 3: preview -->
+    <div id="imp-preview-wrap" style="margin-bottom: 1.25rem; display:none;">
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">3. Preview</div>
+      <div id="imp-preview-summary" style="font-size:12px; color:#374151; margin-bottom:0.5rem;"></div>
+      <div style="max-height: 280px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;">
+        <table style="width:100%; font-size:11px; border-collapse:collapse;">
+          <thead style="background:#f9fafb; position:sticky; top:0;">
+            <tr>
+              <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151;">#</th>
+              <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151;">Name</th>
+              <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151;">Role</th>
+              <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151;">Reports to</th>
+              <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="imp-preview-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Step 4: mode -->
+    <div id="imp-mode-wrap" style="margin-bottom: 1.25rem; display:none;">
+      <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">4. Import mode</div>
+      <label style="display:flex; gap:0.5rem; align-items:flex-start; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; margin-bottom:0.4rem;">
+        <input type="radio" name="imp-mode" value="addition" checked style="margin-top:3px;" />
+        <div>
+          <div style="font-size:13px; font-weight:600; color:#0f172a;">Addition (safe)</div>
+          <div style="font-size:11px; color:#6b7280;">Add new humans; refresh fields on humans whose names already exist. Nothing is deleted.</div>
+        </div>
+      </label>
+      <label style="display:flex; gap:0.5rem; align-items:flex-start; padding:0.5rem 0.75rem; border:1px solid #fecaca; background:#fff5f5; border-radius:8px; cursor:pointer;">
+        <input type="radio" name="imp-mode" value="overwrite" style="margin-top:3px;" />
+        <div>
+          <div style="font-size:13px; font-weight:600; color:#991b1b;">New / Overwrite (destructive)</div>
+          <div style="font-size:11px; color:#7f1d1d;">Refresh matched humans, create new ones, <strong>and delete any human not in the CSV</strong>. Affected agents lose their escalates_to link.</div>
+        </div>
+      </label>
+    </div>
+
+    <div id="imp-banner" style="display:none; padding:0.5rem 0.75rem; border-radius:8px; font-size:12px; margin-bottom: 0.75rem;"></div>
+    <div id="imp-result" style="display:none; padding:0.75rem; border-radius:8px; background:#ecfdf5; border:1px solid #a7f3d0; font-size:12px; color:#065f46; margin-bottom: 0.75rem; line-height:1.5;"></div>
+  </div>
+  <div class="edit-panel-footer" style="justify-content: flex-end;">
+    <button onclick="closeImportDrawer()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
+    <button id="imp-submit" onclick="submitImport()" disabled class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Import</button>
+  </div>
+</aside>
+<% } %>
 
 <!-- Agent Builder side drawer (slides over the edit panel from the right) -->
 <div id="ab-modal-overlay" class="ab-modal-overlay" onclick="closeAgentBuilderModal()"></div>
@@ -2063,8 +2158,273 @@
         if (typeof closeInvitesDrawer === 'function') closeInvitesDrawer();
         if (typeof closeCompare === 'function') closeCompare();
         if (typeof closeAgentBuilderModal === 'function') closeAgentBuilderModal();
+        if (typeof closeImportDrawer === 'function') closeImportDrawer();
       }
     });
+
+    // ========================================================
+    // CSV import drawer
+    // ========================================================
+    var importedRows = [];
+
+    window.openImportDrawer = function() {
+      // Reset state
+      importedRows = [];
+      var fileInput = document.getElementById('imp-file');
+      if (fileInput) fileInput.value = '';
+      document.getElementById('imp-file-status').textContent = '';
+      document.getElementById('imp-preview-wrap').style.display = 'none';
+      document.getElementById('imp-mode-wrap').style.display = 'none';
+      document.getElementById('imp-banner').style.display = 'none';
+      document.getElementById('imp-result').style.display = 'none';
+      document.getElementById('imp-submit').disabled = true;
+      document.getElementById('imp-submit').textContent = 'Import';
+      document.getElementById('imp-overlay').classList.add('open');
+      document.getElementById('imp-drawer').classList.add('open');
+      document.getElementById('imp-drawer').setAttribute('aria-hidden', 'false');
+    };
+
+    window.closeImportDrawer = function() {
+      document.getElementById('imp-overlay').classList.remove('open');
+      document.getElementById('imp-drawer').classList.remove('open');
+      document.getElementById('imp-drawer').setAttribute('aria-hidden', 'true');
+    };
+
+    // Minimal RFC-4180-ish CSV parser: handles quoted fields, escaped quotes, embedded newlines + commas.
+    function parseCSV(text) {
+      var rows = [];
+      var row = [];
+      var field = '';
+      var inQuotes = false;
+      var i = 0;
+      // Strip BOM if present
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      while (i < text.length) {
+        var c = text[i];
+        if (inQuotes) {
+          if (c === '"') {
+            if (text[i+1] === '"') { field += '"'; i += 2; continue; }
+            inQuotes = false; i++; continue;
+          }
+          field += c; i++; continue;
+        }
+        if (c === '"') { inQuotes = true; i++; continue; }
+        if (c === ',') { row.push(field); field = ''; i++; continue; }
+        if (c === '\r') { i++; continue; }
+        if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+        field += c; i++;
+      }
+      // Final field/row
+      if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+      return rows;
+    }
+
+    var KNOWN_COLS = ['name','role','contact_email','contact_phone','slack_id','reports_to','job_description','authority_level','skills','mcps','status'];
+
+    window.onImportFileChange = function() {
+      var fileInput = document.getElementById('imp-file');
+      var statusEl = document.getElementById('imp-file-status');
+      var banner = document.getElementById('imp-banner');
+      banner.style.display = 'none';
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        statusEl.textContent = '';
+        return;
+      }
+      var file = fileInput.files[0];
+      if (file.size > 2 * 1024 * 1024) {
+        statusEl.textContent = '';
+        showImportBanner('File too large (>2MB).', 'error');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var text = String(ev.target.result || '');
+        try {
+          var raw = parseCSV(text);
+          // Drop empty trailing rows
+          raw = raw.filter(function(r) { return r.length > 0 && !(r.length === 1 && r[0].trim() === ''); });
+          if (raw.length < 2) {
+            statusEl.textContent = '';
+            showImportBanner('CSV must have a header row and at least one data row.', 'error');
+            return;
+          }
+          var header = raw[0].map(function(h) { return String(h || '').trim().toLowerCase().replace(/\s+/g, '_'); });
+          // Validate header
+          if (header.indexOf('name') === -1) {
+            showImportBanner('CSV missing required column: name', 'error');
+            return;
+          }
+          var unknown = header.filter(function(h) { return KNOWN_COLS.indexOf(h) === -1; });
+          if (unknown.length > 0) {
+            showImportBanner('Unknown columns will be ignored: ' + unknown.join(', '), 'warn');
+          }
+          // Build rows
+          var rows = [];
+          for (var r = 1; r < raw.length; r++) {
+            var line = raw[r];
+            var obj = {};
+            header.forEach(function(col, idx) {
+              if (KNOWN_COLS.indexOf(col) === -1) return;
+              var val = (line[idx] !== undefined ? String(line[idx]) : '').trim();
+              if (val.length > 0) obj[col] = val;
+            });
+            // Skip totally empty rows
+            if (Object.keys(obj).length === 0) continue;
+            rows.push(obj);
+          }
+          if (rows.length === 0) {
+            showImportBanner('No data rows found.', 'error');
+            return;
+          }
+          importedRows = rows;
+          statusEl.textContent = file.name + ' — ' + rows.length + ' row' + (rows.length === 1 ? '' : 's') + ' parsed';
+          renderImportPreview(rows);
+          document.getElementById('imp-preview-wrap').style.display = '';
+          document.getElementById('imp-mode-wrap').style.display = '';
+          document.getElementById('imp-submit').disabled = false;
+        } catch (e) {
+          showImportBanner('Failed to parse CSV: ' + e.message, 'error');
+        }
+      };
+      reader.onerror = function() { showImportBanner('Could not read file.', 'error'); };
+      reader.readAsText(file);
+    };
+
+    function renderImportPreview(rows) {
+      var tbody = document.getElementById('imp-preview-tbody');
+      var summary = document.getElementById('imp-preview-summary');
+      tbody.innerHTML = '';
+
+      // Build name index of existing humans + batch names so we can preview reports_to resolution
+      var existingNamesLc = {};
+      var existingByExtId = {};
+      nodes.forEach(function(n) {
+        if (n.type === 'human') {
+          existingNamesLc[String(n.label || '').toLowerCase()] = n;
+          existingByExtId[n.externalId] = n;
+        }
+      });
+      var batchNamesLc = {};
+      rows.forEach(function(r) {
+        if (r.name) batchNamesLc[String(r.name).toLowerCase()] = r;
+      });
+
+      var willCreate = 0, willUpdate = 0, warnings = 0;
+
+      rows.forEach(function(row, idx) {
+        var nameLc = String(row.name || '').toLowerCase();
+        var match = existingNamesLc[nameLc] || null;
+        var isUpdate = !!match;
+        if (isUpdate) willUpdate++; else willCreate++;
+
+        // reports_to resolution preview
+        var rtNote = '';
+        if (row.reports_to) {
+          var rt = String(row.reports_to).trim();
+          var rtLc = rt.toLowerCase();
+          if (existingNamesLc[rtLc] || batchNamesLc[rtLc]) {
+            rtNote = '✓ ' + rt;
+          } else if (existingByExtId[rt]) {
+            rtNote = '✓ ' + rt;
+          } else {
+            rtNote = '⚠ ' + rt + ' (no match)';
+            warnings++;
+          }
+        } else {
+          rtNote = '—';
+        }
+
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td style="padding:5px 8px; border-bottom:1px solid #f3f4f6; color:#6b7280;">' + (idx + 1) + '</td>' +
+          '<td style="padding:5px 8px; border-bottom:1px solid #f3f4f6; color:#0f172a;">' + escapeHtml(row.name || '') + (isUpdate ? ' <span style="color:#0369a1; font-size:10px;">(update)</span>' : ' <span style="color:#059669; font-size:10px;">(new)</span>') + '</td>' +
+          '<td style="padding:5px 8px; border-bottom:1px solid #f3f4f6; color:#374151;">' + escapeHtml(row.role || '') + '</td>' +
+          '<td style="padding:5px 8px; border-bottom:1px solid #f3f4f6; color:#374151;">' + escapeHtml(rtNote) + '</td>' +
+          '<td style="padding:5px 8px; border-bottom:1px solid #f3f4f6; color:#374151;">' + escapeHtml(row.status || '') + '</td>';
+        tbody.appendChild(tr);
+      });
+
+      // Count humans that will be deleted in overwrite mode
+      var batchNamesLcSet = batchNamesLc;
+      var willDelete = 0;
+      Object.keys(existingNamesLc).forEach(function(k) {
+        if (!batchNamesLcSet[k]) willDelete++;
+      });
+
+      summary.innerHTML =
+        '<span style="color:#059669;">' + willCreate + ' new</span> · ' +
+        '<span style="color:#0369a1;">' + willUpdate + ' update' + (willUpdate === 1 ? '' : 's') + '</span> · ' +
+        '<span style="color:#b91c1c;">' + willDelete + ' would be deleted in NEW mode</span>' +
+        (warnings > 0 ? ' · <span style="color:#b45309;">' + warnings + ' warning' + (warnings === 1 ? '' : 's') + '</span>' : '');
+    }
+
+    function showImportBanner(msg, kind) {
+      var banner = document.getElementById('imp-banner');
+      banner.textContent = msg;
+      banner.style.display = '';
+      if (kind === 'error') {
+        banner.style.background = '#fef2f2';
+        banner.style.color = '#991b1b';
+        banner.style.border = '1px solid #fecaca';
+      } else if (kind === 'warn') {
+        banner.style.background = '#fffbeb';
+        banner.style.color = '#92400e';
+        banner.style.border = '1px solid #fde68a';
+      } else {
+        banner.style.background = '#eff6ff';
+        banner.style.color = '#1e40af';
+        banner.style.border = '1px solid #bfdbfe';
+      }
+    }
+
+    window.submitImport = async function() {
+      if (!importedRows || importedRows.length === 0) return;
+      var modeRadios = document.getElementsByName('imp-mode');
+      var mode = 'addition';
+      for (var i = 0; i < modeRadios.length; i++) { if (modeRadios[i].checked) { mode = modeRadios[i].value; break; } }
+      if (mode === 'overwrite') {
+        var ok = window.confirm('NEW / Overwrite mode will DELETE every human not present in your CSV. This cannot be undone (without restoring from a published OOS). Proceed?');
+        if (!ok) return;
+      }
+      var btn = document.getElementById('imp-submit');
+      btn.disabled = true; btn.textContent = 'Importing…';
+      document.getElementById('imp-banner').style.display = 'none';
+
+      try {
+        var res = await fetch('/api/v1/team/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode, rows: importedRows }),
+        });
+        var data = await res.json().catch(function() { return {}; });
+        if (!res.ok) {
+          showImportBanner((data.error && data.error.message) || ('Import failed (' + res.status + ')'), 'error');
+          btn.disabled = false; btn.textContent = 'Import';
+          return;
+        }
+        var resultEl = document.getElementById('imp-result');
+        var warnHtml = '';
+        if (data.warnings && data.warnings.length > 0) {
+          warnHtml = '<div style="margin-top:0.5rem; color:#92400e;"><strong>' + data.warnings.length + ' warning' + (data.warnings.length === 1 ? '' : 's') + ':</strong><ul style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">' +
+            data.warnings.slice(0, 10).map(function(w) {
+              return '<li>Row ' + (w.rowIndex + 1) + ' (' + escapeHtml(w.field) + '): ' + escapeHtml(w.message) + '</li>';
+            }).join('') +
+            (data.warnings.length > 10 ? '<li>… and ' + (data.warnings.length - 10) + ' more</li>' : '') +
+            '</ul></div>';
+        }
+        resultEl.innerHTML = '<strong>Done.</strong> ' +
+          (data.created || 0) + ' created · ' +
+          (data.updated || 0) + ' updated' +
+          (data.deleted ? ' · ' + data.deleted + ' deleted' : '') +
+          '. Reloading…' + warnHtml;
+        resultEl.style.display = '';
+        btn.textContent = 'Imported';
+        setTimeout(function() { window.location.reload(); }, 1800);
+      } catch (e) {
+        showImportBanner('Network error: ' + e.message, 'error');
+        btn.disabled = false; btn.textContent = 'Import';
+      }
+    };
 
     // ========================================================
     // Agent Builder modal (iframe) -- populates create drawer

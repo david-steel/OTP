@@ -704,3 +704,260 @@ export async function patchTeamEntity(
     matchedEntityId: externalId,
   };
 }
+
+// ============================================================
+// CSV import: bulk upsert humans (and in 'overwrite' mode, delete absent ones)
+// ============================================================
+
+export interface ImportRow {
+  name: string;
+  role?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  slack_id?: string;
+  reports_to?: string;       // name OR externalId
+  job_description?: string;
+  authority_level?: string;
+  skills?: string;           // comma-separated
+  mcps?: string;             // comma-separated
+  status?: string;
+}
+
+export interface ImportWarning {
+  rowIndex: number;          // 0-based row index (excluding header)
+  field: string;
+  message: string;
+}
+
+export interface ImportResult {
+  ok: true;
+  created: number;
+  updated: number;
+  deleted: number;
+  warnings: ImportWarning[];
+  oosFileId: string;
+}
+
+const HUMAN_ID_PATTERN = /^[A-Z0-9_\-]{2,120}$/i;
+
+function lc(v: any): string { return String(v || '').trim().toLowerCase(); }
+
+function applyRowToEntity(entity: any, row: ImportRow): void {
+  // Name + role + authority always set (allow overwriting on update)
+  entity.name = String(row.name).trim();
+  if (row.role !== undefined) entity.role = String(row.role).trim() || undefined;
+  if (row.authority_level !== undefined) entity.authority_level = String(row.authority_level).trim() || undefined;
+  if (row.contact_email !== undefined) {
+    const v = String(row.contact_email).trim().toLowerCase();
+    if (v) entity.contact_email = v; else delete entity.contact_email;
+  }
+  if (row.contact_phone !== undefined) {
+    const v = String(row.contact_phone).trim();
+    if (v) entity.contact_phone = v; else delete entity.contact_phone;
+  }
+  if (row.slack_id !== undefined) {
+    const v = String(row.slack_id).trim();
+    if (v) entity.slack_id = v; else delete entity.slack_id;
+  }
+  if (row.job_description !== undefined) {
+    const v = String(row.job_description).trim();
+    if (v) entity.job_description = v; else delete entity.job_description;
+  }
+  if (row.status !== undefined) {
+    const v = String(row.status).trim();
+    if (v) entity.status = v; else delete entity.status;
+  }
+  if (row.skills !== undefined) {
+    const arr = String(row.skills).split(',').map(s => s.trim()).filter(Boolean);
+    entity.skills = arr;
+  }
+  if (row.mcps !== undefined) {
+    const arr = String(row.mcps).split(',').map(s => s.trim()).filter(Boolean);
+    entity.mcps = arr;
+  }
+}
+
+export async function bulkImportHumans(
+  orgId: string,
+  rows: ImportRow[],
+  mode: 'overwrite' | 'addition'
+): Promise<ImportResult> {
+  if (mode !== 'overwrite' && mode !== 'addition') {
+    throw new TeamMutationError('INVALID_MODE', 'mode must be "overwrite" or "addition"');
+  }
+  if (!Array.isArray(rows)) {
+    throw new TeamMutationError('INVALID_ROWS', 'rows must be an array');
+  }
+
+  const draft = await getOrCreateEditableDraft(orgId);
+  const { fmText, body } = splitFrontmatter(draft.rawContent);
+  const fm: any = parseYAML(fmText) || {};
+  fm.entities = fm.entities || {};
+  if (!Array.isArray(fm.entities.humans)) fm.entities.humans = [];
+  if (!Array.isArray(fm.entities.agents)) fm.entities.agents = [];
+
+  const humans: any[] = fm.entities.humans;
+  const agents: any[] = fm.entities.agents;
+
+  // Lookup tables for matching
+  const byNameLc = new Map<string, any>();
+  const byExternalId = new Map<string, any>();
+  for (const h of humans) {
+    if (h && h.name) byNameLc.set(lc(h.name), h);
+    if (h && h.id) byExternalId.set(String(h.id), h);
+  }
+
+  const allUsedIds = new Set<string>([
+    ...humans.map(h => String(h?.id || '')),
+    ...agents.map(a => String(a?.id || '')),
+  ]);
+
+  const warnings: ImportWarning[] = [];
+  let created = 0;
+  let updated = 0;
+
+  // Track which existing humans the import "claimed" (kept), so we can delete the rest in overwrite mode.
+  const seenExistingExternalIds = new Set<string>();
+
+  // First pass: validate names + collect new-row names so reports_to can resolve to siblings in the same batch.
+  const validRows: { row: ImportRow; idx: number; nameLc: string }[] = [];
+  const batchNameLcSet = new Set<string>();
+  rows.forEach((row, idx) => {
+    const name = String(row?.name || '').trim();
+    if (!name) {
+      warnings.push({ rowIndex: idx, field: 'name', message: 'Row skipped: name is required' });
+      return;
+    }
+    const nameLc = lc(name);
+    if (batchNameLcSet.has(nameLc)) {
+      warnings.push({ rowIndex: idx, field: 'name', message: `Row skipped: duplicate name "${name}" in import` });
+      return;
+    }
+    batchNameLcSet.add(nameLc);
+    validRows.push({ row: { ...row, name }, idx, nameLc });
+  });
+
+  // Second pass: upsert each row.
+  // We resolve reports_to AFTER all upserts so a row can reference another row created in the same batch.
+  // To do that, we first do create/update without reports_to, collecting (rowIndex, target) pairs, then resolve.
+  type PendingParent = { entity: any; rawValue: string; rowIndex: number };
+  const pendingParents: PendingParent[] = [];
+
+  for (const { row, idx, nameLc } of validRows) {
+    const existing = byNameLc.get(nameLc);
+    if (existing) {
+      // Update in place
+      applyRowToEntity(existing, row);
+      seenExistingExternalIds.add(String(existing.id));
+      updated++;
+      if (row.reports_to !== undefined) {
+        pendingParents.push({ entity: existing, rawValue: String(row.reports_to || '').trim(), rowIndex: idx });
+      }
+    } else {
+      // Create new
+      const slug = row.name.replace(/[^A-Za-z0-9]/g, '').toUpperCase() || 'TILE';
+      let externalId = 'HUM_' + slug;
+      let suffix = 0;
+      while (allUsedIds.has(externalId)) {
+        suffix++;
+        externalId = `HUM_${slug}_${suffix}`;
+      }
+      allUsedIds.add(externalId);
+      const newEntity: any = { id: externalId, name: row.name };
+      applyRowToEntity(newEntity, row);
+      humans.push(newEntity);
+      byNameLc.set(nameLc, newEntity);
+      byExternalId.set(externalId, newEntity);
+      seenExistingExternalIds.add(externalId);
+      created++;
+      if (row.reports_to !== undefined) {
+        pendingParents.push({ entity: newEntity, rawValue: String(row.reports_to || '').trim(), rowIndex: idx });
+      }
+    }
+  }
+
+  // Resolve reports_to references now that all create/updates are done.
+  for (const p of pendingParents) {
+    if (!p.rawValue) {
+      // Empty -> clear any existing parent
+      delete p.entity.reports_to;
+      continue;
+    }
+    // Try name match (existing + batch-created)
+    const byName = byNameLc.get(lc(p.rawValue));
+    if (byName && byName !== p.entity) {
+      p.entity.reports_to = String(byName.id);
+      continue;
+    }
+    // Try externalId
+    if (HUMAN_ID_PATTERN.test(p.rawValue)) {
+      const byId = byExternalId.get(p.rawValue);
+      if (byId && byId !== p.entity) {
+        p.entity.reports_to = String(byId.id);
+        continue;
+      }
+    }
+    // Self-reference is invalid
+    if (byName === p.entity) {
+      warnings.push({ rowIndex: p.rowIndex, field: 'reports_to', message: `"${p.rawValue}" refers to the same row -- self-reference ignored` });
+      delete p.entity.reports_to;
+      continue;
+    }
+    // Could not resolve
+    warnings.push({ rowIndex: p.rowIndex, field: 'reports_to', message: `Could not match "${p.rawValue}" to any human; leaving parent unset` });
+    delete p.entity.reports_to;
+  }
+
+  // Overwrite mode: delete humans not seen in the import.
+  let deleted = 0;
+  if (mode === 'overwrite') {
+    const removed: string[] = [];
+    fm.entities.humans = humans.filter(h => {
+      const id = String(h?.id || '');
+      if (id && !seenExistingExternalIds.has(id)) {
+        removed.push(id);
+        return false;
+      }
+      return true;
+    });
+    deleted = removed.length;
+    // Cascade-clear references from agents (escalates_to) and other humans (reports_to)
+    if (removed.length > 0) {
+      const removedSet = new Set(removed);
+      for (const a of agents) {
+        if (a && a.escalates_to && removedSet.has(String(a.escalates_to))) {
+          delete a.escalates_to;
+        }
+      }
+      for (const h of fm.entities.humans) {
+        if (h && h.reports_to && removedSet.has(String(h.reports_to))) {
+          delete h.reports_to;
+        }
+      }
+    }
+  }
+
+  // Persist
+  const newRaw = reassembleRaw(fm, body);
+  const parsed = parseOOS(newRaw, draft.template as TemplateType);
+  if (parsed.errors.length > 0) {
+    const blocking = parsed.errors.find(e => e.code === 'MISSING_FRONTMATTER' || e.code === 'FRONTMATTER_PARSE_ERROR');
+    if (blocking) throw new TeamMutationError('REASSEMBLE_FAILED', `Imported OOS no longer parses: ${blocking.message}`, 500);
+  }
+  await db.update(oosFiles).set({
+    rawContent: newRaw,
+    frontmatter: fm as any,
+    wordCount: parsed.wordCount,
+    claimCount: parsed.claims.length,
+    updatedAt: new Date(),
+  }).where(and(eq(oosFiles.id, draft.id), eq(oosFiles.orgId, orgId)));
+
+  return {
+    ok: true,
+    created,
+    updated,
+    deleted,
+    warnings,
+    oosFileId: draft.id,
+  };
+}
