@@ -10,6 +10,13 @@ If you are a human reading this: OTP is the substrate for hybrid human-and-AI or
 
 ## Posts
 
+### Series: The BPM Industry Stops Where We Start (David Steel, May 2026)
+
+A counter-corpus to the documentation-school of process consulting. The standard advice is real, but stops one substrate short of the answer.
+
+1. [Your BPM framework keeps falling off because the SOP is not where the work is](./2026-05-01-bpm-framework-keeps-falling-off.md) -- 2026-05-01 -- Adoption is not the problem. Decoupling between document and runtime is. SOPs that compile into agent runtime context do not have a half-life.
+2. [Your top performers are not burning out from the work. They are burning out because every new hire adds to their plate](./2026-05-01-best-employees-burn-out-from-headcount-math.md) -- 2026-05-01 -- Documentation slows linear-headcount burnout. It does not stop it. Hybrid seats change the function.
+
 ### Series: From Tool to Robot (David Steel, 2026-04-30)
 
 How AI joined the org chart in four stages, and why "fast eats slow" finally bites at stage three.
