@@ -11,6 +11,45 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 1, 2026 ----
+
+  {
+    date: '2026-05-01',
+    tags: ['Improvement'],
+    title: 'Bulk-import your human team from a CSV',
+    summary: 'Move a whole team onto the chart in one shot. Download a template, fill it out in your spreadsheet of choice, drop it back. Two modes: Addition (safe upsert) and NEW / Overwrite (replace anything not in the CSV). Reports-to resolves by name, including humans created in the same import.',
+    details: `<p>Adding humans one tile at a time was fine for a 10-person team and painful for a 50-person team. Today the chart gets a CSV import path that scales.</p>
+
+<h3>Two templates, your choice of detail</h3>
+<ul>
+<li><strong>Simple:</strong> <code>name, role, reports_to</code>. Three columns, enough to draw the org chart and nothing else.</li>
+<li><strong>Full:</strong> name, role, contact email, contact phone, Slack ID, reports_to, job description, authority level, skills, MCPs, status. Every field a human tile carries on the chart, mapped one-to-one.</li>
+<li>Both templates download as real CSVs with three example rows. Open in Sheets / Excel / Numbers, edit, save, drop back.</li>
+</ul>
+
+<h3>Reports-to resolves the way humans actually write it</h3>
+<ul>
+<li>Match by name first against existing humans on the chart and against rows in the same import. So a row "John Smith reports_to Jane Doe" works whether Jane is already on the chart or being created in the same CSV.</li>
+<li>Falls back to external ID (e.g. <code>HUM_JANEDOE</code>) for power users who already know them.</li>
+<li>Names that match nothing leave the parent unset and surface a warning in the result summary -- the row still imports, you just see exactly which links did not land.</li>
+</ul>
+
+<h3>Two import modes, one of them destructive</h3>
+<ul>
+<li><strong>Addition (safe):</strong> upsert by name. Existing humans whose names match get their fields refreshed. Humans not in the CSV are left alone. Default mode, never deletes anything.</li>
+<li><strong>NEW / Overwrite:</strong> upsert by name, then delete any human not in the CSV. Agents that escalated to a deleted human lose that link automatically; other humans that reported to a deleted human do too. Confirmation prompt before any destructive run.</li>
+</ul>
+
+<h3>Preview before you commit</h3>
+<ul>
+<li>The drawer parses your CSV client-side and shows a row-by-row preview: which rows are new, which are updates, and which references will resolve.</li>
+<li>A live count tells you exactly how many humans NEW mode would delete -- before you run it.</li>
+<li>The whole import lands as a single atomic write to your draft OOS, not 50 round-trips. Up to 500 rows per file.</li>
+</ul>
+
+<p>Find it next to "Invite member" at the top of <code>/dashboard/team</code>. Owners only.</p>`
+  },
+
   // ---- April 30, 2026 ----
 
   {
