@@ -236,6 +236,24 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
+  // Why OTP -- the persuasion page (frustrations + outcomes + objections)
+  app.get('/why-otp', async (request, reply) => {
+    return reply.view('pages/why-otp', {
+      title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',
+      description: 'Every AI tool in your stack is doing work that used to require a human seat. None of them have one. OTP gives every agent a seat, an SOP, and a scorecard, on the same chart as your humans.',
+      canonical: BASE_URL + '/why-otp',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Why OTP', url: BASE_URL + '/why-otp' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        headline: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',
+        description: 'Five frustrations every AI-using organization hits, the three outcomes when AI joins the chart, and six honest objections answered.',
+        url: BASE_URL + '/why-otp',
+      },
+    });
+  });
+
   // Tools -- the OTP toolbox (5 foundational tools + extended catalog)
   app.get('/tools', async (request, reply) => {
     return reply.view('pages/tools', {
