@@ -237,6 +237,17 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   // Why OTP -- the persuasion page (frustrations + outcomes + objections)
+  // Start Here -- the 30-min founder intro page (Calendly embed)
+  app.get('/start-here', async (request, reply) => {
+    return reply.view('pages/start-here', {
+      title: 'Start Here - Schedule a 30-Minute Intro with the Founder of OTP',
+      description: 'A free 30-minute conversation with David Steel, founder of OTP. We map your AI footprint, find the coordination gaps, and decide together whether OTP is the right next move.',
+      canonical: BASE_URL + '/start-here',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Start Here', url: BASE_URL + '/start-here' }),
+    });
+  });
+
   app.get('/why-otp', async (request, reply) => {
     return reply.view('pages/why-otp', {
       title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',
