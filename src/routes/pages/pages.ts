@@ -236,6 +236,24 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
+  // Tools -- the OTP toolbox (5 foundational tools + extended catalog)
+  app.get('/tools', async (request, reply) => {
+    return reply.view('pages/tools', {
+      title: 'The OTP Toolbox - Free Tools for Augmented Human Organizations',
+      description: 'Five foundational tools plus the rest of the OTP toolbox. OOS Starter Template, the live Org Chart Builder, the CLAUDE.md Compiler, the Agent Builder, and the Coordination Checkup. Free. Use whether you sign up or not.',
+      canonical: BASE_URL + '/tools',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Tools', url: BASE_URL + '/tools' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'The OTP Toolbox',
+        description: 'Free tools for building and running augmented human organizations on OTP.',
+        url: BASE_URL + '/tools',
+      },
+    });
+  });
+
   // What is OTP -- deep explainer page (model + components + process + FAQ)
   app.get('/what-is-otp', async (request, reply) => {
     return reply.view('pages/what-is-otp', {

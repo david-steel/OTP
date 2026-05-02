@@ -357,6 +357,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/', priority: '1.0', changefreq: 'daily' },
     { loc: '/protocol', priority: '0.95', changefreq: 'monthly' },
     { loc: '/what-is-otp', priority: '0.95', changefreq: 'weekly' },
+    { loc: '/tools', priority: '0.9', changefreq: 'weekly' },
     { loc: '/browse', priority: '0.9', changefreq: 'daily' },
     { loc: '/search', priority: '0.8', changefreq: 'daily' },
     { loc: '/graph', priority: '0.8', changefreq: 'weekly' },

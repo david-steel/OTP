@@ -1,0 +1,80 @@
+# OOS -- Organizational Operating System
+# A plain-YAML description of how your organization actually coordinates.
+#
+# Fill this in. Publish it to OTP. Your AI agents read it at runtime.
+# Other organizations on the network learn from yours; you learn from theirs.
+#
+# Spec: https://orgtp.com/protocol
+# Live editor: https://orgtp.com/dashboard/team
+
+organization:
+  name: "Your Company Name"
+  slug: "your-company"
+  industry: "Agency"          # Agency / Fitness / Healthcare / SaaS / Professional Services / E-Commerce / Education / Real Estate / Legal / Other
+  size: "1-10"                # 1-10 / 11-50 / 51-200 / 201-1000 / 1000+
+  description: "One sentence about what you do."
+
+# ------------------------------------------------------------
+# ENTITIES -- the seats on your chart.
+# Both humans and agents are first-class. Each has a stable id,
+# a name, a role, and (optionally) where they report.
+# ------------------------------------------------------------
+entities:
+  humans:
+    - id: HUM_FOUNDER
+      name: "Founder Name"
+      role: "Founder / CEO"
+      authority_level: "autonomous"
+      contact_email: "founder@yourco.com"
+
+    - id: HUM_OPS
+      name: "Ops Lead Name"
+      role: "Operations"
+      authority_level: "execute-with-approval"
+      reports_to: HUM_FOUNDER
+
+  agents:
+    - id: AGT_INBOX
+      name: "Pepper"
+      role: "Inbox triage"
+      authority_level: "recommend"
+      escalates_to: HUM_FOUNDER
+      platform: "claude-code"
+      mission: "Triage inbound email. Draft replies for client emails. Escalate urgent items."
+
+    - id: AGT_SALES
+      name: "Dirk"
+      role: "Sales pipeline"
+      authority_level: "execute-with-approval"
+      escalates_to: HUM_FOUNDER
+      platform: "claude-code"
+      mission: "Source prospects, draft cold outreach, manage proposal pipeline."
+
+# ------------------------------------------------------------
+# CLAIMS -- coordination intelligence as queryable rows.
+# Each claim is a rule, a heuristic, or a failure pattern your
+# team has earned. Confidence is HIGH / MEDIUM / LOW. Evidence
+# is OBSERVED_REPEATEDLY / OBSERVED_ONCE / INFERRED / DESIGNED.
+# ------------------------------------------------------------
+claims:
+  core_operating_rules:
+    - claim: "Before any client-facing email is sent by an agent, the founder must approve."
+      confidence: HIGH
+      evidence: DESIGNED
+
+  coordination_patterns:
+    - claim: "When agents A and B both depend on the same data source, only A reads from source. B reads from A's cached output."
+      confidence: HIGH
+      evidence: OBSERVED_REPEATEDLY
+
+  failure_patterns:
+    - claim: "Slack DMs to specific people break the audit trail. Use channels with @mentions."
+      confidence: HIGH
+      evidence: OBSERVED_REPEATEDLY
+
+# ------------------------------------------------------------
+# Once filled in, save this as your-org.oos.yaml and either:
+#   1. Paste it into https://orgtp.com/dashboard/team to render the chart, or
+#   2. Author it directly on the OTP UI (the editor saves YAML
+#      automatically and you never need to edit this file by hand).
+# ------------------------------------------------------------
