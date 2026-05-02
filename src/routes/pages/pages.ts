@@ -13,6 +13,8 @@ import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
+import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
+import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 
 function toParsedClaim(c: any): ParsedClaim {
@@ -2831,4 +2833,155 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       return reply.status(500).send({ error: 'Server error' });
     }
   });
+
+  // ---------- Coordination Checkup ----------
+  app.get('/checkup', async (_request, reply) => {
+    return reply.view('pages/checkup', {
+      title: 'Coordination Checkup -- Score Yourself on the 8 Levels of Agentic Maturity - OTP',
+      description: '24 questions, ten minutes. Get a number out of 8.0, the level you are operating at, and a personalized roadmap. Built on Bassim Eledath\'s 8 Levels of Agentic Engineering.',
+      canonical: BASE_URL + '/checkup',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Coordination Checkup', url: BASE_URL + '/checkup' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'Quiz',
+        name: 'OTP Coordination Checkup',
+        description: 'Self-assessment scoring your team against the 8 Levels of Agentic Engineering.',
+        url: BASE_URL + '/checkup',
+      },
+      questions: CHECKUP_QUESTIONS,
+      levelLabels: CHECKUP_LEVEL_LABELS,
+    });
+  });
+
+  app.post<{
+    Body: {
+      name?: string;
+      email?: string;
+      company?: string | null;
+      role?: string | null;
+      answers?: Record<string, number>;
+    };
+  }>('/api/v1/checkup/submit', async (request, reply) => {
+    const { name, email, company, role, answers } = request.body || {};
+
+    if (!email || !email.includes('@')) {
+      return reply.status(400).send({ success: false, error: 'Valid email required' });
+    }
+    if (!name || name.trim().length < 2) {
+      return reply.status(400).send({ success: false, error: 'Name required' });
+    }
+    if (!answers || typeof answers !== 'object') {
+      return reply.status(400).send({ success: false, error: 'Answers required' });
+    }
+
+    const result = calculateCheckup(answers);
+
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS checkup_responses (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          company VARCHAR(255),
+          role VARCHAR(255),
+          answers JSONB NOT NULL,
+          final_score NUMERIC(3,1) NOT NULL,
+          highest_passed_level INTEGER NOT NULL,
+          capped_by_level INTEGER,
+          tier VARCHAR(40) NOT NULL,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS checkup_responses_email_idx ON checkup_responses(email)
+      `);
+      await db.execute(sql`
+        INSERT INTO checkup_responses
+          (email, name, company, role, answers, final_score, highest_passed_level, capped_by_level, tier, created_at)
+        VALUES (
+          ${email.toLowerCase().trim()},
+          ${name.trim()},
+          ${company ? String(company).trim() : null},
+          ${role ? String(role).trim() : null},
+          ${JSON.stringify(answers)}::jsonb,
+          ${result.finalScore},
+          ${result.highestPassedLevel},
+          ${result.cappedByLevel},
+          ${result.tier},
+          NOW()
+        )
+      `);
+    } catch (err: any) {
+      request.log.error({ err }, 'checkup save failed');
+      // continue -- email + result are still valuable
+    }
+
+    // Fire-and-forget email
+    void sendEmail({
+      to: email.toLowerCase().trim(),
+      from: 'David Steel <notifications@mail.orgtp.com>',
+      subject: `Your Coordination Checkup score: ${result.finalScore.toFixed(1)} / 8.0 (${result.tierHeadline})`,
+      html: renderCheckupEmail(name, result),
+    }).catch((e) => request.log.warn({ e }, 'checkup email failed'));
+
+    return reply.send({ success: true, result });
+  });
+}
+
+function renderCheckupEmail(name: string, r: ReturnType<typeof calculateCheckup>): string {
+  const levelRows = r.perLevel.map((p) => {
+    const status = p.passed ? 'PASS' : (r.cappedByLevel === p.level ? 'CAP' : '--');
+    const color = p.passed ? '#10b981' : (r.cappedByLevel === p.level ? '#f59e0b' : '#9ca3af');
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-family:monospace;color:#555;">L${p.level}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;">${escapeHtml(p.label)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:${color};font-weight:600;">${status} ${p.raw}/${p.max}</td>
+    </tr>`;
+  }).join('');
+
+  const roadmapItems = r.roadmap.map((s, i) =>
+    `<li style="margin:0 0 12px 0;line-height:1.6;color:#333;"><strong>${i + 1}.</strong> ${escapeHtml(s)}</li>`
+  ).join('');
+
+  const capLine = r.cappedByLevel
+    ? `<p style="color:#92400e;background:#fef3c7;padding:10px 14px;border-radius:6px;margin:12px 0;">Capped by Level ${r.cappedByLevel} -- ${escapeHtml(CHECKUP_LEVEL_LABELS[r.cappedByLevel])}. Higher levels do not lift your score until this is fixed.</p>`
+    : `<p style="color:#065f46;background:#d1fae5;padding:10px 14px;border-radius:6px;margin:12px 0;">All 8 levels passed. You are operating at the frontier.</p>`;
+
+  return `<!DOCTYPE html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#222;background:#fff;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-size:14px;color:#6b46c1;text-transform:uppercase;letter-spacing:2px;font-weight:600;">Your Coordination Checkup</div>
+    <div style="font-size:64px;font-weight:800;margin:8px 0;color:#111;">${r.finalScore.toFixed(1)}<span style="font-size:24px;color:#999;"> / 8.0</span></div>
+    <div style="font-size:22px;font-weight:700;color:#111;">${escapeHtml(r.tierHeadline)}</div>
+    <div style="font-size:14px;color:#666;">Operating at Level ${r.highestPassedLevel || 0} -- ${escapeHtml(r.levelLabel)}</div>
+  </div>
+
+  <p style="line-height:1.6;color:#444;">Hi ${escapeHtml((name || '').split(' ')[0])},</p>
+  <p style="line-height:1.6;color:#444;">${escapeHtml(r.tierBody)}</p>
+
+  ${capLine}
+
+  <h3 style="margin:28px 0 12px 0;color:#111;font-size:18px;">Per-Level Breakdown</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;">${levelRows}</table>
+
+  <h3 style="margin:28px 0 12px 0;color:#111;font-size:18px;">Your Roadmap</h3>
+  <ol style="padding:0;margin:0;list-style:none;">${roadmapItems}</ol>
+
+  <div style="margin-top:32px;padding:24px;background:#f3f0ff;border-radius:8px;text-align:center;">
+    <h3 style="margin:0 0 8px 0;color:#111;">Want to climb faster?</h3>
+    <p style="margin:0 0 16px 0;color:#555;font-size:14px;line-height:1.5;">OTP is the coordination layer between agentic teams. Pull patterns from publishers ahead of you. Publish your own to leave a trail.</p>
+    <a href="https://orgtp.com/sign-up" style="display:inline-block;padding:12px 24px;background:#6b46c1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">Create your free OTP account</a>
+    <p style="margin:14px 0 0 0;font-size:12px;color:#888;">Or <a href="https://orgtp.com/start-here" style="color:#6b46c1;">book a 30-min walkthrough with David</a></p>
+  </div>
+
+  <p style="margin-top:32px;color:#999;font-size:12px;line-height:1.5;text-align:center;">
+    -- David Steel, OTP<br/>
+    <a href="https://orgtp.com" style="color:#6b46c1;">orgtp.com</a>
+  </p>
+</body></html>`;
+}
+
+function escapeHtml(s: string): string {
+  return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 }

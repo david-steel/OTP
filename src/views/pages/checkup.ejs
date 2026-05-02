@@ -1,0 +1,303 @@
+<!-- HERO -->
+<section class="relative overflow-hidden bg-otp-950 flex items-center py-20 sm:py-28">
+  <div class="absolute top-[-300px] left-[-200px] w-[800px] h-[800px] bg-otp-500/20 rounded-full blur-[180px] pointer-events-none"></div>
+  <div class="absolute bottom-[-200px] right-[-250px] w-[700px] h-[700px] bg-purple-500/15 rounded-full blur-[160px] pointer-events-none"></div>
+
+  <div class="relative w-full max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
+      <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+      <span>Bassim Eledath's 8 Levels of Agentic Engineering</span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 tracking-tight">
+      The <span class="gradient-text">Coordination Checkup</span>
+    </h1>
+    <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-xl mx-auto mb-8">
+      24 questions. Ten minutes. You get a number out of 8.0, the level you are operating at, and a roadmap for the next jump.
+    </p>
+    <a href="#quiz" class="inline-block px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm">
+      Start the Checkup
+    </a>
+    <p class="text-xs text-gray-500 mt-6">
+      Self-assessment. Honest > flattering. The score only matters if it points to real next moves.
+    </p>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="bg-otp-950 py-12 sm:py-20 border-t border-white/5">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+
+    <!-- Progress -->
+    <div id="checkup-progress-wrap" class="mb-8">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs text-gray-400 uppercase tracking-[0.14em] font-medium">
+          Question <span id="checkup-current">1</span> of <span id="checkup-total">24</span>
+        </span>
+        <span class="text-xs text-gray-400" id="checkup-level-label">Level 1 -- Tab Complete</span>
+      </div>
+      <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+        <div id="checkup-progress-bar" class="h-full bg-otp-500 rounded-full transition-all" style="width: 4%"></div>
+      </div>
+    </div>
+
+    <!-- Question card -->
+    <div id="checkup-question-card" class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
+      <div class="text-xs text-otp-300 uppercase tracking-[0.14em] font-medium mb-3" id="q-level-tag">Level 1</div>
+      <h2 class="text-xl sm:text-2xl font-bold text-white leading-snug mb-6" id="q-prompt">Loading...</h2>
+      <div class="space-y-2" id="q-options"></div>
+      <div class="flex justify-between items-center mt-8">
+        <button id="q-back" type="button" class="text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+          &larr; Back
+        </button>
+        <button id="q-skip" type="button" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+          Not sure -- skip
+        </button>
+      </div>
+    </div>
+
+    <!-- Contact gate (hidden until last question answered) -->
+    <div id="checkup-gate-card" class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 hidden">
+      <div class="text-xs text-otp-300 uppercase tracking-[0.14em] font-medium mb-3">Almost done</div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white leading-snug mb-3">
+        You answered all 24. Where should we send the result?
+      </h2>
+      <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+        Your score, the level you are operating at, and a personalized roadmap. We email a copy so you can share it with your team. No spam, unsubscribe anytime.
+      </p>
+      <form id="checkup-contact-form" class="space-y-3">
+        <input type="text" name="name" required placeholder="Full name" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
+        <input type="email" name="email" required placeholder="Work email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
+        <input type="text" name="company" placeholder="Company (optional)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
+        <input type="text" name="role" placeholder="Your role (optional)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
+        <button type="submit" id="checkup-submit-btn" class="w-full px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm mt-2">
+          Reveal my score
+        </button>
+        <p class="text-xs text-gray-500 text-center pt-2">
+          We use your email to send the result and occasional OTP updates. Never sold.
+        </p>
+      </form>
+      <div id="checkup-error" class="hidden mt-4 text-sm text-red-400 text-center"></div>
+    </div>
+
+    <!-- Result card (hidden until submit) -->
+    <div id="checkup-result-card" class="hidden">
+      <!-- populated by JS after submit -->
+    </div>
+
+  </div>
+</section>
+
+<script>
+(function() {
+  // ---------- Question catalog (server-rendered) ----------
+  const QUESTIONS = <%- JSON.stringify(questions).replace(/</g, '\\u003c') %>;
+  const LEVEL_LABELS = <%- JSON.stringify(levelLabels).replace(/</g, '\\u003c') %>;
+
+  // ---------- State ----------
+  const answers = {};   // { qid: 0..3 }
+  let idx = 0;
+  let submitted = false;
+
+  // ---------- Elements ----------
+  const elQuestionCard = document.getElementById('checkup-question-card');
+  const elGateCard = document.getElementById('checkup-gate-card');
+  const elResultCard = document.getElementById('checkup-result-card');
+  const elProgressWrap = document.getElementById('checkup-progress-wrap');
+  const elCurrent = document.getElementById('checkup-current');
+  const elTotal = document.getElementById('checkup-total');
+  const elLevelLabel = document.getElementById('checkup-level-label');
+  const elBar = document.getElementById('checkup-progress-bar');
+  const elTag = document.getElementById('q-level-tag');
+  const elPrompt = document.getElementById('q-prompt');
+  const elOptions = document.getElementById('q-options');
+  const elBack = document.getElementById('q-back');
+  const elSkip = document.getElementById('q-skip');
+  const elErr = document.getElementById('checkup-error');
+
+  elTotal.textContent = String(QUESTIONS.length);
+
+  function render() {
+    if (idx >= QUESTIONS.length) {
+      elQuestionCard.classList.add('hidden');
+      elGateCard.classList.remove('hidden');
+      elProgressWrap.classList.add('hidden');
+      return;
+    }
+    elQuestionCard.classList.remove('hidden');
+    elGateCard.classList.add('hidden');
+    elProgressWrap.classList.remove('hidden');
+
+    const q = QUESTIONS[idx];
+    elCurrent.textContent = String(idx + 1);
+    elLevelLabel.textContent = 'Level ' + q.level + ' -- ' + LEVEL_LABELS[q.level];
+    elTag.textContent = 'Level ' + q.level + ' -- ' + LEVEL_LABELS[q.level];
+    elPrompt.textContent = q.prompt;
+    elBar.style.width = ((idx) / QUESTIONS.length * 100).toFixed(1) + '%';
+    elBack.disabled = idx === 0;
+
+    elOptions.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      const isSelected = answers[q.id] === i;
+      btn.className = 'w-full text-left px-4 py-3 rounded-lg border transition-all text-sm leading-snug ' +
+        (isSelected
+          ? 'bg-otp-500/15 border-otp-500 text-white'
+          : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20');
+      btn.innerHTML =
+        '<span class="inline-block w-5 h-5 rounded-full border mr-3 align-middle ' +
+        (isSelected ? 'bg-otp-500 border-otp-500' : 'border-white/20') + '"></span>' +
+        '<span class="align-middle">' + escapeHtml(opt) + '</span>';
+      btn.addEventListener('click', () => {
+        answers[q.id] = i;
+        idx += 1;
+        render();
+        scrollToCard();
+      });
+      elOptions.appendChild(btn);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function scrollToCard() {
+    const target = document.getElementById('quiz');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  elBack.addEventListener('click', () => {
+    if (idx > 0) { idx -= 1; render(); }
+  });
+  elSkip.addEventListener('click', () => {
+    const q = QUESTIONS[idx];
+    if (q && answers[q.id] === undefined) answers[q.id] = 0;
+    idx += 1;
+    render();
+    scrollToCard();
+  });
+
+  // ---------- Contact submit ----------
+  document.getElementById('checkup-contact-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (submitted) return;
+    submitted = true;
+    const btn = document.getElementById('checkup-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Calculating...';
+    elErr.classList.add('hidden');
+
+    const fd = new FormData(e.target);
+    const payload = {
+      name: fd.get('name'),
+      email: fd.get('email'),
+      company: fd.get('company') || null,
+      role: fd.get('role') || null,
+      answers: answers,
+    };
+
+    try {
+      const res = await fetch('/api/v1/checkup/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Submit failed');
+      renderResult(data.result);
+    } catch (err) {
+      submitted = false;
+      btn.disabled = false;
+      btn.textContent = 'Reveal my score';
+      elErr.textContent = err.message || 'Something went wrong. Try again.';
+      elErr.classList.remove('hidden');
+    }
+  });
+
+  function renderResult(r) {
+    elGateCard.classList.add('hidden');
+    elResultCard.classList.remove('hidden');
+
+    const tierColors = {
+      tourist: { bg: 'from-gray-500/20 to-gray-700/20', text: 'text-gray-300' },
+      tinkerer: { bg: 'from-blue-500/20 to-purple-600/20', text: 'text-blue-300' },
+      operator: { bg: 'from-otp-500/20 to-purple-600/20', text: 'text-otp-300' },
+      orchestrator: { bg: 'from-purple-500/30 to-pink-500/20', text: 'text-purple-300' },
+      autonomous: { bg: 'from-amber-400/30 to-otp-500/20', text: 'text-amber-300' },
+    };
+    const c = tierColors[r.tier] || tierColors.operator;
+
+    let perLevelHtml = '';
+    r.perLevel.forEach((p) => {
+      const isCap = r.cappedByLevel === p.level;
+      const barColor = p.passed ? 'bg-emerald-500' : (isCap ? 'bg-amber-500' : 'bg-white/20');
+      const labelColor = p.passed ? 'text-emerald-400' : (isCap ? 'text-amber-400' : 'text-gray-500');
+      const status = p.passed ? 'PASS' : (isCap ? 'CAP' : '--');
+      perLevelHtml +=
+        '<div class="flex items-center gap-3 py-2">' +
+          '<div class="w-12 text-xs text-gray-400 font-mono">L' + p.level + '</div>' +
+          '<div class="flex-1 min-w-0">' +
+            '<div class="flex justify-between items-center mb-1">' +
+              '<span class="text-sm text-white truncate">' + escapeHtml(p.label) + '</span>' +
+              '<span class="text-xs ' + labelColor + ' font-semibold ml-2">' + status + ' ' + p.raw + '/' + p.max + '</span>' +
+            '</div>' +
+            '<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">' +
+              '<div class="h-full ' + barColor + ' rounded-full" style="width: ' + p.pct + '%"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    });
+
+    let roadmapHtml = '';
+    r.roadmap.forEach((step, i) => {
+      roadmapHtml +=
+        '<div class="flex gap-3">' +
+          '<div class="flex-shrink-0 w-7 h-7 rounded-full bg-otp-500/20 border border-otp-500/40 flex items-center justify-center text-xs text-otp-300 font-bold">' + (i + 1) + '</div>' +
+          '<p class="text-sm text-gray-300 leading-relaxed pt-1">' + escapeHtml(step) + '</p>' +
+        '</div>';
+    });
+
+    const capLine = r.cappedByLevel
+      ? '<p class="text-sm text-amber-300 mt-2">Capped by Level ' + r.cappedByLevel + ' (' + escapeHtml(LEVEL_LABELS[r.cappedByLevel]) + '). Higher levels do not lift your score until this is fixed.</p>'
+      : '<p class="text-sm text-emerald-300 mt-2">All 8 levels passed. You are operating at the frontier.</p>';
+
+    elResultCard.innerHTML =
+      '<div class="bg-gradient-to-br ' + c.bg + ' border border-white/10 rounded-2xl p-6 sm:p-10 text-center">' +
+        '<div class="text-xs ' + c.text + ' uppercase tracking-[0.18em] font-semibold mb-3">Your Score</div>' +
+        '<div class="text-7xl sm:text-8xl font-extrabold text-white tracking-tight mb-2" style="font-variant-numeric: tabular-nums;">' + r.finalScore.toFixed(1) + '<span class="text-3xl text-gray-400 font-bold"> / 8.0</span></div>' +
+        '<div class="text-2xl sm:text-3xl font-bold text-white mb-1">' + escapeHtml(r.tierHeadline) + '</div>' +
+        '<div class="text-sm text-gray-400 mb-4">Operating at Level ' + (r.highestPassedLevel || 0) + ' -- ' + escapeHtml(r.levelLabel) + '</div>' +
+        capLine +
+      '</div>' +
+      '<div class="mt-6 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">' +
+        '<h3 class="text-lg font-bold text-white mb-3">What this means</h3>' +
+        '<p class="text-sm text-gray-300 leading-relaxed">' + escapeHtml(r.tierBody) + '</p>' +
+      '</div>' +
+      '<div class="mt-6 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">' +
+        '<h3 class="text-lg font-bold text-white mb-4">Per-Level Breakdown</h3>' +
+        perLevelHtml +
+      '</div>' +
+      '<div class="mt-6 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">' +
+        '<h3 class="text-lg font-bold text-white mb-5">Your Roadmap</h3>' +
+        '<div class="space-y-4">' + roadmapHtml + '</div>' +
+      '</div>' +
+      '<div class="mt-8 bg-otp-500/10 border border-otp-500/30 rounded-2xl p-6 sm:p-8 text-center">' +
+        '<h3 class="text-xl sm:text-2xl font-bold text-white mb-2">Want to climb faster?</h3>' +
+        '<p class="text-sm text-gray-300 mb-5 max-w-md mx-auto leading-relaxed">' +
+          'OTP is the coordination layer between agentic teams. Pull patterns from publishers ahead of you. Publish your own to leave a trail.' +
+        '</p>' +
+        '<a href="/sign-up" class="inline-block px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm">Create your free OTP account</a>' +
+        '<p class="text-xs text-gray-500 mt-4">Or <a href="/start-here" class="text-otp-300 hover:text-otp-200 underline">book a 30-min walkthrough with David</a></p>' +
+      '</div>';
+
+    document.getElementById('quiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // boot
+  render();
+})();
+</script>
