@@ -43,59 +43,151 @@
       Other organizational models stop one substrate short of where the work is now. This one assumes humans, AI agents, and (soon) robots all hold seats on the same chart and run on the same coordination layer.
     </p>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-12">
+    <!-- Asymmetric layout: the two load-bearing components (Chart + SOPs) get
+         wide cards with real visual previews. The other four are a row of
+         small text-only cards below. Breaks the symmetric 2x3 grid pattern
+         and adds the missing "show, don't tell" for the most concrete pieces. -->
 
-      <div>
-        <div class="text-5xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">01</div>
-        <div class="text-xl font-bold text-gray-900 mb-2">Chart</div>
-        <p class="text-sm text-gray-600 leading-[1.65]">
-          Every seat named, with a role, an authority level, and an accountability line. Humans on it. AI agents on it. The same chart for both. The chart is the place an organization's hybrid shape becomes legible to the people running it.
+    <!-- Chart + SOPs as wide cards with visual previews -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+        <div class="flex items-baseline justify-between mb-3">
+          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">01</div>
+          <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] font-medium">component</div>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 mb-3">Chart</div>
+        <p class="text-sm text-gray-600 leading-[1.65] mb-6">
+          Every seat named, with a role, an authority level, and an accountability line. Humans on it. AI agents on it. The same chart for both.
+        </p>
+
+        <!-- Mini chart preview -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between text-[10px] text-gray-500 uppercase tracking-[0.14em] mb-3 font-medium">
+            <span>chart preview</span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-1 h-1 rounded-full bg-emerald-500"></span>live
+            </span>
+          </div>
+          <div class="flex justify-center mb-2">
+            <div class="comp-tile comp-tile-h">
+              <div class="comp-tile-stripe" style="background:#f59e0b;"></div>
+              <div class="comp-tile-name">David Steel</div>
+              <div class="comp-tile-role">CEO</div>
+            </div>
+          </div>
+          <div class="comp-connector"></div>
+          <div class="grid grid-cols-3 gap-2 mt-2">
+            <div class="comp-tile comp-tile-h">
+              <div class="comp-tile-stripe" style="background:#f59e0b;"></div>
+              <div class="comp-tile-name">Bogdan</div>
+              <div class="comp-tile-role">COO</div>
+            </div>
+            <div class="comp-tile comp-tile-a">
+              <div class="comp-tile-stripe" style="background:#0ea5e9;"></div>
+              <div class="comp-tile-name">Pepper</div>
+              <div class="comp-tile-role">Inbox</div>
+            </div>
+            <div class="comp-tile comp-tile-a">
+              <div class="comp-tile-stripe" style="background:#0ea5e9;"></div>
+              <div class="comp-tile-name">Dirk</div>
+              <div class="comp-tile-role">Sales</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+        <div class="flex items-baseline justify-between mb-3">
+          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">02</div>
+          <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] font-medium">component</div>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 mb-3">SOPs</div>
+        <p class="text-sm text-gray-600 leading-[1.65] mb-6">
+          Runtime context, not documents. The agent reads them at every session. The human edits at noon and the agent that boots at 12:01 has the new version.
+        </p>
+
+        <!-- SOP preview as a code-style block -->
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 text-[10px] text-gray-500 uppercase tracking-[0.14em] font-medium bg-gray-50">
+            <span>pepper / inbox triage SOP</span>
+            <span class="text-gray-400">read at every session</span>
+          </div>
+          <pre class="text-[11px] text-gray-700 leading-[1.55] p-4 overflow-x-auto"><code>title: Daily inbox triage
+trigger: 8:00 AM ET, every weekday
+steps:
+  - Read all unread mail since last run
+  - Match against pepper-clients.md
+  - <span class="text-otp-600 font-semibold">Draft replies for CLIENT-URGENT</span>
+  - Escalate flagged items to Radar
+outputs:
+  - Per-client draft replies in Gmail
+  - Daily summary in pepper-latest.md</code></pre>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Remaining 4 components as a single row of small cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <div class="border-t border-gray-200 pt-5">
+        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">03</div>
+        <div class="text-base font-bold text-gray-900 mb-2">Scoreboard</div>
+        <p class="text-xs text-gray-600 leading-[1.6]">
+          One KPI list. Humans and agents measured against the same outcomes. Agents push their own numbers.
         </p>
       </div>
 
-      <div>
-        <div class="text-5xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">02</div>
-        <div class="text-xl font-bold text-gray-900 mb-2">SOPs</div>
-        <p class="text-sm text-gray-600 leading-[1.65]">
-          Runtime context, not documents. The agent reads them at every session. The human edits at noon and the agent that boots at 12:01 has the new version. The SOP and the work converge.
+      <div class="border-t border-gray-200 pt-5">
+        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">04</div>
+        <div class="text-base font-bold text-gray-900 mb-2">OOS</div>
+        <p class="text-xs text-gray-600 leading-[1.6]">
+          Your coordination spec in plain YAML. Versioned. Publishable. Open format, not vendor-locked.
         </p>
       </div>
 
-      <div>
-        <div class="text-5xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">03</div>
-        <div class="text-xl font-bold text-gray-900 mb-2">Scoreboard</div>
-        <p class="text-sm text-gray-600 leading-[1.65]">
-          One KPI list. Humans and agents measured against the same outcomes. The agents push their own numbers from the work they do. A founder reads one chart, not three dashboards.
+      <div class="border-t border-gray-200 pt-5">
+        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">05</div>
+        <div class="text-base font-bold text-gray-900 mb-2">Network</div>
+        <p class="text-xs text-gray-600 leading-[1.6]">
+          Every other org's OOS, queryable. Coordination intelligence compounds the way knowledge compounds on Wikipedia.
         </p>
       </div>
 
-      <div>
-        <div class="text-5xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">04</div>
-        <div class="text-xl font-bold text-gray-900 mb-2">OOS</div>
-        <p class="text-sm text-gray-600 leading-[1.65]">
-          Your organization's coordination spec, in plain YAML. Versioned. Publishable. The format your humans author and your agents read. Open spec, not vendor-locked.
-        </p>
-      </div>
-
-      <div>
-        <div class="text-5xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">05</div>
-        <div class="text-xl font-bold text-gray-900 mb-2">Network</div>
-        <p class="text-sm text-gray-600 leading-[1.65]">
-          Every other organization's OOS, queryable. Coordination intelligence compounds across orgs the way knowledge compounds on Wikipedia. You get smarter because the orgs ahead of you publish what they figured out.
-        </p>
-      </div>
-
-      <div>
-        <div class="text-5xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">06</div>
-        <div class="text-xl font-bold text-gray-900 mb-2">Agents</div>
-        <p class="text-sm text-gray-600 leading-[1.65]">
-          The AI seats on the chart. Each one has a name, an owner, a job description, and a scorecard. Robots arrive on the same layer in the next wave. Same chart, same SOPs, same scoreboard.
+      <div class="border-t border-gray-200 pt-5">
+        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">06</div>
+        <div class="text-base font-bold text-gray-900 mb-2">Agents</div>
+        <p class="text-xs text-gray-600 leading-[1.6]">
+          The AI seats. Each has a name, owner, job description, scorecard. Robots arrive on the same layer next.
         </p>
       </div>
 
     </div>
   </div>
 </section>
+
+<style>
+  /* Mini chart tiles for the Chart component preview -- editorial, not the
+     full /dashboard/team idiom. Smaller, subtler, sits inside a card. */
+  .comp-tile {
+    position: relative;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 6px 8px 6px 10px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .comp-tile-stripe {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 2px;
+  }
+  .comp-tile-name { font-size: 11px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+  .comp-tile-role { font-size: 9px; color: #6b7280; margin-top: 1px; }
+  .comp-connector {
+    width: 1px; height: 12px; background: #d1d5db; margin: 0 auto;
+  }
+</style>
 
 <!-- ============================================================
      WHEN YOU RUN ON OTP -- concrete outcomes, not adjectives.
