@@ -11,6 +11,45 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 2, 2026 ----
+
+  {
+    date: '2026-05-02',
+    tags: ['Site'],
+    title: 'New /start-here page, redesigned heroes, and an accessibility pass',
+    summary: 'Schedule a 30-minute intro with the founder directly from a new /start-here page. The hero on /, /why-otp, /what-is-otp, and /tools all got rebuilt so the CTA lands above the fold, with inline editorial illustrations on the right. A site-wide accessibility pass on the layout (reduced-motion, keyboard-accessible nav, labeled form inputs).',
+    details: `<p>Three quiet improvements to the public site, all shipped together.</p>
+
+<h3>A new <code>/start-here</code> page</h3>
+<ul>
+<li>Modeled on the EOS Worldwide pattern: one promise, three steps, one calendar.</li>
+<li>Hero promises a 30-minute conversation with David Steel, founder of OTP. No slides, no sales gauntlet.</li>
+<li>"What happens on the call" section walks through the three things in order: map your AI footprint, find the coordination gaps, decide the next move.</li>
+<li>Inline Calendly widget renders the full calendar plus time slots without scrolling, branded against the OTP color palette.</li>
+<li>Three reassurance statements address the obvious objections: it is free, you are talking to the founder, we will tell you if OTP is wrong for your situation.</li>
+<li>A new "Schedule a 30-min intro" primary button is now in the hero of <code>/why-otp</code>, <code>/what-is-otp</code>, and <code>/tools</code>, all routing to <code>/start-here</code>.</li>
+</ul>
+
+<h3>Heroes that put the CTA above the fold</h3>
+<ul>
+<li>The hero on <code>/</code>, <code>/why-otp</code>, <code>/what-is-otp</code>, and <code>/tools</code> all use the same 12-column grid now: text on the left (col-span-7), an editorial illustration on the right (col-span-5).</li>
+<li>H1 sizing tightened so the CTAs land in the first viewport without scrolling on a standard laptop.</li>
+<li>Each illustration is a hand-drawn line-art piece that maps to the page's specific copy: an org chart with disconnected AI tools (why), a four-layer Model/Protocol/Network/SaaS stack (what), an open toolbox with five tools (tools), a calendar slot and 30-minute clock (start-here).</li>
+<li>All illustrations are 1024px lossless WebP with transparent backgrounds. The page background shows through cleanly.</li>
+</ul>
+
+<h3>Accessibility and craft pass</h3>
+<ul>
+<li>Site-wide <code>prefers-reduced-motion</code> gate so animations honor user preference. Vestibular-disorder users and low-end devices get a calm site.</li>
+<li>Keyboard users can now tab into the Explore and Learn nav dropdowns; previously hover-only.</li>
+<li>Email signup field has a visually-hidden label and an <code>aria-live</code> result announcement for screenreaders.</li>
+<li><code>theme-color</code> meta added so mobile browser chrome matches the dark nav instead of defaulting to system white.</li>
+<li><code>transition: all</code> antipatterns replaced with explicit property lists across the layout.</li>
+</ul>
+
+<p>None of this changed the product. It changed how the product introduces itself.</p>`
+  },
+
   // ---- May 1, 2026 ----
 
   {
