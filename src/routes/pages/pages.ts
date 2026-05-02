@@ -236,6 +236,24 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
+  // What is OTP -- deep explainer page (model + components + process + FAQ)
+  app.get('/what-is-otp', async (request, reply) => {
+    return reply.view('pages/what-is-otp', {
+      title: 'What is OTP - The Operating Layer for the Augmented Human Organization',
+      description: 'OTP is a model, a protocol, a network, and a SaaS for organizations where humans and AI agents share seats, share SOPs, and share one scoreboard. Six components, two-week implementation, open file format.',
+      canonical: BASE_URL + '/what-is-otp',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'What is OTP', url: BASE_URL + '/what-is-otp' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        headline: 'What is OTP - The Operating Layer for the Augmented Human Organization',
+        description: 'OTP is a model, a protocol, a network, and a SaaS for organizations where humans and AI agents share seats, share SOPs, and share one scoreboard.',
+        url: BASE_URL + '/what-is-otp',
+      },
+    });
+  });
+
   // Protocol page (the canonical "OTP is a protocol, not a service" page)
   app.get('/protocol', async (request, reply) => {
     return reply.view('pages/protocol', {
