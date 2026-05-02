@@ -15,6 +15,43 @@ export const changelog: ChangelogEntry[] = [
 
   {
     date: '2026-05-02',
+    tags: ['Major', 'Tools'],
+    title: 'The Coordination Checkup is live -- score your team against the 8 Levels of Agentic Maturity',
+    summary: 'A 24-question, ten-minute self-assessment that gives you a number out of 8.0, the level you are operating at, and a personalized roadmap. Built on Bassim Eledath\'s 8 Levels of Agentic Engineering and the same hierarchy rule our internal evaluator uses every night.',
+    details: `<p>The fifth tool in the public OTP toolbox just went from "promised on the homepage" to "live and scoring." Take it at <a href="/checkup"><code>/checkup</code></a>.</p>
+
+<h3>What it actually does</h3>
+<ul>
+<li>24 questions, 3 per level across all 8 levels of agentic maturity. One question at a time, snappy progress bar, no walls of text.</li>
+<li>Final score is calculated using Bassim's hierarchy rule: a weakness at any lower level caps your score regardless of higher-level capabilities. A perfect L8 with a broken L4 still scores you a 4.</li>
+<li>You get a single number out of 8.0, a tier headline (Tourist, Tinkerer, Operator, Orchestrator, Autonomous Agent Team), per-level breakdown showing which level capped you, and a personalized roadmap with the three highest-leverage moves for your next jump.</li>
+<li>Result is also emailed so you can share it with your team or come back to it later.</li>
+</ul>
+
+<h3>Why this exists</h3>
+<ul>
+<li>Most teams cannot answer "where are we, really?" on AI maturity. Vendors sell against the top of the ladder. The honest read is harder to come by.</li>
+<li>The same scoring engine our internal evaluator (Bassim) uses to score Sneeze It nightly is now public, translated from "reads your agent files" into "you tell us what is true."</li>
+<li>The roadmap is the point. The score is just the way in. If you walk away with three concrete moves to make this quarter, the quiz worked.</li>
+</ul>
+
+<h3>The 8 levels, briefly</h3>
+<ul>
+<li><strong>L1 Tab Complete</strong> -- AI as autocomplete in your editor or inbox.</li>
+<li><strong>L2 Agent IDE</strong> -- you have built or deployed at least one real agent.</li>
+<li><strong>L3 Context Engineering</strong> -- system prompts, rules files, persistent context.</li>
+<li><strong>L4 Compounding Engineering</strong> -- lessons learned compound; agents read your playbooks.</li>
+<li><strong>L5 MCP &amp; Skills</strong> -- AI is wired to real tools and takes real actions.</li>
+<li><strong>L6 Harness Engineering</strong> -- validation, observability, authority bounds.</li>
+<li><strong>L7 Background Agents</strong> -- agents run on a schedule without you starting them.</li>
+<li><strong>L8 Autonomous Agent Teams</strong> -- agents talk to each other; you are not the message bus.</li>
+</ul>
+
+<p>The homepage and <code>/tools</code> CTAs both repoint to the live calculator. The Checkup is free, no signup required to take it -- only to see the result.</p>`
+  },
+
+  {
+    date: '2026-05-02',
     tags: ['Site'],
     title: 'New /start-here page, redesigned heroes, and an accessibility pass',
     summary: 'Schedule a 30-minute intro with the founder directly from a new /start-here page. The hero on /, /why-otp, /what-is-otp, and /tools all got rebuilt so the CTA lands above the fold, with inline editorial illustrations on the right. A site-wide accessibility pass on the layout (reduced-motion, keyboard-accessible nav, labeled form inputs).',
