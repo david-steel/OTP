@@ -1,50 +1,101 @@
 <style>
-  /* Hero chart tiles -- mirrors /dashboard/team styling, scaled for the homepage hero */
-  .hero-tile {
+  /* Four-stage arc: tool -> assistant -> agent -> robot
+     Stage 3 (Agent) is the current "you are here" -- highlighted as OTP's home.
+     Stage 4 (Robot) is the next wave -- subtle glow, "shipping" badge. */
+  .stage-card {
     position: relative;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 1.25rem 1rem;
+    transition: transform 250ms ease, border-color 250ms ease, background 250ms ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .stage-card:hover { transform: translateY(-2px); }
+  .stage-marker {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 0.75rem auto;
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 12px 14px;
-    overflow: hidden;
-    width: 168px;
-    transition: transform 200ms ease, border-color 200ms ease;
+    color: #6b7280;
+    z-index: 1;
+    position: relative;
   }
-  .hero-tile:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.18); }
-  .hero-tile-sm { width: auto; padding: 10px 10px; }
-  .hero-tile-stripe {
-    position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+  .stage-meta {
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
   }
-  .hero-tile-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;
+  .stage-name {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: #f3f4f6;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
   }
-  .hero-tile-name { font-weight: 700; color: #fff; font-size: 13px; }
-  .hero-tile-name-sm { font-weight: 700; color: #fff; font-size: 11px; padding-left: 4px; margin-bottom: 1px; }
-  .hero-tile-pill {
-    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em;
+  .stage-desc {
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #9ca3af;
   }
-  .hero-pill-human { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-  .hero-pill-agent { background: rgba(14, 165, 233, 0.15); color: #38bdf8; }
-  .hero-tile-role { font-size: 11px; color: #9ca3af; margin-left: 0; }
-  .hero-tile-role-sm { font-size: 10px; color: #9ca3af; padding-left: 4px; margin-bottom: 4px; }
-  .hero-tile-badges { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-  .hero-sop-badge {
-    font-size: 9px; font-weight: 700; color: #c4b5fd;
-    background: rgba(139, 92, 246, 0.15); padding: 2px 6px; border-radius: 999px;
+
+  /* Past stages: muted, history */
+  .stage-past .stage-marker { color: #6b7280; }
+  .stage-past .stage-name { color: #9ca3af; }
+  .stage-recent .stage-marker { color: #818cf8; background: rgba(99, 102, 241, 0.06); border-color: rgba(99, 102, 241, 0.18); }
+  .stage-recent .stage-name { color: #c7d2fe; }
+
+  /* Current stage (Agent) -- highlighted, brighter, pulse */
+  .stage-current {
+    background: linear-gradient(180deg, rgba(14, 165, 233, 0.10) 0%, rgba(15, 23, 42, 0.4) 100%);
+    border-color: rgba(14, 165, 233, 0.35);
+    box-shadow: 0 0 32px rgba(14, 165, 233, 0.10);
   }
-  .hero-sop-badge-sm {
-    display: inline-block; font-size: 9px; font-weight: 700; color: #c4b5fd;
-    background: rgba(139, 92, 246, 0.15); padding: 1px 5px; border-radius: 999px; margin-left: 4px;
+  .stage-current .stage-name { color: #fff; }
+  .stage-current .stage-desc { color: #cbd5e1; }
+  .stage-marker-current {
+    color: #fff !important;
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+    border-color: rgba(56, 189, 248, 0.6) !important;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), 0 0 24px rgba(14, 165, 233, 0.45);
+    animation: stage-pulse 2.6s ease-in-out infinite;
   }
-  .hero-kpi-badge {
-    display: inline-block; font-size: 10px; font-weight: 700; color: #f9a8d4;
-    background: rgba(190, 24, 93, 0.18); padding: 2px 6px; border-radius: 999px;
-    margin-left: 4px; border: 1px solid rgba(244, 114, 182, 0.25);
+  @keyframes stage-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), 0 0 24px rgba(14, 165, 233, 0.45); }
+    50% { box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.10), 0 0 36px rgba(14, 165, 233, 0.65); }
   }
-  .hero-connector {
-    position: absolute; width: 2px; background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
-    transform: translateX(-50%);
+  .stage-here-pill {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 10px; border-radius: 999px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    white-space: nowrap;
   }
+
+  /* Future stage (Robot) -- gathering, faint purple glow, "shipping" tone */
+  .stage-future {
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.06) 0%, rgba(15, 23, 42, 0.4) 100%);
+    border-color: rgba(168, 85, 247, 0.18);
+  }
+  .stage-marker-future {
+    color: #c4b5fd !important;
+    background: rgba(168, 85, 247, 0.12) !important;
+    border-color: rgba(168, 85, 247, 0.32) !important;
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.18);
+  }
+  .stage-future .stage-name { color: #e9d5ff; }
 </style>
 
 <!-- HERO: Slider between Industry Playbooks + Upload Scanner -->
@@ -61,142 +112,106 @@
   <div class="relative w-full max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-24">
 
     <!-- Slides wrapper: relative container, slides absolutely positioned for crossfade -->
-    <div class="relative" style="min-height: 420px;">
+    <div class="relative" style="min-height: 560px;">
 
-      <!-- ========== SLIDE 1: Chart-as-hero (PRIMARY) ========== -->
-      <!-- This is the load-bearing first impression: a real-looking org chart
-           where humans + AI agents share seats. The point most visitors miss
-           in 30 seconds is "agents go on the chart" -- this slide makes that
-           the first thing they see. -->
+      <!-- ========== SLIDE 1: Four-stage arc (PRIMARY) ========== -->
+      <!-- The thesis from the "From Tool to Robot" essay series, made visual.
+           AI was a tool, then an assistant, now an agent. OTP is the operating
+           layer at the agent stage. Robots are next on the same layer.
+           This is the biggest claim OTP makes; the homepage now leads with it. -->
       <div id="hero-slide-1" class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-100">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-          <!-- Left: Headline + sub + CTAs -->
-          <div class="text-center lg:text-left">
-            <div class="mb-6">
-              <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300">
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                <span>The org chart for human + AI teams</span>
-              </div>
-            </div>
 
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 tracking-tight">
-              Your <span class="gradient-text">AI agents</span> belong on your <span class="gradient-text">org chart</span>, not in 14 tabs.
-            </h1>
-
-            <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0 mb-8">
-              OTP gives every AI agent a seat, an SOP, and a scorecard. Same chart as your humans. One coordination layer.
-            </p>
-
-            <div class="flex flex-col sm:flex-row gap-3 mb-8 max-w-md mx-auto lg:mx-0">
-              <a href="/sign-up" class="px-6 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm text-center">
-                Build your chart
-              </a>
-              <a href="/blog/how-we-coordinate-14-agents" class="px-6 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-semibold hover:bg-white/10 transition-all text-sm text-center">
-                See how Sneeze It runs 14 agents →
-              </a>
-            </div>
-
-            <div class="flex items-center gap-4 text-xs text-gray-500 max-w-md mx-auto lg:mx-0 justify-center lg:justify-start flex-wrap">
-              <span><strong class="text-gray-300"><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %></strong> orgs publishing</span>
-              <span class="opacity-30">·</span>
-              <span><strong class="text-gray-300"><%= typeof claimCount !== 'undefined' ? claimCount : '0' %></strong> coordination claims</span>
-              <span class="opacity-30">·</span>
-              <span><strong class="text-gray-300">14</strong> agents in seats at Sneeze It</span>
-            </div>
+        <!-- Top: micro-badge + headline + sub -->
+        <div class="text-center mb-10 sm:mb-14 max-w-4xl mx-auto">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
+            <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+            <span>The operating layer for AI-native organizations</span>
           </div>
 
-          <!-- Right: static mini org-chart visual -->
-          <div class="relative">
-            <!-- A 7-tile chart: 1 human at top, 1 human + 1 agent in mid row, 4 agents at bottom.
-                 Tiles match the visual idiom of /dashboard/team. Connectors drawn with absolute-positioned divs. -->
-            <div class="relative bg-otp-900/40 border border-white/10 rounded-2xl p-4 sm:p-6" style="min-height: 380px;">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-3">Sneeze It · live</div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.05] mb-6 tracking-tight">
+            AI was a <span class="text-gray-500">tool</span>. Then an <span class="text-gray-400">assistant</span>. Now it has a <span class="gradient-text">seat</span>.
+          </h1>
 
-              <!-- Row 1: CEO -->
-              <div class="flex justify-center mb-7 relative">
-                <div class="hero-tile hero-tile-human">
-                  <div class="hero-tile-stripe" style="background:#f59e0b;"></div>
-                  <div class="hero-tile-row">
-                    <div class="hero-tile-name">David Steel</div>
-                    <div class="hero-tile-pill hero-pill-human">Human</div>
-                  </div>
-                  <div class="hero-tile-role">CEO</div>
-                </div>
+          <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-2xl mx-auto">
+            OTP is the operating layer for what comes next. Humans, AI agents, and (soon) robots running on the same chart, the same SOPs, the same scoreboard.
+          </p>
+        </div>
+
+        <!-- Four-stage arc -->
+        <div class="relative max-w-6xl mx-auto px-2 sm:px-4">
+          <!-- Connector line behind the stages -->
+          <div class="hidden sm:block absolute top-[44px] left-[8%] right-[8%] h-px bg-gradient-to-r from-gray-700 via-otp-500/60 to-purple-500/40 pointer-events-none"></div>
+          <div class="hidden sm:block absolute top-[44px] left-[8%] right-[8%] h-px bg-gradient-to-r from-transparent via-otp-400/40 to-transparent animate-pulse pointer-events-none"></div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+            <!-- Stage 1: TOOL -->
+            <div class="stage-card stage-past relative">
+              <div class="stage-marker">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"/></svg>
               </div>
-
-              <!-- Connector to row 2 -->
-              <div class="hero-connector" style="left:50%; top:64px; height:24px;"></div>
-
-              <!-- Row 2: COO + Pepper -->
-              <div class="grid grid-cols-2 gap-6 mb-7 relative">
-                <div class="flex justify-end">
-                  <div class="hero-tile hero-tile-human">
-                    <div class="hero-tile-stripe" style="background:#f59e0b;"></div>
-                    <div class="hero-tile-row">
-                      <div class="hero-tile-name">Bogdan</div>
-                      <div class="hero-tile-pill hero-pill-human">Human</div>
-                    </div>
-                    <div class="hero-tile-role">COO</div>
-                  </div>
-                </div>
-                <div class="flex justify-start">
-                  <div class="hero-tile hero-tile-agent">
-                    <div class="hero-tile-stripe" style="background:#0ea5e9;"></div>
-                    <div class="hero-tile-row">
-                      <div class="hero-tile-name">Pepper</div>
-                      <div class="hero-tile-pill hero-pill-agent">Agent</div>
-                    </div>
-                    <div class="hero-tile-role">Inbox triage</div>
-                    <div class="hero-tile-badges">
-                      <span class="hero-sop-badge">12 SOPs</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Row 3: Crystal, Dirk, Tally, Dash -->
-              <div class="grid grid-cols-4 gap-2 sm:gap-3">
-                <div class="hero-tile hero-tile-agent hero-tile-sm">
-                  <div class="hero-tile-stripe" style="background:#0ea5e9;"></div>
-                  <div class="hero-tile-name-sm">Crystal</div>
-                  <div class="hero-tile-role-sm">PM</div>
-                  <div class="hero-sop-badge-sm">8 SOPs</div>
-                </div>
-                <div class="hero-tile hero-tile-agent hero-tile-sm">
-                  <div class="hero-tile-stripe" style="background:#0ea5e9;"></div>
-                  <div class="hero-tile-name-sm">Dirk</div>
-                  <div class="hero-tile-role-sm">Sales</div>
-                  <div class="hero-kpi-badge">86 / 150</div>
-                </div>
-                <div class="hero-tile hero-tile-agent hero-tile-sm">
-                  <div class="hero-tile-stripe" style="background:#0ea5e9;"></div>
-                  <div class="hero-tile-name-sm">Tally</div>
-                  <div class="hero-tile-role-sm">Scorecard</div>
-                  <div class="hero-sop-badge-sm">3 SOPs</div>
-                </div>
-                <div class="hero-tile hero-tile-agent hero-tile-sm">
-                  <div class="hero-tile-stripe" style="background:#0ea5e9;"></div>
-                  <div class="hero-tile-name-sm">Dash</div>
-                  <div class="hero-tile-role-sm">Analytics</div>
-                  <div class="hero-sop-badge-sm">5 SOPs</div>
-                </div>
-              </div>
-
-              <!-- Legend -->
-              <div class="mt-5 flex items-center gap-4 text-[10px] text-gray-500 flex-wrap">
-                <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#f59e0b;"></span>Human</span>
-                <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#0ea5e9;"></span>AI agent</span>
-                <span class="flex items-center gap-1.5"><span class="inline-block px-1.5 rounded" style="background:rgba(190,24,93,0.15); color:#f9a8d4;">N / N</span>weekly KPI live</span>
-              </div>
+              <div class="stage-meta">1990s &mdash; 2020s</div>
+              <div class="stage-name">Tool</div>
+              <div class="stage-desc">Spell-check. Search. Excel. AI as productivity input. Never on the chart.</div>
             </div>
 
-            <!-- Floating "live now" badge -->
-            <div class="absolute -top-3 -right-3 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-300 flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-              KPIs pushed by Tally
+            <!-- Stage 2: ASSISTANT -->
+            <div class="stage-card stage-recent relative">
+              <div class="stage-marker">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/></svg>
+              </div>
+              <div class="stage-meta">2022+</div>
+              <div class="stage-name">Assistant</div>
+              <div class="stage-desc">ChatGPT opens stage two. Faster humans. Org chart untouched.</div>
             </div>
+
+            <!-- Stage 3: AGENT (current, OTP's home) -->
+            <div class="stage-card stage-current relative">
+              <div class="stage-here-pill">
+                <span class="w-1 h-1 bg-emerald-400 rounded-full animate-pulse"></span>
+                OTP starts here
+              </div>
+              <div class="stage-marker stage-marker-current">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m4.5-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+              </div>
+              <div class="stage-meta">2024+ &middot; <span class="text-emerald-400 font-bold">now</span></div>
+              <div class="stage-name">Agent</div>
+              <div class="stage-desc">A seat. An SOP. A scorecard. The chart bends to absorb the agent or it breaks.</div>
+            </div>
+
+            <!-- Stage 4: ROBOT (next) -->
+            <div class="stage-card stage-future relative">
+              <div class="stage-marker stage-marker-future">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.847.814a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.898 20.624 16.5 21.75l-.398-1.126a2.25 2.25 0 0 0-1.423-1.423L13.55 18.75l1.126-.398a2.25 2.25 0 0 0 1.423-1.423l.398-1.126.398 1.126a2.25 2.25 0 0 0 1.423 1.423L19.45 18.75l-1.126.398a2.25 2.25 0 0 0-1.423 1.423Z"/></svg>
+              </div>
+              <div class="stage-meta">2026+ &middot; shipping</div>
+              <div class="stage-name">Robot</div>
+              <div class="stage-desc">Figure 02 at BMW. Digit at GXO. Optimus shipping. Same chart. Same scoreboard.</div>
+            </div>
+
           </div>
         </div>
+
+        <!-- CTAs + live counts -->
+        <div class="text-center mt-12">
+          <div class="flex flex-col sm:flex-row gap-3 mb-6 justify-center max-w-md mx-auto sm:max-w-none">
+            <a href="/sign-up" class="px-7 py-3 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm text-center">
+              Build your chart
+            </a>
+            <a href="/blog/the-robots-are-coming" class="px-7 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-semibold hover:bg-white/10 transition-all text-sm text-center">
+              Read the four-stage arc →
+            </a>
+          </div>
+
+          <div class="flex items-center gap-4 text-xs text-gray-500 justify-center flex-wrap">
+            <span><strong class="text-gray-300"><%= typeof publisherCount !== 'undefined' ? publisherCount : '0' %></strong> organizations publishing</span>
+            <span class="opacity-30">&middot;</span>
+            <span><strong class="text-gray-300"><%= typeof claimCount !== 'undefined' ? claimCount : '0' %></strong> coordination claims</span>
+            <span class="opacity-30">&middot;</span>
+            <span><strong class="text-gray-300">14</strong> AI agents in seats at Sneeze It</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- ========== SLIDE 2: Industry Playbooks ========== -->
