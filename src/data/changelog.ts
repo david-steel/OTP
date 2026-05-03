@@ -11,6 +11,52 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 3, 2026 ----
+
+  {
+    date: '2026-05-03',
+    tags: ['Major', 'Tools'],
+    title: 'Run your weekly leadership meeting from OTP -- the Meeting layer is live',
+    summary: 'A full weekly leadership meeting tool with Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, and Conclude. Per-section timer, attendee panel, identify-discuss-solve workflow, auto-cascading recap, and a per-person accountability profile that links back from the org chart. Built and shipped in one Sunday.',
+    details: `<p>OTP now runs your weekly leadership meeting. Visit <a href="/l10"><code>/l10</code></a> to see your meeting list, or click the new <strong>Run Weekly Meeting</strong> button on your team chart at <a href="/dashboard/team"><code>/dashboard/team</code></a>.</p>
+
+<h3>What you get</h3>
+<ul>
+<li><strong>Single-page meeting runner</strong> with all 7 sections on one screen: Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude.</li>
+<li><strong>Per-section timer</strong> on a single-line agenda nav. Click any section to jump and start its budget timer. Goes amber under 60s, red and pulsing when over.</li>
+<li><strong>Attendees &amp; Access panel</strong> at the top of every meeting. Edit who is invited inline.</li>
+<li><strong>Scorecard grouped by team</strong>: Leadership Scorecard (humans), Agent Scorecard (one row per AI agent), and any custom group you push KPIs into. Goal column shows symbols, on-track checkmarks colored green/red.</li>
+<li><strong>Quarterly Priorities</strong> with on-track/off-track toggle, owner, status note. Add new ones inline with the new <strong>+ Add quarterly priority</strong> button.</li>
+<li><strong>Issues with full identify-discuss-solve workflow</strong>. Solve opens a form that captures the resolution and (optionally) auto-creates a 7-day follow-up to-do for an attendee. Edit, delete, convert-to-todo, and assign ownership all live on each issue. Inline <strong>+ Add issue</strong> button at the bottom of the section.</li>
+<li><strong>Cascading message that builds itself</strong>. Every solve appends a one-liner. The <strong>Rebuild draft</strong> button regenerates the full recap from headlines + solved issues + new to-dos so the team always knows what got decided.</li>
+</ul>
+
+<h3>The org chart now shows accountability</h3>
+<ul>
+<li>Click any person or agent on <a href="/dashboard/team"><code>/dashboard/team</code></a> and the edit drawer opens with a <strong>Meetings &amp; Accountability</strong> block: tiles for quarterly priorities owned, open to-dos, open issues, and meetings attended. Below that, upcoming and recent meetings with status badges and contribution chips.</li>
+<li>Click <strong>View full profile</strong> for the dedicated person page at <code>/team/:externalId</code>: hero summary, currently-owned items, and a vertical timeline of every meeting they have attended with per-meeting contribution counts (to-dos owned, issues solved).</li>
+<li>This turns the org chart from a static who-reports-to-whom diagram into a real accountability dashboard. Click anyone, see what they own, see what they delivered.</li>
+</ul>
+
+<h3>Why this matters</h3>
+<ul>
+<li>Most leadership-meeting software is heavy, complicated, and built around someone else's framework. This is built around the work the team is already doing -- Sneeze It is running its own Tuesday leadership meeting from this exact page.</li>
+<li>The meeting layer reuses the same KPIs you push via <code>tally</code>, the same agents on your org chart, the same issues your team raises. No double-entry. No separate system.</li>
+<li>Every AI agent you have can be invited as an attendee, can own a quarterly priority, can own a to-do. Run a real weekly meeting with a mixed human + agent team.</li>
+</ul>
+
+<h3>How to start</h3>
+<ol>
+<li>Go to <a href="/dashboard/team"><code>/dashboard/team</code></a>, click <strong>Run Weekly Meeting</strong> top right.</li>
+<li>Create a meeting (defaults to a leadership meeting tomorrow 9am).</li>
+<li>Add your team as attendees -- humans and agents both.</li>
+<li>Click <strong>Start Meeting</strong>. The scorecard and quarterly priorities snapshot at start, so the agenda is frozen at meeting time.</li>
+<li>Walk through the 7 sections. Solve issues. Cascade decisions. Done.</li>
+</ol>
+
+<p>This is the kind of thing OTP was always meant to be: where your AI team and your human team coordinate from the same surface.</p>`,
+  },
+
   // ---- May 2, 2026 ----
 
   {
