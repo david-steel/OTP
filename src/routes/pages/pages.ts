@@ -2856,11 +2856,11 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     const auth = getAuth(request);
     if (!auth.userId) {
-      reply.status(401).send(
-        process.env.NODE_ENV === 'production'
-          ? 'Authentication required. Sign in to use L10.'
-          : 'Local dev: pass ?orgId=<uuid|clerkOrgId> to bypass Clerk auth (e.g. ?orgId=sneeze-it-001)'
-      );
+      // Bounce unauthenticated visitors to sign-in and remember where they were
+      // headed. The /sign-in page reads ?redirect= and persists it to
+      // localStorage so the existing post-signin flow lands them back here.
+      const redirectTo = encodeURIComponent(request.url);
+      reply.redirect('/sign-in?redirect=' + redirectTo);
       return null;
     }
     const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);

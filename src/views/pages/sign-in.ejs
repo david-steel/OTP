@@ -7,6 +7,19 @@
 </div>
 
 <script>
+  // If the unauthed visitor was bounced here from a protected page (e.g. /l10),
+  // the bouncing route appends ?redirect=<url>. Persist it so the existing
+  // localStorage-based post-signin flow respects it.
+  (function captureRedirectParam() {
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      var redirectParam = qs.get('redirect');
+      if (redirectParam && redirectParam.startsWith('/')) {
+        localStorage.setItem('otp_return_after_signin', redirectParam);
+      }
+    } catch (_) { /* localStorage may be blocked */ }
+  })();
+
   (function waitForClerk() {
     if (!window.Clerk) return setTimeout(waitForClerk, 100);
     window.Clerk.load().then(function() {
