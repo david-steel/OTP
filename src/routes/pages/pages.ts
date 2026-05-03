@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -2832,6 +2832,145 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       }
       return reply.status(500).send({ error: 'Server error' });
     }
+  });
+
+  // ---------- L10 (EOS Level-10 meeting) ----------
+  // Helper: resolve org from Clerk user OR (dev-only) ?orgId= query param
+  async function l10ResolveOrg(request: any, reply: any) {
+    // Dev-only override: ?orgId=<uuid|clerkOrgId> -- never enabled in production.
+    if (process.env.NODE_ENV !== 'production') {
+      const orgIdParam = (request.query as any)?.orgId || (request.query as any)?.org;
+      if (orgIdParam) {
+        const isUuid = /^[0-9a-f-]{36}$/i.test(orgIdParam);
+        const [org] = isUuid
+          ? await db.select().from(organizations).where(eq(organizations.id, orgIdParam)).limit(1)
+          : await db.select().from(organizations).where(eq(organizations.clerkOrgId, orgIdParam)).limit(1);
+        if (org) return org;
+      }
+    }
+
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      reply.status(401).send(
+        process.env.NODE_ENV === 'production'
+          ? 'Authentication required. Sign in to use L10.'
+          : 'Local dev: pass ?orgId=<uuid|clerkOrgId> to bypass Clerk auth (e.g. ?orgId=sneeze-it-001)'
+      );
+      return null;
+    }
+    const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    if (!org) {
+      reply.status(404).send('No organization for this user. Sign in via Clerk and create an organization first.');
+      return null;
+    }
+    return org;
+  }
+
+  // /l10  -- list meetings for the user's org, with quick-create
+  app.get('/l10', async (request, reply) => {
+    const org = await l10ResolveOrg(request, reply);
+    if (!org) return;
+
+    const myMeetings = await db.select().from(meetings)
+      .where(and(eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)))
+      .orderBy(desc(meetings.scheduledAt))
+      .limit(50);
+
+    const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
+    return reply.view('pages/l10-list', {
+      title: 'Weekly Leadership Meetings -- OTP',
+      description: 'Run your weekly leadership meeting from one page.',
+      canonical: BASE_URL + '/l10',
+      noindex: true,
+      org,
+      meetings: myMeetings,
+      devOrgIdParam,
+    });
+  });
+
+  // POST /l10/create  -- quick create handler (form post)
+  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string } }>('/l10/create', async (request, reply) => {
+    const org = await l10ResolveOrg(request, reply);
+    if (!org) return;
+    const auth = getAuth(request);
+    const { title, scheduledAt, meetingType } = request.body || {};
+    if (!title || !scheduledAt) {
+      return reply.status(400).send('title and scheduledAt required');
+    }
+    const [m] = await db.insert(meetings).values({
+      organizationId: org.id,
+      title,
+      meetingType: meetingType || 'leadership',
+      scheduledAt: new Date(scheduledAt),
+      attendees: [],
+      createdBy: auth.userId || 'unknown',
+    }).returning();
+    const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
+    return reply.redirect('/l10/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
+  });
+
+  // /l10/meeting/:id  -- the L10 page itself
+  app.get<{ Params: { id: string } }>('/l10/meeting/:id', async (request, reply) => {
+    const id = request.params.id;
+    if (!validateUuidParam(id)) {
+      return reply.status(400).send('Invalid meeting id');
+    }
+    const org = await l10ResolveOrg(request, reply);
+    if (!org) return;
+
+    const [meeting] = await db.select().from(meetings)
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+      .limit(1);
+    if (!meeting) return reply.status(404).send('Meeting not found');
+
+    // Build agenda data: scorecard (KPIs + latest values), rocks, open issues, open todos
+    const orgKpis = await db.select().from(kpis)
+      .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt)));
+    const latestValues: Record<string, any> = {};
+    for (const k of orgKpis) {
+      const [latest] = await db.select().from(kpiValues)
+        .where(eq(kpiValues.kpiId, k.id))
+        .orderBy(desc(kpiValues.periodStart))
+        .limit(1);
+      if (latest) latestValues[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
+    }
+    const scorecard = meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis
+      ? meeting.scorecardSnapshot
+      : { kpis: orgKpis, latestValues, kpiCount: orgKpis.length };
+
+    const orgRocks = await db.select().from(rocks)
+      .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt)))
+      .orderBy(desc(rocks.dueDate));
+    const rocksData = meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
+      ? meeting.rocksSnapshot
+      : { rocks: orgRocks, count: orgRocks.length };
+
+    const orgIssues = await db.select().from(tickets)
+      .where(and(eq(tickets.orgId, org.id), isNull(tickets.deletedAt)))
+      .orderBy(desc(tickets.createdAt))
+      .limit(100);
+
+    const orgTodos = await db.select().from(todos)
+      .where(and(eq(todos.organizationId, org.id), isNull(todos.deletedAt)))
+      .orderBy(desc(todos.createdAt))
+      .limit(50);
+
+    // Carry the dev orgId through so client-side fetches keep the same auth context locally.
+    const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
+
+    return reply.view('pages/l10-leadership', {
+      title: meeting.title + ' -- OTP',
+      description: 'Weekly leadership meeting',
+      canonical: BASE_URL + '/l10/meeting/' + meeting.id,
+      noindex: true,
+      org,
+      meeting,
+      scorecard,
+      rocks: rocksData,
+      issues: orgIssues,
+      todos: orgTodos,
+      devOrgIdParam,
+    });
   });
 
   // ---------- Coordination Checkup ----------

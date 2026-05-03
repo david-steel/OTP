@@ -25,5 +25,27 @@ export async function getAuthOrg(request: FastifyRequest) {
     return orgArr[0] || null;
   }
 
+  // Dev-only override: ?orgId=<uuid|clerkOrgId> -- never enabled in production.
+  // Lets the L10 page work end-to-end on localhost without Clerk session.
+  if (process.env.NODE_ENV !== 'production') {
+    const q = (request.query || {}) as Record<string, string | undefined>;
+    const orgIdParam = q.orgId || q.org;
+    if (orgIdParam) {
+      const isUuid = /^[0-9a-f-]{36}$/i.test(orgIdParam);
+      const orgArr = isUuid
+        ? await db.select().from(organizations).where(eq(organizations.id, orgIdParam)).limit(1)
+        : await db.select().from(organizations).where(eq(organizations.clerkOrgId, orgIdParam)).limit(1);
+      if (orgArr[0]) return orgArr[0];
+    }
+    const headerOrg = (request.headers['x-dev-org'] as string | undefined);
+    if (headerOrg) {
+      const isUuid = /^[0-9a-f-]{36}$/i.test(headerOrg);
+      const orgArr = isUuid
+        ? await db.select().from(organizations).where(eq(organizations.id, headerOrg)).limit(1)
+        : await db.select().from(organizations).where(eq(organizations.clerkOrgId, headerOrg)).limit(1);
+      if (orgArr[0]) return orgArr[0];
+    }
+  }
+
   return null;
 }

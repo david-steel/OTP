@@ -1062,6 +1062,253 @@ server.tool(
   }
 );
 
+// ============================================================
+// L10 (EOS Level-10) tools
+// ============================================================
+
+server.tool(
+  "list_rocks",
+  "List quarterly rocks for the authenticated organization. Filter by quarter (e.g. '2026-Q2') or owner_external_id. Returns rocks with on_track flag, due date, and latest status note.",
+  {
+    quarter: z.string().regex(/^\d{4}-Q[1-4]$/).optional().describe("Quarter filter, e.g. '2026-Q2'"),
+    owner_external_id: z.string().optional().describe("Filter to one owner"),
+    on_track: z.boolean().optional().describe("Filter on/off-track rocks"),
+  },
+  async (params) => {
+    const q = new URLSearchParams();
+    if (params.quarter) q.set("quarter", params.quarter);
+    if (params.owner_external_id) q.set("ownerExternalId", params.owner_external_id);
+    if (params.on_track !== undefined) q.set("onTrack", String(params.on_track));
+    const result = await otpFetch(`/rocks?${q}`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "add_rock",
+  "Create a quarterly rock (EOS terminology for a 90-day priority). Requires owner, title, quarter, and due date.",
+  {
+    owner_entity_type: z.enum(["agent", "human"]).describe("Who owns this rock"),
+    owner_external_id: z.string().describe("Owner identifier (e.g. 'dsteel', 'dirk')"),
+    owner_name: z.string().optional().describe("Display name for the owner"),
+    title: z.string().min(3).max(500),
+    description: z.string().optional(),
+    quarter: z.string().regex(/^\d{4}-Q[1-4]$/).describe("e.g. '2026-Q2'"),
+    due_date: z.string().describe("ISO 8601 datetime, e.g. '2026-06-30T23:59:59Z'"),
+    on_track: z.boolean().optional().describe("Defaults to true at creation"),
+    status_note: z.string().optional().describe("Initial status note"),
+  },
+  async (params) => {
+    const result = await otpFetch(`/rocks`, {
+      method: "POST",
+      body: JSON.stringify({
+        ownerEntityType: params.owner_entity_type,
+        ownerExternalId: params.owner_external_id,
+        ownerName: params.owner_name,
+        title: params.title,
+        description: params.description,
+        quarter: params.quarter,
+        dueDate: params.due_date,
+        onTrack: params.on_track,
+        statusNote: params.status_note,
+      }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "update_rock",
+  "Update a rock's status (on_track flag, status note, completion). Used during weekly L10 rock review.",
+  {
+    rock_id: z.string().uuid(),
+    on_track: z.boolean().optional(),
+    status_note: z.string().optional().describe("Free-text update from the owner"),
+    completed: z.boolean().optional().describe("Mark rock complete"),
+  },
+  async (params) => {
+    const result = await otpFetch(`/rocks/${params.rock_id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        onTrack: params.on_track,
+        statusNote: params.status_note,
+        completed: params.completed,
+      }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "list_todos",
+  "List 7-day to-dos (commitments made in an L10). Filter by open=true to see only incomplete, by meeting_id, or by owner.",
+  {
+    open: z.boolean().optional().describe("Only return incomplete to-dos"),
+    meeting_id: z.string().uuid().optional().describe("Only to-dos created in a specific meeting"),
+    owner_external_id: z.string().optional(),
+  },
+  async (params) => {
+    const q = new URLSearchParams();
+    if (params.open) q.set("open", "true");
+    if (params.meeting_id) q.set("meetingId", params.meeting_id);
+    if (params.owner_external_id) q.set("ownerExternalId", params.owner_external_id);
+    const result = await otpFetch(`/todos?${q}`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "add_todo",
+  "Create a 7-day to-do (typically created during an L10). Owner commits to complete by the next L10.",
+  {
+    owner_entity_type: z.enum(["agent", "human"]),
+    owner_external_id: z.string(),
+    owner_name: z.string().optional(),
+    title: z.string().min(3).max(500),
+    description: z.string().optional(),
+    due_at: z.string().optional().describe("ISO 8601 datetime; defaults to 7 days from now if omitted"),
+    meeting_id: z.string().uuid().optional().describe("Meeting in which this to-do was created"),
+  },
+  async (params) => {
+    const dueAt = params.due_at || new Date(Date.now() + 7 * 86400000).toISOString();
+    const result = await otpFetch(`/todos`, {
+      method: "POST",
+      body: JSON.stringify({
+        ownerEntityType: params.owner_entity_type,
+        ownerExternalId: params.owner_external_id,
+        ownerName: params.owner_name,
+        title: params.title,
+        description: params.description,
+        dueAt,
+        meetingId: params.meeting_id,
+      }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "complete_todo",
+  "Mark a to-do as done (or undone if already complete).",
+  {
+    todo_id: z.string().uuid(),
+    done: z.boolean().optional().default(true),
+  },
+  async (params) => {
+    const result = await otpFetch(`/todos/${params.todo_id}`, {
+      method: "PUT",
+      body: JSON.stringify({ done: params.done ?? true }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "list_meetings",
+  "List L10 meetings for the authenticated organization. Filter by meeting_type (default 'leadership') or status.",
+  {
+    meeting_type: z.string().optional().describe("e.g. 'leadership', 'departmental', '1on1'"),
+    status: z.enum(["scheduled", "in_progress", "completed", "cancelled"]).optional(),
+  },
+  async (params) => {
+    const q = new URLSearchParams();
+    if (params.meeting_type) q.set("meetingType", params.meeting_type);
+    if (params.status) q.set("status", params.status);
+    const result = await otpFetch(`/meetings?${q}`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "create_meeting",
+  "Schedule a new L10 meeting. Returns the meeting object including its ID and the URL of the running L10 page.",
+  {
+    title: z.string().min(3).max(255),
+    scheduled_at: z.string().describe("ISO 8601 datetime"),
+    meeting_type: z.string().optional().default("leadership"),
+    attendees: z.array(z.object({
+      entity_type: z.enum(["agent", "human"]),
+      external_id: z.string(),
+      name: z.string().optional(),
+    })).optional(),
+  },
+  async (params) => {
+    const result = await otpFetch(`/meetings`, {
+      method: "POST",
+      body: JSON.stringify({
+        title: params.title,
+        scheduledAt: params.scheduled_at,
+        meetingType: params.meeting_type,
+        attendees: (params.attendees || []).map(a => ({
+          entityType: a.entity_type,
+          externalId: a.external_id,
+          name: a.name,
+        })),
+      }),
+    });
+    if (result?.meeting?.id) {
+      result.l10_url = `${OTP_BASE_URL}/l10/meeting/${result.meeting.id}`;
+    }
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "get_meeting_agenda",
+  "Get the full L10 agenda data for a meeting: scorecard snapshot, rocks snapshot, open issues, open to-dos. Use to render or summarize a meeting.",
+  {
+    meeting_id: z.string().uuid(),
+  },
+  async (params) => {
+    const result = await otpFetch(`/meetings/${params.meeting_id}/agenda`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "start_meeting",
+  "Start an L10 meeting -- snapshots current scorecard and rocks into the meeting record so the agenda is frozen at meeting time.",
+  { meeting_id: z.string().uuid() },
+  async (params) => {
+    const result = await otpFetch(`/meetings/${params.meeting_id}/start`, { method: "POST" });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "end_meeting",
+  "End an L10 meeting. Marks status complete and stamps endedAt.",
+  { meeting_id: z.string().uuid() },
+  async (params) => {
+    const result = await otpFetch(`/meetings/${params.meeting_id}/end`, { method: "POST" });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  "set_ids_status",
+  "Move an issue (ticket) through the EOS Identify-Discuss-Solve lifecycle. Optionally rank an issue (priorityRank=1 means top priority).",
+  {
+    ticket_id: z.string().uuid(),
+    ids_status: z.enum(["open", "identified", "discussed", "solved"]).optional(),
+    priority_rank: z.number().int().nullable().optional(),
+    solved_in_meeting_id: z.string().uuid().nullable().optional(),
+    resolution: z.string().optional().describe("Solution captured when moving to 'solved'"),
+  },
+  async (params) => {
+    const body: any = {};
+    if (params.ids_status !== undefined) body.idsStatus = params.ids_status;
+    if (params.priority_rank !== undefined) body.priorityRank = params.priority_rank;
+    if (params.solved_in_meeting_id !== undefined) body.solvedInMeetingId = params.solved_in_meeting_id;
+    if (params.resolution !== undefined) body.resolution = params.resolution;
+    const result = await otpFetch(`/tickets/${params.ticket_id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
 // -- Start --
 
 async function main() {

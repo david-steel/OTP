@@ -38,6 +38,10 @@ export const actorTypeEnum = pgEnum('actor_type', ['user', 'system', 'agent']);
 export const ticketStatusEnum = pgEnum('ticket_status', ['open', 'in_progress', 'resolved', 'closed']);
 export const ticketPriorityEnum = pgEnum('ticket_priority', ['low', 'medium', 'high', 'critical']);
 export const ticketCategoryEnum = pgEnum('ticket_category', ['bug', 'feature', 'question', 'other']);
+// IDS lifecycle (EOS) and ownerEntityType are declared here so the tickets table can reference them.
+// The full L10 schema (rocks, todos, meetings) lives at the bottom of this file.
+export const idsStatusEnum = pgEnum('ids_status', ['open', 'identified', 'discussed', 'solved']);
+export const ownerEntityTypeEnum = pgEnum('owner_entity_type', ['agent', 'human']);
 
 export const organizations = pgTable('organizations', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -150,11 +154,21 @@ export const tickets = pgTable('tickets', {
   reporterEmail: varchar('reporter_email', { length: 255 }),
   resolution: text('resolution'),
   agentNotes: text('agent_notes'),
+  // IDS workflow (EOS Identify-Discuss-Solve) -- separate lifecycle from triage status
+  idsStatus: idsStatusEnum('ids_status').notNull().default('open'),
+  priorityRank: integer('priority_rank'),
+  solvedInMeetingId: uuid('solved_in_meeting_id'),
+  // L10 ownership for the issue (separate from reporter)
+  ownerEntityType: ownerEntityTypeEnum('owner_entity_type'),
+  ownerExternalId: varchar('owner_external_id', { length: 120 }),
+  ownerName: varchar('owner_name', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
 }, (table) => ({
   statusIdx: index('ticket_status_idx').on(table.status),
   orgIdx: index('ticket_org_idx').on(table.orgId),
+  idsStatusIdx: index('ticket_ids_status_idx').on(table.orgId, table.idsStatus),
 }));
 
 export const auditLogs = pgTable('audit_logs', {
@@ -600,3 +614,86 @@ export const oosPlanSyncEvents = pgTable('oos_plan_sync_events', {
   typeIdx: index('oopse_type_idx').on(table.syncType),
   createdIdx: index('oopse_created_idx').on(table.createdAt),
 }));
+
+// ---- L10 (EOS Level-10 meeting layer) ----
+
+export const meetingStatusEnum = pgEnum('meeting_status', ['scheduled', 'in_progress', 'completed', 'cancelled']);
+// idsStatusEnum and ownerEntityTypeEnum are declared earlier (next to ticketStatusEnum) so the tickets table can reference them.
+
+export const rocks = pgTable('rocks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  ownerEntityType: ownerEntityTypeEnum('owner_entity_type').notNull(),
+  ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
+  ownerName: varchar('owner_name', { length: 255 }),
+  title: varchar('title', { length: 500 }).notNull(),
+  description: text('description'),
+  quarter: varchar('quarter', { length: 10 }).notNull(),
+  dueDate: timestamp('due_date').notNull(),
+  onTrack: boolean('on_track').notNull().default(true),
+  statusNote: text('status_note'),
+  statusUpdatedAt: timestamp('status_updated_at'),
+  completedAt: timestamp('completed_at'),
+  createdBy: varchar('created_by', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  orgIdx: index('rocks_org_idx').on(table.organizationId),
+  ownerIdx: index('rocks_owner_idx').on(table.organizationId, table.ownerEntityType, table.ownerExternalId),
+  quarterIdx: index('rocks_quarter_idx').on(table.organizationId, table.quarter),
+}));
+
+export const meetings = pgTable('meetings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  meetingType: varchar('meeting_type', { length: 60 }).notNull().default('leadership'),
+  title: varchar('title', { length: 255 }).notNull(),
+  status: meetingStatusEnum('status').notNull().default('scheduled'),
+  scheduledAt: timestamp('scheduled_at').notNull(),
+  startedAt: timestamp('started_at'),
+  endedAt: timestamp('ended_at'),
+  attendees: jsonb('attendees').notNull().default([]),
+  segueNotes: text('segue_notes'),
+  headlines: text('headlines'),
+  cascadingMessage: text('cascading_message'),
+  ratings: jsonb('ratings').notNull().default({}),
+  scorecardSnapshot: jsonb('scorecard_snapshot'),
+  rocksSnapshot: jsonb('rocks_snapshot'),
+  createdBy: varchar('created_by', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  orgIdx: index('meetings_org_idx').on(table.organizationId),
+  scheduledIdx: index('meetings_scheduled_idx').on(table.organizationId, table.scheduledAt),
+  typeIdx: index('meetings_type_idx').on(table.organizationId, table.meetingType),
+}));
+
+export const todos = pgTable('todos', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  meetingId: uuid('meeting_id').references(() => meetings.id, { onDelete: 'set null' }),
+  ownerEntityType: ownerEntityTypeEnum('owner_entity_type').notNull(),
+  ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
+  ownerName: varchar('owner_name', { length: 255 }),
+  title: varchar('title', { length: 500 }).notNull(),
+  description: text('description'),
+  dueAt: timestamp('due_at'),
+  doneAt: timestamp('done_at'),
+  createdBy: varchar('created_by', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  orgIdx: index('todos_org_idx').on(table.organizationId),
+  meetingIdx: index('todos_meeting_idx').on(table.meetingId),
+  ownerIdx: index('todos_owner_idx').on(table.organizationId, table.ownerEntityType, table.ownerExternalId),
+  openIdx: index('todos_open_idx').on(table.organizationId, table.doneAt),
+}));
+
+// IDS extension columns on tickets are added via raw SQL in the migration:
+//   ALTER TABLE tickets ADD COLUMN ids_status ids_status NOT NULL DEFAULT 'open';
+//   ALTER TABLE tickets ADD COLUMN priority_rank integer;
+//   ALTER TABLE tickets ADD COLUMN solved_in_meeting_id uuid REFERENCES meetings(id) ON DELETE SET NULL;
+// The Drizzle schema above intentionally does not redeclare the tickets table.
