@@ -105,14 +105,17 @@
     document.getElementById('ticket-form').classList.add('hidden');
   });
 
-  // Load stats
-  fetch('/api/v1/tickets/stats').then(r => r.json()).then(function(data) {
-    var s = data.stats;
-    document.getElementById('stat-open').textContent = s.open_count || '0';
-    document.getElementById('stat-progress').textContent = s.in_progress_count || '0';
-    document.getElementById('stat-resolved').textContent = s.resolved_count || '0';
-    document.getElementById('stat-closed').textContent = s.closed_count || '0';
-  }).catch(function() {});
+  // Load stats (also called after admin actions so counters stay in sync)
+  function loadStats() {
+    return fetch('/api/v1/tickets/stats').then(r => r.json()).then(function(data) {
+      var s = data.stats || {};
+      document.getElementById('stat-open').textContent = s.open_count || '0';
+      document.getElementById('stat-progress').textContent = s.in_progress_count || '0';
+      document.getElementById('stat-resolved').textContent = s.resolved_count || '0';
+      document.getElementById('stat-closed').textContent = s.closed_count || '0';
+    }).catch(function() {});
+  }
+  loadStats();
 
   // Load tickets
   function loadTickets(status) {
@@ -231,7 +234,7 @@
         };
         var res = await fetch('/api/v1/tickets/' + id, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
         if (res && res.error) { alert('Save failed: ' + (res.error.message || res.message || 'unknown')); editSave.disabled = false; editSave.textContent = 'Save'; return; }
-        loadTickets(currentFilter);
+        loadTickets(currentFilter); loadStats();
       });
 
       var resolveSave = card.querySelector('[data-action="resolve-save"]');
@@ -241,14 +244,14 @@
         resolveSave.disabled = true; resolveSave.textContent = 'Resolving...';
         var res = await fetch('/api/v1/tickets/' + id, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'resolved', resolution: resolution }) }).then(r => r.json());
         if (res && res.error) { alert('Resolve failed: ' + (res.error.message || res.message || 'unknown')); resolveSave.disabled = false; resolveSave.textContent = 'Resolve'; return; }
-        loadTickets(currentFilter);
+        loadTickets(currentFilter); loadStats();
       });
 
       if (reopenBtn) reopenBtn.addEventListener('click', async function() {
         if (!confirm('Reopen this ticket?')) return;
         var res = await fetch('/api/v1/tickets/' + id, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'open' }) }).then(r => r.json());
         if (res && res.error) { alert('Reopen failed: ' + (res.error.message || res.message || 'unknown')); return; }
-        loadTickets(currentFilter);
+        loadTickets(currentFilter); loadStats();
       });
 
       if (deleteBtn) deleteBtn.addEventListener('click', async function() {
@@ -256,7 +259,7 @@
         deleteBtn.disabled = true; deleteBtn.textContent = '...';
         var res = await fetch('/api/v1/tickets/' + id, { method: 'DELETE', credentials: 'include' }).then(r => r.json());
         if (res && res.error) { alert('Delete failed: ' + (res.error.message || res.message || 'unknown')); deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; return; }
-        loadTickets(currentFilter);
+        loadTickets(currentFilter); loadStats();
       });
     });
   }
@@ -299,7 +302,7 @@
         document.getElementById('ticket-success').classList.remove('hidden');
         document.getElementById('ticket-title').value = '';
         document.getElementById('ticket-description').value = '';
-        loadTickets(currentFilter);
+        loadTickets(currentFilter); loadStats();
         // Reload stats
         fetch('/api/v1/tickets/stats').then(r => r.json()).then(function(s) {
           document.getElementById('stat-open').textContent = s.stats.open_count || '0';

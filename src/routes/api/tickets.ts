@@ -185,7 +185,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
     return { ticket: updated };
   });
 
-  // GET /api/v1/tickets/stats -- Ticket stats
+  // GET /api/v1/tickets/stats -- Ticket stats (excludes soft-deleted)
   app.get('/tickets/stats', async (request, reply) => {
     const stats = await db.execute(sql`
       SELECT
@@ -195,6 +195,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
         COUNT(*) FILTER (WHERE status = 'closed') AS closed_count,
         COUNT(*) AS total
       FROM tickets
+      WHERE deleted_at IS NULL
     `);
 
     return { stats: (stats.rows as any[])[0] || {} };
