@@ -145,8 +145,8 @@
   <section id="rocks" class="mb-12">
     <h2 class="text-xl font-bold mb-3">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
     <% if (!rocks.rocks || rocks.rocks.length === 0) { %>
-      <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm">
-        No rocks yet. Add quarterly rocks via <code>POST /api/v1/rocks</code>.
+      <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm mb-3">
+        No quarterly priorities yet. Add one below.
       </div>
     <% } else { %>
       <div class="space-y-2">
@@ -174,6 +174,29 @@
         <% }); %>
       </div>
     <% } %>
+
+    <!-- Add quarterly priority (collapsed by default) -->
+    <div class="mt-3">
+      <button id="rock-add-toggle" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400">+ Add quarterly priority</button>
+      <div id="rock-add-form" class="hidden mt-3 border rounded p-3 bg-gray-50">
+        <div class="grid grid-cols-12 gap-2">
+          <input id="new-rock-title" type="text" placeholder="Priority title (e.g. 'Move to Trello -- full Accelo decommission')" class="col-span-12 border rounded p-2 text-sm">
+          <select id="new-rock-owner" class="col-span-5 border rounded p-2 text-sm">
+            <option value="">-- owner --</option>
+            <% (meeting.attendees || []).forEach(function(a) { %>
+              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+            <% }); %>
+          </select>
+          <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-3 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
+          <input id="new-rock-due" type="date" class="col-span-4 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3); var endMonth=q*3+2; var end=new Date(d.getFullYear(),endMonth+1,0); return end.toISOString().slice(0,10); })() %>">
+          <textarea id="new-rock-status" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Initial status note (optional)"></textarea>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button id="new-rock-save" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500 font-medium">Add Priority</button>
+          <button id="new-rock-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- 4. Headlines -->
@@ -320,8 +343,35 @@
       <% }); %>
 
       <% if (openIssues.length === 0) { %>
-        <div class="bg-white border rounded p-4 text-sm text-gray-600">No open issues. Add issues to the org via <code>/api/v1/tickets</code>.</div>
+        <div class="bg-white border rounded p-4 text-sm text-gray-600">No open issues. Add one below.</div>
       <% } %>
+    </div>
+
+    <!-- Add issue (collapsed by default) -->
+    <div class="mt-3">
+      <button id="issue-add-toggle" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400">+ Add issue</button>
+      <div id="issue-add-form" class="hidden mt-3 border rounded p-3 bg-white">
+        <div class="grid grid-cols-12 gap-2">
+          <input id="new-issue-title" type="text" placeholder="Issue title (the thing the team needs to identify, discuss, solve)" class="col-span-12 border rounded p-2 text-sm">
+          <textarea id="new-issue-desc" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Description (optional context)"></textarea>
+          <select id="new-issue-priority" class="col-span-4 border rounded p-2 text-sm">
+            <option value="low">low priority</option>
+            <option value="medium" selected>medium priority</option>
+            <option value="high">high priority</option>
+            <option value="critical">critical priority</option>
+          </select>
+          <select id="new-issue-owner" class="col-span-8 border rounded p-2 text-sm">
+            <option value="">-- owner (optional, can assign later) --</option>
+            <% (meeting.attendees || []).forEach(function(a) { %>
+              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button id="new-issue-save" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500 font-medium">Add Issue</button>
+          <button id="new-issue-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <% if (solvedIssues.length > 0) { %>
@@ -548,6 +598,77 @@
       const todoId = box.closest('[data-todo-id]').dataset.todoId;
       await api('/todos/' + todoId, { method: 'PUT', body: JSON.stringify({ done: box.checked }) });
     });
+  });
+
+  // ===== Add quarterly priority =====
+  const rockToggle = document.getElementById('rock-add-toggle');
+  const rockForm = document.getElementById('rock-add-form');
+  if (rockToggle) rockToggle.addEventListener('click', () => rockForm.classList.toggle('hidden'));
+  document.getElementById('new-rock-cancel')?.addEventListener('click', () => rockForm.classList.add('hidden'));
+  document.getElementById('new-rock-save')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const title = document.getElementById('new-rock-title').value.trim();
+    const ownerVal = document.getElementById('new-rock-owner').value;
+    const owner = parseOwner(ownerVal);
+    const quarter = document.getElementById('new-rock-quarter').value.trim();
+    const dueDateRaw = document.getElementById('new-rock-due').value;
+    const statusNote = document.getElementById('new-rock-status').value.trim();
+    if (!title || !owner || !quarter || !dueDateRaw) {
+      return alert('Title, owner, quarter, and due date are all required.');
+    }
+    if (!/^\d{4}-Q[1-4]$/.test(quarter)) {
+      return alert('Quarter must look like "2026-Q2".');
+    }
+    const dueDate = new Date(dueDateRaw + 'T23:59:59Z').toISOString();
+    btn.disabled = true; btn.textContent = 'Adding...';
+    const res = await api('/rocks', { method: 'POST', body: JSON.stringify({
+      title,
+      ownerEntityType: owner.entityType,
+      ownerExternalId: owner.externalId,
+      ownerName: owner.name,
+      quarter,
+      dueDate,
+      onTrack: true,
+      statusNote: statusNote || undefined,
+    })});
+    if (res?.error) { alert('Add failed: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Add Priority'; return; }
+    location.reload();
+  });
+
+  // ===== Add issue =====
+  const issueToggle = document.getElementById('issue-add-toggle');
+  const issueForm = document.getElementById('issue-add-form');
+  if (issueToggle) issueToggle.addEventListener('click', () => issueForm.classList.toggle('hidden'));
+  document.getElementById('new-issue-cancel')?.addEventListener('click', () => issueForm.classList.add('hidden'));
+  document.getElementById('new-issue-save')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const title = document.getElementById('new-issue-title').value.trim();
+    const description = document.getElementById('new-issue-desc').value.trim();
+    const priority = document.getElementById('new-issue-priority').value;
+    const ownerVal = document.getElementById('new-issue-owner').value;
+    const owner = parseOwner(ownerVal);
+    if (!title) return alert('Issue title is required.');
+    btn.disabled = true; btn.textContent = 'Adding...';
+    // POST to /tickets first (no owner field on create), then PUT to set owner if picked.
+    const createRes = await api('/tickets', { method: 'POST', body: JSON.stringify({
+      title,
+      description: description || ('Added during meeting on ' + new Date().toISOString().slice(0,10)),
+      priority,
+      category: 'other',
+    })});
+    if (createRes?.error || !createRes?.ticket?.id) {
+      alert('Add failed: ' + errMsg(createRes));
+      btn.disabled = false; btn.textContent = 'Add Issue';
+      return;
+    }
+    if (owner) {
+      await api('/tickets/' + createRes.ticket.id, { method: 'PUT', body: JSON.stringify({
+        ownerEntityType: owner.entityType,
+        ownerExternalId: owner.externalId,
+        ownerName: owner.name,
+      })});
+    }
+    location.reload();
   });
 
   // Add new to-do
