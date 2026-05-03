@@ -1216,7 +1216,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Team org chart (live derivation from latest draft or published OOS)
   app.get('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
@@ -1268,7 +1268,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: KPI Scoreboard (Phase 3 + Phase 5)
   app.get<{ Querystring: { grain?: string; view?: string } }>('/dashboard/kpis', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role } = resolved;
@@ -1408,7 +1408,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Consultant profile management
   app.get('/dashboard/consultant', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
@@ -1430,7 +1430,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Workspaces
   app.get('/dashboard/workspaces', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
@@ -1456,7 +1456,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Page-level access: any authed org member. Push-to-OOS is super-admin gated at the API endpoint (Phase 6).
   app.get('/dashboard/oos-operating-plan', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
@@ -1569,7 +1569,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Seeds the 8 standard sections so the UI has something to render.
   app.post('/dashboard/oos-operating-plan/create', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    // Form-style POST: bounce to sign-in if the session expired between page
+    // load and submit, so the user lands back on the operating-plan page.
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=/dashboard/oos-operating-plan');
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
@@ -1618,7 +1620,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Workspace detail
   app.get('/dashboard/workspace/:id', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
@@ -1644,7 +1646,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Source documents
   app.get('/dashboard/source-documents', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
@@ -1661,7 +1663,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Source document detail
   app.get('/dashboard/source-documents/:id', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
@@ -1684,7 +1686,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Dashboard: Inquiries
   app.get('/dashboard/inquiries', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/');
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     const org = orgArr[0];
     if (!org) return reply.redirect('/dashboard');
