@@ -569,6 +569,17 @@
       <div id="ef-meetings-loading" style="font-size:0.7rem; color:#9ca3af;">Loading meetings...</div>
     </div>
 
+    <!-- Slash commands (existing-node only; populated by JS on open) -->
+    <div id="ef-commands-block" style="display:none; margin-bottom: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid #f3f4f6;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#374151; font-weight:600;">Slash Commands <span id="ef-commands-count" style="font-size:0.65rem; color:#6b7280; font-weight:400;"></span></div>
+      </div>
+      <div id="ef-commands-list"></div>
+      <div id="ef-commands-empty" style="display:none; font-size:0.75rem; color:#9ca3af; font-style:italic; padding:0.4rem 0;">
+        No slash commands wired to this seat yet.
+      </div>
+    </div>
+
     <!-- Create-mode only: type toggle + agent builder launcher -->
     <div id="ef-create-controls" style="display:none; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f3f4f6;">
       <div style="display:flex; gap:0.4rem; margin-bottom:0.6rem;">
@@ -1525,6 +1536,37 @@
       return opMap[kpi.goalOperator] + ' ' + kpi.goalValue + (unit ? ' ' + unit : '');
     }
 
+    function loadSlashCommands(d) {
+      var block = document.getElementById('ef-commands-block');
+      if (!block) return;
+      var p = d.properties || {};
+      var cmds = Array.isArray(p.slashCommands) ? p.slashCommands : [];
+      var listEl = document.getElementById('ef-commands-list');
+      var emptyEl = document.getElementById('ef-commands-empty');
+      var countEl = document.getElementById('ef-commands-count');
+      block.style.display = '';
+      if (cmds.length === 0) {
+        emptyEl.style.display = '';
+        listEl.innerHTML = '';
+        countEl.textContent = '';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      countEl.textContent = '(' + cmds.length + ')';
+      // Sort by command name for stable display
+      cmds = cmds.slice().sort(function(a, b) { return String(a.command || '').localeCompare(String(b.command || '')); });
+      listEl.innerHTML = cmds.map(function(c) {
+        var cmd = String(c.command || '');
+        var desc = String(c.description || '');
+        var safeCmd = cmd.replace(/[<>&"']/g, function(ch) { return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' })[ch]; });
+        var safeDesc = desc.replace(/[<>&"']/g, function(ch) { return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' })[ch]; });
+        return '<div style="border:1px solid #e5e7eb; border-radius:0.4rem; padding:0.45rem 0.6rem; margin-bottom:0.35rem; background:#fff;">'
+          + '<div style="font-family:ui-monospace, Menlo, monospace; font-size:0.75rem; font-weight:600; color:#0f172a; margin-bottom:0.15rem;">' + safeCmd + '</div>'
+          + '<div style="font-size:0.7rem; color:#475569; line-height:1.45;">' + safeDesc + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
     async function loadMeetingsForEntity(externalId) {
       var block = document.getElementById('ef-meetings-block');
       if (!block) return;
@@ -1831,6 +1873,7 @@
       renderInheritedFor(d);
       loadKpisForEntity(d.type, d.externalId);
       loadMeetingsForEntity(d.externalId);
+      loadSlashCommands(d);
       document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-body').value = (d.type === 'agent' ? (p.runtimeBody || '') : '');

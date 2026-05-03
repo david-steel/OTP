@@ -102,6 +102,7 @@ export function buildTeamGraph(
         maturityLevel: typeof a.maturity_level === 'number' ? a.maturity_level : null,
         escalatesTo: a.escalates_to,
         sops: Array.isArray(a.sops) ? a.sops : [],
+        slashCommands: Array.isArray(a.slash_commands) ? a.slash_commands : [],
         runtimeBody: a.runtime_body || null,
       },
     });
