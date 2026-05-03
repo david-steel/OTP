@@ -200,7 +200,8 @@ export default async function ticketRoutes(app: FastifyInstance) {
     return { stats: (stats.rows as any[])[0] || {} };
   });
 
-  // DELETE /api/v1/tickets/:id -- soft delete (used by L10 to remove issues)
+  // DELETE /api/v1/tickets/:id -- soft delete (used by L10 to remove issues
+  // and by super admins on /tickets to clean up the public issue tracker).
   app.delete<{ Params: { id: string } }>('/tickets/:id', async (request, reply) => {
     const id = requireUuidParam(request, reply);
     if (!id) return;
@@ -212,9 +213,16 @@ export default async function ticketRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope" } });
     }
 
+    // Super admins can delete tickets from any org (or anonymous reports);
+    // org owners can only delete their own org's tickets.
+    const isSuperAdmin = !!(request as any).isSuperAdmin;
+    const whereClause = isSuperAdmin
+      ? eq(tickets.id, id)
+      : and(eq(tickets.id, id), eq(tickets.orgId, org.id));
+
     const [deleted] = await db.update(tickets)
       .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(tickets.id, id), eq(tickets.orgId, org.id)))
+      .where(whereClause)
       .returning();
     if (!deleted) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
 

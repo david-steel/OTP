@@ -1736,7 +1736,12 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Tickets page
   app.get('/tickets', async (request, reply) => {
-    return reply.view('pages/tickets', { title: 'Issue Tracker - OTP', description: 'Report issues, request features, and track platform improvements for OTP.', canonical: BASE_URL + '/tickets' });
+    return reply.view('pages/tickets', {
+      title: 'Issue Tracker - OTP',
+      description: 'Report issues, request features, and track platform improvements for OTP.',
+      canonical: BASE_URL + '/tickets',
+      isSuperAdmin: !!(request as any).isSuperAdmin,
+    });
   });
 
   // Settings: API Keys
