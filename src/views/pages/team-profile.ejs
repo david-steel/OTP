@@ -1,0 +1,233 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <!-- Breadcrumb -->
+  <div class="text-xs text-gray-500 mb-4">
+    <a href="/dashboard/team<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="hover:text-otp-600">Team</a>
+    <span class="mx-1">/</span>
+    <span class="text-gray-700"><%= profile.name %></span>
+  </div>
+
+  <!-- Hero -->
+  <div class="border rounded-lg p-6 mb-6 bg-gradient-to-br from-gray-50 to-white">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div class="flex items-center gap-3 mb-1">
+          <h1 class="text-3xl font-bold"><%= profile.name %></h1>
+          <% if (profile.entityType) { %>
+            <span class="text-xs px-2 py-1 rounded-full <%= profile.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %> font-medium">
+              <%= profile.entityType %>
+            </span>
+          <% } %>
+        </div>
+        <div class="text-sm text-gray-500 font-mono">
+          ID: <%= profile.externalId %>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <a href="/dashboard/team<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="text-xs px-3 py-1.5 bg-white border rounded hover:bg-gray-50">← Org Chart</a>
+        <a href="/l10<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500">Meetings</a>
+      </div>
+    </div>
+
+    <!-- Accountability summary tiles -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="bg-white border rounded p-3">
+        <div class="text-2xl font-bold <%= summary.rocksOwned > 0 && summary.rocksOnTrack < summary.rocksOwned ? 'text-amber-600' : 'text-gray-900' %>"><%= summary.rocksOwned %></div>
+        <div class="text-xs text-gray-500">Quarterly Priorities</div>
+        <% if (summary.rocksOwned > 0) { %>
+          <div class="text-xs mt-1">
+            <span class="text-emerald-700"><%= summary.rocksOnTrack %> on track</span>
+            <% if (summary.rocksOwned - summary.rocksOnTrack > 0) { %>
+              <span class="text-red-700">&middot; <%= summary.rocksOwned - summary.rocksOnTrack %> off</span>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+      <div class="bg-white border rounded p-3">
+        <div class="text-2xl font-bold <%= summary.openTodos > 5 ? 'text-amber-600' : 'text-gray-900' %>"><%= summary.openTodos %></div>
+        <div class="text-xs text-gray-500">Open To-Dos</div>
+        <div class="text-xs text-gray-400 mt-1"><%= summary.completedTodos %> done lifetime</div>
+      </div>
+      <div class="bg-white border rounded p-3">
+        <div class="text-2xl font-bold <%= summary.openIssues > 3 ? 'text-amber-600' : 'text-gray-900' %>"><%= summary.openIssues %></div>
+        <div class="text-xs text-gray-500">Open Issues Owned</div>
+        <div class="text-xs text-gray-400 mt-1"><%= summary.solvedIssues %> solved</div>
+      </div>
+      <div class="bg-white border rounded p-3">
+        <div class="text-2xl font-bold text-gray-900"><%= summary.meetingsAttended %></div>
+        <div class="text-xs text-gray-500">Meetings Attended</div>
+        <% if (summary.meetingsUpcoming > 0) { %>
+          <div class="text-xs text-otp-700 mt-1"><%= summary.meetingsUpcoming %> upcoming</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-column layout: ownership left, timeline right -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left col: Currently Owns -->
+    <div class="lg:col-span-1 space-y-6">
+
+      <section>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Quarterly Priorities</h2>
+        <% if (rocks.length === 0) { %>
+          <div class="text-sm text-gray-500 italic border rounded p-3">None owned.</div>
+        <% } else { %>
+          <div class="space-y-2">
+            <% rocks.forEach(function(r) { %>
+              <div class="border rounded p-3 bg-white">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs px-2 py-0.5 rounded <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' %>">
+                    <%= r.onTrack ? 'On Track' : 'Off Track' %>
+                  </span>
+                  <span class="text-xs text-gray-500"><%= r.quarter %></span>
+                </div>
+                <div class="text-sm font-medium"><%= r.title %></div>
+                <% if (r.statusNote) { %>
+                  <div class="text-xs text-gray-500 italic mt-1">"<%= r.statusNote %>"</div>
+                <% } %>
+                <div class="text-xs text-gray-400 mt-1">Due <%= new Date(r.dueDate).toLocaleDateString() %></div>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </section>
+
+      <section>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Open To-Dos (<%= openTodos.length %>)</h2>
+        <% if (openTodos.length === 0) { %>
+          <div class="text-sm text-gray-500 italic border rounded p-3">Nothing open.</div>
+        <% } else { %>
+          <ul class="space-y-1">
+            <% openTodos.forEach(function(t) { %>
+              <li class="border rounded p-2 text-sm bg-white">
+                <%= t.title %>
+                <% if (t.dueAt) { %>
+                  <div class="text-xs text-gray-400">due <%= new Date(t.dueAt).toLocaleDateString() %></div>
+                <% } %>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+      <section>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Open Issues Owned (<%= openIssues.length %>)</h2>
+        <% if (openIssues.length === 0) { %>
+          <div class="text-sm text-gray-500 italic border rounded p-3">None.</div>
+        <% } else { %>
+          <ul class="space-y-1">
+            <% openIssues.forEach(function(t) { %>
+              <li class="border rounded p-2 text-sm bg-white">
+                <span class="text-xs px-1.5 py-0.5 rounded mr-1
+                  <%= t.idsStatus === 'open' ? 'bg-gray-100 text-gray-700' :
+                     t.idsStatus === 'identified' ? 'bg-blue-100 text-blue-800' :
+                     'bg-amber-100 text-amber-800' %>"><%= t.idsStatus %></span>
+                <%= t.title %>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+      <% if (solvedIssues.length > 0) { %>
+        <section>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Solved Issues (<%= solvedIssues.length %>)</h2>
+          <ul class="space-y-2">
+            <% solvedIssues.slice(0, 10).forEach(function(t) { %>
+              <li class="border rounded p-2 text-sm bg-white">
+                <div class="text-gray-700"><%= t.title %></div>
+                <% if (t.resolution) { %>
+                  <div class="text-xs text-emerald-800 mt-1"><strong>Resolution:</strong> <%= t.resolution %></div>
+                <% } %>
+              </li>
+            <% }); %>
+          </ul>
+        </section>
+      <% } %>
+
+    </div>
+
+    <!-- Right col: Meeting Timeline -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <% if (upcomingMeetings.length > 0) { %>
+        <section>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Upcoming Meetings (<%= upcomingMeetings.length %>)</h2>
+          <div class="space-y-2">
+            <% upcomingMeetings.forEach(function(m) { %>
+              <a href="/l10/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-3 bg-white hover:bg-gray-50">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <div class="font-medium text-sm"><%= m.title %></div>
+                    <div class="text-xs text-gray-500 mt-0.5">
+                      <%= m.meetingType %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
+                    </div>
+                  </div>
+                  <span class="text-xs px-2 py-0.5 rounded
+                    <%= m.status === 'scheduled' ? 'bg-gray-100 text-gray-700' :
+                       m.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                       'bg-gray-100 text-gray-700' %>"><%= m.status %></span>
+                </div>
+              </a>
+            <% }); %>
+          </div>
+        </section>
+      <% } %>
+
+      <section>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Meeting History (<%= pastMeetings.length %>)</h2>
+        <% if (pastMeetings.length === 0) { %>
+          <div class="text-sm text-gray-500 italic border rounded p-4">
+            No past meetings yet. <%= profile.name %> hasn't been invited to anything completed.
+          </div>
+        <% } else { %>
+          <!-- Vertical timeline -->
+          <ol class="relative border-l border-gray-200 ml-3 space-y-4">
+            <% pastMeetings.forEach(function(m) { %>
+              <li class="ml-4">
+                <span class="absolute -left-1.5 mt-2 w-3 h-3 rounded-full bg-otp-500 border-2 border-white"></span>
+                <a href="/l10/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-3 bg-white hover:bg-gray-50">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1">
+                      <div class="font-medium text-sm"><%= m.title %></div>
+                      <div class="text-xs text-gray-500 mt-0.5">
+                        <%= m.meetingType %> &middot; <%= new Date(m.scheduledAt).toLocaleDateString() %>
+                        <% if (m.endedAt) { %>
+                          &middot; ended <%= new Date(m.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+                        <% } %>
+                      </div>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded flex-shrink-0
+                      <%= m.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                         m.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                         'bg-gray-100 text-gray-700' %>"><%= m.status %></span>
+                  </div>
+                  <% if (m.contribution.todosOwned > 0 || m.contribution.issuesSolved > 0) { %>
+                    <div class="flex gap-2 mt-2">
+                      <% if (m.contribution.todosOwned > 0) { %>
+                        <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-800">
+                          <%= m.contribution.todosOwned %> to-do<%= m.contribution.todosOwned === 1 ? '' : 's' %> owned
+                        </span>
+                      <% } %>
+                      <% if (m.contribution.issuesSolved > 0) { %>
+                        <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800">
+                          <%= m.contribution.issuesSolved %> issue<%= m.contribution.issuesSolved === 1 ? '' : 's' %> solved
+                        </span>
+                      <% } %>
+                    </div>
+                  <% } else { %>
+                    <div class="text-xs text-gray-400 mt-1 italic">attended -- no tracked contributions</div>
+                  <% } %>
+                </a>
+              </li>
+            <% }); %>
+          </ol>
+        <% } %>
+      </section>
+
+    </div>
+  </div>
+
+</div>

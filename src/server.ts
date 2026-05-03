@@ -529,6 +529,7 @@ await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meetings.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/team-profile.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/consultants.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/workspaces.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/source-documents.js'), { prefix: '/api/v1' });

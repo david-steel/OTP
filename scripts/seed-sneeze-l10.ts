@@ -8,15 +8,24 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../src/config/database.js';
 import { organizations, rocks, tickets, kpis, kpiValues, meetings } from '../src/db/schema.js';
 
+// Prefer SNEEZE_ORG_ID env var (a UUID) for explicit targeting (e.g. prod), else
+// fall back to the dev stub clerk_org_id 'sneeze-it-001' for local dev.
+const SNEEZE_ORG_ID_ENV = process.env.SNEEZE_ORG_ID || '';
 const SNEEZE_CLERK_ORG_ID = 'sneeze-it-001';
 const CREATED_BY = 'seed:l10';
 
 async function main() {
-  const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, SNEEZE_CLERK_ORG_ID)).limit(1);
-  if (!org) {
-    throw new Error(`Sneeze It org not found (clerk_org_id=${SNEEZE_CLERK_ORG_ID}). Run db:init first.`);
+  let org;
+  if (SNEEZE_ORG_ID_ENV) {
+    const r = await db.select().from(organizations).where(eq(organizations.id, SNEEZE_ORG_ID_ENV)).limit(1);
+    org = r[0];
+    if (!org) throw new Error(`Org not found by id=${SNEEZE_ORG_ID_ENV}`);
+  } else {
+    const r = await db.select().from(organizations).where(eq(organizations.clerkOrgId, SNEEZE_CLERK_ORG_ID)).limit(1);
+    org = r[0];
+    if (!org) throw new Error(`Sneeze It org not found (clerk_org_id=${SNEEZE_CLERK_ORG_ID}). Run db:init first or set SNEEZE_ORG_ID env.`);
   }
-  console.log(`Org: ${org.name} (${org.id})`);
+  console.log(`Org: ${org.name} (${org.id}) clerk_org_id=${org.clerkOrgId}`);
 
   // ---------- Rocks ----------
   const ROCKS = [
@@ -242,7 +251,11 @@ async function main() {
   }
 
   console.log(`\nSummary: ${rocksInserted} rocks, ${kpisInserted} KPIs, ${ticketsInserted} issues seeded.`);
-  console.log(`\nGo to: http://localhost:3000/l10?orgId=${SNEEZE_CLERK_ORG_ID}`);
+  if (SNEEZE_ORG_ID_ENV) {
+    console.log(`\nGo to (prod, signed in as the org owner): https://orgtp.com/l10`);
+  } else {
+    console.log(`\nGo to: http://localhost:3000/l10?orgId=${SNEEZE_CLERK_ORG_ID}`);
+  }
 
   process.exit(0);
 }
