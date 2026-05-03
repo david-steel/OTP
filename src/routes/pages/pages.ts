@@ -1295,6 +1295,14 @@ export default async function pageRoutes(app: FastifyInstance) {
     else from = new Date(now.getUTCFullYear() - 4, 0, 1);
 
     const scoreboard = await getScoreboard(org.id, { timeGrain: grain, from, to: now });
+    // Render with latest period on the LEFT (most recent first). Reverse both
+    // the periods array and each row's per-period values so indices stay aligned.
+    scoreboard.periods.reverse();
+    if (Array.isArray((scoreboard as any).rows)) {
+      for (const row of (scoreboard as any).rows) {
+        if (Array.isArray(row.periods)) row.periods.reverse();
+      }
+    }
     const periodLabels = scoreboard.periods.map(p =>
       formatPeriodLabel(grain, { start: new Date(p.start), end: new Date(p.end) }),
     );
