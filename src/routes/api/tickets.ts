@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { eq, desc, sql, and, isNull } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { tickets, auditLogs } from '../../db/schema.js';
+import { tickets, todos, meetings, auditLogs } from '../../db/schema.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
@@ -20,10 +20,31 @@ const createTicketSchema = z.object({
 });
 
 const updateTicketSchema = z.object({
+  title: z.string().min(3).max(500).optional(),
+  description: z.string().min(1).optional(),
   status: z.enum(['open', 'in_progress', 'resolved', 'closed']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   resolution: z.string().optional(),
   agentNotes: z.string().optional(),
+  // EOS IDS extension -- separate lifecycle from triage status
+  idsStatus: z.enum(['open', 'identified', 'discussed', 'solved']).optional(),
+  priorityRank: z.number().int().nullable().optional(),
+  solvedInMeetingId: z.string().uuid().nullable().optional(),
+  ownerEntityType: z.enum(['agent', 'human']).nullable().optional(),
+  ownerExternalId: z.string().max(120).nullable().optional(),
+  ownerName: z.string().max(255).nullable().optional(),
+});
+
+const solveTicketSchema = z.object({
+  resolution: z.string().min(3, 'Resolution is required'),
+  meetingId: z.string().uuid().optional(),
+  followUp: z.object({
+    title: z.string().min(3).max(500),
+    ownerEntityType: z.enum(['agent', 'human']),
+    ownerExternalId: z.string().min(1).max(120),
+    ownerName: z.string().max(255).optional(),
+    dueAt: z.string().datetime().optional(),
+  }).optional(),
 });
 
 export default async function ticketRoutes(app: FastifyInstance) {
@@ -80,7 +101,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
       const limit = Math.min(parseInt(limitStr || '50', 10), 100);
       const page = Math.max(1, parseInt(pageStr || '1', 10));
 
-      const conditions = [eq(tickets.orgId, org.id)];
+      const conditions = [eq(tickets.orgId, org.id), isNull(tickets.deletedAt)];
       if (status) conditions.push(eq(tickets.status, status as 'open' | 'in_progress' | 'resolved' | 'closed'));
       if (category) conditions.push(eq(tickets.category, category as 'bug' | 'feature' | 'question' | 'other'));
 
@@ -133,10 +154,18 @@ export default async function ticketRoutes(app: FastifyInstance) {
     }
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (body.data.title) updates.title = body.data.title;
+    if (body.data.description !== undefined) updates.description = body.data.description;
     if (body.data.status) updates.status = body.data.status;
     if (body.data.priority) updates.priority = body.data.priority;
     if (body.data.resolution !== undefined) updates.resolution = body.data.resolution;
     if (body.data.agentNotes !== undefined) updates.agentNotes = body.data.agentNotes;
+    if (body.data.idsStatus !== undefined) updates.idsStatus = body.data.idsStatus;
+    if (body.data.priorityRank !== undefined) updates.priorityRank = body.data.priorityRank;
+    if (body.data.solvedInMeetingId !== undefined) updates.solvedInMeetingId = body.data.solvedInMeetingId;
+    if (body.data.ownerEntityType !== undefined) updates.ownerEntityType = body.data.ownerEntityType;
+    if (body.data.ownerExternalId !== undefined) updates.ownerExternalId = body.data.ownerExternalId;
+    if (body.data.ownerName !== undefined) updates.ownerName = body.data.ownerName;
 
     const [updated] = await db.update(tickets)
       .set(updates)
@@ -169,5 +198,112 @@ export default async function ticketRoutes(app: FastifyInstance) {
     `);
 
     return { stats: (stats.rows as any[])[0] || {} };
+  });
+
+  // DELETE /api/v1/tickets/:id -- soft delete (used by L10 to remove issues)
+  app.delete<{ Params: { id: string } }>('/tickets/:id', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const apiKeyCtx = await resolveApiKey(request);
+    if (apiKeyCtx && !requireScope(apiKeyCtx, 'write')) {
+      return reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope" } });
+    }
+
+    const [deleted] = await db.update(tickets)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(tickets.id, id), eq(tickets.orgId, org.id)))
+      .returning();
+    if (!deleted) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
+
+    await db.insert(auditLogs).values(createAuditEntry('ticket.deleted', 'ticket', {
+      orgId: org.id, entityId: id,
+    }));
+    return { ok: true };
+  });
+
+  // POST /api/v1/tickets/:id/solve -- atomic solve with optional follow-up to-do.
+  // Captures resolution, marks idsStatus=solved, links solvedInMeetingId, optionally
+  // creates a 7-day follow-up to-do owned by someone, and appends the resolution to
+  // the meeting's cascading message so the rest of the team can see what was decided.
+  app.post<{ Params: { id: string } }>('/tickets/:id/solve', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const apiKeyCtx = await resolveApiKey(request);
+    if (apiKeyCtx && !requireScope(apiKeyCtx, 'write')) {
+      return reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope" } });
+    }
+
+    const body = solveTicketSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid solve payload', details: body.error.issues } });
+    }
+
+    const [ticket] = await db.update(tickets)
+      .set({
+        idsStatus: 'solved',
+        status: 'resolved',
+        resolution: body.data.resolution,
+        solvedInMeetingId: body.data.meetingId || null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(tickets.id, id), eq(tickets.orgId, org.id)))
+      .returning();
+    if (!ticket) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
+
+    // Optional: spawn a follow-up to-do owned by a specific person.
+    let createdTodo = null;
+    if (body.data.followUp) {
+      const dueAt = body.data.followUp.dueAt
+        ? new Date(body.data.followUp.dueAt)
+        : new Date(Date.now() + 7 * 86400000);
+      const [t] = await db.insert(todos).values({
+        organizationId: org.id,
+        meetingId: body.data.meetingId || null,
+        ownerEntityType: body.data.followUp.ownerEntityType,
+        ownerExternalId: body.data.followUp.ownerExternalId,
+        ownerName: body.data.followUp.ownerName,
+        title: body.data.followUp.title,
+        description: `Follow-up from solved issue: "${ticket.title}". Resolution: ${body.data.resolution}`,
+        dueAt,
+        createdBy: 'l10:solve',
+      }).returning();
+      createdTodo = t;
+    }
+
+    // Append a one-liner to the meeting's cascadingMessage so it broadcasts
+    // out of the meeting record. Atomic-ish: best-effort, do not fail the solve.
+    if (body.data.meetingId) {
+      try {
+        const [m] = await db.select().from(meetings)
+          .where(and(eq(meetings.id, body.data.meetingId), eq(meetings.organizationId, org.id)))
+          .limit(1);
+        if (m) {
+          const prev = m.cascadingMessage || '';
+          const ownerLine = createdTodo
+            ? ` -> follow-up assigned to ${createdTodo.ownerName || createdTodo.ownerExternalId}`
+            : '';
+          const line = `- SOLVED: ${ticket.title} :: ${body.data.resolution}${ownerLine}`;
+          const next = prev ? `${prev}\n${line}` : line;
+          await db.update(meetings)
+            .set({ cascadingMessage: next, updatedAt: new Date() })
+            .where(eq(meetings.id, m.id));
+        }
+      } catch (e) {
+        request.log.warn({ err: e }, 'cascading message append failed');
+      }
+    }
+
+    await db.insert(auditLogs).values(createAuditEntry('ticket.solved', 'ticket', {
+      orgId: org.id, entityId: id,
+      details: { resolution: body.data.resolution, followUpTodoId: createdTodo?.id, meetingId: body.data.meetingId },
+    }));
+
+    return { ticket, todo: createdTodo };
   });
 }

@@ -1,0 +1,722 @@
+<div class="max-w-6xl mx-auto px-4 py-8" data-meeting-id="<%= meeting.id %>">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4 border-b pb-4">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Weekly Leadership Meeting</div>
+      <h1 class="text-2xl font-bold"><%= meeting.title %></h1>
+      <p class="text-sm text-gray-600">
+        Scheduled <%= new Date(meeting.scheduledAt).toLocaleString() %> &middot;
+        Status <span class="font-medium" id="meeting-status"><%= meeting.status %></span>
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <% if (meeting.status === 'scheduled') { %>
+        <button id="start-meeting" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400">
+          Start Meeting (snapshot scorecard + rocks)
+        </button>
+      <% } else if (meeting.status === 'in_progress') { %>
+        <button id="end-meeting" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-500">
+          End Meeting
+        </button>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Attendees panel -->
+  <div class="mb-6 border rounded-lg p-3 bg-gray-50">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs uppercase tracking-wider text-gray-700 font-medium">Attendees &amp; Access</div>
+      <button id="edit-attendees-btn" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100">Edit</button>
+    </div>
+    <div id="attendees-display" class="flex flex-wrap gap-2">
+      <% (meeting.attendees || []).forEach(function(a) { %>
+        <span class="text-xs px-2 py-1 rounded-full <%= a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>" data-attendee="<%= a.entityType + ':' + a.externalId %>">
+          <%= a.name || a.externalId %>
+          <span class="text-gray-500">(<%= a.entityType %>)</span>
+        </span>
+      <% }); %>
+      <% if (!meeting.attendees || meeting.attendees.length === 0) { %>
+        <span class="text-xs text-gray-500 italic">No attendees yet -- click Edit to add</span>
+      <% } %>
+    </div>
+    <div id="attendees-editor" class="hidden mt-3">
+      <p class="text-xs text-gray-600 mb-1">One per line, format: <code>type:externalId:Display Name</code> &middot; type is <code>human</code> or <code>agent</code></p>
+      <textarea id="attendees-textarea" class="w-full border rounded p-2 text-sm font-mono h-32"><% (meeting.attendees || []).forEach(function(a) { %><%= a.entityType %>:<%= a.externalId %>:<%= a.name || '' %>
+<% }); %></textarea>
+      <div class="flex gap-2 mt-2">
+        <button id="save-attendees" class="px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Save</button>
+        <button id="cancel-attendees" class="px-3 py-1 bg-gray-200 text-xs rounded hover:bg-gray-300">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agenda nav (single-line, with per-section start-timer) -->
+  <nav id="agenda-nav" class="flex items-center gap-1 mb-6 text-xs whitespace-nowrap overflow-x-auto" data-active="">
+    <a href="#segue"     data-section="segue"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">1. Checkin <span class="text-gray-500">5m</span></a>
+    <a href="#scorecard" data-section="scorecard" data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">2. Scorecard <span class="text-gray-500">5m</span></a>
+    <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">3. Quarterly Priorities <span class="text-gray-500">5m</span></a>
+    <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">4. Headlines <span class="text-gray-500">5m</span></a>
+    <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">5. To-Dos <span class="text-gray-500">5m</span></a>
+    <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-otp-100 rounded hover:bg-otp-200 text-center font-medium min-w-0">6. Issues <span class="text-gray-600">60m</span></a>
+    <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">7. Conclude <span class="text-gray-500">5m</span></a>
+    <span id="meeting-clock" class="ml-3 px-2 py-1 rounded bg-gray-900 text-white font-mono text-xs whitespace-nowrap">--:--</span>
+    <button id="timer-toggle" class="ml-1 px-2 py-1 bg-otp-500 text-white rounded text-xs hover:bg-otp-400">Start</button>
+    <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Advance to next section">Next →</button>
+  </nav>
+
+  <!-- 1. Segue -->
+  <section id="segue" class="mb-12">
+    <h2 class="text-xl font-bold mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal &amp; business best from each attendee</span></h2>
+    <textarea id="segue-notes" class="w-full border rounded p-3 text-sm h-24" placeholder="One personal best, one business best from each attendee..."><%= meeting.segueNotes || '' %></textarea>
+    <button data-save="segueNotes" class="mt-2 text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
+  </section>
+
+  <!-- 2. Scorecard -->
+  <section id="scorecard" class="mb-12">
+    <h2 class="text-xl font-bold mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span></h2>
+    <% if (!scorecard.kpis || scorecard.kpis.length === 0) { %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm">
+        No KPIs yet for this org. Push values via <code>/tally</code> or POST to <code>/api/v1/kpis/values</code>.
+      </div>
+    <% } else {
+      // Group KPIs by groupName so Leadership / Agent / OTP scorecards render separately.
+      const groups = {};
+      (scorecard.kpis || []).forEach(function(k) {
+        const g = k.groupName || 'Scorecard';
+        (groups[g] = groups[g] || []).push(k);
+      });
+      const groupOrder = ['Leadership Scorecard', 'Agent Scorecard', 'OTP Scorecard'];
+      const otherGroups = Object.keys(groups).filter(g => !groupOrder.includes(g)).sort();
+      const orderedGroups = [...groupOrder.filter(g => groups[g]), ...otherGroups];
+    %>
+      <% orderedGroups.forEach(function(groupName) { %>
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide"><%= groupName %></h3>
+          <table class="w-full border text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left p-2">KPI</th>
+                <th class="text-left p-2">Owner</th>
+                <th class="text-right p-2">Goal</th>
+                <th class="text-right p-2">Latest</th>
+                <th class="text-center p-2">On Track</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% groups[groupName].forEach(function(k) {
+                   const v = (scorecard.latestValues || {})[k.id];
+                   let onTrack = null;
+                   if (v && k.goalValue != null && k.goalOperator) {
+                     const lhs = v.value;
+                     const rhs = k.goalValue;
+                     onTrack = (k.goalOperator === 'gte' && lhs >= rhs) ||
+                               (k.goalOperator === 'gt'  && lhs >  rhs) ||
+                               (k.goalOperator === 'lte' && lhs <= rhs) ||
+                               (k.goalOperator === 'lt'  && lhs <  rhs) ||
+                               (k.goalOperator === 'eq'  && lhs === rhs);
+                   }
+              %>
+                <tr class="border-t">
+                  <td class="p-2"><%= k.title %></td>
+                  <td class="p-2 text-gray-600">
+                    <span class="text-xs px-1.5 py-0.5 rounded mr-1 <%= k.ownerEntityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>"><%= k.ownerEntityType %></span>
+                    <%= k.ownerExternalId %>
+                  </td>
+                  <td class="p-2 text-right text-gray-700"><%
+                    const opSym = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
+                  %><%= opSym %> <%= k.goalValue != null ? k.goalValue : '—' %><% if (k.unit) { %> <span class="text-gray-400 text-xs"><%= k.unit %></span><% } %></td>
+                  <td class="p-2 text-right font-medium"><%= v ? v.value : '—' %></td>
+                  <td class="p-2 text-center">
+                    <% if (onTrack === true) { %><span class="text-emerald-600 font-bold">✓</span><% } %>
+                    <% if (onTrack === false) { %><span class="text-red-600 font-bold">✗</span><% } %>
+                    <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% }); %>
+    <% } %>
+  </section>
+
+  <!-- 3. Rocks -->
+  <section id="rocks" class="mb-12">
+    <h2 class="text-xl font-bold mb-3">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
+    <% if (!rocks.rocks || rocks.rocks.length === 0) { %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm">
+        No rocks yet. Add quarterly rocks via <code>POST /api/v1/rocks</code>.
+      </div>
+    <% } else { %>
+      <div class="space-y-2">
+        <% (rocks.rocks || []).forEach(function(r) { %>
+          <div class="border rounded p-3 flex items-start justify-between" data-rock-id="<%= r.id %>">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs px-2 py-0.5 rounded <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' %>">
+                  <%= r.onTrack ? 'On Track' : 'Off Track' %>
+                </span>
+                <span class="text-xs text-gray-500"><%= r.quarter %></span>
+                <span class="text-xs text-gray-500">Due <%= new Date(r.dueDate).toLocaleDateString() %></span>
+              </div>
+              <div class="font-medium text-sm"><%= r.title %></div>
+              <div class="text-xs text-gray-600 mt-0.5">Owner: <%= r.ownerName || r.ownerExternalId %></div>
+              <% if (r.statusNote) { %>
+                <div class="text-xs text-gray-500 mt-1 italic">"<%= r.statusNote %>"</div>
+              <% } %>
+            </div>
+            <div class="flex gap-1 ml-4">
+              <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200">On</button>
+              <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-red-100 rounded hover:bg-red-200">Off</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- 4. Headlines -->
+  <section id="headlines" class="mb-12">
+    <h2 class="text-xl font-bold mb-3">4. Customer &amp; Employee Headlines <span class="text-sm text-gray-400 font-normal">5 min</span></h2>
+    <textarea id="headlines-notes" class="w-full border rounded p-3 text-sm h-24" placeholder="Notable wins or losses with customers and team..."><%= meeting.headlines || '' %></textarea>
+    <button data-save="headlines" class="mt-2 text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
+  </section>
+
+  <!-- 5. To-Dos -->
+  <section id="todos" class="mb-12">
+    <h2 class="text-xl font-bold mb-3">5. To-Dos <span class="text-sm text-gray-400 font-normal">5 min &middot; 7-day commitments from prior meeting</span></h2>
+    <% if (!todos || todos.length === 0) { %>
+      <div class="bg-gray-50 border rounded p-4 text-sm text-gray-600">No open to-dos.</div>
+    <% } else { %>
+      <ul class="space-y-1">
+        <% todos.forEach(function(t) { %>
+          <li class="flex items-center gap-3 border rounded p-2" data-todo-id="<%= t.id %>">
+            <input type="checkbox" data-todo-toggle <%= t.doneAt ? 'checked' : '' %> class="w-4 h-4">
+            <div class="flex-1">
+              <div class="text-sm <%= t.doneAt ? 'line-through text-gray-400' : '' %>"><%= t.title %></div>
+              <div class="text-xs text-gray-500">
+                <%= t.ownerName || t.ownerExternalId %>
+                <% if (t.dueAt) { %> &middot; due <%= new Date(t.dueAt).toLocaleDateString() %><% } %>
+              </div>
+            </div>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+
+    <!-- New todo quick-add -->
+    <div class="mt-3 flex gap-2">
+      <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="flex-1 border rounded p-2 text-sm">
+      <select id="new-todo-owner" class="border rounded p-2 text-sm w-48">
+        <option value="">-- assign owner --</option>
+        <% (meeting.attendees || []).forEach(function(a) { %>
+          <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+        <% }); %>
+      </select>
+      <button id="add-todo" class="px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">Add</button>
+    </div>
+  </section>
+
+  <!-- 6. IDS -->
+  <section id="ids" class="mb-12 bg-otp-50 -mx-4 px-4 py-6 rounded-lg">
+    <h2 class="text-xl font-bold mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span></h2>
+    <% const openIssues = (issues || []).filter(function(i){ return i.idsStatus !== 'solved'; });
+       const solvedIssues = (issues || []).filter(function(i){ return i.idsStatus === 'solved'; }); %>
+
+    <div class="mb-2 text-sm text-gray-600">
+      <%= openIssues.length %> open &middot; <%= solvedIssues.length %> solved
+    </div>
+
+    <div class="space-y-2">
+      <% openIssues.forEach(function(i) { %>
+        <div class="border rounded p-3 bg-white" data-ticket-id="<%= i.id %>" data-ticket-title="<%= i.title.replace(/"/g, '&quot;') %>">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs px-2 py-0.5 rounded
+                <%= i.idsStatus === 'open' ? 'bg-gray-100 text-gray-700' :
+                   i.idsStatus === 'identified' ? 'bg-blue-100 text-blue-800' :
+                   i.idsStatus === 'discussed' ? 'bg-amber-100 text-amber-800' :
+                   'bg-emerald-100 text-emerald-800' %>">
+                <%= i.idsStatus %>
+              </span>
+              <span class="text-xs text-gray-500">priority: <%= i.priority %></span>
+              <% if (i.priorityRank != null) { %>
+                <span class="text-xs font-medium text-otp-700">#<%= i.priorityRank %></span>
+              <% } %>
+              <% if (i.ownerExternalId) { %>
+                <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-800 rounded">owner: <%= i.ownerName || i.ownerExternalId %></span>
+              <% } %>
+            </div>
+            <div class="flex gap-1">
+              <button data-ids-set="identified" class="text-xs px-2 py-1 bg-blue-100 rounded hover:bg-blue-200">Identify</button>
+              <button data-ids-set="discussed"  class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Discuss</button>
+              <button data-action="solve"       class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200 font-medium">Solve</button>
+              <button data-action="convert"     class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200">→ To-Do</button>
+              <button data-action="edit"        class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Edit</button>
+              <button data-action="delete"      class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
+            </div>
+          </div>
+          <div class="mt-2 text-sm font-medium" data-ticket-title-display><%= i.title %></div>
+          <% if (i.description) { %><div class="text-xs text-gray-600 mt-1" data-ticket-desc-display><%= i.description %></div><% } %>
+
+          <!-- Inline edit form (hidden by default) -->
+          <div data-form="edit" class="hidden mt-3 border-t pt-3">
+            <input data-field="title" type="text" value="<%= i.title %>" class="w-full border rounded p-2 text-sm mb-2">
+            <textarea data-field="description" class="w-full border rounded p-2 text-sm h-20 mb-2" placeholder="Description"><%= i.description || '' %></textarea>
+            <select data-field="owner" class="border rounded p-2 text-sm">
+              <option value="">-- assign issue owner --</option>
+              <% (meeting.attendees || []).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>" <%= (i.ownerExternalId === a.externalId) ? 'selected' : '' %>><%= a.name || a.externalId %></option>
+              <% }); %>
+            </select>
+            <div class="flex gap-2 mt-2">
+              <button data-action="edit-save" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Save</button>
+              <button data-action="edit-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Inline solve form (hidden by default) -->
+          <div data-form="solve" class="hidden mt-3 border-t pt-3 bg-emerald-50 -mx-3 -mb-3 px-3 pb-3">
+            <label class="block text-xs font-medium text-emerald-900 mb-1">Resolution (how was this solved? cascades to all attendees)</label>
+            <textarea data-field="resolution" class="w-full border rounded p-2 text-sm h-20 mb-2" placeholder="Decision, rationale, owner, next step..."></textarea>
+            <label class="flex items-center gap-2 text-xs mb-2">
+              <input type="checkbox" data-field="create-followup" checked> Create a 7-day follow-up to-do
+            </label>
+            <div data-followup-fields class="space-y-2">
+              <input data-field="followup-title" type="text" placeholder="Follow-up to-do title (defaults to issue title)" class="w-full border rounded p-2 text-sm">
+              <select data-field="followup-owner" class="border rounded p-2 text-sm w-full">
+                <option value="">-- to-do owner (required to create follow-up) --</option>
+                <% (meeting.attendees || []).forEach(function(a) { %>
+                  <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button data-action="solve-confirm" class="text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500 font-medium">Solve + Cascade</button>
+              <button data-action="solve-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Inline convert-to-todo form (hidden by default) -->
+          <div data-form="convert" class="hidden mt-3 border-t pt-3 bg-otp-50/40 -mx-3 -mb-3 px-3 pb-3">
+            <label class="block text-xs font-medium text-otp-900 mb-1">Convert this issue to a 7-day to-do</label>
+            <input data-field="convert-title" type="text" value="<%= i.title %>" class="w-full border rounded p-2 text-sm mb-2">
+            <select data-field="convert-owner" class="border rounded p-2 text-sm w-full mb-2">
+              <option value="">-- to-do owner --</option>
+              <% (meeting.attendees || []).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+              <% }); %>
+            </select>
+            <label class="flex items-center gap-2 text-xs mb-2">
+              <input type="checkbox" data-field="delete-after-convert"> Also delete this issue after creating the to-do
+            </label>
+            <div class="flex gap-2">
+              <button data-action="convert-confirm" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Create To-Do</button>
+              <button data-action="convert-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+
+      <% if (openIssues.length === 0) { %>
+        <div class="bg-white border rounded p-4 text-sm text-gray-600">No open issues. Add issues to the org via <code>/api/v1/tickets</code>.</div>
+      <% } %>
+    </div>
+
+    <% if (solvedIssues.length > 0) { %>
+      <details class="mt-4" open>
+        <summary class="cursor-pointer text-sm text-gray-600">Solved this period (<%= solvedIssues.length %>)</summary>
+        <ul class="mt-2 space-y-2 text-sm">
+          <% solvedIssues.forEach(function(i) { %>
+            <li class="border rounded p-2 bg-white flex items-start justify-between gap-3" data-ticket-id="<%= i.id %>" data-ticket-title="<%= i.title.replace(/"/g, '&quot;') %>">
+              <div class="flex-1">
+                <div class="text-gray-500 line-through"><%= i.title %></div>
+                <% if (i.resolution) { %>
+                  <div class="text-xs text-emerald-800 mt-1"><strong>Resolution:</strong> <%= i.resolution %></div>
+                <% } %>
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
+                <button data-action="reopen" class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Reopen</button>
+                <button data-action="delete" class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      </details>
+    <% } %>
+  </section>
+
+  <!-- 7. Conclude -->
+  <section id="conclude" class="mb-8">
+    <h2 class="text-xl font-bold mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span></h2>
+    <label class="block text-sm font-medium mb-1">Cascading message <span class="text-xs text-gray-500 font-normal">-- auto-appended on each Solve. Use Rebuild to regenerate from headlines + solved issues + new to-dos.</span></label>
+    <textarea id="cascading-message" class="w-full border rounded p-3 text-sm h-48 font-mono"><%= meeting.cascadingMessage || '' %></textarea>
+    <div class="mt-2 flex gap-2 items-center">
+      <button data-save="cascadingMessage" class="text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
+      <button id="rebuild-cascading" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Rebuild draft from meeting</button>
+      <span id="cascading-status" class="text-xs text-gray-500"></span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  const meetingId = document.querySelector('[data-meeting-id]').dataset.meetingId;
+  const DEV_ORG = <%- JSON.stringify(devOrgIdParam || '') %>;
+  function withOrg(path) {
+    if (!DEV_ORG) return path;
+    return path + (path.includes('?') ? '&' : '?') + 'orgId=' + encodeURIComponent(DEV_ORG);
+  }
+  const api = (path, opts) => {
+    const hasBody = !!(opts && opts.body);
+    const headers = { ...((opts && opts.headers) || {}) };
+    // Only set JSON content-type when there's actually a body. Fastify rejects
+    // DELETE/GET with Content-Type:application/json and an empty body
+    // (FST_ERR_CTP_EMPTY_JSON_BODY).
+    if (hasBody) headers['Content-Type'] = 'application/json';
+    return fetch('/api/v1' + withOrg(path), {
+      method: 'GET',
+      credentials: 'include',
+      ...opts,
+      headers,
+    }).then(r => r.json());
+  };
+  function errMsg(res) {
+    // Normalize both shapes: my own {error:{code,message}} and Fastify's {error,message,statusCode}.
+    if (!res) return 'unknown error';
+    if (res.error && typeof res.error === 'object') return res.error.message || res.error.code || 'unknown error';
+    if (res.message) return res.message;
+    if (typeof res.error === 'string') return res.error;
+    return 'unknown error';
+  }
+
+  function parseOwner(val) {
+    if (!val) return null;
+    const [entityType, externalId, ...rest] = val.split(':');
+    return { entityType, externalId, name: rest.join(':') || externalId };
+  }
+
+  // ===== Per-section timer =====
+  const chips = Array.from(document.querySelectorAll('.agenda-chip'));
+  const clock = document.getElementById('meeting-clock');
+  const toggleBtn = document.getElementById('timer-toggle');
+  const skipBtn = document.getElementById('timer-skip');
+  let timerState = { running: false, sectionIdx: 0, elapsed: 0, intervalId: null };
+
+  function activeChip() { return chips[timerState.sectionIdx]; }
+  function activeBudgetSec() { return parseInt(activeChip()?.dataset.budget || '5', 10) * 60; }
+  function fmt(s) {
+    const sign = s < 0 ? '-' : '';
+    const a = Math.abs(s);
+    const m = Math.floor(a / 60);
+    const r = a % 60;
+    return sign + String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+  }
+  function paintChip() {
+    chips.forEach((c, i) => {
+      c.classList.remove('ring-2', 'ring-otp-500');
+      if (i === timerState.sectionIdx) c.classList.add('ring-2', 'ring-otp-500');
+    });
+  }
+  function tick() {
+    if (!timerState.running) return;
+    timerState.elapsed++;
+    render();
+  }
+  function render() {
+    const remaining = activeBudgetSec() - timerState.elapsed;
+    clock.textContent = fmt(remaining);
+    if (remaining < 0) {
+      clock.classList.remove('bg-gray-900');
+      clock.classList.add('bg-red-600', 'animate-pulse');
+    } else if (remaining < 60) {
+      clock.classList.remove('bg-gray-900', 'bg-red-600', 'animate-pulse');
+      clock.classList.add('bg-amber-500');
+    } else {
+      clock.classList.remove('bg-red-600', 'bg-amber-500', 'animate-pulse');
+      clock.classList.add('bg-gray-900');
+    }
+    paintChip();
+  }
+  function startTimer() {
+    timerState.running = true;
+    if (!timerState.intervalId) timerState.intervalId = setInterval(tick, 1000);
+    toggleBtn.textContent = 'Pause';
+    render();
+  }
+  function pauseTimer() {
+    timerState.running = false;
+    if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
+    toggleBtn.textContent = 'Resume';
+  }
+  function jumpTo(idx) {
+    timerState.sectionIdx = Math.max(0, Math.min(chips.length - 1, idx));
+    timerState.elapsed = 0;
+    chips[timerState.sectionIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    render();
+  }
+  toggleBtn?.addEventListener('click', () => { timerState.running ? pauseTimer() : startTimer(); });
+  skipBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx + 1); });
+  chips.forEach((c, i) => c.addEventListener('click', () => { jumpTo(i); if (!timerState.running) startTimer(); }));
+  render();
+
+  // Rebuild cascading message from meeting state
+  const rebuildBtn = document.getElementById('rebuild-cascading');
+  if (rebuildBtn) rebuildBtn.addEventListener('click', async () => {
+    const orig = rebuildBtn.textContent;
+    rebuildBtn.disabled = true; rebuildBtn.textContent = 'Rebuilding...';
+    const res = await api('/meetings/' + meetingId + '/rebuild-cascading', { method: 'POST' });
+    if (res?.cascadingMessage !== undefined) {
+      const ta = document.getElementById('cascading-message');
+      if (ta) ta.value = res.cascadingMessage;
+      const status = document.getElementById('cascading-status');
+      if (status) {
+        status.textContent = 'Rebuilt from headlines + solved + new to-dos';
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      }
+    } else {
+      alert('Rebuild failed: ' + errMsg(res));
+    }
+    rebuildBtn.disabled = false; rebuildBtn.textContent = orig;
+  });
+
+  // Save segue / headlines / cascading message
+  document.querySelectorAll('[data-save]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const field = btn.dataset.save;
+      const map = { segueNotes: 'segue-notes', headlines: 'headlines-notes', cascadingMessage: 'cascading-message' };
+      const value = document.getElementById(map[field]).value;
+      btn.textContent = 'Saving...';
+      await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
+      btn.textContent = 'Saved';
+      setTimeout(() => btn.textContent = 'Save', 1500);
+    });
+  });
+
+  // Start / end meeting
+  const startBtn = document.getElementById('start-meeting');
+  if (startBtn) startBtn.addEventListener('click', async () => {
+    await api('/meetings/' + meetingId + '/start', { method: 'POST' });
+    location.reload();
+  });
+  const endBtn = document.getElementById('end-meeting');
+  if (endBtn) endBtn.addEventListener('click', async () => {
+    if (!confirm('End the meeting?')) return;
+    await api('/meetings/' + meetingId + '/end', { method: 'POST' });
+    location.reload();
+  });
+
+  // Attendees
+  const attendeesEditBtn = document.getElementById('edit-attendees-btn');
+  const attendeesEditor = document.getElementById('attendees-editor');
+  const attendeesDisplay = document.getElementById('attendees-display');
+  if (attendeesEditBtn) attendeesEditBtn.addEventListener('click', () => {
+    attendeesEditor.classList.toggle('hidden');
+    attendeesDisplay.classList.toggle('hidden');
+  });
+  document.getElementById('cancel-attendees')?.addEventListener('click', () => {
+    attendeesEditor.classList.add('hidden');
+    attendeesDisplay.classList.remove('hidden');
+  });
+  document.getElementById('save-attendees')?.addEventListener('click', async () => {
+    const lines = document.getElementById('attendees-textarea').value.split('\n').map(l => l.trim()).filter(Boolean);
+    const attendees = lines.map(l => {
+      const [entityType, externalId, ...rest] = l.split(':');
+      if (!entityType || !externalId) return null;
+      if (entityType !== 'human' && entityType !== 'agent') return null;
+      return { entityType, externalId, name: rest.join(':') || externalId };
+    }).filter(Boolean);
+    await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees }) });
+    location.reload();
+  });
+
+  // Rock toggle
+  document.querySelectorAll('[data-rock-toggle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const rockId = btn.closest('[data-rock-id]').dataset.rockId;
+      const onTrack = btn.dataset.rockToggle === 'on';
+      await api('/rocks/' + rockId, { method: 'PUT', body: JSON.stringify({ onTrack }) });
+      location.reload();
+    });
+  });
+
+  // To-do toggle
+  document.querySelectorAll('[data-todo-toggle]').forEach(box => {
+    box.addEventListener('change', async () => {
+      const todoId = box.closest('[data-todo-id]').dataset.todoId;
+      await api('/todos/' + todoId, { method: 'PUT', body: JSON.stringify({ done: box.checked }) });
+    });
+  });
+
+  // Add new to-do
+  const addTodo = document.getElementById('add-todo');
+  if (addTodo) addTodo.addEventListener('click', async () => {
+    const title = document.getElementById('new-todo-title').value.trim();
+    const ownerVal = document.getElementById('new-todo-owner').value;
+    const owner = parseOwner(ownerVal);
+    if (!title || !owner) return alert('Title and owner required');
+    const dueAt = new Date(); dueAt.setDate(dueAt.getDate() + 7);
+    await api('/todos', { method: 'POST', body: JSON.stringify({
+      title, ownerExternalId: owner.externalId, ownerEntityType: owner.entityType, ownerName: owner.name,
+      meetingId, dueAt: dueAt.toISOString(),
+    })});
+    location.reload();
+  });
+
+  // ===== IDS issue actions =====
+  document.querySelectorAll('[data-ticket-id]').forEach(card => {
+    const ticketId = card.dataset.ticketId;
+    const editForm = card.querySelector('[data-form="edit"]');
+    const solveForm = card.querySelector('[data-form="solve"]');
+    const convertForm = card.querySelector('[data-form="convert"]');
+
+    function hideAllForms() {
+      [editForm, solveForm, convertForm].forEach(f => f && f.classList.add('hidden'));
+    }
+
+    // Identify / Discuss buttons (state change only)
+    card.querySelectorAll('[data-ids-set]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idsStatus = btn.dataset.idsSet;
+        await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus }) });
+        location.reload();
+      });
+    });
+
+    // Solve - reveal form
+    card.querySelector('[data-action="solve"]')?.addEventListener('click', () => {
+      hideAllForms();
+      solveForm?.classList.remove('hidden');
+    });
+    card.querySelector('[data-action="solve-cancel"]')?.addEventListener('click', () => solveForm?.classList.add('hidden'));
+    card.querySelector('[data-action="solve-confirm"]')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const resolution = card.querySelector('[data-field="resolution"]').value.trim();
+      if (!resolution) return alert('Resolution is required');
+      const createFollowUp = card.querySelector('[data-field="create-followup"]').checked;
+      const ownerVal = card.querySelector('[data-field="followup-owner"]').value;
+      const owner = parseOwner(ownerVal);
+      const titleVal = card.querySelector('[data-field="followup-title"]').value.trim();
+      const body = { resolution, meetingId };
+      if (createFollowUp) {
+        if (!owner) return alert('Pick an owner for the follow-up to-do (or uncheck the box)');
+        body.followUp = {
+          title: titleVal || ('Follow up: ' + card.dataset.ticketTitle),
+          ownerEntityType: owner.entityType,
+          ownerExternalId: owner.externalId,
+          ownerName: owner.name,
+        };
+      }
+      btn.disabled = true; btn.textContent = 'Solving...';
+      const res = await api('/tickets/' + ticketId + '/solve', { method: 'POST', body: JSON.stringify(body) });
+      if (res?.error) { alert('Error: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Solve + Cascade'; return; }
+      // Live-refresh: pull latest meeting state, update cascading textarea inline,
+      // then collapse this card so the user sees the cascade build up without a reload.
+      const meetingNow = await api('/meetings/' + meetingId);
+      if (meetingNow?.meeting) {
+        const ta = document.getElementById('cascading-message');
+        if (ta) ta.value = meetingNow.meeting.cascadingMessage || '';
+        const status = document.getElementById('cascading-status');
+        if (status) {
+          status.textContent = 'Auto-appended just now';
+          setTimeout(() => { status.textContent = ''; }, 3000);
+        }
+      }
+      card.classList.add('opacity-50');
+      card.style.transition = 'all 0.4s ease-out';
+      card.style.maxHeight = card.offsetHeight + 'px';
+      requestAnimationFrame(() => {
+        card.style.maxHeight = '0px';
+        card.style.padding = '0';
+        card.style.margin = '0';
+        card.style.border = 'none';
+        card.style.overflow = 'hidden';
+      });
+      setTimeout(() => card.remove(), 400);
+    });
+
+    // Convert to to-do
+    card.querySelector('[data-action="convert"]')?.addEventListener('click', () => {
+      hideAllForms();
+      convertForm?.classList.remove('hidden');
+    });
+    card.querySelector('[data-action="convert-cancel"]')?.addEventListener('click', () => convertForm?.classList.add('hidden'));
+    card.querySelector('[data-action="convert-confirm"]')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const ownerVal = card.querySelector('[data-field="convert-owner"]').value;
+      const owner = parseOwner(ownerVal);
+      const title = card.querySelector('[data-field="convert-title"]').value.trim();
+      if (!owner || !title) return alert('Title and owner required');
+      const dueAt = new Date(); dueAt.setDate(dueAt.getDate() + 7);
+      btn.disabled = true; btn.textContent = 'Creating...';
+      await api('/todos', { method: 'POST', body: JSON.stringify({
+        title, ownerExternalId: owner.externalId, ownerEntityType: owner.entityType, ownerName: owner.name,
+        meetingId, dueAt: dueAt.toISOString(),
+        description: 'Converted from issue: "' + card.dataset.ticketTitle + '"',
+      })});
+      const deleteAfter = card.querySelector('[data-field="delete-after-convert"]').checked;
+      if (deleteAfter) {
+        await api('/tickets/' + ticketId, { method: 'DELETE' });
+      }
+      location.reload();
+    });
+
+    // Edit
+    card.querySelector('[data-action="edit"]')?.addEventListener('click', () => {
+      hideAllForms();
+      editForm?.classList.remove('hidden');
+    });
+    card.querySelector('[data-action="edit-cancel"]')?.addEventListener('click', () => editForm?.classList.add('hidden'));
+    card.querySelector('[data-action="edit-save"]')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const title = editForm.querySelector('[data-field="title"]').value.trim();
+      const description = editForm.querySelector('[data-field="description"]').value;
+      const ownerVal = editForm.querySelector('[data-field="owner"]').value;
+      const owner = parseOwner(ownerVal);
+      if (!title) return alert('Title required');
+      const body = { title, description };
+      if (owner) {
+        body.ownerEntityType = owner.entityType;
+        body.ownerExternalId = owner.externalId;
+        body.ownerName = owner.name;
+      } else {
+        body.ownerEntityType = null;
+        body.ownerExternalId = null;
+        body.ownerName = null;
+      }
+      btn.disabled = true; btn.textContent = 'Saving...';
+      await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify(body) });
+      location.reload();
+    });
+
+    // Delete (works on both open and solved cards) -- removes the row instantly,
+    // no reload, so the UI matches what the server already did.
+    card.querySelector('[data-action="delete"]')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      if (!confirm('Delete this issue? This cannot be undone from the UI.')) return;
+      btn.disabled = true; btn.textContent = '...';
+      const res = await api('/tickets/' + ticketId, { method: 'DELETE' });
+      if (res?.error) { alert('Delete failed: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Delete'; return; }
+      card.style.transition = 'all 0.3s ease-out';
+      card.style.maxHeight = card.offsetHeight + 'px';
+      requestAnimationFrame(() => {
+        card.style.maxHeight = '0px';
+        card.style.padding = '0';
+        card.style.margin = '0';
+        card.style.border = 'none';
+        card.style.opacity = '0';
+        card.style.overflow = 'hidden';
+      });
+      setTimeout(() => card.remove(), 300);
+    });
+
+    // Reopen (only on solved-list cards) -- moves it back to open IDS lifecycle.
+    card.querySelector('[data-action="reopen"]')?.addEventListener('click', async () => {
+      await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus: 'open', solvedInMeetingId: null }) });
+      location.reload();
+    });
+  });
+})();
+</script>
