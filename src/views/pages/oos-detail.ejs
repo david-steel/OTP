@@ -54,15 +54,24 @@
         var totalTokenCost = 0;
         var totalTokenSavings = 0;
         claims.forEach(function(c) {
-          var cost = Math.ceil((c.rule + c.why + c.failureMode + c.scope).length / 4);
+          var ruleStr = c.rule || '';
+          var whyStr = c.why || '';
+          var fmStr = c.failureMode || '';
+          var scopeStr = c.scope || '';
+          var cost = Math.ceil((ruleStr + whyStr + fmStr + scopeStr).length / 4);
           var key = c.confidence + '_' + c.evidence;
           var mult = efficiencyMultipliers[key] || 1;
           totalTokenCost += cost;
           totalTokenSavings += cost * mult;
         });
+        // Detect orphaned-data state: oosFile metadata claims content but claim rows are missing.
+        // This happens after a re-publish where claim rows got reassigned to a newer version.
+        // Show "pending sync" instead of "0.0x Inefficient" — never embarrass the publisher live.
+        var hasOrphanedClaimsState = (claims.length === 0) && (oosFile.claimCount > 0);
         var tokenEfficiencyIndex = totalTokenCost > 0 ? (totalTokenSavings / totalTokenCost) : 0;
         var teiLabel, teiColor, teiBg;
-        if (tokenEfficiencyIndex >= 5) { teiLabel = 'High Efficiency'; teiColor = 'text-green-700'; teiBg = 'bg-green-50 border-green-200'; }
+        if (hasOrphanedClaimsState) { teiLabel = 'Pending Sync'; teiColor = 'text-gray-600'; teiBg = 'bg-gray-50 border-gray-200'; }
+        else if (tokenEfficiencyIndex >= 5) { teiLabel = 'High Efficiency'; teiColor = 'text-green-700'; teiBg = 'bg-green-50 border-green-200'; }
         else if (tokenEfficiencyIndex >= 2) { teiLabel = 'Moderate Efficiency'; teiColor = 'text-blue-700'; teiBg = 'bg-blue-50 border-blue-200'; }
         else if (tokenEfficiencyIndex >= 1) { teiLabel = 'Low Efficiency'; teiColor = 'text-amber-700'; teiBg = 'bg-amber-50 border-amber-200'; }
         else { teiLabel = 'Inefficient'; teiColor = 'text-red-700'; teiBg = 'bg-red-50 border-red-200'; }
@@ -74,17 +83,27 @@
       <div class="flex items-center justify-between">
         <div>
           <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Token Efficiency Index</div>
-          <div class="flex items-center gap-3">
-            <span class="text-2xl font-extrabold <%= teiColor %>"><%= tokenEfficiencyIndex.toFixed(1) %>x</span>
-            <span class="text-sm font-semibold <%= teiColor %>"><%= teiLabel %></span>
-          </div>
-          <div class="text-xs text-gray-500 mt-1">Every token invested in this OOS is estimated to save <%= tokenEfficiencyIndex.toFixed(1) %> tokens in prevented failures, retries, and coordination collisions.</div>
+          <% if (hasOrphanedClaimsState) { %>
+            <div class="flex items-center gap-3">
+              <span class="text-2xl font-extrabold <%= teiColor %>">--</span>
+              <span class="text-sm font-semibold <%= teiColor %>"><%= teiLabel %></span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">This OOS shows <%= oosFile.claimCount %> claims in metadata but the claim detail rows are not yet indexed for this version. Re-publishing will rebuild the index.</div>
+          <% } else { %>
+            <div class="flex items-center gap-3">
+              <span class="text-2xl font-extrabold <%= teiColor %>"><%= tokenEfficiencyIndex.toFixed(1) %>x</span>
+              <span class="text-sm font-semibold <%= teiColor %>"><%= teiLabel %></span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">Every token invested in this OOS is estimated to save <%= tokenEfficiencyIndex.toFixed(1) %> tokens in prevented failures, retries, and coordination collisions.</div>
+          <% } %>
         </div>
+        <% if (!hasOrphanedClaimsState) { %>
         <div class="text-right text-sm">
           <div class="text-gray-500">Token Cost: <span class="font-semibold text-gray-700"><%= totalTokenCost.toLocaleString() %></span></div>
           <div class="text-gray-500">Est. Savings: <span class="font-semibold text-green-600"><%= totalTokenSavings.toLocaleString() %></span></div>
           <div class="text-gray-500">Net: <span class="font-semibold text-green-600">+<%= (totalTokenSavings - totalTokenCost).toLocaleString() %></span> tokens</div>
         </div>
+        <% } %>
       </div>
     </div>
 
