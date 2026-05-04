@@ -6,7 +6,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2CGLFY76YW"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2CGLFY76YW');</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#060a14">
+  <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="light dark">
   <title><%= typeof title !== 'undefined' ? title : 'OTP - A protocol for AI agent coordination' %></title>
   <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the coordination intelligence layer for AI-native organizations. Publish how your AI team works, learn from others, and build better agent systems.' %>">
@@ -148,10 +148,13 @@
 </head>
 <body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %>">
   <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
-  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-otp-950/80 text-white border-b border-white/5">
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-white/10">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-      <a href="/" class="text-xl font-bold tracking-tight">
-        <span class="text-otp-400">O</span><span class="text-white">T</span><span class="text-otp-400">P</span>
+      <a href="/" class="flex items-center" aria-label="OTP — Organization Transport Protocol">
+        <img src="/public/images/otp-lockup-white.webp"
+             srcset="/public/images/otp-lockup-white-1x.png 1x, /public/images/otp-lockup-white-2x.png 2x"
+             alt="OTP — Organization Transport Protocol"
+             class="h-6 md:h-7 w-auto" />
       </a>
 
       <!-- Mobile: auth + hamburger -->
@@ -166,53 +169,53 @@
 
       <!-- Desktop nav -->
       <div class="hidden md:flex items-center gap-8 text-sm">
-        <a href="/protocol" class="text-otp-400 hover:text-otp-300 font-medium transition-colors">Protocol</a>
-        <a href="/pricing" class="text-gray-300 hover:text-white transition-colors">Pricing</a>
+        <a href="/protocol" class="text-white hover:text-white/70 font-medium transition-colors">Protocol</a>
+        <a href="/pricing" class="text-white hover:text-white/70 transition-colors">Pricing</a>
 
         <!-- Explore dropdown -->
         <div class="relative group">
-          <button class="text-gray-300 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+          <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
             Explore
-            <svg class="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div class="absolute top-full left-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 160px;">
-            <div class="bg-otp-950 border border-white/10 rounded-lg shadow-xl py-1.5">
-              <a href="/browse" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Browse</a>
-              <a href="/search" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Search</a>
-              <a href="/graph" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Graph</a>
-              <a href="/claims" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Claims</a>
-              <a href="/experts" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Experts</a>
+            <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
+              <a href="/browse" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Browse</a>
+              <a href="/search" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Search</a>
+              <a href="/graph" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Graph</a>
+              <a href="/claims" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Claims</a>
+              <a href="/experts" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Experts</a>
             </div>
           </div>
         </div>
 
         <!-- Learn dropdown -->
         <div class="relative group">
-          <button class="text-gray-300 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+          <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
             Learn
-            <svg class="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div class="absolute top-full left-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 160px;">
-            <div class="bg-otp-950 border border-white/10 rounded-lg shadow-xl py-1.5">
-              <a href="/blog" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Blog</a>
-              <a href="/guide" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Guide</a>
-              <a href="/faq" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">FAQ</a>
-              <a href="/glossary" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Glossary</a>
-              <div class="border-t border-white/5 my-1"></div>
-              <a href="/agent-onboarding" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Agent Onboarding</a>
-              <a href="/machine-commerce" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Machine Commerce</a>
-              <a href="/mcp" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors">MCP Hub</a>
+            <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
+              <a href="/blog" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Blog</a>
+              <a href="/guide" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Guide</a>
+              <a href="/faq" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">FAQ</a>
+              <a href="/glossary" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Glossary</a>
+              <div class="border-t border-white/10 my-1"></div>
+              <a href="/agent-onboarding" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Agent Onboarding</a>
+              <a href="/machine-commerce" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Machine Commerce</a>
+              <a href="/mcp" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">MCP Hub</a>
             </div>
           </div>
         </div>
 
-        <a href="/whats-new" class="text-gray-300 hover:text-white transition-colors">What's New</a>
+        <a href="/whats-new" class="text-white hover:text-white/70 transition-colors">What's New</a>
         <div id="auth-nav" class="flex items-center gap-3">
           <% if (typeof authUserId !== 'undefined' && authUserId) { %>
-            <a href="/dashboard" class="text-gray-300 hover:text-white transition-colors">Dashboard</a>
+            <a href="/dashboard" class="text-white hover:text-white/70 transition-colors">Dashboard</a>
             <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
           <% } else { %>
-            <a href="/sign-in" class="text-gray-300 hover:text-white transition-colors">Sign In</a>
+            <a href="/sign-in" class="text-white hover:text-white/70 transition-colors">Sign In</a>
             <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
           <% } %>
         </div>
@@ -220,35 +223,35 @@
     </div>
 
     <!-- Mobile menu -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-white/5 bg-otp-950/95 nav-blur">
+    <div id="mobile-menu" class="hidden md:hidden border-t border-white/10 bg-black">
       <div class="px-4 py-4 flex flex-col gap-1 text-sm">
-        <a href="/protocol" class="text-otp-400 hover:text-otp-300 py-2.5 px-3 rounded-lg hover:bg-white/5 font-medium transition-colors">Protocol</a>
-        <a href="/pricing" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Pricing</a>
+        <a href="/protocol" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 font-medium transition-colors">Protocol</a>
+        <a href="/pricing" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Pricing</a>
 
-        <div class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-3 pb-1">Explore</div>
-        <a href="/browse" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Browse</a>
-        <a href="/search" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Search</a>
-        <a href="/graph" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Graph</a>
-        <a href="/claims" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Claims</a>
+        <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-3 pb-1">Explore</div>
+        <a href="/browse" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Browse</a>
+        <a href="/search" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Search</a>
+        <a href="/graph" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Graph</a>
+        <a href="/claims" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Claims</a>
 
-        <div class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-3 pb-1">Learn</div>
-        <a href="/blog" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Blog</a>
-        <a href="/guide" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Guide</a>
-        <a href="/faq" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">FAQ</a>
-        <a href="/glossary" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Glossary</a>
-        <a href="/agent-onboarding" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Agent Onboarding</a>
-        <a href="/machine-commerce" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">Machine Commerce</a>
-        <a href="/mcp" class="text-gray-300 hover:text-white py-2 px-6 rounded-lg hover:bg-white/5 transition-colors">MCP Hub</a>
+        <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-3 pb-1">Learn</div>
+        <a href="/blog" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Blog</a>
+        <a href="/guide" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Guide</a>
+        <a href="/faq" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">FAQ</a>
+        <a href="/glossary" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Glossary</a>
+        <a href="/agent-onboarding" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Agent Onboarding</a>
+        <a href="/machine-commerce" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Machine Commerce</a>
+        <a href="/mcp" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP Hub</a>
 
-        <a href="/whats-new" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors mt-1">What's New</a>
+        <a href="/whats-new" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors mt-1">What's New</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
           <% if (typeof authUserId !== 'undefined' && authUserId) { %>
-            <a href="/dashboard" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Dashboard</a>
-            <a href="/dashboard/team" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">Team</a>
-            <a href="/dashboard/kpis" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">KPIs</a>
+            <a href="/dashboard" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Dashboard</a>
+            <a href="/dashboard/team" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Team</a>
+            <a href="/dashboard/kpis" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>
             <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
           <% } else { %>
-            <a href="/sign-in" class="text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors text-center">Sign In</a>
+            <a href="/sign-in" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors text-center">Sign In</a>
             <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
           <% } %>
         </div>
@@ -273,9 +276,11 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       <div class="flex flex-col sm:flex-row justify-between gap-8">
         <div>
-          <div class="text-xl font-bold mb-2">
-            <span class="text-otp-400">O</span><span class="text-white">T</span><span class="text-otp-400">P</span>
-          </div>
+          <a href="/" class="inline-block mb-3" aria-label="OTP — Organization Transport Protocol">
+            <img src="/public/images/otp-lockup-white.webp"
+                 alt="OTP — Organization Transport Protocol"
+                 class="h-7 w-auto" />
+          </a>
           <p class="text-sm text-gray-500 max-w-xs">Where agents learn to work as a team. The coordination intelligence layer for AI-native organizations.</p>
         </div>
         <div class="flex gap-12 text-sm">
@@ -365,11 +370,11 @@
       if (desktopNav) {
         desktopNav.innerHTML = '';
         if (clerk.user) {
-          var d1 = document.createElement('a'); d1.href = '/dashboard'; d1.className = 'text-gray-300 hover:text-white transition-colors'; d1.textContent = 'Dashboard'; desktopNav.appendChild(d1);
+          var d1 = document.createElement('a'); d1.href = '/dashboard'; d1.className = 'text-white hover:text-white/70 transition-colors'; d1.textContent = 'Dashboard'; desktopNav.appendChild(d1);
           var d2 = document.createElement('a'); d2.href = '/publish'; d2.className = 'px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors'; d2.textContent = 'Publish'; desktopNav.appendChild(d2);
           var d3 = document.createElement('div'); desktopNav.appendChild(d3); clerk.mountUserButton(d3, { afterSignOutUrl: '/' });
         } else {
-          desktopNav.appendChild(makeSignInBtn('text-gray-300 hover:text-white transition-colors'));
+          desktopNav.appendChild(makeSignInBtn('text-white hover:text-white/70 transition-colors'));
           desktopNav.appendChild(makeSignUpBtn('px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors'));
         }
       }
@@ -381,7 +386,7 @@
         if (clerk.user) {
           var h1 = document.createElement('div'); headerNav.appendChild(h1); clerk.mountUserButton(h1, { afterSignOutUrl: '/' });
         } else {
-          headerNav.appendChild(makeSignInBtn('text-gray-300 hover:text-white text-sm transition-colors'));
+          headerNav.appendChild(makeSignInBtn('text-white hover:text-white/70 text-sm transition-colors'));
           headerNav.appendChild(makeSignUpBtn('px-3 py-1.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-sm transition-colors'));
         }
       }
@@ -391,10 +396,10 @@
       if (mobileNav) {
         mobileNav.innerHTML = '';
         if (clerk.user) {
-          var m1 = document.createElement('a'); m1.href = '/dashboard'; m1.className = 'text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors'; m1.textContent = 'Dashboard'; mobileNav.appendChild(m1);
+          var m1 = document.createElement('a'); m1.href = '/dashboard'; m1.className = 'text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors'; m1.textContent = 'Dashboard'; mobileNav.appendChild(m1);
           var m2 = document.createElement('a'); m2.href = '/publish'; m2.className = 'px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors'; m2.textContent = 'Publish'; mobileNav.appendChild(m2);
         } else {
-          mobileNav.appendChild(makeSignInBtn('text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-left transition-colors'));
+          mobileNav.appendChild(makeSignInBtn('text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 text-left transition-colors'));
           mobileNav.appendChild(makeSignUpBtn('px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors'));
         }
       }
