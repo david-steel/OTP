@@ -1,0 +1,171 @@
+<!-- ============================================================
+     /teams — Track 3 destination. Coordinate Your Team (L7-L8).
+     Multiple humans, multiple agents, agent operations at scale.
+     Goal: turn agent silos into a coordinated operating layer.
+     ============================================================ -->
+
+<style>
+  .teams-step {
+    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+  }
+  .teams-step:hover {
+    transform: translateY(-2px);
+    border-color: rgba(217, 70, 239, 0.5);
+    background: rgba(217, 70, 239, 0.04);
+  }
+  .step-number-teams {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    background: rgba(217, 70, 239, 0.12);
+    color: #f0abfc;
+    border: 1px solid rgba(217, 70, 239, 0.3);
+    flex-shrink: 0;
+  }
+  .teams-track-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 8px;
+    font-size: 11px; font-weight: 600;
+    background: linear-gradient(135deg, rgba(217, 70, 239, 0.18), rgba(217, 70, 239, 0.08));
+    color: #f0abfc;
+    border: 1px solid rgba(217, 70, 239, 0.4);
+  }
+</style>
+
+<!-- HERO -->
+<section class="bg-otp-950 relative">
+  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 sm:px-8 pt-20 sm:pt-24 pb-12">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-8 font-medium">
+      <a href="/" class="hover:text-gray-300 transition-colors">OTP</a>
+      <span class="text-gray-700">/</span>
+      <span>Coordinate Your Team</span>
+    </div>
+
+    <!-- Track pill -->
+    <div class="flex flex-wrap items-center gap-2 mb-8">
+      <span class="teams-track-pill">
+        <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-400"></span>
+        Track 3 &middot; Your team is running agents &middot; L7&ndash;L8
+      </span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-white leading-[1.1] tracking-tight max-w-3xl mb-5 text-balance">
+      Multiple humans. Multiple agents. One operating layer.
+    </h1>
+    <p class="text-lg text-gray-300 max-w-2xl leading-relaxed mb-2">
+      You're past the solo stage. Several people are now running agents on different parts of the business. They're operating in silos, duplicating work, and nobody can see the full stack at once.
+    </p>
+    <p class="text-base text-gray-400 max-w-2xl leading-relaxed">
+      This track is about turning a fleet of disconnected agents into a coordinated team. Four steps: multi-user permissions, a cross-team agent registry, an inter-agent message bus so agents can talk to each other directly, and Bassim's L8 maturity score across the org so you can see where you actually are.
+    </p>
+  </div>
+</section>
+
+<!-- FOUR STEPS -->
+<section class="bg-otp-950 py-12 sm:py-16">
+  <div class="max-w-5xl mx-auto px-6 sm:px-8">
+
+    <div class="space-y-5">
+
+      <!-- Step 1: Multi-user permissions -->
+      <a href="/dashboard/team" class="teams-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-teams">1</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Set up multi-user with role permissions</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 30 min</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Invite your team. Decide who can edit which agents, see which KPIs, approve which SOPs. Most agent failures at this stage aren't technical &mdash; they're permission ambiguity. Two people editing the same agent's SOP at the same time. Get the boundaries clear early.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-fuchsia-500/15 text-fuchsia-300 rounded-md font-medium border border-fuchsia-500/30">
+                Open team setup
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Step 2: Cross-agent registry -->
+      <a href="/graph" class="teams-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-teams">2</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Build the cross-agent registry</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 45 min</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Every agent across every team in one chart. Sales agents, ops agents, support agents, finance agents &mdash; visible to everyone with permission. This is the moment people stop saying "we have AI in finance" and start saying "we have 23 agents on the chart." It changes the conversation.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-fuchsia-500/15 text-fuchsia-300 rounded-md font-medium border border-fuchsia-500/30">
+                Open the org chart
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Step 3: Message bus -->
+      <a href="/protocol" class="teams-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-teams">3</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Wire up the inter-agent message bus</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 1 hr</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Agents talking to other agents directly &mdash; not through a human in the middle. The sales agent flags a churn risk to the retention agent. The pacing agent notifies the analytics agent of a budget anomaly. This is L8 territory: agent-to-agent coordination without a human bottleneck.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-fuchsia-500/15 text-fuchsia-300 rounded-md font-medium border border-fuchsia-500/30">
+                Configure the bus
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Step 4: Maturity scoring -->
+      <a href="/dashboard" class="teams-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-teams">4</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Turn on Bassim L8 maturity scoring</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Continuous</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Get a live score on where your org is on Bassim Eledath's 8 Levels of Agentic Engineering. Not a vanity number &mdash; a diagnostic. Where are you stuck? Which level is the bottleneck? Which agents are pulling you up? Which are pulling you down? This is the dashboard your leadership team meets around.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-fuchsia-500/15 text-fuchsia-300 rounded-md font-medium border border-fuchsia-500/30">
+                Open your maturity score
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- What's next -->
+    <div class="mt-14 pt-10 border-t border-white/10">
+      <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">When you're past this</div>
+      <h3 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-3">Become a Certified OTP Integrator</h3>
+      <p class="text-base text-gray-400 max-w-2xl mb-6 leading-relaxed">
+        You're running an agent-mature org. You probably know other companies that aren't there yet and need help getting there. The OTP Partner Program lets you implement OTP for clients, run their orgs from your dashboard, and earn revenue share &mdash; with a Certified OTP Integrator badge that signals you've actually done it.
+      </p>
+      <a href="/start-here" class="inline-flex items-center gap-2 text-fuchsia-400 hover:text-fuchsia-300 font-medium transition-colors">
+        Talk to David about partnering
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+    </div>
+
+  </div>
+</section>

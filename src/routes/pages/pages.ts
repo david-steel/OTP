@@ -252,11 +252,31 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   app.get('/foundation', async (request, reply) => {
     return reply.view('pages/foundation', {
-      title: 'Build the Foundation - OTP Onboarding Tab 1 (L1-L3)',
-      description: 'Tab 1 of the OTP onboarding ladder. Map your org chart, define your operating system, set your KPIs, document your SOPs. The foundation your first agent will land on.',
+      title: 'Build the Foundation - OTP Track 1 (Zero Agents)',
+      description: 'OTP onboarding Track 1 for organizations that do not have agents yet. Map your org chart, define your operating system, set your KPIs, document your SOPs. The foundation your first agent will land on.',
       canonical: BASE_URL + '/foundation',
       ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: 'Build the Foundation', url: BASE_URL + '/foundation' }),
+    });
+  });
+
+  app.get('/deploy', async (request, reply) => {
+    return reply.view('pages/deploy', {
+      title: 'Bring Your Agents In - OTP Track 2 (Solo Operator)',
+      description: 'OTP onboarding Track 2 for solo operators already running agents. Register your existing agents, place each on the chart, assign KPIs, and put them on a runtime that does not die when your credits run out.',
+      canonical: BASE_URL + '/deploy',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Bring Your Agents In', url: BASE_URL + '/deploy' }),
+    });
+  });
+
+  app.get('/teams', async (request, reply) => {
+    return reply.view('pages/teams', {
+      title: 'Coordinate Your Team - OTP Track 3 (Multi-User Agent Operations)',
+      description: 'OTP onboarding Track 3 for teams running agents at scale. Multi-user role permissions, cross-agent registry, inter-agent message bus, Bassim L8 maturity scoring across the org.',
+      canonical: BASE_URL + '/teams',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Coordinate Your Team', url: BASE_URL + '/teams' }),
     });
   });
 

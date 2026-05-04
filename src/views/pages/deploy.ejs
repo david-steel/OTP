@@ -1,0 +1,171 @@
+<!-- ============================================================
+     /deploy — Track 2 destination. Bring Your Agents In (L4-L6).
+     Solo operator with one or more agents already running ad-hoc.
+     Goal: get them registered, placed, KPI'd, and on a runtime.
+     ============================================================ -->
+
+<style>
+  .deploy-step {
+    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+  }
+  .deploy-step:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.04);
+  }
+  .step-number-deploy {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    flex-shrink: 0;
+  }
+  .deploy-track-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 8px;
+    font-size: 11px; font-weight: 600;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.08));
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+  }
+</style>
+
+<!-- HERO -->
+<section class="bg-otp-950 relative">
+  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 sm:px-8 pt-20 sm:pt-24 pb-12">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-8 font-medium">
+      <a href="/" class="hover:text-gray-300 transition-colors">OTP</a>
+      <span class="text-gray-700">/</span>
+      <span>Bring Your Agents In</span>
+    </div>
+
+    <!-- Track pill -->
+    <div class="flex flex-wrap items-center gap-2 mb-8">
+      <span class="deploy-track-pill">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+        Track 2 &middot; You're running agents already &middot; L4&ndash;L6
+      </span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-white leading-[1.1] tracking-tight max-w-3xl mb-5 text-balance">
+      Your agents are running. Now give them a chart.
+    </h1>
+    <p class="text-lg text-gray-300 max-w-2xl leading-relaxed mb-2">
+      You've already crossed the starting line. You have agents. They're working. But they're scattered across tabs, scripts, and crontabs &mdash; and nobody knows their KPIs.
+    </p>
+    <p class="text-base text-gray-400 max-w-2xl leading-relaxed">
+      This track is about formalizing what you've built. Four steps: register the agents you have, give each one a seat on your chart, assign each one a number it owns, and put them on a runtime that doesn't die when your credits run out.
+    </p>
+  </div>
+</section>
+
+<!-- FOUR STEPS -->
+<section class="bg-otp-950 py-12 sm:py-16">
+  <div class="max-w-5xl mx-auto px-6 sm:px-8">
+
+    <div class="space-y-5">
+
+      <!-- Step 1: Register -->
+      <a href="/dashboard/team" class="deploy-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-deploy">1</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Register your existing agents</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 20 min</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">List every agent you're already running. What does it do, who owns it, what triggers it, where does it live today (cron, Claude Code, Make, n8n, Lambda)? This is the inventory step. You can't manage what you can't see.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/15 text-indigo-300 rounded-md font-medium border border-indigo-500/30">
+                Open the agent registry
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Step 2: Place on chart -->
+      <a href="/graph" class="deploy-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-deploy">2</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Place every agent on the chart</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 30 min</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Each agent gets a seat alongside your humans. Who does it report to? Who owns it as a manager? If you can't place it on the chart, it's not really part of the org &mdash; it's a script. This is where most teams hit the pain wall and realize the chart they had wasn't built to receive agents.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/15 text-indigo-300 rounded-md font-medium border border-indigo-500/30">
+                Open the chart
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Step 3: KPIs per agent -->
+      <a href="/dashboard/kpis" class="deploy-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-deploy">3</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Assign each agent a KPI</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 25 min</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">One number per agent. Cold emails sent. Tickets resolved. Loads tracked. Anomalies caught. If an agent doesn't own a number, it doesn't earn its seat &mdash; and you can't tell whether it's helping or just consuming tokens. This is the difference between an agent and a script.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/15 text-indigo-300 rounded-md font-medium border border-indigo-500/30">
+                Wire up KPIs
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Step 4: Runtime -->
+      <a href="/mcp" class="deploy-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
+        <div class="flex items-start gap-5">
+          <div class="step-number-deploy">4</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Hook up triggers and runtime</h3>
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 30 min</span>
+            </div>
+            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Schedule your agents through OTP's MCP layer. Daily, hourly, on-event. No more cron jobs that die when your credits run out. No more "Dirk stopped working last Tuesday and nobody knew." OTP fires them, watches them, and reports the KPI back to the chart.</p>
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/15 text-indigo-300 rounded-md font-medium border border-indigo-500/30">
+                Configure the runtime
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- What's next -->
+    <div class="mt-14 pt-10 border-t border-white/10">
+      <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">When this track gets too small</div>
+      <h3 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-3">Track 3 &middot; Coordinate your team</h3>
+      <p class="text-base text-gray-400 max-w-2xl mb-6 leading-relaxed">
+        When more than one human is running agents, Track 2's solo-operator shape stops scaling. You'll need multi-user permissions, a cross-agent registry, an inter-agent message bus, and Bassim's L7&ndash;L8 maturity scoring. That's Track 3.
+      </p>
+      <a href="/teams" class="inline-flex items-center gap-2 text-fuchsia-400 hover:text-fuchsia-300 font-medium transition-colors">
+        See Track 3
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+    </div>
+
+  </div>
+</section>
