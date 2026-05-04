@@ -567,6 +567,14 @@ try {
   app.log.error({ err }, 'ensurePartnerSignupsTable failed -- /partners and /admin/partners may 500 until resolved');
 }
 
+try {
+  const { ensureImprovementsTable } = await import('./db/ensure-improvements.js');
+  await ensureImprovementsTable();
+  app.log.info('improvements table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureImprovementsTable failed -- /admin/improvements may 500 until resolved');
+}
+
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';

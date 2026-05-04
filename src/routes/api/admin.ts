@@ -3,7 +3,7 @@ import { getAuth } from '@clerk/fastify';
 import { eq, sql, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
-import { oosFiles, auditLogs, newsletterSubscribers, partnerSignups } from '../../db/schema.js';
+import { oosFiles, auditLogs, newsletterSubscribers, partnerSignups, improvements } from '../../db/schema.js';
 import { renameOOSSchema } from '../../shared/validation.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { isSuperAdmin } from '../../middleware/super-admin.js';
@@ -319,5 +319,149 @@ export default async function adminRoutes(app: FastifyInstance) {
       .returning();
 
     return { partner: updated };
+  });
+
+  // ============================================================
+  // IMPROVEMENTS / ROADMAP TRACKER
+  // Lightweight CRUD for capturing ideas, priorities, and status.
+  // ============================================================
+  const improvementCreateSchema = z.object({
+    title: z.string().min(1).max(255),
+    description: z.string().max(8000).optional().nullable(),
+    notes: z.string().max(20000).optional().nullable(),
+    status: z.enum(['idea', 'in_progress', 'completed', 'wont_do']).optional(),
+    priority: z.enum(['low', 'medium', 'high']).optional(),
+    source: z.string().max(120).optional().nullable(),
+  });
+
+  const improvementUpdateSchema = z.object({
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(8000).nullable().optional(),
+    notes: z.string().max(20000).nullable().optional(),
+    status: z.enum(['idea', 'in_progress', 'completed', 'wont_do']).optional(),
+    priority: z.enum(['low', 'medium', 'high']).optional(),
+    source: z.string().max(120).nullable().optional(),
+  });
+
+  // GET /api/v1/admin/improvements?status=...
+  app.get<{ Querystring: { status?: string } }>('/admin/improvements', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+
+    const status = request.query.status;
+    const validStatuses = ['idea', 'in_progress', 'completed', 'wont_do'] as const;
+
+    let rows;
+    if (status && status !== 'all' && (validStatuses as readonly string[]).includes(status)) {
+      rows = await db.select()
+        .from(improvements)
+        .where(eq(improvements.status, status as typeof validStatuses[number]))
+        .orderBy(desc(improvements.createdAt));
+    } else {
+      rows = await db.select().from(improvements).orderBy(desc(improvements.createdAt));
+    }
+
+    const all = await db.select().from(improvements);
+    const counts = {
+      total: all.length,
+      idea: all.filter(r => r.status === 'idea').length,
+      in_progress: all.filter(r => r.status === 'in_progress').length,
+      completed: all.filter(r => r.status === 'completed').length,
+      wont_do: all.filter(r => r.status === 'wont_do').length,
+    };
+
+    return { improvements: rows, counts };
+  });
+
+  // POST /api/v1/admin/improvements
+  app.post('/admin/improvements', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+
+    const parsed = improvementCreateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: { code: 'INVALID_INPUT', message: 'Invalid payload', details: parsed.error.flatten().fieldErrors },
+      });
+    }
+
+    const data = parsed.data;
+    const [inserted] = await db.insert(improvements).values({
+      title: data.title.trim(),
+      description: data.description?.trim() || null,
+      notes: data.notes?.trim() || null,
+      status: data.status || 'idea',
+      priority: data.priority || 'medium',
+      source: data.source?.trim() || null,
+    }).returning();
+
+    return { improvement: inserted };
+  });
+
+  // PATCH /api/v1/admin/improvements/:id
+  app.patch<{ Params: { id: string } }>('/admin/improvements/:id', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+
+    const { id } = request.params;
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+      return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid id' } });
+    }
+
+    const parsed = improvementUpdateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: { code: 'INVALID_INPUT', message: 'Invalid payload', details: parsed.error.flatten().fieldErrors },
+      });
+    }
+
+    const [existing] = await db.select().from(improvements).where(eq(improvements.id, id)).limit(1);
+    if (!existing) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Improvement not found' } });
+    }
+
+    const updates = parsed.data;
+    const patch: Record<string, unknown> = { updatedAt: new Date() };
+    if (updates.title !== undefined) patch.title = updates.title.trim();
+    if (updates.description !== undefined) patch.description = updates.description?.trim() || null;
+    if (updates.notes !== undefined) patch.notes = updates.notes?.trim() || null;
+    if (updates.priority !== undefined) patch.priority = updates.priority;
+    if (updates.source !== undefined) patch.source = updates.source?.trim() || null;
+
+    if (updates.status && updates.status !== existing.status) {
+      patch.status = updates.status;
+      // Auto-stamp completedAt when transitioning to completed; clear when leaving completed.
+      if (updates.status === 'completed') patch.completedAt = new Date();
+      else if (existing.status === 'completed') patch.completedAt = null;
+    }
+
+    const [updated] = await db.update(improvements)
+      .set(patch)
+      .where(eq(improvements.id, id))
+      .returning();
+
+    return { improvement: updated };
+  });
+
+  // DELETE /api/v1/admin/improvements/:id
+  app.delete<{ Params: { id: string } }>('/admin/improvements/:id', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+
+    const { id } = request.params;
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+      return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid id' } });
+    }
+
+    const [deleted] = await db.delete(improvements).where(eq(improvements.id, id)).returning();
+    if (!deleted) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Improvement not found' } });
+    }
+
+    return { deleted: deleted.id };
   });
 }

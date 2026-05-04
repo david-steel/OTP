@@ -371,6 +371,38 @@ export const partnerStatusEnum = pgEnum('partner_status', [
   'onboarded',
 ]);
 
+// ---- Improvements / Roadmap Tracker ----
+
+export const improvementStatusEnum = pgEnum('improvement_status', [
+  'idea',
+  'in_progress',
+  'completed',
+  'wont_do',
+]);
+
+export const improvementPriorityEnum = pgEnum('improvement_priority', [
+  'low',
+  'medium',
+  'high',
+]);
+
+export const improvements = pgTable('improvements', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  notes: text('notes'),
+  status: improvementStatusEnum('status').notNull().default('idea'),
+  priority: improvementPriorityEnum('priority').notNull().default('medium'),
+  source: varchar('source', { length: 120 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+}, (table) => ({
+  statusIdx: index('imp_status_idx').on(table.status),
+  priorityIdx: index('imp_priority_idx').on(table.priority),
+  createdIdx: index('imp_created_idx').on(table.createdAt),
+}));
+
 export const partnerSignups = pgTable('partner_signups', {
   id: uuid('id').defaultRandom().primaryKey(),
   companyName: varchar('company_name', { length: 255 }).notNull(),

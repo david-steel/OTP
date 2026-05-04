@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -1102,6 +1102,40 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Partner Applications — Admin',
       noindex: true,
       partners: visible,
+      counts,
+      activeStatus: requestedStatus || 'all',
+      keyParam: request.query.key || '',
+    });
+  });
+
+  // Super Admin: Improvements / roadmap tracker
+  app.get<{ Querystring: { status?: string; key?: string } }>('/admin/improvements', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
+    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+
+    const requestedStatus = request.query.status;
+    const validStatuses = ['idea', 'in_progress', 'completed', 'wont_do'] as const;
+    type Status = typeof validStatuses[number];
+
+    const all = await db.select().from(improvements).orderBy(desc(improvements.createdAt));
+
+    let visible = all;
+    if (requestedStatus && requestedStatus !== 'all' && (validStatuses as readonly string[]).includes(requestedStatus)) {
+      visible = all.filter(i => i.status === (requestedStatus as Status));
+    }
+
+    const counts = {
+      total: all.length,
+      idea: all.filter(i => i.status === 'idea').length,
+      in_progress: all.filter(i => i.status === 'in_progress').length,
+      completed: all.filter(i => i.status === 'completed').length,
+      wont_do: all.filter(i => i.status === 'wont_do').length,
+    };
+
+    return reply.view('pages/admin-improvements', {
+      title: 'Improvements — Admin',
+      noindex: true,
+      improvements: visible,
       counts,
       activeStatus: requestedStatus || 'all',
       keyParam: request.query.key || '',

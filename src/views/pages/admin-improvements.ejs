@@ -1,0 +1,380 @@
+<!-- ============================================================
+     /admin/improvements — Roadmap / Idea Tracker
+     Admin-only. Add / edit / complete / delete. Status filter
+     tabs, priority pill, inline actions, expandable notes.
+     ============================================================ -->
+<%
+  function fmtAge(d) {
+    if (!d) return '';
+    const ms = Date.now() - new Date(d).getTime();
+    const min = Math.floor(ms / 60000);
+    if (min < 60) return min + 'm ago';
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return hr + 'h ago';
+    const day = Math.floor(hr / 24);
+    return day + 'd ago';
+  }
+  const keyQs = keyParam ? '&key=' + encodeURIComponent(keyParam) : '';
+%>
+
+<style>
+  .imp-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px; font-weight: 600;
+    color: #9ca3af;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 150ms ease;
+  }
+  .imp-tab:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .imp-tab.active { color: #fff; background: rgba(14,165,233,0.10); border-color: rgba(14,165,233,0.4); }
+  .imp-tab-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; padding: 0 6px; height: 18px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    background: rgba(255,255,255,0.10); color: #d1d5db;
+  }
+  .imp-tab.active .imp-tab-count { background: rgba(14,165,233,0.35); color: #fff; }
+
+  .status-pill, .priority-pill {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .status-idea { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.30); }
+  .status-in_progress { background: rgba(14,165,233,0.15); color: #7dd3fc; border: 1px solid rgba(14,165,233,0.30); }
+  .status-completed { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.30); }
+  .status-wont_do { background: rgba(107,114,128,0.20); color: #9ca3af; border: 1px solid rgba(107,114,128,0.40); }
+
+  .priority-low { background: rgba(107,114,128,0.15); color: #9ca3af; border: 1px solid rgba(107,114,128,0.30); }
+  .priority-medium { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.30); }
+  .priority-high { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.30); }
+
+  .row-card {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+  .row-card:hover { border-color: rgba(255,255,255,0.15); }
+  .row-card.expanded { border-color: rgba(14,165,233,0.4); background: rgba(14,165,233,0.03); }
+
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.03);
+    color: #d1d5db;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .action-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .action-btn.start { color: #7dd3fc; border-color: rgba(14,165,233,0.30); }
+  .action-btn.start:hover { background: rgba(14,165,233,0.10); }
+  .action-btn.complete { color: #6ee7b7; border-color: rgba(16,185,129,0.30); }
+  .action-btn.complete:hover { background: rgba(16,185,129,0.10); }
+  .action-btn.kill { color: #9ca3af; border-color: rgba(107,114,128,0.30); }
+  .action-btn.kill:hover { background: rgba(107,114,128,0.15); color: #d1d5db; }
+  .action-btn.danger { color: #fca5a5; border-color: rgba(239,68,68,0.30); }
+  .action-btn.danger:hover { background: rgba(239,68,68,0.10); }
+
+  .field-input-admin {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    color: #f9fafb;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .field-input-admin:focus {
+    outline: none;
+    border-color: rgba(14,165,233,0.5);
+    background: rgba(14,165,233,0.04);
+  }
+  textarea.field-input-admin { min-height: 76px; resize: vertical; }
+
+  select.field-input-admin {
+    cursor: pointer;
+    padding-right: 36px;
+  }
+  select.field-input-admin option { background: #0f172a; color: #fff; }
+
+  .add-form {
+    border: 1px dashed rgba(14,165,233,0.30);
+    border-radius: 12px;
+    background: rgba(14,165,233,0.04);
+    padding: 1.5rem;
+  }
+</style>
+
+<section class="bg-otp-950 min-h-screen py-12">
+  <div class="max-w-5xl mx-auto px-6 sm:px-8">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div>
+        <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-2 font-medium">
+          <a href="/admin<%= keyParam ? '?key=' + encodeURIComponent(keyParam) : '' %>" class="hover:text-gray-300 transition-colors">Admin</a>
+          <span class="text-gray-700">/</span>
+          <span>Improvements</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Improvements &amp; ideas</h1>
+        <p class="text-sm text-gray-400 mt-2"><%= counts.total %> total &middot; <%= counts.idea %> ideas &middot; <%= counts.in_progress %> in progress &middot; <%= counts.completed %> done</p>
+      </div>
+    </div>
+
+    <!-- Add new (always visible at top) -->
+    <div class="add-form mb-8">
+      <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Capture a new idea</h2>
+      <form id="add-improvement-form" class="space-y-3" novalidate>
+        <input id="new-title" name="title" type="text" class="field-input-admin" placeholder="Title (e.g. 'Skills page: which agents use which skills')" maxlength="255" required />
+        <textarea id="new-description" name="description" class="field-input-admin" placeholder="Optional one-liner description &mdash; what would you build?" rows="2" maxlength="8000"></textarea>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <select id="new-priority" name="priority" class="field-input-admin">
+            <option value="low">Priority: Low</option>
+            <option value="medium" selected>Priority: Medium</option>
+            <option value="high">Priority: High</option>
+          </select>
+          <select id="new-status" name="status" class="field-input-admin">
+            <option value="idea" selected>Status: Idea</option>
+            <option value="in_progress">Status: In progress</option>
+            <option value="completed">Status: Completed</option>
+            <option value="wont_do">Status: Won't do</option>
+          </select>
+          <input id="new-source" name="source" type="text" class="field-input-admin" placeholder="Source (e.g. 'session', 'Dan', 'Steven@PLS')" maxlength="120" />
+        </div>
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" id="add-submit-btn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-medium text-sm transition-colors">
+            Add to backlog
+          </button>
+          <span id="add-status-msg" class="text-xs hidden"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Status filter tabs -->
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-white/5 pb-4">
+      <a href="/admin/improvements?status=all<%- keyQs %>" class="imp-tab <%= activeStatus === 'all' ? 'active' : '' %>">All <span class="imp-tab-count"><%= counts.total %></span></a>
+      <a href="/admin/improvements?status=idea<%- keyQs %>" class="imp-tab <%= activeStatus === 'idea' ? 'active' : '' %>">Ideas <span class="imp-tab-count"><%= counts.idea %></span></a>
+      <a href="/admin/improvements?status=in_progress<%- keyQs %>" class="imp-tab <%= activeStatus === 'in_progress' ? 'active' : '' %>">In progress <span class="imp-tab-count"><%= counts.in_progress %></span></a>
+      <a href="/admin/improvements?status=completed<%- keyQs %>" class="imp-tab <%= activeStatus === 'completed' ? 'active' : '' %>">Completed <span class="imp-tab-count"><%= counts.completed %></span></a>
+      <a href="/admin/improvements?status=wont_do<%- keyQs %>" class="imp-tab <%= activeStatus === 'wont_do' ? 'active' : '' %>">Won't do <span class="imp-tab-count"><%= counts.wont_do %></span></a>
+    </div>
+
+    <% if (improvements.length === 0) { %>
+      <div class="text-center py-16 text-gray-500">
+        <p class="text-base">Nothing in this view yet.</p>
+        <% if (counts.total === 0) { %>
+          <p class="text-xs mt-2">Capture your first idea using the form above.</p>
+        <% } %>
+      </div>
+    <% } else { %>
+
+      <div class="space-y-3" id="improvements-list">
+        <% improvements.forEach(imp => { %>
+          <div class="row-card p-5" data-improvement-id="<%= imp.id %>">
+
+            <div class="flex flex-wrap items-start justify-between gap-4 cursor-pointer" onclick="toggleImprovementRow('<%= imp.id %>')">
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span class="status-pill status-<%= imp.status %>"><%= imp.status.replace(/_/g, ' ') %></span>
+                  <span class="priority-pill priority-<%= imp.priority %>"><%= imp.priority %></span>
+                  <% if (imp.source) { %>
+                    <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">via <%= imp.source %></span>
+                  <% } %>
+                </div>
+                <h3 class="text-base font-bold text-white"><%= imp.title %></h3>
+                <% if (imp.description) { %>
+                  <p class="text-sm text-gray-400 mt-1 line-clamp-2"><%= imp.description %></p>
+                <% } %>
+                <p class="text-xs text-gray-500 mt-2">
+                  <%= fmtAge(imp.createdAt) %>
+                  <% if (imp.completedAt) { %> &middot; completed <%= fmtAge(imp.completedAt) %><% } %>
+                </p>
+              </div>
+              <div class="text-xs text-gray-600">
+                <span id="toggle-icon-<%= imp.id %>">&plus; edit</span>
+              </div>
+            </div>
+
+            <!-- Expandable editor -->
+            <div class="mt-5 pt-5 border-t border-white/5 hidden" id="details-<%= imp.id %>">
+              <div class="space-y-3 mb-5">
+                <div>
+                  <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 block">Title</label>
+                  <input id="edit-title-<%= imp.id %>" type="text" class="field-input-admin" value="<%= imp.title %>" maxlength="255" />
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 block">Description</label>
+                  <textarea id="edit-description-<%= imp.id %>" class="field-input-admin" rows="2" maxlength="8000"><%= imp.description || '' %></textarea>
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 block">Notes (longer-form thinking)</label>
+                  <textarea id="edit-notes-<%= imp.id %>" class="field-input-admin" rows="4" maxlength="20000" placeholder="Implementation notes, blockers, references, links..."><%= imp.notes || '' %></textarea>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 block">Priority</label>
+                    <select id="edit-priority-<%= imp.id %>" class="field-input-admin">
+                      <option value="low" <%= imp.priority === 'low' ? 'selected' : '' %>>Low</option>
+                      <option value="medium" <%= imp.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+                      <option value="high" <%= imp.priority === 'high' ? 'selected' : '' %>>High</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 block">Source</label>
+                    <input id="edit-source-<%= imp.id %>" type="text" class="field-input-admin" value="<%= imp.source || '' %>" maxlength="120" />
+                  </div>
+                </div>
+                <button class="action-btn" onclick="saveImprovement('<%= imp.id %>')">Save changes</button>
+              </div>
+
+              <!-- Status transitions -->
+              <div class="flex flex-wrap gap-2 pt-4 border-t border-white/5">
+                <% if (imp.status !== 'in_progress') { %>
+                  <button class="action-btn start" onclick="setImprovementStatus('<%= imp.id %>', 'in_progress')">Start</button>
+                <% } %>
+                <% if (imp.status !== 'completed') { %>
+                  <button class="action-btn complete" onclick="setImprovementStatus('<%= imp.id %>', 'completed')">Complete</button>
+                <% } %>
+                <% if (imp.status !== 'idea') { %>
+                  <button class="action-btn" onclick="setImprovementStatus('<%= imp.id %>', 'idea')">Back to idea</button>
+                <% } %>
+                <% if (imp.status !== 'wont_do') { %>
+                  <button class="action-btn kill" onclick="setImprovementStatus('<%= imp.id %>', 'wont_do')">Won't do</button>
+                <% } %>
+                <span class="ml-auto"></span>
+                <button class="action-btn danger" onclick="deleteImprovement('<%= imp.id %>')">Delete</button>
+              </div>
+
+              <div id="status-msg-<%= imp.id %>" class="text-xs mt-3 hidden"></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+  </div>
+</section>
+
+<script>
+  var ADMIN_KEY = <%- JSON.stringify(keyParam || '') %>;
+
+  function withKey(url) {
+    if (!ADMIN_KEY) return url;
+    return url + (url.indexOf('?') > -1 ? '&' : '?') + 'key=' + encodeURIComponent(ADMIN_KEY);
+  }
+
+  function toggleImprovementRow(id) {
+    var details = document.getElementById('details-' + id);
+    var icon = document.getElementById('toggle-icon-' + id);
+    var card = details.closest('.row-card');
+    if (details.classList.contains('hidden')) {
+      details.classList.remove('hidden');
+      icon.textContent = '− close';
+      card.classList.add('expanded');
+    } else {
+      details.classList.add('hidden');
+      icon.textContent = '+ edit';
+      card.classList.remove('expanded');
+    }
+  }
+
+  function showMsg(id, text, isError) {
+    var el = document.getElementById('status-msg-' + id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'text-xs mt-3 ' + (isError ? 'text-red-400' : 'text-emerald-400');
+    setTimeout(function() { el.classList.add('hidden'); }, 4000);
+  }
+
+  function showAddMsg(text, isError) {
+    var el = document.getElementById('add-status-msg');
+    el.textContent = text;
+    el.className = 'text-xs ' + (isError ? 'text-red-400' : 'text-emerald-400');
+    setTimeout(function() { el.classList.add('hidden'); }, 4000);
+  }
+
+  async function patchImprovement(id, body) {
+    var res = await fetch(withKey('/api/v1/admin/improvements/' + id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    var json = await res.json();
+    if (!res.ok) throw new Error((json.error && json.error.message) || 'Update failed');
+    return json;
+  }
+
+  async function setImprovementStatus(id, status) {
+    try {
+      await patchImprovement(id, { status: status });
+      showMsg(id, 'Status: ' + status.replace(/_/g, ' '), false);
+      setTimeout(function() { location.reload(); }, 500);
+    } catch (e) { showMsg(id, e.message, true); }
+  }
+
+  async function saveImprovement(id) {
+    var title = document.getElementById('edit-title-' + id).value.trim();
+    var description = document.getElementById('edit-description-' + id).value.trim();
+    var notes = document.getElementById('edit-notes-' + id).value.trim();
+    var priority = document.getElementById('edit-priority-' + id).value;
+    var source = document.getElementById('edit-source-' + id).value.trim();
+
+    if (!title) { showMsg(id, 'Title is required', true); return; }
+    try {
+      await patchImprovement(id, { title: title, description: description || null, notes: notes || null, priority: priority, source: source || null });
+      showMsg(id, 'Saved', false);
+      setTimeout(function() { location.reload(); }, 500);
+    } catch (e) { showMsg(id, e.message, true); }
+  }
+
+  async function deleteImprovement(id) {
+    if (!confirm('Delete this improvement? This cannot be undone.')) return;
+    try {
+      var res = await fetch(withKey('/api/v1/admin/improvements/' + id), { method: 'DELETE' });
+      var json = await res.json();
+      if (!res.ok) throw new Error((json.error && json.error.message) || 'Delete failed');
+      location.reload();
+    } catch (e) { showMsg(id, e.message, true); }
+  }
+
+  // Add new
+  document.getElementById('add-improvement-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var title = document.getElementById('new-title').value.trim();
+    var description = document.getElementById('new-description').value.trim();
+    var priority = document.getElementById('new-priority').value;
+    var status = document.getElementById('new-status').value;
+    var source = document.getElementById('new-source').value.trim();
+
+    if (!title) { showAddMsg('Title is required', true); return; }
+
+    var btn = document.getElementById('add-submit-btn');
+    btn.disabled = true;
+    var orig = btn.innerHTML;
+    btn.innerHTML = 'Adding...';
+
+    try {
+      var res = await fetch(withKey('/api/v1/admin/improvements'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, description: description || null, priority: priority, status: status, source: source || null }),
+      });
+      var json = await res.json();
+      if (!res.ok) throw new Error((json.error && json.error.message) || 'Add failed');
+      showAddMsg('Added. Refreshing...', false);
+      setTimeout(function() { location.reload(); }, 500);
+    } catch (e) {
+      showAddMsg(e.message, true);
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+</script>
