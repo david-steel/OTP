@@ -65,7 +65,10 @@ export const oosFrontmatterSchema = z.object({
     low: z.number().int().min(0),
   }),
   evidence_distribution: z.record(z.string(), z.number().int().min(0)),
-});
+}).passthrough();
+// passthrough: keep undeclared frontmatter keys (entities, agent_count_by_role, etc.)
+// after validation. Without this, Zod strips entities from result.data and the team
+// chart renders empty (live regression on Sneeze It v23 publish, 2026-05-04).
 
 // ---- Claim Schema ----
 
