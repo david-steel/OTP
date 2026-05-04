@@ -1,0 +1,429 @@
+<!-- ============================================================
+     /admin/partners — Partner Application Review Queue
+     Admin-only. Status filter tabs, expandable rows, inline
+     actions for status + tier + admin notes. PATCHes to
+     /api/v1/admin/partners/:id.
+     ============================================================ -->
+<%
+  const channelLabels = {
+    eos_implementer: 'EOS Implementer',
+    scaling_up_coach: 'Scaling Up Coach',
+    pinnacle_petra: 'Pinnacle / Petra',
+    okr_lattice: 'OKR / Lattice',
+    agile_scrum: 'Agile / Scrum',
+    vistage_chair: 'Vistage Chair',
+    ypo_facilitator: 'YPO Forum Facilitator',
+    eo_facilitator: 'EO Forum Facilitator',
+    fractional_cio: 'Fractional CIO',
+    fractional_cto: 'Fractional CTO',
+    fractional_cmo: 'Fractional CMO',
+    fractional_cfo: 'Fractional CFO',
+    fractional_coo: 'Fractional COO',
+    fractional_cro: 'Fractional CRO',
+    msp: 'MSP',
+    ai_consultancy: 'AI Consultancy',
+    systems_integrator: 'Systems Integrator',
+    dev_agency: 'Dev Agency',
+    ai_builder: 'AI Builder / Engineer',
+    agent_engineer: 'Agent Engineer',
+    automation_specialist: 'Automation Specialist',
+    mcp_developer: 'MCP Developer',
+    business_coach: 'Business Coach',
+    management_consultant: 'Management Consultant',
+    growth_coach: 'Growth Coach',
+    strategy_consultant: 'Strategy Consultant',
+    other: 'Other',
+  };
+  const clientCountLabels = {
+    under_5: 'Under 5',
+    '5_to_20': '5 – 20',
+    '20_to_50': '20 – 50',
+    '50_plus': '50+',
+  };
+  function fmtAge(d) {
+    if (!d) return '';
+    const ms = Date.now() - new Date(d).getTime();
+    const min = Math.floor(ms / 60000);
+    if (min < 60) return min + 'm ago';
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return hr + 'h ago';
+    const day = Math.floor(hr / 24);
+    return day + 'd ago';
+  }
+  const keyQs = keyParam ? '&key=' + encodeURIComponent(keyParam) : '';
+%>
+
+<style>
+  .ap-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px; font-weight: 600;
+    color: #9ca3af;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 150ms ease;
+  }
+  .ap-tab:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .ap-tab.active {
+    color: #fff;
+    background: rgba(14, 165, 233, 0.10);
+    border-color: rgba(14, 165, 233, 0.4);
+  }
+  .ap-tab-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; padding: 0 6px;
+    height: 18px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    background: rgba(255,255,255,0.10);
+    color: #d1d5db;
+  }
+  .ap-tab.active .ap-tab-count {
+    background: rgba(14, 165, 233, 0.35);
+    color: #fff;
+  }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .status-pending { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.30); }
+  .status-reviewing { background: rgba(14, 165, 233, 0.15); color: #7dd3fc; border: 1px solid rgba(14, 165, 233, 0.30); }
+  .status-approved { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.30); }
+  .status-declined { background: rgba(239, 68, 68, 0.12); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.30); }
+  .status-onboarded { background: rgba(124, 58, 237, 0.15); color: #c4b5fd; border: 1px solid rgba(124, 58, 237, 0.30); }
+
+  .tier-pill {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .tier-founding_partner { background: linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(217, 119, 6, 0.10)); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.40); }
+  .tier-certified_integrator { background: rgba(14, 165, 233, 0.12); color: #7dd3fc; border: 1px solid rgba(14, 165, 233, 0.30); }
+  .tier-master_integrator { background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(236, 72, 153, 0.12)); color: #f0abfc; border: 1px solid rgba(236, 72, 153, 0.40); }
+
+  .channel-chip {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 500;
+    background: rgba(255,255,255,0.04);
+    color: #d1d5db;
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-right: 4px; margin-bottom: 4px;
+  }
+
+  .row-card {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+  .row-card:hover { border-color: rgba(255,255,255,0.15); }
+  .row-card.expanded { border-color: rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.03); }
+
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.03);
+    color: #d1d5db;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .action-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .action-btn.review { color: #7dd3fc; border-color: rgba(14,165,233,0.30); }
+  .action-btn.review:hover { background: rgba(14,165,233,0.10); }
+  .action-btn.approve { color: #6ee7b7; border-color: rgba(16,185,129,0.30); }
+  .action-btn.approve:hover { background: rgba(16,185,129,0.10); }
+  .action-btn.decline { color: #fca5a5; border-color: rgba(239,68,68,0.30); }
+  .action-btn.decline:hover { background: rgba(239,68,68,0.10); }
+  .action-btn.onboard { color: #c4b5fd; border-color: rgba(124,58,237,0.30); }
+  .action-btn.onboard:hover { background: rgba(124,58,237,0.10); }
+
+  .field-input-admin {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 6px;
+    color: #f9fafb;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .field-input-admin:focus {
+    outline: none;
+    border-color: rgba(14,165,233,0.5);
+    background: rgba(14,165,233,0.04);
+  }
+
+  .tier-select {
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 6px;
+    color: #f9fafb;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .tier-select:focus { outline: none; border-color: rgba(14,165,233,0.5); }
+  .tier-select option { background: #0f172a; }
+</style>
+
+<section class="bg-otp-950 min-h-screen py-12">
+  <div class="max-w-7xl mx-auto px-6 sm:px-8">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div>
+        <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-2 font-medium">
+          <a href="/admin<%= keyParam ? '?key=' + encodeURIComponent(keyParam) : '' %>" class="hover:text-gray-300 transition-colors">Admin</a>
+          <span class="text-gray-700">/</span>
+          <span>Partners</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Partner applications</h1>
+        <p class="text-sm text-gray-400 mt-2"><%= counts.total %> total &middot; <%= counts.pending %> pending review</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-gray-500">
+        <span>Public page:</span>
+        <a href="/partners" target="_blank" rel="noopener" class="text-otp-400 hover:text-otp-300 underline">/partners</a>
+      </div>
+    </div>
+
+    <!-- Status filter tabs -->
+    <div class="flex flex-wrap gap-2 mb-8 border-b border-white/5 pb-5">
+      <a href="/admin/partners?status=all<%- keyQs %>" class="ap-tab <%= activeStatus === 'all' ? 'active' : '' %>">All <span class="ap-tab-count"><%= counts.total %></span></a>
+      <a href="/admin/partners?status=pending<%- keyQs %>" class="ap-tab <%= activeStatus === 'pending' ? 'active' : '' %>">Pending <span class="ap-tab-count"><%= counts.pending %></span></a>
+      <a href="/admin/partners?status=reviewing<%- keyQs %>" class="ap-tab <%= activeStatus === 'reviewing' ? 'active' : '' %>">Reviewing <span class="ap-tab-count"><%= counts.reviewing %></span></a>
+      <a href="/admin/partners?status=approved<%- keyQs %>" class="ap-tab <%= activeStatus === 'approved' ? 'active' : '' %>">Approved <span class="ap-tab-count"><%= counts.approved %></span></a>
+      <a href="/admin/partners?status=onboarded<%- keyQs %>" class="ap-tab <%= activeStatus === 'onboarded' ? 'active' : '' %>">Onboarded <span class="ap-tab-count"><%= counts.onboarded %></span></a>
+      <a href="/admin/partners?status=declined<%- keyQs %>" class="ap-tab <%= activeStatus === 'declined' ? 'active' : '' %>">Declined <span class="ap-tab-count"><%= counts.declined %></span></a>
+    </div>
+
+    <% if (partners.length === 0) { %>
+      <div class="text-center py-20 text-gray-500">
+        <p class="text-base">No partner applications in this view.</p>
+        <% if (counts.total === 0) { %>
+          <p class="text-xs mt-2">Send people to <a href="/partners" class="text-otp-400 underline">/partners</a> to start collecting them.</p>
+        <% } %>
+      </div>
+    <% } else { %>
+
+      <!-- Application rows -->
+      <div class="space-y-3" id="partners-list">
+        <% partners.forEach(p => { %>
+          <div class="row-card p-5" data-partner-id="<%= p.id %>">
+
+            <!-- Row header (always visible) -->
+            <div class="flex flex-wrap items-start justify-between gap-4 cursor-pointer" onclick="togglePartnerRow('<%= p.id %>')">
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 class="text-base font-bold text-white"><%= p.companyName %></h3>
+                  <span class="status-pill status-<%= p.status %>"><%= p.status %></span>
+                  <% if (p.tier) { %>
+                    <span class="tier-pill tier-<%= p.tier %>"><%= p.tier.replace(/_/g, ' ') %></span>
+                  <% } %>
+                </div>
+                <p class="text-sm text-gray-300"><%= p.fullName %><% if (p.title) { %> &middot; <span class="text-gray-500"><%= p.title %></span><% } %></p>
+                <p class="text-xs text-gray-500 mt-1">
+                  <a href="mailto:<%= p.email %>" class="hover:text-otp-400" onclick="event.stopPropagation()"><%= p.email %></a>
+                  <% if (p.clientCountRange && clientCountLabels[p.clientCountRange]) { %>
+                    &middot; <%= clientCountLabels[p.clientCountRange] %> clients
+                  <% } %>
+                  &middot; <%= fmtAge(p.createdAt) %>
+                </p>
+              </div>
+              <div class="text-xs text-gray-600">
+                <span id="toggle-icon-<%= p.id %>">&plus; expand</span>
+              </div>
+            </div>
+
+            <!-- Channels (compact, always visible) -->
+            <% const channelList = Array.isArray(p.channels) ? p.channels : []; %>
+            <% if (channelList.length > 0) { %>
+              <div class="mt-3 flex flex-wrap">
+                <% channelList.slice(0, 6).forEach(slug => { %>
+                  <span class="channel-chip"><%= channelLabels[slug] || slug %></span>
+                <% }) %>
+                <% if (channelList.length > 6) { %>
+                  <span class="channel-chip">+<%= channelList.length - 6 %> more</span>
+                <% } %>
+              </div>
+            <% } %>
+
+            <!-- Expandable details -->
+            <div class="mt-5 pt-5 border-t border-white/5 hidden" id="details-<%= p.id %>">
+
+              <!-- Full details grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-6">
+                <% if (p.linkedinUrl) { %>
+                  <div>
+                    <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">LinkedIn</div>
+                    <a href="<%= p.linkedinUrl %>" target="_blank" rel="noopener" class="text-sm text-otp-400 hover:text-otp-300 break-all"><%= p.linkedinUrl %></a>
+                  </div>
+                <% } %>
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Source</div>
+                  <span class="text-sm text-gray-300"><%= p.source %></span>
+                </div>
+                <% if (p.otherChannel) { %>
+                  <div class="md:col-span-2">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">"Other" discipline</div>
+                    <span class="text-sm text-gray-300"><%= p.otherChannel %></span>
+                  </div>
+                <% } %>
+                <% if (channelList.length > 0) { %>
+                  <div class="md:col-span-2">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">All channels (<%= channelList.length %>)</div>
+                    <div class="flex flex-wrap">
+                      <% channelList.forEach(slug => { %>
+                        <span class="channel-chip"><%= channelLabels[slug] || slug %></span>
+                      <% }) %>
+                    </div>
+                  </div>
+                <% } %>
+                <% if (p.fitNote) { %>
+                  <div class="md:col-span-2">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Fit note</div>
+                    <div class="text-sm text-gray-300 leading-relaxed bg-white/[0.02] rounded-lg p-4 border border-white/5"><%= p.fitNote %></div>
+                  </div>
+                <% } %>
+                <div class="md:col-span-2">
+                  <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Timestamps</div>
+                  <div class="text-xs text-gray-500 space-y-1">
+                    <div>Created: <%= new Date(p.createdAt).toLocaleString() %></div>
+                    <div>Updated: <%= new Date(p.updatedAt).toLocaleString() %></div>
+                    <% if (p.reviewedAt) { %><div>Reviewed: <%= new Date(p.reviewedAt).toLocaleString() %></div><% } %>
+                    <% if (p.approvedAt) { %><div>Approved: <%= new Date(p.approvedAt).toLocaleString() %></div><% } %>
+                    <% if (p.declinedAt) { %><div>Declined: <%= new Date(p.declinedAt).toLocaleString() %></div><% } %>
+                    <% if (p.onboardedAt) { %><div>Onboarded: <%= new Date(p.onboardedAt).toLocaleString() %></div><% } %>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Admin notes -->
+              <div class="mb-5">
+                <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 block">Admin notes (private)</label>
+                <textarea id="notes-<%= p.id %>" class="field-input-admin" rows="3" placeholder="Internal review notes — not visible to the partner."><%= p.adminNotes || '' %></textarea>
+                <button class="action-btn mt-2" onclick="saveNotes('<%= p.id %>')">Save notes</button>
+              </div>
+
+              <!-- Tier assignment -->
+              <div class="mb-5 flex flex-wrap items-center gap-3">
+                <label class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Tier:</label>
+                <select id="tier-<%= p.id %>" class="tier-select">
+                  <option value="" <%= !p.tier ? 'selected' : '' %>>(none)</option>
+                  <option value="founding_partner" <%= p.tier === 'founding_partner' ? 'selected' : '' %>>Founding Partner</option>
+                  <option value="certified_integrator" <%= p.tier === 'certified_integrator' ? 'selected' : '' %>>Certified Integrator</option>
+                  <option value="master_integrator" <%= p.tier === 'master_integrator' ? 'selected' : '' %>>Master Integrator</option>
+                </select>
+                <button class="action-btn" onclick="saveTier('<%= p.id %>')">Save tier</button>
+              </div>
+
+              <!-- Status actions -->
+              <div class="flex flex-wrap gap-2 pt-4 border-t border-white/5">
+                <% if (p.status !== 'reviewing') { %>
+                  <button class="action-btn review" onclick="updateStatus('<%= p.id %>', 'reviewing')">Mark reviewing</button>
+                <% } %>
+                <% if (p.status !== 'approved') { %>
+                  <button class="action-btn approve" onclick="updateStatus('<%= p.id %>', 'approved')">Approve</button>
+                <% } %>
+                <% if (p.status !== 'onboarded') { %>
+                  <button class="action-btn onboard" onclick="updateStatus('<%= p.id %>', 'onboarded')">Mark onboarded</button>
+                <% } %>
+                <% if (p.status !== 'declined') { %>
+                  <button class="action-btn decline" onclick="updateStatus('<%= p.id %>', 'declined')">Decline</button>
+                <% } %>
+                <% if (p.status !== 'pending') { %>
+                  <button class="action-btn" onclick="updateStatus('<%= p.id %>', 'pending')">Reset to pending</button>
+                <% } %>
+              </div>
+
+              <div id="status-msg-<%= p.id %>" class="text-xs mt-3 hidden"></div>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+
+    <% } %>
+
+  </div>
+</section>
+
+<script>
+  // Carry the ?key= param across PATCH calls so non-Clerk admin sessions still work
+  var ADMIN_KEY = <%- JSON.stringify(keyParam || '') %>;
+
+  function togglePartnerRow(id) {
+    var details = document.getElementById('details-' + id);
+    var icon = document.getElementById('toggle-icon-' + id);
+    var card = details.closest('.row-card');
+    if (details.classList.contains('hidden')) {
+      details.classList.remove('hidden');
+      icon.textContent = '− collapse';
+      card.classList.add('expanded');
+    } else {
+      details.classList.add('hidden');
+      icon.textContent = '+ expand';
+      card.classList.remove('expanded');
+    }
+  }
+
+  function showMsg(id, text, isError) {
+    var el = document.getElementById('status-msg-' + id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'text-xs mt-3 ' + (isError ? 'text-red-400' : 'text-emerald-400');
+    setTimeout(function() { el.classList.add('hidden'); }, 4000);
+  }
+
+  async function patchPartner(id, body) {
+    var url = '/api/v1/admin/partners/' + id + (ADMIN_KEY ? '?key=' + encodeURIComponent(ADMIN_KEY) : '');
+    var res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    var json = await res.json();
+    if (!res.ok) {
+      throw new Error((json.error && json.error.message) || 'Update failed');
+    }
+    return json;
+  }
+
+  async function updateStatus(id, status) {
+    try {
+      await patchPartner(id, { status: status });
+      showMsg(id, 'Status updated to ' + status + '. Refreshing...', false);
+      setTimeout(function() { location.reload(); }, 700);
+    } catch (e) {
+      showMsg(id, e.message, true);
+    }
+  }
+
+  async function saveTier(id) {
+    var sel = document.getElementById('tier-' + id);
+    var tier = sel.value || null;
+    try {
+      await patchPartner(id, { tier: tier });
+      showMsg(id, tier ? ('Tier set to ' + tier.replace(/_/g, ' ')) : 'Tier cleared', false);
+      setTimeout(function() { location.reload(); }, 700);
+    } catch (e) {
+      showMsg(id, e.message, true);
+    }
+  }
+
+  async function saveNotes(id) {
+    var ta = document.getElementById('notes-' + id);
+    try {
+      await patchPartner(id, { adminNotes: ta.value });
+      showMsg(id, 'Notes saved', false);
+    } catch (e) {
+      showMsg(id, e.message, true);
+    }
+  }
+</script>

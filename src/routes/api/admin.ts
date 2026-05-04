@@ -3,7 +3,7 @@ import { getAuth } from '@clerk/fastify';
 import { eq, sql, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
-import { oosFiles, auditLogs, newsletterSubscribers } from '../../db/schema.js';
+import { oosFiles, auditLogs, newsletterSubscribers, partnerSignups } from '../../db/schema.js';
 import { renameOOSSchema } from '../../shared/validation.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { isSuperAdmin } from '../../middleware/super-admin.js';
@@ -224,5 +224,100 @@ export default async function adminRoutes(app: FastifyInstance) {
     }
 
     return { subscriber: inserted, status: 'created' };
+  });
+
+  // ============================================================
+  // GET /api/v1/admin/partners -- List partner applications
+  // Optional ?status=pending|reviewing|approved|declined|onboarded|all
+  // ============================================================
+  app.get<{ Querystring: { status?: string } }>('/admin/partners', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+
+    const status = request.query.status;
+    const validStatuses = ['pending', 'reviewing', 'approved', 'declined', 'onboarded'] as const;
+
+    let rows;
+    if (status && status !== 'all' && (validStatuses as readonly string[]).includes(status)) {
+      rows = await db.select()
+        .from(partnerSignups)
+        .where(eq(partnerSignups.status, status as typeof validStatuses[number]))
+        .orderBy(desc(partnerSignups.createdAt));
+    } else {
+      rows = await db.select()
+        .from(partnerSignups)
+        .orderBy(desc(partnerSignups.createdAt));
+    }
+
+    // Counts by status for tab badges
+    const all = await db.select().from(partnerSignups);
+    const counts = {
+      total: all.length,
+      pending: all.filter(r => r.status === 'pending').length,
+      reviewing: all.filter(r => r.status === 'reviewing').length,
+      approved: all.filter(r => r.status === 'approved').length,
+      declined: all.filter(r => r.status === 'declined').length,
+      onboarded: all.filter(r => r.status === 'onboarded').length,
+    };
+
+    return { partners: rows, counts };
+  });
+
+  // ============================================================
+  // PATCH /api/v1/admin/partners/:id
+  // Update status, tier, and/or admin_notes.
+  // Auto-stamps reviewedAt/approvedAt/declinedAt/onboardedAt on transitions.
+  // ============================================================
+  const partnerUpdateSchema = z.object({
+    status: z.enum(['pending', 'reviewing', 'approved', 'declined', 'onboarded']).optional(),
+    tier: z.enum(['founding_partner', 'certified_integrator', 'master_integrator']).nullable().optional(),
+    adminNotes: z.string().max(8000).nullable().optional(),
+  });
+
+  app.patch<{ Params: { id: string } }>('/admin/partners/:id', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+
+    const { id } = request.params;
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+      return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid id' } });
+    }
+
+    const parsed = partnerUpdateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: { code: 'INVALID_INPUT', message: 'Invalid update payload', details: parsed.error.flatten().fieldErrors },
+      });
+    }
+
+    const updates = parsed.data;
+
+    const [existing] = await db.select().from(partnerSignups).where(eq(partnerSignups.id, id)).limit(1);
+    if (!existing) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Partner application not found' } });
+    }
+
+    const patch: Record<string, unknown> = { updatedAt: new Date() };
+    if (updates.adminNotes !== undefined) patch.adminNotes = updates.adminNotes;
+    if (updates.tier !== undefined) patch.tier = updates.tier;
+
+    if (updates.status && updates.status !== existing.status) {
+      patch.status = updates.status;
+      const now = new Date();
+      // Stamp the corresponding timestamp column on a transition.
+      if (updates.status === 'reviewing' && !existing.reviewedAt) patch.reviewedAt = now;
+      if (updates.status === 'approved') patch.approvedAt = now;
+      if (updates.status === 'declined') patch.declinedAt = now;
+      if (updates.status === 'onboarded') patch.onboardedAt = now;
+    }
+
+    const [updated] = await db.update(partnerSignups)
+      .set(patch)
+      .where(eq(partnerSignups.id, id))
+      .returning();
+
+    return { partner: updated };
   });
 }

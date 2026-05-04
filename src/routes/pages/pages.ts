@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups } from '../../db/schema.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -1069,6 +1069,42 @@ export default async function pageRoutes(app: FastifyInstance) {
       noindex: true,
       stats: { total, active, converted, unsubscribed, conversionRate, bySource },
       subscribers: subs,
+    });
+  });
+
+  // Super Admin: Partner program review queue
+  // Allows ?key=otp-founding-2026 fallback so David can review without full Clerk session.
+  app.get<{ Querystring: { status?: string; key?: string } }>('/admin/partners', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
+    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+
+    const requestedStatus = request.query.status;
+    const validStatuses = ['pending', 'reviewing', 'approved', 'declined', 'onboarded'] as const;
+    type PartnerStatus = typeof validStatuses[number];
+
+    const partnersAll = await db.select().from(partnerSignups).orderBy(desc(partnerSignups.createdAt));
+
+    let visible = partnersAll;
+    if (requestedStatus && requestedStatus !== 'all' && (validStatuses as readonly string[]).includes(requestedStatus)) {
+      visible = partnersAll.filter(p => p.status === (requestedStatus as PartnerStatus));
+    }
+
+    const counts = {
+      total: partnersAll.length,
+      pending: partnersAll.filter(p => p.status === 'pending').length,
+      reviewing: partnersAll.filter(p => p.status === 'reviewing').length,
+      approved: partnersAll.filter(p => p.status === 'approved').length,
+      declined: partnersAll.filter(p => p.status === 'declined').length,
+      onboarded: partnersAll.filter(p => p.status === 'onboarded').length,
+    };
+
+    return reply.view('pages/admin-partners', {
+      title: 'Partner Applications — Admin',
+      noindex: true,
+      partners: visible,
+      counts,
+      activeStatus: requestedStatus || 'all',
+      keyParam: request.query.key || '',
     });
   });
 
