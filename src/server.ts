@@ -556,6 +556,17 @@ app.setNotFoundHandler(async (request, reply) => {
   });
 });
 
+// Boot-time idempotent migrations.
+// Drizzle's migration history has accumulated drift, so we self-heal
+// targeted feature tables on startup rather than running db:migrate.
+try {
+  const { ensurePartnerSignupsTable } = await import('./db/ensure-partner-signups.js');
+  await ensurePartnerSignupsTable();
+  app.log.info('partner_signups table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensurePartnerSignupsTable failed -- /partners and /admin/partners may 500 until resolved');
+}
+
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
