@@ -280,6 +280,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get('/partners', async (request, reply) => {
+    return reply.view('pages/partners', {
+      title: 'OTP Partner Program - Become a Certified OTP Integrator',
+      description: 'OTP Partner Program for trusted advisors -- EOS Implementers, Scaling Up coaches, fractional CXOs, MSPs, AI consultancies, agent builders. Three tiers, recurring revenue share, multi-tenant dashboard, Founding Partner cohort limited to 50.',
+      canonical: BASE_URL + '/partners',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Partner Program', url: BASE_URL + '/partners' }),
+    });
+  });
+
   app.get('/why-otp', async (request, reply) => {
     return reply.view('pages/why-otp', {
       title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',

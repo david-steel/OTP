@@ -538,6 +538,7 @@ await app.register(import('./routes/api/admin.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/best-practices.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/digest.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/newsletter.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/partner-signup.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/oos-operating-plan.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' });
 

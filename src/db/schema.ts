@@ -355,6 +355,54 @@ export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   sourceIdx: index('ns_source_idx').on(table.source),
 }));
 
+// ---- Partner Program ----
+
+export const partnerTierEnum = pgEnum('partner_tier', [
+  'founding_partner',
+  'certified_integrator',
+  'master_integrator',
+]);
+
+export const partnerStatusEnum = pgEnum('partner_status', [
+  'pending',
+  'reviewing',
+  'approved',
+  'declined',
+  'onboarded',
+]);
+
+export const partnerSignups = pgTable('partner_signups', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
+  fullName: varchar('full_name', { length: 200 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  title: varchar('title', { length: 255 }),
+  linkedinUrl: varchar('linkedin_url', { length: 500 }),
+  // List of channels/certifications self-claimed at signup. Stored as JSON array of slugs.
+  channels: jsonb('channels').notNull().default([]),
+  otherChannel: varchar('other_channel', { length: 500 }),
+  clientCountRange: varchar('client_count_range', { length: 50 }),
+  fitNote: text('fit_note'),
+  source: varchar('source', { length: 50 }).notNull().default('partners-page'),
+  status: partnerStatusEnum('status').notNull().default('pending'),
+  // Tier is unassigned at signup; set by admin after review.
+  tier: partnerTierEnum('tier'),
+  reviewedAt: timestamp('reviewed_at'),
+  approvedAt: timestamp('approved_at'),
+  declinedAt: timestamp('declined_at'),
+  onboardedAt: timestamp('onboarded_at'),
+  adminNotes: text('admin_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  emailCompanyIdx: uniqueIndex('ps_email_company_idx').on(table.email, table.companyName),
+  emailIdx: index('ps_email_idx').on(table.email),
+  statusIdx: index('ps_status_idx').on(table.status),
+  tierIdx: index('ps_tier_idx').on(table.tier),
+  createdIdx: index('ps_created_idx').on(table.createdAt),
+  sourceIdx: index('ps_source_idx').on(table.source),
+}));
+
 export const practiceVotes = pgTable('practice_votes', {
   id: uuid('id').defaultRandom().primaryKey(),
   bestPracticeId: uuid('best_practice_id').references(() => bestPractices.id, { onDelete: 'cascade' }).notNull(),

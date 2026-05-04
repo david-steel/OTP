@@ -1,0 +1,572 @@
+<!-- ============================================================
+     /partners — OTP Partner Program landing + application form.
+     For trusted advisors (EOS Implementers, Scaling Up coaches,
+     fractional CXOs, MSPs, AI consultancies, Vistage chairs,
+     etc.) who serve the businesses OTP is built for.
+     Form posts to /api/v1/partner-signup.
+     ============================================================ -->
+
+<style>
+  .tier-card {
+    transition: transform 250ms ease, border-color 250ms ease, background 250ms ease;
+  }
+  .tier-card:hover {
+    transform: translateY(-3px);
+  }
+  .tier-badge {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+  }
+  .tier-founding-badge {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%);
+    color: #fffbeb;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 24px rgba(245, 158, 11, 0.35);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+  }
+  .tier-certified-badge {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), 0 0 24px rgba(14, 165, 233, 0.30);
+    border: 1px solid rgba(14, 165, 233, 0.5);
+  }
+  .tier-master-badge {
+    background: linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #f59e0b 100%);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18), 0 0 28px rgba(236, 72, 153, 0.35);
+    border: 1px solid rgba(236, 72, 153, 0.5);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Form */
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #d1d5db;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .field-required::after {
+    content: " *";
+    color: #f59e0b;
+  }
+  .field-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px;
+    color: #f9fafb;
+    font-size: 14px;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: rgba(14, 165, 233, 0.6);
+    background: rgba(14, 165, 233, 0.04);
+  }
+  .field-input::placeholder { color: #6b7280; }
+  textarea.field-input { min-height: 96px; resize: vertical; font-family: inherit; }
+
+  .channel-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    font-size: 13px;
+    color: #d1d5db;
+  }
+  .channel-checkbox:hover {
+    background: rgba(14, 165, 233, 0.06);
+    border-color: rgba(14, 165, 233, 0.3);
+  }
+  .channel-checkbox input[type="checkbox"] {
+    accent-color: #0ea5e9;
+    cursor: pointer;
+  }
+  .channel-checkbox input[type="checkbox"]:checked + span {
+    color: #fff;
+    font-weight: 500;
+  }
+  .channel-checkbox:has(input:checked) {
+    background: rgba(14, 165, 233, 0.10);
+    border-color: rgba(14, 165, 233, 0.5);
+  }
+
+  .channel-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 10px;
+    margin-top: 18px;
+  }
+  .channel-group-label:first-child { margin-top: 0; }
+
+  .radio-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #d1d5db;
+    transition: all 150ms ease;
+  }
+  .radio-pill input { accent-color: #0ea5e9; }
+  .radio-pill:has(input:checked) {
+    background: rgba(14, 165, 233, 0.10);
+    border-color: rgba(14, 165, 233, 0.5);
+    color: #fff;
+  }
+
+  /* Honeypot — visually hidden but accessible */
+  .hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+</style>
+
+<!-- HERO -->
+<section class="bg-otp-950 relative">
+  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 sm:px-8 pt-20 sm:pt-24 pb-16">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-8 font-medium">
+      <a href="/" class="hover:text-gray-300 transition-colors">OTP</a>
+      <span class="text-gray-700">/</span>
+      <span>Partner Program</span>
+    </div>
+
+    <!-- Pill -->
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold tracking-wider uppercase mb-6">
+      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+      Founding Partner program is open
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.05] tracking-tight max-w-3xl mb-6 text-balance">
+      Your clients are about to bring agents in. Be the one who shows them how.
+    </h1>
+    <p class="text-lg text-gray-300 max-w-2xl leading-relaxed mb-2">
+      OTP is the operating layer for organizations that run AI agents alongside humans. Every company you advise is heading there. Most of them don't know it yet.
+    </p>
+    <p class="text-base text-gray-400 max-w-2xl leading-relaxed">
+      The OTP Partner Program is for the trusted advisors already in those rooms &mdash; EOS Implementers, Scaling Up coaches, Vistage chairs, fractional CXOs, MSPs, AI consultancies, agent builders. You bring the trust. We bring the protocol. Your clients get an AI-native operating model with you as the implementation lead.
+    </p>
+  </div>
+</section>
+
+<!-- WHY YOU FIT -->
+<section class="bg-otp-950 py-16 border-t border-white/5">
+  <div class="max-w-5xl mx-auto px-6 sm:px-8">
+    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">Who this is for</div>
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight max-w-3xl mb-6 text-balance">
+      If your clients trust you to fix what's broken about how their company runs &mdash; this is your channel.
+    </h2>
+    <p class="text-base text-gray-400 max-w-2xl leading-relaxed mb-10">
+      OTP isn't a tool you sell. It's a transformation you lead. Below are the disciplines we're actively recruiting from for the Founding Partner cohort.
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-gray-300">
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> EOS Implementers (Traction)</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Scaling Up Coaches</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Vistage / YPO / EO Forum Chairs</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Pinnacle / Petra Coaches</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Fractional CIOs and CTOs</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Fractional CMOs and CROs</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Fractional COOs and CFOs</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> MSPs and AI Consultancies</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Systems Integrators</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> AI Builders and Agent Engineers</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Automation Specialists</div>
+      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Management and Strategy Consultants</div>
+    </div>
+    <p class="text-xs text-gray-500 mt-6">Don't see your discipline? Apply anyway and tell us how you fit. We're more interested in the trust you've earned than the title on your card.</p>
+  </div>
+</section>
+
+<!-- THE DEAL -->
+<section class="bg-black py-20 border-t border-white/10">
+  <div class="max-w-5xl mx-auto px-6 sm:px-8">
+    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">The Deal</div>
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight max-w-3xl mb-12 text-balance">
+      What you get when you partner with OTP.
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
+        <div class="text-3xl mb-3">&#x1F4B0;</div>
+        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Recurring revenue share</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Earn on every client you bring in for as long as they stay subscribed. Founding Partners get the highest rate. Specific structure shared during certification.</p>
+      </div>
+
+      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
+        <div class="text-3xl mb-3">&#x1F310;</div>
+        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Multi-tenant partner dashboard</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Manage every client org from a single login. Switch between accounts, push templates, run audits across your book. Built for advisors with portfolios.</p>
+      </div>
+
+      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
+        <div class="text-3xl mb-3">&#x1F3AF;</div>
+        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Co-branded onboarding</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Your brand alongside OTP in your clients' first experience. White-label is on the roadmap for Master Integrators.</p>
+      </div>
+
+      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
+        <div class="text-3xl mb-3">&#x1F511;</div>
+        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Founder access + partner Slack</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Direct line to David Steel for strategic conversations. A private Slack for partners to swap intel, share what's working with clients, and shape the roadmap.</p>
+      </div>
+
+    </div>
+
+    <p class="text-sm text-gray-500 mt-8 max-w-2xl leading-relaxed">
+      Plus: early access to the OTP agent runtime, certification training, marketing materials, a Certified OTP Integrator badge, and inclusion in the public partner directory.
+    </p>
+  </div>
+</section>
+
+<!-- THREE TIERS -->
+<section class="bg-otp-950 py-20 border-t border-white/10">
+  <div class="max-w-6xl mx-auto px-6 sm:px-8">
+    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">Certification Tiers</div>
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight max-w-3xl mb-4 text-balance">
+      Three tiers. You earn the next one with proof, not promises.
+    </h2>
+    <p class="text-base text-gray-400 max-w-2xl mb-12">
+      Each tier unlocks more revenue, more features, more visibility &mdash; and signals to your clients that you've actually done it. Tier is assigned by us after review, not at signup.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Founding Partner -->
+      <div class="tier-card rounded-2xl p-7 border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-transparent">
+        <div class="tier-badge tier-founding-badge">FP</div>
+        <div class="text-[10px] uppercase tracking-wider text-amber-300 font-semibold mb-1">Tier 1 &middot; Limited</div>
+        <h3 class="text-2xl font-extrabold text-white mb-2 tracking-tight">Founding Partner</h3>
+        <p class="text-sm text-amber-200/80 mb-5 leading-relaxed">First 50 partners only. Locked once the cohort is full. The most valuable tier in the program.</p>
+        <ul class="space-y-2 text-sm text-gray-300 mb-5">
+          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Highest revenue share rate (locked for life)</li>
+          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Direct founder Slack channel</li>
+          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Inherits all future tier benefits as they launch</li>
+          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Listed first in the partner directory</li>
+          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Quarterly co-marketing slot with David</li>
+        </ul>
+        <div class="pt-4 border-t border-amber-500/20">
+          <div class="text-[10px] uppercase tracking-wider text-amber-300/70 font-semibold mb-1">How you earn it</div>
+          <p class="text-xs text-gray-400 leading-relaxed">Apply during the founding window. Pass a brief review call with David. Cohort capped at 50.</p>
+        </div>
+      </div>
+
+      <!-- Certified Integrator -->
+      <div class="tier-card rounded-2xl p-7 border border-otp-500/40 bg-gradient-to-br from-otp-500/10 to-transparent">
+        <div class="tier-badge tier-certified-badge">CI</div>
+        <div class="text-[10px] uppercase tracking-wider text-otp-300 font-semibold mb-1">Tier 2 &middot; Open</div>
+        <h3 class="text-2xl font-extrabold text-white mb-2 tracking-tight">Certified OTP Integrator</h3>
+        <p class="text-sm text-otp-200/80 mb-5 leading-relaxed">The standard active partner tier. Enough scale to deliver real results, with full program benefits.</p>
+        <ul class="space-y-2 text-sm text-gray-300 mb-5">
+          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Standard revenue share on every client</li>
+          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Co-branded client onboarding</li>
+          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Multi-tenant partner dashboard</li>
+          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Certified OTP Integrator badge</li>
+          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Partner directory listing</li>
+        </ul>
+        <div class="pt-4 border-t border-otp-500/20">
+          <div class="text-[10px] uppercase tracking-wider text-otp-300/70 font-semibold mb-1">How you earn it</div>
+          <p class="text-xs text-gray-400 leading-relaxed">Complete OTP certification training. Get your first paying client live for 30 consecutive days.</p>
+        </div>
+      </div>
+
+      <!-- Master Integrator -->
+      <div class="tier-card rounded-2xl p-7 border border-fuchsia-500/40 bg-gradient-to-br from-fuchsia-500/10 to-transparent">
+        <div class="tier-badge tier-master-badge">M</div>
+        <div class="text-[10px] uppercase tracking-wider text-fuchsia-300 font-semibold mb-1">Tier 3 &middot; Earned</div>
+        <h3 class="text-2xl font-extrabold text-white mb-2 tracking-tight">OTP Master Integrator</h3>
+        <p class="text-sm text-fuchsia-200/80 mb-5 leading-relaxed">The proven track-record tier. Featured. White-labeled. Co-marketed. Reserved for partners who've shown the work.</p>
+        <ul class="space-y-2 text-sm text-gray-300 mb-5">
+          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> White-label option (your brand, our protocol)</li>
+          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Featured partner status on orgtp.com</li>
+          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Co-marketing campaigns with OTP</li>
+          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Early access to new features &amp; agent runtime betas</li>
+          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Master Integrator badge (gradient, distinct)</li>
+        </ul>
+        <div class="pt-4 border-t border-fuchsia-500/20">
+          <div class="text-[10px] uppercase tracking-wider text-fuchsia-300/70 font-semibold mb-1">How you earn it</div>
+          <p class="text-xs text-gray-400 leading-relaxed">Five or more live client orgs. One published case study. Active for 6+ months as a Certified Integrator.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- APPLICATION FORM -->
+<section class="bg-otp-950 py-20 border-t border-white/10" id="apply">
+  <div class="max-w-3xl mx-auto px-6 sm:px-8">
+    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">Apply for the program</div>
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight mb-4 text-balance">
+      Become a Certified OTP Integrator.
+    </h2>
+    <p class="text-base text-gray-400 mb-10 leading-relaxed">
+      Tell us about your practice. David personally reviews every application and replies within 3 business days.
+    </p>
+
+    <form id="partner-application-form" class="space-y-7" novalidate>
+      <!-- Honeypot (bots fill this; humans don't see it) -->
+      <div class="hp-field" aria-hidden="true">
+        <label>Website (leave blank)</label>
+        <input type="text" name="website" autocomplete="off" tabindex="-1" />
+      </div>
+
+      <!-- About You -->
+      <div>
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">About you</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="fullName" class="field-label field-required">Full name</label>
+            <input id="fullName" name="fullName" type="text" required maxlength="200" class="field-input" placeholder="Jane Smith" />
+          </div>
+          <div>
+            <label for="email" class="field-label field-required">Email</label>
+            <input id="email" name="email" type="email" required maxlength="255" class="field-input" placeholder="jane@yourfirm.com" />
+          </div>
+          <div>
+            <label for="title" class="field-label">Title or role</label>
+            <input id="title" name="title" type="text" maxlength="255" class="field-input" placeholder="Founder &amp; EOS Implementer" />
+          </div>
+          <div>
+            <label for="linkedinUrl" class="field-label">LinkedIn URL</label>
+            <input id="linkedinUrl" name="linkedinUrl" type="url" maxlength="500" class="field-input" placeholder="https://linkedin.com/in/janesmith" />
+          </div>
+        </div>
+      </div>
+
+      <!-- About Your Practice -->
+      <div>
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">About your practice</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label for="companyName" class="field-label field-required">Company name</label>
+            <input id="companyName" name="companyName" type="text" required maxlength="255" class="field-input" placeholder="Smith &amp; Associates Consulting" />
+          </div>
+        </div>
+
+        <div class="mt-5">
+          <label class="field-label">Active clients you currently serve</label>
+          <div class="flex flex-wrap gap-2">
+            <label class="radio-pill"><input type="radio" name="clientCountRange" value="under_5" /> <span>Under 5</span></label>
+            <label class="radio-pill"><input type="radio" name="clientCountRange" value="5_to_20" /> <span>5 &ndash; 20</span></label>
+            <label class="radio-pill"><input type="radio" name="clientCountRange" value="20_to_50" /> <span>20 &ndash; 50</span></label>
+            <label class="radio-pill"><input type="radio" name="clientCountRange" value="50_plus" /> <span>50+</span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channels / Certifications -->
+      <div>
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-1">How you show up <span class="text-amber-400">*</span></h3>
+        <p class="text-xs text-gray-500 mb-5">Select every framework, certification, role, or discipline you currently hold or operate as. Pick all that apply.</p>
+
+        <div class="space-y-1">
+
+          <div class="channel-group-label">Operating systems &amp; frameworks</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="eos_implementer" /> <span>EOS Implementer (Traction)</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="scaling_up_coach" /> <span>Scaling Up Coach</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="pinnacle_petra" /> <span>Pinnacle / Petra Coach</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="okr_lattice" /> <span>OKR / Lattice</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="agile_scrum" /> <span>Agile / Scrum</span></label>
+          </div>
+
+          <div class="channel-group-label">Forum &amp; peer-group leaders</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="vistage_chair" /> <span>Vistage Chair</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="ypo_facilitator" /> <span>YPO Forum Facilitator</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="eo_facilitator" /> <span>EO Forum Facilitator</span></label>
+          </div>
+
+          <div class="channel-group-label">Fractional CXO</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="fractional_cio" /> <span>Fractional CIO</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="fractional_cto" /> <span>Fractional CTO</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="fractional_cmo" /> <span>Fractional CMO</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="fractional_cfo" /> <span>Fractional CFO</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="fractional_coo" /> <span>Fractional COO</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="fractional_cro" /> <span>Fractional CRO</span></label>
+          </div>
+
+          <div class="channel-group-label">Service providers</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="msp" /> <span>MSP (Managed Service Provider)</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="ai_consultancy" /> <span>AI Consultancy</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="systems_integrator" /> <span>Systems Integrator</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="dev_agency" /> <span>Dev Agency</span></label>
+          </div>
+
+          <div class="channel-group-label">Builders</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="ai_builder" /> <span>AI Builder / Engineer</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="agent_engineer" /> <span>Agent Engineer</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="automation_specialist" /> <span>Automation (Zapier / Make / n8n)</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="mcp_developer" /> <span>MCP Developer</span></label>
+          </div>
+
+          <div class="channel-group-label">Coaches &amp; consultants</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="business_coach" /> <span>Business Coach</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="management_consultant" /> <span>Management Consultant</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="growth_coach" /> <span>Growth Coach</span></label>
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="strategy_consultant" /> <span>Strategy Consultant</span></label>
+          </div>
+
+          <div class="channel-group-label">Don't see your discipline?</div>
+          <div class="grid grid-cols-1 gap-2">
+            <label class="channel-checkbox"><input type="checkbox" name="channels" value="other" id="channel-other" /> <span>Other (describe below)</span></label>
+            <input id="otherChannel" name="otherChannel" type="text" maxlength="500" class="field-input mt-2 hidden" placeholder="What discipline best describes your work?" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Fit -->
+      <div>
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Fit (optional)</h3>
+        <label for="fitNote" class="field-label">How do you see OTP fitting your practice?</label>
+        <textarea id="fitNote" name="fitNote" maxlength="4000" class="field-input" placeholder="One paragraph is plenty. What kind of clients would you bring in? What gap does OTP fill in your current delivery?"></textarea>
+      </div>
+
+      <input type="hidden" name="source" value="partners-page" />
+
+      <!-- Submit -->
+      <div class="pt-2">
+        <button type="submit" id="submit-btn" class="inline-flex items-center gap-2 px-7 py-3.5 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-lg font-bold text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          Submit application
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+        <p class="text-xs text-gray-500 mt-3">Reviewed by David Steel personally. We reply within 3 business days.</p>
+      </div>
+
+      <!-- Status messages -->
+      <div id="form-status" class="hidden rounded-lg p-4 text-sm"></div>
+    </form>
+  </div>
+</section>
+
+<!-- FOUNDER NOTE -->
+<section class="bg-black py-20 border-t border-white/10">
+  <div class="max-w-3xl mx-auto px-6 sm:px-8">
+    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">A note from the founder</div>
+    <blockquote class="text-xl sm:text-2xl text-gray-100 leading-[1.5] font-light max-w-3xl mb-6">
+      "I built OTP because my own company hit the wall everyone is about to hit. Half my team is AI now. The org chart broke. The KPIs broke. The way we coordinate broke. I had to invent the operating layer to fix it. The trusted advisors who get to this first &mdash; the EOS implementers, the fractional CXOs, the AI consultancies &mdash; have a window right now. I'd rather be in business with people I respect than chase scale alone."
+    </blockquote>
+    <div class="text-sm text-gray-400">&mdash; David Steel, founder of OTP</div>
+  </div>
+</section>
+
+<!-- FORM HANDLER -->
+<script>
+(function() {
+  var form = document.getElementById('partner-application-form');
+  var statusEl = document.getElementById('form-status');
+  var submitBtn = document.getElementById('submit-btn');
+  var otherCheckbox = document.getElementById('channel-other');
+  var otherInput = document.getElementById('otherChannel');
+
+  // Show/hide "Other" text input based on checkbox state
+  if (otherCheckbox && otherInput) {
+    otherCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        otherInput.classList.remove('hidden');
+        otherInput.focus();
+      } else {
+        otherInput.classList.add('hidden');
+        otherInput.value = '';
+      }
+    });
+  }
+
+  function showStatus(message, isError) {
+    statusEl.textContent = message;
+    statusEl.className = 'rounded-lg p-4 text-sm ' + (isError
+      ? 'bg-red-500/10 border border-red-500/30 text-red-300'
+      : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-200');
+  }
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    statusEl.classList.add('hidden');
+    submitBtn.disabled = true;
+    var originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = 'Submitting...';
+
+    var formData = new FormData(form);
+    var channels = formData.getAll('channels');
+    var payload = {
+      companyName: (formData.get('companyName') || '').trim(),
+      fullName: (formData.get('fullName') || '').trim(),
+      email: (formData.get('email') || '').trim(),
+      title: (formData.get('title') || '').trim() || null,
+      linkedinUrl: (formData.get('linkedinUrl') || '').trim() || null,
+      channels: channels,
+      otherChannel: (formData.get('otherChannel') || '').trim() || null,
+      clientCountRange: formData.get('clientCountRange') || null,
+      fitNote: (formData.get('fitNote') || '').trim() || null,
+      source: formData.get('source') || 'partners-page',
+      website: formData.get('website') || '',
+    };
+
+    if (!payload.companyName || !payload.fullName || !payload.email) {
+      showStatus('Please fill in your name, email, and company name.', true);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      return;
+    }
+    if (channels.length === 0) {
+      showStatus('Pick at least one discipline that describes how you show up.', true);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      return;
+    }
+
+    try {
+      var res = await fetch('/api/v1/partner-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      var json = await res.json();
+      if (!res.ok) {
+        showStatus(json.error && json.error.message ? json.error.message : 'Something went wrong. Try again in a minute.', true);
+      } else {
+        showStatus(json.message || 'Application received.', false);
+        form.reset();
+        if (otherInput) otherInput.classList.add('hidden');
+      }
+    } catch (err) {
+      showStatus('Network error. Please try again.', true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  });
+})();
+</script>
