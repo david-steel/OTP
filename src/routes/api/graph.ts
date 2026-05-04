@@ -18,20 +18,29 @@ export default async function graphRoutes(app: FastifyInstance) {
   // GET /api/v1/graph -- Full Intelligence Graph (nodes + edges + claims for visualization)
   app.get<{ Querystring: { min_score?: string } }>('/graph', async (request, reply) => {
     const minScore = parseFloat(request.query.min_score || '0');
-    const publishedFiles = await db.select({
-      id: oosFiles.id,
-      orgId: oosFiles.orgId,
-      orgName: organizations.name,
-      template: oosFiles.template,
-      industry: organizations.industry,
-      claimCount: oosFiles.claimCount,
-      qualityTier: organizations.qualityTier,
-      badge: organizations.badge,
-      frontmatter: oosFiles.frontmatter,
-    })
-      .from(oosFiles)
-      .innerJoin(organizations, eq(oosFiles.orgId, organizations.id))
-      .where(eq(oosFiles.status, 'published'));
+    // Latest published OOS per org only -- prior versions are history, not live nodes.
+    // Without DISTINCT ON, every prior published version becomes a duplicate org node
+    // and clicking the org sends users to a stale OOS (live-demo bug 2026-05-04).
+    const latestRows = await db.execute(sql`
+      SELECT DISTINCT ON (f.org_id)
+        f.id, f.org_id, f.template, f.claim_count, f.frontmatter,
+        o.name AS org_name, o.industry, o.quality_tier, o.badge
+      FROM oos_files f
+      INNER JOIN organizations o ON f.org_id = o.id
+      WHERE f.status = 'published'
+      ORDER BY f.org_id, f.version DESC, f.published_at DESC
+    `);
+    const publishedFiles = (latestRows.rows || []).map((r: any) => ({
+      id: r.id,
+      orgId: r.org_id,
+      orgName: r.org_name,
+      template: r.template,
+      industry: r.industry,
+      claimCount: r.claim_count,
+      qualityTier: r.quality_tier,
+      badge: r.badge,
+      frontmatter: r.frontmatter,
+    }));
 
     const similarities = await db.execute(sql`
       SELECT cs.oos_a_id, cs.oos_b_id,
@@ -50,10 +59,15 @@ export default async function graphRoutes(app: FastifyInstance) {
       score: parseFloat(r.score),
     }));
 
+    // Drop similarity edges that reference superseded OOS versions -- otherwise
+    // the graph renders edges pointing to nodes that no longer exist.
+    const liveOosIds = new Set(publishedFiles.map(f => f.id));
+    const liveSims = simRows.filter(s => liveOosIds.has(s.oosAId) && liveOosIds.has(s.oosBId));
+
     // Apply min_score filter if provided
     const filteredSims = minScore > 0
-      ? simRows.filter(s => s.score >= minScore)
-      : simRows;
+      ? liveSims.filter(s => s.score >= minScore)
+      : liveSims;
 
     const graph = buildGraph(publishedFiles, filteredSims);
 
