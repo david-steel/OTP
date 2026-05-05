@@ -20,7 +20,7 @@
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-3">
     <div class="bg-white p-4 border rounded-lg text-center">
       <div class="text-2xl font-bold text-gray-900"><%= stats.catalogSize %></div>
       <div class="text-[10px] uppercase tracking-wide text-gray-500 mt-1">Catalog skills</div>
@@ -48,6 +48,29 @@
     <div class="bg-white p-4 border rounded-lg text-center">
       <div class="text-2xl font-bold text-gray-900"><%= stats.orgsScanned %></div>
       <div class="text-[10px] uppercase tracking-wide text-gray-500 mt-1">Orgs scanned</div>
+    </div>
+  </div>
+
+  <!-- Capability stats (slash commands) -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+    <div class="bg-indigo-50 p-4 border border-indigo-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-indigo-700"><%= stats.commandCount %></div>
+      <div class="text-[10px] uppercase tracking-wide text-indigo-700 mt-1">Distinct slash commands</div>
+    </div>
+    <div class="bg-indigo-50 p-4 border border-indigo-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-indigo-700"><%= stats.totalCommandRuns %></div>
+      <div class="text-[10px] uppercase tracking-wide text-indigo-700 mt-1">Command declarations</div>
+    </div>
+    <div class="bg-rose-50 p-4 border border-rose-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-rose-700"><%= stats.missingCommandsCount %></div>
+      <div class="text-[10px] uppercase tracking-wide text-rose-700 mt-1">Agents w/ no commands</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center text-left">
+      <div class="text-[10px] uppercase tracking-wide text-gray-500 leading-relaxed">
+        Skills are nouns (what they know).<br>
+        Slash commands are verbs (what they run).<br>
+        Both render below.
+      </div>
     </div>
   </div>
 
@@ -138,6 +161,77 @@
             <% } %>
           </div>
         <% }) %>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Capabilities (slash commands) -->
+  <% if (commandEntries && commandEntries.length > 0) { %>
+    <section class="mb-8">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-indigo-700 mb-1">Capabilities (slash commands)</h2>
+      <p class="text-xs text-gray-600 mb-3">Every distinct slash command declared by any agent across the network. Click a command to highlight every tile that runs it on the org chart.</p>
+      <div class="overflow-hidden rounded-lg border border-indigo-200">
+        <table class="w-full text-sm">
+          <thead class="bg-indigo-50 text-xs uppercase tracking-wide text-indigo-700">
+            <tr>
+              <th class="text-left px-4 py-2 w-1/3">Command</th>
+              <th class="text-left px-4 py-2 w-16">Used by</th>
+              <th class="text-left px-4 py-2">Who runs it</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% commandEntries.forEach(function(e) { %>
+              <tr>
+                <td class="px-4 py-3 font-mono text-xs text-gray-900">
+                  <a href="/dashboard/team?highlightCommand=<%= encodeURIComponent(e.command) %>" class="hover:text-indigo-700 hover:underline" title="Highlight tiles that run this command">/<%= e.command %></a>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs font-semibold"><%= e.usageCount %></span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    <% e.users.forEach(function(u) { %>
+                      <a href="/dashboard/team?highlightCommand=<%= encodeURIComponent(e.command) %>"
+                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-otp-50 text-otp-700 hover:opacity-80">
+                        <span class="font-mono text-[10px] uppercase tracking-wide opacity-70">agent</span>
+                        <span class="font-semibold"><%= u.entityLabel %></span>
+                        <span class="text-[10px] opacity-60">@ <%= u.orgName %></span>
+                      </a>
+                    <% }) %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Agents missing commands -->
+  <% if (missingCommandsAgents && missingCommandsAgents.length > 0) { %>
+    <section class="mb-8">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-rose-700 mb-1">Agents with no slash commands declared</h2>
+      <p class="text-xs text-gray-600 mb-3">An agent without a slash command is a chart node with no executable verb. Either add commands, or this agent is purely declarative.</p>
+      <div class="overflow-hidden rounded-lg border border-rose-200">
+        <table class="w-full text-sm">
+          <thead class="bg-rose-50 text-xs uppercase tracking-wide text-rose-700">
+            <tr>
+              <th class="text-left px-4 py-2">Agent</th>
+              <th class="text-left px-4 py-2">Role</th>
+              <th class="text-left px-4 py-2">Org</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% missingCommandsAgents.forEach(function(m) { %>
+              <tr>
+                <td class="px-4 py-3 font-semibold text-gray-900"><%= m.entityLabel %> <span class="text-[10px] font-mono text-gray-400">(<%= m.entityId %>)</span></td>
+                <td class="px-4 py-3 text-gray-700 text-xs"><%= m.role || '(no role set)' %></td>
+                <td class="px-4 py-3 text-gray-500 text-xs"><%= m.orgName %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
       </div>
     </section>
   <% } %>

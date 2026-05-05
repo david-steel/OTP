@@ -1138,7 +1138,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     // a YAML array (preferred) and sometimes as a comma-separated string
     // (the CSV import path stores it as a single string until next save).
     // Both shapes need to count as assigned skills.
-    function readSkills(raw: unknown): string[] {
+    function readList(raw: unknown): string[] {
       if (Array.isArray(raw)) {
         return raw.map(s => String(s || '').trim()).filter(Boolean);
       }
@@ -1148,13 +1148,52 @@ export default async function pageRoutes(app: FastifyInstance) {
       return [];
     }
 
+    // command (lower-case) -> entity refs that declare this slash command
+    type CmdRef = {
+      orgId: string; orgName: string;
+      entityId: string; entityLabel: string;
+      original: string;
+    };
+    const cmdUsage = new Map<string, CmdRef[]>();
+    const missingCommandsAgents: Array<{
+      orgId: string; orgName: string; entityId: string; entityLabel: string; role: string | null;
+    }> = [];
+
     for (const o of allOrgs) {
       try {
         const graph = await getOrgTeamGraph(o.id, o.name || '');
         for (const node of graph.nodes) {
           if (node.type !== 'agent' && node.type !== 'human') continue;
           const props: any = node.properties || {};
-          const skillsClean = readSkills(props.skills);
+          const skillsClean = readList(props.skills);
+          const commandsClean = readList(props.slashCommands).map(c =>
+            // Normalise: strip leading "/" so /standup and standup match.
+            c.startsWith('/') ? c.slice(1) : c
+          ).filter(Boolean);
+
+          // Slash command aggregation -- agents only (humans don't run /commands)
+          if (node.type === 'agent') {
+            if (commandsClean.length === 0) {
+              missingCommandsAgents.push({
+                orgId: o.id,
+                orgName: o.name || '(unnamed)',
+                entityId: node.externalId,
+                entityLabel: node.label,
+                role: props.role ? String(props.role).trim() : null,
+              });
+            }
+            for (const c of commandsClean) {
+              const key = c.toLowerCase();
+              if (!cmdUsage.has(key)) cmdUsage.set(key, []);
+              cmdUsage.get(key)!.push({
+                orgId: o.id,
+                orgName: o.name || '(unnamed)',
+                entityId: node.externalId,
+                entityLabel: node.label,
+                original: c,
+              });
+            }
+          }
           const role: string | null = (props.role || props.jobDescription) ? String(props.role || props.jobDescription).trim() : null;
 
           const ref: EntityRef = {
@@ -1264,6 +1303,28 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
     coverage.sort((a, b) => b.entityCount - a.entityCount);
 
+    // Build the slash command inventory: every distinct command observed,
+    // sorted by usage. Each entry shows who runs it across orgs.
+    type CmdEntry = {
+      command: string;
+      key: string;
+      usageCount: number;
+      users: Array<{ orgName: string; entityLabel: string; entityId: string; orgId: string }>;
+    };
+    const commandEntries: CmdEntry[] = [];
+    for (const [key, list] of cmdUsage.entries()) {
+      commandEntries.push({
+        command: list[0].original,
+        key,
+        usageCount: list.length,
+        users: list.map(u => ({
+          orgName: u.orgName, entityLabel: u.entityLabel,
+          entityId: u.entityId, orgId: u.orgId,
+        })),
+      });
+    }
+    commandEntries.sort((a, b) => b.usageCount - a.usageCount || a.command.localeCompare(b.command));
+
     const stats = {
       catalogSize: catalogEntries.length,
       assigned: catalogEntries.filter(e => e.usageCount > 0).length,
@@ -1272,6 +1333,9 @@ export default async function pageRoutes(app: FastifyInstance) {
       missingCount: missingSkills.length,
       orgsScanned: allOrgs.length,
       totalAssignments: Array.from(usage.values()).reduce((n, list) => n + list.length, 0),
+      commandCount: commandEntries.length,
+      missingCommandsCount: missingCommandsAgents.length,
+      totalCommandRuns: Array.from(cmdUsage.values()).reduce((n, list) => n + list.length, 0),
     };
 
     const byCategory = new Map<string, CatalogEntry[]>();
@@ -1288,6 +1352,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       coverage,
       catalogEntries,
       categoriesRaw: SKILLS_CATALOG,
+      commandEntries,
+      missingCommandsAgents,
     };
   }
 
@@ -1356,6 +1422,24 @@ export default async function pageRoutes(app: FastifyInstance) {
         'missing_skills_entity', '', '',
         'no_skills_assigned', 0,
         csvEscape(m.entityType), csvEscape(m.entityLabel), csvEscape(m.entityId),
+        csvEscape(m.orgName), csvEscape(m.orgId),
+      ].join(','));
+    }
+    for (const cmd of data.commandEntries) {
+      for (const u of cmd.users) {
+        lines.push([
+          'slash_command', '', csvEscape('/' + cmd.command),
+          'declared', cmd.usageCount,
+          'agent', csvEscape(u.entityLabel), csvEscape(u.entityId),
+          csvEscape(u.orgName), csvEscape(u.orgId),
+        ].join(','));
+      }
+    }
+    for (const m of data.missingCommandsAgents) {
+      lines.push([
+        'missing_commands_agent', '', '',
+        'no_commands_declared', 0,
+        'agent', csvEscape(m.entityLabel), csvEscape(m.entityId),
         csvEscape(m.orgName), csvEscape(m.orgId),
       ].join(','));
     }
@@ -1682,13 +1766,14 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get<{ Querystring: { highlightSkill?: string } }>('/dashboard/team', async (request, reply) => {
+  app.get<{ Querystring: { highlightSkill?: string; highlightCommand?: string } }>('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
     const highlightSkill = (request.query.highlightSkill || '').toString().slice(0, 120);
+    const highlightCommand = (request.query.highlightCommand || '').toString().slice(0, 120);
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
@@ -1744,6 +1829,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       memberCount: members.length,
       comparisonPairs: computeAgentComparisonPairs(team.nodes),
       highlightSkill,
+      highlightCommand,
     });
   });
 

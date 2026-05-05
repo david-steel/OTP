@@ -771,24 +771,48 @@
       return EDITABLE_TILES.has(externalId);
     }
 
-    // Skill highlight: when arriving from /admin/skills with ?highlightSkill=
-    // we dim every tile that doesn't have that skill so the relevant ones pop.
+    // Skill / command highlight: arriving from /admin/skills with
+    // ?highlightSkill= or ?highlightCommand= dims every tile that doesn't
+    // declare the relevant skill or slash command.
     var HIGHLIGHT_SKILL = <%- JSON.stringify(typeof highlightSkill !== 'undefined' ? (highlightSkill || '') : '') %>;
+    var HIGHLIGHT_COMMAND = <%- JSON.stringify(typeof highlightCommand !== 'undefined' ? (highlightCommand || '') : '') %>;
+
+    function readListLoose(raw) {
+      if (Array.isArray(raw)) return raw.map(function(s) { return String(s || '').trim(); }).filter(Boolean);
+      if (typeof raw === 'string') return raw.split(/[,;\n]/).map(function(s) { return s.trim(); }).filter(Boolean);
+      return [];
+    }
     function nodeHasSkill(n, skillLower) {
       if (!skillLower) return true;
-      var skills = (n && n.properties && n.properties.skills) || [];
-      if (!Array.isArray(skills)) return false;
+      var skills = readListLoose(n && n.properties && n.properties.skills);
       for (var i = 0; i < skills.length; i++) {
-        if (String(skills[i] || '').trim().toLowerCase() === skillLower) return true;
+        if (skills[i].toLowerCase() === skillLower) return true;
       }
       return false;
     }
-    if (HIGHLIGHT_SKILL) {
-      // Show a banner so the user knows the chart is filtered.
+    function nodeHasCommand(n, cmdLower) {
+      if (!cmdLower) return true;
+      var commands = readListLoose(n && n.properties && n.properties.slashCommands);
+      var target = cmdLower.replace(/^\//, '');
+      for (var i = 0; i < commands.length; i++) {
+        var c = commands[i].toLowerCase().replace(/^\//, '');
+        if (c === target) return true;
+      }
+      return false;
+    }
+    function nodeMatchesHighlight(n) {
+      if (HIGHLIGHT_SKILL && !nodeHasSkill(n, HIGHLIGHT_SKILL.toLowerCase())) return false;
+      if (HIGHLIGHT_COMMAND && !nodeHasCommand(n, HIGHLIGHT_COMMAND.toLowerCase())) return false;
+      return true;
+    }
+    if (HIGHLIGHT_SKILL || HIGHLIGHT_COMMAND) {
       window.addEventListener('DOMContentLoaded', function() {
+        var label = HIGHLIGHT_COMMAND
+          ? ('command <strong>/' + HIGHLIGHT_COMMAND.replace(/^\//, '') + '</strong>')
+          : ('skill <strong>' + HIGHLIGHT_SKILL + '</strong>');
         var banner = document.createElement('div');
         banner.style.cssText = 'position:sticky;top:0;z-index:50;background:#fef3c7;border-bottom:1px solid #fcd34d;padding:0.5rem 1rem;font-size:13px;color:#92400e;display:flex;justify-content:space-between;align-items:center;';
-        banner.innerHTML = 'Highlighting tiles with skill: <strong>' + HIGHLIGHT_SKILL + '</strong>' +
+        banner.innerHTML = 'Highlighting tiles with ' + label +
           '<a href="/dashboard/team" style="text-decoration:underline;color:#92400e;font-size:12px;">clear filter</a>';
         document.body.insertBefore(banner, document.body.firstChild);
       });
@@ -1205,8 +1229,8 @@
         var isInactive = ['inactive', 'retired', 'terminated'].indexOf(statusLower) !== -1;
         var isClaimed = (n.type === 'human' && claimedTileMap[n.externalId]);
         var box = document.createElement('div');
-        var skillDim = HIGHLIGHT_SKILL && !nodeHasSkill(n, HIGHLIGHT_SKILL.toLowerCase());
-        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '') + (isClaimed ? ' claimed' : '') + (skillDim ? ' skill-dim' : '');
+        var dimByHighlight = (HIGHLIGHT_SKILL || HIGHLIGHT_COMMAND) && !nodeMatchesHighlight(n);
+        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '') + (isClaimed ? ' claimed' : '') + (dimByHighlight ? ' skill-dim' : '');
         box.style.left = x + 'px';
         box.style.top  = y + 'px';
         box.style.width  = NODE_W + 'px';
