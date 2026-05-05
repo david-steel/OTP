@@ -13,8 +13,9 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
-import { patchTeamEntity, deleteTeamEntity, createTeamEntity, bulkImportHumans, TeamMutationError, buildAgentContext } from '../../services/team-graph.js';
+import { patchTeamEntity, deleteTeamEntity, createTeamEntity, bulkImportHumans, TeamMutationError, buildAgentContext, getOrgTeamGraph } from '../../services/team-graph.js';
 import type { EntityType, ImportRow } from '../../services/team-graph.js';
+import { computeEditableTiles } from '../../services/chart-permissions.js';
 import {
   issueInvite,
   revokeInvite,
@@ -81,6 +82,124 @@ async function getOrg(request: FastifyRequest) {
   return await getAuthOrg(request);
 }
 
+/**
+ * Phase 3: chart-edit permission gate. Returns true if the request is
+ * allowed to mutate the given tile, false after writing a 403 reply if not.
+ *
+ * Logic:
+ *  - API-key requests with write scope bypass per-tile checks (programmatic
+ *    integrations stay simple). Already gated by checkScope upstream.
+ *  - Clerk-authed requests must have an org_member row whose computed
+ *    editable-tile set includes the targeted externalId.
+ *  - If a Clerk user has no org_member row but does match the legacy
+ *    organizations.clerkOrgId, treat them as an implicit owner (back-compat
+ *    with single-user orgs from before the Phase 1 backfill).
+ */
+async function checkChartEdit(
+  request: FastifyRequest,
+  reply: any,
+  orgId: string,
+  externalId: string,
+): Promise<boolean> {
+  const auth = getAuth(request);
+
+  // API-key path: rely on the scope already being validated by checkScope.
+  if (!auth.userId) return true;
+
+  const member = (request as any).orgMember as
+    | { role: any; claimedEntityId?: string | null; claimedEntityIds?: string[] | null }
+    | null;
+
+  // No member row at all -- check the legacy "I created this org" fallback.
+  if (!member) {
+    const [legacy] = await db.select().from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+    if (legacy && legacy.clerkOrgId === auth.userId) return true;
+    reply.status(403).send({ error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this org' } });
+    return false;
+  }
+
+  const team = await getOrgTeamGraph(orgId, '');
+  const editable = computeEditableTiles(member, team);
+
+  if (!editable.has(externalId)) {
+    reply.status(403).send({
+      error: {
+        code: 'CHART_EDIT_DENIED',
+        message: 'Your role does not allow editing this tile',
+      },
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Phase 3: gate for creating NEW chart tiles.
+ *  - owner / admin / implementer  -> always allowed
+ *  - manager                      -> allowed only when reportsTo points
+ *                                    at a tile inside their subtree
+ *  - all other roles              -> denied
+ */
+async function checkChartCreate(
+  request: FastifyRequest,
+  reply: any,
+  orgId: string,
+  reportsTo: string | undefined,
+): Promise<boolean> {
+  const auth = getAuth(request);
+  if (!auth.userId) return true; // API-key path
+
+  const member = (request as any).orgMember as
+    | { role: any; claimedEntityId?: string | null; claimedEntityIds?: string[] | null }
+    | null;
+
+  if (!member) {
+    const [legacy] = await db.select().from(organizations)
+      .where(eq(organizations.id, orgId)).limit(1);
+    if (legacy && legacy.clerkOrgId === auth.userId) return true;
+    reply.status(403).send({ error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this org' } });
+    return false;
+  }
+
+  if (member.role === 'owner' || member.role === 'admin' || member.role === 'implementer') {
+    return true;
+  }
+
+  if (member.role === 'manager') {
+    if (!reportsTo) {
+      reply.status(403).send({
+        error: {
+          code: 'CHART_CREATE_NEEDS_PARENT',
+          message: 'Managers must specify reportsTo when creating a tile',
+        },
+      });
+      return false;
+    }
+    const team = await getOrgTeamGraph(orgId, '');
+    const editable = computeEditableTiles(member, team);
+    if (!editable.has(reportsTo)) {
+      reply.status(403).send({
+        error: {
+          code: 'CHART_CREATE_OUT_OF_SCOPE',
+          message: 'You can only create tiles under teams you manage',
+        },
+      });
+      return false;
+    }
+    return true;
+  }
+
+  reply.status(403).send({
+    error: {
+      code: 'CHART_CREATE_DENIED',
+      message: 'Your role does not allow creating chart tiles',
+    },
+  });
+  return false;
+}
+
 export default async function teamRoutes(app: FastifyInstance) {
   // ============================================================
   // PATCH /api/v1/team/entity -- Edit one agent or human entity
@@ -95,6 +214,8 @@ export default async function teamRoutes(app: FastifyInstance) {
     if (!body.success) {
       return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
     }
+
+    if (!(await checkChartEdit(request, reply, org.id, body.data.externalId))) return;
 
     try {
       const result = await patchTeamEntity(
@@ -133,6 +254,8 @@ export default async function teamRoutes(app: FastifyInstance) {
     const body = createSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
 
+    if (!(await checkChartCreate(request, reply, org.id, body.data.reportsTo))) return;
+
     try {
       return await createTeamEntity(org.id, body.data);
     } catch (e) {
@@ -161,6 +284,8 @@ export default async function teamRoutes(app: FastifyInstance) {
       if (!externalId || !/^[A-Z0-9_\-]{1,120}$/i.test(externalId)) {
         return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
       }
+
+      if (!(await checkChartEdit(request, reply, org.id, externalId))) return;
 
       try {
         return await deleteTeamEntity(org.id, type as EntityType, externalId);

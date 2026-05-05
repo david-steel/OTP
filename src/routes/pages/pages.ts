@@ -1440,6 +1440,16 @@ export default async function pageRoutes(app: FastifyInstance) {
       }
     }
 
+    // Phase 3: gated edit. Compute the set of tile externalIds the current
+    // viewer is allowed to edit. The whole chart stays visible to everyone;
+    // edit affordances (button states, drag handles) are gated client-side
+    // by this list, and every chart-mutation API endpoint enforces it
+    // server-side as well.
+    const { computeEditableTiles } = await import('../../services/chart-permissions.js');
+    const viewerMember = (request as any).orgMember;
+    const editableTilesSet = computeEditableTiles(viewerMember, team);
+    const editableTiles = Array.from(editableTilesSet);
+
     return reply.view('pages/dashboard-team', {
       title: 'Team - Dashboard - OTP',
       description: 'Visual org chart of your AI agents and humans. Edit live; changes save to a draft until you publish.',
@@ -1447,6 +1457,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       org,
       viewerRole: role,
       viewerClaimedEntityId: claimedEntityId,
+      viewerClaimedEntityIds: viewerMember ? (viewerMember.claimedEntityIds || []) : [],
+      editableTiles,
       teamNodes: team.nodes,
       teamEdges: team.edges,
       teamMeta: {

@@ -754,6 +754,18 @@
     var claimedTileMap = <%- JSON.stringify(typeof claimedTileMap !== 'undefined' ? claimedTileMap : {}) %>;
     var viewerRole = <%- JSON.stringify(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
     var viewerClaimedEntityId = <%- JSON.stringify(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
+    var viewerClaimedEntityIds = <%- JSON.stringify(typeof viewerClaimedEntityIds !== 'undefined' ? viewerClaimedEntityIds : []) %>;
+    // Phase 3: gated edit. The server precomputes which chart tiles this
+    // viewer is allowed to edit (whole tree visible, edit gated by role +
+    // chain of command + claimed seats). The Set lookup keeps client gates
+    // O(1). Server-side enforcement still runs on every mutation API call.
+    var EDITABLE_TILES = new Set(<%- JSON.stringify(typeof editableTiles !== 'undefined' ? editableTiles : []) %>);
+    function canEditTile(externalId) {
+      // Owners pre-Phase-1-backfill have viewerRole='owner' but no member
+      // row, so editableTiles may be empty. Fall back to viewerRole.
+      if (viewerRole === 'owner') return true;
+      return EDITABLE_TILES.has(externalId);
+    }
     var comparisonPairs = <%- JSON.stringify(typeof comparisonPairs !== 'undefined' ? comparisonPairs : []) %>;
     var SKILLS_CATALOG = <%- JSON.stringify(typeof skillsCatalog !== 'undefined' ? skillsCatalog : []) %>;
     var ALL_CATALOG_SKILLS = SKILLS_CATALOG.reduce(function(acc, c) { return acc.concat(c.skills); }, []);
@@ -1203,9 +1215,11 @@
 
         box.innerHTML = inner;
 
-        // Owner-only: append a "+" button that opens the create drawer with this tile preselected as parent.
+        // Phase 3: append a "+" button to add a child report under this tile.
+        // Visible whenever the viewer can edit this tile (owner/admin/implementer
+        // see it everywhere; managers see it on tiles in their subtree).
         // Clicking the button does not propagate to the tile click (which would open edit).
-        if (viewerRole === 'owner' && n.type !== 'organization') {
+        if (canEditTile(n.externalId) && n.type !== 'organization') {
           var addBtn = document.createElement('button');
           addBtn.type = 'button';
           addBtn.className = 'org-add-child-btn';
@@ -1864,6 +1878,45 @@
       }
     };
 
+    // Phase 3: gated edit. When the viewer can't edit this tile, make the
+    // drawer read-only so they can still SEE everything (whole chart visible)
+    // but can't save / delete / invite.
+    function applyChartEditGate(d) {
+      var canEdit = canEditTile(d.externalId);
+      var panel = document.getElementById('edit-form');
+      // Read-only the inputs + selects + textareas inside the panel
+      var inputs = panel ? panel.querySelectorAll('input, textarea, select') : [];
+      Array.prototype.forEach.call(inputs, function(el) {
+        if (canEdit) {
+          el.removeAttribute('readonly');
+          if (el.tagName === 'SELECT') el.disabled = false;
+        } else {
+          if (el.tagName === 'SELECT') el.disabled = true;
+          else el.setAttribute('readonly', 'readonly');
+        }
+      });
+      var saveBtn = document.getElementById('ef-save');
+      if (saveBtn) {
+        saveBtn.disabled = !canEdit;
+        saveBtn.title = canEdit ? '' : 'You do not have permission to edit this tile';
+      }
+      var delBtn = document.getElementById('ef-delete');
+      if (delBtn) delBtn.style.display = canEdit ? '' : 'none';
+      var inviteBtn = document.getElementById('ef-invite-btn');
+      if (inviteBtn) inviteBtn.disabled = !canEdit;
+      // Header badge
+      var badge = document.getElementById('ef-readonly-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'ef-readonly-badge';
+        badge.className = 'ml-2 inline-block px-2 py-0.5 text-[10px] uppercase tracking-wide font-semibold rounded bg-gray-100 text-gray-600';
+        badge.textContent = 'Read-only';
+        var headerName = document.getElementById('edit-name-display');
+        if (headerName && headerName.parentNode) headerName.parentNode.appendChild(badge);
+      }
+      badge.style.display = canEdit ? 'none' : 'inline-block';
+    }
+
     window.openEditPanel = function(d) {
       currentNode = d;
       var p = d.properties || {};
@@ -1962,6 +2015,7 @@
       document.getElementById('edit-panel').classList.add('open');
       document.getElementById('edit-overlay').classList.add('open');
       document.getElementById('edit-panel').setAttribute('aria-hidden', 'false');
+      applyChartEditGate(d);
     };
     window.closeEdit = function() {
       document.getElementById('edit-panel').classList.remove('open');
