@@ -1402,6 +1402,14 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     const member = (request as any).orgMember;
 
+    // Phase 4: list teams so the invite form can pre-assign team membership.
+    const orgTeams = await db.select({
+      id: teams.id, name: teams.name, slug: teams.slug, type: teams.type,
+    })
+      .from(teams)
+      .where(eq(teams.orgId, org.id))
+      .orderBy(desc(teams.isDefault), teams.name);
+
     return reply.view('pages/dashboard-members', {
       title: 'Members - Dashboard - OTP',
       description: 'Invite teammates and configure their access.',
@@ -1415,6 +1423,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       availableRoles,
       chartPositions,
       roleDefaults: ROLE_DEFAULT_TOGGLES,
+      orgTeams,
     });
   });
 

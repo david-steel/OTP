@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
-import { meetings, rocks, kpis, kpiValues, tickets, todos, auditLogs } from '../../db/schema.js';
+import { meetings, rocks, kpis, kpiValues, tickets, todos, auditLogs, organizations } from '../../db/schema.js';
 import { getAuth } from '@clerk/fastify';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
@@ -57,6 +57,72 @@ async function gateWriteScope(request: any, reply: any): Promise<boolean> {
   return true;
 }
 
+/**
+ * Phase 4: gate edits to a meeting on role + team membership.
+ * Returns true if the request may mutate this meeting, false after writing
+ * a 403 reply.
+ *
+ * Rules:
+ *  - API-key request: rely on gateWriteScope (already validated upstream).
+ *  - Org-wide roles (owner/admin/implementer): always allowed.
+ *  - Observer/inactive/free: never allowed (read-only).
+ *  - Manager/managee: allowed only if they belong to the meeting's team
+ *    (via team_memberships) and their role can edit assigned items.
+ */
+async function checkMeetingEdit(
+  request: any,
+  reply: any,
+  orgId: string,
+  meetingId: string,
+): Promise<boolean> {
+  const auth = getAuth(request);
+  if (!auth.userId) return true; // API-key path
+
+  const member = (request as any).orgMember as
+    | { id: string; role: any }
+    | null;
+
+  if (!member) {
+    // Legacy "I am the org owner via clerkOrgId" fallback
+    const [legacy] = await db.select().from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+    if (legacy && (legacy as any).clerkOrgId === auth.userId) return true;
+    reply.status(403).send({ error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this org' } });
+    return false;
+  }
+
+  if (member.role === 'owner' || member.role === 'admin' || member.role === 'implementer') {
+    return true;
+  }
+  if (member.role === 'observer' || member.role === 'inactive' || member.role === 'free') {
+    reply.status(403).send({ error: { code: 'MEETING_READ_ONLY', message: 'Your role is read-only for meetings' } });
+    return false;
+  }
+
+  // manager / managee / member: must belong to the meeting's team.
+  const [m] = await db.select({ teamId: meetings.teamId })
+    .from(meetings)
+    .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
+    .limit(1);
+  if (!m) {
+    reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+    return false;
+  }
+  if (!m.teamId) return true; // company-wide / unscoped meeting -- allow
+
+  const { teamMemberships } = await import('../../db/schema.js');
+  const [tm] = await db.select()
+    .from(teamMemberships)
+    .where(and(eq(teamMemberships.teamId, m.teamId), eq(teamMemberships.memberId, member.id)))
+    .limit(1);
+  if (!tm) {
+    reply.status(403).send({ error: { code: 'NOT_ON_TEAM', message: 'You are not on this meeting\'s team' } });
+    return false;
+  }
+  return true;
+}
+
 async function buildScorecardSnapshot(orgId: string) {
   const orgKpis = await db.select().from(kpis).where(and(eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)));
   const kpiIds = orgKpis.map(k => k.id);
@@ -105,6 +171,76 @@ export default async function meetingRoutes(app: FastifyInstance) {
       resolvedTeamId = defaultTeam?.id || null;
     }
 
+    // Phase 4: auto-populate attendees from team_memberships if the caller
+    // didn't provide an explicit attendee list. Humans on the team come
+    // first; agents reporting to any of those humans (via reports_to walk
+    // on the published OOS chart) come next, so an L8 attendee list mirrors
+    // who actually shows up on Zoom plus their AI agents.
+    let resolvedAttendees: any[] = (body.data.attendees as any[]) || [];
+    if (resolvedAttendees.length === 0 && resolvedTeamId) {
+      const { teamMemberships, orgMembers: orgMembersTable } =
+        await import('../../db/schema.js');
+      const teamHumans = await db
+        .select({
+          memberId: orgMembersTable.id,
+          displayName: orgMembersTable.displayName,
+          email: orgMembersTable.email,
+          role: orgMembersTable.role,
+          claimedEntityIds: orgMembersTable.claimedEntityIds,
+        })
+        .from(teamMemberships)
+        .innerJoin(orgMembersTable, eq(teamMemberships.memberId, orgMembersTable.id))
+        .where(eq(teamMemberships.teamId, resolvedTeamId));
+
+      const humanTileIds: string[] = [];
+      for (const h of teamHumans) {
+        const tiles = (h.claimedEntityIds as string[]) || [];
+        for (const t of tiles) if (t) humanTileIds.push(t);
+        resolvedAttendees.push({
+          type: 'human',
+          memberId: h.memberId,
+          name: h.displayName || h.email || 'member',
+          externalIds: tiles,
+          role: h.role,
+        });
+      }
+
+      // Walk the chart to find agents reporting (transitively) to any of
+      // these humans' tiles. If the chart isn't published or the team has
+      // no claimed humans, this list is empty -- not an error.
+      if (humanTileIds.length > 0) {
+        try {
+          const { getOrgTeamGraph } = await import('../../services/team-graph.js');
+          const graph = await getOrgTeamGraph(org.id, '');
+          // Find every node reachable downward through reports_to edges
+          // starting from each human's tiles. Then keep the agents.
+          const visited = new Set<string>(humanTileIds);
+          const queue = [...humanTileIds];
+          while (queue.length > 0) {
+            const node = queue.shift()!;
+            for (const edge of graph.edges) {
+              if (edge.type !== 'reports_to') continue;
+              if (edge.targetId === node && !visited.has(edge.sourceId)) {
+                visited.add(edge.sourceId);
+                queue.push(edge.sourceId);
+              }
+            }
+          }
+          for (const n of graph.nodes) {
+            if (n.type === 'agent' && visited.has(n.externalId)) {
+              resolvedAttendees.push({
+                type: 'agent',
+                externalId: n.externalId,
+                name: n.label,
+              });
+            }
+          }
+        } catch {
+          // Chart unavailable -- proceed with humans only.
+        }
+      }
+    }
+
     const createdBy = getAuth(request).userId || 'api_key';
     const [meeting] = await db.insert(meetings).values({
       organizationId: org.id,
@@ -112,7 +248,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
       meetingType: body.data.meetingType,
       title: body.data.title,
       scheduledAt: new Date(body.data.scheduledAt),
-      attendees: body.data.attendees,
+      attendees: resolvedAttendees,
       createdBy,
     }).returning();
 
@@ -156,6 +292,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!(await gateWriteScope(request, reply))) return;
     const org = await authedOrFail(request, reply);
     if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
     const [scorecardSnapshot, rocksSnapshot] = await Promise.all([
       buildScorecardSnapshot(org.id),
@@ -189,6 +326,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!(await gateWriteScope(request, reply))) return;
     const org = await authedOrFail(request, reply);
     if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
     const [updated] = await db.update(meetings)
       .set({ status: 'completed', endedAt: new Date(), updatedAt: new Date() })
@@ -210,6 +348,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!(await gateWriteScope(request, reply))) return;
     const org = await authedOrFail(request, reply);
     if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
     const body = updateMeetingSchema.safeParse(request.body);
     if (!body.success) {
@@ -252,6 +391,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!(await gateWriteScope(request, reply))) return;
     const org = await authedOrFail(request, reply);
     if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
     const [meeting] = await db.select().from(meetings)
       .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))

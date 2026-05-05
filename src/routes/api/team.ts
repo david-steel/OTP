@@ -438,6 +438,7 @@ export default async function teamRoutes(app: FastifyInstance) {
       featureAccess: accessSchema,
       dataAccess: accessSchema,
       agentAccess: accessSchema,
+      teamIds: z.array(z.string().uuid()).max(50).optional(),
     });
     const body = inviteSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
@@ -464,6 +465,7 @@ export default async function teamRoutes(app: FastifyInstance) {
           data: body.data.dataAccess || {},
           agent: body.data.agentAccess || {},
         },
+        teamIds: body.data.teamIds,
       }, baseUrl.includes('localhost') ? 'https://orgtp.com' : baseUrl);
 
       // Fire-and-forget the email; do not fail the API if Resend is down.

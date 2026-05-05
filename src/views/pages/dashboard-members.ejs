@@ -11,6 +11,7 @@
   var availableRoles = locals.availableRoles || [];
   var chartPositions = locals.chartPositions || [];
   var roleDefaults = locals.roleDefaults || {};
+  var orgTeams = locals.orgTeams || [];
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -114,6 +115,19 @@
         </select>
         <span class="text-xs text-gray-500 mt-1 block">You can invite at-or-below your own role (<%= inviterRole %>).</span>
       </label>
+
+      <!-- Teams (multi-select) -->
+      <% if (orgTeams.length > 0) { %>
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Teams</span>
+          <select name="teamIds" multiple size="<%= Math.min(5, Math.max(2, orgTeams.length)) %>" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <% orgTeams.forEach(function(t) { %>
+              <option value="<%= t.id %>"><%= t.name %><%= t.type !== 'department' ? ' (' + t.type + ')' : '' %></option>
+            <% }) %>
+          </select>
+          <span class="text-xs text-gray-500 mt-1 block">Hold Cmd / Ctrl to pick multiple. They join these teams immediately on accept and show up in the team's L8 meeting attendees.</span>
+        </label>
+      <% } %>
 
       <!-- Org chart positions (multi-select) -->
       <label class="block">
@@ -259,21 +273,27 @@
     var agentAccess = {};
     agentSlugs.forEach(function(s) { agentAccess[s] = true; });
 
-    // Multi-seat select: collect every selected option value from the
-    // claimedEntityIds dropdown. fd.get returns only the first value.
-    var seatSelect = form.querySelector('select[name="claimedEntityIds"]');
-    var seatIds = [];
-    if (seatSelect) {
-      Array.prototype.forEach.call(seatSelect.selectedOptions, function(opt) {
-        if (opt.value) seatIds.push(opt.value);
-      });
+    // Multi-select helper: pull selected option values from a <select multiple>.
+    function readMultiSelect(name) {
+      var sel = form.querySelector('select[name="' + name + '"]');
+      var out = [];
+      if (sel) {
+        Array.prototype.forEach.call(sel.selectedOptions, function(opt) {
+          if (opt.value) out.push(opt.value);
+        });
+      }
+      return out;
     }
+
+    var seatIds = readMultiSelect('claimedEntityIds');
+    var teamIds = readMultiSelect('teamIds');
 
     var body = {
       email: fd.get('email'),
       displayName: fd.get('displayName') || undefined,
       role: fd.get('role') || 'managee',
       claimedEntityIds: seatIds.length > 0 ? seatIds : undefined,
+      teamIds: teamIds.length > 0 ? teamIds : undefined,
       featureAccess: readToggles('feature_'),
       dataAccess: readToggles('data_'),
       agentAccess: agentAccess,

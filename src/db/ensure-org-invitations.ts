@@ -35,6 +35,9 @@ const STATIC_DDL: string[] = [
   `UPDATE "org_invitations" SET "claimed_entity_ids" = jsonb_build_array("claimed_entity_id")
      WHERE "claimed_entity_id" IS NOT NULL
        AND ("claimed_entity_ids" = '[]'::jsonb OR "claimed_entity_ids" IS NULL);`,
+  // Phase 4: pre-assign teams at invite time. The list of team UUIDs to drop
+  // the new member into on accept. Empty array means "no teams" (rare).
+  `ALTER TABLE "org_invitations" ADD COLUMN IF NOT EXISTS "team_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;`,
 ];
 
 export async function ensureOrgInvitationsExtensions(): Promise<void> {

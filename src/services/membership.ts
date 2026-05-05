@@ -142,6 +142,7 @@ export interface IssueInviteOptions {
   role?: Role;                // default 'managee'
   displayName?: string | null;
   access?: AccessToggles;     // pre-configured toggles, copied to org_members on accept
+  teamIds?: string[];         // team UUIDs to add the new member to on accept
   ttlDays?: number;           // default INVITATION_TTL_DAYS
 }
 
@@ -205,6 +206,10 @@ export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Pr
     : (opts.claimedEntityId ? [opts.claimedEntityId] : []);
   const primarySeat = seatList[0] || opts.claimedEntityId || null;
 
+  const teamList = (opts.teamIds && opts.teamIds.length > 0)
+    ? Array.from(new Set(opts.teamIds.filter(Boolean)))
+    : [];
+
   const [created] = await db.insert(orgInvitations).values({
     orgId: opts.orgId,
     email,
@@ -215,6 +220,7 @@ export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Pr
     featureAccess: opts.access?.feature || {},
     dataAccess: opts.access?.data || {},
     agentAccess: opts.access?.agent || {},
+    teamIds: teamList,
     tokenHash,
     expiresAt,
     createdByUserId: opts.ownerUserId,
@@ -307,6 +313,22 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     status: 'active',
     invitedByUserId: inv.createdByUserId,
   }).returning();
+
+  // Phase 4: drop the new member into any pre-assigned teams.
+  const teamIds = (inv.teamIds as string[]) || [];
+  if (teamIds.length > 0) {
+    const { teamMemberships } = await import('../db/schema.js');
+    const rows = teamIds.map(tid => ({
+      teamId: tid,
+      memberId: member.id,
+      roleOnTeam: 'member' as const,
+    }));
+    // onConflictDoNothing isn't critical here -- the unique index on
+    // (team_id, member_id) makes this safe; we just swallow duplicate errors.
+    try {
+      await db.insert(teamMemberships).values(rows);
+    } catch { /* race / duplicate -- ignore */ }
+  }
 
   await db.update(orgInvitations).set({
     status: 'accepted',

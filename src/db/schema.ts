@@ -514,6 +514,8 @@ export const orgInvitations = pgTable('org_invitations', {
   featureAccess: jsonb('feature_access').notNull().default({}),
   dataAccess: jsonb('data_access').notNull().default({}),
   agentAccess: jsonb('agent_access').notNull().default({}),
+  // Phase 4: which teams to drop this person into when they accept
+  teamIds: jsonb('team_ids').notNull().default([]).$type<string[]>(),
   tokenHash: varchar('token_hash', { length: 100 }).notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   createdByUserId: varchar('created_by_user_id', { length: 255 }).notNull(),
