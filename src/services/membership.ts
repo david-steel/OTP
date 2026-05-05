@@ -277,25 +277,60 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
   // strict email-match, return an error here instead.
   // (Per Q6-A: auto-link existing users without friction.)
 
-  // Idempotency: if a member row already exists, just return it.
+  // Idempotency: if a member row already exists, reactivate it if it was
+  // revoked / suspended / inactive, and apply the new invitation's role +
+  // toggles + claimed tiles + display name. This is the path David hit when
+  // re-inviting a previously-revoked teammate -- without the reactivation,
+  // the existing row stayed status='revoked' and the decorator skipped them,
+  // sending /dashboard down the founder publisher-profile branch.
   const [existingMember] = await db
     .select()
     .from(orgMembers)
     .where(and(eq(orgMembers.orgId, inv.orgId), eq(orgMembers.clerkUserId, clerkUserId)))
     .limit(1);
   if (existingMember) {
-    // Mark invite accepted, leave member row as is (do not downgrade owner -> member)
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    // Never downgrade an existing owner -- preserve their role.
+    if (existingMember.role !== 'owner') {
+      updates.role = inv.role;
+      updates.claimedEntityId = inv.claimedEntityId;
+      updates.claimedEntityIds = ((inv.claimedEntityIds as string[]) || []);
+      updates.featureAccess = (inv.featureAccess as Record<string, boolean>) || {};
+      updates.dataAccess = (inv.dataAccess as Record<string, boolean>) || {};
+      updates.agentAccess = (inv.agentAccess as Record<string, boolean>) || {};
+      if (inv.displayName) updates.displayName = inv.displayName;
+    }
+    if (userEmail || inv.email) updates.email = userEmail || inv.email;
+    // Always reactivate (revoked / suspended / inactive -> active).
+    updates.status = 'active';
+
+    const [reactivated] = await db.update(orgMembers).set(updates as any)
+      .where(eq(orgMembers.id, existingMember.id))
+      .returning();
+
+    // Re-add team memberships from the invite (duplicate-safe).
+    const teamIdsRe = (inv.teamIds as string[]) || [];
+    if (teamIdsRe.length > 0) {
+      const { teamMemberships } = await import('../db/schema.js');
+      try {
+        await db.insert(teamMemberships).values(
+          teamIdsRe.map(tid => ({ teamId: tid, memberId: reactivated.id, roleOnTeam: 'member' as const }))
+        );
+      } catch { /* duplicate -- ignore */ }
+    }
+
     await db.update(orgInvitations).set({
       status: 'accepted',
       acceptedAt: new Date(),
       acceptedByUserId: clerkUserId,
     }).where(eq(orgInvitations.id, inv.id));
+
     return {
       ok: true,
       orgId: inv.orgId,
-      role: existingMember.role as Role,
-      claimedEntityId: existingMember.claimedEntityId || inv.claimedEntityId,
-      memberId: existingMember.id,
+      role: reactivated.role as Role,
+      claimedEntityId: reactivated.claimedEntityId || inv.claimedEntityId,
+      memberId: reactivated.id,
     };
   }
 
