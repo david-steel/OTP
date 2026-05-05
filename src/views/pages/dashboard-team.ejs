@@ -48,6 +48,10 @@
   /* Inactive nodes (status=inactive|retired|terminated) */
   .org-node.inactive { filter: grayscale(0.85); opacity: 0.7; }
   .org-node.inactive .name { text-decoration: line-through; }
+
+  /* Skill-highlight dimming: tiles without the highlighted skill fade back */
+  .org-node.skill-dim { opacity: 0.18; filter: grayscale(0.6); }
+  .org-node.skill-dim:hover { opacity: 0.55; }
   .org-node.inactive::after { content: ''; }
 
   /* Contact icon row on humans */
@@ -766,6 +770,29 @@
       if (viewerRole === 'owner') return true;
       return EDITABLE_TILES.has(externalId);
     }
+
+    // Skill highlight: when arriving from /admin/skills with ?highlightSkill=
+    // we dim every tile that doesn't have that skill so the relevant ones pop.
+    var HIGHLIGHT_SKILL = <%- JSON.stringify(typeof highlightSkill !== 'undefined' ? (highlightSkill || '') : '') %>;
+    function nodeHasSkill(n, skillLower) {
+      if (!skillLower) return true;
+      var skills = (n && n.properties && n.properties.skills) || [];
+      if (!Array.isArray(skills)) return false;
+      for (var i = 0; i < skills.length; i++) {
+        if (String(skills[i] || '').trim().toLowerCase() === skillLower) return true;
+      }
+      return false;
+    }
+    if (HIGHLIGHT_SKILL) {
+      // Show a banner so the user knows the chart is filtered.
+      window.addEventListener('DOMContentLoaded', function() {
+        var banner = document.createElement('div');
+        banner.style.cssText = 'position:sticky;top:0;z-index:50;background:#fef3c7;border-bottom:1px solid #fcd34d;padding:0.5rem 1rem;font-size:13px;color:#92400e;display:flex;justify-content:space-between;align-items:center;';
+        banner.innerHTML = 'Highlighting tiles with skill: <strong>' + HIGHLIGHT_SKILL + '</strong>' +
+          '<a href="/dashboard/team" style="text-decoration:underline;color:#92400e;font-size:12px;">clear filter</a>';
+        document.body.insertBefore(banner, document.body.firstChild);
+      });
+    }
     var comparisonPairs = <%- JSON.stringify(typeof comparisonPairs !== 'undefined' ? comparisonPairs : []) %>;
     var SKILLS_CATALOG = <%- JSON.stringify(typeof skillsCatalog !== 'undefined' ? skillsCatalog : []) %>;
     var ALL_CATALOG_SKILLS = SKILLS_CATALOG.reduce(function(acc, c) { return acc.concat(c.skills); }, []);
@@ -1178,7 +1205,8 @@
         var isInactive = ['inactive', 'retired', 'terminated'].indexOf(statusLower) !== -1;
         var isClaimed = (n.type === 'human' && claimedTileMap[n.externalId]);
         var box = document.createElement('div');
-        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '') + (isClaimed ? ' claimed' : '');
+        var skillDim = HIGHLIGHT_SKILL && !nodeHasSkill(n, HIGHLIGHT_SKILL.toLowerCase());
+        box.className = 'org-node type-' + n.type + (isInactive ? ' inactive' : '') + (isClaimed ? ' claimed' : '') + (skillDim ? ' skill-dim' : '');
         box.style.left = x + 'px';
         box.style.top  = y + 'px';
         box.style.width  = NODE_W + 'px';

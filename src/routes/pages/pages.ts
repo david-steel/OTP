@@ -1111,42 +1111,63 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   // Super Admin: Skills inventory across every org's published OOS chart.
-  // Shows the canonical SKILLS_CATALOG, who uses each skill, what's
-  // unassigned (catalog skill nobody uses), and what custom skills exist
-  // in the wild that should probably get promoted into the catalog.
-  app.get<{ Querystring: { key?: string } }>('/admin/skills', async (request, reply) => {
-    const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
-    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
-
+  // Renders HTML at /admin/skills and the same data as CSV at /admin/skills.csv.
+  // Aggregates: catalog usage, custom skills (in the wild not in catalog),
+  // agents missing skills entirely, and coverage-by-role across orgs.
+  async function buildSkillsInventory() {
     const { SKILLS_CATALOG } = await import('../../data/skills-catalog.js');
     const allOrgs = await db.select({ id: organizations.id, name: organizations.name }).from(organizations);
 
-    // skill (lower-case) -> [{ orgId, orgName, entityId, entityLabel, entityType }]
-    const usage = new Map<string, Array<{
+    type EntityRef = {
       orgId: string; orgName: string;
       entityId: string; entityLabel: string; entityType: 'agent' | 'human' | 'organization';
-      original: string; // case-preserving original spelling
-    }>>();
+      role: string | null;
+    };
+
+    // skill (lower-case) -> entity refs
+    const usage = new Map<string, Array<EntityRef & { original: string }>>();
+    // role (lower-case) -> { displayRole, entities, skillsByCount }
+    const roleData = new Map<string, {
+      displayRole: string;
+      entities: Array<EntityRef & { skills: string[] }>;
+    }>();
+    // agents/humans with empty or missing skills
+    const missingSkills: Array<EntityRef> = [];
 
     for (const o of allOrgs) {
       try {
         const graph = await getOrgTeamGraph(o.id, o.name || '');
         for (const node of graph.nodes) {
-          const skills = ((node.properties as any)?.skills) as string[] | undefined;
-          if (!Array.isArray(skills)) continue;
-          for (const raw of skills) {
-            const s = String(raw || '').trim();
-            if (!s) continue;
-            const key = s.toLowerCase();
-            if (!usage.has(key)) usage.set(key, []);
-            usage.get(key)!.push({
-              orgId: o.id,
-              orgName: o.name || '(unnamed)',
-              entityId: node.externalId,
-              entityLabel: node.label,
-              entityType: node.type,
-              original: s,
-            });
+          if (node.type !== 'agent' && node.type !== 'human') continue;
+          const props: any = node.properties || {};
+          const skillsRaw = Array.isArray(props.skills) ? props.skills as string[] : [];
+          const skillsClean = skillsRaw.map(s => String(s || '').trim()).filter(Boolean);
+          const role: string | null = (props.role || props.jobDescription) ? String(props.role || props.jobDescription).trim() : null;
+
+          const ref: EntityRef = {
+            orgId: o.id,
+            orgName: o.name || '(unnamed)',
+            entityId: node.externalId,
+            entityLabel: node.label,
+            entityType: node.type,
+            role,
+          };
+
+          if (skillsClean.length === 0) {
+            missingSkills.push(ref);
+          } else {
+            for (const s of skillsClean) {
+              const key = s.toLowerCase();
+              if (!usage.has(key)) usage.set(key, []);
+              usage.get(key)!.push({ ...ref, original: s });
+            }
+          }
+
+          if (role) {
+            // Bucket by a normalised role label so "CFO", "cfo", " CFO " merge.
+            const rkey = role.toLowerCase();
+            if (!roleData.has(rkey)) roleData.set(rkey, { displayRole: role, entities: [] });
+            roleData.get(rkey)!.entities.push({ ...ref, skills: skillsClean });
           }
         }
       } catch {
@@ -1154,7 +1175,6 @@ export default async function pageRoutes(app: FastifyInstance) {
       }
     }
 
-    // Build the catalog view: every canonical skill annotated with usage.
     type CatalogEntry = {
       category: string;
       skill: string;
@@ -1168,23 +1188,14 @@ export default async function pageRoutes(app: FastifyInstance) {
       for (const skill of cat.skills) {
         const key = skill.toLowerCase();
         catalogKeys.add(key);
-        const users = usage.get(key) || [];
-        catalogEntries.push({
-          category: cat.category,
-          skill,
-          key,
-          usageCount: users.length,
-          users: users.map(u => ({
-            orgName: u.orgName, entityLabel: u.entityLabel,
-            entityType: u.entityType, entityId: u.entityId, orgId: u.orgId,
-          })),
-        });
+        const users = (usage.get(key) || []).map(u => ({
+          orgName: u.orgName, entityLabel: u.entityLabel,
+          entityType: u.entityType, entityId: u.entityId, orgId: u.orgId,
+        }));
+        catalogEntries.push({ category: cat.category, skill, key, usageCount: users.length, users });
       }
     }
 
-    // Custom skills: in usage but not in the canonical catalog. These are
-    // candidates for promotion into SKILLS_CATALOG so the autocomplete
-    // helps the next person adding the same skill.
     const customSkills: Array<{
       skill: string; key: string; usageCount: number;
       users: Array<{ orgName: string; entityLabel: string; entityType: string; entityId: string; orgId: string }>;
@@ -1203,31 +1214,142 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
     customSkills.sort((a, b) => b.usageCount - a.usageCount);
 
-    // Top-level stats
+    // Coverage by role: for each role found across the network, what skills
+    // are commonly assigned. Surfaces "every CFO except mine has X."
+    type RoleCoverage = {
+      role: string;
+      entityCount: number;
+      orgCount: number;
+      commonSkills: Array<{ skill: string; count: number; entities: string[] }>;
+    };
+    const coverage: RoleCoverage[] = [];
+    for (const [, data] of roleData.entries()) {
+      if (data.entities.length < 2) continue; // only show roles that exist in 2+ places
+      const skillCount = new Map<string, { display: string; count: number; entities: Set<string> }>();
+      const orgs = new Set<string>();
+      for (const e of data.entities) {
+        orgs.add(e.orgId);
+        for (const s of e.skills) {
+          const k = s.toLowerCase();
+          if (!skillCount.has(k)) skillCount.set(k, { display: s, count: 0, entities: new Set() });
+          const sc = skillCount.get(k)!;
+          sc.count += 1;
+          sc.entities.add(`${e.entityLabel} @ ${e.orgName}`);
+        }
+      }
+      const commonSkills = Array.from(skillCount.values())
+        .filter(s => s.count >= 2)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 12)
+        .map(s => ({ skill: s.display, count: s.count, entities: Array.from(s.entities) }));
+      coverage.push({
+        role: data.displayRole,
+        entityCount: data.entities.length,
+        orgCount: orgs.size,
+        commonSkills,
+      });
+    }
+    coverage.sort((a, b) => b.entityCount - a.entityCount);
+
     const stats = {
       catalogSize: catalogEntries.length,
       assigned: catalogEntries.filter(e => e.usageCount > 0).length,
       unassigned: catalogEntries.filter(e => e.usageCount === 0).length,
       customCount: customSkills.length,
+      missingCount: missingSkills.length,
       orgsScanned: allOrgs.length,
       totalAssignments: Array.from(usage.values()).reduce((n, list) => n + list.length, 0),
     };
 
-    // Group catalog entries by category for the view.
     const byCategory = new Map<string, CatalogEntry[]>();
     for (const e of catalogEntries) {
       if (!byCategory.has(e.category)) byCategory.set(e.category, []);
       byCategory.get(e.category)!.push(e);
     }
 
-    return reply.view('pages/admin-skills', {
-      title: 'Skills Inventory - Admin - OTP',
-      description: 'Platform-wide skills inventory: every catalog skill, who uses it, and which skills are unassigned.',
-      noindex: true,
+    return {
       stats,
       categories: Array.from(byCategory.entries()).map(([category, entries]) => ({ category, entries })),
       customSkills,
+      missingSkills,
+      coverage,
+      catalogEntries,
+      categoriesRaw: SKILLS_CATALOG,
+    };
+  }
+
+  app.get<{ Querystring: { key?: string } }>('/admin/skills', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
+    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+
+    const data = await buildSkillsInventory();
+
+    return reply.view('pages/admin-skills', {
+      title: 'Skills Inventory - Admin - OTP',
+      description: 'Platform-wide skills inventory: every catalog skill, who uses it, what is unassigned, plus coverage by role.',
+      noindex: true,
+      ...data,
+      keyParam: request.query.key || '',
     });
+  });
+
+  // CSV export of the same aggregation.
+  app.get<{ Querystring: { key?: string } }>('/admin/skills.csv', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
+    if (!isAdmin) return reply.status(404).send('Not Found');
+
+    const data = await buildSkillsInventory();
+
+    function csvEscape(v: any): string {
+      const s = v === null || v === undefined ? '' : String(v);
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    const lines: string[] = [];
+    lines.push('section,category,skill,status,usage_count,entity_type,entity_label,entity_external_id,org_name,org_id');
+
+    for (const c of data.categories) {
+      for (const e of c.entries) {
+        if (e.users.length === 0) {
+          lines.push([
+            'catalog', csvEscape(c.category), csvEscape(e.skill),
+            'unassigned', 0, '', '', '', '', '',
+          ].join(','));
+        } else {
+          for (const u of e.users) {
+            lines.push([
+              'catalog', csvEscape(c.category), csvEscape(e.skill),
+              'assigned', e.usageCount,
+              csvEscape(u.entityType), csvEscape(u.entityLabel), csvEscape(u.entityId),
+              csvEscape(u.orgName), csvEscape(u.orgId),
+            ].join(','));
+          }
+        }
+      }
+    }
+    for (const cs of data.customSkills) {
+      for (const u of cs.users) {
+        lines.push([
+          'custom', '', csvEscape(cs.skill),
+          'custom', cs.usageCount,
+          csvEscape(u.entityType), csvEscape(u.entityLabel), csvEscape(u.entityId),
+          csvEscape(u.orgName), csvEscape(u.orgId),
+        ].join(','));
+      }
+    }
+    for (const m of data.missingSkills) {
+      lines.push([
+        'missing_skills_entity', '', '',
+        'no_skills_assigned', 0,
+        csvEscape(m.entityType), csvEscape(m.entityLabel), csvEscape(m.entityId),
+        csvEscape(m.orgName), csvEscape(m.orgId),
+      ].join(','));
+    }
+
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', 'attachment; filename="otp-skills-inventory.csv"');
+    return lines.join('\n') + '\n';
   });
 
   // Super Admin: Improvements / roadmap tracker
@@ -1547,12 +1669,13 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get('/dashboard/team', async (request, reply) => {
+  app.get<{ Querystring: { highlightSkill?: string } }>('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
+    const highlightSkill = (request.query.highlightSkill || '').toString().slice(0, 120);
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
@@ -1607,6 +1730,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       pendingInvites,
       memberCount: members.length,
       comparisonPairs: computeAgentComparisonPairs(team.nodes),
+      highlightSkill,
     });
   });
 

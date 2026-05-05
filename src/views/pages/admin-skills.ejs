@@ -1,15 +1,26 @@
+<%
+  var keyParam = locals.keyParam || '';
+  var keyQs = keyParam ? ('?key=' + encodeURIComponent(keyParam)) : '';
+  function chipLink(label, type, externalId, orgName, orgId, skillKey) {
+    var href = '/dashboard/team' + (skillKey ? ('?highlightSkill=' + encodeURIComponent(skillKey)) : '');
+    return href;
+  }
+%>
 <div class="max-w-6xl mx-auto px-4 py-8">
 
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
     <div>
       <h1 class="text-2xl font-bold">Skills Inventory</h1>
-      <p class="text-gray-500 text-sm">Every catalog skill, who uses it, and which skills aren't assigned to anyone yet.</p>
+      <p class="text-gray-500 text-sm">Every catalog skill, who uses it, what's unassigned, and how each role is typically equipped across the network.</p>
     </div>
-    <a href="/admin" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50">&larr; Admin</a>
+    <div class="flex items-center gap-2">
+      <a href="/admin/skills.csv<%= keyQs %>" class="text-xs px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100">Download CSV</a>
+      <a href="/admin" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50">&larr; Admin</a>
+    </div>
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
     <div class="bg-white p-4 border rounded-lg text-center">
       <div class="text-2xl font-bold text-gray-900"><%= stats.catalogSize %></div>
       <div class="text-[10px] uppercase tracking-wide text-gray-500 mt-1">Catalog skills</div>
@@ -24,7 +35,11 @@
     </div>
     <div class="bg-otp-50 p-4 border border-otp-200 rounded-lg text-center">
       <div class="text-2xl font-bold text-otp-700"><%= stats.customCount %></div>
-      <div class="text-[10px] uppercase tracking-wide text-otp-700 mt-1">Custom (not in catalog)</div>
+      <div class="text-[10px] uppercase tracking-wide text-otp-700 mt-1">Custom</div>
+    </div>
+    <div class="bg-rose-50 p-4 border border-rose-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-rose-700"><%= stats.missingCount %></div>
+      <div class="text-[10px] uppercase tracking-wide text-rose-700 mt-1">Entities w/ no skills</div>
     </div>
     <div class="bg-white p-4 border rounded-lg text-center">
       <div class="text-2xl font-bold text-gray-900"><%= stats.totalAssignments %></div>
@@ -36,7 +51,7 @@
     </div>
   </div>
 
-  <!-- Filter: show all / unassigned only / assigned only -->
+  <!-- Filter -->
   <div class="mb-4 flex items-center gap-2 text-xs">
     <span class="text-gray-500 font-semibold uppercase tracking-wide">Filter:</span>
     <button onclick="setFilter('all')" id="f-all" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded font-medium hover:bg-gray-200">All</button>
@@ -60,7 +75,9 @@
           <tbody class="bg-white divide-y divide-gray-100">
             <% c.entries.forEach(function(e) { %>
               <tr class="skill-row" data-status="<%= e.usageCount > 0 ? 'assigned' : 'unassigned' %>">
-                <td class="px-4 py-3 font-mono text-xs text-gray-900"><%= e.skill %></td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-900">
+                  <a href="/dashboard/team?highlightSkill=<%= encodeURIComponent(e.skill) %>" class="hover:text-otp-600 hover:underline" title="Highlight tiles with this skill on the org chart"><%= e.skill %></a>
+                </td>
                 <td class="px-4 py-3">
                   <% if (e.usageCount > 0) { %>
                     <span class="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold"><%= e.usageCount %></span>
@@ -74,11 +91,13 @@
                   <% } else { %>
                     <div class="flex flex-wrap gap-1">
                       <% e.users.forEach(function(u) { %>
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] <%= u.entityType === 'agent' ? 'bg-otp-50 text-otp-700' : 'bg-blue-50 text-blue-700' %>">
+                        <a href="/dashboard/team?highlightSkill=<%= encodeURIComponent(e.skill) %>"
+                           class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] hover:opacity-80
+                                  <%= u.entityType === 'agent' ? 'bg-otp-50 text-otp-700' : 'bg-blue-50 text-blue-700' %>">
                           <span class="font-mono text-[10px] uppercase tracking-wide opacity-70"><%= u.entityType %></span>
                           <span class="font-semibold"><%= u.entityLabel %></span>
                           <span class="text-[10px] opacity-60">@ <%= u.orgName %></span>
-                        </span>
+                        </a>
                       <% }) %>
                     </div>
                   <% } %>
@@ -91,11 +110,43 @@
     </section>
   <% }) %>
 
-  <!-- Custom skills (used in the wild, not in catalog) -->
+  <!-- Coverage by role -->
+  <% if (coverage.length > 0) { %>
+    <section class="mb-8">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">Coverage by role</h2>
+      <p class="text-xs text-gray-600 mb-3">For each role that exists in 2+ places across the network, the most common skills assigned. Useful for spotting outliers ("every CFO except mine has fundraising").</p>
+      <div class="space-y-3">
+        <% coverage.forEach(function(r) { %>
+          <div class="rounded-lg border border-gray-200 bg-white p-4">
+            <div class="flex items-baseline justify-between mb-2">
+              <h3 class="font-semibold text-gray-900"><%= r.role %></h3>
+              <span class="text-xs text-gray-500"><%= r.entityCount %> entities &middot; <%= r.orgCount %> org<%= r.orgCount === 1 ? '' : 's' %></span>
+            </div>
+            <% if (r.commonSkills.length === 0) { %>
+              <p class="text-xs text-gray-400 italic">No skills assigned by 2+ entities at this role yet.</p>
+            <% } else { %>
+              <div class="flex flex-wrap gap-1.5">
+                <% r.commonSkills.forEach(function(cs) { %>
+                  <a href="/dashboard/team?highlightSkill=<%= encodeURIComponent(cs.skill) %>"
+                     class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-gray-50 border border-gray-200 text-xs hover:bg-gray-100"
+                     title="<%= cs.entities.join(', ') %>">
+                    <span class="font-medium text-gray-800"><%= cs.skill %></span>
+                    <span class="text-[10px] text-gray-500"><%= cs.count %>x</span>
+                  </a>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Custom skills -->
   <% if (customSkills.length > 0) { %>
     <section class="mb-8">
       <h2 class="text-sm font-bold uppercase tracking-wide text-otp-700 mb-1">Custom skills (not in catalog)</h2>
-      <p class="text-xs text-gray-600 mb-3">These are skills humans typed in by hand. Worth promoting the popular ones into <code>src/data/skills-catalog.ts</code> so the autocomplete picks them up.</p>
+      <p class="text-xs text-gray-600 mb-3">Skills humans typed in by hand. Use the Promote button to copy a snippet for <code>src/data/skills-catalog.ts</code>.</p>
       <div class="overflow-hidden rounded-lg border border-otp-200">
         <table class="w-full text-sm">
           <thead class="bg-otp-50 text-xs uppercase tracking-wide text-otp-700">
@@ -103,12 +154,15 @@
               <th class="text-left px-4 py-2 w-1/3">Custom skill</th>
               <th class="text-left px-4 py-2 w-16">Used by</th>
               <th class="text-left px-4 py-2">Who</th>
+              <th class="text-right px-4 py-2 w-24">Promote</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-100">
             <% customSkills.forEach(function(e) { %>
               <tr>
-                <td class="px-4 py-3 font-mono text-xs text-gray-900"><%= e.skill %></td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-900">
+                  <a href="/dashboard/team?highlightSkill=<%= encodeURIComponent(e.skill) %>" class="hover:text-otp-600 hover:underline"><%= e.skill %></a>
+                </td>
                 <td class="px-4 py-3">
                   <span class="inline-block px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold"><%= e.usageCount %></span>
                 </td>
@@ -123,6 +177,9 @@
                     <% }) %>
                   </div>
                 </td>
+                <td class="px-4 py-3 text-right">
+                  <button onclick="openPromote('<%= e.skill.replace(/'/g, "\\'") %>')" class="px-2 py-1 text-xs bg-otp-50 text-otp-700 border border-otp-200 rounded hover:bg-otp-100">Promote</button>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -130,6 +187,59 @@
       </div>
     </section>
   <% } %>
+
+  <!-- Entities missing skills entirely -->
+  <% if (missingSkills.length > 0) { %>
+    <section class="mb-8">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-rose-700 mb-1">Agents and humans with no skills assigned</h2>
+      <p class="text-xs text-gray-600 mb-3">These chart entities have an empty <code>skills</code> array. Each one is a definition gap: the chart has them, but nobody knows what they're good at.</p>
+      <div class="overflow-hidden rounded-lg border border-rose-200">
+        <table class="w-full text-sm">
+          <thead class="bg-rose-50 text-xs uppercase tracking-wide text-rose-700">
+            <tr>
+              <th class="text-left px-4 py-2">Entity</th>
+              <th class="text-left px-4 py-2">Type</th>
+              <th class="text-left px-4 py-2">Role</th>
+              <th class="text-left px-4 py-2">Org</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% missingSkills.forEach(function(m) { %>
+              <tr>
+                <td class="px-4 py-3 font-semibold text-gray-900"><%= m.entityLabel %> <span class="text-[10px] font-mono text-gray-400">(<%= m.entityId %>)</span></td>
+                <td class="px-4 py-3"><span class="inline-block px-2 py-0.5 rounded text-[11px] <%= m.entityType === 'agent' ? 'bg-otp-50 text-otp-700' : 'bg-blue-50 text-blue-700' %>"><%= m.entityType %></span></td>
+                <td class="px-4 py-3 text-gray-700 text-xs"><%= m.role || '(no role set)' %></td>
+                <td class="px-4 py-3 text-gray-500 text-xs"><%= m.orgName %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+</div>
+
+<!-- Promote modal -->
+<div id="promote-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4" onclick="if (event.target.id === 'promote-modal') closePromote()">
+  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6">
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-lg font-bold text-gray-900">Promote <code id="promote-skill-name"></code> to catalog</h3>
+      <button onclick="closePromote()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    </div>
+    <p class="text-sm text-gray-600 mb-4">Paste this entry into the right category in <code>src/data/skills-catalog.ts</code>, then commit.</p>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-700 mb-1">Category</label>
+    <select id="promote-category" class="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-4">
+      <% categoriesRaw.forEach(function(c) { %>
+        <option value="<%= c.category %>"><%= c.category %></option>
+      <% }) %>
+    </select>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-700 mb-1">Snippet (insert into the matching category's <code>skills</code> array)</label>
+    <pre id="promote-snippet" class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto font-mono"></pre>
+    <div class="flex justify-end gap-2 mt-4">
+      <button onclick="copyPromote()" class="px-4 py-1.5 bg-otp-500 text-white rounded text-sm font-medium hover:bg-otp-400">Copy snippet</button>
+      <button onclick="closePromote()" class="px-4 py-1.5 bg-gray-100 text-gray-700 rounded text-sm">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -141,13 +251,11 @@
       var show = (mode === 'all') || (status === mode);
       r.style.display = show ? '' : 'none';
     });
-    // Hide categories that have zero visible rows after filtering.
     var categories = document.querySelectorAll('.skills-category');
     Array.prototype.forEach.call(categories, function(c) {
       var visible = c.querySelectorAll('.skill-row:not([style*="display: none"])').length;
       c.style.display = visible > 0 ? '' : 'none';
     });
-    // Active state on filter buttons
     ['all', 'unassigned', 'assigned'].forEach(function(m) {
       var btn = document.getElementById('f-' + m);
       if (!btn) return;
@@ -157,5 +265,25 @@
   }
   window.setFilter = setFilter;
   setFilter('all');
+
+  function buildSnippet(skill) {
+    return "  '" + skill.replace(/'/g, "\\'") + "',";
+  }
+  window.openPromote = function(skill) {
+    document.getElementById('promote-skill-name').textContent = skill;
+    document.getElementById('promote-snippet').textContent = buildSnippet(skill);
+    var modal = document.getElementById('promote-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+  window.closePromote = function() {
+    var modal = document.getElementById('promote-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  };
+  window.copyPromote = function() {
+    var text = document.getElementById('promote-snippet').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(text);
+  };
 })();
 </script>
