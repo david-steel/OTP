@@ -598,6 +598,14 @@ try {
   app.log.error({ err }, 'ensureTeamsTables failed -- team-scoped features will not work until resolved');
 }
 
+try {
+  const { ensureOrgInvitationsExtensions } = await import('./db/ensure-org-invitations.js');
+  await ensureOrgInvitationsExtensions();
+  app.log.info('org_invitations toggle columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgInvitationsExtensions failed -- invite toggles will not persist until resolved');
+}
+
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';

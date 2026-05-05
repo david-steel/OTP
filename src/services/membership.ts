@@ -127,12 +127,20 @@ export async function listMembers(orgId: string) {
 
 // ---- Invite issuance ----
 
+export interface AccessToggles {
+  feature?: Record<string, boolean>;
+  data?: Record<string, boolean>;
+  agent?: Record<string, boolean>;
+}
+
 export interface IssueInviteOptions {
   orgId: string;
-  ownerUserId: string;        // Clerk user issuing the invite (must already be owner)
+  ownerUserId: string;        // Clerk user issuing the invite (must hold a role authorized to invite)
   email: string;
   claimedEntityId?: string | null;
-  role?: Role;                // default 'member'
+  role?: Role;                // default 'managee'
+  displayName?: string | null;
+  access?: AccessToggles;     // pre-configured toggles, copied to org_members on accept
   ttlDays?: number;           // default INVITATION_TTL_DAYS
 }
 
@@ -146,12 +154,20 @@ export interface IssuedInvite {
 }
 
 export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Promise<IssuedInvite> {
-  const role = opts.role || 'member';
+  const role = opts.role || 'managee';
   const ttl = (opts.ttlDays ?? INVITATION_TTL_DAYS) * 24 * 60 * 60 * 1000;
 
-  const ownerRole = await getRoleForUser(opts.orgId, opts.ownerUserId);
-  if (ownerRole !== 'owner') {
-    throw new MembershipError('NOT_OWNER', 'Only the org owner can issue invitations', 403);
+  // Owner / admin / manager may issue invitations. Anything else is denied.
+  // Mirrors permissions.canInviteMembers without importing it (services layer
+  // stays free of middleware deps).
+  const inviterRole = await getRoleForUser(opts.orgId, opts.ownerUserId);
+  const allowedToInvite: Role[] = ['owner', 'admin', 'manager'];
+  if (!inviterRole || !allowedToInvite.includes(inviterRole)) {
+    throw new MembershipError(
+      'CANNOT_INVITE',
+      'Your role does not allow issuing invitations',
+      403
+    );
   }
   const email = String(opts.email || '').trim().toLowerCase();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -185,6 +201,10 @@ export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Pr
     email,
     role,
     claimedEntityId: opts.claimedEntityId || null,
+    displayName: opts.displayName || null,
+    featureAccess: opts.access?.feature || {},
+    dataAccess: opts.access?.data || {},
+    agentAccess: opts.access?.agent || {},
     tokenHash,
     expiresAt,
     createdByUserId: opts.ownerUserId,
@@ -268,6 +288,11 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     clerkUserId,
     role: inv.role,
     claimedEntityId: inv.claimedEntityId,
+    email: userEmail || inv.email,
+    displayName: inv.displayName || null,
+    featureAccess: (inv.featureAccess as Record<string, boolean>) || {},
+    dataAccess: (inv.dataAccess as Record<string, boolean>) || {},
+    agentAccess: (inv.agentAccess as Record<string, boolean>) || {},
     status: 'active',
     invitedByUserId: inv.createdByUserId,
   }).returning();

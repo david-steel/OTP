@@ -293,16 +293,35 @@ export default async function teamRoutes(app: FastifyInstance) {
     const org = await getOrg(request);
     if (!org) return reply.status(404).send({ error: { code: 'NO_ORG', message: 'No org found for current user' } });
 
-    const role = await getRoleForUser(org.id, auth.userId);
-    if (role !== 'owner') return reply.status(403).send({ error: { code: 'NOT_OWNER', message: 'Only the org owner can issue invitations' } });
+    const inviterRole = await getRoleForUser(org.id, auth.userId);
+    const ALLOWED: ('owner' | 'admin' | 'manager')[] = ['owner', 'admin', 'manager'];
+    if (!inviterRole || !ALLOWED.includes(inviterRole as any)) {
+      return reply.status(403).send({ error: { code: 'CANNOT_INVITE', message: 'Your role does not allow issuing invitations' } });
+    }
 
+    const accessSchema = z.record(z.string(), z.boolean()).optional();
     const inviteSchema = z.object({
       email: z.string().email().max(200),
+      displayName: z.string().max(200).optional(),
       claimedEntityId: z.string().max(120).optional(),
-      role: z.enum(['member', 'owner']).optional(),
+      role: z.enum([
+        'owner', 'admin', 'manager', 'managee',
+        'inactive', 'observer', 'implementer', 'free',
+        'member', // legacy alias accepted for back-compat
+      ]).optional(),
+      featureAccess: accessSchema,
+      dataAccess: accessSchema,
+      agentAccess: accessSchema,
     });
     const body = inviteSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
+
+    // Inviters cannot grant a role above their own. Owner > admin > manager.
+    const RANK: Record<string, number> = { owner: 4, admin: 3, manager: 2, managee: 1, member: 1, observer: 1, implementer: 3, free: 1, inactive: 0 };
+    const requestedRole = body.data.role || 'managee';
+    if ((RANK[requestedRole] || 0) > (RANK[inviterRole] || 0)) {
+      return reply.status(403).send({ error: { code: 'ROLE_TOO_HIGH', message: 'You cannot invite someone to a role above your own' } });
+    }
 
     try {
       const baseUrl = `${request.protocol}://${request.hostname}`;
@@ -310,8 +329,14 @@ export default async function teamRoutes(app: FastifyInstance) {
         orgId: org.id,
         ownerUserId: auth.userId,
         email: body.data.email,
+        displayName: body.data.displayName || null,
         claimedEntityId: body.data.claimedEntityId || null,
-        role: body.data.role || 'member',
+        role: requestedRole,
+        access: {
+          feature: body.data.featureAccess || {},
+          data: body.data.dataAccess || {},
+          agent: body.data.agentAccess || {},
+        },
       }, baseUrl.includes('localhost') ? 'https://orgtp.com' : baseUrl);
 
       // Fire-and-forget the email; do not fail the API if Resend is down.
