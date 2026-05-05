@@ -1,0 +1,222 @@
+/**
+ * Fastify-style route guards built on top of org_members + permissions.ts.
+ *
+ * Two-layer model:
+ *   1. A preHandler (registerOrgMemberDecorator) attaches the current
+ *      user's org_member row to every request as `request.orgMember`.
+ *      Mirror of how `isSuperAdmin` is decorated in server.ts.
+ *   2. Per-route guards (requireOrgMember, requireRole, requireFeatureAccess)
+ *      read that decoration and short-circuit with redirect/404 when access
+ *      is denied. Existing routes opt in by calling the guard inside the
+ *      handler -- no global behavior change.
+ *
+ * The decorator preHandler MUST fail-soft: a DB outage or missing table
+ * sets `request.orgMember = null` and lets the request continue. Auth gates
+ * are still enforced by the guards themselves; we just don't 500 the entire
+ * site if the membership lookup hiccups.
+ */
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { getAuth } from '@clerk/fastify';
+import { eq, and } from 'drizzle-orm';
+import { db } from '../config/database.js';
+import { orgMembers, organizations } from '../db/schema.js';
+import type { Role } from '../services/membership.js';
+import {
+  canInviteMembers,
+  canCreateTeams,
+  canEditOrgSettings,
+  canAccessApp,
+} from './permissions.js';
+
+export interface CurrentMember {
+  id: string;
+  orgId: string;
+  clerkUserId: string;
+  role: Role;
+  status: string;
+  email: string | null;
+  displayName: string | null;
+  featureAccess: Record<string, boolean>;
+  dataAccess: Record<string, boolean>;
+  agentAccess: Record<string, boolean>;
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    orgMember: CurrentMember | null;
+  }
+}
+
+// ---------- Decorator: attach current member to every request ----------
+
+export function registerOrgMemberDecorator(app: FastifyInstance): void {
+  app.decorateRequest('orgMember', null);
+
+  app.addHook('preHandler', async (request) => {
+    try {
+      const auth = getAuth(request);
+      const userId = auth?.userId;
+      if (!userId) return;
+
+      // Active member of any org. We currently scope to the first hit; a
+      // multi-org user sees one org at a time. When org-switching ships,
+      // this resolution will read a session preference.
+      const [row] = await db.select({
+        id: orgMembers.id,
+        orgId: orgMembers.orgId,
+        clerkUserId: orgMembers.clerkUserId,
+        role: orgMembers.role,
+        status: orgMembers.status,
+        email: orgMembers.email,
+        displayName: orgMembers.displayName,
+        featureAccess: orgMembers.featureAccess,
+        dataAccess: orgMembers.dataAccess,
+        agentAccess: orgMembers.agentAccess,
+      })
+        .from(orgMembers)
+        .where(and(
+          eq(orgMembers.clerkUserId, userId),
+          eq(orgMembers.status, 'active'),
+        ))
+        .limit(1);
+
+      if (!row) return;
+
+      (request as any).orgMember = {
+        id: row.id,
+        orgId: row.orgId,
+        clerkUserId: row.clerkUserId!,
+        role: row.role as Role,
+        status: row.status,
+        email: row.email,
+        displayName: row.displayName,
+        featureAccess: (row.featureAccess as Record<string, boolean>) || {},
+        dataAccess: (row.dataAccess as Record<string, boolean>) || {},
+        agentAccess: (row.agentAccess as Record<string, boolean>) || {},
+      };
+    } catch (err) {
+      // Fail-soft. Auth gates run independently; we just leave orgMember null.
+      request.log.debug({ err }, 'orgMember decorator preHandler failed');
+    }
+  });
+}
+
+// ---------- Per-route guards ----------
+
+/**
+ * Require an authenticated user with an active org_members row. If there is
+ * no Clerk session, redirects to /sign-in?redirect=. If the user is signed
+ * in but not yet a member of any org, returns 404 (admin pattern).
+ *
+ * Returns the CurrentMember on success, null after writing the redirect or
+ * status. Callers must check for null and bail.
+ */
+export async function requireOrgMember(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<CurrentMember | null> {
+  const auth = getAuth(request);
+  if (!auth?.userId) {
+    reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    return null;
+  }
+
+  const member = (request as any).orgMember as CurrentMember | null;
+  if (!member) {
+    // Authed but not a member -- could mean invite-pending or expired session
+    // mismatch. Send to sign-in so Clerk can refresh; if Clerk says signed
+    // in, the page will show the no-org register prompt.
+    reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    return null;
+  }
+
+  if (!canAccessApp(member.role)) {
+    // Inactive seat: on the chart only.
+    reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    return null;
+  }
+
+  return member;
+}
+
+/**
+ * Require the current member to hold one of the given roles. Returns the
+ * CurrentMember on success, or 404s with the home view on denial (matches
+ * /admin/* security-by-obscurity pattern).
+ */
+export async function requireRole(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  roles: Role[],
+): Promise<CurrentMember | null> {
+  const member = await requireOrgMember(request, reply);
+  if (!member) return null;
+
+  if (!roles.includes(member.role)) {
+    reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    return null;
+  }
+  return member;
+}
+
+/**
+ * Require the current member to hold a specific feature toggle. Reads
+ * `member.featureAccess[key]`. Owners and admins bypass the check (they
+ * can access everything regardless of toggle state).
+ */
+export async function requireFeatureAccess(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  featureKey: string,
+): Promise<CurrentMember | null> {
+  const member = await requireOrgMember(request, reply);
+  if (!member) return null;
+
+  if (canEditOrgSettings(member.role)) return member;
+
+  if (member.featureAccess[featureKey] !== true) {
+    reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    return null;
+  }
+  return member;
+}
+
+// ---------- Convenience wrappers ----------
+
+export async function requireCanInvite(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<CurrentMember | null> {
+  const member = await requireOrgMember(request, reply);
+  if (!member) return null;
+  if (!canInviteMembers(member.role)) {
+    reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    return null;
+  }
+  return member;
+}
+
+export async function requireCanCreateTeams(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<CurrentMember | null> {
+  const member = await requireOrgMember(request, reply);
+  if (!member) return null;
+  if (!canCreateTeams(member.role)) {
+    reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    return null;
+  }
+  return member;
+}
+
+/**
+ * Resolve the organization row tied to the current member. Returns null if
+ * the member or org cannot be loaded.
+ */
+export async function getCurrentOrg(member: CurrentMember) {
+  const [org] = await db.select()
+    .from(organizations)
+    .where(eq(organizations.id, member.orgId))
+    .limit(1);
+  return org || null;
+}

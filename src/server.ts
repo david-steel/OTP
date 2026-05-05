@@ -132,6 +132,13 @@ app.addHook('preHandler', async (request, reply) => {
   };
 });
 
+// Org member decorator -- attaches the current user's org_members row to
+// every request as request.orgMember. Fail-soft: a DB hiccup leaves it null
+// rather than 500-ing the whole site. Per-route guards in middleware/guards.ts
+// read this decoration to enforce role + access gates.
+import { registerOrgMemberDecorator } from './middleware/guards.js';
+registerOrgMemberDecorator(app);
+
 // Redirect www to apex domain
 app.addHook('onRequest', async (request, reply) => {
   const host = request.hostname;
