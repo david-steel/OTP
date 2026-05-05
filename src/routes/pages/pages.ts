@@ -1683,6 +1683,20 @@ export default async function pageRoutes(app: FastifyInstance) {
     const invitations = await listPendingInvites(org.id);
     const { FEATURE_TOGGLES, DATA_TOGGLES, ROLE_DEFAULT_TOGGLES } = await import('../../data/access-toggles.js');
 
+    // Pull team memberships for every member so the edit modal can pre-fill.
+    const memberIds = members.map(m => m.id);
+    const memberTeams: Record<string, string[]> = {};
+    if (memberIds.length > 0) {
+      const tmRows = await db.select({
+        memberId: teamMemberships.memberId,
+        teamId: teamMemberships.teamId,
+      }).from(teamMemberships).where(inArray(teamMemberships.memberId, memberIds));
+      for (const r of tmRows) {
+        if (!memberTeams[r.memberId]) memberTeams[r.memberId] = [];
+        memberTeams[r.memberId].push(r.teamId);
+      }
+    }
+
     // Pull the org chart so the inviter can match the new member to a
     // specific accountability tile (HUM_X / AI_X). Filter to human + agent
     // tiles (skip the synthetic ORG root), and flag which are already
@@ -1763,6 +1777,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       chartPositions,
       roleDefaults: ROLE_DEFAULT_TOGGLES,
       orgTeams,
+      memberTeams,
     });
   });
 

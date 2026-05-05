@@ -433,6 +433,73 @@ export async function revokeInvite(invitationId: string, ownerUserId: string): P
 }
 
 /**
+ * Update a member's role, status, claimed tiles, access toggles, display
+ * name, or team memberships. Owner / admin / implementer only. Owners are
+ * protected -- their role cannot be changed via this path; ownership
+ * transfer is a separate, deliberate flow.
+ */
+export interface UpdateMemberPatch {
+  role?: Role;
+  status?: 'active' | 'suspended' | 'inactive' | 'revoked';
+  displayName?: string | null;
+  claimedEntityId?: string | null;
+  claimedEntityIds?: string[];
+  featureAccess?: Record<string, boolean>;
+  dataAccess?: Record<string, boolean>;
+  agentAccess?: Record<string, boolean>;
+  teamIds?: string[]; // when provided, replaces the member's team set
+}
+
+export async function updateMember(
+  memberId: string,
+  requesterUserId: string,
+  patch: UpdateMemberPatch,
+): Promise<{ ok: true; id: string }> {
+  const [target] = await db.select().from(orgMembers).where(eq(orgMembers.id, memberId)).limit(1);
+  if (!target) throw new MembershipError('NOT_FOUND', 'Member not found', 404);
+
+  const requesterRole = await getRoleForUser(target.orgId, requesterUserId);
+  if (!requesterRole || (requesterRole !== 'owner' && requesterRole !== 'admin' && requesterRole !== 'implementer')) {
+    throw new MembershipError('CANNOT_EDIT_MEMBER', 'Your role does not allow editing members', 403);
+  }
+  if (target.role === 'owner' && patch.role && patch.role !== 'owner') {
+    throw new MembershipError('CANNOT_DEMOTE_OWNER', 'Owners cannot be demoted via this path. Transfer ownership first.', 403);
+  }
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (patch.role !== undefined && target.role !== 'owner') updates.role = patch.role;
+  if (patch.status !== undefined) updates.status = patch.status;
+  if (patch.displayName !== undefined) updates.displayName = patch.displayName;
+  if (patch.claimedEntityId !== undefined) updates.claimedEntityId = patch.claimedEntityId;
+  if (patch.claimedEntityIds !== undefined) updates.claimedEntityIds = patch.claimedEntityIds;
+  if (patch.featureAccess !== undefined) updates.featureAccess = patch.featureAccess;
+  if (patch.dataAccess !== undefined) updates.dataAccess = patch.dataAccess;
+  if (patch.agentAccess !== undefined) updates.agentAccess = patch.agentAccess;
+
+  if (Object.keys(updates).length > 1) {
+    await db.update(orgMembers).set(updates as any).where(eq(orgMembers.id, memberId));
+  }
+
+  // Replace team memberships when provided. Atomic: clear, then re-add.
+  if (patch.teamIds !== undefined) {
+    const { teamMemberships } = await import('../db/schema.js');
+    await db.delete(teamMemberships).where(eq(teamMemberships.memberId, memberId));
+    if (patch.teamIds.length > 0) {
+      const fresh = patch.teamIds.map(tid => ({
+        teamId: tid,
+        memberId,
+        roleOnTeam: 'member' as const,
+      }));
+      try {
+        await db.insert(teamMemberships).values(fresh);
+      } catch { /* duplicate -- ignore */ }
+    }
+  }
+
+  return { ok: true, id: memberId };
+}
+
+/**
  * Remove a member from the org by flipping their status to 'revoked'.
  * Soft-delete: the row stays so the audit trail and any tile claim
  * lookups still resolve historically. Owner / admin / implementer only;

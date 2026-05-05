@@ -12,6 +12,7 @@
   var chartPositions = locals.chartPositions || [];
   var roleDefaults = locals.roleDefaults || {};
   var orgTeams = locals.orgTeams || [];
+  var memberTeams = locals.memberTeams || {};
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -58,17 +59,39 @@
                 <td class="px-4 py-3"><span class="inline-block px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= m.role %></span></td>
                 <td class="px-4 py-3 text-gray-500 text-xs"><%= m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : '-' %></td>
                 <td class="px-4 py-3 text-right">
-                  <% if (m.role !== 'owner') { %>
+                  <%
+                    var memberPayload = {
+                      id: m.id,
+                      displayName: m.displayName || '',
+                      email: m.email || '',
+                      role: m.role,
+                      status: m.status,
+                      claimedEntityIds: Array.isArray(m.claimedEntityIds) ? m.claimedEntityIds : (m.claimedEntityId ? [m.claimedEntityId] : []),
+                      featureAccess: m.featureAccess || {},
+                      dataAccess: m.dataAccess || {},
+                      agentAccess: m.agentAccess || {},
+                      teamIds: memberTeams[m.id] || [],
+                    };
+                  %>
+                  <div class="inline-flex gap-1">
                     <button type="button"
-                            data-member-id="<%= m.id %>"
-                            data-member-name="<%= (m.displayName || m.email || 'this member').replace(/"/g, '&quot;') %>"
-                            onclick="revokeMember(this)"
-                            class="text-xs px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">
-                      Revoke
+                            data-member='<%- JSON.stringify(memberPayload).replace(/'/g, "&#39;") %>'
+                            onclick="openEditMember(this)"
+                            class="text-xs px-2 py-1 bg-otp-50 text-otp-700 border border-otp-200 rounded hover:bg-otp-100">
+                      Edit
                     </button>
-                  <% } else { %>
-                    <span class="text-xs text-gray-400 italic">owner</span>
-                  <% } %>
+                    <% if (m.role !== 'owner') { %>
+                      <button type="button"
+                              data-member-id="<%= m.id %>"
+                              data-member-name="<%= (m.displayName || m.email || 'this member').replace(/"/g, '&quot;') %>"
+                              onclick="revokeMember(this)"
+                              class="text-xs px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">
+                        Revoke
+                      </button>
+                    <% } else { %>
+                      <span class="text-xs text-gray-400 italic px-2 py-1">owner</span>
+                    <% } %>
+                  </div>
                 </td>
               </tr>
             <% }) %>
@@ -251,6 +274,224 @@
     </form>
   </section>
 </div>
+
+<!-- Edit member modal -->
+<div id="edit-member-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4 overflow-y-auto" onclick="if (event.target.id === 'edit-member-modal') closeEditMember()">
+  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 my-8">
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900">Edit member</h3>
+        <p class="text-xs text-gray-500 mt-0.5" id="edit-member-subtitle"></p>
+      </div>
+      <button onclick="closeEditMember()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+
+    <form id="edit-member-form" class="space-y-5">
+      <input type="hidden" id="edit-member-id">
+
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Display name</span>
+        <input id="edit-displayName" type="text" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+      </label>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Role</span>
+          <select id="edit-role" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <% availableRoles.forEach(function(r) { %>
+              <option value="<%= r.value %>"><%= r.label %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Status</span>
+          <select id="edit-status" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="inactive">Inactive (chart only)</option>
+          </select>
+        </label>
+      </div>
+
+      <% if (orgTeams.length > 0) { %>
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Teams</span>
+          <select id="edit-teamIds" multiple size="<%= Math.min(5, Math.max(2, orgTeams.length)) %>" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <% orgTeams.forEach(function(t) { %>
+              <option value="<%= t.id %>"><%= t.name %></option>
+            <% }) %>
+          </select>
+        </label>
+      <% } %>
+
+      <% if (chartPositions.length > 0) { %>
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Chart tiles</span>
+          <select id="edit-claimedEntityIds" multiple size="5" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <% chartPositions.forEach(function(p) { %>
+              <option value="<%= p.externalId %>"><%= p.label %> (<%= p.type %>)</option>
+            <% }) %>
+          </select>
+        </label>
+      <% } %>
+
+      <details class="border border-gray-200 rounded-lg overflow-hidden">
+        <summary class="cursor-pointer bg-gray-50 px-4 py-2 text-xs font-bold uppercase tracking-wide text-gray-700 select-none">Feature access</summary>
+        <div class="p-3 space-y-2">
+          <% featureToggles.forEach(function(t) { %>
+            <label class="flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" data-toggle-type="feature" data-toggle-key="<%= t.key %>" class="edit-toggle">
+              <span class="text-gray-800"><%= t.label %></span>
+            </label>
+          <% }) %>
+        </div>
+      </details>
+
+      <details class="border border-gray-200 rounded-lg overflow-hidden">
+        <summary class="cursor-pointer bg-gray-50 px-4 py-2 text-xs font-bold uppercase tracking-wide text-gray-700 select-none">Data access</summary>
+        <div class="p-3 space-y-2">
+          <% dataToggles.forEach(function(t) { %>
+            <label class="flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" data-toggle-type="data" data-toggle-key="<%= t.key %>" class="edit-toggle">
+              <span class="text-gray-800"><%= t.label %></span>
+            </label>
+          <% }) %>
+        </div>
+      </details>
+
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Agent slugs (comma-separated)</span>
+        <input id="edit-agentSlugs" type="text" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono" placeholder="dirk, crystal">
+      </label>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <div id="edit-status-msg" class="text-sm text-gray-600 min-h-[1.25rem]"></div>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeEditMember()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded text-sm font-medium">Cancel</button>
+          <button type="submit" id="edit-submit" class="px-4 py-2 bg-otp-600 text-white rounded-lg text-sm font-semibold hover:bg-otp-700 disabled:opacity-50">Save changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+window.openEditMember = function(btn) {
+  var raw = btn.getAttribute('data-member');
+  if (!raw) return;
+  var m;
+  try { m = JSON.parse(raw); } catch (e) { alert('Could not parse member data.'); return; }
+
+  document.getElementById('edit-member-id').value = m.id;
+  document.getElementById('edit-member-subtitle').textContent = (m.displayName || m.email || m.id);
+  document.getElementById('edit-displayName').value = m.displayName || '';
+  document.getElementById('edit-role').value = m.role || 'managee';
+  // The role 'owner' isn't in availableRoles for non-owners; if the modal
+  // opens for an owner, the dropdown defaults to the first option, which
+  // is fine because the server protects owner role from being demoted.
+  document.getElementById('edit-status').value = m.status === 'revoked' ? 'active' : (m.status || 'active');
+
+  // Multi-selects
+  var teamSel = document.getElementById('edit-teamIds');
+  if (teamSel) {
+    Array.prototype.forEach.call(teamSel.options, function(o) {
+      o.selected = (m.teamIds || []).indexOf(o.value) !== -1;
+    });
+  }
+  var tileSel = document.getElementById('edit-claimedEntityIds');
+  if (tileSel) {
+    Array.prototype.forEach.call(tileSel.options, function(o) {
+      o.selected = (m.claimedEntityIds || []).indexOf(o.value) !== -1;
+    });
+  }
+
+  // Toggles
+  Array.prototype.forEach.call(document.querySelectorAll('.edit-toggle'), function(el) {
+    var type = el.getAttribute('data-toggle-type');
+    var key = el.getAttribute('data-toggle-key');
+    var src = type === 'feature' ? (m.featureAccess || {}) : (m.dataAccess || {});
+    el.checked = src[key] === true;
+  });
+
+  // Agent slugs
+  var agentKeys = Object.keys(m.agentAccess || {}).filter(function(k) { return m.agentAccess[k] === true; });
+  document.getElementById('edit-agentSlugs').value = agentKeys.join(', ');
+
+  document.getElementById('edit-status-msg').textContent = '';
+  var modal = document.getElementById('edit-member-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+};
+
+window.closeEditMember = function() {
+  var modal = document.getElementById('edit-member-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+};
+
+(function() {
+  var form = document.getElementById('edit-member-form');
+  if (!form) return;
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var id = document.getElementById('edit-member-id').value;
+    var btn = document.getElementById('edit-submit');
+    var msg = document.getElementById('edit-status-msg');
+    btn.disabled = true; msg.textContent = 'Saving...';
+    msg.className = 'text-sm text-gray-600 min-h-[1.25rem]';
+
+    function readMulti(id) {
+      var sel = document.getElementById(id);
+      if (!sel) return undefined;
+      var out = [];
+      Array.prototype.forEach.call(sel.selectedOptions, function(o) { if (o.value) out.push(o.value); });
+      return out;
+    }
+    var feature = {}, data = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.edit-toggle'), function(el) {
+      var type = el.getAttribute('data-toggle-type');
+      var key = el.getAttribute('data-toggle-key');
+      (type === 'feature' ? feature : data)[key] = el.checked;
+    });
+    var agentSlugs = String(document.getElementById('edit-agentSlugs').value || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    var agentAccess = {};
+    agentSlugs.forEach(function(s) { agentAccess[s] = true; });
+
+    var body = {
+      displayName: document.getElementById('edit-displayName').value || null,
+      role: document.getElementById('edit-role').value,
+      status: document.getElementById('edit-status').value,
+      teamIds: readMulti('edit-teamIds'),
+      claimedEntityIds: readMulti('edit-claimedEntityIds'),
+      featureAccess: feature,
+      dataAccess: data,
+      agentAccess: agentAccess,
+    };
+
+    try {
+      var res = await fetch('/api/v1/team/members/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function(){ return {}; });
+        msg.textContent = 'Error: ' + ((err.error && err.error.message) || res.status);
+        msg.className = 'text-sm text-red-600 min-h-[1.25rem]';
+        btn.disabled = false;
+        return;
+      }
+      msg.textContent = 'Saved. Reloading...';
+      msg.className = 'text-sm text-emerald-700 min-h-[1.25rem]';
+      setTimeout(function() { window.location.reload(); }, 600);
+    } catch (e) {
+      msg.textContent = 'Network error.';
+      msg.className = 'text-sm text-red-600 min-h-[1.25rem]';
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
 
 <script>
 window.revokeInvite = async function(btn) {

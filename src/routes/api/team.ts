@@ -544,6 +544,47 @@ export default async function teamRoutes(app: FastifyInstance) {
   });
 
   // ============================================================
+  // PATCH /api/v1/team/members/:id -- edit a member's role / status /
+  // claimed tiles / access toggles / teams. Owner / admin / implementer.
+  // ============================================================
+  app.patch<{ Params: { id: string } }>('/team/members/:id', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) {
+      return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid member id' } });
+    }
+
+    const accessSchema = z.record(z.string(), z.boolean()).optional();
+    const updateSchema = z.object({
+      role: z.enum([
+        'owner', 'admin', 'manager', 'managee',
+        'inactive', 'observer', 'implementer', 'free',
+        'member',
+      ]).optional(),
+      status: z.enum(['active', 'suspended', 'inactive', 'revoked']).optional(),
+      displayName: z.string().max(200).nullable().optional(),
+      claimedEntityId: z.string().max(120).nullable().optional(),
+      claimedEntityIds: z.array(z.string().max(120)).max(50).optional(),
+      featureAccess: accessSchema,
+      dataAccess: accessSchema,
+      agentAccess: accessSchema,
+      teamIds: z.array(z.string().uuid()).max(50).optional(),
+    });
+    const body = updateSchema.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
+
+    try {
+      const { updateMember } = await import('../../services/membership.js');
+      return await updateMember(request.params.id, auth.userId, body.data as any);
+    } catch (e) {
+      if (e instanceof MembershipError) {
+        return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      }
+      throw e;
+    }
+  });
+
+  // ============================================================
   // DELETE /api/v1/team/members/:id -- revoke an active member
   // (soft delete: status -> 'revoked', row stays for audit + tile-claim history)
   // ============================================================
