@@ -271,8 +271,8 @@ export default async function teamRoutes(app: FastifyInstance) {
       filename = 'otp-humans-full.csv';
       csv = [
         'name,role,contact_email,contact_phone,slack_id,reports_to,job_description,authority_level,skills,mcps,status',
-        'Jane Doe,CEO,jane@example.com,+1 555 0100,U01ABC,,Sets vision and runs the L10,autonomous,"strategy,leadership","gmail,slack",active',
-        'John Smith,COO,john@example.com,,U02DEF,Jane Doe,Owns ops scorecard and weekly L10,execute-with-approval,"operations,EOS","accelo,todoist",active',
+        'Jane Doe,CEO,jane@example.com,+1 555 0100,U01ABC,,Sets vision and runs the L8,autonomous,"strategy,leadership","gmail,slack",active',
+        'John Smith,COO,john@example.com,,U02DEF,Jane Doe,Owns ops scorecard and weekly L8,execute-with-approval,"operations,EOS","accelo,todoist",active',
         'Sarah Lee,Marketing Lead,sarah@example.com,,U03GHI,John Smith,Owns brand and demand gen,recommend,"copywriting,paid-ads","ga4,hubspot",active',
       ].join('\n') + '\n';
     } else {

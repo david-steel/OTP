@@ -26,7 +26,7 @@ export async function getAuthOrg(request: FastifyRequest) {
   }
 
   // Dev-only override: ?orgId=<uuid|clerkOrgId> -- never enabled in production.
-  // Lets the L10 page work end-to-end on localhost without Clerk session.
+  // Lets the L8 page work end-to-end on localhost without Clerk session.
   if (process.env.NODE_ENV !== 'production') {
     const q = (request.query || {}) as Record<string, string | undefined>;
     const orgIdParam = q.orgId || q.org;

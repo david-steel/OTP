@@ -201,7 +201,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
     return { stats: (stats.rows as any[])[0] || {} };
   });
 
-  // DELETE /api/v1/tickets/:id -- soft delete (used by L10 to remove issues
+  // DELETE /api/v1/tickets/:id -- soft delete (used by L8 to remove issues
   // and by super admins on /tickets to clean up the public issue tracker).
   app.delete<{ Params: { id: string } }>('/tickets/:id', async (request, reply) => {
     const id = requireUuidParam(request, reply);

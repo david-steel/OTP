@@ -49,14 +49,14 @@ export const SOP_TEMPLATE_GROUPS: SOPTemplateGroup[] = [
       },
       {
         id: 'founder_weekly_l10',
-        title: 'Weekly Leadership L10',
+        title: 'Weekly Leadership L8',
         trigger: 'Same day and time each week (default Tuesday 9 AM, 90 minutes)',
         steps: [
           '5 min: Segue. One personal best and one professional best from the past week, each member',
           '5 min: Scorecard. Green / yellow / red on each weekly metric. Anything red drops into the Issues list',
           '5 min: Rock review. On track / off track per Rock owner; off track drops into Issues',
           '5 min: Customer and employee headlines. One-line wins or warnings only',
-          '5 min: To-do review. Completed / not completed from last L10. Not completed becomes new accountability',
+          '5 min: To-do review. Completed / not completed from last L8. Not completed becomes new accountability',
           '60 min: IDS. Identify, Discuss, Solve the top three Issues. Stop at solution and assigned owner',
           '5 min: Conclude. Recap to-dos, cascading messages, rate the meeting 1 to 10 with one-sentence why',
         ],

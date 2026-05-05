@@ -1,12 +1,12 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="mb-8">
-    <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Weekly Leadership Meetings</div>
+    <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">L8 Meetings -- the cadence that drives your org to agentic maturity</div>
     <h1 class="text-2xl font-bold"><%= org.name %></h1>
-    <p class="text-sm text-gray-600 mt-1">Run your weekly leadership meeting from one page. Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude.</p>
+    <p class="text-sm text-gray-600 mt-1">Run your weekly leadership meeting from one page. Check-in, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude.</p>
   </div>
 
   <!-- Quick create -->
-  <form action="/l10/create<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" method="POST" class="border rounded-lg p-4 mb-8 bg-gray-50">
+  <form action="/l8/create<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" method="POST" class="border rounded-lg p-4 mb-8 bg-gray-50">
     <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-700">New Meeting</h2>
     <div class="grid grid-cols-3 gap-3">
       <input name="title" type="text" required placeholder="e.g. Leadership Meeting -- 2026-05-05"
@@ -38,7 +38,7 @@
   <% } else { %>
     <div class="space-y-2">
       <% meetings.forEach(function(m) { %>
-        <a href="/l10/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-4 hover:bg-gray-50">
+        <a href="/l8/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-4 hover:bg-gray-50">
           <div class="flex items-center justify-between">
             <div>
               <div class="font-medium"><%= m.title %></div>

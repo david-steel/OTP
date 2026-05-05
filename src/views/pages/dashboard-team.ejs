@@ -264,9 +264,9 @@
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
         <% } %>
         <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
-          <a href="/l10" class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-1.5 transition-colors" title="Run your weekly leadership meeting -- scorecard, quarterly priorities, headlines, to-dos, issues, conclude.">
+          <a href="/l8" class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-1.5 transition-colors" title="Run your weekly L8 meeting -- the cadence that drives your org to agentic maturity. Scorecard, quarterly priorities, headlines, to-dos, issues, conclude.">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Run Weekly Meeting
+            Run L8 Meeting
           </a>
           <button onclick="openCreateDrawer('human')" class="text-xs px-3 py-1.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold inline-flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -1616,7 +1616,7 @@
             if (m.contribution.issuesSolved > 0) bits.push('<span style="background:#d1fae5; color:#065f46; padding:0.1rem 0.4rem; border-radius:0.25rem; font-size:0.6rem;">' + m.contribution.issuesSolved + ' solved</span>');
             contributionHtml = '<div style="margin-top:0.25rem;">' + bits.join('') + '</div>';
           }
-          var href = '/l10/meeting/' + encodeURIComponent(m.id) + (passOrg ? ('?orgId=' + encodeURIComponent(passOrg)) : '');
+          var href = '/l8/meeting/' + encodeURIComponent(m.id) + (passOrg ? ('?orgId=' + encodeURIComponent(passOrg)) : '');
           return '<a href="' + href + '" style="display:block; border:1px solid #e5e7eb; border-radius:0.4rem; padding:0.4rem 0.55rem; margin-bottom:0.3rem; text-decoration:none; color:#111827;">'
             + '<div style="display:flex; justify-content:space-between; gap:0.4rem; align-items:center;">'
             + '<div style="font-size:0.75rem; font-weight:600;">' + (m.title || '(untitled)') + '</div>'

@@ -39,7 +39,7 @@ export const ticketStatusEnum = pgEnum('ticket_status', ['open', 'in_progress', 
 export const ticketPriorityEnum = pgEnum('ticket_priority', ['low', 'medium', 'high', 'critical']);
 export const ticketCategoryEnum = pgEnum('ticket_category', ['bug', 'feature', 'question', 'other']);
 // IDS lifecycle (EOS) and ownerEntityType are declared here so the tickets table can reference them.
-// The full L10 schema (rocks, todos, meetings) lives at the bottom of this file.
+// The full L8 schema (rocks, todos, meetings) lives at the bottom of this file.
 export const idsStatusEnum = pgEnum('ids_status', ['open', 'identified', 'discussed', 'solved']);
 export const ownerEntityTypeEnum = pgEnum('owner_entity_type', ['agent', 'human']);
 
@@ -158,7 +158,7 @@ export const tickets = pgTable('tickets', {
   idsStatus: idsStatusEnum('ids_status').notNull().default('open'),
   priorityRank: integer('priority_rank'),
   solvedInMeetingId: uuid('solved_in_meeting_id'),
-  // L10 ownership for the issue (separate from reporter)
+  // L8 ownership for the issue (separate from reporter)
   ownerEntityType: ownerEntityTypeEnum('owner_entity_type'),
   ownerExternalId: varchar('owner_external_id', { length: 120 }),
   ownerName: varchar('owner_name', { length: 255 }),
@@ -711,7 +711,7 @@ export const oosPlanSyncEvents = pgTable('oos_plan_sync_events', {
   createdIdx: index('oopse_created_idx').on(table.createdAt),
 }));
 
-// ---- L10 (EOS Level-10 meeting layer) ----
+// ---- L8 (weekly leadership meeting; renamed from EOS Level-10) ----
 
 export const meetingStatusEnum = pgEnum('meeting_status', ['scheduled', 'in_progress', 'completed', 'cancelled']);
 // idsStatusEnum and ownerEntityTypeEnum are declared earlier (next to ticketStatusEnum) so the tickets table can reference them.

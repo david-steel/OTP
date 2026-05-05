@@ -300,7 +300,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return { meeting: updated, cascadingMessage };
   });
 
-  // GET /api/v1/meetings/:id/agenda  (pulls everything the L10 page needs in one call)
+  // GET /api/v1/meetings/:id/agenda  (pulls everything the L8 page needs in one call)
   app.get<{ Params: { id: string } }>('/meetings/:id/agenda', async (request, reply) => {
     const id = requireUuidParam(request, reply);
     if (!id) return;

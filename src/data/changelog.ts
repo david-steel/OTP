@@ -11,6 +11,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 5, 2026 ----
+
+  {
+    date: '2026-05-05',
+    tags: ['Naming'],
+    title: 'L10 is now L8 -- weekly leadership meeting renamed to point at agentic maturity',
+    summary: 'OTP\'s weekly leadership meeting is now called the L8 Meeting. Same agenda, same cadence -- different finish line. "L8" aims at Level 8 (Autonomous Agent Teams) on the 8 Levels of Agentic Engineering. Old /l10 URLs 301-redirect to /l8 so existing links and bookmarks keep working.',
+    details: `<p>The weekly leadership meeting is now the <strong>L8 Meeting</strong>. The name comes from Level 8 of the 8 Levels of Agentic Engineering -- Autonomous Agent Teams. Same agenda shape as the EOS L10 (Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude); different reason to run it: every week the meeting forces the question "are we more agentic this week than last week?"</p>
+<p>Old <code>/l10</code> URLs continue to work via 301 redirect, so any link, bookmark, or doc that points at <code>/l10</code> will land on <code>/l8</code> automatically. The glossary keeps the L10 entry alongside the new L8 entry so the EOS lineage stays discoverable.</p>`,
+  },
+
   // ---- May 3, 2026 ----
 
   {
@@ -18,7 +29,7 @@ export const changelog: ChangelogEntry[] = [
     tags: ['Major', 'Tools'],
     title: 'Run your weekly leadership meeting from OTP -- the Meeting layer is live',
     summary: 'A full weekly leadership meeting tool with Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, and Conclude. Per-section timer, attendee panel, identify-discuss-solve workflow, auto-cascading recap, and a per-person accountability profile that links back from the org chart. Built and shipped in one Sunday.',
-    details: `<p>OTP now runs your weekly leadership meeting. Visit <a href="/l10"><code>/l10</code></a> to see your meeting list, or click the new <strong>Run Weekly Meeting</strong> button on your team chart at <a href="/dashboard/team"><code>/dashboard/team</code></a>.</p>
+    details: `<p>OTP now runs your weekly leadership meeting. Visit <a href="/l8"><code>/l8</code></a> to see your meeting list, or click the new <strong>Run L8 Meeting</strong> button on your team chart at <a href="/dashboard/team"><code>/dashboard/team</code></a>.</p>
 
 <h3>What you get</h3>
 <ul>
@@ -218,7 +229,7 @@ export const changelog: ChangelogEntry[] = [
 <h3>SOPs as the unit of coordination</h3>
 <ul>
 <li><strong>Author once:</strong> click any agent or human on <code>/dashboard/team</code> and add SOPs in the side panel. Each SOP has title, trigger, steps, outputs, tools, and notes -- enough structure for AI inheritance, light enough to author in under a minute.</li>
-<li><strong>Five Founder/CEO templates seeded:</strong> daily inbox triage, weekly L10, monthly stakeholder update, founder-led discovery call, quarterly Rocks-setting. Click "+ From template..." in the SOP section, pick one, edit to your voice, save. Sixty seconds to a working operating cadence.</li>
+<li><strong>Five Founder/CEO templates seeded:</strong> daily inbox triage, weekly L8, monthly stakeholder update, founder-led discovery call, quarterly Rocks-setting. Click "+ From template..." in the SOP section, pick one, edit to your voice, save. Sixty seconds to a working operating cadence.</li>
 <li><strong>Purple "N SOPs" badge</strong> on every chart tile that has authored SOPs. Visual confirmation that a tile carries executable spec, not just a name.</li>
 </ul>
 

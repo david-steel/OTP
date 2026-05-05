@@ -25,7 +25,7 @@
       </div>
       <div class="flex gap-2">
         <a href="/dashboard/team<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="text-xs px-3 py-1.5 bg-white border rounded hover:bg-gray-50">← Org Chart</a>
-        <a href="/l10<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500">Meetings</a>
+        <a href="/l8<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500">Meetings</a>
       </div>
     </div>
 
@@ -157,7 +157,7 @@
           <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Upcoming Meetings (<%= upcomingMeetings.length %>)</h2>
           <div class="space-y-2">
             <% upcomingMeetings.forEach(function(m) { %>
-              <a href="/l10/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-3 bg-white hover:bg-gray-50">
+              <a href="/l8/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-3 bg-white hover:bg-gray-50">
                 <div class="flex items-center justify-between gap-3">
                   <div>
                     <div class="font-medium text-sm"><%= m.title %></div>
@@ -188,7 +188,7 @@
             <% pastMeetings.forEach(function(m) { %>
               <li class="ml-4">
                 <span class="absolute -left-1.5 mt-2 w-3 h-3 rounded-full bg-otp-500 border-2 border-white"></span>
-                <a href="/l10/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-3 bg-white hover:bg-gray-50">
+                <a href="/l8/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-3 bg-white hover:bg-gray-50">
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex-1">
                       <div class="font-medium text-sm"><%= m.title %></div>

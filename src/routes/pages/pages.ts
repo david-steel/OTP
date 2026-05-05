@@ -784,7 +784,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       { name: 'Intelligence Inbox', description: 'A feed of relevant coordination intelligence discoveries delivered to an OTP publisher when new patterns emerge.' },
       { name: 'JSON-LD', description: 'A way to embed structured data into a web page so search engines and AI systems can understand the content.' },
       { name: 'Knowledge Claim', description: 'An individual operational rule extracted from an OOS with a claim ID, section, rule, reasoning, failure mode, confidence level, and evidence type.' },
-      { name: 'L10 Meeting', description: 'A weekly 90-minute leadership meeting from EOS with a strict agenda including scorecard review, rock updates, and IDS.' },
+      { name: 'L8 Meeting', description: 'OTP\'s weekly 90-minute leadership meeting -- the cadence designed to advance an organization toward Level 8 (Autonomous Agent Teams) on the 8 Levels of Agentic Engineering. Same agenda shape as the EOS L10 (scorecard review, rock updates, IDS), pointed at agentic maturity rather than just business rhythm.' },
       { name: 'Latency', description: 'The time between asking an AI model a question and getting a response. In multi-agent systems, latency compounds across agents.' },
       { name: 'llms.txt', description: 'A file at the root of a website that tells AI language models what the site is about and how to interact with it.' },
       { name: 'MCP (Model Context Protocol)', description: 'An open protocol created by Anthropic that lets AI models connect to external tools and data sources.' },
@@ -2959,9 +2959,24 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     }
   });
 
-  // ---------- L10 (EOS Level-10 meeting) ----------
+  // ---------- /l10 -> /l8 back-compat redirects (renamed 2026-05-05) ----------
+  // External links and bookmarks may still point at /l10. Send them to /l8.
+  app.get('/l10', async (_req, reply) => reply.redirect('/l8', 301));
+  app.get('/l10/create', async (_req, reply) => reply.redirect('/l8/create', 301));
+  app.post('/l10/create', async (req, reply) => {
+    const qs = new URLSearchParams((req.query as any) || {}).toString();
+    return reply.redirect('/l8/create' + (qs ? '?' + qs : ''), 308);
+  });
+  app.get<{ Params: { id: string } }>('/l10/meeting/:id', async (req, reply) => {
+    const qs = new URLSearchParams((req.query as any) || {}).toString();
+    return reply.redirect('/l8/meeting/' + req.params.id + (qs ? '?' + qs : ''), 301);
+  });
+
+  // ---------- L8 (weekly meeting that drives the org to agentic maturity) ----------
+  // Same cadence and agenda shape as the EOS L10. The "L8" name aims at
+  // Level 8 of the 8 Levels of Agentic Engineering -- Autonomous Agent Teams.
   // Helper: resolve org from Clerk user OR (dev-only) ?orgId= query param
-  async function l10ResolveOrg(request: any, reply: any) {
+  async function l8ResolveOrg(request: any, reply: any) {
     // Dev-only override: ?orgId=<uuid|clerkOrgId> -- never enabled in production.
     if (process.env.NODE_ENV !== 'production') {
       const orgIdParam = (request.query as any)?.orgId || (request.query as any)?.org;
@@ -2991,9 +3006,9 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     return org;
   }
 
-  // /l10  -- list meetings for the user's org, with quick-create
-  app.get('/l10', async (request, reply) => {
-    const org = await l10ResolveOrg(request, reply);
+  // /l8  -- list meetings for the user's org, with quick-create
+  app.get('/l8', async (request, reply) => {
+    const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
     const myMeetings = await db.select().from(meetings)
@@ -3002,10 +3017,10 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .limit(50);
 
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
-    return reply.view('pages/l10-list', {
-      title: 'Weekly Leadership Meetings -- OTP',
-      description: 'Run your weekly leadership meeting from one page.',
-      canonical: BASE_URL + '/l10',
+    return reply.view('pages/l8-list', {
+      title: 'L8 Meetings -- OTP',
+      description: 'Run your weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
+      canonical: BASE_URL + '/l8',
       noindex: true,
       org,
       meetings: myMeetings,
@@ -3013,9 +3028,9 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     });
   });
 
-  // POST /l10/create  -- quick create handler (form post)
-  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string } }>('/l10/create', async (request, reply) => {
-    const org = await l10ResolveOrg(request, reply);
+  // POST /l8/create  -- quick create handler (form post)
+  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string } }>('/l8/create', async (request, reply) => {
+    const org = await l8ResolveOrg(request, reply);
     if (!org) return;
     const auth = getAuth(request);
     const { title, scheduledAt, meetingType } = request.body || {};
@@ -3031,16 +3046,16 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       createdBy: auth.userId || 'unknown',
     }).returning();
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
-    return reply.redirect('/l10/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
+    return reply.redirect('/l8/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
   });
 
-  // /l10/meeting/:id  -- the L10 page itself
-  app.get<{ Params: { id: string } }>('/l10/meeting/:id', async (request, reply) => {
+  // /l8/meeting/:id  -- the L8 page itself
+  app.get<{ Params: { id: string } }>('/l8/meeting/:id', async (request, reply) => {
     const id = request.params.id;
     if (!validateUuidParam(id)) {
       return reply.status(400).send('Invalid meeting id');
     }
-    const org = await l10ResolveOrg(request, reply);
+    const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
     const [meeting] = await db.select().from(meetings)
@@ -3083,10 +3098,10 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // Carry the dev orgId through so client-side fetches keep the same auth context locally.
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
 
-    return reply.view('pages/l10-leadership', {
+    return reply.view('pages/l8-leadership', {
       title: meeting.title + ' -- OTP',
-      description: 'Weekly leadership meeting',
-      canonical: BASE_URL + '/l10/meeting/' + meeting.id,
+      description: 'Weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
+      canonical: BASE_URL + '/l8/meeting/' + meeting.id,
       noindex: true,
       org,
       meeting,
@@ -3100,7 +3115,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
   // ---------- Team member profile (per-person accountability page) ----------
   app.get<{ Params: { externalId: string } }>('/team/:externalId', async (request, reply) => {
-    const org = await l10ResolveOrg(request, reply);
+    const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
     const externalId = decodeURIComponent(request.params.externalId);
