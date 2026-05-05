@@ -1134,14 +1134,27 @@ export default async function pageRoutes(app: FastifyInstance) {
     // agents/humans with empty or missing skills
     const missingSkills: Array<EntityRef> = [];
 
+    // Normalise the skills field. YAML chart files sometimes store skills as
+    // a YAML array (preferred) and sometimes as a comma-separated string
+    // (the CSV import path stores it as a single string until next save).
+    // Both shapes need to count as assigned skills.
+    function readSkills(raw: unknown): string[] {
+      if (Array.isArray(raw)) {
+        return raw.map(s => String(s || '').trim()).filter(Boolean);
+      }
+      if (typeof raw === 'string') {
+        return raw.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+      }
+      return [];
+    }
+
     for (const o of allOrgs) {
       try {
         const graph = await getOrgTeamGraph(o.id, o.name || '');
         for (const node of graph.nodes) {
           if (node.type !== 'agent' && node.type !== 'human') continue;
           const props: any = node.properties || {};
-          const skillsRaw = Array.isArray(props.skills) ? props.skills as string[] : [];
-          const skillsClean = skillsRaw.map(s => String(s || '').trim()).filter(Boolean);
+          const skillsClean = readSkills(props.skills);
           const role: string | null = (props.role || props.jobDescription) ? String(props.role || props.jobDescription).trim() : null;
 
           const ref: EntityRef = {
