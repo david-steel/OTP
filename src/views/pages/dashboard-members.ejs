@@ -10,6 +10,7 @@
   var dataToggles = locals.dataToggles || [];
   var availableRoles = locals.availableRoles || [];
   var chartPositions = locals.chartPositions || [];
+  var roleDefaults = locals.roleDefaults || {};
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -114,11 +115,10 @@
         <span class="text-xs text-gray-500 mt-1 block">You can invite at-or-below your own role (<%= inviterRole %>).</span>
       </label>
 
-      <!-- Org chart position -->
+      <!-- Org chart positions (multi-select) -->
       <label class="block">
-        <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Org chart position</span>
-        <select name="claimedEntityId" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
-          <option value="">-- No specific tile (general member) --</option>
+        <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Org chart positions</span>
+        <select name="claimedEntityIds" multiple size="6" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
           <% var humans = chartPositions.filter(function(p) { return p.type === 'human'; }); %>
           <% var agents = chartPositions.filter(function(p) { return p.type === 'agent'; }); %>
           <% if (humans.length > 0) { %>
@@ -148,7 +148,7 @@
           <% if (chartPositions.length === 0) { %>
             No org chart published yet. Build one at <a href="/dashboard/team" class="underline">/dashboard/team</a>, then come back to assign tiles.
           <% } else { %>
-            Tiles already claimed are disabled. Leave blank if this person isn't on the chart yet.
+            Hold Cmd / Ctrl to select multiple tiles -- one human can hold several seats. Tiles already claimed are disabled. Leave nothing selected if this person isn't on the chart yet.
           <% } %>
         </span>
       </label>
@@ -214,6 +214,31 @@
   var btn = document.getElementById('invite-submit');
   if (!form) return;
 
+  // Per-role default toggle map. When the role select changes, flip the
+  // checkboxes to match this map so admins don't have to think through each
+  // toggle. They can still override before submitting.
+  var ROLE_DEFAULTS = <%- JSON.stringify(roleDefaults) %>;
+
+  function applyRoleDefaults(role) {
+    var defaults = ROLE_DEFAULTS[role];
+    if (!defaults) return;
+    Object.keys(defaults).forEach(function(key) {
+      // Toggle inputs are named "feature_<key>" or "data_<key>".
+      var el = form.querySelector('input[type="checkbox"][name="feature_' + key + '"]') ||
+               form.querySelector('input[type="checkbox"][name="data_' + key + '"]');
+      if (el) el.checked = !!defaults[key];
+    });
+  }
+
+  var roleSelect = form.querySelector('select[name="role"]');
+  if (roleSelect) {
+    roleSelect.addEventListener('change', function() {
+      applyRoleDefaults(roleSelect.value);
+    });
+    // Apply once on initial load to match the pre-selected role.
+    applyRoleDefaults(roleSelect.value);
+  }
+
   function readToggles(prefix) {
     var out = {};
     Array.prototype.forEach.call(form.querySelectorAll('input[type="checkbox"][name^="' + prefix + '"]'), function(el) {
@@ -234,11 +259,21 @@
     var agentAccess = {};
     agentSlugs.forEach(function(s) { agentAccess[s] = true; });
 
+    // Multi-seat select: collect every selected option value from the
+    // claimedEntityIds dropdown. fd.get returns only the first value.
+    var seatSelect = form.querySelector('select[name="claimedEntityIds"]');
+    var seatIds = [];
+    if (seatSelect) {
+      Array.prototype.forEach.call(seatSelect.selectedOptions, function(opt) {
+        if (opt.value) seatIds.push(opt.value);
+      });
+    }
+
     var body = {
       email: fd.get('email'),
       displayName: fd.get('displayName') || undefined,
       role: fd.get('role') || 'managee',
-      claimedEntityId: fd.get('claimedEntityId') || undefined,
+      claimedEntityIds: seatIds.length > 0 ? seatIds : undefined,
       featureAccess: readToggles('feature_'),
       dataAccess: readToggles('data_'),
       agentAccess: agentAccess,

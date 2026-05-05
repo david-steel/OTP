@@ -22,6 +22,19 @@ const STATIC_DDL: string[] = [
   `ALTER TABLE "org_invitations" ADD COLUMN IF NOT EXISTS "feature_access" jsonb NOT NULL DEFAULT '{}'::jsonb;`,
   `ALTER TABLE "org_invitations" ADD COLUMN IF NOT EXISTS "data_access" jsonb NOT NULL DEFAULT '{}'::jsonb;`,
   `ALTER TABLE "org_invitations" ADD COLUMN IF NOT EXISTS "agent_access" jsonb NOT NULL DEFAULT '{}'::jsonb;`,
+  // Multi-seat: a single human can hold multiple tiles on the org chart.
+  // The original claimed_entity_id stays as the "primary" seat for back-compat;
+  // claimed_entity_ids carries the full set (including the primary).
+  `ALTER TABLE "org_invitations" ADD COLUMN IF NOT EXISTS "claimed_entity_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;`,
+  `ALTER TABLE "org_members"     ADD COLUMN IF NOT EXISTS "claimed_entity_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;`,
+  // Backfill: any member or invite with a single primary seat gets it
+  // mirrored into the array (idempotent: only populate empty arrays).
+  `UPDATE "org_members" SET "claimed_entity_ids" = jsonb_build_array("claimed_entity_id")
+     WHERE "claimed_entity_id" IS NOT NULL
+       AND ("claimed_entity_ids" = '[]'::jsonb OR "claimed_entity_ids" IS NULL);`,
+  `UPDATE "org_invitations" SET "claimed_entity_ids" = jsonb_build_array("claimed_entity_id")
+     WHERE "claimed_entity_id" IS NOT NULL
+       AND ("claimed_entity_ids" = '[]'::jsonb OR "claimed_entity_ids" IS NULL);`,
 ];
 
 export async function ensureOrgInvitationsExtensions(): Promise<void> {

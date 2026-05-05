@@ -304,6 +304,7 @@ export default async function teamRoutes(app: FastifyInstance) {
       email: z.string().email().max(200),
       displayName: z.string().max(200).optional(),
       claimedEntityId: z.string().max(120).optional(),
+      claimedEntityIds: z.array(z.string().max(120)).max(50).optional(),
       role: z.enum([
         'owner', 'admin', 'manager', 'managee',
         'inactive', 'observer', 'implementer', 'free',
@@ -331,6 +332,7 @@ export default async function teamRoutes(app: FastifyInstance) {
         email: body.data.email,
         displayName: body.data.displayName || null,
         claimedEntityId: body.data.claimedEntityId || null,
+        claimedEntityIds: body.data.claimedEntityIds,
         role: requestedRole,
         access: {
           feature: body.data.featureAccess || {},

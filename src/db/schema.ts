@@ -484,7 +484,8 @@ export const orgMembers = pgTable('org_members', {
   email: varchar('email', { length: 255 }),
   displayName: varchar('display_name', { length: 255 }),
   role: orgMemberRoleEnum('role').notNull().default('managee'),
-  claimedEntityId: varchar('claimed_entity_id', { length: 120 }), // tile they claimed (HUM_X)
+  claimedEntityId: varchar('claimed_entity_id', { length: 120 }), // primary tile (back-compat)
+  claimedEntityIds: jsonb('claimed_entity_ids').notNull().default([]).$type<string[]>(), // full list of tiles this human holds
   status: orgMemberStatusEnum('status').notNull().default('active'),
   // Phase 1 access toggles (admin sets at invite time, employee sees what they have)
   featureAccess: jsonb('feature_access').notNull().default({}),
@@ -506,7 +507,8 @@ export const orgInvitations = pgTable('org_invitations', {
   orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   email: varchar('email', { length: 200 }).notNull(),
   role: orgMemberRoleEnum('role').notNull().default('managee'),
-  claimedEntityId: varchar('claimed_entity_id', { length: 120 }),
+  claimedEntityId: varchar('claimed_entity_id', { length: 120 }), // primary tile (back-compat)
+  claimedEntityIds: jsonb('claimed_entity_ids').notNull().default([]).$type<string[]>(),
   displayName: varchar('display_name', { length: 255 }),
   // Phase 2 access toggles: copied into org_members on accept
   featureAccess: jsonb('feature_access').notNull().default({}),

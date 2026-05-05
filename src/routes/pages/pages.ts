@@ -1342,7 +1342,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const { listMembers, listPendingInvites } = await import('../../services/membership.js');
     const members = await listMembers(org.id);
     const invitations = await listPendingInvites(org.id);
-    const { FEATURE_TOGGLES, DATA_TOGGLES } = await import('../../data/access-toggles.js');
+    const { FEATURE_TOGGLES, DATA_TOGGLES, ROLE_DEFAULT_TOGGLES } = await import('../../data/access-toggles.js');
 
     // Pull the org chart so the inviter can match the new member to a
     // specific accountability tile (HUM_X / AI_X). Filter to human + agent
@@ -1414,6 +1414,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       dataToggles: DATA_TOGGLES,
       availableRoles,
       chartPositions,
+      roleDefaults: ROLE_DEFAULT_TOGGLES,
     });
   });
 

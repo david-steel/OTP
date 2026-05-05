@@ -137,7 +137,8 @@ export interface IssueInviteOptions {
   orgId: string;
   ownerUserId: string;        // Clerk user issuing the invite (must hold a role authorized to invite)
   email: string;
-  claimedEntityId?: string | null;
+  claimedEntityId?: string | null;     // primary tile (back-compat with single-seat code paths)
+  claimedEntityIds?: string[];          // all tiles this human holds; primary is the first element
   role?: Role;                // default 'managee'
   displayName?: string | null;
   access?: AccessToggles;     // pre-configured toggles, copied to org_members on accept
@@ -196,11 +197,20 @@ export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Pr
   const { token, tokenHash } = generateToken();
   const expiresAt = new Date(Date.now() + ttl);
 
+  // Normalise the multi-seat list. If the caller only sent a single
+  // claimedEntityId, treat it as a one-element list. If they sent a list,
+  // the first element becomes the back-compat single field.
+  const seatList = (opts.claimedEntityIds && opts.claimedEntityIds.length > 0)
+    ? Array.from(new Set(opts.claimedEntityIds.filter(Boolean)))
+    : (opts.claimedEntityId ? [opts.claimedEntityId] : []);
+  const primarySeat = seatList[0] || opts.claimedEntityId || null;
+
   const [created] = await db.insert(orgInvitations).values({
     orgId: opts.orgId,
     email,
     role,
-    claimedEntityId: opts.claimedEntityId || null,
+    claimedEntityId: primarySeat,
+    claimedEntityIds: seatList,
     displayName: opts.displayName || null,
     featureAccess: opts.access?.feature || {},
     dataAccess: opts.access?.data || {},
@@ -288,6 +298,7 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     clerkUserId,
     role: inv.role,
     claimedEntityId: inv.claimedEntityId,
+    claimedEntityIds: ((inv.claimedEntityIds as string[]) || []),
     email: userEmail || inv.email,
     displayName: inv.displayName || null,
     featureAccess: (inv.featureAccess as Record<string, boolean>) || {},

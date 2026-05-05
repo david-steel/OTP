@@ -38,3 +38,48 @@ export const DATA_TOGGLES: AccessToggle[] = [
   { key: 'view_partners',        label: 'See partner records',       description: 'Read partner applications and tier info.', defaultOn: false },
   { key: 'view_consultants',     label: 'See consultant ecosystem',  description: 'Read consultant profiles and workspaces.', defaultOn: false },
 ];
+
+/**
+ * Per-role default toggle map. The invite form uses this to pre-fill the
+ * checkboxes when an admin picks a role from the dropdown. Keys are toggle
+ * keys (must exist in FEATURE_TOGGLES or DATA_TOGGLES); values are the
+ * default ON state.
+ *
+ * Owners / admins / implementers don't need toggle defaults -- they bypass
+ * gates entirely (see permissions.canEditOrgSettings). The defaults below
+ * shape what a manager / managee / observer / free seat sees on day one.
+ */
+export const ROLE_DEFAULT_TOGGLES: Record<string, Record<string, boolean>> = {
+  // Full access. Pre-check everything so the form reflects "they can do
+  // anything"; these roles bypass gates anyway, this is just visual.
+  owner:       { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: true,  run_one_on_one: true,
+                 view_admin_dashboard: true,  view_team_chart: true, view_partners: true,  view_consultants: true },
+  admin:       { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: true,  run_one_on_one: true,
+                 view_admin_dashboard: true,  view_team_chart: true, view_partners: true,  view_consultants: true },
+  implementer: { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: true,  run_one_on_one: true,
+                 view_admin_dashboard: true,  view_team_chart: true, view_partners: false, view_consultants: false },
+
+  // Manager: runs their team, can run meetings.
+  manager:     { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: true,  run_one_on_one: true,
+                 view_admin_dashboard: false, view_team_chart: true, view_partners: false, view_consultants: false },
+
+  // Managee: in the meeting, but doesn't run it.
+  managee:     { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: false, run_one_on_one: false,
+                 view_admin_dashboard: false, view_team_chart: true, view_partners: false, view_consultants: false },
+
+  // Observer: read-only across the board. No "run" toggles.
+  observer:    { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: false, run_one_on_one: false,
+                 view_admin_dashboard: false, view_team_chart: true, view_partners: false, view_consultants: false },
+
+  // Free: minimal. They can see the chart and read OOS, nothing else.
+  free:        { view_scorecard: false, view_kpis: false, view_oos: true, view_rocks: false, view_todos: false, view_issues: false, run_l8: false, run_one_on_one: false,
+                 view_admin_dashboard: false, view_team_chart: true, view_partners: false, view_consultants: false },
+
+  // Inactive: chart-only. Everything off.
+  inactive:    { view_scorecard: false, view_kpis: false, view_oos: false, view_rocks: false, view_todos: false, view_issues: false, run_l8: false, run_one_on_one: false,
+                 view_admin_dashboard: false, view_team_chart: false, view_partners: false, view_consultants: false },
+
+  // Legacy alias for managee.
+  member:      { view_scorecard: true, view_kpis: true, view_oos: true, view_rocks: true, view_todos: true, view_issues: true, run_l8: false, run_one_on_one: false,
+                 view_admin_dashboard: false, view_team_chart: true, view_partners: false, view_consultants: false },
+};
