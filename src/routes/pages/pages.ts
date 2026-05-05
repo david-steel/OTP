@@ -1344,6 +1344,40 @@ export default async function pageRoutes(app: FastifyInstance) {
     const invitations = await listPendingInvites(org.id);
     const { FEATURE_TOGGLES, DATA_TOGGLES } = await import('../../data/access-toggles.js');
 
+    // Pull the org chart so the inviter can match the new member to a
+    // specific accountability tile (HUM_X / AI_X). Filter to human + agent
+    // tiles (skip the synthetic ORG root), and flag which are already
+    // claimed by an active member or pending invite.
+    const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const claimedByMember: Record<string, { displayName: string | null; email: string | null; role: string }> = {};
+    for (const m of members) {
+      if (m.claimedEntityId) {
+        claimedByMember[m.claimedEntityId] = {
+          displayName: (m as any).displayName || null,
+          email: (m as any).email || null,
+          role: m.role,
+        };
+      }
+    }
+    const claimedByInvite: Record<string, { email: string }> = {};
+    for (const inv of invitations) {
+      if (inv.claimedEntityId) claimedByInvite[inv.claimedEntityId] = { email: inv.email };
+    }
+    const chartPositions = team.nodes
+      .filter(n => n.type === 'human' || n.type === 'agent')
+      .map(n => ({
+        externalId: n.externalId,
+        label: n.label,
+        type: n.type,
+        claimedBy: claimedByMember[n.externalId] || null,
+        pendingInvite: claimedByInvite[n.externalId] || null,
+      }))
+      .sort((a, b) => {
+        // Humans first, then agents; alpha by label inside each group.
+        if (a.type !== b.type) return a.type === 'human' ? -1 : 1;
+        return a.label.localeCompare(b.label);
+      });
+
     // Inviters can issue at-or-below their own rank.
     const RANK: Record<Role, number> = {
       owner: 4, implementer: 3, admin: 3, manager: 2,
@@ -1379,6 +1413,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       featureToggles: FEATURE_TOGGLES,
       dataToggles: DATA_TOGGLES,
       availableRoles,
+      chartPositions,
     });
   });
 

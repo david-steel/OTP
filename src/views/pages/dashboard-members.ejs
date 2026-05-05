@@ -9,6 +9,7 @@
   var featureToggles = locals.featureToggles || [];
   var dataToggles = locals.dataToggles || [];
   var availableRoles = locals.availableRoles || [];
+  var chartPositions = locals.chartPositions || [];
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -113,6 +114,45 @@
         <span class="text-xs text-gray-500 mt-1 block">You can invite at-or-below your own role (<%= inviterRole %>).</span>
       </label>
 
+      <!-- Org chart position -->
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Org chart position</span>
+        <select name="claimedEntityId" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+          <option value="">-- No specific tile (general member) --</option>
+          <% var humans = chartPositions.filter(function(p) { return p.type === 'human'; }); %>
+          <% var agents = chartPositions.filter(function(p) { return p.type === 'agent'; }); %>
+          <% if (humans.length > 0) { %>
+            <optgroup label="Humans">
+              <% humans.forEach(function(p) { %>
+                <% var taken = p.claimedBy || p.pendingInvite; %>
+                <% var takenLabel = p.claimedBy ? ('claimed by ' + (p.claimedBy.displayName || p.claimedBy.email || p.claimedBy.role)) : (p.pendingInvite ? ('invite pending: ' + p.pendingInvite.email) : ''); %>
+                <option value="<%= p.externalId %>" <%= taken ? 'disabled' : '' %>>
+                  <%= p.label %><%= taken ? ' -- ' + takenLabel : '' %>
+                </option>
+              <% }) %>
+            </optgroup>
+          <% } %>
+          <% if (agents.length > 0) { %>
+            <optgroup label="AI Agents">
+              <% agents.forEach(function(p) { %>
+                <% var taken = p.claimedBy || p.pendingInvite; %>
+                <% var takenLabel = p.claimedBy ? ('claimed by ' + (p.claimedBy.displayName || p.claimedBy.email || p.claimedBy.role)) : (p.pendingInvite ? ('invite pending: ' + p.pendingInvite.email) : ''); %>
+                <option value="<%= p.externalId %>" <%= taken ? 'disabled' : '' %>>
+                  <%= p.label %><%= taken ? ' -- ' + takenLabel : '' %>
+                </option>
+              <% }) %>
+            </optgroup>
+          <% } %>
+        </select>
+        <span class="text-xs text-gray-500 mt-1 block">
+          <% if (chartPositions.length === 0) { %>
+            No org chart published yet. Build one at <a href="/dashboard/team" class="underline">/dashboard/team</a>, then come back to assign tiles.
+          <% } else { %>
+            Tiles already claimed are disabled. Leave blank if this person isn't on the chart yet.
+          <% } %>
+        </span>
+      </label>
+
       <!-- Feature toggles -->
       <details class="border border-gray-200 rounded-lg overflow-hidden" open>
         <summary class="cursor-pointer bg-gray-50 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-700 select-none">Feature access</summary>
@@ -198,6 +238,7 @@
       email: fd.get('email'),
       displayName: fd.get('displayName') || undefined,
       role: fd.get('role') || 'managee',
+      claimedEntityId: fd.get('claimedEntityId') || undefined,
       featureAccess: readToggles('feature_'),
       dataAccess: readToggles('data_'),
       agentAccess: agentAccess,
