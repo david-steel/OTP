@@ -26,6 +26,22 @@ await app.register(fastifyCookie, {
   secret: process.env.IMPERSONATION_SECRET || process.env.CLERK_SECRET_KEY || 'dev-cookie-secret',
 });
 
+// Accept application/x-www-form-urlencoded bodies for plain HTML form posts
+// (impersonation buttons, /l8/create form, accept-invite, etc). Fastify
+// default only handles JSON; without this it rejects forms with 415.
+app.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string' }, (_req, body, done) => {
+  try {
+    const parsed: Record<string, string> = {};
+    if (typeof body === 'string' && body.length > 0) {
+      const params = new URLSearchParams(body);
+      for (const [k, v] of params.entries()) parsed[k] = v;
+    }
+    done(null, parsed);
+  } catch (err) {
+    done(err as Error, undefined);
+  }
+});
+
 // CORS
 await app.register(fastifyCors, {
   origin: process.env.NODE_ENV === 'production'
