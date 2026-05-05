@@ -542,6 +542,27 @@ export default async function teamRoutes(app: FastifyInstance) {
     const members = await listMembers(org.id);
     return { data: members, viewerRole: role };
   });
+
+  // ============================================================
+  // DELETE /api/v1/team/members/:id -- revoke an active member
+  // (soft delete: status -> 'revoked', row stays for audit + tile-claim history)
+  // ============================================================
+  app.delete<{ Params: { id: string } }>('/team/members/:id', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) {
+      return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid member id' } });
+    }
+    try {
+      const { removeMember } = await import('../../services/membership.js');
+      return await removeMember(request.params.id, auth.userId);
+    } catch (e) {
+      if (e instanceof MembershipError) {
+        return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      }
+      throw e;
+    }
+  });
 }
 
 // ---- Email template (inline so we do not add another file for one email) ----

@@ -387,11 +387,44 @@ export async function revokeInvite(invitationId: string, ownerUserId: string): P
   if (!inv) throw new MembershipError('NOT_FOUND', 'Invitation not found', 404);
 
   const role = await getRoleForUser(inv.orgId, ownerUserId);
-  if (role !== 'owner') throw new MembershipError('NOT_OWNER', 'Only the org owner can revoke invitations', 403);
+  // Phase 4: widened from owner-only to owner|admin|implementer.
+  if (!role || (role !== 'owner' && role !== 'admin' && role !== 'implementer')) {
+    throw new MembershipError('CANNOT_REVOKE', 'Your role does not allow revoking invitations', 403);
+  }
 
   if (inv.status !== 'pending') return { ok: true, id: invitationId };
   await db.update(orgInvitations).set({ status: 'revoked' }).where(eq(orgInvitations.id, invitationId));
   return { ok: true, id: invitationId };
+}
+
+/**
+ * Remove a member from the org by flipping their status to 'revoked'.
+ * Soft-delete: the row stays so the audit trail and any tile claim
+ * lookups still resolve historically. Owner / admin / implementer only;
+ * cannot revoke an owner.
+ */
+export async function removeMember(
+  memberId: string,
+  requesterUserId: string,
+): Promise<{ ok: true; id: string }> {
+  const [target] = await db.select().from(orgMembers).where(eq(orgMembers.id, memberId)).limit(1);
+  if (!target) throw new MembershipError('NOT_FOUND', 'Member not found', 404);
+
+  const requesterRole = await getRoleForUser(target.orgId, requesterUserId);
+  if (!requesterRole || (requesterRole !== 'owner' && requesterRole !== 'admin' && requesterRole !== 'implementer')) {
+    throw new MembershipError('CANNOT_REVOKE_MEMBER', 'Your role does not allow removing members', 403);
+  }
+  if (target.role === 'owner') {
+    throw new MembershipError('CANNOT_REVOKE_OWNER', 'Owners cannot be revoked. Transfer ownership first.', 403);
+  }
+  if (target.clerkUserId === requesterUserId) {
+    throw new MembershipError('CANNOT_REVOKE_SELF', 'You cannot revoke yourself.', 403);
+  }
+
+  await db.update(orgMembers)
+    .set({ status: 'revoked', updatedAt: new Date() })
+    .where(eq(orgMembers.id, memberId));
+  return { ok: true, id: memberId };
 }
 
 // ---- Maintenance: expire old pending invites (call from cron) ----

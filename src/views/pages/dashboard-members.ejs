@@ -47,6 +47,7 @@
               <th class="text-left px-4 py-2">Email</th>
               <th class="text-left px-4 py-2">Role</th>
               <th class="text-left px-4 py-2">Joined</th>
+              <th class="text-right px-4 py-2 w-24">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-100">
@@ -56,6 +57,19 @@
                 <td class="px-4 py-3 text-gray-600"><%= m.email || '-' %></td>
                 <td class="px-4 py-3"><span class="inline-block px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= m.role %></span></td>
                 <td class="px-4 py-3 text-gray-500 text-xs"><%= m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : '-' %></td>
+                <td class="px-4 py-3 text-right">
+                  <% if (m.role !== 'owner') { %>
+                    <button type="button"
+                            data-member-id="<%= m.id %>"
+                            data-member-name="<%= (m.displayName || m.email || 'this member').replace(/"/g, '&quot;') %>"
+                            onclick="revokeMember(this)"
+                            class="text-xs px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">
+                      Revoke
+                    </button>
+                  <% } else { %>
+                    <span class="text-xs text-gray-400 italic">owner</span>
+                  <% } %>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -76,6 +90,7 @@
               <th class="text-left px-4 py-2">Role</th>
               <th class="text-left px-4 py-2">Sent</th>
               <th class="text-left px-4 py-2">Expires</th>
+              <th class="text-right px-4 py-2 w-24">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-100">
@@ -85,6 +100,15 @@
                 <td class="px-4 py-3"><span class="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-semibold uppercase tracking-wide"><%= inv.role %></span></td>
                 <td class="px-4 py-3 text-gray-500 text-xs"><%= inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : '-' %></td>
                 <td class="px-4 py-3 text-gray-500 text-xs"><%= inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString() : '-' %></td>
+                <td class="px-4 py-3 text-right">
+                  <button type="button"
+                          data-invite-id="<%= inv.id %>"
+                          data-invite-email="<%= inv.email.replace(/"/g, '&quot;') %>"
+                          onclick="revokeInvite(this)"
+                          class="text-xs px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">
+                    Revoke
+                  </button>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -229,6 +253,46 @@
 </div>
 
 <script>
+window.revokeInvite = async function(btn) {
+  var id = btn.getAttribute('data-invite-id');
+  var email = btn.getAttribute('data-invite-email');
+  if (!confirm('Revoke the pending invite for ' + email + '? They will not be able to use the link in their email.')) return;
+  btn.disabled = true; btn.textContent = 'Revoking...';
+  try {
+    var res = await fetch('/api/v1/team/invitations/' + id, { method: 'DELETE' });
+    if (!res.ok) {
+      var err = await res.json().catch(function(){ return {}; });
+      alert('Failed: ' + ((err.error && err.error.message) || res.status));
+      btn.disabled = false; btn.textContent = 'Revoke';
+      return;
+    }
+    window.location.reload();
+  } catch (e) {
+    alert('Network error.');
+    btn.disabled = false; btn.textContent = 'Revoke';
+  }
+};
+
+window.revokeMember = async function(btn) {
+  var id = btn.getAttribute('data-member-id');
+  var name = btn.getAttribute('data-member-name');
+  if (!confirm('Revoke ' + name + '? They will lose access immediately. The chart tile they claimed stays on the org chart but is no longer linked to them.')) return;
+  btn.disabled = true; btn.textContent = 'Revoking...';
+  try {
+    var res = await fetch('/api/v1/team/members/' + id, { method: 'DELETE' });
+    if (!res.ok) {
+      var err = await res.json().catch(function(){ return {}; });
+      alert('Failed: ' + ((err.error && err.error.message) || res.status));
+      btn.disabled = false; btn.textContent = 'Revoke';
+      return;
+    }
+    window.location.reload();
+  } catch (e) {
+    alert('Network error.');
+    btn.disabled = false; btn.textContent = 'Revoke';
+  }
+};
+
 (function() {
   var form = document.getElementById('invite-form');
   var status = document.getElementById('invite-status');
