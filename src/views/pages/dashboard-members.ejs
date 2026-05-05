@@ -1,0 +1,229 @@
+<%
+  // Members page. Owner / admin / manager only (gated by requireCanInvite
+  // in the route handler). Lists existing org_members + pending invitations
+  // and provides an "Invite member" form that POSTs to /api/v1/team/invite.
+  var orgName = (locals.org && locals.org.name) || 'Your org';
+  var members = locals.members || [];
+  var invitations = locals.invitations || [];
+  var inviterRole = (locals.member && locals.member.role) || 'owner';
+  var featureToggles = locals.featureToggles || [];
+  var dataToggles = locals.dataToggles || [];
+  var availableRoles = locals.availableRoles || [];
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <!-- Header -->
+  <div class="mb-8 flex items-end justify-between gap-4">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Members</h1>
+      <p class="text-sm text-gray-600 mt-1"><%= members.length %> active &middot; <%= invitations.length %> pending invite<%= invitations.length === 1 ? '' : 's' %></p>
+    </div>
+    <a href="/dashboard" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50">&larr; Dashboard</a>
+  </div>
+
+  <!-- Active members -->
+  <section class="mb-10">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">Active</h2>
+    <% if (members.length === 0) { %>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">No active members yet.</div>
+    <% } else { %>
+      <div class="overflow-hidden rounded-lg border border-gray-200">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+            <tr>
+              <th class="text-left px-4 py-2">Name</th>
+              <th class="text-left px-4 py-2">Email</th>
+              <th class="text-left px-4 py-2">Role</th>
+              <th class="text-left px-4 py-2">Joined</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% members.forEach(function(m) { %>
+              <tr>
+                <td class="px-4 py-3"><%= m.displayName || '(no name)' %></td>
+                <td class="px-4 py-3 text-gray-600"><%= m.email || '-' %></td>
+                <td class="px-4 py-3"><span class="inline-block px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= m.role %></span></td>
+                <td class="px-4 py-3 text-gray-500 text-xs"><%= m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- Pending invitations -->
+  <% if (invitations.length > 0) { %>
+    <section class="mb-10">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">Pending invites</h2>
+      <div class="overflow-hidden rounded-lg border border-amber-200">
+        <table class="w-full text-sm">
+          <thead class="bg-amber-50 text-xs uppercase tracking-wide text-amber-800">
+            <tr>
+              <th class="text-left px-4 py-2">Email</th>
+              <th class="text-left px-4 py-2">Role</th>
+              <th class="text-left px-4 py-2">Sent</th>
+              <th class="text-left px-4 py-2">Expires</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% invitations.forEach(function(inv) { %>
+              <tr>
+                <td class="px-4 py-3"><%= inv.email %></td>
+                <td class="px-4 py-3"><span class="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-semibold uppercase tracking-wide"><%= inv.role %></span></td>
+                <td class="px-4 py-3 text-gray-500 text-xs"><%= inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : '-' %></td>
+                <td class="px-4 py-3 text-gray-500 text-xs"><%= inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString() : '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Invite form -->
+  <section class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-bold text-gray-900 mb-1">Invite a member</h2>
+    <p class="text-sm text-gray-600 mb-6">Set their role and pre-configure their access. They'll receive an email with a link to accept.</p>
+
+    <form id="invite-form" class="space-y-6">
+
+      <!-- Identity -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Email</span>
+          <input name="email" type="email" required class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="bogdan@sneeze.it">
+        </label>
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Display name</span>
+          <input name="displayName" type="text" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Bogdan Tabaka">
+        </label>
+      </div>
+
+      <!-- Role -->
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Role</span>
+        <select name="role" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm">
+          <% availableRoles.forEach(function(r) { %>
+            <option value="<%= r.value %>" <%= r.value === 'managee' ? 'selected' : '' %>><%= r.label %></option>
+          <% }) %>
+        </select>
+        <span class="text-xs text-gray-500 mt-1 block">You can invite at-or-below your own role (<%= inviterRole %>).</span>
+      </label>
+
+      <!-- Feature toggles -->
+      <details class="border border-gray-200 rounded-lg overflow-hidden" open>
+        <summary class="cursor-pointer bg-gray-50 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-700 select-none">Feature access</summary>
+        <div class="p-4 space-y-3">
+          <% featureToggles.forEach(function(t) { %>
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" name="feature_<%= t.key %>" <%= t.defaultOn ? 'checked' : '' %> class="mt-0.5">
+              <span class="flex-1">
+                <span class="font-semibold text-sm text-gray-900"><%= t.label %></span>
+                <span class="block text-xs text-gray-500 mt-0.5"><%= t.description %></span>
+              </span>
+            </label>
+          <% }) %>
+        </div>
+      </details>
+
+      <!-- Data toggles -->
+      <details class="border border-gray-200 rounded-lg overflow-hidden">
+        <summary class="cursor-pointer bg-gray-50 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-700 select-none">Data access</summary>
+        <div class="p-4 space-y-3">
+          <% dataToggles.forEach(function(t) { %>
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" name="data_<%= t.key %>" <%= t.defaultOn ? 'checked' : '' %> class="mt-0.5">
+              <span class="flex-1">
+                <span class="font-semibold text-sm text-gray-900"><%= t.label %></span>
+                <span class="block text-xs text-gray-500 mt-0.5"><%= t.description %></span>
+              </span>
+            </label>
+          <% }) %>
+        </div>
+      </details>
+
+      <!-- Agent toggles (free-form for v1) -->
+      <details class="border border-gray-200 rounded-lg overflow-hidden">
+        <summary class="cursor-pointer bg-gray-50 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-700 select-none">Agent access</summary>
+        <div class="p-4">
+          <label class="block">
+            <span class="text-xs text-gray-600 mb-1 block">Comma-separated agent slugs (e.g. <code class="text-[11px] bg-gray-100 px-1 py-0.5 rounded">dirk, crystal, dash</code>). Each agent listed becomes a granted toggle on the new member's profile.</span>
+            <input name="agentSlugs" type="text" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono" placeholder="dirk, crystal">
+          </label>
+        </div>
+      </details>
+
+      <!-- Submit -->
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <div id="invite-status" class="text-sm text-gray-600 min-h-[1.25rem]"></div>
+        <button type="submit" id="invite-submit" class="px-5 py-2 bg-otp-600 text-white rounded-lg font-semibold text-sm hover:bg-otp-700 disabled:opacity-50">
+          Send invite
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script>
+(function() {
+  var form = document.getElementById('invite-form');
+  var status = document.getElementById('invite-status');
+  var btn = document.getElementById('invite-submit');
+  if (!form) return;
+
+  function readToggles(prefix) {
+    var out = {};
+    Array.prototype.forEach.call(form.querySelectorAll('input[type="checkbox"][name^="' + prefix + '"]'), function(el) {
+      var key = el.name.slice(prefix.length);
+      out[key] = el.checked;
+    });
+    return out;
+  }
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    btn.disabled = true;
+    status.textContent = 'Sending...';
+    status.className = 'text-sm text-gray-600 min-h-[1.25rem]';
+
+    var fd = new FormData(form);
+    var agentSlugs = String(fd.get('agentSlugs') || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    var agentAccess = {};
+    agentSlugs.forEach(function(s) { agentAccess[s] = true; });
+
+    var body = {
+      email: fd.get('email'),
+      displayName: fd.get('displayName') || undefined,
+      role: fd.get('role') || 'managee',
+      featureAccess: readToggles('feature_'),
+      dataAccess: readToggles('data_'),
+      agentAccess: agentAccess,
+    };
+
+    try {
+      var res = await fetch('/api/v1/team/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      var data = await res.json();
+      if (!res.ok) {
+        status.textContent = (data.error && data.error.message) || ('Error: ' + res.status);
+        status.className = 'text-sm text-red-600 min-h-[1.25rem]';
+        btn.disabled = false;
+        return;
+      }
+      status.textContent = 'Invite sent to ' + data.email + '. Reloading...';
+      status.className = 'text-sm text-emerald-700 min-h-[1.25rem]';
+      setTimeout(function() { window.location.reload(); }, 900);
+    } catch (err) {
+      status.textContent = 'Network error -- try again.';
+      status.className = 'text-sm text-red-600 min-h-[1.25rem]';
+      btn.disabled = false;
+    }
+  });
+})();
+</script>

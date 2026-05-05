@@ -1326,6 +1326,62 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   // Dashboard: Team org chart (live derivation from latest draft or published OOS)
+  // ---------- Members page (admin invite UX) ----------
+  app.get('/dashboard/members', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = await resolveOrgForUser(auth.userId);
+    if (!resolved) return reply.redirect('/dashboard');
+    const { org, role: viewerRole } = resolved;
+
+    const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
+    if (!ALLOWED.includes(viewerRole)) {
+      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    }
+
+    const { listMembers, listPendingInvites } = await import('../../services/membership.js');
+    const members = await listMembers(org.id);
+    const invitations = await listPendingInvites(org.id);
+    const { FEATURE_TOGGLES, DATA_TOGGLES } = await import('../../data/access-toggles.js');
+
+    // Inviters can issue at-or-below their own rank.
+    const RANK: Record<Role, number> = {
+      owner: 4, implementer: 3, admin: 3, manager: 2,
+      managee: 1, member: 1, observer: 1, free: 1, inactive: 0,
+    };
+    const ROLE_LABELS: Record<Role, string> = {
+      owner: 'Owner -- full access + can delete the company',
+      admin: 'Admin -- full access except delete',
+      manager: 'Manager -- assigned teams, can invite + create teams',
+      managee: 'Managee -- assigned teams, edit own items',
+      observer: 'Observer -- view-only, cannot own rocks/issues/todos',
+      implementer: 'Implementer -- entire company view+edit (cannot own items)',
+      free: 'Free -- placeholder seat',
+      inactive: 'Inactive -- on the chart only, no app access',
+      member: 'Member (legacy)',
+    };
+    const inviterRank = RANK[viewerRole as Role] ?? 0;
+    const PRESENT_ROLES: Role[] = ['owner', 'admin', 'manager', 'managee', 'observer', 'implementer', 'free', 'inactive'];
+    const availableRoles = PRESENT_ROLES
+      .filter(r => (RANK[r] ?? 0) <= inviterRank)
+      .map(r => ({ value: r, label: ROLE_LABELS[r] }));
+
+    const member = (request as any).orgMember;
+
+    return reply.view('pages/dashboard-members', {
+      title: 'Members - Dashboard - OTP',
+      description: 'Invite teammates and configure their access.',
+      noindex: true,
+      org,
+      member: member || { role: viewerRole },
+      members,
+      invitations,
+      featureToggles: FEATURE_TOGGLES,
+      dataToggles: DATA_TOGGLES,
+      availableRoles,
+    });
+  });
+
   app.get('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
