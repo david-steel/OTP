@@ -575,6 +575,22 @@ try {
   app.log.error({ err }, 'ensureImprovementsTable failed -- /admin/improvements may 500 until resolved');
 }
 
+try {
+  const { ensureOrgMembersTable } = await import('./db/ensure-org-members.js');
+  await ensureOrgMembersTable();
+  app.log.info('org_members table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgMembersTable failed -- employee/role features will not work until resolved');
+}
+
+try {
+  const { ensureTeamsTables } = await import('./db/ensure-teams.js');
+  await ensureTeamsTables();
+  app.log.info('teams + team_memberships tables are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureTeamsTables failed -- team-scoped features will not work until resolved');
+}
+
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';

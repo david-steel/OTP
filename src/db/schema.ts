@@ -464,17 +464,32 @@ export const onboardingSequence = pgTable('onboarding_sequence', {
 
 // ---- Org membership (Phase 4.6 multi-user invitations) ----
 
-export const orgMemberRoleEnum = pgEnum('org_member_role', ['owner', 'member']);
-export const orgMemberStatusEnum = pgEnum('org_member_status', ['active', 'revoked']);
+// Ninety-style roles. 'member' is a deprecated legacy value kept for backward
+// compat; new code should use 'managee'. See ensure-org-members.ts for the
+// data migration that promotes 'member' → 'managee'.
+export const orgMemberRoleEnum = pgEnum('org_member_role', [
+  'owner', 'admin', 'manager', 'managee',
+  'inactive', 'observer', 'implementer', 'free',
+  'member', // deprecated
+]);
+export const orgMemberStatusEnum = pgEnum('org_member_status', [
+  'active', 'invited', 'suspended', 'inactive', 'revoked',
+]);
 export const orgInvitationStatusEnum = pgEnum('org_invitation_status', ['pending', 'accepted', 'revoked', 'expired']);
 
 export const orgMembers = pgTable('org_members', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull(),
-  role: orgMemberRoleEnum('role').notNull().default('member'),
+  email: varchar('email', { length: 255 }),
+  displayName: varchar('display_name', { length: 255 }),
+  role: orgMemberRoleEnum('role').notNull().default('managee'),
   claimedEntityId: varchar('claimed_entity_id', { length: 120 }), // tile they claimed (HUM_X)
   status: orgMemberStatusEnum('status').notNull().default('active'),
+  // Phase 1 access toggles (admin sets at invite time, employee sees what they have)
+  featureAccess: jsonb('feature_access').notNull().default({}),
+  dataAccess: jsonb('data_access').notNull().default({}),
+  agentAccess: jsonb('agent_access').notNull().default({}),
   invitedByUserId: varchar('invited_by_user_id', { length: 255 }),
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -483,6 +498,7 @@ export const orgMembers = pgTable('org_members', {
   orgUserIdx: uniqueIndex('org_members_org_user_idx').on(table.orgId, table.clerkUserId),
   orgIdx: index('org_members_org_idx').on(table.orgId),
   userIdx: index('org_members_user_idx').on(table.clerkUserId),
+  roleIdx: index('org_members_role_idx').on(table.orgId, table.role),
 }));
 
 export const orgInvitations = pgTable('org_invitations', {
@@ -777,3 +793,40 @@ export const todos = pgTable('todos', {
 //   ALTER TABLE tickets ADD COLUMN priority_rank integer;
 //   ALTER TABLE tickets ADD COLUMN solved_in_meeting_id uuid REFERENCES meetings(id) ON DELETE SET NULL;
 // The Drizzle schema above intentionally does not redeclare the tickets table.
+
+// ---- Teams (Phase 1: Employee/Manager/Managee model) ----
+// Tables created by ensure-teams.ts at boot. The org_members and
+// org_invitations tables already exist (Phase 4.6) and are extended via
+// ensure-org-members.ts to add Ninety-style roles + access toggles.
+
+export const teamTypeEnum = pgEnum('team_type', [
+  'leadership', 'department', 'project', 'other',
+]);
+
+export const teamRoleEnum = pgEnum('team_role', ['leader', 'member']);
+
+export const teams = pgTable('teams', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull(),
+  type: teamTypeEnum('type').notNull().default('department'),
+  description: text('description'),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('teams_org_idx').on(table.orgId),
+  typeIdx: index('teams_type_idx').on(table.orgId, table.type),
+}));
+
+export const teamMemberships = pgTable('team_memberships', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull(),
+  memberId: uuid('member_id').references(() => orgMembers.id, { onDelete: 'cascade' }).notNull(),
+  roleOnTeam: teamRoleEnum('role_on_team').notNull().default('member'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  teamIdx: index('tm_team_idx').on(table.teamId),
+  memberIdx: index('tm_member_idx').on(table.memberId),
+}));

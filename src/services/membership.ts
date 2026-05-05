@@ -15,7 +15,19 @@ import { orgMembers, orgInvitations, organizations } from '../db/schema.js';
 
 export const INVITATION_TTL_DAYS = 30;
 
-export type Role = 'owner' | 'member';
+// Ninety-style role hierarchy. 'member' is a deprecated legacy value that
+// remains in the DB enum until a future re-typing migration; new code paths
+// should use 'managee' instead.
+export type Role =
+  | 'owner'
+  | 'admin'
+  | 'manager'
+  | 'managee'
+  | 'inactive'
+  | 'observer'
+  | 'implementer'
+  | 'free'
+  | 'member'; // deprecated
 
 export class MembershipError extends Error {
   constructor(public code: string, message: string, public httpStatus = 400) {
