@@ -1110,6 +1110,126 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Super Admin: Skills inventory across every org's published OOS chart.
+  // Shows the canonical SKILLS_CATALOG, who uses each skill, what's
+  // unassigned (catalog skill nobody uses), and what custom skills exist
+  // in the wild that should probably get promoted into the catalog.
+  app.get<{ Querystring: { key?: string } }>('/admin/skills', async (request, reply) => {
+    const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
+    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+
+    const { SKILLS_CATALOG } = await import('../../data/skills-catalog.js');
+    const allOrgs = await db.select({ id: organizations.id, name: organizations.name }).from(organizations);
+
+    // skill (lower-case) -> [{ orgId, orgName, entityId, entityLabel, entityType }]
+    const usage = new Map<string, Array<{
+      orgId: string; orgName: string;
+      entityId: string; entityLabel: string; entityType: 'agent' | 'human' | 'organization';
+      original: string; // case-preserving original spelling
+    }>>();
+
+    for (const o of allOrgs) {
+      try {
+        const graph = await getOrgTeamGraph(o.id, o.name || '');
+        for (const node of graph.nodes) {
+          const skills = ((node.properties as any)?.skills) as string[] | undefined;
+          if (!Array.isArray(skills)) continue;
+          for (const raw of skills) {
+            const s = String(raw || '').trim();
+            if (!s) continue;
+            const key = s.toLowerCase();
+            if (!usage.has(key)) usage.set(key, []);
+            usage.get(key)!.push({
+              orgId: o.id,
+              orgName: o.name || '(unnamed)',
+              entityId: node.externalId,
+              entityLabel: node.label,
+              entityType: node.type,
+              original: s,
+            });
+          }
+        }
+      } catch {
+        // Org has no published OOS or chart isn't parseable -- skip it.
+      }
+    }
+
+    // Build the catalog view: every canonical skill annotated with usage.
+    type CatalogEntry = {
+      category: string;
+      skill: string;
+      key: string;
+      usageCount: number;
+      users: Array<{ orgName: string; entityLabel: string; entityType: string; entityId: string; orgId: string }>;
+    };
+    const catalogEntries: CatalogEntry[] = [];
+    const catalogKeys = new Set<string>();
+    for (const cat of SKILLS_CATALOG) {
+      for (const skill of cat.skills) {
+        const key = skill.toLowerCase();
+        catalogKeys.add(key);
+        const users = usage.get(key) || [];
+        catalogEntries.push({
+          category: cat.category,
+          skill,
+          key,
+          usageCount: users.length,
+          users: users.map(u => ({
+            orgName: u.orgName, entityLabel: u.entityLabel,
+            entityType: u.entityType, entityId: u.entityId, orgId: u.orgId,
+          })),
+        });
+      }
+    }
+
+    // Custom skills: in usage but not in the canonical catalog. These are
+    // candidates for promotion into SKILLS_CATALOG so the autocomplete
+    // helps the next person adding the same skill.
+    const customSkills: Array<{
+      skill: string; key: string; usageCount: number;
+      users: Array<{ orgName: string; entityLabel: string; entityType: string; entityId: string; orgId: string }>;
+    }> = [];
+    for (const [key, list] of usage.entries()) {
+      if (catalogKeys.has(key)) continue;
+      customSkills.push({
+        skill: list[0].original,
+        key,
+        usageCount: list.length,
+        users: list.map(u => ({
+          orgName: u.orgName, entityLabel: u.entityLabel,
+          entityType: u.entityType, entityId: u.entityId, orgId: u.orgId,
+        })),
+      });
+    }
+    customSkills.sort((a, b) => b.usageCount - a.usageCount);
+
+    // Top-level stats
+    const stats = {
+      catalogSize: catalogEntries.length,
+      assigned: catalogEntries.filter(e => e.usageCount > 0).length,
+      unassigned: catalogEntries.filter(e => e.usageCount === 0).length,
+      customCount: customSkills.length,
+      orgsScanned: allOrgs.length,
+      totalAssignments: Array.from(usage.values()).reduce((n, list) => n + list.length, 0),
+    };
+
+    // Group catalog entries by category for the view.
+    const byCategory = new Map<string, CatalogEntry[]>();
+    for (const e of catalogEntries) {
+      if (!byCategory.has(e.category)) byCategory.set(e.category, []);
+      byCategory.get(e.category)!.push(e);
+    }
+
+    return reply.view('pages/admin-skills', {
+      title: 'Skills Inventory - Admin - OTP',
+      description: 'Platform-wide skills inventory: every catalog skill, who uses it, and which skills are unassigned.',
+      noindex: true,
+      stats,
+      categories: Array.from(byCategory.entries()).map(([category, entries]) => ({ category, entries })),
+      customSkills,
+    });
+  });
+
   // Super Admin: Improvements / roadmap tracker
   app.get<{ Querystring: { status?: string; key?: string } }>('/admin/improvements', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';

@@ -1,0 +1,161 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold">Skills Inventory</h1>
+      <p class="text-gray-500 text-sm">Every catalog skill, who uses it, and which skills aren't assigned to anyone yet.</p>
+    </div>
+    <a href="/admin" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50">&larr; Admin</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-gray-900"><%= stats.catalogSize %></div>
+      <div class="text-[10px] uppercase tracking-wide text-gray-500 mt-1">Catalog skills</div>
+    </div>
+    <div class="bg-emerald-50 p-4 border border-emerald-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-emerald-700"><%= stats.assigned %></div>
+      <div class="text-[10px] uppercase tracking-wide text-emerald-700 mt-1">Assigned</div>
+    </div>
+    <div class="bg-amber-50 p-4 border border-amber-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-amber-700"><%= stats.unassigned %></div>
+      <div class="text-[10px] uppercase tracking-wide text-amber-700 mt-1">Unassigned (gap)</div>
+    </div>
+    <div class="bg-otp-50 p-4 border border-otp-200 rounded-lg text-center">
+      <div class="text-2xl font-bold text-otp-700"><%= stats.customCount %></div>
+      <div class="text-[10px] uppercase tracking-wide text-otp-700 mt-1">Custom (not in catalog)</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-gray-900"><%= stats.totalAssignments %></div>
+      <div class="text-[10px] uppercase tracking-wide text-gray-500 mt-1">Total assignments</div>
+    </div>
+    <div class="bg-white p-4 border rounded-lg text-center">
+      <div class="text-2xl font-bold text-gray-900"><%= stats.orgsScanned %></div>
+      <div class="text-[10px] uppercase tracking-wide text-gray-500 mt-1">Orgs scanned</div>
+    </div>
+  </div>
+
+  <!-- Filter: show all / unassigned only / assigned only -->
+  <div class="mb-4 flex items-center gap-2 text-xs">
+    <span class="text-gray-500 font-semibold uppercase tracking-wide">Filter:</span>
+    <button onclick="setFilter('all')" id="f-all" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded font-medium hover:bg-gray-200">All</button>
+    <button onclick="setFilter('unassigned')" id="f-unassigned" class="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded font-medium hover:bg-amber-100">Unassigned only</button>
+    <button onclick="setFilter('assigned')" id="f-assigned" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-medium hover:bg-emerald-100">Assigned only</button>
+  </div>
+
+  <!-- Catalog by category -->
+  <% categories.forEach(function(c) { %>
+    <section class="mb-8 skills-category" data-category="<%= c.category %>">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3"><%= c.category %></h2>
+      <div class="overflow-hidden rounded-lg border border-gray-200">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+            <tr>
+              <th class="text-left px-4 py-2 w-1/3">Skill</th>
+              <th class="text-left px-4 py-2 w-16">Used by</th>
+              <th class="text-left px-4 py-2">Who</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% c.entries.forEach(function(e) { %>
+              <tr class="skill-row" data-status="<%= e.usageCount > 0 ? 'assigned' : 'unassigned' %>">
+                <td class="px-4 py-3 font-mono text-xs text-gray-900"><%= e.skill %></td>
+                <td class="px-4 py-3">
+                  <% if (e.usageCount > 0) { %>
+                    <span class="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold"><%= e.usageCount %></span>
+                  <% } else { %>
+                    <span class="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-semibold uppercase">Gap</span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-3">
+                  <% if (e.users.length === 0) { %>
+                    <span class="text-xs text-gray-400 italic">No agent uses this yet</span>
+                  <% } else { %>
+                    <div class="flex flex-wrap gap-1">
+                      <% e.users.forEach(function(u) { %>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] <%= u.entityType === 'agent' ? 'bg-otp-50 text-otp-700' : 'bg-blue-50 text-blue-700' %>">
+                          <span class="font-mono text-[10px] uppercase tracking-wide opacity-70"><%= u.entityType %></span>
+                          <span class="font-semibold"><%= u.entityLabel %></span>
+                          <span class="text-[10px] opacity-60">@ <%= u.orgName %></span>
+                        </span>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% }) %>
+
+  <!-- Custom skills (used in the wild, not in catalog) -->
+  <% if (customSkills.length > 0) { %>
+    <section class="mb-8">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-otp-700 mb-1">Custom skills (not in catalog)</h2>
+      <p class="text-xs text-gray-600 mb-3">These are skills humans typed in by hand. Worth promoting the popular ones into <code>src/data/skills-catalog.ts</code> so the autocomplete picks them up.</p>
+      <div class="overflow-hidden rounded-lg border border-otp-200">
+        <table class="w-full text-sm">
+          <thead class="bg-otp-50 text-xs uppercase tracking-wide text-otp-700">
+            <tr>
+              <th class="text-left px-4 py-2 w-1/3">Custom skill</th>
+              <th class="text-left px-4 py-2 w-16">Used by</th>
+              <th class="text-left px-4 py-2">Who</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% customSkills.forEach(function(e) { %>
+              <tr>
+                <td class="px-4 py-3 font-mono text-xs text-gray-900"><%= e.skill %></td>
+                <td class="px-4 py-3">
+                  <span class="inline-block px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold"><%= e.usageCount %></span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    <% e.users.forEach(function(u) { %>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] <%= u.entityType === 'agent' ? 'bg-otp-50 text-otp-700' : 'bg-blue-50 text-blue-700' %>">
+                        <span class="font-mono text-[10px] uppercase tracking-wide opacity-70"><%= u.entityType %></span>
+                        <span class="font-semibold"><%= u.entityLabel %></span>
+                        <span class="text-[10px] opacity-60">@ <%= u.orgName %></span>
+                      </span>
+                    <% }) %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+</div>
+
+<script>
+(function() {
+  function setFilter(mode) {
+    var rows = document.querySelectorAll('.skill-row');
+    Array.prototype.forEach.call(rows, function(r) {
+      var status = r.getAttribute('data-status');
+      var show = (mode === 'all') || (status === mode);
+      r.style.display = show ? '' : 'none';
+    });
+    // Hide categories that have zero visible rows after filtering.
+    var categories = document.querySelectorAll('.skills-category');
+    Array.prototype.forEach.call(categories, function(c) {
+      var visible = c.querySelectorAll('.skill-row:not([style*="display: none"])').length;
+      c.style.display = visible > 0 ? '' : 'none';
+    });
+    // Active state on filter buttons
+    ['all', 'unassigned', 'assigned'].forEach(function(m) {
+      var btn = document.getElementById('f-' + m);
+      if (!btn) return;
+      if (m === mode) btn.classList.add('ring-2', 'ring-offset-1', 'ring-gray-400');
+      else btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-400');
+    });
+  }
+  window.setFilter = setFilter;
+  setFilter('all');
+})();
+</script>
