@@ -17,13 +17,20 @@
 <div class="max-w-5xl mx-auto px-4 py-8">
 
   <!-- Header -->
-  <div class="mb-8 flex items-end justify-between gap-4">
+  <div class="mb-8 flex items-end justify-between gap-4 flex-wrap">
     <div>
       <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
       <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Members</h1>
       <p class="text-sm text-gray-600 mt-1"><%= members.length %> active &middot; <%= invitations.length %> pending invite<%= invitations.length === 1 ? '' : 's' %></p>
     </div>
-    <a href="/dashboard" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50">&larr; Dashboard</a>
+    <div class="flex items-center gap-2">
+      <button type="button" onclick="document.getElementById('invite-form').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){document.querySelector('#invite-form input[name=email]').focus();}, 400);"
+              class="text-sm px-4 py-2 bg-otp-600 text-white rounded-lg font-semibold hover:bg-otp-700 inline-flex items-center gap-1.5 shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Invite member
+      </button>
+      <a href="/dashboard" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50">&larr; Dashboard</a>
+    </div>
   </div>
 
   <!-- Active members -->
