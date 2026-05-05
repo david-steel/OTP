@@ -1959,15 +1959,13 @@ export default async function pageRoutes(app: FastifyInstance) {
           }
         } catch { /* Clerk lookup failed -- fall back to invite email */ }
 
-        const result = await acceptInvite(token, auth.userId, clerkEmail);
-        return reply.view('pages/accept-invite', {
-          title: 'Welcome - OTP',
-          noindex: true,
-          state: 'accepted',
-          orgName: invRow.org_name,
-          claimedEntityId: result.claimedEntityId,
-          dashboardUrl: '/dashboard',
-        });
+        await acceptInvite(token, auth.userId, clerkEmail);
+        // Skip the "Welcome aboard" interstitial -- David wants new
+        // members landing straight on their dashboard. The /dashboard
+        // route resolves their org via the request.orgMember decorator
+        // (now correctly populated since acceptInvite just set
+        // status='active') and routes them to admin or employee view.
+        return reply.redirect('/dashboard');
       } catch (e) {
         if (e instanceof MembershipError) {
           return reply.view('pages/accept-invite', {
