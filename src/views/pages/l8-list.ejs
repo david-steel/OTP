@@ -1,9 +1,31 @@
+<%
+  var teamsList = locals.teamsList || [];
+  var filterTeamId = locals.filterTeamId || '';
+  var defaultTeamId = locals.defaultTeamId || '';
+  var teamLookup = {};
+  teamsList.forEach(function(t) { teamLookup[t.id] = t; });
+%>
+
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="mb-8">
     <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">L8 Meetings -- the cadence that drives your org to agentic maturity</div>
     <h1 class="text-2xl font-bold"><%= org.name %></h1>
     <p class="text-sm text-gray-600 mt-1">Run your weekly leadership meeting from one page. Check-in, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude.</p>
   </div>
+
+  <!-- Team filter -->
+  <% if (teamsList.length > 1) { %>
+    <form method="GET" action="/l8" class="mb-4 flex items-center gap-2 text-sm">
+      <label class="text-xs uppercase tracking-wide text-gray-600 font-semibold">Team:</label>
+      <select name="teamId" onchange="this.form.submit()" class="border rounded p-1.5 text-sm">
+        <option value="">All teams</option>
+        <% teamsList.forEach(function(t) { %>
+          <option value="<%= t.id %>" <%= filterTeamId === t.id ? 'selected' : '' %>><%= t.name %></option>
+        <% }) %>
+      </select>
+      <% if (devOrgIdParam) { %><input type="hidden" name="orgId" value="<%= devOrgIdParam %>"><% } %>
+    </form>
+  <% } %>
 
   <!-- Quick create -->
   <form action="/l8/create<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" method="POST" class="border rounded-lg p-4 mb-8 bg-gray-50">
@@ -16,14 +38,21 @@
              class="border rounded p-2 text-sm"
              value="<%= new Date(Date.now() + 86400000).toISOString().slice(0,16) %>">
     </div>
-    <div class="mt-3 flex justify-between items-center">
+    <div class="mt-3 flex flex-wrap items-center gap-3">
       <select name="meetingType" class="border rounded p-2 text-sm">
         <option value="leadership">Leadership Team</option>
         <option value="departmental">Departmental</option>
         <option value="1on1">1-on-1</option>
         <option value="other">Other</option>
       </select>
-      <button class="px-4 py-2 bg-otp-500 text-white rounded text-sm font-medium hover:bg-otp-400">
+      <% if (teamsList.length > 0) { %>
+        <select name="teamId" class="border rounded p-2 text-sm" title="Which team is meeting?">
+          <% teamsList.forEach(function(t) { %>
+            <option value="<%= t.id %>" <%= (filterTeamId ? t.id === filterTeamId : t.id === defaultTeamId) ? 'selected' : '' %>><%= t.name %></option>
+          <% }) %>
+        </select>
+      <% } %>
+      <button class="ml-auto px-4 py-2 bg-otp-500 text-white rounded text-sm font-medium hover:bg-otp-400">
         Create + Open
       </button>
     </div>
@@ -43,6 +72,8 @@
             <div>
               <div class="font-medium"><%= m.title %></div>
               <div class="text-xs text-gray-500 mt-1">
+                <% var teamName = m.teamId && teamLookup[m.teamId] ? teamLookup[m.teamId].name : ''; %>
+                <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
                 <%= m.meetingType %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
               </div>
             </div>

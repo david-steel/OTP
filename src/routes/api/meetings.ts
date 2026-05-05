@@ -23,6 +23,7 @@ const createMeetingSchema = z.object({
   title: z.string().min(3).max(255),
   scheduledAt: z.string().datetime(),
   attendees: z.array(attendeeSchema).optional().default([]),
+  teamId: z.string().uuid().optional(),
 });
 
 const updateMeetingSchema = z.object({
@@ -35,6 +36,7 @@ const updateMeetingSchema = z.object({
   headlines: z.string().optional(),
   cascadingMessage: z.string().optional(),
   ratings: z.record(z.number().min(1).max(10)).optional(),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 async function authedOrFail(request: any, reply: any) {
@@ -91,9 +93,22 @@ export default async function meetingRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid meeting data', details: body.error.issues } });
     }
 
+    // Phase 4: a meeting is scoped to a team. If the caller didn't pick one,
+    // fall back to the org's default Leadership Team (created by ensure-teams.ts).
+    let resolvedTeamId: string | null = body.data.teamId || null;
+    if (!resolvedTeamId) {
+      const { teams } = await import('../../db/schema.js');
+      const [defaultTeam] = await db.select({ id: teams.id })
+        .from(teams)
+        .where(and(eq(teams.orgId, org.id), eq(teams.slug, 'leadership')))
+        .limit(1);
+      resolvedTeamId = defaultTeam?.id || null;
+    }
+
     const createdBy = getAuth(request).userId || 'api_key';
     const [meeting] = await db.insert(meetings).values({
       organizationId: org.id,
+      teamId: resolvedTeamId,
       meetingType: body.data.meetingType,
       title: body.data.title,
       scheduledAt: new Date(body.data.scheduledAt),
@@ -108,14 +123,15 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return reply.status(201).send({ meeting });
   });
 
-  // GET /api/v1/meetings?meetingType=leadership&upcoming=true
-  app.get<{ Querystring: { meetingType?: string; status?: string; upcoming?: string } }>('/meetings', async (request, reply) => {
+  // GET /api/v1/meetings?meetingType=leadership&upcoming=true&teamId=<uuid>
+  app.get<{ Querystring: { meetingType?: string; status?: string; upcoming?: string; teamId?: string } }>('/meetings', async (request, reply) => {
     const org = await authedOrFail(request, reply);
     if (!org) return;
 
     const conditions = [eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)];
     if (request.query.meetingType) conditions.push(eq(meetings.meetingType, request.query.meetingType));
     if (request.query.status) conditions.push(eq(meetings.status, request.query.status as any));
+    if (request.query.teamId) conditions.push(eq(meetings.teamId, request.query.teamId));
 
     const results = await db.select().from(meetings).where(and(...conditions)).orderBy(desc(meetings.scheduledAt));
     return { meetings: results, total: results.length };

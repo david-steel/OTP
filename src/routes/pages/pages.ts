@@ -3163,15 +3163,26 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     return org;
   }
 
-  // /l8  -- list meetings for the user's org, with quick-create
-  app.get('/l8', async (request, reply) => {
+  // /l8  -- list meetings for the user's org, with team filter + quick-create
+  app.get<{ Querystring: { teamId?: string } }>('/l8', async (request, reply) => {
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
+    // All teams in this org -- powers the filter dropdown + create form.
+    const orgTeams = await db.select({
+      id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault,
+    }).from(teams).where(eq(teams.orgId, org.id)).orderBy(desc(teams.isDefault), teams.name);
+
+    const filterTeamId = request.query.teamId || '';
+    const conditions = [eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)];
+    if (filterTeamId) conditions.push(eq(meetings.teamId, filterTeamId));
+
     const myMeetings = await db.select().from(meetings)
-      .where(and(eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)))
+      .where(and(...conditions))
       .orderBy(desc(meetings.scheduledAt))
       .limit(50);
+
+    const defaultTeamId = orgTeams.find(t => t.slug === 'leadership')?.id || orgTeams[0]?.id || '';
 
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
     return reply.view('pages/l8-list', {
@@ -3181,21 +3192,37 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       noindex: true,
       org,
       meetings: myMeetings,
+      teamsList: orgTeams,
+      filterTeamId,
+      defaultTeamId,
       devOrgIdParam,
     });
   });
 
   // POST /l8/create  -- quick create handler (form post)
-  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string } }>('/l8/create', async (request, reply) => {
+  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string; teamId?: string } }>('/l8/create', async (request, reply) => {
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
     const auth = getAuth(request);
-    const { title, scheduledAt, meetingType } = request.body || {};
+    const { title, scheduledAt, meetingType, teamId } = request.body || {};
     if (!title || !scheduledAt) {
       return reply.status(400).send('title and scheduledAt required');
     }
+
+    // Resolve team: explicit teamId from form, else this org's default
+    // Leadership Team (created by ensure-teams.ts).
+    let resolvedTeamId: string | null = teamId || null;
+    if (!resolvedTeamId) {
+      const [defaultTeam] = await db.select({ id: teams.id })
+        .from(teams)
+        .where(and(eq(teams.orgId, org.id), eq(teams.slug, 'leadership')))
+        .limit(1);
+      resolvedTeamId = defaultTeam?.id || null;
+    }
+
     const [m] = await db.insert(meetings).values({
       organizationId: org.id,
+      teamId: resolvedTeamId,
       title,
       meetingType: meetingType || 'leadership',
       scheduledAt: new Date(scheduledAt),

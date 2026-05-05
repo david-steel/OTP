@@ -750,6 +750,7 @@ export const rocks = pgTable('rocks', {
 export const meetings = pgTable('meetings', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  teamId: uuid('team_id'), // FK added by ensure-meeting-teams.ts; declared as plain uuid to dodge Drizzle's circular ref check
   meetingType: varchar('meeting_type', { length: 60 }).notNull().default('leadership'),
   title: varchar('title', { length: 255 }).notNull(),
   status: meetingStatusEnum('status').notNull().default('scheduled'),

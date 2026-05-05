@@ -606,6 +606,14 @@ try {
   app.log.error({ err }, 'ensureOrgInvitationsExtensions failed -- invite toggles will not persist until resolved');
 }
 
+try {
+  const { ensureMeetingTeamColumn } = await import('./db/ensure-meeting-teams.js');
+  await ensureMeetingTeamColumn();
+  app.log.info('meetings.team_id column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingTeamColumn failed -- per-team meeting scoping will not work until resolved');
+}
+
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
