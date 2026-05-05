@@ -1,0 +1,119 @@
+<%
+  // Employee dashboard. Shown to manager / managee / observer / free roles.
+  // Owners, admins, and implementers see pages/dashboard-admin instead.
+  var member = locals.member || {};
+  var role = member.role || 'managee';
+  var displayName = member.displayName || member.email || 'there';
+  var firstName = displayName.split(' ')[0].split('@')[0];
+  var orgName = (locals.org && locals.org.name) || '';
+  var teams = locals.teams || [];
+  var todayMeetings = locals.todayMeetings || [];
+  var agentAccess = (member.agentAccess && Object.keys(member.agentAccess).filter(function(k) { return member.agentAccess[k] === true; })) || [];
+  var capabilities = locals.capabilities || {};
+  var preview = locals.previewRole || '';
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <% if (preview) { %>
+    <div class="mb-6 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-900">
+      <strong>Preview mode:</strong> Viewing as <code><%= preview %></code> (owner-only). <a href="/dashboard" class="underline">Exit preview</a>.
+    </div>
+  <% } %>
+
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Hi <%= firstName %>.</h1>
+    <p class="text-sm text-gray-600 mt-1">
+      <span class="inline-flex items-center gap-1.5">
+        <span class="px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= role %></span>
+        <% if (teams.length > 0) { %>
+          <span class="text-gray-400">on</span>
+          <% teams.forEach(function(t, i) { %>
+            <span class="text-gray-700"><%= t.name %><%= i < teams.length - 1 ? ',' : '' %></span>
+          <% }) %>
+        <% } else { %>
+          <span class="text-gray-400">no teams yet</span>
+        <% } %>
+      </span>
+    </p>
+  </div>
+
+  <!-- My Day: today's meetings -->
+  <section class="mb-8">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">My Day</h2>
+    <% if (todayMeetings.length === 0) { %>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+        No meetings scheduled today.
+        <% if (capabilities.canEditAssignedItems) { %>
+          <a href="/l8" class="text-otp-600 font-semibold hover:text-otp-700">Open the meeting tool &rarr;</a>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="space-y-2">
+        <% todayMeetings.forEach(function(m) { %>
+          <a href="/l8/meeting/<%= m.id %>" class="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="font-semibold text-gray-900 truncate"><%= m.title %></div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  <%= m.meetingType %> &middot; <%= new Date(m.scheduledAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) %>
+                </div>
+              </div>
+              <span class="text-xs text-otp-600 font-semibold whitespace-nowrap">Open &rarr;</span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- Quick actions -->
+  <section class="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <a href="/dashboard/team" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-otp-300 hover:shadow-sm transition-all">
+      <div class="text-base font-bold text-gray-900 mb-1">Org Chart</div>
+      <p class="text-xs text-gray-600 mb-3">See how your team is structured. View-only for your role <% if (capabilities.canEditAssignedItems) { %>(edit your own seat)<% } %>.</p>
+      <span class="text-otp-600 text-xs font-semibold">View chart &rarr;</span>
+    </a>
+
+    <% if (capabilities.canEditAssignedItems) { %>
+      <a href="/l8" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-otp-300 hover:shadow-sm transition-all">
+        <div class="text-base font-bold text-gray-900 mb-1">L8 Meetings</div>
+        <p class="text-xs text-gray-600 mb-3">Run your weekly L8 meeting -- the cadence that drives the org to agentic maturity.</p>
+        <span class="text-otp-600 text-xs font-semibold">Open meeting tool &rarr;</span>
+      </a>
+    <% } else { %>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-5">
+        <div class="text-base font-bold text-gray-700 mb-1">L8 Meetings</div>
+        <p class="text-xs text-gray-500">View-only for your role. Ask your manager to assign you to a team.</p>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- My Agents -->
+  <section class="mb-8">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">My Agents</h2>
+    <% if (agentAccess.length === 0) { %>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+        No agents assigned yet. Your admin can grant you access to specific AI agents from the Members page.
+      </div>
+    <% } else { %>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        <% agentAccess.forEach(function(agentKey) { %>
+          <div class="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+            <div class="font-semibold text-gray-900"><%= agentKey %></div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- Footer note -->
+  <p class="text-xs text-gray-400 mt-12">
+    Employee view (v1). Stats, owned to-dos, and meeting agendas are coming next.
+    <% if (capabilities.canEditOrgSettings) { %>
+      As an owner you can <a href="/dashboard?previewRole=managee" class="underline">preview the managee view</a>.
+    <% } %>
+  </p>
+</div>

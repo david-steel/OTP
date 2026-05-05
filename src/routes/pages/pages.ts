@@ -2,7 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships } from '../../db/schema.js';
+import { hasOrgWideView, canEditOrgSettings, capabilitiesFor } from '../../middleware/permissions.js';
+import type { Role } from '../../services/membership.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -2146,7 +2148,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     if (!auth.userId) {
       // Not signed in -- show prompt to sign in (handled client-side by Clerk JS)
-      return reply.view('pages/dashboard', {
+      return reply.view('pages/dashboard-admin', {
         title: 'Publisher Dashboard - OTP',
         description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
         ogImage: BASE_URL + '/public/og-image.png',
@@ -2176,6 +2178,57 @@ export default async function pageRoutes(app: FastifyInstance) {
       });
     }
 
+    // Role-aware split. Owners/admins/implementers see the publisher
+    // dashboard (admin view). Manager/managee/observer/free see the
+    // employee view. Owners can preview the employee view via
+    // ?previewRole=managee for QA.
+    const member = (request as any).orgMember as { role: Role; id: string; displayName: string | null; email: string | null; agentAccess: Record<string, boolean>; featureAccess: Record<string, boolean>; dataAccess: Record<string, boolean>; } | null;
+    const VALID_ROLES: Role[] = ['owner', 'admin', 'manager', 'managee', 'inactive', 'observer', 'implementer', 'free', 'member'];
+    const previewParam = (request.query as any)?.previewRole as string | undefined;
+    const isOwnerLike = !!(member && canEditOrgSettings(member.role));
+    const previewActive = !!(isOwnerLike && previewParam && VALID_ROLES.includes(previewParam as Role));
+    const effectiveRole: Role = previewActive
+      ? (previewParam as Role)
+      : (member ? member.role : 'owner');
+
+    if (!hasOrgWideView(effectiveRole)) {
+      // ---------- Employee view ----------
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
+      const todayMeetings = await db.select()
+        .from(meetings)
+        .where(and(
+          eq(meetings.organizationId, org.id),
+          isNull(meetings.deletedAt),
+          sql`${meetings.scheduledAt} >= ${todayStart}`,
+          sql`${meetings.scheduledAt} < ${todayEnd}`,
+        ))
+        .orderBy(meetings.scheduledAt);
+
+      const memberTeams = member
+        ? await db.select({ id: teams.id, name: teams.name, slug: teams.slug })
+            .from(teamMemberships)
+            .innerJoin(teams, eq(teamMemberships.teamId, teams.id))
+            .where(eq(teamMemberships.memberId, member.id))
+        : [];
+
+      return reply.view('pages/dashboard-employee', {
+        title: 'Dashboard - OTP',
+        description: 'Your day on OTP -- meetings, agents, and team.',
+        ogImage: BASE_URL + '/public/og-image.png',
+        noindex: true,
+        org,
+        member: member ? { ...member, role: effectiveRole } : { role: effectiveRole, displayName: null, email: null, agentAccess: {}, featureAccess: {}, dataAccess: {} },
+        teams: memberTeams,
+        todayMeetings,
+        capabilities: capabilitiesFor(effectiveRole),
+        previewRole: previewActive ? previewParam : '',
+      });
+    }
+
+    // ---------- Admin view (owner / admin / implementer) ----------
     // Signed in + has org -- show real dashboard
     const orgOosFiles = await db.select()
       .from(oosFiles)
@@ -2233,7 +2286,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       networkLearnings = (nlResult.rows as any[]) || [];
     } catch {}
 
-    return reply.view('pages/dashboard', {
+    return reply.view('pages/dashboard-admin', {
       title: 'Publisher Dashboard - OTP',
       description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
       ogImage: BASE_URL + '/public/og-image.png',
