@@ -13,6 +13,7 @@
   var roleDefaults = locals.roleDefaults || {};
   var orgTeams = locals.orgTeams || [];
   var memberTeams = locals.memberTeams || {};
+  var isSuperAdmin = locals.isSuperAdmin === true;
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -74,6 +75,11 @@
                     };
                   %>
                   <div class="inline-flex gap-1">
+                    <% if (isSuperAdmin && m.clerkUserId) { %>
+                      <form method="POST" action="/admin/impersonate/<%= m.id %>" class="inline">
+                        <button type="submit" class="text-xs px-2 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded hover:bg-amber-100 font-semibold" title="Super-admin: view the app as this user">View as</button>
+                      </form>
+                    <% } %>
                     <button type="button"
                             data-member='<%- JSON.stringify(memberPayload).replace(/'/g, "&#39;") %>'
                             onclick="openEditMember(this)"

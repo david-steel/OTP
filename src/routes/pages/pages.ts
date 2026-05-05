@@ -1110,6 +1110,101 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // ---------- Super-admin impersonation ----------
+  // POST /admin/impersonate/:memberId  -- start "view as" session
+  // POST /admin/impersonate/exit        -- clear cookie + audit log
+  app.post<{ Params: { memberId: string } }>('/admin/impersonate/:memberId', async (request, reply) => {
+    if (!(request as any).isSuperAdmin) {
+      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    }
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'AUTH_REQUIRED' });
+
+    const { startImpersonation, IMPERSONATION_COOKIE_NAME } = await import('../../middleware/impersonation.js');
+    try {
+      const started = await startImpersonation({
+        byClerkUserId: auth.userId,
+        targetMemberId: request.params.memberId,
+      });
+      reply.setCookie(IMPERSONATION_COOKIE_NAME, started.cookieValue, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: started.cookieMaxAgeSec,
+        path: '/',
+      });
+      return reply.redirect('/dashboard');
+    } catch (e: any) {
+      const msg = String(e?.message || 'Impersonation failed');
+      return reply.status(400).send({ error: msg });
+    }
+  });
+
+  // POST /admin/impersonate/by-clerk/:clerkUserId  -- resolve member by Clerk
+  // user id, then start impersonation. Convenience for /admin users table
+  // which doesn't already have member ids on hand.
+  app.post<{ Params: { clerkUserId: string } }>('/admin/impersonate/by-clerk/:clerkUserId', async (request, reply) => {
+    if (!(request as any).isSuperAdmin) {
+      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    }
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'AUTH_REQUIRED' });
+
+    const targetClerkId = request.params.clerkUserId;
+    if (!/^[A-Za-z0-9_]{10,80}$/.test(targetClerkId)) {
+      return reply.status(400).send({ error: 'INVALID_CLERK_USER_ID' });
+    }
+    const [m] = await db.select().from(orgMembers)
+      .where(eq(orgMembers.clerkUserId, targetClerkId))
+      .limit(1);
+    if (!m) return reply.status(404).send({ error: 'NO_MEMBER_ROW: target has not joined any org via membership table' });
+
+    const { startImpersonation, IMPERSONATION_COOKIE_NAME } = await import('../../middleware/impersonation.js');
+    try {
+      const started = await startImpersonation({
+        byClerkUserId: auth.userId,
+        targetMemberId: m.id,
+      });
+      reply.setCookie(IMPERSONATION_COOKIE_NAME, started.cookieValue, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: started.cookieMaxAgeSec,
+        path: '/',
+      });
+      return reply.redirect('/dashboard');
+    } catch (e: any) {
+      return reply.status(400).send({ error: String(e?.message || 'Impersonation failed') });
+    }
+  });
+
+  app.post('/admin/impersonate/exit', async (request, reply) => {
+    const auth = getAuth(request);
+    const { decodeImpersonationCookie, endImpersonation, IMPERSONATION_COOKIE_NAME } =
+      await import('../../middleware/impersonation.js');
+    const cookieRaw = (request as any).cookies?.[IMPERSONATION_COOKIE_NAME];
+    const payload = decodeImpersonationCookie(cookieRaw);
+    if (payload && auth.userId && payload.by === auth.userId) {
+      await endImpersonation(payload);
+    }
+    reply.clearCookie(IMPERSONATION_COOKIE_NAME, { path: '/' });
+    return reply.redirect('/admin');
+  });
+
+  // GET fallback to allow plain-link exit (banner button)
+  app.get('/admin/impersonate/exit', async (request, reply) => {
+    const auth = getAuth(request);
+    const { decodeImpersonationCookie, endImpersonation, IMPERSONATION_COOKIE_NAME } =
+      await import('../../middleware/impersonation.js');
+    const cookieRaw = (request as any).cookies?.[IMPERSONATION_COOKIE_NAME];
+    const payload = decodeImpersonationCookie(cookieRaw);
+    if (payload && auth.userId && payload.by === auth.userId) {
+      await endImpersonation(payload);
+    }
+    reply.clearCookie(IMPERSONATION_COOKIE_NAME, { path: '/' });
+    return reply.redirect('/admin');
+  });
+
   // Super Admin: Skills inventory across every org's published OOS chart.
   // Renders HTML at /admin/skills and the same data as CSV at /admin/skills.csv.
   // Aggregates: catalog usage, custom skills (in the wild not in catalog),
@@ -1785,6 +1880,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       roleDefaults: ROLE_DEFAULT_TOGGLES,
       orgTeams,
       memberTeams,
+      isSuperAdmin: (request as any).isSuperAdmin === true,
     });
   });
 

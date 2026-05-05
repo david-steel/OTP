@@ -44,6 +44,12 @@ export interface CurrentMember {
 declare module 'fastify' {
   interface FastifyRequest {
     orgMember: CurrentMember | null;
+    impersonation: {
+      active: boolean;
+      targetName: string;
+      targetMemberId: string;
+      bySuperAdmin: string;
+    } | null;
   }
 }
 
@@ -51,12 +57,47 @@ declare module 'fastify' {
 
 export function registerOrgMemberDecorator(app: FastifyInstance): void {
   app.decorateRequest('orgMember', null);
+  app.decorateRequest('impersonation', null);
 
   app.addHook('preHandler', async (request) => {
     try {
       const auth = getAuth(request);
       const userId = auth?.userId;
       if (!userId) return;
+
+      // Phase 5: super-admin impersonation. If a valid impersonation cookie
+      // is present AND the caller is the super admin who set it, swap the
+      // routing context to the target member. The Clerk session stays as
+      // the super admin's, so any writes audit-log under their userId.
+      const { decodeImpersonationCookie, resolveImpersonatedContext } =
+        await import('./impersonation.js');
+      const { isSuperAdmin } = await import('./super-admin.js');
+      const cookieRaw = (request as any).cookies?.otp_impersonation as string | undefined;
+      const payload = decodeImpersonationCookie(cookieRaw);
+      if (payload && isSuperAdmin(request)) {
+        const ctx = await resolveImpersonatedContext(payload, userId);
+        if (ctx) {
+          (request as any).orgMember = {
+            id: ctx.member.id,
+            orgId: ctx.member.orgId,
+            clerkUserId: ctx.member.clerkUserId!,
+            role: ctx.member.role as Role,
+            status: ctx.member.status,
+            email: ctx.member.email,
+            displayName: ctx.member.displayName,
+            featureAccess: (ctx.member.featureAccess as Record<string, boolean>) || {},
+            dataAccess: (ctx.member.dataAccess as Record<string, boolean>) || {},
+            agentAccess: (ctx.member.agentAccess as Record<string, boolean>) || {},
+          };
+          (request as any).impersonation = {
+            active: true,
+            targetName: payload.name,
+            targetMemberId: payload.memberId,
+            bySuperAdmin: payload.by,
+          };
+          return;
+        }
+      }
 
       // Active member of any org. We currently scope to the first hit; a
       // multi-org user sees one org at a time. When org-switching ships,

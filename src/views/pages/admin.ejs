@@ -160,11 +160,16 @@
                   <% } else { %>
                     <div class="text-xs text-gray-400 italic">No activity yet. <%= u.orgName ? 'Has org but has not done anything in it.' : 'No org created yet.' %></div>
                   <% } %>
-                  <div class="text-xs text-gray-400 mt-3 pt-3 border-t">
-                    Clerk user ID: <span class="font-mono"><%= u.clerkUserId %></span>
-                    <% if (u.lastMcpUsedAt) { %>
-                      · Last MCP call: <%= u.lastMcpUsedAt.toLocaleString() %>
-                    <% } %>
+                  <div class="text-xs text-gray-400 mt-3 pt-3 border-t flex items-center justify-between gap-3">
+                    <div>
+                      Clerk user ID: <span class="font-mono"><%= u.clerkUserId %></span>
+                      <% if (u.lastMcpUsedAt) { %>
+                        · Last MCP call: <%= u.lastMcpUsedAt.toLocaleString() %>
+                      <% } %>
+                    </div>
+                    <form method="POST" action="/admin/impersonate/by-clerk/<%= u.clerkUserId %>" onclick="event.stopPropagation();">
+                      <button type="submit" class="text-xs px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded hover:bg-amber-100 font-semibold">View as <%= u.email || u.name || 'user' %></button>
+                    </form>
                   </div>
                 </td>
               </tr>

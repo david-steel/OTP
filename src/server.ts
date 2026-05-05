@@ -3,6 +3,7 @@ import fastifyView from '@fastify/view';
 import fastifyStatic from '@fastify/static';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyCors from '@fastify/cors';
+import fastifyCookie from '@fastify/cookie';
 import { clerkPlugin } from '@clerk/fastify';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,6 +19,11 @@ const app = Fastify({
 await app.register(fastifyRateLimit, {
   max: 100,
   timeWindow: '1 minute',
+});
+
+// Cookies (super-admin impersonation, future: session prefs)
+await app.register(fastifyCookie, {
+  secret: process.env.IMPERSONATION_SECRET || process.env.CLERK_SECRET_KEY || 'dev-cookie-secret',
 });
 
 // CORS
@@ -124,11 +130,13 @@ app.addHook('preHandler', async (request, reply) => {
   let userId: string | null = null;
   try { userId = getAuth(request).userId || null; } catch { userId = null; }
   (request as any).authUserId = userId;
-  // Auto-inject authUserId into every reply.view call so layout can render
-  // auth-aware nav without each route needing to remember to pass it.
+  // Auto-inject authUserId + impersonation context into every reply.view
+  // call so layout can render auth-aware nav and the impersonation banner
+  // without each route needing to remember to pass them.
   const origView = (reply as any).view.bind(reply);
   (reply as any).view = function (template: string, data?: any, opts?: any) {
-    return origView(template, { ...(data || {}), authUserId: userId }, opts);
+    const imp = (request as any).impersonation || null;
+    return origView(template, { ...(data || {}), authUserId: userId, impersonation: imp }, opts);
   };
 });
 
