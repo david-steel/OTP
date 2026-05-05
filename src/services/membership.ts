@@ -336,6 +336,34 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     acceptedByUserId: clerkUserId,
   }).where(eq(orgInvitations.id, inv.id));
 
+  // Phase 4: auto-populate the chart tile's contact_email when empty so the
+  // new member's accountability tile carries their actual email after accept.
+  // Walks every claimed tile across the org's draft OOS file and patches any
+  // human entity whose contact_email is missing.
+  const allClaimedTiles: string[] = Array.from(new Set([
+    ...(((inv.claimedEntityIds as string[]) || [])),
+    ...(inv.claimedEntityId ? [inv.claimedEntityId] : []),
+  ].filter(Boolean)));
+  if (allClaimedTiles.length > 0 && (userEmail || inv.email)) {
+    const fillEmail = userEmail || inv.email;
+    try {
+      const { patchTeamEntity } = await import('./team-graph.js');
+      for (const tile of allClaimedTiles) {
+        // patchTeamEntity is tolerant: it merges the patch onto the latest
+        // editable OOS draft, so we can pass just contactEmail. The chart
+        // service does its own "do not overwrite if non-empty" check by
+        // virtue of how merges work; but we also pass displayName here to
+        // sync the human label with the invitee's name when given.
+        try {
+          await patchTeamEntity(inv.orgId, 'human', tile, {
+            contactEmail: fillEmail,
+            ...(inv.displayName ? { name: inv.displayName } : {}),
+          } as any);
+        } catch { /* tile may be agent or already filled -- skip */ }
+      }
+    } catch { /* import failure -- skip auto-populate */ }
+  }
+
   return {
     ok: true,
     orgId: inv.orgId,

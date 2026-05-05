@@ -41,25 +41,29 @@
         </div>
       </div>
 
-      <div id="invite-cta" class="flex flex-col sm:flex-row gap-3">
-        <button id="invite-signup-btn" class="px-5 py-3 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold transition-colors">Create account &amp; accept</button>
-        <button id="invite-signin-btn" class="px-5 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">Sign in &amp; accept</button>
+      <div id="invite-cta" class="flex">
+        <button id="invite-accept-btn" class="px-6 py-3 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold transition-colors">Continue &amp; accept invitation</button>
       </div>
-      <p class="text-xs text-gray-400 mt-4">After signing in, you will land on the team chart with your tile claimed automatically.</p>
+      <p class="text-xs text-gray-400 mt-4">Clerk will create your account if you're new, or sign you in if you already have one. Either way you land on your dashboard.</p>
 
       <script>
         (function() {
           var redirectUrl = window.location.href; // /accept-invite?token=... preserved
-          function tryClerk(action) {
+          var invitedEmail = <%- JSON.stringify(typeof invitedEmail !== 'undefined' ? invitedEmail : '') %>;
+          document.getElementById('invite-accept-btn').addEventListener('click', function() {
             if (!window.__clerk) {
               alert('Sign-in is loading. Please try again in a moment.');
               return;
             }
-            if (action === 'signup') window.__clerk.openSignUp({ redirectUrl: redirectUrl, afterSignUpUrl: redirectUrl });
-            else window.__clerk.openSignIn({ redirectUrl: redirectUrl, afterSignInUrl: redirectUrl });
-          }
-          document.getElementById('invite-signup-btn').addEventListener('click', function() { tryClerk('signup'); });
-          document.getElementById('invite-signin-btn').addEventListener('click', function() { tryClerk('signin'); });
+            // openSignIn handles both new and returning users via Clerk's
+            // internal "I already have an account" toggle. Pre-fills email.
+            window.__clerk.openSignIn({
+              redirectUrl: redirectUrl,
+              afterSignInUrl: redirectUrl,
+              afterSignUpUrl: redirectUrl,
+              initialValues: invitedEmail ? { emailAddress: invitedEmail } : undefined,
+            });
+          });
         })();
       </script>
 

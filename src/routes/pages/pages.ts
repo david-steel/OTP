@@ -1944,14 +1944,29 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     if (auth.userId) {
       try {
-        const result = await acceptInvite(token, auth.userId, null);
+        // Pull the Clerk user's primary email so acceptInvite can populate
+        // the chart tile's contact_email when claimed.
+        let clerkEmail: string | null = null;
+        try {
+          const secretKey = process.env.CLERK_SECRET_KEY;
+          if (secretKey) {
+            const { createClerkClient } = await import('@clerk/backend');
+            const clerk = createClerkClient({ secretKey });
+            const u = await clerk.users.getUser(auth.userId);
+            clerkEmail = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
+              || u.emailAddresses[0]?.emailAddress
+              || null;
+          }
+        } catch { /* Clerk lookup failed -- fall back to invite email */ }
+
+        const result = await acceptInvite(token, auth.userId, clerkEmail);
         return reply.view('pages/accept-invite', {
           title: 'Welcome - OTP',
           noindex: true,
           state: 'accepted',
           orgName: invRow.org_name,
           claimedEntityId: result.claimedEntityId,
-          dashboardUrl: '/dashboard/team',
+          dashboardUrl: '/dashboard',
         });
       } catch (e) {
         if (e instanceof MembershipError) {
@@ -2619,14 +2634,26 @@ export default async function pageRoutes(app: FastifyInstance) {
       });
     }
 
-    // Check if user has an org
-    const [org] = await db.select()
-      .from(organizations)
-      .where(eq(organizations.clerkOrgId, auth.userId))
-      .limit(1);
+    // Phase 1+: invited members are tied to their org via org_members, not
+    // organizations.clerkOrgId. Resolve the org from the request.orgMember
+    // decoration first so an invited member never sees the founder-style
+    // "Complete Publisher Profile" form by mistake.
+    const memberDecoration = (request as any).orgMember as { orgId: string } | null;
+    let org: any = null;
+    if (memberDecoration?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, memberDecoration.orgId)).limit(1);
+      if (m) org = m;
+    }
+    if (!org) {
+      // Fallback to legacy "I founded this org" lookup.
+      const [legacy] = await db.select().from(organizations)
+        .where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+      if (legacy) org = legacy;
+    }
 
     if (!org) {
-      // Signed in but no org -- show registration form
+      // Truly no org for this user (not invited, not a founder) -- show
+      // the publisher registration form.
       return reply.view('pages/register', {
         title: 'Complete Your Profile - OTP',
         description: 'Complete your publisher profile to start publishing coordination intelligence on OTP.',
