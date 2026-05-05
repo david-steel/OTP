@@ -160,11 +160,12 @@
 
     <!-- Status filter tabs -->
     <div class="flex flex-wrap gap-2 mb-6 border-b border-white/5 pb-4">
-      <a href="/admin/improvements?status=all<%- keyQs %>" class="imp-tab <%= activeStatus === 'all' ? 'active' : '' %>">All <span class="imp-tab-count"><%= counts.total %></span></a>
+      <a href="/admin/improvements?status=open<%- keyQs %>" class="imp-tab <%= activeStatus === 'open' ? 'active' : '' %>">Open <span class="imp-tab-count"><%= counts.open %></span></a>
       <a href="/admin/improvements?status=idea<%- keyQs %>" class="imp-tab <%= activeStatus === 'idea' ? 'active' : '' %>">Ideas <span class="imp-tab-count"><%= counts.idea %></span></a>
       <a href="/admin/improvements?status=in_progress<%- keyQs %>" class="imp-tab <%= activeStatus === 'in_progress' ? 'active' : '' %>">In progress <span class="imp-tab-count"><%= counts.in_progress %></span></a>
       <a href="/admin/improvements?status=completed<%- keyQs %>" class="imp-tab <%= activeStatus === 'completed' ? 'active' : '' %>">Completed <span class="imp-tab-count"><%= counts.completed %></span></a>
       <a href="/admin/improvements?status=wont_do<%- keyQs %>" class="imp-tab <%= activeStatus === 'wont_do' ? 'active' : '' %>">Won't do <span class="imp-tab-count"><%= counts.wont_do %></span></a>
+      <a href="/admin/improvements?status=all<%- keyQs %>" class="imp-tab <%= activeStatus === 'all' ? 'active' : '' %>">All <span class="imp-tab-count"><%= counts.total %></span></a>
     </div>
 
     <% if (improvements.length === 0) { %>

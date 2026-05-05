@@ -1454,19 +1454,26 @@ export default async function pageRoutes(app: FastifyInstance) {
     const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
     if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
 
-    const requestedStatus = request.query.status;
+    // Default view: only "open" items (idea + in_progress). Closed items
+    // (completed, wont_do) hide unless the user explicitly opts in via
+    // status=all / status=completed / status=wont_do.
+    const requestedStatus = request.query.status || 'open';
     const validStatuses = ['idea', 'in_progress', 'completed', 'wont_do'] as const;
     type Status = typeof validStatuses[number];
+    const openStatuses: Status[] = ['idea', 'in_progress'];
 
     const all = await db.select().from(improvements).orderBy(desc(improvements.createdAt));
 
     let visible = all;
-    if (requestedStatus && requestedStatus !== 'all' && (validStatuses as readonly string[]).includes(requestedStatus)) {
+    if (requestedStatus === 'open') {
+      visible = all.filter(i => openStatuses.includes(i.status as Status));
+    } else if (requestedStatus !== 'all' && (validStatuses as readonly string[]).includes(requestedStatus)) {
       visible = all.filter(i => i.status === (requestedStatus as Status));
     }
 
     const counts = {
       total: all.length,
+      open: all.filter(i => openStatuses.includes(i.status as Status)).length,
       idea: all.filter(i => i.status === 'idea').length,
       in_progress: all.filter(i => i.status === 'in_progress').length,
       completed: all.filter(i => i.status === 'completed').length,
@@ -1478,7 +1485,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       noindex: true,
       improvements: visible,
       counts,
-      activeStatus: requestedStatus || 'all',
+      activeStatus: requestedStatus,
       keyParam: request.query.key || '',
     });
   });
