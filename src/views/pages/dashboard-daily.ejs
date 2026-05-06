@@ -1,0 +1,571 @@
+<%
+  // Daily Manager Dashboard. The home base for anyone who runs a meeting --
+  // EOS-style L10 with Headlines / Rocks / KPIs / To-Dos / Issues, plus an
+  // OTP-native "My Agents" surface. Designed to be opened every morning.
+  //
+  // Data shape passed in by the /dashboard route:
+  //   org, orgs, member, capabilities, isIntegrator (bool),
+  //   meetings, selectedMeetingId, headlines, currentQuarter,
+  //   myRocks, myKpis, kpiValues (map kpiId -> latest value),
+  //   myTodos, myIssues, myAgents,
+  //   mcpStatus { connected, lastUsedAt, hasKey, keyPrefix? },
+  //   memberClaimedEntityIds (string[]).
+
+  var member = locals.member || {};
+  var role = member.role || 'managee';
+  var displayName = member.displayName || member.email || 'there';
+  var firstName = (displayName.split(' ')[0] || displayName).split('@')[0];
+  var orgName = (locals.org && locals.org.name) || '';
+  var caps = locals.capabilities || {};
+  var orgs = locals.orgs || [];
+  var meetings = locals.meetings || [];
+  var selectedMeetingId = locals.selectedMeetingId || '';
+  var selectedMeeting = null;
+  for (var i = 0; i < meetings.length; i++) {
+    if (meetings[i].id === selectedMeetingId) { selectedMeeting = meetings[i]; break; }
+  }
+  var headlines = locals.headlines || [];
+  var myRocks = locals.myRocks || [];
+  var myKpis = locals.myKpis || [];
+  var kpiValues = locals.kpiValues || {};
+  var myTodos = locals.myTodos || [];
+  var myIssues = locals.myIssues || [];
+  var myAgents = locals.myAgents || [];
+  var mcp = locals.mcpStatus || { connected: false, hasKey: false, lastUsedAt: null };
+  var quarter = locals.currentQuarter || '';
+  var isIntegrator = !!locals.isIntegrator;
+  var greeting = (function(){
+    var h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  })();
+%>
+
+<div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
+     data-org-id="<%= locals.org && locals.org.id %>"
+     data-meeting-id="<%= selectedMeetingId %>"
+     data-is-integrator="<%= isIntegrator ? '1' : '0' %>"
+     data-quarter="<%= quarter %>">
+
+  <!-- Header: greeting + org switcher + role -->
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= greeting %>, <%= firstName %>.</h1>
+      <p class="text-sm text-gray-600 mt-1">
+        <span class="px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= role %></span>
+        <% if (quarter) { %>
+          <span class="text-gray-400 ml-2">Quarter <%= quarter %></span>
+        <% } %>
+      </p>
+    </div>
+
+    <% if (orgs.length > 1) { %>
+      <form method="GET" action="/dashboard" class="text-sm">
+        <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Organization</label>
+        <select name="orgId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+          <% orgs.forEach(function(o){ %>
+            <option value="<%= o.id %>" <%= o.id === (locals.org && locals.org.id) ? 'selected' : '' %>><%= o.name %></option>
+          <% }); %>
+        </select>
+      </form>
+    <% } %>
+  </div>
+
+  <!-- MCP status banner -->
+  <% if (!mcp.connected) { %>
+    <div class="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="min-w-0">
+          <div class="text-sm font-bold text-amber-900">Connect your MCP key to make this dashboard live</div>
+          <p class="text-xs text-amber-800 mt-1">
+            OTP is at its best when your agents push KPIs and pull rocks via MCP.
+            <% if (mcp.hasKey) { %>You have a key, but it has not been used in 7 days.<% } %>
+          </p>
+        </div>
+        <a href="/dashboard/api" class="rounded bg-amber-900 text-amber-50 text-xs font-semibold px-3 py-1.5 hover:bg-amber-800">Set up MCP &rarr;</a>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-900 flex items-center gap-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+      MCP live -- last seen <%= mcp.lastUsedAt ? new Date(mcp.lastUsedAt).toLocaleString() : 'just now' %>.
+    </div>
+  <% } %>
+
+  <!-- Meeting selector -->
+  <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
+    <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Meeting</h2>
+      <% if (caps.canEditAssignedItems) { %>
+        <a href="/l8" class="text-xs text-otp-600 font-semibold">Open the L8 tool &rarr;</a>
+      <% } %>
+    </div>
+    <% if (meetings.length === 0) { %>
+      <p class="text-sm text-gray-600">No meetings yet. <% if (caps.canCreateTeams) { %><a href="/l8" class="text-otp-600 underline">Create one</a>.<% } %></p>
+    <% } else { %>
+      <form method="GET" action="/dashboard" class="flex flex-wrap items-center gap-3">
+        <% if (orgs.length > 1) { %><input type="hidden" name="orgId" value="<%= locals.org.id %>"><% } %>
+        <select name="meetingId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm flex-1 min-w-[260px] focus:outline-none focus:ring-2 focus:ring-otp-500">
+          <% meetings.forEach(function(m){ %>
+            <option value="<%= m.id %>" <%= m.id === selectedMeetingId ? 'selected' : '' %>>
+              <%= m.title %> -- <%= new Date(m.scheduledAt).toLocaleDateString() %>
+              <%= m.status === 'completed' ? '(completed)' : '' %>
+            </option>
+          <% }); %>
+        </select>
+        <% if (selectedMeeting) { %>
+          <span class="text-xs text-gray-500">
+            <%= selectedMeeting.meetingType %> &middot;
+            <%= new Date(selectedMeeting.scheduledAt).toLocaleString() %>
+          </span>
+        <% } %>
+      </form>
+    <% } %>
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- LEFT COLUMN -->
+    <div class="space-y-6">
+
+      <!-- Headlines -->
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">
+            Headlines
+            <% if (headlines.filter(function(h){return !h.readAt;}).length > 0) { %>
+              <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-otp-100 text-otp-700 text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
+            <% } %>
+          </h2>
+          <% if (isIntegrator) { %>
+            <span class="text-[10px] uppercase tracking-wide text-otp-700 bg-otp-50 rounded px-1.5 py-0.5">Integrator</span>
+          <% } %>
+        </div>
+
+        <% if (selectedMeetingId) { %>
+          <form id="headline-form" class="mb-3 flex gap-2" data-meeting-id="<%= selectedMeetingId %>">
+            <select name="kind" class="rounded border border-gray-300 bg-white px-2 py-1 text-xs">
+              <option value="customer">Customer</option>
+              <option value="employee">Employee</option>
+              <option value="other" selected>Other</option>
+            </select>
+            <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+            <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-otp-700">Add</button>
+          </form>
+        <% } %>
+
+        <% if (headlines.length === 0) { %>
+          <p class="text-xs text-gray-500">No headlines yet for this meeting.</p>
+        <% } else { %>
+          <ul class="space-y-2">
+            <% headlines.forEach(function(h){ %>
+              <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-headline-id="<%= h.id %>">
+                <input type="checkbox" class="headline-read-cb mt-1" <%= h.readAt ? 'checked' : '' %> <%= isIntegrator ? '' : 'disabled' %>>
+                <div class="flex-1 min-w-0">
+                  <div class="<%= h.readAt ? 'line-through text-gray-500' : 'text-gray-900' %>"><%= h.body %></div>
+                  <div class="text-[11px] text-gray-500 mt-0.5">
+                    <span class="uppercase tracking-wide"><%= h.kind %></span>
+                    &middot; <%= h.authorName || h.authorUserId %>
+                    <%= h.readAt ? ' &middot; read ' + new Date(h.readAt).toLocaleString() : '' %>
+                  </div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+      <!-- My Rocks -->
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My Rocks <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %></h2>
+        </div>
+        <% if (myRocks.length === 0) { %>
+          <p class="text-xs text-gray-500">No rocks claimed for this quarter.</p>
+        <% } else { %>
+          <ul class="space-y-2">
+            <% myRocks.forEach(function(r){
+                 var due = r.dueDate ? new Date(r.dueDate) : null;
+                 var overdue = due && !r.completedAt && due < new Date();
+            %>
+              <li class="rounded border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm" data-rock-id="<%= r.id %>">
+                <div class="flex items-start gap-3">
+                  <button class="rock-track-toggle text-[11px] font-semibold uppercase rounded px-2 py-0.5 <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' %>" data-on-track="<%= r.onTrack ? '1' : '0' %>">
+                    <%= r.onTrack ? 'On track' : 'Off track' %>
+                  </button>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-gray-900"><%= r.title %></div>
+                    <div class="text-[11px] text-gray-500 mt-0.5">
+                      <%= due ? 'Due ' + due.toLocaleDateString() : 'No due date' %>
+                      <%= overdue ? ' -- OVERDUE' : '' %>
+                      <%= r.completedAt ? ' -- Done' : '' %>
+                    </div>
+                    <% if (r.statusNote) { %>
+                      <p class="text-xs text-gray-600 mt-1"><%= r.statusNote %></p>
+                    <% } %>
+                  </div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+      <!-- My KPIs -->
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My KPIs</h2>
+          <a href="/dashboard/kpis" class="text-xs text-otp-600 font-semibold">Scoreboard &rarr;</a>
+        </div>
+        <% if (myKpis.length === 0) { %>
+          <p class="text-xs text-gray-500">No KPIs assigned to you yet.</p>
+        <% } else { %>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                <th class="py-1">KPI</th>
+                <th class="py-1">Goal</th>
+                <th class="py-1">Latest</th>
+                <th class="py-1">Enter</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% myKpis.forEach(function(k){
+                   var latest = kpiValues[k.id];
+                   var goalSym = { gte: '>=', lte: '<=', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
+              %>
+                <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>">
+                  <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
+                  <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
+                  <td class="py-2 pr-3 text-gray-700"><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
+                  <td class="py-2">
+                    <input type="number" step="any" class="kpi-value-input rounded border border-gray-300 px-2 py-1 text-xs w-20" placeholder="value" value="<%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '' %>">
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </section>
+
+    </div><!-- /left -->
+
+    <!-- RIGHT COLUMN -->
+    <div class="space-y-6">
+
+      <!-- My To-Dos -->
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My To-Dos</h2>
+          <button id="todo-add-toggle" class="text-xs text-otp-600 font-semibold">+ Add</button>
+        </div>
+        <form id="todo-add-form" class="hidden mb-3 space-y-2">
+          <input type="text" name="title" required maxlength="500" placeholder="What to do" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+          <div class="flex gap-2">
+            <input type="date" name="dueAt" class="rounded border border-gray-300 px-2 py-1 text-xs">
+            <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Save</button>
+          </div>
+        </form>
+        <% if (myTodos.length === 0) { %>
+          <p class="text-xs text-gray-500">No open to-dos. Nice.</p>
+        <% } else { %>
+          <ul class="space-y-1">
+            <% myTodos.forEach(function(t){
+                 var due = t.dueAt ? new Date(t.dueAt) : null;
+                 var overdue = due && !t.doneAt && due < new Date();
+            %>
+              <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-todo-id="<%= t.id %>">
+                <input type="checkbox" class="todo-done-cb mt-1" <%= t.doneAt ? 'checked' : '' %>>
+                <div class="flex-1 min-w-0">
+                  <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %>"><%= t.title %></div>
+                  <div class="text-[11px] <%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %> mt-0.5">
+                    <%= due ? (overdue ? 'OVERDUE -- ' : 'Due ') + due.toLocaleDateString() : 'No due date' %>
+                  </div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+      <!-- IDS Issues -->
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Issues (IDS)</h2>
+          <button id="issue-add-toggle" class="text-xs text-otp-600 font-semibold">+ Add</button>
+        </div>
+        <form id="issue-add-form" class="hidden mb-3 space-y-2">
+          <input type="text" name="title" required maxlength="500" placeholder="Issue title" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+          <textarea name="description" rows="2" placeholder="Why does this matter?" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></textarea>
+          <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Add issue</button>
+        </form>
+        <% if (myIssues.length === 0) { %>
+          <p class="text-xs text-gray-500">No open issues for you. Use this list at L10 -- Identify, Discuss, Solve.</p>
+        <% } else { %>
+          <ul class="space-y-1">
+            <% myIssues.forEach(function(t){ %>
+              <li class="text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-issue-id="<%= t.id %>">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-gray-900"><%= t.title %></div>
+                    <% if (t.description) { %><p class="text-xs text-gray-600 mt-0.5"><%= t.description %></p><% } %>
+                    <div class="text-[11px] text-gray-500 mt-0.5">
+                      <%= t.idsStatus %><%= t.priorityRank ? ' &middot; #' + t.priorityRank : '' %>
+                    </div>
+                  </div>
+                  <% if (isIntegrator) { %>
+                    <button class="issue-solve-btn text-[11px] font-semibold rounded px-2 py-0.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">Solved</button>
+                  <% } %>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+      <!-- My Agents -->
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My Agents</h2>
+          <button id="agent-upload-toggle" class="text-xs text-otp-600 font-semibold">+ Upload .md</button>
+        </div>
+        <form id="agent-upload-form" class="hidden mb-3 space-y-2">
+          <input type="text" name="name" maxlength="255" placeholder="Agent name (optional, will read H1)" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+          <textarea name="rawMd" rows="6" required placeholder="Paste your CLAUDE.md or Agent.md content here..." class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs font-mono"></textarea>
+          <div class="flex gap-2">
+            <input type="file" name="file" accept=".md,.markdown,text/markdown,text/plain" id="agent-file-input" class="text-xs">
+            <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Upload</button>
+          </div>
+        </form>
+        <% if (myAgents.length === 0) { %>
+          <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600">
+            No agents yet. Upload your CLAUDE.md or Agent.md to score it on <strong>connection</strong>, <strong>KPIs</strong>, <strong>recent activity</strong>, and <strong>documentation</strong>.
+            <% if (!mcp.connected) { %>
+              Connect MCP first so OTP can see your agent's runs and push the score above 4.
+            <% } %>
+          </div>
+        <% } else { %>
+          <ul class="space-y-2">
+            <% myAgents.forEach(function(a){
+                 var score = a.score || 0;
+                 var pct = Math.round((score / 8) * 100);
+                 var dot = a.mcpConnectedAt ? 'bg-emerald-500' : 'bg-gray-300';
+            %>
+              <li class="rounded border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm" data-agent-id="<%= a.id %>">
+                <div class="flex items-start gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-block w-2 h-2 rounded-full <%= dot %>"></span>
+                      <span class="font-semibold text-gray-900 truncate"><%= a.name %></span>
+                      <% if (a.externalId) { %><span class="text-[10px] text-gray-400 font-mono"><%= a.externalId %></span><% } %>
+                    </div>
+                    <% if (a.description) { %><p class="text-xs text-gray-600 mt-0.5 line-clamp-2"><%= a.description %></p><% } %>
+                    <div class="mt-1 flex items-center gap-2">
+                      <div class="flex-1 h-1.5 bg-gray-200 rounded overflow-hidden">
+                        <div class="h-full <%= score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : 'bg-rose-400' %>" style="width: <%= pct %>%"></div>
+                      </div>
+                      <span class="text-[11px] font-semibold text-gray-700"><%= score.toFixed ? score.toFixed(1) : score %>/8</span>
+                    </div>
+                    <div class="text-[11px] text-gray-500 mt-1">
+                      <%= a.runCount || 0 %> runs (30d)
+                      &middot; <%= a.mcpConnectedAt ? 'MCP active' : 'no MCP activity' %>
+                      <% if ((a.kpis && a.kpis.length) || 0) { %>&middot; <%= a.kpis.length %> KPI<%= a.kpis.length === 1 ? '' : 's' %><% } %>
+                    </div>
+                  </div>
+                  <button class="agent-rescore-btn text-[10px] uppercase tracking-wide text-gray-500 hover:text-otp-600">Re-score</button>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </section>
+
+    </div><!-- /right -->
+  </div>
+
+  <!-- Cascading Message (read-only, integrator-set) -->
+  <% if (selectedMeeting && selectedMeeting.cascadingMessage) { %>
+    <section class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">Cascading message</h2>
+      <pre class="whitespace-pre-wrap text-xs text-gray-800 font-mono"><%= selectedMeeting.cascadingMessage %></pre>
+    </section>
+  <% } %>
+
+  <!-- Footer -->
+  <footer class="mt-10 text-xs text-gray-400">
+    Daily dashboard v1. Run an L10 from this page every week. Push KPIs and pull rocks via MCP.
+    <% if (caps.canEditOrgSettings) { %>
+      &middot; <a href="/dashboard/publisher" class="underline hover:text-otp-600">Switch to publisher view</a>
+    <% } %>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var root = document.getElementById('daily-dashboard');
+  if (!root) return;
+  var meetingId = root.dataset.meetingId || '';
+  var orgId = root.dataset.orgId || '';
+  var isIntegrator = root.dataset.isIntegrator === '1';
+  var quarter = root.dataset.quarter || '';
+
+  function api(method, path, body) {
+    var opts = {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch('/api/v1' + path, opts).then(function(r){
+      if (!r.ok) return r.json().catch(function(){ return {}; }).then(function(j){ throw j.error || { code: 'API_ERROR', message: 'API ' + r.status }; });
+      return r.json();
+    });
+  }
+
+  function reload() { window.location.reload(); }
+
+  // --- Headlines ---
+  var hlForm = document.getElementById('headline-form');
+  if (hlForm) {
+    hlForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var fd = new FormData(hlForm);
+      api('POST', '/meetings/' + meetingId + '/headlines', { body: fd.get('body'), kind: fd.get('kind') })
+        .then(reload)
+        .catch(function(err){ alert('Headline failed: ' + (err.message || 'unknown')); });
+    });
+  }
+  document.querySelectorAll('.headline-read-cb').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      if (!isIntegrator) return;
+      var li = cb.closest('[data-headline-id]');
+      var hid = li.dataset.headlineId;
+      var path = cb.checked ? '/read' : '/unread';
+      api('POST', '/meetings/' + meetingId + '/headlines/' + hid + path, {})
+        .then(reload)
+        .catch(function(err){ cb.checked = !cb.checked; alert(err.message || 'Failed'); });
+    });
+  });
+
+  // --- Rocks: on/off track toggle ---
+  document.querySelectorAll('.rock-track-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-rock-id]');
+      var rid = li.dataset.rockId;
+      var current = btn.dataset.onTrack === '1';
+      var next = !current;
+      api('PUT', '/rocks/' + rid, { onTrack: next })
+        .then(reload)
+        .catch(function(err){ alert('Could not update rock: ' + (err.message || 'unknown')); });
+    });
+  });
+
+  // --- KPIs: inline value entry ---
+  document.querySelectorAll('.kpi-value-input').forEach(function(inp){
+    var debounce = null;
+    inp.addEventListener('change', function(){
+      clearTimeout(debounce);
+      debounce = setTimeout(function(){
+        var tr = inp.closest('[data-kpi-id]');
+        var kid = tr.dataset.kpiId;
+        var val = inp.value === '' ? null : parseFloat(inp.value);
+        if (val === null || Number.isNaN(val)) return;
+        // Push current week as the period.
+        var now = new Date();
+        var dow = now.getDay(); // 0 Sun .. 6 Sat
+        var weekStart = new Date(now); weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
+        var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
+        api('POST', '/kpis/' + kid + '/values', { periodStart: weekStart.toISOString(), periodEnd: weekEnd.toISOString(), value: val, source: 'manual' })
+          .then(function(){ inp.classList.add('ring-1'); inp.classList.add('ring-emerald-400'); setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800); })
+          .catch(function(err){ alert('KPI save failed: ' + (err.message || 'unknown')); });
+      }, 300);
+    });
+  });
+
+  // --- To-Dos ---
+  var todoToggle = document.getElementById('todo-add-toggle');
+  var todoForm = document.getElementById('todo-add-form');
+  if (todoToggle && todoForm) {
+    todoToggle.addEventListener('click', function(){ todoForm.classList.toggle('hidden'); });
+    todoForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var fd = new FormData(todoForm);
+      var body = { title: fd.get('title'), ownerEntityType: 'human', ownerExternalId: '<%= (locals.memberClaimedEntityIds && locals.memberClaimedEntityIds[0]) || (locals.member && locals.member.email) || "self" %>' };
+      var due = fd.get('dueAt');
+      if (due) body.dueAt = new Date(due + 'T17:00:00').toISOString();
+      if (meetingId) body.meetingId = meetingId;
+      api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + (err.message || 'unknown')); });
+    });
+  }
+  document.querySelectorAll('.todo-done-cb').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var li = cb.closest('[data-todo-id]');
+      var tid = li.dataset.todoId;
+      api('PUT', '/todos/' + tid, { done: cb.checked })
+        .then(reload)
+        .catch(function(err){ cb.checked = !cb.checked; alert(err.message || 'Failed'); });
+    });
+  });
+
+  // --- Issues ---
+  var issToggle = document.getElementById('issue-add-toggle');
+  var issForm = document.getElementById('issue-add-form');
+  if (issToggle && issForm) {
+    issToggle.addEventListener('click', function(){ issForm.classList.toggle('hidden'); });
+    issForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var fd = new FormData(issForm);
+      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium' })
+        .then(reload)
+        .catch(function(err){ alert('Add issue failed: ' + (err.message || 'unknown')); });
+    });
+  }
+  document.querySelectorAll('.issue-solve-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-issue-id]');
+      var iid = li.dataset.issueId;
+      api('PUT', '/tickets/' + iid, { idsStatus: 'solved', solvedInMeetingId: meetingId || null })
+        .then(reload)
+        .catch(function(err){ alert('Could not mark solved: ' + (err.message || 'unknown')); });
+    });
+  });
+
+  // --- Agents ---
+  var agToggle = document.getElementById('agent-upload-toggle');
+  var agForm = document.getElementById('agent-upload-form');
+  var agFile = document.getElementById('agent-file-input');
+  if (agToggle && agForm) {
+    agToggle.addEventListener('click', function(){ agForm.classList.toggle('hidden'); });
+    if (agFile) {
+      agFile.addEventListener('change', function(){
+        var f = agFile.files && agFile.files[0];
+        if (!f) return;
+        var reader = new FileReader();
+        reader.onload = function(){ agForm.querySelector('[name=rawMd]').value = String(reader.result || ''); };
+        reader.readAsText(f);
+      });
+    }
+    agForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var fd = new FormData(agForm);
+      var raw = String(fd.get('rawMd') || '').trim();
+      if (!raw) return alert('Paste or pick a markdown file first.');
+      api('POST', '/manager-agents', { name: fd.get('name') || undefined, rawMd: raw })
+        .then(reload)
+        .catch(function(err){ alert('Upload failed: ' + (err.message || 'unknown')); });
+    });
+  }
+  document.querySelectorAll('.agent-rescore-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-agent-id]');
+      var aid = li.dataset.agentId;
+      btn.textContent = '...';
+      api('POST', '/manager-agents/' + aid + '/score', {})
+        .then(reload)
+        .catch(function(err){ btn.textContent = 'Re-score'; alert(err.message || 'Failed'); });
+    });
+  });
+})();
+</script>

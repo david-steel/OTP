@@ -18,14 +18,17 @@
  */
 import type { Role } from '../services/membership.js';
 
-const ALL_FULL_ACCESS: Role[] = ['owner', 'admin'];
-const CAN_INVITE: Role[] = ['owner', 'admin', 'manager'];
-const CAN_CREATE_TEAMS: Role[] = ['owner', 'admin', 'manager'];
+const ALL_FULL_ACCESS: Role[] = ['owner', 'admin', 'visionary', 'integrator'];
+const CAN_INVITE: Role[] = ['owner', 'admin', 'manager', 'visionary', 'integrator'];
+const CAN_CREATE_TEAMS: Role[] = ['owner', 'admin', 'manager', 'visionary', 'integrator'];
 const CAN_VIEW_APP: Role[] = [
   'owner', 'admin', 'manager', 'managee',
-  'observer', 'implementer', 'free', 'member',
+  'observer', 'implementer', 'visionary', 'integrator',
+  'free', 'member',
 ];
 const CANNOT_OWN_ITEMS: Role[] = ['observer', 'implementer', 'inactive'];
+// EOS Integrator runs the L10 and approves headlines + overrides rock status.
+const CAN_INTEGRATE: Role[] = ['owner', 'admin', 'integrator', 'implementer'];
 
 function has(role: Role | null | undefined, allowed: Role[]): boolean {
   return !!role && allowed.includes(role);
@@ -39,6 +42,15 @@ export function canDeleteOrg(role: Role | null | undefined): boolean {
 
 export function canEditOrgSettings(role: Role | null | undefined): boolean {
   return has(role, ALL_FULL_ACCESS) || role === 'implementer';
+}
+
+/**
+ * Whether this role can act as the EOS Integrator on the dashboard:
+ * mark headlines as read, override a Rock's on/off-track status,
+ * close issues, and finalize cascading messages.
+ */
+export function canIntegrate(role: Role | null | undefined): boolean {
+  return has(role, CAN_INTEGRATE);
 }
 
 export function canInviteMembers(role: Role | null | undefined): boolean {
@@ -78,7 +90,8 @@ export function canAccessApp(role: Role | null | undefined): boolean {
  * are gated to their assigned teams.
  */
 export function hasOrgWideView(role: Role | null | undefined): boolean {
-  return role === 'owner' || role === 'admin' || role === 'implementer';
+  return role === 'owner' || role === 'admin' || role === 'implementer'
+      || role === 'visionary' || role === 'integrator';
 }
 
 /**
@@ -117,6 +130,7 @@ export interface RoleCapabilities {
   canEditAssignedItems: boolean;
   hasOrgWideView: boolean;
   isTeamScoped: boolean;
+  canIntegrate: boolean;
 }
 
 export function capabilitiesFor(role: Role | null | undefined): RoleCapabilities {
@@ -130,5 +144,6 @@ export function capabilitiesFor(role: Role | null | undefined): RoleCapabilities
     canEditAssignedItems: canEditAssignedItems(role),
     hasOrgWideView: hasOrgWideView(role),
     isTeamScoped: isTeamScoped(role),
+    canIntegrate: canIntegrate(role),
   };
 }

@@ -561,6 +561,8 @@ await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meetings.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/headlines.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/manager-agents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/team-profile.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/consultants.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/workspaces.js'), { prefix: '/api/v1' });
@@ -645,6 +647,22 @@ try {
   app.log.info('agent_runs + agent_schedules tables are ready');
 } catch (err) {
   app.log.error({ err }, 'ensureAgentRuntimeTables failed -- agent runtime will not work until resolved');
+}
+
+try {
+  const { ensureMeetingHeadlinesTable } = await import('./db/ensure-meeting-headlines.js');
+  await ensureMeetingHeadlinesTable();
+  app.log.info('meeting_headlines table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingHeadlinesTable failed -- daily dashboard headlines will not persist until resolved');
+}
+
+try {
+  const { ensureManagerAgentsTable } = await import('./db/ensure-manager-agents.js');
+  await ensureManagerAgentsTable();
+  app.log.info('manager_agents table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureManagerAgentsTable failed -- manager agent uploads on the dashboard will not persist until resolved');
 }
 
 // Start server

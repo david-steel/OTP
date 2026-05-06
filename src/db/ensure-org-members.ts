@@ -24,6 +24,10 @@ import { db } from '../config/database.js';
 const NEW_ROLE_VALUES = [
   'admin', 'manager', 'managee',
   'inactive', 'observer', 'implementer', 'free',
+  // EOS leadership roles. Visionary is typically the CEO; Integrator is the
+  // operating partner (often COO) who runs the L10. The dashboard surfaces
+  // Integrator-only actions (mark headlines read, override Rock status).
+  'visionary', 'integrator',
 ];
 
 const NEW_STATUS_VALUES = ['invited', 'suspended', 'inactive'];

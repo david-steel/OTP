@@ -470,6 +470,7 @@ export const onboardingSequence = pgTable('onboarding_sequence', {
 export const orgMemberRoleEnum = pgEnum('org_member_role', [
   'owner', 'admin', 'manager', 'managee',
   'inactive', 'observer', 'implementer', 'free',
+  'visionary', 'integrator',
   'member', // deprecated
 ]);
 export const orgMemberStatusEnum = pgEnum('org_member_status', [
@@ -839,4 +840,56 @@ export const teamMemberships = pgTable('team_memberships', {
 }, (table) => ({
   teamIdx: index('tm_team_idx').on(table.teamId),
   memberIdx: index('tm_member_idx').on(table.memberId),
+}));
+
+// ---- Meeting headlines (per-author headline rows on a meeting) ----
+// Created in ensure-meeting-headlines.ts. Schema declared here for typed
+// queries from API code.
+
+export const meetingHeadlineKindEnum = pgEnum('meeting_headline_kind', ['customer', 'employee', 'other']);
+
+export const meetingHeadlines = pgTable('meeting_headlines', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  meetingId: uuid('meeting_id').references(() => meetings.id, { onDelete: 'cascade' }).notNull(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  authorUserId: varchar('author_user_id', { length: 255 }).notNull(),
+  authorName: varchar('author_name', { length: 255 }),
+  kind: meetingHeadlineKindEnum('kind').notNull().default('other'),
+  body: text('body').notNull(),
+  readAt: timestamp('read_at'),
+  readByUserId: varchar('read_by_user_id', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  meetingIdx: index('mhl_meeting_idx').on(table.meetingId, table.createdAt),
+  authorIdx: index('mhl_author_idx').on(table.orgId, table.authorUserId),
+  unreadIdx: index('mhl_unread_idx').on(table.meetingId, table.readAt),
+}));
+
+// ---- Manager agents (user-uploaded CLAUDE.md / Agent.md per dashboard) ----
+// Created in ensure-manager-agents.ts.
+
+export const managerAgents = pgTable('manager_agents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  ownerUserId: varchar('owner_user_id', { length: 255 }).notNull(),
+  ownerMemberId: uuid('owner_member_id').references(() => orgMembers.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  externalId: varchar('external_id', { length: 120 }),
+  description: text('description'),
+  rawMd: text('raw_md').notNull(),
+  frontmatter: jsonb('frontmatter').notNull().default({}),
+  kpis: jsonb('kpis').notNull().default([]),
+  score: real('score'),
+  scoreBreakdown: jsonb('score_breakdown'),
+  mcpConnectedAt: timestamp('mcp_connected_at'),
+  lastRunAt: timestamp('last_run_at'),
+  runCount: integer('run_count').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  orgIdx: index('mga_org_idx').on(table.orgId),
+  ownerIdx: index('mga_owner_idx').on(table.orgId, table.ownerUserId),
+  externalIdx: index('mga_external_idx').on(table.orgId, table.externalId),
 }));

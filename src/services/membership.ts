@@ -26,6 +26,8 @@ export type Role =
   | 'inactive'
   | 'observer'
   | 'implementer'
+  | 'visionary'
+  | 'integrator'
   | 'free'
   | 'member'; // deprecated
 

@@ -2,9 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships } from '../../db/schema.js';
-import { hasOrgWideView, canEditOrgSettings, capabilitiesFor } from '../../middleware/permissions.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents } from '../../db/schema.js';
+import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
+import { getOrgsForUser } from '../../services/membership.js';
 import { isNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -1835,11 +1836,13 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     // Inviters can issue at-or-below their own rank.
     const RANK: Record<Role, number> = {
-      owner: 4, implementer: 3, admin: 3, manager: 2,
-      managee: 1, member: 1, observer: 1, free: 1, inactive: 0,
+      owner: 4, visionary: 4, integrator: 4, implementer: 3, admin: 3,
+      manager: 2, managee: 1, member: 1, observer: 1, free: 1, inactive: 0,
     };
     const ROLE_LABELS: Record<Role, string> = {
       owner: 'Owner -- full access + can delete the company',
+      visionary: 'Visionary -- EOS Visionary (CEO), full access',
+      integrator: 'Integrator -- EOS Integrator (operating partner), full access + runs L10',
       admin: 'Admin -- full access except delete',
       manager: 'Manager -- assigned teams, can invite + create teams',
       managee: 'Managee -- assigned teams, edit own items',
@@ -1850,7 +1853,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       member: 'Member (legacy)',
     };
     const inviterRank = RANK[viewerRole as Role] ?? 0;
-    const PRESENT_ROLES: Role[] = ['owner', 'admin', 'manager', 'managee', 'observer', 'implementer', 'free', 'inactive'];
+    const PRESENT_ROLES: Role[] = ['owner', 'visionary', 'integrator', 'admin', 'manager', 'managee', 'observer', 'implementer', 'free', 'inactive'];
     const availableRoles = PRESENT_ROLES
       .filter(r => (RANK[r] ?? 0) <= inviterRank)
       .map(r => ({ value: r, label: ROLE_LABELS[r] }));
@@ -2777,12 +2780,11 @@ export default async function pageRoutes(app: FastifyInstance) {
       });
     }
 
-    // Role-aware split. Owners/admins/implementers see the publisher
-    // dashboard (admin view). Manager/managee/observer/free see the
-    // employee view. Owners can preview the employee view via
-    // ?previewRole=managee for QA.
-    const member = (request as any).orgMember as { role: Role; id: string; displayName: string | null; email: string | null; agentAccess: Record<string, boolean>; featureAccess: Record<string, boolean>; dataAccess: Record<string, boolean>; } | null;
-    const VALID_ROLES: Role[] = ['owner', 'admin', 'manager', 'managee', 'inactive', 'observer', 'implementer', 'free', 'member'];
+    // Daily Manager Dashboard: every authed user with an org sees the same
+    // page now -- the EOS-style daily home. Owners/admins keep the legacy
+    // publisher view at /dashboard/publisher (linked from the daily footer).
+    const member = (request as any).orgMember as { role: Role; id: string; displayName: string | null; email: string | null; agentAccess: Record<string, boolean>; featureAccess: Record<string, boolean>; dataAccess: Record<string, boolean>; claimedEntityIds?: string[]; } | null;
+    const VALID_ROLES: Role[] = ['owner', 'admin', 'manager', 'managee', 'inactive', 'observer', 'implementer', 'visionary', 'integrator', 'free', 'member'];
     const previewParam = (request.query as any)?.previewRole as string | undefined;
     const isOwnerLike = !!(member && canEditOrgSettings(member.role));
     const previewActive = !!(isOwnerLike && previewParam && VALID_ROLES.includes(previewParam as Role));
@@ -2790,44 +2792,192 @@ export default async function pageRoutes(app: FastifyInstance) {
       ? (previewParam as Role)
       : (member ? member.role : 'owner');
 
-    if (!hasOrgWideView(effectiveRole)) {
-      // ---------- Employee view ----------
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-
-      const todayMeetings = await db.select()
-        .from(meetings)
-        .where(and(
-          eq(meetings.organizationId, org.id),
-          isNull(meetings.deletedAt),
-          sql`${meetings.scheduledAt} >= ${todayStart}`,
-          sql`${meetings.scheduledAt} < ${todayEnd}`,
-        ))
-        .orderBy(meetings.scheduledAt);
-
-      const memberTeams = member
-        ? await db.select({ id: teams.id, name: teams.name, slug: teams.slug })
-            .from(teamMemberships)
-            .innerJoin(teams, eq(teamMemberships.teamId, teams.id))
-            .where(eq(teamMemberships.memberId, member.id))
-        : [];
-
-      return reply.view('pages/dashboard-employee', {
-        title: 'Dashboard - OTP',
-        description: 'Your day on OTP -- meetings, agents, and team.',
-        ogImage: BASE_URL + '/public/og-image.png',
-        noindex: true,
-        org,
-        member: member ? { ...member, role: effectiveRole } : { role: effectiveRole, displayName: null, email: null, agentAccess: {}, featureAccess: {}, dataAccess: {} },
-        teams: memberTeams,
-        todayMeetings,
-        capabilities: capabilitiesFor(effectiveRole),
-        previewRole: previewActive ? previewParam : '',
-      });
+    // ---- Multi-org awareness ----
+    const userOrgs = await getOrgsForUser(auth.userId);
+    const orgListBasic: { id: string; name: string }[] = [];
+    if (userOrgs.length > 0) {
+      const ids = userOrgs.map(u => u.orgId);
+      const rows = await db.select({ id: organizations.id, name: organizations.name })
+        .from(organizations).where(inArray(organizations.id, ids));
+      for (const r of rows) orgListBasic.push({ id: r.id, name: r.name });
+    } else {
+      orgListBasic.push({ id: org.id, name: org.name });
     }
 
-    // ---------- Admin view (owner / admin / implementer) ----------
+    // ---- Meetings ----
+    const meetingsList = await db.select().from(meetings)
+      .where(and(eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)))
+      .orderBy(desc(meetings.scheduledAt))
+      .limit(50);
+
+    let selectedMeetingId = (request.query as any)?.meetingId as string | undefined;
+    if (!selectedMeetingId || !meetingsList.find(m => m.id === selectedMeetingId)) {
+      // Default to the next upcoming meeting; fall back to the most recent.
+      const now = new Date();
+      const upcoming = meetingsList
+        .filter(m => new Date(m.scheduledAt) >= now)
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
+      selectedMeetingId = upcoming?.id || meetingsList[0]?.id || '';
+    }
+
+    // ---- Headlines for selected meeting ----
+    let headlinesList: any[] = [];
+    if (selectedMeetingId) {
+      headlinesList = await db.select().from(meetingHeadlines)
+        .where(and(eq(meetingHeadlines.meetingId, selectedMeetingId), eq(meetingHeadlines.orgId, org.id)))
+        .orderBy(desc(meetingHeadlines.createdAt));
+    }
+
+    // ---- Quarter ----
+    const now = new Date();
+    const q = Math.floor(now.getMonth() / 3) + 1;
+    const currentQuarter = `${now.getFullYear()}-Q${q}`;
+
+    // ---- Owner identity for "my" filtering ----
+    // Use the member's first claimed entity id; fall back to email.
+    const claimedIds = ((member as any)?.claimedEntityIds as string[] | undefined) || [];
+    const myExternalId = claimedIds[0] || (member?.email || '');
+
+    // ---- My Rocks ----
+    let myRocks: any[] = [];
+    if (myExternalId) {
+      myRocks = await db.select().from(rocks)
+        .where(and(
+          eq(rocks.organizationId, org.id),
+          isNull(rocks.deletedAt),
+          eq(rocks.quarter, currentQuarter),
+          eq(rocks.ownerExternalId, myExternalId),
+        ))
+        .orderBy(desc(rocks.dueDate));
+    }
+
+    // ---- My KPIs ----
+    let myKpis: any[] = [];
+    let kpiValuesMap: Record<string, { value: number | null; periodStart: Date; periodEnd: Date }> = {};
+    if (myExternalId) {
+      myKpis = await db.select().from(kpis)
+        .where(and(
+          eq(kpis.organizationId, org.id),
+          isNull(kpis.deletedAt),
+          eq(kpis.ownerExternalId, myExternalId),
+        ))
+        .orderBy(kpis.title);
+      for (const k of myKpis) {
+        const [latest] = await db.select().from(kpiValues)
+          .where(eq(kpiValues.kpiId, k.id))
+          .orderBy(desc(kpiValues.periodStart))
+          .limit(1);
+        if (latest) kpiValuesMap[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
+      }
+    }
+
+    // ---- My To-Dos (open) ----
+    let myTodos: any[] = [];
+    if (myExternalId) {
+      myTodos = await db.select().from(todos)
+        .where(and(
+          eq(todos.organizationId, org.id),
+          isNull(todos.deletedAt),
+          isNull(todos.doneAt),
+          eq(todos.ownerExternalId, myExternalId),
+        ))
+        .orderBy(desc(todos.createdAt))
+        .limit(50);
+    }
+
+    // ---- My Issues (open IDS) ----
+    let myIssues: any[] = [];
+    if (myExternalId) {
+      myIssues = await db.select().from(tickets)
+        .where(and(
+          eq(tickets.orgId, org.id),
+          isNull(tickets.deletedAt),
+          eq(tickets.ownerExternalId, myExternalId),
+          sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+        ))
+        .orderBy(desc(tickets.createdAt))
+        .limit(50);
+    } else {
+      // No claimed tile yet -- show the org-wide open IDS list so the user
+      // is not staring at an empty page.
+      myIssues = await db.select().from(tickets)
+        .where(and(
+          eq(tickets.orgId, org.id),
+          isNull(tickets.deletedAt),
+          sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+        ))
+        .orderBy(desc(tickets.createdAt))
+        .limit(20);
+    }
+
+    // ---- My Agents ----
+    const myAgents = await db.select().from(managerAgents)
+      .where(and(
+        eq(managerAgents.orgId, org.id),
+        eq(managerAgents.ownerUserId, auth.userId),
+        isNull(managerAgents.deletedAt),
+      ))
+      .orderBy(desc(managerAgents.updatedAt));
+
+    // ---- MCP status ----
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const orgKeys = await db.select().from(apiKeys)
+      .where(and(eq(apiKeys.orgId, org.id), isNull(apiKeys.revokedAt)))
+      .limit(20);
+    const liveKey = orgKeys.find(k => k.lastUsedAt && k.lastUsedAt >= sevenDaysAgo);
+    const mcpStatus = {
+      connected: !!liveKey,
+      hasKey: orgKeys.length > 0,
+      lastUsedAt: liveKey?.lastUsedAt || null,
+      keyPrefix: liveKey?.keyPrefix || (orgKeys[0]?.keyPrefix || null),
+    };
+
+    return reply.view('pages/dashboard-daily', {
+      title: 'Dashboard - OTP',
+      description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
+      ogImage: BASE_URL + '/public/og-image.png',
+      noindex: true,
+      org,
+      orgs: orgListBasic,
+      member: member ? { ...member, role: effectiveRole } : { role: effectiveRole, displayName: null, email: null, agentAccess: {}, featureAccess: {}, dataAccess: {} },
+      memberClaimedEntityIds: claimedIds,
+      capabilities: capabilitiesFor(effectiveRole),
+      isIntegrator: canIntegrate(effectiveRole),
+      meetings: meetingsList,
+      selectedMeetingId,
+      headlines: headlinesList,
+      currentQuarter,
+      myRocks,
+      myKpis,
+      kpiValues: kpiValuesMap,
+      myTodos,
+      myIssues,
+      myAgents,
+      mcpStatus,
+      previewRole: previewActive ? previewParam : '',
+    });
+  });
+
+  // Legacy publisher dashboard (OOS files, claims, network learnings).
+  // Linked from the daily dashboard footer for owners/admins.
+  app.get('/dashboard/publisher', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=/dashboard/publisher');
+
+    const memberDecoration = (request as any).orgMember as { orgId: string } | null;
+    let org: any = null;
+    if (memberDecoration?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, memberDecoration.orgId)).limit(1);
+      if (m) org = m;
+    }
+    if (!org) {
+      const [legacy] = await db.select().from(organizations)
+        .where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+      if (legacy) org = legacy;
+    }
+    if (!org) return reply.redirect('/dashboard');
+
+    // Same publisher data as the original /dashboard owner branch.
     // Signed in + has org -- show real dashboard
     const orgOosFiles = await db.select()
       .from(oosFiles)
