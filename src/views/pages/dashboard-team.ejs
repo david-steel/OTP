@@ -724,25 +724,16 @@
       <div class="hint">Saved with the agent's draft. Pull the merged result via "Copy as CLAUDE.md" below.</div>
     </div>
 
-    <!-- Agent runtime: manual trigger + run history -->
+    <!-- Agent runtime: manual trigger + run history (Coming Soon, schema in
+         place; activates when BYO Anthropic key per org ships) -->
     <div id="ef-runtime-trigger" class="sop-section" style="display:none">
       <div class="sop-section-header">
         <span class="sop-section-title">Run agent</span>
-        <span id="ef-run-status" class="text-[10px] uppercase tracking-wide text-gray-500"></span>
+        <span class="text-[10px] uppercase tracking-wide font-semibold" style="background:#fef3c7;color:#92400e;padding:0.1rem 0.4rem;border-radius:9999px;border:1px solid #fcd34d;">Coming soon</span>
       </div>
-      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Fires this agent against Anthropic with the chart context as system prompt. Optional override prompt below; leave blank for a dry-run summary of what the agent would do.</p>
-      <textarea id="ef-run-prompt" rows="2" placeholder="Optional: what should this agent do right now?" style="width:100%; padding:0.5rem 0.625rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:#111827; background:#fff;"></textarea>
-      <div style="margin-top:0.5rem; display:flex; gap:0.5rem; align-items:center;">
-        <button type="button" id="ef-run-btn" onclick="runAgentNow()" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-500 font-semibold">Run now</button>
-        <button type="button" onclick="loadAgentRuns()" class="px-3 py-1.5 text-xs bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50">Refresh history</button>
-      </div>
-      <div id="ef-run-output" style="margin-top:0.75rem; display:none; padding:0.65rem 0.75rem; background:#0f172a; color:#f1f5f9; border-radius:0.5rem; font-size:11.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; max-height:280px; overflow:auto;"></div>
-      <div style="margin-top:0.75rem;">
-        <div class="text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-1">Recent runs</div>
-        <div id="ef-run-history" class="text-xs text-gray-600">
-          <span class="text-gray-400 italic">No runs loaded yet.</span>
-        </div>
-      </div>
+      <p style="font-size: 11px; color: #6b7280; margin: 0;">
+        Once BYO Anthropic keys ship, this fires the agent against your org's API key with the chart context as system prompt. Output + token usage will log here for cost tracking. The schema + API are already wired -- only the customer-paid LLM bill remains.
+      </p>
     </div>
 
     <div id="ef-context-section" class="sop-section" style="display:none">
@@ -2084,22 +2075,9 @@
       document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-body').value = (d.type === 'agent' ? (p.runtimeBody || '') : '');
-      // Agent runtime trigger panel: only on agent tiles
+      // Agent runtime trigger panel (Coming Soon for now): show only on agent tiles
       var runtimeTrigger = document.getElementById('ef-runtime-trigger');
       if (runtimeTrigger) runtimeTrigger.style.display = (d.type === 'agent' ? '' : 'none');
-      var runOut = document.getElementById('ef-run-output');
-      if (runOut) { runOut.style.display = 'none'; runOut.textContent = ''; }
-      var runStatus = document.getElementById('ef-run-status');
-      if (runStatus) runStatus.textContent = '';
-      var runPrompt = document.getElementById('ef-run-prompt');
-      if (runPrompt) runPrompt.value = '';
-      if (d.type === 'agent') {
-        // Auto-load recent runs so the user sees history without an extra click
-        loadAgentRuns();
-      } else {
-        var hist = document.getElementById('ef-run-history');
-        if (hist) hist.innerHTML = '<span class="text-gray-400 italic">No runs loaded yet.</span>';
-      }
       document.getElementById('edit-type-label').textContent = (d.type === 'agent' ? 'Edit agent' : 'Edit human');
       document.getElementById('edit-name-display').textContent = d.label + ' (' + d.externalId + ')';
       document.getElementById('ef-name').value = d.label || '';
