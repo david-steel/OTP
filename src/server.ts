@@ -551,6 +551,7 @@ await app.register(import('./routes/api/search.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/browse.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/graph.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/team.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/agents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/kpis.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/scanner.js'), { prefix: '/api/v1' });
@@ -636,6 +637,14 @@ try {
   app.log.info('meetings.team_id column is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureMeetingTeamColumn failed -- per-team meeting scoping will not work until resolved');
+}
+
+try {
+  const { ensureAgentRuntimeTables } = await import('./db/ensure-agent-runtime.js');
+  await ensureAgentRuntimeTables();
+  app.log.info('agent_runs + agent_schedules tables are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureAgentRuntimeTables failed -- agent runtime will not work until resolved');
 }
 
 // Start server

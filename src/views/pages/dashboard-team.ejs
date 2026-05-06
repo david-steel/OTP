@@ -724,6 +724,27 @@
       <div class="hint">Saved with the agent's draft. Pull the merged result via "Copy as CLAUDE.md" below.</div>
     </div>
 
+    <!-- Agent runtime: manual trigger + run history -->
+    <div id="ef-runtime-trigger" class="sop-section" style="display:none">
+      <div class="sop-section-header">
+        <span class="sop-section-title">Run agent</span>
+        <span id="ef-run-status" class="text-[10px] uppercase tracking-wide text-gray-500"></span>
+      </div>
+      <p style="font-size: 11px; color: #6b7280; margin: 0 0 0.5rem 0;">Fires this agent against Anthropic with the chart context as system prompt. Optional override prompt below; leave blank for a dry-run summary of what the agent would do.</p>
+      <textarea id="ef-run-prompt" rows="2" placeholder="Optional: what should this agent do right now?" style="width:100%; padding:0.5rem 0.625rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:#111827; background:#fff;"></textarea>
+      <div style="margin-top:0.5rem; display:flex; gap:0.5rem; align-items:center;">
+        <button type="button" id="ef-run-btn" onclick="runAgentNow()" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-500 font-semibold">Run now</button>
+        <button type="button" onclick="loadAgentRuns()" class="px-3 py-1.5 text-xs bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50">Refresh history</button>
+      </div>
+      <div id="ef-run-output" style="margin-top:0.75rem; display:none; padding:0.65rem 0.75rem; background:#0f172a; color:#f1f5f9; border-radius:0.5rem; font-size:11.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; max-height:280px; overflow:auto;"></div>
+      <div style="margin-top:0.75rem;">
+        <div class="text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-1">Recent runs</div>
+        <div id="ef-run-history" class="text-xs text-gray-600">
+          <span class="text-gray-400 italic">No runs loaded yet.</span>
+        </div>
+      </div>
+    </div>
+
     <div id="ef-context-section" class="sop-section" style="display:none">
       <div class="sop-section-header">
         <span class="sop-section-title">Agent context</span>
@@ -1969,6 +1990,87 @@
       badge.style.display = canEdit ? 'none' : 'inline-block';
     }
 
+    // ---- Agent runtime: manual trigger + run history (Agent Timer Stage 1)
+    function escapeHtmlForRun(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function fmtRunTime(iso) {
+      try { return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+      catch (e) { return iso; }
+    }
+    window.runAgentNow = async function() {
+      if (!currentNode || currentNode.type !== 'agent') return;
+      var btn = document.getElementById('ef-run-btn');
+      var statusEl = document.getElementById('ef-run-status');
+      var outEl = document.getElementById('ef-run-output');
+      var prompt = (document.getElementById('ef-run-prompt').value || '').trim();
+      btn.disabled = true; btn.textContent = 'Running...';
+      statusEl.textContent = 'sending to anthropic';
+      outEl.style.display = 'none';
+      try {
+        var res = await fetch('/api/v1/agents/' + encodeURIComponent(currentNode.externalId) + '/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt || undefined }),
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
+        outEl.style.display = '';
+        if (data.status === 'succeeded') {
+          statusEl.textContent = (data.tokensInput || 0) + ' in / ' + (data.tokensOutput || 0) + ' out';
+          outEl.textContent = data.output || '(empty response)';
+        } else {
+          statusEl.textContent = 'failed';
+          outEl.textContent = '[ERROR] ' + (data.error || 'Unknown failure');
+        }
+        loadAgentRuns();
+      } catch (e) {
+        outEl.style.display = '';
+        outEl.textContent = '[ERROR] ' + (e && e.message ? e.message : String(e));
+        statusEl.textContent = 'error';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Run now';
+      }
+    };
+    window.loadAgentRuns = async function() {
+      if (!currentNode || currentNode.type !== 'agent') return;
+      var hist = document.getElementById('ef-run-history');
+      if (!hist) return;
+      hist.innerHTML = '<span class="text-gray-400 italic">Loading...</span>';
+      try {
+        var res = await fetch('/api/v1/agents/' + encodeURIComponent(currentNode.externalId) + '/runs?limit=10');
+        var data = await res.json();
+        var runs = (data && data.runs) || [];
+        if (runs.length === 0) {
+          hist.innerHTML = '<span class="text-gray-400 italic">No runs yet. Click "Run now" to fire this agent.</span>';
+          return;
+        }
+        var rows = runs.map(function(r) {
+          var color = r.status === 'succeeded' ? '#059669' : (r.status === 'failed' ? '#dc2626' : '#6b7280');
+          var when = fmtRunTime(r.created_at);
+          var tokens = (r.tokens_input != null ? (r.tokens_input + '/' + r.tokens_output) : '');
+          return '<div style="border-top:1px solid #f3f4f6; padding:0.4rem 0; display:flex; gap:0.5rem; align-items:flex-start;">' +
+                   '<span style="display:inline-block; width:0.5rem; height:0.5rem; border-radius:9999px; background:' + color + '; margin-top:0.4rem; flex-shrink:0;"></span>' +
+                   '<div style="flex:1; min-width:0;">' +
+                     '<div style="display:flex; gap:0.5rem; align-items:baseline; font-size:11px;">' +
+                       '<span style="font-weight:600; color:#111827;">' + escapeHtmlForRun(r.status) + '</span>' +
+                       '<span style="color:#6b7280;">' + escapeHtmlForRun(when) + '</span>' +
+                       (tokens ? '<span style="color:#9ca3af; font-family: ui-monospace, monospace;">' + escapeHtmlForRun(tokens) + ' tok</span>' : '') +
+                       '<span style="color:#9ca3af; font-size:10px;">' + escapeHtmlForRun(r.trigger || 'manual') + '</span>' +
+                     '</div>' +
+                     (r.output ? '<div style="font-family: ui-monospace, monospace; font-size:10.5px; color:#374151; margin-top:0.2rem; max-height:80px; overflow:hidden; text-overflow:ellipsis; white-space:pre-wrap;">' + escapeHtmlForRun(String(r.output).slice(0, 400)) + (r.output.length > 400 ? '…' : '') + '</div>' : '') +
+                     (r.error ? '<div style="color:#dc2626; font-size:11px; margin-top:0.2rem;">' + escapeHtmlForRun(r.error) + '</div>' : '') +
+                   '</div>' +
+                 '</div>';
+        }).join('');
+        hist.innerHTML = rows;
+      } catch (e) {
+        hist.innerHTML = '<span class="text-red-600">Failed to load run history.</span>';
+      }
+    };
+
     window.openEditPanel = function(d) {
       currentNode = d;
       var p = d.properties || {};
@@ -1982,6 +2084,22 @@
       document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-body').value = (d.type === 'agent' ? (p.runtimeBody || '') : '');
+      // Agent runtime trigger panel: only on agent tiles
+      var runtimeTrigger = document.getElementById('ef-runtime-trigger');
+      if (runtimeTrigger) runtimeTrigger.style.display = (d.type === 'agent' ? '' : 'none');
+      var runOut = document.getElementById('ef-run-output');
+      if (runOut) { runOut.style.display = 'none'; runOut.textContent = ''; }
+      var runStatus = document.getElementById('ef-run-status');
+      if (runStatus) runStatus.textContent = '';
+      var runPrompt = document.getElementById('ef-run-prompt');
+      if (runPrompt) runPrompt.value = '';
+      if (d.type === 'agent') {
+        // Auto-load recent runs so the user sees history without an extra click
+        loadAgentRuns();
+      } else {
+        var hist = document.getElementById('ef-run-history');
+        if (hist) hist.innerHTML = '<span class="text-gray-400 italic">No runs loaded yet.</span>';
+      }
       document.getElementById('edit-type-label').textContent = (d.type === 'agent' ? 'Edit agent' : 'Edit human');
       document.getElementById('edit-name-display').textContent = d.label + ' (' + d.externalId + ')';
       document.getElementById('ef-name').value = d.label || '';
