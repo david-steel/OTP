@@ -22,7 +22,9 @@ import { db } from '../config/database.js';
 import { sql } from 'drizzle-orm';
 import { getOrgTeamGraph } from './team-graph.js';
 
-const DEFAULT_MODEL = process.env.OTP_AGENT_MODEL || 'claude-opus-4-5';
+// Default to Sonnet -- ~10x cheaper than Opus and plenty capable for the
+// agent-runtime use case. Override with OTP_AGENT_MODEL env var per-org.
+const DEFAULT_MODEL = process.env.OTP_AGENT_MODEL || 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 4096;
 
 export interface RunAgentOptions {
