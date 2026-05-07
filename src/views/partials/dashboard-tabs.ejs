@@ -10,7 +10,8 @@
   var path = locals.currentPath || '';
   var role = (locals.memberRole || '').toString();
   var inDashArea = path === '/dashboard' || path.indexOf('/dashboard/') === 0
-                || path === '/l8' || path.indexOf('/l8/') === 0;
+                || path === '/l8' || path.indexOf('/l8/') === 0
+                || path === '/settings/api';
   var authed = !!locals.authUserId;
 %>
 
@@ -40,7 +41,7 @@
        { href: '/dashboard/workspaces',         label: 'Workspaces',allow: ORG_WIDE },
        { href: '/dashboard/inquiries',          label: 'Inquiries', allow: ORG_WIDE },
        { href: '/dashboard/publisher',          label: 'Publisher', allow: ORG_WIDE },
-       { href: '/dashboard/api',                label: 'MCP / API', allow: ORG_WIDE },
+       { href: '/settings/api',                label: 'MCP / API', allow: ORG_WIDE },
      ];
 
      // Active match: longest-prefix wins. /dashboard/team beats /dashboard.
