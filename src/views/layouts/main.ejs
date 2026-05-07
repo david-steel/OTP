@@ -223,7 +223,26 @@
         <a href="/whats-new" class="text-white hover:text-white/70 transition-colors">What's New</a>
         <div id="auth-nav" class="flex items-center gap-3">
           <% if (typeof authUserId !== 'undefined' && authUserId) { %>
-            <a href="/dashboard" class="text-white hover:text-white/70 transition-colors">Dashboard</a>
+            <!-- Dashboard dropdown (signed-in users) -->
+            <div class="relative group">
+              <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
+                Dashboard
+                <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div class="absolute top-full right-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 220px;">
+                <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
+                  <a href="/dashboard" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Daily <span class="text-white/50 text-xs">- run my day</span></a>
+                  <a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Meetings <span class="text-white/50 text-xs">- L8 / L10</span></a>
+                  <a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Team chart</a>
+                  <a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">KPIs / Scoreboard</a>
+                  <div class="border-t border-white/10 my-1"></div>
+                  <a href="/dashboard/oos-operating-plan" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Operating plan</a>
+                  <a href="/dashboard/members" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Members</a>
+                  <a href="/dashboard/publisher" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Publisher</a>
+                  <a href="/dashboard/api" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">MCP / API keys</a>
+                </div>
+              </div>
+            </div>
             <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
           <% } else { %>
             <a href="/sign-in" class="text-white hover:text-white/70 transition-colors">Sign In</a>
@@ -257,10 +276,16 @@
         <a href="/whats-new" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors mt-1">What's New</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
           <% if (typeof authUserId !== 'undefined' && authUserId) { %>
-            <a href="/dashboard" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Dashboard</a>
-            <a href="/dashboard/team" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Team</a>
-            <a href="/dashboard/kpis" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>
-            <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
+            <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-1 pb-1">Dashboard</div>
+            <a href="/dashboard" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Daily</a>
+            <a href="/l8" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Meetings</a>
+            <a href="/dashboard/team" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Team chart</a>
+            <a href="/dashboard/kpis" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>
+            <a href="/dashboard/oos-operating-plan" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Operating plan</a>
+            <a href="/dashboard/members" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Members</a>
+            <a href="/dashboard/publisher" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Publisher</a>
+            <a href="/dashboard/api" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP / API</a>
+            <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors mt-2">Publish</a>
           <% } else { %>
             <a href="/sign-in" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors text-center">Sign In</a>
             <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
@@ -270,6 +295,9 @@
     </div>
   </nav>
   <% } %>
+
+  <!-- Dashboard sub-nav (renders only on /dashboard/* and /l8/*; no-op otherwise) -->
+  <%- include('../partials/dashboard-tabs') %>
 
   <script>
     document.getElementById('mobile-menu-btn').addEventListener('click', function() {

@@ -152,7 +152,19 @@ app.addHook('preHandler', async (request, reply) => {
   const origView = (reply as any).view.bind(reply);
   (reply as any).view = function (template: string, data?: any, opts?: any) {
     const imp = (request as any).impersonation || null;
-    return origView(template, { ...(data || {}), authUserId: userId, impersonation: imp }, opts);
+    // Auto-inject currentPath + memberRole so partials/dashboard-tabs.ejs
+    // can render the dashboard tab strip + global Dashboard dropdown
+    // without every route re-passing the same locals.
+    const om = (request as any).orgMember || null;
+    const currentPath = (request.url || '').split('?')[0];
+    const memberRole: string | null = om ? om.role : null;
+    return origView(template, {
+      ...(data || {}),
+      authUserId: userId,
+      impersonation: imp,
+      currentPath,
+      memberRole,
+    }, opts);
   };
 });
 
