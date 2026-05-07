@@ -2872,14 +2872,25 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
 
     // ---- My To-Dos (open) ----
+    // Owner resolution accepts ANY of the user's known external IDs:
+    //   - claimedEntityIds (e.g., agent tiles they hold)
+    //   - email (legacy fallback)
+    //   - canonical human tile (HUM_DAVIDSTEEL etc) — agents push here directly
+    // Added 2026-05-07: union with hardcoded HUM_DAVIDSTEEL so Watchdog/Pulse/etc.
+    // pushes are visible on /dashboard. Future: derive HUM_ id from member claim.
+    const ownerCandidates = Array.from(new Set([
+      ...claimedIds,
+      ...(member?.email ? [member.email] : []),
+      'HUM_DAVIDSTEEL',  // canonical human tile for the org owner; expand when org_members carries this mapping
+    ].filter(Boolean) as string[]));
     let myTodos: any[] = [];
-    if (myExternalId) {
+    if (ownerCandidates.length > 0) {
       myTodos = await db.select().from(todos)
         .where(and(
           eq(todos.organizationId, org.id),
           isNull(todos.deletedAt),
           isNull(todos.doneAt),
-          eq(todos.ownerExternalId, myExternalId),
+          inArray(todos.ownerExternalId, ownerCandidates),
         ))
         .orderBy(desc(todos.createdAt))
         .limit(50);
