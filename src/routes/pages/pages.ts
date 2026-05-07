@@ -4156,6 +4156,70 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     return reply.send({ success: true, result });
   });
+
+  // ---- /me/todos — mobile-first personal todo queue ----
+  // Phone-readable view of open todos owned by the current user. Agents
+  // (Watchdog, Pulse, Dirk, etc.) push REDs / escalations here via
+  // POST /api/v1/todos with ownerEntityType='human'.
+  // Added 2026-05-07 — replaces ntfy deep-link to dead Obsidian daily notes
+  // and Slack-DM-as-todolist as the canonical agent→human action channel.
+  app.get('/me/todos', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=/me/todos');
+
+    // Resolve org (same pattern as /dashboard).
+    const memberDecoration = (request as any).orgMember as { orgId: string } | null;
+    let org: any = null;
+    if (memberDecoration?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, memberDecoration.orgId)).limit(1);
+      if (m) org = m;
+    }
+    if (!org) {
+      const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+      if (legacy) org = legacy;
+    }
+    if (!org) return reply.redirect('/dashboard');
+
+    // V1: hardcoded HUM_DAVIDSTEEL until org_members carries an external_id mapping.
+    // The watchdog and other agents push to this exact owner. Future: resolve from
+    // org_members.user_id -> external_id, fall back to HUM_<USERNAME>.
+    const ownerExternalId = 'HUM_DAVIDSTEEL';
+
+    const myTodos = await db.select()
+      .from(todos)
+      .where(and(
+        eq(todos.organizationId, org.id),
+        eq(todos.ownerEntityType, 'human'),
+        eq(todos.ownerExternalId, ownerExternalId),
+        isNull(todos.doneAt),
+        isNull(todos.deletedAt),
+      ))
+      .orderBy(desc(todos.createdAt));
+
+    // Recently resolved (last 24h) so user sees what closed.
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentlyDone = await db.select()
+      .from(todos)
+      .where(and(
+        eq(todos.organizationId, org.id),
+        eq(todos.ownerEntityType, 'human'),
+        eq(todos.ownerExternalId, ownerExternalId),
+        isNull(todos.deletedAt),
+      ))
+      .orderBy(desc(todos.createdAt))
+      .limit(50);
+    const justDone = recentlyDone.filter(t => t.doneAt && t.doneAt >= dayAgo);
+
+    return reply.view('pages/me-todos', {
+      title: 'My Todos - OTP',
+      description: 'Open action items from your agents.',
+      noindex: true,
+      org,
+      todos: myTodos,
+      justDone,
+      ownerExternalId,
+    });
+  });
 }
 
 function renderCheckupEmail(name: string, r: ReturnType<typeof calculateCheckup>): string {

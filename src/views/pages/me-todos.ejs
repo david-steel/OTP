@@ -1,0 +1,180 @@
+<style>
+  body { background: #fafaf9; }
+  .me-wrap { max-width: 680px; margin: 0 auto; padding: 16px 12px 80px; }
+  .me-h { padding: 8px 4px 16px; }
+  .me-h h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #111; }
+  .me-h .sub { color: #666; font-size: 14px; }
+  .me-card {
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .me-card.red { border-left: 4px solid #dc2626; }
+  .me-card.agent { border-left: 4px solid #6b46c1; }
+  .me-card.done { opacity: 0.5; }
+  .me-title {
+    font-size: 16px; font-weight: 600; color: #111; line-height: 1.35;
+    margin: 0 0 8px;
+    word-wrap: break-word;
+  }
+  .me-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: #666; margin-bottom: 10px; }
+  .me-tag { padding: 2px 8px; border-radius: 999px; background: #f3f0ff; color: #6b46c1; font-weight: 600; font-size: 11px; }
+  .me-tag.red { background: #fee2e2; color: #dc2626; }
+  .me-desc {
+    font-size: 14px; color: #333; line-height: 1.5; margin: 8px 0 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .me-desc code {
+    background: #f5f5f4; padding: 2px 5px; border-radius: 4px;
+    font-size: 12px; font-family: ui-monospace, SFMono-Regular, monospace;
+    word-break: break-all;
+  }
+  .me-actions { display: flex; gap: 8px; }
+  .me-btn {
+    flex: 1; padding: 12px 16px;
+    border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+  }
+  .me-btn.primary { background: #6b46c1; color: #fff; }
+  .me-btn.primary:active { background: #553c9a; }
+  .me-btn.secondary { background: #f5f5f4; color: #555; }
+  .me-empty {
+    padding: 48px 24px; text-align: center; color: #888;
+    background: #fff; border: 1px solid #e7e5e4; border-radius: 12px;
+  }
+  .me-empty .big { font-size: 32px; margin-bottom: 8px; }
+  .me-section-h {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    color: #888; letter-spacing: 0.5px;
+    margin: 24px 4px 8px;
+  }
+  .me-foot {
+    text-align: center; color: #999; font-size: 12px; margin-top: 32px;
+  }
+  .me-foot a { color: #6b46c1; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #18181b; }
+    .me-h h1 { color: #fafafa; }
+    .me-h .sub { color: #a1a1aa; }
+    .me-card { background: #27272a; border-color: #3f3f46; }
+    .me-title { color: #fafafa; }
+    .me-desc { color: #d4d4d8; }
+    .me-desc code { background: #18181b; }
+    .me-btn.secondary { background: #3f3f46; color: #d4d4d8; }
+    .me-empty { background: #27272a; border-color: #3f3f46; color: #a1a1aa; }
+    .me-meta { color: #a1a1aa; }
+  }
+</style>
+
+<div class="me-wrap">
+  <div class="me-h">
+    <h1>Your queue</h1>
+    <div class="sub"><%= todos.length %> open · agents push action items here · L8 meeting starts here</div>
+  </div>
+
+  <% if (todos.length === 0) { %>
+    <div class="me-empty">
+      <div class="big">✓</div>
+      <div style="font-size: 18px; font-weight: 600; color: inherit;">Nothing on your queue.</div>
+      <div style="margin-top: 4px;">Agents flag action items here when they need you.</div>
+    </div>
+  <% } %>
+
+  <% todos.forEach(function(t) {
+    const title = t.title || '';
+    const isWatchdogRed = title.includes('🔴') || title.startsWith('[Watchdog');
+    const cardClass = isWatchdogRed ? 'me-card red' : (title.startsWith('[') ? 'me-card agent' : 'me-card');
+    // Parse optional [Agent X] prefix
+    const tagMatch = title.match(/^\[([^\]]+)\]\s*/);
+    const tagText = tagMatch ? tagMatch[1] : null;
+    const cleanTitle = tagMatch ? title.slice(tagMatch[0].length) : title;
+    const desc = t.description || '';
+    const created = t.createdAt ? new Date(t.createdAt) : null;
+    const ago = created ? humanAgo(created) : '';
+  %>
+    <div class="me-card <%= isWatchdogRed ? 'red' : (tagText ? 'agent' : '') %>" data-id="<%= t.id %>">
+      <% if (tagText) { %>
+        <div class="me-meta">
+          <span class="me-tag <%= isWatchdogRed ? 'red' : '' %>"><%= tagText %></span>
+          <% if (ago) { %><span><%= ago %></span><% } %>
+        </div>
+      <% } else if (ago) { %>
+        <div class="me-meta"><span><%= ago %></span></div>
+      <% } %>
+      <h2 class="me-title"><%= cleanTitle %></h2>
+      <% if (desc) { %>
+        <div class="me-desc"><%= desc %></div>
+      <% } %>
+      <div class="me-actions">
+        <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Mark done</button>
+      </div>
+    </div>
+  <% }); %>
+
+  <% if (justDone && justDone.length > 0) { %>
+    <div class="me-section-h">Closed last 24h</div>
+    <% justDone.forEach(function(t) { %>
+      <div class="me-card done">
+        <div class="me-meta"><span>✓ <%= t.doneAt ? humanAgo(new Date(t.doneAt)) : '' %></span></div>
+        <h2 class="me-title" style="text-decoration: line-through;"><%= t.title %></h2>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <div class="me-foot">
+    OTP · <a href="/dashboard">Daily dashboard</a> · <a href="/dashboard/kpis">KPIs</a>
+  </div>
+</div>
+
+<script>
+async function markDone(btn, id) {
+  btn.disabled = true;
+  btn.textContent = 'Marking...';
+  try {
+    const r = await fetch('/api/v1/todos/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ done: true }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const card = btn.closest('.me-card');
+    if (card) {
+      card.style.transition = 'opacity 0.2s';
+      card.style.opacity = '0';
+      setTimeout(() => { card.remove(); checkEmpty(); }, 200);
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Mark done';
+    alert('Could not mark done: ' + e.message);
+  }
+}
+function checkEmpty() {
+  const remaining = document.querySelectorAll('.me-card:not(.done)').length;
+  if (remaining === 0) {
+    location.reload();
+  }
+}
+</script>
+
+<%
+function humanAgo(d) {
+  const ms = Date.now() - d.getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return days + 'd ago';
+  return d.toLocaleDateString();
+}
+%>
