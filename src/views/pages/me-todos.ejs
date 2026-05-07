@@ -24,9 +24,30 @@
   .me-tag { padding: 2px 8px; border-radius: 999px; background: #f3f0ff; color: #6b46c1; font-weight: 600; font-size: 11px; }
   .me-tag.red { background: #fee2e2; color: #dc2626; }
   .me-desc {
-    font-size: 14px; color: #333; line-height: 1.5; margin: 8px 0 12px;
+    font-size: 14px; color: #333; line-height: 1.5; margin: 8px 0 4px;
     white-space: pre-wrap;
     word-break: break-word;
+    max-height: 4.5em;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+  .me-desc.expanded {
+    max-height: none;
+  }
+  .me-desc:not(.expanded)::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1.5em;
+    background: linear-gradient(to bottom, transparent, #fff);
+    pointer-events: none;
+  }
+  .me-desc-toggle {
+    font-size: 12px; color: #6b46c1; font-weight: 600; cursor: pointer;
+    padding: 4px 0; margin-bottom: 8px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
   .me-desc code {
     background: #f5f5f4; padding: 2px 5px; border-radius: 4px;
@@ -110,7 +131,10 @@
       <% } %>
       <h2 class="me-title"><%= cleanTitle %></h2>
       <% if (desc) { %>
-        <div class="me-desc"><%= desc %></div>
+        <div class="me-desc" onclick="toggleDesc(this)"><%= desc %></div>
+        <% if (desc.length > 120 || (desc.match(/\n/g) || []).length > 2) { %>
+          <div class="me-desc-toggle" onclick="toggleDesc(this.previousElementSibling)">Tap description to expand</div>
+        <% } %>
       <% } %>
       <div class="me-actions">
         <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Mark done</button>
@@ -134,6 +158,14 @@
 </div>
 
 <script>
+function toggleDesc(el) {
+  el.classList.toggle('expanded');
+  const next = el.nextElementSibling;
+  if (next && next.classList && next.classList.contains('me-desc-toggle')) {
+    next.textContent = el.classList.contains('expanded') ? 'Tap to collapse' : 'Tap description to expand';
+  }
+}
+
 async function markDone(btn, id) {
   btn.disabled = true;
   btn.textContent = 'Marking...';
