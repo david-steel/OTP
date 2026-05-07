@@ -246,6 +246,7 @@
               </div>
             </div>
             <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
+            <div id="auth-user-button-desktop"></div>
           <% } else { %>
             <a href="/sign-in" class="text-white hover:text-white/70 transition-colors">Sign In</a>
             <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
@@ -288,6 +289,7 @@
             <a href="/dashboard/publisher" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Publisher</a>
             <a href="/dashboard/api" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP / API</a>
             <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors mt-2">Publish</a>
+            <div id="auth-user-button-mobile" class="pt-2"></div>
           <% } else { %>
             <a href="/sign-in" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors text-center">Sign In</a>
             <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
@@ -407,21 +409,51 @@
         return btn;
       }
 
-      // Desktop nav
+      // Desktop nav: server already rendered the right state (Dashboard
+      // dropdown + Publish if signed-in, or Sign In + Publish if not). We
+      // only mount the Clerk UserButton into the prepared slot. We do NOT
+      // clobber the server's nav anymore -- doing so wipes out the
+      // server-rendered dropdown markup.
+      var desktopSlot = document.getElementById('auth-user-button-desktop');
       var desktopNav = document.getElementById('auth-nav');
-      if (desktopNav) {
+      if (clerk.user && desktopSlot) {
+        desktopSlot.innerHTML = '';
+        clerk.mountUserButton(desktopSlot, { afterSignOutUrl: '/' });
+      } else if (clerk.user && desktopNav && !desktopSlot) {
+        // Fallback for state mismatch (server thought signed-out, Clerk
+        // says signed-in). Build the same dropdown the server would.
         desktopNav.innerHTML = '';
-        if (clerk.user) {
-          var d1 = document.createElement('a'); d1.href = '/dashboard'; d1.className = 'text-white hover:text-white/70 transition-colors'; d1.textContent = 'Dashboard'; desktopNav.appendChild(d1);
-          var d2 = document.createElement('a'); d2.href = '/publish'; d2.className = 'px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors'; d2.textContent = 'Publish'; desktopNav.appendChild(d2);
-          var d3 = document.createElement('div'); desktopNav.appendChild(d3); clerk.mountUserButton(d3, { afterSignOutUrl: '/' });
-        } else {
-          desktopNav.appendChild(makeSignInBtn('text-white hover:text-white/70 transition-colors'));
-          desktopNav.appendChild(makeSignUpBtn('px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors'));
-        }
+        var fallbackHtml =
+          '<div class="relative group z-50">' +
+            '<button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">Dashboard' +
+              '<svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
+            '</button>' +
+            '<div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 220px;">' +
+              '<div class="h-2"></div>' +
+              '<div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">' +
+                '<a href="/dashboard" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Daily</a>' +
+                '<a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Meetings</a>' +
+                '<a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Team chart</a>' +
+                '<a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">KPIs / Scoreboard</a>' +
+                '<div class="border-t border-white/10 my-1"></div>' +
+                '<a href="/dashboard/oos-operating-plan" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Operating plan</a>' +
+                '<a href="/dashboard/members" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Members</a>' +
+                '<a href="/dashboard/publisher" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Publisher</a>' +
+                '<a href="/dashboard/api" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">MCP / API keys</a>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>' +
+          '<div id="auth-user-button-desktop"></div>';
+        desktopNav.innerHTML = fallbackHtml;
+        var slot = document.getElementById('auth-user-button-desktop');
+        if (slot) clerk.mountUserButton(slot, { afterSignOutUrl: '/' });
+      } else if (!clerk.user && desktopNav) {
+        // Signed-out: server already rendered Sign In + Publish. Nothing to do.
       }
 
-      // Mobile header
+      // Mobile header (the avatar slot in the top bar). Server doesn't
+      // render anything here -- leave full client-side control.
       var headerNav = document.getElementById('auth-nav-header');
       if (headerNav) {
         headerNav.innerHTML = '';
@@ -433,17 +465,23 @@
         }
       }
 
-      // Mobile menu
+      // Mobile menu: server already rendered the full Dashboard section.
+      // Mount UserButton into the slot if present.
+      var mobileSlot = document.getElementById('auth-user-button-mobile');
       var mobileNav = document.getElementById('auth-nav-mobile');
-      if (mobileNav) {
+      if (clerk.user && mobileSlot) {
+        mobileSlot.innerHTML = '';
+        clerk.mountUserButton(mobileSlot, { afterSignOutUrl: '/' });
+      } else if (clerk.user && mobileNav && !mobileSlot) {
         mobileNav.innerHTML = '';
-        if (clerk.user) {
-          var m1 = document.createElement('a'); m1.href = '/dashboard'; m1.className = 'text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors'; m1.textContent = 'Dashboard'; mobileNav.appendChild(m1);
-          var m2 = document.createElement('a'); m2.href = '/publish'; m2.className = 'px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors'; m2.textContent = 'Publish'; mobileNav.appendChild(m2);
-        } else {
-          mobileNav.appendChild(makeSignInBtn('text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 text-left transition-colors'));
-          mobileNav.appendChild(makeSignUpBtn('px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors'));
-        }
+        var mDashWrap = document.createElement('div');
+        mDashWrap.innerHTML =
+          '<a href="/dashboard" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Daily</a>' +
+          '<a href="/l8" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Meetings</a>' +
+          '<a href="/dashboard/team" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Team chart</a>' +
+          '<a href="/dashboard/kpis" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>' +
+          '<a href="/publish" class="block px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors mt-2">Publish</a>';
+        mobileNav.appendChild(mDashWrap);
       }
 
       window.dispatchEvent(new CustomEvent('clerk-loaded', { detail: { user: clerk.user } }));
