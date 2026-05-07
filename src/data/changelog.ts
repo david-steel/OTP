@@ -11,6 +11,57 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 7, 2026 ----
+
+  {
+    date: '2026-05-07',
+    tags: ['Major', 'Tools'],
+    title: 'A daily home for managers -- the Dashboard now runs your day',
+    summary: 'The /dashboard page is now an EOS-style daily manager surface: meeting selector, headlines (Integrator marks read), my Quarterly Priorities with on/off-track toggle, KPIs with inline weekly entry, my To-Dos, IDS issues, plus a "My Agents" panel where you upload your CLAUDE.md or Agent.md and get a 0-8 score. New "Dashboard" dropdown in the global nav and a sticky tab strip on every dashboard page so you always know where you are and where else to go.',
+    details: `<p>OTP's dashboard used to be a publisher splash for owners and a near-empty page for everyone else. It is now a daily manager workspace, designed to be opened every morning.</p>
+
+<h3>What you get on /dashboard</h3>
+<ul>
+<li><strong>Meeting selector</strong> -- pick the meeting you are running (defaults to the next upcoming).</li>
+<li><strong>Headlines</strong> -- any attendee can post a headline. The Integrator gets a checkbox to mark each one read; everyone else sees the read state. No more headlines getting lost in a shared text blob.</li>
+<li><strong>My Quarterly Priorities (Rocks)</strong> -- this quarter only, filtered to what you own. One click toggles on-track / off-track.</li>
+<li><strong>My KPIs</strong> -- the KPIs you own. Type a value, hit tab, it saves to this week's period. The same numbers feed your scorecard.</li>
+<li><strong>My To-Dos</strong> -- add inline with a due date, check off when done. Overdue items go red.</li>
+<li><strong>Issues (IDS)</strong> -- add an issue right from the dashboard. The Integrator can mark it solved and auto-link it to the current meeting.</li>
+<li><strong>My Agents</strong> -- upload a CLAUDE.md or Agent.md file (paste it or pick the file). Each agent gets a 0-8 score: <strong>+2</strong> if your org's MCP key is live, <strong>+2</strong> if KPIs are declared, up to <strong>+3</strong> for recent agent runs, <strong>+1</strong> for a description. The score is meant to push you toward connecting MCP -- that is where OTP actually starts working for you.</li>
+<li><strong>MCP banner</strong> at the top -- green when an API key on your org has been used in the last 7 days, amber CTA when not. The single most important conversion moment from passive viewer to active user.</li>
+<li><strong>Multi-org dropdown</strong> -- if you are a member of more than one org, switch between them right at the top of the page.</li>
+</ul>
+
+<h3>Two new EOS roles: Visionary and Integrator</h3>
+<ul>
+<li>Added <strong>Visionary</strong> and <strong>Integrator</strong> as first-class roles alongside Owner / Admin / Manager / Managee. Visible in the Members invite dropdown.</li>
+<li>The <strong>Integrator</strong> role unlocks running-the-meeting actions: marking headlines read, overriding a Rock's status, marking issues solved. Owners, Admins, and EOS Implementers also have these powers, so nothing changes for orgs that have not adopted the role yet.</li>
+</ul>
+
+<h3>Wayfinding: Dashboard dropdown + tab strip</h3>
+<ul>
+<li>The global nav now has a <strong>Dashboard ▾</strong> menu (signed-in users) with shortcuts to Daily / Meetings / Team chart / KPIs / Operating plan / Members / Publisher / MCP. One click to anywhere from any page.</li>
+<li>A sticky <strong>tab strip</strong> renders on every <code>/dashboard/*</code> and <code>/l8/*</code> page so you always see where you are and what other surfaces are available -- role-filtered (managee does not see Publisher).</li>
+<li>The legacy publisher dashboard (OOS files, claims, network learnings) moved to <a href="/dashboard/publisher"><code>/dashboard/publisher</code></a> and is one click away from the Daily view.</li>
+</ul>
+
+<h3>Why this matters</h3>
+<ul>
+<li>OTP works because you use it every day. A login that lands on a publisher splash does not earn a daily habit. A login that lands on your Quarterly Priorities, your KPIs, your headlines, and your agents does.</li>
+<li>The "My Agents" score is a forcing function. Upload your CLAUDE.md, see the score, see exactly which lever (connect MCP, declare a KPI, run the agent, write a real description) moves it. Every visit is a nudge toward making the system live, not decorative.</li>
+<li>The same data that drives your dashboard is the same data your weekly L8 meeting reads. No double-entry, no separate system.</li>
+</ul>
+
+<h3>How to start</h3>
+<ol>
+<li>Sign in and visit <a href="/dashboard"><code>/dashboard</code></a>.</li>
+<li>Pick a meeting from the dropdown. Add a headline. Type a KPI value. Add a To-Do.</li>
+<li>If the MCP banner is amber, click <strong>Set up MCP</strong> and create an API key.</li>
+<li>Upload your CLAUDE.md under "My Agents" and watch the score change as you connect things up.</li>
+</ol>`,
+  },
+
   // ---- May 5, 2026 ----
 
   {
