@@ -88,10 +88,11 @@
       </div>
     </div>
   <% } else { %>
-    <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-900 flex items-center gap-2">
+    <a href="/settings/api" class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-900 flex items-center gap-2 hover:bg-emerald-100 hover:border-emerald-300 transition-colors">
       <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-      MCP live -- last seen <%= mcp.lastUsedAt ? new Date(mcp.lastUsedAt).toLocaleString() : 'just now' %>.
-    </div>
+      <span class="flex-1">MCP live &middot; last seen <%= mcp.lastUsedAt ? new Date(mcp.lastUsedAt).toLocaleString() : 'just now' %></span>
+      <span class="text-emerald-700 font-semibold">Manage &rarr;</span>
+    </a>
   <% } %>
 
   <!-- Meeting selector -->
