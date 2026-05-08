@@ -4,7 +4,8 @@ date: 2026-05-08
 author: David Steel
 slug: implementation-discipline-still-applies
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # The implementation discipline that makes processes stick for humans applies to agents too. The work moves up a layer.

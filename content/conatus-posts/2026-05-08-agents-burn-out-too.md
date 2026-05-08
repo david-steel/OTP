@@ -4,7 +4,8 @@ date: 2026-05-08
 author: David Steel
 slug: agents-burn-out-too
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # Your best employees burn out. So do your best agents.

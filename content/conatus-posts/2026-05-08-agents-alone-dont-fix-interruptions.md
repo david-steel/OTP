@@ -4,7 +4,8 @@ date: 2026-05-08
 author: David Steel
 slug: agents-alone-dont-fix-interruptions
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # Agents alone are not going to fix the interruption problem. The team has to actually use them.

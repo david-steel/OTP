@@ -4,7 +4,8 @@ date: 2026-05-01
 author: David Steel
 slug: bpm-framework-keeps-falling-off
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # Your BPM framework keeps falling off because the SOP is not where the work is

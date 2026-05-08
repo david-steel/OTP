@@ -4,7 +4,8 @@ date: 2026-05-01
 author: David Steel
 slug: best-employees-burn-out-from-headcount-math
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # Your top performers are not burning out from the work. They are burning out because every new hire adds to their plate.

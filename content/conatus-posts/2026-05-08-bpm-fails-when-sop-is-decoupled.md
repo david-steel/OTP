@@ -4,7 +4,8 @@ date: 2026-05-08
 author: David Steel
 slug: bpm-fails-when-sop-is-decoupled
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # Most BPM efforts fail for one reason that gets misnamed five different ways

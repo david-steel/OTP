@@ -4,7 +4,8 @@ date: 2026-05-08
 author: David Steel
 slug: got-a-minute-interruptions
 type: founder_essay
-status: draft
+status: published
+distribution_status: queued
 ---
 
 # The "got a minute?" problem is not solved by more SOPs. It is solved by giving the team a substrate to ask.
