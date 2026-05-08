@@ -11,6 +11,47 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 7, 2026 (evening polish) ----
+
+  {
+    date: '2026-05-07',
+    tags: ['Improvement', 'Tools'],
+    title: 'Dashboard polish: editable to-dos, IDS filter, clickable MCP, compact My Agents',
+    summary: 'Six small upgrades to the Daily Dashboard that add up to a much faster morning surface: edit and delete on every to-do (both inline on the dashboard and on the standalone /me/todos PWA view), an Issues (IDS) status filter that defaults to Open, the green MCP-live pill is now clickable to /settings/api, and the My Agents panel collapsed to a single-row glance pulling from the real team chart instead of an unused upload table.',
+    details: `<p>The Dashboard shipped earlier today as a full daily manager surface. Tonight is the first polish pass -- the rough edges from a couple hours of real use.</p>
+
+<h3>To-Dos: full CRUD inline</h3>
+<ul>
+<li>Every to-do row now has <strong>Edit</strong>, <strong>Done</strong>, and <strong>Delete</strong> alongside the checkbox.</li>
+<li>Edit toggles an inline form for title and description -- save reloads, cancel reverts.</li>
+<li>Delete uses a 2-tap confirm (tap once, button turns red "Confirm?", tap again within 3 seconds to soft-delete). No accidental losses.</li>
+<li>Descriptions now display in the row when present, no separate page needed.</li>
+<li>The same UX is live on the mobile <code>/me/todos</code> PWA so the queue feels the same on phone or laptop.</li>
+</ul>
+
+<h3>Issues (IDS): status filter, default Open</h3>
+<ul>
+<li>New pill bar above the issues list: <strong>Open</strong> / <strong>Identified</strong> / <strong>Discussed</strong> / <strong>All open</strong>, each with live counts.</li>
+<li><strong>Open</strong> is the default selection so the dashboard opens to the issues that still need to be identified first.</li>
+<li>Pure client-side filter -- switching is instant.</li>
+</ul>
+
+<h3>MCP-live pill is now clickable</h3>
+<ul>
+<li>The amber "not connected" banner already linked to <code>/settings/api</code>. The green "live" pill was static.</li>
+<li>Now both states are clickable surfaces to the same MCP management page. One tap to verify, rotate, or copy the key.</li>
+</ul>
+
+<h3>My Agents: compact rows + sourced from the team chart</h3>
+<ul>
+<li>Each agent renders as a single line: status dot, name, slim score bar, score, KPI count. ~14 agents drops from ~2000px to ~350px while keeping the at-a-glance "who's red" read.</li>
+<li>Header summary shows total seats, average score, and counts of red/yellow agents.</li>
+<li>Click any row to jump straight to <code>/dashboard/team</code>.</li>
+<li><strong>Bigger fix:</strong> the panel now sources from the same team graph that powers <code>/dashboard/team</code> instead of a separate upload table. Score reads from the entity's <code>maturity_level</code> (the Bassim-style maturity score), and the KPI count joins live from your KPI registry. Agents you add to the chart now appear here automatically -- no separate upload step.</li>
+</ul>
+`,
+  },
+
   // ---- May 7, 2026 ----
 
   {
