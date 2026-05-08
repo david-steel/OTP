@@ -271,38 +271,74 @@
         </form>
         <% if (myTodos.length === 0) { %>
           <p class="text-xs text-gray-500">No open to-dos. Nice.</p>
-        <% } else { %>
-          <ul class="space-y-1">
-            <% myTodos.forEach(function(t){
-                 var due = t.dueAt ? new Date(t.dueAt) : null;
-                 var overdue = due && !t.doneAt && due < new Date();
-            %>
-              <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-todo-id="<%= t.id %>">
-                <input type="checkbox" class="todo-done-cb mt-1" <%= t.doneAt ? 'checked' : '' %>>
-                <div class="flex-1 min-w-0">
-                  <div class="todo-view">
-                    <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %> break-words"><%= t.title %></div>
-                    <% if (t.description) { %>
-                      <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap break-words"><%= t.description %></p>
-                    <% } %>
-                    <div class="text-[11px] flex items-center gap-3 mt-1 <%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>">
-                      <span><%= due ? (overdue ? 'OVERDUE -- ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
-                      <button type="button" class="todo-edit-btn text-otp-600 font-semibold hover:underline">Edit</button>
-                      <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
+        <% } else {
+          // Bucket todos into Overdue / Today / Upcoming
+          var nowD = new Date();
+          var todayStart = new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate());
+          var tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+          var overdueT = [], todayT = [], upcomingT = [];
+          myTodos.forEach(function(t){
+            var due = t.dueAt ? new Date(t.dueAt) : null;
+            if (!t.doneAt && due && due < todayStart) overdueT.push(t);
+            else if (due && due >= todayStart && due < tomorrowStart) todayT.push(t);
+            else upcomingT.push(t);
+          });
+          // Sort each bucket: overdue oldest-first, today and upcoming earliest-first, no-due-date last in upcoming
+          overdueT.sort(function(a,b){ return new Date(a.dueAt) - new Date(b.dueAt); });
+          todayT.sort(function(a,b){ return new Date(a.dueAt) - new Date(b.dueAt); });
+          upcomingT.sort(function(a,b){
+            if (!a.dueAt && !b.dueAt) return 0;
+            if (!a.dueAt) return 1;
+            if (!b.dueAt) return -1;
+            return new Date(a.dueAt) - new Date(b.dueAt);
+          });
+          var sections = [
+            { name: 'Overdue', items: overdueT, color: 'text-rose-600', alwaysShow: false },
+            { name: 'Today',   items: todayT,   color: 'text-gray-700', alwaysShow: true },
+            { name: 'Upcoming',items: upcomingT,color: 'text-gray-600', alwaysShow: false }
+          ];
+        %>
+          <% sections.forEach(function(section){
+               if (!section.alwaysShow && section.items.length === 0) return; %>
+            <div class="text-[11px] uppercase tracking-wide font-bold <%= section.color %> mt-3 mb-1.5 first:mt-0">
+              <%= section.name %> <span class="text-gray-400 font-semibold">(<%= section.items.length %>)</span>
+            </div>
+            <% if (section.items.length === 0) { %>
+              <p class="text-xs text-gray-400 italic ml-1">Nothing for today.</p>
+            <% } else { %>
+              <ul class="space-y-1">
+                <% section.items.forEach(function(t){
+                     var due = t.dueAt ? new Date(t.dueAt) : null;
+                     var overdue = due && !t.doneAt && due < new Date();
+                %>
+                  <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-todo-id="<%= t.id %>">
+                    <input type="checkbox" class="todo-done-cb mt-1" <%= t.doneAt ? 'checked' : '' %>>
+                    <div class="flex-1 min-w-0">
+                      <div class="todo-view">
+                        <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %> break-words"><%= t.title %></div>
+                        <% if (t.description) { %>
+                          <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap break-words"><%= t.description %></p>
+                        <% } %>
+                        <div class="text-[11px] flex items-center gap-3 mt-1 <%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>">
+                          <span><%= due ? (overdue ? 'OVERDUE -- ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
+                          <button type="button" class="todo-edit-btn text-otp-600 font-semibold hover:underline">Edit</button>
+                          <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
+                        </div>
+                      </div>
+                      <form class="todo-edit hidden space-y-1.5">
+                        <input type="text" name="title" required maxlength="500" value="<%= t.title %>" class="w-full rounded border border-gray-300 px-2 py-1 text-sm">
+                        <textarea name="description" rows="2" placeholder="Description (optional)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"><%= t.description || '' %></textarea>
+                        <div class="flex gap-2 items-center">
+                          <button type="button" class="todo-edit-cancel text-xs text-gray-500 font-semibold hover:underline">Cancel</button>
+                          <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Save</button>
+                        </div>
+                      </form>
                     </div>
-                  </div>
-                  <form class="todo-edit hidden space-y-1.5">
-                    <input type="text" name="title" required maxlength="500" value="<%= t.title %>" class="w-full rounded border border-gray-300 px-2 py-1 text-sm">
-                    <textarea name="description" rows="2" placeholder="Description (optional)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"><%= t.description || '' %></textarea>
-                    <div class="flex gap-2 items-center">
-                      <button type="button" class="todo-edit-cancel text-xs text-gray-500 font-semibold hover:underline">Cancel</button>
-                      <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Save</button>
-                    </div>
-                  </form>
-                </div>
-              </li>
-            <% }); %>
-          </ul>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+          <% }); %>
         <% } %>
       </section>
 
