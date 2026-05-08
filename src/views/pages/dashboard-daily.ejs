@@ -319,9 +319,21 @@
         <% if (myIssues.length === 0) { %>
           <p class="text-xs text-gray-500">No open issues for you. Use this list at L10 -- Identify, Discuss, Solve.</p>
         <% } else { %>
-          <ul class="space-y-1">
+          <%
+            var issueCounts = { open: 0, identified: 0, discussed: 0 };
+            myIssues.forEach(function(t){ if (issueCounts[t.idsStatus] !== undefined) issueCounts[t.idsStatus]++; });
+            var totalOpen = issueCounts.open + issueCounts.identified + issueCounts.discussed;
+          %>
+          <div id="issue-filter" class="flex items-center gap-1 text-[11px] mb-2 flex-wrap" data-active="open">
+            <button type="button" data-filter="open"       class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-otp-600 text-white">Open <span class="opacity-70">(<%= issueCounts.open %>)</span></button>
+            <button type="button" data-filter="identified" class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200">Identified <span class="opacity-70">(<%= issueCounts.identified %>)</span></button>
+            <button type="button" data-filter="discussed"  class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200">Discussed <span class="opacity-70">(<%= issueCounts.discussed %>)</span></button>
+            <button type="button" data-filter="all"        class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200">All open <span class="opacity-70">(<%= totalOpen %>)</span></button>
+          </div>
+          <p id="issue-empty-msg" class="text-xs text-gray-500 hidden">No issues with that status.</p>
+          <ul id="issue-list" class="space-y-1">
             <% myIssues.forEach(function(t){ %>
-              <li class="text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-issue-id="<%= t.id %>">
+              <li class="issue-row text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-issue-id="<%= t.id %>" data-status="<%= t.idsStatus %>">
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex-1 min-w-0">
                     <div class="font-semibold text-gray-900"><%= t.title %></div>
@@ -597,6 +609,34 @@
         .catch(function(err){ alert('Could not mark solved: ' + (err.message || 'unknown')); });
     });
   });
+  function applyIssueFilter(filter) {
+    var rows = document.querySelectorAll('.issue-row');
+    var visible = 0;
+    rows.forEach(function(li){
+      var status = li.dataset.status || '';
+      var show = filter === 'all' ? (status !== 'solved') : status === filter;
+      li.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    var emptyMsg = document.getElementById('issue-empty-msg');
+    if (emptyMsg) emptyMsg.classList.toggle('hidden', visible !== 0);
+    var bar = document.getElementById('issue-filter');
+    if (bar) {
+      bar.dataset.active = filter;
+      bar.querySelectorAll('.issue-filter-btn').forEach(function(b){
+        var on = b.dataset.filter === filter;
+        b.classList.toggle('bg-otp-600', on);
+        b.classList.toggle('text-white', on);
+        b.classList.toggle('bg-gray-100', !on);
+        b.classList.toggle('text-gray-700', !on);
+        b.classList.toggle('hover:bg-gray-200', !on);
+      });
+    }
+  }
+  document.querySelectorAll('.issue-filter-btn').forEach(function(b){
+    b.addEventListener('click', function(){ applyIssueFilter(b.dataset.filter); });
+  });
+  if (document.getElementById('issue-filter')) applyIssueFilter('open');
 
   // --- Agents ---
   var agToggle = document.getElementById('agent-upload-toggle');
