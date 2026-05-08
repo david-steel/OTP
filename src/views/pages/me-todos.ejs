@@ -54,9 +54,9 @@
     font-size: 12px; font-family: ui-monospace, SFMono-Regular, monospace;
     word-break: break-all;
   }
-  .me-actions { display: flex; gap: 8px; }
+  .me-actions { display: flex; gap: 8px; margin-top: 8px; }
   .me-btn {
-    flex: 1; padding: 12px 16px;
+    flex: 1; padding: 12px 12px;
     border-radius: 8px; border: none;
     font-size: 14px; font-weight: 600;
     cursor: pointer;
@@ -66,6 +66,26 @@
   .me-btn.primary { background: #6b46c1; color: #fff; }
   .me-btn.primary:active { background: #553c9a; }
   .me-btn.secondary { background: #f5f5f4; color: #555; }
+  .me-btn.secondary:active { background: #e7e5e4; }
+  .me-btn.danger { background: #fee2e2; color: #dc2626; }
+  .me-btn.danger:active { background: #dc2626; color: #fff; }
+  .me-btn.danger.confirm { background: #dc2626; color: #fff; }
+  .me-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .me-edit { margin-top: 12px; display: none; }
+  .me-edit.open { display: block; }
+  .me-edit label { display: block; font-size: 12px; font-weight: 600; color: #666; margin: 8px 0 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .me-edit input, .me-edit textarea {
+    width: 100%; box-sizing: border-box;
+    padding: 10px 12px; font-size: 15px;
+    border: 1px solid #d4d4d8; border-radius: 8px;
+    background: #fff; color: #111;
+    font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .me-edit textarea { min-height: 100px; resize: vertical; line-height: 1.45; }
+  .me-edit input:focus, .me-edit textarea:focus { outline: none; border-color: #6b46c1; box-shadow: 0 0 0 3px rgba(107,70,193,0.15); }
+
   .me-empty {
     padding: 48px 24px; text-align: center; color: #888;
     background: #fff; border: 1px solid #e7e5e4; border-radius: 12px;
@@ -89,8 +109,11 @@
     .me-desc { color: #d4d4d8; }
     .me-desc code { background: #18181b; }
     .me-btn.secondary { background: #3f3f46; color: #d4d4d8; }
+    .me-btn.danger { background: #450a0a; color: #fca5a5; }
     .me-empty { background: #27272a; border-color: #3f3f46; color: #a1a1aa; }
     .me-meta { color: #a1a1aa; }
+    .me-edit input, .me-edit textarea { background: #18181b; border-color: #3f3f46; color: #fafafa; }
+    .me-edit label { color: #a1a1aa; }
   }
 </style>
 
@@ -111,8 +134,6 @@
   <% todos.forEach(function(t) {
     const title = t.title || '';
     const isWatchdogRed = title.includes('🔴') || title.startsWith('[Watchdog');
-    const cardClass = isWatchdogRed ? 'me-card red' : (title.startsWith('[') ? 'me-card agent' : 'me-card');
-    // Parse optional [Agent X] prefix
     const tagMatch = title.match(/^\[([^\]]+)\]\s*/);
     const tagText = tagMatch ? tagMatch[1] : null;
     const cleanTitle = tagMatch ? title.slice(tagMatch[0].length) : title;
@@ -120,24 +141,38 @@
     const created = t.createdAt ? new Date(t.createdAt) : null;
     const ago = created ? humanAgo(created) : '';
   %>
-    <div class="me-card <%= isWatchdogRed ? 'red' : (tagText ? 'agent' : '') %>" data-id="<%= t.id %>">
-      <% if (tagText) { %>
-        <div class="me-meta">
-          <span class="me-tag <%= isWatchdogRed ? 'red' : '' %>"><%= tagText %></span>
-          <% if (ago) { %><span><%= ago %></span><% } %>
-        </div>
-      <% } else if (ago) { %>
-        <div class="me-meta"><span><%= ago %></span></div>
-      <% } %>
-      <h2 class="me-title"><%= cleanTitle %></h2>
-      <% if (desc) { %>
-        <div class="me-desc" onclick="toggleDesc(this)"><%= desc %></div>
-        <% if (desc.length > 120 || (desc.match(/\n/g) || []).length > 2) { %>
-          <div class="me-desc-toggle" onclick="toggleDesc(this.previousElementSibling)">Tap description to expand</div>
+    <div class="me-card <%= isWatchdogRed ? 'red' : (tagText ? 'agent' : '') %>" data-id="<%= t.id %>" data-title="<%= encodeURIComponent(title) %>" data-desc="<%= encodeURIComponent(desc) %>">
+      <div class="me-view">
+        <% if (tagText) { %>
+          <div class="me-meta">
+            <span class="me-tag <%= isWatchdogRed ? 'red' : '' %>"><%= tagText %></span>
+            <% if (ago) { %><span><%= ago %></span><% } %>
+          </div>
+        <% } else if (ago) { %>
+          <div class="me-meta"><span><%= ago %></span></div>
         <% } %>
-      <% } %>
-      <div class="me-actions">
-        <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Mark done</button>
+        <h2 class="me-title"><%= cleanTitle %></h2>
+        <% if (desc) { %>
+          <div class="me-desc" onclick="toggleDesc(this)"><%= desc %></div>
+          <% if (desc.length > 120 || (desc.match(/\n/g) || []).length > 2) { %>
+            <div class="me-desc-toggle" onclick="toggleDesc(this.previousElementSibling)">Tap description to expand</div>
+          <% } %>
+        <% } %>
+        <div class="me-actions">
+          <button class="me-btn secondary" onclick="openEdit(this)">Edit</button>
+          <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Done</button>
+          <button class="me-btn danger" onclick="confirmDelete(this, '<%= t.id %>')">Delete</button>
+        </div>
+      </div>
+      <div class="me-edit">
+        <label>Title</label>
+        <input type="text" class="me-edit-title" value="<%= title %>" maxlength="500" />
+        <label>Description</label>
+        <textarea class="me-edit-desc"><%= desc %></textarea>
+        <div class="me-actions">
+          <button class="me-btn secondary" onclick="cancelEdit(this)">Cancel</button>
+          <button class="me-btn primary" onclick="saveEdit(this, '<%= t.id %>')">Save</button>
+        </div>
       </div>
     </div>
   <% }); %>
@@ -166,6 +201,54 @@ function toggleDesc(el) {
   }
 }
 
+function openEdit(btn) {
+  const card = btn.closest('.me-card');
+  if (!card) return;
+  card.querySelector('.me-view').style.display = 'none';
+  card.querySelector('.me-edit').classList.add('open');
+  const titleInput = card.querySelector('.me-edit-title');
+  if (titleInput) titleInput.focus();
+}
+
+function cancelEdit(btn) {
+  const card = btn.closest('.me-card');
+  if (!card) return;
+  card.querySelector('.me-edit').classList.remove('open');
+  card.querySelector('.me-view').style.display = '';
+  const origTitle = decodeURIComponent(card.dataset.title || '');
+  const origDesc = decodeURIComponent(card.dataset.desc || '');
+  const ti = card.querySelector('.me-edit-title');
+  const td = card.querySelector('.me-edit-desc');
+  if (ti) ti.value = origTitle;
+  if (td) td.value = origDesc;
+}
+
+async function saveEdit(btn, id) {
+  const card = btn.closest('.me-card');
+  if (!card) return;
+  const title = card.querySelector('.me-edit-title').value.trim();
+  const description = card.querySelector('.me-edit-desc').value;
+  if (!title) { alert('Title cannot be empty.'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  try {
+    const r = await fetch('/api/v1/todos/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ title: title, description: description }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    card.dataset.title = encodeURIComponent(title);
+    card.dataset.desc = encodeURIComponent(description);
+    location.reload();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+    alert('Could not save: ' + e.message);
+  }
+}
+
 async function markDone(btn, id) {
   btn.disabled = true;
   btn.textContent = 'Marking...';
@@ -185,10 +268,49 @@ async function markDone(btn, id) {
     }
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = 'Mark done';
+    btn.textContent = 'Done';
     alert('Could not mark done: ' + e.message);
   }
 }
+
+function confirmDelete(btn, id) {
+  if (!btn.classList.contains('confirm')) {
+    btn.classList.add('confirm');
+    btn.textContent = 'Confirm?';
+    setTimeout(() => {
+      if (btn.classList.contains('confirm') && !btn.disabled) {
+        btn.classList.remove('confirm');
+        btn.textContent = 'Delete';
+      }
+    }, 3000);
+    return;
+  }
+  doDelete(btn, id);
+}
+
+async function doDelete(btn, id) {
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  try {
+    const r = await fetch('/api/v1/todos/' + id, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const card = btn.closest('.me-card');
+    if (card) {
+      card.style.transition = 'opacity 0.2s';
+      card.style.opacity = '0';
+      setTimeout(() => { card.remove(); checkEmpty(); }, 200);
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.classList.remove('confirm');
+    btn.textContent = 'Delete';
+    alert('Could not delete: ' + e.message);
+  }
+}
+
 function checkEmpty() {
   const remaining = document.querySelectorAll('.me-card:not(.done)').length;
   if (remaining === 0) {
