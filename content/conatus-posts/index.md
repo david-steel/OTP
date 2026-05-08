@@ -16,6 +16,8 @@ A counter-corpus to the documentation-school of process consulting. The standard
 
 1. [Your BPM framework keeps falling off because the SOP is not where the work is](./2026-05-01-bpm-framework-keeps-falling-off.md) -- 2026-05-01 -- Adoption is not the problem. Decoupling between document and runtime is. SOPs that compile into agent runtime context do not have a half-life.
 2. [Your top performers are not burning out from the work. They are burning out because every new hire adds to their plate](./2026-05-01-best-employees-burn-out-from-headcount-math.md) -- 2026-05-01 -- Documentation slows linear-headcount burnout. It does not stop it. Hybrid seats change the function.
+3. [The "got a minute?" problem is not solved by more SOPs. It is solved by giving the team a substrate to ask](./2026-05-08-got-a-minute-interruptions.md) -- 2026-05-08 -- Founder interruption load survives every documentation effort because the question is rarely "what is the rule." It is "given the rule, what do I do here." That is runtime context, and an agent can hold it.
+4. [Most BPM efforts fail for one reason that gets misnamed five different ways](./2026-05-08-bpm-fails-when-sop-is-decoupled.md) -- 2026-05-08 -- Lack of sponsorship, change management, training, tech, resistance. Five named failure modes, one underlying cause: the SOP and the work run in separate runtimes. Agents collapse the gap.
 
 ### Series: From Tool to Robot (David Steel, 2026-04-30)
 
