@@ -361,17 +361,14 @@
         </div>
         <% if (myAgents.length === 0) { %>
           <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600">
-            No agents yet. Add them on <a href="/dashboard/team" class="text-otp-600 font-semibold hover:underline">/dashboard/team</a> to score them on connection, KPIs, recent activity, and documentation.
-            <% if (!mcp.connected) { %>
-              Connect MCP first so OTP can see your agent's runs.
-            <% } %>
+            No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-otp-600 font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
           </div>
         <% } else {
              var redCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
              var yellowCount = myAgents.filter(function(a){ return (a.score||0) >= 3 && (a.score||0) < 6; }).length;
              var avg = myAgents.reduce(function(s,a){ return s + (a.score||0); }, 0) / myAgents.length;
         %>
-          <div class="text-[11px] text-gray-500 mb-2 flex items-center gap-3">
+          <div class="text-[11px] text-gray-500 mb-2 flex items-center gap-3 flex-wrap">
             <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
             <span>avg <strong class="text-gray-700"><%= avg.toFixed(1) %>/8</strong></span>
             <% if (redCount > 0) { %><span class="text-rose-600 font-semibold"><%= redCount %> red</span><% } %>
@@ -381,18 +378,18 @@
             <% myAgents.forEach(function(a){
                  var score = a.score || 0;
                  var pct = Math.round((score / 8) * 100);
-                 var dot = a.mcpConnectedAt ? 'bg-emerald-500' : 'bg-gray-300';
-                 var bar = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : 'bg-rose-400';
+                 var color = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : score > 0 ? 'bg-rose-400' : 'bg-gray-300';
+                 var kpiN = (typeof a.kpiCount === 'number') ? a.kpiCount : 0;
             %>
               <li>
                 <a href="/dashboard/team" class="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-gray-50 rounded" data-agent-id="<%= a.id %>">
-                  <span class="inline-block w-2 h-2 rounded-full <%= dot %> shrink-0"></span>
+                  <span class="inline-block w-2 h-2 rounded-full <%= color %> shrink-0"></span>
                   <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
                   <span class="hidden sm:inline-block w-24 h-1 bg-gray-200 rounded overflow-hidden shrink-0">
-                    <span class="block h-full <%= bar %>" style="width: <%= pct %>%"></span>
+                    <span class="block h-full <%= color %>" style="width: <%= pct %>%"></span>
                   </span>
                   <span class="text-[11px] font-semibold text-gray-700 tabular-nums w-10 text-right shrink-0"><%= score.toFixed ? score.toFixed(1) : score %></span>
-                  <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= a.runCount || 0 %> runs</span>
+                  <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= kpiN %> KPI<%= kpiN === 1 ? '' : 's' %></span>
                 </a>
               </li>
             <% }); %>

@@ -2922,13 +2922,38 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
 
     // ---- My Agents ----
-    const myAgents = await db.select().from(managerAgents)
-      .where(and(
-        eq(managerAgents.orgId, org.id),
-        eq(managerAgents.ownerUserId, auth.userId),
-        isNull(managerAgents.deletedAt),
-      ))
-      .orderBy(desc(managerAgents.updatedAt));
+    // Source from the team graph (the org chart's truth) rather than the
+    // manager_agents upload table. The chart at /dashboard/team is what
+    // operators actually maintain. Score comes from maturity_level if set
+    // (Bassim writes this); KPI count from kpis table joined on external id.
+    const teamGraphForAgents = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const allAgentNodes = teamGraphForAgents.nodes.filter(n => n.type === 'agent');
+    const ownedAgentNodes = claimedIds.length > 0
+      ? allAgentNodes.filter(n => claimedIds.includes(n.externalId))
+      : allAgentNodes;
+    const orgKpisForAgents = await db.select({ ownerExternalId: kpis.ownerExternalId })
+      .from(kpis)
+      .where(eq(kpis.organizationId, org.id));
+    const kpiCountByExt: Record<string, number> = {};
+    for (const k of orgKpisForAgents) {
+      if (k.ownerExternalId) kpiCountByExt[k.ownerExternalId] = (kpiCountByExt[k.ownerExternalId] || 0) + 1;
+    }
+    const myAgents = ownedAgentNodes.map(n => {
+      const props = n.properties as any;
+      const score = typeof props.maturityLevel === 'number' ? props.maturityLevel : 0;
+      const kpiCount = kpiCountByExt[n.externalId] || 0;
+      return {
+        id: n.id,
+        externalId: n.externalId,
+        name: n.label,
+        description: props.role || props.mission || '',
+        score,
+        kpiCount,
+        runCount: 0,
+        mcpConnectedAt: null,
+        kpis: [] as any[],
+      };
+    }).sort((a, b) => (b.score || 0) - (a.score || 0));
 
     // ---- MCP status ----
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
