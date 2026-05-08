@@ -279,10 +279,25 @@
               <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-todo-id="<%= t.id %>">
                 <input type="checkbox" class="todo-done-cb mt-1" <%= t.doneAt ? 'checked' : '' %>>
                 <div class="flex-1 min-w-0">
-                  <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %>"><%= t.title %></div>
-                  <div class="text-[11px] <%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %> mt-0.5">
-                    <%= due ? (overdue ? 'OVERDUE -- ' : 'Due ') + due.toLocaleDateString() : 'No due date' %>
+                  <div class="todo-view">
+                    <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %> break-words"><%= t.title %></div>
+                    <% if (t.description) { %>
+                      <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap break-words"><%= t.description %></p>
+                    <% } %>
+                    <div class="text-[11px] flex items-center gap-3 mt-1 <%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>">
+                      <span><%= due ? (overdue ? 'OVERDUE -- ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
+                      <button type="button" class="todo-edit-btn text-otp-600 font-semibold hover:underline">Edit</button>
+                      <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
+                    </div>
                   </div>
+                  <form class="todo-edit hidden space-y-1.5">
+                    <input type="text" name="title" required maxlength="500" value="<%= t.title %>" class="w-full rounded border border-gray-300 px-2 py-1 text-sm">
+                    <textarea name="description" rows="2" placeholder="Description (optional)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"><%= t.description || '' %></textarea>
+                    <div class="flex gap-2 items-center">
+                      <button type="button" class="todo-edit-cancel text-xs text-gray-500 font-semibold hover:underline">Cancel</button>
+                      <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Save</button>
+                    </div>
+                  </form>
                 </div>
               </li>
             <% }); %>
@@ -506,6 +521,57 @@
       api('PUT', '/todos/' + tid, { done: cb.checked })
         .then(reload)
         .catch(function(err){ cb.checked = !cb.checked; alert(err.message || 'Failed'); });
+    });
+  });
+  document.querySelectorAll('.todo-edit-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-todo-id]');
+      li.querySelector('.todo-view').classList.add('hidden');
+      li.querySelector('.todo-edit').classList.remove('hidden');
+      var titleInput = li.querySelector('.todo-edit input[name="title"]');
+      if (titleInput) titleInput.focus();
+    });
+  });
+  document.querySelectorAll('.todo-edit-cancel').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-todo-id]');
+      li.querySelector('.todo-edit').classList.add('hidden');
+      li.querySelector('.todo-view').classList.remove('hidden');
+    });
+  });
+  document.querySelectorAll('.todo-edit').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var li = form.closest('[data-todo-id]');
+      var tid = li.dataset.todoId;
+      var fd = new FormData(form);
+      var title = (fd.get('title') || '').toString().trim();
+      if (!title) { alert('Title cannot be empty.'); return; }
+      api('PUT', '/todos/' + tid, { title: title, description: (fd.get('description') || '').toString() })
+        .then(reload)
+        .catch(function(err){ alert('Save failed: ' + (err.message || 'unknown')); });
+    });
+  });
+  document.querySelectorAll('.todo-delete-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if (!btn.dataset.confirming) {
+        btn.dataset.confirming = '1';
+        btn.textContent = 'Confirm?';
+        btn.classList.remove('text-rose-600');
+        btn.classList.add('text-white', 'bg-rose-600', 'rounded', 'px-1.5');
+        setTimeout(function(){
+          if (btn.dataset.confirming === '1') {
+            delete btn.dataset.confirming;
+            btn.classList.remove('text-white', 'bg-rose-600', 'rounded', 'px-1.5');
+            btn.classList.add('text-rose-600');
+            btn.textContent = 'Delete';
+          }
+        }, 3000);
+        return;
+      }
+      var li = btn.closest('[data-todo-id]');
+      var tid = li.dataset.todoId;
+      api('DELETE', '/todos/' + tid).then(reload).catch(function(err){ alert(err.message || 'Failed'); });
     });
   });
 
