@@ -353,57 +353,47 @@
         <% } %>
       </section>
 
-      <!-- My Agents -->
+      <!-- My Agents (compact) -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My Agents</h2>
-          <button id="agent-upload-toggle" class="text-xs text-otp-600 font-semibold">+ Upload .md</button>
+          <a href="/dashboard/team" class="text-xs text-otp-600 font-semibold hover:underline">View chart &rarr;</a>
         </div>
-        <form id="agent-upload-form" class="hidden mb-3 space-y-2">
-          <input type="text" name="name" maxlength="255" placeholder="Agent name (optional, will read H1)" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
-          <textarea name="rawMd" rows="6" required placeholder="Paste your CLAUDE.md or Agent.md content here..." class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs font-mono"></textarea>
-          <div class="flex gap-2">
-            <input type="file" name="file" accept=".md,.markdown,text/markdown,text/plain" id="agent-file-input" class="text-xs">
-            <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Upload</button>
-          </div>
-        </form>
         <% if (myAgents.length === 0) { %>
           <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600">
-            No agents yet. Upload your CLAUDE.md or Agent.md to score it on <strong>connection</strong>, <strong>KPIs</strong>, <strong>recent activity</strong>, and <strong>documentation</strong>.
+            No agents yet. Add them on <a href="/dashboard/team" class="text-otp-600 font-semibold hover:underline">/dashboard/team</a> to score them on connection, KPIs, recent activity, and documentation.
             <% if (!mcp.connected) { %>
-              Connect MCP first so OTP can see your agent's runs and push the score above 4.
+              Connect MCP first so OTP can see your agent's runs.
             <% } %>
           </div>
-        <% } else { %>
-          <ul class="space-y-2">
+        <% } else {
+             var redCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
+             var yellowCount = myAgents.filter(function(a){ return (a.score||0) >= 3 && (a.score||0) < 6; }).length;
+             var avg = myAgents.reduce(function(s,a){ return s + (a.score||0); }, 0) / myAgents.length;
+        %>
+          <div class="text-[11px] text-gray-500 mb-2 flex items-center gap-3">
+            <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
+            <span>avg <strong class="text-gray-700"><%= avg.toFixed(1) %>/8</strong></span>
+            <% if (redCount > 0) { %><span class="text-rose-600 font-semibold"><%= redCount %> red</span><% } %>
+            <% if (yellowCount > 0) { %><span class="text-amber-600 font-semibold"><%= yellowCount %> yellow</span><% } %>
+          </div>
+          <ul class="divide-y divide-gray-100 -mx-2">
             <% myAgents.forEach(function(a){
                  var score = a.score || 0;
                  var pct = Math.round((score / 8) * 100);
                  var dot = a.mcpConnectedAt ? 'bg-emerald-500' : 'bg-gray-300';
+                 var bar = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : 'bg-rose-400';
             %>
-              <li class="rounded border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm" data-agent-id="<%= a.id %>">
-                <div class="flex items-start gap-3">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="inline-block w-2 h-2 rounded-full <%= dot %>"></span>
-                      <span class="font-semibold text-gray-900 truncate"><%= a.name %></span>
-                      <% if (a.externalId) { %><span class="text-[10px] text-gray-400 font-mono"><%= a.externalId %></span><% } %>
-                    </div>
-                    <% if (a.description) { %><p class="text-xs text-gray-600 mt-0.5 line-clamp-2"><%= a.description %></p><% } %>
-                    <div class="mt-1 flex items-center gap-2">
-                      <div class="flex-1 h-1.5 bg-gray-200 rounded overflow-hidden">
-                        <div class="h-full <%= score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : 'bg-rose-400' %>" style="width: <%= pct %>%"></div>
-                      </div>
-                      <span class="text-[11px] font-semibold text-gray-700"><%= score.toFixed ? score.toFixed(1) : score %>/8</span>
-                    </div>
-                    <div class="text-[11px] text-gray-500 mt-1">
-                      <%= a.runCount || 0 %> runs (30d)
-                      &middot; <%= a.mcpConnectedAt ? 'MCP active' : 'no MCP activity' %>
-                      <% if ((a.kpis && a.kpis.length) || 0) { %>&middot; <%= a.kpis.length %> KPI<%= a.kpis.length === 1 ? '' : 's' %><% } %>
-                    </div>
-                  </div>
-                  <button class="agent-rescore-btn text-[10px] uppercase tracking-wide text-gray-500 hover:text-otp-600">Re-score</button>
-                </div>
+              <li>
+                <a href="/dashboard/team" class="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-gray-50 rounded" data-agent-id="<%= a.id %>">
+                  <span class="inline-block w-2 h-2 rounded-full <%= dot %> shrink-0"></span>
+                  <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
+                  <span class="hidden sm:inline-block w-24 h-1 bg-gray-200 rounded overflow-hidden shrink-0">
+                    <span class="block h-full <%= bar %>" style="width: <%= pct %>%"></span>
+                  </span>
+                  <span class="text-[11px] font-semibold text-gray-700 tabular-nums w-10 text-right shrink-0"><%= score.toFixed ? score.toFixed(1) : score %></span>
+                  <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= a.runCount || 0 %> runs</span>
+                </a>
               </li>
             <% }); %>
           </ul>
@@ -639,40 +629,6 @@
   });
   if (document.getElementById('issue-filter')) applyIssueFilter('open');
 
-  // --- Agents ---
-  var agToggle = document.getElementById('agent-upload-toggle');
-  var agForm = document.getElementById('agent-upload-form');
-  var agFile = document.getElementById('agent-file-input');
-  if (agToggle && agForm) {
-    agToggle.addEventListener('click', function(){ agForm.classList.toggle('hidden'); });
-    if (agFile) {
-      agFile.addEventListener('change', function(){
-        var f = agFile.files && agFile.files[0];
-        if (!f) return;
-        var reader = new FileReader();
-        reader.onload = function(){ agForm.querySelector('[name=rawMd]').value = String(reader.result || ''); };
-        reader.readAsText(f);
-      });
-    }
-    agForm.addEventListener('submit', function(e){
-      e.preventDefault();
-      var fd = new FormData(agForm);
-      var raw = String(fd.get('rawMd') || '').trim();
-      if (!raw) return alert('Paste or pick a markdown file first.');
-      api('POST', '/manager-agents', { name: fd.get('name') || undefined, rawMd: raw })
-        .then(reload)
-        .catch(function(err){ alert('Upload failed: ' + (err.message || 'unknown')); });
-    });
-  }
-  document.querySelectorAll('.agent-rescore-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var li = btn.closest('[data-agent-id]');
-      var aid = li.dataset.agentId;
-      btn.textContent = '...';
-      api('POST', '/manager-agents/' + aid + '/score', {})
-        .then(reload)
-        .catch(function(err){ btn.textContent = 'Re-score'; alert(err.message || 'Failed'); });
-    });
-  });
+  // --- Agents: row clicks navigate to /dashboard/team (no JS handlers needed) ---
 })();
 </script>
