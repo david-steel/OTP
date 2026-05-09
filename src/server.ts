@@ -66,6 +66,30 @@ app.get('/health', async () => {
   };
 });
 
+// Public API v1 — encapsulated scope, wide CORS, tighter rate limit.
+// Wave 2 will register route files here. Wave 1 just proves the scope works.
+// Note: @fastify/cors is registered at root scope above (fastify-plugin breaks
+// encapsulation), so we set the public-API CORS headers via an onSend hook
+// rather than re-registering the plugin (which would throw FST_ERR_DEC_ALREADY_PRESENT).
+const ENABLE_PUBLIC_API = process.env.ENABLE_PUBLIC_API === 'true';
+if (ENABLE_PUBLIC_API) {
+  await app.register(async (fastify) => {
+    fastify.addHook('onSend', async (_req, reply) => {
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Access-Control-Allow-Credentials', 'false');
+    });
+    await fastify.register(fastifyRateLimit, { max: 60, timeWindow: '1 minute' });
+    fastify.get('/_status', async () => ({ status: 'ok', api: 'v1', mode: 'public' }));
+    await fastify.register(import('./routes/api/public/orgs.js'));
+    await fastify.register(import('./routes/api/public/best-practices.js'));
+    await fastify.register(import('./routes/api/public/claims-public.js'));
+    await fastify.register(import('./routes/api/public/kpis.js'));
+  }, { prefix: '/api/v1' });
+  console.log('[startup][public-api] enabled at /api/v1');
+} else {
+  console.log('[startup][public-api] disabled (set ENABLE_PUBLIC_API=true to enable)');
+}
+
 // Clerk authentication — boot-resilient. Clerk uses fastify-plugin which
 // breaks encapsulation, so its preHandler hook runs on EVERY route (including
 // /health). If the publishable key is malformed, Clerk throws "Publishable key
