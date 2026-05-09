@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ---- Enums ----
 
@@ -54,6 +55,11 @@ export const organizations = pgTable('organizations', {
   badge: badgeEnum('badge'),
   qualityTier: qualityTierEnum('quality_tier'),
   agenticLevel: integer('agentic_level'),
+  slug: text('slug').unique(),
+  public: boolean('public').default(false).notNull(),
+  description: text('description'),
+  website: text('website'),
+  chart: jsonb('chart'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
@@ -101,6 +107,8 @@ export const claims = pgTable('claims', {
   source: varchar('source', { length: 50 }).default('oos_publish'),
   sourceUrl: text('source_url'),
   agentName: varchar('agent_name', { length: 100 }),
+  public: boolean('public').default(false).notNull(),
+  roles: text('roles').array().default(sql`'{}'::text[]`).notNull(),
   // search_vector is managed by a database trigger, not Drizzle
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -285,6 +293,7 @@ export const bestPractices = pgTable('best_practices', {
   sourceUrl: text('source_url').notNull(),
   canonicalUrl: text('canonical_url'),
   isCoordination: boolean('is_coordination'),
+  public: boolean('public').default(false).notNull(),
   lastUpdatedAt: timestamp('last_updated_at'),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -643,6 +652,7 @@ export const kpis = pgTable('kpis', {
   executionItemId: uuid('execution_item_id').references(() => oosExecutionItems.id, { onDelete: 'set null' }),
   claimId: uuid('claim_id'),
   isPublished: boolean('is_published').notNull().default(false),
+  public: boolean('public').default(false).notNull(),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
