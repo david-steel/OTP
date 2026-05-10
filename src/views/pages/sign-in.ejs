@@ -7,15 +7,34 @@
 </div>
 
 <script>
-  // If the unauthed visitor was bounced here from a protected page (e.g. /l8),
-  // the bouncing route appends ?redirect=<url>. Persist it so the existing
-  // localStorage-based post-signin flow respects it.
+  // Trusted satellite domains that may receive cross-domain post-sign-in
+  // redirects. Add new satellites here; anything not in this list is rejected
+  // and falls back to /dashboard.
+  var TRUSTED_SATELLITES = ['orger.ai'];
+
+  function isTrustedSatelliteUrl(url) {
+    try {
+      var u = new URL(url);
+      if (u.protocol !== 'https:') return false;
+      return TRUSTED_SATELLITES.indexOf(u.hostname) !== -1;
+    } catch (_) { return false; }
+  }
+
+  // Capture the return URL from either:
+  //   ?redirect=<path>      -- legacy OTP-internal bounce (must start with /)
+  //   ?redirect_url=<url>   -- Clerk's standard cross-domain param, accepted
+  //                           when it points at a trusted satellite
   (function captureRedirectParam() {
     try {
       var qs = new URLSearchParams(window.location.search);
-      var redirectParam = qs.get('redirect');
-      if (redirectParam && redirectParam.startsWith('/')) {
-        localStorage.setItem('otp_return_after_signin', redirectParam);
+      var legacy = qs.get('redirect');
+      if (legacy && legacy.startsWith('/')) {
+        localStorage.setItem('otp_return_after_signin', legacy);
+        return;
+      }
+      var clerkRedirect = qs.get('redirect_url');
+      if (clerkRedirect && (clerkRedirect.startsWith('/') || isTrustedSatelliteUrl(clerkRedirect))) {
+        localStorage.setItem('otp_return_after_signin', clerkRedirect);
       }
     } catch (_) { /* localStorage may be blocked */ }
   })();
