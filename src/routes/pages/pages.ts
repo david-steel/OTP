@@ -832,15 +832,20 @@ export default async function pageRoutes(app: FastifyInstance) {
       updatedAt: row.updated_at,
     };
 
-    // Hydrate related terms (one query, only the slugs we need)
+    // Hydrate related terms (one query, only the slugs we need).
+    // Use pool.query directly: Drizzle's sql template encodes JS string[] as
+    // a Postgres record, which fails on `slug = ANY($1)` (needs array, not record).
+    // node-postgres on the raw Pool handles JS arrays -> text[] natively.
     let relatedTerms: Array<{ slug: string; name: string; definition: string }> = [];
     if (term.relatedSlugs.length > 0) {
-      const relatedRes = await db.execute(sql`
-        SELECT slug, name, definition
-        FROM glossary_terms
-        WHERE slug = ANY(${term.relatedSlugs}) AND public = true
-        ORDER BY name ASC
-      `) as any;
+      const { pool } = await import('../../config/database.js');
+      const relatedRes = await pool.query(
+        `SELECT slug, name, definition
+         FROM glossary_terms
+         WHERE slug = ANY($1::text[]) AND public = true
+         ORDER BY name ASC`,
+        [term.relatedSlugs],
+      );
       relatedTerms = (relatedRes.rows || []).map((r: any) => ({ slug: r.slug, name: r.name, definition: r.definition }));
     }
 
