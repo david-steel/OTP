@@ -175,7 +175,7 @@ These are the posts a CEO sends to the board. Each one is a longer, more strateg
 
 - 12 clusters
 - 84 questions
-- 1 published, 3 drafted, 80 open
+- 4 published, 0 drafted, 80 open
 
 At 3 posts per weekday, working through this map takes ~28 weekdays = roughly 6 weeks. By mid-July 2026, OTP owns the citation graph for "how to organize AI agents in a company."
 
