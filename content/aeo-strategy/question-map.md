@@ -17,7 +17,7 @@ The CEO's first question when staring at agent capability is "how do I put this 
 | # | Question | Status | URL |
 |---|---|---|---|
 | 1.1 | How do I add an AI agent to my org chart? | ✅ published | /blog/adding-an-agent-to-your-org-chart |
-| 1.2 | How do AI agents and humans share accountability? | drafted | /blog/humans-and-agents-on-the-same-scorecard |
+| 1.2 | How do AI agents and humans share accountability? | ✅ published | /blog/humans-and-agents-on-the-same-scorecard |
 | 1.3 | What does an org chart look like with AI agents on it? | open | |
 | 1.4 | Should AI agents report to humans or to other agents? | open | |
 | 1.5 | How many agents can one human manage? | open | |
@@ -31,7 +31,7 @@ Every operator who hires an agent immediately asks the same thing: how do I know
 
 | # | Question | Status | URL |
 |---|---|---|---|
-| 2.1 | How do I measure AI agent performance? | drafted | /blog/agent-that-does-not-push-its-own-kpi |
+| 2.1 | How do I measure AI agent performance? | ✅ published | /blog/agent-that-does-not-push-its-own-kpi |
 | 2.2 | What KPIs should an AI agent have? | open | |
 | 2.3 | How often should an AI agent report its numbers? | open | |
 | 2.4 | What happens when an agent's KPI drops? | open | |
@@ -46,7 +46,7 @@ The first time two agents collide is the moment most operators realize coordinat
 
 | # | Question | Status | URL |
 |---|---|---|---|
-| 3.1 | What stops AI agents from doing duplicate work? | drafted | /blog/two-agents-doing-the-same-job |
+| 3.1 | What stops AI agents from doing duplicate work? | ✅ published | /blog/two-agents-doing-the-same-job |
 | 3.2 | How do AI agents talk to each other? | open | |
 | 3.3 | How do I prevent agent collisions? | open | |
 | 3.4 | What is an agent message bus? | open | |
