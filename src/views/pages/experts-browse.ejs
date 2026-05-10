@@ -1,111 +1,160 @@
+<%
+  // experts: array of consultant_profiles rows (camelCase columns from cp.*)
+  // counts: { total, claimed, eos }
+%>
 <div class="max-w-6xl mx-auto px-4 py-8">
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold">Expert Directory</h1>
-    <a href="/dashboard/consultant" class="px-4 py-2 bg-otp-500 text-white rounded hover:bg-otp-400 text-sm font-medium">Create Your Profile</a>
-  </div>
 
-  <p class="text-gray-600 mb-6 max-w-3xl">Browse consultants who publish coordination intelligence on OTP. Each expert brings domain knowledge, published OOS files, and real operational experience. Filter by expertise to find the right consultant for your needs.</p>
+  <!-- Header -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Operating-System Coach Directory</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          <%= counts.total %> coaches listed
+          <% if (counts.eos > 0) { %> &middot; <%= counts.eos %> EOS Implementers®<% } %>
+          <% if (counts.claimed > 0) { %> &middot; <%= counts.claimed %> claimed<% } %>
+        </p>
+      </div>
+      <a href="/for-coaches" class="px-4 py-2 bg-otp-500 text-white rounded hover:bg-otp-400 text-sm font-medium whitespace-nowrap">Are you a coach? Claim your profile</a>
+    </div>
+
+    <p class="text-gray-600 mt-4 max-w-3xl text-sm sm:text-base">
+      Public directory of operating-system coaches and consultants. Listings include EOS Implementers® (seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a>), Scaling Up coaches, and OTP-native publishers. Coaches can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
+    </p>
+  </div>
 
   <!-- Filters -->
-  <div class="bg-white p-4 rounded-lg border mb-6 flex gap-4 flex-wrap items-center">
+  <div class="bg-white p-4 rounded-lg border mb-6 flex gap-3 flex-wrap items-center">
     <div class="flex-1 min-w-[200px]">
-      <input type="text" id="filter-search" placeholder="Search by name or bio..." class="w-full text-sm border rounded px-3 py-1.5 focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none">
+      <input type="text" id="filter-search" placeholder="Search by name, city, or framework..." class="w-full text-sm border rounded px-3 py-1.5 focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none">
     </div>
-    <select id="filter-expertise" class="text-sm border rounded px-3 py-1.5">
-      <option value="">All Expertise</option>
+    <select id="filter-source" class="text-sm border rounded px-3 py-1.5">
+      <option value="">All listings</option>
+      <option value="eosworldwide">EOS Implementers®</option>
+      <option value="otp">OTP Publishers</option>
+      <option value="claimed">Claimed only</option>
     </select>
-    <select id="filter-sort" class="text-sm border rounded px-3 py-1.5">
-      <option value="newest">Newest</option>
-      <option value="most-oos">Most OOS Files</option>
-      <option value="name">Name A-Z</option>
+    <select id="filter-country" class="text-sm border rounded px-3 py-1.5">
+      <option value="">All countries</option>
     </select>
   </div>
 
-  <!-- Expert Cards -->
+  <!-- Cards -->
   <div id="experts-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <% if (typeof experts !== 'undefined' && experts.length > 0) { %>
-      <%
-        var allTags = [];
-        experts.forEach(function(e) {
-          if (e.expertise_tags) {
-            e.expertise_tags.forEach(function(t) {
-              if (allTags.indexOf(t) === -1) allTags.push(t);
-            });
-          }
-        });
+      <% experts.forEach(function(e) {
+        var isEOS = e.directory_source === 'eosworldwide';
+        var isClaimed = e.claimed === true;
+        var locParts = [e.geo_city, e.geo_state, e.geo_country].filter(Boolean);
+        var locStr = locParts.join(', ');
+        var sourceTag = isEOS ? 'eosworldwide' : (e.directory_source || 'otp');
+        var claimTag = isClaimed ? 'claimed' : 'unclaimed';
       %>
-      <% experts.forEach(function(expert) { %>
-        <a href="/expert/<%= expert.slug %>" class="bg-white p-5 rounded-lg border claim-card block" data-tags="<%= (expert.expertise_tags || []).join(',') %>" data-name="<%= (expert.display_name || '').toLowerCase() %>" data-bio="<%= (expert.bio || '').toLowerCase() %>" data-oos="<%= expert.oos_count || 0 %>">
-          <div class="flex items-start gap-4">
-            <% if (expert.photo_url) { %>
-              <img src="<%= expert.photo_url %>" alt="<%= expert.display_name %>" class="w-14 h-14 rounded-full object-cover shrink-0">
+        <a href="/expert/<%= e.slug %>"
+           class="bg-white p-4 rounded-lg border claim-card block"
+           data-name="<%= (e.display_name || '').toLowerCase() %>"
+           data-city="<%= (e.geo_city || '').toLowerCase() %>"
+           data-country="<%= (e.geo_country || '') %>"
+           data-source="<%= sourceTag %>"
+           data-claim="<%= claimTag %>">
+          <div class="flex items-start gap-3">
+            <% if (e.photo_url) { %>
+              <img src="<%= e.photo_url %>" alt="<%= e.display_name %>" loading="lazy" class="w-14 h-14 rounded-full object-cover shrink-0">
             <% } else { %>
               <div class="w-14 h-14 rounded-full bg-otp-500 text-white flex items-center justify-center text-lg font-bold shrink-0">
-                <%= (expert.display_name || '?').charAt(0).toUpperCase() %>
+                <%= (e.display_name || '?').charAt(0).toUpperCase() %>
               </div>
             <% } %>
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-gray-900 truncate"><%= expert.display_name %></div>
-              <p class="text-sm text-gray-500 mt-1 line-clamp-2"><%= (expert.bio || '').substring(0, 100) %><%= (expert.bio || '').length > 100 ? '...' : '' %></p>
+              <div class="font-semibold text-gray-900 truncate"><%= e.display_name %></div>
+              <% if (locStr) { %>
+                <div class="text-xs text-gray-500 mt-0.5 truncate"><%= locStr %></div>
+              <% } %>
+              <% if (e.headline) { %>
+                <p class="text-xs text-gray-600 mt-1.5 line-clamp-2"><%= e.headline %></p>
+              <% } %>
             </div>
           </div>
 
-          <% if (expert.expertise_tags && expert.expertise_tags.length > 0) { %>
-            <div class="flex flex-wrap gap-1.5 mt-3">
-              <% expert.expertise_tags.slice(0, 4).forEach(function(tag) { %>
-                <span class="text-xs px-2 py-0.5 bg-otp-50 text-otp-700 rounded-full"><%= tag %></span>
-              <% }); %>
-              <% if (expert.expertise_tags.length > 4) { %>
-                <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">+<%= expert.expertise_tags.length - 4 %></span>
-              <% } %>
-            </div>
-          <% } %>
-
-          <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
-            <span><%= expert.oos_count || 0 %> OOS files</span>
+          <!-- Source / claim badges -->
+          <div class="flex flex-wrap gap-1.5 mt-3">
+            <% if (isEOS) { %>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-medium">EOS Implementer®</span>
+            <% } else if (sourceTag === 'otp') { %>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-otp-50 text-otp-700 border border-otp-100 font-medium">OTP Publisher</span>
+            <% } %>
+            <% if (isClaimed) { %>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">Claimed</span>
+            <% } else if (e.directory_source) { %>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200 font-medium">Directory listing</span>
+            <% } %>
           </div>
         </a>
       <% }); %>
     <% } else { %>
       <div class="col-span-full text-center py-16 text-gray-400">
-        <p class="text-lg mb-2">No published experts yet.</p>
-        <p class="text-sm">Be the first to <a href="/dashboard/consultant" class="text-otp-500 hover:underline">create your expert profile</a>.</p>
+        <p class="text-lg mb-2">No coaches in the directory yet.</p>
+        <p class="text-sm">If you're a coach, <a href="/for-coaches" class="text-otp-500 hover:underline">claim your profile</a>.</p>
       </div>
     <% } %>
+  </div>
+
+  <!-- Trademark + sourcing footer -->
+  <div class="mt-12 pt-6 border-t border-gray-200 text-xs text-gray-500 max-w-3xl">
+    <p class="mb-2">
+      <strong class="text-gray-700">Sourcing.</strong>
+      Profiles tagged "EOS Implementer®" are seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a> via their open WordPress REST API. Each listing links back to its source page. Implementers can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
+    </p>
+    <p class="mb-2">
+      <strong class="text-gray-700">Trademarks.</strong>
+      EOS®, Entrepreneurial Operating System®, EOS Implementer®, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. Listings here are factual references to publicly available coach profiles and do not imply endorsement in either direction.
+    </p>
   </div>
 </div>
 
 <script>
 (function() {
-  // Populate expertise filter from actual tags
-  var select = document.getElementById('filter-expertise');
-  var cards = document.querySelectorAll('#experts-grid [data-tags]');
-  var tagSet = {};
+  var cards = document.querySelectorAll('#experts-grid [data-source]');
+  var search = document.getElementById('filter-search');
+  var sourceSel = document.getElementById('filter-source');
+  var countrySel = document.getElementById('filter-country');
+
+  // Populate country filter from data
+  var countrySet = {};
   cards.forEach(function(c) {
-    var tags = c.getAttribute('data-tags');
-    if (tags) tags.split(',').forEach(function(t) { if (t) tagSet[t] = true; });
+    var co = c.getAttribute('data-country');
+    if (co) countrySet[co] = (countrySet[co] || 0) + 1;
   });
-  Object.keys(tagSet).sort().forEach(function(t) {
+  Object.keys(countrySet).sort().forEach(function(co) {
     var opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t;
-    select.appendChild(opt);
+    opt.value = co;
+    opt.textContent = co + ' (' + countrySet[co] + ')';
+    countrySel.appendChild(opt);
   });
 
-  function filterCards() {
-    var search = document.getElementById('filter-search').value.toLowerCase();
-    var expertise = document.getElementById('filter-expertise').value;
+  function applyFilter() {
+    var q = (search.value || '').toLowerCase().trim();
+    var src = sourceSel.value;
+    var co = countrySel.value;
     cards.forEach(function(card) {
       var name = card.getAttribute('data-name') || '';
-      var bio = card.getAttribute('data-bio') || '';
-      var tags = card.getAttribute('data-tags') || '';
-      var matchSearch = !search || name.indexOf(search) !== -1 || bio.indexOf(search) !== -1;
-      var matchTag = !expertise || tags.split(',').indexOf(expertise) !== -1;
-      card.style.display = (matchSearch && matchTag) ? '' : 'none';
+      var city = card.getAttribute('data-city') || '';
+      var country = card.getAttribute('data-country') || '';
+      var cardSource = card.getAttribute('data-source') || '';
+      var cardClaim = card.getAttribute('data-claim') || '';
+      var matchSearch = !q || name.indexOf(q) !== -1 || city.indexOf(q) !== -1;
+      var matchSource =
+        !src ||
+        (src === 'claimed' && cardClaim === 'claimed') ||
+        (src === 'otp' && cardSource === 'otp') ||
+        (src === cardSource);
+      var matchCountry = !co || country === co;
+      card.style.display = (matchSearch && matchSource && matchCountry) ? '' : 'none';
     });
   }
 
-  document.getElementById('filter-search').addEventListener('input', filterCards);
-  document.getElementById('filter-expertise').addEventListener('change', filterCards);
+  search.addEventListener('input', applyFilter);
+  sourceSel.addEventListener('change', applyFilter);
+  countrySel.addEventListener('change', applyFilter);
 })();
 </script>

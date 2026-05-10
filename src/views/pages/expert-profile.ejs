@@ -6,7 +6,8 @@
   var locStr = locParts.join(', ');
   var isEOS = profile.directory_source === 'eosworldwide';
   var isUnclaimed = profile.directory_source && !profile.claimed;
-  var roleLabel = isEOS ? ((profile.tier ? profile.tier + ' ' : '') + 'EOS Implementer') : null;
+  var roleLabel = isEOS ? ((profile.tier ? profile.tier + ' ' : '') + 'EOS Implementer®') : null;
+  var firstName = (profile.display_name || '').split(' ')[0] || profile.display_name || 'this coach';
 %>
 
 <!-- Hero -->
@@ -16,7 +17,7 @@
     <nav class="text-xs text-gray-400 mb-6">
       <a href="/" class="hover:text-otp-300">Home</a>
       <span class="mx-1.5 text-gray-600">/</span>
-      <a href="/experts" class="hover:text-otp-300">Experts</a>
+      <a href="/experts" class="hover:text-otp-300">Coach Directory</a>
       <span class="mx-1.5 text-gray-600">/</span>
       <span class="text-gray-300"><%= profile.display_name %></span>
     </nav>
@@ -29,9 +30,18 @@
         </div>
       <% } %>
       <div class="text-center sm:text-left flex-1 min-w-0">
-        <% if (roleLabel) { %>
-          <div class="text-xs uppercase tracking-wider text-otp-300 font-semibold mb-1"><%= roleLabel %></div>
-        <% } %>
+        <!-- Status pills (clear at-a-glance differentiation) -->
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs mb-3">
+          <% if (roleLabel) { %>
+            <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 font-semibold border border-blue-400/20"><%= roleLabel %></span>
+          <% } %>
+          <% if (isUnclaimed) { %>
+            <span class="px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">Directory listing &middot; unclaimed</span>
+          <% } else if (profile.claimed) { %>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 font-semibold border border-emerald-400/20">Claimed by <%= firstName %></span>
+          <% } %>
+        </div>
+
         <h1 class="text-2xl sm:text-3xl font-extrabold mb-2"><%= profile.display_name %></h1>
 
         <% if (locStr) { %>
@@ -47,14 +57,6 @@
 
         <% if (profile.bio) { %>
           <p class="text-gray-300 max-w-2xl mb-4"><%= profile.bio %></p>
-        <% } %>
-
-        <% if (profile.expertise_tags && profile.expertise_tags.length > 0) { %>
-          <div class="flex flex-wrap gap-2 mb-5 justify-center sm:justify-start">
-            <% profile.expertise_tags.forEach(function(tag) { %>
-              <span class="text-xs px-2.5 py-1 bg-white/10 text-otp-300 rounded-full"><%= tag %></span>
-            <% }); %>
-          </div>
         <% } %>
 
         <div class="flex flex-wrap gap-3 justify-center sm:justify-start items-center">
@@ -73,7 +75,7 @@
           <% if (profile.content_source_url && isEOS) { %>
             <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-              EOS Worldwide
+              Source profile
             </a>
           <% } %>
           <a href="/expert/<%= profile.slug %>/contact" class="px-5 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Contact</a>
@@ -85,15 +87,30 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
+  <!-- Source disclosure (high on the page, not buried) -->
+  <% if (isUnclaimed && isEOS) { %>
+    <section class="mb-8 p-4 sm:p-5 rounded-xl border border-gray-200 bg-gray-50 text-sm">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 mt-0.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div class="flex-1">
+          <p class="text-gray-700">
+            <strong class="text-gray-900">Directory listing.</strong>
+            This page is a factual reference to <%= profile.display_name %>'s public profile in <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's open implementer directory</a>. <%= profile.display_name %> has not yet claimed it on OTP. EOS®, EOS Implementer®, and related marks are trademarks of EOS Worldwide, LLC. <strong>OTP is not affiliated with or endorsed by EOS Worldwide.</strong>
+          </p>
+        </div>
+      </div>
+    </section>
+  <% } %>
+
   <!-- Claim banner (only when unclaimed directory profile) -->
   <% if (isUnclaimed) { %>
     <section class="mb-10 p-5 sm:p-6 rounded-xl border border-amber-200 bg-amber-50">
       <div class="flex items-start gap-4">
         <div class="shrink-0 w-10 h-10 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center font-bold">!</div>
         <div class="flex-1 min-w-0">
-          <h2 class="text-base font-bold text-amber-900 mb-1">Is this you, <%= profile.display_name.split(' ')[0] %>?</h2>
+          <h2 class="text-base font-bold text-amber-900 mb-1">Is this you, <%= firstName %>?</h2>
           <p class="text-sm text-amber-900/90 mb-3">
-            We seeded this profile from the <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="underline font-medium">public EOS Worldwide directory</a> so coaches like you show up on OTP. <strong>Claim it</strong> to add your full bio, services, calendar, OOS files, and outbound coordination intelligence -- or <strong>request removal</strong> if you'd rather not be listed.
+            <strong>Claim it</strong> to control what appears here -- add your full bio, services, calendar, OOS files, and outbound coordination intelligence -- or <strong>request removal</strong> if you'd rather not be listed. Either is one click.
           </p>
           <div class="flex flex-wrap gap-2">
             <a href="/for-coaches?slug=<%= profile.slug %>" class="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition-colors">Claim this profile</a>
@@ -107,7 +124,7 @@
   <!-- Key points / specialties -->
   <% if (profile.expertise_tags && profile.expertise_tags.length > 0) { %>
     <section class="mb-10">
-      <h2 class="text-lg font-bold text-gray-900 mb-4">What <%= profile.display_name.split(' ')[0] %> brings</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-4">What <%= firstName %> brings</h2>
       <ul class="grid sm:grid-cols-2 gap-3">
         <% profile.expertise_tags.forEach(function(tag) { %>
           <li class="flex items-start gap-2 text-sm text-gray-700">
@@ -162,7 +179,7 @@
   <% } else if (isUnclaimed) { %>
     <section class="mb-10 p-6 rounded-xl border border-gray-200 bg-gray-50 text-center">
       <h2 class="text-base font-bold text-gray-900 mb-1">No coordination intelligence published yet</h2>
-      <p class="text-sm text-gray-600">When <%= profile.display_name.split(' ')[0] %> claims this profile and publishes their first OOS file, it will appear here -- showing the operating-system patterns they use with their clients.</p>
+      <p class="text-sm text-gray-600">When <%= firstName %> claims this profile and publishes their first OOS file, it will appear here -- showing the operating-system patterns they use with their clients.</p>
     </section>
   <% } %>
 
@@ -170,28 +187,40 @@
   <% if (profile.geo_country || profile.geo_state || profile.geo_city) { %>
     <section class="mb-10 p-5 rounded-xl border border-gray-200 bg-white">
       <h2 class="text-base font-bold text-gray-900 mb-2">Browse the directory</h2>
-      <p class="text-sm text-gray-600 mb-3">Find more coaches by location or framework on OTP's expert directory.</p>
+      <p class="text-sm text-gray-600 mb-3">Find more coaches by location or framework on OTP's coach directory.</p>
       <div class="flex flex-wrap gap-2 text-sm">
-        <a href="/experts" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-otp-500 text-white font-medium hover:bg-otp-600 transition-colors">All experts</a>
+        <a href="/experts" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-otp-500 text-white font-medium hover:bg-otp-600 transition-colors">All coaches</a>
         <% if (isEOS) { %>
-          <a href="/glossary/eos" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">What is EOS?</a>
+          <a href="/glossary/eos" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">What is EOS®?</a>
         <% } %>
         <a href="/glossary" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">Coordination glossary</a>
       </div>
     </section>
   <% } %>
 
-  <!-- Source attribution (transparency) -->
-  <% if (profile.directory_source && profile.content_source_url) { %>
-    <p class="mt-8 text-xs text-gray-500">
-      <%= profile.display_name %>'s profile was seeded from a public source:
-      <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">
-        <%= profile.content_source_url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') %>
-      </a>.
-      <% if (isUnclaimed) { %>
-        If you're <%= profile.display_name %>, <a href="/for-coaches?slug=<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">claim it</a> to fully control what's shown -- or <a href="/tickets?type=takedown&slug=<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
+  <!-- Trademark + sourcing footer -->
+  <% if (profile.directory_source) { %>
+    <div class="mt-10 pt-6 border-t border-gray-200 text-xs text-gray-500 space-y-2">
+      <p>
+        <strong class="text-gray-700">Sourcing.</strong>
+        Profile data was seeded from
+        <% if (profile.content_source_url) { %>
+          <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline"><%= profile.content_source_url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') %></a>
+        <% } else { %>
+          a public source
+        <% } %>
+        on <%= profile.last_synced_at ? new Date(profile.last_synced_at).toLocaleDateString() : 'a recent date' %>.
+        <% if (isUnclaimed) { %>
+          If you're <%= profile.display_name %>, <a href="/for-coaches?slug=<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">claim it</a> to fully control what's shown -- or <a href="/tickets?type=takedown&slug=<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
+        <% } %>
+      </p>
+      <% if (isEOS) { %>
+        <p>
+          <strong class="text-gray-700">Trademarks.</strong>
+          EOS®, Entrepreneurial Operating System®, EOS Implementer®, EOS Worldwide®, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. This page is a factual reference to a publicly available coach profile and does not imply endorsement in either direction.
+        </p>
       <% } %>
-    </p>
+    </div>
   <% } %>
 
 </div>

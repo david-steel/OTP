@@ -1754,12 +1754,19 @@ export default async function pageRoutes(app: FastifyInstance) {
       WHERE cp.published = true
       ORDER BY cp.created_at DESC
     `) as any;
+    const allExperts = profileRows.rows || [];
+    const counts = {
+      total: allExperts.length,
+      claimed: allExperts.filter((e: any) => e.claimed === true).length,
+      eos: allExperts.filter((e: any) => e.directory_source === 'eosworldwide').length,
+    };
     return reply.view('pages/experts-browse', {
-      title: 'Experts - Find AI Coordination Consultants - OTP',
-      description: 'Browse consultants and coaches who specialize in AI agent coordination. Contact experts, view their published intelligence, and hire them for your team.',
+      title: 'Operating-System Coach Directory | OTP',
+      description: `Public directory of ${counts.total}+ operating-system coaches and consultants -- EOS Implementers, Scaling Up coaches, and OTP-native publishers. Filter by framework, location, or expertise.`,
       canonical: BASE_URL + '/experts',
-      breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }),
-      experts: profileRows.rows || [],
+      breadcrumbs: bc({ name: 'Coach Directory', url: BASE_URL + '/experts' }),
+      experts: allExperts,
+      counts,
     });
   });
 
@@ -1823,21 +1830,35 @@ export default async function pageRoutes(app: FastifyInstance) {
       ...(profile.last_synced_at ? { dateModified: new Date(profile.last_synced_at).toISOString() } : {}),
     };
 
-    // Tight, location-aware meta description for SERP / AI Overviews
+    // Tight, location-aware meta description for SERP / AI Overviews.
+    // For EOS-sourced unclaimed profiles we are explicit it's a directory
+    // listing -- factual, defensible, and lowers the SERP click-through
+    // expectation so visitors arrive understanding what they'll see.
     const locParts = [profile.geo_city, profile.geo_state, profile.geo_country].filter(Boolean);
-    const locStr = locParts.length ? ` based in ${locParts.join(', ')}` : '';
-    const roleStr = profile.directory_source === 'eosworldwide'
-      ? `${profile.tier ? profile.tier + ' ' : ''}EOS Implementer`
+    const locStr = locParts.length ? ` in ${locParts.join(', ')}` : '';
+    const isEOS = profile.directory_source === 'eosworldwide';
+    const isUnclaimed = profile.directory_source && !profile.claimed;
+    const roleStr = isEOS
+      ? `${profile.tier ? profile.tier + ' ' : ''}EOS Implementer®`
       : 'AI coordination expert';
+    const directoryNote = isEOS && isUnclaimed
+      ? ' (directory listing seeded from EOS Worldwide; not affiliated with EOS Worldwide)'
+      : '';
     const metaDesc = profile.headline
       ? `${profile.display_name}, ${roleStr}${locStr}. ${profile.headline}`.slice(0, 200)
-      : `${profile.display_name}, ${roleStr}${locStr} on OTP.`.slice(0, 200);
+      : `${profile.display_name}, ${roleStr}${locStr}.${directoryNote}`.slice(0, 200);
+
+    // Page title differentiates directory listings from OTP publishers
+    const pageTitle = isEOS
+      ? `${profile.display_name} | EOS Implementer®${locStr} | OTP Coach Directory`
+      : `${profile.display_name} | OTP Publisher`;
 
     return reply.view('pages/expert-profile', {
-      title: profile.display_name + (profile.directory_source === 'eosworldwide' ? ' | EOS Implementer | OTP' : ' - AI Coordination Expert - OTP'),
+      title: pageTitle,
       description: metaDesc,
       canonical: profileUrl,
-      breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }, { name: profile.display_name, url: profileUrl }),
+      breadcrumbs: bc({ name: 'Coach Directory', url: BASE_URL + '/experts' }, { name: profile.display_name, url: profileUrl }),
+      ogImage: profile.photo_url || undefined,
       profile,
       oosFiles: oosRows.rows || [],
       jsonLd: [personSchema, profilePageSchema],
