@@ -235,6 +235,12 @@ app.get('/robots.txt', async (request, reply) => {
   return reply.sendFile('robots.txt');
 });
 
+// Bing Webmaster Tools site verification at root
+app.get('/BingSiteAuth.xml', async (request, reply) => {
+  reply.type('application/xml');
+  return reply.sendFile('BingSiteAuth.xml');
+});
+
 // llms.txt at root
 app.get('/llms.txt', async (request, reply) => {
   return reply.sendFile('llms.txt');
