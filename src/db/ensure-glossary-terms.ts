@@ -8,9 +8,15 @@
  *      → adding new terms to glossary-seed.ts ships them on next boot
  *      → editing existing terms in seed file does NOT overwrite the row
  *        (use a separate migration if you need to update copy in place)
+ *
+ * Note: the seed loop uses the underlying pg.Pool directly, not Drizzle's
+ * `sql` template. Drizzle's sql template binds JS arrays as Postgres
+ * record/tuple types, which fails on text[] columns ("expression is of type
+ * record"). node-postgres on the raw Pool handles JS arrays -> text[]
+ * natively. The DDL is plain text so Drizzle's sql.raw is fine for it.
  */
 import { sql } from 'drizzle-orm';
-import { db } from '../config/database.js';
+import { db, pool } from '../config/database.js';
 import { GLOSSARY_SEED } from '../data/glossary-seed.js';
 
 const DDL = [
@@ -37,19 +43,21 @@ export async function ensureGlossaryTermsTable(): Promise<void> {
     await db.execute(sql.raw(stmt));
   }
 
+  // Seed via raw pg.Pool — handles string[] -> text[] natively.
   for (const term of GLOSSARY_SEED) {
-    await db.execute(sql`
-      INSERT INTO glossary_terms (slug, name, definition, why_it_matters, framework, related_slugs, aliases)
-      VALUES (
-        ${term.slug},
-        ${term.name},
-        ${term.definition},
-        ${term.whyItMatters ?? null},
-        ${term.framework ?? null},
-        ${term.relatedSlugs && term.relatedSlugs.length ? term.relatedSlugs : null},
-        ${term.aliases && term.aliases.length ? term.aliases : null}
-      )
-      ON CONFLICT (slug) DO NOTHING
-    `);
+    await pool.query(
+      `INSERT INTO glossary_terms (slug, name, definition, why_it_matters, framework, related_slugs, aliases)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (slug) DO NOTHING`,
+      [
+        term.slug,
+        term.name,
+        term.definition,
+        term.whyItMatters ?? null,
+        term.framework ?? null,
+        term.relatedSlugs && term.relatedSlugs.length ? term.relatedSlugs : null,
+        term.aliases && term.aliases.length ? term.aliases : null,
+      ],
+    );
   }
 }
