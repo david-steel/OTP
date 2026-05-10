@@ -1,93 +1,197 @@
+<%
+  // profile fields used: display_name, slug, photo_url, headline, bio, expertise_tags,
+  // website_url, linkedin_url, contact_email, phone, tier, geo_city, geo_state,
+  // geo_country, directory_source, content_source_url, claimed
+  var locParts = [profile.geo_city, profile.geo_state, profile.geo_country].filter(Boolean);
+  var locStr = locParts.join(', ');
+  var isEOS = profile.directory_source === 'eosworldwide';
+  var isUnclaimed = profile.directory_source && !profile.claimed;
+  var roleLabel = isEOS ? ((profile.tier ? profile.tier + ' ' : '') + 'EOS Implementer') : null;
+%>
+
 <!-- Hero -->
 <div class="bg-otp-950 text-white relative overflow-hidden">
   <div class="absolute inset-0 bg-grid opacity-30"></div>
   <div class="relative max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+    <nav class="text-xs text-gray-400 mb-6">
+      <a href="/" class="hover:text-otp-300">Home</a>
+      <span class="mx-1.5 text-gray-600">/</span>
+      <a href="/experts" class="hover:text-otp-300">Experts</a>
+      <span class="mx-1.5 text-gray-600">/</span>
+      <span class="text-gray-300"><%= profile.display_name %></span>
+    </nav>
     <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
       <% if (profile.photo_url) { %>
-        <img src="<%= profile.photo_url %>" alt="<%= profile.display_name %>" class="w-24 h-24 rounded-full object-cover border-4 border-white/10 shrink-0">
+        <img src="<%= profile.photo_url %>" alt="<%= profile.display_name %>" loading="lazy" class="w-28 h-28 rounded-full object-cover border-4 border-white/10 shrink-0">
       <% } else { %>
-        <div class="w-24 h-24 rounded-full bg-otp-500 text-white flex items-center justify-center text-3xl font-bold border-4 border-white/10 shrink-0">
+        <div class="w-28 h-28 rounded-full bg-otp-500 text-white flex items-center justify-center text-4xl font-bold border-4 border-white/10 shrink-0">
           <%= (profile.display_name || '?').charAt(0).toUpperCase() %>
         </div>
       <% } %>
-      <div class="text-center sm:text-left">
+      <div class="text-center sm:text-left flex-1 min-w-0">
+        <% if (roleLabel) { %>
+          <div class="text-xs uppercase tracking-wider text-otp-300 font-semibold mb-1"><%= roleLabel %></div>
+        <% } %>
         <h1 class="text-2xl sm:text-3xl font-extrabold mb-2"><%= profile.display_name %></h1>
+
+        <% if (locStr) { %>
+          <div class="inline-flex items-center gap-1.5 text-sm text-gray-300 mb-3">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <%= locStr %>
+          </div>
+        <% } %>
+
+        <% if (profile.headline) { %>
+          <p class="text-lg text-gray-200 max-w-2xl mb-4"><%= profile.headline %></p>
+        <% } %>
+
         <% if (profile.bio) { %>
           <p class="text-gray-300 max-w-2xl mb-4"><%= profile.bio %></p>
         <% } %>
 
         <% if (profile.expertise_tags && profile.expertise_tags.length > 0) { %>
-          <div class="flex flex-wrap gap-2 mb-4 justify-center sm:justify-start">
+          <div class="flex flex-wrap gap-2 mb-5 justify-center sm:justify-start">
             <% profile.expertise_tags.forEach(function(tag) { %>
               <span class="text-xs px-2.5 py-1 bg-white/10 text-otp-300 rounded-full"><%= tag %></span>
             <% }); %>
           </div>
         <% } %>
 
-        <div class="flex flex-wrap gap-3 justify-center sm:justify-start">
+        <div class="flex flex-wrap gap-3 justify-center sm:justify-start items-center">
           <% if (profile.website_url) { %>
-            <a href="<%= profile.website_url %>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
+            <a href="<%= profile.website_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
               Website
             </a>
           <% } %>
           <% if (profile.linkedin_url) { %>
-            <a href="<%= profile.linkedin_url %>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
+            <a href="<%= profile.linkedin_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               LinkedIn
             </a>
           <% } %>
-          <a href="/expert/<%= profile.slug %>/contact" class="px-5 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Contact This Expert</a>
+          <% if (profile.content_source_url && isEOS) { %>
+            <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              EOS Worldwide
+            </a>
+          <% } %>
+          <a href="/expert/<%= profile.slug %>/contact" class="px-5 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Contact</a>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Published OOS Files -->
-<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-  <h2 class="text-xl font-bold mb-4">Published OOS Files</h2>
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
-  <% if (typeof oosFiles !== 'undefined' && oosFiles.length > 0) { %>
-    <div class="grid gap-4">
-      <% oosFiles.forEach(function(oos) { %>
-        <a href="/oos/<%= oos.id %>" class="bg-white p-5 rounded-lg border claim-card flex items-start gap-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="font-semibold"><%= oos.org_name %></span>
-              <% if (oos.badge === 'founding') { %>
-                <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding</span>
-              <% } %>
-              <% if (oos.quality_tier) { %>
-                <span class="badge-<%= oos.quality_tier %> text-white text-xs px-2 py-0.5 rounded"><%= oos.quality_tier %></span>
-              <% } %>
-              <% if (oos.agentic_level) { %>
-                <span class="badge-level badge-level-<%= oos.agentic_level %>" title="Agentic Level">L<%= oos.agentic_level %></span>
-              <% } %>
-            </div>
-            <div class="text-sm text-gray-500 mb-2">
-              <%= oos.industry %> &middot; <%= oos.size %> &middot; v<%= oos.version %>
-            </div>
-            <div class="flex gap-4 text-xs text-gray-400">
-              <span><%= oos.claim_count %> claims</span>
-              <span class="px-2 py-0.5 bg-gray-100 rounded"><%= oos.template.replace('_', ' ') %></span>
-              <span>Published <%= new Date(oos.published_at).toLocaleDateString() %></span>
-            </div>
+  <!-- Claim banner (only when unclaimed directory profile) -->
+  <% if (isUnclaimed) { %>
+    <section class="mb-10 p-5 sm:p-6 rounded-xl border border-amber-200 bg-amber-50">
+      <div class="flex items-start gap-4">
+        <div class="shrink-0 w-10 h-10 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center font-bold">!</div>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-base font-bold text-amber-900 mb-1">Is this you, <%= profile.display_name.split(' ')[0] %>?</h2>
+          <p class="text-sm text-amber-900/90 mb-3">
+            We seeded this profile from the <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="underline font-medium">public EOS Worldwide directory</a> so coaches like you show up on OTP. <strong>Claim it</strong> to add your full bio, services, calendar, OOS files, and outbound coordination intelligence -- or <strong>request removal</strong> if you'd rather not be listed.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <a href="/for-coaches?slug=<%= profile.slug %>" class="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition-colors">Claim this profile</a>
+            <a href="/tickets?type=takedown&slug=<%= profile.slug %>" class="inline-flex items-center px-4 py-2 rounded-lg bg-white border border-amber-300 hover:border-amber-400 text-amber-900 text-sm font-medium transition-colors">Request removal</a>
           </div>
-          <div class="text-right text-xs text-gray-400 min-w-[100px]">
-            <div class="flex gap-1 justify-end mb-1">
-              <span class="bg-confidence-high text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).high || 0 %></span>
-              <span class="bg-confidence-medium text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).medium || 0 %></span>
-              <span class="bg-confidence-low text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).low || 0 %></span>
-            </div>
-          </div>
-        </a>
-      <% }); %>
-    </div>
-  <% } else { %>
-    <div class="text-center py-12 text-gray-400 bg-white rounded-lg border">
-      <p class="text-lg mb-1">No published OOS files yet.</p>
-      <p class="text-sm">This expert has not published any coordination intelligence.</p>
-    </div>
+        </div>
+      </div>
+    </section>
   <% } %>
+
+  <!-- Key points / specialties -->
+  <% if (profile.expertise_tags && profile.expertise_tags.length > 0) { %>
+    <section class="mb-10">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">What <%= profile.display_name.split(' ')[0] %> brings</h2>
+      <ul class="grid sm:grid-cols-2 gap-3">
+        <% profile.expertise_tags.forEach(function(tag) { %>
+          <li class="flex items-start gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 mt-0.5 text-otp-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span><%= tag %></span>
+          </li>
+        <% }); %>
+      </ul>
+    </section>
+  <% } %>
+
+  <!-- Coordination intelligence (OOS files) -->
+  <% if (typeof oosFiles !== 'undefined' && oosFiles.length > 0) { %>
+    <section class="mb-10">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">Published Coordination Intelligence</h2>
+      <div class="grid gap-4">
+        <% oosFiles.forEach(function(oos) { %>
+          <a href="/oos/<%= oos.id %>" class="bg-white p-5 rounded-lg border claim-card flex items-start gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold"><%= oos.org_name %></span>
+                <% if (oos.badge === 'founding') { %>
+                  <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding</span>
+                <% } %>
+                <% if (oos.quality_tier) { %>
+                  <span class="badge-<%= oos.quality_tier %> text-white text-xs px-2 py-0.5 rounded"><%= oos.quality_tier %></span>
+                <% } %>
+                <% if (oos.agentic_level) { %>
+                  <span class="badge-level badge-level-<%= oos.agentic_level %>" title="Agentic Level">L<%= oos.agentic_level %></span>
+                <% } %>
+              </div>
+              <div class="text-sm text-gray-500 mb-2">
+                <%= oos.industry %> &middot; <%= oos.size %> &middot; v<%= oos.version %>
+              </div>
+              <div class="flex gap-4 text-xs text-gray-400">
+                <span><%= oos.claim_count %> claims</span>
+                <span class="px-2 py-0.5 bg-gray-100 rounded"><%= oos.template.replace('_', ' ') %></span>
+                <span>Published <%= new Date(oos.published_at).toLocaleDateString() %></span>
+              </div>
+            </div>
+            <div class="text-right text-xs text-gray-400 min-w-[100px]">
+              <div class="flex gap-1 justify-end mb-1">
+                <span class="bg-confidence-high text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).high || 0 %></span>
+                <span class="bg-confidence-medium text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).medium || 0 %></span>
+                <span class="bg-confidence-low text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).low || 0 %></span>
+              </div>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } else if (isUnclaimed) { %>
+    <section class="mb-10 p-6 rounded-xl border border-gray-200 bg-gray-50 text-center">
+      <h2 class="text-base font-bold text-gray-900 mb-1">No coordination intelligence published yet</h2>
+      <p class="text-sm text-gray-600">When <%= profile.display_name.split(' ')[0] %> claims this profile and publishes their first OOS file, it will appear here -- showing the operating-system patterns they use with their clients.</p>
+    </section>
+  <% } %>
+
+  <!-- Cross-sell: similar coaches -->
+  <% if (profile.geo_country || profile.geo_state || profile.geo_city) { %>
+    <section class="mb-10 p-5 rounded-xl border border-gray-200 bg-white">
+      <h2 class="text-base font-bold text-gray-900 mb-2">Browse the directory</h2>
+      <p class="text-sm text-gray-600 mb-3">Find more coaches by location or framework on OTP's expert directory.</p>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <a href="/experts" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-otp-500 text-white font-medium hover:bg-otp-600 transition-colors">All experts</a>
+        <% if (isEOS) { %>
+          <a href="/glossary/eos" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">What is EOS?</a>
+        <% } %>
+        <a href="/glossary" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">Coordination glossary</a>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Source attribution (transparency) -->
+  <% if (profile.directory_source && profile.content_source_url) { %>
+    <p class="mt-8 text-xs text-gray-500">
+      <%= profile.display_name %>'s profile was seeded from a public source:
+      <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">
+        <%= profile.content_source_url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') %>
+      </a>.
+      <% if (isUnclaimed) { %>
+        If you're <%= profile.display_name %>, <a href="/for-coaches?slug=<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">claim it</a> to fully control what's shown -- or <a href="/tickets?type=takedown&slug=<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
+      <% } %>
+    </p>
+  <% } %>
+
 </div>

@@ -556,6 +556,16 @@ app.get('/sitemap.xml', async (request, reply) => {
       const encoded = encodeURIComponent(row.industry);
       dynamicUrls += `  <url><loc>${BASE}/industry/${encoded}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>\n`;
     }
+
+    // Glossary term pages -- one per public glossary term
+    const glossaryRows = await database.execute(sql`
+      SELECT slug, updated_at FROM glossary_terms WHERE public = true ORDER BY name ASC
+    `) as any;
+    for (const row of (glossaryRows.rows || [])) {
+      if (!row.slug) continue;
+      const lastmod = row.updated_at ? new Date(row.updated_at).toISOString().split('T')[0] : today;
+      dynamicUrls += `  <url><loc>${BASE}/glossary/${row.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+    }
   } catch {
     // If DB unavailable, serve static pages only
   }
@@ -699,6 +709,22 @@ try {
   app.log.info('manager_agents table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureManagerAgentsTable failed -- manager agent uploads on the dashboard will not persist until resolved');
+}
+
+try {
+  const { ensureGlossaryTermsTable } = await import('./db/ensure-glossary-terms.js');
+  await ensureGlossaryTermsTable();
+  app.log.info('glossary_terms table is ready and seeded');
+} catch (err) {
+  app.log.error({ err }, 'ensureGlossaryTermsTable failed -- /glossary and /glossary/:slug may 500 until resolved');
+}
+
+try {
+  const { ensureCoachDirectory } = await import('./db/ensure-coach-directory.js');
+  await ensureCoachDirectory();
+  app.log.info('coach directory columns + seed Directory org are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureCoachDirectory failed -- /experts and /expert/:slug may behave incorrectly until resolved');
 }
 
 // Start server

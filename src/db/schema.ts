@@ -221,12 +221,25 @@ export const consultantProfiles = pgTable('consultant_profiles', {
   contentCount: integer('content_count').notNull().default(0),
   publisherDescription: text('publisher_description'),
   lastSyncedAt: timestamp('last_synced_at'),
+  // Coach Directory (Layer 2) -- seeded by ensure-coach-directory.ts
+  claimed: boolean('claimed').notNull().default(false),
+  directorySource: varchar('directory_source', { length: 80 }),
+  directorySourceId: varchar('directory_source_id', { length: 120 }),
+  phone: varchar('phone', { length: 60 }),
+  tier: varchar('tier', { length: 60 }),
+  geoCity: varchar('geo_city', { length: 120 }),
+  geoState: varchar('geo_state', { length: 120 }),
+  geoCountry: varchar('geo_country', { length: 120 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   orgIdx: index('cp_org_idx').on(table.orgId),
   slugIdx: uniqueIndex('cp_slug_idx').on(table.slug),
   publishedIdx: index('cp_published_idx').on(table.published),
+  claimedIdx: index('cp_claimed_idx').on(table.claimed),
+  directorySourceIdx: index('cp_directory_source_idx').on(table.directorySource),
+  geoCityIdx: index('cp_geo_city_idx').on(table.geoCity),
+  geoCountryIdx: index('cp_geo_country_idx').on(table.geoCountry),
 }));
 
 export const workspaces = pgTable('workspaces', {
@@ -902,4 +915,24 @@ export const managerAgents = pgTable('manager_agents', {
   orgIdx: index('mga_org_idx').on(table.orgId),
   ownerIdx: index('mga_owner_idx').on(table.orgId, table.ownerUserId),
   externalIdx: index('mga_external_idx').on(table.orgId, table.externalId),
+}));
+
+// ---- Glossary Terms (programmatic SEO) ----
+// Created in ensure-glossary-terms.ts.
+
+export const glossaryTerms = pgTable('glossary_terms', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  slug: varchar('slug', { length: 200 }).notNull().unique(),
+  name: varchar('name', { length: 300 }).notNull(),
+  definition: text('definition').notNull(),
+  whyItMatters: text('why_it_matters'),
+  framework: varchar('framework', { length: 80 }),
+  relatedSlugs: text('related_slugs').array(),
+  aliases: text('aliases').array(),
+  public: boolean('public').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  frameworkIdx: index('gt_framework_idx').on(table.framework),
+  publicIdx: index('gt_public_idx').on(table.public),
 }));

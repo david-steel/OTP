@@ -726,7 +726,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.sendFile('orchestra-kit.html');
   });
 
-  // Glossary
+  // Glossary index (DB-driven, grouped A-Z)
   app.get('/glossary', async (request, reply) => {
     const glossaryUrl = BASE_URL + '/glossary';
     const faqItems = [
@@ -741,110 +741,149 @@ export default async function pageRoutes(app: FastifyInstance) {
       { q: 'What is an AI agent?', a: 'A software program powered by AI that can take actions on its own, including using tools, reading files, calling APIs, making decisions, and completing multi-step tasks.' },
       { q: 'What is shared state in multi-agent systems?', a: 'Information that multiple agents need access to, stored in files or databases where one agent writes and others read. Keeping shared state consistent is a core coordination challenge.' },
     ];
-    const definedTerms = [
-      { name: 'A2A (Agent-to-Agent Protocol)', description: 'A protocol that lets AI agents talk directly to each other. It sits in the middle layer of the AI coordination stack, between MCP and OTP.' },
-      { name: 'Agent Army', description: 'A team of specialized AI agents that work together inside one organization. Each agent has a clear job, clear tools, and clear boundaries.' },
-      { name: 'Agent Handoff', description: 'When one AI agent passes a task, context, or decision to another agent with everything the receiving agent needs to continue.' },
-      { name: 'Agent Message Bus', description: 'A communication channel that lets agents send structured messages directly to each other without a human in the middle.' },
-      { name: 'Agent Orchestration', description: 'The process of coordinating multiple AI agents so they work as a team, deciding who runs when and how results flow between agents.' },
-      { name: 'Agentic Maturity Levels', description: 'An 8-level framework measuring how sophisticated an organization\'s AI agent coordination is, from L1 Tab Complete to L8 Autonomous Agent Teams.' },
-      { name: 'AI Agent', description: 'A software program powered by AI that can take actions on its own, including using tools, reading files, calling APIs, and completing multi-step tasks.' },
-      { name: 'API (Application Programming Interface)', description: 'A set of rules that lets two pieces of software talk to each other. APIs are how AI agents connect to the outside world.' },
-      { name: 'Authority Boundary', description: 'A clear line that defines what an AI agent is allowed to do and what it must not do, including tool access, decision rights, and human approval requirements.' },
-      { name: 'Auto-Fixer', description: 'An OTP tool that automatically repairs common issues in an Organizational Operating System before publishing.' },
-      { name: 'Autonomous vs. Semi-Autonomous', description: 'Two modes an AI agent can operate in. Autonomous agents act without approval. Semi-autonomous agents recommend and wait for a human to confirm.' },
-      { name: 'Blast Radius', description: 'How much damage spreads when something goes wrong in a multi-agent system. Good architecture keeps blast radius small.' },
-      { name: 'ChatGPT (OpenAI)', description: 'An AI assistant built by OpenAI, based on the GPT family of language models. One of several major AI platforms used to power agents.' },
-      { name: 'Claim Provenance', description: 'The origin story of a knowledge claim, tracking where it came from, when it was created, who authored it, and how it changed over time.' },
-      { name: 'Claim Sections', description: 'Standard categories within an OOS that organize claims by domain, including core operating rules, agent roles, coordination patterns, and failure patterns.' },
-      { name: 'Claim Similarity', description: 'A score measuring how closely two knowledge claims from different organizations match in meaning.' },
-      { name: 'Claude (Anthropic)', description: 'An AI assistant built by Anthropic, designed with a focus on safety and helpfulness. Used as the backbone for many AI agent architectures.' },
-      { name: 'CLAUDE.md', description: 'A configuration file that gives Claude instructions about how to behave in a specific project or organization. The simplest form of an Organizational Operating System.' },
-      { name: 'Clerk', description: 'An authentication and user management service that handles sign-up, sign-in, and session management for web applications.' },
-      { name: 'CLI (Command Line Interface)', description: 'A way to interact with a computer by typing text commands instead of clicking buttons. Most AI agent tools run through CLIs.' },
-      { name: 'Confidence Levels', description: 'How certain an organization is about a knowledge claim. Every claim must declare HIGH, MEDIUM, or LOW confidence.' },
-      { name: 'Context Window', description: 'The amount of text an AI model can see at one time, measured in tokens. Everything the model reads must fit inside the context window.' },
-      { name: 'Coordination Failure', description: 'When agents fail not because they are bad at their individual jobs, but because they cannot work together properly.' },
-      { name: 'Coordination Intelligence', description: 'The collective, structured knowledge of how AI agents within and across organizations should coordinate, captured in operational rules, failure modes, and evidence-backed patterns.' },
-      { name: 'Copilot (Microsoft / GitHub)', description: 'An AI coding assistant built by GitHub that suggests code as you type, representing the embedded assistant model of AI integration.' },
-      { name: 'Diff Engine', description: 'An OTP tool that compares two versions of an OOS and shows exactly what changed, including added, removed, and modified claims.' },
-      { name: 'EOS (Entrepreneurial Operating System)', description: 'A business management framework with L10 meetings, 90-day Rocks, Scorecards, and IDS problem-solving. Many concepts map to AI agent coordination.' },
-      { name: 'Escalation Over Autonomy', description: 'A design principle where agents flag and recommend rather than act unilaterally when outside their authority boundary.' },
-      { name: 'Escalation Pattern', description: 'A documented rule for what happens when an agent hits a situation it cannot handle alone, defining triggers, recipients, and response times.' },
-      { name: 'Evidence Types', description: 'How a knowledge claim was established: MEASURED_RESULT, OBSERVED_REPEATEDLY, OBSERVED_ONCE, HUMAN_DEFINED_RULE, INFERENCE, or SPECULATION.' },
-      { name: 'Failure Mode', description: 'A required field on every knowledge claim documenting what happens when the rule is violated.' },
-      { name: 'Fastify', description: 'A web framework for Node.js built for speed. OTP\'s platform is built on Fastify for low-latency API responses.' },
-      { name: 'Fine-Tuning', description: 'The process of training a pre-built AI model on specific data so it gets better at a particular task.' },
-      { name: 'Founding Publisher', description: 'One of the first 50 organizations to publish an OOS on the OTP platform. Permanent badge that cannot be earned later.' },
-      { name: 'Gemini (Google)', description: 'Google\'s family of multimodal AI models, available through Google Cloud and consumer products.' },
-      { name: 'Grounding', description: 'Connecting an AI model\'s responses to real, verifiable information. The primary defense against hallucination.' },
-      { name: 'Guardrails', description: 'Rules and checks that prevent an AI agent from doing things it should not do, built into prompts, code, or review processes.' },
-      { name: 'Hallucination', description: 'When an AI model generates information that sounds correct but is completely made up.' },
-      { name: 'Human-AI Boundary', description: 'The explicit, documented line between what AI agents handle and what humans handle in a system.' },
-      { name: 'IDS (Identify, Discuss, Solve)', description: 'A problem-solving method from EOS. Identify the real issue, discuss it openly, solve it with a clear action item and owner.' },
-      { name: 'Inference', description: 'The process of running a trained AI model to get a response. Every agent action runs inference, which costs money and time.' },
-      { name: 'Intelligence Graph', description: 'A network visualization showing how coordination patterns connect across published OOS files.' },
-      { name: 'Intelligence Inbox', description: 'A feed of relevant coordination intelligence discoveries delivered to an OTP publisher when new patterns emerge.' },
-      { name: 'JSON-LD', description: 'A way to embed structured data into a web page so search engines and AI systems can understand the content.' },
-      { name: 'Knowledge Claim', description: 'An individual operational rule extracted from an OOS with a claim ID, section, rule, reasoning, failure mode, confidence level, and evidence type.' },
-      { name: 'L8 Meeting', description: 'OTP\'s weekly 90-minute leadership meeting -- the cadence designed to advance an organization toward Level 8 (Autonomous Agent Teams) on the 8 Levels of Agentic Engineering. Same agenda shape as the EOS L10 (scorecard review, rock updates, IDS), pointed at agentic maturity rather than just business rhythm.' },
-      { name: 'Latency', description: 'The time between asking an AI model a question and getting a response. In multi-agent systems, latency compounds across agents.' },
-      { name: 'llms.txt', description: 'A file at the root of a website that tells AI language models what the site is about and how to interact with it.' },
-      { name: 'MCP (Model Context Protocol)', description: 'An open protocol created by Anthropic that lets AI models connect to external tools and data sources.' },
-      { name: 'MCP Server', description: 'A program that wraps an external tool or data source and makes it accessible through MCP.' },
-      { name: 'Merge Protocol', description: 'The rules for combining claims from multiple OOS files into a single view, handling conflicts and preserving provenance.' },
-      { name: 'Multi-Agent System', description: 'Any setup where more than one AI agent operates in the same environment, sharing data and handing off tasks.' },
-      { name: 'Node.js', description: 'A runtime that lets you run JavaScript outside of a web browser, used for most MCP servers and AI agent frameworks.' },
-      { name: 'npm (Node Package Manager)', description: 'A tool for installing, sharing, and managing JavaScript code packages. The largest software registry in the world.' },
-      { name: 'One Seat, One Owner', description: 'A design principle where every responsibility in an agent system is owned by exactly one agent. No overlap, no gaps.' },
-      { name: 'OOS Templates', description: 'Structured formats for different organizational models: Agent Army, Value Chain, and Org Chart.' },
-      { name: 'Open Source Models', description: 'AI models whose code and weights are publicly available, like Meta\'s Llama and Mistral AI\'s models.' },
-      { name: 'Organizational Operating System (OOS)', description: 'A structured artifact that encodes how AI agents in an organization coordinate, using YAML frontmatter with Markdown-structured claims.' },
-      { name: 'Organization Transport Protocol (OTP)', description: 'The protocol and platform for publishing, comparing, and learning from organizational coordination intelligence.' },
-      { name: 'Override Authority', description: 'The power to overrule an AI agent\'s decision or action, defined in advance with clear conditions and escalation paths.' },
-      { name: 'PII Scanner', description: 'An OTP tool that checks your OOS for personally identifiable information before publishing.' },
-      { name: 'PostgreSQL', description: 'A powerful, open source database system used by OTP to store published OOS files, claims, and publisher accounts.' },
-      { name: 'Pre-Computed Shared State', description: 'A pattern where data sources write results to files on a schedule, and agents read those files instead of querying sources directly.' },
-      { name: 'Prompt Engineering', description: 'The skill of writing instructions that get an AI model to do what you actually want. The highest-leverage skill in AI agent development.' },
-      { name: 'Publisher Badges', description: 'Quality tiers (Founding, Platinum, Gold, Silver, Bronze) assigned to organizations based on OOS completeness and evidence quality.' },
-      { name: 'Quality Score', description: 'A number that rates the overall quality of a published OOS based on confidence levels, evidence types, and completeness.' },
-      { name: 'Race Condition', description: 'When two agents try to do the same thing at the same time and the result depends on which one finishes first.' },
-      { name: 'RAG (Retrieval Augmented Generation)', description: 'A technique where an AI model looks up relevant information from a database before generating its answer.' },
-      { name: 'Railway', description: 'A cloud platform for deploying web applications and databases. OTP is deployed on Railway.' },
-      { name: 'REST API', description: 'A common style for building APIs using standard web requests (GET, POST, PUT, DELETE) to manage data.' },
-      { name: 'Rock (EOS Term)', description: 'A 90-day priority goal in the EOS framework. Each team member picks 1 to 3 Rocks per quarter.' },
-      { name: 'Schema Markup', description: 'A vocabulary of tags from Schema.org added to HTML to help search engines understand content types.' },
-      { name: 'Scorecard', description: 'A weekly tracking sheet from EOS showing 5 to 15 key business numbers, each with an owner and target.' },
-      { name: 'Scout (OTP Intelligence Scout)', description: 'An OTP feature that monitors the Intelligence Graph for new patterns and insights relevant to your published OOS.' },
-      { name: 'Shared State', description: 'Information that multiple agents need access to, stored where one agent writes and others read.' },
-      { name: 'SOP (Standard Operating Procedure)', description: 'A step-by-step document describing how to complete a specific task consistently. An OOS is a collection of machine-readable SOPs.' },
-      { name: 'System Prompt', description: 'Hidden instructions given to an AI model before the conversation starts, defining role, personality, boundaries, and behavior.' },
-      { name: 'The Three-Layer AI Coordination Stack', description: 'AI coordination at three layers: Tool (MCP), Agent (A2A), and Organization (OTP).' },
-      { name: 'Token', description: 'The basic unit of text AI models work with, roughly 3/4 of a word. Models charge, process, and limit by tokens.' },
-      { name: 'Token Efficiency Ratio', description: 'A metric measuring whether an operational rule saves more tokens than it costs to load into an agent\'s context.' },
-      { name: 'Webhook', description: 'A way for one system to notify another when something happens, sending a message the moment an event occurs.' },
-    ];
+
+    // Pull every public glossary term, ordered A-Z by name
+    const rowsRes = await db.execute(sql`
+      SELECT slug, name, definition, why_it_matters, framework, related_slugs, aliases
+      FROM glossary_terms
+      WHERE public = true
+      ORDER BY name ASC
+    `) as any;
+    const allTerms = (rowsRes.rows || []).map((r: any) => ({
+      slug: r.slug,
+      name: r.name,
+      definition: r.definition,
+      whyItMatters: r.why_it_matters,
+      framework: r.framework,
+      relatedSlugs: r.related_slugs || [],
+      aliases: r.aliases || [],
+    }));
+
+    // Group by first letter (A-Z), with "#" bucket for non-alpha (e.g. "4DX")
+    const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+    const grouped: Record<string, typeof allTerms> = { '#': [] };
+    for (const L of letters) grouped[L] = [];
+    for (const t of allTerms) {
+      const first = t.name.charAt(0).toUpperCase();
+      if (letters.includes(first)) grouped[first].push(t);
+      else grouped['#'].push(t);
+    }
+    const groupedOrder = (grouped['#'].length ? ['#'] : []).concat(letters);
+    const activeLetters = new Set(groupedOrder.filter(L => grouped[L].length > 0));
+    const totalCount = allTerms.length;
     return reply.view('pages/glossary', {
-      title: 'AI Coordination Dictionary - 60+ Terms Defined - OTP',
-      description: 'The definitive reference for AI coordination terminology. Plain English definitions for MCP, A2A, OOS, agent orchestration, shared state, escalation patterns, and every concept you need to build AI agent teams.',
+      title: `AI Coordination Dictionary - ${totalCount} Terms Defined - OTP`,
+      description: `The definitive reference for AI agent coordination, EOS, Scaling Up, 4DX, OKRs, and Holacracy terminology. ${totalCount} plain-English definitions covering protocols, frameworks, and the patterns that hold AI agent teams together.`,
       canonical: glossaryUrl,
       breadcrumbs: bc({ name: 'Glossary', url: glossaryUrl }),
+      grouped,
+      groupedOrder,
+      activeLetters,
+      totalCount,
       jsonLd: [
         {
           '@context': 'https://schema.org',
           '@type': 'DefinedTermSet',
           name: 'AI Coordination Dictionary',
-          description: 'The definitive reference for AI coordination terminology. 60+ terms covering protocols, agent concepts, coordination patterns, and the Organization Transport Protocol.',
+          description: `The definitive reference for AI coordination terminology. ${totalCount} terms covering protocols, agent concepts, coordination patterns, and operating-system frameworks (EOS, Scaling Up, 4DX, OKRs, Holacracy).`,
           url: glossaryUrl,
-          hasDefinedTerm: definedTerms.map(t => ({
+          hasDefinedTerm: allTerms.map((t: any) => ({
             '@type': 'DefinedTerm',
+            '@id': `${glossaryUrl}/${t.slug}`,
             name: t.name,
-            description: t.description,
+            description: t.definition,
+            url: `${glossaryUrl}/${t.slug}`,
             inDefinedTermSet: glossaryUrl
           }))
         },
         { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) }
       ]
+    });
+  });
+
+  // Glossary term detail page (programmatic SEO target)
+  app.get<{ Params: { slug: string } }>('/glossary/:slug', async (request, reply) => {
+    const slug = (request.params.slug || '').toLowerCase().trim();
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      reply.status(404);
+      return reply.view('pages/404', { title: 'Term not found - OTP', description: 'Glossary term not found.', canonical: BASE_URL + '/glossary' });
+    }
+
+    const termRes = await db.execute(sql`
+      SELECT slug, name, definition, why_it_matters, framework, related_slugs, aliases, updated_at
+      FROM glossary_terms
+      WHERE slug = ${slug} AND public = true
+      LIMIT 1
+    `) as any;
+    const row = (termRes.rows || [])[0];
+    if (!row) {
+      reply.status(404);
+      return reply.view('pages/404', { title: 'Term not found - OTP', description: 'Glossary term not found.', canonical: BASE_URL + '/glossary' });
+    }
+
+    const term = {
+      slug: row.slug as string,
+      name: row.name as string,
+      definition: row.definition as string,
+      whyItMatters: row.why_it_matters as string | null,
+      framework: row.framework as string | null,
+      relatedSlugs: (row.related_slugs || []) as string[],
+      aliases: (row.aliases || []) as string[],
+      updatedAt: row.updated_at,
+    };
+
+    // Hydrate related terms (one query, only the slugs we need)
+    let relatedTerms: Array<{ slug: string; name: string; definition: string }> = [];
+    if (term.relatedSlugs.length > 0) {
+      const relatedRes = await db.execute(sql`
+        SELECT slug, name, definition
+        FROM glossary_terms
+        WHERE slug = ANY(${term.relatedSlugs}) AND public = true
+        ORDER BY name ASC
+      `) as any;
+      relatedTerms = (relatedRes.rows || []).map((r: any) => ({ slug: r.slug, name: r.name, definition: r.definition }));
+    }
+
+    const termUrl = `${BASE_URL}/glossary/${term.slug}`;
+    const lastmod = term.updatedAt ? new Date(term.updatedAt as any).toISOString() : new Date().toISOString();
+
+    return reply.view('pages/glossary-term', {
+      title: `${term.name} - OTP Glossary`,
+      description: term.definition.length > 155 ? term.definition.slice(0, 152) + '...' : term.definition,
+      canonical: termUrl,
+      breadcrumbs: bc(
+        { name: 'Glossary', url: BASE_URL + '/glossary' },
+        { name: term.name, url: termUrl }
+      ),
+      term,
+      relatedTerms,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'DefinedTerm',
+          '@id': termUrl,
+          name: term.name,
+          description: term.definition,
+          url: termUrl,
+          ...(term.aliases.length ? { alternateName: term.aliases } : {}),
+          inDefinedTermSet: {
+            '@type': 'DefinedTermSet',
+            name: 'AI Coordination Dictionary',
+            url: BASE_URL + '/glossary',
+          },
+          ...(term.framework ? { termCode: term.framework } : {}),
+          dateModified: lastmod,
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL + '/' },
+            { '@type': 'ListItem', position: 2, name: 'Glossary', item: BASE_URL + '/glossary' },
+            { '@type': 'ListItem', position: 3, name: term.name, item: termUrl },
+          ],
+        },
+      ],
     });
   });
 
@@ -1738,13 +1777,65 @@ export default async function pageRoutes(app: FastifyInstance) {
       ORDER BY f.created_at DESC
     `) as any;
 
+    // Build a JSON-LD Person + ProfilePage block for SEO. Person schema is
+    // what AI Overviews and Google Knowledge Graph need to recognize the
+    // entity. Sprinkle in city/country, sameAs links, jobTitle, image.
+    const profileUrl = BASE_URL + '/expert/' + slug;
+    const sameAs: string[] = [];
+    if (profile.linkedin_url) sameAs.push(profile.linkedin_url);
+    if (profile.directory_source === 'eosworldwide' && profile.content_source_url) {
+      sameAs.push(profile.content_source_url);
+    }
+    const personSchema: any = {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      '@id': profileUrl + '#person',
+      name: profile.display_name,
+      url: profileUrl,
+    };
+    if (profile.photo_url) personSchema.image = profile.photo_url;
+    if (profile.headline) personSchema.description = profile.headline;
+    if (sameAs.length) personSchema.sameAs = sameAs;
+    if (profile.directory_source === 'eosworldwide') {
+      personSchema.jobTitle = profile.tier ? `${profile.tier} EOS Implementer` : 'EOS Implementer';
+      personSchema.knowsAbout = ['EOS (Entrepreneurial Operating System)', 'Business Operating Systems', 'Leadership Coaching'];
+    }
+    if (profile.geo_city || profile.geo_country) {
+      personSchema.address = {
+        '@type': 'PostalAddress',
+        ...(profile.geo_city ? { addressLocality: profile.geo_city } : {}),
+        ...(profile.geo_state ? { addressRegion: profile.geo_state } : {}),
+        ...(profile.geo_country ? { addressCountry: profile.geo_country } : {}),
+      };
+    }
+    const profilePageSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ProfilePage',
+      '@id': profileUrl,
+      url: profileUrl,
+      name: `${profile.display_name} - OTP`,
+      mainEntity: { '@id': profileUrl + '#person' },
+      ...(profile.last_synced_at ? { dateModified: new Date(profile.last_synced_at).toISOString() } : {}),
+    };
+
+    // Tight, location-aware meta description for SERP / AI Overviews
+    const locParts = [profile.geo_city, profile.geo_state, profile.geo_country].filter(Boolean);
+    const locStr = locParts.length ? ` based in ${locParts.join(', ')}` : '';
+    const roleStr = profile.directory_source === 'eosworldwide'
+      ? `${profile.tier ? profile.tier + ' ' : ''}EOS Implementer`
+      : 'AI coordination expert';
+    const metaDesc = profile.headline
+      ? `${profile.display_name}, ${roleStr}${locStr}. ${profile.headline}`.slice(0, 200)
+      : `${profile.display_name}, ${roleStr}${locStr} on OTP.`.slice(0, 200);
+
     return reply.view('pages/expert-profile', {
-      title: profile.display_name + ' - AI Coordination Expert - OTP',
-      description: profile.bio ? profile.bio.substring(0, 160) : 'AI coordination expert on OTP.',
-      canonical: BASE_URL + '/expert/' + slug,
-      breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }, { name: profile.display_name, url: BASE_URL + '/expert/' + slug }),
+      title: profile.display_name + (profile.directory_source === 'eosworldwide' ? ' | EOS Implementer | OTP' : ' - AI Coordination Expert - OTP'),
+      description: metaDesc,
+      canonical: profileUrl,
+      breadcrumbs: bc({ name: 'Experts', url: BASE_URL + '/experts' }, { name: profile.display_name, url: profileUrl }),
       profile,
       oosFiles: oosRows.rows || [],
+      jsonLd: [personSchema, profilePageSchema],
     });
   });
 
