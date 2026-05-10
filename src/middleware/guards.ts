@@ -50,6 +50,7 @@ declare module 'fastify' {
       targetMemberId: string;
       bySuperAdmin: string;
     } | null;
+    serviceAuth: { actAsClerkUserId: string } | null;
   }
 }
 
@@ -58,12 +59,24 @@ declare module 'fastify' {
 export function registerOrgMemberDecorator(app: FastifyInstance): void {
   app.decorateRequest('orgMember', null);
   app.decorateRequest('impersonation', null);
+  app.decorateRequest('serviceAuth', null);
 
   app.addHook('preHandler', async (request) => {
     try {
       const auth = getAuth(request);
       const userId = auth?.userId;
-      if (!userId) return;
+      if (!userId) {
+        // No Clerk session. Try service-to-service auth (orger-next, SDKs).
+        // Populates request.orgMember from the act-as user so per-tile gates
+        // (checkChartEdit / checkChartCreate) work unchanged.
+        const { resolveServiceAuth } = await import('./service-auth.js');
+        const svc = await resolveServiceAuth(request);
+        if (svc) {
+          (request as any).orgMember = svc.member;
+          (request as any).serviceAuth = { actAsClerkUserId: svc.clerkUserId };
+        }
+        return;
+      }
 
       // Phase 5: super-admin impersonation. If a valid impersonation cookie
       // is present AND the caller is the super admin who set it, swap the

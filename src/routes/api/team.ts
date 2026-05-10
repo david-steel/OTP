@@ -62,6 +62,9 @@ const patchSchema = z.object({
 async function checkScope(request: FastifyRequest, reply: any, requiredScope: string): Promise<boolean> {
   const auth = getAuth(request);
   if (auth.userId) return true;
+  // Service auth = trusted bridge acting as a Clerk user. The act-as user's
+  // role is still enforced downstream in checkChartEdit / checkChartCreate.
+  if ((request as any).serviceAuth) return true;
   const apiKeyCtx = await resolveApiKey(request);
   if (apiKeyCtx && !requireScope(apiKeyCtx, requiredScope)) {
     reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: `API key requires '${requiredScope}' scope` } });
@@ -102,20 +105,26 @@ async function checkChartEdit(
   externalId: string,
 ): Promise<boolean> {
   const auth = getAuth(request);
+  const svcAuth = (request as any).serviceAuth as { actAsClerkUserId: string } | null;
 
   // API-key path: rely on the scope already being validated by checkScope.
-  if (!auth.userId) return true;
+  // Service-auth still falls through to the per-tile gate so the act-as
+  // user's role is enforced.
+  if (!auth.userId && !svcAuth) return true;
 
   const member = (request as any).orgMember as
     | { role: any; claimedEntityId?: string | null; claimedEntityIds?: string[] | null }
     | null;
 
   // No member row at all -- check the legacy "I created this org" fallback.
+  // Only meaningful for Clerk sessions; service auth must have a real member.
   if (!member) {
-    const [legacy] = await db.select().from(organizations)
-      .where(eq(organizations.id, orgId))
-      .limit(1);
-    if (legacy && legacy.clerkOrgId === auth.userId) return true;
+    if (auth.userId) {
+      const [legacy] = await db.select().from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+      if (legacy && legacy.clerkOrgId === auth.userId) return true;
+    }
     reply.status(403).send({ error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this org' } });
     return false;
   }
@@ -149,16 +158,20 @@ async function checkChartCreate(
   reportsTo: string | undefined,
 ): Promise<boolean> {
   const auth = getAuth(request);
-  if (!auth.userId) return true; // API-key path
+  const svcAuth = (request as any).serviceAuth as { actAsClerkUserId: string } | null;
+  // API-key path bypasses; service-auth falls through to act-as user's role.
+  if (!auth.userId && !svcAuth) return true;
 
   const member = (request as any).orgMember as
     | { role: any; claimedEntityId?: string | null; claimedEntityIds?: string[] | null }
     | null;
 
   if (!member) {
-    const [legacy] = await db.select().from(organizations)
-      .where(eq(organizations.id, orgId)).limit(1);
-    if (legacy && legacy.clerkOrgId === auth.userId) return true;
+    if (auth.userId) {
+      const [legacy] = await db.select().from(organizations)
+        .where(eq(organizations.id, orgId)).limit(1);
+      if (legacy && legacy.clerkOrgId === auth.userId) return true;
+    }
     reply.status(403).send({ error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this org' } });
     return false;
   }
@@ -201,6 +214,19 @@ async function checkChartCreate(
 }
 
 export default async function teamRoutes(app: FastifyInstance) {
+  // ============================================================
+  // GET /api/v1/team/graph -- full team chart (nodes + edges)
+  // ============================================================
+  // Returns the live team graph derived from the latest draft (or
+  // published) OOS file. Read-only. Auth: Clerk session, API key, or
+  // service auth. orger-next consumes this to render the chart.
+  app.get('/team/graph', async (request, reply) => {
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    const graph = await getOrgTeamGraph(org.id, org.name);
+    return graph;
+  });
+
   // ============================================================
   // PATCH /api/v1/team/entity -- Edit one agent or human entity
   // ============================================================

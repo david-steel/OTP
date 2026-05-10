@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../config/database.js';
 import { organizations } from '../db/schema.js';
 import { resolveApiKey } from './api-key-auth.js';
+import { resolveServiceAuth } from './service-auth.js';
 
 /**
  * Get the organization for the authenticated user.
@@ -22,6 +23,14 @@ export async function getAuthOrg(request: FastifyRequest) {
   const apiKeyCtx = await resolveApiKey(request);
   if (apiKeyCtx) {
     const orgArr = await db.select().from(organizations).where(eq(organizations.id, apiKeyCtx.orgId)).limit(1);
+    return orgArr[0] || null;
+  }
+
+  // Service-to-service auth (orger-next, future SDKs). Resolves to the org
+  // tied to the act-as Clerk user's org_members row.
+  const svc = await resolveServiceAuth(request);
+  if (svc) {
+    const orgArr = await db.select().from(organizations).where(eq(organizations.id, svc.member.orgId)).limit(1);
     return orgArr[0] || null;
   }
 
