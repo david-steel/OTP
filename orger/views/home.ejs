@@ -1,0 +1,49 @@
+<nav class="nav">
+  <a href="/orger" class="nav-brand">Orger</a>
+  <div style="display:flex; gap: var(--space-md); align-items:center;">
+    <a href="/orger/product" style="color: var(--color-text-secondary);">Product</a>
+    <a href="/sign-in" class="btn-ghost">Login</a>
+  </div>
+</nav>
+
+<main style="min-height: calc(100vh - 80px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding: var(--space-3xl) var(--space-md); text-align:center; position:relative;">
+  <div class="dotted-grid" style="position:absolute; inset:0; opacity:0.5; pointer-events:none;"></div>
+
+  <div style="position:relative; z-index:1; max-width: 760px;">
+    <div style="display:inline-flex; align-items:center; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); background: var(--color-bg-surface); border:1px solid var(--color-border-subtle); border-radius: var(--radius-full); font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: var(--space-xl);">
+      <span style="width:6px; height:6px; background: var(--color-pop); border-radius:50%;"></span>
+      <span class="mono">Coming soon</span>
+    </div>
+
+    <h1 style="font-size: clamp(3rem, 8vw, 6rem); margin-bottom: var(--space-lg);">
+      Your org chart,<br>with agents.
+    </h1>
+
+    <p style="font-size: 1.25rem; color: var(--color-text-secondary); margin-bottom: var(--space-2xl); line-height: 1.4; max-width: 560px; margin-left:auto; margin-right:auto;">
+      Drag and drop the humans you have. Get grounded recommendations for the AI agents you should build. Share it in one click.
+    </p>
+
+    <form action="/orger/waitlist" method="post" style="display:flex; gap: var(--space-sm); justify-content:center; max-width: 480px; margin: 0 auto var(--space-md); flex-wrap:wrap;">
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="you@yourcompany.com"
+        style="flex:1; min-width: 240px; padding: var(--space-sm) var(--space-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-medium); border-radius: var(--radius-md); color: var(--color-text-primary); font-family: var(--font-body); font-size: 1rem;"
+      >
+      <button type="submit" class="btn-primary">Get on the waitlist</button>
+    </form>
+
+    <p style="font-size: 0.875rem; color: var(--color-text-tertiary);">
+      No spam. Just a heads-up when Orger opens.
+    </p>
+  </div>
+
+  <div style="position:absolute; bottom: var(--space-xl); right: var(--space-xl); width: 80px; height: 80px; opacity: 0.9;" aria-hidden="true">
+    <img src="/orger/public/images/shrub-pixel.png" alt="" onerror="this.style.display='none'" style="width:100%; height:100%; image-rendering: pixelated;">
+  </div>
+</main>
+
+<footer class="footer">
+  Orger is a project by <a href="https://orgtp.com" target="_blank" rel="noopener">OTP</a>. Built with Shrub the ogre. Even ogres need a team.
+</footer>

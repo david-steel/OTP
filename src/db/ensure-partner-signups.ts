@@ -58,6 +58,18 @@ const DDL = [
   `CREATE INDEX IF NOT EXISTS "ps_tier_idx" ON "partner_signups" ("tier");`,
   `CREATE INDEX IF NOT EXISTS "ps_created_idx" ON "partner_signups" ("created_at");`,
   `CREATE INDEX IF NOT EXISTS "ps_source_idx" ON "partner_signups" ("source");`,
+
+  // Cross-product lightweight signups (orger.ai waitlist, future products) only
+  // collect an email + source. Company / name / channels stay required for the
+  // full /partners application but become optional for lead-style entries.
+  // ALTER COLUMN ... DROP NOT NULL is idempotent: re-running on an already
+  // nullable column is a no-op, so this is safe on every boot.
+  `ALTER TABLE "partner_signups" ALTER COLUMN "company_name" DROP NOT NULL;`,
+  `ALTER TABLE "partner_signups" ALTER COLUMN "full_name" DROP NOT NULL;`,
+  // channels has a NOT NULL with a default jsonb '[]' — keep the default,
+  // just drop the strict NOT NULL so the lead-signup path doesn't have to
+  // pass an empty array explicitly.
+  `ALTER TABLE "partner_signups" ALTER COLUMN "channels" DROP NOT NULL;`,
 ];
 
 export async function ensurePartnerSignupsTable(): Promise<void> {

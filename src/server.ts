@@ -45,8 +45,8 @@ app.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string
 // CORS
 await app.register(fastifyCors, {
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://orgtp.com']
-    : ['https://orgtp.com', 'http://localhost:3000'],
+    ? ['https://orgtp.com', 'https://orger.ai']
+    : ['https://orgtp.com', 'https://orger.ai', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
 });
@@ -139,6 +139,15 @@ await app.register(fastifyStatic, {
   prefix: '/public/',
   maxAge: 31536000000,
   immutable: true,
+});
+
+// Orger static assets — separate prefix, decorateReply: false to coexist with /public/
+await app.register(fastifyStatic, {
+  root: path.join(__dirname, '..', 'orger', 'public'),
+  prefix: '/orger/public/',
+  maxAge: 31536000000,
+  immutable: true,
+  decorateReply: false,
 });
 
 // Derive Clerk frontend API domain from publishable key
@@ -625,6 +634,7 @@ await app.register(import('./routes/api/best-practices.js'), { prefix: '/api/v1'
 await app.register(import('./routes/api/digest.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/newsletter.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/partner-signup.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/lead-signup.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/oos-operating-plan.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' });
 
@@ -731,6 +741,16 @@ try {
   app.log.info('coach directory columns + seed Directory org are ready');
 } catch (err) {
   app.log.error({ err }, 'ensureCoachDirectory failed -- /experts and /expert/:slug may behave incorrectly until resolved');
+}
+
+// Orger — sibling product, mounted at /orger prefix until orger.ai vhost is configured.
+// Wrapped in try/catch so a registration failure does not prevent OTP boot.
+try {
+  const { orgerRoutes } = await import('./orger/routes/orger.js');
+  await app.register(orgerRoutes, { prefix: '/orger' });
+  app.log.info('[startup][orger] mounted at /orger');
+} catch (err) {
+  app.log.error({ err }, '[startup][orger] registration failed — /orger routes will 404');
 }
 
 // Start server

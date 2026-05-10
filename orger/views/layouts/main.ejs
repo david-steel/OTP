@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0F1B14">
+  <meta name="color-scheme" content="dark">
+
+  <title><%= typeof title !== 'undefined' ? title : 'Orger — Your org chart, with agents.' %></title>
+  <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'Free AI-aware org chart builder. Drag and drop the humans you have. Get grounded recommendations for the AI agents you should build.' %>">
+  <% if (typeof noindex !== 'undefined' && noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
+  <link rel="canonical" href="<%= typeof canonical !== 'undefined' && canonical ? canonical : 'https://orger.ai' %>">
+
+  <meta property="og:site_name" content="Orger">
+  <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>">
+  <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'Orger — Your org chart, with agents.' %>">
+  <meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : 'Free AI-aware org chart builder. Built for solo founders, startup teams, and the agents that complete them.' %>">
+  <meta property="og:url" content="<%= typeof canonical !== 'undefined' && canonical ? canonical : 'https://orger.ai' %>">
+  <meta property="og:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orger.ai/orger/public/images/og-card.png' %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'Orger — Your org chart, with agents.' %>">
+  <meta name="twitter:description" content="<%= typeof description !== 'undefined' && description ? description : 'Free AI-aware org chart builder. Built for solo founders, startup teams, and the agents that complete them.' %>">
+  <meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orger.ai/orger/public/images/og-card.png' %>">
+
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --color-bg-deep: #0F1B14;
+      --color-bg-surface: #1A2B20;
+      --color-bg-elevated: #243832;
+      --color-brand: #5C8A3C;
+      --color-brand-hover: #6FA346;
+      --color-pop: #A6E22E;
+      --color-pop-text: #0F1B14;
+      --color-warm: #FFB454;
+      --color-warm-soft: #F4C97A;
+      --color-danger: #E94B6A;
+      --color-text-primary: #F4F1EA;
+      --color-text-secondary: #B8C4BB;
+      --color-text-tertiary: #7A9482;
+      --color-border-subtle: #243832;
+      --color-border-medium: #3A5544;
+      --color-border-strong: #5C8A3C;
+
+      --font-display: "Cabinet Grotesk", "General Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: "General Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Geist Mono", "JetBrains Mono", monospace;
+
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --space-2xl: 3rem;
+      --space-3xl: 4rem;
+      --space-4xl: 6rem;
+      --space-5xl: 8rem;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --radius-2xl: 24px;
+      --radius-full: 9999px;
+
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --duration-fast: 150ms;
+      --duration-base: 250ms;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--color-bg-deep);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    code, pre, .mono { font-family: var(--font-mono); }
+
+    a { color: var(--color-pop); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    button { font-family: inherit; cursor: pointer; }
+
+    .btn-primary {
+      background: var(--color-pop);
+      color: var(--color-pop-text);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: var(--space-sm) var(--space-lg);
+      font-weight: 500;
+      font-size: 1rem;
+      transition: filter var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border-medium);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm) var(--space-lg);
+      font-weight: 500;
+      font-size: 1rem;
+      transition: background var(--duration-fast) var(--ease-out);
+    }
+    .btn-ghost:hover { background: var(--color-bg-surface); }
+
+    .dotted-grid {
+      background-image: radial-gradient(circle, rgba(58, 85, 68, 0.4) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-md) var(--space-2xl);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .nav-brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .nav-brand:hover { text-decoration: none; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-md); }
+
+    @media (min-width: 768px) {
+      .container { padding: 0 var(--space-2xl); }
+    }
+
+    .footer {
+      padding: var(--space-2xl) var(--space-2xl);
+      border-top: 1px solid var(--color-border-subtle);
+      color: var(--color-text-tertiary);
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .footer a { color: var(--color-text-secondary); }
+  </style>
+
+  <% if (typeof extraHead !== 'undefined') { %><%- extraHead %><% } %>
+</head>
+<body>
+  <%- body %>
+
+  <% if (typeof extraScripts !== 'undefined') { %><%- extraScripts %><% } %>
+</body>
+</html>

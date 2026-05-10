@@ -4,8 +4,26 @@ Stack: Node.js / TypeScript
 Tests: `npm test`
 Lint: eslint
 
+## Two Products, One Backend
+
+This repo serves two products that share Clerk auth, Postgres, and the MCP server:
+
+1. **OTP** (`orgtp.com`) — Organization Transport Protocol. Source: `src/`.
+2. **Orger** (`orger.ai`) — Free AI-aware org chart builder. Source: `orger/`.
+
+Same backend (Clerk, Postgres, API, MCP). Different brands, different domains, different design systems. Built as siblings, not nested.
+
 ## Key Directories
-- `src/`
+- `src/` — OTP application (server, routes, views, db schema)
+- `orger/` — Orger application (views, routes, public assets, design system)
+- `content/` — shared content (Conatus essays, OTP blog posts)
+- `data/` — shared data files
+
+## Design Systems
+
+When working on OTP code (`src/`): no formal design system yet — match existing patterns.
+
+When working on Orger code (`orger/`): **always read `orger/DESIGN.md` before any visual or UI decision.** All font choices, colors, spacing, microcopy voice, and the Shrub mascot rules are defined there. Do not deviate without explicit user approval. In QA mode, flag any code that doesn't match `orger/DESIGN.md`.
 
 ## Config Files
 - `package.json`

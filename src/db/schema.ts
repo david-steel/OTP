@@ -427,13 +427,19 @@ export const improvements = pgTable('improvements', {
 
 export const partnerSignups = pgTable('partner_signups', {
   id: uuid('id').defaultRandom().primaryKey(),
-  companyName: varchar('company_name', { length: 255 }).notNull(),
-  fullName: varchar('full_name', { length: 200 }).notNull(),
+  // Optional at the DB layer — the full /partners application validates these
+  // as required at the app layer (zod schema in /api/v1/partner-signup).
+  // Cross-product lightweight signups (orger.ai waitlist, future products)
+  // only need email + source. ALTER COLUMN ... DROP NOT NULL applied in
+  // ensure-partner-signups.ts.
+  companyName: varchar('company_name', { length: 255 }),
+  fullName: varchar('full_name', { length: 200 }),
   email: varchar('email', { length: 255 }).notNull(),
   title: varchar('title', { length: 255 }),
   linkedinUrl: varchar('linkedin_url', { length: 500 }),
-  // List of channels/certifications self-claimed at signup. Stored as JSON array of slugs.
-  channels: jsonb('channels').notNull().default([]),
+  // List of channels/certifications self-claimed at signup. Stored as JSON
+  // array of slugs. Optional for cross-product signups; defaults to [].
+  channels: jsonb('channels').default([]),
   otherChannel: varchar('other_channel', { length: 500 }),
   clientCountRange: varchar('client_count_range', { length: 50 }),
   fitNote: text('fit_note'),
