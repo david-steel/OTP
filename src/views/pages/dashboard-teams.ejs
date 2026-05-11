@@ -1,0 +1,186 @@
+<div class="max-w-5xl mx-auto px-4 py-8" data-org-id="<%= org.id %>">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold">Teams</h1>
+      <p class="text-sm text-gray-500 mt-1">Create teams, add people, scope L10 meetings + issues + KPIs by team.</p>
+    </div>
+    <button id="create-team-toggle" class="px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">+ New team</button>
+  </div>
+
+  <!-- Create form (collapsed by default) -->
+  <div id="create-team-form" class="hidden mb-6 border rounded p-4 bg-white">
+    <div class="grid grid-cols-12 gap-2 mb-2">
+      <input id="new-team-name" type="text" placeholder="Team name (e.g. 'David x Dan', 'Web Team')" class="col-span-6 border rounded p-2 text-sm" maxlength="255">
+      <select id="new-team-type" class="col-span-3 border rounded p-2 text-sm">
+        <option value="leadership">leadership</option>
+        <option value="department" selected>department</option>
+        <option value="project">project</option>
+        <option value="other">other</option>
+      </select>
+      <input id="new-team-slug" type="text" placeholder="slug (auto)" class="col-span-3 border rounded p-2 text-sm" maxlength="60">
+      <textarea id="new-team-desc" placeholder="Description (optional)" class="col-span-12 border rounded p-2 text-sm h-16"></textarea>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button id="create-team-cancel" class="px-3 py-1.5 text-sm bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+      <button id="create-team-save" class="px-3 py-1.5 text-sm bg-otp-500 text-white rounded hover:bg-otp-400">Create team</button>
+    </div>
+  </div>
+
+  <!-- Teams list -->
+  <div class="space-y-3">
+    <% if (!teams || teams.length === 0) { %>
+      <div class="border rounded p-6 bg-white text-center text-gray-500">
+        No teams yet. Click <strong>+ New team</strong> to create one.
+      </div>
+    <% } %>
+    <% (teams || []).forEach(function(t) { %>
+      <div class="border rounded p-4 bg-white" data-team-id="<%= t.id %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-lg font-semibold" data-field="name-display"><%= t.name %></h2>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-mono"><%= t.type %></span>
+              <% if (t.isDefault) { %>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">default</span>
+              <% } %>
+              <span class="text-xs text-gray-500"><%= t.members.length %> member<%= t.members.length === 1 ? '' : 's' %></span>
+              <span class="text-xs text-gray-400 font-mono"><%= t.slug %></span>
+            </div>
+            <% if (t.description) { %>
+              <p class="text-sm text-gray-600 mt-1"><%= t.description %></p>
+            <% } %>
+          </div>
+          <div class="flex gap-1">
+            <button data-action="rename" class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Rename</button>
+            <% if (!t.isDefault) { %>
+              <button data-action="delete" class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Members list -->
+        <div class="mt-3 border-t pt-3">
+          <% if (t.members.length === 0) { %>
+            <div class="text-sm text-gray-500 italic mb-2">No members yet. Add someone below.</div>
+          <% } else { %>
+            <div class="space-y-1 mb-3">
+              <% t.members.forEach(function(m) { %>
+                <div class="flex items-center justify-between text-sm py-1" data-membership-member-id="<%= m.memberId %>">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium"><%= m.displayName || m.email || m.memberId.slice(0,8) %></span>
+                    <span class="text-xs px-1.5 py-0.5 rounded
+                      <%= m.roleOnTeam === 'leader' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600' %>">
+                      <%= m.roleOnTeam %>
+                    </span>
+                    <span class="text-xs text-gray-400"><%= m.orgRole %></span>
+                  </div>
+                  <button data-action="remove-member" data-member-id="<%= m.memberId %>"
+                    class="text-xs px-2 py-0.5 text-red-700 hover:bg-red-50 rounded">remove</button>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <!-- Add member form -->
+          <div class="flex gap-2 items-center">
+            <select data-field="add-member-pick" class="border rounded p-1.5 text-sm flex-1">
+              <option value="">-- pick a member to add --</option>
+              <% (allMembers || []).forEach(function(m) {
+                const already = (t.members || []).some(function(x){ return x.memberId === m.id; });
+                if (already) return;
+              %>
+                <option value="<%= m.id %>"><%= m.displayName || m.email || m.id.slice(0,8) %><% if (m.role) { %> · <%= m.role %><% } %></option>
+              <% }); %>
+            </select>
+            <select data-field="add-member-role" class="border rounded p-1.5 text-sm">
+              <option value="member" selected>member</option>
+              <option value="leader">leader</option>
+            </select>
+            <button data-action="add-member" class="text-xs px-2 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400">+ Add</button>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
+<script>
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    opts.credentials = 'same-origin';
+    const r = await fetch('/api/v1' + path, opts);
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body?.error?.message || ('HTTP ' + r.status));
+    }
+    return r.json();
+  }
+
+  // Create team
+  const createToggle = document.getElementById('create-team-toggle');
+  const createForm = document.getElementById('create-team-form');
+  createToggle?.addEventListener('click', () => createForm.classList.toggle('hidden'));
+  document.getElementById('create-team-cancel')?.addEventListener('click', () => createForm.classList.add('hidden'));
+  document.getElementById('create-team-save')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const name = document.getElementById('new-team-name').value.trim();
+    const type = document.getElementById('new-team-type').value;
+    const slug = document.getElementById('new-team-slug').value.trim() || undefined;
+    const description = document.getElementById('new-team-desc').value.trim() || undefined;
+    if (!name) return alert('Team name required.');
+    btn.disabled = true; btn.textContent = 'Creating...';
+    try {
+      await api('/teams', { method: 'POST', body: JSON.stringify({ name, type, slug, description }) });
+      location.reload();
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Create team';
+      alert('Could not create: ' + err.message);
+    }
+  });
+
+  // Per-team actions
+  document.querySelectorAll('[data-team-id]').forEach(card => {
+    const teamId = card.dataset.teamId;
+
+    card.querySelector('[data-action="rename"]')?.addEventListener('click', async () => {
+      const current = card.querySelector('[data-field="name-display"]').textContent.trim();
+      const next = prompt('Rename team to:', current);
+      if (!next || next.trim() === current) return;
+      try {
+        await api('/teams/' + teamId, { method: 'PATCH', body: JSON.stringify({ name: next.trim() }) });
+        location.reload();
+      } catch (err) { alert('Rename failed: ' + err.message); }
+    });
+
+    card.querySelector('[data-action="delete"]')?.addEventListener('click', async () => {
+      const current = card.querySelector('[data-field="name-display"]').textContent.trim();
+      if (!confirm('Delete team "' + current + '"? Its issues/L10s lose their team scoping and become hidden until re-tagged.')) return;
+      try {
+        await api('/teams/' + teamId, { method: 'DELETE' });
+        location.reload();
+      } catch (err) { alert('Delete failed: ' + err.message); }
+    });
+
+    card.querySelector('[data-action="add-member"]')?.addEventListener('click', async () => {
+      const pick = card.querySelector('[data-field="add-member-pick"]').value;
+      const role = card.querySelector('[data-field="add-member-role"]').value;
+      if (!pick) return alert('Pick a member first.');
+      try {
+        await api('/teams/' + teamId + '/members', { method: 'POST', body: JSON.stringify({ memberId: pick, roleOnTeam: role }) });
+        location.reload();
+      } catch (err) { alert('Add member failed: ' + err.message); }
+    });
+
+    card.querySelectorAll('[data-action="remove-member"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const memberId = btn.dataset.memberId;
+        if (!confirm('Remove this person from the team?')) return;
+        try {
+          await api('/teams/' + teamId + '/members/' + memberId, { method: 'DELETE' });
+          location.reload();
+        } catch (err) { alert('Remove failed: ' + err.message); }
+      });
+    });
+  });
+</script>

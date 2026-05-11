@@ -17,6 +17,10 @@ const createTicketSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
   category: z.enum(['bug', 'feature', 'question', 'other']).optional().default('bug'),
   reporterEmail: z.string().email().optional(),
+  teamId: z.string().uuid().nullable().optional(),
+  ownerEntityType: z.enum(['agent', 'human']).optional(),
+  ownerExternalId: z.string().max(120).optional(),
+  ownerName: z.string().max(255).optional(),
 });
 
 const updateTicketSchema = z.object({
@@ -33,6 +37,7 @@ const updateTicketSchema = z.object({
   ownerEntityType: z.enum(['agent', 'human']).nullable().optional(),
   ownerExternalId: z.string().max(120).nullable().optional(),
   ownerName: z.string().max(255).nullable().optional(),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 const solveTicketSchema = z.object({
@@ -66,11 +71,15 @@ export default async function ticketRoutes(app: FastifyInstance) {
 
     const [ticket] = await db.insert(tickets).values({
       orgId: org?.id || null,
+      teamId: body.data.teamId || null,
       title: body.data.title,
       description: body.data.description,
       priority: body.data.priority,
       category: body.data.category,
       reporterEmail: body.data.reporterEmail || null,
+      ownerEntityType: body.data.ownerEntityType || null,
+      ownerExternalId: body.data.ownerExternalId || null,
+      ownerName: body.data.ownerName || null,
     }).returning();
 
     await db.insert(auditLogs).values(
@@ -166,6 +175,7 @@ export default async function ticketRoutes(app: FastifyInstance) {
     if (body.data.ownerEntityType !== undefined) updates.ownerEntityType = body.data.ownerEntityType;
     if (body.data.ownerExternalId !== undefined) updates.ownerExternalId = body.data.ownerExternalId;
     if (body.data.ownerName !== undefined) updates.ownerName = body.data.ownerName;
+    if (body.data.teamId !== undefined) updates.teamId = body.data.teamId;
 
     const [updated] = await db.update(tickets)
       .set(updates)

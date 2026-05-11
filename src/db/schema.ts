@@ -177,6 +177,10 @@ export const apiKeys = pgTable('api_keys', {
 export const tickets = pgTable('tickets', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id),
+  // Team scoping: which L10/forum this issue belongs to. Leadership team
+  // L10 only sees its own issues, separating private work (e.g. a
+  // "David x Dan" team) from full-team agenda items.
+  teamId: uuid('team_id'),
   title: varchar('title', { length: 500 }).notNull(),
   description: text('description').notNull(),
   status: ticketStatusEnum('status').notNull().default('open'),
@@ -199,6 +203,7 @@ export const tickets = pgTable('tickets', {
 }, (table) => ({
   statusIdx: index('ticket_status_idx').on(table.status),
   orgIdx: index('ticket_org_idx').on(table.orgId),
+  teamIdx: index('tickets_team_idx').on(table.orgId, table.teamId),
   idsStatusIdx: index('ticket_ids_status_idx').on(table.orgId, table.idsStatus),
 }));
 

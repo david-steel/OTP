@@ -2004,6 +2004,55 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /dashboard/teams -- manage teams (create, rename, delete, members)
+  app.get('/dashboard/teams', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = await resolveOrgForUser(auth.userId);
+    if (!resolved) return reply.redirect('/dashboard');
+    const { org, role: viewerRole } = resolved;
+
+    const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
+    if (!ALLOWED.includes(viewerRole)) {
+      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    }
+
+    const orgTeams = await db.select().from(teams)
+      .where(eq(teams.orgId, org.id))
+      .orderBy(desc(teams.isDefault), asc(teams.name));
+
+    // Membership counts + members per team (one round trip, grouped client-side).
+    const tmRows = orgTeams.length === 0 ? [] : await db
+      .select({
+        teamId: teamMemberships.teamId,
+        roleOnTeam: teamMemberships.roleOnTeam,
+        memberId: orgMembers.id,
+        displayName: orgMembers.displayName,
+        email: orgMembers.email,
+        orgRole: orgMembers.role,
+      })
+      .from(teamMemberships)
+      .innerJoin(orgMembers, eq(orgMembers.id, teamMemberships.memberId))
+      .where(eq(orgMembers.orgId, org.id));
+
+    const teamsWithMembers = orgTeams.map(t => ({
+      ...t,
+      members: tmRows.filter(r => r.teamId === t.id),
+    }));
+
+    const { listMembers } = await import('../../services/membership.js');
+    const allMembers = await listMembers(org.id);
+
+    return reply.view('pages/dashboard-teams', {
+      title: 'Teams - OTP',
+      noindex: true,
+      org,
+      viewerRole,
+      teams: teamsWithMembers,
+      allMembers,
+    });
+  });
+
   app.get<{ Querystring: { highlightSkill?: string; highlightCommand?: string } }>('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
@@ -4067,8 +4116,17 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       ? meeting.rocksSnapshot
       : { rocks: orgRocks, count: orgRocks.length };
 
+    // Team-scoped issues. Strict match on meeting.team_id so a Leadership
+    // L10 never sees issues that another team (e.g. "David x Dan") owns.
+    // Tickets with team_id IS NULL are hidden -- post-backfill they should
+    // be impossible, but if one slips through it can be assigned via the
+    // issue card's team selector.
     const orgIssues = await db.select().from(tickets)
-      .where(and(eq(tickets.orgId, org.id), isNull(tickets.deletedAt)))
+      .where(and(
+        eq(tickets.orgId, org.id),
+        meeting.teamId ? eq(tickets.teamId, meeting.teamId) : isNull(tickets.teamId),
+        isNull(tickets.deletedAt),
+      ))
       .orderBy(desc(tickets.createdAt))
       .limit(100);
 

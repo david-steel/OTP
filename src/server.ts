@@ -613,6 +613,7 @@ await app.register(import('./routes/api/browse.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/graph.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/team.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/charts.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/teams.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/agents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/kpis.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
@@ -742,6 +743,14 @@ try {
   app.log.info('todos v2 columns are ready (kind, priority, recurrence, subtasks)');
 } catch (err) {
   app.log.error({ err }, 'ensureTodosV2 failed -- /me/todos and /l8 todo separation will not work until resolved');
+}
+
+try {
+  const { ensureTicketsTeam } = await import('./db/ensure-tickets-team.js');
+  await ensureTicketsTeam();
+  app.log.info('tickets.team_id is ready (team-scoped L10 issues)');
+} catch (err) {
+  app.log.error({ err }, 'ensureTicketsTeam failed -- /l8 issue filtering by team will not work until resolved');
 }
 
 try {
