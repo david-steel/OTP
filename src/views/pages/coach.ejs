@@ -1,0 +1,431 @@
+<!-- ============================================================
+     /coach — landing page for coaches, consultants, advisors with
+     clients. Pitch: stop watching your clients bolt AI on broken
+     systems. OTP is the operating protocol your playbook lives in.
+     MIT 2025 anchor stat. Coach mascot. Calendly CTA.
+     ============================================================ -->
+
+<style>
+  /* === Local animations for /coach landing === */
+  @keyframes coach-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .coach-float { animation: coach-float 5s ease-in-out infinite; }
+
+  @keyframes coach-ring {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0.15; transform: scale(1.1); }
+  }
+  .coach-ring-1 { animation: coach-ring 3.5s ease-in-out infinite; }
+  .coach-ring-2 { animation: coach-ring 3.5s ease-in-out 0.5s infinite; }
+  .coach-ring-3 { animation: coach-ring 3.5s ease-in-out 1s infinite; }
+
+  @keyframes coach-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.4) rotate(0); }
+    25% { opacity: 1; transform: scale(1) rotate(90deg); }
+    50% { opacity: 0.4; transform: scale(0.85) rotate(0); }
+    75% { opacity: 1; transform: scale(1.1) rotate(-90deg); }
+  }
+  .coach-sparkle { animation: coach-sparkle 4s ease-in-out infinite; }
+
+  @keyframes coach-red-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55), 0 0 32px -4px rgba(239, 68, 68, 0.55); }
+    50% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0), 0 0 64px -4px rgba(239, 68, 68, 0.9); }
+  }
+  .coach-red-pulse { animation: coach-red-pulse 2.4s ease-in-out infinite; }
+
+  .coach-gradient-red {
+    background: linear-gradient(135deg, #fecaca 0%, #ef4444 35%, #dc2626 70%, #b91c1c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .coach-gradient-otp {
+    background: linear-gradient(135deg, #b9dffe 0%, #4db8ff 50%, #0095ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .coach-hazard-stripe {
+    background: repeating-linear-gradient(45deg, transparent 0, transparent 14px, rgba(0,0,0,0.5) 14px, rgba(0,0,0,0.5) 28px);
+  }
+
+  .coach-alarm-stripe {
+    background: linear-gradient(90deg, rgba(220,38,38,0.95) 0%, rgba(239,68,68,1) 50%, rgba(220,38,38,0.95) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .coach-alarm-stripe::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(45deg, transparent 0, transparent 18px, rgba(0,0,0,0.12) 18px, rgba(0,0,0,0.12) 36px);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .coach-float, .coach-ring-1, .coach-ring-2, .coach-ring-3,
+    .coach-sparkle, .coach-red-pulse {
+      animation: none !important;
+    }
+  }
+</style>
+
+<!-- =====================================================
+     HERO — alarm eyebrow + headline + mascot + CTAs
+     ===================================================== -->
+<section class="bg-otp-950 relative overflow-hidden pt-28 pb-12 sm:pt-32 sm:pb-16">
+  <!-- subtle grid backdrop -->
+  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
+
+  <!-- ambient red glow -->
+  <div class="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full opacity-50 blur-3xl" style="background: radial-gradient(circle, rgba(239,68,68,0.18), transparent 60%);"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 sm:px-8 text-center">
+    <!-- Red alarm eyebrow -->
+    <div class="mb-6 flex justify-center">
+      <div class="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white" style="background: linear-gradient(90deg, rgba(220,38,38,0.95), rgba(239,68,68,1) 50%, rgba(220,38,38,0.95)); box-shadow: 0 0 0 1px rgba(239,68,68,0.5), 0 8px 24px -6px rgba(239,68,68,0.55);">
+        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243a3 3 0 014.243 0l7.65 7.65a3 3 0 010 4.244l-3.408 3.408a3 3 0 01-4.243 0l-7.65-7.65a3 3 0 010-4.243l3.408-3.409zM12 8v4m0 4h.01"/></svg>
+        <span>For coaches, consultants &amp; operators with clients</span>
+      </div>
+    </div>
+
+    <h1 class="font-extrabold leading-[0.95] tracking-tight text-white" style="font-size: clamp(2.5rem, 6vw, 4.75rem);">
+      <span class="block">Stop watching your clients</span>
+      <span class="mt-1 block coach-gradient-red">bolt AI on broken systems.</span>
+    </h1>
+
+    <p class="mx-auto mt-5 max-w-2xl text-base sm:text-lg leading-relaxed text-gray-300">
+      OTP is the operating protocol your clients run on &mdash; and the one their AI plugs into.
+      <span class="font-semibold text-white">Your playbook defines the protocol.</span>
+      One operating layer per client. An infrastructure of learning across your whole book.
+    </p>
+
+    <!-- Mascot with sparkles -->
+    <div class="relative mx-auto mt-10 flex w-full items-center justify-center md:mt-12">
+      <!-- Sparkles (inner ring) -->
+      <% const sparkles = [
+        { pos: 'left:8%; top:12%;', size: 28, color: '#ef4444', delay: 0.5 },
+        { pos: 'right:6%; top:8%;', size: 22, color: '#0095ff', delay: 0.9 },
+        { pos: 'left:14%; top:42%;', size: 18, color: '#0095ff', delay: 1.4 },
+        { pos: 'right:12%; top:36%;', size: 26, color: '#ef4444', delay: 1.8 },
+        { pos: 'left:4%; bottom:18%;', size: 20, color: '#d4ad32', delay: 2.2 },
+        { pos: 'right:4%; bottom:14%;', size: 24, color: '#0095ff', delay: 2.6 },
+        { pos: 'left:24%; top:2%;', size: 14, color: '#d4ad32', delay: 3.0 },
+        { pos: 'right:24%; bottom:2%;', size: 16, color: '#ef4444', delay: 3.4 },
+        { pos: 'left:-2%; top:28%;', size: 12, color: '#0095ff', delay: 0.2 },
+        { pos: 'right:-2%; top:20%;', size: 14, color: '#d4ad32', delay: 1.1 },
+        { pos: 'left:18%; bottom:6%;', size: 12, color: '#ef4444', delay: 1.6 },
+        { pos: 'right:18%; top:18%;', size: 16, color: '#0095ff', delay: 2.0 },
+        { pos: 'left:36%; top:-2%;', size: 18, color: '#ef4444', delay: 2.4 },
+        { pos: 'right:36%; top:-2%;', size: 14, color: '#0095ff', delay: 2.8 },
+        { pos: 'left:42%; bottom:-1%;', size: 20, color: '#d4ad32', delay: 3.2 },
+        { pos: 'right:42%; bottom:-1%;', size: 16, color: '#0095ff', delay: 3.6 },
+        { pos: 'left:30%; top:28%;', size: 10, color: '#d4ad32', delay: 0.7 },
+        { pos: 'right:30%; top:52%;', size: 10, color: '#0095ff', delay: 1.3 },
+        { pos: 'left:38%; bottom:20%;', size: 12, color: '#ef4444', delay: 2.1 },
+        { pos: 'right:38%; bottom:28%;', size: 10, color: '#d4ad32', delay: 3.1 },
+      ]; %>
+      <% sparkles.forEach(s => { %>
+        <div class="pointer-events-none absolute coach-sparkle z-20" style="<%= s.pos %> animation-delay: <%= s.delay %>s; filter: drop-shadow(0 0 8px <%= s.color %>aa) drop-shadow(0 0 16px <%= s.color %>66);">
+          <svg width="<%= s.size %>" height="<%= s.size %>" viewBox="0 0 24 24" fill="<%= s.color %>" stroke="<%= s.color %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+            <path d="M20 3v4"/>
+            <path d="M22 5h-4"/>
+            <path d="M4 17v2"/>
+            <path d="M5 18H3"/>
+          </svg>
+        </div>
+      <% }); %>
+
+      <!-- Mascot -->
+      <div class="relative z-10 coach-float" style="filter: drop-shadow(0 32px 56px rgba(0,0,0,0.6)) drop-shadow(0 0 32px rgba(239,68,68,0.3));">
+        <img src="/public/images/coach-mascot.png" alt="OTP mascot. Half human in a red coach jersey with whistle and football, half AI circuit board with headset and playbook. One being. Two halves. Same playbook." class="h-auto w-[320px] sm:w-[460px] md:w-[560px]" />
+      </div>
+    </div>
+
+    <!-- CTAs -->
+    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <a href="https://calendly.com/davidsteel/performance-call" target="_blank" rel="noopener noreferrer" class="coach-red-pulse group inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-white transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span>Book a 15-minute call</span>
+        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+      <a href="#how" class="inline-flex items-center gap-2 rounded-xl border border-otp-500/40 bg-white/5 px-6 py-3.5 text-base font-medium text-otp-300 backdrop-blur transition-all duration-200 hover:border-otp-400 hover:bg-white/10">See how it works</a>
+    </div>
+
+    <p class="mt-8 text-[11px] uppercase tracking-[0.25em] text-gray-500">
+      <span class="font-semibold text-red-400">Your Playbook</span> &middot;
+      <span class="text-white">Your Clients</span> &middot;
+      <span class="text-otp-400">One Protocol</span>
+    </p>
+  </div>
+</section>
+
+<!-- =====================================================
+     RED ALARM STRIP — full-bleed
+     ===================================================== -->
+<div class="coach-alarm-stripe relative py-2.5">
+  <p class="relative z-10 text-center font-semibold uppercase tracking-[0.3em] text-white text-xs sm:text-sm">
+    <span aria-hidden>☠</span>
+    <span class="mx-3">Your clients are standing in the AI budget bonfire</span>
+    <span aria-hidden>☠</span>
+  </p>
+</div>
+
+<!-- =====================================================
+     PROBLEM — overlay vs integrated + 95% billboard
+     ===================================================== -->
+<section class="bg-otp-950 relative py-16 sm:py-24">
+  <div class="mx-auto max-w-6xl px-6 sm:px-8">
+    <div class="mx-auto mb-12 max-w-2xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-red-400">The problem</p>
+      <h2 class="mt-4 text-4xl sm:text-5xl font-bold tracking-tight text-white">
+        Your clients didn't fail at AI.<br class="hidden sm:inline" />
+        <span class="coach-gradient-red">They overlayed it.</span>
+      </h2>
+      <p class="mt-5 text-lg text-gray-300">
+        When your client says <span class="font-medium text-white">"I tried ChatGPT, it didn't help"</span> &mdash; that's not slow adoption. That's intelligence bolted onto a broken operating model. You can't coach them out of it. You have to change the layer.
+      </p>
+    </div>
+
+    <!-- 95% billboard -->
+    <div class="relative mx-auto mb-16 max-w-5xl overflow-hidden rounded-3xl" style="background: linear-gradient(135deg, rgba(127,12,12,0.85) 0%, rgba(185,28,28,0.75) 50%, rgba(127,12,12,0.85) 100%); border: 1px solid rgba(239,68,68,0.55); box-shadow: 0 24px 60px -20px rgba(239,68,68,0.55), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 80px -10px rgba(239,68,68,0.35);">
+      <div class="coach-hazard-stripe pointer-events-none absolute inset-x-0 top-0 h-3 opacity-70"></div>
+      <div class="coach-hazard-stripe pointer-events-none absolute inset-x-0 bottom-0 h-3 opacity-70"></div>
+
+      <div class="relative z-10 px-8 py-14 text-center sm:py-20">
+        <p class="text-xs font-bold uppercase tracking-[0.4em] text-red-200/90">MIT 2025 &middot; The GenAI Divide</p>
+        <div class="mt-4 font-extrabold leading-none tracking-tighter text-white" style="font-size: clamp(7rem, 22vw, 18rem); text-shadow: 0 0 40px rgba(255,200,200,0.5), 0 0 80px rgba(239,68,68,0.7), 0 8px 24px rgba(0,0,0,0.6);">
+          95%
+        </div>
+        <p class="mt-2 text-2xl sm:text-4xl font-bold tracking-tight text-white">
+          of enterprise AI pilots <span class="text-red-200">fail.</span>
+        </p>
+        <p class="mx-auto mt-8 max-w-xl text-base sm:text-lg leading-relaxed text-red-100/90">
+          Not because the AI is bad. Because it's overlaid
+          <span class="font-bold text-white">on</span> the org instead of integrated
+          <span class="font-bold text-white">into</span> it.
+        </p>
+        <div class="mx-auto mt-7 h-px w-16 bg-red-200/35"></div>
+        <p class="mx-auto mt-6 max-w-xl text-base sm:text-lg font-semibold italic leading-relaxed text-white">
+          Your clients are sitting in that 95% &mdash; unless you change the layer.
+        </p>
+        <p class="mt-8 text-[10px] uppercase tracking-[0.28em] text-red-100/55">
+          Source:
+          <a href="https://mlq.ai/media/quarterly_decks/v0.1_State_of_AI_in_Business_2025_Report.pdf" target="_blank" rel="noopener noreferrer" class="underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
+            MIT NANDA &middot; The GenAI Divide &middot; State of AI in Business 2025
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Two cards: Overlay vs Integrated -->
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div class="relative overflow-hidden rounded-2xl p-7" style="background: linear-gradient(135deg, rgba(127,12,12,0.35) 0%, rgba(6,10,20,0.85) 100%); border: 1px solid rgba(239,68,68,0.4); box-shadow: 0 8px 32px -12px rgba(239,68,68,0.35), inset 0 1px 0 rgba(255,255,255,0.05);">
+        <div class="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-red-500/25">
+          <svg class="h-5 w-5 text-red-300" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </div>
+        <p class="text-xs font-bold uppercase tracking-[0.25em] text-red-300">What your clients are doing now</p>
+        <h3 class="mt-2 text-2xl font-bold text-white">The overlay</h3>
+        <ul class="mt-5 space-y-3 text-sm sm:text-base text-gray-300">
+          <li>ChatGPT licenses they pay for and nobody opens.</li>
+          <li>A Copilot sitting on top of a process their team doesn't follow.</li>
+          <li>Agents wired to workflows the org already ignores.</li>
+          <li>Your playbook in a binder. Their AI on a tab. Nothing talks to each other.</li>
+        </ul>
+      </div>
+
+      <div class="relative overflow-hidden rounded-2xl p-7" style="background: linear-gradient(135deg, rgba(0,149,255,0.10), rgba(77,184,255,0.04)); backdrop-filter: blur(16px) saturate(1.4); border: 1px solid rgba(0,149,255,0.25); box-shadow: 0 8px 32px -12px rgba(0,149,255,0.35), inset 0 1px 0 rgba(255,255,255,0.05);">
+        <div class="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-otp-500/25">
+          <svg class="h-5 w-5 text-otp-300" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <p class="text-xs font-bold uppercase tracking-[0.25em] text-otp-400">What changes when you bring the protocol</p>
+        <h3 class="mt-2 text-2xl font-bold text-white">The integration</h3>
+        <ul class="mt-5 space-y-3 text-sm sm:text-base text-gray-300">
+          <li>Your methodology defines the operating layer at every client.</li>
+          <li>Their team and their AI plug into the same protocol &mdash; yours.</li>
+          <li>L10s, scorecards, issues, to-dos &mdash; one operating layer, end to end.</li>
+          <li>You stop being the deck. You become the system the org runs on.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     WEDGE — two kinds of advisors, the window is closing
+     ===================================================== -->
+<section class="bg-otp-950 relative py-16 sm:py-24">
+  <div class="mx-auto max-w-6xl px-6 sm:px-8">
+    <div class="mx-auto mb-14 max-w-3xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-red-400">The window is closing</p>
+      <h2 class="mt-4 text-4xl sm:text-5xl font-bold tracking-tight text-white">
+        Two kinds of advisors right now.<br class="hidden sm:inline" />
+        <span class="coach-gradient-red">The gap is widening every week.</span>
+      </h2>
+      <p class="mt-5 text-lg text-gray-300">
+        One kind walks into client meetings with frameworks in a binder and watches the client burn budget on AI tools that don't stick. The other walks in with the operating protocol their humans and their AI both run on. In 18 months your clients will know which kind you are &mdash; by results.
+      </p>
+    </div>
+
+    <!-- Threat quote -->
+    <blockquote class="relative mx-auto mb-14 max-w-4xl overflow-hidden rounded-3xl" style="background: linear-gradient(135deg, rgba(127,12,12,0.65) 0%, rgba(40,12,12,0.85) 50%, rgba(127,12,12,0.65) 100%); border: 1px solid rgba(239,68,68,0.45); border-left: 4px solid #ef4444; box-shadow: 0 24px 60px -20px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 80px -10px rgba(239,68,68,0.25);">
+      <div class="coach-hazard-stripe pointer-events-none absolute inset-x-0 top-0 h-2 opacity-60"></div>
+      <div class="relative z-10 px-8 py-12 sm:px-12 sm:py-16">
+        <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-500/25">
+          <svg class="h-6 w-6 text-red-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <p class="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-white">
+          "Every dollar your clients spend on AI without an operating protocol is a dollar that goes to someone else's protocol next quarter."
+        </p>
+        <p class="mt-5 text-base sm:text-lg text-red-100/85">
+          The advisors who bring the protocol layer first own the next decade of client relationships. The ones still presenting decks won't catch up. <span class="font-semibold text-white">You don't get this window back.</span>
+        </p>
+      </div>
+    </blockquote>
+
+    <!-- Three cards -->
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <!-- Red card -->
+      <div class="relative overflow-hidden rounded-2xl p-7" style="background: linear-gradient(135deg, rgba(127,12,12,0.45) 0%, rgba(6,10,20,0.85) 100%); border: 1px solid rgba(239,68,68,0.5); box-shadow: 0 8px 32px -12px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.05);">
+        <div class="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-red-500/25">
+          <svg class="h-5 w-5 text-red-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.24 17 7.317 17.79 9.135 18.5 11 18.5 13a7.97 7.97 0 01-.843 5.657z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/></svg>
+        </div>
+        <p class="text-xs font-bold uppercase tracking-[0.22em] text-red-300">The binder advisor</p>
+        <h3 class="mt-2 text-xl font-bold text-white">Slides. Frameworks. Monthly calls.</h3>
+        <p class="mt-4 text-sm sm:text-base leading-relaxed text-gray-300">
+          Shows up with the same deck. Watches the client buy AI tools that gather dust. Gets quietly replaced when a sharper operator walks in with the system the client's team actually adopts.
+        </p>
+      </div>
+
+      <!-- Pop card 1 -->
+      <div class="relative overflow-hidden rounded-2xl p-7" style="background: linear-gradient(135deg, rgba(0,149,255,0.12), rgba(77,184,255,0.05)); backdrop-filter: blur(16px) saturate(1.4); border: 1px solid rgba(0,149,255,0.3); box-shadow: 0 8px 32px -12px rgba(0,149,255,0.4), inset 0 1px 0 rgba(255,255,255,0.05);">
+        <div class="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-otp-500/25">
+          <svg class="h-5 w-5 text-otp-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/></svg>
+        </div>
+        <p class="text-xs font-bold uppercase tracking-[0.22em] text-otp-400">The protocol advisor</p>
+        <h3 class="mt-2 text-xl font-bold text-white">Your playbook, embedded.</h3>
+        <p class="mt-4 text-sm sm:text-base leading-relaxed text-gray-300">
+          Clients run your methodology every day &mdash; humans and AI on the same operating layer. You stop being the meeting facilitator. You become the system architect of how their company runs.
+        </p>
+      </div>
+
+      <!-- Pop card 2 -->
+      <div class="relative overflow-hidden rounded-2xl p-7" style="background: linear-gradient(135deg, rgba(0,149,255,0.08), rgba(77,184,255,0.03)); backdrop-filter: blur(14px) saturate(1.3); border: 1px solid rgba(0,149,255,0.22); box-shadow: 0 8px 32px -12px rgba(0,149,255,0.3), inset 0 1px 0 rgba(255,255,255,0.05);">
+        <div class="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-otp-500/20">
+          <svg class="h-5 w-5 text-otp-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        </div>
+        <p class="text-xs font-bold uppercase tracking-[0.22em] text-otp-400">The compounding gap</p>
+        <h3 class="mt-2 text-xl font-bold text-white">Every client makes you sharper.</h3>
+        <p class="mt-4 text-sm sm:text-base leading-relaxed text-gray-300">
+          Each client's outcomes feed back into your playbook. The next client gets a smarter version of you. Your IP gets better while you sleep. The book of business stops trading time for money.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     HOW IT WORKS — 4 steps + infrastructure of learning
+     ===================================================== -->
+<section id="how" class="bg-otp-950 relative py-16 sm:py-24">
+  <div class="mx-auto max-w-6xl px-6 sm:px-8">
+    <div class="mx-auto mb-14 max-w-4xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-otp-400">How it works</p>
+      <h2 class="mt-4 text-3xl sm:text-5xl font-bold tracking-tight text-white">
+        <span class="block md:whitespace-nowrap">Your Playbook. Your Clients.</span>
+        <span class="mt-1 block coach-gradient-otp">One Protocol.</span>
+      </h2>
+      <p class="mt-5 text-lg text-gray-300">
+        OTP doesn't replace the coach, the consultant, or the operator. It puts everyone on the same page &mdash; literally and structurally &mdash; and lets the whole book of business get smarter together.
+      </p>
+    </div>
+
+    <div class="space-y-10 md:space-y-12">
+      <% const steps = [
+        { n: '01', title: 'Bring your playbook.', body: "Your methodology. Your frameworks. The cadence, the meetings, the scorecards, the way you guide a client to actually run their business — your way. You don't bend your playbook to fit a tool. OTP meets it where it lives." },
+        { n: '02', title: 'Humans and AI plug into the same protocol.', body: 'Inside every client engagement, their team works in OTP. Your AI agents work in OTP. Same data, same context, same playbook — yours. Not a chatbot in another tab. Not a copilot stitched to a vendor\'s roadmap. One operating layer, end to end.' },
+        { n: '03', title: 'The client runs your playbook every day.', body: 'L10s prep themselves. Scorecards update automatically. Issues surface and get worked. Your IP is in their daily operations — with or without you on the call. You become the strategic relationship, not the meeting facilitator.' },
+        { n: '04', title: 'Every client makes every other client smarter.', body: "When Client A solves a problem, Client B's OTP learns from it. Patterns surface across your portfolio. Best practices flow up. Your playbook isn't static — it gets sharper every quarter. You build an infrastructure of learning that compounds across your whole book of business. Nobody else can offer this. Not a binder. Not a coach. Only the protocol." },
+      ]; %>
+      <% steps.forEach(s => { %>
+        <div class="relative grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 md:gap-10 rounded-2xl p-7 md:p-10" style="background: rgba(255,255,255,0.03); backdrop-filter: blur(14px) saturate(1.3); border: 1px solid rgba(255,255,255,0.08);">
+          <div class="flex items-start gap-4 md:flex-col md:items-center md:gap-3">
+            <span class="font-extrabold leading-none coach-gradient-otp" style="font-size: clamp(3rem, 6vw, 4rem);"><%= s.n %></span>
+            <span class="flex h-12 w-12 items-center justify-center rounded-full bg-otp-500/15">
+              <svg class="h-5 w-5 text-otp-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg>
+            </span>
+          </div>
+          <div>
+            <h3 class="text-2xl sm:text-3xl font-bold text-white"><%= s.title %></h3>
+            <p class="mt-3 text-base sm:text-lg leading-relaxed text-gray-300"><%= s.body %></p>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- The kicker -->
+    <div class="mx-auto mt-14 max-w-3xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.3em] text-otp-400">The thing nobody else has</p>
+      <p class="mt-3 text-xl sm:text-2xl font-semibold leading-snug text-white">
+        An infrastructure of learning. Every client makes every other client better. Your playbook compounds.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     CTA — book a call
+     ===================================================== -->
+<section id="book" class="bg-otp-950 relative overflow-hidden py-16 sm:py-24">
+  <div class="pointer-events-none absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(239,68,68,0.18), transparent 70%), radial-gradient(ellipse 60% 50% at 50% 100%, rgba(0,149,255,0.10), transparent 70%);"></div>
+
+  <div class="relative z-10 mx-auto max-w-3xl px-6 sm:px-8 text-center">
+    <!-- Red urgency badge -->
+    <div class="mb-6 flex justify-center">
+      <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white" style="background: linear-gradient(90deg, rgba(220,38,38,0.95), rgba(239,68,68,1), rgba(220,38,38,0.95)); box-shadow: 0 0 0 1px rgba(239,68,68,0.5), 0 8px 24px -6px rgba(239,68,68,0.55), 0 0 32px -4px rgba(239,68,68,0.4);">
+        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243a3 3 0 014.243 0l7.65 7.65a3 3 0 010 4.244l-3.408 3.408a3 3 0 01-4.243 0l-7.65-7.65a3 3 0 010-4.243l3.408-3.409zM12 8v4m0 4h.01"/></svg>
+        The clock is ticking
+      </div>
+    </div>
+
+    <div class="coach-float mx-auto mb-8 flex h-48 w-48 sm:h-56 sm:w-56 items-center justify-center" style="filter: drop-shadow(0 24px 40px rgba(0,0,0,0.55)) drop-shadow(0 0 28px rgba(239,68,68,0.55));">
+      <img src="/public/images/coach-mascot.png" alt="" class="h-auto w-full" />
+    </div>
+
+    <h2 class="text-4xl sm:text-5xl font-bold tracking-tight text-white">
+      15 minutes.<br class="hidden sm:inline" />
+      <span class="coach-gradient-red">Or watch the next operator win your client.</span>
+    </h2>
+    <p class="mx-auto mt-6 max-w-2xl text-lg sm:text-xl text-gray-300">
+      If you have a methodology, a book of clients, and an instinct that AI is about to remake who they keep on retainer &mdash; this conversation pays for itself. If we're not a fit, you walk away with a sharper read on where AI is headed for advisory businesses in the next 18 months.
+      <span class="font-semibold text-white">Either way you win. Doing nothing has a price.</span>
+    </p>
+
+    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <a href="https://calendly.com/davidsteel/performance-call" target="_blank" rel="noopener noreferrer" class="coach-red-pulse group inline-flex items-center gap-2 rounded-xl px-10 py-5 text-lg font-bold text-white transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span>Pick a time</span>
+        <svg class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+    </div>
+
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-400">
+      <span class="inline-flex items-center gap-1.5">
+        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
+        15 minutes
+      </span>
+      <span>&middot;</span>
+      <span>No deck. No pitch.</span>
+      <span>&middot;</span>
+      <span>Direct with David Steel</span>
+    </div>
+  </div>
+</section>

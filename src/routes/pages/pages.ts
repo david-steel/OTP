@@ -346,6 +346,24 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Coach landing -- conversion page for coaches, consultants, advisors with clients
+  app.get('/coach', async (request, reply) => {
+    return reply.view('pages/coach', {
+      title: 'OTP for Coaches, Consultants & Operators - Your Playbook. Your Clients. One Protocol.',
+      description: 'MIT 2025: 95% of enterprise AI pilots fail. Not because the AI is bad - because it is overlaid on the org instead of integrated into it. OTP is the operating protocol your clients run on, with your playbook defining the layer. An infrastructure of learning across your whole book of business.',
+      canonical: BASE_URL + '/coach',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'For Coaches', url: BASE_URL + '/coach' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'OTP for Coaches, Consultants & Operators',
+        description: 'Your playbook defines the protocol. One operating layer per client. An infrastructure of learning across your whole book of business.',
+        url: BASE_URL + '/coach',
+      },
+    });
+  });
+
   // Protocol page (the canonical "OTP is a protocol, not a service" page)
   app.get('/protocol', async (request, reply) => {
     return reply.view('pages/protocol', {
