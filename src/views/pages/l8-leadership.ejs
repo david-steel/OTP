@@ -183,8 +183,8 @@
           <input id="new-rock-title" type="text" placeholder="Priority title (e.g. 'Move to Trello -- full Accelo decommission')" class="col-span-12 border rounded p-2 text-sm">
           <select id="new-rock-owner" class="col-span-5 border rounded p-2 text-sm">
             <option value="">-- owner --</option>
-            <% (meeting.attendees || []).forEach(function(a) { %>
-              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+            <% (availableOwners || []).forEach(function(a) { %>
+              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
             <% }); %>
           </select>
           <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-3 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
@@ -233,8 +233,8 @@
       <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="flex-1 border rounded p-2 text-sm">
       <select id="new-todo-owner" class="border rounded p-2 text-sm w-48">
         <option value="">-- assign owner --</option>
-        <% (meeting.attendees || []).forEach(function(a) { %>
-          <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+        <% (availableOwners || []).forEach(function(a) { %>
+          <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
         <% }); %>
       </select>
       <button id="add-todo" class="px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">Add</button>
@@ -289,8 +289,8 @@
             <textarea data-field="description" class="w-full border rounded p-2 text-sm h-20 mb-2" placeholder="Description"><%= i.description || '' %></textarea>
             <select data-field="owner" class="border rounded p-2 text-sm">
               <option value="">-- assign issue owner --</option>
-              <% (meeting.attendees || []).forEach(function(a) { %>
-                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>" <%= (i.ownerExternalId === a.externalId) ? 'selected' : '' %>><%= a.name || a.externalId %></option>
+              <% (availableOwners || []).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>" <%= (i.ownerExternalId === a.externalId) ? 'selected' : '' %>><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
               <% }); %>
             </select>
             <div class="flex gap-2 mt-2">
@@ -310,8 +310,8 @@
               <input data-field="followup-title" type="text" placeholder="Follow-up to-do title (defaults to issue title)" class="w-full border rounded p-2 text-sm">
               <select data-field="followup-owner" class="border rounded p-2 text-sm w-full">
                 <option value="">-- to-do owner (required to create follow-up) --</option>
-                <% (meeting.attendees || []).forEach(function(a) { %>
-                  <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+                <% (availableOwners || []).forEach(function(a) { %>
+                  <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
                 <% }); %>
               </select>
             </div>
@@ -327,8 +327,8 @@
             <input data-field="convert-title" type="text" value="<%= i.title %>" class="w-full border rounded p-2 text-sm mb-2">
             <select data-field="convert-owner" class="border rounded p-2 text-sm w-full mb-2">
               <option value="">-- to-do owner --</option>
-              <% (meeting.attendees || []).forEach(function(a) { %>
-                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+              <% (availableOwners || []).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
               <% }); %>
             </select>
             <label class="flex items-center gap-2 text-xs mb-2">
@@ -362,8 +362,8 @@
           </select>
           <select id="new-issue-owner" class="col-span-8 border rounded p-2 text-sm">
             <option value="">-- owner (optional, can assign later) --</option>
-            <% (meeting.attendees || []).forEach(function(a) { %>
-              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+            <% (availableOwners || []).forEach(function(a) { %>
+              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
             <% }); %>
           </select>
         </div>

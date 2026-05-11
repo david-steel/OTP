@@ -4077,6 +4077,35 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .orderBy(desc(todos.createdAt))
       .limit(50);
 
+    // Build the full roster for owner dropdowns. The template was previously
+    // restricting owner selection to meeting.attendees, which excluded the
+    // meeting creator (David ran the L10 but never added himself as an
+    // attendee) and made it impossible to assign to-dos to people outside
+    // the room (delegating to a Crystal/Pulse/etc. that isn't there).
+    //
+    // availableOwners = every human + every agent in the org's primary
+    // chart, with isAttendee flag for the UI to badge the in-room subset.
+    const { getOrgTeamGraph } = await import('../../services/team-graph.js');
+    const teamGraph = await getOrgTeamGraph(org.id, org.name);
+    const attendeeKeys = new Set<string>(
+      ((meeting.attendees || []) as Array<{ entityType: string; externalId: string }>)
+        .map((a) => `${a.entityType}:${a.externalId}`)
+    );
+    const availableOwners = teamGraph.nodes
+      .filter((n) => n.type === 'agent' || n.type === 'human')
+      .map((n) => ({
+        entityType: n.type,
+        externalId: n.externalId,
+        name: n.label,
+        isAttendee: attendeeKeys.has(`${n.type}:${n.externalId}`),
+      }))
+      .sort((a, b) => {
+        // Humans first, then agents; in-room first within each group.
+        if (a.entityType !== b.entityType) return a.entityType === 'human' ? -1 : 1;
+        if (a.isAttendee !== b.isAttendee) return a.isAttendee ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
     // Carry the dev orgId through so client-side fetches keep the same auth context locally.
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
 
@@ -4091,6 +4120,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       rocks: rocksData,
       issues: orgIssues,
       todos: orgTodos,
+      availableOwners,
       devOrgIdParam,
     });
   });
