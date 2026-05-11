@@ -2171,6 +2171,56 @@ export default async function pageRoutes(app: FastifyInstance) {
       }
     }
 
+    // tileTeamsMap: externalId -> [{ teamId, teamName, roleOnTeam }]
+    // For each human/agent tile, list the teams it's on so the chart edit
+    // panel can render team chips. Walks every claim path: claimedEntityId
+    // direct hit, claimedEntityIds array, plus chart-stub members
+    // (clerk_user_id LIKE 'chart:<externalId>') that the team-picker
+    // auto-created.
+    const tileTeamsMap: Record<string, Array<{ teamId: string; teamName: string; roleOnTeam: string }>> = {};
+    {
+      const tmRows = await db
+        .select({
+          memberId: orgMembers.id,
+          clerkUserId: orgMembers.clerkUserId,
+          claimedEntityId: orgMembers.claimedEntityId,
+          claimedEntityIds: orgMembers.claimedEntityIds,
+          teamId: teamMemberships.teamId,
+          teamName: teams.name,
+          roleOnTeam: teamMemberships.roleOnTeam,
+        })
+        .from(teamMemberships)
+        .innerJoin(orgMembers, eq(orgMembers.id, teamMemberships.memberId))
+        .innerJoin(teams, eq(teams.id, teamMemberships.teamId))
+        .where(eq(orgMembers.orgId, org.id));
+      for (const row of tmRows) {
+        const externalIds = new Set<string>();
+        if (row.claimedEntityId) externalIds.add(row.claimedEntityId);
+        const ids = (row.claimedEntityIds as unknown) as string[] | null;
+        if (Array.isArray(ids)) for (const id of ids) externalIds.add(id);
+        // Stub member created by the team-picker: clerk_user_id = 'chart:<EXT>'
+        if (row.clerkUserId?.startsWith('chart:')) {
+          externalIds.add(row.clerkUserId.slice('chart:'.length));
+        }
+        for (const ext of externalIds) {
+          if (!tileTeamsMap[ext]) tileTeamsMap[ext] = [];
+          // Dedupe (claimedEntityId + claimedEntityIds can overlap).
+          if (!tileTeamsMap[ext].find(t => t.teamId === row.teamId)) {
+            tileTeamsMap[ext].push({ teamId: row.teamId, teamName: row.teamName, roleOnTeam: row.roleOnTeam });
+          }
+        }
+      }
+    }
+
+    // pendingInviteByTile: externalId -> { email } so the chart edit panel
+    // can show 'invite sent' instead of an active Invite button.
+    const pendingInviteByTile: Record<string, { email: string }> = {};
+    for (const inv of pendingInvites) {
+      if (inv.claimedEntityId) {
+        pendingInviteByTile[inv.claimedEntityId] = { email: inv.email };
+      }
+    }
+
     // Phase 3: gated edit. Compute the set of tile externalIds the current
     // viewer is allowed to edit. The whole chart stays visible to everyone;
     // edit affordances (button states, drag handles) are gated client-side
@@ -2206,6 +2256,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       sopTemplateGroups: SOP_TEMPLATE_GROUPS,
       skillsCatalog: SKILLS_CATALOG,
       claimedTileMap,
+      tileTeamsMap,
+      pendingInviteByTile,
       pendingInvites,
       memberCount: members.length,
       comparisonPairs: computeAgentComparisonPairs(team.nodes),

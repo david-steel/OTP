@@ -573,6 +573,30 @@
       <div id="ef-meetings-loading" style="font-size:0.7rem; color:#9ca3af;">Loading meetings...</div>
     </div>
 
+    <!-- Teams & access (existing-node only; populated by JS on open) -->
+    <div id="ef-teams-block" style="display:none; margin-bottom: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid #f3f4f6;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#374151; font-weight:600;">Teams &amp; Access</div>
+        <a href="/dashboard/teams" style="font-size:0.7rem; color:#6b7280; text-decoration:none;" title="Manage teams">manage →</a>
+      </div>
+      <div id="ef-teams-chips" style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.6rem;"></div>
+      <div id="ef-teams-empty" style="display:none; font-size:0.72rem; color:#9ca3af; font-style:italic; margin-bottom:0.5rem;">
+        Not on any team yet.
+      </div>
+      <div id="ef-invite-row" style="display:none;">
+        <button type="button" id="ef-invite-btn" onclick="inviteFromTile()"
+          style="width:100%; padding:0.45rem 0.65rem; background:#10b981; color:#fff; border:none; border-radius:0.4rem; font-size:0.75rem; font-weight:600; cursor:pointer;">
+          ✉️ Invite to OTP
+        </button>
+        <div id="ef-invite-pending" style="display:none; font-size:0.7rem; color:#92400e; background:#fef3c7; border:1px solid #fde68a; border-radius:0.4rem; padding:0.45rem 0.65rem;">
+          Invite pending: <span id="ef-invite-pending-email"></span>
+        </div>
+        <div id="ef-invite-claimed" style="display:none; font-size:0.7rem; color:#065f46; background:#d1fae5; border:1px solid #6ee7b7; border-radius:0.4rem; padding:0.45rem 0.65rem;">
+          ✓ Already claimed by an OTP member.
+        </div>
+      </div>
+    </div>
+
     <!-- Slash commands (existing-node only; populated by JS on open) -->
     <div id="ef-commands-block" style="display:none; margin-bottom: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid #f3f4f6;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
@@ -768,6 +792,8 @@
     var nodes = <%- JSON.stringify(teamNodes) %>;
     var edges = <%- JSON.stringify(teamEdges) %>;
     var claimedTileMap = <%- JSON.stringify(typeof claimedTileMap !== 'undefined' ? claimedTileMap : {}) %>;
+    var tileTeamsMap = <%- JSON.stringify(typeof tileTeamsMap !== 'undefined' ? tileTeamsMap : {}) %>;
+    var pendingInviteByTile = <%- JSON.stringify(typeof pendingInviteByTile !== 'undefined' ? pendingInviteByTile : {}) %>;
     var viewerRole = <%- JSON.stringify(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
     var viewerClaimedEntityId = <%- JSON.stringify(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
     var viewerClaimedEntityIds = <%- JSON.stringify(typeof viewerClaimedEntityIds !== 'undefined' ? viewerClaimedEntityIds : []) %>;
@@ -1645,6 +1671,96 @@
       }).join('');
     }
 
+    // Track the currently-open tile so inviteFromTile() can pre-fill the
+    // invite modal with the right external_id + name.
+    var currentTile = null;
+
+    function populateTeamsBlock(d) {
+      var block = document.getElementById('ef-teams-block');
+      if (!block) return;
+      currentTile = d;
+      // Org tile + brand-new (un-saved) tiles can't be on a team yet.
+      var hasExternal = d && d.externalId && d.type !== 'organization';
+      if (!hasExternal) {
+        block.style.display = 'none';
+        return;
+      }
+      block.style.display = '';
+
+      // Team chips (de-dup by teamId).
+      var chipsEl = document.getElementById('ef-teams-chips');
+      var emptyEl = document.getElementById('ef-teams-empty');
+      var teams = (tileTeamsMap && tileTeamsMap[d.externalId]) || [];
+      chipsEl.innerHTML = '';
+      if (teams.length === 0) {
+        emptyEl.style.display = '';
+      } else {
+        emptyEl.style.display = 'none';
+        teams.forEach(function(t) {
+          var chip = document.createElement('a');
+          chip.href = '/dashboard/teams';
+          chip.title = 'Manage team in /dashboard/teams';
+          chip.textContent = t.teamName + (t.roleOnTeam === 'leader' ? ' (leader)' : '');
+          chip.style.cssText = 'display:inline-flex; align-items:center; padding:0.2rem 0.55rem; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:9999px; font-size:0.7rem; text-decoration:none; font-weight:500;';
+          chipsEl.appendChild(chip);
+        });
+      }
+
+      // Invite row: only for human tiles that aren't already claimed.
+      var inviteRow = document.getElementById('ef-invite-row');
+      var inviteBtn = document.getElementById('ef-invite-btn');
+      var pendingEl = document.getElementById('ef-invite-pending');
+      var pendingEmailEl = document.getElementById('ef-invite-pending-email');
+      var claimedEl = document.getElementById('ef-invite-claimed');
+      var canInvite = (viewerRole === 'owner' || viewerRole === 'admin') && d.type === 'human';
+      if (!canInvite) {
+        inviteRow.style.display = 'none';
+        return;
+      }
+      inviteRow.style.display = '';
+      var claimed = claimedTileMap && claimedTileMap[d.externalId];
+      var pending = pendingInviteByTile && pendingInviteByTile[d.externalId];
+      inviteBtn.style.display = 'none';
+      pendingEl.style.display = 'none';
+      claimedEl.style.display = 'none';
+      if (claimed) {
+        claimedEl.style.display = '';
+      } else if (pending) {
+        pendingEmailEl.textContent = pending.email;
+        pendingEl.style.display = '';
+      } else {
+        inviteBtn.style.display = '';
+      }
+    }
+
+    // Opens the existing "Invite a new member" modal pre-filled with the
+    // currently-open tile so the admin can send an invite in one click.
+    window.inviteFromTile = function() {
+      if (!currentTile) return;
+      // Pull the tile's contact email (filled by openEditPanel into ef-jobdesc etc;
+      // safest path is to re-read from the chart nodes data structure)
+      var match = nodes.find(function(n) { return n.id === currentTile.id; });
+      var props = match && match.properties ? match.properties : {};
+      var nameEl = document.getElementById('inv-new-name');
+      var emailEl = document.getElementById('inv-new-email');
+      var roleEl = document.getElementById('inv-new-role');
+      var reportsToEl = document.getElementById('inv-new-reportsto');
+      var claimsEl = document.getElementById('inv-new-claims');
+      var overlay = document.getElementById('invite-new-overlay');
+      var modal = document.getElementById('invite-new-modal');
+      if (nameEl) nameEl.value = currentTile.label || '';
+      if (emailEl) emailEl.value = (props.contactEmail || '');
+      if (roleEl) roleEl.value = (props.role || '');
+      // Pre-select claimed tile if the field exists.
+      if (claimsEl) {
+        Array.from(claimsEl.options || []).forEach(function(o) {
+          o.selected = (o.value === currentTile.externalId);
+        });
+      }
+      if (overlay) overlay.classList.add('open');
+      if (modal) modal.classList.add('open');
+    };
+
     async function loadMeetingsForEntity(externalId) {
       var block = document.getElementById('ef-meetings-block');
       if (!block) return;
@@ -2072,6 +2188,7 @@
       loadKpisForEntity(d.type, d.externalId);
       loadMeetingsForEntity(d.externalId);
       loadSlashCommands(d);
+      populateTeamsBlock(d);
       document.getElementById('ef-context-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-section').style.display = (d.type === 'agent' ? '' : 'none');
       document.getElementById('ef-runtime-body').value = (d.type === 'agent' ? (p.runtimeBody || '') : '');
