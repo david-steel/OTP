@@ -97,12 +97,16 @@
                 <% }); %>
               </optgroup>
               <% if (chartHumans && chartHumans.length > 0) { %>
-                <optgroup label="From org chart (will auto-create membership)">
-                  <% chartHumans.forEach(function(c) {
-                    // Skip if any member of THIS team already represents this externalId.
-                    const already = (t.members || []).some(function(x){ return false; }); // refined client-side
-                  %>
+                <optgroup label="Humans from org chart (will auto-create membership)">
+                  <% chartHumans.forEach(function(c) { %>
                     <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>"><%= c.label %><% if (c.role) { %> · <%= c.role %><% } %></option>
+                  <% }); %>
+                </optgroup>
+              <% } %>
+              <% if (chartAgents && chartAgents.length > 0) { %>
+                <optgroup label="Agents from org chart (AI teammates)">
+                  <% chartAgents.forEach(function(c) { %>
+                    <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>">🤖 <%= c.label %><% if (c.role) { %> · <%= c.role %><% } %></option>
                   <% }); %>
                 </optgroup>
               <% } %>

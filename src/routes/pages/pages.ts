@@ -2118,8 +2118,17 @@ export default async function pageRoutes(app: FastifyInstance) {
       const ids = (m as any).claimedEntityIds;
       if (Array.isArray(ids)) for (const id of ids) memberClaimedIds.add(id);
     }
+    // Include both humans and agents from the chart so AI-agent teams
+    // (like an "AI Army" team) can include their agents directly.
     const chartHumans = teamGraph.nodes
       .filter(n => n.type === 'human' && !memberClaimedIds.has(n.externalId))
+      .map(n => ({
+        externalId: n.externalId,
+        label: n.label,
+        role: (n.properties as any)?.role || null,
+      }));
+    const chartAgents = teamGraph.nodes
+      .filter(n => n.type === 'agent' && !memberClaimedIds.has(n.externalId))
       .map(n => ({
         externalId: n.externalId,
         label: n.label,
@@ -2134,6 +2143,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       teams: teamsWithMembers,
       allMembers: allMembersEnriched,
       chartHumans,
+      chartAgents,
     });
   });
 
