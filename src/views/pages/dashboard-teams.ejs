@@ -92,21 +92,22 @@
                 <% (allMembers || []).forEach(function(m) {
                   const already = (t.members || []).some(function(x){ return x.memberId === m.id; });
                   if (already) return;
+                  const label = m.displayName || m.email || m.id.slice(0,8);
                 %>
-                  <option value="member:<%= m.id %>"><%= m.displayName || m.email || m.id.slice(0,8) %><% if (m.role) { %> · <%= m.role %><% } %></option>
+                  <option value="member:<%= m.id %>" title="<%= m.role || '' %>"><%= label %></option>
                 <% }); %>
               </optgroup>
               <% if (chartHumans && chartHumans.length > 0) { %>
-                <optgroup label="Humans from org chart (will auto-create membership)">
+                <optgroup label="Humans from org chart">
                   <% chartHumans.forEach(function(c) { %>
-                    <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>"><%= c.label %><% if (c.role) { %> · <%= c.role %><% } %></option>
+                    <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>" title="<%= c.role || '' %>"><%= c.label %></option>
                   <% }); %>
                 </optgroup>
               <% } %>
               <% if (chartAgents && chartAgents.length > 0) { %>
-                <optgroup label="Agents from org chart (AI teammates)">
+                <optgroup label="Agents from org chart">
                   <% chartAgents.forEach(function(c) { %>
-                    <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>">🤖 <%= c.label %><% if (c.role) { %> · <%= c.role %><% } %></option>
+                    <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>" title="<%= c.role || '' %>">🤖 <%= c.label %></option>
                   <% }); %>
                 </optgroup>
               <% } %>

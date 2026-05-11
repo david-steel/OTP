@@ -351,6 +351,46 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     invitedByUserId: inv.createdByUserId,
   }).returning();
 
+  // Reconcile any pre-existing chart stubs claiming the same tile(s).
+  // When an admin pre-adds a chart human (e.g. HUM_BOGDANTABAKA) to a team
+  // before the real person accepts an invite, the team_membership attaches
+  // to a stub row (clerk_user_id LIKE 'chart:%', status='inactive'). On
+  // accept, transfer that stub's team_memberships to the freshly-created
+  // real member and delete the stub so we don't carry ghost rows.
+  const claimSet = new Set<string>([
+    ...((inv.claimedEntityIds as string[]) || []),
+    ...(inv.claimedEntityId ? [inv.claimedEntityId] : []),
+  ].filter(Boolean));
+  if (claimSet.size > 0) {
+    const { teamMemberships } = await import('../db/schema.js');
+    const stubs = (await db.select().from(orgMembers).where(and(
+      eq(orgMembers.orgId, inv.orgId),
+      eq(orgMembers.status, 'inactive'),
+    ))).filter(s => {
+      if (!s.clerkUserId?.startsWith('chart:')) return false;
+      if (s.claimedEntityId && claimSet.has(s.claimedEntityId)) return true;
+      const ids = (s.claimedEntityIds as unknown) as string[] | null;
+      return Array.isArray(ids) && ids.some(x => claimSet.has(x));
+    });
+    for (const stub of stubs) {
+      // Move every team_membership from stub.id → member.id, swallowing the
+      // unique-index conflict if the real member is already on that team.
+      const stubMemberships = await db.select().from(teamMemberships).where(eq(teamMemberships.memberId, stub.id));
+      for (const tm of stubMemberships) {
+        try {
+          await db.update(teamMemberships)
+            .set({ memberId: member.id })
+            .where(eq(teamMemberships.id, tm.id));
+        } catch {
+          // Duplicate (team_id, member_id) -- the real account is already
+          // on this team. Drop the stub's row.
+          await db.delete(teamMemberships).where(eq(teamMemberships.id, tm.id));
+        }
+      }
+      await db.delete(orgMembers).where(eq(orgMembers.id, stub.id));
+    }
+  }
+
   // Phase 4: drop the new member into any pre-assigned teams.
   const teamIds = (inv.teamIds as string[]) || [];
   if (teamIds.length > 0) {
