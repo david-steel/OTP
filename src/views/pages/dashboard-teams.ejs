@@ -126,8 +126,23 @@
     opts.credentials = 'same-origin';
     const r = await fetch('/api/v1' + path, opts);
     if (!r.ok) {
-      const body = await r.json().catch(() => ({}));
-      throw new Error(body?.error?.message || ('HTTP ' + r.status));
+      // Try to surface a real error -- JSON envelope first, then plain
+      // text body, then bare status. The previous version showed only
+      // "HTTP 400" for any non-JSON response which hid the actual cause.
+      let detail = '';
+      const ct = r.headers.get('content-type') || '';
+      try {
+        if (ct.includes('application/json')) {
+          const body = await r.json();
+          detail = body?.error?.message
+            || body?.error?.code
+            || body?.message
+            || JSON.stringify(body);
+        } else {
+          detail = (await r.text()).slice(0, 200);
+        }
+      } catch (_) { /* ignore */ }
+      throw new Error('HTTP ' + r.status + (detail ? ' — ' + detail : ''));
     }
     return r.json();
   }
