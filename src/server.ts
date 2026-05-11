@@ -737,6 +737,14 @@ try {
 }
 
 try {
+  const { ensureTodosV2 } = await import('./db/ensure-todos-v2.js');
+  await ensureTodosV2();
+  app.log.info('todos v2 columns are ready (kind, priority, recurrence, subtasks)');
+} catch (err) {
+  app.log.error({ err }, 'ensureTodosV2 failed -- /me/todos and /l8 todo separation will not work until resolved');
+}
+
+try {
   const { ensureGlossaryTermsTable } = await import('./db/ensure-glossary-terms.js');
   await ensureGlossaryTermsTable();
   app.log.info('glossary_terms table is ready and seeded');

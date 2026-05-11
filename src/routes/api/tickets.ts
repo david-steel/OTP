@@ -271,8 +271,25 @@ export default async function ticketRoutes(app: FastifyInstance) {
       const dueAt = body.data.followUp.dueAt
         ? new Date(body.data.followUp.dueAt)
         : new Date(Date.now() + 7 * 86400000);
+      // Tag the follow-up as kind='l10' scoped to the meeting's team so it
+      // surfaces on /l8 and not /me/todos. If no meeting context is present
+      // (shouldn't happen from the L8 UI but possible from API), fall back
+      // to personal so the row isn't orphaned.
+      let followKind: 'personal' | 'l10' = 'personal';
+      let followTeamId: string | null = null;
+      if (body.data.meetingId) {
+        const [solvedMeeting] = await db.select().from(meetings)
+          .where(and(eq(meetings.id, body.data.meetingId), eq(meetings.organizationId, org.id)))
+          .limit(1);
+        if (solvedMeeting?.teamId) {
+          followKind = 'l10';
+          followTeamId = solvedMeeting.teamId;
+        }
+      }
       const [t] = await db.insert(todos).values({
         organizationId: org.id,
+        kind: followKind,
+        teamId: followTeamId,
         meetingId: body.data.meetingId || null,
         ownerEntityType: body.data.followUp.ownerEntityType,
         ownerExternalId: body.data.followUp.ownerExternalId,

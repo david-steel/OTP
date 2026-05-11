@@ -115,6 +115,26 @@
     .me-edit input, .me-edit textarea { background: #18181b; border-color: #3f3f46; color: #fafafa; }
     .me-edit label { color: #a1a1aa; }
   }
+  /* Priority dot — sits at the left of each card meta row */
+  .me-prio { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .me-prio.p1 { background: #e94b6a; }     /* danger red */
+  .me-prio.p2 { background: #fbbf24; }     /* warm gold */
+  .me-prio.p3 { background: #9ca3af; }     /* neutral */
+  .me-prio.p4 { background: #d1d5db; opacity: 0.7; }
+  @media (prefers-color-scheme: dark) {
+    .me-prio.p3 { background: #6b7280; }
+    .me-prio.p4 { background: #4b5563; }
+  }
+  .me-recur { display: inline-block; margin-left: 6px; font-size: 11px; color: #6b7280; }
+  .me-recur::before { content: "↻ "; }
+  .me-section-l10 { margin-top: 24px; padding: 12px 14px; border-left: 3px solid #6366f1; background: #eef2ff; border-radius: 6px; }
+  @media (prefers-color-scheme: dark) {
+    .me-section-l10 { background: #1e1b4b; }
+  }
+  .me-section-l10 .l10-title { font-size: 12px; font-weight: 700; color: #4338ca; text-transform: uppercase; letter-spacing: 0.08em; }
+  @media (prefers-color-scheme: dark) {
+    .me-section-l10 .l10-title { color: #a5b4fc; }
+  }
 </style>
 
 <div class="me-wrap">
@@ -143,14 +163,12 @@
   %>
     <div class="me-card <%= isWatchdogRed ? 'red' : (tagText ? 'agent' : '') %>" data-id="<%= t.id %>" data-title="<%= encodeURIComponent(title) %>" data-desc="<%= encodeURIComponent(desc) %>">
       <div class="me-view">
-        <% if (tagText) { %>
-          <div class="me-meta">
-            <span class="me-tag <%= isWatchdogRed ? 'red' : '' %>"><%= tagText %></span>
-            <% if (ago) { %><span><%= ago %></span><% } %>
-          </div>
-        <% } else if (ago) { %>
-          <div class="me-meta"><span><%= ago %></span></div>
-        <% } %>
+        <div class="me-meta">
+          <span class="me-prio <%= t.priority || 'p3' %>" title="priority <%= t.priority || 'p3' %>"></span>
+          <% if (tagText) { %><span class="me-tag <%= isWatchdogRed ? 'red' : '' %>"><%= tagText %></span><% } %>
+          <% if (ago) { %><span><%= ago %></span><% } %>
+          <% if (t.recurrenceParentId) { %><span class="me-recur">recurring instance</span><% } %>
+        </div>
         <h2 class="me-title"><%= cleanTitle %></h2>
         <% if (desc) { %>
           <div class="me-desc" onclick="toggleDesc(this)"><%= desc %></div>
@@ -161,6 +179,7 @@
         <div class="me-actions">
           <button class="me-btn secondary" onclick="openEdit(this)">Edit</button>
           <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Done</button>
+          <button class="me-btn secondary" onclick="promoteToL10(this, '<%= t.id %>')" title="Send this to the leadership L10">→ L10</button>
           <button class="me-btn danger" onclick="confirmDelete(this, '<%= t.id %>')">Delete</button>
         </div>
       </div>
@@ -176,6 +195,24 @@
       </div>
     </div>
   <% }); %>
+
+  <% if (l10Todos && l10Todos.length > 0) { %>
+    <div class="me-section-l10">
+      <div class="l10-title"><%= l10Todos.length %> L10 to-do<%= l10Todos.length === 1 ? '' : 's' %> assigned to you</div>
+      <div style="font-size: 13px; color: inherit; margin-top: 4px;">
+        Action items from leadership team meetings. Manage in <a href="/l8">/l8</a>.
+      </div>
+      <% l10Todos.forEach(function(t) { %>
+        <div style="margin-top: 10px; padding: 10px 12px; background: rgba(255,255,255,0.5); border-radius: 6px;">
+          <div class="me-meta">
+            <span class="me-prio <%= t.priority || 'p3' %>"></span>
+            <% if (t.dueAt) { %><span>due <%= new Date(t.dueAt).toLocaleDateString() %></span><% } %>
+          </div>
+          <div style="font-weight: 600; margin-top: 2px;"><%= t.title %></div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
 
   <% if (justDone && justDone.length > 0) { %>
     <div class="me-section-h">Closed last 24h</div>
@@ -246,6 +283,32 @@ async function saveEdit(btn, id) {
     btn.disabled = false;
     btn.textContent = 'Save';
     alert('Could not save: ' + e.message);
+  }
+}
+
+async function promoteToL10(btn, id) {
+  if (!confirm('Send this to-do to the leadership L10? It will leave your personal queue and become visible to the whole team.')) return;
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = 'Promoting...';
+  try {
+    const r = await fetch('/api/v1/todos/' + id + '/promote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({}),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const card = btn.closest('.me-card');
+    if (card) {
+      card.style.transition = 'opacity 0.2s';
+      card.style.opacity = '0';
+      setTimeout(() => location.reload(), 250);
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = origText;
+    alert('Could not promote: ' + e.message);
   }
 }
 

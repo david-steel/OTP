@@ -43,6 +43,8 @@ export const ticketCategoryEnum = pgEnum('ticket_category', ['bug', 'feature', '
 // The full L8 schema (rocks, todos, meetings) lives at the bottom of this file.
 export const idsStatusEnum = pgEnum('ids_status', ['open', 'identified', 'discussed', 'solved']);
 export const ownerEntityTypeEnum = pgEnum('owner_entity_type', ['agent', 'human']);
+export const todoKindEnum = pgEnum('todo_kind', ['personal', 'l10']);
+export const todoPriorityEnum = pgEnum('todo_priority', ['p1', 'p2', 'p3', 'p4']);
 
 export const organizations = pgTable('organizations', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -830,6 +832,11 @@ export const meetings = pgTable('meetings', {
 export const todos = pgTable('todos', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  // Phase: Todos v2. Clean separation between personal and L10 meeting todos
+  // so /me/todos and /l8 never leak into each other again.
+  kind: todoKindEnum('kind').notNull().default('personal'),
+  priority: todoPriorityEnum('priority').notNull().default('p3'),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'set null' }),
   meetingId: uuid('meeting_id').references(() => meetings.id, { onDelete: 'set null' }),
   ownerEntityType: ownerEntityTypeEnum('owner_entity_type').notNull(),
   ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
@@ -838,6 +845,14 @@ export const todos = pgTable('todos', {
   description: text('description'),
   dueAt: timestamp('due_at'),
   doneAt: timestamp('done_at'),
+  // Recurrence: iCal RRULE on a template, and the FK back to the template
+  // on every generated instance. Templates never appear in user-facing
+  // lists (only their instances do).
+  recurrenceRule: text('recurrence_rule'),
+  recurrenceParentId: uuid('recurrence_parent_id'),
+  // Subtask tree.
+  parentTodoId: uuid('parent_todo_id'),
+  position: integer('position').notNull().default(0),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -847,6 +862,10 @@ export const todos = pgTable('todos', {
   meetingIdx: index('todos_meeting_idx').on(table.meetingId),
   ownerIdx: index('todos_owner_idx').on(table.organizationId, table.ownerEntityType, table.ownerExternalId),
   openIdx: index('todos_open_idx').on(table.organizationId, table.doneAt),
+  kindOwnerIdx: index('todos_kind_owner_idx').on(table.organizationId, table.kind, table.ownerExternalId),
+  kindTeamIdx: index('todos_kind_team_idx').on(table.organizationId, table.kind, table.teamId),
+  parentIdx: index('todos_parent_idx').on(table.parentTodoId, table.position),
+  recurrenceParentIdx: index('todos_recurrence_parent_idx').on(table.recurrenceParentId),
 }));
 
 // IDS extension columns on tickets are added via raw SQL in the migration:

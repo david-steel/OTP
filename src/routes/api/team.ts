@@ -475,7 +475,8 @@ export default async function teamRoutes(app: FastifyInstance) {
       claimedEntityId: z.string().max(120).optional(),
       claimedEntityIds: z.array(z.string().max(120)).max(50).optional(),
       role: z.enum([
-        'owner', 'admin', 'manager', 'managee',
+        'owner', 'visionary', 'integrator',
+        'admin', 'manager', 'managee',
         'inactive', 'observer', 'implementer', 'free',
         'member', // legacy alias accepted for back-compat
       ]).optional(),
@@ -488,7 +489,7 @@ export default async function teamRoutes(app: FastifyInstance) {
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
 
     // Inviters cannot grant a role above their own. Owner > admin > manager.
-    const RANK: Record<string, number> = { owner: 4, admin: 3, manager: 2, managee: 1, member: 1, observer: 1, implementer: 3, free: 1, inactive: 0 };
+    const RANK: Record<string, number> = { owner: 4, visionary: 4, integrator: 4, admin: 3, manager: 2, managee: 1, member: 1, observer: 1, implementer: 3, free: 1, inactive: 0 };
     const requestedRole = body.data.role || 'managee';
     if ((RANK[requestedRole] || 0) > (RANK[inviterRole] || 0)) {
       return reply.status(403).send({ error: { code: 'ROLE_TOO_HIGH', message: 'You cannot invite someone to a role above your own' } });

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
-import { eq, and, desc, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
@@ -4072,10 +4072,19 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .orderBy(desc(tickets.createdAt))
       .limit(100);
 
+    // L10 todos only -- filter by kind='l10' AND the meeting's team so
+    // personal todos from /me/todos can never leak into a leadership L10.
+    // Recurrence templates hidden by default; only instances appear.
     const orgTodos = await db.select().from(todos)
-      .where(and(eq(todos.organizationId, org.id), isNull(todos.deletedAt)))
+      .where(and(
+        eq(todos.organizationId, org.id),
+        eq(todos.kind, 'l10'),
+        meeting.teamId ? eq(todos.teamId, meeting.teamId) : isNull(todos.teamId),
+        isNull(todos.deletedAt),
+        isNull(todos.recurrenceRule),
+      ))
       .orderBy(desc(todos.createdAt))
-      .limit(50);
+      .limit(100);
 
     // Build the full roster for owner dropdowns. The template was previously
     // restricting owner selection to meeting.attendees, which excluded the
@@ -4368,18 +4377,39 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // org_members.user_id -> external_id, fall back to HUM_<USERNAME>.
     const ownerExternalId = 'HUM_DAVIDSTEEL';
 
+    // Personal todos only here. L10 todos owned by the user are shown as a
+    // separate read-only section so /me stays personal-by-default.
+    // Recurrence templates (rule set + no due_at) never appear -- only their
+    // generated instances do.
     const myTodos = await db.select()
       .from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
+        eq(todos.kind, 'personal'),
         eq(todos.ownerEntityType, 'human'),
         eq(todos.ownerExternalId, ownerExternalId),
         isNull(todos.doneAt),
         isNull(todos.deletedAt),
+        isNull(todos.parentTodoId),       // top-level only; subtasks expand
+        isNull(todos.recurrenceRule),     // hide templates
       ))
-      .orderBy(desc(todos.createdAt));
+      .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
 
-    // Recently resolved (last 24h) so user sees what closed.
+    // L10 todos assigned to me, read-only here (managed in /l8).
+    const myL10Todos = await db.select()
+      .from(todos)
+      .where(and(
+        eq(todos.organizationId, org.id),
+        eq(todos.kind, 'l10'),
+        eq(todos.ownerEntityType, 'human'),
+        eq(todos.ownerExternalId, ownerExternalId),
+        isNull(todos.doneAt),
+        isNull(todos.deletedAt),
+        isNull(todos.recurrenceRule),
+      ))
+      .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
+
+    // Recently resolved (last 24h) -- across both kinds.
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const recentlyDone = await db.select()
       .from(todos)
@@ -4399,6 +4429,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       noindex: true,
       org,
       todos: myTodos,
+      l10Todos: myL10Todos,
       justDone,
       ownerExternalId,
     });
