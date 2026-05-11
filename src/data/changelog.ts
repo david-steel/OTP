@@ -11,6 +11,34 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 10, 2026 ----
+
+  {
+    date: '2026-05-10',
+    tags: ['Major'],
+    title: 'Orger.ai launches: the first product built on OTP',
+    summary: 'Orger.ai is live with a new design and a new identity as the first product built on OTP as a framework, not just consuming it via API. Same Clerk auth, same Postgres, same MCP server, same team graph. The marketing site is its own Next.js app; the chart you build inside it is rendered straight off the OTP team graph through service auth.',
+    details: `<p><a href="https://orger.ai" class="text-otp-600 hover:text-otp-500 underline">Orger.ai</a> shipped today with a new homepage, a mascot named Orgy, and a free builder that lets you drag and drop the humans you have and get grounded recommendations for the AI agents you should hire next.</p>
+
+<p>The bigger news for the network: Orger is the first product <strong>built on</strong> OTP, not just one that consumes the API.</p>
+
+<h3>What that means concretely</h3>
+<ul>
+<li>Same Clerk auth as orgtp.com.</li>
+<li>Same Postgres database backing every chart on the network.</li>
+<li>Same MCP server surface, queryable from any MCP-aware AI client.</li>
+<li>Same team graph schema. Seats you create on Orger are OTP seats.</li>
+<li>Same scorecard surface and the same correction loop every other agent on the network learns from.</li>
+</ul>
+
+<h3>Why this matters for the framework story</h3>
+<p>OTP has been called a protocol, a coordination layer, a network, and a transactive memory system. All accurate, none of them prove the framework claim on their own. A framework only earns the word once a product is built on it that could not have been built any other way at the same cost. Orger is that product.</p>
+
+<p>Read the full launch story: <a href="/blog/orger-is-the-first-site-built-on-otp" class="text-otp-600 hover:text-otp-500 underline">Orger is the first site built on OTP</a>.</p>
+
+<p>If you are building something that needs humans, agents, seats, scorecards, and corrections to live on the same protocol, the framework is open. The MCP is <code>npx -y @orgtp/mcp-server</code>. Reach the team if you want to be the second.</p>`,
+  },
+
   // ---- May 7, 2026 (evening polish) ----
 
   {
