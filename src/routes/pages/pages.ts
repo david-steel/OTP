@@ -2027,21 +2027,104 @@ export default async function pageRoutes(app: FastifyInstance) {
         teamId: teamMemberships.teamId,
         roleOnTeam: teamMemberships.roleOnTeam,
         memberId: orgMembers.id,
+        clerkUserId: orgMembers.clerkUserId,
         displayName: orgMembers.displayName,
         email: orgMembers.email,
         orgRole: orgMembers.role,
+        status: orgMembers.status,
       })
       .from(teamMemberships)
       .innerJoin(orgMembers, eq(orgMembers.id, teamMemberships.memberId))
       .where(eq(orgMembers.orgId, org.id));
 
-    const teamsWithMembers = orgTeams.map(t => ({
-      ...t,
-      members: tmRows.filter(r => r.teamId === t.id),
-    }));
-
     const { listMembers } = await import('../../services/membership.js');
     const allMembers = await listMembers(org.id);
+
+    // ----- Enrich names from Clerk for org_members with null display_name -----
+    // The team picker showed UUID prefixes (e.g. '1a834f3c') for any member
+    // whose org_members row was created without a display_name -- the org
+    // owner is the classic case. We hit Clerk to get the real name, fall
+    // back to the legacy display, and write back so subsequent loads
+    // don't re-fetch.
+    const needsClerkLookup = [...allMembers, ...tmRows].some(m =>
+      !(m as any).displayName && !(m as any).email && (m as any).clerkUserId?.startsWith('user_')
+    );
+    const clerkNameByUserId: Record<string, string> = {};
+    if (needsClerkLookup) {
+      try {
+        const { createClerkClient } = await import('@clerk/backend');
+        const secretKey = process.env.CLERK_SECRET_KEY!;
+        const clerk = createClerkClient({ secretKey });
+        const candidates = Array.from(new Set(
+          [...allMembers, ...tmRows]
+            .map((m: any) => m.clerkUserId)
+            .filter((u: string | null) => u && u.startsWith('user_'))
+        )) as string[];
+        for (const clerkUserId of candidates) {
+          try {
+            const u = await clerk.users.getUser(clerkUserId);
+            const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+              || u.username
+              || u.primaryEmailAddress?.emailAddress
+              || null;
+            const email = u.primaryEmailAddress?.emailAddress || null;
+            if (name) clerkNameByUserId[clerkUserId] = name;
+            // Write back to org_members so future loads don't need Clerk.
+            if (name || email) {
+              await db.update(orgMembers)
+                .set({
+                  displayName: name || undefined,
+                  email: email || undefined,
+                  updatedAt: new Date(),
+                })
+                .where(and(
+                  eq(orgMembers.clerkUserId, clerkUserId),
+                  eq(orgMembers.orgId, org.id),
+                ));
+            }
+          } catch (e) {
+            request.log.warn({ clerkUserId, err: (e as Error).message }, 'Failed to fetch Clerk user');
+          }
+        }
+      } catch (err) {
+        request.log.warn({ err }, 'Clerk client unavailable -- names will fall back to UUID');
+      }
+    }
+
+    // Apply enrichment to the rows we'll render.
+    function enrich<T extends { displayName?: string | null; clerkUserId?: string | null }>(m: T): T {
+      if (!m.displayName && m.clerkUserId && clerkNameByUserId[m.clerkUserId]) {
+        return { ...m, displayName: clerkNameByUserId[m.clerkUserId] };
+      }
+      return m;
+    }
+    const tmEnriched = tmRows.map(enrich);
+    const allMembersEnriched = allMembers.map(enrich);
+
+    const teamsWithMembers = orgTeams.map(t => ({
+      ...t,
+      members: tmEnriched.filter(r => r.teamId === t.id),
+    }));
+
+    // ----- Load chart humans for the picker -----
+    // So users can add a chart-only person (no Clerk account yet) to a
+    // team. The POST /teams/:id/members handler auto-creates a stub
+    // org_members row when given a chart externalId.
+    const { getOrgTeamGraph } = await import('../../services/team-graph.js');
+    const teamGraph = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const memberClaimedIds = new Set<string>();
+    for (const m of allMembersEnriched) {
+      if ((m as any).claimedEntityId) memberClaimedIds.add((m as any).claimedEntityId);
+      const ids = (m as any).claimedEntityIds;
+      if (Array.isArray(ids)) for (const id of ids) memberClaimedIds.add(id);
+    }
+    const chartHumans = teamGraph.nodes
+      .filter(n => n.type === 'human' && !memberClaimedIds.has(n.externalId))
+      .map(n => ({
+        externalId: n.externalId,
+        label: n.label,
+        role: (n.properties as any)?.role || null,
+      }));
 
     return reply.view('pages/dashboard-teams', {
       title: 'Teams - OTP',
@@ -2049,7 +2132,8 @@ export default async function pageRoutes(app: FastifyInstance) {
       org,
       viewerRole,
       teams: teamsWithMembers,
-      allMembers,
+      allMembers: allMembersEnriched,
+      chartHumans,
     });
   });
 

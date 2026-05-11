@@ -64,8 +64,16 @@ const teamUpdateSchema = z.object({
 });
 
 const addMemberSchema = z.object({
-  memberId: z.string().uuid(),
+  // Either memberId (existing org_members.id) OR externalId (chart human
+  // like HUM_DAN) -- if externalId is provided and no matching org_member
+  // exists yet, a stub row is auto-created so the chart person can be on
+  // a team without needing a Clerk account first.
+  memberId: z.string().uuid().optional(),
+  externalId: z.string().max(120).optional(),
+  displayName: z.string().max(255).optional(),
   roleOnTeam: z.enum(['leader', 'member']).optional().default('member'),
+}).refine(d => d.memberId || d.externalId, {
+  message: 'Either memberId or externalId is required',
 });
 
 export default async function teamsRoutes(app: FastifyInstance) {
@@ -219,18 +227,59 @@ export default async function teamsRoutes(app: FastifyInstance) {
     const body = addMemberSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
 
-    // Verify both the team and the member belong to this org -- prevents
-    // cross-org leakage via guessed IDs.
+    // Verify the team belongs to this org -- prevents cross-org leakage.
     const [team] = await db.select().from(teams)
       .where(and(eq(teams.id, id), eq(teams.orgId, org.id))).limit(1);
     if (!team) return reply.status(404).send({ error: { code: 'TEAM_NOT_FOUND', message: 'Team not found in your org' } });
-    const [member] = await db.select().from(orgMembers)
-      .where(and(eq(orgMembers.id, body.data.memberId), eq(orgMembers.orgId, org.id))).limit(1);
-    if (!member) return reply.status(404).send({ error: { code: 'MEMBER_NOT_FOUND', message: 'Org member not found in your org' } });
+
+    // Resolve the org_members.id we'll attach. Three paths:
+    //   1) memberId passed → look up that row (must belong to org)
+    //   2) externalId passed → find org_member already claiming that tile
+    //   3) externalId passed but no claimant → auto-create a stub row so
+    //      the chart person can be on a team without needing a Clerk
+    //      account first
+    let resolvedMemberId: string | null = null;
+
+    if (body.data.memberId) {
+      const [m] = await db.select().from(orgMembers)
+        .where(and(eq(orgMembers.id, body.data.memberId), eq(orgMembers.orgId, org.id))).limit(1);
+      if (!m) return reply.status(404).send({ error: { code: 'MEMBER_NOT_FOUND', message: 'Org member not found in your org' } });
+      resolvedMemberId = m.id;
+    } else if (body.data.externalId) {
+      const ext = body.data.externalId;
+      // Try to find an existing claimant via claimedEntityId or claimedEntityIds JSONB.
+      const candidates = await db.select().from(orgMembers).where(eq(orgMembers.orgId, org.id));
+      const claimed = candidates.find(m =>
+        m.claimedEntityId === ext ||
+        (Array.isArray((m.claimedEntityIds as unknown) as string[]) &&
+         ((m.claimedEntityIds as unknown) as string[]).includes(ext))
+      );
+      if (claimed) {
+        resolvedMemberId = claimed.id;
+      } else {
+        // Auto-create a stub. clerk_user_id is non-null in the schema, so
+        // we use a `chart:<external_id>` sentinel that can never collide
+        // with a real Clerk user (those start with `user_`). When the
+        // chart person eventually signs in to Clerk, a follow-up flow
+        // can reconcile by matching claimed_entity_id and merging.
+        const [stub] = await db.insert(orgMembers).values({
+          orgId: org.id,
+          clerkUserId: `chart:${ext}`,
+          email: null,
+          displayName: body.data.displayName || ext,
+          role: 'managee',
+          status: 'inactive',
+          claimedEntityId: ext,
+          claimedEntityIds: [ext],
+        }).returning();
+        resolvedMemberId = stub.id;
+      }
+    }
+    if (!resolvedMemberId) return reply.status(400).send({ error: { code: 'BAD_TARGET', message: 'Could not resolve member or external id' } });
 
     // Idempotent: if already a member, just update the role.
     const [existing] = await db.select().from(teamMemberships)
-      .where(and(eq(teamMemberships.teamId, id), eq(teamMemberships.memberId, body.data.memberId)))
+      .where(and(eq(teamMemberships.teamId, id), eq(teamMemberships.memberId, resolvedMemberId)))
       .limit(1);
     if (existing) {
       const [updated] = await db.update(teamMemberships)
@@ -241,7 +290,7 @@ export default async function teamsRoutes(app: FastifyInstance) {
     }
     const [created] = await db.insert(teamMemberships).values({
       teamId: id,
-      memberId: body.data.memberId,
+      memberId: resolvedMemberId,
       roleOnTeam: body.data.roleOnTeam,
     }).returning();
     return reply.status(201).send(created);

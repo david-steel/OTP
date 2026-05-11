@@ -50,7 +50,10 @@
               <p class="text-sm text-gray-600 mt-1"><%= t.description %></p>
             <% } %>
           </div>
-          <div class="flex gap-1">
+          <div class="flex gap-1 items-center">
+            <% if (t.isDefault) { %>
+              <span class="text-[11px] text-gray-400 italic mr-1">rename only · backfill home for legacy data</span>
+            <% } %>
             <button data-action="rename" class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Rename</button>
             <% if (!t.isDefault) { %>
               <button data-action="delete" class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
@@ -84,13 +87,25 @@
           <!-- Add member form -->
           <div class="flex gap-2 items-center">
             <select data-field="add-member-pick" class="border rounded p-1.5 text-sm flex-1">
-              <option value="">-- pick a member to add --</option>
-              <% (allMembers || []).forEach(function(m) {
-                const already = (t.members || []).some(function(x){ return x.memberId === m.id; });
-                if (already) return;
-              %>
-                <option value="<%= m.id %>"><%= m.displayName || m.email || m.id.slice(0,8) %><% if (m.role) { %> · <%= m.role %><% } %></option>
-              <% }); %>
+              <option value="">-- pick a person to add --</option>
+              <optgroup label="Signed-in members">
+                <% (allMembers || []).forEach(function(m) {
+                  const already = (t.members || []).some(function(x){ return x.memberId === m.id; });
+                  if (already) return;
+                %>
+                  <option value="member:<%= m.id %>"><%= m.displayName || m.email || m.id.slice(0,8) %><% if (m.role) { %> · <%= m.role %><% } %></option>
+                <% }); %>
+              </optgroup>
+              <% if (chartHumans && chartHumans.length > 0) { %>
+                <optgroup label="From org chart (will auto-create membership)">
+                  <% chartHumans.forEach(function(c) {
+                    // Skip if any member of THIS team already represents this externalId.
+                    const already = (t.members || []).some(function(x){ return false; }); // refined client-side
+                  %>
+                    <option value="ext:<%= c.externalId %>:<%= encodeURIComponent(c.label) %>"><%= c.label %><% if (c.role) { %> · <%= c.role %><% } %></option>
+                  <% }); %>
+                </optgroup>
+              <% } %>
             </select>
             <select data-field="add-member-role" class="border rounded p-1.5 text-sm">
               <option value="member" selected>member</option>
@@ -165,9 +180,22 @@
     card.querySelector('[data-action="add-member"]')?.addEventListener('click', async () => {
       const pick = card.querySelector('[data-field="add-member-pick"]').value;
       const role = card.querySelector('[data-field="add-member-role"]').value;
-      if (!pick) return alert('Pick a member first.');
+      if (!pick) return alert('Pick a person first.');
+      // Value format: "member:<uuid>" or "ext:<HUM_X>:<encoded-name>"
+      const body = { roleOnTeam: role };
+      if (pick.startsWith('member:')) {
+        body.memberId = pick.slice('member:'.length);
+      } else if (pick.startsWith('ext:')) {
+        const rest = pick.slice('ext:'.length);
+        const colonIdx = rest.indexOf(':');
+        body.externalId = colonIdx >= 0 ? rest.slice(0, colonIdx) : rest;
+        if (colonIdx >= 0) body.displayName = decodeURIComponent(rest.slice(colonIdx + 1));
+      } else {
+        // Back-compat: bare UUID = memberId.
+        body.memberId = pick;
+      }
       try {
-        await api('/teams/' + teamId + '/members', { method: 'POST', body: JSON.stringify({ memberId: pick, roleOnTeam: role }) });
+        await api('/teams/' + teamId + '/members', { method: 'POST', body: JSON.stringify(body) });
         location.reload();
       } catch (err) { alert('Add member failed: ' + err.message); }
     });
