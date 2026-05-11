@@ -684,6 +684,9 @@ export const kpiValueSourceEnum = pgEnum('kpi_value_source', ['manual', 'api', '
 export const kpis = pgTable('kpis', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  // Team scoping: which L10 scorecard this KPI belongs on. Backfill (in
+  // ensure-kpis-rocks-team.ts) puts all existing KPIs on leadership.
+  teamId: uuid('team_id'),
   ownerEntityType: kpiOwnerEntityTypeEnum('owner_entity_type').notNull(),
   ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
   title: varchar('title', { length: 255 }).notNull(),
@@ -786,6 +789,9 @@ export const meetingStatusEnum = pgEnum('meeting_status', ['scheduled', 'in_prog
 export const rocks = pgTable('rocks', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  // Team scoping: which L10 owns this rock. Backfilled to leadership for
+  // all legacy rocks; move to a different team via PATCH /rocks/:id.
+  teamId: uuid('team_id'),
   ownerEntityType: ownerEntityTypeEnum('owner_entity_type').notNull(),
   ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
   ownerName: varchar('owner_name', { length: 255 }),

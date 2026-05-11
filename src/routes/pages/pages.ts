@@ -4094,9 +4094,15 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .limit(1);
     if (!meeting) return reply.status(404).send('Meeting not found');
 
-    // Build agenda data: scorecard (KPIs + latest values), rocks, open issues, open todos
+    // Build agenda data scoped to THIS meeting's team. KPIs / Rocks / Issues
+    // all filter strictly by meeting.team_id so private teams (e.g. "David
+    // x Dan") don't leak into Leadership L10s and vice versa.
     const orgKpis = await db.select().from(kpis)
-      .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt)));
+      .where(and(
+        eq(kpis.organizationId, org.id),
+        meeting.teamId ? eq(kpis.teamId, meeting.teamId) : isNull(kpis.teamId),
+        isNull(kpis.deletedAt),
+      ));
     const latestValues: Record<string, any> = {};
     for (const k of orgKpis) {
       const [latest] = await db.select().from(kpiValues)
@@ -4110,7 +4116,11 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       : { kpis: orgKpis, latestValues, kpiCount: orgKpis.length };
 
     const orgRocks = await db.select().from(rocks)
-      .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt)))
+      .where(and(
+        eq(rocks.organizationId, org.id),
+        meeting.teamId ? eq(rocks.teamId, meeting.teamId) : isNull(rocks.teamId),
+        isNull(rocks.deletedAt),
+      ))
       .orderBy(desc(rocks.dueDate));
     const rocksData = meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
       ? meeting.rocksSnapshot

@@ -754,6 +754,14 @@ try {
 }
 
 try {
+  const { ensureKpisRocksTeam } = await import('./db/ensure-kpis-rocks-team.js');
+  await ensureKpisRocksTeam();
+  app.log.info('kpis.team_id + rocks.team_id are ready (team-scoped L10 scorecard + rocks)');
+} catch (err) {
+  app.log.error({ err }, 'ensureKpisRocksTeam failed -- /l8 KPI/Rocks filtering by team will not work until resolved');
+}
+
+try {
   const { ensureGlossaryTermsTable } = await import('./db/ensure-glossary-terms.js');
   await ensureGlossaryTermsTable();
   app.log.info('glossary_terms table is ready and seeded');
