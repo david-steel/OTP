@@ -90,6 +90,7 @@ const createSchema = z.object({
   aggregationMethod: aggSchema.optional(),
   planSectionId: z.string().uuid().nullable().optional(),
   executionItemId: z.string().uuid().nullable().optional(),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 const updateSchema = z.object({
@@ -104,6 +105,7 @@ const updateSchema = z.object({
   aggregationMethod: aggSchema.optional(),
   planSectionId: z.string().uuid().nullable().optional(),
   executionItemId: z.string().uuid().nullable().optional(),
+  teamId: z.string().uuid().nullable().optional(),
 }).refine((p) => Object.keys(p).length > 0, { message: 'patch must contain at least one field' });
 
 const listQuerySchema = z.object({
@@ -111,6 +113,7 @@ const listQuerySchema = z.object({
   ownerExternalId: z.string().max(120).optional(),
   groupName: z.string().max(120).optional(),
   timeGrain: grainSchema.optional(),
+  teamId: z.string().uuid().optional(),
 });
 
 export default async function kpiRoutes(app: FastifyInstance) {

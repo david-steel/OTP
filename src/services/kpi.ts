@@ -37,6 +37,7 @@ export interface CreateKpiInput {
   aggregationMethod?: KpiAggregation;
   planSectionId?: string | null;
   executionItemId?: string | null;
+  teamId?: string | null;
 }
 
 export interface UpdateKpiInput {
@@ -51,6 +52,7 @@ export interface UpdateKpiInput {
   aggregationMethod?: KpiAggregation;
   planSectionId?: string | null;
   executionItemId?: string | null;
+  teamId?: string | null;
 }
 
 export interface KpiListFilters {
@@ -58,6 +60,7 @@ export interface KpiListFilters {
   ownerExternalId?: string;
   groupName?: string;
   timeGrain?: KpiTimeGrain;
+  teamId?: string;
 }
 
 function validateGoalPair(operator: KpiGoalOperator | null | undefined, value: number | null | undefined): void {
@@ -93,6 +96,7 @@ export async function createKpi(orgId: string, input: CreateKpiInput, createdBy:
       aggregationMethod: input.aggregationMethod ?? 'sum',
       planSectionId: input.planSectionId ?? null,
       executionItemId: input.executionItemId ?? null,
+      teamId: input.teamId ?? null,
       createdBy,
     })
     .returning();
@@ -124,6 +128,7 @@ export async function updateKpi(orgId: string, kpiId: string, patch: UpdateKpiIn
   if (patch.aggregationMethod !== undefined) update.aggregationMethod = patch.aggregationMethod;
   if (patch.planSectionId !== undefined) update.planSectionId = patch.planSectionId;
   if (patch.executionItemId !== undefined) update.executionItemId = patch.executionItemId;
+  if (patch.teamId !== undefined) update.teamId = patch.teamId;
 
   const [row] = await db
     .update(kpis)
@@ -172,6 +177,7 @@ export async function listKpis(orgId: string, filters: KpiListFilters = {}) {
   if (filters.ownerExternalId) conditions.push(eq(kpis.ownerExternalId, filters.ownerExternalId));
   if (filters.groupName) conditions.push(eq(kpis.groupName, filters.groupName));
   if (filters.timeGrain) conditions.push(eq(kpis.timeGrain, filters.timeGrain));
+  if (filters.teamId) conditions.push(eq(kpis.teamId, filters.teamId));
 
   return await db
     .select()

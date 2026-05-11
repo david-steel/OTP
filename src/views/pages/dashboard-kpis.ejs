@@ -158,10 +158,31 @@
                     if (row.periods[i].value !== null && row.periods[i].value !== undefined) { latestVal = row.periods[i].value; break; }
                   }
                 %>
+                  <%
+                    const kpiTeam = (orgTeams || []).find(function(t) { return t.id === k.teamId; });
+                    const isKpiAdmin = ['owner','admin','manager','visionary','integrator'].indexOf(viewerRole || '') >= 0;
+                  %>
                   <tr data-kpi-id="<%= k.id %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>">
                     <td>
                       <div class="sb-title"><%= k.title %><% if (k.formula) { %><span class="sb-fx-pill">fx</span><% } %></div>
                       <% if (k.description) { %><div class="sb-meta"><%= k.description.length > 70 ? k.description.slice(0, 70) + '...' : k.description %></div><% } %>
+                      <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
+                        <% if (kpiTeam) { %>
+                          <span style="display:inline-flex; align-items:center; padding:1px 8px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:9999px; font-size:10px; font-weight:600;">
+                            <%= kpiTeam.name %>
+                          </span>
+                        <% } else { %>
+                          <span style="display:inline-flex; align-items:center; padding:1px 8px; background:#fef3c7; color:#92400e; border:1px solid #fde68a; border-radius:9999px; font-size:10px; font-weight:600;">no team</span>
+                        <% } %>
+                        <% if (isKpiAdmin && (orgTeams || []).length > 0) { %>
+                          <select class="kpi-team-mover" style="font-size:10px; padding:1px 4px; border:1px solid #e5e7eb; border-radius:4px; background:#fff; color:#6b7280;" title="Move this KPI to a different team">
+                            <option value="">move to…</option>
+                            <% (orgTeams || []).forEach(function(tm) { if (tm.id === k.teamId) return; %>
+                              <option value="<%= tm.id %>"><%= tm.name %></option>
+                            <% }); %>
+                          </select>
+                        <% } %>
+                      </div>
                     </td>
                     <td>
                       <span class="sb-owner">
@@ -367,6 +388,38 @@
       });
       inp.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+      });
+    });
+
+    // KPI team mover -- admin-only dropdown next to each KPI title.
+    document.querySelectorAll('.kpi-team-mover').forEach(function(sel) {
+      sel.addEventListener('change', async function(e) {
+        var newTeamId = e.currentTarget.value;
+        if (!newTeamId) return;
+        var tr = e.currentTarget.closest('tr');
+        if (!tr) return;
+        var kpiId = tr.dataset.kpiId;
+        e.currentTarget.disabled = true;
+        try {
+          var r = await fetch('/api/v1/kpis/' + kpiId, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ teamId: newTeamId }),
+          });
+          if (!r.ok) {
+            var body = await r.json().catch(function(){ return {}; });
+            throw new Error(body && body.error ? (body.error.message || body.error.code) : ('HTTP ' + r.status));
+          }
+          // Fade the row out -- it now belongs to a different team scoreboard.
+          tr.style.transition = 'opacity 0.25s';
+          tr.style.opacity = '0';
+          setTimeout(function(){ tr.remove(); }, 250);
+        } catch (err) {
+          alert('Move failed: ' + (err.message || 'unknown'));
+          e.currentTarget.disabled = false;
+          e.currentTarget.value = '';
+        }
       });
     });
   });

@@ -2004,6 +2004,75 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /dashboard/ids -- admin-only cross-team Issues (IDS) view.
+  // Lists every open issue across the whole org with a team chip per row
+  // and an admin-only mover. Restricted to owner/admin/manager so the
+  // private-team data ('David x Dan' issues) doesn't leak to managee
+  // viewers who shouldn't see it.
+  app.get<{ Querystring: { teamId?: string; idsStatus?: string } }>('/dashboard/ids', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = await resolveOrgForUser(auth.userId);
+    if (!resolved) return reply.redirect('/dashboard');
+    const { org, role: viewerRole } = resolved;
+
+    const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
+    if (!ALLOWED.includes(viewerRole)) {
+      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    }
+
+    const filterTeamId = (request.query.teamId || '').toString();
+    const filterIdsStatus = (request.query.idsStatus || '').toString();
+
+    const orgTeams = await db
+      .select({ id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault })
+      .from(teams).where(eq(teams.orgId, org.id))
+      .orderBy(desc(teams.isDefault), asc(teams.name));
+
+    const conditions = [eq(tickets.orgId, org.id), isNull(tickets.deletedAt)];
+    if (filterTeamId && /^[0-9a-f-]{36}$/i.test(filterTeamId)) {
+      conditions.push(eq(tickets.teamId, filterTeamId));
+    }
+    if (['open', 'identified', 'discussed', 'solved'].includes(filterIdsStatus)) {
+      conditions.push(eq(tickets.idsStatus, filterIdsStatus as 'open' | 'identified' | 'discussed' | 'solved'));
+    } else {
+      // Default: open ones (anything not yet solved).
+      conditions.push(sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`);
+    }
+
+    const orgIssues = await db
+      .select({
+        id: tickets.id,
+        title: tickets.title,
+        description: tickets.description,
+        idsStatus: tickets.idsStatus,
+        priority: tickets.priority,
+        priorityRank: tickets.priorityRank,
+        ownerEntityType: tickets.ownerEntityType,
+        ownerExternalId: tickets.ownerExternalId,
+        ownerName: tickets.ownerName,
+        teamId: tickets.teamId,
+        teamName: teams.name,
+        createdAt: tickets.createdAt,
+      })
+      .from(tickets)
+      .leftJoin(teams, eq(teams.id, tickets.teamId))
+      .where(and(...conditions))
+      .orderBy(desc(tickets.createdAt))
+      .limit(500);
+
+    return reply.view('pages/dashboard-ids', {
+      title: 'Issues (IDS) - Dashboard - OTP',
+      noindex: true,
+      org,
+      viewerRole,
+      orgTeams,
+      issues: orgIssues,
+      filterTeamId,
+      filterIdsStatus,
+    });
+  });
+
   // /dashboard/teams -- manage teams (create, rename, delete, members)
   app.get('/dashboard/teams', async (request, reply) => {
     const auth = getAuth(request);
@@ -2308,6 +2377,14 @@ export default async function pageRoutes(app: FastifyInstance) {
       formatPeriodLabel(grain, { start: new Date(p.start), end: new Date(p.end) }),
     );
 
+    // Pass org teams so the view can render team chips + an admin-only
+    // 'move to team' dropdown on each KPI row.
+    const orgTeamsKpi = await db
+      .select({ id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault })
+      .from(teams)
+      .where(eq(teams.orgId, org.id))
+      .orderBy(desc(teams.isDefault), asc(teams.name));
+
     return reply.view('pages/dashboard-kpis', {
       title: 'KPIs - Dashboard - OTP',
       description: 'Scoreboard view of every measurable on your org chart.',
@@ -2320,6 +2397,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       periodLabels,
       grain,
       view,
+      orgTeams: orgTeamsKpi,
       isSuperAdmin: (request as any).isSuperAdmin,
     });
   });
