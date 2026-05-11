@@ -11,7 +11,7 @@
 import { eq, and, desc } from 'drizzle-orm';
 import { parse as parseYAML, stringify as stringifyYAML } from 'yaml';
 import { db } from '../config/database.js';
-import { oosFiles } from '../db/schema.js';
+import { oosFiles, charts } from '../db/schema.js';
 import { parseOOS } from './claim-parser.js';
 import type { TemplateType } from '../shared/enums.js';
 
@@ -44,16 +44,63 @@ export interface TeamGraph {
 
 const FRONTMATTER_SPLIT = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
 
-export async function loadOrgTeamFiles(orgId: string): Promise<{
+// ---------- Chart resolution ----------
+
+/**
+ * Resolve the primary chart for an org. Every org has exactly one primary
+ * chart after the ensure-charts.ts backfill — if this returns null, the
+ * backfill hasn't run or the org was deleted mid-flight.
+ */
+export async function getPrimaryChartId(orgId: string): Promise<string | null> {
+  const [row] = await db.select({ id: charts.id }).from(charts)
+    .where(and(eq(charts.orgId, orgId), eq(charts.isPrimary, true)))
+    .limit(1);
+  return row?.id || null;
+}
+
+/**
+ * Confirm a chart belongs to an org. Used as a security check before any
+ * chart-scoped mutation — prevents a caller authed for org A from editing
+ * org B's chart by passing a foreign chartId.
+ */
+export async function chartBelongsToOrg(chartId: string, orgId: string): Promise<boolean> {
+  const [row] = await db.select({ id: charts.id }).from(charts)
+    .where(and(eq(charts.id, chartId), eq(charts.orgId, orgId)))
+    .limit(1);
+  return !!row;
+}
+
+// ---------- OOS file loaders ----------
+
+/**
+ * Load draft+published OOS files for a specific chart. During the transition
+ * window, legacy files with NULL chart_id are treated as belonging to the
+ * org's primary chart (matches the ensure-charts.ts backfill semantics).
+ */
+export async function loadChartTeamFiles(chartId: string): Promise<{
   draft: typeof oosFiles.$inferSelect | null;
   published: typeof oosFiles.$inferSelect | null;
 }> {
   const rows = await db.select().from(oosFiles)
-    .where(eq(oosFiles.orgId, orgId))
+    .where(eq(oosFiles.chartId, chartId))
     .orderBy(desc(oosFiles.version));
   const draft = rows.find(r => r.status === 'draft') || null;
   const published = rows.find(r => r.status === 'published') || null;
   return { draft, published };
+}
+
+/**
+ * Back-compat shim: resolve the org's primary chart and load its files.
+ * Callers that don't yet know about multi-chart (OTP's own /dashboard/team)
+ * keep working unchanged.
+ */
+export async function loadOrgTeamFiles(orgId: string): Promise<{
+  draft: typeof oosFiles.$inferSelect | null;
+  published: typeof oosFiles.$inferSelect | null;
+}> {
+  const chartId = await getPrimaryChartId(orgId);
+  if (!chartId) return { draft: null, published: null };
+  return loadChartTeamFiles(chartId);
 }
 
 function entitiesFromFrontmatter(fm: any): { agents: any[]; humans: any[] } {
@@ -389,8 +436,13 @@ export async function buildAgentContext(
   };
 }
 
-export async function getOrgTeamGraph(orgId: string, orgLabel: string): Promise<TeamGraph> {
-  const { draft, published } = await loadOrgTeamFiles(orgId);
+/**
+ * Build the team graph for a specific chart. Prefers the latest draft over
+ * the latest published — same semantics as the legacy org-scoped getter,
+ * just scoped to one chart instead of the org's primary.
+ */
+export async function getChartTeamGraph(chartId: string, orgLabel: string): Promise<TeamGraph> {
+  const { draft, published } = await loadChartTeamFiles(chartId);
   const source = draft || published;
   if (!source) {
     return {
@@ -413,6 +465,27 @@ export async function getOrgTeamGraph(orgId: string, orgLabel: string): Promise<
     hasDraft: !!draft,
     hasPublished: !!published,
   };
+}
+
+/**
+ * Back-compat shim — resolves the org's primary chart and returns its graph.
+ * OTP's /dashboard/team and the original /api/v1/team/graph (no chartId)
+ * both go through here.
+ */
+export async function getOrgTeamGraph(orgId: string, orgLabel: string): Promise<TeamGraph> {
+  const chartId = await getPrimaryChartId(orgId);
+  if (!chartId) {
+    return {
+      nodes: [{ id: 'ORG', externalId: 'ORG', type: 'organization', label: orgLabel, properties: {} }],
+      edges: [],
+      oosFileId: null,
+      oosStatus: null,
+      oosVersion: null,
+      hasDraft: false,
+      hasPublished: false,
+    };
+  }
+  return getChartTeamGraph(chartId, orgLabel);
 }
 
 // ---------- Mutation: edit one entity in the latest editable OOS ----------
@@ -475,18 +548,29 @@ function reassembleRaw(fmObject: any, body: string): string {
   return `---\n${fmText.trimEnd()}\n---\n${body}`;
 }
 
-async function getOrCreateEditableDraft(orgId: string): Promise<typeof oosFiles.$inferSelect> {
-  const { draft, published } = await loadOrgTeamFiles(orgId);
+/**
+ * Chart-scoped variant: find the latest draft for this chart, or roll forward
+ * the latest published into a new draft. The new draft is tagged with the
+ * chartId so future loads stay scoped correctly.
+ */
+async function getOrCreateEditableDraftForChart(
+  orgId: string,
+  chartId: string,
+): Promise<typeof oosFiles.$inferSelect> {
+  const { draft, published } = await loadChartTeamFiles(chartId);
   if (draft) return draft;
   if (!published) {
     throw new TeamMutationError('NO_OOS', 'Publish an OOS before editing the team chart', 409);
   }
-  // Create new draft from latest published, copying rawContent and frontmatter
+  // Version numbers are scoped to the org (legacy uniqueIndex on
+  // org_id + version), so we still max across the whole org, not just the
+  // chart, to avoid collisions with sibling charts.
   return await db.transaction(async (tx) => {
     const rows = await tx.select().from(oosFiles).where(eq(oosFiles.orgId, orgId)).orderBy(desc(oosFiles.version));
     const maxVersion = rows.length ? rows[0].version : 0;
     const [created] = await tx.insert(oosFiles).values({
       orgId,
+      chartId,
       name: published.name,
       template: published.template,
       version: maxVersion + 1,
@@ -505,6 +589,36 @@ async function getOrCreateEditableDraft(orgId: string): Promise<typeof oosFiles.
   });
 }
 
+/**
+ * Back-compat wrapper: resolves the primary chart for the org and delegates.
+ * Pre-Phase-C callers (CSV import endpoints, OTP-internal flows) all enter
+ * through here without needing to know about chart_id.
+ */
+async function getOrCreateEditableDraft(orgId: string): Promise<typeof oosFiles.$inferSelect> {
+  const chartId = await getPrimaryChartId(orgId);
+  if (!chartId) {
+    throw new TeamMutationError('NO_PRIMARY_CHART', 'Org has no primary chart (ensure-charts.ts backfill missing)', 500);
+  }
+  return getOrCreateEditableDraftForChart(orgId, chartId);
+}
+
+/**
+ * Shared mutation entry point: resolves the right draft based on whether an
+ * explicit chartId was supplied. When supplied, verifies it belongs to the
+ * org (security gate). When omitted, falls through to the org's primary
+ * chart for back-compat with pre-Phase-C callers.
+ */
+async function resolveEditableDraft(
+  orgId: string,
+  chartId?: string,
+): Promise<typeof oosFiles.$inferSelect> {
+  if (!chartId) return getOrCreateEditableDraft(orgId);
+  if (!(await chartBelongsToOrg(chartId, orgId))) {
+    throw new TeamMutationError('CHART_NOT_IN_ORG', 'Chart does not belong to this org', 403);
+  }
+  return getOrCreateEditableDraftForChart(orgId, chartId);
+}
+
 export interface CreateEntityInput {
   type: EntityType;
   name: string;
@@ -517,7 +631,8 @@ export interface CreateEntityInput {
 
 export async function createTeamEntity(
   orgId: string,
-  input: CreateEntityInput
+  input: CreateEntityInput,
+  chartId?: string,
 ): Promise<{ ok: true; externalId: string; oosFileId: string; type: EntityType }> {
   if (input.type !== 'agent' && input.type !== 'human') {
     throw new TeamMutationError('INVALID_TYPE', 'Type must be "agent" or "human"');
@@ -525,7 +640,7 @@ export async function createTeamEntity(
   const name = String(input.name || '').trim();
   if (!name) throw new TeamMutationError('MISSING_NAME', 'Name is required');
 
-  const draft = await getOrCreateEditableDraft(orgId);
+  const draft = await resolveEditableDraft(orgId, chartId);
   const { fmText, body } = splitFrontmatter(draft.rawContent);
   const fm: any = parseYAML(fmText) || {};
   fm.entities = fm.entities || {};
@@ -576,14 +691,15 @@ export async function createTeamEntity(
 export async function deleteTeamEntity(
   orgId: string,
   entityType: EntityType,
-  externalId: string
+  externalId: string,
+  chartId?: string,
 ): Promise<{ ok: true; oosFileId: string; status: 'draft'; version: number; removedEntityId: string }> {
   if (entityType !== 'agent' && entityType !== 'human') {
     throw new TeamMutationError('INVALID_TYPE', 'Type must be "agent" or "human"');
   }
   if (!externalId) throw new TeamMutationError('MISSING_ID', 'externalId is required');
 
-  const draft = await getOrCreateEditableDraft(orgId);
+  const draft = await resolveEditableDraft(orgId, chartId);
   const { fmText, body } = splitFrontmatter(draft.rawContent);
   const fm: any = parseYAML(fmText) || {};
   fm.entities = fm.entities || {};
@@ -637,7 +753,8 @@ export async function patchTeamEntity(
   orgId: string,
   entityType: EntityType,
   externalId: string,
-  rawPatch: Partial<EntityPatch>
+  rawPatch: Partial<EntityPatch>,
+  chartId?: string,
 ): Promise<MutationResult> {
   if (entityType !== 'agent' && entityType !== 'human') {
     throw new TeamMutationError('INVALID_TYPE', 'Type must be "agent" or "human"');
@@ -653,7 +770,7 @@ export async function patchTeamEntity(
     throw new TeamMutationError('EMPTY_PATCH', 'No editable fields supplied');
   }
 
-  const draft = await getOrCreateEditableDraft(orgId);
+  const draft = await resolveEditableDraft(orgId, chartId);
   const { fmText, body } = splitFrontmatter(draft.rawContent);
   const fm: any = parseYAML(fmText) || {};
   fm.entities = fm.entities || {};
@@ -781,7 +898,8 @@ function applyRowToEntity(entity: any, row: ImportRow): void {
 export async function bulkImportHumans(
   orgId: string,
   rows: ImportRow[],
-  mode: 'overwrite' | 'addition'
+  mode: 'overwrite' | 'addition',
+  chartId?: string,
 ): Promise<ImportResult> {
   if (mode !== 'overwrite' && mode !== 'addition') {
     throw new TeamMutationError('INVALID_MODE', 'mode must be "overwrite" or "addition"');
@@ -790,7 +908,7 @@ export async function bulkImportHumans(
     throw new TeamMutationError('INVALID_ROWS', 'rows must be an array');
   }
 
-  const draft = await getOrCreateEditableDraft(orgId);
+  const draft = await resolveEditableDraft(orgId, chartId);
   const { fmText, body } = splitFrontmatter(draft.rawContent);
   const fm: any = parseYAML(fmText) || {};
   fm.entities = fm.entities || {};

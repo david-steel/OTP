@@ -30,6 +30,7 @@ import { sendEmail } from '../../config/email.js';
 const patchSchema = z.object({
   type: z.enum(['agent', 'human']),
   externalId: z.string().min(1).max(120),
+  chartId: z.string().uuid().optional(),
   patch: z.object({
     name: z.string().min(1).max(255).optional(),
     role: z.string().min(1).max(255).optional(),
@@ -220,11 +221,21 @@ export default async function teamRoutes(app: FastifyInstance) {
   // Returns the live team graph derived from the latest draft (or
   // published) OOS file. Read-only. Auth: Clerk session, API key, or
   // service auth. orger-next consumes this to render the chart.
-  app.get('/team/graph', async (request, reply) => {
+  app.get<{ Querystring: { chartId?: string } }>('/team/graph', async (request, reply) => {
     const org = await getOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
-    const graph = await getOrgTeamGraph(org.id, org.name);
-    return graph;
+    const chartIdParam = request.query.chartId;
+    if (chartIdParam) {
+      const { getChartTeamGraph, chartBelongsToOrg } = await import('../../services/team-graph.js');
+      if (!/^[0-9a-f-]{36}$/i.test(chartIdParam)) {
+        return reply.status(400).send({ error: { code: 'INVALID_CHART_ID', message: 'chartId must be a UUID' } });
+      }
+      if (!(await chartBelongsToOrg(chartIdParam, org.id))) {
+        return reply.status(403).send({ error: { code: 'CHART_NOT_IN_ORG', message: 'Chart does not belong to your org' } });
+      }
+      return getChartTeamGraph(chartIdParam, org.name);
+    }
+    return getOrgTeamGraph(org.id, org.name);
   });
 
   // ============================================================
@@ -248,7 +259,8 @@ export default async function teamRoutes(app: FastifyInstance) {
         org.id,
         body.data.type as EntityType,
         body.data.externalId,
-        body.data.patch
+        body.data.patch,
+        body.data.chartId,
       );
       return result;
     } catch (e) {
@@ -276,6 +288,7 @@ export default async function teamRoutes(app: FastifyInstance) {
       reportsTo: z.string().max(120).optional(),
       escalatesTo: z.string().max(120).optional(),
       authorityLevel: z.string().max(120).optional(),
+      chartId: z.string().uuid().optional(),
     });
     const body = createSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
@@ -283,7 +296,8 @@ export default async function teamRoutes(app: FastifyInstance) {
     if (!(await checkChartCreate(request, reply, org.id, body.data.reportsTo))) return;
 
     try {
-      return await createTeamEntity(org.id, body.data);
+      const { chartId, ...createInput } = body.data;
+      return await createTeamEntity(org.id, createInput, chartId);
     } catch (e) {
       if (e instanceof TeamMutationError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
       request.log.error(e);
@@ -294,7 +308,7 @@ export default async function teamRoutes(app: FastifyInstance) {
   // ============================================================
   // DELETE /api/v1/team/entity -- remove an agent or human from the latest draft
   // ============================================================
-  app.delete<{ Querystring: { type?: string; externalId?: string } }>(
+  app.delete<{ Querystring: { type?: string; externalId?: string; chartId?: string } }>(
     '/team/entity',
     async (request, reply) => {
       if (!(await checkScope(request, reply, 'write'))) return;
@@ -304,17 +318,21 @@ export default async function teamRoutes(app: FastifyInstance) {
 
       const type = request.query.type;
       const externalId = request.query.externalId;
+      const chartId = request.query.chartId;
       if (type !== 'agent' && type !== 'human') {
         return reply.status(400).send({ error: { code: 'INVALID_TYPE', message: 'type must be agent or human' } });
       }
       if (!externalId || !/^[A-Z0-9_\-]{1,120}$/i.test(externalId)) {
         return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
       }
+      if (chartId && !/^[0-9a-f-]{36}$/i.test(chartId)) {
+        return reply.status(400).send({ error: { code: 'INVALID_CHART_ID', message: 'chartId must be a UUID' } });
+      }
 
       if (!(await checkChartEdit(request, reply, org.id, externalId))) return;
 
       try {
-        return await deleteTeamEntity(org.id, type as EntityType, externalId);
+        return await deleteTeamEntity(org.id, type as EntityType, externalId, chartId);
       } catch (e) {
         if (e instanceof TeamMutationError) {
           return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });

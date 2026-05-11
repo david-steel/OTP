@@ -612,6 +612,7 @@ await app.register(import('./routes/api/search.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/browse.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/graph.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/team.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/charts.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/agents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/kpis.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
