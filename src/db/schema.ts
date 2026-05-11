@@ -66,9 +66,29 @@ export const organizations = pgTable('organizations', {
   clerkIdx: uniqueIndex('org_clerk_idx').on(table.clerkOrgId),
 }));
 
+// Phase C: multi-chart support. One org can hold N charts; each chart is
+// backed by its own oos_file lineage. Backfill (in ensure-charts.ts) gives
+// every legacy org a "Main" chart marked is_primary=true.
+export const charts = pgTable('charts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  isPrimary: boolean('is_primary').notNull().default(false),
+  createdByClerkUserId: varchar('created_by_clerk_user_id', { length: 255 }),
+  shareToken: varchar('share_token', { length: 64 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('charts_org_idx').on(table.orgId),
+  // Note: the (org_id) WHERE is_primary partial unique index and the
+  // share_token partial unique index are created by ensure-charts.ts since
+  // Drizzle's uniqueIndex doesn't support WHERE clauses.
+}));
+
 export const oosFiles = pgTable('oos_files', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id).notNull(),
+  chartId: uuid('chart_id').references(() => charts.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }),
   template: templateEnum('template').notNull(),
   version: integer('version').notNull().default(1),
@@ -88,6 +108,7 @@ export const oosFiles = pgTable('oos_files', {
 }, (table) => ({
   orgVersionIdx: uniqueIndex('oos_org_version_idx').on(table.orgId, table.version),
   statusIdx: index('oos_status_idx').on(table.status),
+  chartIdx: index('oos_files_chart_idx').on(table.chartId),
 }));
 
 export const claims = pgTable('claims', {

@@ -728,6 +728,14 @@ try {
 }
 
 try {
+  const { ensureChartsTable } = await import('./db/ensure-charts.js');
+  await ensureChartsTable();
+  app.log.info('charts table is ready (multi-chart Phase C)');
+} catch (err) {
+  app.log.error({ err }, 'ensureChartsTable failed -- multi-chart support and orger-next chart UI will not work until resolved');
+}
+
+try {
   const { ensureGlossaryTermsTable } = await import('./db/ensure-glossary-terms.js');
   await ensureGlossaryTermsTable();
   app.log.info('glossary_terms table is ready and seeded');
