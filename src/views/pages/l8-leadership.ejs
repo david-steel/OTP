@@ -166,7 +166,15 @@
                 <div class="text-xs text-gray-500 mt-1 italic">"<%= r.statusNote %>"</div>
               <% } %>
             </div>
-            <div class="flex gap-1 ml-4">
+            <div class="flex gap-1 ml-4 items-center">
+              <% if ((orgTeams || []).length > 1) { %>
+                <select data-rock-move-team class="text-xs px-1 py-1 border rounded text-gray-500" title="Move this priority to a different team">
+                  <option value="">move…</option>
+                  <% (orgTeams || []).forEach(function(tm) { if (tm.id === r.teamId) return; %>
+                    <option value="<%= tm.id %>"><%= tm.name %></option>
+                  <% }); %>
+                </select>
+              <% } %>
               <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200">On</button>
               <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-red-100 rounded hover:bg-red-200">Off</button>
             </div>
@@ -618,6 +626,29 @@
     });
   });
 
+  // Rock move-to-team: PUT /rocks/:id { teamId } then fade the card out
+  // (it now belongs to a different team's L10).
+  document.querySelectorAll('[data-rock-move-team]').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const newTeamId = e.currentTarget.value;
+      if (!newTeamId) return;
+      const card = e.currentTarget.closest('[data-rock-id]');
+      if (!card) return;
+      const rockId = card.dataset.rockId;
+      e.currentTarget.disabled = true;
+      const res = await api('/rocks/' + rockId, { method: 'PUT', body: JSON.stringify({ teamId: newTeamId }) });
+      if (res?.error) {
+        alert('Move failed: ' + errMsg(res));
+        e.currentTarget.disabled = false;
+        e.currentTarget.value = '';
+        return;
+      }
+      card.style.transition = 'opacity 0.25s';
+      card.style.opacity = '0';
+      setTimeout(() => card.remove(), 250);
+    });
+  });
+
   // To-do toggle
   document.querySelectorAll('[data-todo-toggle]').forEach(box => {
     box.addEventListener('change', async () => {
@@ -656,6 +687,7 @@
       dueDate,
       onTrack: true,
       statusNote: statusNote || undefined,
+      teamId: teamId || undefined,
     })});
     if (res?.error) { alert('Add failed: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Add Priority'; return; }
     location.reload();

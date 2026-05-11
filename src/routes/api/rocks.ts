@@ -22,6 +22,7 @@ const createRockSchema = z.object({
   dueDate: z.string().datetime(),
   onTrack: z.boolean().optional().default(true),
   statusNote: z.string().optional(),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 const updateRockSchema = z.object({
@@ -35,6 +36,7 @@ const updateRockSchema = z.object({
   onTrack: z.boolean().optional(),
   statusNote: z.string().optional(),
   completed: z.boolean().optional(),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 function authedOrFail(request: any, reply: any) {
@@ -84,6 +86,7 @@ export default async function rockRoutes(app: FastifyInstance) {
       onTrack: body.data.onTrack ?? true,
       statusNote: body.data.statusNote,
       statusUpdatedAt: body.data.statusNote ? new Date() : null,
+      teamId: body.data.teamId || null,
       createdBy,
     }).returning();
 
@@ -95,7 +98,7 @@ export default async function rockRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/rocks?quarter=2026-Q2
-  app.get<{ Querystring: { quarter?: string; ownerExternalId?: string; onTrack?: string } }>('/rocks', async (request, reply) => {
+  app.get<{ Querystring: { quarter?: string; ownerExternalId?: string; onTrack?: string; teamId?: string } }>('/rocks', async (request, reply) => {
     const org = await authedOrFail(request, reply);
     if (!org) return;
 
@@ -104,6 +107,9 @@ export default async function rockRoutes(app: FastifyInstance) {
     if (request.query.ownerExternalId) conditions.push(eq(rocks.ownerExternalId, request.query.ownerExternalId));
     if (request.query.onTrack === 'true') conditions.push(eq(rocks.onTrack, true));
     if (request.query.onTrack === 'false') conditions.push(eq(rocks.onTrack, false));
+    if (request.query.teamId && /^[0-9a-f-]{36}$/i.test(request.query.teamId)) {
+      conditions.push(eq(rocks.teamId, request.query.teamId));
+    }
 
     const results = await db.select().from(rocks).where(and(...conditions)).orderBy(desc(rocks.dueDate));
     return { rocks: results, total: results.length };
@@ -150,6 +156,7 @@ export default async function rockRoutes(app: FastifyInstance) {
     }
     if (d.completed === true) updates.completedAt = new Date();
     if (d.completed === false) updates.completedAt = null;
+    if (d.teamId !== undefined) updates.teamId = d.teamId;
 
     const [updated] = await db.update(rocks)
       .set(updates)
