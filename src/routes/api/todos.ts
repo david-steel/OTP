@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, asc, isNull, isNotNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { RRule } from 'rrule';
+import pkg from 'rrule';
+const { RRule } = pkg;
 import { db } from '../../config/database.js';
 import { todos, auditLogs, teams } from '../../db/schema.js';
 import { getAuth } from '@clerk/fastify';
