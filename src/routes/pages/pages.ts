@@ -3133,17 +3133,45 @@ export default async function pageRoutes(app: FastifyInstance) {
       ...(member?.email ? [member.email] : []),
       'HUM_DAVIDSTEEL',  // canonical human tile for the org owner; expand when org_members carries this mapping
     ].filter(Boolean) as string[]));
+    // Enriched todos: include the meeting title + team name so the view
+    // can show a source label per todo (Personal / From <meeting>).
+    // Recurrence templates are hidden -- only their instances appear in
+    // user-facing lists.
     let myTodos: any[] = [];
     if (ownerCandidates.length > 0) {
-      myTodos = await db.select().from(todos)
+      myTodos = await db
+        .select({
+          id: todos.id,
+          title: todos.title,
+          description: todos.description,
+          dueAt: todos.dueAt,
+          doneAt: todos.doneAt,
+          kind: todos.kind,
+          priority: todos.priority,
+          recurrenceRule: todos.recurrenceRule,
+          recurrenceParentId: todos.recurrenceParentId,
+          meetingId: todos.meetingId,
+          teamId: todos.teamId,
+          createdAt: todos.createdAt,
+          createdBy: todos.createdBy,
+          ownerEntityType: todos.ownerEntityType,
+          ownerExternalId: todos.ownerExternalId,
+          meetingTitle: meetings.title,
+          teamName: teams.name,
+        })
+        .from(todos)
+        .leftJoin(meetings, eq(meetings.id, todos.meetingId))
+        .leftJoin(teams, eq(teams.id, todos.teamId))
         .where(and(
           eq(todos.organizationId, org.id),
           isNull(todos.deletedAt),
           isNull(todos.doneAt),
+          isNull(todos.parentTodoId),
+          isNull(todos.recurrenceRule),
           inArray(todos.ownerExternalId, ownerCandidates),
         ))
-        .orderBy(desc(todos.createdAt))
-        .limit(50);
+        .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
+        .limit(100);
     }
 
     // ---- My Issues (open IDS) ----
@@ -4270,6 +4298,13 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // Carry the dev orgId through so client-side fetches keep the same auth context locally.
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
 
+    // Org teams for the issue "move to team" dropdown.
+    const orgTeamsList = await db
+      .select({ id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault })
+      .from(teams)
+      .where(eq(teams.orgId, org.id))
+      .orderBy(desc(teams.isDefault), asc(teams.name));
+
     return reply.view('pages/l8-leadership', {
       title: meeting.title + ' -- OTP',
       description: 'Weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
@@ -4282,6 +4317,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       issues: orgIssues,
       todos: orgTodos,
       availableOwners,
+      orgTeams: orgTeamsList,
       devOrgIdParam,
     });
   });

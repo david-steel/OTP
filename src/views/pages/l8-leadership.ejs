@@ -288,7 +288,15 @@
                 <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-800 rounded">owner: <%= i.ownerName || i.ownerExternalId %></span>
               <% } %>
             </div>
-            <div class="flex gap-1">
+            <div class="flex gap-1 items-center">
+              <% if ((orgTeams || []).length > 1) { %>
+                <select data-action="move-team" class="text-xs px-1 py-1 border rounded" title="Move this issue to a different team">
+                  <option value="">move to…</option>
+                  <% orgTeams.forEach(function(tm) { if (tm.id === i.teamId) return; %>
+                    <option value="<%= tm.id %>"><%= tm.name %></option>
+                  <% }); %>
+                </select>
+              <% } %>
               <button data-ids-set="identified" class="text-xs px-2 py-1 bg-blue-100 rounded hover:bg-blue-200">Identify</button>
               <button data-ids-set="discussed"  class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Discuss</button>
               <button data-action="solve"       class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200 font-medium">Solve</button>
@@ -809,6 +817,26 @@
         await api('/tickets/' + ticketId, { method: 'DELETE' });
       }
       location.reload();
+    });
+
+    // Move to a different team -- PATCH /tickets/:id { teamId } then
+    // remove the card from this meeting's view (it now lives on a
+    // different team's L10).
+    card.querySelector('[data-action="move-team"]')?.addEventListener('change', async (e) => {
+      const sel = e.currentTarget;
+      const newTeamId = sel.value;
+      if (!newTeamId) return;
+      sel.disabled = true;
+      const res = await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ teamId: newTeamId }) });
+      if (res?.error) {
+        alert('Move failed: ' + errMsg(res));
+        sel.disabled = false;
+        sel.value = '';
+        return;
+      }
+      card.style.transition = 'opacity 0.25s';
+      card.style.opacity = '0';
+      setTimeout(() => card.remove(), 250);
     });
 
     // Edit

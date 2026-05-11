@@ -313,14 +313,40 @@
                 %>
                   <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-todo-id="<%= t.id %>">
                     <input type="checkbox" class="todo-done-cb mt-1" <%= t.doneAt ? 'checked' : '' %>>
+                    <% // Priority dot color
+                       var prioColor = t.priority === 'p1' ? 'bg-rose-500'
+                                     : t.priority === 'p2' ? 'bg-amber-500'
+                                     : t.priority === 'p3' ? 'bg-gray-400'
+                                     : 'bg-gray-300';
+                       // Source label
+                       var sourceLabel, sourceClass;
+                       if (t.kind === 'l10' && t.meetingTitle) {
+                         sourceLabel = 'From ' + t.meetingTitle;
+                         sourceClass = 'bg-indigo-50 text-indigo-700';
+                       } else if (t.kind === 'l10' && t.teamName) {
+                         sourceLabel = t.teamName + ' L10';
+                         sourceClass = 'bg-indigo-50 text-indigo-700';
+                       } else if (t.kind === 'l10') {
+                         sourceLabel = 'L10';
+                         sourceClass = 'bg-indigo-50 text-indigo-700';
+                       } else {
+                         sourceLabel = 'Personal';
+                         sourceClass = 'bg-gray-100 text-gray-600';
+                       }
+                    %>
+                    <span class="inline-block w-2 h-2 rounded-full mt-2 <%= prioColor %>" title="priority <%= t.priority || 'p3' %>"></span>
                     <div class="flex-1 min-w-0">
                       <div class="todo-view">
                         <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %> break-words"><%= t.title %></div>
                         <% if (t.description) { %>
                           <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap break-words"><%= t.description %></p>
                         <% } %>
-                        <div class="text-[11px] flex items-center gap-3 mt-1 <%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>">
-                          <span><%= due ? (overdue ? 'OVERDUE -- ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
+                        <div class="text-[11px] flex items-center gap-2 mt-1 flex-wrap">
+                          <span class="px-1.5 py-0.5 rounded font-medium <%= sourceClass %>"><%= sourceLabel %></span>
+                          <% if (t.recurrenceParentId) { %>
+                            <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Recurring instance">↻ recurring</span>
+                          <% } %>
+                          <span class="<%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= due ? (overdue ? 'OVERDUE — ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
                           <button type="button" class="todo-edit-btn text-otp-600 font-semibold hover:underline">Edit</button>
                           <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
                         </div>
