@@ -4423,6 +4423,29 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .limit(50);
     const justDone = recentlyDone.filter(t => t.doneAt && t.doneAt >= dayAgo);
 
+    // Upcoming meetings for the "attach to meeting" picker in the create form.
+    // Show next 14 days, ordered by scheduled date, with the team's name so
+    // the user knows which forum each meeting belongs to.
+    const twoWeeksFromNow = new Date(Date.now() + 14 * 86400000);
+    const upcomingMeetingRows = await db
+      .select({
+        id: meetings.id,
+        title: meetings.title,
+        scheduledAt: meetings.scheduledAt,
+        teamId: meetings.teamId,
+        teamName: teams.name,
+      })
+      .from(meetings)
+      .leftJoin(teams, eq(teams.id, meetings.teamId))
+      .where(and(
+        eq(meetings.organizationId, org.id),
+        isNull(meetings.deletedAt),
+        eq(meetings.status, 'scheduled'),
+      ))
+      .orderBy(asc(meetings.scheduledAt))
+      .limit(20);
+    const upcomingMeetings = upcomingMeetingRows.filter(m => m.scheduledAt <= twoWeeksFromNow);
+
     return reply.view('pages/me-todos', {
       title: 'My Todos - OTP',
       description: 'Open action items from your agents.',
@@ -4432,6 +4455,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       l10Todos: myL10Todos,
       justDone,
       ownerExternalId,
+      upcomingMeetings,
     });
   });
 }

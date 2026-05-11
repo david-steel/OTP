@@ -135,12 +135,75 @@
   @media (prefers-color-scheme: dark) {
     .me-section-l10 .l10-title { color: #a5b4fc; }
   }
+  /* Create form */
+  .me-create-card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .me-create-title { width: 100%; border: none; outline: none; font-size: 17px; font-weight: 600; padding: 6px 0; background: transparent; color: inherit; }
+  .me-create-desc { width: 100%; border: none; outline: none; resize: none; min-height: 32px; max-height: 120px; padding: 4px 0 8px; background: transparent; color: inherit; font-size: 14px; font-family: inherit; }
+  .me-create-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 10px; border-top: 1px solid #f4f4f5; }
+  .me-create-row select, .me-create-row input[type="datetime-local"] { border: 1px solid #e4e4e7; background: #fafafa; border-radius: 6px; padding: 6px 8px; font-size: 13px; color: inherit; }
+  .me-create-row .me-btn { margin-left: auto; }
+  @media (prefers-color-scheme: dark) {
+    .me-create-card { background: #18181b; border-color: #27272a; box-shadow: none; }
+    .me-create-row { border-top-color: #27272a; }
+    .me-create-row select, .me-create-row input[type="datetime-local"] { background: #27272a; border-color: #3f3f46; color: #fafafa; }
+  }
+  /* Edit form upgrades (priority/date/recur/meeting selectors live inline) */
+  .me-edit-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .me-edit-row select, .me-edit-row input[type="datetime-local"] { border: 1px solid #d4d4d8; background: #fafafa; border-radius: 6px; padding: 6px 8px; font-size: 13px; color: inherit; }
+  @media (prefers-color-scheme: dark) {
+    .me-edit-row select, .me-edit-row input[type="datetime-local"] { background: #27272a; border-color: #3f3f46; color: #fafafa; }
+  }
 </style>
 
 <div class="me-wrap">
   <div class="me-h">
     <h1>Your queue</h1>
     <div class="sub"><%= todos.length %> open · agents push action items here · L8 meeting starts here</div>
+  </div>
+
+  <!-- New todo create form -->
+  <div class="me-create-card">
+    <input id="new-todo-title" type="text" placeholder="What needs to happen?" maxlength="500" class="me-create-title" />
+    <textarea id="new-todo-desc" placeholder="Description (optional)" class="me-create-desc"></textarea>
+    <div class="me-create-row">
+      <select id="new-todo-priority" title="Priority">
+        <option value="p1">P1 critical</option>
+        <option value="p2">P2 high</option>
+        <option value="p3" selected>P3 normal</option>
+        <option value="p4">P4 low</option>
+      </select>
+      <select id="new-todo-quickdate" title="When">
+        <option value="">No date</option>
+        <option value="today-afternoon">This afternoon</option>
+        <option value="today-evening">Tonight</option>
+        <option value="tomorrow-am">Tomorrow morning</option>
+        <option value="tomorrow-pm">Tomorrow afternoon</option>
+        <option value="end-of-week">End of week (Fri 5pm)</option>
+        <option value="next-week">Next Monday</option>
+        <option value="custom">Custom...</option>
+      </select>
+      <input id="new-todo-custom-date" type="datetime-local" style="display:none;" />
+      <select id="new-todo-recur" title="Recurrence">
+        <option value="">No repeat</option>
+        <option value="FREQ=DAILY">Daily</option>
+        <option value="FREQ=WEEKLY">Weekly</option>
+        <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR">M / W / F</option>
+        <option value="FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR">Weekdays</option>
+        <option value="FREQ=MONTHLY">Monthly</option>
+      </select>
+      <% if (upcomingMeetings && upcomingMeetings.length > 0) { %>
+        <select id="new-todo-meeting" title="Attach to a meeting (makes it an L10 todo)">
+          <option value="">No meeting (personal)</option>
+          <% upcomingMeetings.forEach(function(m) {
+            const d = new Date(m.scheduledAt);
+            const label = (m.teamName || 'meeting') + ' · ' + d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}) + ' · ' + m.title;
+          %>
+            <option value="<%= m.id %>:<%= m.teamId || '' %>"><%= label %></option>
+          <% }); %>
+        </select>
+      <% } %>
+      <button class="me-btn primary" onclick="createTodo(this)">Add to queue</button>
+    </div>
   </div>
 
   <% if (todos.length === 0) { %>
@@ -188,6 +251,22 @@
         <input type="text" class="me-edit-title" value="<%= title %>" maxlength="500" />
         <label>Description</label>
         <textarea class="me-edit-desc"><%= desc %></textarea>
+        <div class="me-edit-row">
+          <select class="me-edit-priority" title="Priority">
+            <% ['p1','p2','p3','p4'].forEach(function(p) { %>
+              <option value="<%= p %>" <%= (t.priority || 'p3') === p ? 'selected' : '' %>><%= p.toUpperCase() %></option>
+            <% }); %>
+          </select>
+          <input type="datetime-local" class="me-edit-due" value="<%= t.dueAt ? new Date(t.dueAt).toISOString().slice(0,16) : '' %>" />
+          <select class="me-edit-recur" title="Recurrence">
+            <option value="" <%= !t.recurrenceRule ? 'selected' : '' %>>No repeat</option>
+            <option value="FREQ=DAILY" <%= t.recurrenceRule === 'FREQ=DAILY' ? 'selected' : '' %>>Daily</option>
+            <option value="FREQ=WEEKLY" <%= t.recurrenceRule === 'FREQ=WEEKLY' ? 'selected' : '' %>>Weekly</option>
+            <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR" <%= t.recurrenceRule === 'FREQ=WEEKLY;BYDAY=MO,WE,FR' ? 'selected' : '' %>>M / W / F</option>
+            <option value="FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR" <%= t.recurrenceRule === 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' ? 'selected' : '' %>>Weekdays</option>
+            <option value="FREQ=MONTHLY" <%= t.recurrenceRule === 'FREQ=MONTHLY' ? 'selected' : '' %>>Monthly</option>
+          </select>
+        </div>
         <div class="me-actions">
           <button class="me-btn secondary" onclick="cancelEdit(this)">Cancel</button>
           <button class="me-btn primary" onclick="saveEdit(this, '<%= t.id %>')">Save</button>
@@ -266,6 +345,11 @@ async function saveEdit(btn, id) {
   const title = card.querySelector('.me-edit-title').value.trim();
   const description = card.querySelector('.me-edit-desc').value;
   if (!title) { alert('Title cannot be empty.'); return; }
+  const priority = (card.querySelector('.me-edit-priority') || {}).value || undefined;
+  const dueStr = (card.querySelector('.me-edit-due') || {}).value || '';
+  const dueAt = dueStr ? new Date(dueStr).toISOString() : null;
+  const recurrenceRule = (card.querySelector('.me-edit-recur') || {}).value || null;
+  const body = { title, description, priority, dueAt, recurrenceRule };
   btn.disabled = true;
   btn.textContent = 'Saving...';
   try {
@@ -273,7 +357,7 @@ async function saveEdit(btn, id) {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ title: title, description: description }),
+      body: JSON.stringify(body),
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     card.dataset.title = encodeURIComponent(title);
@@ -283,6 +367,118 @@ async function saveEdit(btn, id) {
     btn.disabled = false;
     btn.textContent = 'Save';
     alert('Could not save: ' + e.message);
+  }
+}
+
+// Map the quick-date preset enum to an actual JS Date. Returns null for the
+// blank option. Custom returns whatever the user typed in the datetime-local
+// input (or null if empty).
+function resolveQuickDate(preset, customStr) {
+  const now = new Date();
+  function atHour(date, h, m = 0) {
+    const d = new Date(date);
+    d.setHours(h, m, 0, 0);
+    return d;
+  }
+  function addDays(n) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  switch (preset) {
+    case '': return null;
+    case 'today-afternoon': return atHour(now, 15);
+    case 'today-evening':   return atHour(now, 19);
+    case 'tomorrow-am':     return atHour(addDays(1), 9);
+    case 'tomorrow-pm':     return atHour(addDays(1), 15);
+    case 'end-of-week': {
+      // Friday 5pm. If today is past Fri 5pm, jump to next Friday.
+      const f = new Date(now);
+      const dow = f.getDay(); // 0 = Sun
+      const daysToFri = (5 - dow + 7) % 7;
+      f.setDate(f.getDate() + (daysToFri === 0 && f.getHours() >= 17 ? 7 : daysToFri));
+      return atHour(f, 17);
+    }
+    case 'next-week': {
+      const m = new Date(now);
+      const dow = m.getDay();
+      const daysToMon = ((1 - dow + 7) % 7) || 7;
+      m.setDate(m.getDate() + daysToMon);
+      return atHour(m, 9);
+    }
+    case 'custom':
+      return customStr ? new Date(customStr) : null;
+  }
+  return null;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const quick = document.getElementById('new-todo-quickdate');
+  const custom = document.getElementById('new-todo-custom-date');
+  if (quick && custom) {
+    quick.addEventListener('change', () => {
+      custom.style.display = quick.value === 'custom' ? '' : 'none';
+    });
+  }
+});
+
+async function createTodo(btn) {
+  const titleEl = document.getElementById('new-todo-title');
+  const title = titleEl.value.trim();
+  if (!title) { titleEl.focus(); return; }
+  const description = document.getElementById('new-todo-desc').value;
+  const priority = document.getElementById('new-todo-priority').value || 'p3';
+  const preset = document.getElementById('new-todo-quickdate').value;
+  const customDate = document.getElementById('new-todo-custom-date').value;
+  const dueDate = resolveQuickDate(preset, customDate);
+  const recurrenceRule = (document.getElementById('new-todo-recur') || {}).value || null;
+  const meetingSel = document.getElementById('new-todo-meeting');
+  const meetingVal = meetingSel ? meetingSel.value : '';
+  // "<meetingId>:<teamId>" -- if set, promotes the todo to kind='l10'
+  // attached to that meeting + its team. Otherwise stays personal.
+  let meetingId = null;
+  let teamId = null;
+  let kind = 'personal';
+  if (meetingVal) {
+    const parts = meetingVal.split(':');
+    meetingId = parts[0] || null;
+    teamId = parts[1] || null;
+    kind = 'l10';
+  }
+
+  const ownerExternalId = '<%= ownerExternalId %>';
+  const body = {
+    kind,
+    priority,
+    teamId,
+    meetingId,
+    ownerEntityType: 'human',
+    ownerExternalId,
+    title,
+    description: description || undefined,
+    dueAt: dueDate ? dueDate.toISOString() : undefined,
+    recurrenceRule: recurrenceRule || undefined,
+  };
+
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = 'Adding...';
+  try {
+    const r = await fetch('/api/v1/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err?.error?.message || ('HTTP ' + r.status));
+    }
+    location.reload();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = origText;
+    alert('Could not create: ' + e.message);
   }
 }
 
