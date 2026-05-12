@@ -19,6 +19,7 @@ import { computeEditableTiles } from '../../services/chart-permissions.js';
 import {
   issueInvite,
   revokeInvite,
+  resendInvite,
   listPendingInvites,
   listMembers,
   getRoleForUser,
@@ -557,6 +558,54 @@ export default async function teamRoutes(app: FastifyInstance) {
     if (role !== 'owner') return reply.status(403).send({ error: { code: 'NOT_OWNER', message: 'Only owners see pending invitations' } });
     const invites = await listPendingInvites(org.id);
     return { data: invites };
+  });
+
+  // ============================================================
+  // POST /api/v1/team/invitations/:id/resend -- re-fire the invite email
+  // with a fresh token + extended expiry. Same invitation row id.
+  // ============================================================
+  app.post<{ Params: { id: string } }>('/team/invitations/:id/resend', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in to resend invitations' } });
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) {
+      return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid invitation id' } });
+    }
+
+    const org = await getOrg(request);
+    if (!org) return reply.status(404).send({ error: { code: 'NO_ORG', message: 'No org found for current user' } });
+
+    try {
+      const baseUrl = `${request.protocol}://${request.hostname}`;
+      const effectiveBase = baseUrl.includes('localhost') ? 'https://orgtp.com' : baseUrl;
+      const resent = await resendInvite(request.params.id, auth.userId, effectiveBase);
+
+      const ownerName = (org as any).name || 'OTP';
+      const tileLabel = resent.claimedEntityId || 'a tile on the team chart';
+      const subject = `${ownerName} invited you to OTP (resent)`;
+      const html = renderInviteEmail({
+        orgName: ownerName,
+        acceptUrl: resent.acceptUrl,
+        tileLabel,
+        expiresAt: resent.expiresAt,
+      });
+      sendEmail({
+        to: resent.email,
+        subject,
+        html,
+        from: 'OTP Invitations <notifications@mail.orgtp.com>',
+      }).catch(err => request.log.error('[invite-resend] email send failed:', err));
+
+      return {
+        ok: true,
+        invitationId: resent.invitationId,
+        email: resent.email,
+        expiresAt: resent.expiresAt,
+      };
+    } catch (e) {
+      if (e instanceof MembershipError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to resend invitation' } });
+    }
   });
 
   // ============================================================

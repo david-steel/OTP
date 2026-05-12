@@ -475,6 +475,62 @@ export async function revokeInvite(invitationId: string, ownerUserId: string): P
 }
 
 /**
+ * Resend a pending invitation. Rotates the token (the old one is hashed and
+ * unrecoverable anyway) and refreshes expires_at so the recipient gets a
+ * fresh working link. The invitation row id stays the same so the pending-
+ * invites drawer entry doesn't churn.
+ *
+ * Returns the new acceptUrl so the caller can re-fire the email.
+ */
+export interface ResentInvite {
+  invitationId: string;
+  email: string;
+  claimedEntityId: string | null;
+  displayName: string | null;
+  expiresAt: Date;
+  acceptUrl: string;
+}
+
+export async function resendInvite(
+  invitationId: string,
+  requesterUserId: string,
+  baseUrl: string,
+  ttlDays: number = INVITATION_TTL_DAYS,
+): Promise<ResentInvite> {
+  const [inv] = await db.select().from(orgInvitations).where(eq(orgInvitations.id, invitationId)).limit(1);
+  if (!inv) throw new MembershipError('NOT_FOUND', 'Invitation not found', 404);
+
+  const role = await getRoleForUser(inv.orgId, requesterUserId);
+  const allowedToResend: Role[] = ['owner', 'admin', 'manager'];
+  if (!role || !allowedToResend.includes(role)) {
+    throw new MembershipError('CANNOT_RESEND', 'Your role does not allow resending invitations', 403);
+  }
+  if (inv.status !== 'pending') {
+    throw new MembershipError(
+      `INVITATION_${inv.status.toUpperCase()}`,
+      `Cannot resend a ${inv.status} invitation. Issue a new one instead.`,
+      410,
+    );
+  }
+
+  const { token, tokenHash } = generateToken();
+  const expiresAt = new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
+  await db.update(orgInvitations)
+    .set({ tokenHash, expiresAt })
+    .where(eq(orgInvitations.id, invitationId));
+
+  const acceptUrl = `${baseUrl.replace(/\/$/, '')}/accept-invite?token=${token}`;
+  return {
+    invitationId: inv.id,
+    email: inv.email,
+    claimedEntityId: inv.claimedEntityId,
+    displayName: inv.displayName,
+    expiresAt,
+    acceptUrl,
+  };
+}
+
+/**
  * Update a member's role, status, claimed tiles, access toggles, display
  * name, or team memberships. Owner / admin / implementer only. Owners are
  * protected -- their role cannot be changed via this path; ownership

@@ -102,8 +102,12 @@
   .invite-row { padding: 0.75rem 0; border-bottom: 1px dashed #e5e7eb; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
   .invite-row:last-child { border-bottom: none; }
   .invite-row .meta { font-size: 11px; color: #6b7280; margin-top: 0.15rem; }
+  .invite-row .actions { display: flex; gap: 0.35rem; align-items: center; }
   .invite-row .actions button { font-size: 11px; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; cursor: pointer; }
   .invite-row .actions button:hover { background: #fee2e2; }
+  .invite-row .actions button.resend { border-color: #bae6fd; background: #f0f9ff; color: #0369a1; }
+  .invite-row .actions button.resend:hover { background: #e0f2fe; }
+  .invite-row .actions button:disabled { opacity: 0.5; cursor: wait; }
 
   /* SOP authoring section in edit panel */
   .sop-section { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #f3f4f6; }
@@ -504,6 +508,7 @@
             </div>
           </div>
           <div class="actions">
+            <button class="resend" onclick="resendInvite('<%= inv.id %>', this)">Resend</button>
             <button onclick="revokeInvite('<%= inv.id %>')">Revoke</button>
           </div>
         </div>
@@ -3192,6 +3197,40 @@
         status.style.color = '#b91c1c';
         status.textContent = 'Network error: ' + e.message;
         btn.disabled = false; btn.textContent = 'Send invite';
+      }
+    };
+
+    window.resendInvite = async function(invitationId, btn) {
+      var originalText = btn ? btn.textContent : 'Resend';
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      try {
+        var res = await fetch('/api/v1/team/invitations/' + invitationId + '/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) {
+          var err = await res.json().catch(function() { return {}; });
+          alert('Resend failed: ' + ((err.error && err.error.message) || res.status));
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+          return;
+        }
+        var data = await res.json().catch(function() { return {}; });
+        if (btn) { btn.textContent = 'Sent ✓'; }
+        // Update the expiry meta line on the row to reflect the new date.
+        var row = document.querySelector('.invite-row[data-invite-id="' + invitationId + '"]');
+        if (row && data.expiresAt) {
+          var meta = row.querySelector('.meta');
+          if (meta) {
+            var d = new Date(data.expiresAt);
+            meta.innerHTML = meta.innerHTML.replace(/Expires [A-Z][a-z]+ \d+/, 'Expires ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+          }
+        }
+        setTimeout(function() {
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }, 2000);
+      } catch (e) {
+        alert('Network error: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
     };
 
