@@ -59,27 +59,27 @@
 </style>
 
 <!-- =====================================================
-     BETA BANNER — top of page, frames why everything is free
+     BETA BANNER — solid gold + black text. Free-forever promise.
      ===================================================== -->
-<div class="relative w-full" style="background: linear-gradient(90deg, rgba(212,173,50,0.18), rgba(245,200,77,0.22), rgba(212,173,50,0.18)); border-bottom: 1px solid rgba(212,173,50,0.35);">
-  <div class="mx-auto max-w-6xl px-4 py-2.5 sm:py-3 text-center">
-    <p class="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-amber-300">
-      <span class="inline-block px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-200 mr-2 border border-amber-300/30">BETA</span>
-      <span class="text-white/90">We're brand new — that's why everything is free.</span>
-      <span class="hidden sm:inline text-amber-200/80">Lock in free for your whole team before pricing turns on.</span>
+<div class="relative w-full" style="background: linear-gradient(90deg, #d4ad32 0%, #f5c84d 35%, #f5c84d 65%, #d4ad32 100%); box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px -4px rgba(212,173,50,0.4);">
+  <div class="mx-auto max-w-6xl px-4 py-3 sm:py-3.5 text-center">
+    <p class="text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-black flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
+      <span class="inline-block px-2 py-0.5 rounded-md bg-black text-amber-300 mr-1">BETA</span>
+      <span>Join now = Free forever for your whole team.</span>
+      <span class="hidden sm:inline text-black/75 font-bold normal-case tracking-normal">Beta members lock in free pricing before paid plans turn on.</span>
     </p>
   </div>
 </div>
 
 <!-- =====================================================
-     HERO — platform-first headline + feature tile preview
+     HERO — Big Radar mascot, headline, single CTA
      ===================================================== -->
 <section class="bg-otp-950 relative overflow-hidden pt-16 pb-12 sm:pt-20 sm:pb-16">
   <div class="absolute inset-0 bg-grid opacity-20"></div>
   <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
   <div class="absolute bottom-[-200px] left-[-100px] w-[500px] h-[500px] bg-blue-500/8 rounded-full blur-[160px] pointer-events-none"></div>
 
-  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
 
     <div class="mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400 bg-amber-500/10 border border-amber-500/20">
       <span class="w-1.5 h-1.5 rounded-full bg-amber-400 radar-pulse-glow"></span>
@@ -87,67 +87,49 @@
     </div>
 
     <h1 class="hero-headline font-extrabold text-white">
-      <span class="line-1">Every tool you need to run your week.</span>
-      <span class="line-2 radar-gradient-gold">Free while we're in beta.</span>
+      <span class="line-1">Every tool you need to</span>
+      <span class="line-2">run your Meetings <span class="radar-gradient-gold">+</span></span>
     </h1>
 
     <p class="mx-auto mt-5 max-w-2xl text-base sm:text-lg leading-relaxed text-gray-300">
-      Vision Plan. Weekly Scoreboard. Quarterly Priorities. To-Dos. Issues Board. Leadership Meeting. Team Chart. Plus a built-in AI Chief of Staff.
+      Vision Plan, Weekly Scoreboard, Quarterly Priorities, To-Dos, Issues Board, Leadership Meeting, Team Chart, and more.
     </p>
     <p class="mx-auto mt-2 max-w-2xl text-sm sm:text-base text-amber-300/90 font-semibold">
-      The same rhythm your leadership team already runs — without the per-seat price tag.
+      Plus Radar — your built-in AI Chief of Staff that runs the work between meetings.
     </p>
 
-    <!-- Feature tile preview (the platform IS the hero visual) -->
-    <div class="relative mx-auto mt-10 max-w-5xl">
-      <!-- App chrome / window frame -->
-      <div class="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.02] backdrop-blur shadow-2xl overflow-hidden">
-        <!-- Title bar -->
-        <div class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 bg-white/[0.02]">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-400/60"></span>
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-400/60"></span>
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/60"></span>
-          </div>
-          <div class="flex-1 text-center text-[10px] uppercase tracking-[0.25em] text-gray-500">orgtp.com / your team</div>
-          <div class="w-12"></div>
+    <!-- BIG Radar mascot in the middle. Sparkles around him. -->
+    <div class="relative mx-auto mt-10 flex w-full items-center justify-center md:mt-14">
+      <% const sparkles = [
+        { pos: 'left:6%; top:12%;',   size: 32, color: '#d4ad32', delay: 0.4 },
+        { pos: 'right:4%; top:8%;',   size: 26, color: '#0095ff', delay: 0.9 },
+        { pos: 'left:12%; top:42%;',  size: 20, color: '#0095ff', delay: 1.5 },
+        { pos: 'right:10%; top:36%;', size: 30, color: '#d4ad32', delay: 1.9 },
+        { pos: 'left:2%; bottom:18%;',  size: 22, color: '#84cc16', delay: 2.3 },
+        { pos: 'right:2%; bottom:14%;', size: 28, color: '#0095ff', delay: 2.7 },
+        { pos: 'left:22%; top:2%;',   size: 16, color: '#d4ad32', delay: 3.1 },
+        { pos: 'right:22%; bottom:2%;', size: 18, color: '#84cc16', delay: 3.5 },
+        { pos: 'left:-4%; top:30%;',  size: 14, color: '#0095ff', delay: 0.3 },
+        { pos: 'right:-4%; top:22%;', size: 16, color: '#d4ad32', delay: 1.2 },
+        { pos: 'left:18%; bottom:6%;',  size: 14, color: '#84cc16', delay: 1.7 },
+        { pos: 'right:18%; top:18%;', size: 18, color: '#0095ff', delay: 2.1 },
+        { pos: 'left:36%; top:-4%;',  size: 20, color: '#d4ad32', delay: 2.5 },
+        { pos: 'right:36%; top:-4%;', size: 16, color: '#0095ff', delay: 2.9 },
+        { pos: 'left:42%; bottom:-2%;', size: 22, color: '#84cc16', delay: 3.3 },
+        { pos: 'right:42%; bottom:-2%;', size: 18, color: '#0095ff', delay: 3.7 },
+        { pos: 'left:30%; top:50%;',  size: 12, color: '#d4ad32', delay: 1.0 },
+        { pos: 'right:30%; top:50%;', size: 14, color: '#0095ff', delay: 2.4 },
+      ]; %>
+      <% sparkles.forEach(s => { %>
+        <div class="pointer-events-none absolute radar-sparkle z-20" style="<%= s.pos %> animation-delay: <%= s.delay %>s; filter: drop-shadow(0 0 8px <%= s.color %>aa) drop-shadow(0 0 16px <%= s.color %>66);">
+          <svg width="<%= s.size %>" height="<%= s.size %>" viewBox="0 0 24 24" fill="<%= s.color %>" stroke="<%= s.color %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+          </svg>
         </div>
+      <% }); %>
 
-        <!-- Tile grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4 sm:p-6">
-          <% const heroTiles = [
-            { icon: '📋', label: 'Vision Plan',         hint: 'Long-range + 1-year' },
-            { icon: '📊', label: 'Weekly Scoreboard',   hint: '5–15 live KPIs' },
-            { icon: '🎯', label: 'Quarterly Priorities',hint: '90-day goals' },
-            { icon: '✅', label: 'To-Dos',              hint: 'Owned + dated' },
-            { icon: '⚠',  label: 'Issues Board',        hint: 'Surface + solve' },
-            { icon: '🗓', label: 'Leadership Meeting',  hint: 'Weekly cadence' },
-            { icon: '🪪', label: 'Team Chart',          hint: 'Roles + seats' },
-            { icon: '📣', label: 'Team Updates',        hint: 'Wins + news' },
-          ]; %>
-          <% heroTiles.forEach(t => { %>
-            <div class="feature-tile rounded-xl border border-white/10 bg-white/[0.025] p-4 text-left">
-              <div class="text-2xl mb-2"><%= t.icon %></div>
-              <div class="text-sm font-bold text-white"><%= t.label %></div>
-              <div class="text-[11px] text-gray-500 mt-0.5"><%= t.hint %></div>
-            </div>
-          <% }); %>
-          <!-- Radar tile — gold-accented, marks the bonus -->
-          <div class="feature-tile rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-400/15 to-amber-500/5 p-4 text-left col-span-2 sm:col-span-1 lg:col-span-2">
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0">
-                <div class="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-amber-400/40">
-                  <img src="/public/images/radar-mascot.png" alt="Radar" class="w-full h-full object-cover" />
-                </div>
-              </div>
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300 mb-0.5">Built-in &middot; AI</div>
-                <div class="text-sm font-bold text-white">Radar, your AI Chief of Staff</div>
-                <div class="text-[11px] text-amber-100/70 mt-0.5">Briefings, scoreboard pulls, issue radar</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="relative z-10 radar-float" style="filter: drop-shadow(0 36px 64px rgba(0,0,0,0.65)) drop-shadow(0 0 36px rgba(212,173,50,0.32));">
+        <img src="/public/images/radar-mascot.png" alt="Radar — your AI Chief of Staff, built into every OTP account." class="h-auto w-[380px] sm:w-[520px] md:w-[620px] lg:w-[680px]" />
       </div>
     </div>
 
@@ -160,7 +142,7 @@
     </div>
 
     <p class="mt-5 text-[11px] uppercase tracking-[0.25em] text-gray-500">
-      <span class="text-white">Free during beta</span> &middot;
+      <span class="text-white">Join in Beta = Free forever</span> &middot;
       <span class="text-amber-400">No credit card</span> &middot;
       <span class="text-otp-300">Whole team included</span>
     </p>
@@ -217,78 +199,34 @@
 </section>
 
 <!-- =====================================================
-     RADAR — the bonus AI Chief of Staff
+     RADAR CAPABILITIES — compact bar, Radar is already the hero
      ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
+<section class="bg-otp-950 relative py-16 sm:py-20 border-t border-white/5">
   <div class="mx-auto max-w-6xl px-6 sm:px-8">
+    <div class="mx-auto mb-10 max-w-2xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">What Radar does</p>
+      <h2 class="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+        The work that happens <span class="radar-gradient-gold">between meetings</span>.
+      </h2>
+      <p class="mt-4 text-base text-gray-400">
+        Every OTP account comes with Radar. No add-on. No extra seat fee. This is the part the per-seat tools don't have.
+      </p>
+    </div>
 
-    <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-      <!-- Left: copy -->
-      <div>
-        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400 bg-amber-500/10 border border-amber-500/20 mb-5">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 radar-pulse-glow"></span>
-          And one more thing
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <% const radarCaps = [
+        { icon: '⚡', label: 'Daily briefings',        desc: 'Pulls activity from Slack, email, calendar, CRM, and the scoreboard into one morning brief.' },
+        { icon: '📊', label: 'Live scoreboard pulls',  desc: 'Reads weekly KPIs from your source systems. The scoreboard is current before the meeting starts.' },
+        { icon: '⚠',  label: 'Issue radar',            desc: 'Watches Slack and email for problems mid-week. Surfaces them to the Issues Board before Friday.' },
+        { icon: '★',  label: 'Accountability tracking', desc: 'Tracks Quarterly Priorities and To-Dos weekly. Flags drift before it becomes a problem.' },
+      ]; %>
+      <% radarCaps.forEach(c => { %>
+        <div class="feature-tile rounded-2xl border border-amber-400/20 bg-gradient-to-b from-amber-400/[0.05] to-white/[0.02] p-5">
+          <div class="text-amber-400 text-2xl mb-3"><%= c.icon %></div>
+          <h3 class="text-base font-bold text-white mb-1.5"><%= c.label %></h3>
+          <p class="text-sm text-gray-400 leading-relaxed"><%= c.desc %></p>
         </div>
-        <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-          Meet Radar.<br/>
-          <span class="radar-gradient-gold">Your built-in AI Chief of Staff.</span>
-        </h2>
-        <p class="mt-5 text-lg text-gray-300 leading-relaxed">
-          Every account on OTP comes with Radar. He runs alongside your leadership team and does the work that happens between meetings.
-        </p>
-        <p class="mt-3 text-base text-gray-400 leading-relaxed">
-          No other operating platform has this. It's the part that makes OTP different from the per-seat meeting tools.
-        </p>
-
-        <div class="mt-7 space-y-3">
-          <% const radarCaps = [
-            { icon: '⚡', label: 'Daily briefings', desc: 'Pulls activity from Slack, email, calendar, CRM, and the scoreboard. Hands you a brief that replaces 2+ hours of manual checking.' },
-            { icon: '📊', label: 'Live scoreboard updates', desc: 'Pulls weekly KPIs from source systems. No more chasing teammates for numbers before the meeting.' },
-            { icon: '⚠',  label: 'Issue radar', desc: 'Watches Slack and email for problems between sessions. Surfaces them to the Issues Board before Friday.' },
-            { icon: '★',  label: 'Accountability without nagging', desc: 'Tracks quarterly priorities and to-dos weekly. Flags drift before it becomes a problem.' },
-          ]; %>
-          <% radarCaps.forEach(c => { %>
-            <div class="flex items-start gap-3">
-              <div class="text-amber-400 text-xl flex-shrink-0 mt-0.5"><%= c.icon %></div>
-              <div>
-                <p class="font-bold text-white"><%= c.label %></p>
-                <p class="text-sm text-gray-400 mt-0.5 leading-relaxed"><%= c.desc %></p>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-
-        <div class="mt-8">
-          <a href="/sign-up" class="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-bold text-otp-950 transition-transform hover:scale-[1.03]" style="background: linear-gradient(135deg, #d4ad32, #f5c84d);">
-            Get Radar for your team
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </a>
-        </div>
-      </div>
-
-      <!-- Right: Radar mascot -->
-      <div class="relative flex items-center justify-center">
-        <% const sideSparkles = [
-          { pos: 'left:8%; top:14%;',   size: 22, color: '#d4ad32', delay: 0.4 },
-          { pos: 'right:6%; top:10%;',  size: 18, color: '#0095ff', delay: 0.9 },
-          { pos: 'left:14%; bottom:18%;', size: 16, color: '#84cc16', delay: 1.5 },
-          { pos: 'right:10%; bottom:14%;', size: 20, color: '#d4ad32', delay: 2.0 },
-          { pos: 'left:42%; top:-4%;',  size: 14, color: '#0095ff', delay: 2.4 },
-          { pos: 'right:38%; bottom:-2%;', size: 16, color: '#84cc16', delay: 2.8 },
-          { pos: 'left:-2%; top:48%;',  size: 12, color: '#d4ad32', delay: 1.0 },
-          { pos: 'right:-2%; top:44%;', size: 14, color: '#0095ff', delay: 1.8 },
-        ]; %>
-        <% sideSparkles.forEach(s => { %>
-          <div class="pointer-events-none absolute radar-sparkle z-20" style="<%= s.pos %> animation-delay: <%= s.delay %>s; filter: drop-shadow(0 0 8px <%= s.color %>aa);">
-            <svg width="<%= s.size %>" height="<%= s.size %>" viewBox="0 0 24 24" fill="<%= s.color %>" stroke="<%= s.color %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
-            </svg>
-          </div>
-        <% }); %>
-        <div class="relative z-10 radar-float" style="filter: drop-shadow(0 32px 56px rgba(0,0,0,0.6)) drop-shadow(0 0 32px rgba(212,173,50,0.3));">
-          <img src="/public/images/radar-mascot.png" alt="Radar — half human Chief of Staff in olive uniform with RADAR dog tags, half AI circuit board. Built on OTP." class="h-auto w-[320px] sm:w-[420px] md:w-[480px]" />
-        </div>
-      </div>
+      <% }); %>
     </div>
   </div>
 </section>
@@ -431,7 +369,7 @@
     <div class="mb-6 flex justify-center">
       <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-otp-950" style="background: linear-gradient(90deg, #d4ad32, #f5c84d, #d4ad32); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 8px 24px -6px rgba(212,173,50,0.45);">
         <span aria-hidden>★</span>
-        Beta seats are open — for now
+        Join in Beta = Free forever
         <span aria-hidden>★</span>
       </div>
     </div>
@@ -441,7 +379,7 @@
       <span class="radar-gradient-gold">Free for your whole team.</span>
     </h2>
     <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-gray-300 leading-relaxed">
-      We're in beta and that's why this offer exists. Sign up while we're new and lock in free for your team. When pricing turns on, you stay grandfathered.
+      We're brand new. That's why this offer exists. Sign up while we're in Beta and your whole team stays free for life — grandfathered when paid plans turn on.
     </p>
 
     <div class="mt-10 flex justify-center">
