@@ -1,25 +1,38 @@
-<div class="max-w-6xl mx-auto px-4 py-8">
-  <div class="flex items-start justify-between mb-2">
-    <div>
-      <h1 class="text-2xl font-bold">OOS Operating Plan</h1>
-      <p class="text-gray-500 text-sm">A live, structured system that turns strategy into execution by aligning people, agents, and operating rules around measurable outcomes.</p>
-    </div>
-    <% if (plan) { %>
-      <div class="flex flex-col items-end gap-1">
-        <span class="px-3 py-1 bg-otp-100 text-otp-700 text-xs font-bold rounded-full uppercase"><%= plan.status %></span>
-        <span class="text-xs text-gray-500">Last synced: <%= plan.lastSyncedToOosAt ? new Date(plan.lastSyncedToOosAt).toLocaleString() : 'never' %></span>
+<section class="bg-gray-50 min-h-screen">
+<div class="max-w-7xl mx-auto px-6 sm:px-8 py-8">
+
+  <!-- Page header card -->
+  <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-3 mb-1">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 leading-none">Plan</h1>
+          <% if (plan) { %>
+            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-otp-700 bg-otp-50 border border-otp-100 px-2 py-1 rounded"><%= plan.status %></span>
+          <% } %>
+        </div>
+        <p class="text-sm text-gray-500 leading-relaxed max-w-2xl">A live, structured system that turns strategy into execution by aligning people, agents, and operating rules around measurable outcomes.</p>
       </div>
-    <% } %>
+      <% if (plan) { %>
+        <div class="text-right text-xs text-gray-500">
+          <div class="font-semibold text-gray-700 mb-0.5">Last synced</div>
+          <%= plan.lastSyncedToOosAt ? new Date(plan.lastSyncedToOosAt).toLocaleString() : 'never' %>
+        </div>
+      <% } %>
+    </div>
   </div>
 
   <% if (!plan) { %>
 
     <!-- Empty state: no plan yet -->
-    <div class="mt-8 bg-white border rounded-lg p-12 text-center">
-      <h2 class="text-xl font-semibold mb-2">No operating plan yet</h2>
-      <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Create your organization's first OOS Operating Plan. We'll seed the eight standard sections and you can fill them in or auto-generate from your existing OOS.</p>
-      <button id="btn-create-plan" type="button" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-600 text-sm transition-colors">
-        Create OOS Operating Plan
+    <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+      <div class="mx-auto w-12 h-12 rounded-full bg-otp-50 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-otp-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900 mb-2">No operating plan yet</h2>
+      <p class="text-gray-600 text-sm mb-6 max-w-md mx-auto leading-relaxed">Create your organization's first Plan. We'll seed the eight standard sections and you can fill them in or auto-generate from your existing OOS.</p>
+      <button id="btn-create-plan" type="button" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-600 text-sm transition-colors">
+        Create Plan
       </button>
       <div id="create-plan-msg" class="mt-3 text-sm text-gray-500"></div>
       <script>
@@ -52,17 +65,17 @@
 
   <% } else { %>
 
-    <!-- Plan header actions -->
-    <div class="mt-6 mb-6 flex flex-wrap gap-2 text-xs">
-      <button id="btn-generate" class="px-3 py-1.5 bg-otp-50 text-otp-700 border border-otp-200 rounded-lg hover:bg-otp-100 transition-colors" data-action="generate" data-plan-id="<%= plan.id %>">Generate 90-Day Plan</button>
-      <button id="btn-recalc" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" data-action="recalculate" data-plan-id="<%= plan.id %>">Recalculate Assignments</button>
-      <button id="btn-preview" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors" data-action="preview" data-plan-id="<%= plan.id %>">Preview OOS Update</button>
+    <!-- Plan header actions toolbar -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-2 text-xs">
+      <button id="btn-generate" class="px-3 py-1.5 bg-otp-50 text-otp-700 border border-otp-200 rounded-lg hover:bg-otp-100 transition-colors font-medium" data-action="generate" data-plan-id="<%= plan.id %>">Generate 90-Day Plan</button>
+      <button id="btn-recalc" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors font-medium" data-action="recalculate" data-plan-id="<%= plan.id %>">Recalculate Assignments</button>
+      <button id="btn-preview" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors font-medium" data-action="preview" data-plan-id="<%= plan.id %>">Preview OOS Update</button>
       <% if (isSuperAdmin) { %>
         <button id="btn-push" class="px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-300 rounded-lg hover:bg-amber-100 transition-colors font-semibold" data-action="push" data-plan-id="<%= plan.id %>">Push to OOS</button>
       <% } else { %>
         <button class="px-3 py-1.5 bg-gray-100 text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed" title="Super admin only">Push to OOS (super-admin)</button>
       <% } %>
-      <button id="btn-export" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" data-action="export" data-plan-id="<%= plan.id %>">Export / Copy Markdown</button>
+      <button id="btn-export" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors font-medium" data-action="export" data-plan-id="<%= plan.id %>">Export / Copy Markdown</button>
     </div>
 
     <div id="action-msg" class="hidden mb-4 px-3 py-2 rounded-lg text-sm"></div>
@@ -107,8 +120,8 @@
 
     <!-- 8 section cards (collapsible) -->
     <div class="mb-8">
-      <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide mb-3">Plan sections</h2>
-      <div class="space-y-3">
+      <h2 class="text-xs font-bold uppercase tracking-[0.15em] text-gray-500 mb-4 px-1">Plan sections</h2>
+      <div class="space-y-4">
         <%
           // Each field: { label, desc, key (storage), multiline (textarea vs input) }.
           // The key is the stable storage slot inside content_json; never change it
@@ -189,17 +202,20 @@
           <% var meta = sectionMeta[s.sectionKey]; %>
           <% var content = (s.contentJson && typeof s.contentJson === 'object') ? s.contentJson : {}; %>
           <% var anyValue = meta && meta.fields ? meta.fields.some(function(f) { var v = content[f.key]; return v !== undefined && v !== null && String(v).trim() !== ''; }) : false; %>
-          <details class="bg-white border rounded-lg overflow-hidden">
-            <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-start justify-between gap-4">
-              <div class="flex-1">
-                <div class="font-semibold text-sm"><%= s.title %></div>
+          <details class="bg-white border border-gray-200 rounded-2xl overflow-hidden group">
+            <summary class="px-6 py-5 cursor-pointer hover:bg-gray-50/50 flex items-start justify-between gap-4 list-none">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <svg class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <div class="text-base sm:text-lg font-bold text-gray-900"><%= s.title %></div>
+                </div>
                 <% if (meta) { %>
-                  <div class="text-xs text-gray-500 mt-0.5 leading-snug"><%= meta.tagline %></div>
+                  <div class="text-sm text-gray-600 leading-relaxed pl-6"><%= meta.tagline %></div>
                 <% } %>
               </div>
-              <span class="text-xs text-gray-400 font-mono whitespace-nowrap mt-1"><%= s.sectionKey %></span>
+              <span class="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-mono whitespace-nowrap mt-1.5"><%= s.sectionKey.replace(/_/g, ' ') %></span>
             </summary>
-            <div class="px-4 py-3 border-t bg-gray-50" data-section-row="<%= s.id %>">
+            <div class="px-6 py-5 border-t border-gray-100 bg-gray-50/30" data-section-row="<%= s.id %>">
               <!-- View mode: definition list of stored field values, or empty-state with field guide -->
               <div data-section-view>
                 <% if (anyValue) { %>
@@ -766,3 +782,4 @@
     }
   })();
 </script>
+</section>
