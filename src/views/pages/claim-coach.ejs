@@ -1,0 +1,135 @@
+<%-
+  /* /claim/:slug — Coach claim page (Founding 25 flow).
+     Variables: profile, isSignedIn, alreadyClaimed, signInUrl, signUpUrl, takedownUrl, publicProfileUrl */
+%>
+<section class="bg-gradient-to-b from-amber-50 via-white to-white">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+
+    <!-- Founding 25 badge -->
+    <div class="flex justify-center mb-6">
+      <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold tracking-wider uppercase">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        Founding 25 · EOS Coach
+      </span>
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl font-extrabold text-gray-900 text-center leading-tight mb-4">
+      <span class="block">Hi <%= profile.displayName.split(' ')[0] %>,</span>
+      <span class="block">your OTP page is ready.</span>
+    </h1>
+    <p class="text-base sm:text-lg text-gray-600 text-center max-w-xl mx-auto mb-12">
+      Since you're listed in the EOS Worldwide public implementer directory, we built a draft profile for you on OTP. Claim it, activate AI agents for your clients, or have us remove it. One click each.
+    </p>
+
+    <!-- Profile preview card -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="px-6 sm:px-8 py-6 sm:py-8 border-b border-gray-100">
+        <div class="flex flex-col sm:flex-row items-start gap-5">
+          <% if (profile.photoUrl || profile.avatarUrl) { %>
+            <img src="<%= profile.photoUrl || profile.avatarUrl %>" alt="<%= profile.displayName %>" class="w-20 h-20 rounded-full object-cover border-2 border-amber-200" />
+          <% } else { %>
+            <div class="w-20 h-20 rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center text-amber-700 text-2xl font-bold">
+              <%= profile.displayName.charAt(0) %>
+            </div>
+          <% } %>
+          <div class="flex-1">
+            <div class="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">Your draft profile</div>
+            <div class="text-xl sm:text-2xl font-bold text-gray-900 mb-1"><%= profile.displayName %></div>
+            <% if (profile.tier) { %>
+              <div class="text-sm text-gray-500 mb-2"><%= profile.tier %> EOS Implementer</div>
+            <% } %>
+            <% if (profile.headline) { %>
+              <div class="text-sm text-gray-700 leading-relaxed"><%= profile.headline %></div>
+            <% } %>
+            <% if (profile.geoCity || profile.geoState) { %>
+              <div class="text-xs text-gray-500 mt-2">
+                <%= [profile.geoCity, profile.geoState, profile.geoCountry].filter(Boolean).join(', ') %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <% if (alreadyClaimed) { %>
+        <!-- Already claimed state -->
+        <div class="px-6 sm:px-8 py-6 bg-gray-50">
+          <div class="flex items-start gap-3">
+            <span class="text-amber-600 mt-0.5">⚠</span>
+            <div class="text-sm text-gray-700">
+              <p class="font-semibold text-gray-900 mb-1">This profile has already been claimed.</p>
+              <p class="leading-relaxed">If you believe this is your profile and someone else claimed it, <a href="mailto:dsteel@sneeze.it?subject=Profile dispute - <%= profile.slug %>" class="text-amber-700 underline font-medium">email David directly</a>.</p>
+            </div>
+          </div>
+        </div>
+      <% } else if (!isSignedIn) { %>
+        <!-- Not signed in: sign-in/sign-up CTAs -->
+        <div class="px-6 sm:px-8 py-6 sm:py-8 bg-amber-50/40">
+          <div class="text-sm text-gray-600 mb-4">Sign in or create a free OTP account to claim this profile. Takes about 30 seconds.</div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a href="<%= signUpUrl %>" class="flex-1 inline-flex items-center justify-center px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors">
+              Sign up to claim →
+            </a>
+            <a href="<%= signInUrl %>" class="flex-1 inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white border-2 border-amber-300 hover:border-amber-400 text-gray-900 font-semibold transition-colors">
+              Already have OTP? Sign in
+            </a>
+          </div>
+        </div>
+      <% } else { %>
+        <!-- Signed in: confirm form -->
+        <div class="px-6 sm:px-8 py-6 sm:py-8 bg-amber-50/40">
+          <div class="text-sm text-gray-700 leading-relaxed mb-4">
+            You're signed in. Click below to claim this profile under your OTP account. We'll bind the profile to your workspace and unlock the founding-coach badge, roadmap voting, and a direct line to David.
+          </div>
+          <form method="POST" action="/claim/<%= profile.slug %>" class="m-0">
+            <button type="submit" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors">
+              Claim my profile →
+            </button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- What you get -->
+    <div class="mt-12 grid sm:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="text-amber-600 text-2xl mb-2">★</div>
+        <div class="text-sm font-bold text-gray-900 mb-1">Founding 25 badge</div>
+        <div class="text-xs text-gray-600 leading-relaxed">Visible on your storefront forever. First 25 coaches only.</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="text-amber-600 text-2xl mb-2">⚙</div>
+        <div class="text-sm font-bold text-gray-900 mb-1">AI agents for clients</div>
+        <div class="text-xs text-gray-600 leading-relaxed">Scorecard, issues, accountability. Free for every client you bring.</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="text-amber-600 text-2xl mb-2">💬</div>
+        <div class="text-sm font-bold text-gray-900 mb-1">Direct line to David</div>
+        <div class="text-xs text-gray-600 leading-relaxed">Roadmap input, founder Slack, your feedback shapes what we build.</div>
+      </div>
+    </div>
+
+    <!-- Removal option -->
+    <div class="mt-12 pt-8 border-t border-gray-200 text-center">
+      <p class="text-sm text-gray-600 mb-3">Don't want to be in the directory at all?</p>
+      <a href="<%= takedownUrl %>" class="text-sm text-gray-700 underline hover:text-gray-900 font-medium">
+        Request removal of this profile →
+      </a>
+      <p class="text-xs text-gray-500 mt-2">One-click. Removed from public directory and search.</p>
+    </div>
+
+    <!-- Public profile link (transparency) -->
+    <div class="mt-8 text-center">
+      <a href="<%= publicProfileUrl %>" class="text-xs text-gray-500 hover:text-gray-700 underline">
+        See what your public profile looks like right now →
+      </a>
+    </div>
+
+    <!-- Legal footer -->
+    <div class="mt-12 pt-6 border-t border-gray-100">
+      <p class="text-xs text-gray-500 leading-relaxed text-center max-w-2xl mx-auto">
+        Your profile was seeded from the <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="underline">EOS Worldwide public implementer directory</a>. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. EOS and related marks are trademarks of EOS Worldwide, LLC.
+      </p>
+    </div>
+
+  </div>
+</section>

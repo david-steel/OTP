@@ -642,6 +642,7 @@ await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' 
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
+await app.register(import('./routes/pages/coach-claim.js'));
 
 // Custom 404 handler -- return HTML instead of Fastify's default JSON
 app.setNotFoundHandler(async (request, reply) => {

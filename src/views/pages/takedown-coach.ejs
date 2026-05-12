@@ -1,0 +1,60 @@
+<%-
+  /* /takedown/:slug — Coach removal request form.
+     Variables: profile, slug, submitUrl */
+%>
+<section class="bg-gradient-to-b from-gray-50 via-white to-white">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 mb-5">
+        <span class="text-gray-600 text-2xl">✕</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">Request removal from the OTP directory</h1>
+      <p class="text-gray-600">No questions, no friction. Just confirm and we'll unpublish your profile.</p>
+    </div>
+
+    <!-- Profile preview (so they confirm it's the right one) -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-8">
+      <div class="flex items-center gap-4">
+        <% if (profile.photoUrl || profile.avatarUrl) { %>
+          <img src="<%= profile.photoUrl || profile.avatarUrl %>" alt="<%= profile.displayName %>" class="w-14 h-14 rounded-full object-cover" />
+        <% } else { %>
+          <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold"><%= profile.displayName.charAt(0) %></div>
+        <% } %>
+        <div class="flex-1">
+          <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Profile to remove</div>
+          <div class="text-lg font-semibold text-gray-900"><%= profile.displayName %></div>
+          <% if (profile.geoCity || profile.geoState) { %>
+            <div class="text-xs text-gray-500"><%= [profile.geoCity, profile.geoState].filter(Boolean).join(', ') %></div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" action="<%= submitUrl %>" class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+      <div>
+        <label for="email" class="block text-sm font-semibold text-gray-900 mb-1.5">Your email (optional)</label>
+        <input type="email" id="email" name="email" placeholder="you@example.com" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none" />
+        <p class="text-xs text-gray-500 mt-1">If provided, we'll confirm when removal is complete.</p>
+      </div>
+
+      <div>
+        <label for="reason" class="block text-sm font-semibold text-gray-900 mb-1.5">Reason (optional)</label>
+        <textarea id="reason" name="reason" rows="4" placeholder="Not interested, doesn't fit my brand, never gave permission, etc." class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none resize-y"></textarea>
+        <p class="text-xs text-gray-500 mt-1">Helps us improve. Not shared with anyone.</p>
+      </div>
+
+      <button type="submit" class="w-full inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-gray-900 hover:bg-black text-white font-bold transition-colors">
+        Remove my profile from OTP
+      </button>
+      <p class="text-xs text-gray-500 text-center">We'll unpublish within 24 hours and email you when it's done.</p>
+    </form>
+
+    <div class="mt-8 text-center">
+      <p class="text-sm text-gray-600">Changed your mind?</p>
+      <a href="/claim/<%= slug %>" class="text-sm text-amber-700 underline hover:text-amber-800 font-medium">Go back to the claim page</a>
+    </div>
+
+  </div>
+</section>

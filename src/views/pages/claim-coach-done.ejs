@@ -1,0 +1,51 @@
+<%-
+  /* /claim/:slug/done — Post-claim confirmation.
+     Variables: profile, slug, status ('success' | 'already_claimed'), publicProfileUrl, dashboardUrl */
+%>
+<section class="bg-gradient-to-b from-amber-50 via-white to-white">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 py-20 text-center">
+
+    <% if (status === 'already_claimed') { %>
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-6">
+        <span class="text-amber-600 text-3xl">!</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">This profile is already claimed.</h1>
+      <p class="text-gray-600 mb-8">
+        Someone else claimed this profile before you. If you believe this is your profile and there's a dispute, email David directly and we'll sort it out.
+      </p>
+      <a href="mailto:dsteel@sneeze.it?subject=Profile dispute - <%= slug %>" class="inline-flex items-center px-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800">
+        Email David
+      </a>
+    <% } else { %>
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-6">
+        <span class="text-green-600 text-3xl">✓</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">You're in.</h1>
+      <p class="text-base sm:text-lg text-gray-700 mb-2">
+        Your OTP profile is claimed<% if (profile) { %>, <%= profile.displayName.split(' ')[0] %><% } %>.
+      </p>
+      <p class="text-sm text-gray-600 mb-10">
+        David got the notification. You're tracked as part of the Founding 25 cohort. Next: head to your dashboard to set up the workspace your clients will join.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto mb-10">
+        <a href="<%= dashboardUrl %>" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold">
+          Go to dashboard →
+        </a>
+        <a href="<%= publicProfileUrl %>" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 font-semibold hover:border-gray-400">
+          View public profile
+        </a>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-left max-w-md mx-auto">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-700 mb-2">Founding 25 perks unlocked</div>
+        <ul class="text-sm text-gray-700 space-y-1">
+          <li>★ Badge on your storefront</li>
+          <li>★ Roadmap voting (monthly)</li>
+          <li>★ Direct line to David (just reply to the welcome email)</li>
+        </ul>
+      </div>
+    <% } %>
+
+  </div>
+</section>
