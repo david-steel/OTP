@@ -506,6 +506,8 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/generate', priority: '0.8', changefreq: 'monthly' },
     { loc: '/industries', priority: '0.7', changefreq: 'weekly' },
     { loc: '/experts', priority: '0.8', changefreq: 'weekly' },
+    { loc: '/meet-radar', priority: '0.95', changefreq: 'weekly' },
+    { loc: '/plan', priority: '0.7', changefreq: 'monthly' },
     { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.8', changefreq: 'monthly' },
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },
