@@ -1857,7 +1857,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const isEOS = profile.directory_source === 'eosworldwide';
     const isUnclaimed = profile.directory_source && !profile.claimed;
     const roleStr = isEOS
-      ? `${profile.tier ? profile.tier + ' ' : ''}EOS Implementer®`
+      ? `${profile.tier ? profile.tier + ' ' : ''}EOS Implementer`
       : 'AI coordination expert';
     const directoryNote = isEOS && isUnclaimed
       ? ' (directory listing seeded from EOS Worldwide; not affiliated with EOS Worldwide)'
@@ -1868,7 +1868,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     // Page title differentiates directory listings from OTP publishers
     const pageTitle = isEOS
-      ? `${profile.display_name} | EOS Implementer®${locStr} | OTP Coach Directory`
+      ? `${profile.display_name} | EOS Implementer${locStr} | OTP Coach Directory`
       : `${profile.display_name} | OTP Publisher`;
 
     return reply.view('pages/expert-profile', {

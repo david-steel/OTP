@@ -6,7 +6,7 @@
   var locStr = locParts.join(', ');
   var isEOS = profile.directory_source === 'eosworldwide';
   var isUnclaimed = profile.directory_source && !profile.claimed;
-  var roleLabel = isEOS ? ((profile.tier ? profile.tier + ' ' : '') + 'EOS Implementer®') : null;
+  var roleLabel = isEOS ? ((profile.tier ? profile.tier + ' ' : '') + 'EOS Implementer') : null;
   var firstName = (profile.display_name || '').split(' ')[0] || profile.display_name || 'this coach';
 %>
 
@@ -191,7 +191,7 @@
       <div class="flex flex-wrap gap-2 text-sm">
         <a href="/experts" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-otp-500 text-white font-medium hover:bg-otp-600 transition-colors">All coaches</a>
         <% if (isEOS) { %>
-          <a href="/glossary/eos" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">What is EOS®?</a>
+          <a href="/glossary/eos" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">What is EOS?</a>
         <% } %>
         <a href="/glossary" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">Coordination glossary</a>
       </div>

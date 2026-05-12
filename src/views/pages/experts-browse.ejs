@@ -11,7 +11,7 @@
         <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Operating-System Coach Directory</h1>
         <p class="text-sm text-gray-500 mt-1">
           <%= counts.total %> coaches listed
-          <% if (counts.eos > 0) { %> &middot; <%= counts.eos %> EOS Implementers®<% } %>
+          <% if (counts.eos > 0) { %> &middot; <%= counts.eos %> EOS Implementers<% } %>
           <% if (counts.claimed > 0) { %> &middot; <%= counts.claimed %> claimed<% } %>
         </p>
       </div>
@@ -19,7 +19,7 @@
     </div>
 
     <p class="text-gray-600 mt-4 max-w-3xl text-sm sm:text-base">
-      Public directory of operating-system coaches and consultants. Listings include EOS Implementers® (seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a>), Scaling Up coaches, and OTP-native publishers. Coaches can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
+      Public directory of operating-system coaches and consultants. Listings include EOS Implementers (seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a>), Scaling Up coaches, and OTP-native publishers. Coaches can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
     </p>
   </div>
 
@@ -30,7 +30,7 @@
     </div>
     <select id="filter-source" class="text-sm border rounded px-3 py-1.5">
       <option value="">All listings</option>
-      <option value="eosworldwide">EOS Implementers®</option>
+      <option value="eosworldwide">EOS Implementers</option>
       <option value="otp">OTP Publishers</option>
       <option value="claimed">Claimed only</option>
     </select>
@@ -79,7 +79,7 @@
           <!-- Source / claim badges -->
           <div class="flex flex-wrap gap-1.5 mt-3">
             <% if (isEOS) { %>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-medium">EOS Implementer®</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-medium">EOS Implementer</span>
             <% } else if (sourceTag === 'otp') { %>
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-otp-50 text-otp-700 border border-otp-100 font-medium">OTP Publisher</span>
             <% } %>
@@ -103,7 +103,7 @@
   <div class="mt-12 pt-6 border-t border-gray-200 text-xs text-gray-500 max-w-3xl">
     <p class="mb-2">
       <strong class="text-gray-700">Sourcing.</strong>
-      Profiles tagged "EOS Implementer®" are seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a> via their open WordPress REST API. Each listing links back to its source page. Implementers can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
+      Profiles tagged "EOS Implementer" are seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a> via their open WordPress REST API. Each listing links back to its source page. Implementers can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
     </p>
     <p class="mb-2">
       <strong class="text-gray-700">Trademarks.</strong>
