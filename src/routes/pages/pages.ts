@@ -77,6 +77,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP - How the Best AI Teams Run',
       description: 'How the best AI teams run. Search. Compare. Make yours better. Coordination intelligence from organizations running AI agents in production.',
       canonical: BASE_URL + '/',
+      ogImage: BASE_URL + '/public/images/og-otp-home.png',
       jsonLd: [
         {
           '@context': 'https://schema.org',
@@ -368,7 +369,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP for Coaches, Consultants & Operators - Your Playbook. Your Clients. One Protocol.',
       description: 'MIT 2025: 95% of enterprise AI pilots fail. Not because the AI is bad - because it is overlaid on the org instead of integrated into it. OTP is the operating protocol your clients run on, with your playbook defining the layer. An infrastructure of learning across your whole book of business.',
       canonical: BASE_URL + '/coach',
-      ogImage: BASE_URL + '/public/og-image.png',
+      ogImage: BASE_URL + '/public/images/og-coach.png',
       breadcrumbs: bc({ name: 'For Coaches', url: BASE_URL + '/coach' }),
       jsonLd: {
         '@context': 'https://schema.org',
