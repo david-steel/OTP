@@ -3213,10 +3213,27 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
 
     // ---- Meetings ----
-    const meetingsList = await db.select().from(meetings)
-      .where(and(eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)))
-      .orderBy(desc(meetings.scheduledAt))
-      .limit(50);
+    // Strict team-membership scope: a member only sees meetings on teams
+    // they belong to. Private teams (e.g. "David x Dan") never leak to
+    // anyone outside them, regardless of role. Meetings with NULL team_id
+    // are treated as unassigned and stay invisible until backfilled to a
+    // team. To restore visibility, add the user to the relevant team.
+    const myTeamIdRows = member
+      ? await db.select({ teamId: teamMemberships.teamId })
+          .from(teamMemberships)
+          .where(eq(teamMemberships.memberId, member.id))
+      : [];
+    const myTeamIds = myTeamIdRows.map(r => r.teamId);
+    const meetingsList = myTeamIds.length === 0
+      ? []
+      : await db.select().from(meetings)
+          .where(and(
+            eq(meetings.organizationId, org.id),
+            isNull(meetings.deletedAt),
+            inArray(meetings.teamId, myTeamIds),
+          ))
+          .orderBy(desc(meetings.scheduledAt))
+          .limit(50);
 
     let selectedMeetingId = (request.query as any)?.meetingId as string | undefined;
     if (!selectedMeetingId || !meetingsList.find(m => m.id === selectedMeetingId)) {
@@ -4285,19 +4302,40 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
-    // All teams in this org -- powers the filter dropdown + create form.
-    const orgTeams = await db.select({
-      id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault,
-    }).from(teams).where(eq(teams.orgId, org.id)).orderBy(desc(teams.isDefault), teams.name);
+    // Strict team-membership scope (same rule as /dashboard meetings):
+    // only show meetings on teams the current member belongs to.
+    const member = (request as any).orgMember as { id: string } | null;
+    const myTeamIdRows = member
+      ? await db.select({ teamId: teamMemberships.teamId })
+          .from(teamMemberships)
+          .where(eq(teamMemberships.memberId, member.id))
+      : [];
+    const myTeamIds = myTeamIdRows.map(r => r.teamId);
+
+    // Team dropdown -- only show teams the user is on (else they can pick
+    // a team and see nothing, which is confusing).
+    const orgTeams = myTeamIds.length === 0
+      ? []
+      : await db.select({
+          id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault,
+        }).from(teams)
+          .where(and(eq(teams.orgId, org.id), inArray(teams.id, myTeamIds)))
+          .orderBy(desc(teams.isDefault), teams.name);
 
     const filterTeamId = request.query.teamId || '';
-    const conditions = [eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)];
-    if (filterTeamId) conditions.push(eq(meetings.teamId, filterTeamId));
+    // Ignore filter requests for teams the user isn't on.
+    const effectiveFilter = filterTeamId && myTeamIds.includes(filterTeamId) ? filterTeamId : '';
 
-    const myMeetings = await db.select().from(meetings)
-      .where(and(...conditions))
-      .orderBy(desc(meetings.scheduledAt))
-      .limit(50);
+    const myMeetings = myTeamIds.length === 0
+      ? []
+      : await db.select().from(meetings)
+          .where(and(
+            eq(meetings.organizationId, org.id),
+            isNull(meetings.deletedAt),
+            effectiveFilter ? eq(meetings.teamId, effectiveFilter) : inArray(meetings.teamId, myTeamIds),
+          ))
+          .orderBy(desc(meetings.scheduledAt))
+          .limit(50);
 
     const defaultTeamId = orgTeams.find(t => t.slug === 'leadership')?.id || orgTeams[0]?.id || '';
 
@@ -4310,7 +4348,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       org,
       meetings: myMeetings,
       teamsList: orgTeams,
-      filterTeamId,
+      filterTeamId: effectiveFilter,
       defaultTeamId,
       devOrgIdParam,
     });
@@ -4363,6 +4401,25 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
       .limit(1);
     if (!meeting) return reply.status(404).send('Meeting not found');
+
+    // Team-membership gate: 404 if the requester isn't on this meeting's
+    // team. Prevents a direct URL to "David x Dan" from leaking to anyone
+    // outside that team. Members must be on the team; meetings with NULL
+    // team_id stay invisible until backfilled.
+    const _member = (request as any).orgMember as { id: string } | null;
+    if (_member) {
+      if (!meeting.teamId) return reply.status(404).send('Meeting not found');
+      const [tm] = await db.select({ teamId: teamMemberships.teamId })
+        .from(teamMemberships)
+        .where(and(
+          eq(teamMemberships.memberId, _member.id),
+          eq(teamMemberships.teamId, meeting.teamId),
+        ))
+        .limit(1);
+      if (!tm) return reply.status(404).send('Meeting not found');
+    }
+    // If _member is null, the requester is the legacy founder who got past
+    // l8ResolveOrg via clerkOrgId === auth.userId. They retain full access.
 
     // Build agenda data scoped to THIS meeting's team. KPIs / Rocks / Issues
     // all filter strictly by meeting.team_id so private teams (e.g. "David

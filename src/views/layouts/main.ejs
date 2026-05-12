@@ -231,7 +231,19 @@
 
         <a href="/whats-new" class="text-white hover:text-white/70 transition-colors">What's New</a>
         <div id="auth-nav" class="flex items-center gap-3">
-          <% if (typeof authUserId !== 'undefined' && authUserId) { %>
+          <% if (typeof authUserId !== 'undefined' && authUserId) {
+               // Role-gated dashboard links. Mirrors dashboard-tabs.ejs buckets.
+               var _role = (locals.memberRole || '').toString();
+               var _ORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
+               var _INVITER  = ['owner','admin','manager','visionary','integrator'];
+               var _ALL = true; // every authed org member
+               function _has(allowed){
+                 if (allowed === true) return true;
+                 if (!_role) return false;
+                 for (var i=0;i<allowed.length;i++){ if (allowed[i]===_role) return true; }
+                 return false;
+               }
+          %>
             <!-- Dashboard dropdown (signed-in users) -->
             <div class="relative group z-50">
               <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
@@ -242,15 +254,15 @@
               <div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 220px;">
                 <div class="h-2"></div>
                 <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
-                  <a href="/dashboard" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Daily <span class="text-white/50 text-xs">- run my day</span></a>
-                  <a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Meetings <span class="text-white/50 text-xs">- L8 / L10</span></a>
-                  <a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Team chart</a>
-                  <a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">KPIs / Scoreboard</a>
-                  <div class="border-t border-white/10 my-1"></div>
-                  <a href="/dashboard/oos-operating-plan" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Operating plan</a>
-                  <a href="/dashboard/members" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Members</a>
-                  <a href="/dashboard/publisher" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Publisher</a>
-                  <a href="/settings/api" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">MCP / API keys</a>
+                  <% if (_has(_ALL)) { %><a href="/dashboard" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Daily <span class="text-white/50 text-xs">- run my day</span></a><% } %>
+                  <% if (_has(_ALL)) { %><a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Meetings <span class="text-white/50 text-xs">- L8 / L10</span></a><% } %>
+                  <% if (_has(_ALL)) { %><a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Team chart</a><% } %>
+                  <% if (_has(_ALL)) { %><a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">KPIs / Scoreboard</a><% } %>
+                  <% if (_has(_ORG_WIDE) || _has(_INVITER)) { %><div class="border-t border-white/10 my-1"></div><% } %>
+                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Operating plan</a><% } %>
+                  <% if (_has(_INVITER)) { %><a href="/dashboard/members" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Members</a><% } %>
+                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/publisher" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Publisher</a><% } %>
+                  <% if (_has(_ORG_WIDE)) { %><a href="/settings/api" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">MCP / API keys</a><% } %>
                 </div>
               </div>
             </div>
@@ -287,16 +299,26 @@
 
         <a href="/whats-new" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors mt-1">What's New</a>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
-          <% if (typeof authUserId !== 'undefined' && authUserId) { %>
+          <% if (typeof authUserId !== 'undefined' && authUserId) {
+               var _mRole = (locals.memberRole || '').toString();
+               var _mORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
+               var _mINVITER  = ['owner','admin','manager','visionary','integrator'];
+               function _mHas(allowed){
+                 if (allowed === true) return true;
+                 if (!_mRole) return false;
+                 for (var i=0;i<allowed.length;i++){ if (allowed[i]===_mRole) return true; }
+                 return false;
+               }
+          %>
             <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-1 pb-1">Dashboard</div>
             <a href="/dashboard" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Daily</a>
             <a href="/l8" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Meetings</a>
             <a href="/dashboard/team" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Team chart</a>
             <a href="/dashboard/kpis" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>
-            <a href="/dashboard/oos-operating-plan" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Operating plan</a>
-            <a href="/dashboard/members" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Members</a>
-            <a href="/dashboard/publisher" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Publisher</a>
-            <a href="/settings/api" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP / API</a>
+            <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Operating plan</a><% } %>
+            <% if (_mHas(_mINVITER))  { %><a href="/dashboard/members" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Members</a><% } %>
+            <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/publisher" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Publisher</a><% } %>
+            <% if (_mHas(_mORG_WIDE)) { %><a href="/settings/api" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP / API</a><% } %>
             <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors mt-2">Publish</a>
             <div id="auth-user-button-mobile" class="pt-2"></div>
           <% } else { %>
@@ -444,11 +466,10 @@
                 '<a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Meetings</a>' +
                 '<a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Team chart</a>' +
                 '<a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">KPIs / Scoreboard</a>' +
-                '<div class="border-t border-white/10 my-1"></div>' +
-                '<a href="/dashboard/oos-operating-plan" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Operating plan</a>' +
-                '<a href="/dashboard/members" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Members</a>' +
-                '<a href="/dashboard/publisher" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Publisher</a>' +
-                '<a href="/settings/api" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">MCP / API keys</a>' +
+                // Role-gated items (Operating plan / Members / Publisher / MCP) intentionally
+                // omitted here -- this fallback fires when server thought signed-out but Clerk
+                // says signed-in, so memberRole is unknown. The server-rendered nav on the
+                // next page load shows the full role-appropriate set.
               '</div>' +
             '</div>' +
           '</div>' +
