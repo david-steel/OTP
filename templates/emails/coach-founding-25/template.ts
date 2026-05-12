@@ -33,37 +33,40 @@ const C = {
 
 // 4-point sparkle SVG (matches /coach page sparkle, lucide "Sparkles" path).
 // Wrapped in a span we can absolutely-position and animate.
-// SVG-as-data-URI helpers. Gmail (web + mobile) strips raw <svg> tags but
-// accepts <img src="data:image/svg+xml;utf8,..."> — so we render every SVG
-// as an image. Works in Gmail, Apple Mail, modern Outlook, mobile clients.
-function svgDataUri(svgMarkup: string): string {
-  // URL-encode the SVG. encodeURIComponent handles all special chars including # and ".
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svgMarkup)}`;
-}
+// Sparkle + wave helpers. Use inline SVG inside positioned <span>/<td> wrappers.
+// Rationale: Apple Mail (the majority of coach inboxes) renders inline SVG
+// fine but strips position:absolute from inline-styled <img> tags. Gmail
+// strips raw <svg> entirely, so Gmail users see no sparkles/waves — the
+// mascot, layout, copy, and CTAs all still render. That's the right
+// trade-off for now. Could swap to PNG sparkles later for full coverage.
 
 const SPARKLE_PATH = 'M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z';
 
 // Wavy transition strip — fluid curve dividing two background colors.
-// Rendered as data-URI img so Gmail picks it up.
+// direction='down': fillColor at top with wavy bottom edge (navy → white)
+// direction='up':   fillColor at bottom with wavy top edge   (white → navy)
 function waveTransition(fillColor: string, bgColor: string, direction: 'down' | 'up'): string {
   const path = direction === 'down'
     ? 'M0,0 L600,0 L600,28 C500,58 400,8 300,30 C200,52 100,8 0,28 Z'
     : 'M0,32 C100,8 200,52 300,30 C400,8 500,58 600,32 L600,60 L0,60 Z';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 60" width="600" height="60" preserveAspectRatio="none"><path d="${path}" fill="${fillColor}"/></svg>`;
   return `<tr>
     <td style="background:${bgColor};padding:0;line-height:0;font-size:0;">
-      <img src="${svgDataUri(svg)}" width="600" height="60" alt="" style="display:block;width:100%;height:60px;border:0;" />
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 60" width="600" height="60" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
+        <path d="${path}" fill="${fillColor}"/>
+      </svg>
     </td>
   </tr>`;
 }
 
 // Inline sparkle next to text (flows with the line)
 function sparkleInline(size: number, color: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="${SPARKLE_PATH}"/></svg>`;
-  return `<img src="${svgDataUri(svg)}" width="${size}" height="${size}" alt="" style="display:inline-block;vertical-align:middle;border:0;" />`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}" style="display:inline-block;vertical-align:middle;">
+<path d="${SPARKLE_PATH}"/>
+</svg>`;
 }
 
-// Absolutely-positioned sparkle (around mascot, around numbers)
+// Absolutely-positioned sparkle. The <span> wrapper carries position:absolute
+// because Apple Mail strips position from inline-styled <img>/<svg> directly.
 function sparkleAt(opts: {
   size: number; color: string; top: string; left?: string; right?: string;
   delay: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; speed?: 'slow' | 'fast';
@@ -71,8 +74,12 @@ function sparkleAt(opts: {
   const { size, color, top, left, right, delay, speed } = opts;
   const pos = right !== undefined ? `right:${right};` : `left:${left};`;
   const speedClass = speed === 'slow' ? ' s-slow' : speed === 'fast' ? ' s-fast' : '';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="${SPARKLE_PATH}"/></svg>`;
-  return `<img src="${svgDataUri(svg)}" width="${size}" height="${size}" alt="" class="sparkle s-d${delay}${speedClass}" style="position:absolute;top:${top};${pos}width:${size}px;height:${size}px;display:block;border:0;" />`;
+  const glow = `filter: drop-shadow(0 0 8px ${color}aa) drop-shadow(0 0 16px ${color}55);`;
+  return `<span class="sparkle s-d${delay}${speedClass}" style="position:absolute;top:${top};${pos}width:${size}px;height:${size}px;line-height:0;${glow}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}" style="display:block;">
+<path d="${SPARKLE_PATH}"/>
+</svg>
+</span>`;
 }
 
 export function renderCoachFoundingEmail(vars: CoachEmailVars): {
