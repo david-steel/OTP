@@ -275,6 +275,18 @@ Reason: ${escapeHtml(reason || '(not provided)')}</p>
     });
   });
 
+  // ───── GET /meet-radar ────────────────────────────────────────
+  // Positioning page for LinkedIn EOS audiences. Soft framing:
+  // "the next layer" not "vs Ninety/Bloom." Radar as protagonist.
+  // Story arc: paper → meeting software → AI-native.
+  app.get('/meet-radar', async (_request, reply) => {
+    return reply.view('pages/meet-radar', {
+      title: 'Meet Radar — the AI Chief of Staff for EOS organizations | OTP',
+      description: 'Meeting software ran the meeting. Radar runs everything between them. Free for coaches and their clients. Founding 25 cohort open now.',
+      canonical: 'https://orgtp.com/meet-radar',
+    });
+  });
+
   // ───── GET /unsubscribe?slug=... ──────────────────────────────
   // One-click unsubscribe. Creates an UNSUBSCRIBE ticket so the send script
   // can skip this slug on future sends. Shows a confirmation page that also

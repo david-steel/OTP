@@ -1,0 +1,318 @@
+<!-- ============================================================
+     /meet-radar — Positioning page for LinkedIn EOS audiences.
+     Soft framing: "the next layer," not "vs Ninety/Bloom." Radar is
+     the protagonist. Story arc: paper → meeting software → AI-native.
+     CTAs route to /claim (for coaches in the directory) + /plan.
+     ============================================================ -->
+<style>
+  /* Sparkle twinkle — matches /coach page treatment for consistency */
+  @keyframes radar-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.4) rotate(0); }
+    25% { opacity: 1; transform: scale(1) rotate(90deg); }
+    50% { opacity: 0.6; transform: scale(0.8) rotate(180deg); }
+    75% { opacity: 1; transform: scale(1) rotate(270deg); }
+  }
+  .radar-sparkle { animation: radar-sparkle 4s ease-in-out infinite; }
+
+  @keyframes radar-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .radar-float { animation: radar-float 6s ease-in-out infinite; }
+
+  @keyframes radar-pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212, 173, 50, 0.6); }
+    50% { box-shadow: 0 0 0 12px rgba(212, 173, 50, 0); }
+  }
+  .radar-pulse-glow { animation: radar-pulse-glow 2.4s ease-in-out infinite; }
+
+  .radar-gradient-gold {
+    background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #d4ad32 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .radar-sparkle, .radar-float, .radar-pulse-glow { animation: none !important; }
+  }
+</style>
+
+<!-- =====================================================
+     HERO — Radar centered, sparkles, headline
+     ===================================================== -->
+<section class="bg-otp-950 relative overflow-hidden pt-24 pb-12 sm:pt-32 sm:pb-16">
+  <div class="absolute inset-0 bg-grid opacity-20"></div>
+  <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+  <div class="absolute bottom-[-200px] left-[-100px] w-[500px] h-[500px] bg-blue-500/8 rounded-full blur-[160px] pointer-events-none"></div>
+
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
+
+    <div class="mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400 bg-amber-500/10 border border-amber-500/20">
+      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 radar-pulse-glow"></span>
+      Built on OTP
+    </div>
+
+    <h1 class="font-extrabold leading-[0.98] tracking-tight text-white mb-6" style="font-size: clamp(2.5rem, 6vw, 4.5rem);">
+      <span class="block">Meeting software ran the meeting.</span>
+      <span class="block radar-gradient-gold mt-2">Radar runs everything between them.</span>
+    </h1>
+
+    <p class="mx-auto mt-5 max-w-2xl text-base sm:text-lg leading-relaxed text-gray-300">
+      Meet Radar. He's an AI Chief of Staff running on OTP — the operating layer for organizations that have outgrown meeting software.
+      <span class="block mt-2 font-semibold text-white">Same EOS rhythm. Different layer of the stack.</span>
+    </p>
+
+    <!-- Radar mascot with sparkles -->
+    <div class="relative mx-auto mt-10 flex w-full items-center justify-center md:mt-14">
+      <% const sparkles = [
+        { pos: 'left:10%; top:14%;',  size: 28, color: '#d4ad32', delay: 0.4 },
+        { pos: 'right:8%; top:10%;',  size: 22, color: '#0095ff', delay: 0.9 },
+        { pos: 'left:16%; top:44%;',  size: 18, color: '#0095ff', delay: 1.5 },
+        { pos: 'right:14%; top:38%;', size: 26, color: '#d4ad32', delay: 1.9 },
+        { pos: 'left:6%; bottom:20%;',  size: 20, color: '#84cc16', delay: 2.3 },
+        { pos: 'right:6%; bottom:16%;', size: 24, color: '#0095ff', delay: 2.7 },
+        { pos: 'left:26%; top:4%;',   size: 14, color: '#d4ad32', delay: 3.1 },
+        { pos: 'right:26%; bottom:4%;', size: 16, color: '#84cc16', delay: 3.5 },
+        { pos: 'left:-2%; top:30%;',  size: 12, color: '#0095ff', delay: 0.3 },
+        { pos: 'right:-2%; top:22%;', size: 14, color: '#d4ad32', delay: 1.2 },
+        { pos: 'left:20%; bottom:8%;',  size: 12, color: '#84cc16', delay: 1.7 },
+        { pos: 'right:20%; top:20%;', size: 16, color: '#0095ff', delay: 2.1 },
+        { pos: 'left:38%; top:-2%;',  size: 18, color: '#d4ad32', delay: 2.5 },
+        { pos: 'right:38%; top:-2%;', size: 14, color: '#0095ff', delay: 2.9 },
+        { pos: 'left:44%; bottom:-1%;', size: 20, color: '#84cc16', delay: 3.3 },
+        { pos: 'right:44%; bottom:-1%;', size: 16, color: '#0095ff', delay: 3.7 },
+      ]; %>
+      <% sparkles.forEach(s => { %>
+        <div class="pointer-events-none absolute radar-sparkle z-20" style="<%= s.pos %> animation-delay: <%= s.delay %>s; filter: drop-shadow(0 0 8px <%= s.color %>aa) drop-shadow(0 0 16px <%= s.color %>66);">
+          <svg width="<%= s.size %>" height="<%= s.size %>" viewBox="0 0 24 24" fill="<%= s.color %>" stroke="<%= s.color %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+          </svg>
+        </div>
+      <% }); %>
+
+      <div class="relative z-10 radar-float" style="filter: drop-shadow(0 32px 56px rgba(0,0,0,0.6)) drop-shadow(0 0 32px rgba(212,173,50,0.3));">
+        <img src="/public/images/radar-mascot.png" alt="Radar — half human in olive Chief of Staff fatigues with dog tags reading RADAR / CHIEF OF STAFF, half AI circuit board. Built on OTP." class="h-auto w-[300px] sm:w-[420px] md:w-[500px]" />
+      </div>
+    </div>
+
+    <!-- Primary CTA -->
+    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <a href="/coach" class="group inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-white transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #b8941c 100%);">
+        <span>For coaches: Founding 25 offer</span>
+        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+      <a href="/plan" class="inline-flex items-center gap-2 rounded-xl border border-otp-500/40 bg-white/5 px-6 py-3.5 text-base font-medium text-otp-300 backdrop-blur transition-all duration-200 hover:border-otp-400 hover:bg-white/10">
+        See what your plan looks like
+      </a>
+    </div>
+
+    <p class="mt-8 text-[11px] uppercase tracking-[0.25em] text-gray-500">
+      <span class="font-semibold text-amber-400">Same EOS</span> &middot;
+      <span class="text-white">Different layer</span> &middot;
+      <span class="text-otp-400">Free for coaches and their clients</span>
+    </p>
+  </div>
+</section>
+
+<!-- =====================================================
+     THE SHIFT — paper → meeting software → AI-native
+     ===================================================== -->
+<section class="bg-otp-950 relative py-16 sm:py-24">
+  <div class="mx-auto max-w-5xl px-6 sm:px-8">
+    <div class="mx-auto mb-12 max-w-2xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">The shift</p>
+      <h2 class="mt-4 text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+        Every operating system runs on the technology of its era.
+      </h2>
+      <p class="mt-5 text-lg text-gray-400">
+        EOS is the rhythm. The layer beneath it keeps changing.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-3 gap-5">
+      <!-- Then -->
+      <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
+        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-3">2007 to 2018</div>
+        <h3 class="text-lg font-bold text-white mb-2">Paper and Google Docs</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">A binder of templates. A V/TO PDF on someone's desktop. A scorecard in a tab nobody opens.</p>
+      </div>
+      <!-- Now -->
+      <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
+        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-3">2018 to today</div>
+        <h3 class="text-lg font-bold text-white mb-2">Meeting software</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Ninety. Bloom Growth. EOS One. EOS in a database. The meeting got digitized. Most of the org still doesn't show up between meetings.</p>
+      </div>
+      <!-- Next -->
+      <div class="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6">
+        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 mb-3">2026 forward</div>
+        <h3 class="text-lg font-bold text-white mb-2">AI agents in the org</h3>
+        <p class="text-sm text-gray-300 leading-relaxed">Radar and the other agents on OTP run alongside the team. Briefings, scorecard pulls, accountability nudges, issue surfacing. The org runs even when humans aren't in the room.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     MEET RADAR — what he does
+     ===================================================== -->
+<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
+  <div class="mx-auto max-w-5xl px-6 sm:px-8">
+    <div class="mx-auto mb-12 max-w-2xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">Meet Radar</p>
+      <h2 class="mt-4 text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+        He doesn't run your meeting.<br class="hidden sm:inline" />
+        He runs your organization between them.
+      </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-5">
+      <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
+        <div class="text-amber-400 text-2xl mb-3">⚡</div>
+        <h3 class="text-base font-bold text-white mb-1.5">Daily briefings to the leader</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Every morning Radar pulls activity across Slack, email, calendar, CRM, and the scorecard. Hands the leader a brief that replaces 2.5 hours of manual checking.</p>
+      </div>
+      <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
+        <div class="text-amber-400 text-2xl mb-3">⌖</div>
+        <h3 class="text-base font-bold text-white mb-1.5">Scorecard, live</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Pulls weekly KPIs from the actual source systems. No more chasing teammates for numbers. By the time the L8 starts, the scorecard is already current.</p>
+      </div>
+      <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
+        <div class="text-amber-400 text-2xl mb-3">⚖</div>
+        <h3 class="text-base font-bold text-white mb-1.5">Issue radar</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Watches for issue signals between sessions. When someone says "we have a problem with..." in Slack on Tuesday, it shows up on the issues list before Friday's meeting.</p>
+      </div>
+      <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
+        <div class="text-amber-400 text-2xl mb-3">★</div>
+        <h3 class="text-base font-bold text-white mb-1.5">Accountability without nagging</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Tracks goal progress weekly. Flags drift before it becomes a problem. The leader stops being the nag.</p>
+      </div>
+    </div>
+
+    <p class="mt-12 text-center text-base text-gray-400 max-w-2xl mx-auto leading-relaxed">
+      Radar is one agent. The OTP layer hosts more — sales agents, operations agents, finance agents. They run inside the same operating system your team already trusts.
+    </p>
+  </div>
+</section>
+
+<!-- =====================================================
+     THE ECONOMICS — math without naming and shaming
+     ===================================================== -->
+<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
+  <div class="mx-auto max-w-3xl px-6 sm:px-8">
+    <div class="rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur p-7 sm:p-10">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400 mb-3">The economics</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white leading-tight mb-4">
+        Per-seat software costs $12 to $16 per user per month.
+      </h2>
+      <p class="text-base text-gray-300 leading-relaxed mb-4">
+        That's the price tag of every popular meeting-software tool in the EOS world. They charge it because they have to. Per-seat is the business model.
+      </p>
+      <p class="text-base text-gray-300 leading-relaxed mb-4">
+        OTP is funded by our agency, Sneeze It. We use the platform to run our own team. That means we can give the foundational layer away. No seat fees for you. No seat fees for your clients.
+      </p>
+      <div class="mt-6 pt-6 border-t border-white/10">
+        <p class="text-xs font-bold uppercase tracking-[0.2em] text-amber-400 mb-3">The math at scale</p>
+        <ul class="space-y-2 text-sm text-gray-300">
+          <li class="flex items-baseline justify-between gap-3 pb-2 border-b border-white/5">
+            <span>10-person leadership team on meeting software</span>
+            <span class="font-bold text-white whitespace-nowrap">~$1,920 / year</span>
+          </li>
+          <li class="flex items-baseline justify-between gap-3 pb-2 border-b border-white/5">
+            <span>Coach with 20 client companies</span>
+            <span class="font-bold text-white whitespace-nowrap">~$38,400 / year</span>
+          </li>
+          <li class="flex items-baseline justify-between gap-3 pt-1">
+            <span>Same setup on OTP</span>
+            <span class="font-bold radar-gradient-gold whitespace-nowrap">$0</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     FOR WHO
+     ===================================================== -->
+<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
+  <div class="mx-auto max-w-4xl px-6 sm:px-8">
+    <div class="text-center mb-12">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">Who this is for</p>
+      <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-white">
+        If any of these feel familiar, you're in the right place.
+      </h2>
+    </div>
+
+    <div class="space-y-3">
+      <div class="rounded-xl bg-white/[0.03] border border-white/10 p-5 flex items-start gap-4">
+        <div class="text-amber-400 text-xl flex-shrink-0">✓</div>
+        <div>
+          <p class="font-semibold text-white">You run EOS for your clients and you've outgrown the meeting view.</p>
+          <p class="text-sm text-gray-400 mt-1">Your clients have agents and integrations now. Meeting software only sees the meeting.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-white/[0.03] border border-white/10 p-5 flex items-start gap-4">
+        <div class="text-amber-400 text-xl flex-shrink-0">✓</div>
+        <div>
+          <p class="font-semibold text-white">You're tired of paying $12-16 per seat per client.</p>
+          <p class="text-sm text-gray-400 mt-1">Across 20 clients with 10-person teams that's nearly $40,000 a year in software your clients didn't ask for.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-white/[0.03] border border-white/10 p-5 flex items-start gap-4">
+        <div class="text-amber-400 text-xl flex-shrink-0">✓</div>
+        <div>
+          <p class="font-semibold text-white">You want one operating layer your clients run on, that gets sharper every time another client uses it.</p>
+          <p class="text-sm text-gray-400 mt-1">Your playbook compounds. Lessons from one engagement flow into the next.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-white/[0.03] border border-white/10 p-5 flex items-start gap-4">
+        <div class="text-amber-400 text-xl flex-shrink-0">✓</div>
+        <div>
+          <p class="font-semibold text-white">You're an operator, not a coach — and your team uses EOS but it lives in a tool that doesn't talk to your real work.</p>
+          <p class="text-sm text-gray-400 mt-1">Bring your team onto OTP. Same rhythm. Agents that actually do the between-meeting work.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     CTA — book or claim
+     ===================================================== -->
+<section class="bg-otp-950 relative overflow-hidden py-16 sm:py-24 border-t border-white/5">
+  <div class="pointer-events-none absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(212,173,50,0.16), transparent 70%);"></div>
+
+  <div class="relative z-10 mx-auto max-w-3xl px-6 sm:px-8 text-center">
+    <div class="mb-6 flex justify-center">
+      <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-otp-950" style="background: linear-gradient(90deg, #d4ad32, #f5c84d, #d4ad32); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 8px 24px -6px rgba(212,173,50,0.45);">
+        <span aria-hidden>★</span>
+        Founding 25 cohort open now
+        <span aria-hidden>★</span>
+      </div>
+    </div>
+
+    <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+      Bring Radar to your clients.<br class="hidden sm:inline" />
+      <span class="radar-gradient-gold">Free for you. Free for them.</span>
+    </h2>
+    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-gray-300 leading-relaxed">
+      First 25 coaches who claim a profile get a permanent Founding badge, roadmap voting, and a direct line to David Steel. Every client you onboard runs OTP free for life.
+    </p>
+
+    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <a href="/experts" class="group inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #b8941c 100%);">
+        <span>Find your coaching profile</span>
+        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+      <a href="/coach" class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-7 py-4 text-base font-semibold text-white backdrop-blur transition-all duration-200 hover:border-white/40 hover:bg-white/10">
+        See the full Founding 25 offer
+      </a>
+    </div>
+
+    <p class="mt-8 text-[11px] uppercase tracking-[0.2em] text-gray-500">
+      OTP is not affiliated with EOS Worldwide, Ninety, or Bloom Growth.<br/>
+      EOS and related marks are trademarks of EOS Worldwide, LLC.
+    </p>
+  </div>
+</section>
