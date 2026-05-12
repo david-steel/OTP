@@ -38,12 +38,12 @@ export async function sendOnboardingEmail1(email: string): Promise<boolean> {
   try {
     const templatePath = path.resolve(__dirname, '../../templates/emails/newsletter-welcome.ejs');
     const html = await ejs.renderFile(templatePath, { email });
-    return await sendEmail({
+    return !!(await sendEmail({
       to: email,
       subject: "You're in -- welcome to OTP",
       html,
       from: 'David Steel <notifications@mail.orgtp.com>',
-    });
+    }));
   } catch (err) {
     console.error('[clerk-webhook] Email #1 render/send failed:', err);
     return false;

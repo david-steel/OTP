@@ -126,24 +126,28 @@ async function main() {
       continue;
     }
 
-    // Live send
+    // Live send — Resend tags let us filter by campaign + per-coach in the dashboard
     try {
-      const ok = await sendEmail({
+      const messageId = await sendEmail({
         to: email,
         subject: rendered.subject,
         html: rendered.html,
         from: args.from,
         replyTo: args.replyTo,
+        tags: [
+          { name: 'campaign', value: 'founding_25_coach' },
+          { name: 'slug', value: slug.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) },
+        ],
       });
-      if (ok) {
+      if (messageId) {
         const sentAt = new Date().toISOString();
-        results.push({ email, slug, rowIndex: r.rowIndex, sent: true, sentAt });
+        results.push({ email, slug, rowIndex: r.rowIndex, sent: true, messageId, sentAt });
         sentCount++;
-        console.log(`${idx} ✓ ${email}`);
+        console.log(`${idx} ✓ ${email}  (id=${messageId})`);
       } else {
-        results.push({ email, slug, rowIndex: r.rowIndex, sent: false, error: 'sendEmail returned false (check Resend config)' });
+        results.push({ email, slug, rowIndex: r.rowIndex, sent: false, error: 'sendEmail returned null (check Resend config)' });
         failedCount++;
-        console.log(`${idx} ✗ ${email} (sendEmail false)`);
+        console.log(`${idx} ✗ ${email} (sendEmail null)`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

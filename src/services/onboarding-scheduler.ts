@@ -32,12 +32,12 @@ async function renderAndSend(email: string, tpl: EmailTemplate): Promise<boolean
   try {
     const templatePath = path.resolve(__dirname, '../templates/emails', tpl.templateFile);
     const html = await ejs.renderFile(templatePath, { email });
-    return await sendEmail({
+    return !!(await sendEmail({
       to: email,
       subject: tpl.subject,
       html,
       from: 'David Steel <notifications@mail.orgtp.com>',
-    });
+    }));
   } catch (err) {
     console.error(`[onboarding-scheduler] Failed to render/send ${tpl.templateFile}:`, err);
     return false;
