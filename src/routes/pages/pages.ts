@@ -38,6 +38,22 @@ function quarterLabel(d: Date): string {
 
 export default async function pageRoutes(app: FastifyInstance) {
 
+  // Resolve the requesting user's org. Team-member path first (org_members
+  // populated by guards middleware), then legacy founder fallback where the
+  // user's clerk_user_id is stored as organizations.clerk_org_id. Returns
+  // null when neither hits.
+  async function resolveRequestOrg(request: any) {
+    const auth = getAuth(request);
+    if (!auth?.userId) return null;
+    const member = (request as any).orgMember as { orgId: string } | null;
+    if (member?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
+      if (m) return m;
+    }
+    const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    return legacy || null;
+  }
+
   // Homepage
   // Homepage v3 preview (not live -- for review only)
   app.get('/home-v3', async (request, reply) => {
@@ -2527,8 +2543,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/consultant', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
     const isAdmin = (request as any).isSuperAdmin;
@@ -2549,8 +2564,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/workspaces', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
     const wsRows = await db.execute(sql`
@@ -2575,8 +2589,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/oos-operating-plan', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
     // One active plan per org (MVP). Future: departmental plans via departmentId.
@@ -2690,8 +2703,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     // Form-style POST: bounce to sign-in if the session expired between page
     // load and submit, so the user lands back on the operating-plan page.
     if (!auth.userId) return reply.redirect('/sign-in?redirect=/dashboard/oos-operating-plan');
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
 
     // Reuse existing active plan if one already exists.
@@ -2743,8 +2755,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.post('/dashboard/oos-operating-plan/copy-forward', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
 
     const [currentPlan] = await db
@@ -2806,8 +2817,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
     if (!(request as any).isSuperAdmin) return reply.status(403).send({ error: { code: 'SUPER_ADMIN_ONLY', message: 'Super admin only' } });
 
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
 
     const [currentPlan] = await db
@@ -2912,8 +2922,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/workspace/:id', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
     const { id } = request.params as { id: string };
 
@@ -2938,8 +2947,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/source-documents', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
     const docRows = await db.execute(sql`SELECT * FROM source_documents WHERE org_id = ${org.id} ORDER BY created_at DESC`) as any;
@@ -2955,8 +2963,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/source-documents/:id', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
     const { id } = request.params as { id: string };
 
@@ -2978,8 +2985,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/dashboard/inquiries', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    const org = orgArr[0];
+    const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
     const profileRows = await db.execute(sql`SELECT id FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
@@ -3044,7 +3050,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'unauthenticated', keys: [] });
     }
 
-    const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = await resolveRequestOrg(request);
     if (!org) {
       return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'no_org', keys: [] });
     }
@@ -4462,12 +4468,19 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       reply.redirect('/sign-in?redirect=' + redirectTo);
       return null;
     }
-    const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-    if (!org) {
-      reply.status(404).send('No organization for this user. Sign in via Clerk and create an organization first.');
-      return null;
+    const [legacyOrg] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    if (legacyOrg) return legacyOrg;
+
+    // Team-member path: user joined an existing org via org_members. The
+    // guards middleware resolves their active membership onto request.orgMember.
+    const member = (request as any).orgMember as { orgId: string } | null;
+    if (member?.orgId) {
+      const [memberOrg] = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
+      if (memberOrg) return memberOrg;
     }
-    return org;
+
+    reply.status(404).send('No organization for this user. Sign in via Clerk and create an organization first.');
+    return null;
   }
 
   // /l8  -- list meetings for the user's org, with team filter + quick-create
