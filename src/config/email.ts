@@ -20,6 +20,10 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   from?: string;
+  /** Address(es) the recipient's "Reply" button should target. Critical for
+   *  any campaign sent from notifications@mail.orgtp.com — without it, replies
+   *  bounce because the sending domain has no MX records. */
+  replyTo?: string | string[];
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
@@ -35,6 +39,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
       to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
       html: options.html,
+      replyTo: options.replyTo,
     });
 
     if (error) {

@@ -8,7 +8,11 @@
 //   npx tsx scripts/send-coach-founding-25.ts \
 //     --input /tmp/coach-batch.json \
 //     --output /tmp/coach-results.json \
-//     [--dry-run] [--from "Name <email>"]
+//     [--dry-run] [--from "Name <email>"] [--reply-to "Name <email>"]
+//
+// Reply-To defaults to David Steel <dsteel@sneeze.it> so coach replies route
+// to David's real inbox (the From address mail.orgtp.com has no MX, so reply
+// without Reply-To would bounce).
 //
 // INPUT JSON SHAPE:
 //   {
@@ -49,19 +53,23 @@ interface Result {
   error?: string;
 }
 
-function parseArgs(): { input: string; output: string; dryRun: boolean; from?: string } {
+const DEFAULT_REPLY_TO = 'David Steel <dsteel@sneeze.it>';
+
+function parseArgs(): { input: string; output: string; dryRun: boolean; from?: string; replyTo: string } {
   const argv = process.argv.slice(2);
   let input = '', output = '', dryRun = false, from: string | undefined;
+  let replyTo = DEFAULT_REPLY_TO;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--input') input = argv[++i];
     else if (a === '--output') output = argv[++i];
     else if (a === '--dry-run') dryRun = true;
     else if (a === '--from') from = argv[++i];
+    else if (a === '--reply-to') replyTo = argv[++i];
   }
   if (!input) throw new Error('Missing --input <path-to-recipients.json>');
   if (!output) throw new Error('Missing --output <path-to-results.json>');
-  return { input, output, dryRun, from };
+  return { input, output, dryRun, from, replyTo };
 }
 
 async function main() {
@@ -72,9 +80,10 @@ async function main() {
 
   console.log(`\n=== Coach Founding 25 ${args.dryRun ? 'DRY-RUN' : 'SEND'} ===`);
   console.log(`Recipients: ${recipients.length}`);
-  console.log(`Input:  ${path.resolve(args.input)}`);
-  console.log(`Output: ${path.resolve(args.output)}`);
-  if (args.from) console.log(`From:   ${args.from}`);
+  console.log(`Input:    ${path.resolve(args.input)}`);
+  console.log(`Output:   ${path.resolve(args.output)}`);
+  if (args.from) console.log(`From:     ${args.from}`);
+  console.log(`Reply-To: ${args.replyTo}`);
   console.log();
 
   const results: Result[] = [];
@@ -124,6 +133,7 @@ async function main() {
         subject: rendered.subject,
         html: rendered.html,
         from: args.from,
+        replyTo: args.replyTo,
       });
       if (ok) {
         const sentAt = new Date().toISOString();
