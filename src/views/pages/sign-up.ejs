@@ -19,34 +19,39 @@
 </style>
 
 <div class="max-w-3xl mx-auto px-4 py-10 sm:py-14">
-  <!-- Character welcome strip -->
+  <!-- Headline -->
   <div class="text-center mb-6">
-    <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-600 mb-1">You're in the right place</p>
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">The team is ready for you.</h1>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Create your OTP account</h1>
+    <p class="text-sm text-gray-500 max-w-md mx-auto">Free for your whole team while we're in Beta — grandfathered when paid plans turn on.</p>
   </div>
 
-  <div class="flex items-end justify-center gap-2 sm:gap-6 mb-2">
-    <% const sChars = [
-      { src: '/public/images/radar-mascot.png',     name: 'Radar',     role: 'AI Chief of Staff', cls: 'su-char-1' },
-      { src: '/public/images/coach-mascot.png',     name: 'Coach',     role: 'Your playbook',     cls: 'su-char-2' },
-      { src: '/public/images/orgy-mascot.png',      name: 'Orgy',      role: 'The org itself',    cls: 'su-char-3' },
-      { src: '/public/images/pinocchio-mascot.png', name: 'Pinocchio', role: 'No-lie truth-teller', cls: 'su-char-4' },
-    ]; %>
-    <% sChars.forEach(c => { %>
-      <div class="flex flex-col items-center flex-1 max-w-[150px]">
-        <img src="<%= c.src %>" alt="<%= c.name %> — <%= c.role %>" class="su-char <%= c.cls %> h-auto w-[80px] sm:w-[120px] md:w-[140px]" />
-        <p class="mt-2 text-xs sm:text-sm font-bold text-gray-900"><%= c.name %></p>
-        <p class="text-[10px] sm:text-[11px] text-gray-500 text-center leading-tight"><%= c.role %></p>
-      </div>
-    <% }); %>
-  </div>
-
-  <p class="text-center text-sm text-gray-500 mt-4 mb-8 max-w-md mx-auto">
-    Create your free account to bring the team into your org. Beta members stay free for life.
-  </p>
-
+  <!-- Clerk sign-up box -->
   <div class="max-w-md mx-auto">
     <div id="clerk-sign-up" class="flex justify-center"></div>
+  </div>
+
+  <!-- Character welcome strip BELOW the sign-up -->
+  <div class="mt-12 sm:mt-16">
+    <div class="text-center mb-6">
+      <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-600 mb-1">You're in the right place</p>
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-900">The team is ready for you.</h2>
+    </div>
+
+    <div class="flex items-end justify-center gap-2 sm:gap-6">
+      <% const sChars = [
+        { src: '/public/images/radar-mascot.png',     name: 'Radar',     role: 'AI Chief of Staff', cls: 'su-char-1' },
+        { src: '/public/images/coach-mascot.png',     name: 'Coach',     role: 'Your playbook',     cls: 'su-char-2' },
+        { src: '/public/images/orgy-mascot.png',      name: 'Orgy',      role: 'The org itself',    cls: 'su-char-3' },
+        { src: '/public/images/pinocchio-mascot.png', name: 'Pinocchio', role: 'No-lie truth-teller', cls: 'su-char-4' },
+      ]; %>
+      <% sChars.forEach(c => { %>
+        <div class="flex flex-col items-center flex-1 max-w-[150px]">
+          <img src="<%= c.src %>" alt="<%= c.name %> — <%= c.role %>" class="su-char <%= c.cls %> h-auto w-[80px] sm:w-[120px] md:w-[140px]" />
+          <p class="mt-2 text-xs sm:text-sm font-bold text-gray-900"><%= c.name %></p>
+          <p class="text-[10px] sm:text-[11px] text-gray-500 text-center leading-tight"><%= c.role %></p>
+        </div>
+      <% }); %>
+    </div>
   </div>
 </div>
 
