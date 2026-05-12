@@ -33,34 +33,37 @@ const C = {
 
 // 4-point sparkle SVG (matches /coach page sparkle, lucide "Sparkles" path).
 // Wrapped in a span we can absolutely-position and animate.
-// Wavy transition strip — SVG with a fluid curve dividing two background colors.
-// direction='down': fillColor at top with wavy bottom edge (navy hero → white body)
-// direction='up':   fillColor at bottom with wavy top edge (white body → navy footer)
-// bgColor is the OPPOSITE color that shows through the wave.
-// Inline SVG renders in Apple Mail, Gmail web, mobile clients. Outlook desktop
-// strips SVG and shows the bgColor strip — graceful degradation.
+// SVG-as-data-URI helpers. Gmail (web + mobile) strips raw <svg> tags but
+// accepts <img src="data:image/svg+xml;utf8,..."> — so we render every SVG
+// as an image. Works in Gmail, Apple Mail, modern Outlook, mobile clients.
+function svgDataUri(svgMarkup: string): string {
+  // URL-encode the SVG. encodeURIComponent handles all special chars including # and ".
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svgMarkup)}`;
+}
+
+const SPARKLE_PATH = 'M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z';
+
+// Wavy transition strip — fluid curve dividing two background colors.
+// Rendered as data-URI img so Gmail picks it up.
 function waveTransition(fillColor: string, bgColor: string, direction: 'down' | 'up'): string {
   const path = direction === 'down'
-    // Navy fills top, wave dips down into white below
     ? 'M0,0 L600,0 L600,28 C500,58 400,8 300,30 C200,52 100,8 0,28 Z'
-    // Navy fills bottom, wave arcs up into white above
     : 'M0,32 C100,8 200,52 300,30 C400,8 500,58 600,32 L600,60 L0,60 Z';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 60" width="600" height="60" preserveAspectRatio="none"><path d="${path}" fill="${fillColor}"/></svg>`;
   return `<tr>
     <td style="background:${bgColor};padding:0;line-height:0;font-size:0;">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 60" width="600" height="60" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
-        <path d="${path}" fill="${fillColor}"/>
-      </svg>
+      <img src="${svgDataUri(svg)}" width="600" height="60" alt="" style="display:block;width:100%;height:60px;border:0;" />
     </td>
   </tr>`;
 }
 
-// Inline sparkle (for use next to text — flows with the line)
+// Inline sparkle next to text (flows with the line)
 function sparkleInline(size: number, color: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}" style="display:inline-block;vertical-align:middle;">
-<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
-</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="${SPARKLE_PATH}"/></svg>`;
+  return `<img src="${svgDataUri(svg)}" width="${size}" height="${size}" alt="" style="display:inline-block;vertical-align:middle;border:0;" />`;
 }
 
+// Absolutely-positioned sparkle (around mascot, around numbers)
 function sparkleAt(opts: {
   size: number; color: string; top: string; left?: string; right?: string;
   delay: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; speed?: 'slow' | 'fast';
@@ -68,13 +71,8 @@ function sparkleAt(opts: {
   const { size, color, top, left, right, delay, speed } = opts;
   const pos = right !== undefined ? `right:${right};` : `left:${left};`;
   const speedClass = speed === 'slow' ? ' s-slow' : speed === 'fast' ? ' s-fast' : '';
-  // Glow drop-shadow via filter, matches the /coach page sparkle treatment
-  const glow = `filter: drop-shadow(0 0 8px ${color}aa) drop-shadow(0 0 16px ${color}55);`;
-  return `<span class="sparkle s-d${delay}${speedClass}" style="position:absolute;top:${top};${pos}width:${size}px;height:${size}px;line-height:0;${glow}">
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}" style="display:block;">
-<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
-</svg>
-</span>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="${SPARKLE_PATH}"/></svg>`;
+  return `<img src="${svgDataUri(svg)}" width="${size}" height="${size}" alt="" class="sparkle s-d${delay}${speedClass}" style="position:absolute;top:${top};${pos}width:${size}px;height:${size}px;display:block;border:0;" />`;
 }
 
 export function renderCoachFoundingEmail(vars: CoachEmailVars): {
@@ -105,11 +103,13 @@ export function renderCoachFoundingEmail(vars: CoachEmailVars): {
   @media only screen and (max-width: 620px) {
     .container { width: 100% !important; }
     .px-mobile { padding-left: 24px !important; padding-right: 24px !important; }
-    .h1 { font-size: 30px !important; line-height: 1.15 !important; }
-    .hero-pad { padding: 32px 24px 40px !important; }
-    .cta-btn { width: 100% !important; box-sizing: border-box; }
-    .step-num { font-size: 56px !important; }
-    .sparkle { transform: scale(0.7); }
+    .h1 { font-size: 30px !important; line-height: 1.15 !important; letter-spacing: -0.5px !important; }
+    .hero-pad { padding: 28px 20px 40px !important; }
+    .hero-stage { height: auto !important; min-height: 280px !important; max-width: 92% !important; }
+    .hero-mascot { width: 220px !important; max-width: 60% !important; margin-top: 8px !important; }
+    .cta-btn { width: 100% !important; box-sizing: border-box; padding: 16px 24px !important; }
+    .step-num { font-size: 52px !important; }
+    .sparkle { transform: scale(0.65); }
   }
   /* Twinkle animation — Apple Mail, Gmail web, modern clients support it;
      Outlook desktop ignores and shows static sparkles (still good). */
@@ -171,8 +171,8 @@ export function renderCoachFoundingEmail(vars: CoachEmailVars): {
           <td class="hero-pad" style="background:${C.hero};background-image:radial-gradient(ellipse 80% 60% at 50% 35%, ${C.heroAccent} 0%, ${C.hero} 70%);padding:16px 24px 48px;text-align:center;">
 
             <!-- Mascot stage: relative-positioned container with absolutely-scattered sparkles.
-                 Modern clients (Apple Mail, Gmail web) animate. Outlook desktop falls back to static. -->
-            <div style="position:relative;width:440px;max-width:100%;margin:0 auto 28px;height:380px;">
+                 height fixed on desktop for sparkle positioning; collapses on mobile via media query. -->
+            <div class="hero-stage" style="position:relative;width:440px;max-width:100%;margin:0 auto 28px;height:380px;">
 
               <!-- Sparkles scattered organically around the mascot.
                    12 sparkles, varied sizes, 3 colors, staggered animation delays. -->
@@ -189,8 +189,8 @@ export function renderCoachFoundingEmail(vars: CoachEmailVars): {
               ${sparkleAt({ size: 18, color: C.accentBlue,  top: '0%',  left: '54%', delay: 6 })}
               ${sparkleAt({ size: 16, color: C.accentGold,  top: '24%', left: '68%', delay: 2, speed: 'fast' })}
 
-              <!-- Mascot centered in the stage, z-index above sparkles via line-height trick -->
-              <img src="${MASCOT_URL}" width="340" height="340" alt="OTP coach mascot, half human in red coach jersey with whistle and football, half AI circuit board with headset and playbook" style="position:relative;display:block;width:340px;height:340px;max-width:78%;margin:20px auto 0;border:0;" />
+              <!-- Mascot centered. height:auto preserves aspect ratio on mobile -->
+              <img src="${MASCOT_URL}" width="340" height="340" alt="OTP coach mascot, half human in red coach jersey with whistle and football, half AI circuit board with headset and playbook" class="hero-mascot" style="position:relative;display:block;width:340px;height:auto;max-width:78%;margin:20px auto 0;border:0;" />
 
             </div>
 
