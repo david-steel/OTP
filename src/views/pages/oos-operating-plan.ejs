@@ -118,235 +118,162 @@
       </div>
     </details>
 
-    <!-- Tabs (decorative for now — clicking doesn't filter yet) -->
+    <!-- Tabs — functional (JS at bottom of file wires click handlers) -->
     <div class="mb-6 flex items-center gap-6 -mb-px border-b border-gray-200">
-      <button type="button" class="text-sm font-semibold pb-3 text-gray-900 border-b-2 border-pink-500">Vision</button>
-      <button type="button" class="text-sm font-medium pb-3 text-gray-500 hover:text-gray-700">Traction</button>
-      <button type="button" class="text-sm font-medium pb-3 text-gray-500 hover:text-gray-700">SWOT</button>
+      <button type="button" data-tab="vision"   class="plan-tab text-sm font-semibold pb-3 text-gray-900 border-b-2 border-pink-500">Vision</button>
+      <button type="button" data-tab="traction" class="plan-tab text-sm font-medium pb-3 text-gray-500 border-b-2 border-transparent hover:text-gray-700">Traction</button>
+      <button type="button" data-tab="swot"     class="plan-tab text-sm font-medium pb-3 text-gray-500 border-b-2 border-transparent hover:text-gray-700">SWOT</button>
     </div>
 
-    <!-- 8 section cards in 2-column grid (/plan layout) -->
-    <div class="mb-8">
-      <%
-        // Column split: strategic sections go left (2/3 width), execution + accountability go right (1/3 width).
-        var leftCol  = ['foundation', 'market_command', 'destination', 'annual_game_plan'];
-        var rightCol = ['ninety_day_engine', 'performance_scorecard', 'constraints_leverage', 'alignment_accountability'];
-        var leftSections  = sections.filter(function(s){ return leftCol.indexOf(s.sectionKey) !== -1; });
-        var rightSections = sections.filter(function(s){ return rightCol.indexOf(s.sectionKey) !== -1; });
-        // Helper to render one section card (called from both columns)
-        function dummy(){} // placeholder; rendering inline below via partial pattern
-      %>
+    <%
+      // Section distribution across tabs.
+      // Vision   = strategic foundation: who we are, where we're going, how we win.
+      // Traction = execution layer: 90-day engine, scorecard, accountability + the execution items table.
+      // SWOT     = constraints_leverage: bottlenecks/risks/opportunities/required resources.
+      var visionKeys   = ['foundation', 'market_command', 'destination', 'annual_game_plan'];
+      var tractionKeys = ['ninety_day_engine', 'performance_scorecard', 'alignment_accountability'];
+      var swotKeys     = ['constraints_leverage'];
 
+      // Per-tab left/right column split (2/3 + 1/3 grid).
+      var visionLeftKeys  = ['foundation', 'market_command'];
+      var visionRightKeys = ['destination', 'annual_game_plan'];
+      var visionLeft  = sections.filter(function(s){ return visionLeftKeys.indexOf(s.sectionKey) !== -1; });
+      var visionRight = sections.filter(function(s){ return visionRightKeys.indexOf(s.sectionKey) !== -1; });
+
+      var tractionLeftKeys  = ['ninety_day_engine', 'performance_scorecard'];
+      var tractionRightKeys = ['alignment_accountability'];
+      var tractionLeft  = sections.filter(function(s){ return tractionLeftKeys.indexOf(s.sectionKey) !== -1; });
+      var tractionRight = sections.filter(function(s){ return tractionRightKeys.indexOf(s.sectionKey) !== -1; });
+
+      var swotSections = sections.filter(function(s){ return swotKeys.indexOf(s.sectionKey) !== -1; });
+
+      // Section metadata — tagline + field schema per section key.
+      // Field key is the storage slot in content_json; never change it once
+      // data exists, or migrate explicitly. Used by the partial to render
+      // both view-mode (definition list) and editor-mode (form inputs).
+      var sectionMeta = {
+        foundation: {
+          tagline: "The non-negotiable identity of the organization: why it exists, how it operates, and who it serves.",
+          fields: [
+            { label: "Purpose", desc: "The fundamental reason the organization exists beyond profit.", key: "purpose", multiline: true },
+            { label: "Mission", desc: "What the organization does daily to fulfill its purpose.", key: "mission", multiline: true },
+            { label: "Values", desc: "The standards that guide decisions and behavior. One per line.", key: "values", multiline: true },
+            { label: "Ideal Customer", desc: "The specific type of customer the organization is built to serve best.", key: "ideal_customer", multiline: true },
+          ],
+        },
+        market_command: {
+          tagline: "Defines how the organization positions itself to win in the market.",
+          fields: [
+            { label: "Category", desc: "The space the organization competes in.", key: "category", multiline: false },
+            { label: "Unique Advantage", desc: "What the organization does better or differently than competitors.", key: "unique_advantage", multiline: true },
+            { label: "Brand Promise", desc: "The consistent result customers can expect.", key: "brand_promise", multiline: true },
+            { label: "Proof Points", desc: "Evidence that validates the organization's claims. One per line.", key: "proof_points", multiline: true },
+          ],
+        },
+        destination: {
+          tagline: "The long-term target that aligns all decisions and execution.",
+          fields: [
+            { label: "3-5 Year Target", desc: "The measurable future state the organization is building toward.", key: "year_target", multiline: true },
+            { label: "Revenue Goal", desc: "The financial growth target.", key: "revenue_goal", multiline: false },
+            { label: "Profit Goal", desc: "The profitability target.", key: "profit_goal", multiline: false },
+            { label: "Defining Metric", desc: "The single most important number that indicates success.", key: "defining_metric", multiline: false },
+          ],
+        },
+        annual_game_plan: {
+          tagline: "The strategic focus for the current year.",
+          fields: [
+            { label: "Primary Objective", desc: "The most important outcome to achieve this year.", key: "primary_objective", multiline: true },
+            { label: "Strategic Initiatives", desc: "The key efforts required to reach the objective. One per line.", key: "strategic_initiatives", multiline: true },
+            { label: "Key Outcomes", desc: "Specific, measurable results that define success. One per line.", key: "key_outcomes", multiline: true },
+          ],
+        },
+        ninety_day_engine: {
+          tagline: "The system that converts strategy into immediate, accountable action.",
+          fields: [
+            { label: "Quarter Narrative", desc: "Plain-English context for this quarter's plan: theme, key bets, where the leverage is. Per-item details (Owner, Confidence, Status, etc.) live in the 90-Day table below.", key: "quarter_narrative", multiline: true },
+            { label: "Quarterly Targets", desc: "The outcomes to achieve in the next 90 days. One per line.", key: "quarterly_targets", multiline: true },
+          ],
+        },
+        performance_scorecard: {
+          tagline: "A real-time measurement system that tracks whether execution is working.",
+          fields: [
+            { label: "Weekly KPIs", desc: "Core numbers tracked consistently. One per line, e.g. 'Dirk: 30 cold emails / day'.", key: "weekly_kpis", multiline: true },
+            { label: "Leading Indicators", desc: "Predictive metrics that signal future outcomes. One per line.", key: "leading_indicators", multiline: true },
+            { label: "Lagging Indicators", desc: "Results that confirm past performance. One per line.", key: "lagging_indicators", multiline: true },
+            { label: "Benchmarks", desc: "Target ranges used to evaluate performance. One per line.", key: "benchmarks", multiline: true },
+          ],
+        },
+        constraints_leverage: {
+          tagline: "Identifies what is slowing the organization down and where it can accelerate.",
+          fields: [
+            { label: "Bottlenecks", desc: "Points of friction limiting progress. One per line.", key: "bottlenecks", multiline: true },
+            { label: "Risks", desc: "Potential issues that could impact outcomes. One per line.", key: "risks", multiline: true },
+            { label: "Required Resources", desc: "What is needed to execute successfully. One per line.", key: "required_resources", multiline: true },
+            { label: "Opportunities", desc: "Areas where the organization can gain advantage quickly. One per line.", key: "opportunities", multiline: true },
+          ],
+        },
+        alignment_accountability: {
+          tagline: "Ensures clarity, ownership, and forward movement across the organization.",
+          fields: [
+            { label: "Key Decisions", desc: "Confirmed choices that guide execution. One per line.", key: "key_decisions", multiline: true },
+            { label: "Open Issues", desc: "Unresolved items requiring attention. One per line.", key: "open_issues", multiline: true },
+            { label: "Ownership Clarity", desc: "Clear accountability for each initiative.", key: "ownership_clarity", multiline: true },
+            { label: "Next Review Date", desc: "When progress and alignment will be reassessed.", key: "next_review_date", multiline: false },
+          ],
+        },
+      };
+    %>
+
+    <!-- VISION TAB PANEL -->
+    <div data-tab-panel="vision" class="mb-8">
       <div class="grid lg:grid-cols-3 gap-6">
-        <%
-          // Each field: { label, desc, key (storage), multiline (textarea vs input) }.
-          // The key is the stable storage slot inside content_json; never change it
-          // once data exists, or migrate explicitly.
-          var sectionMeta = {
-            foundation: {
-              tagline: "The non-negotiable identity of the organization: why it exists, how it operates, and who it serves.",
-              fields: [
-                { label: "Purpose", desc: "The fundamental reason the organization exists beyond profit.", key: "purpose", multiline: true },
-                { label: "Mission", desc: "What the organization does daily to fulfill its purpose.", key: "mission", multiline: true },
-                { label: "Values", desc: "The standards that guide decisions and behavior. One per line.", key: "values", multiline: true },
-                { label: "Ideal Customer", desc: "The specific type of customer the organization is built to serve best.", key: "ideal_customer", multiline: true },
-              ],
-            },
-            market_command: {
-              tagline: "Defines how the organization positions itself to win in the market.",
-              fields: [
-                { label: "Category", desc: "The space the organization competes in.", key: "category", multiline: false },
-                { label: "Unique Advantage", desc: "What the organization does better or differently than competitors.", key: "unique_advantage", multiline: true },
-                { label: "Brand Promise", desc: "The consistent result customers can expect.", key: "brand_promise", multiline: true },
-                { label: "Proof Points", desc: "Evidence that validates the organization's claims. One per line.", key: "proof_points", multiline: true },
-              ],
-            },
-            destination: {
-              tagline: "The long-term target that aligns all decisions and execution.",
-              fields: [
-                { label: "3-5 Year Target", desc: "The measurable future state the organization is building toward.", key: "year_target", multiline: true },
-                { label: "Revenue Goal", desc: "The financial growth target.", key: "revenue_goal", multiline: false },
-                { label: "Profit Goal", desc: "The profitability target.", key: "profit_goal", multiline: false },
-                { label: "Defining Metric", desc: "The single most important number that indicates success.", key: "defining_metric", multiline: false },
-              ],
-            },
-            annual_game_plan: {
-              tagline: "The strategic focus for the current year.",
-              fields: [
-                { label: "Primary Objective", desc: "The most important outcome to achieve this year.", key: "primary_objective", multiline: true },
-                { label: "Strategic Initiatives", desc: "The key efforts required to reach the objective. One per line.", key: "strategic_initiatives", multiline: true },
-                { label: "Key Outcomes", desc: "Specific, measurable results that define success. One per line.", key: "key_outcomes", multiline: true },
-              ],
-            },
-            ninety_day_engine: {
-              tagline: "The system that converts strategy into immediate, accountable action.",
-              fields: [
-                { label: "Quarter Narrative", desc: "Plain-English context for this quarter's plan: theme, key bets, where the leverage is. Per-item details (Owner, Confidence, Status, etc.) live in the 90-Day table below.", key: "quarter_narrative", multiline: true },
-                { label: "Quarterly Targets", desc: "The outcomes to achieve in the next 90 days. One per line.", key: "quarterly_targets", multiline: true },
-              ],
-            },
-            performance_scorecard: {
-              tagline: "A real-time measurement system that tracks whether execution is working.",
-              fields: [
-                { label: "Weekly KPIs", desc: "Core numbers tracked consistently. One per line, e.g. 'Dirk: 30 cold emails / day'.", key: "weekly_kpis", multiline: true },
-                { label: "Leading Indicators", desc: "Predictive metrics that signal future outcomes. One per line.", key: "leading_indicators", multiline: true },
-                { label: "Lagging Indicators", desc: "Results that confirm past performance. One per line.", key: "lagging_indicators", multiline: true },
-                { label: "Benchmarks", desc: "Target ranges used to evaluate performance. One per line.", key: "benchmarks", multiline: true },
-              ],
-            },
-            constraints_leverage: {
-              tagline: "Identifies what is slowing the organization down and where it can accelerate.",
-              fields: [
-                { label: "Bottlenecks", desc: "Points of friction limiting progress. One per line.", key: "bottlenecks", multiline: true },
-                { label: "Risks", desc: "Potential issues that could impact outcomes. One per line.", key: "risks", multiline: true },
-                { label: "Required Resources", desc: "What is needed to execute successfully. One per line.", key: "required_resources", multiline: true },
-                { label: "Opportunities", desc: "Areas where the organization can gain advantage quickly. One per line.", key: "opportunities", multiline: true },
-              ],
-            },
-            alignment_accountability: {
-              tagline: "Ensures clarity, ownership, and forward movement across the organization.",
-              fields: [
-                { label: "Key Decisions", desc: "Confirmed choices that guide execution. One per line.", key: "key_decisions", multiline: true },
-                { label: "Open Issues", desc: "Unresolved items requiring attention. One per line.", key: "open_issues", multiline: true },
-                { label: "Ownership Clarity", desc: "Clear accountability for each initiative.", key: "ownership_clarity", multiline: true },
-                { label: "Next Review Date", desc: "When progress and alignment will be reassessed.", key: "next_review_date", multiline: false },
-              ],
-            },
-          };
-        %>
-        <%
-          // Single inline helper that renders one section as an always-open card.
-          // Duplicated in left + right loops below — same EJS body, just different sections array.
-        %>
-
-        <!-- LEFT column (2/3 width on lg) — strategic foundation sections -->
         <div class="lg:col-span-2 space-y-6">
-          <% leftSections.forEach(function(s) { %>
-            <% var meta = sectionMeta[s.sectionKey]; %>
-            <% var content = (s.contentJson && typeof s.contentJson === 'object') ? s.contentJson : {}; %>
-            <% var anyValue = meta && meta.fields ? meta.fields.some(function(f) { var v = content[f.key]; return v !== undefined && v !== null && String(v).trim() !== ''; }) : false; %>
-            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-              <div class="px-6 sm:px-7 py-5 border-b border-gray-100 flex items-start justify-between gap-4">
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-1"><%= s.title %></h3>
-                  <% if (meta) { %>
-                    <p class="text-sm text-gray-500 leading-relaxed"><%= meta.tagline %></p>
-                  <% } %>
-                </div>
-                <span class="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-mono whitespace-nowrap mt-1.5"><%= s.sectionKey.replace(/_/g, ' ') %></span>
-              </div>
-              <div class="px-6 sm:px-7 py-5" data-section-row="<%= s.id %>">
-                <div data-section-view>
-                  <% if (anyValue) { %>
-                    <dl class="space-y-3">
-                      <% meta.fields.forEach(function(f) { var v = content[f.key]; if (v !== undefined && v !== null && String(v).trim() !== '') { %>
-                        <div>
-                          <dt class="text-xs font-semibold text-gray-800"><%= f.label %></dt>
-                          <dd class="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap"><%= String(v) %></dd>
-                        </div>
-                      <% } }) %>
-                    </dl>
-                  <% } else if (meta && meta.fields && meta.fields.length > 0) { %>
-                    <p class="text-xs text-gray-500 italic mb-2">No content yet. This section captures:</p>
-                    <ul class="text-xs text-gray-600 space-y-1 mb-2">
-                      <% meta.fields.forEach(function(f) { %>
-                        <li><strong class="text-gray-800"><%= f.label %>:</strong> <%= f.desc %></li>
-                      <% }) %>
-                    </ul>
-                  <% } else { %>
-                    <p class="text-xs text-gray-400 italic">No content yet.</p>
-                  <% } %>
-                  <button class="mt-3 px-3 py-1.5 bg-otp-500 text-white rounded-lg text-xs hover:bg-otp-600 font-medium" data-section-edit="<%= s.id %>"><%= anyValue ? 'Edit' : 'Add content' %></button>
-                </div>
-                <div data-section-editor class="hidden space-y-3">
-                  <% if (meta && meta.fields) { meta.fields.forEach(function(f) { var v = content[f.key] !== undefined && content[f.key] !== null ? String(content[f.key]) : ''; %>
-                    <div>
-                      <label class="block text-xs font-semibold text-gray-800 mb-0.5"><%= f.label %></label>
-                      <p class="text-xs text-gray-500 mb-1.5"><%= f.desc %></p>
-                      <% if (f.multiline) { %>
-                        <textarea data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" rows="3" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>"><%= v %></textarea>
-                      <% } else { %>
-                        <input data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" type="text" value="<%= v %>" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>">
-                      <% } %>
-                    </div>
-                  <% }) } %>
-                  <div class="flex items-center gap-2 pt-1">
-                    <button class="px-3 py-1.5 bg-otp-500 text-white rounded-lg text-xs hover:bg-otp-600 font-medium" data-section-save="<%= s.id %>">Save</button>
-                    <button class="px-3 py-1.5 bg-gray-100 text-gray-700 border rounded-lg text-xs hover:bg-gray-200" data-section-cancel="<%= s.id %>">Cancel</button>
-                    <span class="text-xs" data-section-msg="<%= s.id %>"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <% visionLeft.forEach(function(s) { %>
+            <%- include('../partials/plan-section-card', { s: s, sectionMeta: sectionMeta }) %>
           <% }) %>
         </div>
-
-        <!-- RIGHT column (1/3 width on lg) — execution + accountability sections -->
         <div class="space-y-6">
-          <% rightSections.forEach(function(s) { %>
-            <% var meta = sectionMeta[s.sectionKey]; %>
-            <% var content = (s.contentJson && typeof s.contentJson === 'object') ? s.contentJson : {}; %>
-            <% var anyValue = meta && meta.fields ? meta.fields.some(function(f) { var v = content[f.key]; return v !== undefined && v !== null && String(v).trim() !== ''; }) : false; %>
-            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-              <div class="px-6 sm:px-7 py-5 border-b border-gray-100 flex items-start justify-between gap-4">
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-1"><%= s.title %></h3>
-                  <% if (meta) { %>
-                    <p class="text-sm text-gray-500 leading-relaxed"><%= meta.tagline %></p>
-                  <% } %>
-                </div>
-                <span class="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-mono whitespace-nowrap mt-1.5"><%= s.sectionKey.replace(/_/g, ' ') %></span>
-              </div>
-              <div class="px-6 sm:px-7 py-5" data-section-row="<%= s.id %>">
-                <div data-section-view>
-                  <% if (anyValue) { %>
-                    <dl class="space-y-3">
-                      <% meta.fields.forEach(function(f) { var v = content[f.key]; if (v !== undefined && v !== null && String(v).trim() !== '') { %>
-                        <div>
-                          <dt class="text-xs font-semibold text-gray-800"><%= f.label %></dt>
-                          <dd class="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap"><%= String(v) %></dd>
-                        </div>
-                      <% } }) %>
-                    </dl>
-                  <% } else if (meta && meta.fields && meta.fields.length > 0) { %>
-                    <p class="text-xs text-gray-500 italic mb-2">No content yet. This section captures:</p>
-                    <ul class="text-xs text-gray-600 space-y-1 mb-2">
-                      <% meta.fields.forEach(function(f) { %>
-                        <li><strong class="text-gray-800"><%= f.label %>:</strong> <%= f.desc %></li>
-                      <% }) %>
-                    </ul>
-                  <% } else { %>
-                    <p class="text-xs text-gray-400 italic">No content yet.</p>
-                  <% } %>
-                  <button class="mt-3 px-3 py-1.5 bg-otp-500 text-white rounded-lg text-xs hover:bg-otp-600 font-medium" data-section-edit="<%= s.id %>"><%= anyValue ? 'Edit' : 'Add content' %></button>
-                </div>
-                <div data-section-editor class="hidden space-y-3">
-                  <% if (meta && meta.fields) { meta.fields.forEach(function(f) { var v = content[f.key] !== undefined && content[f.key] !== null ? String(content[f.key]) : ''; %>
-                    <div>
-                      <label class="block text-xs font-semibold text-gray-800 mb-0.5"><%= f.label %></label>
-                      <p class="text-xs text-gray-500 mb-1.5"><%= f.desc %></p>
-                      <% if (f.multiline) { %>
-                        <textarea data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" rows="3" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>"><%= v %></textarea>
-                      <% } else { %>
-                        <input data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" type="text" value="<%= v %>" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>">
-                      <% } %>
-                    </div>
-                  <% }) } %>
-                  <div class="flex items-center gap-2 pt-1">
-                    <button class="px-3 py-1.5 bg-otp-500 text-white rounded-lg text-xs hover:bg-otp-600 font-medium" data-section-save="<%= s.id %>">Save</button>
-                    <button class="px-3 py-1.5 bg-gray-100 text-gray-700 border rounded-lg text-xs hover:bg-gray-200" data-section-cancel="<%= s.id %>">Cancel</button>
-                    <span class="text-xs" data-section-msg="<%= s.id %>"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <% visionRight.forEach(function(s) { %>
+            <%- include('../partials/plan-section-card', { s: s, sectionMeta: sectionMeta }) %>
           <% }) %>
         </div>
       </div>
     </div>
 
-    <!-- 90-Day Execution Engine table -->
-    <div class="mb-8">
+    <!-- TRACTION TAB PANEL (hidden by default; 90-Day table is rendered inside, see below) -->
+    <div data-tab-panel="traction" class="hidden mb-8">
+      <div class="grid lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 space-y-6">
+          <% tractionLeft.forEach(function(s) { %>
+            <%- include('../partials/plan-section-card', { s: s, sectionMeta: sectionMeta }) %>
+          <% }) %>
+        </div>
+        <div class="space-y-6">
+          <% tractionRight.forEach(function(s) { %>
+            <%- include('../partials/plan-section-card', { s: s, sectionMeta: sectionMeta }) %>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- SWOT TAB PANEL (hidden by default) -->
+    <div data-tab-panel="swot" class="hidden mb-8">
+      <div class="bg-otp-50 border border-otp-100 rounded-2xl p-5 mb-6 text-sm text-gray-700 leading-relaxed">
+        <p class="font-bold text-gray-900 mb-1">SWOT-style analysis</p>
+        <p>The Constraints &amp; Leverage section maps to a SWOT framework. Bottlenecks = weaknesses. Risks = threats. Opportunities = opportunities. Required Resources = what you need to convert weakness into strength. Edit below to refresh the picture.</p>
+      </div>
+      <div class="space-y-6">
+        <% swotSections.forEach(function(s) { %>
+          <%- include('../partials/plan-section-card', { s: s, sectionMeta: sectionMeta }) %>
+        <% }) %>
+      </div>
+    </div>
+
+
+    <!-- 90-Day Execution Engine table — second half of the Traction tab.
+         Shares data-tab-panel="traction" with the Traction sections grid above
+         so both toggle together when tabs switch. -->
+    <div data-tab-panel="traction" class="hidden mb-8">
       <div class="flex items-baseline justify-between mb-3">
         <h2 class="text-sm font-semibold uppercase text-gray-600 tracking-wide">90-Day Execution Engine: <%= currentQuarter %></h2>
         <div class="flex items-center gap-3">
@@ -517,6 +444,31 @@
 
 <script>
   (function() {
+
+    // ---------- Tab switching (Vision / Traction / SWOT) ----------
+    // Each tab button has data-tab="vision|traction|swot".
+    // Each panel (or panel half) has data-tab-panel matching the same value.
+    // Multiple elements can share the same data-tab-panel value (the Traction tab
+    // has two: the section grid and the 90-Day Execution Engine table).
+    document.querySelectorAll('[data-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var tab = btn.getAttribute('data-tab');
+        // Hide every panel, then unhide the ones matching this tab.
+        document.querySelectorAll('[data-tab-panel]').forEach(function(p) { p.classList.add('hidden'); });
+        document.querySelectorAll('[data-tab-panel="' + tab + '"]').forEach(function(p) { p.classList.remove('hidden'); });
+        // Update active/inactive styling on the tab buttons themselves.
+        document.querySelectorAll('[data-tab]').forEach(function(b) {
+          if (b.getAttribute('data-tab') === tab) {
+            b.classList.remove('text-gray-500', 'font-medium', 'border-transparent');
+            b.classList.add('text-gray-900', 'font-semibold', 'border-pink-500');
+          } else {
+            b.classList.remove('text-gray-900', 'font-semibold', 'border-pink-500');
+            b.classList.add('text-gray-500', 'font-medium', 'border-transparent');
+          }
+        });
+      });
+    });
+
     var msg = document.getElementById('action-msg');
     function showMsg(text, kind) {
       if (!msg) return;
