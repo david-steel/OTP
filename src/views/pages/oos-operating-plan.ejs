@@ -89,6 +89,18 @@
   <% } else { %>
 
     <!-- Plan header actions toolbar -->
+    <%
+      // Show the "Seed Sneeze It example" button only when:
+      //   1. The user is a super admin (sanity gate, server enforces too)
+      //   2. NONE of the 4 strategic sections already has any content
+      //      (the seed endpoint refuses if any does — surface that as hidden button instead of error)
+      var strategicSeedKeys = ['foundation', 'market_command', 'destination', 'annual_game_plan'];
+      var strategicSeedable = isSuperAdmin && sections.every(function(sec) {
+        if (strategicSeedKeys.indexOf(sec.sectionKey) === -1) return true;
+        var c = (sec.contentJson && typeof sec.contentJson === 'object') ? sec.contentJson : {};
+        return !Object.values(c).some(function(v) { return v !== null && v !== undefined && String(v).trim() !== ''; });
+      });
+    %>
     <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-2 text-xs">
       <button id="btn-generate" class="px-3 py-1.5 bg-otp-50 text-otp-700 border border-otp-200 rounded-lg hover:bg-otp-100 transition-colors font-medium" data-action="generate" data-plan-id="<%= plan.id %>">Generate 90-Day Plan</button>
       <button id="btn-recalc" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors font-medium" data-action="recalculate" data-plan-id="<%= plan.id %>">Recalculate Assignments</button>
@@ -99,6 +111,13 @@
         <button class="px-3 py-1.5 bg-gray-100 text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed" title="Super admin only">Push to OOS (super-admin)</button>
       <% } %>
       <button id="btn-export" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors font-medium" data-action="export" data-plan-id="<%= plan.id %>">Export / Copy Markdown</button>
+      <% if (strategicSeedable) { %>
+        <button id="btn-seed-example"
+                class="px-3 py-1.5 bg-purple-50 text-purple-800 border border-purple-300 rounded-lg hover:bg-purple-100 transition-colors font-semibold"
+                title="One-click: populate the 4 strategic sections with the Sneeze It example content from /plan">
+          ✦ Seed Sneeze It example
+        </button>
+      <% } %>
     </div>
 
     <div id="action-msg" class="hidden mb-4 px-3 py-2 rounded-lg text-sm"></div>
@@ -470,6 +489,48 @@
 
 <script>
   (function() {
+
+    // ---------- Seed Sneeze It example content ----------
+    // One-click: populate the 4 strategic sections (foundation, market_command,
+    // destination, annual_game_plan) with the Sneeze It content from /plan.
+    // Backend refuses if any of those 4 already has content — the button is
+    // also server-hidden in that case, so this is belt-and-suspenders.
+    var seedBtn = document.getElementById('btn-seed-example');
+    if (seedBtn) {
+      seedBtn.addEventListener('click', async function() {
+        if (!window.confirm(
+          'Populate the 4 strategic sections with Sneeze It example content?\n\n' +
+          'Sections affected: Foundation, Market Command, Destination, Annual Game Plan.\n' +
+          'Source: the /plan public preview (mapped to OOS field keys).\n\n' +
+          'Existing content will be preserved — the backend refuses to overwrite. ' +
+          'This is a one-shot operation; once any of these sections has content, ' +
+          'the button disappears.'
+        )) return;
+
+        seedBtn.disabled = true;
+        var originalLabel = seedBtn.innerHTML;
+        seedBtn.innerHTML = 'Seeding...';
+        try {
+          var res = await fetch('/dashboard/oos-operating-plan/seed-example', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}',
+          });
+          var data = await res.json();
+          if (!res.ok || !data.ok) {
+            window.alert('Seed failed: ' + (data.error && data.error.message ? data.error.message : 'HTTP ' + res.status));
+            seedBtn.disabled = false;
+            seedBtn.innerHTML = originalLabel;
+            return;
+          }
+          window.location.reload();
+        } catch (e) {
+          window.alert('Seed failed: ' + e.message);
+          seedBtn.disabled = false;
+          seedBtn.innerHTML = originalLabel;
+        }
+      });
+    }
 
     // ---------- Copy plan forward to next year ----------
     // Archives current plan, creates a new active one with year+1 in the title,

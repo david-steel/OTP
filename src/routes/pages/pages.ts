@@ -2798,6 +2798,116 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.send({ ok: true, planId: newPlan.id, newYear: nextYear, archivedPlanId: currentPlan.id });
   });
 
+  // Seed the active plan's 4 strategic sections with example Sneeze It content
+  // (the same content shown on the public /plan preview, mapped to OOS field keys).
+  // Super-admin gated. Refuses if any of the 4 strategic sections already has content.
+  app.post('/dashboard/oos-operating-plan/seed-example', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(request as any).isSuperAdmin) return reply.status(403).send({ error: { code: 'SUPER_ADMIN_ONLY', message: 'Super admin only' } });
+
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
+
+    const [currentPlan] = await db
+      .select()
+      .from(oosOperatingPlans)
+      .where(and(eq(oosOperatingPlans.organizationId, org.id), eq(oosOperatingPlans.status, 'active')))
+      .limit(1);
+    if (!currentPlan) return reply.status(404).send({ error: { code: 'NO_PLAN', message: 'No active plan to seed' } });
+
+    const strategicKeys = ['foundation', 'market_command', 'destination', 'annual_game_plan'] as const;
+    const existing = await db
+      .select()
+      .from(oosOperatingPlanSections)
+      .where(eq(oosOperatingPlanSections.planId, currentPlan.id));
+
+    // Refuse if ANY strategic section already has content.
+    for (const s of existing) {
+      if (!strategicKeys.includes(s.sectionKey as typeof strategicKeys[number])) continue;
+      const c = (s.contentJson || {}) as Record<string, unknown>;
+      const hasContent = Object.values(c).some(v => v !== null && v !== undefined && String(v).trim() !== '');
+      if (hasContent) {
+        return reply.status(409).send({
+          error: { code: 'ALREADY_HAS_CONTENT', message: `Section "${s.sectionKey}" already has content. Seed refuses to overwrite. Clear those fields first or edit manually.` },
+        });
+      }
+    }
+
+    // Sneeze It example content, mapped from /plan's Ninety V/TO labels to OOS field keys.
+    const sneezeItContent: Record<typeof strategicKeys[number], Record<string, string>> = {
+      foundation: {
+        purpose: 'PROFIT!',
+        mission: 'Deliver qualified appointments that fuel growth for membership and retention-driven businesses.',
+        values: [
+          'CHAMPS:',
+          '• Communicate With Courage — Speak truthfully, listen actively, and create clarity, even when it\'s hard.',
+          '• Heart In The Game — Show up with passion, energy, and emotional buy-in. Play with purpose.',
+          '• Make Each Other Better — Elevate your teammates. Give, receive, and seek feedback. Protect the culture.',
+          '• Push For Greatness — Pursue excellence relentlessly. Improve constantly. Raise the bar.',
+          '• Stay Resilient — Adapt under pressure. Show grit in the face of challenges. Bounce back stronger. Be the calm in the chaos.',
+        ].join('\n'),
+        ideal_customer: 'Multi-location membership and retention brands (fitness, wellness, hospitality) with $1M-$50M revenue, an installed call center, and an executive team that already runs an operating system.',
+      },
+      market_command: {
+        category: 'AI-native operating layer for membership and retention brands.',
+        unique_advantage: [
+          '1) Agency-funded operating platform — clients run free.',
+          '2) AI agents that hold the org\'s other agents accountable.',
+          '3) Per-client playbook compounds across the entire book of business.',
+        ].join('\n'),
+        brand_promise: 'Qualified appointments delivered on a per-location basis or your money back.',
+        proof_points: [
+          'Capture, Core, Clarity, Call Center — the proven 4C process.',
+          'Multi-location WOA franchises in production.',
+          'HiTone Fitness, Villa Sport, Cellebration Wellness, exhale, South Coast MedSpa.',
+          'Founding 25 EOS coach cohort launching 2026.',
+        ].join('\n'),
+      },
+      destination: {
+        year_target: 'Reach $6M revenue with 10% Net Operating Income, 95% target-market clients, strong sales process, and successful expansion into new markets. Founding 25 coaches active on OTP.',
+        year_target_year: '2029',
+        ten_year_target: 'Create a million shown appointments for membership and retention brands worldwide.',
+        ten_year_target_year: '2036',
+        revenue_goal: '$6M by 2029 (3-Year). Aspirational scale beyond that.',
+        profit_goal: '10% Net Operating Income.',
+        defining_metric: 'Shown appointments delivered per client per month.',
+      },
+      annual_game_plan: {
+        primary_objective: 'Ship the Founding 25 coach cohort, scale Sneeze It to $2M ARR, complete the Accelo → Trello migration.',
+        strategic_initiatives: [
+          '1) Founding 25 coach campaign — claim, onboard, prove value.',
+          '2) WOA 4C franchise expansion toward 50 locations.',
+          '3) Accelo → Trello migration with the PM bot in place.',
+          '4) OTP coordination intelligence loops live (claims, OOS sync).',
+          '5) AI-agent accountability layer established as the product moat.',
+        ].join('\n'),
+        key_outcomes: [
+          '50 OTP signups by Sep 30.',
+          '$2M Sneeze It ARR by Dec 31.',
+          '50 WOA locations on 4C.',
+          '25 founding coaches with at least one onboarded client each.',
+        ].join('\n'),
+      },
+    };
+
+    // Update each strategic section's contentJson. Sections are seeded at plan-creation
+    // time so they exist already — we update, not insert.
+    let updated = 0;
+    for (const key of strategicKeys) {
+      const section = existing.find(s => s.sectionKey === key);
+      if (!section) continue;
+      await db
+        .update(oosOperatingPlanSections)
+        .set({ contentJson: sneezeItContent[key], updatedAt: new Date() })
+        .where(eq(oosOperatingPlanSections.id, section.id));
+      updated++;
+    }
+
+    return reply.send({ ok: true, planId: currentPlan.id, sectionsUpdated: updated });
+  });
+
   // Dashboard: Workspace detail
   app.get('/dashboard/workspace/:id', async (request, reply) => {
     const auth = getAuth(request);
