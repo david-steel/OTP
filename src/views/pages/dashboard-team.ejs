@@ -3206,7 +3206,6 @@
       try {
         var res = await fetch('/api/v1/team/invitations/' + invitationId + '/resend', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
         });
         if (!res.ok) {
           var err = await res.json().catch(function() { return {}; });
