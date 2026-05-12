@@ -24,7 +24,18 @@
         <p class="text-sm text-gray-500 leading-relaxed"><%= meta.tagline %></p>
       <% } %>
     </div>
-    <span class="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-mono whitespace-nowrap mt-1.5"><%= s.sectionKey.replace(/_/g, ' ') %></span>
+    <div class="flex items-center gap-3 mt-1">
+      <span class="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-mono whitespace-nowrap">
+        <%= s.sectionKey.replace(/_/g, ' ') %>
+      </span>
+      <!-- Pencil icon — same action as the in-card Edit button. -->
+      <button type="button" data-section-edit="<%= s.id %>" title="Edit this section" aria-label="Edit"
+              class="text-gray-400 hover:text-otp-500 hover:bg-otp-50 rounded-lg p-1.5 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+      </button>
+    </div>
   </div>
   <div class="px-6 sm:px-7 py-5" data-section-row="<%= s.id %>">
     <div data-section-view>

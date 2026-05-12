@@ -2,21 +2,44 @@
 <div class="max-w-7xl mx-auto px-6 sm:px-8 py-8">
 
   <!-- Page header card -->
+  <%
+    // Coverage year: prefer a year embedded in the plan title (e.g. "Operating Plan 2026"),
+    // fall back to plan.createdAt year. This lets users encode the year in the title
+    // without requiring a DB migration; the copy-forward action below sets the title
+    // explicitly with the new year.
+    var coverageYear = null;
+    if (plan) {
+      var yearMatch = (plan.title || '').match(/(20\d{2})/);
+      coverageYear = yearMatch ? yearMatch[1] : new Date(plan.createdAt).getFullYear().toString();
+    }
+  %>
   <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 mb-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-3 mb-1">
+        <div class="flex flex-wrap items-center gap-3 mb-1">
           <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 leading-none">Plan</h1>
           <% if (plan) { %>
+            <span class="text-sm font-semibold text-gray-700 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md"><%= coverageYear %></span>
             <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-otp-700 bg-otp-50 border border-otp-100 px-2 py-1 rounded"><%= plan.status %></span>
           <% } %>
         </div>
         <p class="text-sm text-gray-500 leading-relaxed max-w-2xl">A live, structured system that turns strategy into execution by aligning people, agents, and operating rules around measurable outcomes.</p>
       </div>
       <% if (plan) { %>
-        <div class="text-right text-xs text-gray-500">
-          <div class="font-semibold text-gray-700 mb-0.5">Last synced</div>
-          <%= plan.lastSyncedToOosAt ? new Date(plan.lastSyncedToOosAt).toLocaleString() : 'never' %>
+        <div class="flex items-start gap-3">
+          <div class="text-right text-xs text-gray-500">
+            <div class="font-semibold text-gray-700 mb-0.5">Last synced</div>
+            <%= plan.lastSyncedToOosAt ? new Date(plan.lastSyncedToOosAt).toLocaleString() : 'never' %>
+          </div>
+          <!-- Copy plan forward to next year — calls POST /api/v1/oos-operating-plan/copy-forward -->
+          <button id="btn-copy-forward" data-plan-id="<%= plan.id %>" data-current-year="<%= coverageYear %>"
+                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:border-otp-400 hover:text-otp-700 transition-colors"
+                  title="Archive this plan and create a fresh copy for next year">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+            </svg>
+            Copy to next year
+          </button>
         </div>
       <% } %>
     </div>
@@ -174,6 +197,9 @@
           tagline: "The long-term target that aligns all decisions and execution.",
           fields: [
             { label: "3-5 Year Target", desc: "The measurable future state the organization is building toward.", key: "year_target", multiline: true },
+            { label: "3-5 Year Target Year", desc: "The specific year the 3-5 year target lands in (e.g., 2029).", key: "year_target_year", multiline: false },
+            { label: "10 Year Target", desc: "The longer-range vision — where the organization is heading 10 years out.", key: "ten_year_target", multiline: true },
+            { label: "10 Year Target Year", desc: "The specific year the 10 year target lands in (e.g., 2034).", key: "ten_year_target_year", multiline: false },
             { label: "Revenue Goal", desc: "The financial growth target.", key: "revenue_goal", multiline: false },
             { label: "Profit Goal", desc: "The profitability target.", key: "profit_goal", multiline: false },
             { label: "Defining Metric", desc: "The single most important number that indicates success.", key: "defining_metric", multiline: false },
@@ -444,6 +470,47 @@
 
 <script>
   (function() {
+
+    // ---------- Copy plan forward to next year ----------
+    // Archives current plan, creates a new active one with year+1 in the title,
+    // and duplicates all section content into the new plan. New year = fresh
+    // execution items (none copied), same strategic foundation (all copied).
+    var copyBtn = document.getElementById('btn-copy-forward');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async function() {
+        var currentYear = copyBtn.getAttribute('data-current-year');
+        var nextYear = parseInt(currentYear, 10) + 1;
+        if (!window.confirm(
+          'Archive the ' + currentYear + ' plan and create a fresh ' + nextYear + ' plan?\n\n' +
+          'Sections will be copied with their content. Execution items will NOT — ' +
+          'a new year means new quarterly execution. The ' + currentYear + ' plan will ' +
+          'remain in the archive for reference.'
+        )) return;
+
+        copyBtn.disabled = true;
+        var originalLabel = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<span class="text-xs">Creating ' + nextYear + ' plan...</span>';
+        try {
+          var res = await fetch('/dashboard/oos-operating-plan/copy-forward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}',
+          });
+          var data = await res.json();
+          if (!res.ok || !data.ok) {
+            window.alert('Copy failed: ' + (data.error && data.error.message ? data.error.message : 'HTTP ' + res.status));
+            copyBtn.disabled = false;
+            copyBtn.innerHTML = originalLabel;
+            return;
+          }
+          window.location.reload();
+        } catch (e) {
+          window.alert('Copy failed: ' + e.message);
+          copyBtn.disabled = false;
+          copyBtn.innerHTML = originalLabel;
+        }
+      });
+    }
 
     // ---------- Tab switching (Vision / Traction / SWOT) ----------
     // Each tab button has data-tab="vision|traction|swot".

@@ -2735,6 +2735,69 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.redirect('/dashboard/oos-operating-plan');
   });
 
+  // Copy the active plan forward to next year.
+  // - Archives the current active plan (status='archived')
+  // - Creates a new active plan with title carrying year+1
+  // - Duplicates all 8 sections + their contentJson into the new plan
+  // - Returns the new plan id (client reloads /dashboard/oos-operating-plan)
+  app.post('/dashboard/oos-operating-plan/copy-forward', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    const org = orgArr[0];
+    if (!org) return reply.status(403).send({ error: { code: 'NO_ORG', message: 'You need an organization first' } });
+
+    const [currentPlan] = await db
+      .select()
+      .from(oosOperatingPlans)
+      .where(and(eq(oosOperatingPlans.organizationId, org.id), eq(oosOperatingPlans.status, 'active')))
+      .limit(1);
+    if (!currentPlan) return reply.status(404).send({ error: { code: 'NO_PLAN', message: 'No active plan to copy' } });
+
+    // Pull next year from the title if present, else current+1.
+    const titleYearMatch = (currentPlan.title || '').match(/(20\d{2})/);
+    const currentYear = titleYearMatch ? parseInt(titleYearMatch[1], 10) : new Date(currentPlan.createdAt).getFullYear();
+    const nextYear = currentYear + 1;
+
+    await db
+      .update(oosOperatingPlans)
+      .set({ status: 'archived', updatedAt: new Date() })
+      .where(eq(oosOperatingPlans.id, currentPlan.id));
+
+    const newTitle = titleYearMatch
+      ? currentPlan.title.replace(/20\d{2}/, String(nextYear))
+      : `${org.name} Operating Plan ${nextYear}`;
+    const [newPlan] = await db
+      .insert(oosOperatingPlans)
+      .values({
+        organizationId: org.id,
+        title: newTitle,
+        status: 'active',
+        createdBy: auth.userId,
+      })
+      .returning();
+
+    const existingSections = await db
+      .select()
+      .from(oosOperatingPlanSections)
+      .where(eq(oosOperatingPlanSections.planId, currentPlan.id))
+      .orderBy(oosOperatingPlanSections.sortOrder);
+    if (existingSections.length > 0) {
+      await db.insert(oosOperatingPlanSections).values(
+        existingSections.map(s => ({
+          planId: newPlan.id,
+          sectionKey: s.sectionKey,
+          title: s.title,
+          contentJson: s.contentJson,
+          sortOrder: s.sortOrder,
+        })),
+      );
+    }
+
+    // Execution items deliberately NOT copied — new year means new quarterly execution.
+    return reply.send({ ok: true, planId: newPlan.id, newYear: nextYear, archivedPlanId: currentPlan.id });
+  });
+
   // Dashboard: Workspace detail
   app.get('/dashboard/workspace/:id', async (request, reply) => {
     const auth = getAuth(request);
