@@ -264,6 +264,17 @@ Reason: ${escapeHtml(reason || '(not provided)')}</p>
     });
   });
 
+  // ───── GET /plan ──────────────────────────────────────────────
+  // Read-only Plan page preview. Static Sneeze It data for now; future
+  // pass adds per-workspace plan data, edit modals, and DB schema.
+  app.get('/plan', async (_request, reply) => {
+    return reply.view('pages/plan', {
+      title: 'Plan - OTP',
+      description: 'OTP Plan page — Core Values, Core Focus, 10-Year Target, 3-Year, and 1-Year measurables.',
+      noindex: true,
+    });
+  });
+
   // ───── GET /unsubscribe?slug=... ──────────────────────────────
   // One-click unsubscribe. Creates an UNSUBSCRIBE ticket so the send script
   // can skip this slug on future sends. Shows a confirmation page that also
