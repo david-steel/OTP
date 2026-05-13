@@ -9,6 +9,20 @@
   <!-- Google Ads -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=<%= googleAdsId %>"></script>
   <script>gtag('config','<%= googleAdsId %>');</script>
+  <script>
+    // Delayed-navigation helper. Use as: <a href="/x" onclick="return gtagSendEvent('/x')">
+    // Fires the conversion event, then navigates after the gtag callback (or 2s timeout).
+    function gtagSendEvent(url) {
+      var callback = function () {
+        if (typeof url === 'string') { window.location = url; }
+      };
+      gtag('event', 'ads_conversion_PURCHASE_1', {
+        'event_callback': callback,
+        'event_timeout': 2000
+      });
+      return false;
+    }
+  </script>
   <% } %>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#000000">
