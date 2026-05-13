@@ -177,9 +177,14 @@
       </div>
     </section>
   <% } else if (isUnclaimed) { %>
-    <section class="mb-10 p-6 rounded-xl border border-gray-200 bg-gray-50 text-center">
-      <h2 class="text-base font-bold text-gray-900 mb-1">No coordination intelligence published yet</h2>
-      <p class="text-sm text-gray-600">When <%= firstName %> claims this profile and publishes their first OOS file, it will appear here -- showing the operating-system patterns they use with their clients.</p>
+    <section class="mb-10 p-6 rounded-xl border border-amber-200 bg-amber-50 text-center">
+      <h2 class="text-base font-bold text-gray-900 mb-1">Founding 25 profile -- ready to be claimed by <%= firstName %></h2>
+      <p class="text-sm text-gray-700">This is a draft listing seeded from <%= firstName %>'s public directory entry. Once they claim it, their operating-system patterns, scorecards, and client tools will appear here.</p>
+    </section>
+  <% } else { %>
+    <section class="mb-10 p-6 rounded-xl border border-emerald-200 bg-emerald-50 text-center">
+      <h2 class="text-base font-bold text-gray-900 mb-1"><%= firstName %> is part of the Founding 25</h2>
+      <p class="text-sm text-gray-700">Operating-system patterns and coordination intelligence will appear here as <%= firstName %> publishes them. <%= firstName.length > 0 ? firstName + ' is' : 'They are' %> set up and active on OTP.</p>
     </section>
   <% } %>
 

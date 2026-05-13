@@ -9,6 +9,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
+import { createClerkClient } from '@clerk/backend';
 import { eq } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, consultantProfiles, tickets } from '../../db/schema.js';
@@ -16,6 +17,20 @@ import { sendEmail } from '../../config/email.js';
 
 const BASE_URL = 'https://orgtp.com';
 const DAVID_EMAIL = 'dsteel@sneeze.it';
+
+async function fetchClerkPrimaryEmail(clerkUserId: string): Promise<string | null> {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey || !clerkUserId.startsWith('user_')) return null;
+  try {
+    const clerk = createClerkClient({ secretKey });
+    const user = await clerk.users.getUser(clerkUserId);
+    const primary = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId);
+    return primary?.emailAddress || user.emailAddresses[0]?.emailAddress || null;
+  } catch (err) {
+    console.warn('[claim] Clerk email lookup failed for', clerkUserId, err);
+    return null;
+  }
+}
 
 export default async function coachClaimRoutes(app: FastifyInstance) {
 
@@ -101,13 +116,24 @@ export default async function coachClaimRoutes(app: FastifyInstance) {
       userOrg = created;
     }
 
-    // Bind the profile to the user's org and flip claimed=true.
+    // Bind the profile to the user's org, flip claimed=true, auto-publish, and
+    // pre-fill contactEmail from Clerk if the row doesn't have one yet. This
+    // removes three small post-claim friction points so the coach lands on a
+    // working public profile immediately rather than an unchecked publish toggle
+    // and a blank required-field.
+    const clerkEmail = await fetchClerkPrimaryEmail(auth.userId);
+    const updates: Record<string, unknown> = {
+      orgId: userOrg.id,
+      claimed: true,
+      published: true,
+      isPublished: true,
+    };
+    if (!profile.contactEmail && clerkEmail) {
+      updates.contactEmail = clerkEmail;
+    }
     await db
       .update(consultantProfiles)
-      .set({
-        orgId: userOrg.id,
-        claimed: true,
-      })
+      .set(updates)
       .where(eq(consultantProfiles.id, profile.id));
 
     // Fire-and-forget notification to David. Wrap in try/catch so a notify failure
