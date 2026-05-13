@@ -285,6 +285,7 @@ Reason: ${escapeHtml(reason || '(not provided)')}</p>
       description: 'Meeting software ran the meeting. Radar runs everything between them. The operating layer for EOS companies. Free for your whole team.',
       canonical: 'https://orgtp.com/meet-radar',
       ogImage: 'https://orgtp.com/public/images/og-meet-radar.png',
+      googleAdsId: 'AW-18159119434',
     });
   });
 

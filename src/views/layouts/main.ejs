@@ -5,6 +5,11 @@
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2CGLFY76YW"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2CGLFY76YW');</script>
+  <% if (typeof googleAdsId !== 'undefined' && googleAdsId) { %>
+  <!-- Google Ads -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<%= googleAdsId %>"></script>
+  <script>gtag('config','<%= googleAdsId %>');</script>
+  <% } %>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="light dark">
