@@ -9,7 +9,7 @@
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
 
     <!-- Header -->
-    <div class="mb-8">
+    <div class="mb-6">
       <div class="text-xs font-bold uppercase tracking-[0.18em] text-amber-700 mb-1">My Practice</div>
       <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
         <% if (coachProfile) { %>
@@ -22,6 +22,25 @@
         <p class="mt-2 text-sm text-gray-600">All your linked client orgs. Side-by-side. As a Founder Certified Coach, every client you bring is yours in perpetuity.</p>
       <% } %>
     </div>
+
+    <% if (typeof inviteStatus !== 'undefined' && inviteStatus === 'sent') { %>
+      <div class="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <span class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold">✓</span>
+        <div class="text-sm text-emerald-900">
+          <strong>Invite sent to <%= inviteToEmail %>.</strong> Replies route to your inbox.
+        </div>
+      </div>
+    <% } else if (typeof inviteStatus !== 'undefined' && inviteStatus === 'bad_email') { %>
+      <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <span class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold">!</span>
+        <div class="text-sm text-amber-900"><strong>That email didn't look valid.</strong> Try again with a properly formatted address.</div>
+      </div>
+    <% } else if (typeof inviteStatus !== 'undefined' && inviteStatus === 'fail') { %>
+      <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <span class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">×</span>
+        <div class="text-sm text-red-900"><strong>Send failed.</strong> Try again — likely a transient Resend issue.</div>
+      </div>
+    <% } %>
 
     <% if (!coachProfile) { %>
 
@@ -78,6 +97,21 @@
         </div>
       </div>
 
+      <!-- Direct-invite form: shortcut for coaches who'd rather fire an
+           invite from here than copy/paste into their own email client. -->
+      <div class="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500 mb-2">Or send directly</div>
+        <h3 class="text-base font-bold text-gray-900 mb-3">Email your client the invite from here</h3>
+        <form method="POST" action="/dashboard/practice/send-invite" class="flex flex-col sm:flex-row gap-2">
+          <input type="text" name="firstName" placeholder="First name (optional)" maxlength="80" class="sm:max-w-[180px] px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+          <input type="email" name="email" placeholder="client@example.com" required class="flex-1 px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+          <button type="submit" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold whitespace-nowrap">
+            Send invite
+          </button>
+        </form>
+        <p class="mt-2 text-xs text-gray-500">We send from David's OTP address but Reply-To is set to your contact email, so they reply to you.</p>
+      </div>
+
       <!-- Helpful nudge cards below the share link -->
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="rounded-xl bg-white border border-gray-200 p-5">
@@ -122,11 +156,17 @@
 
       <!-- Compact share-link bar (always visible for adding more clients) -->
       <% if (inviteUrl) { %>
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-3 flex flex-col sm:flex-row sm:items-center gap-3">
           <div class="text-xs text-amber-800 font-semibold whitespace-nowrap">★ Add another client:</div>
           <input type="text" id="practice-invite-url-compact" value="<%= inviteUrl %>" readonly class="flex-1 px-3 py-1.5 text-xs font-mono text-gray-900 bg-white border border-amber-200 rounded-lg"/>
           <button type="button" onclick="(function(){var i=document.getElementById('practice-invite-url-compact');i.select();document.execCommand('copy');var b=event.target;var t=b.textContent;b.textContent='Copied ✓';setTimeout(function(){b.textContent=t;},1800);})()" class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold">Copy</button>
         </div>
+        <!-- Or fire an invite directly from the platform -->
+        <form method="POST" action="/dashboard/practice/send-invite" class="bg-white border border-gray-200 rounded-xl p-3 mb-6 flex flex-col sm:flex-row gap-2">
+          <input type="text" name="firstName" placeholder="First name" maxlength="80" class="sm:max-w-[140px] px-3 py-1.5 text-xs text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+          <input type="email" name="email" placeholder="…or send directly: client@example.com" required class="flex-1 px-3 py-1.5 text-xs text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+          <button type="submit" class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold whitespace-nowrap">Send invite</button>
+        </form>
       <% } %>
 
       <!-- Client list -->

@@ -2563,7 +2563,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   //   1. User is not a claimed coach -> intro + claim CTA
   //   2. Claimed coach with 0 clients -> share-link command center
   //   3. Claimed coach with clients   -> client list + recent activity
-  app.get('/dashboard/practice', async (request, reply) => {
+  app.get<{ Querystring: { invite?: string; to?: string } }>('/dashboard/practice', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const org = await resolveRequestOrg(request);
@@ -2619,12 +2619,91 @@ export default async function pageRoutes(app: FastifyInstance) {
       coachProfile,
       clients,
       inviteUrl,
+      inviteStatus: request.query.invite || null,
+      inviteToEmail: request.query.to || null,
       stats: {
         totalClients: clients.length,
         activeAccess: clients.filter(c => !c.revoked_at).length,
         revokedAccess: clients.filter(c => c.revoked_at).length,
       },
     });
+  });
+
+  // POST /dashboard/practice/send-invite -- coach-fires invite directly
+  // from the Practice dashboard. Saves the copy-link-then-paste-into-email
+  // friction. Reply-To is the coach's contact email so any reply lands in
+  // their inbox and they own the relationship.
+  app.post<{ Body: { email?: string; firstName?: string } }>('/dashboard/practice/send-invite', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'Not signed in' });
+    const coachOrg = await resolveRequestOrg(request);
+    if (!coachOrg) return reply.redirect('/dashboard');
+
+    const body = (request.body || {}) as { email?: string; firstName?: string };
+    const recipientEmail = String(body.email || '').trim().toLowerCase();
+    const recipientFirstName = String(body.firstName || '').trim().slice(0, 80);
+
+    // Basic email shape guard. Browser already enforces `type=email`; this is
+    // a server-side belt-and-suspenders so we never paste garbage into Resend.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      return reply.redirect('/dashboard/practice?invite=bad_email');
+    }
+
+    // Coach must have a claimed profile + invite token to use this.
+    const [coach] = await db.execute(sql`
+      SELECT slug, display_name, invite_token, contact_email
+      FROM consultant_profiles
+      WHERE org_id = ${coachOrg.id} AND claimed = true
+      LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!coach || !coach.invite_token) {
+      return reply.redirect('/dashboard/practice?invite=no_token');
+    }
+
+    const coachFirst = String(coach.display_name || 'Your coach').split(' ')[0];
+    const inviteUrl = `${BASE_URL}/join/${coach.invite_token}`;
+    const replyTo = coach.contact_email
+      ? `${coach.display_name} <${coach.contact_email}>`
+      : 'David Steel <dsteel@sneeze.it>';
+    const greeting = recipientFirstName ? `Hi ${recipientFirstName} — ` : 'Hi — ';
+
+    try {
+      const { sendEmail } = await import('../../config/email.js');
+      await sendEmail({
+        to: recipientEmail,
+        subject: `${coachFirst} invited you to OTP`,
+        from: 'David Steel <david@mail.orgtp.com>',
+        replyTo,
+        tags: [
+          { name: 'campaign', value: 'coach_direct_invite' },
+          { name: 'coach_slug', value: String(coach.slug || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) },
+        ],
+        html: `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;max-width:640px;margin:0;padding:24px;line-height:1.55;font-size:15px;">
+
+<p>${greeting}<strong>${coachFirst}</strong> just set up an OTP workspace for you.</p>
+
+<p>OTP is an operating chart that puts AI agents and humans on the same accountability layer. Each seat has a name, a role, a KPI, and an SOP. Your team's chart. Your team's numbers. Free during ${coachFirst}'s Founder Certified Coach cohort.</p>
+
+<p>One-click to claim your workspace:</p>
+
+<p><a href="${inviteUrl}" style="display:inline-block;padding:12px 22px;background:#1f2937;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Accept invite →</a></p>
+
+<p style="margin-top:18px;color:#6b7280;font-size:13px;">Or paste this URL: <span style="font-family:monospace;">${inviteUrl}</span></p>
+
+<p style="margin-top:24px;">Questions? Reply to this email — it lands directly in ${coachFirst}'s inbox.</p>
+
+<p>— David Steel<br/>
+Founder, OTP</p>
+
+</body></html>`,
+      });
+    } catch (err) {
+      request.log.warn({ err }, 'direct-invite send failed');
+      return reply.redirect('/dashboard/practice?invite=fail&to=' + encodeURIComponent(recipientEmail));
+    }
+
+    return reply.redirect('/dashboard/practice?invite=sent&to=' + encodeURIComponent(recipientEmail));
   });
 
   // POST /dashboard/practice/client/:clientOrgId/nudge -- coach-triggered
