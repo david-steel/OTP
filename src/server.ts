@@ -191,12 +191,16 @@ app.addHook('preHandler', async (request, reply) => {
     const om = (request as any).orgMember || null;
     const currentPath = (request.url || '').split('?')[0];
     const memberRole: string | null = om ? om.role : null;
+    const isCoach = !!(request as any).isCoach;
+    const coachSlug = (request as any).coachSlug || null;
     return origView(template, {
       ...(data || {}),
       authUserId: userId,
       impersonation: imp,
       currentPath,
       memberRole,
+      isCoach,
+      coachSlug,
     }, opts);
   };
 });
@@ -207,6 +211,38 @@ app.addHook('preHandler', async (request, reply) => {
 // read this decoration to enforce role + access gates.
 import { registerOrgMemberDecorator } from './middleware/guards.js';
 registerOrgMemberDecorator(app);
+
+// Coach-status decorator: once per request, check whether the current org has
+// a claimed consultant_profile and stash isCoach + coachInviteToken on the
+// request. The wrapped reply.view above reads these onto every view's locals
+// so partials/dashboard-tabs.ejs can decide whether to show the "My Practice"
+// tab without each route remembering to pass it. Fail-soft: any error leaves
+// isCoach=false (worst case: the tab just doesn't appear).
+app.addHook('preHandler', async (request) => {
+  const om = (request as any).orgMember;
+  if (!om || !om.orgId) return;
+  try {
+    const { sql } = await import('drizzle-orm');
+    const { db } = await import('./config/database.js');
+    const r = await db.execute(sql`
+      SELECT slug, invite_token
+      FROM consultant_profiles
+      WHERE org_id = ${om.orgId} AND claimed = true
+      LIMIT 1
+    `) as any;
+    const row = (r.rows || [])[0];
+    if (row) {
+      (request as any).isCoach = true;
+      (request as any).coachSlug = row.slug || null;
+      (request as any).coachInviteToken = row.invite_token || null;
+    } else {
+      (request as any).isCoach = false;
+    }
+  } catch (err) {
+    (request as any).isCoach = false;
+    request.log.debug({ err }, 'isCoach decorator failed');
+  }
+});
 
 // Redirect www to apex domain
 app.addHook('onRequest', async (request, reply) => {

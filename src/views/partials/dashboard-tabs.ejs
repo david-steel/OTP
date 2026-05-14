@@ -9,9 +9,11 @@
   // No-op return if not authenticated or path is not a dashboard page.
   var path = locals.currentPath || '';
   var role = (locals.memberRole || '').toString();
+  var isCoach = !!locals.isCoach;
   var inDashArea = path === '/dashboard' || path.indexOf('/dashboard/') === 0
                 || path === '/l8' || path.indexOf('/l8/') === 0
-                || path === '/settings/api';
+                || path === '/settings/api'
+                || path === '/settings/coaches';
   var authed = !!locals.authUserId;
 %>
 
@@ -30,11 +32,15 @@
      }
 
      // Tab definitions. Order matters -- left to right.
+     // `coachOnly: true` gates a tab on the request-level isCoach flag set
+     // by the coach-status preHandler in server.ts (only true when the
+     // current org has a claimed consultant_profile).
      var tabs = [
        { href: '/dashboard',                    label: 'Daily',     allow: ALL_AUTHED },
        { href: '/l8',                           label: 'Meetings',  allow: ALL_AUTHED },
        { href: '/dashboard/team',               label: 'Team',      allow: ALL_AUTHED },
        { href: '/dashboard/kpis',               label: 'KPIs',      allow: ALL_AUTHED },
+       { href: '/dashboard/practice',           label: 'My Practice ★', allow: ALL_AUTHED, coachOnly: true },
        { href: '/dashboard/ids',                label: 'Issues',    allow: INVITER },
        { href: '/dashboard/oos-operating-plan', label: 'Plan',      allow: ORG_WIDE },
        { href: '/dashboard/members',            label: 'Members',   allow: INVITER },
@@ -61,7 +67,11 @@
   <div class="border-b border-gray-200 bg-white sticky top-[60px] z-30">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
       <nav class="flex gap-1 overflow-x-auto -mb-px text-sm" aria-label="Dashboard">
-        <% tabs.forEach(function(t){ if (!hasRole(t.allow)) return; var active = t.href === activeHref; %>
+        <% tabs.forEach(function(t){
+             if (!hasRole(t.allow)) return;
+             if (t.coachOnly && !isCoach) return;
+             var active = t.href === activeHref;
+        %>
           <a href="<%= t.href %>"
              class="whitespace-nowrap px-3 py-2.5 border-b-2 font-medium transition-colors <%= active ? 'border-otp-600 text-otp-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' %>">
             <%= t.label %>
