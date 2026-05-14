@@ -10,15 +10,19 @@
     <div class="text-center mb-10">
       <div class="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800 mb-5">
         <span aria-hidden>★</span>
-        <span>Founding 25 Coach · Personal Invite</span>
+        <span>Founder Certified Coach · Personal Invite</span>
       </div>
-      <% if (coach.avatarUrl || coach.photoUrl) { %>
-        <img src="<%= coach.avatarUrl || coach.photoUrl %>" alt="<%= coach.displayName %>" class="mx-auto h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover ring-4 ring-amber-200 shadow-md mb-4"/>
-      <% } else { %>
-        <div class="mx-auto h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white text-2xl font-extrabold ring-4 ring-amber-200 shadow-md mb-4">
-          <%= (coach.displayName || '?').split(' ').map(function(p){return p[0]||'';}).join('').substring(0,2).toUpperCase() %>
-        </div>
-      <% } %>
+      <div class="relative inline-block mb-4">
+        <% if (coach.avatarUrl || coach.photoUrl) { %>
+          <img src="<%= coach.avatarUrl || coach.photoUrl %>" alt="<%= coach.displayName %>" class="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover ring-4 ring-amber-200 shadow-md"/>
+        <% } else { %>
+          <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white text-2xl font-extrabold ring-4 ring-amber-200 shadow-md">
+            <%= (coach.displayName || '?').split(' ').map(function(p){return p[0]||'';}).join('').substring(0,2).toUpperCase() %>
+          </div>
+        <% } %>
+        <!-- Founder Certified Coach badge — overlap on avatar -->
+        <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach" class="absolute -bottom-2 -right-2 h-12 w-auto drop-shadow-lg" title="Founder Certified Coach" />
+      </div>
       <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
         <%= coach.displayName %> invited you to OTP.
       </h1>

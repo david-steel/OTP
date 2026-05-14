@@ -29,7 +29,7 @@
           <%= (profile.display_name || '?').charAt(0).toUpperCase() %>
         </div>
       <% } %>
-      <div class="text-center sm:text-left flex-1 min-w-0">
+      <div class="text-center sm:text-left flex-1 min-w-0 relative">
         <!-- Status pills (clear at-a-glance differentiation) -->
         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs mb-3">
           <% if (roleLabel) { %>
@@ -38,11 +38,26 @@
           <% if (isUnclaimed) { %>
             <span class="px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">Directory listing &middot; unclaimed</span>
           <% } else if (profile.claimed) { %>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 font-semibold border border-emerald-400/20">Claimed by <%= firstName %></span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 font-semibold border border-emerald-400/20">★ Founder Certified Coach</span>
           <% } %>
         </div>
 
-        <h1 class="text-2xl sm:text-3xl font-extrabold mb-2"><%= profile.display_name %></h1>
+        <!-- Founder Certified Coach badge — visible credential marker for claimed profiles -->
+        <% if (profile.claimed) { %>
+          <div class="absolute top-0 right-0 hidden sm:block">
+            <a href="/public/images/founder-coach-badge.png" target="_blank" rel="noopener" title="OTP Founder Certified Coach — click to view full badge" class="inline-block transition-transform hover:scale-105">
+              <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach Badge" class="h-20 w-auto drop-shadow-lg" />
+            </a>
+          </div>
+          <!-- Mobile placement: centered above headline -->
+          <div class="sm:hidden flex justify-center mb-3">
+            <a href="/public/images/founder-coach-badge.png" target="_blank" rel="noopener" title="OTP Founder Certified Coach">
+              <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach Badge" class="h-16 w-auto drop-shadow-lg" />
+            </a>
+          </div>
+        <% } %>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold mb-2 sm:pr-24"><%= profile.display_name %></h1>
 
         <% if (locStr) { %>
           <div class="inline-flex items-center gap-1.5 text-sm text-gray-300 mb-3">
