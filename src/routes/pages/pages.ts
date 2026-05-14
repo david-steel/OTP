@@ -2627,6 +2627,98 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Settings: My Coaches -- client-side view of all coaches who have
+  // access to this org's workspace. Lets the client revoke access at any
+  // time. Phase 2 v0.3. Permission split locked in
+  // [[project_otp_coach_revenue_model]]: client can revoke ACCESS;
+  // attribution stays attached for commission purposes.
+  app.get('/settings/coaches', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.redirect('/dashboard');
+
+    // Pull all coaches (active + revoked) who have ever had access to this org.
+    const rows = await db.execute(sql`
+      SELECT
+        acc.id              AS access_id,
+        acc.permission_level AS permission_level,
+        acc.granted_at      AS granted_at,
+        acc.revoked_at      AS revoked_at,
+        cp.id               AS coach_profile_id,
+        cp.slug             AS coach_slug,
+        cp.display_name     AS coach_name,
+        cp.avatar_url       AS coach_avatar,
+        cp.photo_url        AS coach_photo,
+        cp.bio              AS coach_bio,
+        cp.contact_email    AS coach_email,
+        coach_org.id        AS coach_org_id,
+        coach_org.name      AS coach_org_name
+      FROM coach_client_access acc
+      JOIN organizations coach_org ON coach_org.id = acc.coach_org_id
+      LEFT JOIN consultant_profiles cp ON cp.org_id = acc.coach_org_id AND cp.claimed = true
+      WHERE acc.client_org_id = ${org.id}
+      ORDER BY acc.revoked_at NULLS FIRST, acc.granted_at DESC
+    `) as any;
+
+    return reply.view('pages/settings-coaches', {
+      title: 'My Coaches - Settings - OTP',
+      description: 'Manage coach access to your OTP workspace.',
+      noindex: true,
+      coaches: rows.rows || [],
+    });
+  });
+
+  // POST /settings/coaches/:accessId/revoke -- client fires a coach.
+  // Sets revoked_at on the access row. Attribution is INTENTIONALLY left
+  // untouched -- coach still earns commission per the perpetuity model.
+  app.post<{ Params: { accessId: string } }>('/settings/coaches/:accessId/revoke', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'Not signed in' });
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.status(403).send({ error: 'No org' });
+
+    const { accessId } = request.params;
+    // Verify this access row belongs to the current user's org before revoking.
+    const [row] = await db.execute(sql`
+      SELECT client_org_id, revoked_at FROM coach_client_access WHERE id = ${accessId}::uuid LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!row) return reply.status(404).send({ error: 'Access record not found' });
+    if (row.client_org_id !== org.id) return reply.status(403).send({ error: 'Not your access record' });
+    if (row.revoked_at) return reply.redirect('/settings/coaches'); // already revoked, no-op
+
+    await db.execute(sql`
+      UPDATE coach_client_access
+      SET revoked_at = NOW(), revoked_by_user_id = ${auth.userId}
+      WHERE id = ${accessId}::uuid
+    `);
+
+    return reply.redirect('/settings/coaches');
+  });
+
+  // POST /settings/coaches/:accessId/restore -- undo revocation. Re-grants
+  // access by clearing revoked_at.
+  app.post<{ Params: { accessId: string } }>('/settings/coaches/:accessId/restore', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'Not signed in' });
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.status(403).send({ error: 'No org' });
+
+    const { accessId } = request.params;
+    const [row] = await db.execute(sql`
+      SELECT client_org_id FROM coach_client_access WHERE id = ${accessId}::uuid LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!row) return reply.status(404).send({ error: 'Access record not found' });
+    if (row.client_org_id !== org.id) return reply.status(403).send({ error: 'Not your access record' });
+
+    await db.execute(sql`
+      UPDATE coach_client_access
+      SET revoked_at = NULL, revoked_by_user_id = NULL, granted_at = NOW()
+      WHERE id = ${accessId}::uuid
+    `);
+    return reply.redirect('/settings/coaches');
+  });
+
   // Dashboard: Workspaces
   app.get('/dashboard/workspaces', async (request, reply) => {
     const auth = getAuth(request);

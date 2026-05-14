@@ -1,0 +1,98 @@
+<%-
+  /* /settings/coaches — client-side view of coaches with access to this org.
+     Variables: coaches[] (each row: access_id, permission_level, granted_at,
+                revoked_at, coach_profile_id, coach_slug, coach_name,
+                coach_avatar/photo, coach_bio, coach_email, coach_org_id,
+                coach_org_name) */
+%>
+<section class="bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+
+    <div class="mb-8">
+      <a href="/dashboard" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1 mb-3">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Dashboard
+      </a>
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-2">My Coaches</h1>
+      <p class="text-sm text-gray-600">Coaches with access to your OTP workspace. You can revoke access at any time.</p>
+    </div>
+
+    <% if (!coaches || coaches.length === 0) { %>
+
+      <div class="bg-white border-2 border-gray-200 rounded-2xl p-8 sm:p-10 text-center">
+        <h2 class="text-lg font-bold text-gray-900 mb-2">No coaches linked yet</h2>
+        <p class="text-sm text-gray-600">When you accept a coach's invite link, they'll show up here. You stay in control of their access.</p>
+      </div>
+
+    <% } else { %>
+
+      <div class="space-y-4">
+        <% coaches.forEach(function(c){
+             var name = c.coach_name || c.coach_org_name || 'Coach';
+             var initials = name.split(' ').map(function(p){return p[0]||'';}).join('').substring(0,2).toUpperCase();
+             var avatar = c.coach_avatar || c.coach_photo;
+             var isActive = !c.revoked_at;
+        %>
+          <div class="bg-white border-2 <%= isActive ? 'border-emerald-200' : 'border-gray-200 opacity-90' %> rounded-2xl p-5 sm:p-6">
+            <div class="flex items-start gap-4">
+              <% if (avatar) { %>
+                <img src="<%= avatar %>" alt="<%= name %>" class="flex-shrink-0 h-16 w-16 rounded-full object-cover ring-2 ring-amber-200"/>
+              <% } else { %>
+                <div class="flex-shrink-0 h-16 w-16 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white text-lg font-extrabold ring-2 ring-amber-200">
+                  <%= initials %>
+                </div>
+              <% } %>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 class="text-lg font-bold text-gray-900"><%= name %></h3>
+                  <% if (isActive) { %>
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold uppercase tracking-wider">Active</span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold uppercase tracking-wider">Revoked</span>
+                  <% } %>
+                </div>
+                <% if (c.coach_bio) { %>
+                  <p class="text-xs text-gray-600 mb-2 line-clamp-2"><%= c.coach_bio.substring(0, 180) %></p>
+                <% } %>
+                <div class="text-xs text-gray-500 space-y-0.5">
+                  <% if (isActive) { %>
+                    <div>Granted <%= new Date(c.granted_at).toLocaleDateString() %> · Permission: <%= c.permission_level || 'full_visibility' %></div>
+                  <% } else { %>
+                    <div>Granted <%= new Date(c.granted_at).toLocaleDateString() %> · Revoked <%= new Date(c.revoked_at).toLocaleDateString() %></div>
+                  <% } %>
+                  <% if (c.coach_slug) { %>
+                    <div><a href="/expert/<%= c.coach_slug %>" target="_blank" rel="noopener" class="text-otp-600 hover:underline">View coach profile →</a></div>
+                  <% } %>
+                </div>
+              </div>
+
+              <div class="flex-shrink-0">
+                <% if (isActive) { %>
+                  <form method="POST" action="/settings/coaches/<%= c.access_id %>/revoke" onsubmit="return confirm('Revoke access for <%= name %>?\n\nThey will no longer see your workspace. Their attribution stays attached for commission purposes, but they lose all visibility into your data.');">
+                    <button type="submit" class="inline-flex items-center gap-1 px-4 py-2 rounded-lg border-2 border-red-200 text-red-700 hover:bg-red-50 text-sm font-semibold">
+                      Revoke access
+                    </button>
+                  </form>
+                <% } else { %>
+                  <form method="POST" action="/settings/coaches/<%= c.access_id %>/restore">
+                    <button type="submit" class="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+                      Restore access
+                    </button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-gray-700">
+        <strong class="text-gray-900">A note on coach attribution.</strong>
+        Even after you revoke a coach's access, they remain attributed to your account in our records. That attribution affects commission accounting only — it does not give them any visibility into your data. If you want to formally re-attribute to a different coach, email <a href="mailto:dsteel@sneeze.it" class="text-amber-700 underline">dsteel@sneeze.it</a>.
+      </div>
+
+    <% } %>
+
+  </div>
+</section>
