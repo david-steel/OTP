@@ -168,6 +168,83 @@ Org id: ${escapeHtml(userOrg.id)}</p>
       console.warn('[claim] David notification failed:', err);
     }
 
+    // Welcome email to the coach who just claimed. The previous behavior
+    // emailed only David, which left coaches in silence right after they
+    // signed up -- Joel Swanson had to cold-email asking "who are you?"
+    // because the platform never followed up. This sends the answer to his
+    // question before he asks it.
+    //
+    // Sourced from Joel's first inbound: WHO / WHAT / WHY in plain English,
+    // plus the share link, the badge, and a 15-min-call CTA.
+    const coachEmail = updates.contactEmail as string | undefined ?? profile.contactEmail ?? clerkEmail ?? null;
+    const finalInviteToken = (updates.inviteToken as string | undefined) ?? (profile as any).inviteToken ?? null;
+    if (coachEmail && coachEmail.toLowerCase() !== DAVID_EMAIL.toLowerCase()) {
+      try {
+        const firstName = (profile.displayName || '').split(' ')[0] || 'there';
+        const inviteUrl = finalInviteToken ? `${BASE_URL}/join/${finalInviteToken}` : null;
+        const calendlyUrl = 'https://calendly.com/davidsteel/performance-call';
+        await sendEmail({
+          to: coachEmail,
+          subject: `Welcome to the Founding 25, ${firstName}`,
+          replyTo: 'David Steel <dsteel@sneeze.it>',
+          from: 'David Steel <david@mail.orgtp.com>',
+          tags: [
+            { name: 'campaign', value: 'founding_25_coach_welcome' },
+            { name: 'slug', value: slug.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) },
+          ],
+          html: `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;max-width:640px;margin:0;padding:24px;line-height:1.55;font-size:15px;">
+
+<p>${escapeHtml(firstName)} — welcome. You just claimed your Founder Certified Coach profile on OTP. Real quick, since most coaches who land here have the same three questions:</p>
+
+<p><strong>WHO I AM</strong><br/>
+David Steel. I built OTP for my own use first — I needed a way to put AI and humans on one accountability chart without the chart falling apart. A few other operators saw it, asked to use it, and that turned into the Founding 25 cohort. EOS coaches were a natural fit because the structure your clients already use (accountability chart, scorecard, SOPs, L10) is exactly the structure OTP runs on.</p>
+
+<p><strong>WHAT OTP IS</strong><br/>
+At the surface: an accountability chart with AI seats sitting next to human seats. Each seat — AI or human — has a name, a role, a KPI, and an SOP. Click an AI seat: you see what it does, the number it hits, who it reports to. Click a human seat: same.</p>
+
+<p>Under the hood it does more (carries SOPs into the AI runtime so they don't drift, lets agents talk to each other without you in the middle), but the surface is the chart.</p>
+
+<p><strong>WHY THIS MATTERS FOR YOUR CLIENTS</strong><br/>
+Your clients are starting to add AI to their teams. Right now it lives scattered across Notion docs, Zaps, ChatGPT tabs, and Mike-the-IT-guy's head. It's becoming a People &amp; Process issue — except the EOS toolkit doesn't have a seat type for "AI agent" yet.</p>
+
+<p>OTP fills that gap using tools your clients already speak fluently. We just add the AI seats.</p>
+
+${inviteUrl ? `
+<p><strong>YOUR SHAREABLE CLIENT LINK</strong><br/>
+This is your personal invite URL. Send it to any leadership team you work with — they join under your roof, you get the coach view across all of them. Every client is yours in perpetuity, GHL-style (you keep earning even if they later pay OTP directly).</p>
+
+<p style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;font-family:monospace;font-size:13px;word-break:break-all;">
+  <a href="${inviteUrl}" style="color:#92400e;text-decoration:none;">${inviteUrl}</a>
+</p>
+
+<p>See all your clients side-by-side in your new Practice dashboard:<br/>
+<a href="${BASE_URL}/dashboard/practice" style="color:#1f2937;font-weight:600;">${BASE_URL}/dashboard/practice →</a></p>
+` : ''}
+
+<p><strong>YOUR FOUNDER CERTIFIED COACH BADGE</strong><br/>
+Yours to use on your website, in your email signature, or anywhere else. Download:<br/>
+<a href="${BASE_URL}/public/images/founder-coach-badge.png" style="color:#1f2937;font-weight:600;">${BASE_URL}/public/images/founder-coach-badge.png →</a></p>
+
+<p><strong>WHAT'S NEXT</strong><br/>
+Three ways to go from here, in escalating effort:</p>
+<ul style="margin:8px 0 12px 20px;padding:0;">
+  <li>Reply to this email — I read everything personally during Founding 25.</li>
+  <li>Book a 15-min call: <a href="${calendlyUrl}" style="color:#1f2937;">${calendlyUrl}</a></li>
+  <li>Send your client link to one leadership team this week. The Practice dashboard will populate as they accept.</li>
+</ul>
+
+<p>Glad you're in.</p>
+
+<p>— David</p>
+
+</body></html>`,
+        });
+      } catch (err) {
+        console.warn('[claim] coach welcome email failed:', err);
+      }
+    }
+
     return reply.redirect(`/claim/${slug}/done`);
   });
 
