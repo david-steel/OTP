@@ -1767,14 +1767,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // For Coaches landing page
-  app.get('/for-coaches', async (request, reply) => {
-    return reply.view('pages/for-coaches', {
-      title: 'For Coaches and Consultants - OTP',
-      description: 'Stop giving advice. Start installing systems. Your clients get 2.5 hours back on Day 1. You get data across every client that makes your coaching sharper with every engagement.',
-      canonical: BASE_URL + '/for-coaches',
-      breadcrumbs: bc({ name: 'For Coaches', url: BASE_URL + '/for-coaches' }),
-    });
+  // /for-coaches: legacy page (Mar 22) superseded by /coach which has the
+  // 90-second Coach playbook + the full pitch. Keep the route as a 301 so
+  // any external links / old sitemap entries land on the new canonical page.
+  app.get('/for-coaches', async (_request, reply) => {
+    return reply.redirect(301, '/coach');
   });
 
   // ---- Consultant Ecosystem Pages ----
