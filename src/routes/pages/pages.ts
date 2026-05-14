@@ -2627,12 +2627,123 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // POST /dashboard/practice/client/:clientOrgId/nudge -- coach-triggered
+  // activation email to the client. Designed for the empty-state on the
+  // client detail page ("Nothing here yet" -> coach hits Nudge -> client
+  // gets a templated email with a concrete first-step CTA).
+  //
+  // Email is from David's mail.orgtp.com address but reply-to is the
+  // coach's own contact email, so any reply lands in the coach's inbox
+  // and they own the relationship. Coach attribution stays intact.
+  app.post<{ Params: { clientOrgId: string } }>('/dashboard/practice/client/:clientOrgId/nudge', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'Not signed in' });
+    const coachOrg = await resolveRequestOrg(request);
+    if (!coachOrg) return reply.status(403).send({ error: 'No org' });
+
+    const { clientOrgId } = request.params;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientOrgId)) {
+      return reply.status(404).send({ error: 'Bad client id' });
+    }
+
+    // Verify ACTIVE coach access. Revoked coaches cannot nudge.
+    const access = await db.execute(sql`
+      SELECT acc.id FROM coach_client_access acc
+      WHERE acc.coach_org_id = ${coachOrg.id}
+        AND acc.client_org_id = ${clientOrgId}::uuid
+        AND acc.revoked_at IS NULL
+      LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!access[0]) return reply.status(403).send({ error: 'No active access to this client' });
+
+    // Pull the coach's display info + the client org's Clerk user id (which
+    // for solo orgs is the clerk_org_id field).
+    const [coachProfile] = await db.execute(sql`
+      SELECT display_name, slug, contact_email FROM consultant_profiles
+      WHERE org_id = ${coachOrg.id} AND claimed = true LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!coachProfile) return reply.status(403).send({ error: 'Caller is not a claimed coach' });
+
+    const [clientOrg] = await db.execute(sql`
+      SELECT id, name, clerk_org_id FROM organizations WHERE id = ${clientOrgId}::uuid LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!clientOrg) return reply.status(404).send({ error: 'Client org not found' });
+
+    // Look up the client's primary email via Clerk.
+    let clientEmail: string | null = null;
+    if (clientOrg.clerk_org_id && String(clientOrg.clerk_org_id).startsWith('user_')) {
+      const secretKey = process.env.CLERK_SECRET_KEY;
+      if (secretKey) {
+        try {
+          const { createClerkClient } = await import('@clerk/backend');
+          const clerk = createClerkClient({ secretKey });
+          const user = await clerk.users.getUser(clientOrg.clerk_org_id);
+          const primary = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId);
+          clientEmail = primary?.emailAddress || user.emailAddresses[0]?.emailAddress || null;
+        } catch (err) {
+          request.log.warn({ err }, 'Clerk lookup failed during nudge');
+        }
+      }
+    }
+    if (!clientEmail) {
+      return reply.redirect(`/dashboard/practice/client/${clientOrgId}?nudge=no_email`);
+    }
+
+    const coachFirst = String(coachProfile.display_name || 'Your coach').split(' ')[0];
+    const replyTo = coachProfile.contact_email
+      ? `${coachProfile.display_name} <${coachProfile.contact_email}>`
+      : 'David Steel <dsteel@sneeze.it>';
+
+    try {
+      const { sendEmail } = await import('../../config/email.js');
+      await sendEmail({
+        to: clientEmail,
+        subject: `Quick start: map your first 3 seats on OTP`,
+        replyTo,
+        from: 'David Steel <david@mail.orgtp.com>',
+        tags: [
+          { name: 'campaign', value: 'coach_nudge_to_client' },
+          { name: 'coach_slug', value: String(coachProfile.slug || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) },
+        ],
+        html: `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;max-width:640px;margin:0;padding:24px;line-height:1.55;font-size:15px;">
+
+<p>Hi — quick nudge from <strong>${coachFirst}</strong>.</p>
+
+<p>Your OTP workspace is set up but empty. The fastest way to get value is to map three seats on your chart — even if it takes you ten minutes today, it gives ${coachFirst} something concrete to work with in your next conversation.</p>
+
+<p><strong>Three seats to start with:</strong></p>
+<ol style="margin:8px 0 12px 20px;padding:0;">
+  <li>The seat you sit in (CEO / Visionary / Integrator — whatever you call it)</li>
+  <li>One human direct report</li>
+  <li>One AI tool you already use (ChatGPT, Claude, a Zap — anything)</li>
+</ol>
+
+<p>That third seat is the unlock. Most operating systems don't have a place for AI yet. OTP gives it a seat next to the humans so accountability stops drifting.</p>
+
+<p><a href="https://orgtp.com/dashboard" style="display:inline-block;padding:12px 22px;background:#1f2937;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Open my dashboard →</a></p>
+
+<p style="margin-top:18px;font-size:13px;color:#6b7280;">Reply to this email if you want ${coachFirst}'s help — it'll land in their inbox.</p>
+
+<p>— David Steel<br/>
+Founder, OTP</p>
+
+</body></html>`,
+      });
+    } catch (err) {
+      request.log.warn({ err }, 'nudge email send failed');
+      return reply.redirect(`/dashboard/practice/client/${clientOrgId}?nudge=fail`);
+    }
+
+    return reply.redirect(`/dashboard/practice/client/${clientOrgId}?nudge=sent`);
+  });
+
   // /dashboard/practice/client/:client_org_id -- read-only coach-view of a
   // single linked client. Auth gate: current user's org must have active
   // coach_client_access into the target client_org_id. No active-org
   // switching (which would risk write-path leakage) -- this is a dedicated
   // read-only summary route. Phase 2 v0.4.
-  app.get<{ Params: { clientOrgId: string } }>('/dashboard/practice/client/:clientOrgId', async (request, reply) => {
+  app.get<{ Params: { clientOrgId: string }; Querystring: { nudge?: string } }>('/dashboard/practice/client/:clientOrgId', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const coachOrg = await resolveRequestOrg(request);
@@ -2702,6 +2813,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       noindex: true,
       client: clientOrg,
       attribution,
+      nudgeStatus: request.query.nudge || null,
       stats: {
         members: memberCount,
         teams: teamCount,

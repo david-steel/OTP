@@ -30,18 +30,42 @@
       </div>
     </div>
 
+    <% if (nudgeStatus === 'sent') { %>
+      <div class="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold">✓</span>
+        <div class="text-sm text-emerald-900"><strong>Nudge sent.</strong> Your client got an email with a concrete first-step CTA. Replies route to your inbox.</div>
+      </div>
+    <% } else if (nudgeStatus === 'no_email') { %>
+      <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold">!</span>
+        <div class="text-sm text-amber-900"><strong>No email on file for this client.</strong> Reach out directly through the channel you normally use.</div>
+      </div>
+    <% } else if (nudgeStatus === 'fail') { %>
+      <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">×</span>
+        <div class="text-sm text-red-900"><strong>Send failed.</strong> Resend may be down — try again in a minute.</div>
+      </div>
+    <% } %>
+
     <% if (stats.empty) { %>
 
       <!-- Empty state: client signed up but hasn't built anything yet -->
       <div class="bg-white border-2 border-gray-200 rounded-2xl p-10 text-center max-w-xl mx-auto">
         <div class="text-5xl mb-4">📭</div>
         <h2 class="text-lg font-bold text-gray-900 mb-2">Nothing here yet</h2>
-        <p class="text-sm text-gray-600 mb-1">
-          <strong><%= client.name %></strong> joined your practice but hasn't started building yet.
+        <p class="text-sm text-gray-600 mb-3">
+          <strong><%= client.name %></strong> joined your practice but hasn't started building.
         </p>
-        <p class="text-xs text-gray-500">
-          As they add team members, charts, KPIs, and SOPs, you'll see the summary populate here. Nudge them to map their team as a first step.
+        <p class="text-xs text-gray-500 mb-6">
+          The fastest way to activate them: send a nudge email with a concrete first-step CTA.
         </p>
+        <form method="POST" action="/dashboard/practice/client/<%= client.id %>/nudge" onsubmit="return confirm('Send a nudge email to <%= client.name %>?\n\nThey will receive a templated email with a concrete first-step CTA. Replies to that email route to YOU.');">
+          <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-transform hover:scale-[1.02]">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span>Send activation nudge →</span>
+          </button>
+        </form>
+        <p class="mt-3 text-[11px] text-gray-400">Reply-To is set to your coach email so any response lands in your inbox, not OTP's.</p>
       </div>
 
     <% } else { %>
