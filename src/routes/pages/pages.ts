@@ -1776,6 +1776,46 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // ---- Consultant Ecosystem Pages ----
 
+  // /coaches -- public Founder Certified Coach directory. Differs from
+  // /experts in two ways: (a) only claimed coaches with a directory source,
+  // not unclaimed scrape entries; (b) marketing-positioned as the Founding 25
+  // cohort, with the Founder badge prominent. Prospects landing here see
+  // proof-of-cohort and a 'join' CTA.
+  app.get('/coaches', async (_request, reply) => {
+    const rows = await db.execute(sql`
+      SELECT
+        cp.slug,
+        cp.display_name,
+        cp.headline,
+        cp.bio,
+        cp.avatar_url,
+        cp.photo_url,
+        cp.geo_city,
+        cp.geo_state,
+        cp.geo_country,
+        cp.directory_source,
+        cp.expertise_tags,
+        cp.linkedin_url,
+        cp.website_url,
+        cp.updated_at
+      FROM consultant_profiles cp
+      WHERE cp.claimed = true
+        AND cp.published = true
+        AND cp.directory_source IS NOT NULL
+      ORDER BY cp.updated_at DESC
+    `) as any;
+    const coaches = rows.rows || [];
+
+    return reply.view('pages/coaches', {
+      title: 'Founder Certified Coaches - OTP',
+      description: 'The Founding 25 cohort of OTP-certified coaches. Each one is helping shape the operating protocol for AI-augmented teams.',
+      canonical: BASE_URL + '/coaches',
+      coaches,
+      coachCount: coaches.length,
+      remainingSeats: Math.max(0, 25 - coaches.length),
+    });
+  });
+
   // Browse experts
   app.get('/experts', async (request, reply) => {
     const profileRows = await db.execute(sql`
