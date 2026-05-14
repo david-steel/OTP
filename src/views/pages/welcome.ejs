@@ -1,0 +1,111 @@
+<%-
+  /* /welcome — client onboarding quickstart.
+     Variables: attribution (optional), seatCount, agentCount, isDone */
+%>
+<section class="bg-gradient-to-b from-amber-50 via-white to-amber-50 min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <% if (attribution && attribution.coach_name) { %>
+        <div class="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800 mb-5">
+          <span aria-hidden>★</span>
+          <span>Set up by <%= attribution.coach_name %></span>
+        </div>
+      <% } %>
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-3">
+        Welcome to OTP.
+      </h1>
+      <p class="max-w-2xl mx-auto text-base sm:text-lg text-gray-700">
+        Map your first 3 seats in 5 minutes. That's the unlock — once your chart has you, one teammate, and one AI tool, the whole system clicks into place.
+      </p>
+    </div>
+
+    <% if (isDone) { %>
+      <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-6 sm:p-8 mb-10 text-center max-w-xl mx-auto">
+        <div class="text-4xl mb-3">🎉</div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">You're set up.</h2>
+        <p class="text-sm text-gray-700 mb-4">
+          You have <strong><%= seatCount %></strong> teammate<%= seatCount === 1 ? '' : 's' %> and <strong><%= agentCount %></strong> AI agent<%= agentCount === 1 ? '' : 's' %> on the chart. <% if (attribution && attribution.coach_name) { %><%= (attribution.coach_name||'Your coach').split(' ')[0] %> can see this now.<% } %>
+        </p>
+        <a href="/dashboard/team" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-bold">
+          Open the chart <span aria-hidden>→</span>
+        </a>
+      </div>
+    <% } %>
+
+    <!-- Three numbered cards -->
+    <div class="grid gap-5 sm:gap-6 md:grid-cols-3 mb-10">
+
+      <!-- Card 1: Add yourself -->
+      <% var done1 = seatCount >= 1; %>
+      <div class="group relative rounded-2xl bg-white border-2 <%= done1 ? 'border-emerald-300' : 'border-amber-200' %> p-6 transition-all hover:shadow-lg">
+        <div class="absolute -top-4 left-6 inline-flex h-9 w-9 items-center justify-center rounded-xl <%= done1 ? 'bg-emerald-500' : 'bg-amber-400' %> text-white font-extrabold shadow-md">
+          <% if (done1) { %>✓<% } else { %>1<% } %>
+        </div>
+        <div class="text-[11px] font-bold uppercase tracking-[0.18em] mt-2 mb-2 <%= done1 ? 'text-emerald-700' : 'text-amber-700' %>">Two minutes</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Add yourself.</h3>
+        <p class="text-sm text-gray-700 mb-4">
+          The seat you sit in &mdash; CEO, Founder, Visionary, Integrator, whatever you call it. Just your name, your role, the number you're accountable for.
+        </p>
+        <a href="/dashboard/team" class="inline-flex items-center gap-1.5 text-sm font-semibold <%= done1 ? 'text-emerald-700 hover:text-emerald-800' : 'text-amber-700 hover:text-amber-800' %>">
+          <% if (done1) { %>Already added &mdash; edit<% } else { %>Add your seat<% } %> <span aria-hidden>→</span>
+        </a>
+      </div>
+
+      <!-- Card 2: Add a teammate -->
+      <% var done2 = seatCount >= 2; %>
+      <div class="group relative rounded-2xl bg-white border-2 <%= done2 ? 'border-emerald-300' : 'border-red-200' %> p-6 transition-all hover:shadow-lg">
+        <div class="absolute -top-4 left-6 inline-flex h-9 w-9 items-center justify-center rounded-xl <%= done2 ? 'bg-emerald-500' : 'bg-red-500' %> text-white font-extrabold shadow-md">
+          <% if (done2) { %>✓<% } else { %>2<% } %>
+        </div>
+        <div class="text-[11px] font-bold uppercase tracking-[0.18em] mt-2 mb-2 <%= done2 ? 'text-emerald-700' : 'text-red-700' %>">One minute</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Add one teammate.</h3>
+        <p class="text-sm text-gray-700 mb-4">
+          One direct report. The person who answers when something goes wrong on their seat. Same fields: name, role, KPI.
+        </p>
+        <a href="/dashboard/team" class="inline-flex items-center gap-1.5 text-sm font-semibold <%= done2 ? 'text-emerald-700 hover:text-emerald-800' : 'text-red-700 hover:text-red-800' %>">
+          <% if (done2) { %>Done &mdash; add another<% } else { %>Add teammate<% } %> <span aria-hidden>→</span>
+        </a>
+      </div>
+
+      <!-- Card 3: Add an AI tool -->
+      <% var done3 = agentCount >= 1; %>
+      <div class="group relative rounded-2xl bg-white border-2 <%= done3 ? 'border-emerald-300' : 'border-otp-200' %> p-6 transition-all hover:shadow-lg">
+        <div class="absolute -top-4 left-6 inline-flex h-9 w-9 items-center justify-center rounded-xl <%= done3 ? 'bg-emerald-500' : 'bg-otp-500' %> text-white font-extrabold shadow-md">
+          <% if (done3) { %>✓<% } else { %>3<% } %>
+        </div>
+        <div class="text-[11px] font-bold uppercase tracking-[0.18em] mt-2 mb-2 <%= done3 ? 'text-emerald-700' : 'text-otp-700' %>">Two minutes</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Add one AI tool.</h3>
+        <p class="text-sm text-gray-700 mb-4">
+          ChatGPT, Claude, a Zap, an autoresponder &mdash; anything your team actually uses. It gets a seat next to the humans. Same fields. This is what makes OTP different.
+        </p>
+        <a href="/dashboard/team" class="inline-flex items-center gap-1.5 text-sm font-semibold <%= done3 ? 'text-emerald-700 hover:text-emerald-800' : 'text-otp-700 hover:text-otp-800' %>">
+          <% if (done3) { %>Done<% } else { %>Add AI seat<% } %> <span aria-hidden>→</span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Progress + why this matters -->
+    <% if (!isDone) { %>
+      <div class="bg-gray-900 rounded-2xl p-6 sm:p-8 text-white">
+        <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-300 mb-2">Why these three</div>
+        <h2 class="text-xl sm:text-2xl font-bold mb-3">Three seats is the minimum that makes the protocol useful.</h2>
+        <p class="text-sm text-gray-300 mb-2">
+          One seat is just a card. Two seats is a relationship. <strong class="text-white">Three seats &mdash; with one of them being an AI tool &mdash; is the smallest chart that shows the thing nobody else's framework does:</strong> AI and humans on the same accountability layer.
+        </p>
+        <p class="text-sm text-gray-400">
+          Once you've added these three, <% if (attribution && attribution.coach_name) { %><%= (attribution.coach_name||'your coach').split(' ')[0] %> can see your chart in their coach view and<% } else { %>you can<% } %> start spotting where the SOPs are missing, what the AI is doing without oversight, and which seats don't have a KPI yet.
+        </p>
+      </div>
+    <% } %>
+
+    <% if (attribution && attribution.coach_name && !isDone) { %>
+      <p class="mt-8 text-center text-sm text-gray-500">
+        Stuck? Reply to any OTP email — <%= (attribution.coach_name||'your coach').split(' ')[0] %> gets it directly.
+      </p>
+    <% } %>
+
+  </div>
+</section>
