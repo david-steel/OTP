@@ -197,8 +197,8 @@ Org id: ${escapeHtml(userOrg.id)}</p>
 
 <p>${escapeHtml(firstName)} — welcome. You just claimed your Founder Certified Coach profile on OTP. Real quick, since most coaches who land here have the same three questions:</p>
 
-<p><strong>WHO I AM</strong><br/>
-David Steel. I built OTP for my own use first — I needed a way to put AI and humans on one accountability chart without the chart falling apart. A few other operators saw it, asked to use it, and that turned into the Founding 25 cohort. EOS coaches were a natural fit because the structure your clients already use (accountability chart, scorecard, SOPs, L10) is exactly the structure OTP runs on.</p>
+<p><strong>WHERE THIS CAME FROM</strong><br/>
+OTP started inside a real, running operating system — 14 AI agents working alongside 12 humans, every Tuesday in the same L10, every seat with a name, a KPI, and an SOP. Once the pattern proved out, we opened the protocol up. EOS coaches were a natural fit because the structure your clients already use (accountability chart, scorecard, SOPs, L10) is exactly the structure OTP runs on. I'm David Steel, the founder — I read every Founding 25 reply personally.</p>
 
 <p><strong>WHAT OTP IS</strong><br/>
 At the surface: an accountability chart with AI seats sitting next to human seats. Each seat — AI or human — has a name, a role, a KPI, and an SOP. Click an AI seat: you see what it does, the number it hits, who it reports to. Click a human seat: same.</p>
