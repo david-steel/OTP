@@ -212,17 +212,80 @@ Access: ${existingAccess ? (existingAccess.revokedAt ? 're-granted' : 'pre-exist
 
     if (coach.contactEmail && coach.contactEmail.toLowerCase() !== DAVID_EMAIL.toLowerCase()) {
       try {
+        const coachFirstName = escapeHtml((coach.displayName || '').split(' ')[0] || 'there');
         await sendEmail({
           to: coach.contactEmail,
-          subject: `New client joined your OTP ecosystem`,
-          html: `<p>Hi ${escapeHtml((coach.displayName || '').split(' ')[0])},</p>
-<p>A new client just joined your OTP ecosystem via your invite link. You'll see them in your coach view as soon as the dashboard rolls out this week.</p>
+          subject: `New client joined your OTP practice`,
+          html: `<p>Hi ${coachFirstName},</p>
+<p>A new client just joined your OTP ecosystem via your invite link. They've been attributed to you (perpetuity per the Founder Certified Coach agreement) and you have full coach-view access to their workspace.</p>
+<p>See them in your practice dashboard now:<br/>
+<a href="${BASE_URL}/dashboard/practice" style="color:#1f2937;font-weight:600;">${BASE_URL}/dashboard/practice →</a></p>
 <p>— David</p>`,
           from: 'David Steel <david@mail.orgtp.com>',
           replyTo: 'David Steel <dsteel@sneeze.it>',
+          tags: [
+            { name: 'campaign', value: 'coach_new_client_notify' },
+            { name: 'slug', value: coach.slug.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) },
+          ],
         });
       } catch (err) {
         console.warn('[invite] coach notification failed:', err);
+      }
+    }
+
+    // Client welcome email -- the equivalent of the coach welcome that we
+    // added to coach-claim.ts. When a client accepts a coach invite they
+    // previously got NOTHING from the platform (same silence gap that hurt
+    // Joel). This sends them the basics: what OTP is, who their coach is,
+    // what to do next, and clear control language ('you can fire your coach
+    // anytime') for trust.
+    const clientEmail = await fetchClerkPrimaryEmail(auth.userId);
+    if (clientEmail && clientEmail.toLowerCase() !== DAVID_EMAIL.toLowerCase()) {
+      try {
+        const coachFirst = escapeHtml((coach.displayName || 'Your coach').split(' ')[0]);
+        const coachName = escapeHtml(coach.displayName || 'your coach');
+        await sendEmail({
+          to: clientEmail,
+          subject: `Welcome to OTP — ${coachFirst} set you up`,
+          replyTo: 'David Steel <dsteel@sneeze.it>',
+          from: 'David Steel <david@mail.orgtp.com>',
+          tags: [
+            { name: 'campaign', value: 'client_welcome_via_coach_invite' },
+            { name: 'coach_slug', value: coach.slug.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) },
+          ],
+          html: `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;max-width:640px;margin:0;padding:24px;line-height:1.55;font-size:15px;">
+
+<p>Welcome to OTP. ${coachFirst} just brought you into their practice on our platform — a few quick things so you know what you've signed up for.</p>
+
+<p><strong>WHAT OTP IS</strong><br/>
+It's the operating layer your team — humans and AI agents — runs on. One accountability chart. Each seat has a name, a role, a KPI, and an SOP. When you click an AI seat you see what it's doing, the number it's hitting, who it reports to. When you click a human seat: same.</p>
+
+<p>Underneath it does more (carries SOPs into the AI's runtime so they don't drift, lets agents talk to each other without you in the middle) but the surface is the chart.</p>
+
+<p><strong>WHAT YOU JUST GOT</strong><br/>
+A private workspace for your team. Yours. Your data, your chart, your KPIs. Free during ${coachFirst}'s Founder Certified Coach cohort — no card, no trial timer.</p>
+
+<p><strong>WHAT YOUR COACH SEES</strong><br/>
+${coachName} has a coach-view of your workspace so they can support you across all their clients. Same as a CPA seeing your books, or a fractional COO seeing your ops dashboard. You're in control:</p>
+<ul style="margin:8px 0 12px 20px;padding:0;">
+  <li>You can revoke their access from settings at any time: <a href="${BASE_URL}/settings/coaches" style="color:#1f2937;">${BASE_URL}/settings/coaches →</a></li>
+  <li>Your data stays in your workspace — it doesn't get shared with their other clients.</li>
+</ul>
+
+<p><strong>WHAT TO DO FIRST</strong><br/>
+Head to your dashboard and start mapping your team — even just three or four seats. The chart fills in as you build:<br/>
+<a href="${BASE_URL}/dashboard" style="color:#1f2937;font-weight:600;">${BASE_URL}/dashboard →</a></p>
+
+<p>Questions? Reply to this email — I read everything during the Founding cohort.</p>
+
+<p>— David Steel<br/>
+Founder, OTP</p>
+
+</body></html>`,
+        });
+      } catch (err) {
+        console.warn('[invite] client welcome email failed:', err);
       }
     }
 
