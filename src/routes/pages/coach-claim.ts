@@ -11,9 +11,17 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { createClerkClient } from '@clerk/backend';
 import { eq } from 'drizzle-orm';
+import { randomBytes } from 'crypto';
 import { db } from '../../config/database.js';
 import { organizations, consultantProfiles, tickets } from '../../db/schema.js';
 import { sendEmail } from '../../config/email.js';
+
+// Coach-client invite token: 24 random bytes → ~32-char base64url string.
+// Stable per coach (generated once on first claim, reused forever) so the
+// coach can hand the same link to every client.
+function generateInviteToken(): string {
+  return randomBytes(24).toString('base64url');
+}
 
 const BASE_URL = 'https://orgtp.com';
 const DAVID_EMAIL = 'dsteel@sneeze.it';
@@ -131,6 +139,11 @@ export default async function coachClaimRoutes(app: FastifyInstance) {
     if (!profile.contactEmail && clerkEmail) {
       updates.contactEmail = clerkEmail;
     }
+    // Generate the coach's invite token on first claim if they don't have one.
+    // Stable per coach so they can hand the same link to every client.
+    if (!(profile as any).inviteToken) {
+      updates.inviteToken = generateInviteToken();
+    }
     await db
       .update(consultantProfiles)
       .set(updates)
@@ -171,6 +184,19 @@ Org id: ${escapeHtml(userOrg.id)}</p>
         .where(eq(consultantProfiles.slug, slug))
         .limit(1);
 
+      // Build the coach's shareable client-invite URL. If the token is
+      // somehow missing on a claimed profile (legacy data), generate one
+      // now so the page never falls back to "no link available."
+      let inviteToken = (profile as any)?.inviteToken as string | null | undefined;
+      if (profile && profile.claimed && !inviteToken) {
+        inviteToken = generateInviteToken();
+        await db
+          .update(consultantProfiles)
+          .set({ inviteToken })
+          .where(eq(consultantProfiles.id, profile.id));
+      }
+      const inviteUrl = inviteToken ? `${BASE_URL}/join/${inviteToken}` : null;
+
       return reply.view('pages/claim-coach-done', {
         title: `Profile claimed - OTP`,
         description: `Your OTP coaching profile has been claimed.`,
@@ -180,6 +206,7 @@ Org id: ${escapeHtml(userOrg.id)}</p>
         status,
         publicProfileUrl: `${BASE_URL}/expert/${slug}`,
         dashboardUrl: '/dashboard/consultant',
+        inviteUrl,
       });
     },
   );

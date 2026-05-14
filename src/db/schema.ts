@@ -258,6 +258,8 @@ export const consultantProfiles = pgTable('consultant_profiles', {
   geoCity: varchar('geo_city', { length: 120 }),
   geoState: varchar('geo_state', { length: 120 }),
   geoCountry: varchar('geo_country', { length: 120 }),
+  // Coach-client ecosystem (Phase 2) -- ensure-coach-clients.ts
+  inviteToken: varchar('invite_token', { length: 64 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
@@ -993,3 +995,39 @@ export const glossaryTerms = pgTable('glossary_terms', {
   frameworkIdx: index('gt_framework_idx').on(table.framework),
   publicIdx: index('gt_public_idx').on(table.public),
 }));
+
+// =====================================================================
+// Coach-Client Ecosystem (Phase 2) -- ensure-coach-clients.ts
+// =====================================================================
+// Two tables intentionally separate. Access is REVOCABLE (client can fire
+// coach). Attribution is IMMUTABLE except by admin transfer (coach earns
+// commission in perpetuity, GHL-style). Do not collapse into one table.
+
+export const coachClientAttribution = pgTable('coach_client_attribution', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  clientOrgId: uuid('client_org_id').references(() => organizations.id).notNull(),
+  coachOrgId: uuid('coach_org_id').references(() => organizations.id).notNull(),
+  coachProfileId: uuid('coach_profile_id').references(() => consultantProfiles.id),
+  attributedAt: timestamp('attributed_at').defaultNow().notNull(),
+  attributionSource: varchar('attribution_source', { length: 64 }).notNull().default('invite_link'),
+  inviteTokenUsed: varchar('invite_token_used', { length: 64 }),
+  // Transfer audit -- when an admin moves attribution to a new coach, this
+  // row is marked transferredAt and a new row is inserted referencing this
+  // one via transferred_from_coach_org_id.
+  transferredFromCoachOrgId: uuid('transferred_from_coach_org_id').references(() => organizations.id),
+  transferredAt: timestamp('transferred_at'),
+  transferredByAdminId: varchar('transferred_by_admin_id', { length: 255 }),
+  notes: text('notes'),
+}, (table) => ({
+  coachIdx: index('cca_coach_idx').on(table.coachOrgId),
+}));
+
+export const coachClientAccess = pgTable('coach_client_access', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  clientOrgId: uuid('client_org_id').references(() => organizations.id).notNull(),
+  coachOrgId: uuid('coach_org_id').references(() => organizations.id).notNull(),
+  permissionLevel: varchar('permission_level', { length: 32 }).notNull().default('full_visibility'),
+  grantedAt: timestamp('granted_at').defaultNow().notNull(),
+  revokedAt: timestamp('revoked_at'),
+  revokedByUserId: varchar('revoked_by_user_id', { length: 255 }),
+});

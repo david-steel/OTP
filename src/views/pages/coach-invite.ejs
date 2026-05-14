@@ -1,0 +1,84 @@
+<%-
+  /* /join/:token — coach-branded invite landing.
+     Variables: coach, token, isSignedIn, alreadyLinked,
+                signInUrl, signUpUrl, coachPublicUrl */
+%>
+<section class="bg-gradient-to-b from-amber-50 via-white to-amber-50 relative min-h-[calc(100vh-80px)]">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 pb-20">
+
+    <!-- Coach-led header. Lean into the coach's brand. -->
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800 mb-5">
+        <span aria-hidden>★</span>
+        <span>Founding 25 Coach · Personal Invite</span>
+      </div>
+      <% if (coach.avatarUrl || coach.photoUrl) { %>
+        <img src="<%= coach.avatarUrl || coach.photoUrl %>" alt="<%= coach.displayName %>" class="mx-auto h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover ring-4 ring-amber-200 shadow-md mb-4"/>
+      <% } else { %>
+        <div class="mx-auto h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white text-2xl font-extrabold ring-4 ring-amber-200 shadow-md mb-4">
+          <%= (coach.displayName || '?').split(' ').map(function(p){return p[0]||'';}).join('').substring(0,2).toUpperCase() %>
+        </div>
+      <% } %>
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
+        <%= coach.displayName %> invited you to OTP.
+      </h1>
+      <% if (coach.bio) { %>
+        <p class="max-w-xl mx-auto text-base text-gray-600">
+          <%= coach.bio.substring(0, 220) %>
+        </p>
+      <% } %>
+      <p class="mt-4 text-sm text-gray-500">
+        <a href="<%= coachPublicUrl %>" target="_blank" rel="noopener noreferrer" class="text-amber-700 hover:text-amber-800 underline">View <%= coach.displayName.split(' ')[0] %>'s OTP profile →</a>
+      </p>
+    </div>
+
+    <!-- Body: what is this and what happens if I accept -->
+    <div class="bg-white border-2 border-amber-200/80 rounded-2xl p-6 sm:p-8 shadow-lg shadow-amber-100/40 mb-8">
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">What is this?</h2>
+      <p class="text-sm sm:text-base text-gray-700 leading-relaxed mb-4">
+        OTP is the operating layer your team — humans and AI agents — runs on. One accountability chart. AI seats next to human seats. Each with a name, a KPI, and an SOP. Your coach <strong class="text-gray-900"><%= coach.displayName %></strong> works inside it with you.
+      </p>
+
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mt-7 mb-4">What you get when you accept</h2>
+      <ul class="space-y-2.5 text-sm sm:text-base text-gray-700">
+        <li class="flex gap-3"><span class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">1</span><span><strong class="text-gray-900">Your own private workspace.</strong> Your team's chart, KPIs, SOPs, and AI agents — all yours, all private.</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">2</span><span><strong class="text-gray-900">Free during <%= coach.displayName.split(' ')[0] %>'s Founding 25 cohort.</strong> No card, no trial timer.</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">3</span><span><strong class="text-gray-900">A coach who sees what you see.</strong> <%= coach.displayName.split(' ')[0] %> gets a coach-view of your workspace so they can give sharper advice across all their clients. You can revoke that visibility at any time.</span></li>
+      </ul>
+
+      <p class="mt-6 text-xs text-gray-500 italic">
+        Your data is yours. <%= coach.displayName.split(' ')[0] %> can see it because they're your coach — same as a CPA seeing your books. You can remove their access from your settings anytime.
+      </p>
+    </div>
+
+    <% if (alreadyLinked) { %>
+      <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-5 text-center mb-6">
+        <p class="text-sm font-semibold text-emerald-800">✓ You're already linked to <%= coach.displayName %>.</p>
+        <p class="text-xs text-emerald-700 mt-1">Head to your dashboard to keep working.</p>
+        <a href="/dashboard" class="inline-flex items-center justify-center mt-4 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Go to dashboard →</a>
+      </div>
+    <% } else if (isSignedIn) { %>
+      <!-- One-click accept for already-signed-in visitors -->
+      <form method="POST" action="/join/<%= token %>" class="flex flex-col items-center gap-3">
+        <button type="submit" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-base font-bold transition-transform hover:scale-[1.02]">
+          <span>Accept invite & set up my workspace</span>
+          <span aria-hidden>→</span>
+        </button>
+        <p class="text-xs text-gray-500">One click. No card. We'll create your workspace and link you to <%= coach.displayName.split(' ')[0] %>.</p>
+      </form>
+    <% } else { %>
+      <!-- Sign-up funnel for anonymous visitors -->
+      <div class="flex flex-col items-center gap-3">
+        <a href="<%= signUpUrl %>" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-base font-bold transition-transform hover:scale-[1.02]">
+          <span>Sign up & accept invite</span>
+          <span aria-hidden>→</span>
+        </a>
+        <a href="<%= signInUrl %>" class="text-sm text-gray-600 hover:text-gray-900 underline">Already have OTP? Sign in</a>
+      </div>
+    <% } %>
+
+    <p class="mt-10 text-center text-xs text-gray-400">
+      Invited by <a href="<%= coachPublicUrl %>" class="text-gray-500 hover:text-gray-700 underline"><%= coach.displayName %></a> · Powered by OTP
+    </p>
+  </div>
+</section>

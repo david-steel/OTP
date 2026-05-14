@@ -645,6 +645,7 @@ await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/coach-claim.js'));
+await app.register(import('./routes/pages/coach-invite.js'));
 
 // Custom 404 handler -- return HTML instead of Fastify's default JSON
 app.setNotFoundHandler(async (request, reply) => {
@@ -778,6 +779,14 @@ try {
   app.log.info('coach directory columns + seed Directory org are ready');
 } catch (err) {
   app.log.error({ err }, 'ensureCoachDirectory failed -- /experts and /expert/:slug may behave incorrectly until resolved');
+}
+
+try {
+  const { ensureCoachClientTables } = await import('./db/ensure-coach-clients.js');
+  await ensureCoachClientTables();
+  app.log.info('coach-client ecosystem tables ready (invite_token, attribution, access)');
+} catch (err) {
+  app.log.error({ err }, 'ensureCoachClientTables failed -- /join/:token and coach dashboard will not work until resolved');
 }
 
 // Orger — sibling product, mounted at /orger prefix until orger.ai vhost is configured.
