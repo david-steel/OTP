@@ -11,6 +11,66 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 14, 2026 ----
+
+  {
+    date: '2026-05-14',
+    tags: ['Major', 'Coaches'],
+    title: 'The Coach Ecosystem ships — Founder Certified badge, the Practice dashboard, and the full activation loop',
+    summary: 'The Founder 25 coach-and-client ecosystem went live today: every claimed coach gets a Founder Certified Coach badge, a personal /dashboard/practice with side-by-side client visibility, a shareable invite link, and perpetual GHL-style commission attribution on every client they bring. Joel Swanson became the first cold-email-driven claim within four hours.',
+    details: `<p>Today shipped fifteen contained pieces that together turn the Founder 25 cohort from a marketing line into a working product. The thing the platform has been missing -- a real reason for a coach to come back tomorrow -- is now there.</p>
+
+<h3>For coaches: the Practice dashboard</h3>
+<ul>
+<li><strong><a href="/dashboard/practice" class="text-otp-600 hover:text-otp-500 underline">/dashboard/practice</a></strong> -- your coach view across every client org you bring in. Three states: intro (not a coach yet), empty (share-link command center with email + LinkedIn share CTAs), populated (stats + side-by-side client list).</li>
+<li><strong>/dashboard/practice/client/:id</strong> -- read-only view of one linked client's workspace. Shows team members, KPIs, AI agents, OOS file count, plus a "<strong>Send activation nudge</strong>" button that fires a templated email to dormant clients with a concrete first-step CTA.</li>
+<li><strong>"My Practice ★" nav tab</strong> -- appears automatically in the dashboard nav for any claimed coach (coach-status detected server-side via a request-level preHandler).</li>
+<li><strong>Send invite by email</strong> form on the Practice dashboard -- type a client's address plus optional first name, fire the invite directly from the platform. Reply-To routes to the coach so any reply lands in their inbox.</li>
+</ul>
+
+<h3>For coaches: the Founder Certified Coach badge</h3>
+<ul>
+<li>Downloadable PNG at three sizes -- full quality (1.3MB) for print/email-signature, web preview (213KB) for site embedding, and compact (66KB) for inline markers.</li>
+<li>Displayed automatically on the coach's public <code>/expert/:slug</code> profile (top-right of the hero on desktop, centered above the headline on mobile).</li>
+<li>Highlighted in the <code>/claim/:slug/done</code> page with two download buttons (full + web).</li>
+<li>Featured on the new <code>/coaches</code> directory and on the <code>/coach</code> Founding 25 perk card.</li>
+</ul>
+
+<h3>The /coaches public directory</h3>
+<p>A new page at <a href="/coaches" class="text-otp-600 hover:text-otp-500 underline">orgtp.com/coaches</a> shows every claimed Founder Certified Coach as a card -- name, location, headline, bio, expertise tags, badge. The dark hero shows "<strong>X of 25 seats filled</strong>" so prospective coaches see real cohort progress, not vapor.</p>
+
+<h3>For clients: /welcome quickstart + revocation control</h3>
+<ul>
+<li><strong>/welcome</strong> -- when a client accepts a coach's invite they now land on a 3-card activation guide ("Add yourself &middot; Add one teammate &middot; Add one AI tool"). Cards flip to a green ✓ as the work gets done. Personalized with the coach's name when attribution is found.</li>
+<li><strong>/settings/coaches</strong> -- clients can revoke any coach's access from one page. Founder attribution stays attached for commission accounting; only data visibility is revoked. Two-table design (access revocable, attribution immutable) so commission survives even if the client fires the coach -- same hook GHL agencies use to overcome the "what if they leave?" fear.</li>
+</ul>
+
+<h3>The full loop end-to-end</h3>
+<ol>
+<li>Cold email lands &rarr; coach hits <code>/claim/:slug</code> &rarr; claims their Founder profile.</li>
+<li>Auto-publish + auto-fill Clerk email &rarr; public profile is live immediately, no checkbox to remember.</li>
+<li>Welcome email fires with the Founder badge, the share link, and a 15-min Calendly CTA. Reply-To routes to David's real inbox.</li>
+<li>Coach lands on <code>/dashboard/practice</code> &rarr; copies their <code>/join/{token}</code> link or fires the invite-by-email form.</li>
+<li>Client clicks the join link &rarr; coach-branded landing &rarr; accepts.</li>
+<li>Two records get written: <strong>access</strong> (revocable by client) and <strong>attribution</strong> (perpetual).</li>
+<li>Client gets a welcome email + lands on <code>/welcome</code> &rarr; builds their first 3 seats &rarr; coach sees stats populate in their Practice dashboard.</li>
+</ol>
+
+<h3>First real signal</h3>
+<p>Joel Swanson, an EOS Implementer in Colorado, became the first cold-email-driven claim today -- about four hours after his email landed. He wrote back asking the basic "who are you, what is this, why should I care" questions, which became the spec for the new <code>/coach</code> 101 panel and the welcome email template every coach receives from this point on.</p>
+
+<h3>Under the hood</h3>
+<ul>
+<li>Two new tables -- <code>coach_client_attribution</code> (immutable except by admin transfer) and <code>coach_client_access</code> (revocable by the client). Different mutability rules, intentionally separate.</li>
+<li>Self-healing schema migration on boot via <code>ensure-coach-clients.ts</code>.</li>
+<li>Resend open + click tracking enabled for the founding-25 campaign. Every cold email since this morning gets per-recipient engagement data, filterable by <code>campaign=founding_25_coach</code>.</li>
+<li>Three new branded OG images (1200&times;630) so <code>/join/{token}</code>, <code>/coaches</code>, and <code>/welcome</code> all show real preview cards when shared on LinkedIn / iMessage / Slack.</li>
+<li>Takedown handler now <strong>auto-unpublishes</strong> the profile immediately when a coach hits the "remove me" link (the email promise was "one-click removed" but the old code only filed a ticket and waited for a human).</li>
+</ul>
+
+<p>Founder badge for any claimed coach: <a href="/public/images/founder-coach-badge.png" class="text-otp-600 hover:text-otp-500 underline">download the PNG</a>. The Founding 25 still has open seats -- see <a href="/coach" class="text-otp-600 hover:text-otp-500 underline">/coach</a> for the playbook.</p>`,
+  },
+
   // ---- May 10, 2026 ----
 
   {
