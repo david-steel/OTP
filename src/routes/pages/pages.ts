@@ -2627,6 +2627,93 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /dashboard/practice/client/:client_org_id -- read-only coach-view of a
+  // single linked client. Auth gate: current user's org must have active
+  // coach_client_access into the target client_org_id. No active-org
+  // switching (which would risk write-path leakage) -- this is a dedicated
+  // read-only summary route. Phase 2 v0.4.
+  app.get<{ Params: { clientOrgId: string } }>('/dashboard/practice/client/:clientOrgId', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const coachOrg = await resolveRequestOrg(request);
+    if (!coachOrg) return reply.redirect('/dashboard');
+
+    const { clientOrgId } = request.params;
+    // UUID-shape guard so a malformed param can't reach the DB layer.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientOrgId)) {
+      return reply.status(404).view('pages/404', { title: 'Client not found - OTP' });
+    }
+
+    // Verify ACTIVE coach access from this user's org into the target client.
+    // Attribution alone is not sufficient -- access can be revoked while
+    // attribution lives on for commission. View paths require active access.
+    const accessCheck = await db.execute(sql`
+      SELECT acc.id, acc.permission_level, acc.granted_at
+      FROM coach_client_access acc
+      WHERE acc.coach_org_id  = ${coachOrg.id}
+        AND acc.client_org_id = ${clientOrgId}::uuid
+        AND acc.revoked_at IS NULL
+      LIMIT 1
+    `) as any;
+    if (!(accessCheck.rows || [])[0]) {
+      return reply.status(403).view('pages/404', { title: 'No access - OTP', description: 'You do not have active coach access to this client.' });
+    }
+
+    // Client org core info + attribution data so the coach can see when
+    // the client joined and via what path.
+    const [clientOrg] = await db.execute(sql`
+      SELECT id, name, industry, size, created_at
+      FROM organizations WHERE id = ${clientOrgId}::uuid LIMIT 1
+    `).then((r: any) => r.rows || []);
+    if (!clientOrg) {
+      return reply.status(404).view('pages/404', { title: 'Client not found - OTP' });
+    }
+
+    const [attribution] = await db.execute(sql`
+      SELECT attributed_at, attribution_source
+      FROM coach_client_attribution
+      WHERE coach_org_id = ${coachOrg.id}
+        AND client_org_id = ${clientOrgId}::uuid
+        AND transferred_at IS NULL
+      LIMIT 1
+    `).then((r: any) => r.rows || []);
+
+    // Summary counts. Wrap each in try/catch so a missing/legacy table
+    // never 500s this page -- we show 0 instead of breaking.
+    async function safeCount(query: any): Promise<number> {
+      try {
+        const r = await db.execute(query) as any;
+        return Number((r.rows || [])[0]?.c || 0);
+      } catch { return 0; }
+    }
+    const cid = clientOrgId;
+    const [memberCount, teamCount, kpiCount, oosCount, chartCount, agentCount] = await Promise.all([
+      safeCount(sql`SELECT COUNT(*) AS c FROM org_members WHERE org_id = ${cid}::uuid`),
+      safeCount(sql`SELECT COUNT(*) AS c FROM teams WHERE org_id = ${cid}::uuid`),
+      safeCount(sql`SELECT COUNT(*) AS c FROM kpis WHERE org_id = ${cid}::uuid`),
+      safeCount(sql`SELECT COUNT(*) AS c FROM oos_files WHERE org_id = ${cid}::uuid AND status = 'published'`),
+      safeCount(sql`SELECT COUNT(*) AS c FROM charts WHERE org_id = ${cid}::uuid`),
+      safeCount(sql`SELECT COUNT(*) AS c FROM manager_agents WHERE org_id = ${cid}::uuid`),
+    ]);
+
+    return reply.view('pages/dashboard-practice-client', {
+      title: `${clientOrg.name} - Coach View - OTP`,
+      description: `Coach-view summary of ${clientOrg.name}.`,
+      noindex: true,
+      client: clientOrg,
+      attribution,
+      stats: {
+        members: memberCount,
+        teams: teamCount,
+        kpis: kpiCount,
+        oosFiles: oosCount,
+        charts: chartCount,
+        agents: agentCount,
+        empty: memberCount + teamCount + kpiCount + oosCount + chartCount + agentCount === 0,
+      },
+    });
+  });
+
   // Settings: My Coaches -- client-side view of all coaches who have
   // access to this org's workspace. Lets the client revoke access at any
   // time. Phase 2 v0.3. Permission split locked in

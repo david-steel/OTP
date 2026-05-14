@@ -1,0 +1,85 @@
+<%-
+  /* /dashboard/practice/client/:id — coach-view summary of one linked client.
+     Read-only. Variables: client, attribution, stats */
+%>
+<section class="bg-gray-50 min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+
+    <!-- Viewing-as-coach banner. Yellow strip so it's clear this is not
+         the coach's own workspace. -->
+    <div class="bg-amber-100 border-2 border-amber-300 rounded-xl px-4 py-3 mb-6 flex items-center gap-3 text-sm">
+      <span class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-amber-400 text-white font-bold text-xs">★</span>
+      <span class="text-amber-900">
+        <strong>You're viewing as coach.</strong>
+        Read-only access. Your client owns this workspace and can revoke your access at any time.
+      </span>
+      <a href="/dashboard/practice" class="ml-auto text-xs text-amber-800 hover:text-amber-900 underline whitespace-nowrap">
+        ← Back to practice
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-1"><%= client.name %></h1>
+      <div class="text-sm text-gray-500 space-x-3">
+        <% if (client.industry) { %><span><%= client.industry %></span><% } %>
+        <% if (client.size) { %><span>· <%= client.size %></span><% } %>
+        <% if (attribution && attribution.attributed_at) { %>
+          <span>· Joined your practice <%= new Date(attribution.attributed_at).toLocaleDateString() %></span>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (stats.empty) { %>
+
+      <!-- Empty state: client signed up but hasn't built anything yet -->
+      <div class="bg-white border-2 border-gray-200 rounded-2xl p-10 text-center max-w-xl mx-auto">
+        <div class="text-5xl mb-4">📭</div>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">Nothing here yet</h2>
+        <p class="text-sm text-gray-600 mb-1">
+          <strong><%= client.name %></strong> joined your practice but hasn't started building yet.
+        </p>
+        <p class="text-xs text-gray-500">
+          As they add team members, charts, KPIs, and SOPs, you'll see the summary populate here. Nudge them to map their team as a first step.
+        </p>
+      </div>
+
+    <% } else { %>
+
+      <!-- Summary stats grid -->
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+        <% var cards = [
+          { label: 'Team members',     n: stats.members, color: 'gray',    hint: 'Human seats on the chart.' },
+          { label: 'Teams',            n: stats.teams,   color: 'gray',    hint: 'L8 / sub-team groupings.' },
+          { label: 'KPIs tracked',     n: stats.kpis,    color: 'blue',    hint: 'Numbers on the scorecard.' },
+          { label: 'Org charts',       n: stats.charts,  color: 'amber',   hint: 'Visual structure maps.' },
+          { label: 'AI agents',        n: stats.agents,  color: 'red',     hint: 'Manager / runtime agents.' },
+          { label: 'OOS files',        n: stats.oosFiles,color: 'emerald', hint: 'Published operating-system docs.' },
+        ]; %>
+        <% cards.forEach(function(c){
+             var border = { gray: 'border-gray-200', blue: 'border-otp-200', amber: 'border-amber-200', red: 'border-red-200', emerald: 'border-emerald-200' }[c.color];
+             var text = { gray: 'text-gray-700', blue: 'text-otp-700', amber: 'text-amber-700', red: 'text-red-700', emerald: 'text-emerald-700' }[c.color];
+        %>
+          <div class="rounded-xl bg-white border-2 <%= border %> p-5">
+            <div class="text-[11px] font-bold uppercase tracking-wider <%= text %> mb-1"><%= c.label %></div>
+            <div class="text-3xl font-extrabold text-gray-900"><%= c.n %></div>
+            <div class="mt-1 text-xs text-gray-500"><%= c.hint %></div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Note while deeper views are pending v0.5 -->
+      <div class="bg-white border border-gray-200 rounded-xl p-5 text-sm text-gray-600">
+        <strong class="text-gray-900">Deep views coming.</strong>
+        Direct read-only views of <%= client.name %>'s chart, KPIs, and OOS files unlock in v0.5. For now, the stats above tell you whether the workspace is active and where the gaps are.
+      </div>
+
+    <% } %>
+
+    <!-- Footer with attribution disclosure -->
+    <div class="mt-8 text-xs text-gray-500 text-center">
+      Coach attribution &middot; OTP Founder Certified Coach program
+    </div>
+
+  </div>
+</section>
