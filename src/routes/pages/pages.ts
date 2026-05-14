@@ -1771,7 +1771,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // 90-second Coach playbook + the full pitch. Keep the route as a 301 so
   // any external links / old sitemap entries land on the new canonical page.
   app.get('/for-coaches', async (_request, reply) => {
-    return reply.redirect(301, '/coach');
+    return reply.redirect('/coach', 301);
   });
 
   // ---- Consultant Ecosystem Pages ----
