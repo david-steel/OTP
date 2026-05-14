@@ -253,6 +253,15 @@ Org id: ${escapeHtml(userOrg.id)}</p>
         reporterEmail,
       });
 
+      // Honor the takedown immediately. The email + claim page promise
+      // "One-click. Removed from public directory and search." -- so unpublish
+      // the profile now, not "when David gets to the ticket." The ticket and
+      // notification email still fire so a human can follow up if needed.
+      await db
+        .update(consultantProfiles)
+        .set({ published: false, isPublished: false })
+        .where(eq(consultantProfiles.id, profile.id));
+
       // Notify David — takedowns need eyes
       try {
         await sendEmail({
