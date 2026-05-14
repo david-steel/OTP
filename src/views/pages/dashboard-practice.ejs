@@ -1,0 +1,176 @@
+<%-
+  /* /dashboard/practice — Coach view across all attributed/linked clients.
+     Phase 2 v0.2. Three states: not-a-coach, zero-clients (share-link hub),
+     populated. Same playful + dark style as /coach landing.
+
+     Variables: coachProfile, clients[], inviteUrl, stats */
+%>
+<section class="bg-gradient-to-b from-gray-50 via-white to-amber-50 min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="text-xs font-bold uppercase tracking-[0.18em] text-amber-700 mb-1">My Practice</div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
+        <% if (coachProfile) { %>
+          <%= coachProfile.display_name %>'s Practice
+        <% } else { %>
+          Your Practice
+        <% } %>
+      </h1>
+      <% if (coachProfile) { %>
+        <p class="mt-2 text-sm text-gray-600">All your linked client orgs. Side-by-side. As a Founder Certified Coach, every client you bring is yours in perpetuity.</p>
+      <% } %>
+    </div>
+
+    <% if (!coachProfile) { %>
+
+      <!-- STATE 1: Not a claimed coach yet -->
+      <div class="bg-white border-2 border-amber-200 rounded-2xl p-8 sm:p-10 text-center max-w-2xl mx-auto shadow-lg shadow-amber-100/40">
+        <img src="/public/images/coach-mascot.png" alt="Coach mascot" class="mx-auto h-24 w-24 mb-6"/>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-3">This is the coach view.</h2>
+        <p class="text-base text-gray-700 mb-6 max-w-md mx-auto">
+          Once you claim your Founder Certified Coach profile, every leadership team you invite shows up here in one place.
+        </p>
+        <a href="/coach" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-base font-bold transition-transform hover:scale-[1.02]">
+          <span>See the Coach playbook</span>
+          <span aria-hidden>→</span>
+        </a>
+        <p class="mt-4 text-xs text-gray-500">EOS coach? You may already have a draft profile waiting for you to claim.</p>
+      </div>
+
+    <% } else if (stats.totalClients === 0) { %>
+
+      <!-- STATE 2: Claimed coach, 0 clients yet — share-link command center -->
+      <!-- Lead with the share link. This is the highest-value action. -->
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 sm:p-8 mb-8 shadow-xl shadow-amber-100/60">
+        <div class="grid gap-6 md:grid-cols-[1fr,160px] items-start">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-amber-200/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800 mb-3">
+              <span aria-hidden>★</span> Your coach link
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-3">Invite your first client.</h2>
+            <p class="text-sm sm:text-base text-gray-700 mb-4">
+              Send this link to a leadership team you work with. They join under your roof. You get the coach view across all of them. They're attributed to you in perpetuity.
+            </p>
+            <% if (inviteUrl) { %>
+              <div class="flex flex-col sm:flex-row gap-2 mb-3">
+                <input type="text" id="practice-invite-url" value="<%= inviteUrl %>" readonly class="flex-1 px-3 py-2.5 text-sm font-mono text-gray-900 bg-white border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+                <button type="button" onclick="(function(){var i=document.getElementById('practice-invite-url');i.select();document.execCommand('copy');var b=event.target;var t=b.textContent;b.textContent='Copied ✓';setTimeout(function(){b.textContent=t;},1800);})()" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold whitespace-nowrap">
+                  Copy link
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <a href="mailto:?subject=<%= encodeURIComponent("I'd like to invite you to OTP") %>&body=<%= encodeURIComponent("Hi -- I'm setting up an OTP workspace for our work together. Use this link to join my ecosystem:\n\n" + inviteUrl + "\n\nIt's free during the Founder Certified Coach cohort. Your data stays yours -- I just get a coach view so I can support you better across our engagements.\n\n— " + (coachProfile.display_name || 'Your Coach')) %>" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-gray-800 hover:border-amber-400 font-medium">
+                  ✉ Email this link
+                </a>
+                <a href="https://www.linkedin.com/messaging/?recipient=&body=<%= encodeURIComponent('Hi -- joining you on a fresh ops platform. Here is the link: ' + inviteUrl) %>" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-gray-800 hover:border-amber-400 font-medium">
+                  in LinkedIn DM
+                </a>
+              </div>
+            <% } else { %>
+              <p class="text-sm text-amber-700">Your invite link is generating — refresh in a moment.</p>
+            <% } %>
+          </div>
+          <div class="hidden md:flex justify-center">
+            <img src="/public/images/founder-coach-badge-preview.png" alt="OTP Founder Certified Coach badge" class="w-32 h-auto"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Helpful nudge cards below the share link -->
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl bg-white border border-gray-200 p-5">
+          <div class="text-2xl mb-2">1</div>
+          <h3 class="text-sm font-bold text-gray-900 mb-1">Pick one client to start</h3>
+          <p class="text-xs text-gray-600">A team you already work with. They get free OTP under your roof.</p>
+        </div>
+        <div class="rounded-xl bg-white border border-gray-200 p-5">
+          <div class="text-2xl mb-2">2</div>
+          <h3 class="text-sm font-bold text-gray-900 mb-1">Send them the link</h3>
+          <p class="text-xs text-gray-600">Email, Slack, LinkedIn — wherever you already talk to them.</p>
+        </div>
+        <div class="rounded-xl bg-white border border-gray-200 p-5">
+          <div class="text-2xl mb-2">3</div>
+          <h3 class="text-sm font-bold text-gray-900 mb-1">They claim. You see them here.</h3>
+          <p class="text-xs text-gray-600">Their chart, KPIs, and AI footprint show up in your coach view.</p>
+        </div>
+      </div>
+
+    <% } else { %>
+
+      <!-- STATE 3: Coach with clients — list view -->
+
+      <!-- Stats row -->
+      <div class="grid gap-4 sm:grid-cols-3 mb-8">
+        <div class="rounded-xl bg-white border-2 border-gray-200 p-5">
+          <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Linked clients</div>
+          <div class="text-3xl font-extrabold text-gray-900"><%= stats.totalClients %></div>
+        </div>
+        <div class="rounded-xl bg-white border-2 border-emerald-200 p-5">
+          <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Active access</div>
+          <div class="text-3xl font-extrabold text-gray-900"><%= stats.activeAccess %></div>
+        </div>
+        <div class="rounded-xl bg-white border-2 border-gray-200 p-5">
+          <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Revoked (still attributed)</div>
+          <div class="text-3xl font-extrabold text-gray-900"><%= stats.revokedAccess %></div>
+          <% if (stats.revokedAccess > 0) { %>
+            <div class="mt-1 text-xs text-gray-500">Commission preserved in perpetuity.</div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Compact share-link bar (always visible for adding more clients) -->
+      <% if (inviteUrl) { %>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div class="text-xs text-amber-800 font-semibold whitespace-nowrap">★ Add another client:</div>
+          <input type="text" id="practice-invite-url-compact" value="<%= inviteUrl %>" readonly class="flex-1 px-3 py-1.5 text-xs font-mono text-gray-900 bg-white border border-amber-200 rounded-lg"/>
+          <button type="button" onclick="(function(){var i=document.getElementById('practice-invite-url-compact');i.select();document.execCommand('copy');var b=event.target;var t=b.textContent;b.textContent='Copied ✓';setTimeout(function(){b.textContent=t;},1800);})()" class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold">Copy</button>
+        </div>
+      <% } %>
+
+      <!-- Client list -->
+      <div class="space-y-3">
+        <% clients.forEach(function(c){ %>
+          <div class="bg-white border-2 <%= c.revoked_at ? 'border-gray-200 opacity-75' : 'border-emerald-200' %> rounded-xl p-5 transition-all hover:shadow-md">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-lg font-bold text-gray-900 truncate"><%= c.client_name %></h3>
+                  <% if (c.revoked_at) { %>
+                    <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold uppercase tracking-wider">Access revoked</span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold uppercase tracking-wider">Full access</span>
+                  <% } %>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <% if (c.client_industry) { %><%= c.client_industry %> &middot; <% } %>
+                  Joined <%= new Date(c.attributed_at).toLocaleDateString() %>
+                  <% if (c.attribution_source) { %> &middot; via <%= c.attribution_source.replace('_', ' ') %><% } %>
+                </div>
+              </div>
+              <div class="flex gap-2 flex-shrink-0">
+                <% if (!c.revoked_at) { %>
+                  <a href="/dashboard/workspace/<%= c.client_org_id %>" class="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold">
+                    View workspace <span aria-hidden>→</span>
+                  </a>
+                <% } else { %>
+                  <span class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-500 text-sm font-medium" title="Client revoked your coach access">Locked</span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <p class="mt-8 text-xs text-gray-500 text-center">
+        Side-by-side comparison, KPI roll-up, and pattern detection across clients are coming next.
+        <% if (stats.revokedAccess > 0) { %>
+          <br/>Revoked clients stay attributed for commission per the Founder Certified Coach agreement.
+        <% } %>
+      </p>
+
+    <% } %>
+
+  </div>
+</section>

@@ -2558,6 +2558,75 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Dashboard: My Practice -- coach view across all attributed/linked clients.
+  // Phase 2 v0.2. The page renders 3 distinct states:
+  //   1. User is not a claimed coach -> intro + claim CTA
+  //   2. Claimed coach with 0 clients -> share-link command center
+  //   3. Claimed coach with clients   -> client list + recent activity
+  app.get('/dashboard/practice', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.redirect('/dashboard');
+
+    // 1. Is this user a claimed coach? Look for any consultant_profile under
+    //    this org that has claimed=true (a coach can only have one such row).
+    const coachRows = await db.execute(sql`
+      SELECT id, slug, display_name, invite_token, avatar_url, photo_url, claimed, published
+      FROM consultant_profiles
+      WHERE org_id = ${org.id} AND claimed = true
+      LIMIT 1
+    `) as any;
+    const coachProfile = (coachRows.rows || [])[0] || null;
+
+    // 2. Clients attributed to this coach (current attribution, not transferred-out).
+    //    Join: attribution -> client org. Include access state via LEFT JOIN
+    //    so we can show "access revoked" for clients who fired the coach but
+    //    are still attributed for commission.
+    let clients: any[] = [];
+    if (coachProfile) {
+      const clientRows = await db.execute(sql`
+        SELECT
+          att.id              AS attribution_id,
+          att.attributed_at   AS attributed_at,
+          att.attribution_source AS attribution_source,
+          o.id                AS client_org_id,
+          o.name              AS client_name,
+          o.industry          AS client_industry,
+          acc.id              AS access_id,
+          acc.permission_level AS permission_level,
+          acc.granted_at      AS granted_at,
+          acc.revoked_at      AS revoked_at
+        FROM coach_client_attribution att
+        JOIN organizations o ON o.id = att.client_org_id
+        LEFT JOIN coach_client_access acc
+          ON acc.client_org_id = att.client_org_id
+         AND acc.coach_org_id  = att.coach_org_id
+        WHERE att.coach_org_id = ${org.id}
+          AND att.transferred_at IS NULL
+        ORDER BY att.attributed_at DESC
+      `) as any;
+      clients = clientRows.rows || [];
+    }
+
+    const BASE_URL = 'https://orgtp.com';
+    const inviteUrl = coachProfile?.invite_token ? `${BASE_URL}/join/${coachProfile.invite_token}` : null;
+
+    return reply.view('pages/dashboard-practice', {
+      title: 'My Practice - Dashboard - OTP',
+      description: 'Your coach view across all client orgs on OTP.',
+      noindex: true,
+      coachProfile,
+      clients,
+      inviteUrl,
+      stats: {
+        totalClients: clients.length,
+        activeAccess: clients.filter(c => !c.revoked_at).length,
+        revokedAccess: clients.filter(c => c.revoked_at).length,
+      },
+    });
+  });
+
   // Dashboard: Workspaces
   app.get('/dashboard/workspaces', async (request, reply) => {
     const auth = getAuth(request);
