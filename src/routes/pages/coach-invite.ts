@@ -89,6 +89,7 @@ export default async function coachInviteRoutes(app: FastifyInstance) {
       title: `${coach.displayName} invited you to OTP`,
       description: `${coach.displayName} is a Founding 25 coach on OTP. Join their ecosystem and get the operating layer for your AI-augmented team.`,
       noindex: true,
+      ogImage: `${BASE_URL}/public/images/og-join.png`,
       coach,
       token,
       isSignedIn,
@@ -304,6 +305,7 @@ Founder, OTP</p>
       title: 'You\'re in - OTP',
       description: 'You\'ve joined the OTP ecosystem.',
       noindex: true,
+      ogImage: `${BASE_URL}/public/images/og-join.png`,
       coach,
       dashboardUrl: '/dashboard',
     });
