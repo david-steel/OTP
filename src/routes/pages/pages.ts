@@ -1770,6 +1770,55 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // ──────────────────────────────────────────────────────────────
+  // Radar ad sitelink landing pages. Each is a Google Ads sitelink
+  // destination for the Radar Search campaign, so each passes
+  // googleAdsId to load the Google Ads tag for conversion tracking.
+  // ──────────────────────────────────────────────────────────────
+  app.get('/free-account', async (_request, reply) => {
+    return reply.view('pages/free-account', {
+      title: 'Claim Your Free OTP Account | Free for Your Whole Team',
+      description: 'OTP is free for your whole team while we are in Beta. No per-seat fees, no credit card. Per-seat EOS tools run $8 to $16 per user per month.',
+      canonical: BASE_URL + '/free-account',
+      ogImage: 'https://orgtp.com/public/images/og-meet-radar.png',
+      googleAdsId: 'AW-18159119434',
+      breadcrumbs: bc({ name: 'Free Account', url: BASE_URL + '/free-account' }),
+    });
+  });
+
+  app.get('/fix-accountability-gaps', async (_request, reply) => {
+    return reply.view('pages/fix-accountability-gaps', {
+      title: 'Fix Accountability Gaps | OTP',
+      description: 'Things fall through the cracks between meetings. OTP closes accountability gaps with a Team Chart, Quarterly Priorities, To-Dos, an Issues Board, and Radar tracking every owner between meetings.',
+      canonical: BASE_URL + '/fix-accountability-gaps',
+      ogImage: 'https://orgtp.com/public/images/og-meet-radar.png',
+      googleAdsId: 'AW-18159119434',
+      breadcrumbs: bc({ name: 'Fix Accountability Gaps', url: BASE_URL + '/fix-accountability-gaps' }),
+    });
+  });
+
+  app.get('/level-10-meetings', async (_request, reply) => {
+    return reply.view('pages/level-10-meetings', {
+      title: 'Level 10 Meeting Software | Run the Weekly Leadership Meeting on OTP',
+      description: 'Run your weekly Level 10 Meeting on OTP. Timed agenda, live scoreboard, rock review, headlines, to-dos, and issue solving in one place. Free for your whole team in Beta.',
+      canonical: BASE_URL + '/level-10-meetings',
+      ogImage: 'https://orgtp.com/public/images/og-meet-radar.png',
+      googleAdsId: 'AW-18159119434',
+      breadcrumbs: bc({ name: 'Level 10 Meetings', url: BASE_URL + '/level-10-meetings' }),
+    });
+  });
+
+  app.get('/the-otp-difference', async (_request, reply) => {
+    return reply.view('pages/the-otp-difference', {
+      title: 'The OTP Difference | Free, AI-Native, Whole Team Included',
+      description: 'How OTP is different from per-seat EOS tools: free for your whole team, an AI Chief of Staff built in, and the work between meetings handled.',
+      canonical: BASE_URL + '/the-otp-difference',
+      ogImage: 'https://orgtp.com/public/images/og-meet-radar.png',
+      googleAdsId: 'AW-18159119434',
+      breadcrumbs: bc({ name: 'The OTP Difference', url: BASE_URL + '/the-otp-difference' }),
+    });
+  });
+
   // /for-coaches: legacy page (Mar 22) superseded by /coach which has the
   // 90-second Coach playbook + the full pitch. Keep the route as a 301 so
   // any external links / old sitemap entries land on the new canonical page.
