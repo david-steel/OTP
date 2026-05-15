@@ -32,18 +32,11 @@ const VIEW_LAYOUT = path.join(ORGER_VIEWS, 'layouts', 'main.ejs');
 const VIEW_HOME = path.join(ORGER_VIEWS, 'home.ejs');
 const VIEW_404 = path.join(ORGER_VIEWS, '404.ejs');
 const VIEW_WAITLIST_OK = path.join(ORGER_VIEWS, 'waitlist-success.ejs');
-// Orger ad sitelink landing pages (waitlist-capture, pre-launch).
-const VIEW_PRICING = path.join(ORGER_VIEWS, 'pricing.ejs');
-const VIEW_ORG_CHART_SOFTWARE = path.join(ORGER_VIEWS, 'org-chart-software.ejs');
-const VIEW_AI_AGENTS = path.join(ORGER_VIEWS, 'ai-agents.ejs');
-const VIEW_SCALES = path.join(ORGER_VIEWS, 'org-chart-that-scales.ejs');
-const VIEW_EXAMPLES = path.join(ORGER_VIEWS, 'examples.ejs');
 
 const BASE_URL = process.env.ORGER_BASE_URL || 'https://orger.ai';
 
 interface WaitlistBody {
   email?: string;
-  source?: string;
 }
 
 function getClientIp(req: FastifyRequest): string | null {
@@ -100,51 +93,6 @@ export const orgerRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // ──────────────────────────────────────────────────────────────
-  // Ad sitelink landing pages for the Orger.ai PMax campaign.
-  // Pre-launch: every CTA captures a waitlist email. The Google tag
-  // (in the orger layout) covers conversion tracking.
-  // ──────────────────────────────────────────────────────────────
-  fastify.get('/pricing', async (_req, reply) => {
-    return renderOrger(reply, VIEW_PRICING, {
-      title: 'Pricing | Orger',
-      description: 'Orger is a free AI-aware org chart builder. No tiers, no per-seat pricing, no demo gate. Free for every chart and every seat.',
-      canonical: BASE_URL + '/pricing',
-    });
-  });
-
-  fastify.get('/org-chart-software', async (_req, reply) => {
-    return renderOrger(reply, VIEW_ORG_CHART_SOFTWARE, {
-      title: 'Org Chart Software | Orger',
-      description: 'Org chart software that knows about agents. Drag in the humans you have, get grounded recommendations for the AI agents you should build.',
-      canonical: BASE_URL + '/org-chart-software',
-    });
-  });
-
-  fastify.get('/ai-agents', async (_req, reply) => {
-    return renderOrger(reply, VIEW_AI_AGENTS, {
-      title: 'AI Agents on Your Org Chart | Orger',
-      description: 'Orger puts humans and AI agents on one chart. Click an empty seat for a grounded recommendation for the agent that belongs there.',
-      canonical: BASE_URL + '/ai-agents',
-    });
-  });
-
-  fastify.get('/org-chart-that-scales', async (_req, reply) => {
-    return renderOrger(reply, VIEW_SCALES, {
-      title: 'An Org Chart That Scales | Orger',
-      description: 'Start with one seat. Add layers as you grow. Orger scales from solo founder to a full team, free at every size.',
-      canonical: BASE_URL + '/org-chart-that-scales',
-    });
-  });
-
-  fastify.get('/examples', async (_req, reply) => {
-    return renderOrger(reply, VIEW_EXAMPLES, {
-      title: 'Org Chart Examples | Orger',
-      description: 'See what an Orger chart looks like: humans and AI agents on one surface, from a solo founder to a twenty-person team.',
-      canonical: BASE_URL + '/examples',
-    });
-  });
-
   fastify.post('/waitlist', async (req, reply) => {
     const body = (req.body ?? {}) as WaitlistBody;
     const email = (body.email ?? '').trim();
@@ -160,7 +108,7 @@ export const orgerRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const result = await addToOrgerWaitlist({
         email,
-        source: typeof body.source === 'string' && body.source ? body.source.slice(0, 64) : 'homepage',
+        source: 'homepage',
         ip: getClientIp(req),
         user_agent: (req.headers['user-agent'] ?? null) as string | null,
         referrer: (req.headers['referer'] ?? null) as string | null,
