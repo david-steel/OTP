@@ -1,0 +1,36 @@
+<!-- AEO hub page at /answers. Lists every AeoCluster. Data: src/data/aeo-clusters.ts -->
+
+<!-- Header -->
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
+    <div class="animate-fade-in-up">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Answers</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Answers: How to Organize, Govern, and Coordinate AI Agents</h1>
+      <p class="text-gray-400 mt-4 max-w-xl leading-relaxed">Direct answers to the questions operators ask AI engines about running AI agents inside a company. Each page below answers one cluster of high-intent questions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Cluster grid -->
+<section class="bg-white py-10 sm:py-14">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <% clusters.forEach(function(c) { %>
+        <a href="/answers/<%= c.slug %>" class="block p-5 rounded-xl border border-gray-200 hover:border-otp-400 hover:bg-otp-50 transition-colors group">
+          <span class="inline-block text-xs font-semibold text-otp-600 px-2 py-0.5 rounded-full bg-otp-500/10 mb-3"><%= c.badge %></span>
+          <span class="block text-base font-bold text-gray-900 leading-snug group-hover:text-otp-600 transition-colors"><%= c.h1 %></span>
+          <span class="block text-sm text-gray-600 mt-2 leading-relaxed"><%= c.description %></span>
+          <span class="inline-flex items-center gap-1 text-sm font-semibold text-otp-600 mt-3"><%= c.items.length %> questions answered<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></span>
+        </a>
+      <% }); %>
+    </div>
+
+    <!-- CTA -->
+    <div class="mt-12 text-center">
+      <p class="text-gray-500 mb-4">Want your organization's coordination patterns cited too? Publish your OOS to the network.</p>
+      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+    </div>
+  </div>
+</section>

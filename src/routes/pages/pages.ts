@@ -19,6 +19,7 @@ import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
 import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
+import { aeoClusters } from '../../data/aeo-clusters.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -951,6 +952,58 @@ export default async function pageRoutes(app: FastifyInstance) {
       jsonLd: { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) }
     });
   });
+
+  // AEO cluster pages -- answer-engine-optimized landing pages targeting the
+  // commercial-intent buyer prompts from the SurgeGraph AI-ranking audit
+  // (2026-05-15). Hub at /answers, one page per cluster at /answers/<slug>.
+  app.get('/answers', async (request, reply) => {
+    return reply.view('pages/aeo-hub', {
+      title: 'Answers: Organizing, Governing & Coordinating AI Agents - OTP',
+      description: 'Direct answers to what operators ask AI engines about running AI agents inside a company: coordination, operating systems, governance, playbooks, and collaboration.',
+      canonical: BASE_URL + '/answers',
+      breadcrumbs: bc({ name: 'Answers', url: BASE_URL + '/answers' }),
+      clusters: aeoClusters,
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'OTP Answers',
+        description: 'Answer-engine-optimized guides to organizing, governing, and coordinating AI agents inside a company.',
+        url: BASE_URL + '/answers',
+        hasPart: aeoClusters.map(c => ({ '@type': 'WebPage', name: c.h1, url: BASE_URL + '/answers/' + c.slug })),
+      },
+    });
+  });
+
+  for (const cluster of aeoClusters) {
+    app.get('/answers/' + cluster.slug, async (request, reply) => {
+      const clusterUrl = BASE_URL + '/answers/' + cluster.slug;
+      const related = aeoClusters
+        .filter(c => c.slug !== cluster.slug)
+        .map(c => ({ slug: c.slug, badge: c.badge, h1: c.h1 }));
+      return reply.view('pages/aeo-cluster', {
+        title: cluster.title,
+        description: cluster.description,
+        canonical: clusterUrl,
+        breadcrumbs: bc(
+          { name: 'Answers', url: BASE_URL + '/answers' },
+          { name: cluster.badge, url: clusterUrl }
+        ),
+        cluster,
+        related,
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          name: cluster.h1,
+          url: clusterUrl,
+          mainEntity: cluster.items.map(it => ({
+            '@type': 'Question',
+            name: it.q,
+            acceptedAnswer: { '@type': 'Answer', text: it.a.replace(/<[^>]+>/g, '') },
+          })),
+        },
+      });
+    });
+  }
 
   // About
   app.get('/about', async (request, reply) => {

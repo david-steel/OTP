@@ -546,6 +546,13 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/plan', priority: '0.7', changefreq: 'monthly' },
     { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/answers', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/answers/ai-coordination-platform', priority: '0.85', changefreq: 'monthly' },
+    { loc: '/answers/organizational-operating-system', priority: '0.85', changefreq: 'monthly' },
+    { loc: '/answers/knowledge-sharing-network', priority: '0.85', changefreq: 'monthly' },
+    { loc: '/answers/ai-governance-compliance', priority: '0.85', changefreq: 'monthly' },
+    { loc: '/answers/ai-playbooks-orchestration', priority: '0.85', changefreq: 'monthly' },
+    { loc: '/answers/ai-agent-collaboration', priority: '0.85', changefreq: 'monthly' },
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },
     { loc: '/whats-new', priority: '0.7', changefreq: 'weekly' },
   ];
