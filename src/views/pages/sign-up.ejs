@@ -75,3 +75,13 @@
     });
   })();
 </script>
+
+<!-- Google Ads conversion — OTP / Orger account sign-up.
+     Fires on /sign-up page load. Requires the Google Ads tag, which the
+     /sign-up route enables via googleAdsId (see routes/pages/pages.ts).
+     orger.ai and orgtp.com share this page, so this covers both campaigns. -->
+<script>
+  if (typeof gtag === 'function') {
+    gtag('event', 'conversion_event_signup');
+  }
+</script>
