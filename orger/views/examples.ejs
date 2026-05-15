@@ -1,0 +1,157 @@
+<nav class="nav">
+  <a href="/orger" class="nav-brand">Orger</a>
+  <div style="display:flex; gap: var(--space-md); align-items:center;">
+    <a href="/orger/product" style="color: var(--color-text-secondary);">Product</a>
+    <a href="/sign-in" class="btn-ghost">Login</a>
+  </div>
+</nav>
+
+<% const examples = [
+  { title: 'Solo founder, four seats',
+    desc: 'One human running the show, three agents doing the legwork.',
+    nodes: [
+      { type: 'human', label: 'Founder' },
+      { type: 'agent', label: 'research-agent' },
+      { type: 'agent', label: 'content-agent' },
+      { type: 'agent', label: 'inbox-agent' } ] },
+  { title: 'Five-person startup',
+    desc: 'A small human team with one AI support seat picking up the slack.',
+    nodes: [
+      { type: 'human', label: 'Team Lead' },
+      { type: 'human', label: 'Engineer' },
+      { type: 'agent', label: 'support-agent' } ] },
+  { title: 'Agency, two layers',
+    desc: 'A human delivery crew sitting on top of an agent operations layer.',
+    nodes: [
+      { type: 'human', label: 'Delivery Lead' },
+      { type: 'agent', label: 'ops-agent' },
+      { type: 'empty', label: '+ Recommend an agent' } ] },
+  { title: 'Coach and client',
+    desc: 'An operations coach using the chart as a teaching artifact with a client.',
+    nodes: [
+      { type: 'human', label: 'Coach' },
+      { type: 'human', label: 'Client Owner' },
+      { type: 'empty', label: '+ Map a seat' } ] },
+  { title: 'Leadership team',
+    desc: 'A human exec row with an agent Chief of Staff keeping the layers honest.',
+    nodes: [
+      { type: 'human', label: 'CEO' },
+      { type: 'human', label: 'COO' },
+      { type: 'agent', label: 'chief-of-staff' } ] },
+  { title: 'Twenty-person company',
+    desc: 'A blended structure where humans and agents share the same surface.',
+    nodes: [
+      { type: 'human', label: 'Department Head' },
+      { type: 'agent', label: 'analytics-agent' },
+      { type: 'empty', label: '+ Add human' } ] }
+]; %>
+
+<main style="position:relative;">
+  <section style="position:relative; padding: var(--space-4xl) var(--space-md) var(--space-3xl); text-align:center; overflow:hidden;">
+    <div class="dotted-grid" style="position:absolute; inset:0; opacity:0.5; pointer-events:none;"></div>
+
+    <div style="position:relative; z-index:1; max-width: 760px; margin: 0 auto;">
+      <div style="display:inline-flex; align-items:center; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); background: var(--color-bg-surface); border:1px solid var(--color-border-subtle); border-radius: var(--radius-full); font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: var(--space-xl);">
+        <span style="width:6px; height:6px; background: var(--color-pop); border-radius:50%;"></span>
+        <span class="mono">Examples</span>
+      </div>
+
+      <h1 style="font-size: clamp(2.75rem, 7vw, 5rem); margin-bottom: var(--space-lg); font-family: var(--font-display);">
+        What an Orger chart<br>looks like.
+      </h1>
+
+      <p style="font-size: 1.25rem; color: var(--color-text-secondary); margin-bottom: var(--space-2xl); line-height: 1.4; max-width: 560px; margin-left:auto; margin-right:auto;">
+        These are example charts teams will map once Orger opens. Humans and AI agents on one surface, layer by layer. No two look the same.
+      </p>
+
+      <form action="/orger/waitlist" method="post" style="display:flex; gap: var(--space-sm); justify-content:center; max-width: 480px; margin: 0 auto var(--space-md); flex-wrap:wrap;">
+        <input type="hidden" name="source" value="examples">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="you@yourcompany.com"
+          style="flex:1; min-width: 240px; padding: var(--space-sm) var(--space-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-medium); border-radius: var(--radius-md); color: var(--color-text-primary); font-family: var(--font-body); font-size: 1rem;"
+        >
+        <button type="submit" class="btn-primary">Get on the waitlist</button>
+      </form>
+
+      <p style="font-size: 0.875rem; color: var(--color-text-tertiary);">
+        Pre-launch. These charts are illustrative, not live yet.
+      </p>
+    </div>
+  </section>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-md) var(--space-4xl);">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-lg);">
+      <% examples.forEach(function(ex) { %>
+        <article style="background: var(--color-bg-surface); border:1px solid var(--color-border-subtle); border-radius: var(--radius-lg); padding: var(--space-lg);">
+          <h2 style="font-size: 1.25rem; font-family: var(--font-display); margin-bottom: var(--space-xs);"><%= ex.title %></h2>
+          <p style="color: var(--color-text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: var(--space-lg);"><%= ex.desc %></p>
+          <div style="display:flex; flex-wrap:wrap; gap: var(--space-sm);">
+            <% ex.nodes.forEach(function(node) { %>
+              <% if (node.type === 'human') { %>
+                <span style="display:inline-flex; align-items:center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); background: var(--color-warm); color: var(--color-bg-deep); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8125rem;">
+                  <span style="width:8px; height:8px; background: var(--color-bg-deep); border-radius:50%; opacity:0.55;"></span>
+                  <%= node.label %>
+                </span>
+              <% } else if (node.type === 'agent') { %>
+                <span style="display:inline-flex; align-items:center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); background: var(--color-brand); color: var(--color-text-primary); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8125rem;">
+                  <span style="width:8px; height:8px; background: var(--color-pop); border-radius:50%;"></span>
+                  <%= node.label %>
+                </span>
+              <% } else { %>
+                <span style="display:inline-flex; align-items:center; padding: var(--space-sm) var(--space-md); background: transparent; color: var(--color-text-tertiary); border: 2px dashed var(--color-border-medium); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8125rem;">
+                  <%= node.label %>
+                </span>
+              <% } %>
+            <% }); %>
+          </div>
+        </article>
+      <% }); %>
+    </div>
+  </section>
+
+  <section style="max-width: 720px; margin: 0 auto; padding: 0 var(--space-md) var(--space-4xl); text-align:center;">
+    <p style="font-size: 1.5rem; font-family: var(--font-display); color: var(--color-text-primary); line-height: 1.35;">
+      Every one of these started as an empty chart and one decision. Yours is next.
+    </p>
+  </section>
+
+  <section style="position:relative; padding: var(--space-4xl) var(--space-md); text-align:center; overflow:hidden;">
+    <div class="dotted-grid" style="position:absolute; inset:0; opacity:0.5; pointer-events:none;"></div>
+
+    <div style="position:relative; z-index:1; max-width: 620px; margin: 0 auto;">
+      <h2 style="font-size: clamp(2rem, 5vw, 3rem); font-family: var(--font-display); margin-bottom: var(--space-md);">
+        Map your own layers.
+      </h2>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); margin-bottom: var(--space-xl); line-height: 1.4;">
+        Orger is free and the waitlist is open. Be on the chart when the chart goes live.
+      </p>
+
+      <form action="/orger/waitlist" method="post" style="display:flex; gap: var(--space-sm); justify-content:center; max-width: 480px; margin: 0 auto var(--space-md); flex-wrap:wrap;">
+        <input type="hidden" name="source" value="examples">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="you@yourcompany.com"
+          style="flex:1; min-width: 240px; padding: var(--space-sm) var(--space-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-medium); border-radius: var(--radius-md); color: var(--color-text-primary); font-family: var(--font-body); font-size: 1rem;"
+        >
+        <button type="submit" class="btn-primary">Get on the waitlist</button>
+      </form>
+
+      <p style="font-size: 0.875rem; color: var(--color-text-tertiary);">
+        No spam. Just a heads-up when Orger opens.
+      </p>
+    </div>
+
+    <div style="position:absolute; bottom: var(--space-xl); right: var(--space-xl); width: 80px; height: 80px; opacity: 0.9;" aria-hidden="true">
+      <img src="/orger/public/images/shrub-pixel.png" alt="" onerror="this.style.display='none'" style="width:100%; height:100%; image-rendering: pixelated;">
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  Orger is a project by <a href="https://orgtp.com" target="_blank" rel="noopener">OTP</a>. Built with Shrub the ogre. Even ogres need a team.
+</footer>

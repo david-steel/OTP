@@ -6,6 +6,16 @@
   <meta name="theme-color" content="#0F1B14">
   <meta name="color-scheme" content="dark">
 
+  <!-- Google tag (gtag.js) - Google Ads account AW-18159119434 (shared with OTP).
+       Loads on every orger.ai page so the Orger PMax campaign can track conversions. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18159119434"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-18159119434');
+  </script>
+
   <title><%= typeof title !== 'undefined' ? title : 'Orger — Your org chart, with agents.' %></title>
   <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'Free AI-aware org chart builder. Drag and drop the humans you have. Get grounded recommendations for the AI agents you should build.' %>">
   <% if (typeof noindex !== 'undefined' && noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>

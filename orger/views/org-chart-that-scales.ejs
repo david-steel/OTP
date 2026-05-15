@@ -1,0 +1,145 @@
+<nav class="nav">
+  <a href="/orger" class="nav-brand">Orger</a>
+  <div style="display:flex; gap: var(--space-md); align-items:center;">
+    <a href="/orger/product" style="color: var(--color-text-secondary);">Product</a>
+    <a href="/sign-in" class="btn-ghost">Login</a>
+  </div>
+</nav>
+
+<main style="position:relative;">
+  <section style="min-height: calc(100vh - 80px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding: var(--space-4xl) var(--space-md); text-align:center; position:relative;">
+    <div class="dotted-grid" style="position:absolute; inset:0; opacity:0.5; pointer-events:none;"></div>
+
+    <div style="position:relative; z-index:1; max-width: 780px;">
+      <div style="display:inline-flex; align-items:center; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); background: var(--color-bg-surface); border:1px solid var(--color-border-subtle); border-radius: var(--radius-full); font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: var(--space-xl);">
+        <span style="width:6px; height:6px; background: var(--color-pop); border-radius:50%;"></span>
+        <span class="mono">Scales with you</span>
+      </div>
+
+      <h1 style="font-size: clamp(3rem, 8vw, 6rem); margin-bottom: var(--space-lg);">
+        Start with one seat.<br>Add layers as you grow.
+      </h1>
+
+      <p style="font-size: 1.25rem; color: var(--color-text-secondary); margin-bottom: var(--space-2xl); line-height: 1.4; max-width: 580px; margin-left:auto; margin-right:auto;">
+        Orgs have layers. So does Orger. One node today, a full team and an agent layer later, and the same chart holds all of it. Free at every size.
+      </p>
+
+      <form action="/orger/waitlist" method="post" style="display:flex; gap: var(--space-sm); justify-content:center; max-width: 480px; margin: 0 auto var(--space-md); flex-wrap:wrap;">
+        <input type="hidden" name="source" value="scales">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="you@yourcompany.com"
+          style="flex:1; min-width: 240px; padding: var(--space-sm) var(--space-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-medium); border-radius: var(--radius-md); color: var(--color-text-primary); font-family: var(--font-body); font-size: 1rem;"
+        >
+        <button type="submit" class="btn-primary">Get on the waitlist</button>
+      </form>
+
+      <p style="font-size: 0.875rem; color: var(--color-text-tertiary);">
+        No spam. Just a heads-up when Orger opens.
+      </p>
+    </div>
+
+    <div style="position:absolute; bottom: var(--space-xl); right: var(--space-xl); width: 80px; height: 80px; opacity: 0.9;" aria-hidden="true">
+      <img src="/orger/public/images/shrub-pixel.png" alt="" onerror="this.style.display='none'" style="width:100%; height:100%; image-rendering: pixelated;">
+    </div>
+  </section>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: var(--space-5xl) var(--space-md);">
+    <div style="text-align:center; margin-bottom: var(--space-3xl);">
+      <h2 style="font-size: clamp(2rem, 4vw, 3rem); margin-bottom: var(--space-md);">The chart grows when the org does</h2>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); max-width: 620px; margin: 0 auto;">
+        Same surface, three sizes. Each layer you add is a layer, not a line item.
+      </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-lg);">
+      <% const stages = [
+        { tag: "Stage 1", title: "Just you", desc: "One seat, one founder. The chart starts as a single node and a clear head.", nodes: [{c:"var(--color-warm)"}] },
+        { tag: "Stage 2", title: "Five people, first agent", desc: "Four humans report in, and your first AI agent earns a seat beside them.", nodes: [{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-brand)"}] },
+        { tag: "Stage 3", title: "Twenty people, an agent layer", desc: "A human team up top, an agent layer underneath. Both visible, both on one chart.", nodes: [{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-warm)"},{c:"var(--color-brand)"},{c:"var(--color-brand)"},{c:"var(--color-brand)"},{c:"var(--color-brand)"}] }
+      ]; %>
+      <% stages.forEach(function(s){ %>
+        <div style="background: var(--color-bg-surface); border:1px solid var(--color-border-subtle); border-radius: var(--radius-lg); padding: var(--space-lg);">
+          <span class="mono" style="font-size: 0.75rem; color: var(--color-pop);"><%= s.tag %></span>
+          <h3 style="font-size: 1.25rem; margin: var(--space-sm) 0;"><%= s.title %></h3>
+          <p style="color: var(--color-text-secondary); line-height: 1.5; margin-bottom: var(--space-lg);"><%= s.desc %></p>
+          <div style="display:flex; flex-wrap:wrap; gap: var(--space-xs);">
+            <% s.nodes.forEach(function(n){ %>
+              <span style="width:22px; height:22px; background: <%= n.c %>; border-radius: var(--radius-sm);"></span>
+            <% }); %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-md) var(--space-5xl);">
+    <div style="text-align:center; margin-bottom: var(--space-3xl);">
+      <h2 style="font-size: clamp(2rem, 4vw, 3rem); margin-bottom: var(--space-md);">Why it actually scales</h2>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); max-width: 620px; margin: 0 auto;">
+        Most org chart tools charge per head. Hire someone, pay more. Orger does not work that way.
+      </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-lg);">
+      <% const features = [
+        { title: "Free at every size", desc: "One node or two hundred, the price is the same: nothing. No tier you age out of." },
+        { title: "No per-seat penalty for hiring", desc: "Growing the team never grows the bill. The chart cheers the hire instead of taxing it." },
+        { title: "Humans and agents on one surface", desc: "The people you have and the AI agents you should build scale together, side by side." },
+        { title: "No replatform, no enterprise contract", desc: "Other tools make you migrate or sign a contract as you grow. Orger just keeps going." }
+      ]; %>
+      <% features.forEach(function(f){ %>
+        <div style="background: var(--color-bg-surface); border:1px solid var(--color-border-subtle); border-radius: var(--radius-lg); padding: var(--space-lg);">
+          <span style="display:inline-block; width:10px; height:10px; background: var(--color-pop); border-radius: var(--radius-sm); margin-bottom: var(--space-md);"></span>
+          <h3 style="font-size: 1.125rem; margin-bottom: var(--space-sm);"><%= f.title %></h3>
+          <p style="color: var(--color-text-secondary); line-height: 1.5;"><%= f.desc %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section style="max-width: 760px; margin: 0 auto; padding: 0 var(--space-md) var(--space-5xl); text-align:center;">
+    <div style="background: var(--color-bg-surface); border:1px solid var(--color-border-medium); border-radius: var(--radius-2xl); padding: var(--space-3xl) var(--space-2xl);">
+      <h2 style="font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1.2;">
+        An org chart should add layers as you do.
+      </h2>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); margin-top: var(--space-md);">
+        Not a new invoice. Onions have layers, ogres have layers, your org has layers. The bill stays flat while the chart gets deeper.
+      </p>
+    </div>
+  </section>
+
+  <section style="position:relative; padding: var(--space-5xl) var(--space-md); text-align:center;">
+    <div class="dotted-grid" style="position:absolute; inset:0; opacity:0.4; pointer-events:none;"></div>
+    <div style="position:relative; z-index:1; max-width: 620px; margin: 0 auto;">
+      <h2 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: var(--space-md);">
+        Start at one. Grow without the bill.
+      </h2>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); margin-bottom: var(--space-2xl);">
+        Orger is a free AI-aware org chart builder from OTP and Sneeze It. Pre-launch, waitlist open. Get in line and we will tell you the moment it opens.
+      </p>
+
+      <form action="/orger/waitlist" method="post" style="display:flex; gap: var(--space-sm); justify-content:center; max-width: 480px; margin: 0 auto var(--space-md); flex-wrap:wrap;">
+        <input type="hidden" name="source" value="scales">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="you@yourcompany.com"
+          style="flex:1; min-width: 240px; padding: var(--space-sm) var(--space-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-medium); border-radius: var(--radius-md); color: var(--color-text-primary); font-family: var(--font-body); font-size: 1rem;"
+        >
+        <button type="submit" class="btn-primary">Get on the waitlist</button>
+      </form>
+
+      <p style="font-size: 0.875rem; color: var(--color-text-tertiary);">
+        No spam. Just a heads-up when Orger opens.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  Orger is a project by <a href="https://orgtp.com" target="_blank" rel="noopener">OTP</a>. Built with Shrub the ogre. Even ogres need a team.
+</footer>
