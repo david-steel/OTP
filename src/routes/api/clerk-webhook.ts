@@ -21,6 +21,7 @@ interface ClerkUserCreatedData {
   id: string;
   email_addresses: ClerkEmailAddress[];
   primary_email_address_id: string | null;
+  first_name?: string | null;
 }
 
 interface ClerkWebhookEvent {
@@ -34,15 +35,16 @@ function getPrimaryEmail(user: ClerkUserCreatedData): string | null {
   return primary?.email_address || user.email_addresses[0]?.email_address || null;
 }
 
-export async function sendOnboardingEmail1(email: string): Promise<boolean> {
+export async function sendOnboardingEmail1(email: string, firstName?: string | null): Promise<boolean> {
   try {
     const templatePath = path.resolve(__dirname, '../../templates/emails/newsletter-welcome.ejs');
-    const html = await ejs.renderFile(templatePath, { email });
+    const html = await ejs.renderFile(templatePath, { email, firstName: firstName ?? null });
     return !!(await sendEmail({
       to: email,
-      subject: "You're in -- welcome to OTP",
+      subject: "You're one of OTP's first 50",
       html,
-      from: 'David Steel <notifications@mail.orgtp.com>',
+      from: 'David Steel <dsteel@mail.orgtp.com>',
+      replyTo: 'dsteel@sneeze.it',
     }));
   } catch (err) {
     console.error('[clerk-webhook] Email #1 render/send failed:', err);
@@ -154,7 +156,7 @@ export default async function clerkWebhookRoutes(app: FastifyInstance) {
       console.error('[clerk-webhook] Pre-signup conversion check failed:', err);
     }
 
-    const sent = await sendOnboardingEmail1(email);
+    const sent = await sendOnboardingEmail1(email, user.first_name);
     if (sent) {
       await db
         .update(onboardingSequence)
