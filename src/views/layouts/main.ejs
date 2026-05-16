@@ -188,6 +188,21 @@
 
   <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
   <nav class="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-white/10">
+  <% if (typeof minimalNav !== 'undefined' && minimalNav) { %>
+    <!-- Minimal landing-page header: logo + single conversion CTA, no escape hatches. -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center" aria-label="OTP — Organization Transport Protocol">
+        <img src="/public/images/otp-lockup-white.webp"
+             srcset="/public/images/otp-lockup-white-1x.png 1x, /public/images/otp-lockup-white-2x.png 2x"
+             alt="OTP — Organization Transport Protocol"
+             class="h-6 md:h-7 w-auto" />
+      </a>
+      <div class="flex items-center gap-3 sm:gap-4 text-sm">
+        <a href="/sign-in" class="text-white hover:text-white/70 transition-colors">Sign in</a>
+        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors whitespace-nowrap">Create free account</a>
+      </div>
+    </div>
+  <% } else { %>
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
       <a href="/" class="flex items-center" aria-label="OTP — Organization Transport Protocol">
         <img src="/public/images/otp-lockup-white.webp"
@@ -349,6 +364,7 @@
         </div>
       </div>
     </div>
+  <% } %>
   </nav>
   <% } %>
 
@@ -356,10 +372,13 @@
   <%- include('../partials/dashboard-tabs') %>
 
   <script>
-    document.getElementById('mobile-menu-btn').addEventListener('click', function() {
-      document.getElementById('mobile-menu').classList.toggle('hidden');
-    });
-
+    var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', function() {
+        var mm = document.getElementById('mobile-menu');
+        if (mm) mm.classList.toggle('hidden');
+      });
+    }
   </script>
 
   <main class="pt-[65px]">

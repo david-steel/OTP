@@ -425,6 +425,7 @@ Reason: ${escapeHtml(reason || '(not provided)')}</p>
       canonical: 'https://orgtp.com/meet-radar',
       ogImage: 'https://orgtp.com/public/images/og-meet-radar.png',
       googleAdsId: 'AW-18159119434',
+      minimalNav: true,
     });
   });
 
