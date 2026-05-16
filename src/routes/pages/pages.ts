@@ -1813,14 +1813,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Radar -- AI Chief of Staff product page
-  app.get('/radar', async (request, reply) => {
-    return reply.view('pages/radar', {
-      title: 'Radar -- AI Chief of Staff | 2.5 Hours Back on Day 1',
-      description: 'Radar is an AI Chief of Staff built on Claude Code. One command launches 11 parallel scanners, compiles a daily briefing, and presents an action queue. 2.5 hours saved on Day 1.',
-      canonical: BASE_URL + '/radar',
-      breadcrumbs: bc({ name: 'Radar', url: BASE_URL + '/radar' }),
-    });
+  // /radar -- legacy technical product page (off-message: Claude Code / MCP
+  // install story). 301-redirects to /meet-radar, the current Radar landing
+  // page. The pages/radar.ejs view is retained in the repo but no longer routed.
+  app.get('/radar', async (_request, reply) => {
+    return reply.redirect('/meet-radar', 301);
   });
 
   // ──────────────────────────────────────────────────────────────
