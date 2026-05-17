@@ -703,6 +703,34 @@ app.setNotFoundHandler(async (request, reply) => {
   });
 });
 
+// Custom error handler -- friendly HTML 500 for page routes, JSON for API routes.
+app.setErrorHandler(async (err, request, reply) => {
+  const error = err as { statusCode?: number; code?: string; message?: string };
+  const status = error.statusCode && error.statusCode >= 400 && error.statusCode < 600
+    ? error.statusCode
+    : 500;
+  request.log.error({ err, url: request.url }, 'request error');
+  // API routes stay machine-readable.
+  if (request.url.startsWith('/api/')) {
+    return reply.status(status).send({
+      error: {
+        code: error.code || 'INTERNAL_ERROR',
+        message: status >= 500 ? 'Internal server error' : (error.message || 'Error'),
+      },
+    });
+  }
+  // Page routes get the friendly 500 view for server errors.
+  if (status >= 500) {
+    return reply.status(500).view('pages/500', {
+      title: 'Something went wrong - OTP',
+      description: 'An unexpected error occurred.',
+      canonical: 'https://orgtp.com/',
+      noindex: true,
+    });
+  }
+  return reply.status(status).send(error.message || 'Error');
+});
+
 // Boot-time idempotent migrations.
 // Drizzle's migration history has accumulated drift, so we self-heal
 // targeted feature tables on startup rather than running db:migrate.
