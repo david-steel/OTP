@@ -1,0 +1,59 @@
+<%# ============================================================
+   OTP v7 layout -- light, editorial design system.
+   Opt in per route:  reply.view('pages/x', data, { layout: 'layouts/v7' })
+   Locals: title, description, canonical, ogImage, ogType, noindex,
+           jsonLd (object or array), googleAdsId, headExtra.
+   Page-specific <style> lives in the page view itself.
+   ============================================================ %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2CGLFY76YW"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2CGLFY76YW');</script>
+<% if (typeof googleAdsId !== 'undefined' && googleAdsId) { %>
+<!-- Google Ads -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=<%= googleAdsId %>"></script>
+<script>gtag('config','<%= googleAdsId %>');</script>
+<script>
+  function gtagSendEvent(url){
+    var cb=function(){ if(typeof url==='string'){ window.location=url; } };
+    gtag('event','ads_conversion_PURCHASE_1',{'event_callback':cb,'event_timeout':2000});
+    return false;
+  }
+</script>
+<% } %>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fcfcfd">
+<title><%= typeof title !== 'undefined' && title ? title : 'OTP - The operating platform for teams of people and AI agents' %></title>
+<meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the operating platform for teams of people and AI agents. One chart, one scoreboard, one weekly meeting. Free for your whole team in beta.' %>">
+<% if (typeof noindex !== 'undefined' && noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
+<% if (typeof canonical !== 'undefined' && canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<meta property="og:site_name" content="OTP">
+<meta property="og:type" content="<%= typeof ogType !== 'undefined' && ogType ? ogType : 'website' %>">
+<meta property="og:title" content="<%= typeof title !== 'undefined' && title ? title : 'OTP' %>">
+<meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : 'The operating platform for teams of people and AI agents.' %>">
+<% if (typeof canonical !== 'undefined' && canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+<meta property="og:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/images/og-otp-home.png' %>">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<%= typeof title !== 'undefined' && title ? title : 'OTP' %>">
+<meta name="twitter:description" content="<%= typeof description !== 'undefined' && description ? description : 'The operating platform for teams of people and AI agents.' %>">
+<meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/images/og-otp-home.png' %>">
+<link rel="icon" type="image/png" href="/public/favicon-orgy.png">
+<link rel="apple-touch-icon" href="/public/favicon-orgy-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/public/v7.css">
+<% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
+<script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
+<% } %>
+<% if (typeof headExtra !== 'undefined' && headExtra) { %><%- headExtra %><% } %>
+</head>
+<body>
+<%- include('../partials/v7-nav') %>
+<%- body %>
+<%- include('../partials/v7-footer') %>
+</body>
+</html>

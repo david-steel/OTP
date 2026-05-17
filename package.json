@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "css:build": "tailwindcss -i src/styles/input.css -o public/styles.css --minify",
+    "css:build": "tailwindcss -i src/styles/input.css -o public/styles.css --minify && tailwindcss -i src/styles/v7.css -o public/v7.css --minify",
     "css:watch": "tailwindcss -i src/styles/input.css -o public/styles.css --watch",
     "build": "npm run css:build && tsc",
     "start": "node dist/server.js",

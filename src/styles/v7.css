@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   OTP v7 design system -- light, editorial.
+   Compiled to public/v7.css and linked by layouts/v7.ejs.
+   Tokens + shared component classes. Page-specific styles
+   live in the page view itself.
+   ============================================================ */
+:root {
+  --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+  --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+  --blue:#0d7df2; --blue-deep:#0a56b0; --blue-block:#0d5fd6;
+  --orange:#ff7a1a; --orange-deep:#d4540a; --orange-block:#ff7a1a;
+  --green:#0a9d63; --green-deep:#06724a;
+  --orgy:#bdd622; --orgy-deep:#a3ba17;
+  --line:rgba(20,22,28,0.10);
+  --line-soft:rgba(20,22,28,0.06);
+}
+html { -webkit-font-smoothing:antialiased; }
+body { font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); }
+::selection { background:var(--blue); color:#fff; }
+
+.font-display { font-family:'Schibsted Grotesk','Inter',sans-serif; }
+.font-mono { font-family:'JetBrains Mono',monospace; }
+
+.eyebrow {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; font-weight:500;
+  letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--ink-mute);
+}
+.tick { width:8px; height:8px; border-radius:2px; display:inline-block; }
+
+/* org tiles -- light, full hairline borders, NO side stripes */
+.otile {
+  position:relative; background:var(--card);
+  border:1px solid var(--line); border-radius:13px;
+  padding:12px 13px 13px;
+  box-shadow:0 1px 2px rgba(20,22,28,0.04);
+}
+.otile-dot { width:9px; height:9px; border-radius:3px; flex:none; }
+.otile-tag {
+  font-family:'JetBrains Mono',monospace; font-size:8.5px;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-mute);
+}
+.otile-name { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); line-height:1.15; }
+.otile-role { font-size:10.5px; color:var(--ink-mute); margin-top:2px; }
+.kpi-pill {
+  font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:500;
+  color:var(--green-deep); border:1px solid rgba(10,157,99,0.3);
+  background:rgba(10,157,99,0.08);
+  padding:2px 6px; border-radius:5px;
+  display:inline-block; margin-top:7px;
+}
+.connector { background:var(--line); }
+
+/* buttons */
+.btn-primary {
+  background:var(--orgy); color:var(--ink);
+  font-weight:700; font-family:'Inter',sans-serif;
+  border-radius:10px;
+  transition:background .2s ease, transform .2s cubic-bezier(.16,1,.3,1);
+}
+.btn-primary:hover { background:var(--orgy-deep); transform:translateY(-1px); }
+.btn-ink {
+  background:var(--ink); color:#fff;
+  font-weight:700; font-family:'Inter',sans-serif;
+  border-radius:10px;
+  transition:background .2s ease, transform .2s cubic-bezier(.16,1,.3,1);
+}
+.btn-ink:hover { background:#22252e; transform:translateY(-1px); }
+.btn-ghost {
+  border:1px solid var(--line); color:var(--ink);
+  font-weight:600; font-family:'Inter',sans-serif;
+  border-radius:10px;
+  transition:border-color .2s ease, background .2s ease;
+}
+.btn-ghost:hover { border-color:var(--ink); background:rgba(20,22,28,0.03); }
+
+/* big colour-blocked cards / sections use generous radius */
+.card { background:var(--card); border:1px solid var(--line); border-radius:20px;
+  box-shadow:0 1px 3px rgba(20,22,28,0.05), 0 16px 36px -22px rgba(20,22,28,0.16); }
+
+.lift { transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s ease; }
+.lift:hover { transform:translateY(-4px); box-shadow:0 1px 3px rgba(20,22,28,0.06), 0 26px 50px -24px rgba(20,22,28,0.26); }
+
+.idx-row { border-top:1px solid var(--line); transition:background .15s ease, padding-left .15s ease; }
+.idx-row:last-child { border-bottom:1px solid var(--line); }
+.idx-row:hover { background:var(--card); padding-left:10px; }
+
+.link-u { font-weight:600; border-bottom:2px solid currentColor; padding-bottom:1px; transition:opacity .15s ease; }
+.link-u:hover { opacity:0.65; }
