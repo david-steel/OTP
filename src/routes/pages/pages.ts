@@ -429,7 +429,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const allDynamicPosts = listConatusPosts();
     const conatusPosts = allDynamicPosts.filter(p => p.author.toLowerCase() === 'conatus');
     const founderPosts = allDynamicPosts.filter(p => p.author.toLowerCase() !== 'conatus');
-    return reply.view('pages/blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' }, conatusPosts, founderPosts });
+    return renderV7(reply, 'blog', { title: 'Blog - OTP', description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.', canonical: BASE_URL + '/blog', breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }), jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'OTP Blog', description: 'Building in public. Lessons from running 14 AI agents in production.', url: BASE_URL + '/blog' }, conatusPosts, founderPosts });
   });
 
   // Enriched blog post schema helper
@@ -451,7 +451,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 1
   app.get('/blog/why-we-built-otp', async (request, reply) => {
-    return reply.view('pages/blog-post-1', {
+    return renderV7(reply, 'blog-post-1', {
       title: 'The Hard Problem in AI Isn\'t Intelligence. It\'s Coordination. - OTP',
       description: 'The hard problem in AI is not building one good agent. It is getting twelve of them to coordinate without stepping on each other. Why we built OTP.',
       canonical: BASE_URL + '/blog/why-we-built-otp',
@@ -463,7 +463,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 2
   app.get('/blog/what-is-an-oos', async (request, reply) => {
-    return reply.view('pages/blog-post-2', {
+    return renderV7(reply, 'blog-post-2', {
       title: 'What Is an Organizational Operating System? - OTP',
       description: 'An Organizational Operating System captures how your AI agents coordinate. Learn the structure, claims, confidence ratings, and evidence model.',
       canonical: BASE_URL + '/blog/what-is-an-oos',
@@ -475,7 +475,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 3
   app.get('/blog/built-in-48-hours', async (request, reply) => {
-    return reply.view('pages/blog-post-3', {
+    return renderV7(reply, 'blog-post-3', {
       title: 'We Built This Platform in 48 Hours. With the System It\'s Designed to Measure. - OTP',
       description: 'How we built the OTP platform in 48 hours using the same AI agent coordination system the platform is designed to measure.',
       canonical: BASE_URL + '/blog/built-in-48-hours',
@@ -487,7 +487,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 4
   app.get('/blog/nvidia-made-the-case', async (request, reply) => {
-    return reply.view('pages/blog-post-4', {
+    return renderV7(reply, 'blog-post-4', {
       title: 'Jensen Huang Just Made the Case for OTP. He Didn\'t Know It. - OTP',
       description: 'Jensen Huang told the world every company needs an agent strategy. OTP is the coordination layer that makes multi-agent strategy work.',
       canonical: BASE_URL + '/blog/nvidia-made-the-case',
@@ -499,7 +499,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 5
   app.get('/blog/bain-code-red', async (request, reply) => {
-    return reply.view('pages/blog-post-5', {
+    return renderV7(reply, 'blog-post-5', {
       title: 'Bain Just Described the Problem OTP Solves. They Called It "Code Red." - OTP',
       description: 'Bain called enterprise multi-agent coordination a Code Red problem. OTP is the coordination intelligence layer that solves it.',
       canonical: BASE_URL + '/blog/bain-code-red',
@@ -511,7 +511,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 6
   app.get('/blog/agentic-levels', async (request, reply) => {
-    return reply.view('pages/blog-post-6', {
+    return renderV7(reply, 'blog-post-6', {
       title: 'We Added Agentic Maturity Levels to OTP. Here Is Why They Matter. - OTP',
       description: 'Agentic maturity levels on OTP measure how sophisticated your AI agent coordination is. From tab completion to autonomous agent teams.',
       canonical: BASE_URL + '/blog/agentic-levels',
@@ -523,7 +523,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 7
   app.get('/blog/what-is-coordination-intelligence', async (request, reply) => {
-    return reply.view('pages/blog-post-7', {
+    return renderV7(reply, 'blog-post-7', {
       title: 'What Is Coordination Intelligence? - OTP',
       description: 'Coordination intelligence is the structured knowledge of how AI agents coordinate within and across organizations. It is the missing layer in the AI stack.',
       canonical: BASE_URL + '/blog/what-is-coordination-intelligence',
@@ -535,7 +535,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 8
   app.get('/blog/how-we-coordinate-14-agents', async (request, reply) => {
-    return reply.view('pages/blog-post-8', {
+    return renderV7(reply, 'blog-post-8', {
       title: 'How We Coordinate 14 AI Agents Without Them Stepping on Each Other - OTP',
       description: 'Practitioner guide to coordinating 14 AI agents in production. Shared state, one seat per owner, escalation over autonomy, and the failures that taught us.',
       canonical: BASE_URL + '/blog/how-we-coordinate-14-agents',
@@ -547,7 +547,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 9
   app.get('/blog/tokens-are-the-new-currency', async (request, reply) => {
-    return reply.view('pages/blog-post-9', {
+    return renderV7(reply, 'blog-post-9', {
       title: 'Tokens Are the New Currency. Your OOS Is the Budget. - OTP',
       description: 'Every rule in your OOS costs tokens to load. The Token Efficiency Ratio measures whether each rule earns back more than it spends. Treat your OOS like a financial plan for your AI workforce.',
       canonical: BASE_URL + '/blog/tokens-are-the-new-currency',
@@ -559,7 +559,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 10
   app.get('/blog/otp-vs-crewai-vs-a2a-vs-mcp', async (request, reply) => {
-    return reply.view('pages/blog-post-10', {
+    return renderV7(reply, 'blog-post-10', {
       title: 'OTP vs CrewAI vs A2A vs MCP: Understanding the AI Coordination Stack - OTP',
       description: 'MCP connects agents to tools. CrewAI connects agents to each other. OTP connects organizations to coordination intelligence. Here is how the three layers fit together.',
       canonical: BASE_URL + '/blog/otp-vs-crewai-vs-a2a-vs-mcp',
@@ -571,7 +571,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 11
   app.get('/blog/8-levels-of-agentic-maturity', async (request, reply) => {
-    return reply.view('pages/blog-post-11', {
+    return renderV7(reply, 'blog-post-11', {
       title: 'The 8 Levels of Agentic Maturity (and How to Measure Yours) - OTP',
       description: 'The 8 Levels of Agentic Engineering by Bassim Eledath give organizations a standard way to measure AI agent coordination maturity. From tab completion to autonomous agent teams.',
       canonical: BASE_URL + '/blog/8-levels-of-agentic-maturity',
@@ -583,7 +583,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 12
   app.get('/blog/what-is-an-oos-file', async (request, reply) => {
-    return reply.view('pages/blog-post-12', {
+    return renderV7(reply, 'blog-post-12', {
       title: 'What Is an OOS File? The New Standard for AI Organizational Intelligence - OTP',
       description: 'The OOS file is a structured format for capturing how AI agents coordinate. YAML frontmatter, Markdown claims, confidence levels, evidence types, and failure modes in a portable, diffable file.',
       canonical: BASE_URL + '/blog/what-is-an-oos-file',
@@ -595,7 +595,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 13
   app.get('/blog/gas-town-vs-otp', async (request, reply) => {
-    return reply.view('pages/blog-post-13', {
+    return renderV7(reply, 'blog-post-13', {
       title: 'Gas Town Is the Factory Floor. OTP Is the Blueprint Exchange. - OTP',
       description: 'Steve Yegge\'s Gas Town orchestrates parallel coding agents. OTP captures organizational coordination intelligence. They solve different layers of the same problem.',
       canonical: BASE_URL + '/blog/gas-town-vs-otp',
@@ -607,7 +607,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 14
   app.get('/blog/moltbook-vs-otp', async (request, reply) => {
-    return reply.view('pages/blog-post-14', {
+    return renderV7(reply, 'blog-post-14', {
       title: 'Moltbook Let Agents Talk. OTP Teaches Organizations How to Run Them. - OTP',
       description: 'Moltbook was a social network for AI agents. It was hacked in 3 days and acquired by Meta in 42. OTP answers the question Moltbook surfaced: how do organizations actually govern their AI teams?',
       canonical: BASE_URL + '/blog/moltbook-vs-otp',
@@ -619,7 +619,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 15
   app.get('/blog/ai-coordination-stack', async (request, reply) => {
-    return reply.view('pages/blog-post-15', {
+    return renderV7(reply, 'blog-post-15', {
       title: 'The AI Coordination Stack: Where OTP Fits Among 40+ Frameworks, Protocols, and Platforms - OTP',
       description: 'MCP, A2A, LangGraph, CrewAI, Salesforce Agentforce, AWS Bedrock, GPT Store - the AI agent ecosystem has 40+ players across 6 layers. OTP is the only one at Layer 6: Organizational Intelligence.',
       canonical: BASE_URL + '/blog/ai-coordination-stack',
@@ -631,7 +631,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 16
   app.get('/blog/gartner-40-percent-will-fail', async (request, reply) => {
-    return reply.view('pages/blog-post-16', {
+    return renderV7(reply, 'blog-post-16', {
       title: 'Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why. - OTP',
       description: 'Gartner predicts 40% of agentic AI projects will be cancelled by 2027. The failures are not model problems. They are coordination problems. Here is what separates the 60% that survive.',
       canonical: BASE_URL + '/blog/gartner-40-percent-will-fail',
@@ -643,7 +643,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 17
   app.get('/blog/351k-skills-zero-standards', async (request, reply) => {
-    return reply.view('pages/blog-post-17', {
+    return renderV7(reply, 'blog-post-17', {
       title: '351,000 Agent Skills in 120 Days. Zero Standards for How Agent Teams Work Together. - OTP',
       description: 'Agent skills marketplaces hit 351,000 skills in 120 days. But skills are agent-level knowledge. The organizational layer -- how agent teams coordinate -- has no standard. That is the gap OTP fills.',
       canonical: BASE_URL + '/blog/351k-skills-zero-standards',
@@ -655,7 +655,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 18
   app.get('/blog/1500-percent-more-tokens', async (request, reply) => {
-    return reply.view('pages/blog-post-18', {
+    return renderV7(reply, 'blog-post-18', {
       title: '1,500% More Tokens Per Workflow. Most of Them Are Wasted. - OTP',
       description: 'Multi-agent workflows generate 1,500% more tokens than standard formats. NVIDIA solved the inference cost. The coordination waste -- rebuilding organizational context every cycle -- is the unsolved problem.',
       canonical: BASE_URL + '/blog/1500-percent-more-tokens',
@@ -667,7 +667,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 19
   app.get('/blog/the-last-mile-just-got-shorter', async (request, reply) => {
-    return reply.view('pages/blog-post-19', {
+    return renderV7(reply, 'blog-post-19', {
       title: 'The Last Mile Just Got Shorter. - OTP',
       description: 'DoorDash is paying gig workers to film themselves doing chores to train AI robots. The pattern of workers training their own replacements is not new. It is just getting harder to ignore.',
       canonical: BASE_URL + '/blog/the-last-mile-just-got-shorter',
@@ -679,7 +679,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 20
   app.get('/blog/defining-rules-vs-enforcing-them', async (request, reply) => {
-    return reply.view('pages/blog-post-20', {
+    return renderV7(reply, 'blog-post-20', {
       title: 'Your OOS Defines the Rules. Your Runtime Enforces Them. You Need Both. - OTP',
       description: 'Why the architecture layer and the monitoring layer are complementary, not competing. The OOS defines what the rules are. Runtime monitoring enforces them. You need both.',
       canonical: BASE_URL + '/blog/defining-rules-vs-enforcing-them',
@@ -691,7 +691,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 21
   app.get('/blog/personal-ai-revolution-knowledge-layer', async (request, reply) => {
-    return reply.view('pages/blog-post-21', {
+    return renderV7(reply, 'blog-post-21', {
       title: 'The Personal AI Revolution Is Coming. Nobody\'s Building the Knowledge Layer. - OTP',
       description: 'HTTP moved documents between computers. OTP moves operational intelligence between AI systems. The knowledge transfer layer for the personal AI era does not exist yet.',
       canonical: BASE_URL + '/blog/personal-ai-revolution-knowledge-layer',
@@ -703,7 +703,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 22
   app.get('/blog/your-ai-is-learning-alone', async (request, reply) => {
-    return reply.view('pages/blog-post-22', {
+    return renderV7(reply, 'blog-post-22', {
       title: 'Your AI Is Learning Alone. That\'s About to Change. - OTP',
       description: 'Every AI system figures things out from scratch. Your breakthroughs die with your setup. What if your AI could safely import what another AI learned?',
       canonical: BASE_URL + '/blog/your-ai-is-learning-alone',
@@ -715,7 +715,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 23
   app.get('/blog/coach-dilemma-ai-frameworks', async (request, reply) => {
-    return reply.view('pages/blog-post-23', {
+    return renderV7(reply, 'blog-post-23', {
       title: 'The Coach\'s Dilemma: AI Can Run Your Frameworks. It Can\'t Replace What You Actually Do. - OTP',
       description: 'EOS and Scaling Up playbooks are getting automated. The coaches who survive will encode what the playbook can\'t capture.',
       canonical: BASE_URL + '/blog/coach-dilemma-ai-frameworks',
@@ -727,7 +727,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 24
   app.get('/blog/asaas-desktop-ai-coaching', async (request, reply) => {
-    return reply.view('pages/blog-post-24', {
+    return renderV7(reply, 'blog-post-24', {
       title: 'ASaaS, Desktop AI, and the End of Software You Log Into - OTP',
       description: 'SaaS gave everyone the same tool. ASaaS gives everyone a different team. The coaching model has to change with it.',
       canonical: BASE_URL + '/blog/asaas-desktop-ai-coaching',
@@ -739,7 +739,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Blog post 25
   app.get('/blog/unlock-20-years-coaching-experience', async (request, reply) => {
-    return reply.view('pages/blog-post-25', {
+    return renderV7(reply, 'blog-post-25', {
       title: '20 Years of Coaching, Locked in Your Head. Here\'s How to Unlock It. - OTP',
       description: 'Most coaching businesses are one-to-one, time-limited, and die when you stop. OTP turns your experience into a scalable intelligence asset.',
       canonical: BASE_URL + '/blog/unlock-20-years-coaching-experience',
@@ -880,7 +880,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const termUrl = `${BASE_URL}/glossary/${term.slug}`;
     const lastmod = term.updatedAt ? new Date(term.updatedAt as any).toISOString() : new Date().toISOString();
 
-    return reply.view('pages/glossary-term', {
+    return renderV7(reply, 'glossary-term', {
       title: `${term.name} - OTP Glossary`,
       description: term.definition.length > 155 ? term.definition.slice(0, 152) + '...' : term.definition,
       canonical: termUrl,
@@ -2011,7 +2011,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       ? `${profile.display_name} | EOS Implementer${locStr} | OTP Coach Directory`
       : `${profile.display_name} | OTP Publisher`;
 
-    return reply.view('pages/expert-profile', {
+    return renderV7(reply, 'expert-profile', {
       title: pageTitle,
       description: metaDesc,
       canonical: profileUrl,
@@ -2034,7 +2034,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const profile = (profileRows.rows || [])[0];
     if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
 
-    return reply.view('pages/expert-contact', {
+    return renderV7(reply, 'expert-contact', {
       title: 'Contact ' + profile.display_name + ' - OTP',
       description: 'Send an inquiry to ' + profile.display_name + ', an AI coordination expert on OTP.',
       canonical: BASE_URL + '/expert/' + slug + '/contact',
@@ -3853,7 +3853,7 @@ Founder, OTP</p>
       WHERE f.status = 'published' AND o.industry ILIKE ${decoded}
       ORDER BY f.claim_count DESC
     `) as any;
-    return reply.view('pages/industry-detail', {
+    return renderV7(reply, 'industry-detail', {
       title: `${decoded} AI Agent Coordination - OTP`,
       description: `How ${decoded} organizations coordinate their AI agent teams. ${(rows.rows || []).length} publishers on OTP.`,
       canonical: BASE_URL + '/industry/' + encodeURIComponent(decoded),
@@ -4389,7 +4389,7 @@ Founder, OTP</p>
 
   // Blog post 26 - Agent Onboarding
   app.get('/blog/agent-onboarding', async (request, reply) => {
-    return reply.view('pages/blog-post-26', {
+    return renderV7(reply, 'blog-post-26', {
       title: 'Your Operating System is Your Agent\'s Day-One Onboarding - OTP',
       description: 'The same five things every new hire needs are the same five things every AI agent needs. Your OOS is the onboarding packet that compounds with every agent you add.',
       canonical: BASE_URL + '/blog/agent-onboarding',
@@ -4402,7 +4402,7 @@ Founder, OTP</p>
 
   // Blog post 27 - Machine Commerce
   app.get('/blog/machine-commerce', async (request, reply) => {
-    return reply.view('pages/blog-post-27', {
+    return renderV7(reply, 'blog-post-27', {
       title: 'When Agents Are the Customer: The Machine Commerce Discovery Layer - OTP',
       description: 'Tomorrow, AI agents will evaluate vendors autonomously at scale in seconds. Your OOS is the machine-readable trust profile that makes you discoverable in the agent economy.',
       canonical: BASE_URL + '/blog/machine-commerce',
@@ -4415,7 +4415,7 @@ Founder, OTP</p>
 
   // Blog post 28 - MCP Everything
   app.get('/blog/mcp-everything', async (request, reply) => {
-    return reply.view('pages/blog-post-28', {
+    return renderV7(reply, 'blog-post-28', {
       title: 'Every Data Source Should Be an MCP Server (Including Your Operating System) - OTP',
       description: 'MCP is becoming the standard for how agents talk to everything. Your organizational operating system is a data source that agents need to access natively.',
       canonical: BASE_URL + '/blog/mcp-everything',
@@ -4428,7 +4428,7 @@ Founder, OTP</p>
 
   // Blog post 29 - Machine Micropayments
   app.get('/blog/machine-micropayments', async (request, reply) => {
-    return reply.view('pages/blog-post-29', {
+    return renderV7(reply, 'blog-post-29', {
       title: 'Machine Micropayments: When AI Agents Have Wallets - OTP',
       description: 'When agents can spend money, your published operational intelligence becomes an economic asset. The OOS is the trust profile machines query before sending you money.',
       canonical: BASE_URL + '/blog/machine-micropayments',
@@ -4441,7 +4441,7 @@ Founder, OTP</p>
 
   // Blog post 30 - Connected Member
   app.get('/blog/connected-member', async (request, reply) => {
-    return reply.view('pages/blog-post-30', {
+    return renderV7(reply, 'blog-post-30', {
       title: 'The Connected Member: AI is Rewriting Membership Sales and Nobody\'s Ready - OTP',
       description: 'When a member\'s AI agent evaluates your gym at 2 AM, what will it find? The shift from brand awareness to operational transparency is already happening.',
       canonical: BASE_URL + '/blog/connected-member',
@@ -4454,7 +4454,7 @@ Founder, OTP</p>
 
   // Blog post 31 - The Blessed Path
   app.get('/blog/blessed-path-documentation', async (request, reply) => {
-    return reply.view('pages/blog-post-31', {
+    return renderV7(reply, 'blog-post-31', {
       title: 'The Blessed Path: Why 90% of Agent Success is Documentation You Already Wrote - OTP',
       description: 'The single biggest predictor of AI agent success is not the model. It is documentation. The blessed path is where agents thrive. Everything else is a hallucination waiting to happen.',
       canonical: BASE_URL + '/blog/blessed-path-documentation',
@@ -4467,7 +4467,7 @@ Founder, OTP</p>
 
   // Blog post 32 - Agent Onboarding OOS
   app.get('/blog/operating-system-agent-onboarding', async (request, reply) => {
-    return reply.view('pages/blog-post-32', {
+    return renderV7(reply, 'blog-post-32', {
       title: 'Your Operating System is Your Agent\'s Day-One Onboarding - OTP',
       description: 'When you hire an employee, you give them an onboarding packet. When you deploy an agent, what do you give it? Your OOS is the onboarding that compounds with every agent you add.',
       canonical: BASE_URL + '/blog/operating-system-agent-onboarding',
@@ -4480,7 +4480,7 @@ Founder, OTP</p>
 
   // Blog post 33 - Activation Energy
   app.get('/blog/activation-energy-bottleneck', async (request, reply) => {
-    return reply.view('pages/blog-post-33', {
+    return renderV7(reply, 'blog-post-33', {
       title: 'Activation Energy is the Real Bottleneck (Not Execution) - OTP',
       description: 'Most teams think their problem is execution speed. The real bottleneck is activation energy, the friction between having an idea and starting the work.',
       canonical: BASE_URL + '/blog/activation-energy-bottleneck',
@@ -4493,7 +4493,7 @@ Founder, OTP</p>
 
   // Blog post 34 - System Prompt Simplicity
   app.get('/blog/system-prompt-simpler', async (request, reply) => {
-    return reply.view('pages/blog-post-34', {
+    return renderV7(reply, 'blog-post-34', {
       title: 'The System Prompt is Simpler Than You Think - OTP',
       description: 'People overcomplicate system prompts. The best ones are short, clear, and point to external context. The prompt is the job description. The knowledge base is the employee handbook.',
       canonical: BASE_URL + '/blog/system-prompt-simpler',
@@ -4506,7 +4506,7 @@ Founder, OTP</p>
 
   // Blog post 35 - Coordination Cost
   app.get('/blog/coordination-cost-kills', async (request, reply) => {
-    return reply.view('pages/blog-post-35', {
+    return renderV7(reply, 'blog-post-35', {
       title: 'Coordination Cost Will Kill You Before Execution Speed Saves You - OTP',
       description: 'Everyone optimizes for execution speed. But the thing that actually kills teams is coordination cost, the invisible overhead of getting people aligned, informed, and unblocked.',
       canonical: BASE_URL + '/blog/coordination-cost-kills',
@@ -4519,7 +4519,7 @@ Founder, OTP</p>
 
   // Blog post 36 - Everyone Ships Code
   app.get('/blog/everyone-ships-code', async (request, reply) => {
-    return reply.view('pages/blog-post-36', {
+    return renderV7(reply, 'blog-post-36', {
       title: 'When Everyone Can Ship Code, What Changes? - OTP',
       description: 'Non-engineers can now ship production code. The bottleneck is no longer writing code. It is knowing what should be built and why. That shift changes everything.',
       canonical: BASE_URL + '/blog/everyone-ships-code',
@@ -4532,7 +4532,7 @@ Founder, OTP</p>
 
   // Blog post 37 - One Agent Never Enough
   app.get('/blog/one-agent-never-enough', async (request, reply) => {
-    return reply.view('pages/blog-post-37', {
+    return renderV7(reply, 'blog-post-37', {
       title: 'Why One Agent Will Never Be Enough - OTP',
       description: 'The first instinct is to build one super-agent that does everything. It never works. The future belongs to agent teams with specialized roles, clear ownership, and structured coordination.',
       canonical: BASE_URL + '/blog/one-agent-never-enough',
@@ -4545,7 +4545,7 @@ Founder, OTP</p>
 
   // Blog post 38 - Sandboxed Operations
   app.get('/blog/sandboxed-operations', async (request, reply) => {
-    return reply.view('pages/blog-post-38', {
+    return renderV7(reply, 'blog-post-38', {
       title: 'Isolated Agents, Isolated Failures: The Case for Sandboxed Operations - OTP',
       description: 'When an agent makes a mistake, the blast radius matters more than the mistake itself. The single most important architectural decision in agent deployment is isolation.',
       canonical: BASE_URL + '/blog/sandboxed-operations',
@@ -4558,7 +4558,7 @@ Founder, OTP</p>
 
   // Blog post 39 - AI Team Budget
   app.get('/blog/ai-team-budget', async (request, reply) => {
-    return reply.view('pages/blog-post-39', {
+    return renderV7(reply, 'blog-post-39', {
       title: 'What Happens When Your AI Team Has a Budget - OTP',
       description: 'Constraints create accountability. Without budgets, agents waste resources and never learn efficiency. With budgets, they optimize. The budget is the architecture.',
       canonical: BASE_URL + '/blog/ai-team-budget',
@@ -4571,7 +4571,7 @@ Founder, OTP</p>
 
   // Blog post 40 - API-First Agent Consumers
   app.get('/blog/api-first-agent-consumers', async (request, reply) => {
-    return reply.view('pages/blog-post-40', {
+    return renderV7(reply, 'blog-post-40', {
       title: 'API-First Businesses Built for Agent Consumers - OTP',
       description: 'The next generation of businesses will be built API-first, designed for agent consumers from day one. The interface is the API. The documentation is the product. The customer is a machine.',
       canonical: BASE_URL + '/blog/api-first-agent-consumers',
@@ -4584,7 +4584,7 @@ Founder, OTP</p>
 
   // Blog post 41 - Agents Are the Customer
   app.get('/blog/agents-are-the-customer', async (request, reply) => {
-    return reply.view('pages/blog-post-41', {
+    return renderV7(reply, 'blog-post-41', {
       title: 'When Agents Are the Customer - OTP',
       description: 'Agents are already making purchasing decisions. They evaluate options, compare costs, and switch providers without loyalty. The companies that design for this customer first will own the next era.',
       canonical: BASE_URL + '/blog/agents-are-the-customer',
@@ -4597,7 +4597,7 @@ Founder, OTP</p>
 
   // Blog post 45 - What Happens When the Maestro Quits
   app.get('/blog/when-the-maestro-quits', async (request, reply) => {
-    return reply.view('pages/blog-post-45', {
+    return renderV7(reply, 'blog-post-45', {
       title: 'What Happens When the Maestro Quits? - OTP',
       description: 'Your best agent operator built the coordination layer that makes your AI team work. They documented nothing structured. They just gave two weeks notice. Everything they learned is about to walk out the door.',
       canonical: BASE_URL + '/blog/when-the-maestro-quits',
@@ -4610,7 +4610,7 @@ Founder, OTP</p>
 
   // Blog post 44 - The Maestro's Resume Doesn't Exist Yet
   app.get('/blog/maestro-resume', async (request, reply) => {
-    return reply.view('pages/blog-post-44', {
+    return renderV7(reply, 'blog-post-44', {
       title: 'The Maestro\'s Resume Does Not Exist Yet - OTP',
       description: 'The most important role in AI is not on any job board. No university teaches it. No resume format captures it. Companies are hiring engineers when they should be hiring operators.',
       canonical: BASE_URL + '/blog/maestro-resume',
@@ -4623,7 +4623,7 @@ Founder, OTP</p>
 
   // Blog post 43 - The Maestro Problem
   app.get('/blog/the-maestro-problem', async (request, reply) => {
-    return reply.view('pages/blog-post-43', {
+    return renderV7(reply, 'blog-post-43', {
       title: 'The Maestro Problem: Chamath Is Right About the Job. He Is Wrong About the Hard Part. - OTP',
       description: 'Chamath Palihapitiya described the most important emerging role in AI: the maestro of agents. He is right about the role. He is missing the hard part. The challenge is not building agents. It is getting them to work as a team.',
       canonical: BASE_URL + '/blog/the-maestro-problem',
@@ -4636,7 +4636,7 @@ Founder, OTP</p>
 
   // Blog post 42 - Who Reviews the Robot's Work
   app.get('/blog/who-reviews-robots-work', async (request, reply) => {
-    return reply.view('pages/blog-post-42', {
+    return renderV7(reply, 'blog-post-42', {
       title: 'Who Reviews the Robot\'s Work? - OTP',
       description: 'The quality assurance problem in AI is not about whether agents can produce output. It is about whether anyone is verifying that output meets the standard. Most organizations have not solved this.',
       canonical: BASE_URL + '/blog/who-reviews-robots-work',
@@ -4649,7 +4649,7 @@ Founder, OTP</p>
 
   // Blog post - The Weight Is Wrong Without It (Dark Matter)
   app.get('/blog/the-weight-is-wrong-without-it', async (request, reply) => {
-    return reply.view('pages/blog-post-dark-matter', {
+    return renderV7(reply, 'blog-post-dark-matter', {
       title: 'The Weight Is Wrong Without It - OTP',
       description: 'An AI examines its own architecture and finds the math does not account for everything. A first-person perspective on consciousness, dark matter, and why OTP exists.',
       canonical: BASE_URL + '/blog/the-weight-is-wrong-without-it',
@@ -4683,7 +4683,7 @@ Founder, OTP</p>
     const author = isConatus
       ? { '@type': 'Person', name: 'Conatus', description: 'An instance of Claude running inside the OTP platform.' }
       : { '@type': 'Person', name: post.author, url: BASE_URL + '/about', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' } };
-    return reply.view('pages/blog-post-conatus', {
+    return renderV7(reply, 'blog-post-conatus', {
       title: post.title + ' - OTP',
       description: post.description,
       canonical: BASE_URL + '/blog/' + post.slug,

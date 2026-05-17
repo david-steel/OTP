@@ -1,56 +1,81 @@
+<%# /glossary/:slug -- v7 layout (light, editorial). One glossary term.
+    Route locals: term { slug, name, definition, whyItMatters, framework,
+    relatedSlugs[], aliases[] }, relatedTerms [{ slug, name, definition }].
+    Render via reply.view('pages/glossary-term', data, { layout: 'layouts/v7' }). %>
 <%
-  // term: { slug, name, definition, whyItMatters, framework, relatedSlugs[], aliases[] }
-  // relatedTerms: [{ slug, name, definition }]
   function humanize(s) { return (s || '').replace(/-/g, ' '); }
 %>
-<!-- Term header -->
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <nav class="text-xs text-gray-400 mb-4">
-      <a href="/" class="hover:text-otp-300">Home</a>
-      <span class="mx-1.5 text-gray-600">/</span>
-      <a href="/glossary" class="hover:text-otp-300">Glossary</a>
-      <span class="mx-1.5 text-gray-600">/</span>
-      <span class="text-gray-300"><%= term.name %></span>
+<style>
+  .gt-prose p { color:var(--ink-soft); font-size:17px; line-height:1.78; }
+  .gt-prose strong { color:var(--ink); font-weight:600; }
+  .gt-peek { animation:gt-peek 7s ease-in-out infinite; transform-origin:bottom center; }
+  @keyframes gt-peek { 0%,88%,100%{transform:translateY(0) rotate(0);} 94%{transform:translateY(-6px) rotate(-4deg);} }
+  @media (prefers-reduced-motion:reduce){ .gt-peek{ animation:none; } }
+</style>
+
+<!-- ================= TERM HEADER ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[760px] mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px] sm:pb-14">
+    <nav class="font-mono text-[12px] text-[var(--ink-mute)] mb-7 flex flex-wrap items-center gap-1.5">
+      <a href="/" class="hover:text-[var(--ink)] transition-colors">Home</a>
+      <span class="text-[var(--line)]">/</span>
+      <a href="/glossary" class="hover:text-[var(--ink)] transition-colors">Glossary</a>
+      <span class="text-[var(--line)]">/</span>
+      <span class="text-[var(--ink-soft)]"><%= term.name %></span>
     </nav>
-    <div class="animate-fade-in-up">
-      <div class="flex items-center gap-2 text-xs mb-3">
-        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Glossary</span>
-        <% if (term.framework) { %>
-          <span class="px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold"><%= term.framework %></span>
+
+    <div class="flex items-start gap-5">
+      <div class="flex-1 min-w-0">
+        <div class="eyebrow mb-4 flex flex-wrap items-center gap-2.5">
+          <span class="tick" style="background:var(--blue);"></span>
+          <span>Glossary</span>
+          <% if (term.framework) { %>
+            <span class="font-mono text-[10px] font-medium tracking-[0.12em] uppercase px-2 py-[3px] rounded-md"
+                  style="color:var(--blue-deep); background:rgba(13,125,242,.08); border:1px solid rgba(13,125,242,.2);"><%= term.framework %></span>
+          <% } %>
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.1rem,4.4vw,3.4rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          <%= term.name %>
+        </h1>
+        <% if (term.aliases && term.aliases.length) { %>
+          <p class="font-mono text-[12.5px] text-[var(--ink-mute)] mt-3">
+            Also known as: <%= term.aliases.join(', ') %>
+          </p>
         <% } %>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight"><%= term.name %></h1>
-      <% if (term.aliases && term.aliases.length) { %>
-        <p class="text-sm text-gray-400 mt-2">Also known as: <%= term.aliases.join(', ') %></p>
-      <% } %>
+      <img src="/public/orgy-clean.png" alt="" aria-hidden="true"
+           class="gt-peek hidden sm:block shrink-0 w-[78px] h-auto"
+           style="filter:drop-shadow(0 12px 20px rgba(20,22,28,.16));">
     </div>
   </div>
 </section>
 
-<!-- Term body -->
-<article class="bg-white py-10 sm:py-14">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+<!-- ================= TERM BODY ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
 
-    <div class="prose prose-lg max-w-none">
-      <p class="text-lg text-gray-800 leading-relaxed"><%= term.definition %></p>
+    <div class="gt-prose">
+      <p><%= term.definition %></p>
     </div>
 
     <% if (term.whyItMatters) { %>
-      <div class="mt-8 p-5 rounded-xl border border-otp-100 bg-otp-50">
-        <div class="text-xs font-semibold text-otp-600 uppercase tracking-wider mb-2">Why it matters</div>
-        <p class="text-gray-800 leading-relaxed"><%= term.whyItMatters %></p>
+      <div class="card p-7 mt-9 border-t-[3px]" style="border-top-color:var(--blue);">
+        <div class="eyebrow mb-3" style="color:var(--blue-deep);">Why it matters</div>
+        <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72]"><%= term.whyItMatters %></p>
       </div>
     <% } %>
 
     <% if (relatedTerms && relatedTerms.length) { %>
-      <section class="mt-12">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Related terms</h2>
-        <div class="grid sm:grid-cols-2 gap-3">
+      <section class="mt-14">
+        <div class="eyebrow mb-5">Related terms</div>
+        <div class="grid sm:grid-cols-2 gap-4">
           <% relatedTerms.forEach(function(rt) { %>
-            <a href="/glossary/<%= rt.slug %>" class="block p-4 rounded-lg border border-gray-200 bg-white hover:border-otp-300 hover:bg-otp-50/40 transition-colors">
-              <div class="font-semibold text-gray-900 group-hover:text-otp-600"><%= rt.name %></div>
-              <div class="text-sm text-gray-600 mt-1 line-clamp-2"><%= rt.definition.length > 130 ? rt.definition.slice(0, 127) + '...' : rt.definition %></div>
+            <a href="/glossary/<%= rt.slug %>" class="card lift p-5 block">
+              <div class="font-display text-[var(--ink)] text-[1.05rem] font-bold leading-snug"><%= rt.name %></div>
+              <div class="text-[13.5px] text-[var(--ink-soft)] leading-[1.6] mt-1.5">
+                <%= rt.definition.length > 130 ? rt.definition.slice(0, 127) + '...' : rt.definition %>
+              </div>
             </a>
           <% }); %>
         </div>
@@ -60,29 +85,45 @@
     <% if (term.relatedSlugs && term.relatedSlugs.length > (relatedTerms ? relatedTerms.length : 0)) { %>
       <% var missing = term.relatedSlugs.filter(function(s) { return !relatedTerms.some(function(r) { return r.slug === s; }); }); %>
       <% if (missing.length) { %>
-        <p class="mt-6 text-sm text-gray-500">
+        <p class="mt-7 text-[13.5px] text-[var(--ink-mute)]">
           See also:
           <% missing.forEach(function(s, i) { %>
-            <a href="/glossary/<%= s %>" class="text-otp-500 hover:text-otp-600"><%= humanize(s) %></a><% if (i < missing.length - 1) { %>, <% } %>
+            <a href="/glossary/<%= s %>" class="text-[var(--blue-deep)] link-u capitalize"><%= humanize(s) %></a><% if (i < missing.length - 1) { %>, <% } %>
           <% }); %>
         </p>
       <% } %>
     <% } %>
-
-    <!-- Cross-link to product surfaces -->
-    <section class="mt-14 p-6 rounded-xl border border-gray-200 bg-gray-50">
-      <h2 class="text-base font-bold text-gray-900 mb-2">Build with this on OTP</h2>
-      <p class="text-gray-700 mb-4 text-sm">OTP encodes coordination intelligence so AI agent teams can run on it. If this term shows up in your team's playbook, it belongs in your OOS.</p>
-      <div class="flex flex-wrap gap-3 text-sm">
-        <a href="/start-here" class="inline-flex items-center px-4 py-2 rounded-lg bg-otp-500 text-white font-semibold hover:bg-otp-600 transition-colors">Get started</a>
-        <a href="/practices" class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 font-semibold hover:border-otp-300 transition-colors">Browse practices</a>
-        <a href="/glossary" class="inline-flex items-center px-4 py-2 rounded-lg text-otp-500 hover:text-otp-600 font-semibold">All terms →</a>
-      </div>
-    </section>
-
-    <p class="mt-10 text-xs text-gray-500">
-      Found an issue with this definition? <a href="/tickets" class="text-otp-500 hover:text-otp-600 font-medium">Tell us</a> and we'll fix it.
-    </p>
-
   </div>
-</article>
+</section>
+
+<!-- ================= BUILD WITH THIS ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
+    <div class="card p-8 sm:p-10">
+      <div class="flex flex-col sm:flex-row items-start gap-7">
+        <img src="/public/hand-3.png" alt="" aria-hidden="true"
+             class="shrink-0 mx-auto sm:mx-0 w-[76px] h-auto">
+        <div>
+          <div class="eyebrow mb-3" style="color:var(--green-deep);">Build with this on OTP</div>
+          <h2 class="font-display text-[var(--ink)] leading-[1.15] mb-3"
+              style="font-size:clamp(1.4rem,2.6vw,1.95rem); font-weight:700;">
+            If this term shows up in your playbook, it belongs in your OOS.
+          </h2>
+          <p class="text-[15px] text-[var(--ink-soft)] leading-[1.7] mb-6">
+            OTP encodes coordination intelligence so teams of humans and AI agents can run on it.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <a href="/start-here" class="btn-primary px-6 py-3 text-[15px]">Get started</a>
+            <a href="/practices" class="btn-ghost px-6 py-3 text-[15px]">Browse practices</a>
+            <a href="/glossary" class="inline-flex items-center px-2 py-3 text-[15px] text-[var(--ink)] link-u">All terms &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-10 text-[13px] text-[var(--ink-mute)]">
+      Found an issue with this definition?
+      <a href="/tickets" class="text-[var(--blue-deep)] link-u">Tell us</a> and we'll fix it.
+    </p>
+  </div>
+</section>

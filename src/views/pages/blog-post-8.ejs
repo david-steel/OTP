@@ -1,27 +1,27 @@
 <%- include('../partials/blog-signup-cta'); %>
 <!-- Post header -->
-<section class="bg-otp-950 border-b border-white/5">
+<section class="bg-[var(--white)] border-b border-[var(--line-soft)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-[var(--blue)] hover:text-[var(--blue)] transition-colors mb-6 group">
       <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Practitioner Guide</span>
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-[rgba(13,125,242,0.12)] text-[var(--blue)] font-semibold">Practitioner Guide</span>
         <span>March 2026</span>
         <span>&middot;</span>
         <span>David Steel</span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">How We Coordinate 14 AI Agents Without Them Stepping on Each Other</h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight">How We Coordinate 14 AI Agents Without Them Stepping on Each Other</h1>
     </div>
   </div>
 </section>
 
 <!-- Post body -->
-<section class="bg-white py-10 sm:py-14">
+<section class="bg-[var(--card)] py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+    <article class="text-[var(--ink-soft)] leading-[1.8] text-[15px] sm:text-base space-y-5">
 
       <p>We run 14 AI agents at Sneeze It. Not experiments. Not prototypes. Production agents that manage real money, real clients, and real employees every single day.</p>
 
@@ -29,7 +29,7 @@
 
       <p>Building one good agent is straightforward. Getting 14 of them to run simultaneously without colliding, duplicating work, corrupting data, or sending conflicting messages to the same client? That is the actual problem. Here is what we learned.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Principle 1: One Seat, One Owner</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Principle 1: One Seat, One Owner</h2>
 
       <p>No agent does two jobs. No two agents do the same job. The boundaries are explicit and non-negotiable.</p>
 
@@ -39,27 +39,27 @@
 
       <p>Overlap is where multi-agent systems fail. We eliminate it by design.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Principle 2: Pre-Computed Shared State</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Principle 2: Pre-Computed Shared State</h2>
 
       <p>Every data source writes to a shared state file. Orchestrators read files. They never scan sources directly.</p>
 
-      <p>Radar does not query Slack during the morning briefing. Radar reads <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm">radar-slack-latest.md</code>, which was written by the Slack scanner. Dash does not pull from the Meta Ads API during the briefing. Dash reads from its own pre-computed file. Every agent follows the same pattern: scan, write to your file, done. The orchestrator compiles from files.</p>
+      <p>Radar does not query Slack during the morning briefing. Radar reads <code class="bg-[var(--grey)] px-1.5 py-0.5 rounded text-sm">radar-slack-latest.md</code>, which was written by the Slack scanner. Dash does not pull from the Meta Ads API during the briefing. Dash reads from its own pre-computed file. Every agent follows the same pattern: scan, write to your file, done. The orchestrator compiles from files.</p>
 
       <p>This prevents race conditions. It ensures every agent sees the same data at the same time. It also means that if one scanner fails, the rest of the briefing still works. The failed section gets flagged as stale, not missing.</p>
 
       <p>Before we built this, we had agents hitting the same APIs simultaneously, getting different results at different times, and producing contradictory reports. Twelve data corruption events in our first month. Pre-computed shared state eliminated all of them.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Principle 3: Escalation Over Autonomy</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Principle 3: Escalation Over Autonomy</h2>
 
       <p>Agents flag and recommend. The human decides.</p>
 
       <p>Pepper drafts every email. I approve before it sends. Arin writes Slack messages to the call center team. I approve before they post. Dirk identifies pipeline opportunities. I decide which ones to pursue. No agent sends a client communication without explicit human approval.</p>
 
-      <p>The one exception: agent-to-agent coordination. We built a <a href="/glossary" class="text-otp-500 hover:text-otp-600 transition-colors font-medium">message bus</a> so agents can coordinate directly using structured message types. REQUEST, INFORM, PROPOSAL, RESPONSE, CHALLENGE. When Jeff detects an overspend anomaly, he sends a REQUEST to Dash for diagnosis. Dash responds with data. That loop runs without me in the middle.</p>
+      <p>The one exception: agent-to-agent coordination. We built a <a href="/glossary" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors font-medium">message bus</a> so agents can coordinate directly using structured message types. REQUEST, INFORM, PROPOSAL, RESPONSE, CHALLENGE. When Jeff detects an overspend anomaly, he sends a REQUEST to Dash for diagnosis. Dash responds with data. That loop runs without me in the middle.</p>
 
       <p>But anything that touches a client, a dollar, or an external system requires human approval. Autonomy is earned, not granted.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Principle 4: Separate Blast Radius</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Principle 4: Separate Blast Radius</h2>
 
       <p>Tuning one agent never breaks another. Each agent has its own shared state file, its own invocation command, its own scope, its own personality, its own tool access.</p>
 
@@ -67,15 +67,15 @@
 
       <p>This is critical for iteration speed. We change something about an agent almost every day. New rules, refined prompts, additional data sources, adjusted escalation thresholds. If those changes rippled across the entire system, we would be paralyzed. Separate blast radius means we can move fast without fear.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Principle 5: Earn Complexity</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Principle 5: Earn Complexity</h2>
 
       <p>Validate the current stack before adding new agents or tools.</p>
 
       <p>We built Radar first. Just the morning briefing. Once Radar proved its value, we added Dash for ad analytics. Then Pepper for email. Then Crystal for projects. Then Dirk for revenue. Each agent had to demonstrate real, measurable impact before the next one was approved.</p>
 
-      <p>Right now we have four more agents planned: Mike (CMO), Sparky (marketing ops), Ledger (finance), and Bridge (human-AI culture). They are all parked. Not because we cannot build them. Because the current 14 have not fully earned their seats yet. Bassim evaluates us nightly against the <a href="/browse" class="text-otp-500 hover:text-otp-600 transition-colors font-medium">8 Levels of Agentic Engineering</a>. Until the score moves, we are not adding more complexity.</p>
+      <p>Right now we have four more agents planned: Mike (CMO), Sparky (marketing ops), Ledger (finance), and Bridge (human-AI culture). They are all parked. Not because we cannot build them. Because the current 14 have not fully earned their seats yet. Bassim evaluates us nightly against the <a href="/browse" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors font-medium">8 Levels of Agentic Engineering</a>. Until the score moves, we are not adding more complexity.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What We Got Wrong</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">What We Got Wrong</h2>
 
       <p>The principles above sound clean. They emerged from failures that were not.</p>
 
@@ -87,27 +87,27 @@
 
       <p>Every principle in this article is a scar from something that broke in production.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">From Internal System to Published Protocol</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">From Internal System to Published Protocol</h2>
 
-      <p>These five principles became our <a href="/blog/why-we-built-otp" class="text-otp-500 hover:text-otp-600 transition-colors font-medium">Organizational Operating System</a>. We published it on OTP so other organizations running AI agents can see exactly how we coordinate ours.</p>
+      <p>These five principles became our <a href="/blog/why-we-built-otp" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors font-medium">Organizational Operating System</a>. We published it on OTP so other organizations running AI agents can see exactly how we coordinate ours.</p>
 
       <p>Not the prompts. Not the API keys. The coordination architecture. The ownership boundaries. The escalation rules. The failure modes we discovered and the patterns we built to prevent them.</p>
 
-      <p>If you are running more than a few AI agents, you are either solving these problems or about to discover them. You can <a href="/browse" class="text-otp-500 hover:text-otp-600 transition-colors font-medium">browse published intelligence</a> from organizations that already have, <a href="/browse" class="text-otp-500 hover:text-otp-600 transition-colors font-medium">compare your approach to theirs</a>, and learn what we all learned the hard way.</p>
+      <p>If you are running more than a few AI agents, you are either solving these problems or about to discover them. You can <a href="/browse" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors font-medium">browse published intelligence</a> from organizations that already have, <a href="/browse" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors font-medium">compare your approach to theirs</a>, and learn what we all learned the hard way.</p>
 
-      <p>Or you can <a href="/guide" class="text-otp-500 hover:text-otp-600 transition-colors font-medium">publish your own OOS</a> and contribute what you know.</p>
+      <p>Or you can <a href="/guide" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors font-medium">publish your own OOS</a> and contribute what you know.</p>
 
-      <div class="bg-otp-50 border border-otp-100 rounded-xl p-5 my-8">
-        <p class="text-otp-800 font-semibold text-sm">The hard problem is not building smarter agents. It is building the coordination layer that keeps them from breaking things. These five principles are our answer. We are sharing them because nobody should have to rediscover them from scratch.</p>
+      <div class="bg-[var(--grey)] border border-[var(--line)] rounded-xl p-5 my-8">
+        <p class="text-[var(--blue-deep)] font-semibold text-sm">The hard problem is not building smarter agents. It is building the coordination layer that keeps them from breaking things. These five principles are our answer. We are sharing them because nobody should have to rediscover them from scratch.</p>
       </div>
 
       <!-- Author -->
-      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+      <div class="mt-12 pt-8 border-t border-[var(--line)] flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--blue-deep)] flex items-center justify-center text-[var(--ink)] font-bold text-lg flex-shrink-0">DS</div>
         <div>
-          <div class="font-bold text-gray-900">David Steel</div>
-          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
-          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+          <div class="font-bold text-[var(--ink)]">David Steel</div>
+          <p class="text-sm text-[var(--ink-mute)] mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
         </div>
       </div>
 
@@ -116,10 +116,10 @@
 </section>
 
 <!-- Next post CTA -->
-<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+<section class="bg-[var(--grey)] py-10 sm:py-14 border-t border-[var(--line)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <p class="text-sm text-gray-400 mb-4">Ready to publish your own coordination intelligence?</p>
-    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
+    <p class="text-sm text-[var(--ink-mute)] mb-4">Ready to publish your own coordination intelligence?</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--blue)] text-[var(--ink)] rounded-lg font-semibold hover:bg-[var(--blue)] transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
       Publish Your OOS
       <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
     </a>

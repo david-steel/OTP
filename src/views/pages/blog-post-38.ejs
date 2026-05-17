@@ -1,30 +1,30 @@
 <%- include('../partials/blog-signup-cta'); %>
 <!-- Post header -->
-<section class="bg-otp-950 border-b border-white/5">
+<section class="bg-[var(--white)] border-b border-[var(--line-soft)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-[var(--blue)] hover:text-[var(--blue)] transition-colors mb-6 group">
       <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Technical</span>
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-[rgba(13,125,242,0.12)] text-[var(--blue)] font-semibold">Technical</span>
         <span>February 2026</span>
         <span>&middot;</span>
         <span>David Steel</span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Isolated Agents, Isolated Failures: The Case for Sandboxed Operations</h1>
-      <p class="text-gray-400 mt-4 text-base sm:text-lg leading-relaxed">When an agent makes a mistake, the blast radius matters more than the mistake itself. A typo in a draft email is harmless. A bad database query that corrupts production data is catastrophic. The single most important architectural decision in agent deployment is isolation.</p>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight">Isolated Agents, Isolated Failures: The Case for Sandboxed Operations</h1>
+      <p class="text-[var(--ink-mute)] mt-4 text-base sm:text-lg leading-relaxed">When an agent makes a mistake, the blast radius matters more than the mistake itself. A typo in a draft email is harmless. A bad database query that corrupts production data is catastrophic. The single most important architectural decision in agent deployment is isolation.</p>
     </div>
   </div>
 </section>
 
 <!-- Post body -->
-<section class="bg-white py-10 sm:py-14">
+<section class="bg-[var(--card)] py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+    <article class="text-[var(--ink-soft)] leading-[1.8] text-[15px] sm:text-base space-y-5">
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Blast Radius Thinking</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Blast Radius Thinking</h2>
 
       <p>Every agent failure has a blast radius. The question is whether you designed for it or discovered it after the damage was done.</p>
 
@@ -32,7 +32,7 @@
 
       <p>This is not paranoia. This is engineering discipline. The same discipline that puts circuit breakers in electrical panels and bulkheads in ships. You design for failure because failure is inevitable.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The All-Powerful Agent is a Liability</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The All-Powerful Agent is a Liability</h2>
 
       <p>The instinct is to give agents broad permissions. Read everything. Write everywhere. Access all systems. It feels efficient. It is, until something goes wrong.</p>
 
@@ -40,7 +40,7 @@
 
       <p>A human employee who accidentally deletes a row in a spreadsheet is an annoyance. An agent that accidentally runs a bulk update on a production database in 200 milliseconds is a disaster. The velocity of the mistake is what makes isolation non-negotiable.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Deliberate Limitation</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Deliberate Limitation</h2>
 
       <p>The best agent architectures are deliberately limited. Each agent can do less, but the system as a whole does more. Safely.</p>
 
@@ -50,7 +50,7 @@
 
       <p>This runs counter to the "all-powerful AI" narrative. But the narrative is selling a fantasy. Production systems require constraint.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Rollback is Non-Negotiable</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Rollback is Non-Negotiable</h2>
 
       <p>If an agent takes an action, you need to be able to undo it. Full stop. Design every agent interaction to be reversible.</p>
 
@@ -58,7 +58,7 @@
 
       <p>The cost of this pattern is latency. The benefit is sleep. I have never once regretted adding an approval gate. I have regretted removing one.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Failure Containment in Practice</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Failure Containment in Practice</h2>
 
       <p>At Sneeze It, we use a principle called "separate blast radius." Tuning one agent never breaks another. Each agent operates in its own context, with its own state files, its own tools, and its own error handling.</p>
 
@@ -68,27 +68,27 @@
 
       <p>Isolation is not overhead. It is insurance. And the premium is far cheaper than the claim.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Hard Lesson</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The Hard Lesson</h2>
 
       <p>The cost of isolation is overhead. More agents, more state files, more coordination mechanisms. The cost of not isolating is catastrophe. Organizations that skip sandboxing learn this the hard way. Usually once.</p>
 
       <p>I have never heard someone say "I wish we had given our agents more permissions." I hear "I wish we had contained that failure" regularly.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What OTP Enables</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">What OTP Enables</h2>
 
       <p>OTP's architecture enforces isolation at the protocol level. Each organization's OOS is its own artifact. Merge operations are previewed, reviewed, and approved. No agent can overwrite another organization's intelligence. The protocol is the sandbox.</p>
 
       <p>This is not a feature. It is a design philosophy. Organizational intelligence is too valuable to trust to unconstrained automation. Every interaction is bounded, reversible, and auditable.</p>
 
-      <div class="bg-otp-50 border border-otp-100 rounded-xl p-6 sm:p-8 mt-10">
-        <p class="text-sm font-semibold text-otp-700 mb-2">Audit Your Blast Radius</p>
-        <p class="text-gray-600 text-sm leading-relaxed mb-4">For every agent in your system, answer one question: what is the worst thing it can do if it fails? If you cannot answer that, you have a sandboxing problem. Fix it before it fixes you.</p>
+      <div class="bg-[var(--grey)] border border-[var(--line)] rounded-xl p-6 sm:p-8 mt-10">
+        <p class="text-sm font-semibold text-[var(--blue-deep)] mb-2">Audit Your Blast Radius</p>
+        <p class="text-[var(--ink-soft)] text-sm leading-relaxed mb-4">For every agent in your system, answer one question: what is the worst thing it can do if it fails? If you cannot answer that, you have a sandboxing problem. Fix it before it fixes you.</p>
         <div class="flex flex-wrap gap-3">
-          <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-otp-500 hover:bg-otp-600 text-white text-sm font-semibold rounded-lg transition-colors">
+          <a href="/publish" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--blue)] hover:bg-[var(--blue-deep)] text-[var(--ink)] text-sm font-semibold rounded-lg transition-colors">
             Publish Your OOS
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </a>
-          <a href="/browse" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-otp-200 hover:border-otp-300 text-otp-600 text-sm font-semibold rounded-lg transition-colors">
+          <a href="/browse" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--card)] border border-[var(--line)] hover:border-[var(--blue)] text-[var(--blue-deep)] text-sm font-semibold rounded-lg transition-colors">
             See Who's Publishing
           </a>
         </div>

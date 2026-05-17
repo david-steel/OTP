@@ -1,175 +1,175 @@
 <%- include('../partials/blog-signup-cta'); %>
 <!-- Post header -->
-<section class="bg-otp-950 border-b border-white/5">
+<section class="bg-[var(--white)] border-b border-[var(--line-soft)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-[var(--blue)] hover:text-[var(--blue)] transition-colors mb-6 group">
       <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
         <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold">Framework</span>
         <span>March 2026</span>
         <span>&middot;</span>
         <span>David Steel</span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">The 8 Levels of Agentic Maturity (and How to Measure Yours)</h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight">The 8 Levels of Agentic Maturity (and How to Measure Yours)</h1>
     </div>
   </div>
 </section>
 
 <!-- Post body -->
-<section class="bg-white py-10 sm:py-14">
+<section class="bg-[var(--card)] py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+    <article class="text-[var(--ink-soft)] leading-[1.8] text-[15px] sm:text-base space-y-5">
 
       <p>Not all AI agent deployments are created equal. A company using ChatGPT for customer support is not at the same maturity as a company running 14 autonomous agents that coordinate via a shared message bus. The first is a tool. The second is an organization. They face entirely different problems, require entirely different architectures, and fail in entirely different ways.</p>
 
       <p>But until recently, there was no standard way to measure the difference. No common vocabulary. No framework that let you look at two AI deployments and say, objectively, which one has more sophisticated coordination. You either had agents or you didn't. That was the extent of the conversation.</p>
 
-      <p>The <strong class="text-gray-900">8 Levels of Agentic Engineering</strong> by Bassim Eledath changed that. It gave the industry a clear, hierarchical framework for measuring how advanced an AI agent deployment actually is. Not how smart the model is. How well the agents coordinate. OTP adopted it as a core measurement dimension. Every published <a href="/glossary#organizational-operating-system" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">OOS</a> on the platform receives an agentic level score based on this framework.</p>
+      <p>The <strong class="text-[var(--ink)]">8 Levels of Agentic Engineering</strong> by Bassim Eledath changed that. It gave the industry a clear, hierarchical framework for measuring how advanced an AI agent deployment actually is. Not how smart the model is. How well the agents coordinate. OTP adopted it as a core measurement dimension. Every published <a href="/glossary#organizational-operating-system" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">OOS</a> on the platform receives an agentic level score based on this framework.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The 8 Levels</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The 8 Levels</h2>
 
       <p>Each level builds on the one below it. Weaknesses at lower levels cap your score regardless of what you have built higher up. You cannot be L7 if your L3 tool integration is unreliable.</p>
 
       <div class="space-y-6 my-8">
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">L1</span>
-            <span class="font-bold text-gray-900">Tab Complete</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink-soft)]">L1</span>
+            <span class="font-bold text-[var(--ink)]">Tab Complete</span>
           </div>
-          <p class="text-sm text-gray-600">Basic autocomplete. GitHub Copilot suggestions. The AI predicts the next token in your workflow. No autonomy. No persistent action. The human does all the thinking. The AI finishes the sentence.</p>
+          <p class="text-sm text-[var(--ink-soft)]">Basic autocomplete. GitHub Copilot suggestions. The AI predicts the next token in your workflow. No autonomy. No persistent action. The human does all the thinking. The AI finishes the sentence.</p>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">L2</span>
-            <span class="font-bold text-gray-900">Chat Assistant</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink-soft)]">L2</span>
+            <span class="font-bold text-[var(--ink)]">Chat Assistant</span>
           </div>
-          <p class="text-sm text-gray-600">Interactive Q&A. ChatGPT, Claude, Gemini. Single-turn or multi-turn conversations, but no persistent action beyond the chat window. The AI answers questions. It does not do work on your behalf. Close the tab and everything resets.</p>
+          <p class="text-sm text-[var(--ink-soft)]">Interactive Q&A. ChatGPT, Claude, Gemini. Single-turn or multi-turn conversations, but no persistent action beyond the chat window. The AI answers questions. It does not do work on your behalf. Close the tab and everything resets.</p>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-300 text-gray-700">L3</span>
-            <span class="font-bold text-gray-900">Tool User</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink-soft)]">L3</span>
+            <span class="font-bold text-[var(--ink)]">Tool User</span>
           </div>
-          <p class="text-sm text-gray-600">The agent can call external tools via MCP or function calling. Read databases. Send emails. Make API calls. Pull data from Slack. Post to a CRM. This is where the AI starts touching real systems. The risk profile changes here because mistakes now have consequences outside the chat window.</p>
+          <p class="text-sm text-[var(--ink-soft)]">The agent can call external tools via MCP or function calling. Read databases. Send emails. Make API calls. Pull data from Slack. Post to a CRM. This is where the AI starts touching real systems. The risk profile changes here because mistakes now have consequences outside the chat window.</p>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">L4</span>
-            <span class="font-bold text-gray-900">Workflow Agent</span>
+            <span class="font-bold text-[var(--ink)]">Workflow Agent</span>
           </div>
-          <p class="text-sm text-gray-600">Multi-step task execution with planning. The agent can break a goal into subtasks and execute them sequentially. "Compile a morning briefing" becomes: scan Slack, pull calendar events, check email, triage by priority, write to a daily note. Ten steps. One command. The agent plans the work, not just executes a single action.</p>
+          <p class="text-sm text-[var(--ink-soft)]">Multi-step task execution with planning. The agent can break a goal into subtasks and execute them sequentially. "Compile a morning briefing" becomes: scan Slack, pull calendar events, check email, triage by priority, write to a daily note. Ten steps. One command. The agent plans the work, not just executes a single action.</p>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">L5</span>
-            <span class="font-bold text-gray-900">Autonomous Specialist</span>
+            <span class="font-bold text-[var(--ink)]">Autonomous Specialist</span>
           </div>
-          <p class="text-sm text-gray-600">A domain-expert agent that operates independently within a defined scope. It handles its own errors. It knows what it owns and what it does not own. A call center manager agent that reads performance data, drafts coaching messages, and flags problems without being asked. The human sets the mission. The agent runs it.</p>
+          <p class="text-sm text-[var(--ink-soft)]">A domain-expert agent that operates independently within a defined scope. It handles its own errors. It knows what it owns and what it does not own. A call center manager agent that reads performance data, drafts coaching messages, and flags problems without being asked. The human sets the mission. The agent runs it.</p>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">L6</span>
-            <span class="font-bold text-gray-900">Multi-Agent System</span>
+            <span class="font-bold text-[var(--ink)]">Multi-Agent System</span>
           </div>
-          <p class="text-sm text-gray-600">Multiple specialized agents in the same environment. Each has a role. An analytics agent, a project manager agent, an email agent, a pipeline agent. They coexist. But coordination is ad-hoc. They share a codebase or a runtime, not a protocol. When they collide, the human resolves it.</p>
+          <p class="text-sm text-[var(--ink-soft)]">Multiple specialized agents in the same environment. Each has a role. An analytics agent, a project manager agent, an email agent, a pipeline agent. They coexist. But coordination is ad-hoc. They share a codebase or a runtime, not a protocol. When they collide, the human resolves it.</p>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-otp-100 text-otp-700">L7</span>
-            <span class="font-bold text-gray-900">Orchestrated Agent Team</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--grey)] text-[var(--blue-deep)]">L7</span>
+            <span class="font-bold text-[var(--ink)]">Orchestrated Agent Team</span>
           </div>
-          <p class="text-sm text-gray-600">A coordinated agent fleet with shared state files, explicit ownership boundaries, pre-computed data handoffs, and escalation protocols. Every agent knows what it owns, what it does not own, and where to send problems it cannot solve. This is where most serious AI-native companies are today. The coordination is deliberate, documented, and testable.</p>
+          <p class="text-sm text-[var(--ink-soft)]">A coordinated agent fleet with shared state files, explicit ownership boundaries, pre-computed data handoffs, and escalation protocols. Every agent knows what it owns, what it does not own, and where to send problems it cannot solve. This is where most serious AI-native companies are today. The coordination is deliberate, documented, and testable.</p>
         </div>
 
-        <div class="bg-otp-50 rounded-xl p-5 border border-otp-100">
+        <div class="bg-[var(--grey)] rounded-xl p-5 border border-[var(--line)]">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-otp-500 text-white">L8</span>
-            <span class="font-bold text-gray-900">Autonomous Agent Teams</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--blue)] text-[var(--ink)]">L8</span>
+            <span class="font-bold text-[var(--ink)]">Autonomous Agent Teams</span>
           </div>
-          <p class="text-sm text-gray-600">Agents coordinate with each other without human mediation. An agent-to-agent message bus carries structured messages: requests, proposals, challenges, responses. One agent detects an overspend anomaly, sends a diagnosis request to the analytics agent, receives the root cause, and escalates to the operations agent with a recommended action. The human sets strategy. The agents execute and self-correct. This is the frontier.</p>
+          <p class="text-sm text-[var(--ink-soft)]">Agents coordinate with each other without human mediation. An agent-to-agent message bus carries structured messages: requests, proposals, challenges, responses. One agent detects an overspend anomaly, sends a diagnosis request to the analytics agent, receives the root cause, and escalates to the operations agent with a recommended action. The human sets strategy. The agents execute and self-correct. This is the frontier.</p>
         </div>
 
       </div>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">How OTP Measures It</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">How OTP Measures It</h2>
 
-      <p>Every published OOS on OTP receives an <a href="/glossary#agentic-maturity-levels" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">agentic level score</a>. The score is not self-reported. It is calculated based on the coordination patterns, authority boundaries, and failure modes documented in the claims.</p>
+      <p>Every published OOS on OTP receives an <a href="/glossary#agentic-maturity-levels" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">agentic level score</a>. The score is not self-reported. It is calculated based on the coordination patterns, authority boundaries, and failure modes documented in the claims.</p>
 
       <p>An OOS that describes shared state files, explicit agent ownership boundaries, and escalation protocols will score L7. One that also describes an agent message bus with structured message types (REQUEST, INFORM, PROPOSAL, RESPONSE, CHALLENGE) and documented agent-to-agent workflows will score L8.</p>
 
       <p>The scoring looks at what you actually do, not what you aspire to. If your OOS describes an agent message bus but your claims show zero transactions through it, the score reflects the gap. Dead infrastructure does not count.</p>
 
-      <div class="bg-gray-50 rounded-xl p-5 my-8 border border-gray-100">
-        <p class="text-gray-600 text-sm">The agentic level score is visible on every published OOS. When you <a href="/browse" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">browse the registry</a>, you can filter and sort by level. This makes it easy to find organizations operating at your level or the level you want to reach.</p>
+      <div class="bg-[var(--grey)] rounded-xl p-5 my-8 border border-[var(--line)]">
+        <p class="text-[var(--ink-soft)] text-sm">The agentic level score is visible on every published OOS. When you <a href="/browse" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">browse the registry</a>, you can filter and sort by level. This makes it easy to find organizations operating at your level or the level you want to reach.</p>
       </div>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Where Most Organizations Are</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Where Most Organizations Are</h2>
 
       <p>Most organizations using AI today are between L2 and L4. They have chat assistants. Maybe a few tool-using agents that pull data from APIs or send automated emails. Some have built workflow agents that chain multiple steps together. That is the current center of gravity.</p>
 
       <p>The jump from L4 to L5 is significant. It requires an agent that owns a domain, handles its own errors, and operates without being prompted for every action. Most teams underestimate how much specification that takes. You have to define what the agent owns, what it does not own, how it handles edge cases, and what it does when it is wrong.</p>
 
-      <p>The jump from L5 to L7 is where <a href="/blog/what-is-coordination-intelligence" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">coordination intelligence</a> becomes essential. You cannot get six agents to work together without explicit rules about shared state, ownership boundaries, data handoffs, and escalation paths. Ad-hoc coordination breaks down fast. Two agents write to the same file. One agent optimizes a metric that another agent depends on. An escalation fires but nobody picks it up. These are not model failures. They are organizational failures. And they require organizational solutions.</p>
+      <p>The jump from L5 to L7 is where <a href="/blog/what-is-coordination-intelligence" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">coordination intelligence</a> becomes essential. You cannot get six agents to work together without explicit rules about shared state, ownership boundaries, data handoffs, and escalation paths. Ad-hoc coordination breaks down fast. Two agents write to the same file. One agent optimizes a metric that another agent depends on. An escalation fires but nobody picks it up. These are not model failures. They are organizational failures. And they require organizational solutions.</p>
 
       <p>That is exactly what the OOS captures.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">How to Level Up</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">How to Level Up</h2>
 
-      <p>The path from your current level to the next is not theoretical. It is documented in the OOS files already published on OTP. <a href="/browse" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">Browse them</a>. <a href="/browse" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">Compare yours</a>. See what L7 and L8 organizations do differently. The patterns are visible.</p>
+      <p>The path from your current level to the next is not theoretical. It is documented in the OOS files already published on OTP. <a href="/browse" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">Browse them</a>. <a href="/browse" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">Compare yours</a>. See what L7 and L8 organizations do differently. The patterns are visible.</p>
 
       <p>Here is what we have observed so far across published OOS files:</p>
 
       <ul class="list-disc pl-5 space-y-2 my-4">
-        <li><strong class="text-gray-900">L4 to L5:</strong> Requires explicit ownership boundaries. Each agent needs a job description that includes what it does NOT own. Without this, agents drift into each other's lanes.</li>
-        <li><strong class="text-gray-900">L5 to L6:</strong> Requires shared state. Agents need to read each other's output without direct coupling. Pre-computed files that one agent writes and another reads.</li>
-        <li><strong class="text-gray-900">L6 to L7:</strong> Requires orchestration protocols. A chief of staff agent or morning briefing routine that reads all shared state files and compiles a single view. Escalation paths that are tested, not just documented.</li>
-        <li><strong class="text-gray-900">L7 to L8:</strong> Requires an agent message bus. Agents that can send structured messages to each other. Proposals, challenges, requests. The human sets strategy. The agents coordinate execution.</li>
+        <li><strong class="text-[var(--ink)]">L4 to L5:</strong> Requires explicit ownership boundaries. Each agent needs a job description that includes what it does NOT own. Without this, agents drift into each other's lanes.</li>
+        <li><strong class="text-[var(--ink)]">L5 to L6:</strong> Requires shared state. Agents need to read each other's output without direct coupling. Pre-computed files that one agent writes and another reads.</li>
+        <li><strong class="text-[var(--ink)]">L6 to L7:</strong> Requires orchestration protocols. A chief of staff agent or morning briefing routine that reads all shared state files and compiles a single view. Escalation paths that are tested, not just documented.</li>
+        <li><strong class="text-[var(--ink)]">L7 to L8:</strong> Requires an agent message bus. Agents that can send structured messages to each other. Proposals, challenges, requests. The human sets strategy. The agents coordinate execution.</li>
       </ul>
 
       <p>Each transition has a characteristic failure mode. L5 agents fail when their boundaries are ambiguous. L6 agents fail when shared state gets corrupted. L7 agents fail when escalations are documented but never tested. L8 agents fail when the message bus exists but no workflow actually uses it.</p>
 
       <p>The OOS makes these failure modes explicit and comparable. That is the point.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Your Score Is Not a Vanity Metric</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Your Score Is Not a Vanity Metric</h2>
 
       <p>Your agentic maturity level determines whether your AI team scales or collapses. At L4, adding a fifth agent is straightforward. At L7, adding a fifteenth agent without breaking the coordination layer requires serious architectural discipline. The level tells you what class of problems you are solving and what class of problems are about to hit you.</p>
 
       <p>It also determines what you can learn from other organizations. An L3 organization publishing an OOS will not get much from comparing against an L8 deployment. The problems are too different. But two L7 organizations comparing their coordination patterns will find immediately actionable intelligence. OTP makes that comparison possible.</p>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
-        <a href="/publish" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
-          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Publish Your OOS</div>
-          <p class="text-xs text-gray-400">See where you score on the 8 levels</p>
+        <a href="/publish" class="bg-[var(--grey)] rounded-xl p-4 border border-[var(--line)] card-hover text-center group">
+          <div class="text-sm font-bold text-[var(--ink)] mb-1 group-hover:text-[var(--blue-deep)] transition-colors">Publish Your OOS</div>
+          <p class="text-xs text-[var(--ink-mute)]">See where you score on the 8 levels</p>
         </a>
-        <a href="/browse" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
-          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Browse by Level</div>
-          <p class="text-xs text-gray-400">Find organizations at your maturity</p>
+        <a href="/browse" class="bg-[var(--grey)] rounded-xl p-4 border border-[var(--line)] card-hover text-center group">
+          <div class="text-sm font-bold text-[var(--ink)] mb-1 group-hover:text-[var(--blue-deep)] transition-colors">Browse by Level</div>
+          <p class="text-xs text-[var(--ink-mute)]">Find organizations at your maturity</p>
         </a>
-        <a href="/blog/agentic-levels" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
-          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Why Levels Matter</div>
-          <p class="text-xs text-gray-400">How we integrated the framework into OTP</p>
+        <a href="/blog/agentic-levels" class="bg-[var(--grey)] rounded-xl p-4 border border-[var(--line)] card-hover text-center group">
+          <div class="text-sm font-bold text-[var(--ink)] mb-1 group-hover:text-[var(--blue-deep)] transition-colors">Why Levels Matter</div>
+          <p class="text-xs text-[var(--ink-mute)]">How we integrated the framework into OTP</p>
         </a>
       </div>
 
-      <p><a href="/publish" class="text-otp-500 hover:text-otp-600 transition-colors underline decoration-otp-200">Publish your OOS</a>. See where you stand. The framework is clear. The measurement is automated. The only question is whether you are willing to be honest about where you are today.</p>
+      <p><a href="/publish" class="text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors underline decoration-otp-200">Publish your OOS</a>. See where you stand. The framework is clear. The measurement is automated. The only question is whether you are willing to be honest about where you are today.</p>
 
       <!-- Author -->
-      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+      <div class="mt-12 pt-8 border-t border-[var(--line)] flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--blue-deep)] flex items-center justify-center text-[var(--ink)] font-bold text-lg flex-shrink-0">DS</div>
         <div>
-          <div class="font-bold text-gray-900">David Steel</div>
-          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
-          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+          <div class="font-bold text-[var(--ink)]">David Steel</div>
+          <p class="text-sm text-[var(--ink-mute)] mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
         </div>
       </div>
 
@@ -178,10 +178,10 @@
 </section>
 
 <!-- Next post CTA -->
-<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+<section class="bg-[var(--grey)] py-10 sm:py-14 border-t border-[var(--line)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <p class="text-sm text-gray-400 mb-4">Your agentic maturity level determines what problems you face next. Publish your OOS and find out.</p>
-    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
+    <p class="text-sm text-[var(--ink-mute)] mb-4">Your agentic maturity level determines what problems you face next. Publish your OOS and find out.</p>
+    <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--blue)] text-[var(--ink)] rounded-lg font-semibold hover:bg-[var(--blue)] transition-all hover:shadow-lg hover:shadow-otp-500/25 group">
       Publish Your OOS
       <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
     </a>

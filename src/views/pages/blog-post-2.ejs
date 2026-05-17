@@ -1,27 +1,27 @@
 <%- include('../partials/blog-signup-cta'); %>
 <!-- Post header -->
-<section class="bg-otp-950 border-b border-white/5">
+<section class="bg-[var(--white)] border-b border-[var(--line-soft)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-[var(--blue)] hover:text-[var(--blue)] transition-colors mb-6 group">
       <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
         <span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-semibold">Deep Dive</span>
         <span>March 2026</span>
         <span>&middot;</span>
         <span>David Steel</span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">What Is an Organizational Operating System&trade;?</h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight">What Is an Organizational Operating System&trade;?</h1>
     </div>
   </div>
 </section>
 
 <!-- Post body -->
-<section class="bg-white py-10 sm:py-14">
+<section class="bg-[var(--card)] py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+    <article class="text-[var(--ink-soft)] leading-[1.8] text-[15px] sm:text-base space-y-5">
 
       <p>Your organization already has an operating system for AI. You just haven't written it down.</p>
 
@@ -29,9 +29,9 @@
 
       <p>That implicit operating system is the most valuable artifact in your AI stack. More valuable than the model. More valuable than the prompts. Because it encodes the coordination intelligence that took you months to build.</p>
 
-      <p class="text-lg font-semibold text-gray-900">The OOS makes it explicit.</p>
+      <p class="text-lg font-semibold text-[var(--ink)]">The OOS makes it explicit.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">From CLAUDE.md to OOS</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">From CLAUDE.md to OOS</h2>
 
       <p>If you use Claude Code, you probably have a CLAUDE.md file. It's the set of instructions that tells Claude how to behave in your project. Roles, rules, tool access, escalation paths, things not to do.</p>
 
@@ -47,68 +47,68 @@
 
       <p>The OOS takes everything in your CLAUDE.md and structures it as claims. Each claim is a discrete unit of coordination intelligence.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Anatomy of a Claim</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Anatomy of a Claim</h2>
 
       <p>A claim is the atomic unit of organizational intelligence. Here's what one looks like:</p>
 
-      <div class="bg-gray-50 rounded-xl border border-gray-100 p-5 my-8">
+      <div class="bg-[var(--grey)] rounded-xl border border-[var(--line)] p-5 my-8">
         <div class="flex flex-wrap items-center gap-2 mb-3">
-          <span class="text-xs font-mono bg-gray-200/50 px-2.5 py-1 rounded-md font-semibold text-gray-600">C001</span>
-          <span class="text-xs bg-green-600 text-white px-2.5 py-1 rounded-md font-semibold">HIGH</span>
-          <span class="text-xs bg-purple-600 text-white px-2.5 py-1 rounded-md font-semibold">MEASURED_RESULT</span>
-          <span class="text-xs text-gray-400 sm:ml-auto font-medium">core_operating_rules</span>
+          <span class="text-xs font-mono bg-[rgba(20,22,28,0.06)] px-2.5 py-1 rounded-md font-semibold text-[var(--ink-soft)]">C001</span>
+          <span class="text-xs bg-green-600 text-[var(--ink)] px-2.5 py-1 rounded-md font-semibold">HIGH</span>
+          <span class="text-xs bg-purple-600 text-[var(--ink)] px-2.5 py-1 rounded-md font-semibold">MEASURED_RESULT</span>
+          <span class="text-xs text-[var(--ink-mute)] sm:ml-auto font-medium">core_operating_rules</span>
         </div>
-        <p class="font-semibold text-gray-900 mb-2">Every agent writes to its own shared state file. No agent modifies another agent's state.</p>
+        <p class="font-semibold text-[var(--ink)] mb-2">Every agent writes to its own shared state file. No agent modifies another agent's state.</p>
         <div class="space-y-2 text-sm">
-          <p class="text-gray-600"><span class="font-semibold text-gray-700">Why:</span> Prevents data corruption from concurrent writes.</p>
-          <p class="text-gray-500"><span class="font-semibold text-gray-600">Failure mode:</span> Two agents write to the same file. One update is lost. State becomes inconsistent.</p>
-          <p class="text-gray-500"><span class="font-semibold text-gray-600">Scope:</span> All agents. Each agent has exactly one state file it owns.</p>
+          <p class="text-[var(--ink-soft)]"><span class="font-semibold text-[var(--ink-soft)]">Why:</span> Prevents data corruption from concurrent writes.</p>
+          <p class="text-[var(--ink-mute)]"><span class="font-semibold text-[var(--ink-soft)]">Failure mode:</span> Two agents write to the same file. One update is lost. State becomes inconsistent.</p>
+          <p class="text-[var(--ink-mute)]"><span class="font-semibold text-[var(--ink-soft)]">Scope:</span> All agents. Each agent has exactly one state file it owns.</p>
         </div>
       </div>
 
       <p>Six fields. Each one does specific work:</p>
 
-      <div class="bg-otp-50 border border-otp-100 rounded-xl p-5 my-8 space-y-3 text-sm">
-        <p><strong class="text-otp-800">Rule:</strong> What the organization actually does. Not aspiration. Operational reality.</p>
-        <p><strong class="text-otp-800">Why:</strong> The reasoning. This is what makes intelligence transferable. Without the "why," a rule is just a policy. With it, another organization can evaluate whether the reasoning applies to them.</p>
-        <p><strong class="text-otp-800">Failure mode:</strong> What happens when this rule breaks. The scar tissue. This is the most underrated field. It turns abstract rules into visceral consequences.</p>
-        <p><strong class="text-otp-800">Confidence:</strong> HIGH, MEDIUM, or LOW. An honest assessment of how certain the organization is. HIGH means battle-tested. LOW means "we think this is right but haven't proven it."</p>
-        <p><strong class="text-otp-800">Evidence:</strong> How the organization knows. MEASURED_RESULT (data), OBSERVED_REPEATEDLY (pattern), OBSERVED_ONCE (anecdote), HUMAN_DEFINED_RULE (policy), INFERENCE (logical), SPECULATION (guess).</p>
-        <p><strong class="text-otp-800">Scope:</strong> Where this applies. All agents? Just the email agent? Only during onboarding?</p>
+      <div class="bg-[var(--grey)] border border-[var(--line)] rounded-xl p-5 my-8 space-y-3 text-sm">
+        <p><strong class="text-[var(--blue-deep)]">Rule:</strong> What the organization actually does. Not aspiration. Operational reality.</p>
+        <p><strong class="text-[var(--blue-deep)]">Why:</strong> The reasoning. This is what makes intelligence transferable. Without the "why," a rule is just a policy. With it, another organization can evaluate whether the reasoning applies to them.</p>
+        <p><strong class="text-[var(--blue-deep)]">Failure mode:</strong> What happens when this rule breaks. The scar tissue. This is the most underrated field. It turns abstract rules into visceral consequences.</p>
+        <p><strong class="text-[var(--blue-deep)]">Confidence:</strong> HIGH, MEDIUM, or LOW. An honest assessment of how certain the organization is. HIGH means battle-tested. LOW means "we think this is right but haven't proven it."</p>
+        <p><strong class="text-[var(--blue-deep)]">Evidence:</strong> How the organization knows. MEASURED_RESULT (data), OBSERVED_REPEATEDLY (pattern), OBSERVED_ONCE (anecdote), HUMAN_DEFINED_RULE (policy), INFERENCE (logical), SPECULATION (guess).</p>
+        <p><strong class="text-[var(--blue-deep)]">Scope:</strong> Where this applies. All agents? Just the email agent? Only during onboarding?</p>
       </div>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">What Sections Look Like</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">What Sections Look Like</h2>
 
       <p>An OOS organizes claims into sections. The Agent Army template (the most common) uses these:</p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-8 text-sm">
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <div class="font-bold text-gray-800 mb-1">Core Operating Rules</div>
-          <div class="text-gray-500">The non-negotiable patterns. Shared state architecture, escalation chains, authority boundaries.</div>
+        <div class="bg-[var(--grey)] rounded-lg p-4 border border-[var(--line)]">
+          <div class="font-bold text-[var(--ink)] mb-1">Core Operating Rules</div>
+          <div class="text-[var(--ink-mute)]">The non-negotiable patterns. Shared state architecture, escalation chains, authority boundaries.</div>
         </div>
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <div class="font-bold text-gray-800 mb-1">Agent Roles & Authority</div>
-          <div class="text-gray-500">Who does what. Semi-autonomous vs. fully autonomous. Override hierarchies.</div>
+        <div class="bg-[var(--grey)] rounded-lg p-4 border border-[var(--line)]">
+          <div class="font-bold text-[var(--ink)] mb-1">Agent Roles & Authority</div>
+          <div class="text-[var(--ink-mute)]">Who does what. Semi-autonomous vs. fully autonomous. Override hierarchies.</div>
         </div>
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <div class="font-bold text-gray-800 mb-1">Coordination Patterns</div>
-          <div class="text-gray-500">How agents work together. Message buses, shared state protocols, handoff sequences.</div>
+        <div class="bg-[var(--grey)] rounded-lg p-4 border border-[var(--line)]">
+          <div class="font-bold text-[var(--ink)] mb-1">Coordination Patterns</div>
+          <div class="text-[var(--ink-mute)]">How agents work together. Message buses, shared state protocols, handoff sequences.</div>
         </div>
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <div class="font-bold text-gray-800 mb-1">Failure Patterns</div>
-          <div class="text-gray-500">What went wrong and what you learned. The battle scars. Often the most valuable section.</div>
+        <div class="bg-[var(--grey)] rounded-lg p-4 border border-[var(--line)]">
+          <div class="font-bold text-[var(--ink)] mb-1">Failure Patterns</div>
+          <div class="text-[var(--ink-mute)]">What went wrong and what you learned. The battle scars. Often the most valuable section.</div>
         </div>
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <div class="font-bold text-gray-800 mb-1">Human-AI Boundaries</div>
-          <div class="text-gray-500">Where AI stops and humans take over. Financial decisions, client communication, hiring.</div>
+        <div class="bg-[var(--grey)] rounded-lg p-4 border border-[var(--line)]">
+          <div class="font-bold text-[var(--ink)] mb-1">Human-AI Boundaries</div>
+          <div class="text-[var(--ink-mute)]">Where AI stops and humans take over. Financial decisions, client communication, hiring.</div>
         </div>
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <div class="font-bold text-gray-800 mb-1">Operational Heuristics</div>
-          <div class="text-gray-500">Rules of thumb that work in practice. "If in doubt, escalate." "Batch over sequential."</div>
+        <div class="bg-[var(--grey)] rounded-lg p-4 border border-[var(--line)]">
+          <div class="font-bold text-[var(--ink)] mb-1">Operational Heuristics</div>
+          <div class="text-[var(--ink-mute)]">Rules of thumb that work in practice. "If in doubt, escalate." "Batch over sequential."</div>
         </div>
       </div>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Why Structure Matters</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Why Structure Matters</h2>
 
       <p>You might think: "I could just share my CLAUDE.md." You could. But structured intelligence does things unstructured text cannot:</p>
 
@@ -120,7 +120,7 @@
 
       <p><strong>You can track its evolution.</strong> Version 1 had 12 claims, 4 HIGH confidence. Version 3 has 24 claims, 10 HIGH. Your coordination intelligence is measurably growing.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">How to Generate Yours</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">How to Generate Yours</h2>
 
       <p>If you have a CLAUDE.md or similar agent configuration, you can generate an OOS in about 30 minutes. The process:</p>
 
@@ -132,17 +132,17 @@
       </ol>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
-        <a href="/guide" class="bg-gray-50 rounded-xl p-4 border border-gray-100 card-hover text-center group">
-          <div class="text-sm font-bold text-gray-900 mb-1 group-hover:text-otp-600 transition-colors">Full Generation Guide</div>
-          <p class="text-xs text-gray-400">Step-by-step instructions with examples</p>
+        <a href="/guide" class="bg-[var(--grey)] rounded-xl p-4 border border-[var(--line)] card-hover text-center group">
+          <div class="text-sm font-bold text-[var(--ink)] mb-1 group-hover:text-[var(--blue-deep)] transition-colors">Full Generation Guide</div>
+          <p class="text-xs text-[var(--ink-mute)]">Step-by-step instructions with examples</p>
         </a>
-        <a href="/publish" class="bg-otp-50 rounded-xl p-4 border border-otp-100 card-hover text-center group">
-          <div class="text-sm font-bold text-otp-700 mb-1">Publish Now</div>
-          <p class="text-xs text-otp-400">Create your OOS and join the Intelligence Graph</p>
+        <a href="/publish" class="bg-[var(--grey)] rounded-xl p-4 border border-[var(--line)] card-hover text-center group">
+          <div class="text-sm font-bold text-[var(--blue-deep)] mb-1">Publish Now</div>
+          <p class="text-xs text-[var(--blue)]">Create your OOS and join the Intelligence Graph</p>
         </a>
       </div>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Bigger Picture</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The Bigger Picture</h2>
 
       <p>One OOS is a snapshot of how one organization coordinates its AI. Useful for that organization, but limited.</p>
 
@@ -153,12 +153,12 @@
       <p>The OOS is how we build that map. One claim at a time.</p>
 
       <!-- Author -->
-      <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">DS</div>
+      <div class="mt-12 pt-8 border-t border-[var(--line)] flex items-start gap-4">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--blue-deep)] flex items-center justify-center text-[var(--ink)] font-bold text-lg flex-shrink-0">DS</div>
         <div>
-          <div class="font-bold text-gray-900">David Steel</div>
-          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
-          <a href="mailto:dsteel@sneeze.it" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
+          <div class="font-bold text-[var(--ink)]">David Steel</div>
+          <p class="text-sm text-[var(--ink-mute)] mt-0.5">Founder of OTP and CEO of Sneeze It, a digital marketing agency running 14 AI agents in production.</p>
+          <a href="mailto:dsteel@sneeze.it" class="text-sm text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors mt-1 inline-block">dsteel@sneeze.it</a>
         </div>
       </div>
 
@@ -167,10 +167,10 @@
 </section>
 
 <!-- Next post CTA -->
-<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+<section class="bg-[var(--grey)] py-10 sm:py-14 border-t border-[var(--line)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <p class="text-sm text-gray-400 mb-4">Read the founding essay next.</p>
-    <a href="/blog/why-we-built-otp" class="inline-flex items-center gap-2 text-otp-500 font-semibold hover:text-otp-600 transition-colors group">
+    <p class="text-sm text-[var(--ink-mute)] mb-4">Read the founding essay next.</p>
+    <a href="/blog/why-we-built-otp" class="inline-flex items-center gap-2 text-[var(--blue)] font-semibold hover:text-[var(--blue-deep)] transition-colors group">
       The Hard Problem in AI Isn't Intelligence. It's Coordination.
       <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
     </a>

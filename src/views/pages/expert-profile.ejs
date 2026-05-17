@@ -1,7 +1,10 @@
+<%# /expert/:slug -- v7 layout (light, editorial). One coach/expert profile.
+    Route locals: profile { display_name, slug, photo_url, headline, bio,
+    expertise_tags[], website_url, linkedin_url, contact_email, phone, tier,
+    geo_city, geo_state, geo_country, directory_source, content_source_url,
+    claimed, last_synced_at }, oosFiles [{...}] (optional).
+    Render via reply.view('pages/expert-profile', data, { layout: 'layouts/v7' }). %>
 <%
-  // profile fields used: display_name, slug, photo_url, headline, bio, expertise_tags,
-  // website_url, linkedin_url, contact_email, phone, tier, geo_city, geo_state,
-  // geo_country, directory_source, content_source_url, claimed
   var locParts = [profile.geo_city, profile.geo_state, profile.geo_country].filter(Boolean);
   var locStr = locParts.join(', ');
   var isEOS = profile.directory_source === 'eosworldwide';
@@ -9,141 +12,157 @@
   var roleLabel = isEOS ? ((profile.tier ? profile.tier + ' ' : '') + 'EOS Implementer') : null;
   var firstName = (profile.display_name || '').split(' ')[0] || profile.display_name || 'this coach';
 %>
+<style>
+  .ep-wave { animation:ep-wave 3.4s ease-in-out infinite; transform-origin:75% 85%; }
+  @keyframes ep-wave { 0%,72%,100%{transform:rotate(0);} 82%{transform:rotate(13deg);} 91%{transform:rotate(-6deg);} }
+  @media (prefers-reduced-motion:reduce){ .ep-wave{ animation:none; } }
+</style>
 
-<!-- Hero -->
-<div class="bg-otp-950 text-white relative overflow-hidden">
-  <div class="absolute inset-0 bg-grid opacity-30"></div>
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-    <nav class="text-xs text-gray-400 mb-6">
-      <a href="/" class="hover:text-otp-300">Home</a>
-      <span class="mx-1.5 text-gray-600">/</span>
-      <a href="/experts" class="hover:text-otp-300">Coach Directory</a>
-      <span class="mx-1.5 text-gray-600">/</span>
-      <span class="text-gray-300"><%= profile.display_name %></span>
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16">
+    <nav class="font-mono text-[12px] text-[var(--ink-mute)] mb-8 flex flex-wrap items-center gap-1.5">
+      <a href="/" class="hover:text-[var(--ink)] transition-colors">Home</a>
+      <span class="text-[var(--line)]">/</span>
+      <a href="/experts" class="hover:text-[var(--ink)] transition-colors">Coach Directory</a>
+      <span class="text-[var(--line)]">/</span>
+      <span class="text-[var(--ink-soft)]"><%= profile.display_name %></span>
     </nav>
-    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+
+    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-7">
       <% if (profile.photo_url) { %>
-        <img src="<%= profile.photo_url %>" alt="<%= profile.display_name %>" loading="lazy" class="w-28 h-28 rounded-full object-cover border-4 border-white/10 shrink-0">
+        <img src="<%= profile.photo_url %>" alt="<%= profile.display_name %>" loading="lazy"
+             class="w-28 h-28 rounded-full object-cover shrink-0"
+             style="border:3px solid var(--card); box-shadow:0 6px 20px rgba(20,22,28,.16), 0 0 0 1px var(--line);">
       <% } else { %>
-        <div class="w-28 h-28 rounded-full bg-otp-500 text-white flex items-center justify-center text-4xl font-bold border-4 border-white/10 shrink-0">
+        <div class="w-28 h-28 rounded-full text-white flex items-center justify-center font-display shrink-0"
+             style="font-size:42px; font-weight:800; background:linear-gradient(135deg,var(--blue),var(--blue-deep)); box-shadow:0 6px 20px rgba(20,22,28,.16);">
           <%= (profile.display_name || '?').charAt(0).toUpperCase() %>
         </div>
       <% } %>
+
       <div class="text-center sm:text-left flex-1 min-w-0 relative">
-        <!-- Status pills (clear at-a-glance differentiation) -->
-        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs mb-3">
+        <!-- Status pills -->
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-3">
           <% if (roleLabel) { %>
-            <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 font-semibold border border-blue-400/20"><%= roleLabel %></span>
+            <span class="font-mono text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-md"
+                  style="color:var(--blue-deep); background:rgba(13,125,242,.08); border:1px solid rgba(13,125,242,.2);"><%= roleLabel %></span>
           <% } %>
           <% if (isUnclaimed) { %>
-            <span class="px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">Directory listing &middot; unclaimed</span>
+            <span class="font-mono text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-md"
+                  style="color:var(--ink-mute); background:var(--grey); border:1px solid var(--line);">Directory listing &middot; unclaimed</span>
           <% } else if (profile.claimed) { %>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 font-semibold border border-emerald-400/20">★ Founder Certified Coach</span>
+            <span class="font-mono text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-md"
+                  style="color:var(--green-deep); background:rgba(10,157,99,.08); border:1px solid rgba(10,157,99,.25);">&#9733; Founder Certified Coach</span>
           <% } %>
         </div>
 
-        <!-- Founder Certified Coach badge — visible credential marker for claimed profiles -->
+        <!-- Founder Certified Coach badge -->
         <% if (profile.claimed) { %>
           <div class="absolute top-0 right-0 hidden sm:block">
-            <a href="/public/images/founder-coach-badge.png" target="_blank" rel="noopener" title="OTP Founder Certified Coach — click to view full badge" class="inline-block transition-transform hover:scale-105">
-              <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach Badge" class="h-20 w-auto drop-shadow-lg" />
+            <a href="/public/images/founder-coach-badge.png" target="_blank" rel="noopener" title="OTP Founder Certified Coach -- click to view full badge" class="inline-block transition-transform hover:scale-105">
+              <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach Badge" class="h-20 w-auto" style="filter:drop-shadow(0 8px 14px rgba(20,22,28,.18));" />
             </a>
           </div>
-          <!-- Mobile placement: centered above headline -->
           <div class="sm:hidden flex justify-center mb-3">
             <a href="/public/images/founder-coach-badge.png" target="_blank" rel="noopener" title="OTP Founder Certified Coach">
-              <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach Badge" class="h-16 w-auto drop-shadow-lg" />
+              <img src="/public/images/founder-coach-badge-sm.png" alt="OTP Founder Certified Coach Badge" class="h-16 w-auto" style="filter:drop-shadow(0 8px 14px rgba(20,22,28,.18));" />
             </a>
           </div>
         <% } %>
 
-        <h1 class="text-2xl sm:text-3xl font-extrabold mb-2 sm:pr-24"><%= profile.display_name %></h1>
+        <h1 class="font-display text-[var(--ink)] sm:pr-24"
+            style="font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.1; font-weight:700; letter-spacing:-0.02em;">
+          <%= profile.display_name %>
+        </h1>
 
         <% if (locStr) { %>
-          <div class="inline-flex items-center gap-1.5 text-sm text-gray-300 mb-3">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <div class="inline-flex items-center gap-1.5 font-mono text-[12.5px] text-[var(--ink-mute)] mt-2.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <%= locStr %>
           </div>
         <% } %>
 
         <% if (profile.headline) { %>
-          <p class="text-lg text-gray-200 max-w-2xl mb-4"><%= profile.headline %></p>
+          <p class="font-display text-[var(--ink)] max-w-2xl mt-4"
+             style="font-size:clamp(1.05rem,2vw,1.3rem); line-height:1.4; font-weight:600;"><%= profile.headline %></p>
         <% } %>
 
         <% if (profile.bio) { %>
-          <p class="text-gray-300 max-w-2xl mb-4"><%= profile.bio %></p>
+          <p class="text-[15px] text-[var(--ink-soft)] leading-[1.72] max-w-2xl mt-3"><%= profile.bio %></p>
         <% } %>
 
-        <div class="flex flex-wrap gap-3 justify-center sm:justify-start items-center">
+        <div class="flex flex-wrap gap-3 justify-center sm:justify-start items-center mt-6">
           <% if (profile.website_url) { %>
-            <a href="<%= profile.website_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
+            <a href="<%= profile.website_url %>" target="_blank" rel="noopener noreferrer nofollow" class="btn-ghost inline-flex items-center gap-1.5 px-4 py-2.5 text-[14px]">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
               Website
             </a>
           <% } %>
           <% if (profile.linkedin_url) { %>
-            <a href="<%= profile.linkedin_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
+            <a href="<%= profile.linkedin_url %>" target="_blank" rel="noopener noreferrer nofollow" class="btn-ghost inline-flex items-center gap-1.5 px-4 py-2.5 text-[14px]">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               LinkedIn
             </a>
           <% } %>
           <% if (profile.content_source_url && isEOS) { %>
-            <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
+            <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="btn-ghost inline-flex items-center gap-1.5 px-4 py-2.5 text-[14px]">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
               Source profile
             </a>
           <% } %>
-          <a href="/expert/<%= profile.slug %>/contact" class="px-5 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Contact</a>
+          <a href="/expert/<%= profile.slug %>/contact" class="btn-primary inline-flex items-center px-5 py-2.5 text-[14px]">Contact</a>
         </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+<!-- ================= BODY ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
 
-  <!-- Source disclosure (high on the page, not buried) -->
+  <!-- Source disclosure -->
   <% if (isUnclaimed && isEOS) { %>
-    <section class="mb-8 p-4 sm:p-5 rounded-xl border border-gray-200 bg-gray-50 text-sm">
+    <div class="card p-5 sm:p-6 mb-8">
       <div class="flex items-start gap-3">
-        <svg class="w-5 h-5 mt-0.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <div class="flex-1">
-          <p class="text-gray-700">
-            <strong class="text-gray-900">Directory listing.</strong>
-            This page is a factual reference to <%= profile.display_name %>'s public profile in <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's open implementer directory</a>. <%= profile.display_name %> has not yet claimed it on OTP. EOS®, EOS Implementer®, and related marks are trademarks of EOS Worldwide, LLC. <strong>OTP is not affiliated with or endorsed by EOS Worldwide.</strong>
-          </p>
-        </div>
+        <svg class="w-5 h-5 mt-0.5 text-[var(--ink-mute)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">
+          <strong class="text-[var(--ink)]">Directory listing.</strong>
+          This page is a factual reference to <%= profile.display_name %>'s public profile in <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-[var(--blue-deep)] link-u">EOS Worldwide's open implementer directory</a>. <%= profile.display_name %> has not yet claimed it on OTP. EOS&reg;, EOS Implementer&reg;, and related marks are trademarks of EOS Worldwide, LLC. <strong class="text-[var(--ink)]">OTP is not affiliated with or endorsed by EOS Worldwide.</strong>
+        </p>
       </div>
-    </section>
+    </div>
   <% } %>
 
-  <!-- Claim banner (only when unclaimed directory profile) -->
+  <!-- Claim banner -->
   <% if (isUnclaimed) { %>
-    <section class="mb-10 p-5 sm:p-6 rounded-xl border border-amber-200 bg-amber-50">
+    <div class="card p-6 sm:p-7 mb-10 border-t-[3px]" style="border-top-color:var(--orange);">
       <div class="flex items-start gap-4">
-        <div class="shrink-0 w-10 h-10 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center font-bold">!</div>
+        <div class="shrink-0 w-10 h-10 rounded-xl text-white flex items-center justify-center font-display font-extrabold text-[18px]"
+             style="background:var(--orange);">!</div>
         <div class="flex-1 min-w-0">
-          <h2 class="text-base font-bold text-amber-900 mb-1">Is this you, <%= firstName %>?</h2>
-          <p class="text-sm text-amber-900/90 mb-3">
-            <strong>Claim it</strong> to control what appears here -- add your full bio, services, calendar, OOS files, and outbound coordination intelligence -- or <strong>request removal</strong> if you'd rather not be listed. Either is one click.
+          <h2 class="font-display text-[var(--ink)] text-[1.15rem] font-bold mb-1.5">Is this you, <%= firstName %>?</h2>
+          <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7] mb-4">
+            <strong class="text-[var(--ink)]">Claim it</strong> to control what appears here -- add your full bio, services, calendar, OOS files, and outbound coordination intelligence -- or <strong class="text-[var(--ink)]">request removal</strong> if you'd rather not be listed. Either is one click.
           </p>
-          <div class="flex flex-wrap gap-2">
-            <a href="/claim/<%= profile.slug %>" class="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition-colors">Claim this profile</a>
-            <a href="/takedown/<%= profile.slug %>" class="inline-flex items-center px-4 py-2 rounded-lg bg-white border border-amber-300 hover:border-amber-400 text-amber-900 text-sm font-medium transition-colors">Request removal</a>
+          <div class="flex flex-wrap gap-3">
+            <a href="/claim/<%= profile.slug %>" class="btn-ink inline-flex items-center px-5 py-2.5 text-[14px]">Claim this profile</a>
+            <a href="/takedown/<%= profile.slug %>" class="btn-ghost inline-flex items-center px-5 py-2.5 text-[14px]">Request removal</a>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   <% } %>
 
   <!-- Key points / specialties -->
   <% if (profile.expertise_tags && profile.expertise_tags.length > 0) { %>
-    <section class="mb-10">
-      <h2 class="text-lg font-bold text-gray-900 mb-4">What <%= firstName %> brings</h2>
+    <section class="mb-12">
+      <div class="eyebrow mb-5">What <%= firstName %> brings</div>
       <ul class="grid sm:grid-cols-2 gap-3">
         <% profile.expertise_tags.forEach(function(tag) { %>
-          <li class="flex items-start gap-2 text-sm text-gray-700">
-            <svg class="w-4 h-4 mt-0.5 text-otp-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <li class="flex items-start gap-2.5 text-[14.5px] text-[var(--ink-soft)] card p-4">
+            <svg class="w-4 h-4 mt-0.5 shrink-0" style="color:var(--green);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
             <span><%= tag %></span>
           </li>
         <% }); %>
@@ -153,14 +172,14 @@
 
   <!-- Coordination intelligence (OOS files) -->
   <% if (typeof oosFiles !== 'undefined' && oosFiles.length > 0) { %>
-    <section class="mb-10">
-      <h2 class="text-lg font-bold text-gray-900 mb-4">Published Coordination Intelligence</h2>
+    <section class="mb-12">
+      <div class="eyebrow mb-5">Published Coordination Intelligence</div>
       <div class="grid gap-4">
         <% oosFiles.forEach(function(oos) { %>
-          <a href="/oos/<%= oos.id %>" class="bg-white p-5 rounded-lg border claim-card flex items-start gap-4">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-semibold"><%= oos.org_name %></span>
+          <a href="/oos/<%= oos.id %>" class="card lift p-5 sm:p-6 flex items-start gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                <span class="font-display text-[var(--ink)] text-[1.05rem] font-bold"><%= oos.org_name %></span>
                 <% if (oos.badge === 'founding') { %>
                   <span class="badge-founding text-white text-xs px-2 py-0.5 rounded">Founding</span>
                 <% } %>
@@ -171,20 +190,20 @@
                   <span class="badge-level badge-level-<%= oos.agentic_level %>" title="Agentic Level">L<%= oos.agentic_level %></span>
                 <% } %>
               </div>
-              <div class="text-sm text-gray-500 mb-2">
+              <div class="font-mono text-[11.5px] text-[var(--ink-mute)] mb-2.5">
                 <%= oos.industry %> &middot; <%= oos.size %> &middot; v<%= oos.version %>
               </div>
-              <div class="flex gap-4 text-xs text-gray-400">
+              <div class="flex flex-wrap gap-2.5 font-mono text-[11px] text-[var(--ink-mute)] items-center">
                 <span><%= oos.claim_count %> claims</span>
-                <span class="px-2 py-0.5 bg-gray-100 rounded"><%= oos.template.replace('_', ' ') %></span>
+                <span class="px-2 py-0.5 rounded" style="background:var(--grey); border:1px solid var(--line-soft);"><%= oos.template.replace('_', ' ') %></span>
                 <span>Published <%= new Date(oos.published_at).toLocaleDateString() %></span>
               </div>
             </div>
-            <div class="text-right text-xs text-gray-400 min-w-[100px]">
-              <div class="flex gap-1 justify-end mb-1">
-                <span class="bg-confidence-high text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).high || 0 %></span>
-                <span class="bg-confidence-medium text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).medium || 0 %></span>
-                <span class="bg-confidence-low text-white px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).low || 0 %></span>
+            <div class="text-right shrink-0 min-w-[96px]">
+              <div class="flex gap-1 justify-end">
+                <span class="bg-confidence-high text-white text-[11px] px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).high || 0 %></span>
+                <span class="bg-confidence-medium text-white text-[11px] px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).medium || 0 %></span>
+                <span class="bg-confidence-low text-white text-[11px] px-1.5 py-0.5 rounded"><%= (oos.confidence_distribution || {}).low || 0 %></span>
               </div>
             </div>
           </a>
@@ -192,55 +211,69 @@
       </div>
     </section>
   <% } else if (isUnclaimed) { %>
-    <section class="mb-10 p-6 rounded-xl border border-amber-200 bg-amber-50 text-center">
-      <h2 class="text-base font-bold text-gray-900 mb-1">Founding 25 profile -- ready to be claimed by <%= firstName %></h2>
-      <p class="text-sm text-gray-700">This is a draft listing seeded from <%= firstName %>'s public directory entry. Once they claim it, their operating-system patterns, scorecards, and client tools will appear here.</p>
+    <section class="mb-12">
+      <div class="card p-7 text-center">
+        <h2 class="font-display text-[var(--ink)] text-[1.1rem] font-bold mb-1.5">Founding 25 profile -- ready to be claimed by <%= firstName %></h2>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">This is a draft listing seeded from <%= firstName %>'s public directory entry. Once they claim it, their operating-system patterns, scorecards, and client tools will appear here.</p>
+      </div>
     </section>
   <% } else { %>
-    <section class="mb-10 p-6 rounded-xl border border-emerald-200 bg-emerald-50 text-center">
-      <h2 class="text-base font-bold text-gray-900 mb-1"><%= firstName %> is part of the Founding 25</h2>
-      <p class="text-sm text-gray-700">Operating-system patterns and coordination intelligence will appear here as <%= firstName %> publishes them. <%= firstName.length > 0 ? firstName + ' is' : 'They are' %> set up and active on OTP.</p>
+    <section class="mb-12">
+      <div class="card p-7 text-center border-t-[3px]" style="border-top-color:var(--green);">
+        <h2 class="font-display text-[var(--ink)] text-[1.1rem] font-bold mb-1.5"><%= firstName %> is part of the Founding 25</h2>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">Operating-system patterns and coordination intelligence will appear here as <%= firstName %> publishes them. <%= firstName.length > 0 ? firstName + ' is' : 'They are' %> set up and active on OTP.</p>
+      </div>
     </section>
   <% } %>
 
-  <!-- Cross-sell: similar coaches -->
+  <!-- Cross-sell: browse directory -->
   <% if (profile.geo_country || profile.geo_state || profile.geo_city) { %>
-    <section class="mb-10 p-5 rounded-xl border border-gray-200 bg-white">
-      <h2 class="text-base font-bold text-gray-900 mb-2">Browse the directory</h2>
-      <p class="text-sm text-gray-600 mb-3">Find more coaches by location or framework on OTP's coach directory.</p>
-      <div class="flex flex-wrap gap-2 text-sm">
-        <a href="/experts" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-otp-500 text-white font-medium hover:bg-otp-600 transition-colors">All coaches</a>
-        <% if (isEOS) { %>
-          <a href="/glossary/eos" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">What is EOS?</a>
-        <% } %>
-        <a href="/glossary" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-800 font-medium hover:border-otp-300 transition-colors">Coordination glossary</a>
+    <section class="mb-12">
+      <div class="card p-6 sm:p-7">
+        <div class="flex flex-col sm:flex-row items-start gap-6">
+          <img src="/public/hand-2.png" alt="" aria-hidden="true"
+               class="ep-wave shrink-0 mx-auto sm:mx-0 w-[68px] h-auto">
+          <div>
+            <div class="eyebrow mb-2.5" style="color:var(--blue-deep);">Browse the directory</div>
+            <h2 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-1.5">More coaches on OTP</h2>
+            <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7] mb-5">Find more coaches by location or framework on OTP's coach directory.</p>
+            <div class="flex flex-wrap gap-3">
+              <a href="/experts" class="btn-primary inline-flex items-center px-5 py-2.5 text-[14px]">All coaches</a>
+              <% if (isEOS) { %>
+                <a href="/glossary/eos" class="btn-ghost inline-flex items-center px-5 py-2.5 text-[14px]">What is EOS?</a>
+              <% } %>
+              <a href="/glossary" class="btn-ghost inline-flex items-center px-5 py-2.5 text-[14px]">Coordination glossary</a>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   <% } %>
 
   <!-- Trademark + sourcing footer -->
   <% if (profile.directory_source) { %>
-    <div class="mt-10 pt-6 border-t border-gray-200 text-xs text-gray-500 space-y-2">
+    <div class="pt-7 border-t border-[var(--line)] space-y-2.5 text-[12.5px] text-[var(--ink-mute)] leading-[1.65]">
       <p>
-        <strong class="text-gray-700">Sourcing.</strong>
+        <strong class="text-[var(--ink-soft)]">Sourcing.</strong>
         Profile data was seeded from
         <% if (profile.content_source_url) { %>
-          <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline"><%= profile.content_source_url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') %></a>
+          <a href="<%= profile.content_source_url %>" target="_blank" rel="noopener noreferrer nofollow" class="text-[var(--blue-deep)] link-u"><%= profile.content_source_url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') %></a>
         <% } else { %>
           a public source
         <% } %>
         on <%= profile.last_synced_at ? new Date(profile.last_synced_at).toLocaleDateString() : 'a recent date' %>.
         <% if (isUnclaimed) { %>
-          If you're <%= profile.display_name %>, <a href="/claim/<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">claim it</a> to fully control what's shown -- or <a href="/takedown/<%= profile.slug %>" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
+          If you're <%= profile.display_name %>, <a href="/claim/<%= profile.slug %>" class="text-[var(--blue-deep)] link-u">claim it</a> to fully control what's shown -- or <a href="/takedown/<%= profile.slug %>" class="text-[var(--blue-deep)] link-u">request removal</a>.
         <% } %>
       </p>
       <% if (isEOS) { %>
         <p>
-          <strong class="text-gray-700">Trademarks.</strong>
-          EOS®, Entrepreneurial Operating System®, EOS Implementer®, EOS Worldwide®, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. This page is a factual reference to a publicly available coach profile and does not imply endorsement in either direction.
+          <strong class="text-[var(--ink-soft)]">Trademarks.</strong>
+          EOS&reg;, Entrepreneurial Operating System&reg;, EOS Implementer&reg;, EOS Worldwide&reg;, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. This page is a factual reference to a publicly available coach profile and does not imply endorsement in either direction.
         </p>
       <% } %>
     </div>
   <% } %>
 
-</div>
+  </div>
+</section>

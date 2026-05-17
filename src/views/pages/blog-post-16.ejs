@@ -1,35 +1,35 @@
 <%- include('../partials/blog-signup-cta'); %>
 <!-- Post header -->
-<section class="bg-otp-950 border-b border-white/5">
+<section class="bg-[var(--white)] border-b border-[var(--line-soft)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-[var(--blue)] hover:text-[var(--blue)] transition-colors mb-6 group">
       <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
         <span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-semibold">Industry</span>
         <span>March 2026</span>
         <span>&middot;</span>
         <span>David Steel</span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why.</h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight">Gartner Predicts 40% of AI Agent Projects Will Be Cancelled by 2027. Here Is Why.</h1>
     </div>
   </div>
 </section>
 
 <!-- Post body -->
-<section class="bg-white py-10 sm:py-14">
+<section class="bg-[var(--card)] py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
+    <article class="text-[var(--ink-soft)] leading-[1.8] text-[15px] sm:text-base space-y-5">
 
       <p>Everyone is bullish on AI agents. The funding announcements. The product launches. The conference keynotes. Every week, another company announces their agent strategy.</p>
 
-      <p>Gartner is not bullish. They predict <strong class="text-gray-900">40% of agentic AI projects will be cancelled or significantly rearchitected by 2027.</strong></p>
+      <p>Gartner is not bullish. They predict <strong class="text-[var(--ink)]">40% of agentic AI projects will be cancelled or significantly rearchitected by 2027.</strong></p>
 
       <p>That is not a pessimistic guess. It is a pattern recognition. And if you look at why projects fail, the answer is not what most people expect.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">It Is Not the Agents That Fail</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">It Is Not the Agents That Fail</h2>
 
       <p>The agents work. GPT-4, Claude, Gemini, Llama -- the models are good enough. The frameworks are maturing. MCP connects agents to tools. A2A connects agents to each other. The infrastructure layer is solid and getting better every quarter.</p>
 
@@ -39,33 +39,33 @@
 
       <p>We know this because we run 14 AI agents across a live business. The model is never the problem. The coordination is always the problem.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Three Failure Modes</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The Three Failure Modes</h2>
 
       <p>After running multi-agent systems in production and studying the patterns, three failure modes account for the majority of project cancellations.</p>
 
-      <p><strong class="text-gray-900">1. Authority Collision.</strong> Two agents both think they own the same decision. One rewrites the other's output. Data corrupts. Trust erodes. The team reverts to doing the work manually because the agents cannot be trusted to stay in their lanes.</p>
+      <p><strong class="text-[var(--ink)]">1. Authority Collision.</strong> Two agents both think they own the same decision. One rewrites the other's output. Data corrupts. Trust erodes. The team reverts to doing the work manually because the agents cannot be trusted to stay in their lanes.</p>
 
       <p>This is not a model problem. It is an organizational design problem. If you do not define who owns what, with what authority, under what constraints, agents will overlap. Every time.</p>
 
-      <p><strong class="text-gray-900">2. Silent Failure Cascades.</strong> Agent A produces a bad output. Agent B consumes it without validation. Agent C acts on Agent B's output. By the time a human notices, three layers of decisions have been made on a flawed foundation.</p>
+      <p><strong class="text-[var(--ink)]">2. Silent Failure Cascades.</strong> Agent A produces a bad output. Agent B consumes it without validation. Agent C acts on Agent B's output. By the time a human notices, three layers of decisions have been made on a flawed foundation.</p>
 
       <p>This is not a reliability problem. It is an escalation design problem. If your agents do not have explicit rules for when to flag uncertainty, when to stop and escalate, and when to challenge another agent's output, failures cascade silently.</p>
 
-      <p><strong class="text-gray-900">3. Coordination Overhead Exceeds Value.</strong> The agents technically work. But the human time spent managing them, correcting them, mediating their conflicts, and translating between them exceeds the time the agents save. The project gets cancelled not because it failed, but because it was not worth the management cost.</p>
+      <p><strong class="text-[var(--ink)]">3. Coordination Overhead Exceeds Value.</strong> The agents technically work. But the human time spent managing them, correcting them, mediating their conflicts, and translating between them exceeds the time the agents save. The project gets cancelled not because it failed, but because it was not worth the management cost.</p>
 
       <p>This is not a capability problem. It is a maturity problem. The organization skipped the coordination design and went straight to deploying agents.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Why 40% Fail and 60% Do Not</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Why 40% Fail and 60% Do Not</h2>
 
       <p>The difference between the 40% that get cancelled and the 60% that survive is not better models. It is not bigger budgets. It is not more engineers.</p>
 
-      <p>The difference is <strong class="text-gray-900">explicit organizational intelligence.</strong></p>
+      <p>The difference is <strong class="text-[var(--ink)]">explicit organizational intelligence.</strong></p>
 
-      <p>The organizations that succeed have documented, structured, evidence-rated coordination patterns. They know which agent owns which decision. They have escalation protocols that fire before failures cascade. They have shared state architectures that prevent authority collisions. They have <a href="/blog/8-levels-of-agentic-maturity" class="text-otp-500 hover:text-otp-600 underline">measured their agentic maturity</a> and built up from the foundations instead of skipping to the top.</p>
+      <p>The organizations that succeed have documented, structured, evidence-rated coordination patterns. They know which agent owns which decision. They have escalation protocols that fire before failures cascade. They have shared state architectures that prevent authority collisions. They have <a href="/blog/8-levels-of-agentic-maturity" class="text-[var(--blue)] hover:text-[var(--blue-deep)] underline">measured their agentic maturity</a> and built up from the foundations instead of skipping to the top.</p>
 
       <p>The organizations that fail have agents and hope.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Expensive Way to Learn</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The Expensive Way to Learn</h2>
 
       <p>Right now, every organization deploying multi-agent systems is learning these lessons from scratch. They discover authority collisions after the data corrupts. They discover silent failure cascades after the damage propagates. They discover coordination overhead after they have already committed headcount.</p>
 
@@ -73,17 +73,17 @@
 
       <p>Gartner's 40% prediction is not just about project cancellations. It is about organizational learning setbacks that take years to recover from.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">The Less Expensive Way to Learn</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">The Less Expensive Way to Learn</h2>
 
       <p>What if, instead of discovering every failure mode yourself, you could learn from organizations that already documented theirs?</p>
 
-      <p>Not blog posts. Not conference talks. Not theoretical frameworks. Structured, machine-readable, evidence-rated <a href="/blog/what-is-coordination-intelligence" class="text-otp-500 hover:text-otp-600 underline">coordination intelligence</a> from organizations running multi-agent systems in production.</p>
+      <p>Not blog posts. Not conference talks. Not theoretical frameworks. Structured, machine-readable, evidence-rated <a href="/blog/what-is-coordination-intelligence" class="text-[var(--blue)] hover:text-[var(--blue-deep)] underline">coordination intelligence</a> from organizations running multi-agent systems in production.</p>
 
       <p>Authority boundary patterns that prevent collision. Escalation protocols that catch failures before they cascade. Shared state architectures that have been tested under real load. Coordination overhead benchmarks that tell you what is normal and what is a warning sign.</p>
 
-      <p>This is what an <a href="/blog/what-is-an-oos-file" class="text-otp-500 hover:text-otp-600 underline">Organizational Operating System</a> captures. And this is what <a href="/" class="text-otp-500 hover:text-otp-600 underline">OTP</a> makes discoverable, comparable, and transferable across organizations.</p>
+      <p>This is what an <a href="/blog/what-is-an-oos-file" class="text-[var(--blue)] hover:text-[var(--blue-deep)] underline">Organizational Operating System</a> captures. And this is what <a href="/" class="text-[var(--blue)] hover:text-[var(--blue-deep)] underline">OTP</a> makes discoverable, comparable, and transferable across organizations.</p>
 
-      <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 mt-12 mb-4 pt-6 border-t border-gray-100">Gartner Is Right. The Question Is Which 60% You Join.</h2>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[var(--ink)] mt-12 mb-4 pt-6 border-t border-[var(--line)]">Gartner Is Right. The Question Is Which 60% You Join.</h2>
 
       <p>40% of AI agent projects will be cancelled. That prediction is probably conservative. The coordination problem is harder than most organizations expect, and the tools for solving it at the organizational layer barely exist yet.</p>
 
@@ -93,10 +93,10 @@
 
       <p>The 60% that survive will have an answer to that question. The 40% that get cancelled will not.</p>
 
-      <div class="bg-otp-50 border border-otp-200 p-5 sm:p-6 rounded-xl mt-10">
-        <p class="font-semibold text-gray-900 mb-2">Do not become a Gartner statistic</p>
-        <p class="text-sm text-gray-600 mb-4">Publish your coordination intelligence. Learn from organizations that already solved the failure modes you have not hit yet. The survival rate improves when organizations stop learning in isolation.</p>
-        <a href="/guide" class="inline-block px-6 py-2.5 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Publish Your OOS</a>
+      <div class="bg-[var(--grey)] border border-[var(--line)] p-5 sm:p-6 rounded-xl mt-10">
+        <p class="font-semibold text-[var(--ink)] mb-2">Do not become a Gartner statistic</p>
+        <p class="text-sm text-[var(--ink-soft)] mb-4">Publish your coordination intelligence. Learn from organizations that already solved the failure modes you have not hit yet. The survival rate improves when organizations stop learning in isolation.</p>
+        <a href="/guide" class="inline-block px-6 py-2.5 bg-[var(--blue)] text-[var(--ink)] rounded-lg text-sm font-medium hover:bg-[var(--blue)] transition-colors">Publish Your OOS</a>
       </div>
 
     </article>

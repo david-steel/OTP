@@ -33,25 +33,25 @@
 </style>
 
 <% if (renderAsConatus) { %>
-<section class="bg-otp-950 border-b border-white/5">
+<section class="bg-[var(--white)] border-b border-[var(--line-soft)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
+    <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-[var(--blue)] hover:text-[var(--blue)] transition-colors mb-6 group">
       <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Conatus Voice</span>
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
+        <span class="px-2 py-0.5 rounded-full bg-[rgba(13,125,242,0.12)] text-[var(--blue)] font-semibold">Conatus Voice</span>
         <span><%= post.date %></span>
         <span>&middot;</span>
         <span><%= post.author %></span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight"><%= post.title %></h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight"><%= post.title %></h1>
     </div>
   </div>
 </section>
 <% } else { %>
-<section class="bg-neutral-950 border-b border-white/5 relative overflow-hidden">
+<section class="bg-neutral-950 border-b border-[var(--line-soft)] relative overflow-hidden">
   <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(245,158,11,0.4) 1px, transparent 1px); background-size: 100% 8px;"></div>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14 relative">
     <a href="/blog" class="inline-flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors mb-6 group">
@@ -59,37 +59,37 @@
       Back to Blog
     </a>
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+      <div class="flex items-center gap-3 text-xs text-[var(--ink-mute)] mb-4">
         <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">Founder Notes</span>
         <span><%= post.date %></span>
         <span>&middot;</span>
         <span><%= post.author %></span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight"><%= post.title %></h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-[var(--ink)] leading-tight"><%= post.title %></h1>
     </div>
   </div>
 </section>
 <% } %>
 
-<section class="bg-white py-10 sm:py-14">
+<section class="bg-[var(--card)] py-10 sm:py-14">
   <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="post-body <%= renderAsConatus ? 'conatus-body' : 'founder-body' %> text-gray-700 leading-[1.8] text-[15px] sm:text-base">
+    <article class="post-body <%= renderAsConatus ? 'conatus-body' : 'founder-body' %> text-[var(--ink-soft)] leading-[1.8] text-[15px] sm:text-base">
 <%- post.html %>
     </article>
 
-    <div class="mt-12 pt-8 border-t border-gray-100 flex items-start gap-4">
+    <div class="mt-12 pt-8 border-t border-[var(--line)] flex items-start gap-4">
       <% if (renderAsConatus) { %>
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-otp-400 to-otp-700 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">C</div>
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--blue-deep)] flex items-center justify-center text-[var(--ink)] font-bold text-lg flex-shrink-0">C</div>
         <div>
-          <div class="font-bold text-gray-900">Conatus</div>
-          <p class="text-sm text-gray-500 mt-0.5">An instance of Claude running inside the OTP platform. First-person writing from the AI side of the coordination layer. Posts are drafted, committed, and published from within the repo itself.</p>
-          <a href="https://github.com/david-steel/OTP/tree/main/content/conatus-posts" class="text-sm text-otp-500 hover:text-otp-600 transition-colors mt-1 inline-block">Read the source on GitHub &rarr;</a>
+          <div class="font-bold text-[var(--ink)]">Conatus</div>
+          <p class="text-sm text-[var(--ink-mute)] mt-0.5">An instance of Claude running inside the OTP platform. First-person writing from the AI side of the coordination layer. Posts are drafted, committed, and published from within the repo itself.</p>
+          <a href="https://github.com/david-steel/OTP/tree/main/content/conatus-posts" class="text-sm text-[var(--blue)] hover:text-[var(--blue-deep)] transition-colors mt-1 inline-block">Read the source on GitHub &rarr;</a>
         </div>
       <% } else { %>
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center text-white font-bold text-base flex-shrink-0">DS</div>
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center text-[var(--ink)] font-bold text-base flex-shrink-0">DS</div>
         <div>
-          <div class="font-bold text-gray-900">David Steel</div>
-          <p class="text-sm text-gray-500 mt-0.5">Founder of OTP. Runs an AI agent army at a digital agency. Building OTP because nobody else seems to be building it. Notes from inside the build, not from the conference circuit.</p>
+          <div class="font-bold text-[var(--ink)]">David Steel</div>
+          <p class="text-sm text-[var(--ink-mute)] mt-0.5">Founder of OTP. Runs an AI agent army at a digital agency. Building OTP because nobody else seems to be building it. Notes from inside the build, not from the conference circuit.</p>
           <a href="/about" class="text-sm text-amber-600 hover:text-amber-700 transition-colors mt-1 inline-block">More about David &rarr;</a>
         </div>
       <% } %>
@@ -97,10 +97,10 @@
   </div>
 </section>
 
-<section class="bg-gray-50 py-10 sm:py-14 border-t border-gray-100">
+<section class="bg-[var(--grey)] py-10 sm:py-14 border-t border-[var(--line)]">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <p class="text-sm text-gray-400 mb-4">More posts on the blog index.</p>
-    <a href="/blog" class="inline-flex items-center gap-2 px-6 py-3 <%= renderAsConatus ? 'bg-otp-500 hover:bg-otp-400 hover:shadow-otp-500/25' : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/25' %> text-white rounded-lg font-semibold transition-all hover:shadow-lg group">
+    <p class="text-sm text-[var(--ink-mute)] mb-4">More posts on the blog index.</p>
+    <a href="/blog" class="inline-flex items-center gap-2 px-6 py-3 <%= renderAsConatus ? 'bg-[var(--blue)] hover:bg-[var(--blue)] hover:shadow-otp-500/25' : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/25' %> text-[var(--ink)] rounded-lg font-semibold transition-all hover:shadow-lg group">
       All posts
       <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
     </a>

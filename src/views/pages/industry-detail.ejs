@@ -1,44 +1,82 @@
-<!-- Industry Detail header -->
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <div class="animate-fade-in-up">
-      <a href="/industries" class="inline-flex items-center gap-1.5 text-sm text-otp-400 hover:text-otp-300 transition-colors mb-6 group">
-        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        All Industries
-      </a>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight"><%= industry %> AI Agent Coordination</h1>
-      <p class="text-gray-400 mt-3"><%= orgs.length %> organization<%= orgs.length > 1 ? 's' : '' %> publishing coordination intelligence in <%= industry %></p>
+<%# /industries/:industry -- v7 layout (light, editorial). One industry, list of orgs.
+    Route locals: industry (string), orgs [{ id, name, badge, quality_tier,
+    agentic_level, claim_count, size, template }].
+    Render via reply.view('pages/industry-detail', data, { layout: 'layouts/v7' }). %>
+<style>
+  .id-float { animation:id-float 6.5s ease-in-out infinite; }
+  @keyframes id-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-11px);} }
+  .id-glow {
+    position:absolute; left:50%; top:52%; width:80%; height:62%;
+    transform:translate(-50%,-50%); z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse, rgba(189,214,34,0.26), transparent 70%);
+  }
+  @media (prefers-reduced-motion:reduce){ .id-float{ animation:none; } }
+</style>
+
+<!-- ================= INDUSTRY HEADER ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16">
+    <a href="/industries" class="inline-flex items-center gap-1.5 font-mono text-[12px] text-[var(--ink-mute)] hover:text-[var(--ink)] transition-colors mb-7 group">
+      <span class="group-hover:-translate-x-1 transition-transform">&larr;</span>
+      All Industries
+    </a>
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--orgy);"></span>Industry
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.1rem,4.4vw,3.4rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          <%= industry %> <span class="text-[var(--blue)]">AI agent coordination.</span>
+        </h1>
+        <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto md:mx-0 mt-5">
+          <%= orgs.length %> organization<%= orgs.length > 1 ? 's' : '' %> publishing coordination intelligence in <%= industry %>.
+        </p>
+      </div>
+      <div class="relative shrink-0" style="width:170px; max-width:44vw;">
+        <div class="id-glow"></div>
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="id-float relative block w-full" style="z-index:1; filter:drop-shadow(0 18px 28px rgba(20,22,28,.18));">
+      </div>
     </div>
   </div>
 </section>
 
-<section class="bg-white py-10 sm:py-14">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="space-y-4">
+<!-- ================= ORG LIST ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+
+    <div class="eyebrow mb-6">Organizations</div>
+    <div class="grid sm:grid-cols-2 gap-4">
       <% orgs.forEach(function(org) { %>
-        <a href="/org/<%= org.id %>" class="block bg-white p-5 rounded-xl border border-gray-100 card-hover">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-gray-900"><%= org.name %></span>
+        <a href="/org/<%= org.id %>" class="card lift p-6 block">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex flex-wrap items-center gap-2 min-w-0">
+              <span class="font-display text-[var(--ink)] text-[1.1rem] font-bold leading-snug"><%= org.name %></span>
               <% if (org.badge === 'founding') { %>
-                <span class="badge-founding text-white text-[10px] px-1.5 py-0.5 rounded-full">Founding</span>
+                <span class="badge-founding text-white text-[10px] px-2 py-0.5 rounded-full">Founding</span>
               <% } %>
               <% if (org.quality_tier) { %>
-                <span class="badge-<%= org.quality_tier %> text-white text-[10px] px-1.5 py-0.5 rounded-full capitalize"><%= org.quality_tier %></span>
+                <span class="badge-<%= org.quality_tier %> text-white text-[10px] px-2 py-0.5 rounded-full capitalize"><%= org.quality_tier %></span>
               <% } %>
               <% if (org.agentic_level) { %>
                 <span class="badge-level badge-level-<%= org.agentic_level %>">L<%= org.agentic_level %></span>
               <% } %>
             </div>
-            <span class="text-sm text-gray-500"><%= org.claim_count %> claims</span>
+            <span class="font-mono text-[11px] text-[var(--ink-mute)] shrink-0 whitespace-nowrap"><%= org.claim_count %> claims</span>
           </div>
-          <div class="text-xs text-gray-400"><%= org.size %> &middot; <%= org.template.replace('_', ' ') %> template</div>
+          <div class="font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--ink-mute)]">
+            <%= org.size %> &middot; <%= org.template.replace('_', ' ') %> template
+          </div>
         </a>
       <% }); %>
     </div>
 
-    <div class="mt-10 text-center">
-      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+    <div class="mt-14 text-center">
+      <a href="/publish" class="btn-primary inline-flex items-center gap-2 px-8 py-4 text-[16px] group">
+        Publish your OOS
+        <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+      </a>
     </div>
   </div>
 </section>

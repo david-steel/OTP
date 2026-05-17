@@ -1,57 +1,95 @@
-<div class="max-w-2xl mx-auto px-4 py-8">
-  <div class="mb-6">
-    <a href="/expert/<%= profile.slug %>" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+<%# /expert/:slug/contact -- v7 layout (light, editorial). Contact form for one expert.
+    Route locals: profile { display_name, slug, photo_url }.
+    Form posts to /api/v1/inquiries via the script below. Field names preserved:
+    name, email, company, message. Render with { layout: 'layouts/v7' }. %>
+<style>
+  .ec-input {
+    width:100%; background:var(--card); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px;
+    padding:11px 13px; font-size:14.5px; font-family:'Inter',sans-serif;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .ec-input::placeholder { color:var(--ink-mute); }
+  .ec-input:focus {
+    outline:none; border-color:var(--blue);
+    box-shadow:0 0 0 3px rgba(13,125,242,0.14);
+  }
+  .ec-label {
+    display:block; font-family:'JetBrains Mono',monospace;
+    font-size:11px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--ink-soft); margin-bottom:7px;
+  }
+  .ec-peek { animation:ec-peek 6.5s ease-in-out infinite; }
+  @keyframes ec-peek { 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-8px) rotate(3deg);} }
+  @media (prefers-reduced-motion:reduce){ .ec-peek{ animation:none; } }
+</style>
+
+<section class="bg-[var(--white)]">
+  <div class="max-w-[620px] mx-auto px-6 pt-[124px] pb-20 sm:pt-[148px] sm:pb-24">
+
+    <a href="/expert/<%= profile.slug %>" class="inline-flex items-center gap-1.5 font-mono text-[12px] text-[var(--ink-mute)] hover:text-[var(--ink)] transition-colors mb-8 group">
+      <span class="group-hover:-translate-x-1 transition-transform">&larr;</span>
       Back to <%= profile.display_name %>
     </a>
-  </div>
 
-  <div class="flex items-center gap-4 mb-6">
-    <% if (profile.photo_url) { %>
-      <img src="<%= profile.photo_url %>" alt="<%= profile.display_name %>" class="w-12 h-12 rounded-full object-cover">
-    <% } else { %>
-      <div class="w-12 h-12 rounded-full bg-otp-500 text-white flex items-center justify-center text-lg font-bold">
-        <%= (profile.display_name || '?').charAt(0).toUpperCase() %>
+    <div class="flex items-center gap-4 mb-8">
+      <% if (profile.photo_url) { %>
+        <img src="<%= profile.photo_url %>" alt="<%= profile.display_name %>"
+             class="w-14 h-14 rounded-full object-cover shrink-0"
+             style="border:2px solid var(--card); box-shadow:0 0 0 1px var(--line);">
+      <% } else { %>
+        <div class="w-14 h-14 rounded-full text-white flex items-center justify-center font-display text-[20px] font-extrabold shrink-0"
+             style="background:linear-gradient(135deg,var(--blue),var(--blue-deep));">
+          <%= (profile.display_name || '?').charAt(0).toUpperCase() %>
+        </div>
+      <% } %>
+      <div class="flex-1 min-w-0">
+        <div class="eyebrow mb-1.5">Contact</div>
+        <h1 class="font-display text-[var(--ink)] leading-tight"
+            style="font-size:clamp(1.4rem,3vw,1.85rem); font-weight:700; letter-spacing:-0.02em;">
+          Contact <%= profile.display_name %>
+        </h1>
+        <p class="text-[14px] text-[var(--ink-soft)] mt-1">Send a message directly to this expert.</p>
       </div>
-    <% } %>
-    <div>
-      <h1 class="text-xl font-bold">Contact <%= profile.display_name %></h1>
-      <p class="text-sm text-gray-500">Send a message directly to this expert.</p>
+      <img src="/public/orgy-clean.png" alt="" aria-hidden="true"
+           class="ec-peek hidden sm:block shrink-0 w-[56px] h-auto"
+           style="filter:drop-shadow(0 8px 14px rgba(20,22,28,.16));">
     </div>
-  </div>
 
-  <form id="contact-form" class="bg-white rounded-xl border p-6 sm:p-8 space-y-4">
-    <div class="grid sm:grid-cols-2 gap-4">
+    <form id="contact-form" class="card p-6 sm:p-8 space-y-5">
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="ec-label">Your Name</label>
+          <input type="text" name="name" required class="ec-input" placeholder="Your name">
+        </div>
+        <div>
+          <label class="ec-label">Your Email</label>
+          <input type="email" name="email" required class="ec-input" placeholder="you@company.com">
+        </div>
+      </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-        <input type="text" name="name" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none" placeholder="Your name">
+        <label class="ec-label">Company <span style="color:var(--ink-mute); text-transform:none; letter-spacing:0;">(optional)</span></label>
+        <input type="text" name="company" class="ec-input" placeholder="Company name">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
-        <input type="email" name="email" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none" placeholder="you@company.com">
+        <label class="ec-label">Message</label>
+        <textarea name="message" rows="5" required class="ec-input resize-none" placeholder="What would you like to discuss?"></textarea>
       </div>
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Company <span class="text-gray-400 font-normal">(optional)</span></label>
-      <input type="text" name="company" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none" placeholder="Company name">
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
-      <textarea name="message" rows="5" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none resize-none" placeholder="What would you like to discuss?"></textarea>
-    </div>
-    <button type="submit" id="submit-btn" class="w-full px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-colors">Send Message</button>
-    <div id="form-error" class="hidden text-center py-2 text-red-600 text-sm"></div>
-  </form>
+      <button type="submit" id="submit-btn" class="btn-primary w-full px-6 py-3.5 text-[15px]">Send Message</button>
+      <div id="form-error" class="hidden text-center py-2 text-[14px]" style="color:var(--orange-deep);"></div>
+    </form>
 
-  <div id="form-success" class="hidden bg-white rounded-xl border p-8 text-center">
-    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <div id="form-success" class="hidden card p-9 text-center">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+           style="background:rgba(10,157,99,0.1);">
+        <svg class="w-6 h-6" style="color:var(--green);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h2 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-1.5">Message Sent</h2>
+      <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7] mb-5">Your message has been sent to <%= profile.display_name %>. They will get back to you directly.</p>
+      <a href="/expert/<%= profile.slug %>" class="inline-flex items-center text-[14px] text-[var(--blue-deep)] link-u">Back to profile</a>
     </div>
-    <h2 class="text-lg font-bold text-gray-900 mb-1">Message Sent</h2>
-    <p class="text-sm text-gray-500 mb-4">Your message has been sent to <%= profile.display_name %>. They will get back to you directly.</p>
-    <a href="/expert/<%= profile.slug %>" class="text-sm text-otp-500 hover:text-otp-400">Back to profile</a>
   </div>
-</div>
+</section>
 
 <script>
 document.getElementById('contact-form').addEventListener('submit', async function(e) {
