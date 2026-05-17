@@ -82,6 +82,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.type('text/html').send(html);
   });
 
+  // /meet-radar-b -- v7-light styled variant of /meet-radar, built for a
+  // Google Ads A/B split test against the dark /meet-radar page. Standalone
+  // static document (compiled CSS + gtag conversion tracking inlined).
+  app.get('/meet-radar-b', async (request, reply) => {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const p = fileURLToPath(new URL('../../../public/meet-radar-b.html', import.meta.url));
+    const html = await readFile(p, 'utf8');
+    return reply.type('text/html').send(html);
+  });
+
   app.get('/', async (request, reply) => {
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
