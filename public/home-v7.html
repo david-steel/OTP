@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OTP - Run your people and AI agents as one team</title>
+<link rel="icon" type="image/png" href="/public/favicon-orgy.png">
+<link rel="apple-touch-icon" href="/public/favicon-orgy-512.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+    --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+    --blue:#0d7df2; --blue-deep:#0a56b0; --blue-block:#0d5fd6;
+    --orange:#ff7a1a; --orange-deep:#d4540a; --orange-block:#ff7a1a;
+    --green:#0a9d63; --green-deep:#06724a;
+    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --line:rgba(20,22,28,0.10);
+    --line-soft:rgba(20,22,28,0.06);
+  }
+  html { -webkit-font-smoothing:antialiased; }
+  body { font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); }
+  ::selection { background:var(--blue); color:#fff; }
+
+  .font-display { font-family:'Schibsted Grotesk','Inter',sans-serif; }
+  .font-mono { font-family:'JetBrains Mono',monospace; }
+
+  .eyebrow {
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; font-weight:500;
+    letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--ink-mute);
+  }
+  .tick { width:8px; height:8px; border-radius:2px; display:inline-block; }
+
+  /* org tiles -- light, full hairline borders, NO side stripes */
+  .otile {
+    position:relative; background:var(--card);
+    border:1px solid var(--line); border-radius:13px;
+    padding:12px 13px 13px;
+    box-shadow:0 1px 2px rgba(20,22,28,0.04);
+  }
+  .otile-dot { width:9px; height:9px; border-radius:3px; flex:none; }
+  .otile-tag {
+    font-family:'JetBrains Mono',monospace; font-size:8.5px;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-mute);
+  }
+  .otile-name { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); line-height:1.15; }
+  .otile-role { font-size:10.5px; color:var(--ink-mute); margin-top:2px; }
+  .kpi-pill {
+    font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:500;
+    color:var(--green-deep); border:1px solid rgba(10,157,99,0.3);
+    background:rgba(10,157,99,0.08);
+    padding:2px 6px; border-radius:5px;
+    display:inline-block; margin-top:7px;
+  }
+  .connector { background:var(--line); }
+
+  /* buttons */
+  .btn-primary {
+    background:var(--orgy); color:var(--ink);
+    font-weight:700; font-family:'Inter',sans-serif;
+    border-radius:10px;
+    transition:background .2s ease, transform .2s cubic-bezier(.16,1,.3,1);
+  }
+  .btn-primary:hover { background:var(--orgy-deep); transform:translateY(-1px); }
+  .btn-ink {
+    background:var(--ink); color:#fff;
+    font-weight:700; font-family:'Inter',sans-serif;
+    border-radius:10px;
+    transition:background .2s ease, transform .2s cubic-bezier(.16,1,.3,1);
+  }
+  .btn-ink:hover { background:#22252e; transform:translateY(-1px); }
+  .btn-ghost {
+    border:1px solid var(--line); color:var(--ink);
+    font-weight:600; font-family:'Inter',sans-serif;
+    border-radius:10px;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .btn-ghost:hover { border-color:var(--ink); background:rgba(20,22,28,0.03); }
+
+  /* big colour-blocked cards / sections use generous radius */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px;
+    box-shadow:0 1px 3px rgba(20,22,28,0.05), 0 16px 36px -22px rgba(20,22,28,0.16); }
+
+  .lift { transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s ease; }
+  .lift:hover { transform:translateY(-4px); box-shadow:0 1px 3px rgba(20,22,28,0.06), 0 26px 50px -24px rgba(20,22,28,0.26); }
+
+  .idx-row { border-top:1px solid var(--line); transition:background .15s ease, padding-left .15s ease; }
+  .idx-row:last-child { border-bottom:1px solid var(--line); }
+  .idx-row:hover { background:var(--card); padding-left:10px; }
+
+  .link-u { font-weight:600; border-bottom:2px solid currentColor; padding-bottom:1px; transition:opacity .15s ease; }
+  .link-u:hover { opacity:0.65; }
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<nav class="fixed top-0 inset-x-0 z-50 bg-[var(--white)]/90 backdrop-blur-md border-b border-[var(--line-soft)]">
+  <div class="max-w-[1180px] mx-auto px-6 h-[64px] flex items-center justify-between">
+    <a href="/" class="flex items-baseline gap-2.5">
+      <span class="font-mono font-semibold text-[18px] tracking-tight"><span class="text-[var(--blue)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--blue)]">]</span></span>
+      <span class="eyebrow text-[9px] hidden sm:inline">Organization&nbsp;Transport&nbsp;Protocol</span>
+    </a>
+    <div class="hidden md:flex items-center gap-7 text-[14px] text-[var(--ink-soft)]">
+      <a href="/protocol" class="hover:text-[var(--ink)] transition-colors">Protocol</a>
+      <a href="/pricing" class="hover:text-[var(--ink)] transition-colors">Pricing</a>
+      <a href="/browse" class="hover:text-[var(--ink)] transition-colors">Browse</a>
+      <a href="/whats-new" class="hover:text-[var(--ink)] transition-colors">What's New</a>
+      <a href="/sign-in" class="hover:text-[var(--ink)] transition-colors">Sign in</a>
+      <a href="/sign-up" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
+    </div>
+    <a href="/sign-up" class="btn-primary md:hidden px-4 py-2 text-[13px]">Get started</a>
+  </div>
+</nav>
+
+<!-- ================= HERO (live composed scene) ================= -->
+<style>
+  .hero2 { background:var(--white); overflow:hidden; }
+  .hero2-wrap { max-width:1240px; margin:0 auto; padding:104px 24px 64px; }
+  .hero2-grid { display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .hero2-copy { flex:1 1 420px; min-width:340px; padding-top:24px; }
+  .hero2-stage {
+    flex:0 0 660px; position:relative; width:660px; height:520px;
+  }
+
+  /* entrance: elements start hidden, animate in on load */
+  .rise { opacity:0; animation:h-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes h-rise { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  .pop { opacity:0; animation:h-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
+  @keyframes h-pop { from{opacity:0; transform:scale(.86);} to{opacity:1; transform:scale(1);} }
+
+  /* mascot */
+  .h-mascot { position:absolute; left:46px; top:132px; width:316px; z-index:3; }
+  .h-mascot img { width:100%; display:block; animation:h-float 5.5s ease-in-out infinite; }
+  @keyframes h-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .h-glow { position:absolute; left:66px; top:324px; width:278px; height:104px; z-index:1;
+    background:radial-gradient(ellipse, rgba(13,125,242,0.22), transparent 70%);
+    animation:h-breathe 5.5s ease-in-out infinite; }
+  @keyframes h-breathe { 0%,100%{opacity:.55; transform:scale(.92);} 50%{opacity:1; transform:scale(1.08);} }
+
+  /* speech bubble */
+  .h-bubble { position:absolute; left:28px; top:14px; width:286px; z-index:5;
+    background:var(--card); border:1px solid var(--line); border-radius:16px 16px 16px 4px;
+    padding:13px 16px; box-shadow:0 10px 30px -12px rgba(20,22,28,.22);
+    font-size:13.5px; line-height:1.5; color:var(--ink); }
+  .h-bubble b { color:var(--green-deep); font-weight:600; }
+
+  /* connector svg */
+  .h-conn { position:absolute; inset:0; z-index:2; pointer-events:none; overflow:visible; }
+  .h-conn path { fill:none; stroke-width:2; stroke-linecap:round;
+    stroke-dasharray:1; stroke-dashoffset:1; animation:h-draw 1s ease forwards; }
+  @keyframes h-draw { to{stroke-dashoffset:0;} }
+  .h-pulse { fill:#fff; stroke-width:2; }
+
+  /* card rail */
+  .h-rail { position:absolute; right:0; top:30px; width:248px; z-index:4;
+    display:flex; flex-direction:column; gap:9px; }
+  .h-pill { display:inline-flex; align-items:center; gap:7px; align-self:flex-start;
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:5px 12px 5px 8px; font-size:11px; font-weight:700; letter-spacing:.04em;
+    box-shadow:0 4px 14px -6px rgba(20,22,28,.18); }
+  .h-pill-ico { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .h-pill.hu { color:var(--orange-deep); } .h-pill.hu .h-pill-ico{ background:rgba(255,122,26,.16); }
+  .h-pill.ag { color:var(--blue-deep); } .h-pill.ag .h-pill-ico{ background:rgba(13,125,242,.14); }
+
+  .h-card { background:var(--card); border:1px solid var(--line); border-radius:13px;
+    padding:11px 12px; box-shadow:0 6px 20px -10px rgba(20,22,28,.2);
+    display:flex; gap:10px; align-items:flex-start; }
+  .h-av { width:34px; height:34px; border-radius:9px; flex:none; display:flex;
+    align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff;
+    font-family:'Schibsted Grotesk',sans-serif; }
+  .h-card-body { flex:1; min-width:0; }
+  .h-name { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); }
+  .h-sub { font-size:11px; color:var(--ink-mute); margin-top:1px; }
+  .h-stat { display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; margin-top:6px; }
+  .h-d { width:6px; height:6px; border-radius:50%; flex:none; }
+  .h-live { display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700;
+    color:var(--green-deep); }
+  .h-live i { width:6px; height:6px; border-radius:50%; background:var(--green);
+    animation:h-pulse 1.8s ease-in-out infinite; }
+  @keyframes h-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
+  .h-bar { height:5px; border-radius:3px; background:var(--grey); margin-top:7px; overflow:hidden; }
+  .h-bar i { display:block; height:100%; border-radius:3px; background:var(--blue);
+    transform:scaleX(0); transform-origin:left; animation:h-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes h-grow { to{transform:scaleX(1);} }
+
+  /* task row */
+  .h-tasks { margin-top:14px; }
+  .h-task-rail { width:100%; height:34px; }
+  .h-task-rail path { fill:none; stroke:var(--line); stroke-width:2;
+    stroke-dasharray:1; stroke-dashoffset:1; animation:h-draw 1.1s .5s ease forwards; }
+  .h-task-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; }
+  .h-task { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; box-shadow:0 6px 20px -12px rgba(20,22,28,.16); }
+  .h-task-ico { width:34px; height:34px; border-radius:9px; background:var(--grey);
+    display:flex; align-items:center; justify-content:center; margin-bottom:9px; }
+  .h-task-name { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--ink); }
+  .h-task-stat { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; margin-top:4px; }
+
+  @media (max-width:1100px){
+    .hero2-stage{ transform:scale(.8); transform-origin:top right; margin:-20px 0 -100px; }
+  }
+  @media (max-width:860px){
+    .hero2-stage{ display:none; }
+    .h-task-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+
+<section class="hero2">
+  <div class="hero2-wrap">
+    <div class="eyebrow flex items-center gap-3 mb-3 rise" style="animation-delay:.05s">
+      <span class="tick bg-[var(--blue)]"></span>
+      The operating platform for teams of people and AI agents
+    </div>
+
+    <div class="hero2-grid">
+      <!-- copy -->
+      <div class="hero2-copy">
+        <h1 class="font-display text-[var(--ink)] tracking-[-0.03em] rise" style="animation-delay:.12s; font-size:clamp(2.5rem,4.6vw,4.2rem); line-height:1.08; font-weight:700;">
+          Your Org was built before <span class="text-[var(--blue)]">AI&nbsp;agents.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.55] max-w-md mt-5 rise" style="animation-delay:.22s">
+          OTP&trade; is the operating layer underneath, so the structure stops failing you.
+        </p>
+        <div class="flex flex-wrap gap-3 mt-7 rise" style="animation-delay:.32s">
+          <a href="/sign-up" class="btn-primary px-7 py-3.5 text-[15px]">Get started →</a>
+          <a href="/what-is-otp" class="btn-ghost px-7 py-3.5 text-[15px]">What is OTP</a>
+        </div>
+      </div>
+
+      <!-- live scene -->
+      <div class="hero2-stage">
+        <div class="h-glow"></div>
+
+        <!-- connectors: mascot -> cards -->
+        <svg class="h-conn" viewBox="0 0 660 520">
+          <path pathLength="1" d="M348,297 C384,297 388,100 412,100" stroke="var(--orange)" style="animation-delay:.7s"/>
+          <path pathLength="1" d="M348,300 C384,300 390,175 412,175" stroke="var(--orange)" style="animation-delay:.8s"/>
+          <path pathLength="1" d="M348,302 C384,302 390,289 412,289" stroke="var(--blue)" style="animation-delay:.9s"/>
+          <path pathLength="1" d="M348,305 C384,305 392,368 412,368" stroke="var(--blue)" style="animation-delay:1s"/>
+          <circle class="h-pulse" r="4" stroke="var(--orange)">
+            <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.7s" path="M348,297 C384,297 388,100 412,100"/>
+          </circle>
+          <circle class="h-pulse" r="4" stroke="var(--blue)">
+            <animateMotion dur="2.8s" repeatCount="indefinite" begin="2.3s" path="M348,305 C384,305 392,368 412,368"/>
+          </circle>
+        </svg>
+
+        <!-- mascot -->
+        <div class="h-mascot pop" style="animation-delay:.3s">
+          <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot">
+        </div>
+
+        <!-- speech bubble -->
+        <div class="h-bubble pop" style="animation-delay:.95s">
+          My SOP drives the work. My KPI tracks the result. It all ladders up to this quarter's priorities and the year's goals. <b>Leadership sees every step.</b>
+        </div>
+
+        <!-- card rail -->
+        <div class="h-rail">
+          <div class="h-pill hu pop" style="animation-delay:.55s">
+            <span class="h-pill-ico">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--orange-deep)"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg>
+            </span>HUMANS
+          </div>
+          <div class="h-card rise" style="animation-delay:.62s">
+            <div class="h-av" style="background:#e07a3a">S</div>
+            <div class="h-card-body">
+              <div class="h-name">Sarah</div><div class="h-sub">Product Manager</div>
+              <div class="h-stat" style="color:var(--orange-deep)"><span class="h-d" style="background:var(--orange)"></span>In a meeting</div>
+            </div>
+          </div>
+          <div class="h-card rise" style="animation-delay:.72s">
+            <div class="h-av" style="background:#c4612a">A</div>
+            <div class="h-card-body">
+              <div class="h-name">Alex</div><div class="h-sub">Data Analyst</div>
+              <div class="h-stat" style="color:var(--orange-deep)"><span class="h-d" style="background:var(--orange)"></span>Working on report</div>
+            </div>
+          </div>
+
+          <div class="h-pill ag pop mt-1" style="animation-delay:.8s">
+            <span class="h-pill-ico">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg>
+            </span>AI AGENTS
+          </div>
+          <div class="h-card rise" style="animation-delay:.88s">
+            <div class="h-av" style="background:#0d7df2">R</div>
+            <div class="h-card-body">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="h-name">Research Agent</div>
+                <span class="h-live"><i></i>Live</span>
+              </div>
+              <div class="h-sub">Gathering insights</div>
+              <div class="h-bar"><i style="width:72%;animation-delay:1.3s"></i></div>
+            </div>
+          </div>
+          <div class="h-card rise" style="animation-delay:.98s">
+            <div class="h-av" style="background:#0a64c4">W</div>
+            <div class="h-card-body">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="h-name">Workflow Agent</div>
+                <span class="h-live"><i></i>Live</span>
+              </div>
+              <div class="h-sub">Automating steps</div>
+              <div class="h-bar"><i style="width:64%;background:var(--green);animation-delay:1.45s"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- task row -->
+    <div class="h-tasks">
+      <div class="h-task-grid">
+        <div class="h-task rise" style="animation-delay:.8s">
+          <div class="h-task-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2"><path d="M4 19V5M4 19h16M8 16v-5M13 16V8M18 16v-9"/></svg></div>
+          <div class="h-task-name">Market analysis</div>
+          <div class="h-task-stat" style="color:var(--blue-deep)"><span class="h-d" style="background:var(--blue)"></span>In progress</div>
+        </div>
+        <div class="h-task rise" style="animation-delay:.88s">
+          <div class="h-task-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg></div>
+          <div class="h-task-name">Data pipeline</div>
+          <div class="h-task-stat" style="color:var(--green-deep)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Automated</div>
+        </div>
+        <div class="h-task rise" style="animation-delay:.96s">
+          <div class="h-task-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2" stroke-linecap="round"><path d="M5 19V5M5 19h14M9 15l3-4 3 2 4-6"/></svg></div>
+          <div class="h-task-name">Insight report</div>
+          <div class="h-task-stat" style="color:var(--orange-deep)"><span class="h-d" style="border:2px solid var(--orange);width:9px;height:9px;background:transparent"></span>In review</div>
+        </div>
+        <div class="h-task rise" style="animation-delay:1.04s">
+          <div class="h-task-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 20c0-2.2 1-4.1 3-5"/></svg></div>
+          <div class="h-task-name">Stakeholder update</div>
+          <div class="h-task-stat" style="color:var(--green-deep)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Completed</div>
+        </div>
+        <div class="h-task rise" style="animation-delay:1.12s">
+          <div class="h-task-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="h-task-name">Decision logged</div>
+          <div class="h-task-stat" style="color:var(--green-deep)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Completed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INSTALL (blue colour block) ================= -->
+<section class="bg-[var(--blue-block)]">
+  <div class="max-w-[1180px] mx-auto px-6 py-24">
+    <div class="grid lg:grid-cols-12 gap-x-14 gap-y-10 items-center">
+      <div class="lg:col-span-5">
+        <div class="eyebrow flex items-center gap-2.5 mb-6" style="color:rgba(255,255,255,0.7);">
+          <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+          Live in any AI assistant
+        </div>
+        <h2 class="font-display text-white tracking-[-0.02em] leading-[1.05]"
+            style="font-size:clamp(2.2rem,3.8vw,3.3rem); font-weight:700;">
+          One line. Any AI.<br>Your whole org.
+        </h2>
+        <p class="text-[16px] leading-[1.65] mt-5 max-w-md" style="color:rgba(255,255,255,0.82);">
+          Paste it into Claude Desktop, Cursor, Windsurf, Cline, any MCP-aware assistant. Then ask it anything about your org chart, who owns what, and how your team's processes work.
+        </p>
+        <div class="flex flex-wrap gap-x-6 gap-y-2 mt-6 font-mono text-[12px] text-white">
+          <a href="https://www.npmjs.com/package/@orgtp/mcp-server" class="link-u">View on npm →</a>
+          <a href="https://registry.modelcontextprotocol.io" class="link-u">Anthropic Registry →</a>
+        </div>
+      </div>
+      <div class="lg:col-span-7">
+        <div class="bg-[var(--card)] rounded-2xl p-5 shadow-[0_24px_50px_-20px_rgba(8,40,90,0.5)]">
+          <div class="flex items-center justify-between mb-3">
+            <span class="otile-tag">claude_desktop_config.json</span>
+            <span class="otile-tag px-2 py-0.5 rounded-md" style="color:var(--blue-deep); border:1px solid var(--line);">Copy</span>
+          </div>
+<pre class="font-mono text-[13.5px] leading-[1.7] bg-[var(--grey)] rounded-xl p-4 overflow-x-auto"><span class="text-[var(--ink-mute)]">{</span>
+  <span class="text-[var(--blue-deep)]">"mcpServers"</span><span class="text-[var(--ink-mute)]">: {</span>
+    <span class="text-[var(--blue-deep)]">"otp"</span><span class="text-[var(--ink-mute)]">: {</span>
+      <span class="text-[var(--blue-deep)]">"command"</span><span class="text-[var(--ink-mute)]">:</span> <span class="text-[var(--green-deep)]">"npx"</span><span class="text-[var(--ink-mute)]">,</span>
+      <span class="text-[var(--blue-deep)]">"args"</span><span class="text-[var(--ink-mute)]">: [</span><span class="text-[var(--green-deep)]">"-y"</span><span class="text-[var(--ink-mute)]">,</span> <span class="text-[var(--green-deep)]">"@orgtp/mcp-server"</span><span class="text-[var(--ink-mute)]">]</span>
+    <span class="text-[var(--ink-mute)]">}</span>
+  <span class="text-[var(--ink-mute)]">}</span>
+<span class="text-[var(--ink-mute)]">}</span></pre>
+          <div class="mt-4 pt-4 border-t border-[var(--line)] text-[12px]">
+            <div class="text-[var(--ink-mute)] mb-1.5">Then ask it:</div>
+            <div class="font-mono text-[var(--ink)]">"Use OTP to show me the org chart for sneeze-it."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THREE TRACKS (colour-coded) ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1180px] mx-auto px-6 py-24 sm:py-28">
+    <div class="eyebrow mb-5">Three tracks · Pick yours</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] max-w-2xl"
+        style="font-size:clamp(2rem,4vw,3.2rem); font-weight:700;">
+      Different starting points. <span class="text-[var(--ink-mute)]">Different onboardings.</span>
+    </h2>
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.7] max-w-2xl mt-5">
+      OTP is not one journey, it is three. Where you start depends on where you are right now: zero agents, a few running solo, or a team running them at scale. Each track has its own onboarding built for that reality.
+    </p>
+
+    <div class="grid md:grid-cols-3 gap-5 mt-12">
+      <!-- Track 1 -- blue -->
+      <a href="/foundation" class="lift card block p-7 border-t-[3px]" style="border-top-color:var(--blue);">
+        <div class="flex items-baseline justify-between mb-5">
+          <span class="font-display text-[3.2rem] leading-[0.8]" style="font-weight:800; color:var(--blue);">01</span>
+          <span class="font-mono text-[11px] text-[var(--ink-mute)]">Track 1</span>
+        </div>
+        <div class="eyebrow text-[9px] mb-2" style="color:var(--blue-deep);">You don't have agents yet</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.4rem] leading-tight mb-3" style="font-weight:700;">Build the Foundation</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65] mb-5">
+          Map your org, define your operating system, set your KPIs, document your SOPs. Build the structure your first agent lands on, so the chart does not break when it arrives.
+        </p>
+        <div class="space-y-1.5 font-mono text-[11px] text-[var(--ink-soft)]">
+          <div>↳ Org chart builder</div>
+          <div>↳ Operating system template</div>
+          <div>↳ KPI scorecard</div>
+          <div>↳ SOP library</div>
+        </div>
+        <div class="mt-6 text-[14px] font-semibold" style="color:var(--blue-deep);">Start the track →</div>
+      </a>
+      <!-- Track 2 -- orange -->
+      <a href="/deploy" class="lift card block p-7 border-t-[3px]" style="border-top-color:var(--orange);">
+        <div class="flex items-baseline justify-between mb-5">
+          <span class="font-display text-[3.2rem] leading-[0.8]" style="font-weight:800; color:var(--orange);">02</span>
+          <span class="font-mono text-[11px] text-[var(--ink-mute)]">Track 2</span>
+        </div>
+        <div class="eyebrow text-[9px] mb-2" style="color:var(--orange-deep);">You're running agents already</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.4rem] leading-tight mb-3" style="font-weight:700;">Bring Your Agents In</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65] mb-5">
+          Your agents are scattered across tabs, scripts, and crontabs. Nobody knows their KPIs. OTP gives every agent a seat, an SOP, a number, and a runtime, on the same chart as your humans.
+        </p>
+        <div class="space-y-1.5 font-mono text-[11px] text-[var(--ink-soft)]">
+          <div>↳ Register existing agents</div>
+          <div>↳ Place each on the chart</div>
+          <div>↳ Wire SOPs to agents</div>
+          <div>↳ MCP triggers + scheduling</div>
+        </div>
+        <div class="mt-6 text-[14px] font-semibold" style="color:var(--orange-deep);">Start the track →</div>
+      </a>
+      <!-- Track 3 -- green -->
+      <a href="/teams" class="lift card block p-7 border-t-[3px]" style="border-top-color:var(--green);">
+        <div class="flex items-baseline justify-between mb-5">
+          <span class="font-display text-[3.2rem] leading-[0.8]" style="font-weight:800; color:var(--green);">03</span>
+          <span class="font-mono text-[11px] text-[var(--ink-mute)]">Track 3</span>
+        </div>
+        <div class="eyebrow text-[9px] mb-2" style="color:var(--green-deep);">Your team is running agents</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.4rem] leading-tight mb-3" style="font-weight:700;">Coordinate Your Team</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65] mb-5">
+          Multiple humans, multiple agents, all in silos. Duplicate work. No single chart. OTP coordinates the whole stack: agents talking to each other, KPIs rolling up, the full operating layer.
+        </p>
+        <div class="space-y-1.5 font-mono text-[11px] text-[var(--ink-soft)]">
+          <div>↳ Multi-user role permissions</div>
+          <div>↳ Cross-agent registry</div>
+          <div>↳ Inter-agent message bus</div>
+          <div>↳ Coordination scoring</div>
+        </div>
+        <div class="mt-6 text-[14px] font-semibold" style="color:var(--green-deep);">Start the track →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FIVE FRUSTRATIONS ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1020px] mx-auto px-6 py-24 sm:py-28">
+    <div class="eyebrow mb-5">Why running an AI team feels so hard</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.06] max-w-2xl"
+        style="font-size:clamp(2rem,4.2vw,3.3rem); font-weight:700;">
+      Five things you keep saying about your AI team.
+    </h2>
+
+    <div class="mt-14 divide-y divide-[var(--line)]">
+      <div class="grid grid-cols-[auto_1fr] gap-x-7 items-center py-7">
+        <span class="flex justify-center shrink-0" style="width:104px;"><img src="/public/hand-1.png" alt="1" style="height:88px;width:auto;"></span>
+        <blockquote class="font-display text-[var(--ink)] leading-[1.25]" style="font-size:clamp(1.2rem,2.7vw,1.95rem); font-weight:600;">
+          "My AI tools are scattered across 14 tabs."
+        </blockquote>
+      </div>
+      <div class="grid grid-cols-[auto_1fr] gap-x-7 items-center py-7">
+        <span class="flex justify-center shrink-0" style="width:104px;"><img src="/public/hand-2.png" alt="2" style="height:88px;width:auto;"></span>
+        <blockquote class="font-display text-[var(--ink)] leading-[1.25]" style="font-size:clamp(1.2rem,2.7vw,1.95rem); font-weight:600;">
+          "My senior people are drowning at hire seven."
+        </blockquote>
+      </div>
+      <div class="grid grid-cols-[auto_1fr] gap-x-7 items-center py-7">
+        <span class="flex justify-center shrink-0" style="width:104px;"><img src="/public/hand-3.png" alt="3" style="height:88px;width:auto;"></span>
+        <blockquote class="font-display text-[var(--ink)] leading-[1.25]" style="font-size:clamp(1.2rem,2.7vw,1.95rem); font-weight:600;">
+          "The SOPs we wrote last quarter are already ignored."
+        </blockquote>
+      </div>
+      <div class="grid grid-cols-[auto_1fr] gap-x-7 items-center py-7">
+        <span class="flex justify-center shrink-0" style="width:104px;"><img src="/public/hand-4.png" alt="4" style="height:88px;width:auto;"></span>
+        <blockquote class="font-display text-[var(--ink)] leading-[1.25]" style="font-size:clamp(1.2rem,2.7vw,1.95rem); font-weight:600;">
+          "I don't know what each agent is actually doing."
+        </blockquote>
+      </div>
+      <div class="grid grid-cols-[auto_1fr] gap-x-7 items-center py-7">
+        <span class="flex justify-center shrink-0" style="width:104px;"><img src="/public/hand-5.png" alt="5" style="height:88px;width:auto;"></span>
+        <blockquote class="font-display text-[var(--ink)] leading-[1.25]" style="font-size:clamp(1.2rem,2.7vw,1.95rem); font-weight:600;">
+          "Every new agent gets re-explained from scratch."
+        </blockquote>
+      </div>
+    </div>
+
+    <div class="mt-12 max-w-2xl">
+      <p class="text-[16px] leading-[1.7] text-[var(--ink-soft)]">
+        These are not five problems. They are five symptoms of one thing: your AI is doing real work but it does not have a seat. OTP gives every agent a seat, an SOP, and a scorecard, on the same chart as your humans.
+      </p>
+      <a href="/why-otp" class="inline-block mt-6 text-[15px] text-[var(--ink)] link-u">
+        How OTP solves the five frustrations →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW OTP WORKS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1180px] mx-auto px-6 py-24 sm:py-28">
+    <div class="eyebrow mb-5">How OTP works</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] max-w-2xl mb-14"
+        style="font-size:clamp(2rem,4.2vw,3.3rem); font-weight:700;">
+      Three pieces that make a hybrid org actually run.
+    </h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="card p-7">
+        <div class="font-mono text-[11px] mb-3" style="color:var(--blue-deep);">PIECE 01</div>
+        <div class="font-display text-[var(--ink)] leading-[1] mb-4" style="font-size:clamp(2.2rem,3.4vw,2.9rem); font-weight:800;">Chart.</div>
+        <p class="text-[15px] leading-[1.7] text-[var(--ink-soft)] mb-3">
+          Every seat, human or AI, named, with a role, an authority level, and an accountability line. The chart is where the hybrid shape becomes legible.
+        </p>
+        <p class="text-[13px] leading-[1.6] text-[var(--ink-mute)]">
+          Bigger orgs cannot retrofit this. Their coordination runs on politics, not structure.
+        </p>
+      </div>
+      <div class="card p-7">
+        <div class="font-mono text-[11px] mb-3" style="color:var(--orange-deep);">PIECE 02</div>
+        <div class="font-display text-[var(--ink)] leading-[1] mb-4" style="font-size:clamp(2.2rem,3.4vw,2.9rem); font-weight:800;">Inheritance.</div>
+        <p class="text-[15px] leading-[1.7] text-[var(--ink-soft)] mb-3">
+          SOPs are runtime context, not documents. The agent reads them every session. The human edits at noon, the agent that boots at 12:01 has the new version.
+        </p>
+        <p class="text-[13px] leading-[1.6] text-[var(--ink-mute)]">
+          The doc and the work converge. No more rollout half-life.
+        </p>
+      </div>
+      <div class="card p-7">
+        <div class="font-mono text-[11px] mb-3" style="color:var(--green-deep);">PIECE 03</div>
+        <div class="font-display text-[var(--ink)] leading-[1] mb-4" style="font-size:clamp(2.2rem,3.4vw,2.9rem); font-weight:800;">Network.</div>
+        <p class="text-[15px] leading-[1.7] text-[var(--ink-soft)] mb-3">
+          Every company that shares what works makes the others smarter. The lessons compound instead of getting relearned.
+        </p>
+        <p class="text-[13px] leading-[1.6] text-[var(--ink-mute)]">
+          You get smarter because the companies ahead of you share what they figured out.
+        </p>
+      </div>
+    </div>
+    <a href="/what-is-otp" class="inline-block mt-12 text-[15px] text-[var(--ink)] link-u">
+      See the full model, six components →
+    </a>
+  </div>
+</section>
+
+<!-- ================= COORDINATION SCORE ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1180px] mx-auto px-6 py-24 sm:py-28">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+      <div class="flex justify-center">
+        <div class="relative w-[330px] h-[330px]">
+          <svg viewBox="0 0 360 360" class="w-full h-full">
+            <circle cx="180" cy="180" r="148" fill="none" stroke="rgba(20,22,28,0.07)" stroke-width="24"/>
+            <circle cx="180" cy="180" r="148" fill="none" stroke="var(--blue)" stroke-width="24"
+              stroke-linecap="round" stroke-dasharray="929.9" stroke-dashoffset="167"
+              transform="rotate(-90 180 180)"/>
+            <text x="180" y="174" text-anchor="middle" fill="#14161c" font-size="108" font-weight="800" font-family="Schibsted Grotesk, sans-serif">82</text>
+            <text x="180" y="208" text-anchor="middle" fill="#888c96" font-size="12" font-weight="500" font-family="JetBrains Mono" letter-spacing="3">COORD SCORE</text>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow mb-5">The Coordination Score</div>
+        <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] mb-5"
+            style="font-size:clamp(2rem,3.8vw,3rem); font-weight:700;">
+          Six dimensions. <span class="text-[var(--blue)]">One number.</span>
+        </h2>
+        <p class="text-[16px] text-[var(--ink-soft)] leading-[1.7] mb-9 max-w-md">
+          See how well your agent team is structured, and the gaps you did not know you had.
+        </p>
+        <div class="font-mono text-[12.5px] divide-y divide-[var(--line)] border-y border-[var(--line)]">
+          <div class="flex items-center gap-4 py-3"><span class="font-semibold w-7" style="color:var(--blue-deep);">CF</span><span class="text-[var(--ink)] w-44">Conflict Management</span><span class="text-[var(--ink-mute)] hidden sm:inline">overlapping responsibilities</span></div>
+          <div class="flex items-center gap-4 py-3"><span class="font-semibold w-7" style="color:var(--blue-deep);">ES</span><span class="text-[var(--ink)] w-44">Escalation Structure</span><span class="text-[var(--ink-mute)] hidden sm:inline">paths to human decisions</span></div>
+          <div class="flex items-center gap-4 py-3"><span class="font-semibold w-7" style="color:var(--blue-deep);">WC</span><span class="text-[var(--ink)] w-44">Workflow Clarity</span><span class="text-[var(--ink-mute)] hidden sm:inline">defined inputs and outputs</span></div>
+          <div class="flex items-center gap-4 py-3"><span class="font-semibold w-7" style="color:var(--blue-deep);">HO</span><span class="text-[var(--ink)] w-44">Human Oversight</span><span class="text-[var(--ink-mute)] hidden sm:inline">approval gates, audit trails</span></div>
+          <div class="flex items-center gap-4 py-3"><span class="font-semibold w-7" style="color:var(--blue-deep);">SR</span><span class="text-[var(--ink)] w-44">System Redundancy</span><span class="text-[var(--ink-mute)] hidden sm:inline">fallbacks when systems fail</span></div>
+          <div class="flex items-center gap-4 py-3"><span class="font-semibold w-7" style="color:var(--blue-deep);">AB</span><span class="text-[var(--ink)] w-44">Authority Boundaries</span><span class="text-[var(--ink-mute)] hidden sm:inline">who can do what, no ambiguity</span></div>
+        </div>
+        <a href="/agent-builder" class="btn-primary inline-block mt-9 px-7 py-3.5 text-[15px]">Build your agent →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROOF ================= -->
+<section class="bg-[var(--white)] border-t border-[var(--line-soft)]">
+  <div class="max-w-[1020px] mx-auto px-6 py-24 sm:py-28">
+    <div class="eyebrow mb-5">The origin story</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] max-w-2xl mb-6"
+        style="font-size:clamp(2rem,4.2vw,3.3rem); font-weight:700;">
+      We built this because we needed it.
+    </h2>
+    <p class="text-[16px] leading-[1.7] text-[var(--ink-soft)] max-w-2xl mb-14">
+      Sneeze It runs 14 AI agents in daily operations. Our Coordination Score was 68 when we first scanned. We found 6 gaps we did not know existed. We fixed them. Then our agents stopped stepping on each other.
+    </p>
+    <div class="flex flex-wrap items-center gap-6 sm:gap-14">
+      <div>
+        <div class="font-display leading-[0.8] text-[var(--ink-mute)]" style="font-size:clamp(5rem,13vw,11rem); font-weight:800;">68</div>
+        <div class="font-mono text-[12px] text-[var(--ink-mute)] mt-3">BEFORE · 6 hidden gaps</div>
+      </div>
+      <div class="font-display" style="font-size:clamp(2.5rem,6vw,4.5rem); font-weight:800; color:var(--ink-mute);">→</div>
+      <div>
+        <div class="font-display leading-[0.8]" style="font-size:clamp(5rem,13vw,11rem); font-weight:800; color:var(--green);">91</div>
+        <div class="font-mono text-[12px] mt-3" style="color:var(--green-deep);">AFTER · zero coordination failures</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TOOLBOX ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1020px] mx-auto px-6 py-24 sm:py-28">
+    <div class="eyebrow mb-5">The OTP Toolbox</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.04] max-w-2xl mb-6"
+        style="font-size:clamp(2rem,4.2vw,3.3rem); font-weight:700;">
+      Six free tools. <span class="text-[var(--ink-mute)]">Reach for whichever you need first.</span>
+    </h2>
+    <p class="text-[16px] leading-[1.7] text-[var(--ink-soft)] max-w-2xl mb-10">
+      The tools are free. The chart is where it all comes together. Everything below is something a real OTP user reaches for in their first week.
+    </p>
+
+    <div>
+      <a href="/public/downloads/oos-starter.yaml" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+        <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">01</span>
+        <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Operating System Template</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">A commented YAML you fill in to describe your organization. Ready to use.</span></span>
+        <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Download →</span>
+      </a>
+      <a href="/sign-up" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+        <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">02</span>
+        <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Org Chart Builder</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">Add humans and AI agents as named seats. Author SOPs. Track KPIs.</span></span>
+        <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Open →</span>
+      </a>
+      <a href="/public/downloads/claude-md-template.md" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+        <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">03</span>
+        <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">CLAUDE.md Compiler</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">Click an agent tile, get a markdown bundle of its SOPs plus inherited SOPs.</span></span>
+        <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Download →</span>
+      </a>
+      <a href="/agent-builder" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+        <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">04</span>
+        <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Agent Builder</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">Describe a role, set the personality, get a full agent spec. Thirty seconds.</span></span>
+        <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Open →</span>
+      </a>
+      <a href="/checkup" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+        <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">05</span>
+        <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Coordination Checkup</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">Score your team across six dimensions of coordination. Ten minutes.</span></span>
+        <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Take it →</span>
+      </a>
+      <a href="/l8" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+        <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">06</span>
+        <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Weekly Team Meeting</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">Scorecard, priorities, issues, to-dos. Humans and AI agents on one attendee list.</span></span>
+        <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Open →</span>
+      </a>
+    </div>
+    <a href="/tools" class="inline-block mt-12 text-[15px] text-[var(--ink)] link-u">
+      Explore the full toolbox →
+    </a>
+  </div>
+</section>
+
+<!-- ================= FOUNDING 50 ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1020px] mx-auto px-6 py-24 sm:py-28">
+    <div class="card p-9 sm:p-14 text-center border-t-[3px]" style="border-top-color:var(--orgy-deep);">
+      <div class="eyebrow mb-5" style="color:var(--orgy-deep);">Founding 50 &middot; Free for life</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.04] mx-auto max-w-2xl"
+          style="font-size:clamp(2rem,4.4vw,3.4rem); font-weight:800;">
+        The first 50 get everything. Free for life.
+      </h2>
+      <p class="text-[16px] sm:text-[17px] leading-[1.7] text-[var(--ink-soft)] max-w-xl mx-auto mt-6">
+        OTP is free for your whole team while we are in beta. The first 50 founding members lock that in for good: every tool, every layer, free for life. Once the 50 seats are gone, they are gone.
+      </p>
+      <div class="flex flex-wrap gap-3 justify-center mt-9">
+        <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Claim your founding seat &rarr;</a>
+      </div>
+      <div class="eyebrow mt-6" style="color:var(--ink-mute);">No credit card &middot; Your whole team included &middot; Only 50 seats</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA (orange colour block) ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[1020px] mx-auto px-6 py-28 sm:py-32 text-center">
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.02] mx-auto"
+        style="font-size:clamp(2.6rem,6vw,5rem); font-weight:800;">
+      Two doors. Pick the one that fits.
+    </h2>
+    <p class="text-[17px] leading-[1.6] max-w-xl mx-auto mt-7" style="color:#5a2a06;">
+      Either you build a chart and run on OTP this week, or you read the four-stage arc that explains why the chart matters in the first place.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-10">
+      <a href="/sign-up" class="btn-ink px-8 py-4 text-[16px]">Get started →</a>
+      <a href="/blog/the-robots-are-coming" class="px-8 py-4 text-[16px] font-semibold rounded-[10px] border border-[#14161c]/30 text-[var(--ink)] hover:bg-[#14161c]/8 transition-colors">Read the four-stage arc</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="bg-[#0c1626] text-[#aeb7c6] relative overflow-hidden">
+  <img src="/public/orgy-clean.png" alt="" aria-hidden="true"
+       class="pointer-events-none select-none absolute"
+       style="right:48px; bottom:-118px; width:272px; z-index:0;">
+  <div class="max-w-[1180px] mx-auto px-6 pt-14 pb-24 relative" style="z-index:1;">
+    <div class="flex flex-wrap items-end justify-between gap-8">
+      <div>
+        <div class="flex items-baseline gap-2.5">
+          <span class="font-mono font-semibold text-[18px]"><span class="text-[var(--blue)]">[</span><span class="text-white">OTP</span><span class="text-[var(--blue)]">]</span></span>
+          <span class="eyebrow text-[9px] text-[#7d8696]">Organization Transport Protocol</span>
+        </div>
+        <p class="text-[13px] mt-3 max-w-sm leading-[1.6] text-[#8893a4]">
+          The operating platform where your people and AI agents run as one team. One chart, one scoreboard, one weekly meeting.
+        </p>
+      </div>
+      <div class="flex gap-x-10 gap-y-3 flex-wrap font-mono text-[12px]">
+        <a href="/protocol" class="hover:text-white transition-colors">Protocol</a>
+        <a href="/pricing" class="hover:text-white transition-colors">Pricing</a>
+        <a href="/browse" class="hover:text-white transition-colors">Browse</a>
+        <a href="/blog" class="hover:text-white transition-colors">Blog</a>
+        <a href="/about" class="hover:text-white transition-colors">About</a>
+      </div>
+    </div>
+    <p class="text-[10px] text-[#5f6878] mt-10 leading-[1.6] max-w-2xl">
+      OTP is an independent platform. Best practices in the library are sourced from publicly available content and attributed to their original authors. OTP is not affiliated with, endorsed by, or sponsored by any third-party organizations referenced.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
