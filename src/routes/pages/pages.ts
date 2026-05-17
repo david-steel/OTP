@@ -93,42 +93,15 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.type('text/html').send(html);
   });
 
+  // Homepage. Serves the v7 redesign (public/home-v7.html) as a standalone
+  // static document -- compiled CSS, SEO meta + JSON-LD, and GA baked into the
+  // file's head. No layout, no DB. /home-v7 and /public/home-v7.html match.
   app.get('/', async (request, reply) => {
-    const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
-    const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
-    return reply.view('pages/home-v3', {
-      title: 'OTP - How the Best AI Teams Run',
-      description: 'How the best AI teams run. Search. Compare. Make yours better. Coordination intelligence from organizations running AI agents in production.',
-      canonical: BASE_URL + '/',
-      ogImage: BASE_URL + '/public/images/og-otp-home.png',
-      jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'Organization',
-          name: 'OTP - Organization Transport Protocol',
-          url: BASE_URL,
-          logo: BASE_URL + '/public/favicon-192x192.png',
-          description: 'The coordination intelligence layer for AI-native organizations. Where agents learn to work as a team.',
-          founder: { '@type': 'Person', name: 'David Steel', url: BASE_URL + '/about', jobTitle: 'Founder' },
-          foundingDate: '2026-03',
-          sameAs: ['https://www.linkedin.com/company/orgtp', 'https://x.com/OTP_OOS']
-        },
-        {
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          name: 'OTP',
-          url: BASE_URL,
-          potentialAction: {
-            '@type': 'SearchAction',
-            target: { '@type': 'EntryPoint', urlTemplate: BASE_URL + '/search?q={search_term_string}' },
-            'query-input': 'required name=search_term_string'
-          }
-        }
-      ],
-      publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
-      claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
-      templateCount: 3,
-    });
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const p = fileURLToPath(new URL('../../../public/home-v7.html', import.meta.url));
+    const html = await readFile(p, 'utf8');
+    return reply.type('text/html').send(html);
   });
 
   // Browse
