@@ -1,159 +1,169 @@
-<!-- HERO -->
-<div class="bg-otp-950 text-white relative overflow-hidden">
-  <div class="absolute inset-0 bg-grid opacity-30"></div>
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
-    <p class="text-otp-400 text-sm font-semibold uppercase tracking-widest mb-4">Pricing</p>
-    <h1 class="text-3xl sm:text-4xl font-extrabold mb-4">The open network is free.<br>Enterprise keeps it private.</h1>
-    <p class="text-gray-400 text-lg max-w-2xl mx-auto">Publish, browse, search, compare, and learn from the entire Intelligence Graph at no cost. Enterprise adds a private intelligence layer for organizations that need control.</p>
+<%# /pricing -- v7 layout (light, editorial). Free open network vs
+    Enterprise. Contact form, why-free, FAQ, install CTA.
+    Rendered via reply.view('pages/pricing', data, { layout: 'layouts/v7' }). %>
+<style>
+  .pr-check { width:20px; height:20px; flex:none; margin-top:1px; }
+  .pr-faq { border:1px solid var(--line); border-radius:14px; background:var(--card); overflow:hidden; }
+  .pr-faq summary {
+    cursor:pointer; list-style:none; padding:18px 22px;
+    font-weight:600; font-size:15px; color:var(--ink);
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  }
+  .pr-faq summary::-webkit-details-marker { display:none; }
+  .pr-faq summary .pr-chev { transition:transform .2s ease; flex:none; }
+  .pr-faq[open] summary .pr-chev { transform:rotate(180deg); }
+  .pr-faq-body { padding:0 22px 18px; font-size:14px; color:var(--ink-soft); line-height:1.7; }
+  .pr-field {
+    width:100%; padding:10px 12px; font-size:14px;
+    border:1px solid var(--line); border-radius:10px;
+    background:var(--white); color:var(--ink); outline:none;
+    transition:border-color .15s ease;
+  }
+  .pr-field:focus { border-color:var(--blue); }
+  .pr-input {
+    background:var(--ink); border-radius:12px;
+    padding:14px 18px; font-family:'JetBrains Mono',monospace;
+  }
+  .pr-tilt { animation:pr-tilt 6s ease-in-out infinite; transform-origin:60% 90%; }
+  @keyframes pr-tilt { 0%,100%{transform:rotate(-7deg);} 50%{transform:rotate(8deg);} }
+  @media (prefers-reduced-motion:reduce){ .pr-tilt{ animation:none; } }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[820px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16 text-center">
+    <div class="eyebrow mb-5 flex items-center gap-2.5 justify-center">
+      <span class="tick" style="background:var(--orgy);"></span>Pricing
+    </div>
+    <h1 class="font-display text-[var(--ink)]"
+        style="font-size:clamp(2.1rem,4.4vw,3.4rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
+      The open network is free.<br>Enterprise keeps it private.
+    </h1>
+    <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[38rem] mx-auto mt-5">
+      Publish, browse, search, compare, and learn from the entire Intelligence Graph at no cost. Enterprise adds a private intelligence layer for organizations that need control.
+    </p>
   </div>
-</div>
+</section>
 
-<div class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+<!-- ================= PRICING CARDS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="grid md:grid-cols-2 gap-6">
 
-  <!-- PRICING CARDS -->
-  <div class="grid md:grid-cols-2 gap-8 mb-16">
-
-    <!-- FREE -->
-    <div class="bg-white rounded-xl border-2 border-gray-200 p-8 flex flex-col">
-      <div class="mb-6">
-        <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Open Network</div>
-        <div class="flex items-baseline gap-2">
-          <span class="text-4xl font-extrabold">Free</span>
-          <span class="text-gray-400 text-sm">forever</span>
+      <!-- FREE -->
+      <div class="card p-8 sm:p-9 flex flex-col">
+        <div class="eyebrow mb-3" style="color:var(--green-deep);">Open Network</div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <span class="font-display text-[var(--ink)] text-[3rem] font-bold leading-none">Free</span>
+          <span class="font-mono text-[13px] text-[var(--ink-mute)]">forever</span>
         </div>
-        <p class="text-sm text-gray-500 mt-3">Everything you need to publish your OOS, learn from the network, and get smarter every morning. No credit card. No gates. No trial period.</p>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
+          Everything you need to publish your OOS, learn from the network, and get smarter every morning. No credit card. No gates. No trial period.
+        </p>
+        <div class="border-t border-[var(--line)] pt-6 flex-1">
+          <ul class="space-y-3">
+            <% var freeFeatures = [
+              ['Publish unlimited OOS files', ' with version history'],
+              ['Browse and search', ' the entire Intelligence Graph'],
+              ['Compare', ' any two OOS files side-by-side'],
+              ['Intelligence inbox', ' with Scout recommendations from other orgs'],
+              ['Cross-org pattern discovery', ' across all published OOS files'],
+              ['Full MCP server', ' with 16 tools and 5 slash commands'],
+              ['API key', ' for full read/write access'],
+              ['Quality tier badges', ' (Bronze through Platinum)'],
+              ['PII scanning', ' before anything publishes'],
+              ['Morning briefings', ' via the /otp-morning command']
+            ]; %>
+            <% freeFeatures.forEach(function(f){ %>
+            <li class="flex items-start gap-3">
+              <svg class="pr-check" fill="none" stroke="var(--green)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span class="text-[14px] text-[var(--ink-soft)] leading-[1.55]"><strong class="text-[var(--ink)] font-semibold"><%= f[0] %></strong><%= f[1] %></span>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="mt-8">
+          <a href="/guide#install" class="btn-ink block w-full text-center px-6 py-3.5 text-[15px]">Install Now</a>
+          <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">One command. 30 seconds.</p>
+        </div>
       </div>
 
-      <div class="border-t pt-6 flex-1">
-        <ul class="space-y-3 text-sm text-gray-700">
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Publish unlimited OOS files</strong> with version history</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Browse and search</strong> the entire Intelligence Graph</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Compare</strong> any two OOS files side-by-side</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Intelligence inbox</strong> with Scout recommendations from other orgs</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Cross-org pattern discovery</strong> across all published OOS files</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Full MCP server</strong> with 16 tools and 5 slash commands</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>API key</strong> for full read/write access</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Quality tier badges</strong> (Bronze through Platinum)</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>PII scanning</strong> before anything publishes</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong>Morning briefings</strong> via /otp-morning command</span>
-          </li>
-        </ul>
+      <!-- ENTERPRISE -->
+      <div class="card p-8 sm:p-9 flex flex-col relative border-t-[3px]"
+           style="border-top-color:var(--blue);">
+        <span class="absolute -top-3 right-7 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-full text-white"
+              style="background:var(--blue);">Coming soon</span>
+        <div class="eyebrow mb-3" style="color:var(--blue-deep);">Enterprise</div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <span class="font-display text-[var(--ink)] text-[3rem] font-bold leading-none">Custom</span>
+          <span class="font-mono text-[13px] text-[var(--ink-mute)]">pricing</span>
+        </div>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
+          A private intelligence layer for your organization. Your departments publish internally, compare across teams, and merge learnings. Nothing leaves your walls.
+        </p>
+        <div class="border-t border-[var(--line)] pt-6 flex-1">
+          <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--blue-deep)] mb-4">Everything in Free, plus:</p>
+          <ul class="space-y-3">
+            <% var entFeatures = [
+              ['Private OOS vault', ' for departments and teams'],
+              ['Internal Intelligence Graph', ' across your organization'],
+              ['Data never leaves your organization.', ' No model training on enterprise data.'],
+              ['SSO and admin controls', ''],
+              ['Compliance and audit trail', ''],
+              ['Team API keys', ' with role-based access'],
+              ['Priority support', '']
+            ]; %>
+            <% entFeatures.forEach(function(f){ %>
+            <li class="flex items-start gap-3">
+              <svg class="pr-check" fill="none" stroke="var(--blue)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span class="text-[14px] text-[var(--ink-soft)] leading-[1.55]"><strong class="text-[var(--ink)] font-semibold"><%= f[0] %></strong><%= f[1] %></span>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="mt-8">
+          <button onclick="document.getElementById('enterprise-form').scrollIntoView({behavior:'smooth'})" class="btn-primary block w-full text-center px-6 py-3.5 text-[15px] cursor-pointer">Contact Us</button>
+          <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">We will scope it to your organization.</p>
+        </div>
       </div>
 
-      <div class="mt-8">
-        <a href="/guide#install" class="block w-full text-center px-6 py-3 bg-otp-950 text-white rounded-lg font-semibold hover:bg-otp-800 transition-colors">Install Now</a>
-        <p class="text-xs text-gray-400 text-center mt-2">One command. 30 seconds.</p>
-      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ENTERPRISE CONTACT FORM ================= -->
+<section class="bg-[var(--white)]">
+  <div id="enterprise-form" class="max-w-[680px] mx-auto px-6 py-20 sm:py-24">
+    <div class="text-center mb-8">
+      <div class="eyebrow mb-3">Get in touch</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15]"
+          style="font-size:clamp(1.7rem,3.2vw,2.3rem); font-weight:700;">
+        Talk to us about Enterprise.
+      </h2>
+      <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] mt-3">
+        Tell us about your organization and what you need. We will get back to you within 24 hours.
+      </p>
     </div>
 
-    <!-- ENTERPRISE -->
-    <div class="bg-otp-950 text-white rounded-xl border-2 border-otp-500 p-8 flex flex-col relative">
-      <div class="absolute -top-3 right-6 px-3 py-1 bg-otp-500 text-white text-xs font-bold rounded-full">COMING SOON</div>
-
-      <div class="mb-6">
-        <div class="text-sm font-semibold text-otp-400 uppercase tracking-wider mb-2">Enterprise</div>
-        <div class="flex items-baseline gap-2">
-          <span class="text-4xl font-extrabold">Custom</span>
-          <span class="text-gray-400 text-sm">pricing</span>
-        </div>
-        <p class="text-sm text-gray-400 mt-3">A private intelligence layer for your organization. Your departments publish internally, compare across teams, and merge learnings. Nothing leaves your walls.</p>
-      </div>
-
-      <div class="border-t border-white/10 pt-6 flex-1">
-        <p class="text-xs text-otp-400 font-semibold uppercase tracking-wider mb-4">Everything in Free, plus:</p>
-        <ul class="space-y-3 text-sm text-gray-300">
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">Private OOS vault</strong> for departments and teams</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">Internal Intelligence Graph</strong> across your organization</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">Data never leaves your organization.</strong> No model training on enterprise data.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">SSO and admin controls</strong></span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">Compliance and audit trail</strong></span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">Team API keys</strong> with role-based access</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-otp-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span><strong class="text-white">Priority support</strong></span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="mt-8">
-        <button onclick="document.getElementById('enterprise-form').scrollIntoView({behavior:'smooth'})" class="block w-full text-center px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-colors cursor-pointer">Contact Us</button>
-        <p class="text-xs text-gray-500 text-center mt-2">We will scope it to your organization.</p>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ENTERPRISE CONTACT FORM -->
-  <div id="enterprise-form" class="max-w-2xl mx-auto mb-16">
-    <h2 class="text-2xl font-bold mb-2 text-center">Talk to us about Enterprise</h2>
-    <p class="text-gray-500 text-sm mb-6 text-center">Tell us about your organization and what you need. We will get back to you within 24 hours.</p>
-
-    <form id="contact-form" class="bg-white rounded-xl border p-6 sm:p-8 space-y-4">
+    <form id="contact-form" class="card p-6 sm:p-8 space-y-4">
       <div class="grid sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-          <input type="text" name="name" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none" placeholder="Your name">
+          <label class="block text-[13px] font-medium text-[var(--ink)] mb-1.5">Name</label>
+          <input type="text" name="name" required class="pr-field" placeholder="Your name">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Work Email</label>
-          <input type="email" name="email" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none" placeholder="you@company.com">
+          <label class="block text-[13px] font-medium text-[var(--ink)] mb-1.5">Work Email</label>
+          <input type="email" name="email" required class="pr-field" placeholder="you@company.com">
         </div>
       </div>
       <div class="grid sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
-          <input type="text" name="company" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none" placeholder="Company name">
+          <label class="block text-[13px] font-medium text-[var(--ink)] mb-1.5">Company</label>
+          <input type="text" name="company" required class="pr-field" placeholder="Company name">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Team Size</label>
-          <select name="size" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none text-gray-700">
+          <label class="block text-[13px] font-medium text-[var(--ink)] mb-1.5">Team Size</label>
+          <select name="size" class="pr-field">
             <option value="">Select...</option>
             <option value="1-10">1-10 people</option>
             <option value="11-50">11-50 people</option>
@@ -164,93 +174,102 @@
         </div>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">What are you looking to do?</label>
-        <textarea name="message" rows="4" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none resize-none" placeholder="Tell us about your AI setup and what you need from OTP Enterprise..."></textarea>
+        <label class="block text-[13px] font-medium text-[var(--ink)] mb-1.5">What are you looking to do?</label>
+        <textarea name="message" rows="4" required class="pr-field resize-none" placeholder="Tell us about your AI setup and what you need from OTP Enterprise..."></textarea>
       </div>
-      <button type="submit" id="submit-btn" class="w-full px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-colors">Send Inquiry</button>
+      <button type="submit" id="submit-btn" class="btn-ink w-full px-6 py-3.5 text-[15px]">Send Inquiry</button>
       <div id="form-success" class="hidden text-center py-4">
-        <div class="text-green-600 font-semibold mb-1">Sent. We will be in touch within 24 hours.</div>
-        <p class="text-sm text-gray-500">Check your email for a confirmation.</p>
+        <div class="font-semibold text-[15px] mb-1" style="color:var(--green-deep);">Sent. We will be in touch within 24 hours.</div>
+        <p class="text-[13px] text-[var(--ink-soft)]">Check your email for a confirmation.</p>
       </div>
-      <div id="form-error" class="hidden text-center py-2 text-red-600 text-sm"></div>
+      <div id="form-error" class="hidden text-center py-2 text-[13px]" style="color:var(--orange-deep);"></div>
     </form>
   </div>
+</section>
 
-  <!-- WHY FREE -->
-  <div class="max-w-3xl mx-auto mb-16">
-    <h2 class="text-2xl font-bold mb-4 text-center">Why is the open network free?</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <p class="text-gray-700 mb-4">Because the Intelligence Graph only works if people publish to it.</p>
-      <p class="text-gray-600 mb-4">Every organization that publishes an OOS makes the network more valuable for every other organization. Gating publishing behind a paywall would kill the network before it reaches critical mass. That is the opposite of what we want.</p>
-      <p class="text-gray-600 mb-4">The free tier is not a trial. It is not a limited version. It is the full product. Publish, browse, search, compare, discover intelligence, get morning briefings. Everything.</p>
-      <p class="text-gray-700 font-medium">Enterprise exists for organizations that need the same capabilities behind their own walls. Private vault, internal graph, data isolation, compliance. That is a different problem with different requirements. That is where revenue lives.</p>
+<!-- ================= WHY FREE ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">The model</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15] mb-6"
+        style="font-size:clamp(1.7rem,3.2vw,2.3rem); font-weight:700;">
+      Why is the open network free?
+    </h2>
+    <div class="card p-7 sm:p-9">
+      <p class="text-[16px] text-[var(--ink)] font-semibold leading-[1.7] mb-4">
+        Because the Intelligence Graph only works if people publish to it.
+      </p>
+      <p class="text-[15px] text-[var(--ink-soft)] leading-[1.75] mb-4">
+        Every organization that publishes an OOS makes the network more valuable for every other organization. Gating publishing behind a paywall would kill the network before it reaches critical mass. That is the opposite of what we want.
+      </p>
+      <p class="text-[15px] text-[var(--ink-soft)] leading-[1.75] mb-4">
+        The free tier is not a trial. It is not a limited version. It is the full product. Publish, browse, search, compare, discover intelligence, get morning briefings. Everything.
+      </p>
+      <p class="text-[15px] text-[var(--ink)] font-medium leading-[1.75]">
+        Enterprise exists for organizations that need the same capabilities behind their own walls. Private vault, internal graph, data isolation, compliance. That is a different problem with different requirements. That is where revenue lives.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- FAQ -->
-  <div class="max-w-3xl mx-auto mb-16">
-    <h2 class="text-2xl font-bold mb-6 text-center">Questions</h2>
-    <div class="space-y-4">
-
-      <details class="bg-white rounded-lg border group">
-        <summary class="px-6 py-4 cursor-pointer font-medium text-sm flex items-center justify-between">
-          Will the free tier stay free?
-          <svg class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+<!-- ================= FAQ ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">Questions</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15] mb-9"
+        style="font-size:clamp(1.7rem,3.2vw,2.3rem); font-weight:700;">
+      What people ask before they install.
+    </h2>
+    <div class="space-y-3">
+      <% var faqs = [
+        ['Will the free tier stay free?', 'Yes. The open network will always be free. We may add premium features in the future (advanced analytics, priority Scout scanning, white-label reports), but the core capabilities listed above will remain free.'],
+        ['Is my data used to train AI models?', 'No. Published OOS files are used to power the Intelligence Graph (cross-org patterns, comparisons, recommendations). They are never sent to third-party AI models for training. Enterprise tier adds full data isolation.'],
+        ['What about sensitive information in my OOS?', 'Every OOS is scanned for PII (client names, employee data, proprietary pricing) before publishing. Your org name is pseudonymized by default. The OOS captures coordination patterns and operational intelligence, not trade secrets. If something slips through, you can unpublish instantly.'],
+        ['What platforms does OTP work with?', 'Any MCP-compatible AI client: Claude Code, Cline, Roo Code, Cursor, Windsurf, and more. The web UI works in any browser. The OOS format is platform-agnostic. Claude, GPT, Gemini, open-source models, it does not matter which AI you use.']
+      ]; %>
+      <% faqs.forEach(function(q){ %>
+      <details class="pr-faq">
+        <summary>
+          <%= q[0] %>
+          <svg class="pr-chev" width="16" height="16" fill="none" stroke="var(--ink-mute)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-6 pb-4 text-sm text-gray-600">Yes. The open network will always be free. We may add premium features in the future (advanced analytics, priority Scout scanning, white-label reports), but the core capabilities listed above will remain free.</div>
+        <div class="pr-faq-body"><%= q[1] %></div>
       </details>
-
-      <details class="bg-white rounded-lg border group">
-        <summary class="px-6 py-4 cursor-pointer font-medium text-sm flex items-center justify-between">
-          Is my data used to train AI models?
-          <svg class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </summary>
-        <div class="px-6 pb-4 text-sm text-gray-600">No. Published OOS files are used to power the Intelligence Graph (cross-org patterns, comparisons, recommendations). They are never sent to third-party AI models for training. Enterprise tier adds full data isolation.</div>
-      </details>
-
-      <details class="bg-white rounded-lg border group">
-        <summary class="px-6 py-4 cursor-pointer font-medium text-sm flex items-center justify-between">
-          What about sensitive information in my OOS?
-          <svg class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </summary>
-        <div class="px-6 pb-4 text-sm text-gray-600">Every OOS is scanned for PII (client names, employee data, proprietary pricing) before publishing. Your org name is pseudonymized by default. The OOS captures coordination patterns and operational intelligence, not trade secrets. If something slips through, you can unpublish instantly.</div>
-      </details>
-
-      <details class="bg-white rounded-lg border group">
-        <summary class="px-6 py-4 cursor-pointer font-medium text-sm flex items-center justify-between">
-          What platforms does OTP work with?
-          <svg class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </summary>
-        <div class="px-6 pb-4 text-sm text-gray-600">Any MCP-compatible AI client: Claude Code, Cline, Roo Code, Cursor, Windsurf, and more. The web UI works in any browser. The OOS format is platform-agnostic. Claude, GPT, Gemini, open-source models -- it does not matter which AI you use.</div>
-      </details>
-
-      <details class="bg-white rounded-lg border group">
-        <summary class="px-6 py-4 cursor-pointer font-medium text-sm flex items-center justify-between">
+      <% }); %>
+      <details class="pr-faq">
+        <summary>
           When will Enterprise be available?
-          <svg class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="pr-chev" width="16" height="16" fill="none" stroke="var(--ink-mute)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-6 pb-4 text-sm text-gray-600">We are building it now. If your organization is interested, reach out at <a href="mailto:dsteel@sneeze.it" class="text-otp-500 hover:underline">dsteel@sneeze.it</a> and we will work with you on early access.</div>
+        <div class="pr-faq-body">We are building it now. If your organization is interested, reach out at <a href="mailto:dsteel@sneeze.it" class="text-[var(--blue-deep)] link-u">dsteel@sneeze.it</a> and we will work with you on early access.</div>
       </details>
-
     </div>
   </div>
+</section>
 
-  <!-- CTA -->
-  <div class="text-center py-8">
-    <div class="bg-otp-950 text-white rounded-xl p-8 sm:p-12 max-w-3xl mx-auto">
-      <h2 class="text-2xl font-bold mb-3">Start publishing in 30 seconds.</h2>
-      <p class="text-gray-400 mb-6">One command installs the MCP server and slash commands. No account required to browse. Sign up free to publish.</p>
-      <div class="bg-black/30 rounded-lg p-4 mb-6 max-w-lg mx-auto">
-        <code class="text-otp-400 text-sm sm:text-base font-mono">curl -fsSL https://orgtp.com/install.sh | bash</code>
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[820px] mx-auto px-6 py-20 sm:py-24">
+    <div class="card p-9 sm:p-12 text-center relative overflow-hidden">
+      <img src="/public/hand-3.png" alt="" aria-hidden="true"
+           class="pr-tilt absolute hidden sm:block" style="width:80px; height:auto; top:-6px; right:24px;">
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.6vw,2.6rem); font-weight:700;">
+        Start publishing in 30 seconds.
+      </h2>
+      <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-4">
+        One command installs the MCP server and slash commands. No account required to browse. Sign up free to publish.
+      </p>
+      <div class="pr-input max-w-[460px] mx-auto mt-7">
+        <code class="text-[13px] sm:text-[14px]" style="color:var(--orgy);">curl -fsSL https://orgtp.com/install.sh | bash</code>
       </div>
-      <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="/guide#install" class="px-8 py-3 bg-otp-500 rounded-lg font-semibold hover:bg-otp-400 transition-colors">Installation Guide</a>
-        <a href="/browse" class="px-8 py-3 border border-white/20 rounded-lg font-medium hover:bg-white/5 transition-colors">Browse the Network</a>
+      <div class="flex flex-wrap gap-3 justify-center mt-7">
+        <a href="/guide#install" class="btn-primary px-7 py-3.5 text-[15px]">Installation Guide</a>
+        <a href="/browse" class="btn-ghost px-7 py-3.5 text-[15px]">Browse the Network</a>
       </div>
     </div>
   </div>
-
-</div>
+</section>
 
 <script>
 document.getElementById('contact-form').addEventListener('submit', async function(e) {

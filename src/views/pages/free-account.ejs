@@ -1,106 +1,73 @@
-<%# /free-account — Google Ads sitelink landing page. Sitelink label: "Claim your Free Account".
-    Pricing-page framing modeled on per-seat EOS tool pricing.
-    Trademark-safe naming; beta framing justifies free pricing.
-    Every CTA drives to /sign-up. %>
+<%# /free-account -- v7 layout (light, editorial). Google Ads sitelink landing page.
+    Sitelink label: "Claim your Free Account". Per-seat pricing comparison.
+    Every CTA drives to /sign-up. gtagSendEvent onclick preserved (ad conversion). %>
 <style>
-  .radar-gradient-gold {
-    background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #d4ad32 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .fa-float { animation:fa-float 7s ease-in-out infinite; }
+  @keyframes fa-float { 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-14px) rotate(3deg);} }
+  .fa-glow {
+    position:absolute; inset:-12% -8%; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse, rgba(189,214,34,0.30), transparent 68%);
   }
-  .hero-headline {
-    font-size: clamp(2.25rem, 5.5vw, 4.25rem);
-    line-height: 1.04;
-    letter-spacing: -0.02em;
-  }
-  .feature-tile {
-    transition: transform .2s ease, border-color .2s ease, background-color .2s ease;
-  }
-  .feature-tile:hover {
-    transform: translateY(-2px);
-    border-color: rgba(212, 173, 50, 0.4);
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .feature-tile { animation: none !important; transition: none !important; }
-  }
+  @media (prefers-reduced-motion:reduce){ .fa-float{ animation:none; } }
 </style>
 
-<!-- =====================================================
-     BETA BANNER — exact copy from meet-radar.ejs
-     ===================================================== -->
-<div class="relative w-full" style="background: linear-gradient(90deg, #d4ad32 0%, #f5c84d 35%, #f5c84d 65%, #d4ad32 100%); box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px -4px rgba(212,173,50,0.4);">
-  <div class="mx-auto max-w-6xl px-4 py-3 sm:py-3.5 text-center">
-    <p class="text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-black flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
-      <span class="inline-block px-2 py-0.5 rounded-md bg-black text-amber-300 mr-1">BETA</span>
-      <span>Join now = Free forever for your whole team.</span>
-      <span class="hidden sm:inline text-black/75 font-bold normal-case tracking-normal">Beta members lock in free pricing before paid plans turn on.</span>
-    </p>
-  </div>
-</div>
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20 text-center">
+    <div class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 mb-7"
+         style="border-color:var(--orgy-deep); background:rgba(189,214,34,0.14);">
+      <span class="tick" style="background:var(--orgy-deep);"></span>
+      <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink)]">Beta: free forever for your whole team</span>
+    </div>
 
-<!-- =====================================================
-     HERO — pricing eyebrow, free headline, primary CTA
-     ===================================================== -->
-<section class="bg-otp-950 relative overflow-hidden pt-16 pb-14 sm:pt-20 sm:pb-20">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-  <div class="absolute bottom-[-200px] left-[-100px] w-[500px] h-[500px] bg-blue-500/8 rounded-full blur-[160px] pointer-events-none"></div>
-
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
-    <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">Pricing</p>
-
-    <h1 class="hero-headline font-extrabold text-white mt-5">
-      <span class="block">The whole platform.</span>
-      <span class="block radar-gradient-gold mt-1">Free for your whole team.</span>
+    <div class="eyebrow mb-4">Pricing</div>
+    <h1 class="font-display text-[var(--ink)] mx-auto max-w-[20ch]"
+        style="font-size:clamp(2.3rem,5.4vw,4.1rem); line-height:1.05; font-weight:700; letter-spacing:-0.025em;">
+      The whole platform.
+      <span class="text-[var(--green-deep)]">Free for your whole team.</span>
     </h1>
-
-    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg leading-relaxed text-gray-300">
+    <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[40rem] mx-auto mt-6">
       Vision Plan, Weekly Scoreboard, Quarterly Priorities, To-Dos, Issues Board, the weekly Leadership Meeting, Team Chart, Team Updates, 1-on-1s, and Process Docs. Plus Radar, your built-in AI Chief of Staff.
     </p>
 
-    <div class="mt-10 flex justify-center">
-      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="group inline-flex items-center gap-2 rounded-xl px-9 py-4 text-base font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #b8941c 100%); box-shadow: 0 0 0 1px rgba(212,173,50,0.4), 0 14px 32px -10px rgba(212,173,50,0.5);">
-        <span>Claim your free account</span>
-        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </a>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-8 py-4 text-[16px]">Claim your free account &rarr;</a>
     </div>
-
-    <p class="mt-5 text-[11px] uppercase tracking-[0.25em] text-gray-500">
-      <span class="text-amber-400">No credit card</span> &middot;
-      <span class="text-otp-300">Whole team included</span> &middot;
-      <span class="text-white">Free forever in Beta</span>
+    <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--ink-mute)] mt-6">
+      No credit card &nbsp;&middot;&nbsp; Whole team included &nbsp;&middot;&nbsp; Free forever in beta
     </p>
   </div>
 </section>
 
-<!-- =====================================================
-     THE PLAN — OTP Free card vs per-seat reference card
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-5xl px-6 sm:px-8">
-    <div class="mx-auto mb-12 max-w-2xl text-center">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">One plan. No tiers.</p>
-      <h2 class="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+<!-- ================= THE PLAN ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-24 sm:py-28">
+    <div class="max-w-[620px] mx-auto text-center mb-14">
+      <div class="eyebrow mb-4">One plan. No tiers.</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
         Other operating tools have four price tiers. OTP has one.
       </h2>
     </div>
 
     <div class="grid lg:grid-cols-5 gap-5 items-start">
-      <!-- OTP Free plan card — prominent -->
-      <div class="lg:col-span-3 rounded-2xl border border-amber-400/40 bg-gradient-to-b from-amber-400/[0.07] to-white/[0.02] p-7 sm:p-9">
+      <!-- OTP Free plan card -->
+      <div class="lg:col-span-3 card p-7 sm:p-9 border-t-[3px] relative" style="border-top-color:var(--orgy-deep);">
+        <div class="absolute -top-7 right-6">
+          <img src="/public/hand-3.png" alt="" aria-hidden="true" class="fa-float block" style="width:78px; height:auto; filter:drop-shadow(0 10px 16px rgba(20,22,28,.2));">
+        </div>
         <div class="flex items-baseline justify-between flex-wrap gap-2">
-          <h3 class="text-xl font-bold text-white">OTP Free</h3>
-          <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-md px-2 py-1">Beta</span>
+          <h3 class="font-display text-[1.35rem] font-bold text-[var(--ink)]">OTP Free</h3>
+          <span class="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] rounded-md px-2 py-1"
+                style="color:var(--green-deep); background:rgba(10,157,99,0.10); border:1px solid rgba(10,157,99,0.28);">Beta</span>
         </div>
         <div class="mt-4 flex items-baseline gap-2">
-          <span class="text-5xl font-extrabold text-white">$0</span>
-          <span class="text-sm text-gray-400">/ whole team / month</span>
+          <span class="font-display text-[3.4rem] font-bold text-[var(--ink)] leading-none">$0</span>
+          <span class="text-[14px] text-[var(--ink-mute)]">/ whole team / month</span>
         </div>
-        <p class="mt-3 text-sm text-gray-300">No per-seat fees. No user limit. No credit card. Everything below is included.</p>
+        <p class="mt-3 text-[14px] text-[var(--ink-soft)] leading-[1.6]">No per-seat fees. No user limit. No credit card. Everything below is included.</p>
 
-        <ul class="mt-6 grid sm:grid-cols-2 gap-x-5 gap-y-2.5 text-sm text-gray-200">
+        <ul class="mt-6 grid sm:grid-cols-2 gap-x-5 gap-y-2.5 text-[14px] text-[var(--ink-soft)]">
           <% const included = [
             'Vision Plan', 'Weekly Scoreboard', 'Quarterly Priorities', 'To-Dos',
             'Issues Board', 'Leadership Meeting', 'Team Chart', 'Team Updates',
@@ -108,84 +75,80 @@
           ]; %>
           <% included.forEach(item => { %>
             <li class="flex items-start gap-2">
-              <span class="text-amber-400 flex-shrink-0 mt-0.5">✓</span>
+              <span class="flex-shrink-0 mt-0.5" style="color:var(--green);">&#10003;</span>
               <span><%= item %></span>
             </li>
           <% }); %>
         </ul>
 
         <div class="mt-8">
-          <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-otp-950 transition-transform hover:scale-[1.03]" style="background: linear-gradient(135deg, #d4ad32, #f5c84d);">
-            Claim your free account
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+            Claim your free account &rarr;
           </a>
         </div>
       </div>
 
-      <!-- Reference card — muted -->
-      <div class="lg:col-span-2 rounded-2xl border border-white/10 bg-white/[0.025] p-7 sm:p-9">
-        <h3 class="text-base font-bold text-gray-300">What you pay elsewhere</h3>
+      <!-- Reference card -->
+      <div class="lg:col-span-2 card p-7 sm:p-9" style="background:var(--grey);">
+        <h3 class="font-display text-[1.05rem] font-bold text-[var(--ink-soft)]">What you pay elsewhere</h3>
         <div class="mt-4 flex items-baseline gap-2">
-          <span class="text-4xl font-extrabold text-gray-400">$8 to $16</span>
+          <span class="font-display text-[2.6rem] font-bold text-[var(--ink-mute)]">$8 to $16</span>
         </div>
-        <p class="text-sm text-gray-500">/ user / month</p>
-        <p class="mt-4 text-sm text-gray-500 leading-relaxed">
+        <p class="text-[14px] text-[var(--ink-mute)]">/ user / month</p>
+        <p class="mt-4 text-[14px] text-[var(--ink-soft)] leading-[1.65]">
           Per-seat EOS<sup>&reg;</sup> tools like Ninety, Bloom Growth, and EOS One charge for every person on payroll. The bill grows every time you hire.
         </p>
-        <p class="mt-4 text-xs uppercase tracking-[0.18em] text-gray-600">Per-seat is their business model. Not ours.</p>
+        <p class="mt-4 font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ink-mute)]">Per-seat is their business model. Not ours.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     SAVINGS MATH — per-seat cost vs free on OTP
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-3xl px-6 sm:px-8">
-    <div class="rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur p-7 sm:p-10">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400 mb-3">Do the math</p>
-      <h2 class="text-2xl sm:text-3xl font-bold text-white leading-tight mb-5">
+<!-- ================= SAVINGS MATH ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[720px] mx-auto px-6 py-24 sm:py-28">
+    <div class="card p-7 sm:p-10">
+      <div class="eyebrow mb-3">Do the math</div>
+      <h2 class="font-display text-[var(--ink)] leading-[1.15] mb-6"
+          style="font-size:clamp(1.5rem,2.8vw,2.1rem); font-weight:700;">
         Per-seat pricing adds up fast. Here is what your team would pay.
       </h2>
 
-      <ul class="space-y-2 text-sm text-gray-300">
-        <li class="flex items-baseline justify-between gap-3 pb-2 border-b border-white/5">
-          <span>10-person leadership team on per-seat software</span>
-          <span class="font-bold text-white whitespace-nowrap">~$1,920 / year</span>
-        </li>
-        <li class="flex items-baseline justify-between gap-3 pb-2 border-b border-white/5">
-          <span>25-person company on per-seat software</span>
-          <span class="font-bold text-white whitespace-nowrap">~$4,800 / year</span>
-        </li>
-        <li class="flex items-baseline justify-between gap-3 pb-2 border-b border-white/5">
-          <span>100-person company on per-seat software</span>
-          <span class="font-bold text-white whitespace-nowrap">~$19,200 / year</span>
-        </li>
-        <li class="flex items-baseline justify-between gap-3 pt-1">
-          <span>Same setup on OTP, free in Beta</span>
-          <span class="font-bold radar-gradient-gold whitespace-nowrap">$0</span>
-        </li>
-      </ul>
+      <div>
+        <div class="idx-row flex items-baseline justify-between gap-3 py-3.5">
+          <span class="text-[14.5px] text-[var(--ink-soft)]">10-person leadership team on per-seat software</span>
+          <span class="font-display font-bold text-[var(--ink)] whitespace-nowrap">~$1,920 / year</span>
+        </div>
+        <div class="idx-row flex items-baseline justify-between gap-3 py-3.5">
+          <span class="text-[14.5px] text-[var(--ink-soft)]">25-person company on per-seat software</span>
+          <span class="font-display font-bold text-[var(--ink)] whitespace-nowrap">~$4,800 / year</span>
+        </div>
+        <div class="idx-row flex items-baseline justify-between gap-3 py-3.5">
+          <span class="text-[14.5px] text-[var(--ink-soft)]">100-person company on per-seat software</span>
+          <span class="font-display font-bold text-[var(--ink)] whitespace-nowrap">~$19,200 / year</span>
+        </div>
+        <div class="idx-row flex items-baseline justify-between gap-3 py-3.5">
+          <span class="text-[14.5px] font-semibold text-[var(--ink)]">Same setup on OTP, free in beta</span>
+          <span class="font-display font-bold text-[var(--green-deep)] whitespace-nowrap">$0</span>
+        </div>
+      </div>
 
-      <div class="mt-8 text-center">
-        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-otp-950 transition-transform hover:scale-[1.03]" style="background: linear-gradient(135deg, #d4ad32, #f5c84d);">
-          Move your team to OTP, free
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      <div class="mt-8">
+        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-ink inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+          Move your team to OTP, free &rarr;
         </a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     FAQ — answer the obvious objections about free
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-3xl px-6 sm:px-8">
+<!-- ================= FAQ ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28">
     <div class="text-center mb-12">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">Questions</p>
-      <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-white">
+      <div class="eyebrow mb-3">Questions</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.7rem); font-weight:700;">
         The honest answers about free.
       </h2>
     </div>
@@ -194,7 +157,7 @@
       { q: 'Is it really free?',
         a: 'Yes. The full OTP platform plus Radar, your built-in AI Chief of Staff, at no cost. No per-seat fees. No trial clock counting down. No credit card.' },
       { q: 'How long does free last?',
-        a: 'OTP is in Beta. Beta members are grandfathered free for life. When paid plans turn on, you keep the free plan you signed up on. Joining now locks that in.' },
+        a: 'OTP is in beta. Beta members are grandfathered free for life. When paid plans turn on, you keep the free plan you signed up on. Joining now locks that in.' },
       { q: 'Do I need a credit card?',
         a: 'No. You create an account and start running your team. There is no card on file and nothing to cancel later.' },
       { q: 'How many users are included?',
@@ -202,51 +165,43 @@
       { q: 'What is the catch?',
         a: 'OTP is funded by the agency Sneeze It, which runs its own team on OTP every week. The platform has to be good because we use it ourselves. Beta is how we grow the user base before paid plans launch.' },
       { q: 'What happens when paid plans launch?',
-        a: 'Beta members stay free. Your team is grandfathered onto the free plan permanently. The per-seat pricing that other tools charge will never apply to accounts that joined during Beta.' }
+        a: 'Beta members stay free. Your team is grandfathered onto the free plan permanently. The per-seat pricing that other tools charge will never apply to accounts that joined during beta.' }
     ]; %>
 
     <div class="space-y-3">
       <% faqs.forEach(f => { %>
-        <div class="feature-tile rounded-2xl border border-white/10 bg-white/[0.025] p-6">
-          <h3 class="text-base font-bold text-white mb-2"><%= f.q %></h3>
-          <p class="text-sm text-gray-400 leading-relaxed"><%= f.a %></p>
+        <div class="card lift p-6">
+          <h3 class="font-display text-[1.05rem] font-bold text-[var(--ink)] mb-2"><%= f.q %></h3>
+          <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= f.a %></p>
         </div>
       <% }); %>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     FINAL CTA — beta urgency + account-creation push
-     ===================================================== -->
-<section class="bg-otp-950 relative overflow-hidden py-16 sm:py-24 border-t border-white/5">
-  <div class="pointer-events-none absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(212,173,50,0.16), transparent 70%);"></div>
-
-  <div class="relative z-10 mx-auto max-w-3xl px-6 sm:px-8 text-center">
-    <div class="mb-6 flex justify-center">
-      <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-otp-950" style="background: linear-gradient(90deg, #d4ad32, #f5c84d, #d4ad32); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 8px 24px -6px rgba(212,173,50,0.45);">
-        <span aria-hidden>★</span>
-        Join in Beta = Free forever
-        <span aria-hidden>★</span>
-      </div>
+<!-- ================= FINAL CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7"
+         style="background:var(--ink); color:var(--orgy);">
+      <span aria-hidden>&#9733;</span>
+      <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">Join in beta = free forever</span>
+      <span aria-hidden>&#9733;</span>
     </div>
 
-    <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-      The whole platform.<br class="hidden sm:inline" />
-      <span class="radar-gradient-gold">Free for your whole team.</span>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2.1rem,4.6vw,3.4rem); font-weight:800;">
+      The whole platform. Free for your whole team.
     </h2>
-    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-gray-300 leading-relaxed">
-      Claim your free account while OTP is in Beta. Your whole team stays free for life, grandfathered when paid plans turn on. No credit card, no per-seat fee.
+    <p class="text-[17px] leading-[1.6] max-w-[36rem] mx-auto mt-6" style="color:#5a2a06;">
+      Claim your free account while OTP is in beta. Your whole team stays free for life, grandfathered when paid plans turn on. No credit card, no per-seat fee.
     </p>
 
-    <div class="mt-10 flex justify-center">
-      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="group inline-flex items-center gap-2 rounded-xl px-10 py-4 text-lg font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #b8941c 100%); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 16px 36px -10px rgba(212,173,50,0.55);">
-        <span>Claim your free account</span>
-        <svg class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </a>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-ink px-9 py-4 text-[16px]">Claim your free account &rarr;</a>
     </div>
 
-    <p class="mt-8 text-[11px] uppercase tracking-[0.2em] text-gray-500">
+    <p class="font-mono text-[11px] uppercase tracking-[0.18em] mt-8" style="color:#7a3a0c;">
       OTP is not affiliated with EOS Worldwide, Ninety, or Bloom Growth.
     </p>
   </div>

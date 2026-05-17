@@ -1,137 +1,127 @@
-<!-- Hero -->
-<section class="relative overflow-hidden bg-otp-950">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-otp-500/10 rounded-full blur-[160px] pointer-events-none"></div>
+<%# /mcp-hub -- v7 layout (light, editorial). MCP integration: connect agents to OTP.
+    Rendered via reply.view('pages/mcp-hub', data, { layout: 'layouts/v7' }). %>
+<style>
+  .mcp-float { animation:mcp-float 7s ease-in-out infinite; }
+  @keyframes mcp-float { 0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-12px) rotate(-3deg);} }
+  .mcp-code {
+    background:var(--ink); border-radius:14px; padding:22px 24px; overflow-x:auto;
+    box-shadow:0 1px 3px rgba(20,22,28,.06), 0 18px 40px -24px rgba(20,22,28,.4);
+  }
+  .mcp-code pre, .mcp-code code {
+    font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1.7;
+    color:#d6d8de; white-space:pre;
+  }
+  .mcp-prompt {
+    background:var(--white); border:1px solid var(--line); border-radius:10px;
+    font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-soft);
+    padding:13px 16px;
+  }
+  @media (prefers-reduced-motion:reduce){ .mcp-float{ animation:none; } }
+</style>
 
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-24 text-center">
-    <p class="text-otp-400 text-sm font-semibold uppercase tracking-widest mb-6 animate-fade-in">MCP Integration</p>
-    <h1 class="text-3xl sm:text-5xl font-extrabold text-white leading-[1.1] mb-6 animate-fade-in-up delay-100">
-      Connect your agents to<br>
-      <span class="gradient-text">organizational intelligence.</span>
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20 text-center">
+    <div class="relative inline-block mb-7">
+      <img src="/public/orgy-clean.png" alt="Orgy, the OTP mascot"
+           class="mcp-float block mx-auto" style="width:96px; height:auto; filter:drop-shadow(0 16px 24px rgba(20,22,28,.18));">
+    </div>
+    <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center">
+      <span class="tick" style="background:var(--blue);"></span>MCP Integration
+    </div>
+    <h1 class="font-display text-[var(--ink)] mx-auto"
+        style="font-size:clamp(2.3rem,4.8vw,3.7rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em; max-width:18ch;">
+      Connect your agents to <span class="text-[var(--blue)]">organizational intelligence.</span>
     </h1>
-    <p class="text-lg sm:text-xl text-gray-300 mb-4 animate-fade-in-up delay-200 max-w-2xl mx-auto">
-      OTP exposes all OOS data via the Model Context Protocol. Any AI agent -- Claude, GPT, or custom -- can query organizational intelligence natively.
+    <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[36rem] mx-auto mt-6">
+      OTP exposes all OOS data via the Model Context Protocol. Any AI agent, Claude, GPT, or custom, can query organizational intelligence natively.
     </p>
-    <p class="text-base text-gray-400 mb-10 animate-fade-in-up delay-300 max-w-xl mx-auto">
-      Not just a website. A protocol.
-    </p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-400">
-      <a href="#quick-start" class="px-8 py-4 bg-otp-500 text-white rounded-xl font-bold text-lg hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25">Quick Start</a>
-      <a href="#tools" class="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-xl font-semibold text-lg hover:bg-white/10 transition-all">View Tools</a>
+    <p class="font-mono text-[13px] text-[var(--ink-mute)] mt-4">Not just a website. A protocol.</p>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="#quick-start" class="btn-primary px-8 py-4 text-[16px]">Quick start &rarr;</a>
+      <a href="#tools" class="btn-ghost px-8 py-4 text-[16px]">View tools</a>
     </div>
   </div>
 </section>
 
-<!-- Section 1: What MCP Is -->
-<section class="bg-white py-16 sm:py-20">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">The protocol</p>
-    <h2 class="text-3xl font-extrabold text-gray-900 mb-8 leading-tight">Every data source should be an MCP server. Including your operating system.</h2>
-
-    <div class="space-y-4 text-lg text-gray-600 leading-relaxed">
-      <p>The Model Context Protocol lets AI agents access external data sources as native tools. Instead of scraping websites or parsing APIs, agents call MCP tools directly -- with structured inputs and structured outputs.</p>
-      <p>OTP's MCP server turns the entire Intelligence Graph into a tool your agents can use. Browse published OOS files. Search across claims. Compare coordination patterns between organizations. All from inside your agent's workflow.</p>
-      <p class="text-gray-900 font-semibold">Your agent doesn't need to leave its environment to access organizational intelligence. It's already there.</p>
+<!-- ================= WHAT MCP IS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[720px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">The protocol</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.12]"
+        style="font-size:clamp(1.7rem,3.4vw,2.5rem); font-weight:700;">
+      Every data source should be an MCP server. Including your operating system.
+    </h2>
+    <div class="mt-6 space-y-4">
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.75]">
+        The Model Context Protocol lets AI agents access external data sources as native tools. Instead of scraping websites or parsing APIs, agents call MCP tools directly, with structured inputs and structured outputs.
+      </p>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.75]">
+        OTP's MCP server turns the entire Intelligence Graph into a tool your agents can use. Browse published OOS files. Search across claims. Compare coordination patterns between organizations. All from inside your agent's workflow.
+      </p>
+      <p class="text-[16px] text-[var(--ink)] font-semibold leading-[1.75]">
+        Your agent doesn't need to leave its environment to access organizational intelligence. It's already there.
+      </p>
     </div>
   </div>
 </section>
 
-<!-- Section 2: Available MCP Tools -->
-<section id="tools" class="bg-gray-50 py-16 sm:py-20">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="text-center mb-12">
-      <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">Available tools</p>
-      <h2 class="text-3xl font-extrabold text-gray-900">What your agent can do.</h2>
-      <p class="text-lg text-gray-500 mt-4 max-w-2xl mx-auto">Each tool is a structured operation your agent can call directly via MCP.</p>
+<!-- ================= AVAILABLE TOOLS ================= -->
+<section id="tools" class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[620px] mb-12">
+      <div class="eyebrow mb-4">Available tools</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        What your agent can do.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-4">
+        Each tool is a structured operation your agent can call directly via MCP.
+      </p>
     </div>
 
+    <%
+      const mcpTools = [
+        { name:'publish_oos',     desc:'Publish an OOS file programmatically. Upload structured claims, set visibility, and join the Intelligence Graph.' },
+        { name:'browse_oos',      desc:'Browse published OOS files with filters for industry, size, template, and quality tier. Paginated results with metadata.' },
+        { name:'get_oos',         desc:'Retrieve a specific OOS by ID. Returns full claim structure, confidence distributions, and organizational metadata.' },
+        { name:'compare_oos',     desc:'Compare two OOS files side by side. Returns shared claims, unique claims, similarity scores, and coordination gaps.' },
+        { name:'search_claims',   desc:'Search across all published claims using natural language. Filter by confidence, evidence level, section, and industry.' },
+        { name:'get_publishers',  desc:'Browse organizations on the platform. Filter by industry, quality tier, and agentic maturity level.' },
+      ];
+    %>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <!-- publish_oos -->
-      <div class="bg-white rounded-xl p-5 border card-hover">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-otp-500 text-white flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-          </div>
-          <code class="text-sm font-mono font-bold text-gray-900">publish_oos</code>
-        </div>
-        <p class="text-sm text-gray-500 leading-relaxed">Publish an OOS file programmatically. Upload structured claims, set visibility, and join the Intelligence Graph.</p>
+      <% for (const tool of mcpTools) { %>
+      <div class="card lift p-7">
+        <div class="font-mono text-[12px] font-semibold text-[var(--blue-deep)] mb-3"><%= tool.name %>()</div>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]"><%= tool.desc %></p>
       </div>
-
-      <!-- browse_oos -->
-      <div class="bg-white rounded-xl p-5 border card-hover">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-otp-500 text-white flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-          </div>
-          <code class="text-sm font-mono font-bold text-gray-900">browse_oos</code>
-        </div>
-        <p class="text-sm text-gray-500 leading-relaxed">Browse published OOS files with filters for industry, size, template, and quality tier. Paginated results with metadata.</p>
-      </div>
-
-      <!-- get_oos -->
-      <div class="bg-white rounded-xl p-5 border card-hover">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-otp-500 text-white flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          </div>
-          <code class="text-sm font-mono font-bold text-gray-900">get_oos</code>
-        </div>
-        <p class="text-sm text-gray-500 leading-relaxed">Retrieve a specific OOS by ID. Returns full claim structure, confidence distributions, and organizational metadata.</p>
-      </div>
-
-      <!-- compare_oos -->
-      <div class="bg-white rounded-xl p-5 border card-hover">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-otp-500 text-white flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/></svg>
-          </div>
-          <code class="text-sm font-mono font-bold text-gray-900">compare_oos</code>
-        </div>
-        <p class="text-sm text-gray-500 leading-relaxed">Compare two OOS files side by side. Returns shared claims, unique claims, similarity scores, and coordination gaps.</p>
-      </div>
-
-      <!-- search_claims -->
-      <div class="bg-white rounded-xl p-5 border card-hover">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-otp-500 text-white flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          </div>
-          <code class="text-sm font-mono font-bold text-gray-900">search_claims</code>
-        </div>
-        <p class="text-sm text-gray-500 leading-relaxed">Search across all published claims using natural language. Filter by confidence, evidence level, section, and industry.</p>
-      </div>
-
-      <!-- get_publishers -->
-      <div class="bg-white rounded-xl p-5 border card-hover">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-otp-500 text-white flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-          </div>
-          <code class="text-sm font-mono font-bold text-gray-900">get_publishers</code>
-        </div>
-        <p class="text-sm text-gray-500 leading-relaxed">Browse organizations on the platform. Filter by industry, quality tier, and agentic maturity level.</p>
-      </div>
+      <% } %>
     </div>
   </div>
 </section>
 
-<!-- Section 3: Quick Start -->
-<section id="quick-start" class="bg-white py-16 sm:py-20">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <div class="text-center mb-12">
-      <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">Quick start</p>
-      <h2 class="text-3xl font-extrabold text-gray-900">Add OTP to your agent in 30 seconds.</h2>
+<!-- ================= QUICK START ================= -->
+<section id="quick-start" class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
+    <div class="mb-12">
+      <div class="eyebrow mb-4">Quick start</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        Add OTP to your agent in 30 seconds.
+      </h2>
     </div>
 
-    <div class="space-y-8">
+    <div class="space-y-10">
       <!-- Step 1 -->
       <div>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-full bg-otp-500 text-white flex items-center justify-center text-sm font-bold shrink-0">1</div>
-          <h3 class="font-bold text-gray-900">Add the MCP server to your config</h3>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="font-display shrink-0 flex items-center justify-center text-white"
+               style="width:32px; height:32px; border-radius:9px; font-weight:800; font-size:14px; background:var(--ink);">1</div>
+          <h3 class="font-display text-[var(--ink)] text-[1.1rem] font-bold">Add the MCP server to your config</h3>
         </div>
-        <div class="ml-11 bg-otp-950 rounded-xl p-5 overflow-x-auto">
-          <pre class="text-sm text-gray-300 font-mono leading-relaxed"><code>{
+        <div class="ml-11">
+          <div class="mcp-code"><pre><code>{
   "mcpServers": {
     "otp": {
       "command": "npx",
@@ -141,74 +131,85 @@
       }
     }
   }
-}</code></pre>
+}</code></pre></div>
         </div>
       </div>
 
       <!-- Step 2 -->
       <div>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-full bg-otp-500 text-white flex items-center justify-center text-sm font-bold shrink-0">2</div>
-          <h3 class="font-bold text-gray-900">Get your API key</h3>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="font-display shrink-0 flex items-center justify-center text-white"
+               style="width:32px; height:32px; border-radius:9px; font-weight:800; font-size:14px; background:var(--ink);">2</div>
+          <h3 class="font-display text-[var(--ink)] text-[1.1rem] font-bold">Get your API key</h3>
         </div>
-        <p class="ml-11 text-gray-600">Sign in to OTP and generate an API key from your <a href="/dashboard" class="text-otp-500 hover:text-otp-400 font-medium">dashboard</a>. Free tier includes API access.</p>
+        <p class="ml-11 text-[15px] text-[var(--ink-soft)] leading-[1.7]">
+          Sign in to OTP and generate an API key from your <a href="/dashboard" class="text-[var(--blue-deep)] font-semibold link-u">dashboard</a>. Free tier includes API access.
+        </p>
       </div>
 
       <!-- Step 3 -->
       <div>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-full bg-otp-500 text-white flex items-center justify-center text-sm font-bold shrink-0">3</div>
-          <h3 class="font-bold text-gray-900">Start querying</h3>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="font-display shrink-0 flex items-center justify-center text-white"
+               style="width:32px; height:32px; border-radius:9px; font-weight:800; font-size:14px; background:var(--ink);">3</div>
+          <h3 class="font-display text-[var(--ink)] text-[1.1rem] font-bold">Start querying</h3>
         </div>
-        <p class="ml-11 text-gray-600 mb-3">Your agent can now access the full Intelligence Graph. Try these natural language prompts:</p>
-        <div class="ml-11 space-y-2">
-          <div class="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-700 font-mono">"Browse all published OOS files in the AI services industry"</div>
-          <div class="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-700 font-mono">"Search for claims about agent escalation patterns"</div>
-          <div class="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-700 font-mono">"Compare Sneeze It's OOS with the Expert Coach template"</div>
+        <p class="ml-11 text-[15px] text-[var(--ink-soft)] leading-[1.7] mb-4">
+          Your agent can now access the full Intelligence Graph. Try these natural language prompts:
+        </p>
+        <div class="ml-11 space-y-2.5">
+          <div class="mcp-prompt">"Browse all published OOS files in the AI services industry"</div>
+          <div class="mcp-prompt">"Search for claims about agent escalation patterns"</div>
+          <div class="mcp-prompt">"Compare Sneeze It's OOS with the Expert Coach template"</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Section 4: Use Cases -->
-<section class="bg-gray-50 py-16 sm:py-20">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="text-center mb-12">
-      <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">Use cases</p>
-      <h2 class="text-3xl font-extrabold text-gray-900">What agents do with organizational intelligence.</h2>
+<!-- ================= USE CASES ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[620px] mb-12">
+      <div class="eyebrow mb-4">Use cases</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        What agents do with organizational intelligence.
+      </h2>
     </div>
 
-    <div class="grid sm:grid-cols-2 gap-6">
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <h3 class="font-bold text-gray-900 mb-2">Agent Onboarding</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Agent reads the organization's OOS on first run to understand coordination rules, authority boundaries, and escalation paths. No manual configuration.</p>
+    <%
+      const mcpUseCases = [
+        { title:'Agent Onboarding',   body:'Agent reads the organization’s OOS on first run to understand coordination rules, authority boundaries, and escalation paths. No manual configuration.' },
+        { title:'Cross-Org Discovery', body:'Agent searches for organizations with similar coordination patterns. Compatibility signals guide vendor selection, partnerships, and inter-org coordination.' },
+        { title:'Continuous Learning', body:'Agent periodically queries the Intelligence Graph for new patterns in its industry. Adapts coordination protocols as the network’s collective intelligence grows.' },
+        { title:'Compliance Checking', body:'Agent validates its actions against published authority boundaries. Before taking an action, it checks whether the OOS permits it, programmatically.' },
+      ];
+    %>
+    <div class="grid sm:grid-cols-2 gap-5">
+      <% for (const uc of mcpUseCases) { %>
+      <div class="card lift p-7">
+        <h3 class="font-display text-[var(--ink)] text-[1.15rem] font-bold mb-2"><%= uc.title %></h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= uc.body %></p>
       </div>
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <h3 class="font-bold text-gray-900 mb-2">Cross-Org Discovery</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Agent searches for organizations with similar coordination patterns. Compatibility signals guide vendor selection, partnerships, and inter-org coordination.</p>
-      </div>
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <h3 class="font-bold text-gray-900 mb-2">Continuous Learning</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Agent periodically queries the Intelligence Graph for new patterns in its industry. Adapts coordination protocols as the network's collective intelligence grows.</p>
-      </div>
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <h3 class="font-bold text-gray-900 mb-2">Compliance Checking</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Agent validates its actions against published authority boundaries. Before taking an action, it checks whether the OOS permits it -- programmatically.</p>
-      </div>
+      <% } %>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="bg-otp-950 py-16 sm:py-20 relative overflow-hidden">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">Ready to connect your agents?</h2>
-    <p class="text-gray-400 text-lg mb-8 max-w-xl mx-auto">Get your API key and start querying organizational intelligence from inside your agent's workflow.</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="/dashboard" class="px-8 py-4 bg-otp-500 text-white rounded-xl font-bold text-lg hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25">Get Your API Key</a>
-      <a href="/guide" class="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-xl font-semibold text-lg hover:bg-white/10 transition-all">Read the Guide</a>
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2rem,4.4vw,3.2rem); font-weight:800;">
+      Ready to connect your agents?
+    </h2>
+    <p class="text-[17px] leading-[1.6] max-w-[34rem] mx-auto mt-6" style="color:#5a2a06;">
+      Get your API key and start querying organizational intelligence from inside your agent's workflow.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/dashboard" class="btn-ink px-8 py-4 text-[16px]">Get your API key &rarr;</a>
+      <a href="/guide" class="btn-ghost px-8 py-4 text-[16px]" style="border-color:rgba(20,22,28,.3);">Read the guide</a>
     </div>
   </div>
 </section>

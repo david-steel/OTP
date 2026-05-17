@@ -1,225 +1,180 @@
-<%# /fix-accountability-gaps. Google Ads sitelink landing page.
-    Sitelink label: "Fix Accountability Gaps".
-    Problem-first framing: commitments that slip between meetings.
-    Trademark-safe naming; beta framing justifies free pricing.
-    Every CTA drives to /sign-up. %>
+<%# /fix-accountability-gaps -- v7 layout (light, editorial). Google Ads sitelink landing page.
+    Sitelink label: "Fix Accountability Gaps". Problem-first framing.
+    Every CTA drives to /sign-up. gtagSendEvent onclick preserved (ad conversion). %>
 <style>
-  .radar-gradient-gold {
-    background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #d4ad32 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .feature-tile {
-    transition: transform .2s ease, border-color .2s ease, background-color .2s ease;
-  }
-  .feature-tile:hover {
-    transform: translateY(-2px);
-    border-color: rgba(212, 173, 50, 0.4);
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .feature-tile { animation: none !important; transition: none !important; }
-  }
+  .ag-peek { animation:ag-peek 6s ease-in-out infinite; transform-origin:bottom center; }
+  @keyframes ag-peek { 0%,100%{transform:translateY(8px) rotate(-2deg);} 50%{transform:translateY(-6px) rotate(2deg);} }
+  @media (prefers-reduced-motion:reduce){ .ag-peek{ animation:none; } }
 </style>
 
-<!-- =====================================================
-     BETA BANNER. Solid gold + black text. Free-forever promise.
-     ===================================================== -->
-<div class="relative w-full" style="background: linear-gradient(90deg, #d4ad32 0%, #f5c84d 35%, #f5c84d 65%, #d4ad32 100%); box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px -4px rgba(212,173,50,0.4);">
-  <div class="mx-auto max-w-6xl px-4 py-3 sm:py-3.5 text-center">
-    <p class="text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-black flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
-      <span class="inline-block px-2 py-0.5 rounded-md bg-black text-amber-300 mr-1">BETA</span>
-      <span>Join now = Free forever for your whole team.</span>
-      <span class="hidden sm:inline text-black/75 font-bold normal-case tracking-normal">Beta members lock in free pricing before paid plans turn on.</span>
-    </p>
-  </div>
-</div>
-
-<!-- =====================================================
-     HERO. Problem-first headline, single CTA
-     ===================================================== -->
-<section class="bg-otp-950 relative overflow-hidden pt-16 pb-16 sm:pt-20 sm:pb-20">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-  <div class="absolute bottom-[-200px] left-[-100px] w-[500px] h-[500px] bg-blue-500/8 rounded-full blur-[160px] pointer-events-none"></div>
-
-  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <div class="mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400 bg-amber-500/10 border border-amber-500/20">
-      Accountability
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[840px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20 text-center">
+    <div class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 mb-7"
+         style="border-color:var(--orgy-deep); background:rgba(189,214,34,0.14);">
+      <span class="tick" style="background:var(--orgy-deep);"></span>
+      <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink)]">Beta: free forever for your whole team</span>
     </div>
 
-    <h1 class="font-extrabold text-white tracking-tight leading-[1.05]" style="font-size: clamp(2.25rem, 5.5vw, 3.75rem);">
-      Close the gaps where <span class="radar-gradient-gold">accountability leaks</span>.
+    <div class="eyebrow mb-4">Accountability</div>
+    <h1 class="font-display text-[var(--ink)] mx-auto max-w-[18ch]"
+        style="font-size:clamp(2.3rem,5.4vw,3.9rem); line-height:1.06; font-weight:700; letter-spacing:-0.025em;">
+      Close the gaps where <span class="text-[var(--orange-deep)]">accountability leaks</span>.
     </h1>
-
-    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg leading-relaxed text-gray-300">
+    <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[40rem] mx-auto mt-6">
       Every commitment made in the meeting feels solid on Monday. Then it quietly slips between Mondays. Nothing tracks it, nobody owns it, and you only find out when it has already become a fire.
     </p>
-    <p class="mx-auto mt-3 max-w-2xl text-sm sm:text-base text-amber-300/90 font-semibold">
+    <p class="text-[15px] sm:text-[16px] font-semibold text-[var(--green-deep)] max-w-[40rem] mx-auto mt-3">
       OTP gives every priority an owner, every action a due date, and a built-in AI Chief of Staff that watches for drift between meetings.
     </p>
 
-    <div class="mt-10 flex justify-center">
-      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="group inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #b8941c 100%); box-shadow: 0 0 0 1px rgba(212,173,50,0.4), 0 14px 32px -10px rgba(212,173,50,0.5);">
-        <span>Fix it on OTP, free</span>
-        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </a>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-8 py-4 text-[16px]">Fix it on OTP, free &rarr;</a>
     </div>
-
-    <p class="mt-5 text-[11px] uppercase tracking-[0.25em] text-gray-500">
-      <span class="text-white">Free in Beta</span> &middot;
-      <span class="text-amber-400">No credit card</span> &middot;
-      <span class="text-otp-300">Whole team included</span>
+    <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--ink-mute)] mt-6">
+      Free in beta &nbsp;&middot;&nbsp; No credit card &nbsp;&middot;&nbsp; Whole team included
     </p>
   </div>
 </section>
 
-<!-- =====================================================
-     THE PROBLEM. Where accountability breaks (red-tinted)
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-6xl px-6 sm:px-8">
-    <div class="mx-auto mb-12 max-w-2xl text-center">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">The problem</p>
-      <h2 class="mt-4 text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+<!-- ================= THE PROBLEM ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-24 sm:py-28">
+    <div class="max-w-[620px] mx-auto text-center mb-14">
+      <div class="eyebrow mb-4" style="color:var(--orange-deep);">The problem</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
         Where accountability breaks.
       </h2>
-      <p class="mt-5 text-lg text-gray-400">
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-4">
         It is rarely one big failure. It is three small gaps that repeat every week.
       </p>
     </div>
 
     <% const problems = [
-      { label: 'No clear owner',          desc: 'A priority belongs to "the team", so it belongs to no one. When everyone is accountable, nobody is. The work waits for a name that never gets assigned.' },
-      { label: 'It lives in scattered places', desc: 'A spreadsheet, a doc, someone’s notes, three different tools. There is no single place to look, so the team stops looking. The commitment fades from view.' },
-      { label: 'Drift goes unseen',       desc: 'Nothing tracks the commitment between meetings. You only find out it slipped when it is already a fire. By then the quarter is half gone.' },
+      { label: 'No clear owner',                desc: 'A priority belongs to "the team", so it belongs to no one. When everyone is accountable, nobody is. The work waits for a name that never gets assigned.' },
+      { label: 'It lives in scattered places',  desc: 'A spreadsheet, a doc, someone\'s notes, three different tools. There is no single place to look, so the team stops looking. The commitment fades from view.' },
+      { label: 'Drift goes unseen',             desc: 'Nothing tracks the commitment between meetings. You only find out it slipped when it is already a fire. By then the quarter is half gone.' },
     ]; %>
 
     <div class="grid sm:grid-cols-3 gap-5">
       <% problems.forEach(p => { %>
-        <div class="rounded-2xl border border-red-500/25 bg-red-500/[0.04] p-6">
-          <div class="text-red-400 text-2xl mb-3" aria-hidden>&#9888;</div>
-          <h3 class="text-lg font-bold text-white mb-2"><%= p.label %></h3>
-          <p class="text-sm text-gray-400 leading-relaxed"><%= p.desc %></p>
+        <div class="card p-7 border-t-[3px]" style="border-top-color:var(--orange);">
+          <div class="text-[1.6rem] mb-3" aria-hidden style="color:var(--orange-deep);">&#9888;</div>
+          <h3 class="font-display text-[1.15rem] font-bold text-[var(--ink)] mb-2"><%= p.label %></h3>
+          <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= p.desc %></p>
         </div>
       <% }); %>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     THE FIX. How OTP closes each gap
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-6xl px-6 sm:px-8">
-    <div class="mx-auto mb-12 max-w-2xl text-center">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">The fix</p>
-      <h2 class="mt-4 text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+<!-- ================= THE FIX ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-24 sm:py-28">
+    <div class="max-w-[640px] mx-auto text-center mb-14">
+      <div class="eyebrow mb-4" style="color:var(--green-deep);">The fix</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
         One platform that closes every gap.
       </h2>
-      <p class="mt-5 text-lg text-gray-400">
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-4">
         OTP runs the rhythm your leadership team already knows. Each tool removes one place accountability leaks.
       </p>
     </div>
 
     <% const fixes = [
-      { icon: '🪪', label: 'Team Chart',         desc: 'One owner per seat. No ambiguity about who answers for what. The structure that survives growth.' },
-      { icon: '🎯', label: 'Quarterly Priorities', desc: 'Every 90-day goal is owned, dated, and has visible progress. No priority hides behind "the team".' },
-      { icon: '✅',        label: 'To-Dos',             desc: 'Every action item from every meeting. Owned and closed. Nothing falls into someone’s private notes.' },
-      { icon: '⚠',        label: 'Issues Board',       desc: 'Problems get surfaced and solved, not buried. The list that keeps you out of fire-drill mode.' },
-      { icon: '📊', label: 'Weekly Scoreboard',  desc: 'An owner on every KPI. Red, yellow, green at a glance. Accountability you can read in one row.' },
+      { tag: 'Structure',  label: 'Team Chart',           desc: 'One owner per seat. No ambiguity about who answers for what. The structure that survives growth.' },
+      { tag: 'Quarter',    label: 'Quarterly Priorities', desc: 'Every 90-day goal is owned, dated, and has visible progress. No priority hides behind "the team".' },
+      { tag: 'Week',       label: 'To-Dos',               desc: 'Every action item from every meeting. Owned and closed. Nothing falls into someone\'s private notes.' },
+      { tag: 'Friction',   label: 'Issues Board',         desc: 'Problems get surfaced and solved, not buried. The list that keeps you out of fire-drill mode.' },
+      { tag: 'Numbers',    label: 'Weekly Scoreboard',    desc: 'An owner on every KPI. Red, yellow, green at a glance. Accountability you can read in one row.' },
     ]; %>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       <% fixes.forEach(f => { %>
-        <div class="feature-tile rounded-2xl border border-white/10 bg-white/[0.025] p-5">
-          <div class="text-2xl mb-3"><%= f.icon %></div>
-          <h3 class="text-base font-bold text-white mb-1.5"><%= f.label %></h3>
-          <p class="text-sm text-gray-400 leading-relaxed"><%= f.desc %></p>
+        <div class="card lift p-6">
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-mute)] mb-3"><%= f.tag %></div>
+          <h3 class="font-display text-[1.1rem] font-bold text-[var(--ink)] mb-1.5"><%= f.label %></h3>
+          <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.7]"><%= f.desc %></p>
         </div>
       <% }); %>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     THE WEDGE. Radar tracks accountability between meetings
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-4xl px-6 sm:px-8">
-    <div class="rounded-2xl border border-amber-400/25 bg-gradient-to-b from-amber-400/[0.06] to-white/[0.02] p-7 sm:p-10">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400 mb-3">The difference</p>
-      <h2 class="text-2xl sm:text-4xl font-bold text-white leading-tight">
-        Radar tracks accountability <span class="radar-gradient-gold">between meetings</span>.
-      </h2>
-      <p class="mt-5 text-base sm:text-lg text-gray-300 leading-relaxed">
-        Per-seat EOS&reg; tools only see the meeting. They show you the priority on the screen, and that is where their job ends. The slip happens in the four days nobody is watching.
-      </p>
-      <p class="mt-4 text-base sm:text-lg text-gray-300 leading-relaxed">
-        Every OTP account includes Radar, a built-in AI Chief of Staff. Radar reads your Quarterly Priorities and To-Dos through the week, tracks what is moving and what is not, and flags drift before Friday. Nothing reaches the meeting as a surprise.
-      </p>
+<!-- ================= THE WEDGE: RADAR ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[920px] mx-auto px-6 py-24 sm:py-28">
+    <div class="card p-8 sm:p-11 relative overflow-hidden">
+      <div class="hidden sm:block absolute -bottom-2 right-6">
+        <img src="/public/orgy-clean.png" alt="" aria-hidden="true" class="ag-peek block" style="width:118px; height:auto; filter:drop-shadow(0 14px 22px rgba(20,22,28,.2));">
+      </div>
+      <div class="sm:max-w-[78%]">
+        <div class="eyebrow mb-3" style="color:var(--blue-deep);">The difference</div>
+        <h2 class="font-display text-[var(--ink)] leading-[1.13] mb-4"
+            style="font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700;">
+          Radar tracks accountability <span class="text-[var(--blue)]">between meetings</span>.
+        </h2>
+        <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72]">
+          Per-seat EOS&reg; tools only see the meeting. They show you the priority on the screen, and that is where their job ends. The slip happens in the four days nobody is watching.
+        </p>
+        <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72] mt-4">
+          Every OTP account includes Radar, a built-in AI Chief of Staff. Radar reads your Quarterly Priorities and To-Dos through the week, tracks what is moving and what is not, and flags drift before Friday. Nothing reaches the meeting as a surprise.
+        </p>
+      </div>
 
-      <div class="mt-7 grid sm:grid-cols-3 gap-4">
+      <div class="mt-8 grid sm:grid-cols-3 gap-4">
         <% const radarPoints = [
-          { label: 'Reads the work',  desc: 'Pulls Quarterly Priorities and To-Dos all week, not just on meeting day.' },
+          { label: 'Reads the work',    desc: 'Pulls Quarterly Priorities and To-Dos all week, not just on meeting day.' },
           { label: 'Flags drift early', desc: 'Catches a slipping commitment mid-week, while there is still time to act.' },
-          { label: 'No surprises',    desc: 'The meeting starts with the situation already known. No fire drills.' },
+          { label: 'No surprises',      desc: 'The meeting starts with the situation already known. No fire drills.' },
         ]; %>
         <% radarPoints.forEach(c => { %>
-          <div class="feature-tile rounded-xl border border-amber-400/20 bg-white/[0.03] p-4">
-            <div class="text-amber-400 text-xl mb-2" aria-hidden>&#9733;</div>
-            <h3 class="text-sm font-bold text-white mb-1"><%= c.label %></h3>
-            <p class="text-xs text-gray-400 leading-relaxed"><%= c.desc %></p>
+          <div class="rounded-[13px] border p-4" style="border-color:var(--line); background:var(--grey);">
+            <div class="text-[1.1rem] mb-2" aria-hidden style="color:var(--blue);">&#9733;</div>
+            <h3 class="font-display text-[0.95rem] font-bold text-[var(--ink)] mb-1"><%= c.label %></h3>
+            <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.65]"><%= c.desc %></p>
           </div>
         <% }); %>
       </div>
 
-      <p class="mt-7 text-sm text-amber-300/90 font-semibold">
-        Radar is included free for the whole team while in Beta. No add-on. No per-seat fee.
+      <p class="mt-7 text-[14px] font-semibold text-[var(--green-deep)]">
+        Radar is included free for the whole team while in beta. No add-on. No per-seat fee.
       </p>
 
       <div class="mt-7">
-        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-otp-950 transition-transform hover:scale-[1.03]" style="background: linear-gradient(135deg, #d4ad32, #f5c84d);">
-          Put Radar on your team, free
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-ink inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+          Put Radar on your team, free &rarr;
         </a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     FINAL CTA. Beta urgency + account-creation push
-     ===================================================== -->
-<section class="bg-otp-950 relative overflow-hidden py-16 sm:py-24 border-t border-white/5">
-  <div class="pointer-events-none absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(212,173,50,0.16), transparent 70%);"></div>
-
-  <div class="relative z-10 mx-auto max-w-3xl px-6 sm:px-8 text-center">
-    <div class="mb-6 flex justify-center">
-      <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-otp-950" style="background: linear-gradient(90deg, #d4ad32, #f5c84d, #d4ad32); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 8px 24px -6px rgba(212,173,50,0.45);">
-        <span aria-hidden>&#9733;</span>
-        Join in Beta = Free forever
-        <span aria-hidden>&#9733;</span>
-      </div>
+<!-- ================= FINAL CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7"
+         style="background:var(--ink); color:var(--orgy);">
+      <span aria-hidden>&#9733;</span>
+      <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">Join in beta = free forever</span>
+      <span aria-hidden>&#9733;</span>
     </div>
 
-    <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-      Stop the slip.<br class="hidden sm:inline" />
-      <span class="radar-gradient-gold">Run accountable on OTP.</span>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2.1rem,4.6vw,3.4rem); font-weight:800;">
+      Stop the slip. Run accountable on OTP.
     </h2>
-    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-gray-300 leading-relaxed">
-      One platform for your Vision Plan, Scoreboard, Quarterly Priorities, To-Dos, Issues, and weekly meeting. Plus Radar watching for drift between Mondays. Free for your whole team while we are in Beta, and grandfathered free when paid plans turn on.
+    <p class="text-[17px] leading-[1.6] max-w-[38rem] mx-auto mt-6" style="color:#5a2a06;">
+      One platform for your Vision Plan, Scoreboard, Quarterly Priorities, To-Dos, Issues, and weekly meeting. Plus Radar watching for drift between Mondays. Free for your whole team while we are in beta, and grandfathered free when paid plans turn on.
     </p>
 
-    <div class="mt-10 flex justify-center">
-      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="group inline-flex items-center gap-2 rounded-xl px-10 py-4 text-lg font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #b8941c 100%); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 16px 36px -10px rgba(212,173,50,0.55);">
-        <span>Create your free account</span>
-        <svg class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </a>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-ink px-9 py-4 text-[16px]">Create your free account &rarr;</a>
     </div>
 
-    <p class="mt-8 text-[11px] uppercase tracking-[0.2em] text-gray-500">
+    <p class="font-mono text-[11px] uppercase tracking-[0.18em] mt-8" style="color:#7a3a0c;">
       OTP is not affiliated with EOS Worldwide, Ninety, or Bloom Growth.
     </p>
   </div>

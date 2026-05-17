@@ -1,207 +1,160 @@
-<%# /the-otp-difference — Google Ads sitelink landing page.
-    Audience: operators evaluating OTP against per-seat EOS meeting tools.
-    Differentiation page. Trademark-safe naming. Every CTA drives to /sign-up. %>
+<%# /the-otp-difference -- v7 layout (light, editorial). Google Ads sitelink
+    landing page. Audience: operators evaluating OTP against per-seat EOS
+    meeting tools. Trademark-safe naming. Every CTA drives to /sign-up.
+    Rendered via reply.view('pages/the-otp-difference', data, { layout: 'layouts/v7' }). %>
 <style>
-  .radar-gradient-gold {
-    background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #d4ad32 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero-headline {
-    font-size: clamp(2.25rem, 5.5vw, 4.25rem);
-    line-height: 1.04;
-    letter-spacing: -0.02em;
-  }
-  .hero-headline .line-1,
-  .hero-headline .line-2 { display: block; }
-  .hero-headline .line-2 { margin-top: 0.1em; }
-
-  .feature-tile {
-    transition: transform .2s ease, border-color .2s ease, background-color .2s ease;
-  }
-  .feature-tile:hover {
-    transform: translateY(-2px);
-    border-color: rgba(212, 173, 50, 0.4);
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .feature-tile { animation: none !important; transition: none !important; }
-  }
+  .dif-peek { animation:dif-peek 7s ease-in-out infinite; }
+  @keyframes dif-peek { 0%,100%{transform:translateY(8px) rotate(4deg);} 50%{transform:translateY(-6px) rotate(4deg);} }
+  @media (prefers-reduced-motion:reduce){ .dif-peek{ animation:none; } }
 </style>
 
-<!-- =====================================================
-     BETA BANNER — solid gold + black text. Free-forever promise.
-     ===================================================== -->
-<div class="relative w-full" style="background: linear-gradient(90deg, #d4ad32 0%, #f5c84d 35%, #f5c84d 65%, #d4ad32 100%); box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px -4px rgba(212,173,50,0.4);">
-  <div class="mx-auto max-w-6xl px-4 py-3 sm:py-3.5 text-center">
-    <p class="text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-black flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
-      <span class="inline-block px-2 py-0.5 rounded-md bg-black text-amber-300 mr-1">BETA</span>
-      <span>Join now = Free forever for your whole team.</span>
-      <span class="hidden sm:inline text-black/75 font-bold normal-case tracking-normal">Beta members lock in free pricing before paid plans turn on.</span>
-    </p>
-  </div>
-</div>
-
-<!-- =====================================================
-     HERO — the difference, in one line
-     ===================================================== -->
-<section class="bg-otp-950 relative overflow-hidden pt-16 pb-16 sm:pt-20 sm:pb-20">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-  <div class="absolute bottom-[-200px] left-[-100px] w-[500px] h-[500px] bg-blue-500/8 rounded-full blur-[160px] pointer-events-none"></div>
-
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
-
-    <div class="mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400 bg-amber-500/10 border border-amber-500/20">
-      Why OTP
+<!-- ================= BETA BANNER ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[112px] sm:pt-[132px]">
+    <div class="rounded-2xl px-6 py-4 flex items-center justify-center gap-3 flex-wrap text-center"
+         style="background:linear-gradient(135deg,rgba(189,214,34,.16),rgba(189,214,34,.06)); border:1px solid var(--orgy-deep);">
+      <span class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] px-2 py-1 rounded-md"
+            style="background:var(--ink); color:var(--orgy);">Beta</span>
+      <span class="font-display text-[14px] font-bold text-[var(--ink)]">Join now = free forever for your whole team.</span>
+      <span class="text-[13px] text-[var(--ink-soft)]">Beta members lock in free pricing before paid plans turn on.</span>
     </div>
-
-    <h1 class="hero-headline font-extrabold text-white">
-      <span class="line-1">Same rhythm.</span>
-      <span class="line-2">A very different <span class="radar-gradient-gold">layer underneath</span>.</span>
-    </h1>
-
-    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg leading-relaxed text-gray-300">
-      OTP runs the exact operating rhythm your leadership team already knows. Vision Plan, Weekly Scoreboard, Quarterly Priorities, To-Dos, Issues Board, the weekly Leadership Meeting, and Team Chart. The difference is three things the per-seat tools do not have.
-    </p>
-    <p class="mx-auto mt-3 max-w-2xl text-sm sm:text-base text-amber-300/90 font-semibold">
-      Free for the whole team. A built-in AI Chief of Staff. AI-native from the ground up.
-    </p>
-
-    <div class="mt-10 flex justify-center">
-      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="group inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #b8941c 100%); box-shadow: 0 0 0 1px rgba(212,173,50,0.4), 0 14px 32px -10px rgba(212,173,50,0.5);">
-        <span>See the difference, free</span>
-        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </a>
-    </div>
-
-    <p class="mt-5 text-[11px] uppercase tracking-[0.25em] text-gray-500">
-      <span class="text-white">No per-seat fees</span> &middot;
-      <span class="text-amber-400">No credit card</span> &middot;
-      <span class="text-otp-300">Whole team included</span>
-    </p>
   </div>
 </section>
 
-<!-- =====================================================
-     THREE DIFFERENCES — the core of the page
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-5xl px-6 sm:px-8">
-    <div class="mx-auto mb-12 max-w-2xl text-center">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">Three differences</p>
-      <h2 class="mt-4 text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-12 pb-16 sm:pt-14 sm:pb-20">
+    <div class="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--orgy);"></span>Why OTP
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.25rem,4.8vw,3.8rem); line-height:1.05; font-weight:700; letter-spacing:-0.025em;">
+          Same rhythm. A very different <span class="text-[var(--blue)]">layer underneath.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[36rem] mx-auto md:mx-0 mt-6">
+          OTP runs the exact operating rhythm your leadership team already knows. Vision Plan, Weekly Scoreboard, Quarterly Priorities, To-Dos, Issues Board, the weekly Leadership Meeting, and Team Chart. The difference is three things the per-seat tools do not have.
+        </p>
+        <p class="text-[15px] font-semibold leading-[1.6] max-w-[36rem] mx-auto md:mx-0 mt-3" style="color:var(--green-deep);">
+          Free for the whole team. A built-in AI Chief of Staff. AI-native from the ground up.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-center md:justify-start mt-9">
+          <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-8 py-4 text-[16px]">See the difference, free &rarr;</a>
+        </div>
+        <p class="eyebrow mt-6 text-center md:text-left" style="letter-spacing:0.2em;">
+          No per-seat fees &nbsp;&middot;&nbsp; No credit card &nbsp;&middot;&nbsp; Whole team included
+        </p>
+      </div>
+      <div class="relative shrink-0" style="width:240px; max-width:58vw;">
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="dif-peek block w-full" style="filter:drop-shadow(0 22px 34px rgba(20,22,28,.2));">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THREE DIFFERENCES ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px] mx-auto text-center">
+      <div class="eyebrow mb-4">Three differences</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.8vw,2.9rem); font-weight:700;">
         The toolset is familiar. The platform underneath is not.
       </h2>
-      <p class="mt-5 text-lg text-gray-400">
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
         Per-seat EOS&reg; tools digitized the meeting. OTP rebuilt the layer beneath it.
       </p>
     </div>
 
-    <div class="grid sm:grid-cols-3 gap-5">
-      <div class="feature-tile rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6">
-        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 mb-3">Difference 1</div>
-        <h3 class="text-lg font-bold text-white mb-2">Free for the whole team</h3>
-        <p class="text-sm text-gray-300 leading-relaxed">Per-seat tools bill every person on payroll at $8 to $16 a month. OTP includes the whole team at no cost. No seat math, no upgrade gate, no credit card.</p>
+    <div class="grid sm:grid-cols-3 gap-5 mt-12">
+      <div class="card lift p-7">
+        <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style="color:var(--orgy-deep);">Difference 1</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2 leading-tight">Free for the whole team</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]">Per-seat tools bill every person on payroll at $8 to $16 a month. OTP includes the whole team at no cost. No seat math, no upgrade gate, no credit card.</p>
       </div>
-      <div class="feature-tile rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6">
-        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 mb-3">Difference 2</div>
-        <h3 class="text-lg font-bold text-white mb-2">An AI Chief of Staff is built in</h3>
-        <p class="text-sm text-gray-300 leading-relaxed">Every account includes Radar. It runs the work between meetings: daily briefings, live scoreboard pulls, issues surfaced, accountability tracked. Per-seat tools only see the meeting itself.</p>
+      <div class="card lift p-7">
+        <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style="color:var(--orgy-deep);">Difference 2</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2 leading-tight">An AI Chief of Staff is built in</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]">Every account includes Radar. It runs the work between meetings: daily briefings, live scoreboard pulls, issues surfaced, accountability tracked. Per-seat tools only see the meeting itself.</p>
       </div>
-      <div class="feature-tile rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6">
-        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 mb-3">Difference 3</div>
-        <h3 class="text-lg font-bold text-white mb-2">AI-native, not bolted on</h3>
-        <p class="text-sm text-gray-300 leading-relaxed">OTP is built for teams that already run AI agents. It is not a digital binder bolted onto a 2018 product. The AI layer is the foundation, not an add-on.</p>
+      <div class="card lift p-7 border-t-[3px]" style="border-top-color:var(--blue); background:linear-gradient(180deg,rgba(13,125,242,.06),var(--card));">
+        <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style="color:var(--blue-deep);">Difference 3</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2 leading-tight">AI-native, not bolted on</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]">OTP is built for teams that already run AI agents. It is not a digital binder bolted onto a 2018 product. The AI layer is the foundation, not an add-on.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- =====================================================
-     COMPARISON TABLE — OTP vs per-seat EOS tools
-     ===================================================== -->
-<section class="bg-otp-950 relative py-16 sm:py-24 border-t border-white/5">
-  <div class="mx-auto max-w-4xl px-6 sm:px-8">
-    <div class="mx-auto mb-12 max-w-2xl text-center">
-      <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">Side by side</p>
-      <h2 class="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+<!-- ================= COMPARISON TABLE ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[840px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[560px] mx-auto text-center">
+      <div class="eyebrow mb-4">Side by side</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
         OTP versus per-seat meeting tools.
       </h2>
-      <p class="mt-4 text-base text-gray-400">
+      <p class="text-[15px] text-[var(--ink-soft)] leading-[1.65] mt-4">
         Same weekly rhythm. Same full toolset. Everything else is the difference.
       </p>
     </div>
 
     <% const compareRows = [
-      { label: 'Price',                            otp: 'Free for the whole team in Beta', them: '$8 to $16 per user per month' },
-      { label: 'Whole team included',              otp: 'Yes',                              them: 'No, billed per seat' },
-      { label: 'AI Chief of Staff built in',       otp: 'Yes, Radar',                       them: 'No' },
-      { label: 'Work between meetings',            otp: 'Tracked by Radar',                 them: 'Not covered' },
-      { label: 'The weekly meeting and full toolset', otp: 'Yes',                          them: 'Yes' },
+      { label: 'Price',                               otp: 'Free for the whole team in Beta', them: '$8 to $16 per user per month' },
+      { label: 'Whole team included',                 otp: 'Yes',                              them: 'No, billed per seat' },
+      { label: 'AI Chief of Staff built in',          otp: 'Yes, Radar',                       them: 'No' },
+      { label: 'Work between meetings',               otp: 'Tracked by Radar',                 them: 'Not covered' },
+      { label: 'The weekly meeting and full toolset', otp: 'Yes',                              them: 'Yes' },
     ]; %>
 
-    <div class="overflow-hidden rounded-2xl border border-white/10">
+    <div class="card mt-12 overflow-hidden" style="padding:0;">
       <table class="w-full text-left">
         <thead>
-          <tr class="bg-white/[0.03]">
-            <th class="px-4 sm:px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-gray-500"></th>
-            <th class="px-4 sm:px-6 py-4 text-sm sm:text-base font-bold radar-gradient-gold border-l border-white/10">OTP</th>
-            <th class="px-4 sm:px-6 py-4 text-sm sm:text-base font-bold text-gray-400 border-l border-white/10">Per-seat EOS tools</th>
+          <tr style="background:var(--grey);">
+            <th class="px-5 sm:px-6 py-4"></th>
+            <th class="px-5 sm:px-6 py-4 font-display text-[15px] font-bold text-[var(--blue-deep)]" style="border-left:1px solid var(--line);">OTP</th>
+            <th class="px-5 sm:px-6 py-4 font-display text-[15px] font-bold text-[var(--ink-mute)]" style="border-left:1px solid var(--line);">Per-seat EOS tools</th>
           </tr>
         </thead>
         <tbody>
-          <% compareRows.forEach((row, i) => { %>
-            <tr class="<%= i % 2 === 0 ? 'bg-white/[0.015]' : '' %> border-t border-white/5">
-              <td class="px-4 sm:px-6 py-4 text-sm font-semibold text-white"><%= row.label %></td>
-              <td class="px-4 sm:px-6 py-4 text-sm text-amber-200 font-semibold border-l border-white/10 bg-amber-500/[0.06]"><%= row.otp %></td>
-              <td class="px-4 sm:px-6 py-4 text-sm text-gray-500 border-l border-white/10"><%= row.them %></td>
+          <% compareRows.forEach((row) => { %>
+            <tr style="border-top:1px solid var(--line);">
+              <td class="px-5 sm:px-6 py-4 text-[14px] font-semibold text-[var(--ink)]"><%= row.label %></td>
+              <td class="px-5 sm:px-6 py-4 text-[14px] font-semibold text-[var(--ink)]" style="border-left:1px solid var(--line); background:rgba(13,125,242,.05);"><%= row.otp %></td>
+              <td class="px-5 sm:px-6 py-4 text-[14px] text-[var(--ink-mute)]" style="border-left:1px solid var(--line);"><%= row.them %></td>
             </tr>
           <% }); %>
         </tbody>
       </table>
     </div>
 
-    <p class="mt-6 text-center text-sm text-gray-500">
+    <p class="text-[14px] text-[var(--ink-mute)] leading-[1.65] text-center mt-6 max-w-[40rem] mx-auto">
       OTP is funded by the agency Sneeze It, which runs its own leadership team on OTP. Beta members are grandfathered free for life when paid plans turn on.
     </p>
   </div>
 </section>
 
-<!-- =====================================================
-     FINAL CTA — single account-creation push
-     ===================================================== -->
-<section class="bg-otp-950 relative overflow-hidden py-16 sm:py-24 border-t border-white/5">
-  <div class="pointer-events-none absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(212,173,50,0.16), transparent 70%);"></div>
-
-  <div class="relative z-10 mx-auto max-w-3xl px-6 sm:px-8 text-center">
-    <div class="mb-6 flex justify-center">
-      <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-otp-950" style="background: linear-gradient(90deg, #d4ad32, #f5c84d, #d4ad32); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 8px 24px -6px rgba(212,173,50,0.45);">
-        <span aria-hidden>&starf;</span>
-        Join in Beta = Free forever
-        <span aria-hidden>&starf;</span>
-      </div>
+<!-- ================= FINAL CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <div class="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] px-4 py-1.5 rounded-full mb-7"
+         style="background:var(--ink); color:var(--orgy);">
+      <span aria-hidden>&starf;</span> Join in Beta = free forever <span aria-hidden>&starf;</span>
     </div>
-
-    <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-      Keep the rhythm you know.<br class="hidden sm:inline" />
-      <span class="radar-gradient-gold">Run it on a better layer.</span>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2rem,4.4vw,3.3rem); font-weight:800;">
+      Keep the rhythm you know. Run it on a better layer.
     </h2>
-    <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-gray-300 leading-relaxed">
+    <p class="text-[17px] leading-[1.6] max-w-[35rem] mx-auto mt-6" style="color:#5a2a06;">
       No retraining. No new framework. Just the operating platform per-seat tools never built: free for the whole team, with an AI Chief of Staff included.
     </p>
-
-    <div class="mt-10 flex justify-center">
-      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="group inline-flex items-center gap-2 rounded-xl px-10 py-4 text-lg font-bold text-otp-950 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]" style="background: linear-gradient(135deg, #d4ad32 0%, #f5c84d 50%, #b8941c 100%); box-shadow: 0 0 0 1px rgba(212,173,50,0.5), 0 16px 36px -10px rgba(212,173,50,0.55);">
-        <span>Create your free account</span>
-        <svg class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </a>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-ink px-10 py-4 text-[16px]">Create your free account &rarr;</a>
     </div>
-
-    <p class="mt-8 text-[11px] uppercase tracking-[0.2em] text-gray-500">
+    <p class="text-[12px] mt-8" style="color:#7a4012;">
       OTP is not affiliated with EOS Worldwide, Ninety, or Bloom Growth.
     </p>
   </div>

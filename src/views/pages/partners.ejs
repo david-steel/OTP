@@ -1,317 +1,255 @@
-<!-- ============================================================
-     /partners — OTP Partner Program landing + application form.
-     For trusted advisors (EOS Implementers, Scaling Up coaches,
-     fractional CXOs, MSPs, AI consultancies, Vistage chairs,
-     etc.) who serve the businesses OTP is built for.
-     Form posts to /api/v1/partner-signup.
-     ============================================================ -->
-
+<%# /partners -- v7 layout (light, editorial). OTP Partner Program landing
+    + application form. For trusted advisors (EOS Implementers, Scaling Up
+    coaches, fractional CXOs, MSPs, AI consultancies, Vistage chairs, etc.).
+    Form posts to /api/v1/partner-signup. %>
 <style>
-  .tier-card {
-    transition: transform 250ms ease, border-color 250ms ease, background 250ms ease;
-  }
-  .tier-card:hover {
-    transform: translateY(-3px);
-  }
-  .tier-badge {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 900;
-    font-size: 24px;
-    letter-spacing: -0.02em;
-    margin-bottom: 1.25rem;
-  }
-  .tier-founding-badge {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%);
-    color: #fffbeb;
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 24px rgba(245, 158, 11, 0.35);
-    border: 1px solid rgba(245, 158, 11, 0.5);
-  }
-  .tier-certified-badge {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), 0 0 24px rgba(14, 165, 233, 0.30);
-    border: 1px solid rgba(14, 165, 233, 0.5);
-  }
-  .tier-master-badge {
-    background: linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #f59e0b 100%);
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18), 0 0 28px rgba(236, 72, 153, 0.35);
-    border: 1px solid rgba(236, 72, 153, 0.5);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  }
+  .pt-wave { animation:pt-wave 3.2s ease-in-out infinite; transform-origin:75% 85%; }
+  @keyframes pt-wave { 0%,70%,100%{transform:rotate(0);} 80%{transform:rotate(14deg);} 90%{transform:rotate(-6deg);} }
+  .pt-tilt { animation:pt-tilt 7s ease-in-out infinite; }
+  @keyframes pt-tilt { 0%,100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-10px) rotate(2deg);} }
+  @media (prefers-reduced-motion:reduce){ .pt-wave,.pt-tilt{ animation:none; } }
 
-  /* Form */
+  /* tier badges */
+  .tier-badge {
+    width:64px; height:64px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif; font-weight:800;
+    font-size:22px; letter-spacing:-0.02em; margin-bottom:1.1rem;
+  }
+  .tier-founding-badge { background:linear-gradient(135deg,var(--orange),var(--orange-deep)); color:#fff; }
+  .tier-certified-badge { background:linear-gradient(135deg,var(--blue),var(--blue-deep)); color:#fff; }
+  .tier-master-badge { background:linear-gradient(135deg,var(--green),var(--green-deep)); color:#fff; }
+
+  /* form fields -- light */
   .field-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #d1d5db;
-    margin-bottom: 6px;
-    letter-spacing: 0.02em;
+    display:block; font-family:'JetBrains Mono',monospace;
+    font-size:11px; font-weight:500; letter-spacing:0.06em;
+    text-transform:uppercase; color:var(--ink-mute); margin-bottom:6px;
   }
-  .field-required::after {
-    content: " *";
-    color: #f59e0b;
-  }
+  .field-required::after { content:" *"; color:var(--orange-deep); }
   .field-input {
-    width: 100%;
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 8px;
-    color: #f9fafb;
-    font-size: 14px;
-    transition: border-color 150ms ease, background 150ms ease;
+    width:100%; padding:11px 14px;
+    background:var(--card); border:1px solid var(--line);
+    border-radius:10px; color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14px;
+    transition:border-color 150ms ease, box-shadow 150ms ease;
   }
   .field-input:focus {
-    outline: none;
-    border-color: rgba(14, 165, 233, 0.6);
-    background: rgba(14, 165, 233, 0.04);
+    outline:none; border-color:var(--blue);
+    box-shadow:0 0 0 3px rgba(13,125,242,0.12);
   }
-  .field-input::placeholder { color: #6b7280; }
-  textarea.field-input { min-height: 96px; resize: vertical; font-family: inherit; }
+  .field-input::placeholder { color:var(--ink-mute); }
+  textarea.field-input { min-height:104px; resize:vertical; }
 
   .channel-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 150ms ease;
-    font-size: 13px;
-    color: #d1d5db;
+    display:flex; align-items:center; gap:8px;
+    padding:10px 12px; background:var(--card);
+    border:1px solid var(--line); border-radius:10px;
+    cursor:pointer; transition:border-color 150ms ease, background 150ms ease;
+    font-size:13px; color:var(--ink-soft);
   }
-  .channel-checkbox:hover {
-    background: rgba(14, 165, 233, 0.06);
-    border-color: rgba(14, 165, 233, 0.3);
-  }
-  .channel-checkbox input[type="checkbox"] {
-    accent-color: #0ea5e9;
-    cursor: pointer;
-  }
-  .channel-checkbox input[type="checkbox"]:checked + span {
-    color: #fff;
-    font-weight: 500;
-  }
+  .channel-checkbox:hover { border-color:var(--blue); }
+  .channel-checkbox input[type="checkbox"] { accent-color:var(--blue); cursor:pointer; }
   .channel-checkbox:has(input:checked) {
-    background: rgba(14, 165, 233, 0.10);
-    border-color: rgba(14, 165, 233, 0.5);
+    background:rgba(13,125,242,0.06); border-color:var(--blue);
   }
+  .channel-checkbox:has(input:checked) span { color:var(--ink); font-weight:600; }
 
   .channel-group-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #6b7280;
-    margin-bottom: 10px;
-    margin-top: 18px;
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500;
+    text-transform:uppercase; letter-spacing:0.12em; color:var(--ink-mute);
+    margin-bottom:10px; margin-top:20px;
   }
-  .channel-group-label:first-child { margin-top: 0; }
+  .channel-group-label:first-child { margin-top:0; }
 
   .radio-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #d1d5db;
-    transition: all 150ms ease;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px; background:var(--card);
+    border:1px solid var(--line); border-radius:999px;
+    cursor:pointer; font-size:13px; color:var(--ink-soft);
+    transition:border-color 150ms ease, background 150ms ease;
   }
-  .radio-pill input { accent-color: #0ea5e9; }
+  .radio-pill input { accent-color:var(--blue); }
   .radio-pill:has(input:checked) {
-    background: rgba(14, 165, 233, 0.10);
-    border-color: rgba(14, 165, 233, 0.5);
-    color: #fff;
+    background:rgba(13,125,242,0.06); border-color:var(--blue); color:var(--ink);
   }
 
-  /* Honeypot — visually hidden but accessible */
-  .hp-field {
-    position: absolute;
-    left: -9999px;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-  }
+  /* honeypot -- visually hidden but accessible */
+  .hp-field { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
 </style>
 
-<!-- HERO -->
-<section class="bg-otp-950 relative">
-  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1">
+        <div class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 mb-6"
+             style="border-color:var(--orange-deep); background:rgba(255,122,26,0.10);">
+          <span class="tick" style="background:var(--orange);"></span>
+          <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.16em]" style="color:var(--orange-deep);">Founding Partner program is open</span>
+        </div>
+        <div class="eyebrow mb-4">
+          <a href="/" class="link-u" style="border:none;">OTP</a> &nbsp;/&nbsp; Partner Program
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.3rem,4.6vw,3.6rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          Your clients are about to bring agents in. <span class="text-[var(--orange-deep)]">Be the one who shows them how.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[38rem] mt-5">
+          OTP is the operating layer for organizations that run AI agents alongside humans. Every company you advise is heading there. Most of them don't know it yet.
+        </p>
+        <p class="text-[15px] text-[var(--ink-soft)] leading-[1.7] max-w-[38rem] mt-4">
+          The OTP Partner Program is for the trusted advisors already in those rooms: EOS Implementers, Scaling Up coaches, Vistage chairs, fractional CXOs, MSPs, AI consultancies, agent builders. You bring the trust. We bring the protocol. Your clients get an AI-native operating model with you as the implementation lead.
+        </p>
+        <div class="flex flex-wrap gap-3 mt-8">
+          <a href="#apply" class="btn-primary px-8 py-4 text-[16px]">Apply to the program &rarr;</a>
+          <a href="/browse" class="btn-ghost px-8 py-4 text-[16px]">Browse the network</a>
+        </div>
+      </div>
+      <div class="relative shrink-0" style="width:230px; max-width:54vw;">
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="pt-tilt relative block w-full" style="filter:drop-shadow(0 22px 34px rgba(20,22,28,.2));">
+      </div>
+    </div>
+  </div>
+</section>
 
-  <div class="relative max-w-5xl mx-auto px-6 sm:px-8 pt-20 sm:pt-24 pb-16">
-    <!-- Breadcrumb -->
-    <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-8 font-medium">
-      <a href="/" class="hover:text-gray-300 transition-colors">OTP</a>
-      <span class="text-gray-700">/</span>
-      <span>Partner Program</span>
+<!-- ================= WHO THIS IS FOR ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-24 sm:py-28">
+    <div class="max-w-[680px]">
+      <div class="eyebrow mb-4">Who this is for</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.12]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        If your clients trust you to fix what's broken about how their company runs, this is your channel.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        OTP isn't a tool you sell. It's a transformation you lead. Below are the disciplines we're actively recruiting from for the Founding Partner cohort.
+      </p>
     </div>
 
-    <!-- Pill -->
-    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold tracking-wider uppercase mb-6">
-      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-      Founding Partner program is open
+    <% const disciplines = [
+      'EOS Implementers (Traction)', 'Scaling Up Coaches', 'Vistage / YPO / EO Forum Chairs',
+      'Pinnacle / Petra Coaches', 'Fractional CIOs and CTOs', 'Fractional CMOs and CROs',
+      'Fractional COOs and CFOs', 'MSPs and AI Consultancies', 'Systems Integrators',
+      'AI Builders and Agent Engineers', 'Automation Specialists', 'Management and Strategy Consultants'
+    ]; %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-2.5 mt-11">
+      <% disciplines.forEach(d => { %>
+        <div class="flex gap-2.5 text-[14.5px] text-[var(--ink-soft)]">
+          <span style="color:var(--orange);">&bull;</span><%= d %>
+        </div>
+      <% }); %>
     </div>
-
-    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.05] tracking-tight max-w-3xl mb-6 text-balance">
-      Your clients are about to bring agents in. Be the one who shows them how.
-    </h1>
-    <p class="text-lg text-gray-300 max-w-2xl leading-relaxed mb-2">
-      OTP is the operating layer for organizations that run AI agents alongside humans. Every company you advise is heading there. Most of them don't know it yet.
-    </p>
-    <p class="text-base text-gray-400 max-w-2xl leading-relaxed">
-      The OTP Partner Program is for the trusted advisors already in those rooms &mdash; EOS Implementers, Scaling Up coaches, Vistage chairs, fractional CXOs, MSPs, AI consultancies, agent builders. You bring the trust. We bring the protocol. Your clients get an AI-native operating model with you as the implementation lead.
+    <p class="text-[13px] text-[var(--ink-mute)] mt-7">
+      Don't see your discipline? Apply anyway and tell us how you fit. We're more interested in the trust you've earned than the title on your card.
     </p>
   </div>
 </section>
 
-<!-- WHY YOU FIT -->
-<section class="bg-otp-950 py-16 border-t border-white/5">
-  <div class="max-w-5xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">Who this is for</div>
-    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight max-w-3xl mb-6 text-balance">
-      If your clients trust you to fix what's broken about how their company runs &mdash; this is your channel.
-    </h2>
-    <p class="text-base text-gray-400 max-w-2xl leading-relaxed mb-10">
-      OTP isn't a tool you sell. It's a transformation you lead. Below are the disciplines we're actively recruiting from for the Founding Partner cohort.
-    </p>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-gray-300">
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> EOS Implementers (Traction)</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Scaling Up Coaches</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Vistage / YPO / EO Forum Chairs</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Pinnacle / Petra Coaches</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Fractional CIOs and CTOs</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Fractional CMOs and CROs</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Fractional COOs and CFOs</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> MSPs and AI Consultancies</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Systems Integrators</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> AI Builders and Agent Engineers</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Automation Specialists</div>
-      <div class="flex gap-2"><span class="text-amber-400">&bull;</span> Management and Strategy Consultants</div>
-    </div>
-    <p class="text-xs text-gray-500 mt-6">Don't see your discipline? Apply anyway and tell us how you fit. We're more interested in the trust you've earned than the title on your card.</p>
-  </div>
-</section>
-
-<!-- THE DEAL -->
-<section class="bg-black py-20 border-t border-white/10">
-  <div class="max-w-5xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">The Deal</div>
-    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight max-w-3xl mb-12 text-balance">
-      What you get when you partner with OTP.
-    </h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
-        <div class="text-3xl mb-3">&#x1F4B0;</div>
-        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Recurring revenue share</h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Earn on every client you bring in for as long as they stay subscribed. Founding Partners get the highest rate. Specific structure shared during certification.</p>
-      </div>
-
-      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
-        <div class="text-3xl mb-3">&#x1F310;</div>
-        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Multi-tenant partner dashboard</h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Manage every client org from a single login. Switch between accounts, push templates, run audits across your book. Built for advisors with portfolios.</p>
-      </div>
-
-      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
-        <div class="text-3xl mb-3">&#x1F3AF;</div>
-        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Co-branded onboarding</h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Your brand alongside OTP in your clients' first experience. White-label is on the roadmap for Master Integrators.</p>
-      </div>
-
-      <div class="rounded-2xl p-7 border border-white/10 bg-white/[0.02]">
-        <div class="text-3xl mb-3">&#x1F511;</div>
-        <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight">Founder access + partner Slack</h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Direct line to David Steel for strategic conversations. A private Slack for partners to swap intel, share what's working with clients, and shape the roadmap.</p>
-      </div>
-
+<!-- ================= THE DEAL ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-24 sm:py-28">
+    <div class="max-w-[640px] mb-12">
+      <div class="eyebrow mb-4">The deal</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        What you get when you partner with OTP.
+      </h2>
     </div>
 
-    <p class="text-sm text-gray-500 mt-8 max-w-2xl leading-relaxed">
+    <% const deal = [
+      { tag: 'Revenue',     label: 'Recurring revenue share',       desc: 'Earn on every client you bring in for as long as they stay subscribed. Founding Partners get the highest rate. Specific structure shared during certification.' },
+      { tag: 'Dashboard',   label: 'Multi-tenant partner dashboard', desc: 'Manage every client org from a single login. Switch between accounts, push templates, run audits across your book. Built for advisors with portfolios.' },
+      { tag: 'Brand',       label: 'Co-branded onboarding',         desc: 'Your brand alongside OTP in your clients\' first experience. White-label is on the roadmap for Master Integrators.' },
+      { tag: 'Access',      label: 'Founder access + partner Slack', desc: 'Direct line to David Steel for strategic conversations. A private Slack for partners to swap intel, share what\'s working with clients, and shape the roadmap.' },
+    ]; %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <% deal.forEach(d => { %>
+        <div class="card lift p-7">
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-mute)] mb-3"><%= d.tag %></div>
+          <h3 class="font-display text-[1.25rem] font-bold text-[var(--ink)] mb-2"><%= d.label %></h3>
+          <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.7]"><%= d.desc %></p>
+        </div>
+      <% }); %>
+    </div>
+
+    <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7] max-w-[42rem] mt-8">
       Plus: early access to the OTP agent runtime, certification training, marketing materials, a Certified OTP Integrator badge, and inclusion in the public partner directory.
     </p>
   </div>
 </section>
 
-<!-- THREE TIERS -->
-<section class="bg-otp-950 py-20 border-t border-white/10">
-  <div class="max-w-6xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">Certification Tiers</div>
-    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight max-w-3xl mb-4 text-balance">
-      Three tiers. You earn the next one with proof, not promises.
-    </h2>
-    <p class="text-base text-gray-400 max-w-2xl mb-12">
-      Each tier unlocks more revenue, more features, more visibility &mdash; and signals to your clients that you've actually done it. Tier is assigned by us after review, not at signup.
-    </p>
+<!-- ================= THREE TIERS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1180px] mx-auto px-6 py-24 sm:py-28">
+    <div class="max-w-[680px] mb-12">
+      <div class="eyebrow mb-4">Certification tiers</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        Three tiers. You earn the next one with proof, not promises.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        Each tier unlocks more revenue, more features, more visibility, and signals to your clients that you've actually done it. Tier is assigned by us after review, not at signup.
+      </p>
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
       <!-- Founding Partner -->
-      <div class="tier-card rounded-2xl p-7 border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-transparent">
+      <div class="card lift p-7 border-t-[3px]" style="border-top-color:var(--orange);">
         <div class="tier-badge tier-founding-badge">FP</div>
-        <div class="text-[10px] uppercase tracking-wider text-amber-300 font-semibold mb-1">Tier 1 &middot; Limited</div>
-        <h3 class="text-2xl font-extrabold text-white mb-2 tracking-tight">Founding Partner</h3>
-        <p class="text-sm text-amber-200/80 mb-5 leading-relaxed">First 50 partners only. Locked once the cohort is full. The most valuable tier in the program.</p>
-        <ul class="space-y-2 text-sm text-gray-300 mb-5">
-          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Highest revenue share rate (locked for life)</li>
-          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Direct founder Slack channel</li>
-          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Inherits all future tier benefits as they launch</li>
-          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Listed first in the partner directory</li>
-          <li class="flex gap-2"><span class="text-amber-400 flex-shrink-0">&check;</span> Quarterly co-marketing slot with David</li>
+        <div class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-1" style="color:var(--orange-deep);">Tier 1 &middot; Limited</div>
+        <h3 class="font-display text-[1.5rem] font-bold text-[var(--ink)] mb-2">Founding Partner</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] mb-5 leading-[1.65]">First 50 partners only. Locked once the cohort is full. The most valuable tier in the program.</p>
+        <ul class="space-y-2 text-[13.5px] text-[var(--ink-soft)] mb-5">
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--orange);">&#10003;</span> Highest revenue share rate (locked for life)</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--orange);">&#10003;</span> Direct founder Slack channel</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--orange);">&#10003;</span> Inherits all future tier benefits as they launch</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--orange);">&#10003;</span> Listed first in the partner directory</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--orange);">&#10003;</span> Quarterly co-marketing slot with David</li>
         </ul>
-        <div class="pt-4 border-t border-amber-500/20">
-          <div class="text-[10px] uppercase tracking-wider text-amber-300/70 font-semibold mb-1">How you earn it</div>
-          <p class="text-xs text-gray-400 leading-relaxed">Apply during the founding window. Pass a brief review call with David. Cohort capped at 50.</p>
+        <div class="pt-4" style="border-top:1px solid var(--line);">
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-1" style="color:var(--orange-deep);">How you earn it</div>
+          <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.65]">Apply during the founding window. Pass a brief review call with David. Cohort capped at 50.</p>
         </div>
       </div>
 
       <!-- Certified Integrator -->
-      <div class="tier-card rounded-2xl p-7 border border-otp-500/40 bg-gradient-to-br from-otp-500/10 to-transparent">
+      <div class="card lift p-7 border-t-[3px]" style="border-top-color:var(--blue);">
         <div class="tier-badge tier-certified-badge">CI</div>
-        <div class="text-[10px] uppercase tracking-wider text-otp-300 font-semibold mb-1">Tier 2 &middot; Open</div>
-        <h3 class="text-2xl font-extrabold text-white mb-2 tracking-tight">Certified OTP Integrator</h3>
-        <p class="text-sm text-otp-200/80 mb-5 leading-relaxed">The standard active partner tier. Enough scale to deliver real results, with full program benefits.</p>
-        <ul class="space-y-2 text-sm text-gray-300 mb-5">
-          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Standard revenue share on every client</li>
-          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Co-branded client onboarding</li>
-          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Multi-tenant partner dashboard</li>
-          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Certified OTP Integrator badge</li>
-          <li class="flex gap-2"><span class="text-otp-400 flex-shrink-0">&check;</span> Partner directory listing</li>
+        <div class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-1" style="color:var(--blue-deep);">Tier 2 &middot; Open</div>
+        <h3 class="font-display text-[1.5rem] font-bold text-[var(--ink)] mb-2">Certified OTP Integrator</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] mb-5 leading-[1.65]">The standard active partner tier. Enough scale to deliver real results, with full program benefits.</p>
+        <ul class="space-y-2 text-[13.5px] text-[var(--ink-soft)] mb-5">
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--blue);">&#10003;</span> Standard revenue share on every client</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--blue);">&#10003;</span> Co-branded client onboarding</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--blue);">&#10003;</span> Multi-tenant partner dashboard</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--blue);">&#10003;</span> Certified OTP Integrator badge</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--blue);">&#10003;</span> Partner directory listing</li>
         </ul>
-        <div class="pt-4 border-t border-otp-500/20">
-          <div class="text-[10px] uppercase tracking-wider text-otp-300/70 font-semibold mb-1">How you earn it</div>
-          <p class="text-xs text-gray-400 leading-relaxed">Complete OTP certification training. Get your first paying client live for 30 consecutive days.</p>
+        <div class="pt-4" style="border-top:1px solid var(--line);">
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-1" style="color:var(--blue-deep);">How you earn it</div>
+          <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.65]">Complete OTP certification training. Get your first paying client live for 30 consecutive days.</p>
         </div>
       </div>
 
       <!-- Master Integrator -->
-      <div class="tier-card rounded-2xl p-7 border border-fuchsia-500/40 bg-gradient-to-br from-fuchsia-500/10 to-transparent">
+      <div class="card lift p-7 border-t-[3px]" style="border-top-color:var(--green);">
         <div class="tier-badge tier-master-badge">M</div>
-        <div class="text-[10px] uppercase tracking-wider text-fuchsia-300 font-semibold mb-1">Tier 3 &middot; Earned</div>
-        <h3 class="text-2xl font-extrabold text-white mb-2 tracking-tight">OTP Master Integrator</h3>
-        <p class="text-sm text-fuchsia-200/80 mb-5 leading-relaxed">The proven track-record tier. Featured. White-labeled. Co-marketed. Reserved for partners who've shown the work.</p>
-        <ul class="space-y-2 text-sm text-gray-300 mb-5">
-          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> White-label option (your brand, our protocol)</li>
-          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Featured partner status on orgtp.com</li>
-          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Co-marketing campaigns with OTP</li>
-          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Early access to new features &amp; agent runtime betas</li>
-          <li class="flex gap-2"><span class="text-fuchsia-400 flex-shrink-0">&check;</span> Master Integrator badge (gradient, distinct)</li>
+        <div class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-1" style="color:var(--green-deep);">Tier 3 &middot; Earned</div>
+        <h3 class="font-display text-[1.5rem] font-bold text-[var(--ink)] mb-2">OTP Master Integrator</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] mb-5 leading-[1.65]">The proven track-record tier. Featured. White-labeled. Co-marketed. Reserved for partners who've shown the work.</p>
+        <ul class="space-y-2 text-[13.5px] text-[var(--ink-soft)] mb-5">
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--green);">&#10003;</span> White-label option (your brand, our protocol)</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--green);">&#10003;</span> Featured partner status on orgtp.com</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--green);">&#10003;</span> Co-marketing campaigns with OTP</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--green);">&#10003;</span> Early access to new features and agent runtime betas</li>
+          <li class="flex gap-2"><span class="flex-shrink-0" style="color:var(--green);">&#10003;</span> Master Integrator badge (distinct)</li>
         </ul>
-        <div class="pt-4 border-t border-fuchsia-500/20">
-          <div class="text-[10px] uppercase tracking-wider text-fuchsia-300/70 font-semibold mb-1">How you earn it</div>
-          <p class="text-xs text-gray-400 leading-relaxed">Five or more live client orgs. One published case study. Active for 6+ months as a Certified Integrator.</p>
+        <div class="pt-4" style="border-top:1px solid var(--line);">
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-1" style="color:var(--green-deep);">How you earn it</div>
+          <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.65]">Five or more live client orgs. One published case study. Active for 6+ months as a Certified Integrator.</p>
         </div>
       </div>
 
@@ -319,18 +257,21 @@
   </div>
 </section>
 
-<!-- APPLICATION FORM -->
-<section class="bg-otp-950 py-20 border-t border-white/10" id="apply">
-  <div class="max-w-3xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">Apply for the program</div>
-    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.15] tracking-tight mb-4 text-balance">
-      Become a Certified OTP Integrator.
-    </h2>
-    <p class="text-base text-gray-400 mb-10 leading-relaxed">
-      Tell us about your practice. David personally reviews every application and replies within 3 business days.
-    </p>
+<!-- ================= APPLICATION FORM ================= -->
+<section class="bg-[var(--white)]" id="apply">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28">
+    <div class="mb-10">
+      <div class="eyebrow mb-4">Apply for the program</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        Become a Certified OTP Integrator.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-4">
+        Tell us about your practice. David personally reviews every application and replies within 3 business days.
+      </p>
+    </div>
 
-    <form id="partner-application-form" class="space-y-7" novalidate>
+    <form id="partner-application-form" class="space-y-8" novalidate>
       <!-- Honeypot (bots fill this; humans don't see it) -->
       <div class="hp-field" aria-hidden="true">
         <label>Website (leave blank)</label>
@@ -339,7 +280,7 @@
 
       <!-- About You -->
       <div>
-        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">About you</h3>
+        <h3 class="font-display text-[1.05rem] font-bold text-[var(--ink)] mb-4">About you</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="fullName" class="field-label field-required">Full name</label>
@@ -362,7 +303,7 @@
 
       <!-- About Your Practice -->
       <div>
-        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">About your practice</h3>
+        <h3 class="font-display text-[1.05rem] font-bold text-[var(--ink)] mb-4">About your practice</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
             <label for="companyName" class="field-label field-required">Company name</label>
@@ -374,8 +315,8 @@
           <label class="field-label">Active clients you currently serve</label>
           <div class="flex flex-wrap gap-2">
             <label class="radio-pill"><input type="radio" name="clientCountRange" value="under_5" /> <span>Under 5</span></label>
-            <label class="radio-pill"><input type="radio" name="clientCountRange" value="5_to_20" /> <span>5 &ndash; 20</span></label>
-            <label class="radio-pill"><input type="radio" name="clientCountRange" value="20_to_50" /> <span>20 &ndash; 50</span></label>
+            <label class="radio-pill"><input type="radio" name="clientCountRange" value="5_to_20" /> <span>5 to 20</span></label>
+            <label class="radio-pill"><input type="radio" name="clientCountRange" value="20_to_50" /> <span>20 to 50</span></label>
             <label class="radio-pill"><input type="radio" name="clientCountRange" value="50_plus" /> <span>50+</span></label>
           </div>
         </div>
@@ -383,8 +324,8 @@
 
       <!-- Channels / Certifications -->
       <div>
-        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-1">How you show up <span class="text-amber-400">*</span></h3>
-        <p class="text-xs text-gray-500 mb-5">Select every framework, certification, role, or discipline you currently hold or operate as. Pick all that apply.</p>
+        <h3 class="font-display text-[1.05rem] font-bold text-[var(--ink)] mb-1">How you show up <span style="color:var(--orange-deep);">*</span></h3>
+        <p class="text-[12.5px] text-[var(--ink-mute)] mb-5">Select every framework, certification, role, or discipline you currently hold or operate as. Pick all that apply.</p>
 
         <div class="space-y-1">
 
@@ -449,7 +390,7 @@
 
       <!-- Fit -->
       <div>
-        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Fit (optional)</h3>
+        <h3 class="font-display text-[1.05rem] font-bold text-[var(--ink)] mb-4">Fit (optional)</h3>
         <label for="fitNote" class="field-label">How do you see OTP fitting your practice?</label>
         <textarea id="fitNote" name="fitNote" maxlength="4000" class="field-input" placeholder="One paragraph is plenty. What kind of clients would you bring in? What gap does OTP fill in your current delivery?"></textarea>
       </div>
@@ -458,27 +399,37 @@
 
       <!-- Submit -->
       <div class="pt-2">
-        <button type="submit" id="submit-btn" class="inline-flex items-center gap-2 px-7 py-3.5 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-lg font-bold text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <button type="submit" id="submit-btn" class="btn-primary inline-flex items-center gap-2 px-7 py-3.5 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed">
           Submit application
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
-        <p class="text-xs text-gray-500 mt-3">Reviewed by David Steel personally. We reply within 3 business days.</p>
+        <p class="text-[12.5px] text-[var(--ink-mute)] mt-3">Reviewed by David Steel personally. We reply within 3 business days.</p>
       </div>
 
       <!-- Status messages -->
-      <div id="form-status" class="hidden rounded-lg p-4 text-sm"></div>
+      <div id="form-status" class="hidden rounded-[10px] p-4 text-[14px]"></div>
     </form>
   </div>
 </section>
 
-<!-- FOUNDER NOTE -->
-<section class="bg-black py-20 border-t border-white/10">
-  <div class="max-w-3xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">A note from the founder</div>
-    <blockquote class="text-xl sm:text-2xl text-gray-100 leading-[1.5] font-light max-w-3xl mb-6">
-      "I built OTP because my own company hit the wall everyone is about to hit. Half my team is AI now. The org chart broke. The KPIs broke. The way we coordinate broke. I had to invent the operating layer to fix it. The trusted advisors who get to this first &mdash; the EOS implementers, the fractional CXOs, the AI consultancies &mdash; have a window right now. I'd rather be in business with people I respect than chase scale alone."
-    </blockquote>
-    <div class="text-sm text-gray-400">&mdash; David Steel, founder of OTP</div>
+<!-- ================= FOUNDER NOTE ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28">
+    <div class="card p-8 sm:p-11">
+      <div class="flex flex-col sm:flex-row items-start gap-7">
+        <div class="shrink-0 mx-auto sm:mx-0">
+          <img src="/public/hand-5.png" alt="" aria-hidden="true" class="pt-wave block" style="width:84px; height:auto;">
+        </div>
+        <div>
+          <div class="eyebrow mb-4" style="color:var(--orange-deep);">A note from the founder</div>
+          <blockquote class="font-display text-[var(--ink)] leading-[1.45]"
+                      style="font-size:clamp(1.2rem,2.2vw,1.6rem); font-weight:600;">
+            "I built OTP because my own company hit the wall everyone is about to hit. Half my team is AI now. The org chart broke. The KPIs broke. The way we coordinate broke. I had to invent the operating layer to fix it. The trusted advisors who get to this first, the EOS implementers, the fractional CXOs, the AI consultancies, have a window right now. I'd rather be in business with people I respect than chase scale alone."
+          </blockquote>
+          <div class="font-mono text-[12px] text-[var(--ink-mute)] mt-5">David Steel, founder of OTP</div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -506,9 +457,19 @@
 
   function showStatus(message, isError) {
     statusEl.textContent = message;
-    statusEl.className = 'rounded-lg p-4 text-sm ' + (isError
-      ? 'bg-red-500/10 border border-red-500/30 text-red-300'
-      : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-200');
+    statusEl.classList.remove('hidden');
+    statusEl.className = 'rounded-[10px] p-4 text-[14px] ' + (isError
+      ? 'border'
+      : 'border');
+    if (isError) {
+      statusEl.style.background = 'rgba(212,84,10,0.08)';
+      statusEl.style.borderColor = 'rgba(212,84,10,0.35)';
+      statusEl.style.color = '#d4540a';
+    } else {
+      statusEl.style.background = 'rgba(10,157,99,0.08)';
+      statusEl.style.borderColor = 'rgba(10,157,99,0.35)';
+      statusEl.style.color = '#06724a';
+    }
   }
 
   form.addEventListener('submit', async function(e) {

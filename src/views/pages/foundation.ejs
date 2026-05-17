@@ -1,187 +1,120 @@
-<!-- ============================================================
-     /foundation — Tab 1 destination. Build the Foundation (L1-L3).
-     Four-step guided onboarding for orgs that don't have agents yet.
-     Org Chart → OOS → KPIs → SOPs. Each step links to existing
-     OTP capability or shows "Coming soon" with progress placeholder.
-     ============================================================ -->
-
+<%# /foundation -- v7 layout (light, editorial). Track 1 destination:
+    Build the Foundation (L1-L3). Four-step guided onboarding for orgs
+    that don't have agents yet. Org Chart -> OOS -> KPIs -> SOPs.
+    Rendered via reply.view('pages/foundation', data, { layout: 'layouts/v7' }). %>
 <style>
-  .foundation-step {
-    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+  .fdn-num {
+    width:42px; height:42px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif; font-weight:800; font-size:17px;
+    background:rgba(13,125,242,.1); color:var(--blue-deep);
+    border:1px solid rgba(13,125,242,.22); flex-shrink:0;
   }
-  .foundation-step:hover {
-    transform: translateY(-2px);
-    border-color: rgba(14, 165, 233, 0.5);
-    background: rgba(14, 165, 233, 0.04);
+  .fdn-rung {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 11px; border-radius:8px;
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500;
+    letter-spacing:0.04em;
   }
-  .step-number {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800;
-    font-size: 14px;
-    background: rgba(14, 165, 233, 0.12);
-    color: #38bdf8;
-    border: 1px solid rgba(14, 165, 233, 0.3);
-    flex-shrink: 0;
-  }
-  .ladder-rung {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .ladder-rung-current {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(14, 165, 233, 0.08));
-    color: #38bdf8;
-    border: 1px solid rgba(14, 165, 233, 0.4);
-  }
-  .ladder-rung-next {
-    background: rgba(255, 255, 255, 0.03);
-    color: #6b7280;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+  .fdn-rung-current { background:rgba(13,125,242,.1); color:var(--blue-deep); border:1px solid rgba(13,125,242,.25); }
+  .fdn-rung-next { background:var(--card); color:var(--ink-mute); border:1px solid var(--line); }
+  .fdn-hand { animation:fdn-hand 4s ease-in-out infinite; transform-origin:60% 90%; }
+  @keyframes fdn-hand { 0%,72%,100%{transform:rotate(0);} 82%{transform:rotate(-12deg);} 92%{transform:rotate(6deg);} }
+  @media (prefers-reduced-motion:reduce){ .fdn-hand{ animation:none; } }
 </style>
 
-<!-- HERO -->
-<section class="bg-otp-950 relative">
-  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
-
-  <div class="relative max-w-5xl mx-auto px-6 sm:px-8 pt-20 sm:pt-24 pb-12">
-    <!-- Breadcrumb -->
-    <div class="flex items-center gap-2 text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-8 font-medium">
-      <a href="/" class="hover:text-gray-300 transition-colors">OTP</a>
-      <span class="text-gray-700">/</span>
-      <span>Build the Foundation</span>
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[920px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16">
+    <div class="eyebrow mb-7 flex items-center gap-2 flex-wrap">
+      <a href="/" class="link-u" style="color:var(--ink-mute); border-bottom-width:1.5px;">OTP</a>
+      <span style="color:var(--line);">/</span>
+      <span style="color:var(--ink);">Build the Foundation</span>
     </div>
 
-    <!-- Ladder progress -->
     <div class="flex flex-wrap items-center gap-2 mb-8">
-      <span class="ladder-rung ladder-rung-current">
-        <span class="w-1.5 h-1.5 rounded-full bg-otp-400"></span>
+      <span class="fdn-rung fdn-rung-current">
+        <span class="w-1.5 h-1.5 rounded-full" style="background:var(--blue);"></span>
         You are here &middot; L1&ndash;L3
       </span>
-      <span class="text-gray-600 text-xs">&rarr;</span>
-      <span class="ladder-rung ladder-rung-next">L4&ndash;L6 &middot; Deploy</span>
-      <span class="text-gray-600 text-xs">&rarr;</span>
-      <span class="ladder-rung ladder-rung-next">L7&ndash;L8 &middot; Teams</span>
+      <span class="text-[var(--ink-mute)] text-xs">&rarr;</span>
+      <span class="fdn-rung fdn-rung-next">L4&ndash;L6 &middot; Deploy</span>
+      <span class="text-[var(--ink-mute)] text-xs">&rarr;</span>
+      <span class="fdn-rung fdn-rung-next">L7&ndash;L8 &middot; Teams</span>
     </div>
 
-    <h1 class="text-4xl sm:text-5xl font-extrabold text-white leading-[1.1] tracking-tight max-w-3xl mb-5 text-balance">
-      Build the foundation your first agent will land on.
-    </h1>
-    <p class="text-lg text-gray-300 max-w-2xl leading-relaxed mb-2">
+    <div class="flex items-start gap-4">
+      <h1 class="font-display text-[var(--ink)] max-w-[44rem]"
+          style="font-size:clamp(2.2rem,4.4vw,3.4rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
+        Build the foundation your first agent will land on.
+      </h1>
+      <img src="/public/hand-1.png" alt="" aria-hidden="true"
+           class="fdn-hand shrink-0 hidden md:block mt-1" style="width:54px; height:auto;">
+    </div>
+    <p class="text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[40rem] mt-6">
       Most companies bring agents into a broken org chart and wonder why nothing sticks. You're going to do it differently.
     </p>
-    <p class="text-base text-gray-400 max-w-2xl leading-relaxed">
-      Four steps. Each one is valuable on its own &mdash; even if you never deploy an agent. By the time you're ready for one, the chart, the operating system, the KPIs, and the SOPs are already in place. The agent slots in. The chart doesn't break.
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[40rem] mt-3">
+      Four steps. Each one is valuable on its own, even if you never deploy an agent. By the time you're ready for one, the chart, the operating system, the KPIs, and the SOPs are already in place. The agent slots in. The chart doesn't break.
     </p>
   </div>
 </section>
 
-<!-- FOUR STEPS -->
-<section class="bg-otp-950 py-12 sm:py-16">
-  <div class="max-w-5xl mx-auto px-6 sm:px-8">
+<!-- ================= FOUR STEPS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <% const fdnSteps = [
+      { n:'1', href:'/graph', time:'~ 15 min', title:'Build your org chart',
+        body:'Start with the humans you have today. Every seat, every accountability. This becomes the chart that agents will eventually sit on alongside your team.',
+        cta:'Open the chart builder' },
+      { n:'2', href:'/publish', time:'~ 30 min', title:'Define your operating system',
+        body:'Publish your OOS file, how your org actually runs. Meetings, decision rights, escalation paths, what gets measured. This is the operating manual the next layer (agents) will inherit.',
+        cta:'Publish your OOS' },
+      { n:'3', href:'/dashboard/kpis', time:'~ 20 min', title:'Set your KPI scorecard',
+        body:"One KPI per seat. If a seat doesn't have a number, the work isn't measurable, and an agent that fills that seat later won't be either. Get this right now and the agent layer becomes accountable from day one.",
+        cta:'Open the scorecard' },
+      { n:'4', href:'/publish', time:'Ongoing', title:'Document your SOPs',
+        body:'Standard operating procedures, one per repeatable task. Start with the three things your team does most often. These are the prompts and playbooks your future agents will run from. SOPs first, agents second.',
+        cta:'Add an SOP' },
+    ]; %>
 
-    <div class="space-y-5">
-
-      <!-- Step 1: Org Chart -->
-      <a href="/graph" class="foundation-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
-        <div class="flex items-start gap-5">
-          <div class="step-number">1</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-3 mb-2">
-              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Build your org chart</h3>
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 15 min</span>
-            </div>
-            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Start with the humans you have today. Every seat, every accountability. This becomes the chart that agents will eventually sit on alongside your team.</p>
-            <div class="flex items-center gap-3 text-sm">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-otp-500/15 text-otp-300 rounded-md font-medium border border-otp-500/30">
-                Open the chart builder
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <div class="space-y-4">
+      <% fdnSteps.forEach((s) => { %>
+        <a href="<%= s.href %>" class="card lift block p-7 sm:p-8">
+          <div class="flex items-start gap-5">
+            <div class="fdn-num"><%= s.n %></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-3 mb-2">
+                <h3 class="font-display text-[var(--ink)] text-[1.3rem] sm:text-[1.45rem] font-bold tracking-[-0.01em]"><%= s.title %></h3>
+                <span class="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--ink-mute)]"><%= s.time %></span>
+              </div>
+              <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.7] mb-4"><%= s.body %></p>
+              <span class="inline-flex items-center gap-1.5 text-[14px] text-[var(--blue-deep)] link-u">
+                <%= s.cta %> &rarr;
               </span>
             </div>
           </div>
-        </div>
-      </a>
-
-      <!-- Step 2: OOS -->
-      <a href="/publish" class="foundation-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
-        <div class="flex items-start gap-5">
-          <div class="step-number">2</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-3 mb-2">
-              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Define your operating system</h3>
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 30 min</span>
-            </div>
-            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Publish your OOS file &mdash; how your org actually runs. Meetings, decision rights, escalation paths, what gets measured. This is the operating manual the next layer (agents) will inherit.</p>
-            <div class="flex items-center gap-3 text-sm">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-otp-500/15 text-otp-300 rounded-md font-medium border border-otp-500/30">
-                Publish your OOS
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </span>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      <!-- Step 3: KPIs -->
-      <a href="/dashboard/kpis" class="foundation-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
-        <div class="flex items-start gap-5">
-          <div class="step-number">3</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-3 mb-2">
-              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Set your KPI scorecard</h3>
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">~ 20 min</span>
-            </div>
-            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">One KPI per seat. If a seat doesn't have a number, the work isn't measurable &mdash; and an agent that fills that seat later won't be either. Get this right now and the agent layer becomes accountable from day one.</p>
-            <div class="flex items-center gap-3 text-sm">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-otp-500/15 text-otp-300 rounded-md font-medium border border-otp-500/30">
-                Open the scorecard
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </span>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      <!-- Step 4: SOPs -->
-      <a href="/publish" class="foundation-step block rounded-2xl p-6 sm:p-7 border border-white/10 bg-white/[0.02]">
-        <div class="flex items-start gap-5">
-          <div class="step-number">4</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-3 mb-2">
-              <h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Document your SOPs</h3>
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Ongoing</span>
-            </div>
-            <p class="text-sm sm:text-base text-gray-400 mb-4 leading-relaxed">Standard operating procedures, one per repeatable task. Start with the three things your team does most often. These are the prompts and playbooks your future agents will run from. SOPs first, agents second.</p>
-            <div class="flex items-center gap-3 text-sm">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-otp-500/15 text-otp-300 rounded-md font-medium border border-otp-500/30">
-                Add an SOP
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </span>
-            </div>
-          </div>
-        </div>
-      </a>
-
+        </a>
+      <% }); %>
     </div>
+  </div>
+</section>
 
-    <!-- What's next -->
-    <div class="mt-14 pt-10 border-t border-white/10">
-      <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">When this track is no longer your reality</div>
-      <h3 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-3">Track 2 &middot; Bring your agents in</h3>
-      <p class="text-base text-gray-400 max-w-2xl mb-6 leading-relaxed">
-        The day you deploy your first agent is the day Track 1 stops being your track and Track 2 starts. The foundation you built here doesn't go away &mdash; the chart receives the agent without breaking, the KPI is already defined, the SOP is already written. You don't restart. You shift tracks.
+<!-- ================= WHAT'S NEXT ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <div class="card p-8 sm:p-11" style="background:linear-gradient(180deg,rgba(13,125,242,.05),var(--card));">
+      <div class="eyebrow mb-3" style="color:var(--blue-deep);">When this track is no longer your reality</div>
+      <h2 class="font-display text-[var(--ink)] leading-[1.12] mb-3"
+          style="font-size:clamp(1.6rem,3vw,2.2rem); font-weight:700; letter-spacing:-0.02em;">
+        Track 2 &middot; Bring your agents in
+      </h2>
+      <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.7] max-w-[42rem] mb-6">
+        The day you deploy your first agent is the day Track 1 stops being your track and Track 2 starts. The foundation you built here doesn't go away. The chart receives the agent without breaking, the KPI is already defined, the SOP is already written. You don't restart. You shift tracks.
       </p>
-      <a href="/deploy" class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-        See Track 2
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      <a href="/deploy" class="inline-flex items-center gap-2 text-[15px] text-[var(--blue-deep)] link-u">
+        See Track 2 &rarr;
       </a>
     </div>
-
   </div>
 </section>

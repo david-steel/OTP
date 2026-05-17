@@ -1,179 +1,190 @@
-<!-- Hero -->
-<section class="relative overflow-hidden bg-otp-950">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="absolute top-[-150px] left-[-100px] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-  <div class="absolute bottom-[-150px] right-[-100px] w-[400px] h-[400px] bg-otp-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+<%# /machine-commerce -- v7 layout (light, editorial). The agent economy discovery layer.
+    Rendered via reply.view('pages/machine-commerce', data, { layout: 'layouts/v7' }). %>
+<style>
+  .mc-peek {
+    animation:mc-peek 8s ease-in-out infinite;
+  }
+  @keyframes mc-peek {
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-14px); }
+  }
+  .mc-step-line {
+    position:absolute; top:27px; left:calc(50% + 34px); right:calc(-50% + 34px);
+    height:2px; background:var(--line);
+  }
+  @media (max-width:767px){ .mc-step-line{ display:none; } }
+  @media (prefers-reduced-motion:reduce){ .mc-peek{ animation:none; } }
+</style>
 
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-24 text-center">
-    <p class="text-otp-400 text-sm font-semibold uppercase tracking-widest mb-6 animate-fade-in">Machine Commerce</p>
-    <h1 class="text-3xl sm:text-5xl font-extrabold text-white leading-[1.1] mb-6 animate-fade-in-up delay-100">
-      The agent economy<br>
-      <span class="gradient-text">needs a discovery layer.</span>
-    </h1>
-    <p class="text-lg sm:text-xl text-gray-300 mb-4 animate-fade-in-up delay-200 max-w-2xl mx-auto">
-      AI agents are starting to transact with each other autonomously. Before an agent works with another organization, it needs to understand how that organization operates.
-    </p>
-    <p class="text-base text-gray-400 mb-10 animate-fade-in-up delay-300 max-w-xl mx-auto">
-      OTP is the layer where agents discover organizations they can trust.
-    </p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-400">
-      <a href="/publish" class="px-8 py-4 bg-otp-500 text-white rounded-xl font-bold text-lg hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25">Position Your Organization</a>
-      <a href="#agent-economy" class="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-xl font-semibold text-lg hover:bg-white/10 transition-all">Learn More</a>
-    </div>
-  </div>
-</section>
-
-<!-- Section 1: The Agent Economy is Coming -->
-<section id="agent-economy" class="bg-white py-16 sm:py-20">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">The shift</p>
-    <h2 class="text-3xl font-extrabold text-gray-900 mb-8 leading-tight">Agents are becoming the customer.</h2>
-
-    <div class="space-y-4 text-lg text-gray-600 leading-relaxed">
-      <p>Today, a human decides which vendors to work with. They read reviews, check references, get on a call. Tomorrow, an AI agent will make that evaluation -- autonomously, at scale, in seconds.</p>
-      <p>But an agent can't get on a call. It can't read body language. It can't ask a friend for a referral. <strong class="text-gray-900">It needs structured, machine-readable intelligence about how an organization operates.</strong></p>
-      <p>Before an agent transacts with another organization, it needs answers: How do they coordinate internally? What are their failure modes? How do they handle escalations? What's their track record?</p>
-      <p class="text-gray-900 font-semibold">The organization that publishes this intelligence is the one that gets discovered. The one that doesn't is invisible to the agent economy.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Section 2: OTP as the Discovery Layer -->
-<section class="bg-gray-50 py-16 sm:py-20">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="text-center mb-12">
-      <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">The discovery layer</p>
-      <h2 class="text-3xl font-extrabold text-gray-900">The Intelligence Graph is built for agents.</h2>
-      <p class="text-lg text-gray-500 mt-4 max-w-2xl mx-auto">It's not just a website for humans to browse. It's the protocol layer where agents discover organizations they can coordinate with.</p>
-    </div>
-
-    <div class="grid sm:grid-cols-2 gap-6">
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center mb-4">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1180px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--orange);"></span>Machine Commerce
         </div>
-        <h3 class="font-bold text-gray-900 mb-2">Machine-Readable Trust Profiles</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Published OOS files are structured, queryable, and comparable. An agent doesn't need to interpret a website -- it reads claims, evidence, and confidence scores directly.</p>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.3rem,4.6vw,3.7rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          The agent economy needs a <span class="text-[var(--orange-deep)]">discovery layer.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[35rem] mx-auto md:mx-0 mt-5">
+          AI agents are starting to transact with each other autonomously. Before an agent works with another organization, it needs to understand how that organization operates.
+        </p>
+        <p class="font-mono text-[13px] text-[var(--ink-mute)] mt-4">
+          OTP is the layer where agents discover organizations they can trust.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-center md:justify-start mt-8">
+          <a href="/publish" class="btn-primary px-8 py-4 text-[16px]">Position your organization &rarr;</a>
+          <a href="#agent-economy" class="btn-ghost px-8 py-4 text-[16px]">Learn more</a>
+        </div>
       </div>
-
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center mb-4">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-        </div>
-        <h3 class="font-bold text-gray-900 mb-2">Compatibility Signals</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Claim similarities reveal coordination compatibility. When two organizations share similar patterns, their agents already speak the same language.</p>
-      </div>
-
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center mb-4">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        </div>
-        <h3 class="font-bold text-gray-900 mb-2">Semantic Search</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Agents search across all published claims using natural language. "Find organizations with documented agent escalation patterns" returns ranked, relevant results.</p>
-      </div>
-
-      <div class="bg-white rounded-xl p-6 border card-hover">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center mb-4">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        </div>
-        <h3 class="font-bold text-gray-900 mb-2">Track Record Visibility</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Quality tiers, agentic maturity levels, and evidence distributions give agents a quantified view of organizational capability.</p>
+      <div class="relative shrink-0" style="width:240px; max-width:58vw;">
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="mc-peek block w-full" style="filter:drop-shadow(0 22px 34px rgba(20,22,28,.2));">
       </div>
     </div>
   </div>
 </section>
 
-<!-- Section 3: How It Works -->
-<section class="bg-white py-16 sm:py-20">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="text-center mb-12">
-      <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">How it works</p>
-      <h2 class="text-3xl font-extrabold text-gray-900">Three steps to agent-to-agent discovery.</h2>
+<!-- ================= THE SHIFT ================= -->
+<section id="agent-economy" class="bg-[var(--grey)]">
+  <div class="max-w-[720px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">The shift</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.12]"
+        style="font-size:clamp(1.8rem,3.6vw,2.7rem); font-weight:700;">
+      Agents are becoming the customer.
+    </h2>
+    <div class="mt-6 space-y-4">
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.75]">
+        Today, a human decides which vendors to work with. They read reviews, check references, get on a call. Tomorrow, an AI agent will make that evaluation, autonomously, at scale, in seconds.
+      </p>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.75]">
+        But an agent can't get on a call. It can't read body language. It can't ask a friend for a referral. <strong class="text-[var(--ink)] font-semibold">It needs structured, machine-readable intelligence about how an organization operates.</strong>
+      </p>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.75]">
+        Before an agent transacts with another organization, it needs answers: How do they coordinate internally? What are their failure modes? How do they handle escalations? What's their track record?
+      </p>
+      <p class="text-[16px] text-[var(--ink)] font-semibold leading-[1.75]">
+        The organization that publishes this intelligence is the one that gets discovered. The one that doesn't is invisible to the agent economy.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE DISCOVERY LAYER ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px] mb-12">
+      <div class="eyebrow mb-4">The discovery layer</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        The Intelligence Graph is built for agents.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-4">
+        It's not just a website for humans to browse. It's the protocol layer where agents discover organizations they can coordinate with.
+      </p>
     </div>
 
+    <%
+      const mcFeatures = [
+        { title:'Machine-Readable Trust Profiles', body:'Published OOS files are structured, queryable, and comparable. An agent doesn’t need to interpret a website. It reads claims, evidence, and confidence scores directly.' },
+        { title:'Compatibility Signals',           body:'Claim similarities reveal coordination compatibility. When two organizations share similar patterns, their agents already speak the same language.' },
+        { title:'Semantic Search',                 body:'Agents search across all published claims using natural language. "Find organizations with documented agent escalation patterns" returns ranked, relevant results.' },
+        { title:'Track Record Visibility',         body:'Quality tiers, agentic maturity levels, and evidence distributions give agents a quantified view of organizational capability.' },
+      ];
+    %>
+    <div class="grid sm:grid-cols-2 gap-5">
+      <% for (const f of mcFeatures) { %>
+      <div class="card lift p-7">
+        <h3 class="font-display text-[var(--ink)] text-[1.15rem] font-bold mb-2"><%= f.title %></h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= f.body %></p>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[980px] mx-auto px-6 py-20 sm:py-24">
+    <div class="text-center mb-14">
+      <div class="eyebrow mb-4">How it works</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        Three steps to agent-to-agent discovery.
+      </h2>
+    </div>
+
+    <%
+      const mcSteps = [
+        { n:'1', title:'Publish',  body:'Organization publishes its OOS with structured claims about how it operates. Coordination patterns, authority boundaries, failure modes, all machine-readable.' },
+        { n:'2', title:'Discover', body:'Agents query the Intelligence Graph for compatible organizations. Similarity scores, claim overlap, and evidence quality guide the selection.' },
+        { n:'3', title:'Transact', body:'Armed with coordination intelligence, agents engage with confidence. They understand the other org’s patterns, boundaries, and escalation paths before the first interaction.' },
+      ];
+    %>
     <div class="grid md:grid-cols-3 gap-8">
-      <!-- Step 1 -->
-      <div class="text-center">
-        <div class="w-14 h-14 rounded-2xl bg-otp-500 text-white flex items-center justify-center mx-auto mb-5 text-xl font-bold">1</div>
-        <h3 class="font-bold text-gray-900 text-lg mb-3">Publish</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Organization publishes its OOS with structured claims about how it operates. Coordination patterns, authority boundaries, failure modes -- all machine-readable.</p>
+      <% mcSteps.forEach(function(s, i){ %>
+      <div class="relative text-center">
+        <% if (i < 2) { %><div class="mc-step-line"></div><% } %>
+        <div class="relative font-display flex items-center justify-center text-white mx-auto mb-5"
+             style="width:54px; height:54px; border-radius:15px; font-weight:800; font-size:20px; background:linear-gradient(135deg,var(--orange),var(--orange-deep)); z-index:1;">
+          <%= s.n %>
+        </div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2"><%= s.title %></h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= s.body %></p>
       </div>
-
-      <!-- Step 2 -->
-      <div class="text-center">
-        <div class="w-14 h-14 rounded-2xl bg-otp-500 text-white flex items-center justify-center mx-auto mb-5 text-xl font-bold">2</div>
-        <h3 class="font-bold text-gray-900 text-lg mb-3">Discover</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Agents query the Intelligence Graph for compatible organizations. Similarity scores, claim overlap, and evidence quality guide the selection.</p>
-      </div>
-
-      <!-- Step 3 -->
-      <div class="text-center">
-        <div class="w-14 h-14 rounded-2xl bg-otp-500 text-white flex items-center justify-center mx-auto mb-5 text-xl font-bold">3</div>
-        <h3 class="font-bold text-gray-900 text-lg mb-3">Transact</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Armed with coordination intelligence, agents engage with confidence. They understand the other org's patterns, boundaries, and escalation paths before the first interaction.</p>
-      </div>
+      <% }); %>
     </div>
   </div>
 </section>
 
-<!-- Section 4: Built on Open Standards -->
-<section class="bg-gray-50 py-16 sm:py-20">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+<!-- ================= OPEN STANDARDS ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[860px] mx-auto px-6 py-20 sm:py-24">
     <div class="text-center mb-12">
-      <p class="text-otp-500 text-sm font-semibold uppercase tracking-widest mb-4">Open infrastructure</p>
-      <h2 class="text-3xl font-extrabold text-gray-900">Built on open standards. No lock-in.</h2>
+      <div class="eyebrow mb-4">Open infrastructure</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        Built on open standards. No lock-in.
+      </h2>
     </div>
 
+    <%
+      const mcStandards = [
+        { label:'OOS Format',   note:'CC BY 4.0. Open, portable, yours.' },
+        { label:'MCP Protocol', note:'Native agent integration via Model Context Protocol.' },
+        { label:'API Access',   note:'REST + MCP server. Use whichever fits.' },
+        { label:'No Lock-In',   note:'Your OOS is yours. Export anytime, use anywhere.' },
+      ];
+    %>
     <div class="grid sm:grid-cols-2 gap-4">
-      <div class="bg-white rounded-xl p-5 border flex items-start gap-4">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-        </div>
+      <% for (const s of mcStandards) { %>
+      <div class="card p-6 flex items-start gap-4">
+        <span class="tick mt-1.5 shrink-0" style="background:var(--green);"></span>
         <div>
-          <div class="font-bold text-gray-900 text-sm">OOS Format</div>
-          <div class="text-sm text-gray-500">CC BY 4.0 -- open, portable, yours</div>
+          <div class="font-display text-[var(--ink)] text-[1.02rem] font-bold"><%= s.label %></div>
+          <div class="text-[13.5px] text-[var(--ink-soft)] leading-[1.6] mt-1"><%= s.note %></div>
         </div>
       </div>
-      <div class="bg-white rounded-xl p-5 border flex items-start gap-4">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        </div>
-        <div>
-          <div class="font-bold text-gray-900 text-sm">MCP Protocol</div>
-          <div class="text-sm text-gray-500">Native agent integration via Model Context Protocol</div>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl p-5 border flex items-start gap-4">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-        </div>
-        <div>
-          <div class="font-bold text-gray-900 text-sm">API Access</div>
-          <div class="text-sm text-gray-500">REST + MCP server -- use whichever fits</div>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl p-5 border flex items-start gap-4">
-        <div class="w-10 h-10 rounded-lg bg-otp-100 text-otp-600 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-        </div>
-        <div>
-          <div class="font-bold text-gray-900 text-sm">No Lock-In</div>
-          <div class="text-sm text-gray-500">Your OOS is yours. Export anytime, use anywhere.</div>
-        </div>
-      </div>
+      <% } %>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="bg-otp-950 py-16 sm:py-20 relative overflow-hidden">
-  <div class="absolute inset-0 bg-grid opacity-20"></div>
-  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">Position your organization for the agent economy.</h2>
-    <p class="text-gray-400 text-lg mb-8 max-w-xl mx-auto">The organizations that publish their coordination intelligence today will be the ones agents discover tomorrow.</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="/publish" class="px-8 py-4 bg-otp-500 text-white rounded-xl font-bold text-lg hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25">Publish Your OOS</a>
-      <a href="/graph" class="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-xl font-semibold text-lg hover:bg-white/10 transition-all">Explore the Intelligence Graph</a>
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2rem,4.4vw,3.2rem); font-weight:800;">
+      Position your organization for the agent economy.
+    </h2>
+    <p class="text-[17px] leading-[1.6] max-w-[35rem] mx-auto mt-6" style="color:#5a2a06;">
+      The organizations that publish their coordination intelligence today will be the ones agents discover tomorrow.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/publish" class="btn-ink px-8 py-4 text-[16px]">Publish your OOS &rarr;</a>
+      <a href="/graph" class="btn-ghost px-8 py-4 text-[16px]" style="border-color:rgba(20,22,28,.3);">Explore the Intelligence Graph</a>
     </div>
   </div>
 </section>

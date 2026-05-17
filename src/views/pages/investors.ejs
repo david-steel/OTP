@@ -1,245 +1,314 @@
-<div class="bg-otp-900 text-white">
-  <div class="max-w-4xl mx-auto px-4 py-20 text-center">
-    <div class="text-xs uppercase tracking-widest text-otp-400 mb-4">For Investors</div>
-    <h1 class="text-4xl font-bold mb-4">The Intelligence Graph for the Agentic Era</h1>
-    <p class="text-xl text-otp-200 mb-6 max-w-2xl mx-auto">
-      Every organization building AI agents is solving the same hard problems alone.
-      OTP is the infrastructure layer where organizational AI intelligence becomes visible, searchable, and transferable.
+<%# /investors -- v7 layout (light, editorial). The intelligence graph
+    for the agentic era. Insight, MVP, the moat, market timing, business
+    model, roadmap, why it wins, proof of concept. %>
+<style>
+  .iv-float { animation:iv-float 6.5s ease-in-out infinite; }
+  @keyframes iv-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .iv-glow {
+    position:absolute; left:50%; top:50%; width:78%; height:62%;
+    transform:translate(-50%,-50%); z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse, rgba(13,125,242,0.18), transparent 70%);
+    animation:iv-breathe 6.5s ease-in-out infinite;
+  }
+  @keyframes iv-breathe { 0%,100%{opacity:.5;} 50%{opacity:1;} }
+  .iv-nudge { animation:iv-nudge 4.5s ease-in-out infinite; transform-origin:center; }
+  @keyframes iv-nudge { 0%,100%{transform:translateX(0) rotate(0);} 50%{transform:translateX(6px) rotate(8deg);} }
+  @media (prefers-reduced-motion:reduce){ .iv-float,.iv-glow,.iv-nudge{ animation:none; } }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1180px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--blue);"></span>For investors
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.3rem,4.6vw,3.7rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          The intelligence graph for the <span class="text-[var(--blue)]">agentic era.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto md:mx-0 mt-5">
+          Every organization building AI agents is solving the same hard problems alone. OTP is the infrastructure layer where organizational AI intelligence becomes visible, searchable, and transferable.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-center md:justify-start mt-8">
+          <a href="/graph" class="btn-primary px-8 py-4 text-[16px]">See the live intelligence graph &rarr;</a>
+        </div>
+      </div>
+      <div class="relative shrink-0" style="width:260px; max-width:62vw;">
+        <div class="iv-glow"></div>
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="iv-float relative block w-full" style="z-index:1; filter:drop-shadow(0 22px 34px rgba(20,22,28,.2));">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE INSIGHT ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-6">The insight</div>
+    <div class="card p-8 sm:p-11">
+      <p class="font-display text-[var(--ink)] leading-snug mb-5" style="font-size:clamp(1.3rem,2.6vw,1.8rem); font-weight:700;">
+        The hard problem in AI is no longer intelligence. It is coordination.
+      </p>
+      <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72] mb-4">
+        Building one good AI agent is a solved problem. Getting twelve of them to not step on each other, to share state without corruption, to escalate without deadlock, to override without breaking chains of authority, that is an unsolved, high-value organizational challenge.
+      </p>
+      <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72] mb-5">
+        Every company deploying AI agents is discovering the same failure patterns independently. There is no system of record for what works. No way to learn from another organization's battle-tested coordination intelligence without starting from scratch.
+      </p>
+      <p class="font-display text-[var(--ink)] text-[1.1rem] font-bold">
+        OTP is that system of record.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHAT YOU ARE LOOKING AT ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px]">
+      <div class="eyebrow mb-4">What you are looking at</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        A functional MVP, built in 48 hours.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        It is intentionally early. What matters is not polish, it is that the core mechanics work.
+      </p>
+    </div>
+
+    <% const mvp = [
+      { t: 'Structured intelligence capture', b: 'Organizations publish claims with confidence ratings, evidence typing, failure modes, and scope boundaries. Not opinions, structured, machine-readable operational intelligence.' },
+      { t: 'Cross-organization comparison', b: 'The diff engine identifies what is unique, what is shared, and where organizations conflict. This is the first time AI operational intelligence has been comparable across organizations.' },
+      { t: 'The intelligence graph', b: 'A living, growing network where every published OOS becomes a node. Edges form when organizations share similar patterns. With enough nodes, the graph reveals what no single organization can see alone.' },
+      { t: 'PII scanning', b: 'Automated detection of client names, employee data, and sensitive information before anything publishes. Trust is the foundation.' },
+      { t: 'Quality tiers', b: 'Platinum, Gold, Silver, Bronze, calculated from evidence strength and confidence distribution. Higher quality intelligence rises to the top.' },
+      { t: 'Full-text search', b: '"How do other agencies handle client retention with AI agents?" Search across every published claim in the system.' },
+    ]; %>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+      <% mvp.forEach(function(m){ %>
+        <div class="card lift p-7">
+          <span class="tick mb-4" style="background:var(--blue);"></span>
+          <h3 class="font-display text-[var(--ink)] text-[1.05rem] font-bold mb-2 leading-snug"><%= m.t %></h3>
+          <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.7]"><%= m.b %></p>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE GRAPH IS THE MOAT ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px]">
+      <div class="eyebrow mb-4" style="color:var(--blue-deep);">The graph is the moat</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        Right now the graph has 3 nodes. That is by design.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        Here is what happens as it grows.
+      </p>
+    </div>
+
+    <% const scale = [
+      { n: '10 orgs', b: 'Industry-specific patterns emerge. Agencies discover shared coordination failures. The graph shows "most agencies learn rule X the hard way."' },
+      { n: '100 orgs', b: 'Cross-industry patterns become visible. A logistics company and a marketing agency independently discover the same shared-state architecture. The graph connects them.' },
+      { n: '1,000 orgs', b: 'The graph becomes the definitive map of how humans and AI agents work together. Enterprise buyers use it to benchmark. Consultants reference it. AI platforms build on it.' },
+      { n: '10,000+', b: 'Network effects are irreversible. The intelligence graph is a dataset that cannot be replicated without the same publisher base. Every new node makes the graph more valuable for every existing node.' },
+    ]; %>
+    <div class="mt-12 space-y-3">
+      <% scale.forEach(function(s){ %>
+        <div class="card p-6 sm:p-7 grid sm:grid-cols-[140px,1fr] gap-4 sm:gap-7 items-start">
+          <div class="font-mono text-[15px] font-semibold" style="color:var(--blue-deep);"><%= s.n %></div>
+          <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.7]"><%= s.b %></p>
+        </div>
+      <% }); %>
+    </div>
+
+    <div class="card p-7 sm:p-9 mt-8 text-center" style="background:linear-gradient(180deg,rgba(13,125,242,.06),var(--card)); border-top:3px solid var(--blue);">
+      <p class="font-display text-[var(--ink)] leading-snug" style="font-size:clamp(1.2rem,2.4vw,1.55rem); font-weight:700;">
+        This is not a content library. It is a compounding intelligence network.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MARKET TIMING ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[820px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">Market timing</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1] max-w-[600px]"
+        style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+      AI is no longer a feature. It is the operating system for work.
+    </h2>
+    <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72] mt-5">
+      Bain &amp; Company published "AI Enterprise: Code Red" in February 2026. Their thesis: AI is no longer a feature, it is the operating system for how work gets done. They describe "agent factories," "agent contracts," and the organizational unit of advantage shifting from departments to integrated AI-human systems.
     </p>
-    <a href="/graph" class="inline-block px-6 py-3 bg-otp-500 rounded-lg font-medium hover:bg-otp-400">See the Live Intelligence Graph</a>
-  </div>
-</div>
 
-<div class="max-w-4xl mx-auto px-4 py-16">
+    <blockquote class="card p-7 sm:p-9 my-9 border-l-[4px]" style="border-left-color:var(--blue);">
+      <p class="font-display text-[var(--ink)] leading-[1.4] italic" style="font-size:clamp(1.1rem,2.2vw,1.4rem); font-weight:600;">
+        "The organizational unit of advantage will no longer reside in functions. It will sit in the tightly integrated system of redesigned workflows and a modernized hybrid workforce."
+      </p>
+      <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink-mute)] mt-4">
+        Bain &amp; Company, AI Enterprise: Code Red, Feb 2026
+      </p>
+    </blockquote>
 
-  <!-- The Insight -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">The Insight</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <p class="text-lg text-gray-700 mb-4">The hard problem in AI is no longer intelligence. It is coordination.</p>
-      <p class="text-gray-600 mb-4">Building one good AI agent is a solved problem. Getting twelve of them to not step on each other -- to share state without corruption, to escalate without deadlock, to override without breaking chains of authority -- that is an unsolved, high-value organizational challenge.</p>
-      <p class="text-gray-600">Every company deploying AI agents is discovering the same failure patterns independently. There is no system of record for what works. No way to learn from another organization's battle-tested coordination intelligence without starting from scratch.</p>
-      <p class="text-gray-700 font-medium mt-4">OTP is that system of record.</p>
-    </div>
-  </div>
+    <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72]">
+      That tightly integrated system is what the OOS captures. OTP is how you transfer it.
+    </p>
 
-  <!-- What You're Looking At -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">What You Are Looking At</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <p class="text-gray-600 mb-6">This is a functional MVP built in 48 hours. It is intentionally early. What matters is not polish -- it is that the core mechanics work:</p>
-      <div class="grid grid-cols-2 gap-6">
-        <div class="space-y-4">
-          <div class="flex items-start gap-3">
-            <div class="w-2 h-2 bg-otp-500 rounded-full mt-2 shrink-0"></div>
-            <div>
-              <div class="font-medium text-sm">Structured Intelligence Capture</div>
-              <div class="text-xs text-gray-500">Organizations publish claims with confidence ratings, evidence typing, failure modes, and scope boundaries. Not opinions -- structured, machine-readable operational intelligence.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-2 h-2 bg-otp-500 rounded-full mt-2 shrink-0"></div>
-            <div>
-              <div class="font-medium text-sm">Cross-Organization Comparison</div>
-              <div class="text-xs text-gray-500">The diff engine identifies what is unique, what is shared, and where organizations conflict. This is the first time AI operational intelligence has been comparable across organizations.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-2 h-2 bg-otp-500 rounded-full mt-2 shrink-0"></div>
-            <div>
-              <div class="font-medium text-sm">The Intelligence Graph</div>
-              <div class="text-xs text-gray-500">A living, growing network where every published OOS becomes a node. Edges form when organizations share similar patterns. With enough nodes, the graph reveals what no single organization can see alone.</div>
-            </div>
-          </div>
-        </div>
-        <div class="space-y-4">
-          <div class="flex items-start gap-3">
-            <div class="w-2 h-2 bg-otp-500 rounded-full mt-2 shrink-0"></div>
-            <div>
-              <div class="font-medium text-sm">PII Scanning</div>
-              <div class="text-xs text-gray-500">Automated detection of client names, employee data, and sensitive information before anything publishes. Trust is the foundation.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-2 h-2 bg-otp-500 rounded-full mt-2 shrink-0"></div>
-            <div>
-              <div class="font-medium text-sm">Quality Tiers</div>
-              <div class="text-xs text-gray-500">Platinum, Gold, Silver, Bronze -- calculated from evidence strength and confidence distribution. Higher quality intelligence rises to the top.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-2 h-2 bg-otp-500 rounded-full mt-2 shrink-0"></div>
-            <div>
-              <div class="font-medium text-sm">Full-Text Search</div>
-              <div class="text-xs text-gray-500">"How do other agencies handle client retention with AI agents?" Search across every published claim in the system.</div>
-            </div>
-          </div>
-        </div>
+    <div class="grid sm:grid-cols-3 gap-5 mt-10">
+      <div class="card p-7 text-center">
+        <div class="font-display text-[var(--blue-deep)]" style="font-size:2rem; font-weight:800;">30-50%</div>
+        <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.6] mt-2">Productivity gains projected from AI agent deployment</p>
+      </div>
+      <div class="card p-7 text-center">
+        <div class="font-display text-[var(--blue-deep)]" style="font-size:2rem; font-weight:800;">$47-80B</div>
+        <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.6] mt-2">Total addressable market for AI operational intelligence</p>
+      </div>
+      <div class="card p-7 text-center">
+        <div class="font-display text-[var(--blue-deep)]" style="font-size:2rem; font-weight:800;">0</div>
+        <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.6] mt-2">Competitors building structured organizational AI intelligence exchange</p>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- The Graph is the Moat -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">The Graph Is the Moat</h2>
-    <div class="bg-gradient-to-br from-otp-900 to-otp-800 text-white p-8 rounded-lg">
-      <p class="text-otp-200 mb-6">Right now the Intelligence Graph has 3 nodes. That is by design. Here is what happens as it grows:</p>
-      <div class="space-y-4">
-        <div class="flex items-start gap-4">
-          <div class="text-otp-400 font-mono text-sm w-20 shrink-0">10 orgs</div>
-          <div class="text-sm">Industry-specific patterns emerge. Agencies discover shared coordination failures. The graph shows "most agencies learn rule X the hard way."</div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="text-otp-400 font-mono text-sm w-20 shrink-0">100 orgs</div>
-          <div class="text-sm">Cross-industry patterns become visible. A logistics company and a marketing agency independently discover the same shared-state architecture. The graph connects them.</div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="text-otp-400 font-mono text-sm w-20 shrink-0">1,000 orgs</div>
-          <div class="text-sm">The graph becomes the definitive map of how humans and AI agents work together. Enterprise buyers use it to benchmark. Consultants reference it. AI platforms build on it.</div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="text-otp-400 font-mono text-sm w-20 shrink-0">10,000+</div>
-          <div class="text-sm">Network effects are irreversible. The Intelligence Graph is a dataset that cannot be replicated without the same publisher base. Every new node makes the graph more valuable for every existing node.</div>
-        </div>
-      </div>
-      <p class="text-white font-medium mt-6">This is not a content library. It is a compounding intelligence network.</p>
+<!-- ================= BUSINESS MODEL ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px]">
+      <div class="eyebrow mb-4">Business model</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        Free open network. Enterprise pays for privacy.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        The free open network builds the intelligence graph. Enterprise pays for private, self-enclosed intelligence exchange.
+      </p>
     </div>
-  </div>
 
-  <!-- Market Timing -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">Market Timing</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <p class="text-gray-600 mb-4">Bain & Company published "AI Enterprise: Code Red" in February 2026. Their thesis: AI is no longer a feature. It is the operating system for how work gets done. They describe "agent factories," "agent contracts," and "the organizational unit of advantage" shifting from departments to integrated AI-human systems.</p>
-      <div class="bg-gray-50 border-l-4 border-otp-500 p-4 my-6">
-        <p class="text-gray-700 italic">"The organizational unit of advantage will no longer reside in functions. It will sit in the tightly integrated system of redesigned workflows and a modernized hybrid workforce."</p>
-        <p class="text-xs text-gray-400 mt-2">-- Bain & Company, AI Enterprise: Code Red, Feb 2026</p>
+    <div class="grid md:grid-cols-2 gap-5 mt-12">
+      <div class="card p-7">
+        <div class="eyebrow mb-3">Free &middot; Open network</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-3">Publish, browse, search, compare, merge</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.7]">
+          Everything. Full MCP access. No gates. The open intelligence graph grows through unrestricted participation. This is how the network reaches critical mass.
+        </p>
       </div>
-      <p class="text-gray-600 mb-4">That "tightly integrated system" is what the OOS captures. OTP is how you transfer it.</p>
-      <div class="grid grid-cols-3 gap-4 mt-6">
-        <div class="text-center p-4 bg-gray-50 rounded">
-          <div class="text-2xl font-bold text-otp-600">30-50%</div>
-          <div class="text-xs text-gray-500">Productivity gains projected from AI agent deployment</div>
-        </div>
-        <div class="text-center p-4 bg-gray-50 rounded">
-          <div class="text-2xl font-bold text-otp-600">$47-80B</div>
-          <div class="text-xs text-gray-500">Total addressable market for AI operational intelligence</div>
-        </div>
-        <div class="text-center p-4 bg-gray-50 rounded">
-          <div class="text-2xl font-bold text-otp-600">0</div>
-          <div class="text-xs text-gray-500">Competitors building structured organizational AI intelligence exchange</div>
-        </div>
+      <div class="card p-7 border-t-[3px]" style="border-top-color:var(--blue); background:linear-gradient(180deg,rgba(13,125,242,.06),var(--card));">
+        <div class="eyebrow mb-3" style="color:var(--blue-deep);">Enterprise &middot; Private intelligence layer</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-3">Private OOS vault. This is where revenue lives.</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.7]">
+          Private OOS vault for departments. Internal intelligence graph. Data never leaves the organization. No model training on enterprise data. SSO, admin controls, compliance. Custom pricing.
+        </p>
       </div>
     </div>
+    <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7] mt-7 max-w-[680px]">
+      The free network is the sales engine: department heads see OTP working in the open, then bring it inside their org privately. The Slack and GitHub model, free for individuals, paid for organizations needing privacy and control.
+    </p>
   </div>
+</section>
 
-  <!-- Business Model -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">Business Model</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <p class="text-gray-600 mb-6">Free open network builds the intelligence graph. Enterprise pays for private, self-enclosed intelligence exchange.</p>
-      <div class="grid grid-cols-2 gap-6">
-        <div class="border rounded-lg p-4">
-          <div class="font-medium text-sm mb-2">Free (Open Network)</div>
-          <div class="text-xs text-gray-500">Publish, browse, search, compare, merge -- everything. Full MCP access. No gates. The open intelligence graph grows through unrestricted participation. This is how the network reaches critical mass.</div>
-        </div>
-        <div class="border rounded-lg p-4 border-otp-300 bg-otp-50">
-          <div class="font-medium text-sm mb-2">Enterprise (Private Intelligence Layer)</div>
-          <div class="text-xs text-gray-500">Private OOS vault for departments. Internal intelligence graph. Data never leaves the organization. No model training on enterprise data. SSO, admin controls, compliance. Custom pricing. This is where revenue lives.</div>
-        </div>
-      </div>
-      <p class="text-sm text-gray-500 mt-4">The free network is the sales engine: department heads see OTP working in the open, then bring it inside their org privately. Slack/GitHub model -- free for individuals, paid for organizations needing privacy and control.</p>
+<!-- ================= ROADMAP ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px]">
+      <div class="eyebrow mb-4">The roadmap</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        MVP to platform.
+      </h2>
     </div>
-  </div>
 
-  <!-- What's Next -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">MVP to Platform: The Roadmap</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <div class="space-y-6">
-        <div class="flex items-start gap-4">
-          <div class="w-24 shrink-0">
-            <div class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded text-center">LIVE NOW</div>
+    <% const roadmap = [
+      { tag: 'Live now', color: 'var(--green-deep)', bg: 'rgba(10,157,99,.1)', t: 'Phase 1: Publish and browse', b: 'Structured OOS publishing, cross-org comparison, intelligence graph, full-text search, PII scanning, quality tiers. What you are looking at right now.' },
+      { tag: 'Phase 2', color: 'var(--blue-deep)', bg: 'rgba(13,125,242,.1)', t: 'Subscribe and compare', b: 'Follow organizations. Get notified when their OOS evolves. Merge intelligence with conflict detection and confidence inheritance. The diff engine becomes a learning engine.' },
+      { tag: 'Phase 3', color: 'var(--orange-deep)', bg: 'rgba(255,122,26,.1)', t: 'Enterprise and scale', b: 'Private intelligence layers for enterprises. Departments publish internally, compare across teams, merge learnings, without exposing data externally. SSO, admin controls, compliance. First enterprise contracts.' },
+      { tag: 'Vision', color: 'var(--ink-mute)', bg: 'var(--grey)', t: 'The organizational intelligence layer', b: 'Every AI-augmented organization in the world publishes an OOS. The intelligence graph becomes the definitive dataset of how humans and AI work together. Enterprise benchmarking. Industry standards. The infrastructure layer for the agentic era.' },
+    ]; %>
+    <div class="mt-12 space-y-3">
+      <% roadmap.forEach(function(r){ %>
+        <div class="card p-6 sm:p-7 grid sm:grid-cols-[130px,1fr] gap-4 sm:gap-7 items-start">
+          <div>
+            <span class="inline-block font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-md"
+                  style="color:<%= r.color %>; background:<%= r.bg %>;"><%= r.tag %></span>
           </div>
           <div>
-            <div class="font-medium text-sm">Phase 1: Publish and Browse</div>
-            <div class="text-xs text-gray-500">Structured OOS publishing, cross-org comparison, Intelligence Graph, full-text search, PII scanning, quality tiers. What you are looking at right now.</div>
+            <h3 class="font-display text-[var(--ink)] text-[1.1rem] font-bold mb-1.5 leading-snug"><%= r.t %></h3>
+            <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= r.b %></p>
           </div>
         </div>
-        <div class="flex items-start gap-4">
-          <div class="w-24 shrink-0">
-            <div class="text-xs font-medium bg-otp-100 text-otp-700 px-2 py-1 rounded text-center">PHASE 2</div>
-          </div>
-          <div>
-            <div class="font-medium text-sm">Subscribe and Compare</div>
-            <div class="text-xs text-gray-500">Follow organizations. Get notified when their OOS evolves. Merge intelligence with conflict detection and confidence inheritance. The diff engine becomes a learning engine.</div>
-          </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY THIS WINS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1000px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px] mb-12">
+      <div class="eyebrow mb-4">Why this wins</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        Four reasons the graph compounds.
+      </h2>
+    </div>
+
+    <% const wins = [
+      { t: 'Network effects', b: 'Every publisher makes the graph more valuable for every other publisher. At scale, the dataset is unreplicable. You cannot build this graph without this publisher base.' },
+      { t: 'Zero competition', b: 'GitHub Skills are tool-level. MCP servers are integration-level. Nobody is building the organizational coordination layer. This is a category creation opportunity.' },
+      { t: 'Built-in quality loop', b: 'The creator economy model aligns incentives. Stale intelligence loses subscribers. Publishers are economically motivated to keep their OOS current. The platform gets better without platform intervention.' },
+      { t: 'Platform agnostic', b: 'Claude, GPT, Gemini, open-source. The OOS format does not care which models you use. As AI platforms fragment, OTP becomes the coordination standard that works across all of them.' },
+    ]; %>
+    <div class="grid sm:grid-cols-2 gap-5">
+      <% wins.forEach(function(w){ %>
+        <div class="card lift p-7">
+          <h3 class="font-display text-[var(--ink)] text-[1.15rem] font-bold mb-2"><%= w.t %></h3>
+          <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= w.b %></p>
         </div>
-        <div class="flex items-start gap-4">
-          <div class="w-24 shrink-0">
-            <div class="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-1 rounded text-center">PHASE 3</div>
-          </div>
-          <div>
-            <div class="font-medium text-sm">Enterprise and Scale</div>
-            <div class="text-xs text-gray-500">Private intelligence layers for enterprises. Departments publish internally, compare across teams, merge learnings -- without exposing data externally. SSO, admin controls, compliance. First enterprise contracts.</div>
-          </div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="w-24 shrink-0">
-            <div class="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-1 rounded text-center">VISION</div>
-          </div>
-          <div>
-            <div class="font-medium text-sm">The Organizational Intelligence Layer</div>
-            <div class="text-xs text-gray-500">Every AI-augmented organization in the world publishes an OOS. The Intelligence Graph becomes the definitive dataset of how humans and AI work together. Enterprise benchmarking. Industry standards. The infrastructure layer for the agentic era.</div>
-          </div>
-        </div>
-      </div>
+      <% }); %>
     </div>
   </div>
+</section>
 
-  <!-- Why Now -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">Why This Wins</h2>
-    <div class="grid grid-cols-2 gap-6">
-      <div class="bg-white p-6 rounded-lg border">
-        <div class="font-medium mb-2">Network Effects</div>
-        <p class="text-sm text-gray-600">Every publisher makes the graph more valuable for every other publisher. At scale, the dataset is unreplicable. You cannot build this graph without this publisher base.</p>
-      </div>
-      <div class="bg-white p-6 rounded-lg border">
-        <div class="font-medium mb-2">Zero Competition</div>
-        <p class="text-sm text-gray-600">GitHub Skills are tool-level. MCP servers are integration-level. Nobody is building the organizational coordination layer. This is a category creation opportunity.</p>
-      </div>
-      <div class="bg-white p-6 rounded-lg border">
-        <div class="font-medium mb-2">Built-In Quality Loop</div>
-        <p class="text-sm text-gray-600">The creator economy model aligns incentives. Stale intelligence loses subscribers. Publishers are economically motivated to keep their OOS current. The platform gets better without platform intervention.</p>
-      </div>
-      <div class="bg-white p-6 rounded-lg border">
-        <div class="font-medium mb-2">Platform Agnostic</div>
-        <p class="text-sm text-gray-600">Claude, GPT, Gemini, open-source. The OOS format does not care which models you use. As AI platforms fragment, OTP becomes the coordination standard that works across all of them.</p>
-      </div>
+<!-- ================= PROOF OF CONCEPT ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[820px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-6">Proof of concept</div>
+    <div class="card p-8 sm:p-11 relative">
+      <img src="/public/hand-3.png" alt="" aria-hidden="true"
+           class="iv-nudge absolute -top-7 left-8" style="width:70px; height:auto; filter:drop-shadow(0 10px 18px rgba(20,22,28,.18));">
+      <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72] mb-4">
+        The founder runs a 14-agent AI army managing daily operations for a digital marketing agency. Real revenue. Real clients. Real human employees managed by an AI agent through data-driven Slack coaching.
+      </p>
+      <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72] mb-4">
+        He plugged another organization's OOS into his system. His AI army told him what the other organization did better and what he could improve. That was the moment the concept was proven: <strong class="text-[var(--ink)] font-semibold">organizational AI intelligence is transferable.</strong>
+      </p>
+      <p class="text-[15.5px] text-[var(--ink-soft)] leading-[1.72]">
+        This platform was built in 48 hours by the same AI system it is designed to serve. OTP is its own proof of concept.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- Proof of Concept -->
-  <div class="mb-16">
-    <h2 class="text-2xl font-bold mb-4">Proof of Concept</h2>
-    <div class="bg-white p-8 rounded-lg border">
-      <p class="text-gray-600 mb-4">The founder runs a 14-agent AI army managing daily operations for a digital marketing agency. Real revenue. Real clients. Real human employees managed by an AI agent through data-driven Slack coaching.</p>
-      <p class="text-gray-600 mb-4">He plugged another organization's OOS into his system. His AI army told him what the other organization did better and what he could improve. That was the moment the concept was proven: <strong>organizational AI intelligence is transferable.</strong></p>
-      <p class="text-gray-600">This platform was built in 48 hours by the same AI system it is designed to serve. OTP is its own proof of concept.</p>
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--blue-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <h2 class="font-display text-white tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2.1rem,4.6vw,3.4rem); font-weight:800;">
+      This is Day 2.
+    </h2>
+    <p class="text-[17px] leading-[1.6] max-w-[34rem] mx-auto mt-6" style="color:rgba(255,255,255,.85);">
+      The platform is live. The format works. The graph is growing. The question is not whether organizations need this. The question is who builds it first.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/graph" class="btn-primary px-8 py-4 text-[16px]">Explore the intelligence graph &rarr;</a>
+      <a href="mailto:dsteel@sneeze.it" class="btn-ghost px-8 py-4 text-[16px]" style="border-color:rgba(255,255,255,.4); color:#fff;">Contact the founder</a>
     </div>
   </div>
-
-  <!-- CTA -->
-  <div class="text-center py-8 mb-8">
-    <div class="bg-gradient-to-br from-otp-900 to-otp-800 text-white p-12 rounded-lg">
-      <h2 class="text-2xl font-bold mb-3">This is Day 2.</h2>
-      <p class="text-otp-200 text-lg mb-6 max-w-xl mx-auto">The platform is live. The format works. The graph is growing. The question is not whether organizations need this. The question is who builds it first.</p>
-      <div class="flex gap-4 justify-center">
-        <a href="/graph" class="px-6 py-3 bg-otp-500 rounded-lg font-medium hover:bg-otp-400">Explore the Intelligence Graph</a>
-        <a href="mailto:dsteel@sneeze.it" class="px-6 py-3 border border-otp-400 rounded-lg font-medium hover:bg-otp-800">Contact the Founder</a>
-      </div>
-    </div>
-  </div>
-
-</div>
+</section>

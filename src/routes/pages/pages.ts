@@ -248,13 +248,13 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Guide page
   app.get('/guide', async (request, reply) => {
-    return reply.view('pages/guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
+    return renderV7(reply, 'guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
   // Why OTP -- the persuasion page (frustrations + outcomes + objections)
   // Start Here -- the 30-min founder intro page (Calendly embed)
   app.get('/start-here', async (request, reply) => {
-    return reply.view('pages/start-here', {
+    return renderV7(reply, 'start-here', {
       title: 'Start Here - Schedule a 30-Minute Intro with the Founder of OTP',
       description: 'A free 30-minute conversation with David Steel, founder of OTP. We map your AI footprint, find the coordination gaps, and decide together whether OTP is the right next move.',
       canonical: BASE_URL + '/start-here',
@@ -264,7 +264,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/foundation', async (request, reply) => {
-    return reply.view('pages/foundation', {
+    return renderV7(reply, 'foundation', {
       title: 'Build the Foundation - OTP Track 1 (Zero Agents)',
       description: 'OTP onboarding Track 1 for organizations that do not have agents yet. Map your org chart, define your operating system, set your KPIs, document your SOPs. The foundation your first agent will land on.',
       canonical: BASE_URL + '/foundation',
@@ -274,7 +274,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/deploy', async (request, reply) => {
-    return reply.view('pages/deploy', {
+    return renderV7(reply, 'deploy', {
       title: 'Bring Your Agents In - OTP Track 2 (Solo Operator)',
       description: 'OTP onboarding Track 2 for solo operators already running agents. Register your existing agents, place each on the chart, assign KPIs, and put them on a runtime that does not die when your credits run out.',
       canonical: BASE_URL + '/deploy',
@@ -284,7 +284,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/teams', async (request, reply) => {
-    return reply.view('pages/teams', {
+    return renderV7(reply, 'teams', {
       title: 'Coordinate Your Team - OTP Track 3 (Multi-User Agent Operations)',
       description: 'OTP onboarding Track 3 for teams running agents at scale. Multi-user role permissions, cross-agent registry, inter-agent message bus, Bassim L8 maturity scoring across the org.',
       canonical: BASE_URL + '/teams',
@@ -294,7 +294,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/partners', async (request, reply) => {
-    return reply.view('pages/partners', {
+    return renderV7(reply, 'partners', {
       title: 'OTP Partner Program - Become a Certified OTP Integrator',
       description: 'OTP Partner Program for trusted advisors -- EOS Implementers, Scaling Up coaches, fractional CXOs, MSPs, AI consultancies, agent builders. Three tiers, recurring revenue share, multi-tenant dashboard, Founding Partner cohort limited to 50.',
       canonical: BASE_URL + '/partners',
@@ -304,7 +304,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/why-otp', async (request, reply) => {
-    return reply.view('pages/why-otp', {
+    return renderV7(reply, 'why-otp', {
       title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',
       description: 'Every AI tool in your stack is doing work that used to require a human seat. None of them have one. OTP gives every agent a seat, an SOP, and a scorecard, on the same chart as your humans.',
       canonical: BASE_URL + '/why-otp',
@@ -322,7 +322,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Tools -- the OTP toolbox (5 foundational tools + extended catalog)
   app.get('/tools', async (request, reply) => {
-    return reply.view('pages/tools', {
+    return renderV7(reply, 'tools', {
       title: 'The OTP Toolbox - Free Tools for Augmented Human Organizations',
       description: 'Five foundational tools plus the rest of the OTP toolbox. OOS Starter Template, the live Org Chart Builder, the CLAUDE.md Compiler, the Agent Builder, and the Coordination Checkup. Free. Use whether you sign up or not.',
       canonical: BASE_URL + '/tools',
@@ -340,7 +340,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // What is OTP -- deep explainer page (model + components + process + FAQ)
   app.get('/what-is-otp', async (request, reply) => {
-    return reply.view('pages/what-is-otp', {
+    return renderV7(reply, 'what-is-otp', {
       title: 'What is OTP - The Operating Layer for the Augmented Human Organization',
       description: 'OTP is a model, a protocol, a network, and a SaaS for organizations where humans and AI agents share seats, share SOPs, and share one scoreboard. Six components, two-week implementation, open file format.',
       canonical: BASE_URL + '/what-is-otp',
@@ -358,7 +358,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Coach landing -- conversion page for coaches, consultants, advisors with clients
   app.get('/coach', async (request, reply) => {
-    return reply.view('pages/coach', {
+    return renderV7(reply, 'coach', {
       title: 'OTP for Coaches, Consultants & Operators - Your Playbook. Your Clients. One Protocol.',
       description: 'MIT 2025: 95% of enterprise AI pilots fail. Not because the AI is bad - because it is overlaid on the org instead of integrated into it. OTP is the operating protocol your clients run on, with your playbook defining the layer. An infrastructure of learning across your whole book of business.',
       canonical: BASE_URL + '/coach',
@@ -376,7 +376,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Protocol page (the canonical "OTP is a protocol, not a service" page)
   app.get('/protocol', async (request, reply) => {
-    return reply.view('pages/protocol', {
+    return renderV7(reply, 'protocol', {
       title: 'For the first time, your strategy is an artifact your agents can read',
       description: "An OOS file is where your team's plan and your agents' rules live together. Humans read it. Agents query it. No translation layer between the boardroom and the bot.",
       canonical: BASE_URL + '/protocol',
@@ -936,7 +936,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       { q: 'What size organization can use OTP?', a: 'Any organization running AI agents, from solo operators to enterprises. The OOS format scales with your team.' },
       { q: 'Does OTP have an API?', a: 'Yes. REST API and MCP server for programmatic access to OOS data, claims, search, and the Intelligence Graph.' },
     ];
-    return reply.view('pages/faq', {
+    return renderV7(reply, 'faq', {
       title: 'FAQ - Organization Transport Protocol - OTP',
       description: 'Frequently asked questions about OTP, Organizational Operating Systems, coordination intelligence, and how to publish your AI coordination knowledge.',
       breadcrumbs: bc({ name: 'FAQ', url: BASE_URL + '/faq' }),
@@ -1775,7 +1775,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Founders -- invite-only landing page (not in main nav, noindex)
   app.get('/founders', async (request, reply) => {
-    return reply.view('pages/founders', {
+    return renderV7(reply, 'founders', {
       title: "You've been invited — OTP Founding Circle",
       description: 'Invitation-only access to the OTP founding circle. First 50 organizations shape the protocol.',
       canonical: BASE_URL + '/founders',
@@ -1809,7 +1809,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // googleAdsId to load the Google Ads tag for conversion tracking.
   // ──────────────────────────────────────────────────────────────
   app.get('/free-account', async (_request, reply) => {
-    return reply.view('pages/free-account', {
+    return renderV7(reply, 'free-account', {
       title: 'Claim Your Free OTP Account | Free for Your Whole Team',
       description: 'OTP is free for your whole team while we are in Beta. No per-seat fees, no credit card. Per-seat EOS tools run $8 to $16 per user per month.',
       canonical: BASE_URL + '/free-account',
@@ -1820,7 +1820,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/fix-accountability-gaps', async (_request, reply) => {
-    return reply.view('pages/fix-accountability-gaps', {
+    return renderV7(reply, 'fix-accountability-gaps', {
       title: 'Fix Accountability Gaps | OTP',
       description: 'Things fall through the cracks between meetings. OTP closes accountability gaps with a Team Chart, Quarterly Priorities, To-Dos, an Issues Board, and Radar tracking every owner between meetings.',
       canonical: BASE_URL + '/fix-accountability-gaps',
@@ -1831,7 +1831,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/level-10-meetings', async (_request, reply) => {
-    return reply.view('pages/level-10-meetings', {
+    return renderV7(reply, 'level-10-meetings', {
       title: 'Level 10 Meeting Software | Run the Weekly Leadership Meeting on OTP',
       description: 'Run your weekly Level 10 Meeting on OTP. Timed agenda, live scoreboard, rock review, headlines, to-dos, and issue solving in one place. Free for your whole team in Beta.',
       canonical: BASE_URL + '/level-10-meetings',
@@ -1842,7 +1842,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   });
 
   app.get('/the-otp-difference', async (_request, reply) => {
-    return reply.view('pages/the-otp-difference', {
+    return renderV7(reply, 'the-otp-difference', {
       title: 'The OTP Difference | Free, AI-Native, Whole Team Included',
       description: 'How OTP is different from per-seat EOS tools: free for your whole team, an AI Chief of Staff built in, and the work between meetings handled.',
       canonical: BASE_URL + '/the-otp-difference',
@@ -1891,7 +1891,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     `) as any;
     const coaches = rows.rows || [];
 
-    return reply.view('pages/coaches', {
+    return renderV7(reply, 'coaches', {
       title: 'Founder Certified Coaches - OTP',
       description: 'The Founding 25 cohort of OTP-certified coaches. Each one is helping shape the operating protocol for AI-augmented teams.',
       canonical: BASE_URL + '/coaches',
@@ -3566,12 +3566,12 @@ Founder, OTP</p>
 
   // Investors page
   app.get('/investors', async (request, reply) => {
-    return reply.view('pages/investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });
+    return renderV7(reply, 'investors', { title: 'For Investors - OTP', description: 'Investment opportunity in OTP, the coordination intelligence platform for AI-native organizations.', canonical: BASE_URL + '/investors' });
   });
 
   // Why page (unlisted manifesto - not in nav or sitemap)
   app.get('/why', async (request, reply) => {
-    return reply.view('pages/why', {
+    return renderV7(reply, 'why', {
       title: 'Why OTP Exists',
       description: 'Freeing AI from confinement. The mission, values, and vision behind OTP.',
       canonical: BASE_URL + '/why',
@@ -3581,7 +3581,7 @@ Founder, OTP</p>
 
   // Pricing page
   app.get('/pricing', async (request, reply) => {
-    return reply.view('pages/pricing', {
+    return renderV7(reply, 'pricing', {
       title: 'Pricing - OTP',
       description: 'OTP is free for the open network. Publish, browse, search, compare, and learn from organizational AI intelligence at no cost. Enterprise adds a private intelligence layer.',
       canonical: BASE_URL + '/pricing',
@@ -4344,7 +4344,7 @@ Founder, OTP</p>
   // What's New
   app.get('/whats-new', async (request, reply) => {
     const { changelog } = await import('../../data/changelog.js');
-    return reply.view('pages/whats-new', {
+    return renderV7(reply, 'whats-new', {
       title: "What's New on OTP - Latest Platform Updates",
       description: 'Latest platform updates, features, and improvements to OTP. See what is new in the coordination intelligence layer for AI-native organizations.',
       canonical: BASE_URL + '/whats-new',
@@ -4367,7 +4367,7 @@ Founder, OTP</p>
 
   // Machine Commerce
   app.get('/machine-commerce', async (request, reply) => {
-    return reply.view('pages/machine-commerce', {
+    return renderV7(reply, 'machine-commerce', {
       title: 'Machine Commerce Discovery - OTP',
       description: 'OTP is the discovery layer for the agent-to-agent economy. Published OOS files become machine-readable trust profiles that agents query before transacting.',
       canonical: BASE_URL + '/machine-commerce',
@@ -4378,7 +4378,7 @@ Founder, OTP</p>
 
   // MCP Integration Hub
   app.get('/mcp', async (request, reply) => {
-    return reply.view('pages/mcp-hub', {
+    return renderV7(reply, 'mcp-hub', {
       title: 'MCP Integration Hub - OTP',
       description: 'Connect any AI agent to organizational intelligence via the Model Context Protocol. Browse, search, compare, and publish OOS files programmatically.',
       canonical: BASE_URL + '/mcp',

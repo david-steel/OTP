@@ -1,107 +1,114 @@
-<!-- ============================================================
-     /start-here -- the 30-min intro page.
-     Mirrors EOS's /start-here pattern: promise hero, 3-step
-     "what happens", inline Calendly widget, reassurance strip.
-     ============================================================ -->
+<%# /start-here -- the 30-min intro page. v7 layout (light, editorial). %>
+<style>
+  .sh-num {
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:500;
+    color:var(--blue-deep); letter-spacing:0.04em;
+  }
+  .sh-point { animation:sh-point 3.4s ease-in-out infinite; transform-origin:30% 70%; }
+  @keyframes sh-point { 0%,68%,100%{transform:rotate(0);} 80%{transform:rotate(-12deg);} 90%{transform:rotate(4deg);} }
+  @media (prefers-reduced-motion:reduce){ .sh-point{ animation:none; } }
+</style>
 
-<!-- ============================================================
-     HERO
-     ============================================================ -->
-<section class="bg-otp-950 relative">
-  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
-
-  <div class="relative max-w-6xl mx-auto px-6 sm:px-8 pt-28 sm:pt-32 pb-14">
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
       <div class="lg:col-span-7">
-        <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-10 font-medium">
-          OTP &nbsp;/&nbsp; start here
+        <div class="eyebrow mb-4 flex items-center gap-2.5">
+          <span class="tick" style="background:var(--orange);"></span>Start here
         </div>
-        <h1 class="font-extrabold text-white leading-[1.05] tracking-tight" style="font-size: clamp(2rem, 5vw, 3.5rem);">
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.1rem,4.8vw,3.5rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
           Pick a time.<br>
-          <span class="text-gray-500">Thirty minutes, no slides.</span>
+          <span class="text-[var(--ink-mute)]">Thirty minutes, no slides.</span>
         </h1>
-        <p class="text-lg sm:text-xl text-gray-300 leading-[1.55] max-w-xl mt-8">
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mt-6">
           A 30-minute conversation with David Steel, the founder of OTP. We will look at the AI stack you already have, find the org-chart gaps it has created, and decide together whether OTP is the right next move.
         </p>
+        <div class="flex flex-wrap gap-3 mt-8">
+          <a href="#schedule" class="btn-primary inline-block px-7 py-3.5 text-[15px]">Pick a time &darr;</a>
+          <a href="/what-is-otp" class="btn-ghost inline-block px-7 py-3.5 text-[15px]">What is OTP</a>
+        </div>
       </div>
 
       <div class="lg:col-span-5">
-        <img src="/public/images/hero-start-here.webp" alt="Calendar with one time slot highlighted in amber, paired with a clock showing thirty minutes" width="1024" height="1024" loading="eager" fetchpriority="high" class="w-full h-auto">
+        <div class="relative">
+          <img src="/public/images/hero-start-here.webp"
+               alt="Calendar with one time slot highlighted, paired with a clock showing thirty minutes"
+               width="1024" height="1024" loading="eager" fetchpriority="high"
+               class="w-full h-auto rounded-[20px]" style="filter:drop-shadow(0 24px 40px rgba(20,22,28,.16));">
+          <img src="/public/hand-1.png" alt="" aria-hidden="true"
+               class="sh-point absolute" style="width:78px; height:auto; bottom:-22px; left:-26px; filter:drop-shadow(0 10px 14px rgba(20,22,28,.22));">
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     WHAT HAPPENS ON THE CALL -- 3 steps
-     ============================================================ -->
-<section class="bg-white py-14 sm:py-20 border-t border-gray-100">
-  <div class="max-w-4xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">
-      What happens on the call
-    </div>
-    <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.15] tracking-tight max-w-2xl mb-10">
+<!-- ================= WHAT HAPPENS ON THE CALL ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">What happens on the call</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.12] max-w-[34rem] mb-12"
+        style="font-size:clamp(1.7rem,3.2vw,2.4rem); font-weight:700;">
       Three things, in this order.
     </h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
-      <div>
-        <div class="text-sm font-bold text-otp-500 mb-2" style="font-variant-numeric: tabular-nums;">01</div>
-        <div class="text-base font-semibold text-gray-900 mb-2">Map your AI footprint.</div>
-        <p class="text-sm text-gray-600 leading-[1.6]">You list the AI tools and agents touching your business right now. We identify which ones have a "seat" in your org and which are floating disconnected.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="card p-7">
+        <div class="sh-num mb-3">01</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2">Map your AI footprint</h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">You list the AI tools and agents touching your business right now. We identify which ones have a "seat" in your org and which are floating disconnected.</p>
       </div>
-      <div>
-        <div class="text-sm font-bold text-otp-500 mb-2" style="font-variant-numeric: tabular-nums;">02</div>
-        <div class="text-base font-semibold text-gray-900 mb-2">Find the coordination gaps.</div>
-        <p class="text-sm text-gray-600 leading-[1.6]">We walk through where humans and AI are stepping on each other, where SOPs are missing, where scorecards do not exist yet.</p>
+      <div class="card p-7">
+        <div class="sh-num mb-3">02</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2">Find the coordination gaps</h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">We walk through where humans and AI are stepping on each other, where SOPs are missing, where scorecards do not exist yet.</p>
       </div>
-      <div>
-        <div class="text-sm font-bold text-otp-500 mb-2" style="font-variant-numeric: tabular-nums;">03</div>
-        <div class="text-base font-semibold text-gray-900 mb-2">Decide the next move.</div>
-        <p class="text-sm text-gray-600 leading-[1.6]">If OTP fits, we map a 30-day path. If it does not, we tell you. Either way, you leave with a clearer view of your AI team.</p>
+      <div class="card p-7">
+        <div class="sh-num mb-3">03</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.2rem] font-bold mb-2">Decide the next move</h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">If OTP fits, we map a 30-day path. If it does not, we tell you. Either way, you leave with a clearer view of your AI team.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     CALENDLY EMBED
-     ============================================================ -->
-<section class="bg-gray-50 py-14 sm:py-20 border-t border-gray-100">
-  <div class="max-w-4xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-3 font-medium">
-      Schedule
-    </div>
-    <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.15] tracking-tight max-w-2xl mb-3">
+<!-- ================= CALENDLY EMBED ================= -->
+<section id="schedule" class="bg-[var(--white)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4" style="color:var(--blue-deep);">Schedule</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.12] max-w-[34rem] mb-3"
+        style="font-size:clamp(1.7rem,3.2vw,2.4rem); font-weight:700;">
       Pick a time that works.
     </h2>
-    <p class="text-base text-gray-600 leading-[1.6] max-w-2xl mb-8">
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[36rem] mb-8">
       Direct calendar, no sales gauntlet. Thirty minutes. Free. If OTP is not right for your situation, we will say so on the call.
     </p>
 
-    <!-- Calendly inline widget. hide_landing_page_details + hide_event_type_details + hide_gdpr_banner together suppress the host-profile (Sneeze It branding) AND the event description block, so it goes straight to the calendar. Height 1200px fits the full calendar + time slots without scroll. -->
-    <div class="calendly-inline-widget bg-white rounded-lg shadow-sm" data-url="https://calendly.com/davidsteel/otp-intro?primary_color=1c91ff&hide_landing_page_details=1&hide_event_type_details=1&hide_gdpr_banner=1" style="min-width:320px;height:1200px;"></div>
+    <!-- Calendly inline widget. hide_landing_page_details + hide_event_type_details + hide_gdpr_banner together suppress the host-profile branding AND the event description block, so it goes straight to the calendar. -->
+    <div class="card overflow-hidden p-2 sm:p-3">
+      <div class="calendly-inline-widget rounded-[14px] overflow-hidden" data-url="https://calendly.com/davidsteel/otp-intro?primary_color=0d7df2&hide_landing_page_details=1&hide_event_type_details=1&hide_gdpr_banner=1" style="min-width:320px;height:1200px;"></div>
+    </div>
     <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
   </div>
 </section>
 
-<!-- ============================================================
-     REASSURANCE STRIP -- 3 short statements that pre-empt objections
-     ============================================================ -->
-<section class="bg-white py-12 sm:py-16 border-t border-gray-100">
-  <div class="max-w-4xl mx-auto px-6 sm:px-8">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
-      <div>
-        <div class="text-base font-bold text-gray-900 mb-2">It is free.</div>
-        <p class="text-sm text-gray-600 leading-[1.6]">No card, no commitment, no contract triggered by the call. Just a conversation.</p>
+<!-- ================= REASSURANCE STRIP ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div class="card p-7">
+        <div class="font-display text-[var(--ink)] text-[1.05rem] font-bold mb-2">It is free</div>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">No card, no commitment, no contract triggered by the call. Just a conversation.</p>
       </div>
-      <div>
-        <div class="text-base font-bold text-gray-900 mb-2">You are talking to the founder.</div>
-        <p class="text-sm text-gray-600 leading-[1.6]">David Steel runs the agency this protocol came out of. The chart on the homepage belongs to his team. Same person you talk to.</p>
+      <div class="card p-7">
+        <div class="font-display text-[var(--ink)] text-[1.05rem] font-bold mb-2">You are talking to the founder</div>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">David Steel runs the agency this protocol came out of. The chart on the homepage belongs to his team. Same person you talk to.</p>
       </div>
-      <div>
-        <div class="text-base font-bold text-gray-900 mb-2">We will tell you if it is wrong.</div>
-        <p class="text-sm text-gray-600 leading-[1.6]">Some companies do not need OTP yet. We will be the first to say so. Better that way for both of us.</p>
+      <div class="card p-7">
+        <div class="font-display text-[var(--ink)] text-[1.05rem] font-bold mb-2">We will tell you if it is wrong</div>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">Some companies do not need OTP yet. We will be the first to say so. Better that way for both of us.</p>
       </div>
     </div>
   </div>

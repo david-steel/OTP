@@ -1,42 +1,48 @@
-<!-- ============================================================
-     /what-is-otp -- the deep explainer.
-     Mirrors EOS's "What is EOS" structure: hero, the model (6
-     components), what changes when you run on it, the process with
-     an honest timeline, the network, FAQ. No canvas particles, no
-     gradient orbs, no centered icon stacks. Editorial, first person,
-     OTP-centric.
-     ============================================================ -->
+<%# /what-is-otp -- v7 layout (light, editorial). The deep explainer:
+    hero, the model (6 components), what changes, the process, the
+    network, FAQ, two-door CTA.
+    Rendered via reply.view('pages/what-is-otp', data, { layout: 'layouts/v7' }). %>
+<style>
+  .wo-tile {
+    position:relative; background:var(--card);
+    border:1px solid var(--line); border-radius:7px;
+    padding:7px 9px 7px 11px; overflow:hidden; min-width:0;
+  }
+  .wo-tile-stripe { position:absolute; top:0; left:0; bottom:0; width:2.5px; }
+  .wo-tile-name { font-family:'Schibsted Grotesk',sans-serif; font-size:11.5px; font-weight:700; color:var(--ink); line-height:1.2; }
+  .wo-tile-role { font-size:9.5px; color:var(--ink-mute); margin-top:1px; }
+  .wo-conn { width:1.5px; height:14px; background:var(--line); margin:0 auto; }
+  .wo-code {
+    background:var(--ink); border-radius:12px; overflow:hidden;
+  }
+  .wo-code pre { color:#cdd0d7; }
+  .wo-code .c-hi { color:var(--orgy); font-weight:600; }
+  .wo-bob { animation:wo-bob 5.5s ease-in-out infinite; }
+  @keyframes wo-bob { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  @media (prefers-reduced-motion:reduce){ .wo-bob{ animation:none; } }
+</style>
 
-<!-- ============================================================
-     HERO -- declarative, what OTP is, in a line.
-     ============================================================ -->
-<section class="bg-otp-950 relative">
-  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
-
-  <div class="relative max-w-6xl mx-auto px-6 sm:px-8 pt-28 sm:pt-32 pb-14">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1180px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
       <div class="lg:col-span-7">
-        <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-10 font-medium">
-          OTP &nbsp;/&nbsp; what is it
+        <div class="eyebrow mb-5 flex items-center gap-2.5">
+          <span class="tick" style="background:var(--blue);"></span>OTP / what is it
         </div>
-        <h1 class="font-extrabold text-white leading-[1.05] tracking-tight" style="font-size: clamp(2rem, 5vw, 3.5rem);">
-          OTP is the operating layer for the<br>
-          <span class="text-gray-500">augmented human organization.</span>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.1rem,4.6vw,3.5rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          The operating layer for the<br>
+          <span class="text-[var(--blue)]">augmented human organization.</span>
         </h1>
-        <p class="text-lg sm:text-xl text-gray-300 leading-[1.55] max-w-xl mt-8">
-          It is four things stacked. A <strong class="text-white">model</strong> for hybrid orgs. A <strong class="text-white">protocol</strong> that encodes the model. A <strong class="text-white">network</strong> where organizations publish their version of it. A <strong class="text-white">SaaS</strong> that hosts all three. The model is the highest layer. The SaaS is what users buy.
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[36rem] mt-6">
+          It is four things stacked. A <strong class="text-[var(--ink)] font-semibold">model</strong> for hybrid orgs. A <strong class="text-[var(--ink)] font-semibold">protocol</strong> that encodes the model. A <strong class="text-[var(--ink)] font-semibold">network</strong> where organizations publish their version of it. A <strong class="text-[var(--ink)] font-semibold">SaaS</strong> that hosts all three. The model is the highest layer. The SaaS is what users buy.
         </p>
-
-        <div class="flex flex-wrap gap-x-6 gap-y-3 items-center mt-10">
-          <a href="/start-here" class="px-5 py-2.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-colors text-base">
-            Schedule a 30-min intro &rarr;
-          </a>
-          <a href="/sign-up" class="text-gray-400 border-b border-white/15 pb-1 text-base font-medium hover:text-white hover:border-white/40 transition-colors">
-            Or build your chart &rarr;
-          </a>
+        <div class="flex flex-wrap gap-3 items-center mt-9">
+          <a href="/start-here" class="btn-primary px-7 py-3.5 text-[15px]">Schedule a 30-min intro &rarr;</a>
+          <a href="/sign-up" class="text-[15px] text-[var(--ink)] link-u">Or build your chart &rarr;</a>
         </div>
       </div>
-
       <div class="lg:col-span-5">
         <img src="/public/images/hero-what-is-otp.webp" alt="OTP four-layer stack diagram, top to bottom: Model, Protocol, Network, SaaS" width="1024" height="1024" loading="eager" fetchpriority="high" class="w-full h-auto">
       </div>
@@ -44,98 +50,86 @@
   </div>
 </section>
 
-<!-- ============================================================
-     THE MODEL -- six components. Mirrors EOS's six-block diagram.
-     Typography-first, no icon stacks.
-     ============================================================ -->
-<section class="bg-white py-20 sm:py-28 border-t border-gray-100">
-  <div class="max-w-5xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-4 font-medium">
-      The OTP Model
-    </div>
-    <h2 class="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-[1.1] tracking-tight max-w-3xl mb-4">
+<!-- ================= THE MODEL ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">The OTP Model</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1] max-w-[44rem]"
+        style="font-size:clamp(1.9rem,3.8vw,2.9rem); font-weight:700;">
       Six components every augmented human organization needs.
     </h2>
-    <p class="text-base sm:text-lg text-gray-600 leading-[1.6] max-w-2xl mb-14">
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[38rem] mt-5 mb-12">
       Other organizational models stop one substrate short of where the work is now. This one assumes humans, AI agents, and (soon) robots all hold seats on the same chart and run on the same coordination layer.
     </p>
 
-    <!-- Asymmetric layout: the two load-bearing components (Chart + SOPs) get
-         wide cards with real visual previews. The other four are a row of
-         small text-only cards below. Breaks the symmetric 2x3 grid pattern
-         and adds the missing "show, don't tell" for the most concrete pieces. -->
+    <!-- Chart + SOPs as wide cards with previews -->
+    <div class="grid lg:grid-cols-2 gap-5 mb-5">
 
-    <!-- Chart + SOPs as wide cards with visual previews -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+      <div class="card p-7 sm:p-8">
         <div class="flex items-baseline justify-between mb-3">
-          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">01</div>
-          <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] font-medium">component</div>
+          <span class="font-display text-[var(--blue)] text-[2.3rem] font-bold leading-none" style="font-variant-numeric:tabular-nums;">01</span>
+          <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-mute)]">component</span>
         </div>
-        <div class="text-2xl font-bold text-gray-900 mb-3">Chart</div>
-        <p class="text-sm text-gray-600 leading-[1.65] mb-6">
+        <h3 class="font-display text-[var(--ink)] text-[1.4rem] font-bold mb-2">Chart</h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
           Every seat named, with a role, an authority level, and an accountability line. Humans on it. AI agents on it. The same chart for both.
         </p>
-
-        <!-- Mini chart preview -->
-        <div class="bg-white border border-gray-200 rounded-lg p-4">
-          <div class="flex items-center justify-between text-[10px] text-gray-500 uppercase tracking-[0.14em] mb-3 font-medium">
+        <div class="bg-[var(--grey)] border border-[var(--line)] rounded-xl p-4">
+          <div class="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-mute)] mb-3">
             <span>chart preview</span>
             <span class="flex items-center gap-1.5">
-              <span class="w-1 h-1 rounded-full bg-emerald-500"></span>live
+              <span class="w-1.5 h-1.5 rounded-full" style="background:var(--green);"></span>live
             </span>
           </div>
-          <div class="flex justify-center mb-2">
-            <div class="comp-tile comp-tile-h">
-              <div class="comp-tile-stripe" style="background:#f59e0b;"></div>
-              <div class="comp-tile-name">David Steel</div>
-              <div class="comp-tile-role">CEO</div>
+          <div class="flex justify-center">
+            <div class="wo-tile" style="width:108px;">
+              <div class="wo-tile-stripe" style="background:var(--orange);"></div>
+              <div class="wo-tile-name">David Steel</div>
+              <div class="wo-tile-role">CEO</div>
             </div>
           </div>
-          <div class="comp-connector"></div>
-          <div class="grid grid-cols-3 gap-2 mt-2">
-            <div class="comp-tile comp-tile-h">
-              <div class="comp-tile-stripe" style="background:#f59e0b;"></div>
-              <div class="comp-tile-name">Bogdan</div>
-              <div class="comp-tile-role">COO</div>
+          <div class="wo-conn"></div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="wo-tile">
+              <div class="wo-tile-stripe" style="background:var(--orange);"></div>
+              <div class="wo-tile-name">Bogdan</div>
+              <div class="wo-tile-role">COO</div>
             </div>
-            <div class="comp-tile comp-tile-a">
-              <div class="comp-tile-stripe" style="background:#0ea5e9;"></div>
-              <div class="comp-tile-name">Pepper</div>
-              <div class="comp-tile-role">Inbox</div>
+            <div class="wo-tile">
+              <div class="wo-tile-stripe" style="background:var(--blue);"></div>
+              <div class="wo-tile-name">Pepper</div>
+              <div class="wo-tile-role">Inbox</div>
             </div>
-            <div class="comp-tile comp-tile-a">
-              <div class="comp-tile-stripe" style="background:#0ea5e9;"></div>
-              <div class="comp-tile-name">Dirk</div>
-              <div class="comp-tile-role">Sales</div>
+            <div class="wo-tile">
+              <div class="wo-tile-stripe" style="background:var(--blue);"></div>
+              <div class="wo-tile-name">Dirk</div>
+              <div class="wo-tile-role">Sales</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+      <div class="card p-7 sm:p-8">
         <div class="flex items-baseline justify-between mb-3">
-          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">02</div>
-          <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] font-medium">component</div>
+          <span class="font-display text-[var(--blue)] text-[2.3rem] font-bold leading-none" style="font-variant-numeric:tabular-nums;">02</span>
+          <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-mute)]">component</span>
         </div>
-        <div class="text-2xl font-bold text-gray-900 mb-3">SOPs</div>
-        <p class="text-sm text-gray-600 leading-[1.65] mb-6">
+        <h3 class="font-display text-[var(--ink)] text-[1.4rem] font-bold mb-2">SOPs</h3>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
           Runtime context, not documents. The agent reads them at every session. The human edits at noon and the agent that boots at 12:01 has the new version.
         </p>
-
-        <!-- SOP preview as a code-style block -->
-        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 text-[10px] text-gray-500 uppercase tracking-[0.14em] font-medium bg-gray-50">
+        <div class="wo-code">
+          <div class="flex items-center justify-between px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.13em] text-[var(--ink-mute)]"
+               style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <span>pepper / inbox triage SOP</span>
-            <span class="text-gray-400">read at every session</span>
+            <span>read at every session</span>
           </div>
-          <pre class="text-[11px] text-gray-700 leading-[1.55] p-4 overflow-x-auto"><code>title: Daily inbox triage
+          <pre class="text-[11.5px] leading-[1.65] p-4 overflow-x-auto"><code>title: Daily inbox triage
 trigger: 8:00 AM ET, every weekday
 steps:
   - Read all unread mail since last run
   - Match against pepper-clients.md
-  - <span class="text-otp-600 font-semibold">Draft replies for CLIENT-URGENT</span>
+  - <span class="c-hi">Draft replies for CLIENT-URGENT</span>
   - Escalate flagged items to Radar
 outputs:
   - Per-client draft replies in Gmail
@@ -145,285 +139,171 @@ outputs:
 
     </div>
 
-    <!-- Remaining 4 components as a single row of small cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <div class="border-t border-gray-200 pt-5">
-        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">03</div>
-        <div class="text-base font-bold text-gray-900 mb-2">Scoreboard</div>
-        <p class="text-xs text-gray-600 leading-[1.6]">
-          One KPI list. Humans and agents measured against the same outcomes. Agents push their own numbers.
-        </p>
+    <!-- Remaining 4 components -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <% var comps = [
+        ['03','Scoreboard','One KPI list. Humans and agents measured against the same outcomes. Agents push their own numbers.'],
+        ['04','OOS','Your coordination spec in plain YAML. Versioned. Publishable. Open format, not vendor-locked.'],
+        ['05','Network','Every other org\'s OOS, queryable. Coordination intelligence compounds the way knowledge compounds on Wikipedia.'],
+        ['06','Agents','The AI seats. Each has a name, owner, job description, scorecard. Robots arrive on the same layer next.']
+      ]; %>
+      <% comps.forEach(function(c){ %>
+      <div class="pt-5" style="border-top:1px solid var(--line);">
+        <div class="font-display text-[var(--blue)] text-[1.7rem] font-bold mb-2" style="font-variant-numeric:tabular-nums;"><%= c[0] %></div>
+        <div class="font-display text-[var(--ink)] text-[1rem] font-bold mb-2"><%= c[1] %></div>
+        <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.6]"><%= c[2] %></p>
       </div>
-
-      <div class="border-t border-gray-200 pt-5">
-        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">04</div>
-        <div class="text-base font-bold text-gray-900 mb-2">OOS</div>
-        <p class="text-xs text-gray-600 leading-[1.6]">
-          Your coordination spec in plain YAML. Versioned. Publishable. Open format, not vendor-locked.
-        </p>
-      </div>
-
-      <div class="border-t border-gray-200 pt-5">
-        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">05</div>
-        <div class="text-base font-bold text-gray-900 mb-2">Network</div>
-        <p class="text-xs text-gray-600 leading-[1.6]">
-          Every other org's OOS, queryable. Coordination intelligence compounds the way knowledge compounds on Wikipedia.
-        </p>
-      </div>
-
-      <div class="border-t border-gray-200 pt-5">
-        <div class="text-3xl font-extrabold text-otp-500 mb-2 tracking-tight" style="font-variant-numeric: tabular-nums;">06</div>
-        <div class="text-base font-bold text-gray-900 mb-2">Agents</div>
-        <p class="text-xs text-gray-600 leading-[1.6]">
-          The AI seats. Each has a name, owner, job description, scorecard. Robots arrive on the same layer next.
-        </p>
-      </div>
-
+      <% }); %>
     </div>
   </div>
 </section>
 
-<style>
-  /* Mini chart tiles for the Chart component preview -- editorial, not the
-     full /dashboard/team idiom. Smaller, subtler, sits inside a card. */
-  .comp-tile {
-    position: relative;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 6px 8px 6px 10px;
-    overflow: hidden;
-    min-width: 0;
-  }
-  .comp-tile-stripe {
-    position: absolute; top: 0; left: 0; bottom: 0; width: 2px;
-  }
-  .comp-tile-name { font-size: 11px; font-weight: 700; color: #0f172a; line-height: 1.2; }
-  .comp-tile-role { font-size: 9px; color: #6b7280; margin-top: 1px; }
-  .comp-connector {
-    width: 1px; height: 12px; background: #d1d5db; margin: 0 auto;
-  }
-</style>
-
-<!-- ============================================================
-     WHEN YOU RUN ON OTP -- concrete outcomes, not adjectives.
-     ============================================================ -->
-<section class="bg-gray-50 py-20 sm:py-28 border-t border-gray-100">
-  <div class="max-w-5xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-4 font-medium">
-      When you run on OTP
-    </div>
-    <h2 class="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-[1.1] tracking-tight max-w-3xl mb-12">
+<!-- ================= WHEN YOU RUN ON OTP ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[860px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">When you run on OTP</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1] max-w-[40rem] mb-11"
+        style="font-size:clamp(1.9rem,3.8vw,2.9rem); font-weight:700;">
       What changes when you put your AI on the chart.
     </h2>
-
-    <div class="space-y-8 max-w-3xl">
-      <div class="border-l-2 border-otp-500 pl-6">
-        <p class="text-lg text-gray-900 font-semibold mb-1">Every agent has a name, an owner, and a scorecard.</p>
-        <p class="text-sm text-gray-600 leading-[1.65]">No more shadow IT. The thing running cold outreach has a tile, a job description, and a number it is held to.</p>
+    <div class="space-y-7">
+      <% var changes = [
+        ['Every agent has a name, an owner, and a scorecard.','No more shadow IT. The thing running cold outreach has a tile, a job description, and a number it is held to.', true],
+        ['SOPs you write today flow into runtime tomorrow.','No more rollout half-life. The doc and the work are the same artifact, read by the agent at every session.', false],
+        ['New agents inherit context from the human they report to.','No re-explaining. The next agent under your COO starts with everything the COO already authored.', false],
+        ['Other organizations\' patterns are queryable.','No reinventing. If three orgs further along solved your coordination problem, you adopt their pattern instead of writing your own.', false],
+        ['Hybrid headcount math works.','Senior humans stop drowning at hire seven. The new "hire" is an agent that does not need a Tuesday one-on-one.', false],
+        ['Your chart becomes intelligence everyone gets smarter from.','The OOS you publish is the artifact other orgs learn from. Publishing once contributes to a network that grows with every entrant.', false]
+      ]; %>
+      <% changes.forEach(function(c){ %>
+      <div class="pl-6" style="border-left:2.5px solid <%= c[2] ? 'var(--blue)' : 'var(--line)' %>;">
+        <p class="text-[1.05rem] text-[var(--ink)] font-semibold leading-[1.4] mb-1"><%= c[0] %></p>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65]"><%= c[1] %></p>
       </div>
-
-      <div class="border-l-2 border-otp-500/40 pl-6">
-        <p class="text-lg text-gray-900 font-semibold mb-1">SOPs you write today flow into runtime tomorrow.</p>
-        <p class="text-sm text-gray-600 leading-[1.65]">No more rollout half-life. The doc and the work are the same artifact, read by the agent at every session.</p>
-      </div>
-
-      <div class="border-l-2 border-otp-500/40 pl-6">
-        <p class="text-lg text-gray-900 font-semibold mb-1">New agents inherit context from the human they report to.</p>
-        <p class="text-sm text-gray-600 leading-[1.65]">No re-explaining. The next agent under your COO starts with everything the COO already authored.</p>
-      </div>
-
-      <div class="border-l-2 border-otp-500/40 pl-6">
-        <p class="text-lg text-gray-900 font-semibold mb-1">Other organizations' patterns are queryable.</p>
-        <p class="text-sm text-gray-600 leading-[1.65]">No reinventing. If three orgs further along solved your coordination problem, you adopt their pattern instead of writing your own.</p>
-      </div>
-
-      <div class="border-l-2 border-otp-500/40 pl-6">
-        <p class="text-lg text-gray-900 font-semibold mb-1">Hybrid headcount math works.</p>
-        <p class="text-sm text-gray-600 leading-[1.65]">Senior humans stop drowning at hire seven. The new "hire" is an agent that does not need a Tuesday one-on-one.</p>
-      </div>
-
-      <div class="border-l-2 border-otp-500/40 pl-6">
-        <p class="text-lg text-gray-900 font-semibold mb-1">Your chart becomes intelligence everyone gets smarter from.</p>
-        <p class="text-sm text-gray-600 leading-[1.65]">The OOS you publish is the artifact other orgs learn from. Publishing once contributes to a network that grows with every entrant.</p>
-      </div>
+      <% }); %>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     THE PROCESS -- four steps, honest timeline.
-     ============================================================ -->
-<section class="bg-white py-20 sm:py-28 border-t border-gray-100">
-  <div class="max-w-5xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-4 font-medium">
-      How OTP makes it stick
-    </div>
-    <h2 class="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-[1.1] tracking-tight max-w-3xl mb-4">
+<!-- ================= THE PROCESS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[860px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">How OTP makes it stick</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1] max-w-[40rem]"
+        style="font-size:clamp(1.9rem,3.8vw,2.9rem); font-weight:700;">
       From zero to running on OTP in two weeks.
     </h2>
-    <p class="text-base sm:text-lg text-gray-600 leading-[1.6] max-w-2xl mb-14">
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[38rem] mt-5 mb-12">
       The honest version of the timeline. EOS takes two years. OTP takes two weeks because the agents do most of the implementation work themselves, once the chart is up.
     </p>
 
-    <div class="space-y-10 max-w-3xl">
-      <div class="grid grid-cols-12 gap-6 items-start">
-        <div class="col-span-2">
-          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">01</div>
-          <div class="text-[11px] text-gray-500 uppercase tracking-[0.14em] mt-1">~ 1 hour</div>
+    <div class="space-y-5">
+      <% var steps = [
+        ['01','~ 1 hour','Map your chart.','Sign up. Drop your humans onto /dashboard/team. Add agents you already run as separate seats with named roles. Wire reporting and escalation lines.'],
+        ['02','~ 1 day','Author SOPs.','Five Founder/CEO SOP templates are seeded in the editor. Edit each to your voice. Pick the seats that need their own SOP and write one.'],
+        ['03','~ 1 hour','Wire one agent.','Click "Copy as CLAUDE.md" on any agent tile. Drop the file into Claude Code, Cursor, Codex, or any other stack. The agent now reads its inherited SOPs at every session.'],
+        ['04','~ 1 hour','Publish your OOS.','Hit publish. Your OOS is on the network. Other orgs\' patterns are now queryable to your agents. Adopt one pattern from a publisher further along the curve.']
+      ]; %>
+      <% steps.forEach(function(s){ %>
+      <div class="card p-6 sm:p-7 flex flex-col sm:flex-row gap-5 sm:gap-7">
+        <div class="shrink-0 sm:w-[110px]">
+          <div class="font-display text-[var(--blue)] text-[2.1rem] font-bold leading-none" style="font-variant-numeric:tabular-nums;"><%= s[0] %></div>
+          <div class="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--ink-mute)] mt-1.5"><%= s[1] %></div>
         </div>
-        <div class="col-span-10">
-          <p class="text-xl font-bold text-gray-900 mb-1.5">Map your chart.</p>
-          <p class="text-sm text-gray-600 leading-[1.65]">Sign up. Drop your humans onto <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">/dashboard/team</code>. Add agents you already run as separate seats with named roles. Wire reporting and escalation lines.</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-12 gap-6 items-start">
-        <div class="col-span-2">
-          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">02</div>
-          <div class="text-[11px] text-gray-500 uppercase tracking-[0.14em] mt-1">~ 1 day</div>
-        </div>
-        <div class="col-span-10">
-          <p class="text-xl font-bold text-gray-900 mb-1.5">Author SOPs.</p>
-          <p class="text-sm text-gray-600 leading-[1.65]">Five Founder/CEO SOP templates are seeded in the editor. Edit each to your voice. Pick the seats that need their own SOP and write one.</p>
+        <div>
+          <p class="font-display text-[1.2rem] font-bold text-[var(--ink)] mb-1.5"><%= s[2] %></p>
+          <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65]"><%= s[3] %></p>
         </div>
       </div>
-
-      <div class="grid grid-cols-12 gap-6 items-start">
-        <div class="col-span-2">
-          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">03</div>
-          <div class="text-[11px] text-gray-500 uppercase tracking-[0.14em] mt-1">~ 1 hour</div>
-        </div>
-        <div class="col-span-10">
-          <p class="text-xl font-bold text-gray-900 mb-1.5">Wire one agent.</p>
-          <p class="text-sm text-gray-600 leading-[1.65]">Click "Copy as CLAUDE.md" on any agent tile. Drop the file into Claude Code, Cursor, Codex, or any other stack. The agent now reads its inherited SOPs at every session.</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-12 gap-6 items-start">
-        <div class="col-span-2">
-          <div class="text-4xl font-extrabold text-otp-500 tracking-tight" style="font-variant-numeric: tabular-nums;">04</div>
-          <div class="text-[11px] text-gray-500 uppercase tracking-[0.14em] mt-1">~ 1 hour</div>
-        </div>
-        <div class="col-span-10">
-          <p class="text-xl font-bold text-gray-900 mb-1.5">Publish your OOS.</p>
-          <p class="text-sm text-gray-600 leading-[1.65]">Hit publish. Your OOS is on the network. Other orgs' patterns are now queryable to your agents. Adopt one pattern from a publisher further along the curve.</p>
-        </div>
-      </div>
+      <% }); %>
     </div>
 
-    <div class="mt-14 p-6 bg-gray-50 border border-gray-200 rounded-lg max-w-3xl">
-      <p class="text-sm text-gray-700 leading-[1.65]">
-        <strong class="text-gray-900">An honest note on the timeline.</strong> Two weeks is the version where you do it yourself, with one or two agents wired. Some founders move faster than that. A few move slower because their human team needs to ratify the SOPs first. The protocol does not impose a tempo. The chart does not gate publishing.
+    <div class="card p-6 sm:p-7 mt-7" style="background:linear-gradient(180deg,rgba(13,125,242,.05),var(--card)); border-left:3px solid var(--blue);">
+      <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]">
+        <strong class="text-[var(--ink)] font-semibold">An honest note on the timeline.</strong> Two weeks is the version where you do it yourself, with one or two agents wired. Some founders move faster than that. A few move slower because their human team needs to ratify the SOPs first. The protocol does not impose a tempo. The chart does not gate publishing.
       </p>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     THE NETWORK -- show, don't tell. Real publishers.
-     ============================================================ -->
-<section class="bg-otp-950 py-20 sm:py-28 relative">
-  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
-
-  <div class="relative max-w-5xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-4 font-medium">
-      The Network
+<!-- ================= THE NETWORK ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="flex items-start justify-between gap-6 flex-wrap">
+      <div class="max-w-[44rem]">
+        <div class="eyebrow mb-4">The Network</div>
+        <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+            style="font-size:clamp(1.9rem,3.8vw,2.9rem); font-weight:700;">
+          Run on OTP. Learn from every org that runs on OTP.
+        </h2>
+        <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[38rem] mt-5">
+          The network is what makes OTP defensible. Every published OOS makes every other org on it smarter. We are early. The publishers below joined in the first six weeks.
+        </p>
+      </div>
+      <img src="/public/orgy-cut.png" alt="" aria-hidden="true"
+           class="wo-bob shrink-0 hidden sm:block" style="width:120px; height:auto; filter:drop-shadow(0 16px 26px rgba(20,22,28,.2));">
     </div>
-    <h2 class="text-3xl sm:text-5xl font-extrabold text-white leading-[1.1] tracking-tight max-w-3xl mb-4">
-      Run on OTP. Learn from every org that runs on OTP.
-    </h2>
-    <p class="text-base sm:text-lg text-gray-400 leading-[1.6] max-w-2xl mb-12">
-      The network is what makes OTP defensible. Every published OOS makes every other org on it smarter. We are early. The publishers below joined in the first six weeks.
-    </p>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
-      <a href="/browse" class="block bg-white/5 border border-white/10 rounded-lg p-5 hover:bg-white/10 transition-colors">
-        <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] mb-2">Founding publisher</div>
-        <div class="text-base font-bold text-white mb-1">Sneeze It</div>
-        <div class="text-xs text-gray-400 leading-[1.55]">Twelve humans. Fourteen AI agents. The OTP team's own dogfood.</div>
+    <div class="grid sm:grid-cols-3 gap-4 mt-11">
+      <a href="/browse" class="card lift p-6 block">
+        <div class="font-mono text-[10px] uppercase tracking-[0.13em] text-[var(--ink-mute)] mb-2.5">Founding publisher</div>
+        <div class="font-display text-[1.1rem] font-bold text-[var(--ink)] mb-1.5">Sneeze It</div>
+        <div class="text-[13px] text-[var(--ink-soft)] leading-[1.6]">Twelve humans. Fourteen AI agents. The OTP team's own dogfood.</div>
       </a>
-      <a href="/browse" class="block bg-white/5 border border-white/10 rounded-lg p-5 hover:bg-white/10 transition-colors">
-        <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] mb-2">Founding publisher</div>
-        <div class="text-base font-bold text-white mb-1">R3volution</div>
-        <div class="text-xs text-gray-400 leading-[1.55]">Kris Goodrich's organization. First external OTP publisher.</div>
+      <a href="/browse" class="card lift p-6 block">
+        <div class="font-mono text-[10px] uppercase tracking-[0.13em] text-[var(--ink-mute)] mb-2.5">Founding publisher</div>
+        <div class="font-display text-[1.1rem] font-bold text-[var(--ink)] mb-1.5">R3volution</div>
+        <div class="text-[13px] text-[var(--ink-soft)] leading-[1.6]">Kris Goodrich's organization. First external OTP publisher.</div>
       </a>
-      <a href="/browse" class="block bg-white/5 border border-white/10 rounded-lg p-5 hover:bg-white/10 transition-colors">
-        <div class="text-[10px] text-gray-500 uppercase tracking-[0.14em] mb-2">Browse the network</div>
-        <div class="text-base font-bold text-white mb-1">All publishers →</div>
-        <div class="text-xs text-gray-400 leading-[1.55]">See every organization's published OOS, indexed and searchable.</div>
+      <a href="/browse" class="card lift p-6 block border-t-[3px]" style="border-top-color:var(--blue);">
+        <div class="font-mono text-[10px] uppercase tracking-[0.13em] text-[var(--blue-deep)] mb-2.5">Browse the network</div>
+        <div class="font-display text-[1.1rem] font-bold text-[var(--ink)] mb-1.5">All publishers &rarr;</div>
+        <div class="text-[13px] text-[var(--ink-soft)] leading-[1.6]">See every organization's published OOS, indexed and searchable.</div>
       </a>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     FAQ -- name the obvious objections.
-     ============================================================ -->
-<section class="bg-white py-20 sm:py-28 border-t border-gray-100">
-  <div class="max-w-3xl mx-auto px-6 sm:px-8">
-    <div class="text-[11px] text-gray-500 tracking-[0.18em] uppercase mb-4 font-medium">
-      Common questions
-    </div>
-    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-[1.15] tracking-tight mb-12">
+<!-- ================= FAQ ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-4">Common questions</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15] mb-11"
+        style="font-size:clamp(1.7rem,3.2vw,2.4rem); font-weight:700;">
       What we get asked the most.
     </h2>
-
     <div class="space-y-8">
+      <% var faqs = [
+        ['Is this only for tech companies?','No. Any organization that uses AI tools at all is going to face the same coordination problem soon. Agencies, fitness franchises, professional services, medspa groups, every one of those has agents creeping into the workflow without seats. OTP is for any of them. Sneeze It is a digital agency, not a tech company.'],
+        ['Do I need to use Claude?','No. The OOS file format is plain YAML. The "Copy as CLAUDE.md" button outputs a markdown file your agent can read in any stack, Claude Code, Cursor, Codex, n8n, custom Python. The protocol is substrate-agnostic.'],
+        ['How is this different from Notion, Lattice, or Process Street?','They have documents. We have runtime. Their SOPs are read by humans when humans remember. Ours are read by agents at every session. Same word, different consumer, different half-life.'],
+        ['What if I don\'t have AI agents yet?','Start with just humans. Author SOPs for the seats that need them. When you spin up your first agent, the chart already knows where it goes and what it inherits. The benefit lands the moment the first agent comes online.'],
+        ['Is OTP open source?','The protocol is open. The OOS file format is publicly specified. Anyone can implement it. The hosted SaaS at orgtp.com is paid, that is where the network and the team chart and the agent builder all live.'],
+        ['Why "Augmented Human organization" and not "hybrid"?','Hybrid implies two things coexisting. Augmented Human puts the human at the center and frames AI as the multiplier. That matches reality: every human keeps being the founder, operator, or manager they already were, but each one gets reach-extended by agents holding their SOPs at runtime. The human stays the unit.']
+      ]; %>
+      <% faqs.forEach(function(q){ %>
       <div>
-        <p class="text-base font-bold text-gray-900 mb-2">Is this only for tech companies?</p>
-        <p class="text-sm text-gray-600 leading-[1.7]">No. Any organization that uses AI tools at all is going to face the same coordination problem soon. Agencies, fitness franchises, professional services, medspa groups — every one of those has agents creeping into the workflow without seats. OTP is for any of them. Sneeze It is a digital agency, not a tech company.</p>
+        <p class="text-[1rem] font-bold text-[var(--ink)] mb-2"><%= q[0] %></p>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.7]"><%= q[1] %></p>
       </div>
-
-      <div>
-        <p class="text-base font-bold text-gray-900 mb-2">Do I need to use Claude?</p>
-        <p class="text-sm text-gray-600 leading-[1.7]">No. The OOS file format is plain YAML. The "Copy as CLAUDE.md" button outputs a markdown file your agent can read in any stack — Claude Code, Cursor, Codex, n8n, custom Python. The protocol is substrate-agnostic.</p>
-      </div>
-
-      <div>
-        <p class="text-base font-bold text-gray-900 mb-2">How is this different from Notion, Lattice, or Process Street?</p>
-        <p class="text-sm text-gray-600 leading-[1.7]">They have documents. We have runtime. Their SOPs are read by humans when humans remember. Ours are read by agents at every session. Same word, different consumer, different half-life.</p>
-      </div>
-
-      <div>
-        <p class="text-base font-bold text-gray-900 mb-2">What if I don't have AI agents yet?</p>
-        <p class="text-sm text-gray-600 leading-[1.7]">Start with just humans. Author SOPs for the seats that need them. When you spin up your first agent, the chart already knows where it goes and what it inherits. The benefit lands the moment the first agent comes online.</p>
-      </div>
-
-      <div>
-        <p class="text-base font-bold text-gray-900 mb-2">Is OTP open source?</p>
-        <p class="text-sm text-gray-600 leading-[1.7]">The protocol is open. The OOS file format is publicly specified. Anyone can implement it. The hosted SaaS at orgtp.com is paid — that is where the network and the team chart and the agent builder all live.</p>
-      </div>
-
-      <div>
-        <p class="text-base font-bold text-gray-900 mb-2">Why "Augmented Human organization" and not "hybrid"?</p>
-        <p class="text-sm text-gray-600 leading-[1.7]">Hybrid implies two things coexisting. Augmented Human puts the human at the center and frames AI as the multiplier. That matches reality: every human keeps being the founder, operator, or manager they already were, but each one gets reach-extended by agents holding their SOPs at runtime. The human stays the unit.</p>
-      </div>
+      <% }); %>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     FINAL CTA -- low-friction, two doors.
-     ============================================================ -->
-<section class="bg-otp-950 py-20 sm:py-28 border-t border-white/10 relative">
-  <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image: linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 80px 80px;"></div>
-
-  <div class="relative max-w-3xl mx-auto px-6 sm:px-8 text-center">
-    <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-[1.1] tracking-tight mb-6">
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2.1rem,4.6vw,3.4rem); font-weight:800;">
       Two doors. Pick the one that fits.
     </h2>
-    <p class="text-base sm:text-lg text-gray-400 leading-[1.6] mb-10 max-w-xl mx-auto">
+    <p class="text-[17px] leading-[1.6] max-w-[34rem] mx-auto mt-6" style="color:#5a2a06;">
       Either you build a chart and run on OTP this week, or you read the four-stage arc that explains why the chart matters in the first place.
     </p>
-    <div class="flex flex-col sm:flex-row gap-x-10 gap-y-4 items-center justify-center">
-      <a href="/sign-up" class="text-white border-b border-white pb-1 text-base font-medium hover:text-otp-300 hover:border-otp-300 transition-colors">
-        Build your chart →
-      </a>
-      <a href="/blog/the-robots-are-coming" class="text-gray-400 border-b border-white/15 pb-1 text-base font-medium hover:text-white hover:border-white/40 transition-colors">
-        Read the four-stage arc →
-      </a>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" class="btn-ink px-8 py-4 text-[16px]">Build your chart &rarr;</a>
+      <a href="/blog/the-robots-are-coming" class="btn-ghost px-8 py-4 text-[16px]" style="border-color:rgba(20,22,28,.3);">Read the four-stage arc</a>
     </div>
   </div>
 </section>
