@@ -1,34 +1,78 @@
+<%# /glossary -- v7 layout (light, editorial). AI coordination dictionary.
+    Content sections only -- layout supplies head/nav/footer. %>
 <%
   // grouped: Record<letter, terms[]>, groupedOrder: string[], activeLetters: Set<string>, totalCount: number
   function slugFor(t) { return t.slug; }
 %>
-<!-- Glossary header -->
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Reference</span>
+<style>
+  .gl-peek { animation:gl-peek 8s ease-in-out infinite; transform-origin:bottom center; }
+  @keyframes gl-peek { 0%,100%{transform:translateY(6px) rotate(4deg);} 50%{transform:translateY(-6px) rotate(4deg);} }
+  @media (prefers-reduced-motion:reduce){ .gl-peek{ animation:none; } }
+  .gl-letter {
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    border-radius:9px; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
+    transition:background .15s ease, border-color .15s ease, transform .15s ease;
+  }
+  .gl-letter-on {
+    background:var(--card); border:1px solid var(--line); color:var(--blue-deep);
+  }
+  .gl-letter-on:hover { border-color:var(--blue); transform:translateY(-2px); }
+  .gl-letter-off {
+    background:var(--grey); border:1px solid var(--line-soft); color:var(--ink-mute);
+    opacity:0.4; cursor:default;
+  }
+  .gl-section-h {
+    font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700;
+    font-size:1.7rem; color:var(--ink); letter-spacing:-0.02em;
+    border-bottom:2px solid var(--line); padding-bottom:0.4rem;
+  }
+  .gl-fw {
+    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:500;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--blue-deep); background:rgba(13,125,242,0.08);
+    border:1px solid rgba(13,125,242,0.18);
+    border-radius:6px; padding:3px 8px; white-space:nowrap;
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16">
+    <div class="flex flex-col-reverse md:flex-row items-end gap-8 md:gap-12">
+      <div class="flex-1">
+        <div class="eyebrow mb-4 flex items-center gap-2.5">
+          <span class="tick" style="background:var(--orange);"></span>Reference
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.1rem,4.4vw,3.4rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
+          The AI Coordination <span class="text-[var(--blue)]">Dictionary</span>.
+        </h1>
+        <p class="font-mono text-[13px] text-[var(--ink-mute)] mt-4"><%= totalCount %> terms defined</p>
+        <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.65] max-w-[40rem] mt-4">
+          Plain English definitions for AI agent coordination plus the operating-system frameworks they build on &mdash; EOS, Scaling Up, 4DX, OKRs, and Holacracy. Every term has its own page, its own structured data, and links to the related terms you need to understand it fully.
+        </p>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">AI Coordination Dictionary</h1>
-      <p class="text-lg text-gray-300 mt-2"><%= totalCount %> Terms Defined</p>
-      <p class="text-gray-400 mt-4 max-w-2xl">Plain English definitions for AI agent coordination plus the operating-system frameworks they build on -- EOS, Scaling Up, 4DX, OKRs, and Holacracy. Every term has its own page, its own structured data, and links to the related terms you'll need to understand it fully.</p>
+      <div class="shrink-0 self-center md:self-end" style="width:118px; max-width:30vw;">
+        <img src="/public/images/orgy-mascot.png" alt="Orgy, the OTP mascot"
+             class="gl-peek block w-full" style="filter:drop-shadow(0 14px 22px rgba(20,22,28,.16));">
+      </div>
     </div>
   </div>
 </section>
 
-<!-- Glossary body -->
-<section class="bg-white py-10 sm:py-14">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+<!-- ================= GLOSSARY BODY ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-16 sm:py-20">
 
     <!-- A-Z Quick nav -->
-    <div class="mb-10 p-4 bg-gray-50 rounded-xl border border-gray-100">
-      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Jump to letter</div>
-      <div class="flex flex-wrap gap-2 text-sm font-semibold">
+    <div class="card p-5 mb-12">
+      <div class="eyebrow mb-3">Jump to letter</div>
+      <div class="flex flex-wrap gap-2">
         <% groupedOrder.forEach(function(L) { %>
           <% if (activeLetters.has(L)) { %>
-            <a href="#section-<%= L === '#' ? 'num' : L.toLowerCase() %>" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-otp-500 hover:bg-otp-50 hover:border-otp-300 transition-colors"><%= L %></a>
+            <a href="#section-<%= L === '#' ? 'num' : L.toLowerCase() %>" class="gl-letter gl-letter-on"><%= L %></a>
           <% } else { %>
-            <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-100 text-gray-300 cursor-default"><%= L %></span>
+            <span class="gl-letter gl-letter-off"><%= L %></span>
           <% } %>
         <% }); %>
       </div>
@@ -39,31 +83,34 @@
       if (!bucket.length) return;
       var anchor = (L === '#') ? 'section-num' : ('section-' + L.toLowerCase());
     %>
-      <div id="<%= anchor %>" class="scroll-mt-24 mb-4">
-        <h2 class="text-2xl font-extrabold text-otp-600 border-b-2 border-otp-100 pb-2"><%= L %></h2>
+      <div id="<%= anchor %>" class="scroll-mt-24 mb-5">
+        <h2 class="gl-section-h"><%= L %></h2>
       </div>
-      <div class="space-y-8 mb-14">
+      <div class="grid gap-4 mb-14">
         <% bucket.forEach(function(t) { %>
-          <article id="<%= slugFor(t) %>" class="scroll-mt-24">
-            <div class="flex items-baseline justify-between gap-4 mb-2">
-              <h3 class="text-xl font-bold text-gray-900">
-                <a href="/glossary/<%= t.slug %>" class="hover:text-otp-600 transition-colors"><%= t.name %></a>
+          <article id="<%= slugFor(t) %>" class="card p-6 sm:p-7 scroll-mt-24">
+            <div class="flex items-baseline justify-between gap-4 mb-2.5">
+              <h3 class="font-display text-[1.2rem] font-bold text-[var(--ink)] leading-tight">
+                <a href="/glossary/<%= t.slug %>" class="hover:text-[var(--blue-deep)] transition-colors"><%= t.name %></a>
               </h3>
               <% if (t.framework) { %>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-otp-600 bg-otp-50 border border-otp-100 rounded-full px-2 py-0.5 whitespace-nowrap"><%= t.framework %></span>
+                <span class="gl-fw"><%= t.framework %></span>
               <% } %>
             </div>
-            <p class="text-gray-700 leading-relaxed mb-2"><%= t.definition %></p>
+            <p class="text-[15px] text-[var(--ink-soft)] leading-[1.72] mb-3"><%= t.definition %></p>
             <% if (t.whyItMatters) { %>
-              <p class="text-sm text-gray-500 italic mb-2"><span class="not-italic font-semibold text-gray-600">Why it matters:</span> <%= t.whyItMatters %></p>
+              <p class="text-[13.5px] text-[var(--ink-mute)] leading-[1.6] mb-3">
+                <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-soft)]">Why it matters &mdash;</span>
+                <%= t.whyItMatters %>
+              </p>
             <% } %>
-            <div class="text-sm">
-              <a href="/glossary/<%= t.slug %>" class="text-otp-500 hover:text-otp-600 font-medium">Read full entry →</a>
+            <div class="text-[13.5px] flex flex-wrap items-center gap-x-2 gap-y-1">
+              <a href="/glossary/<%= t.slug %>" class="text-[var(--blue-deep)] font-semibold link-u">Read full entry &rarr;</a>
               <% if (t.relatedSlugs && t.relatedSlugs.length) { %>
-                <span class="text-gray-400 mx-2">·</span>
-                <span class="text-gray-500">See also:
+                <span class="text-[var(--ink-mute)]">&middot;</span>
+                <span class="text-[var(--ink-mute)]">See also:
                   <% t.relatedSlugs.slice(0, 3).forEach(function(rs, i) { %>
-                    <a href="/glossary/<%= rs %>" class="text-otp-500 hover:text-otp-600"><%= rs.replace(/-/g, ' ') %></a><% if (i < Math.min(t.relatedSlugs.length, 3) - 1) { %>, <% } %>
+                    <a href="/glossary/<%= rs %>" class="text-[var(--blue-deep)] hover:opacity-65"><%= rs.replace(/-/g, ' ') %></a><% if (i < Math.min(t.relatedSlugs.length, 3) - 1) { %>, <% } %>
                   <% }); %>
                 </span>
               <% } %>
@@ -74,27 +121,36 @@
     <% }); %>
 
     <!-- Coordination Stack callout -->
-    <div class="mt-16 p-6 bg-gray-50 rounded-xl border border-gray-100">
-      <h2 class="text-lg font-bold text-gray-900 mb-2">The Three-Layer Stack</h2>
-      <p class="text-gray-700 mb-4">AI coordination operates at three layers. Each layer solves a different problem and uses a different protocol.</p>
-      <div class="grid sm:grid-cols-3 gap-4 text-sm">
-        <a href="/glossary/mcp" class="block p-4 bg-white rounded-lg border border-gray-200 hover:border-otp-300 transition-colors">
-          <div class="font-semibold text-gray-900 mb-1">Tool Layer</div>
-          <div class="text-gray-600">MCP (Model Context Protocol)</div>
+    <div class="card p-7 sm:p-9 mt-4">
+      <div class="eyebrow mb-3" style="color:var(--blue-deep);">The stack</div>
+      <h2 class="font-display text-[var(--ink)] leading-[1.15] mb-2"
+          style="font-size:clamp(1.5rem,2.8vw,2rem); font-weight:700; letter-spacing:-0.02em;">
+        The Three-Layer Stack
+      </h2>
+      <p class="text-[15px] text-[var(--ink-soft)] leading-[1.65] mb-6 max-w-[42rem]">
+        AI coordination operates at three layers. Each layer solves a different problem and uses a different protocol.
+      </p>
+      <div class="grid sm:grid-cols-3 gap-4">
+        <a href="/glossary/mcp" class="card lift p-5">
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-mute)] mb-2">Tool Layer</div>
+          <div class="font-display text-[1.05rem] font-bold text-[var(--ink)]">MCP</div>
+          <div class="text-[13px] text-[var(--ink-soft)] mt-1">Model Context Protocol</div>
         </a>
-        <a href="/glossary/a2a" class="block p-4 bg-white rounded-lg border border-gray-200 hover:border-otp-300 transition-colors">
-          <div class="font-semibold text-gray-900 mb-1">Agent Layer</div>
-          <div class="text-gray-600">A2A (Agent-to-Agent)</div>
+        <a href="/glossary/a2a" class="card lift p-5">
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-mute)] mb-2">Agent Layer</div>
+          <div class="font-display text-[1.05rem] font-bold text-[var(--ink)]">A2A</div>
+          <div class="text-[13px] text-[var(--ink-soft)] mt-1">Agent-to-Agent</div>
         </a>
-        <a href="/glossary/otp" class="block p-4 bg-white rounded-lg border border-gray-200 hover:border-otp-300 transition-colors">
-          <div class="font-semibold text-gray-900 mb-1">Organization Layer</div>
-          <div class="text-gray-600">OTP (Organization Transport Protocol)</div>
+        <a href="/glossary/otp" class="card lift p-5 border-t-[3px]" style="border-top-color:var(--blue);">
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] mb-2" style="color:var(--blue-deep);">Organization Layer</div>
+          <div class="font-display text-[1.05rem] font-bold text-[var(--ink)]">OTP</div>
+          <div class="text-[13px] text-[var(--ink-soft)] mt-1">Organization Transport Protocol</div>
         </a>
       </div>
     </div>
 
-    <p class="mt-10 text-sm text-gray-500">
-      Missing a term? <a href="/tickets" class="text-otp-500 hover:text-otp-600 font-medium">Submit it</a> and we'll add it.
+    <p class="mt-10 text-[14px] text-[var(--ink-mute)]">
+      Missing a term? <a href="/tickets" class="text-[var(--blue-deep)] font-semibold link-u">Submit it</a> and we will add it.
     </p>
   </div>
 </section>

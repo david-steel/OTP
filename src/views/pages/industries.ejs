@@ -1,36 +1,79 @@
-<!-- Industries header -->
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
-        <span class="px-2 py-0.5 rounded-full bg-otp-500/20 text-otp-300 font-semibold">Directory</span>
+<%# /industries -- v7 layout (light, editorial). Directory of coordination
+    intelligence grouped by industry. Route provides `industries` array. %>
+<style>
+  .ind-peek { animation:ind-peek 7s ease-in-out infinite; }
+  @keyframes ind-peek { 0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-9px) rotate(-3deg);} }
+  @media (prefers-reduced-motion:reduce){ .ind-peek{ animation:none; } }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--green);"></span>Directory
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.2rem,4.4vw,3.5rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
+          Coordination intelligence, <span class="text-[var(--blue)]">by industry.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto md:mx-0 mt-5">
+          See how organizations in different industries coordinate their AI agent teams. Browse the publishers, compare the claims, borrow what works.
+        </p>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Coordination Intelligence by Industry</h1>
-      <p class="text-gray-400 mt-4 max-w-lg">See how organizations in different industries coordinate their AI agent teams.</p>
+      <div class="relative shrink-0" style="width:148px; max-width:40vw;">
+        <img src="/public/orgy-clean.png" alt="Orgy, the OTP mascot"
+             class="ind-peek block w-full" style="filter:drop-shadow(0 16px 26px rgba(20,22,28,.18));">
+      </div>
     </div>
   </div>
 </section>
 
-<section class="bg-white py-10 sm:py-14">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <% industries.forEach(function(ind) { %>
-        <a href="/industry/<%= encodeURIComponent(ind.industry) %>" class="block p-5 rounded-xl border border-gray-100 card-hover group">
-          <div class="text-lg font-bold text-gray-900 group-hover:text-otp-600 transition-colors"><%= ind.industry %></div>
-          <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
-            <span><%= ind.org_count %> publisher<%= ind.org_count > 1 ? 's' : '' %></span>
-            <span><%= ind.claim_count %> claims</span>
-          </div>
-        </a>
-      <% }); %>
-    </div>
+<!-- ================= INDUSTRY GRID ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-7">Browse industries</div>
 
     <% if (industries.length === 0) { %>
-      <div class="text-center py-12 text-gray-400">No industries represented yet. <a href="/publish" class="text-otp-500">Be the first to publish.</a></div>
+      <div class="card p-10 sm:p-14 text-center">
+        <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65]">
+          No industries represented yet.
+          <a href="/publish" class="text-[var(--blue-deep)] font-semibold link-u">Be the first to publish.</a>
+        </p>
+      </div>
+    <% } else { %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <% industries.forEach(function(ind) { %>
+          <a href="/industry/<%= encodeURIComponent(ind.industry) %>" class="card lift p-6 block group">
+            <div class="font-display text-[var(--ink)] text-[1.15rem] font-bold leading-snug group-hover:text-[var(--blue-deep)] transition-colors">
+              <%= ind.industry %>
+            </div>
+            <div class="flex items-center gap-2.5 mt-3">
+              <span class="font-mono text-[11px] font-medium text-[var(--ink-mute)]"><%= ind.org_count %> publisher<%= ind.org_count > 1 ? 's' : '' %></span>
+              <span class="w-1 h-1 rounded-full" style="background:var(--line);"></span>
+              <span class="font-mono text-[11px] font-medium text-[var(--ink-mute)]"><%= ind.claim_count %> claims</span>
+            </div>
+          </a>
+        <% }); %>
+      </div>
     <% } %>
+  </div>
+</section>
 
-    <div class="mt-10 text-center">
-      <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Publish Your OOS<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <div class="eyebrow mb-4">Add your organization</div>
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.07]"
+        style="font-size:clamp(1.9rem,4vw,2.9rem); font-weight:700;">
+      Put your industry on the map.
+    </h2>
+    <p class="text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+      Publish your Organization Operating System and let other teams in your industry compare their coordination patterns to yours.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/publish" class="btn-primary px-8 py-4 text-[16px]">Publish your OOS &rarr;</a>
     </div>
   </div>
 </section>

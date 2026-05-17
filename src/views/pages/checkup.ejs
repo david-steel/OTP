@@ -1,83 +1,179 @@
-<!-- HERO -->
-<section class="relative overflow-hidden bg-otp-950 flex items-center py-20 sm:py-28">
-  <div class="absolute top-[-300px] left-[-200px] w-[800px] h-[800px] bg-otp-500/20 rounded-full blur-[180px] pointer-events-none"></div>
-  <div class="absolute bottom-[-200px] right-[-250px] w-[700px] h-[700px] bg-purple-500/15 rounded-full blur-[160px] pointer-events-none"></div>
+<%# /checkup -- v7 layout (light, editorial). Interactive Coordination
+    Checkup -- 24-question quiz scoring against Bassim Eledath's 8 Levels
+    of Agentic Engineering. Route provides `questions` and `levelLabels`.
+    The <script> below is preserved VERBATIM -- it targets the element
+    IDs (checkup-*, q-*) kept on the restyled markup, and it builds the
+    result card with utility classes that are remapped to v7 tokens by
+    the scoped CSS in this <style> block (#checkup-result-card .* rules). %>
+<style>
+  /* ---- floating mascot ---- */
+  .cu-float { animation:cu-float 6.5s ease-in-out infinite; }
+  @keyframes cu-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  @media (prefers-reduced-motion:reduce){ .cu-float{ animation:none; } }
 
-  <div class="relative w-full max-w-3xl mx-auto px-4 sm:px-6 text-center">
-    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-otp-300 mb-6">
-      <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-      <span>Bassim Eledath's 8 Levels of Agentic Engineering</span>
+  /* ---- quiz option buttons (built by JS with utility classes) ---- */
+  #q-options button {
+    width:100%; text-align:left; padding:13px 16px; border-radius:11px;
+    font-size:14px; line-height:1.45; transition:all .16s ease;
+    background:var(--card); border:1px solid var(--line); color:var(--ink-soft);
+  }
+  #q-options button:hover {
+    border-color:var(--ink); background:rgba(20,22,28,0.025);
+  }
+  /* selected state -- JS adds bg-otp-500/15 + border-otp-500 + text-white */
+  #q-options button.border-otp-500 {
+    background:rgba(13,125,242,0.07) !important;
+    border-color:var(--blue) !important;
+    color:var(--ink) !important;
+  }
+  /* JS-rendered radio dot inside each option */
+  #q-options button > span:first-child {
+    width:18px; height:18px; border-radius:999px; border:1px solid var(--line);
+    margin-right:12px; vertical-align:middle; display:inline-block;
+  }
+  #q-options button.border-otp-500 > span:first-child {
+    background:var(--blue) !important; border-color:var(--blue) !important;
+  }
+
+  /* ---- result card -- JS builds it with dark utility classes;
+         remap them to v7 light tokens, scoped to the result card ---- */
+  #checkup-result-card .bg-white\/5,
+  #checkup-result-card [class*="bg-gradient-to-br"],
+  #checkup-result-card .bg-otp-500\/10 {
+    background:var(--card) !important;
+    border-color:var(--line) !important;
+  }
+  #checkup-result-card .bg-otp-500\/10 {
+    background:linear-gradient(180deg,rgba(189,214,34,.12),var(--card)) !important;
+  }
+  #checkup-result-card [class*="bg-gradient-to-br"] {
+    background:linear-gradient(160deg,rgba(13,125,242,.08),var(--card)) !important;
+  }
+  #checkup-result-card .text-white { color:var(--ink) !important; }
+  #checkup-result-card .text-gray-300,
+  #checkup-result-card .text-gray-400 { color:var(--ink-soft) !important; }
+  #checkup-result-card .text-gray-500 { color:var(--ink-mute) !important; }
+  #checkup-result-card .text-otp-300,
+  #checkup-result-card .text-blue-300,
+  #checkup-result-card .text-purple-300 { color:var(--blue-deep) !important; }
+  #checkup-result-card .text-amber-300,
+  #checkup-result-card .text-amber-400 { color:var(--orange-deep) !important; }
+  #checkup-result-card .text-emerald-300,
+  #checkup-result-card .text-emerald-400 { color:var(--green-deep) !important; }
+  #checkup-result-card .bg-white\/5.rounded-full,
+  #checkup-result-card .bg-white\/5.h-1 { background:var(--grey) !important; }
+  #checkup-result-card .bg-white\/20 { background:var(--line) !important; }
+  #checkup-result-card .bg-emerald-500 { background:var(--green) !important; }
+  #checkup-result-card .bg-amber-500 { background:var(--orange) !important; }
+  #checkup-result-card .bg-otp-500\/20 {
+    background:rgba(13,125,242,0.1) !important;
+    border-color:rgba(13,125,242,0.3) !important;
+  }
+  #checkup-result-card a[href="/sign-up"] {
+    background:var(--orgy) !important; color:var(--ink) !important;
+    font-weight:700; border-radius:10px;
+  }
+  #checkup-result-card a[href="/sign-up"]:hover { background:var(--orgy-deep) !important; }
+  #checkup-result-card a[href="/start-here"] { color:var(--blue-deep) !important; }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--green);"></span>
+          Bassim Eledath's 8 Levels of Agentic Engineering
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.3rem,4.6vw,3.7rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          The <span class="text-[var(--blue)]">Coordination Checkup.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[35rem] mx-auto md:mx-0 mt-5">
+          24 questions. Ten minutes. You get a number out of 8.0, the level you are operating at, and a roadmap for the next jump.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-center md:justify-start mt-8">
+          <a href="#quiz" class="btn-primary px-8 py-4 text-[16px]">Start the checkup &rarr;</a>
+        </div>
+        <p class="font-mono text-[12px] text-[var(--ink-mute)] mt-6 max-w-[34rem] mx-auto md:mx-0 leading-[1.6]">
+          Self-assessment. Honest beats flattering. The score only matters if it points to real next moves.
+        </p>
+      </div>
+      <div class="relative shrink-0" style="width:230px; max-width:58vw;">
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="cu-float block w-full" style="filter:drop-shadow(0 22px 34px rgba(20,22,28,.2));">
+      </div>
     </div>
-
-    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] mb-6 tracking-tight">
-      The <span class="gradient-text">Coordination Checkup</span>
-    </h1>
-    <p class="text-lg sm:text-xl text-gray-400 leading-relaxed max-w-xl mx-auto mb-8">
-      24 questions. Ten minutes. You get a number out of 8.0, the level you are operating at, and a roadmap for the next jump.
-    </p>
-    <a href="#quiz" class="inline-block px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm">
-      Start the Checkup
-    </a>
-    <p class="text-xs text-gray-500 mt-6">
-      Self-assessment. Honest > flattering. The score only matters if it points to real next moves.
-    </p>
   </div>
 </section>
 
-<!-- QUIZ -->
-<section id="quiz" class="bg-otp-950 py-12 sm:py-20 border-t border-white/5">
-  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+<!-- ================= QUIZ ================= -->
+<section id="quiz" class="bg-[var(--grey)]">
+  <div class="max-w-[640px] mx-auto px-6 py-20 sm:py-24">
 
     <!-- Progress -->
     <div id="checkup-progress-wrap" class="mb-8">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-xs text-gray-400 uppercase tracking-[0.14em] font-medium">
+      <div class="flex justify-between items-center mb-2.5">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] font-medium text-[var(--ink-mute)]">
           Question <span id="checkup-current">1</span> of <span id="checkup-total">24</span>
         </span>
-        <span class="text-xs text-gray-400" id="checkup-level-label">Level 1 -- Tab Complete</span>
+        <span class="font-mono text-[11px] text-[var(--ink-mute)]" id="checkup-level-label">Level 1 -- Tab Complete</span>
       </div>
-      <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-        <div id="checkup-progress-bar" class="h-full bg-otp-500 rounded-full transition-all" style="width: 4%"></div>
+      <div class="w-full h-1.5 rounded-full overflow-hidden" style="background:var(--line);">
+        <div id="checkup-progress-bar" class="h-full rounded-full transition-all" style="width:4%; background:var(--blue);"></div>
       </div>
     </div>
 
     <!-- Question card -->
-    <div id="checkup-question-card" class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
-      <div class="text-xs text-otp-300 uppercase tracking-[0.14em] font-medium mb-3" id="q-level-tag">Level 1</div>
-      <h2 class="text-xl sm:text-2xl font-bold text-white leading-snug mb-6" id="q-prompt">Loading...</h2>
-      <div class="space-y-2" id="q-options"></div>
+    <div id="checkup-question-card" class="card p-7 sm:p-9">
+      <div class="eyebrow mb-3" id="q-level-tag" style="color:var(--blue-deep);">Level 1</div>
+      <h2 class="font-display text-[var(--ink)] leading-snug mb-6" id="q-prompt"
+          style="font-size:clamp(1.25rem,2.6vw,1.6rem); font-weight:700;">Loading...</h2>
+      <div class="space-y-2.5" id="q-options"></div>
       <div class="flex justify-between items-center mt-8">
-        <button id="q-back" type="button" class="text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+        <button id="q-back" type="button"
+                class="text-[14px] font-semibold text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed" disabled>
           &larr; Back
         </button>
-        <button id="q-skip" type="button" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+        <button id="q-skip" type="button"
+                class="font-mono text-[12px] text-[var(--ink-mute)] hover:text-[var(--ink-soft)] transition-colors">
           Not sure -- skip
         </button>
       </div>
     </div>
 
     <!-- Contact gate (hidden until last question answered) -->
-    <div id="checkup-gate-card" class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 hidden">
-      <div class="text-xs text-otp-300 uppercase tracking-[0.14em] font-medium mb-3">Almost done</div>
-      <h2 class="text-2xl sm:text-3xl font-bold text-white leading-snug mb-3">
+    <div id="checkup-gate-card" class="card p-7 sm:p-9 hidden">
+      <div class="eyebrow mb-3" style="color:var(--green-deep);">Almost done</div>
+      <h2 class="font-display text-[var(--ink)] leading-snug mb-3"
+          style="font-size:clamp(1.5rem,3vw,2.05rem); font-weight:700;">
         You answered all 24. Where should we send the result?
       </h2>
-      <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+      <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.7] mb-6">
         Your score, the level you are operating at, and a personalized roadmap. We email a copy so you can share it with your team. No spam, unsubscribe anytime.
       </p>
       <form id="checkup-contact-form" class="space-y-3">
-        <input type="text" name="name" required placeholder="Full name" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
-        <input type="email" name="email" required placeholder="Work email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
-        <input type="text" name="company" placeholder="Company (optional)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
-        <input type="text" name="role" placeholder="Your role (optional)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-otp-500 focus:bg-white/10 transition-colors" />
-        <button type="submit" id="checkup-submit-btn" class="w-full px-8 py-3.5 bg-otp-500 text-white rounded-xl font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 text-sm mt-2">
+        <input type="text" name="name" required placeholder="Full name"
+               class="w-full rounded-lg px-4 py-3 text-[14px] text-[var(--ink)] placeholder-[var(--ink-mute)] focus:outline-none transition-colors"
+               style="background:var(--white); border:1px solid var(--line);" />
+        <input type="email" name="email" required placeholder="Work email"
+               class="w-full rounded-lg px-4 py-3 text-[14px] text-[var(--ink)] placeholder-[var(--ink-mute)] focus:outline-none transition-colors"
+               style="background:var(--white); border:1px solid var(--line);" />
+        <input type="text" name="company" placeholder="Company (optional)"
+               class="w-full rounded-lg px-4 py-3 text-[14px] text-[var(--ink)] placeholder-[var(--ink-mute)] focus:outline-none transition-colors"
+               style="background:var(--white); border:1px solid var(--line);" />
+        <input type="text" name="role" placeholder="Your role (optional)"
+               class="w-full rounded-lg px-4 py-3 text-[14px] text-[var(--ink)] placeholder-[var(--ink-mute)] focus:outline-none transition-colors"
+               style="background:var(--white); border:1px solid var(--line);" />
+        <button type="submit" id="checkup-submit-btn" class="btn-primary w-full px-8 py-4 text-[15px] mt-2">
           Reveal my score
         </button>
-        <p class="text-xs text-gray-500 text-center pt-2">
+        <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center pt-2 leading-[1.6]">
           We use your email to send the result and occasional OTP updates. Never sold.
         </p>
       </form>
-      <div id="checkup-error" class="hidden mt-4 text-sm text-red-400 text-center"></div>
+      <div id="checkup-error" class="hidden mt-4 text-[14px] text-[var(--orange-deep)] text-center"></div>
     </div>
 
     <!-- Result card (hidden until submit) -->

@@ -112,7 +112,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       ORDER BY f.published_at DESC NULLS LAST
       LIMIT 50
     `);
-    return reply.view('pages/browse', { title: 'Browse Intelligence - OTP', description: 'Browse published Organizational Operating Systems. See how organizations coordinate their AI agent teams.', canonical: BASE_URL + '/browse', breadcrumbs: bc({ name: 'Browse', url: BASE_URL + '/browse' }), jsonLd: { '@context': 'https://schema.org', '@type': 'DataCatalog', name: 'OTP Intelligence Catalog', description: 'Published Organizational Operating Systems with coordination intelligence.', url: BASE_URL + '/browse' }, oosFiles: rows.rows || [] });
+    return renderV7(reply, 'browse', { title: 'Browse Intelligence - OTP', description: 'Browse published Organizational Operating Systems. See how organizations coordinate their AI agent teams.', canonical: BASE_URL + '/browse', breadcrumbs: bc({ name: 'Browse', url: BASE_URL + '/browse' }), jsonLd: { '@context': 'https://schema.org', '@type': 'DataCatalog', name: 'OTP Intelligence Catalog', description: 'Published Organizational Operating Systems with coordination intelligence.', url: BASE_URL + '/browse' }, oosFiles: rows.rows || [] });
   });
 
   // Search
@@ -799,7 +799,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const groupedOrder = (grouped['#'].length ? ['#'] : []).concat(letters);
     const activeLetters = new Set(groupedOrder.filter(L => grouped[L].length > 0));
     const totalCount = allTerms.length;
-    return reply.view('pages/glossary', {
+    return renderV7(reply, 'glossary', {
       title: `AI Coordination Dictionary - ${totalCount} Terms Defined - OTP`,
       description: `The definitive reference for AI agent coordination, EOS, Scaling Up, 4DX, OKRs, and Holacracy terminology. ${totalCount} plain-English definitions covering protocols, frameworks, and the patterns that hold AI agent teams together.`,
       canonical: glossaryUrl,
@@ -949,7 +949,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // commercial-intent buyer prompts from the SurgeGraph AI-ranking audit
   // (2026-05-15). Hub at /answers, one page per cluster at /answers/<slug>.
   app.get('/answers', async (request, reply) => {
-    return reply.view('pages/aeo-hub', {
+    return renderV7(reply, 'aeo-hub', {
       title: 'Answers: Organizing, Governing & Coordinating AI Agents - OTP',
       description: 'Direct answers to what operators ask AI engines about running AI agents inside a company: coordination, operating systems, governance, playbooks, and collaboration.',
       canonical: BASE_URL + '/answers',
@@ -1918,7 +1918,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       claimed: allExperts.filter((e: any) => e.claimed === true).length,
       eos: allExperts.filter((e: any) => e.directory_source === 'eosworldwide').length,
     };
-    return reply.view('pages/experts-browse', {
+    return renderV7(reply, 'experts-browse', {
       title: 'Operating-System Coach Directory | OTP',
       description: `Public directory of ${counts.total}+ operating-system coaches and consultants -- EOS Implementers, Scaling Up coaches, and OTP-native publishers. Filter by framework, location, or expertise.`,
       canonical: BASE_URL + '/experts',
@@ -3832,7 +3832,7 @@ Founder, OTP</p>
       WHERE f.status = 'published'
       GROUP BY o.industry ORDER BY org_count DESC
     `) as any;
-    return reply.view('pages/industries', {
+    return renderV7(reply, 'industries', {
       title: 'AI Coordination by Industry - OTP',
       description: 'See how organizations in different industries coordinate their AI agent teams. Browse coordination intelligence by industry.',
       canonical: BASE_URL + '/industries',
@@ -5458,7 +5458,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
   // ---------- Coordination Checkup ----------
   app.get('/checkup', async (_request, reply) => {
-    return reply.view('pages/checkup', {
+    return renderV7(reply, 'checkup', {
       title: 'Coordination Checkup -- Score Yourself on the 8 Levels of Agentic Maturity - OTP',
       description: '24 questions, ten minutes. Get a number out of 8.0, the level you are operating at, and a personalized roadmap. Built on Bassim Eledath\'s 8 Levels of Agentic Engineering.',
       canonical: BASE_URL + '/checkup',

@@ -1,116 +1,158 @@
+<%# /experts -- v7 layout (light, editorial). Operating-system coach directory.
+    Content sections only -- layout supplies head/nav/footer. %>
 <%
   // experts: array of consultant_profiles rows (camelCase columns from cp.*)
   // counts: { total, claimed, eos }
 %>
-<div class="max-w-6xl mx-auto px-4 py-8">
+<style>
+  .ex-wave { animation:ex-wave 3.4s ease-in-out infinite; transform-origin:72% 88%; }
+  @keyframes ex-wave { 0%,68%,100%{transform:rotate(0);} 80%{transform:rotate(15deg);} 90%{transform:rotate(-7deg);} }
+  @media (prefers-reduced-motion:reduce){ .ex-wave{ animation:none; } }
+  .ex-input, .ex-select {
+    font-family:'Inter',sans-serif; font-size:13px;
+    color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:9px;
+    padding:9px 12px; transition:border-color .15s ease;
+  }
+  .ex-select { font-family:'JetBrains Mono',monospace; font-size:12px; }
+  .ex-input::placeholder { color:var(--ink-mute); }
+  .ex-input:focus, .ex-select:focus { outline:none; border-color:var(--blue); }
+  .ex-badge {
+    font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:600;
+    letter-spacing:0.05em; text-transform:uppercase;
+    padding:3px 8px; border-radius:6px; border:1px solid;
+  }
+  .ex-prose a { color:var(--blue-deep); font-weight:600; border-bottom:1.5px solid currentColor; }
+</style>
 
-  <!-- Header -->
-  <div class="mb-6">
-    <div class="flex items-center justify-between gap-4 flex-wrap">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Operating-System Coach Directory</h1>
-        <p class="text-sm text-gray-500 mt-1">
+<!-- ================= HERO + FILTERS ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px] sm:pb-14">
+
+    <div class="flex flex-col-reverse md:flex-row items-start gap-8 md:gap-12">
+      <div class="flex-1">
+        <div class="eyebrow mb-4 flex items-center gap-2.5">
+          <span class="tick" style="background:var(--green);"></span>Directory
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2rem,4.2vw,3.2rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
+          Operating-System <span class="text-[var(--blue)]">Coach Directory</span>.
+        </h1>
+        <p class="font-mono text-[12.5px] text-[var(--ink-mute)] mt-4">
           <%= counts.total %> coaches listed
           <% if (counts.eos > 0) { %> &middot; <%= counts.eos %> EOS Implementers<% } %>
           <% if (counts.claimed > 0) { %> &middot; <%= counts.claimed %> claimed<% } %>
         </p>
+        <p class="ex-prose text-[15px] sm:text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[42rem] mt-4">
+          Public directory of operating-system coaches and consultants. Listings include EOS Implementers (seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow">EOS Worldwide's public directory</a>), Scaling Up coaches, and OTP-native publishers. Coaches can <a href="/for-coaches">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
+        </p>
+        <div class="mt-6">
+          <a href="/for-coaches" class="btn-primary inline-block px-6 py-3 text-[15px]">Are you a coach? Claim your profile &rarr;</a>
+        </div>
       </div>
-      <a href="/for-coaches" class="px-4 py-2 bg-otp-500 text-white rounded hover:bg-otp-400 text-sm font-medium whitespace-nowrap">Are you a coach? Claim your profile</a>
+      <div class="shrink-0 self-center md:self-start" style="width:96px; max-width:26vw;">
+        <img src="/public/hand-3.png" alt="" aria-hidden="true"
+             class="ex-wave block w-full" style="filter:drop-shadow(0 12px 20px rgba(20,22,28,.15));">
+      </div>
     </div>
 
-    <p class="text-gray-600 mt-4 max-w-3xl text-sm sm:text-base">
-      Public directory of operating-system coaches and consultants. Listings include EOS Implementers (seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a>), Scaling Up coaches, and OTP-native publishers. Coaches can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
-    </p>
-  </div>
-
-  <!-- Filters -->
-  <div class="bg-white p-4 rounded-lg border mb-6 flex gap-3 flex-wrap items-center">
-    <div class="flex-1 min-w-[200px]">
-      <input type="text" id="filter-search" placeholder="Search by name, city, or framework..." class="w-full text-sm border rounded px-3 py-1.5 focus:ring-2 focus:ring-otp-500 focus:border-otp-500 outline-none">
+    <!-- Filters -->
+    <div class="card p-4 sm:p-5 mt-10 flex gap-3 flex-wrap items-center">
+      <div class="flex-1 min-w-[200px]">
+        <input type="text" id="filter-search" placeholder="Search by name, city, or framework..." class="ex-input w-full">
+      </div>
+      <select id="filter-source" class="ex-select">
+        <option value="">All listings</option>
+        <option value="eosworldwide">EOS Implementers</option>
+        <option value="otp">OTP Publishers</option>
+        <option value="claimed">Claimed only</option>
+      </select>
+      <select id="filter-country" class="ex-select">
+        <option value="">All countries</option>
+      </select>
     </div>
-    <select id="filter-source" class="text-sm border rounded px-3 py-1.5">
-      <option value="">All listings</option>
-      <option value="eosworldwide">EOS Implementers</option>
-      <option value="otp">OTP Publishers</option>
-      <option value="claimed">Claimed only</option>
-    </select>
-    <select id="filter-country" class="text-sm border rounded px-3 py-1.5">
-      <option value="">All countries</option>
-    </select>
   </div>
+</section>
 
-  <!-- Cards -->
-  <div id="experts-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <% if (typeof experts !== 'undefined' && experts.length > 0) { %>
-      <% experts.forEach(function(e) {
-        var isEOS = e.directory_source === 'eosworldwide';
-        var isClaimed = e.claimed === true;
-        var locParts = [e.geo_city, e.geo_state, e.geo_country].filter(Boolean);
-        var locStr = locParts.join(', ');
-        var sourceTag = isEOS ? 'eosworldwide' : (e.directory_source || 'otp');
-        var claimTag = isClaimed ? 'claimed' : 'unclaimed';
-      %>
-        <a href="/expert/<%= e.slug %>"
-           class="bg-white p-4 rounded-lg border claim-card block"
-           data-name="<%= (e.display_name || '').toLowerCase() %>"
-           data-city="<%= (e.geo_city || '').toLowerCase() %>"
-           data-country="<%= (e.geo_country || '') %>"
-           data-source="<%= sourceTag %>"
-           data-claim="<%= claimTag %>">
-          <div class="flex items-start gap-3">
-            <% if (e.photo_url) { %>
-              <img src="<%= e.photo_url %>" alt="<%= e.display_name %>" loading="lazy" class="w-14 h-14 rounded-full object-cover shrink-0">
-            <% } else { %>
-              <div class="w-14 h-14 rounded-full bg-otp-500 text-white flex items-center justify-center text-lg font-bold shrink-0">
-                <%= (e.display_name || '?').charAt(0).toUpperCase() %>
-              </div>
-            <% } %>
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-gray-900 truncate"><%= e.display_name %></div>
-              <% if (locStr) { %>
-                <div class="text-xs text-gray-500 mt-0.5 truncate"><%= locStr %></div>
+<!-- ================= CARDS ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-16 sm:py-20">
+
+    <div id="experts-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% if (typeof experts !== 'undefined' && experts.length > 0) { %>
+        <% experts.forEach(function(e) {
+          var isEOS = e.directory_source === 'eosworldwide';
+          var isClaimed = e.claimed === true;
+          var locParts = [e.geo_city, e.geo_state, e.geo_country].filter(Boolean);
+          var locStr = locParts.join(', ');
+          var sourceTag = isEOS ? 'eosworldwide' : (e.directory_source || 'otp');
+          var claimTag = isClaimed ? 'claimed' : 'unclaimed';
+        %>
+          <a href="/expert/<%= e.slug %>"
+             class="card lift p-5 block"
+             data-name="<%= (e.display_name || '').toLowerCase() %>"
+             data-city="<%= (e.geo_city || '').toLowerCase() %>"
+             data-country="<%= (e.geo_country || '') %>"
+             data-source="<%= sourceTag %>"
+             data-claim="<%= claimTag %>">
+            <div class="flex items-start gap-3.5">
+              <% if (e.photo_url) { %>
+                <img src="<%= e.photo_url %>" alt="<%= e.display_name %>" loading="lazy" class="w-14 h-14 rounded-full object-cover shrink-0">
+              <% } else { %>
+                <div class="w-14 h-14 rounded-full text-white flex items-center justify-center text-lg font-bold shrink-0 font-display"
+                     style="background:linear-gradient(135deg,var(--blue),var(--blue-deep));">
+                  <%= (e.display_name || '?').charAt(0).toUpperCase() %>
+                </div>
               <% } %>
-              <% if (e.headline) { %>
-                <p class="text-xs text-gray-600 mt-1.5 line-clamp-2"><%= e.headline %></p>
+              <div class="flex-1 min-w-0">
+                <div class="font-display font-bold text-[15px] text-[var(--ink)] truncate"><%= e.display_name %></div>
+                <% if (locStr) { %>
+                  <div class="font-mono text-[11px] text-[var(--ink-mute)] mt-0.5 truncate"><%= locStr %></div>
+                <% } %>
+                <% if (e.headline) { %>
+                  <p class="text-[12.5px] text-[var(--ink-soft)] leading-[1.5] mt-1.5 line-clamp-2"><%= e.headline %></p>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Source / claim badges -->
+            <div class="flex flex-wrap gap-1.5 mt-3.5">
+              <% if (isEOS) { %>
+                <span class="ex-badge" style="background:rgba(13,125,242,0.08);color:var(--blue-deep);border-color:rgba(13,125,242,0.2);">EOS Implementer</span>
+              <% } else if (sourceTag === 'otp') { %>
+                <span class="ex-badge" style="background:rgba(189,214,34,0.18);color:var(--orgy-deep);border-color:rgba(163,186,23,0.4);">OTP Publisher</span>
+              <% } %>
+              <% if (isClaimed) { %>
+                <span class="ex-badge" style="background:rgba(10,157,99,0.1);color:var(--green-deep);border-color:rgba(10,157,99,0.28);">Claimed</span>
+              <% } else if (e.directory_source) { %>
+                <span class="ex-badge" style="background:var(--grey);color:var(--ink-mute);border-color:var(--line);">Directory listing</span>
               <% } %>
             </div>
-          </div>
+          </a>
+        <% }); %>
+      <% } else { %>
+        <div class="col-span-full card p-12 sm:p-16 text-center">
+          <div class="font-display text-[1.2rem] font-bold text-[var(--ink)] mb-2">No coaches in the directory yet.</div>
+          <p class="text-[14px] text-[var(--ink-soft)] leading-[1.6]">
+            If you are a coach, <a href="/for-coaches" class="text-[var(--blue-deep)] font-semibold link-u">claim your profile</a>.
+          </p>
+        </div>
+      <% } %>
+    </div>
 
-          <!-- Source / claim badges -->
-          <div class="flex flex-wrap gap-1.5 mt-3">
-            <% if (isEOS) { %>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-medium">EOS Implementer</span>
-            <% } else if (sourceTag === 'otp') { %>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-otp-50 text-otp-700 border border-otp-100 font-medium">OTP Publisher</span>
-            <% } %>
-            <% if (isClaimed) { %>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">Claimed</span>
-            <% } else if (e.directory_source) { %>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200 font-medium">Directory listing</span>
-            <% } %>
-          </div>
-        </a>
-      <% }); %>
-    <% } else { %>
-      <div class="col-span-full text-center py-16 text-gray-400">
-        <p class="text-lg mb-2">No coaches in the directory yet.</p>
-        <p class="text-sm">If you're a coach, <a href="/for-coaches" class="text-otp-500 hover:underline">claim your profile</a>.</p>
-      </div>
-    <% } %>
+    <!-- Trademark + sourcing footer -->
+    <div class="ex-prose mt-14 pt-7 border-t border-[var(--line)] text-[12.5px] text-[var(--ink-mute)] leading-[1.65] max-w-[44rem]">
+      <p class="mb-3">
+        <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-soft)]">Sourcing.</span>
+        Profiles tagged "EOS Implementer" are seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow">EOS Worldwide's public directory</a> via their open WordPress REST API. Each listing links back to its source page. Implementers can <a href="/for-coaches">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown">request removal</a>.
+      </p>
+      <p class="mb-2">
+        <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-soft)]">Trademarks.</span>
+        EOS&reg;, Entrepreneurial Operating System&reg;, EOS Implementer&reg;, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. Listings here are factual references to publicly available coach profiles and do not imply endorsement in either direction.
+      </p>
+    </div>
   </div>
-
-  <!-- Trademark + sourcing footer -->
-  <div class="mt-12 pt-6 border-t border-gray-200 text-xs text-gray-500 max-w-3xl">
-    <p class="mb-2">
-      <strong class="text-gray-700">Sourcing.</strong>
-      Profiles tagged "EOS Implementer" are seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow" class="text-otp-500 hover:text-otp-600 underline">EOS Worldwide's public directory</a> via their open WordPress REST API. Each listing links back to its source page. Implementers can <a href="/for-coaches" class="text-otp-500 hover:text-otp-600 underline">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown" class="text-otp-500 hover:text-otp-600 underline">request removal</a>.
-    </p>
-    <p class="mb-2">
-      <strong class="text-gray-700">Trademarks.</strong>
-      EOS®, Entrepreneurial Operating System®, EOS Implementer®, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. Listings here are factual references to publicly available coach profiles and do not imply endorsement in either direction.
-    </p>
-  </div>
-</div>
+</section>
 
 <script>
 (function() {
