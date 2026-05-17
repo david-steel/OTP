@@ -130,6 +130,8 @@
     flex:0 0 660px; position:relative; width:660px; height:520px;
   }
 
+  .hero2-mascot-m { display:none; }
+
   /* entrance: elements start hidden, animate in on load */
   .rise { opacity:0; animation:h-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
   @keyframes h-rise { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
@@ -210,7 +212,21 @@
   @media (max-width:860px){
     .hero2-stage{ display:none; }
     .hero2-copy{ min-width:0; }
-    .h-task-grid{ grid-template-columns:repeat(2,1fr); }
+    .h-tasks{ display:none; }
+    .hero2-mascot-m{
+      display:flex; justify-content:center; position:relative;
+      margin-top:22px;
+    }
+    .hero2-mascot-m img{
+      position:relative; width:min(300px,78vw); display:block;
+      animation:h-float 5.5s ease-in-out infinite;
+    }
+    .hero2-mascot-m::before{
+      content:""; position:absolute; left:50%; bottom:5%;
+      transform:translateX(-50%); width:66%; height:32%;
+      background:radial-gradient(ellipse, rgba(13,125,242,0.20), transparent 70%);
+      animation:h-breathe 5.5s ease-in-out infinite;
+    }
   }
 </style>
 
@@ -315,6 +331,11 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- mobile mascot: replaces the desktop scene + task row on small screens -->
+    <div class="hero2-mascot-m">
+      <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot">
     </div>
 
     <!-- task row -->
