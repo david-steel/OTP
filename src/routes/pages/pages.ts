@@ -989,13 +989,13 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/about', {
       title: 'About OTP - Organization Transport Protocol',
       description: 'OTP was built by David Steel, who runs 14 AI agents in production. The platform was constructed using the same agent coordination system it measures.',
-      breadcrumbs: bc({ name: 'About', url: BASE_URL + '/about' }),
       canonical: BASE_URL + '/about',
+      ogImage: 'https://orgtp.com/public/images/og-otp-home.png',
       jsonLd: [
-        { '@context': 'https://schema.org', '@type': 'Organization', name: 'OTP - Organization Transport Protocol', url: BASE_URL, founder: { '@type': 'Person', name: 'David Steel' }, description: 'The coordination intelligence layer for AI-native organizations.' },
-        { '@context': 'https://schema.org', '@type': 'Person', name: 'David Steel', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' }, description: 'Runs 14 AI agents in production at Sneeze It. Built OTP to capture and share coordination intelligence.' }
+        { '@context': 'https://schema.org', '@type': 'Organization', name: 'OTP - Organization Transport Protocol', url: BASE_URL, founder: { '@type': 'Person', name: 'David Steel' }, description: 'The operating platform for teams of people and AI agents.' },
+        { '@context': 'https://schema.org', '@type': 'Person', name: 'David Steel', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' }, description: 'Runs 14 AI agents in production at Sneeze It. Built OTP to share what works across organizations.' }
       ]
-    });
+    }, { layout: 'layouts/v7' });
   });
 
   // Super Admin Dashboard

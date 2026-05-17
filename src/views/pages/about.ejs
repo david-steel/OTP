@@ -1,61 +1,166 @@
-<!-- About header -->
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14">
-    <div class="animate-fade-in-up">
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">About OTP</h1>
-      <p class="text-gray-400 mt-4 max-w-lg">The Organization Transport Protocol. Humans, AI agents, and the SOPs they share -- one queryable accountability graph, one network across organizations.</p>
+<%# /about -- v7 layout (light, editorial). Origin story, stack, founder.
+    Rendered via reply.view('pages/about', data, { layout: 'layouts/v7' }). %>
+<style>
+  .ab-float { animation:ab-float 6.5s ease-in-out infinite; }
+  @keyframes ab-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-13px);} }
+  .ab-glow {
+    position:absolute; left:50%; top:54%; width:78%; height:60%;
+    transform:translate(-50%,-50%); z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse, rgba(13,125,242,0.20), transparent 70%);
+    animation:ab-breathe 6.5s ease-in-out infinite;
+  }
+  @keyframes ab-breathe { 0%,100%{opacity:.5;} 50%{opacity:1;} }
+  .ab-prose h2 {
+    font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700;
+    font-size:clamp(1.45rem,2.6vw,1.95rem); letter-spacing:-0.01em;
+    color:var(--ink); line-height:1.2; margin-top:2.4rem;
+  }
+  .ab-prose h2:first-child { margin-top:0; }
+  .ab-prose p { color:var(--ink-soft); font-size:16px; line-height:1.78; margin-top:1rem; }
+  .ab-prose strong { color:var(--ink); font-weight:600; }
+  .ab-prose a { color:var(--blue-deep); font-weight:600; border-bottom:1.5px solid currentColor; }
+  .ab-wave { animation:ab-wave 3.2s ease-in-out infinite; transform-origin:75% 85%; }
+  @keyframes ab-wave { 0%,70%,100%{transform:rotate(0);} 80%{transform:rotate(14deg);} 90%{transform:rotate(-6deg);} }
+  @media (prefers-reduced-motion:reduce){ .ab-float,.ab-glow,.ab-wave{ animation:none; } }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1180px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+    <div class="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">
+          <span class="tick" style="background:var(--blue);"></span>About OTP
+        </div>
+        <h1 class="font-display text-[var(--ink)]"
+            style="font-size:clamp(2.3rem,4.6vw,3.7rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+          Humans, AI agents, and the <span class="text-[var(--blue)]">SOPs they share.</span>
+        </h1>
+        <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto md:mx-0 mt-5">
+          OTP is the operating layer that wires them together inside an organization, and shares what works across organizations.
+        </p>
+      </div>
+      <div class="relative shrink-0" style="width:260px; max-width:62vw;">
+        <div class="ab-glow"></div>
+        <img src="/public/orgy-cut.png" alt="Orgy, the OTP mascot"
+             class="ab-float relative block w-full" style="z-index:1; filter:drop-shadow(0 22px 34px rgba(20,22,28,.2));">
+      </div>
     </div>
   </div>
 </section>
 
-<!-- About body -->
-<section class="bg-white py-10 sm:py-14">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
-    <article class="text-gray-700 leading-[1.8] text-[15px] sm:text-base space-y-5">
-
-      <h2 class="text-xl font-bold text-gray-900 mt-8">The Origin</h2>
+<!-- ================= ORIGIN + MISSION ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[720px] mx-auto px-6 py-20 sm:py-24">
+    <div class="ab-prose">
+      <h2>The Origin</h2>
       <p>OTP started with a question: if everything about how your AI team operates were lost, what single artifact would contain enough intelligence to rebuild it?</p>
       <p>That question came from running 14 AI agents in production at <strong>Sneeze It</strong>, a digital agency. Agents named Radar (Chief of Staff), Dan (Strategic Co-Founder), Dash (Performance Analyst), Pepper (Executive Assistant), Crystal (Project Manager), Dirk (Revenue Operator), Neil (Chief Learning Officer), and more. Each with a clear seat, clear tools, and clear accountability.</p>
-      <p>The coordination rules that kept them from colliding lived in a single document. We called it the Organizational Operating System. Other organizations wanted to compare theirs, so we built OTP to share them.</p>
-      <p>Then a user asked, "can I add humans to the chart?" We added them. Then we put AI agents under those humans. Then we let humans author SOPs that the agents inherit at runtime. The product expanded -- the OOS was never only for agents. It was always for the whole organization. OTP today carries that forward: humans, AI agents, and the SOPs they share.</p>
+      <p>The coordination rules that kept them from colliding lived in a single document. We called it the Operating System. Other organizations wanted to compare theirs, so we built OTP to share them.</p>
+      <p>Then a user asked, "can I add humans to the chart?" We added them. Then we put AI agents under those humans. Then we let humans author SOPs that the agents inherit at runtime. The product expanded. It was always for the whole organization: humans, AI agents, and the SOPs they share.</p>
 
-      <h2 class="text-xl font-bold text-gray-900 mt-8">The Mission</h2>
-      <p>Every organization is solving the same coordination problems from scratch -- between humans, between AI agents, and between the two. Who owns what? Which SOP governs which decision? What does an AI inherit when a human leaves? When does human oversight engage?</p>
+      <h2>The Mission</h2>
+      <p>Every organization is solving the same coordination problems from scratch. Between humans, between AI agents, and between the two. Who owns what? Which SOP governs which decision? What does an AI inherit when a human leaves? When does human oversight engage?</p>
       <p>These answers exist, scattered across thousands of organizations. OTP makes them visible, comparable, and inheritable. The chart is the surface. The SOPs are the substance. The network is the leverage.</p>
+    </div>
+  </div>
+</section>
 
-      <h2 class="text-xl font-bold text-gray-900 mt-8">The Stack</h2>
-      <p>The AI work-layer has three pieces. MCP and A2A are infrastructure between agents and their tools or each other. OTP is the layer above: the organization itself.</p>
-      <ul class="list-disc ml-6 space-y-1">
-        <li><strong>MCP</strong> (Model Context Protocol): Agent-to-Tool. How agents access external capabilities.</li>
-        <li><strong>A2A</strong> (Agent-to-Agent): Agent-to-Agent. How agents negotiate and hand off work.</li>
-        <li><strong>OTP</strong> (Organization Transport Protocol): Org-to-Intelligence. How humans, agents, AI instances, and SOPs are wired together inside an organization, and shared across them.</li>
-      </ul>
-      <p>MCP and A2A move bytes. OTP moves accountability. The three layers are complementary. <a href="/glossary#three-layer-stack" class="text-otp-500 hover:text-otp-600">Learn more about the stack</a>.</p>
+<!-- ================= THE STACK ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
+    <div class="max-w-[640px]">
+      <div class="eyebrow mb-4">The stack</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
+          style="font-size:clamp(1.9rem,3.6vw,2.8rem); font-weight:700;">
+        MCP and A2A move bytes. OTP moves accountability.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        The AI work-layer has three pieces. MCP and A2A are infrastructure between agents and their tools or each other. OTP is the layer above: the organization itself.
+      </p>
+    </div>
 
-      <h2 class="text-xl font-bold text-gray-900 mt-8">Built by the System It Measures</h2>
-      <p>OTP was built using the same AI agent coordination system it is designed to measure. The platform was constructed in 48 hours by a team of AI agents following the rules documented in their own OOS. This is recursive credibility: the system works because it was built by the system. <a href="/blog/built-in-48-hours" class="text-otp-500 hover:text-otp-600">Read the build story</a>.</p>
+    <div class="grid md:grid-cols-3 gap-5 mt-12">
+      <div class="card p-7">
+        <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-mute)] mb-3">Agent to Tool</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.3rem] font-bold mb-2">MCP</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]">Model Context Protocol. How agents reach external capabilities and data.</p>
+      </div>
+      <div class="card p-7">
+        <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-mute)] mb-3">Agent to Agent</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.3rem] font-bold mb-2">A2A</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]">How agents negotiate, hand off work, and stay out of each other's way.</p>
+      </div>
+      <div class="card p-7 border-t-[3px]" style="border-top-color:var(--blue); background:linear-gradient(180deg,rgba(13,125,242,.06),var(--card));">
+        <div class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style="color:var(--blue-deep);">Org to Intelligence</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.3rem] font-bold mb-2">OTP</h3>
+        <p class="text-[13.5px] text-[var(--ink-soft)] leading-[1.65]">How humans, agents, and the SOPs they share are wired together inside an organization, and across them.</p>
+      </div>
+    </div>
+    <a href="/glossary#three-layer-stack" class="inline-block mt-9 text-[15px] text-[var(--ink)] link-u">
+      Learn more about the stack &rarr;
+    </a>
+  </div>
+</section>
 
-      <h2 class="text-xl font-bold text-gray-900 mt-8">The Founder</h2>
-      <div class="bg-gray-50 rounded-xl border border-gray-100 p-6">
-        <div class="flex items-start gap-4">
-          <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-otp-400 to-otp-600 flex items-center justify-center text-white text-xl font-extrabold flex-shrink-0">DS</div>
-          <div>
-            <div class="font-bold text-gray-900 text-lg">David Steel</div>
-            <div class="text-sm text-gray-500 mb-2">Founder, OTP. CEO, Sneeze It.</div>
-            <p class="text-sm text-gray-600 leading-relaxed">David runs Sneeze It, a digital agency powered by 14 AI agents and a human team in production. He built OTP after discovering that the coordination between his humans and his agents was more valuable than any individual agent. His background spans digital advertising, call center operations, and AI systems architecture. He believes every organization will run on a hybrid human-and-AI operating system, and that the SOPs each human writes today are the inheritance every AI agent under them runs on tomorrow.</p>
-          </div>
+<!-- ================= BUILT BY THE SYSTEM ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[920px] mx-auto px-6 py-20 sm:py-24">
+    <div class="card p-8 sm:p-11">
+      <div class="flex flex-col sm:flex-row items-start gap-7">
+        <div class="shrink-0 mx-auto sm:mx-0">
+          <img src="/public/hand-5.png" alt="" aria-hidden="true" class="ab-wave block" style="width:88px; height:auto;">
+        </div>
+        <div>
+          <div class="eyebrow mb-3" style="color:var(--green-deep);">Built by the system it measures</div>
+          <h2 class="font-display text-[var(--ink)] leading-[1.15] mb-3"
+              style="font-size:clamp(1.5rem,2.8vw,2.1rem); font-weight:700;">
+            OTP was built in 48 hours by a team of AI agents.
+          </h2>
+          <p class="text-[15px] text-[var(--ink-soft)] leading-[1.7]">
+            The platform was constructed using the same AI agent coordination system it is designed to measure. The agents followed the rules documented in their own Operating System. This is recursive credibility: the system works because it was built by the system. <a href="/blog/built-in-48-hours" class="text-[var(--blue-deep)] font-semibold link-u">Read the build story</a>.
+          </p>
         </div>
       </div>
+    </div>
+  </div>
+</section>
 
-      <!-- CTA -->
-      <div class="mt-10 text-center">
-        <p class="text-gray-500 mb-4">Map your team. Author the SOPs. Watch the AI agents under each human inherit them.</p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <a href="/dashboard/team" class="inline-flex items-center gap-2 px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-all hover:shadow-lg hover:shadow-otp-500/25 group">Open the team chart<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
-          <a href="/publish" class="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all">Publish your OOS</a>
+<!-- ================= THE FOUNDER ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[720px] mx-auto px-6 py-20 sm:py-24">
+    <div class="eyebrow mb-6">The founder</div>
+    <div class="card p-7 sm:p-9">
+      <div class="flex flex-col sm:flex-row items-start gap-6">
+        <div class="shrink-0 font-display flex items-center justify-center text-white"
+             style="width:72px; height:72px; border-radius:16px; font-weight:800; font-size:24px; background:linear-gradient(135deg,var(--blue),var(--blue-deep));">
+          DS
+        </div>
+        <div>
+          <div class="font-display text-[var(--ink)] text-[1.35rem] font-bold leading-tight">David Steel</div>
+          <div class="font-mono text-[12px] text-[var(--ink-mute)] mt-1 mb-3">Founder, OTP &nbsp;&middot;&nbsp; CEO, Sneeze It</div>
+          <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.72]">
+            David runs Sneeze It, a digital agency powered by 14 AI agents and a human team in production. He built OTP after discovering that the coordination between his humans and his agents was more valuable than any individual agent. His background spans digital advertising, call center operations, and AI systems architecture. He believes every organization will run on a hybrid human-and-AI operating system, and that the SOPs each human writes today are the inheritance every AI agent under them runs on tomorrow.
+          </p>
         </div>
       </div>
+    </div>
+  </div>
+</section>
 
-    </article>
+<!-- ================= CTA ================= -->
+<section class="bg-[var(--orange-block)]">
+  <div class="max-w-[760px] mx-auto px-6 py-24 sm:py-28 text-center">
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.025em] leading-[1.05]"
+        style="font-size:clamp(2.1rem,4.6vw,3.4rem); font-weight:800;">
+      Map your team. Author the SOPs.
+    </h2>
+    <p class="text-[17px] leading-[1.6] max-w-[34rem] mx-auto mt-6" style="color:#5a2a06;">
+      Watch the AI agents under each human inherit them. Free for your whole team while we are in beta.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-9">
+      <a href="/sign-up" class="btn-ink px-8 py-4 text-[16px]">Build your chart &rarr;</a>
+      <a href="/browse" class="btn-ghost px-8 py-4 text-[16px]" style="border-color:rgba(20,22,28,.3);">Browse the network</a>
+    </div>
   </div>
 </section>
