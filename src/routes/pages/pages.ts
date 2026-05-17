@@ -55,22 +55,6 @@ export default async function pageRoutes(app: FastifyInstance) {
     return legacy || null;
   }
 
-  // Homepage
-  // Homepage v3 preview (not live -- for review only)
-  app.get('/home-v3', async (request, reply) => {
-    const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
-    const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
-    return reply.view('pages/home-v3', {
-      title: 'OTP - How the Best AI Teams Run',
-      description: 'How the best AI teams run. Search. Compare. Make yours better. Coordination intelligence from organizations running AI agents in production.',
-      canonical: BASE_URL + '/',
-      noindex: true,
-      publisherCount: ((pubCountRes.rows as any[])?.[0]?.c) || 0,
-      claimCount: ((clmCountRes.rows as any[])?.[0]?.c) || 0,
-      templateCount: 3,
-    });
-  });
-
   // Homepage v7 -- verbiage-corrected redesign, served as a standalone static
   // document (no layout, no DB). Reads the deployed file from public/ so the
   // /public/ image paths resolve. /home-v7 and /public/home-v7.html match.
@@ -1011,15 +995,6 @@ export default async function pageRoutes(app: FastifyInstance) {
         { '@context': 'https://schema.org', '@type': 'Organization', name: 'OTP - Organization Transport Protocol', url: BASE_URL, founder: { '@type': 'Person', name: 'David Steel' }, description: 'The coordination intelligence layer for AI-native organizations.' },
         { '@context': 'https://schema.org', '@type': 'Person', name: 'David Steel', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' }, description: 'Runs 14 AI agents in production at Sneeze It. Built OTP to capture and share coordination intelligence.' }
       ]
-    });
-  });
-
-  // Homepage v2 (preview for Michael)
-  app.get('/v2', async (request, reply) => {
-    return reply.view('pages/home-v2', {
-      title: 'OTP - Get 2.5 Hours Back. Day One.',
-      description: 'Install an AI Chief of Staff for your business. Day one, 2.5 hours back. Every week it gets smarter by learning from hundreds of other businesses.',
-      canonical: BASE_URL + '/v2',
     });
   });
 
