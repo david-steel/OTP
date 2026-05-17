@@ -71,6 +71,17 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Homepage v7 -- verbiage-corrected redesign, served as a standalone static
+  // document (no layout, no DB). Reads the deployed file from public/ so the
+  // /public/ image paths resolve. /home-v7 and /public/home-v7.html match.
+  app.get('/home-v7', async (request, reply) => {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const p = fileURLToPath(new URL('../../../public/home-v7.html', import.meta.url));
+    const html = await readFile(p, 'utf8');
+    return reply.type('text/html').send(html);
+  });
+
   app.get('/', async (request, reply) => {
     const pubCountRes = await db.execute(sql`SELECT COUNT(DISTINCT org_id) AS c FROM oos_files WHERE status = 'published'`) as any;
     const clmCountRes = await db.execute(sql`SELECT COUNT(*) AS c FROM claims WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')`) as any;
