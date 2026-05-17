@@ -1,4 +1,6 @@
 import type { FastifyInstance } from 'fastify';
+import ejs from 'ejs';
+import { fileURLToPath } from 'node:url';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
@@ -35,6 +37,17 @@ function bc(...items: Array<{ name: string; url: string }>) {
 function quarterLabel(d: Date): string {
   const q = Math.floor(d.getMonth() / 3) + 1;
   return `Q${q}-${d.getFullYear()}`;
+}
+
+// v7 pages render the page view + layouts/v7.ejs manually. @fastify/view's
+// layout feature throws if a per-route layout is passed while a global layout
+// is configured, so v7 routes call renderV7 instead of reply.view.
+const V7_VIEWS = fileURLToPath(new URL('../../views', import.meta.url));
+
+async function renderV7(reply: any, page: string, data: Record<string, any> = {}) {
+  const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, data);
+  const html = await ejs.renderFile(`${V7_VIEWS}/layouts/v7.ejs`, { ...data, body });
+  return reply.type('text/html').send(html);
 }
 
 export default async function pageRoutes(app: FastifyInstance) {
@@ -986,7 +999,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // About
   app.get('/about', async (request, reply) => {
-    return reply.view('pages/about', {
+    return renderV7(reply, 'about', {
       title: 'About OTP - Organization Transport Protocol',
       description: 'OTP was built by David Steel, who runs 14 AI agents in production. The platform was constructed using the same agent coordination system it measures.',
       canonical: BASE_URL + '/about',
@@ -995,7 +1008,7 @@ export default async function pageRoutes(app: FastifyInstance) {
         { '@context': 'https://schema.org', '@type': 'Organization', name: 'OTP - Organization Transport Protocol', url: BASE_URL, founder: { '@type': 'Person', name: 'David Steel' }, description: 'The operating platform for teams of people and AI agents.' },
         { '@context': 'https://schema.org', '@type': 'Person', name: 'David Steel', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' }, description: 'Runs 14 AI agents in production at Sneeze It. Built OTP to share what works across organizations.' }
       ]
-    }, { layout: 'layouts/v7' });
+    });
   });
 
   // Super Admin Dashboard
