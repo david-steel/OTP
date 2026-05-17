@@ -1,0 +1,243 @@
+<%# Step 5 of 7 -- agents. POSTs to /api/v1/onboarding/agent (manager_agents).
+    Locals: org, members[], agents[], currentUserId %>
+<%
+function ob_initials(name){
+  var n=String(name||'').trim(); if(!n) return '?';
+  var p=n.split(/\s+/);
+  return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?';
+}
+var ob_palette=['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+function ob_memberIdx(id){ for(var i=0;i<members.length;i++){ if(members[i].id===id) return i; } return 0; }
+function ob_memberName(id){ for(var i=0;i<members.length;i++){ if(members[i].id===id) return members[i].displayName||'Owner'; } return 'Owner'; }
+function ob_runtime(a){ return (a.frontmatter && a.frontmatter.runtime) ? a.frontmatter.runtime : ''; }
+%>
+<style>
+  :root{
+    --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+    --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+    --blue:#0d7df2; --blue-deep:#0a56b0;
+    --orange:#ff7a1a; --orange-deep:#d4540a;
+    --green:#0a9d63; --green-deep:#06724a;
+    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --red:#d4332a;
+    --line:rgba(20,22,28,0.12); --line-soft:rgba(20,22,28,0.07);
+  }
+  html{-webkit-font-smoothing:antialiased;}
+  body{font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); margin:0;
+    background-image:radial-gradient(circle at 84% 8%, rgba(189,214,34,0.10), transparent 38%),
+                     radial-gradient(circle at 12% 92%, rgba(13,125,242,0.07), transparent 40%);}
+  .font-display{font-family:'Schibsted Grotesk','Inter',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--orgy); color:var(--ink);}
+  .rise{opacity:0; animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .pop{opacity:0; animation:pop .5s cubic-bezier(.34,1.4,.5,1) forwards;}
+  @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+  .slide{opacity:0; animation:slide .55s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes slide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+  .seg{height:6px;border-radius:99px;background:var(--grey);flex:1;overflow:hidden;position:relative;}
+  .seg.done::after,.seg.now::after{content:"";position:absolute;inset:0;border-radius:99px;background:var(--orgy);}
+  .seg.done::after{width:100%;}
+  .seg.now::after{width:100%;transform-origin:left;animation:fillseg 1s .25s cubic-bezier(.16,1,.3,1) backwards;}
+  @keyframes fillseg{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .orgy{animation:float 5s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .orgy-glow{animation:breathe 5s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:.9;transform:scale(1.06)}}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 5px;
+    box-shadow:0 14px 34px -16px rgba(20,22,28,.24);}
+  .field input,.field select{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+    padding:10px 13px;font-size:14.5px;color:var(--ink);transition:border-color .15s,box-shadow .15s;font-family:'Inter',sans-serif;}
+  .field input::placeholder{color:#b4b7bf;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(13,125,242,.13);}
+  .field input.bad{border-color:var(--red);box-shadow:0 0 0 3.5px rgba(212,51,42,.12);}
+  .btn-go{background:var(--orgy);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;font-weight:800;
+    border:none;cursor:pointer;border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-go:hover{background:var(--orgy-deep);transform:translateY(-2px);}
+  .btn-go:disabled{opacity:.6;cursor:default;transform:none;}
+  .btn-ink{background:var(--ink);color:#fff;font-family:'Schibsted Grotesk',sans-serif;font-weight:700;
+    border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-ink:hover{background:#24272f;transform:translateY(-2px);}
+  .step-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+    border-radius:99px;padding:4px 12px 4px 5px;}
+  .addbox{background:#fafbf3;border:1.5px dashed rgba(163,186,23,0.55);border-radius:14px;}
+  .agent{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;}
+  .aicon{width:38px;height:38px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;
+    background:rgba(13,125,242,0.10);}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+    padding:3px 8px;border-radius:99px;background:var(--grey);color:var(--ink-soft);}
+  .mini-av{width:22px;height:22px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:10px;color:#fff;}
+  .err{display:none;background:rgba(212,51,42,.08);border:1px solid rgba(212,51,42,.3);color:var(--red);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:10px;}
+  .err.show{display:block;}
+</style>
+
+<header class="border-b border-[var(--line-soft)] bg-[var(--white)]/85 backdrop-blur-sm">
+  <div class="max-w-[1080px] mx-auto px-6 h-[58px] flex items-center justify-between">
+    <span class="mono font-medium text-[17px]"><span class="text-[var(--orgy-deep)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--orgy-deep)]">]</span></span>
+    <span class="mono text-[11px] tracking-[0.16em] text-[var(--ink-mute)]">SETTING UP YOUR ORG</span>
+  </div>
+  <div class="max-w-[1080px] mx-auto px-6 pb-3 -mt-1">
+    <div class="flex gap-1.5">
+      <span class="seg done"></span><span class="seg done"></span><span class="seg done"></span>
+      <span class="seg done"></span><span class="seg now"></span><span class="seg"></span><span class="seg"></span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1000px] mx-auto px-6 pt-12 pb-20">
+  <div class="grid lg:grid-cols-12 gap-x-10 gap-y-10 items-center">
+
+    <div class="lg:col-span-5 relative flex flex-col items-center">
+      <div class="bubble pop max-w-[310px] px-4 py-3 mb-1" style="animation-delay:.5s">
+        <p class="text-[14px] leading-[1.5] text-[var(--ink)]">
+          Now the fun part. Your AI tools get seats <b class="font-semibold text-[var(--blue-deep)]">exactly like the humans</b> &mdash; a name, a job, an owner.
+        </p>
+      </div>
+      <div class="relative pop" style="animation-delay:.2s">
+        <div class="orgy-glow absolute left-1/2 -translate-x-1/2 bottom-3 w-[64%] h-[26%] rounded-full -z-10"
+             style="background:radial-gradient(ellipse, rgba(13,125,242,0.24), transparent 70%);"></div>
+        <img src="/public/images/onboarding-orgy-agent.webp" alt="Orgy" class="orgy relative w-[258px]">
+      </div>
+    </div>
+
+    <div class="lg:col-span-7">
+      <div class="bg-[var(--card)] border border-[var(--line)] rounded-[20px] p-7 sm:p-9 rise"
+           style="animation-delay:.32s; box-shadow:0 2px 6px rgba(20,22,28,.05), 0 26px 50px -28px rgba(20,22,28,.22);">
+
+        <div class="step-chip rise" style="animation-delay:.4s">
+          <img src="/public/images/onboarding-hand-5.webp" alt="5" class="h-[26px] w-auto">
+          <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">STEP 5 OF 7 · AI AGENTS</span>
+        </div>
+
+        <h1 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] mt-4 mb-1.5 rise"
+            style="font-size:clamp(1.8rem,3.2vw,2.4rem); font-weight:800; animation-delay:.46s">
+          Give your AI tools a seat.
+        </h1>
+        <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.55] mb-6 rise" style="animation-delay:.52s">
+          ChatGPT, Claude, a Zap, an autoresponder. If it does real work, it belongs on the chart.
+        </p>
+
+        <div class="addbox p-4 rise" style="animation-delay:.58s">
+          <div class="mono text-[10.5px] tracking-[0.14em] text-[var(--orgy-deep)] font-medium mb-3">ADD AN AGENT</div>
+          <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+            <div class="field"><input type="text" id="ag-name" placeholder="Agent name"></div>
+            <div class="field"><input type="text" id="ag-desc" placeholder="What it does"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5 mb-3">
+            <select class="field" id="ag-runtime">
+              <option value="Claude">Runs on — Claude</option>
+              <option value="ChatGPT">Runs on — ChatGPT</option>
+              <option value="Zapier">Runs on — Zapier</option>
+              <option value="Make">Runs on — Make</option>
+              <option value="Other">Runs on — Other</option>
+            </select>
+            <select class="field" id="ag-owner">
+              <% members.forEach(function(m){ %>
+                <option value="<%= m.id %>" data-name="<%= m.displayName || 'Owner' %>">Owned by — <%= m.displayName || 'You' %></option>
+              <% }); %>
+            </select>
+          </div>
+          <button type="button" id="ag-add" class="btn-go inline-flex items-center gap-1.5 px-5 py-2.5 text-[14px]">
+            <span class="text-[17px] leading-none">+</span> <span>Add agent</span>
+          </button>
+          <div class="err" id="ag-err"></div>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">YOUR AGENTS</span>
+            <span class="text-[11.5px] text-[var(--ink-mute)]"><span id="ag-count"><%= agents.length %></span> agent<%= agents.length === 1 ? '' : 's' %></span>
+          </div>
+          <div class="space-y-2" id="ag-list">
+            <% agents.forEach(function(a){ %>
+              <div class="agent">
+                <div class="aicon">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2" stroke-linecap="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 4v4M8.5 13h.01M15.5 13h.01M9 17h6"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[14px] text-[var(--ink)]"><%= a.name %></div>
+                  <div class="flex items-center gap-2 mt-1">
+                    <% if (a.description) { %><span class="text-[12px] text-[var(--ink-mute)] truncate max-w-[160px]"><%= a.description %></span><% } %>
+                    <% if (ob_runtime(a)) { %><span class="badge"><%= ob_runtime(a) %></span><% } %>
+                    <span class="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)]"><span class="mini-av" style="background:<%= ob_palette[ob_memberIdx(a.ownerMemberId)%ob_palette.length] %>"><%= ob_initials(ob_memberName(a.ownerMemberId)) %></span><%= ob_memberName(a.ownerMemberId) %></span>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="mt-7 rise" style="animation-delay:.84s">
+          <a href="/onboarding/teams" class="btn-ink inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+            Save and continue
+            <span aria-hidden>&rarr;</span>
+          </a>
+          <div class="mt-3.5">
+            <a href="/onboarding/teams" class="text-[13px] text-[var(--ink-mute)] hover:text-[var(--ink)] underline underline-offset-2 transition-colors">
+              Skip for now
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  var addBtn=document.getElementById('ag-add');
+  var nameEl=document.getElementById('ag-name');
+  var descEl=document.getElementById('ag-desc');
+  var runtimeEl=document.getElementById('ag-runtime');
+  var ownerEl=document.getElementById('ag-owner');
+  var err=document.getElementById('ag-err');
+  var list=document.getElementById('ag-list');
+  var countEl=document.getElementById('ag-count');
+  var palette=['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+  var memberIndex={}; <% members.forEach(function(m,i){ %>memberIndex['<%= m.id %>']=<%= i %>;<% }); %>
+  var count=<%= agents.length %>;
+
+  function showErr(m){ err.textContent=m; err.classList.add('show'); }
+  function initials(name){ var n=(name||'').trim(); if(!n) return '?'; var p=n.split(/\s+/); return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?'; }
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  async function add(){
+    err.classList.remove('show'); nameEl.classList.remove('bad');
+    var name=nameEl.value.trim();
+    if(!name){ nameEl.classList.add('bad'); showErr('Give the agent a name.'); return; }
+    var desc=descEl.value.trim();
+    var runtime=runtimeEl.value;
+    var ownerMemberId=ownerEl.value;
+    var ownerName=ownerEl.options[ownerEl.selectedIndex].getAttribute('data-name')||'Owner';
+    addBtn.disabled=true; addBtn.querySelector('span:last-child').textContent='Adding...';
+    try{
+      var res=await fetch('/api/v1/onboarding/agent',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        body:JSON.stringify({name:name,description:desc,runtime:runtime,ownerMemberId:ownerMemberId}),
+      });
+      var data=await res.json().catch(function(){return {};});
+      if(!res.ok){ showErr((data.error&&data.error.message)||'Could not save that agent.'); addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Add agent'; return; }
+      var color=palette[(memberIndex[ownerMemberId]||0)%palette.length];
+      var row=document.createElement('div');
+      row.className='agent slide';
+      row.innerHTML=
+        '<div class="aicon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" stroke-width="2" stroke-linecap="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 4v4M8.5 13h.01M15.5 13h.01M9 17h6"/></svg></div>'+
+        '<div class="flex-1 min-w-0"><div class="font-display font-bold text-[14px] text-[var(--ink)]">'+esc(name)+'</div>'+
+        '<div class="flex items-center gap-2 mt-1">'+
+        (desc?'<span class="text-[12px] text-[var(--ink-mute)] truncate max-w-[160px]">'+esc(desc)+'</span>':'')+
+        '<span class="badge">'+esc(runtime)+'</span>'+
+        '<span class="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)]"><span class="mini-av" style="background:'+color+'">'+esc(initials(ownerName))+'</span>'+esc(ownerName)+'</span></div></div>';
+      list.appendChild(row);
+      count+=1; countEl.textContent=count;
+      nameEl.value=''; descEl.value='';
+    }catch(e){ showErr('Network error. Try again.'); }
+    addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Add agent';
+  }
+  addBtn.addEventListener('click', add);
+})();
+</script>

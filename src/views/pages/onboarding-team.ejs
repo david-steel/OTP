@@ -1,0 +1,256 @@
+<%# Step 2 of 7 -- team. Invites POST to /api/v1/onboarding/invite (Resend email).
+    Locals: org, members[], invites[], currentUserId %>
+<%
+function ob_initials(name){
+  var n = String(name||'').trim();
+  if(!n) return '?';
+  var p = n.split(/\s+/);
+  return ((p[0][0]||'') + (p.length>1 ? (p[p.length-1][0]||'') : '')).toUpperCase() || '?';
+}
+var ob_palette = ['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+function ob_color(i){ return ob_palette[i % ob_palette.length]; }
+function ob_role(r){
+  var m = { owner:'Owner', admin:'Admin', manager:'Manager', managee:'Team member',
+            observer:'Observer', implementer:'Implementer', visionary:'Visionary',
+            integrator:'Integrator', free:'Team member', inactive:'Inactive', member:'Team member' };
+  return m[r] || 'Team member';
+}
+var ob_seatCount = members.length + invites.length;
+%>
+<style>
+  :root{
+    --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+    --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+    --blue:#0d7df2; --blue-deep:#0a56b0;
+    --orange:#ff7a1a; --orange-deep:#d4540a;
+    --green:#0a9d63; --green-deep:#06724a;
+    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --red:#d4332a;
+    --line:rgba(20,22,28,0.12); --line-soft:rgba(20,22,28,0.07);
+  }
+  html{-webkit-font-smoothing:antialiased;}
+  body{font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); margin:0;
+    background-image:radial-gradient(circle at 84% 8%, rgba(189,214,34,0.10), transparent 38%),
+                     radial-gradient(circle at 12% 92%, rgba(13,125,242,0.07), transparent 40%);}
+  .font-display{font-family:'Schibsted Grotesk','Inter',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--orgy); color:var(--ink);}
+  .rise{opacity:0; animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .pop{opacity:0; animation:pop .5s cubic-bezier(.34,1.4,.5,1) forwards;}
+  @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+  .slide{opacity:0; animation:slide .55s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes slide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+  .seg{height:6px;border-radius:99px;background:var(--grey);flex:1;overflow:hidden;position:relative;}
+  .seg.done::after,.seg.now::after{content:"";position:absolute;inset:0;border-radius:99px;background:var(--orgy);}
+  .seg.done::after{width:100%;}
+  .seg.now::after{width:100%;transform-origin:left;animation:fillseg 1s .25s cubic-bezier(.16,1,.3,1) backwards;}
+  @keyframes fillseg{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .orgy{animation:float 5s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .orgy-glow{animation:breathe 5s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:.9;transform:scale(1.06)}}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 5px;
+    box-shadow:0 14px 34px -16px rgba(20,22,28,.24);}
+  .field input,.field select{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+    padding:10px 13px;font-size:14.5px;color:var(--ink);transition:border-color .15s,box-shadow .15s;font-family:'Inter',sans-serif;}
+  .field input::placeholder{color:#b4b7bf;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(13,125,242,.13);}
+  .field input.bad{border-color:var(--red);box-shadow:0 0 0 3.5px rgba(212,51,42,.12);}
+  .btn-go{background:var(--orgy);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;font-weight:800;
+    border:none;cursor:pointer;border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-go:hover{background:var(--orgy-deep);transform:translateY(-2px);}
+  .btn-go:disabled{opacity:.6;cursor:default;transform:none;}
+  .btn-ink{background:var(--ink);color:#fff;font-family:'Schibsted Grotesk',sans-serif;font-weight:700;
+    border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-ink:hover{background:#24272f;transform:translateY(-2px);}
+  .step-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+    border-radius:99px;padding:4px 12px 4px 5px;}
+  .addbox{background:#fafbf3;border:1.5px dashed rgba(163,186,23,0.55);border-radius:14px;}
+  .person{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:10px 13px;}
+  .av{width:38px;height:38px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+    padding:3px 8px;border-radius:99px;}
+  .badge-sent{background:rgba(10,157,99,0.12);color:var(--green-deep);}
+  .badge-you{background:rgba(13,125,242,0.12);color:var(--blue-deep);}
+  .err{display:none;background:rgba(212,51,42,.08);border:1px solid rgba(212,51,42,.3);color:var(--red);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:10px;}
+  .err.show{display:block;}
+</style>
+
+<header class="border-b border-[var(--line-soft)] bg-[var(--white)]/85 backdrop-blur-sm">
+  <div class="max-w-[1080px] mx-auto px-6 h-[58px] flex items-center justify-between">
+    <span class="mono font-medium text-[17px]"><span class="text-[var(--orgy-deep)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--orgy-deep)]">]</span></span>
+    <span class="mono text-[11px] tracking-[0.16em] text-[var(--ink-mute)]">SETTING UP YOUR ORG</span>
+  </div>
+  <div class="max-w-[1080px] mx-auto px-6 pb-3 -mt-1">
+    <div class="flex gap-1.5">
+      <span class="seg done"></span><span class="seg now"></span><span class="seg"></span>
+      <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1000px] mx-auto px-6 pt-12 pb-20">
+  <div class="grid lg:grid-cols-12 gap-x-10 gap-y-10 items-center">
+
+    <div class="lg:col-span-5 relative flex flex-col items-center">
+      <div class="bubble pop max-w-[310px] px-4 py-3 mb-1" style="animation-delay:.5s">
+        <p class="text-[14px] leading-[1.5] text-[var(--ink)]">
+          Here's the one that matters. Add your people now &mdash; each gets an invite, so <b class="font-semibold text-[var(--green-deep)]">buy-in starts the moment you do</b>.
+        </p>
+      </div>
+      <div class="relative pop" style="animation-delay:.2s">
+        <div class="orgy-glow absolute left-1/2 -translate-x-1/2 bottom-4 w-[78%] h-[37%] rounded-full -z-10"
+             style="background:radial-gradient(ellipse, rgba(189,214,34,0.30), transparent 70%);"></div>
+        <img src="/public/images/onboarding-orgy-welcome.webp" alt="Orgy" class="orgy relative w-[324px]">
+      </div>
+    </div>
+
+    <div class="lg:col-span-7">
+      <div class="bg-[var(--card)] border border-[var(--line)] rounded-[20px] p-7 sm:p-9 rise"
+           style="animation-delay:.32s; box-shadow:0 2px 6px rgba(20,22,28,.05), 0 26px 50px -28px rgba(20,22,28,.22);">
+
+        <div class="step-chip rise" style="animation-delay:.4s">
+          <img src="/public/images/onboarding-hand-2.webp" alt="2" class="h-[26px] w-auto">
+          <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">STEP 2 OF 7 · YOUR TEAM</span>
+        </div>
+
+        <h1 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] mt-4 mb-1.5 rise"
+            style="font-size:clamp(1.8rem,3.2vw,2.4rem); font-weight:800; animation-delay:.46s">
+          Now, bring your team in.
+        </h1>
+        <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.55] mb-6 rise" style="animation-delay:.52s">
+          A chart with one seat is a sticky note. The protocol kicks in when your people are on it.
+        </p>
+
+        <div class="addbox p-4 rise" style="animation-delay:.58s">
+          <div class="mono text-[10.5px] tracking-[0.14em] text-[var(--orgy-deep)] font-medium mb-3">ADD A TEAMMATE</div>
+          <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+            <div class="field"><input type="text" id="tm-name" placeholder="Their name"></div>
+            <div class="field">
+              <select id="tm-role">
+                <option value="managee">Team member</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+                <option value="observer">Observer</option>
+              </select>
+            </div>
+          </div>
+          <div class="field mb-3"><input type="email" id="tm-email" placeholder="Their email — so we can send the invite"></div>
+          <button type="button" id="tm-add" class="btn-go inline-flex items-center gap-1.5 px-5 py-2.5 text-[14px]">
+            <span class="text-[17px] leading-none">+</span> <span>Add to your chart</span>
+          </button>
+          <div class="err" id="tm-err"></div>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">ON YOUR CHART</span>
+            <span class="text-[11.5px] text-[var(--ink-mute)]"><span id="tm-count"><%= ob_seatCount %></span> seat<%= ob_seatCount === 1 ? '' : 's' %></span>
+          </div>
+          <div class="space-y-2" id="tm-list">
+            <% members.forEach(function(m, i){ %>
+              <div class="person">
+                <div class="av" style="background:<%= ob_color(i) %>"><%= ob_initials(m.displayName) %></div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[14px] text-[var(--ink)]"><%= m.displayName || 'You' %></div>
+                  <div class="text-[12px] text-[var(--ink-mute)]"><%= ob_role(m.role) %></div>
+                </div>
+                <% if (m.clerkUserId === currentUserId) { %><span class="badge badge-you">You</span><% } %>
+              </div>
+            <% }); %>
+            <% invites.forEach(function(inv, i){ %>
+              <div class="person">
+                <div class="av" style="background:<%= ob_color(members.length + i) %>"><%= ob_initials(inv.displayName || inv.email) %></div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[14px] text-[var(--ink)]"><%= inv.displayName || inv.email %></div>
+                  <div class="text-[12px] text-[var(--ink-mute)]"><%= ob_role(inv.role) %></div>
+                </div>
+                <span class="badge badge-sent">&#10003; Invite sent</span>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="mt-7 rise" style="animation-delay:.9s">
+          <a href="/onboarding/goals" class="btn-ink inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+            Save and continue
+            <span aria-hidden>&rarr;</span>
+          </a>
+          <div class="mt-3.5">
+            <a href="/onboarding/goals" class="text-[13px] text-[var(--ink-mute)] hover:text-[var(--ink)] underline underline-offset-2 transition-colors">
+              Skip for now
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  var addBtn = document.getElementById('tm-add');
+  var nameEl = document.getElementById('tm-name');
+  var roleEl = document.getElementById('tm-role');
+  var emailEl = document.getElementById('tm-email');
+  var err = document.getElementById('tm-err');
+  var list = document.getElementById('tm-list');
+  var countEl = document.getElementById('tm-count');
+  var palette = ['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+  var seats = <%= ob_seatCount %>;
+  var roleLabel = { managee:'Team member', manager:'Manager', admin:'Admin', observer:'Observer' };
+
+  function initials(name){
+    var n=(name||'').trim(); if(!n) return '?';
+    var p=n.split(/\s+/);
+    return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?';
+  }
+  function showErr(m){ err.textContent=m; err.classList.add('show'); }
+  function clearErr(){ err.classList.remove('show'); }
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  async function add(){
+    clearErr();
+    nameEl.classList.remove('bad'); emailEl.classList.remove('bad');
+    var name = nameEl.value.trim();
+    var email = emailEl.value.trim();
+    var role = roleEl.value;
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      emailEl.classList.add('bad'); showErr('Enter a valid email so we can send the invite.'); return;
+    }
+    addBtn.disabled = true; addBtn.querySelector('span:last-child').textContent = 'Sending invite...';
+    try {
+      var res = await fetch('/api/v1/onboarding/invite', {
+        method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+        body: JSON.stringify({ email: email, displayName: name || undefined, role: role }),
+      });
+      var data = await res.json().catch(function(){ return {}; });
+      if(!res.ok){
+        showErr((data.error && data.error.message) || 'Could not send that invite.');
+        addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Add to your chart';
+        return;
+      }
+      var row = document.createElement('div');
+      row.className = 'person slide';
+      row.innerHTML =
+        '<div class="av" style="background:'+palette[seats % palette.length]+'">'+esc(initials(name||email))+'</div>'+
+        '<div class="flex-1 min-w-0"><div class="font-display font-bold text-[14px] text-[var(--ink)]">'+esc(name||email)+'</div>'+
+        '<div class="text-[12px] text-[var(--ink-mute)]">'+esc(roleLabel[role]||'Team member')+'</div></div>'+
+        '<span class="badge badge-sent">&#10003; Invite sent</span>';
+      list.appendChild(row);
+      seats += 1; countEl.textContent = seats;
+      nameEl.value=''; emailEl.value=''; roleEl.value='managee';
+    } catch(e){
+      showErr('Network error. Try again.');
+    }
+    addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Add to your chart';
+  }
+  addBtn.addEventListener('click', add);
+})();
+</script>

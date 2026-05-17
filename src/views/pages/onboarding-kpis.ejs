@@ -1,0 +1,262 @@
+<%# Step 4 of 7 -- KPIs. POSTs to /api/v1/onboarding/kpi (kpis).
+    Locals: org, members[], kpis[], currentUserId %>
+<%
+function ob_initials(name){
+  var n=String(name||'').trim(); if(!n) return '?';
+  var p=n.split(/\s+/);
+  return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?';
+}
+var ob_palette=['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+function ob_memberIdx(id){ for(var i=0;i<members.length;i++){ if(members[i].id===id) return i; } return 0; }
+function ob_memberName(id){ for(var i=0;i<members.length;i++){ if(members[i].id===id) return members[i].displayName||'Owner'; } return 'Owner'; }
+function ob_target(k){
+  if(k.goalValue===null||k.goalValue===undefined) return '';
+  var v=k.goalValue;
+  return 'Target '+(k.unit==='$'?'$':'')+v+(k.unit==='%'?'%':'');
+}
+%>
+<style>
+  :root{
+    --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+    --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+    --blue:#0d7df2; --blue-deep:#0a56b0;
+    --orange:#ff7a1a; --orange-deep:#d4540a;
+    --green:#0a9d63; --green-deep:#06724a;
+    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --red:#d4332a;
+    --line:rgba(20,22,28,0.12); --line-soft:rgba(20,22,28,0.07);
+  }
+  html{-webkit-font-smoothing:antialiased;}
+  body{font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); margin:0;
+    background-image:radial-gradient(circle at 84% 8%, rgba(189,214,34,0.10), transparent 38%),
+                     radial-gradient(circle at 12% 92%, rgba(13,125,242,0.07), transparent 40%);}
+  .font-display{font-family:'Schibsted Grotesk','Inter',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--orgy); color:var(--ink);}
+  .rise{opacity:0; animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .pop{opacity:0; animation:pop .5s cubic-bezier(.34,1.4,.5,1) forwards;}
+  @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+  .slide{opacity:0; animation:slide .55s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes slide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+  .seg{height:6px;border-radius:99px;background:var(--grey);flex:1;overflow:hidden;position:relative;}
+  .seg.done::after,.seg.now::after{content:"";position:absolute;inset:0;border-radius:99px;background:var(--orgy);}
+  .seg.done::after{width:100%;}
+  .seg.now::after{width:100%;transform-origin:left;animation:fillseg 1s .25s cubic-bezier(.16,1,.3,1) backwards;}
+  @keyframes fillseg{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .orgy{animation:float 5s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .orgy-glow{animation:breathe 5s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:.9;transform:scale(1.06)}}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 5px;
+    box-shadow:0 14px 34px -16px rgba(20,22,28,.24);}
+  .field input,.field select{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+    padding:10px 13px;font-size:14.5px;color:var(--ink);transition:border-color .15s,box-shadow .15s;font-family:'Inter',sans-serif;}
+  .field input::placeholder{color:#b4b7bf;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(13,125,242,.13);}
+  .field input.bad{border-color:var(--red);box-shadow:0 0 0 3.5px rgba(212,51,42,.12);}
+  .btn-go{background:var(--orgy);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;font-weight:800;
+    border:none;cursor:pointer;border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-go:hover{background:var(--orgy-deep);transform:translateY(-2px);}
+  .btn-go:disabled{opacity:.6;cursor:default;transform:none;}
+  .btn-ink{background:var(--ink);color:#fff;font-family:'Schibsted Grotesk',sans-serif;font-weight:700;
+    border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-ink:hover{background:#24272f;transform:translateY(-2px);}
+  .step-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+    border-radius:99px;padding:4px 12px 4px 5px;}
+  .addbox{background:#fafbf3;border:1.5px dashed rgba(163,186,23,0.55);border-radius:14px;}
+  .tf{font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:9px;border:1.5px solid var(--line);
+    background:var(--card);color:var(--ink-soft);cursor:pointer;}
+  .tf.on{border-color:var(--green);background:rgba(10,157,99,0.08);color:var(--green-deep);}
+  .kpi{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;}
+  .kicon{width:38px;height:38px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,157,99,0.10);}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+    padding:3px 8px;border-radius:99px;}
+  .badge-num{background:rgba(10,157,99,0.12);color:var(--green-deep);}
+  .badge-cad{background:var(--grey);color:var(--ink-soft);}
+  .mini-av{width:22px;height:22px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:10px;color:#fff;}
+  .err{display:none;background:rgba(212,51,42,.08);border:1px solid rgba(212,51,42,.3);color:var(--red);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:10px;}
+  .err.show{display:block;}
+</style>
+
+<header class="border-b border-[var(--line-soft)] bg-[var(--white)]/85 backdrop-blur-sm">
+  <div class="max-w-[1080px] mx-auto px-6 h-[58px] flex items-center justify-between">
+    <span class="mono font-medium text-[17px]"><span class="text-[var(--orgy-deep)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--orgy-deep)]">]</span></span>
+    <span class="mono text-[11px] tracking-[0.16em] text-[var(--ink-mute)]">SETTING UP YOUR ORG</span>
+  </div>
+  <div class="max-w-[1080px] mx-auto px-6 pb-3 -mt-1">
+    <div class="flex gap-1.5">
+      <span class="seg done"></span><span class="seg done"></span><span class="seg done"></span>
+      <span class="seg now"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1000px] mx-auto px-6 pt-12 pb-20">
+  <div class="grid lg:grid-cols-12 gap-x-10 gap-y-10 items-center">
+
+    <div class="lg:col-span-5 relative flex flex-col items-center">
+      <div class="bubble pop max-w-[310px] px-4 py-3 mb-1" style="animation-delay:.5s">
+        <p class="text-[14px] leading-[1.5] text-[var(--ink)]">
+          A goal without a number is a wish. KPIs are the numbers each seat watches &mdash; <b class="font-semibold text-[var(--green-deep)]">one per seat</b>, every week.
+        </p>
+      </div>
+      <div class="relative pop" style="animation-delay:.2s">
+        <div class="orgy-glow absolute left-1/2 -translate-x-1/2 bottom-3 w-[66%] h-[28%] rounded-full -z-10"
+             style="background:radial-gradient(ellipse, rgba(10,157,99,0.22), transparent 70%);"></div>
+        <img src="/public/images/onboarding-orgy-kpi.webp" alt="Orgy" class="orgy relative w-[262px]">
+      </div>
+    </div>
+
+    <div class="lg:col-span-7">
+      <div class="bg-[var(--card)] border border-[var(--line)] rounded-[20px] p-7 sm:p-9 rise"
+           style="animation-delay:.32s; box-shadow:0 2px 6px rgba(20,22,28,.05), 0 26px 50px -28px rgba(20,22,28,.22);">
+
+        <div class="step-chip rise" style="animation-delay:.4s">
+          <img src="/public/images/onboarding-hand-4.webp" alt="4" class="h-[26px] w-auto">
+          <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">STEP 4 OF 7 · KPIs</span>
+        </div>
+
+        <h1 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] mt-4 mb-1.5 rise"
+            style="font-size:clamp(1.8rem,3.2vw,2.4rem); font-weight:800; animation-delay:.46s">
+          What numbers tell you it's working?
+        </h1>
+        <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.55] mb-6 rise" style="animation-delay:.52s">
+          One number per seat. That's the scoreboard your weekly meeting runs on.
+        </p>
+
+        <div class="addbox p-4 rise" style="animation-delay:.58s">
+          <div class="mono text-[10.5px] tracking-[0.14em] text-[var(--orgy-deep)] font-medium mb-3">ADD A KPI</div>
+          <div class="field mb-2.5"><input type="text" id="kp-title" placeholder="e.g. Qualified sales calls"></div>
+          <div class="grid grid-cols-[88px_1fr] gap-2.5 mb-2.5">
+            <div class="field"><input type="text" id="kp-target" placeholder="Target"></div>
+            <select class="field" id="kp-owner">
+              <% members.forEach(function(m){ %>
+                <option value="<%= m.id %>" data-name="<%= m.displayName || 'Owner' %>">Owned by — <%= m.displayName || 'You' %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span class="tf on" data-cad="weekly">Weekly</span>
+            <span class="tf" data-cad="monthly">Monthly</span>
+          </div>
+          <button type="button" id="kp-add" class="btn-go inline-flex items-center gap-1.5 px-5 py-2.5 text-[14px]">
+            <span class="text-[17px] leading-none">+</span> <span>Add KPI</span>
+          </button>
+          <div class="err" id="kp-err"></div>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">YOUR KPIs</span>
+            <span class="text-[11.5px] text-[var(--ink-mute)]"><span id="kp-count"><%= kpis.length %></span> KPI<%= kpis.length === 1 ? '' : 's' %></span>
+          </div>
+          <div class="space-y-2" id="kp-list">
+            <% kpis.forEach(function(k){ %>
+              <div class="kpi">
+                <div class="kicon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green-deep)" stroke-width="2"><path d="M5 19V5M5 19h14M9 16v-4M13 16V8M17 16v-6"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[14px] text-[var(--ink)]"><%= k.title %></div>
+                  <div class="flex items-center gap-2 mt-1">
+                    <% if (ob_target(k)) { %><span class="badge badge-num"><%= ob_target(k) %></span><% } %>
+                    <span class="badge badge-cad"><%= k.timeGrain ? (k.timeGrain.charAt(0).toUpperCase()+k.timeGrain.slice(1)) : 'Weekly' %></span>
+                    <span class="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)]"><span class="mini-av" style="background:<%= ob_palette[ob_memberIdx(k.ownerExternalId)%ob_palette.length] %>"><%= ob_initials(ob_memberName(k.ownerExternalId)) %></span><%= ob_memberName(k.ownerExternalId) %></span>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="mt-7 rise" style="animation-delay:.84s">
+          <a href="/onboarding/agents" class="btn-ink inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+            Save and continue
+            <span aria-hidden>&rarr;</span>
+          </a>
+          <div class="mt-3.5">
+            <a href="/onboarding/agents" class="text-[13px] text-[var(--ink-mute)] hover:text-[var(--ink)] underline underline-offset-2 transition-colors">
+              Skip for now
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  var addBtn=document.getElementById('kp-add');
+  var titleEl=document.getElementById('kp-title');
+  var targetEl=document.getElementById('kp-target');
+  var ownerEl=document.getElementById('kp-owner');
+  var err=document.getElementById('kp-err');
+  var list=document.getElementById('kp-list');
+  var countEl=document.getElementById('kp-count');
+  var pills=document.querySelectorAll('.tf');
+  var palette=['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+  var memberIndex={}; <% members.forEach(function(m,i){ %>memberIndex['<%= m.id %>']=<%= i %>;<% }); %>
+  var count=<%= kpis.length %>;
+  var cadence='weekly';
+
+  pills.forEach(function(p){
+    p.addEventListener('click', function(){
+      pills.forEach(function(x){ x.classList.remove('on'); });
+      p.classList.add('on'); cadence=p.getAttribute('data-cad');
+    });
+  });
+  function showErr(m){ err.textContent=m; err.classList.add('show'); }
+  function initials(name){ var n=(name||'').trim(); if(!n) return '?'; var p=n.split(/\s+/); return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?'; }
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+  function fmtTarget(t){
+    if(!t) return '';
+    var num=parseFloat(t.replace(/[^0-9.\-]/g,''));
+    if(!isFinite(num)) return '';
+    var pct=/%/.test(t), dol=/^\s*\$/.test(t);
+    return 'Target '+(dol?'$':'')+num+(pct?'%':'');
+  }
+
+  async function add(){
+    err.classList.remove('show'); titleEl.classList.remove('bad');
+    var title=titleEl.value.trim();
+    if(!title){ titleEl.classList.add('bad'); showErr('Give the KPI a name.'); return; }
+    var target=targetEl.value.trim();
+    var ownerMemberId=ownerEl.value;
+    var ownerName=ownerEl.options[ownerEl.selectedIndex].getAttribute('data-name')||'Owner';
+    addBtn.disabled=true; addBtn.querySelector('span:last-child').textContent='Adding...';
+    try{
+      var res=await fetch('/api/v1/onboarding/kpi',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        body:JSON.stringify({title:title,target:target,cadence:cadence,ownerMemberId:ownerMemberId}),
+      });
+      var data=await res.json().catch(function(){return {};});
+      if(!res.ok){ showErr((data.error&&data.error.message)||'Could not save that KPI.'); addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Add KPI'; return; }
+      var color=palette[(memberIndex[ownerMemberId]||0)%palette.length];
+      var cadLabel=cadence==='weekly'?'Weekly':'Monthly';
+      var targetBadge=fmtTarget(target);
+      var row=document.createElement('div');
+      row.className='kpi slide';
+      row.innerHTML=
+        '<div class="kicon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green-deep)" stroke-width="2"><path d="M5 19V5M5 19h14M9 16v-4M13 16V8M17 16v-6"/></svg></div>'+
+        '<div class="flex-1 min-w-0"><div class="font-display font-bold text-[14px] text-[var(--ink)]">'+esc(title)+'</div>'+
+        '<div class="flex items-center gap-2 mt-1">'+
+        (targetBadge?'<span class="badge badge-num">'+esc(targetBadge)+'</span>':'')+
+        '<span class="badge badge-cad">'+cadLabel+'</span>'+
+        '<span class="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)]"><span class="mini-av" style="background:'+color+'">'+esc(initials(ownerName))+'</span>'+esc(ownerName)+'</span></div></div>';
+      list.appendChild(row);
+      count+=1; countEl.textContent=count;
+      titleEl.value=''; targetEl.value='';
+    }catch(e){ showErr('Network error. Try again.'); }
+    addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Add KPI';
+  }
+  addBtn.addEventListener('click', add);
+})();
+</script>

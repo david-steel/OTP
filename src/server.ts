@@ -684,11 +684,13 @@ await app.register(import('./routes/api/partner-signup.js'), { prefix: '/api/v1'
 await app.register(import('./routes/api/lead-signup.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/oos-operating-plan.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/onboarding.js'), { prefix: '/api/v1' });
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/coach-claim.js'));
 await app.register(import('./routes/pages/coach-invite.js'));
+await app.register(import('./routes/pages/onboarding.js'));
 
 // Custom 404 handler -- return HTML instead of Fastify's default JSON
 app.setNotFoundHandler(async (request, reply) => {

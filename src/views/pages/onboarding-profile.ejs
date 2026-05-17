@@ -1,0 +1,219 @@
+<%# Step 1 of 7 -- profile. Creates the organization + owner member.
+    Locals: org (nullable), member (nullable) %>
+<style>
+  :root{
+    --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+    --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+    --blue:#0d7df2; --blue-deep:#0a56b0;
+    --orange:#ff7a1a; --orange-deep:#d4540a;
+    --green:#0a9d63; --green-deep:#06724a;
+    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --red:#d4332a;
+    --line:rgba(20,22,28,0.12); --line-soft:rgba(20,22,28,0.07);
+  }
+  html{-webkit-font-smoothing:antialiased;}
+  body{font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); margin:0;
+    background-image:radial-gradient(circle at 84% 8%, rgba(189,214,34,0.10), transparent 38%),
+                     radial-gradient(circle at 12% 92%, rgba(13,125,242,0.07), transparent 40%);}
+  .font-display{font-family:'Schibsted Grotesk','Inter',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--orgy); color:var(--ink);}
+
+  .rise{opacity:0; animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .pop{opacity:0; animation:pop .5s cubic-bezier(.34,1.4,.5,1) forwards;}
+  @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+
+  .seg{height:6px;border-radius:99px;background:var(--grey);flex:1;overflow:hidden;position:relative;}
+  .seg.done::after,.seg.now::after{content:"";position:absolute;inset:0;border-radius:99px;background:var(--orgy);}
+  .seg.done::after{width:100%;}
+  .seg.now::after{width:100%;transform-origin:left;animation:fillseg 1s .25s cubic-bezier(.16,1,.3,1) backwards;}
+  @keyframes fillseg{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+  .orgy{animation:float 5s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .orgy-glow{animation:breathe 5s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:.9;transform:scale(1.06)}}
+
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 5px;
+    box-shadow:0 14px 34px -16px rgba(20,22,28,.24);}
+
+  .field input,.field select{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:11px;
+    padding:11px 13px;font-size:14.5px;color:var(--ink);transition:border-color .15s,box-shadow .15s;font-family:'Inter',sans-serif;}
+  .field input::placeholder{color:#b4b7bf;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(13,125,242,.13);}
+  .field input.bad,.field select.bad{border-color:var(--red);box-shadow:0 0 0 3.5px rgba(212,51,42,.12);}
+  .field label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:6px;}
+  .field .hint{font-size:11.5px;color:var(--ink-mute);margin-top:5px;}
+  .grp{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.14em;
+    color:var(--ink-mute);font-weight:500;margin-bottom:12px;}
+
+  .btn-go{background:var(--orgy);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;font-weight:800;
+    border:none;cursor:pointer;border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-go:hover{background:var(--orgy-deep);transform:translateY(-2px);}
+  .btn-go:disabled{opacity:.6;cursor:default;transform:none;}
+  .step-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+    border-radius:99px;padding:4px 12px 4px 5px;}
+  .err{display:none;background:rgba(212,51,42,.08);border:1px solid rgba(212,51,42,.3);color:var(--red);
+    border-radius:10px;padding:10px 13px;font-size:13px;margin-top:14px;}
+  .err.show{display:block;}
+</style>
+
+<header class="border-b border-[var(--line-soft)] bg-[var(--white)]/85 backdrop-blur-sm">
+  <div class="max-w-[1080px] mx-auto px-6 h-[58px] flex items-center justify-between">
+    <span class="mono font-medium text-[17px]"><span class="text-[var(--orgy-deep)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--orgy-deep)]">]</span></span>
+    <span class="mono text-[11px] tracking-[0.16em] text-[var(--ink-mute)]">SETTING UP YOUR ORG</span>
+  </div>
+  <div class="max-w-[1080px] mx-auto px-6 pb-3 -mt-1">
+    <div class="flex gap-1.5">
+      <span class="seg now"></span><span class="seg"></span><span class="seg"></span>
+      <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1000px] mx-auto px-6 pt-12 pb-20">
+  <div class="grid lg:grid-cols-12 gap-x-10 gap-y-10 items-center">
+
+    <div class="lg:col-span-5 relative flex flex-col items-center">
+      <div class="bubble pop max-w-[300px] px-4 py-3 mb-1" style="animation-delay:.5s">
+        <p class="text-[14px] leading-[1.5] text-[var(--ink)]">
+          First, the basics &mdash; <b class="font-semibold text-[var(--green-deep)]">your company and your seat</b> on the chart. Takes about a minute.
+        </p>
+      </div>
+      <div class="relative pop" style="animation-delay:.2s">
+        <div class="orgy-glow absolute left-[39%] -translate-x-1/2 bottom-4 w-[54%] h-[38%] rounded-full -z-10"
+             style="background:radial-gradient(ellipse, rgba(13,125,242,0.22), transparent 70%);"></div>
+        <img src="/public/images/onboarding-orgy-point.webp" alt="Orgy" class="orgy relative w-[342px]">
+      </div>
+    </div>
+
+    <div class="lg:col-span-7">
+      <div class="bg-[var(--card)] border border-[var(--line)] rounded-[20px] p-7 sm:p-9 rise"
+           style="animation-delay:.32s; box-shadow:0 2px 6px rgba(20,22,28,.05), 0 26px 50px -28px rgba(20,22,28,.22);">
+
+        <div class="step-chip rise" style="animation-delay:.4s">
+          <img src="/public/images/onboarding-hand-1.webp" alt="1" class="h-[26px] w-auto">
+          <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">STEP 1 OF 7 · YOUR SEAT</span>
+        </div>
+
+        <h1 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] mt-4 mb-1.5 rise"
+            style="font-size:clamp(1.8rem,3.2vw,2.4rem); font-weight:800; animation-delay:.46s">
+          Let's get you set up.
+        </h1>
+        <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.55] mb-6 rise" style="animation-delay:.52s">
+          Two quick groups and your org is live. You can change any of this later.
+        </p>
+
+        <form id="ob-form" novalidate>
+          <div class="grp rise" style="animation-delay:.58s">YOUR ORGANIZATION</div>
+          <div class="space-y-4 mb-7">
+            <div class="field rise" style="animation-delay:.6s">
+              <label for="ob-company">Company name</label>
+              <input type="text" id="ob-company" placeholder="Acme Co."
+                     value="<%= org && org.name ? org.name : '' %>">
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div class="field rise" style="animation-delay:.64s">
+                <label for="ob-industry">Industry</label>
+                <input type="text" id="ob-industry" placeholder="Marketing, SaaS, Fitness..."
+                       value="<%= org && org.industry ? org.industry : '' %>">
+              </div>
+              <div class="field rise" style="animation-delay:.68s">
+                <label for="ob-size">Team size</label>
+                <select id="ob-size">
+                  <% var sz = org && org.size ? org.size : ''; %>
+                  <option value="solo" <%= sz==='solo'?'selected':'' %>>Just me (solo)</option>
+                  <option value="small" <%= sz==='small'?'selected':'' %>>Small (2-10)</option>
+                  <option value="medium" <%= sz==='medium'?'selected':'' %>>Medium (11-50)</option>
+                  <option value="large" <%= sz==='large'?'selected':'' %>>Large (51-200)</option>
+                  <option value="enterprise" <%= sz==='enterprise'?'selected':'' %>>Enterprise (200+)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="grp rise" style="animation-delay:.72s">YOUR SEAT</div>
+          <div class="space-y-4">
+            <div class="field rise" style="animation-delay:.74s">
+              <label for="ob-name">Your name</label>
+              <input type="text" id="ob-name" placeholder="Jordan Lee"
+                     value="<%= member && member.displayName ? member.displayName : '' %>">
+            </div>
+            <div class="field rise" style="animation-delay:.78s">
+              <label for="ob-title">Your role</label>
+              <input type="text" id="ob-title" placeholder="CEO, Founder, Operator...">
+              <p class="hint">The seat you hold on the chart. Optional, you can set it later.</p>
+            </div>
+          </div>
+        </form>
+
+        <div class="err" id="ob-err"></div>
+
+        <div class="mt-7 rise" style="animation-delay:.84s">
+          <button type="button" id="ob-submit" class="btn-go inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+            Create your org
+            <span aria-hidden>&rarr;</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  var btn = document.getElementById('ob-submit');
+  var err = document.getElementById('ob-err');
+  var fields = {
+    company: document.getElementById('ob-company'),
+    industry: document.getElementById('ob-industry'),
+    size: document.getElementById('ob-size'),
+    displayName: document.getElementById('ob-name'),
+    title: document.getElementById('ob-title'),
+  };
+  function showErr(msg){ err.textContent = msg; err.classList.add('show'); }
+  function clearErr(){ err.classList.remove('show'); }
+
+  async function submit(){
+    clearErr();
+    [fields.company, fields.industry, fields.displayName].forEach(function(f){ f.classList.remove('bad'); });
+    var payload = {
+      company: fields.company.value.trim(),
+      industry: fields.industry.value.trim(),
+      size: fields.size.value,
+      displayName: fields.displayName.value.trim(),
+      title: fields.title.value.trim(),
+    };
+    var missing = false;
+    if(!payload.company){ fields.company.classList.add('bad'); missing = true; }
+    if(!payload.industry){ fields.industry.classList.add('bad'); missing = true; }
+    if(!payload.displayName){ fields.displayName.classList.add('bad'); missing = true; }
+    if(missing){ showErr('Fill in your company name, industry, and your name.'); return; }
+
+    btn.disabled = true; btn.firstChild.textContent = 'Creating your org ';
+    try {
+      var res = await fetch('/api/v1/onboarding/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      });
+      var data = await res.json().catch(function(){ return {}; });
+      if(!res.ok){
+        showErr((data.error && data.error.message) || 'Something went wrong. Try again.');
+        btn.disabled = false; btn.firstChild.textContent = 'Create your org ';
+        return;
+      }
+      window.location.href = '/onboarding/team';
+    } catch(e){
+      showErr('Network error. Check your connection and try again.');
+      btn.disabled = false; btn.firstChild.textContent = 'Create your org ';
+    }
+  }
+  btn.addEventListener('click', submit);
+  document.getElementById('ob-form').addEventListener('submit', function(e){ e.preventDefault(); submit(); });
+})();
+</script>

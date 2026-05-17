@@ -1,0 +1,245 @@
+<%# Step 6 of 7 -- teams. POSTs to /api/v1/onboarding/team (teams + team_memberships).
+    Locals: org, members[], teams[] (each with .members[]), currentUserId %>
+<%
+function ob_initials(name){
+  var n=String(name||'').trim(); if(!n) return '?';
+  var p=n.split(/\s+/);
+  return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?';
+}
+var ob_palette=['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+function ob_memberIdx(id){ for(var i=0;i<members.length;i++){ if(members[i].id===id) return i; } return 0; }
+%>
+<style>
+  :root{
+    --white:#fcfcfd; --grey:#f0f1f3; --card:#ffffff;
+    --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+    --blue:#0d7df2; --blue-deep:#0a56b0;
+    --orange:#ff7a1a; --orange-deep:#d4540a;
+    --green:#0a9d63; --green-deep:#06724a;
+    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --red:#d4332a;
+    --line:rgba(20,22,28,0.12); --line-soft:rgba(20,22,28,0.07);
+  }
+  html{-webkit-font-smoothing:antialiased;}
+  body{font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); margin:0;
+    background-image:radial-gradient(circle at 84% 8%, rgba(189,214,34,0.10), transparent 38%),
+                     radial-gradient(circle at 12% 92%, rgba(13,125,242,0.07), transparent 40%);}
+  .font-display{font-family:'Schibsted Grotesk','Inter',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--orgy); color:var(--ink);}
+  .rise{opacity:0; animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .pop{opacity:0; animation:pop .5s cubic-bezier(.34,1.4,.5,1) forwards;}
+  @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+  .slide{opacity:0; animation:slide .55s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes slide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+  .seg{height:6px;border-radius:99px;background:var(--grey);flex:1;overflow:hidden;position:relative;}
+  .seg.done::after,.seg.now::after{content:"";position:absolute;inset:0;border-radius:99px;background:var(--orgy);}
+  .seg.done::after{width:100%;}
+  .seg.now::after{width:100%;transform-origin:left;animation:fillseg 1s .25s cubic-bezier(.16,1,.3,1) backwards;}
+  @keyframes fillseg{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .orgy{animation:float 5s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .orgy-glow{animation:breathe 5s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:.9;transform:scale(1.06)}}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 5px;
+    box-shadow:0 14px 34px -16px rgba(20,22,28,.24);}
+  .field input{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+    padding:10px 13px;font-size:14.5px;color:var(--ink);transition:border-color .15s,box-shadow .15s;font-family:'Inter',sans-serif;}
+  .field input::placeholder{color:#b4b7bf;}
+  .field input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(13,125,242,.13);}
+  .field input.bad{border-color:var(--red);box-shadow:0 0 0 3.5px rgba(212,51,42,.12);}
+  .btn-go{background:var(--orgy);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;font-weight:800;
+    border:none;cursor:pointer;border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-go:hover{background:var(--orgy-deep);transform:translateY(-2px);}
+  .btn-go:disabled{opacity:.6;cursor:default;transform:none;}
+  .btn-ink{background:var(--ink);color:#fff;font-family:'Schibsted Grotesk',sans-serif;font-weight:700;
+    border-radius:11px;transition:background .18s,transform .18s cubic-bezier(.16,1,.3,1);}
+  .btn-ink:hover{background:#24272f;transform:translateY(-2px);}
+  .step-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+    border-radius:99px;padding:4px 12px 4px 6px;}
+  .addbox{background:#fafbf3;border:1.5px dashed rgba(163,186,23,0.55);border-radius:14px;}
+  .memchip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px 5px 5px;border-radius:99px;
+    border:1.5px solid var(--line);background:var(--card);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+  .memchip.on{border-color:var(--green);background:rgba(10,157,99,0.08);color:var(--green-deep);}
+  .chip-av{width:20px;height:20px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:9.5px;color:#fff;}
+  .team-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;}
+  .av-stack{display:flex;}
+  .av-stack > *{margin-left:-7px;box-shadow:0 0 0 2.5px var(--card);}
+  .av-stack > *:first-child{margin-left:0;}
+  .sav{width:30px;height:30px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:12px;color:#fff;}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+    padding:3px 9px;border-radius:99px;background:rgba(13,125,242,0.12);color:var(--blue-deep);}
+  .err{display:none;background:rgba(212,51,42,.08);border:1px solid rgba(212,51,42,.3);color:var(--red);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:10px;}
+  .err.show{display:block;}
+</style>
+
+<header class="border-b border-[var(--line-soft)] bg-[var(--white)]/85 backdrop-blur-sm">
+  <div class="max-w-[1080px] mx-auto px-6 h-[58px] flex items-center justify-between">
+    <span class="mono font-medium text-[17px]"><span class="text-[var(--orgy-deep)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--orgy-deep)]">]</span></span>
+    <span class="mono text-[11px] tracking-[0.16em] text-[var(--ink-mute)]">SETTING UP YOUR ORG</span>
+  </div>
+  <div class="max-w-[1080px] mx-auto px-6 pb-3 -mt-1">
+    <div class="flex gap-1.5">
+      <span class="seg done"></span><span class="seg done"></span><span class="seg done"></span>
+      <span class="seg done"></span><span class="seg done"></span><span class="seg now"></span><span class="seg"></span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1000px] mx-auto px-6 pt-12 pb-20">
+  <div class="grid lg:grid-cols-12 gap-x-10 gap-y-10 items-center">
+
+    <div class="lg:col-span-5 relative flex flex-col items-center">
+      <div class="bubble pop max-w-[315px] px-4 py-3 mb-1" style="animation-delay:.5s">
+        <p class="text-[14px] leading-[1.5] text-[var(--ink)]">
+          A team is the handful of seats that <b class="font-semibold text-[var(--blue-deep)]">meet together and own a number as a unit</b>. Most orgs start with one.
+        </p>
+      </div>
+      <div class="relative pop" style="animation-delay:.2s">
+        <div class="orgy-glow absolute left-1/2 -translate-x-1/2 bottom-3 w-[68%] h-[30%] rounded-full -z-10"
+             style="background:radial-gradient(ellipse, rgba(189,214,34,0.30), transparent 70%);"></div>
+        <img src="/public/images/onboarding-orgy-coach.webp" alt="Orgy" class="orgy relative w-[284px]">
+      </div>
+    </div>
+
+    <div class="lg:col-span-7">
+      <div class="bg-[var(--card)] border border-[var(--line)] rounded-[20px] p-7 sm:p-9 rise"
+           style="animation-delay:.32s; box-shadow:0 2px 6px rgba(20,22,28,.05), 0 26px 50px -28px rgba(20,22,28,.22);">
+
+        <div class="step-chip rise" style="animation-delay:.4s">
+          <img src="/public/favicon-orgy.png" alt="" class="h-[22px] w-[22px]">
+          <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">STEP 6 OF 7 · TEAMS</span>
+        </div>
+
+        <h1 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.05] mt-4 mb-1.5 rise"
+            style="font-size:clamp(1.8rem,3.2vw,2.4rem); font-weight:800; animation-delay:.46s">
+          Group your seats into teams.
+        </h1>
+        <p class="text-[14.5px] text-[var(--ink-soft)] leading-[1.55] mb-6 rise" style="animation-delay:.52s">
+          Each team gets its own meeting and its own scoreboard. Pick the seats, name it, done.
+        </p>
+
+        <div class="addbox p-4 rise" style="animation-delay:.58s">
+          <div class="mono text-[10.5px] tracking-[0.14em] text-[var(--orgy-deep)] font-medium mb-3">CREATE A TEAM</div>
+          <div class="field mb-3"><input type="text" id="tg-name" placeholder="e.g. Leadership Team"></div>
+          <div class="text-[11.5px] font-semibold text-[var(--ink-soft)] mb-2">Who's on it?</div>
+          <div class="flex flex-wrap gap-2 mb-3" id="tg-chips">
+            <% members.forEach(function(m, i){ %>
+              <span class="memchip on" data-id="<%= m.id %>" data-name="<%= m.displayName || 'You' %>">
+                <span class="chip-av" style="background:<%= ob_palette[i % ob_palette.length] %>"><%= ob_initials(m.displayName) %></span><%= (m.displayName || 'You').split(' ')[0] %>
+              </span>
+            <% }); %>
+          </div>
+          <button type="button" id="tg-add" class="btn-go inline-flex items-center gap-1.5 px-5 py-2.5 text-[14px]">
+            <span class="text-[17px] leading-none">+</span> <span>Create team</span>
+          </button>
+          <div class="err" id="tg-err"></div>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="mono text-[10.5px] tracking-[0.14em] text-[var(--ink-soft)] font-medium">YOUR TEAMS</span>
+            <span class="text-[11.5px] text-[var(--ink-mute)]"><span id="tg-count"><%= teams.length %></span> team<%= teams.length === 1 ? '' : 's' %></span>
+          </div>
+          <div class="space-y-2" id="tg-list">
+            <% teams.forEach(function(t){ %>
+              <div class="team-card">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-display font-bold text-[16px] text-[var(--ink)]"><%= t.name %></span>
+                  <span class="badge">Meets weekly</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <% if (t.members && t.members.length) { %>
+                    <div class="av-stack">
+                      <% t.members.slice(0,6).forEach(function(tm, i){ %>
+                        <div class="sav" style="background:<%= ob_palette[i % ob_palette.length] %>"><%= ob_initials(tm.displayName) %></div>
+                      <% }); %>
+                    </div>
+                    <span class="text-[12px] text-[var(--ink-mute)]"><%= t.members.length %> seat<%= t.members.length === 1 ? '' : 's' %></span>
+                  <% } else { %>
+                    <span class="text-[12px] text-[var(--ink-mute)]">No seats yet</span>
+                  <% } %>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="mt-7 rise" style="animation-delay:.78s">
+          <a href="/onboarding/first-meeting" class="btn-ink inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">
+            Save and continue
+            <span aria-hidden>&rarr;</span>
+          </a>
+          <div class="mt-3.5">
+            <a href="/onboarding/first-meeting" class="text-[13px] text-[var(--ink-mute)] hover:text-[var(--ink)] underline underline-offset-2 transition-colors">
+              Skip for now
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  var addBtn=document.getElementById('tg-add');
+  var nameEl=document.getElementById('tg-name');
+  var chipWrap=document.getElementById('tg-chips');
+  var err=document.getElementById('tg-err');
+  var list=document.getElementById('tg-list');
+  var countEl=document.getElementById('tg-count');
+  var palette=['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+  var count=<%= teams.length %>;
+
+  Array.prototype.forEach.call(chipWrap.querySelectorAll('.memchip'), function(chip){
+    chip.addEventListener('click', function(){ chip.classList.toggle('on'); });
+  });
+  function showErr(m){ err.textContent=m; err.classList.add('show'); }
+  function initials(name){ var n=(name||'').trim(); if(!n) return '?'; var p=n.split(/\s+/); return ((p[0][0]||'')+(p.length>1?(p[p.length-1][0]||''):'')).toUpperCase()||'?'; }
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  async function add(){
+    err.classList.remove('show'); nameEl.classList.remove('bad');
+    var name=nameEl.value.trim();
+    if(!name){ nameEl.classList.add('bad'); showErr('Give the team a name.'); return; }
+    var picked=[];
+    Array.prototype.forEach.call(chipWrap.querySelectorAll('.memchip.on'), function(c){
+      picked.push({ id:c.getAttribute('data-id'), name:c.getAttribute('data-name') });
+    });
+    addBtn.disabled=true; addBtn.querySelector('span:last-child').textContent='Creating...';
+    try{
+      var res=await fetch('/api/v1/onboarding/team',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        body:JSON.stringify({name:name,memberIds:picked.map(function(p){return p.id;})}),
+      });
+      var data=await res.json().catch(function(){return {};});
+      if(!res.ok){ showErr((data.error&&data.error.message)||'Could not create that team.'); addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Create team'; return; }
+      var stack='';
+      picked.slice(0,6).forEach(function(p,i){
+        stack+='<div class="sav" style="background:'+palette[i%palette.length]+'">'+esc(initials(p.name))+'</div>';
+      });
+      var seatTxt=picked.length+' seat'+(picked.length===1?'':'s');
+      var row=document.createElement('div');
+      row.className='team-card slide';
+      row.innerHTML=
+        '<div class="flex items-center justify-between mb-3"><span class="font-display font-bold text-[16px] text-[var(--ink)]">'+esc(name)+'</span>'+
+        '<span class="badge">Meets weekly</span></div>'+
+        '<div class="flex items-center gap-3">'+
+        (picked.length?'<div class="av-stack">'+stack+'</div><span class="text-[12px] text-[var(--ink-mute)]">'+seatTxt+'</span>':'<span class="text-[12px] text-[var(--ink-mute)]">No seats yet</span>')+
+        '</div>';
+      list.appendChild(row);
+      count+=1; countEl.textContent=count;
+      nameEl.value='';
+    }catch(e){ showErr('Network error. Try again.'); }
+    addBtn.disabled=false; addBtn.querySelector('span:last-child').textContent='Create team';
+  }
+  addBtn.addEventListener('click', add);
+})();
+</script>

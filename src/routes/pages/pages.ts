@@ -3883,53 +3883,14 @@ Founder, OTP</p>
     });
   });
 
-  // /welcome -- client onboarding quickstart. Lands here right after they
-  // accept a coach invite (from /join/:token/done -> "Start mapping your team")
-  // or from /dashboard when their workspace is empty. Three-step activation
-  // guide: add yourself, add a teammate, add an AI tool. Each card links to
-  // the team chart builder. The whole point is to make the FIRST 5 MINUTES
-  // concrete -- without this, clients land in a generic dashboard and bounce.
+  // /welcome -- retired. The 3-card quickstart is replaced by the 7-step
+  // onboarding flow (routes/pages/onboarding.ts). Kept as a redirect so any
+  // existing links (coach-invite "done" page, dashboard empty state) land
+  // users in the new flow, which resumes them at the correct step.
   app.get('/welcome', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent('/welcome'));
-    const org = await resolveRequestOrg(request);
-    if (!org) return reply.redirect('/dashboard');
-
-    // Look up the coach who attributed this client (if any), so we can
-    // personalize the greeting. NULL is fine -- client may have signed up
-    // directly without coming through a coach invite link.
-    const [attribution] = await db.execute(sql`
-      SELECT
-        att.attributed_at,
-        cp.display_name AS coach_name,
-        cp.slug         AS coach_slug,
-        cp.avatar_url   AS coach_avatar,
-        cp.photo_url    AS coach_photo
-      FROM coach_client_attribution att
-      LEFT JOIN consultant_profiles cp ON cp.org_id = att.coach_org_id AND cp.claimed = true
-      WHERE att.client_org_id = ${org.id} AND att.transferred_at IS NULL
-      LIMIT 1
-    `).then((r: any) => r.rows || []);
-
-    // Count what they've already added so we can show step completion.
-    async function safeCount(q: any): Promise<number> {
-      try { const r = await db.execute(q) as any; return Number((r.rows || [])[0]?.c || 0); } catch { return 0; }
-    }
-    const [memberCount, agentCount] = await Promise.all([
-      safeCount(sql`SELECT COUNT(*) AS c FROM org_members WHERE org_id = ${org.id}`),
-      safeCount(sql`SELECT COUNT(*) AS c FROM manager_agents WHERE org_id = ${org.id}`),
-    ]);
-
-    return reply.view('pages/welcome', {
-      title: 'Welcome to OTP',
-      description: 'Get started on OTP — map your first 3 seats in 5 minutes.',
-      noindex: true,
-      ogImage: BASE_URL + '/public/images/og-welcome.png',
-      attribution: attribution || null,
-      seatCount: memberCount,
-      agentCount,
-      isDone: memberCount >= 2 && agentCount >= 1,
-    });
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent('/onboarding'));
+    return reply.redirect('/onboarding');
   });
 
   app.get('/dashboard', async (request, reply) => {

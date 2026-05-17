@@ -1,0 +1,180 @@
+// =====================================================================
+// Onboarding flow -- page routes  (7-step post-signup wizard)
+// =====================================================================
+// GET routes only. Each renders one standalone wizard screen with the
+// onboarding layout (no site nav/footer). Forms POST client-side to
+// /api/v1/onboarding/* (see routes/api/onboarding.ts) and to the proven
+// /api/v1/team/invite pipeline, then navigate to the next step.
+//
+// Step 1 (profile) is reachable without an org -- it CREATES the org.
+// Steps 2-7 require an org; a user without one is bounced back to step 1.
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { getAuth } from '@clerk/fastify';
+import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
+import { db } from '../../config/database.js';
+import {
+  organizations, orgMembers, orgInvitations,
+  teams, teamMemberships, rocks, kpis, managerAgents,
+} from '../../db/schema.js';
+
+const LAYOUT = { layout: 'layouts/onboarding' };
+
+export default async function onboardingPageRoutes(app: FastifyInstance) {
+
+  // Bare entry -- resume at the right step.
+  app.get('/onboarding', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent('/onboarding'));
+    const member = (request as any).orgMember;
+    return reply.redirect(member?.orgId ? '/onboarding/team' : '/onboarding/profile');
+  });
+
+  // ---- Step 1: profile (org gets created here) -----------------------
+  app.get('/onboarding/profile', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent('/onboarding/profile'));
+    const member = (request as any).orgMember;
+    let org: any = null;
+    if (member?.orgId) {
+      [org] = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
+    }
+    if (!org) {
+      [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+    }
+    return reply.view('pages/onboarding-profile', {
+      title: 'Set up your seat · OTP',
+      org: org || null,
+      member: member || null,
+    }, LAYOUT);
+  });
+
+  // Steps 2-7 share this guard: authed + has an org, else bounce to step 1.
+  async function requireOrg(request: FastifyRequest, reply: FastifyReply, slug: string) {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      reply.redirect('/sign-in?redirect=' + encodeURIComponent('/onboarding/' + slug));
+      return null;
+    }
+    const member = (request as any).orgMember;
+    if (!member?.orgId) { reply.redirect('/onboarding/profile'); return null; }
+    const [org] = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
+    if (!org) { reply.redirect('/onboarding/profile'); return null; }
+    return { auth, member, org };
+  }
+
+  async function activeMembers(orgId: string) {
+    return db.select({
+      id: orgMembers.id,
+      displayName: orgMembers.displayName,
+      role: orgMembers.role,
+      clerkUserId: orgMembers.clerkUserId,
+    }).from(orgMembers)
+      .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.status, 'active')))
+      .orderBy(orgMembers.createdAt);
+  }
+
+  // ---- Step 2: team --------------------------------------------------
+  app.get('/onboarding/team', async (request, reply) => {
+    const c = await requireOrg(request, reply, 'team'); if (!c) return;
+    const members = await activeMembers(c.org.id);
+    const invites = await db.select().from(orgInvitations)
+      .where(and(eq(orgInvitations.orgId, c.org.id), eq(orgInvitations.status, 'pending')))
+      .orderBy(desc(orgInvitations.createdAt));
+    return reply.view('pages/onboarding-team', {
+      title: 'Add your team · OTP', org: c.org, members, invites,
+      currentUserId: c.auth.userId,
+    }, LAYOUT);
+  });
+
+  // ---- Step 3: goals -------------------------------------------------
+  app.get('/onboarding/goals', async (request, reply) => {
+    const c = await requireOrg(request, reply, 'goals'); if (!c) return;
+    const members = await activeMembers(c.org.id);
+    const goals = await db.select().from(rocks)
+      .where(and(eq(rocks.organizationId, c.org.id), isNull(rocks.deletedAt)))
+      .orderBy(desc(rocks.createdAt));
+    return reply.view('pages/onboarding-goals', {
+      title: 'Set your goals · OTP', org: c.org, members, goals,
+      currentUserId: c.auth.userId,
+    }, LAYOUT);
+  });
+
+  // ---- Step 4: kpis --------------------------------------------------
+  app.get('/onboarding/kpis', async (request, reply) => {
+    const c = await requireOrg(request, reply, 'kpis'); if (!c) return;
+    const members = await activeMembers(c.org.id);
+    const rows = await db.select().from(kpis)
+      .where(and(eq(kpis.organizationId, c.org.id), isNull(kpis.deletedAt)))
+      .orderBy(desc(kpis.createdAt));
+    return reply.view('pages/onboarding-kpis', {
+      title: 'Set your KPIs · OTP', org: c.org, members, kpis: rows,
+      currentUserId: c.auth.userId,
+    }, LAYOUT);
+  });
+
+  // ---- Step 5: agents ------------------------------------------------
+  app.get('/onboarding/agents', async (request, reply) => {
+    const c = await requireOrg(request, reply, 'agents'); if (!c) return;
+    const members = await activeMembers(c.org.id);
+    const rows = await db.select().from(managerAgents)
+      .where(and(eq(managerAgents.orgId, c.org.id), isNull(managerAgents.deletedAt)))
+      .orderBy(desc(managerAgents.createdAt));
+    return reply.view('pages/onboarding-agents', {
+      title: 'Add your agents · OTP', org: c.org, members, agents: rows,
+      currentUserId: c.auth.userId,
+    }, LAYOUT);
+  });
+
+  // ---- Step 6: teams -------------------------------------------------
+  app.get('/onboarding/teams', async (request, reply) => {
+    const c = await requireOrg(request, reply, 'teams'); if (!c) return;
+    const members = await activeMembers(c.org.id);
+    const teamRows = await db.select().from(teams)
+      .where(eq(teams.orgId, c.org.id))
+      .orderBy(desc(teams.createdAt));
+    // Attach each team's members so the team cards can render avatar stacks.
+    let withMembers: any[] = teamRows.map((t) => ({ ...t, members: [] as any[] }));
+    if (teamRows.length > 0) {
+      const tmRows = await db.select({
+        teamId: teamMemberships.teamId,
+        displayName: orgMembers.displayName,
+      }).from(teamMemberships)
+        .innerJoin(orgMembers, eq(orgMembers.id, teamMemberships.memberId))
+        .where(inArray(teamMemberships.teamId, teamRows.map((t) => t.id)));
+      withMembers = teamRows.map((t) => ({
+        ...t,
+        members: tmRows.filter((r) => r.teamId === t.id),
+      }));
+    }
+    return reply.view('pages/onboarding-teams', {
+      title: 'Set up your teams · OTP', org: c.org, members, teams: withMembers,
+      currentUserId: c.auth.userId,
+    }, LAYOUT);
+  });
+
+  // ---- Step 7: first meeting (finale) --------------------------------
+  app.get('/onboarding/first-meeting', async (request, reply) => {
+    const c = await requireOrg(request, reply, 'first-meeting'); if (!c) return;
+    const members = await activeMembers(c.org.id);
+    const [goals, kpiRows, agentRows, teamRows] = await Promise.all([
+      db.select({ id: rocks.id }).from(rocks).where(and(eq(rocks.organizationId, c.org.id), isNull(rocks.deletedAt))),
+      db.select({ id: kpis.id }).from(kpis).where(and(eq(kpis.organizationId, c.org.id), isNull(kpis.deletedAt))),
+      db.select({ id: managerAgents.id }).from(managerAgents).where(and(eq(managerAgents.orgId, c.org.id), isNull(managerAgents.deletedAt))),
+      db.select({ id: teams.id, name: teams.name, isDefault: teams.isDefault }).from(teams).where(eq(teams.orgId, c.org.id)),
+    ]);
+    const leadTeam = teamRows.find((t) => t.isDefault) || teamRows[0] || null;
+    return reply.view('pages/onboarding-meeting', {
+      title: 'Your first meeting · OTP',
+      org: c.org,
+      members,
+      teamName: leadTeam?.name || `${c.org.name} Leadership Team`,
+      counts: {
+        seats: members.length,
+        goals: goals.length,
+        kpis: kpiRows.length,
+        agents: agentRows.length,
+        teams: teamRows.length,
+      },
+    }, LAYOUT);
+  });
+}

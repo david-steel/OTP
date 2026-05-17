@@ -1,0 +1,27 @@
+<%# ============================================================
+   OTP onboarding layout -- standalone focused wizard.
+   No site nav, no footer: the 7-step post-signup flow keeps the
+   user on one task. Opt in per route with:
+     reply.view('pages/onboarding-x', data, { layout: 'layouts/onboarding' })
+   Each page view carries its own <style> block (verbatim from the
+   verified design previews) so every screen renders self-contained.
+   ============================================================ %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fcfcfd">
+<meta name="robots" content="noindex, nofollow">
+<title><%= typeof title !== 'undefined' && title ? title : 'Set up your org · OTP' %></title>
+<link rel="icon" type="image/png" href="/public/favicon-orgy.png">
+<link rel="apple-touch-icon" href="/public/favicon-orgy-512.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+<%- body %>
+</body>
+</html>
