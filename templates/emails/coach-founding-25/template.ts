@@ -471,6 +471,9 @@ export function renderCoachFoundingEmail(vars: CoachEmailVars): {
               You're getting this because your coaching profile was seeded on OTP from the public EOS Worldwide® implementer directory.
             </p>
             <p style="margin:0 0 12px;font-size:11px;line-height:1.7;color:#7A8198;">
+              OTP, 277 Fairfield Rd, Fairfield, NJ 07004
+            </p>
+            <p style="margin:0 0 12px;font-size:11px;line-height:1.7;color:#7A8198;">
               <strong style="color:#A8AFC4;">OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide®, Ninety, or Bloom Growth.</strong> References to these products are factual comparisons only. EOS®, EOS Worldwide®, EOS Implementer®, and related marks are trademarks of EOS Worldwide, LLC. Ninety and Bloom Growth are trademarks of their respective owners.
             </p>
             <p style="margin:0;font-size:11px;line-height:1.7;color:#7A8198;">
