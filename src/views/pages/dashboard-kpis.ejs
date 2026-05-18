@@ -92,6 +92,67 @@
       <span class="sb-filter" title="Phase later: group filter">Group: All</span>
     </div>
 
+    <!-- Shared KPIs: one metric assigned to several people, goals + actuals summed. -->
+    <% var rollups = (typeof sharedRollups !== 'undefined' && sharedRollups) ? sharedRollups : []; %>
+    <% var SB_OP = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }; %>
+    <% if (rollups.length > 0) { %>
+      <div class="sb-shell" style="margin-bottom: 1.25rem;">
+        <div class="sb-group-header">
+          <div class="sb-group-title">Shared KPIs <span class="sb-group-count"><%= rollups.length %></span></div>
+        </div>
+        <div style="padding: 0.25rem 1rem 1rem;">
+          <% rollups.forEach(function(rl) { %>
+            <div style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.75rem 0.9rem; margin-top: 0.75rem;">
+              <div style="display:flex; align-items:baseline; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                <div style="font-weight:700; color:#111827; font-size:14px;"><%= rl.title %></div>
+                <div style="font-size:12px; color:#6b7280;">
+                  <span style="font-weight:700; color:#111827;">Total goal:</span>
+                  <%= rl.goalSum == null ? '—' : ((SB_OP[rl.goalOperator] || '') + ' ' + rl.goalSum + (rl.unit ? ' ' + rl.unit : '')) %>
+                  &nbsp;&middot;&nbsp;
+                  <span style="font-weight:700; color:#111827;">Latest total:</span>
+                  <%= rl.latestSum == null ? '—' : (rl.latestSum + (rl.unit ? ' ' + rl.unit : '')) %>
+                </div>
+              </div>
+              <table style="width:100%; font-size:12px; margin-top:0.5rem; border-collapse:collapse;">
+                <% rl.members.forEach(function(m) { %>
+                  <tr>
+                    <td style="padding:0.25rem 0; color:#374151;"><%= m.ownerName %></td>
+                    <td style="padding:0.25rem 0; color:#6b7280; text-align:right; width:90px;">goal <%= m.goalValue == null ? '—' : m.goalValue %></td>
+                    <td style="padding:0.25rem 0; color:#111827; text-align:right; font-weight:600; width:100px;">latest <%= m.latestValue == null ? '—' : m.latestValue %></td>
+                    <td style="padding:0.25rem 0; text-align:right; width:80px;">
+                      <button type="button" class="kpi-unshare" data-kpi-id="<%= m.kpiId %>" style="font-size:11px; color:#b91c1c; background:none; border:none; cursor:pointer;">Remove</button>
+                    </td>
+                  </tr>
+                <% }); %>
+              </table>
+              <div style="margin-top:0.4rem;">
+                <button type="button" class="kpi-add-person" data-kpi-id="<%= rl.members[0].kpiId %>" data-kpi-title="<%= rl.title %>" style="font-size:11px; font-weight:600; color:#2563eb; background:none; border:none; cursor:pointer; padding:0;">+ Add another person</button>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Assign-to-person panel (shared; toggled by the + person buttons) -->
+    <div id="kpi-assign-panel" class="sb-shell" style="display:none; margin-bottom:1.25rem; padding:1rem;">
+      <div style="font-weight:700; color:#111827; margin-bottom:0.5rem;">
+        Add a person to <span id="kpi-assign-title">this KPI</span>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <select id="kpi-assign-owner" style="font-size:13px; padding:0.4rem 0.5rem; border:1px solid #e5e7eb; border-radius:6px;">
+          <option value="">Pick a person...</option>
+          <% (teamNodes || []).filter(function(n){ return n.type === 'human' || n.type === 'agent'; }).forEach(function(n) { %>
+            <option value="<%= n.type %>:<%= n.externalId %>:<%= n.label %>"><%= n.label %></option>
+          <% }); %>
+        </select>
+        <input id="kpi-assign-goal" type="number" step="any" placeholder="Their goal" style="width:110px; font-size:13px; padding:0.4rem 0.5rem; border:1px solid #e5e7eb; border-radius:6px;" />
+        <button type="button" id="kpi-assign-submit" style="font-size:13px; font-weight:600; padding:0.4rem 0.9rem; background:#2563eb; color:#fff; border:none; border-radius:6px; cursor:pointer;">Add</button>
+        <button type="button" id="kpi-assign-cancel" style="font-size:13px; padding:0.4rem 0.7rem; background:#fff; color:#6b7280; border:1px solid #e5e7eb; border-radius:6px; cursor:pointer;">Cancel</button>
+      </div>
+      <p style="font-size:11px; color:#9ca3af; margin-top:0.4rem;">Each person reports their own number. The scorecard sums the goals and the actuals.</p>
+    </div>
+
     <% if (scoreboard.rows.length === 0) { %>
       <div class="sb-shell sb-empty">
         <p style="font-size:14px; margin-bottom:0.5rem;"><strong>No KPIs yet.</strong></p>
@@ -182,6 +243,7 @@
                             <% }); %>
                           </select>
                         <% } %>
+                        <button type="button" class="kpi-add-person" data-kpi-id="<%= k.id %>" data-kpi-title="<%= k.title %>" style="font-size:10px; font-weight:600; color:#2563eb; background:none; border:none; cursor:pointer; padding:1px 4px;" title="Assign this KPI to another person too">+ person</button>
                       </div>
                     </td>
                     <td>
@@ -419,6 +481,89 @@
           alert('Move failed: ' + (err.message || 'unknown'));
           e.currentTarget.disabled = false;
           e.currentTarget.value = '';
+        }
+      });
+    });
+
+    // --- Shared KPIs: assign a KPI to another person ---
+    var assignPanel = document.getElementById('kpi-assign-panel');
+    var assignTitle = document.getElementById('kpi-assign-title');
+    var assignOwner = document.getElementById('kpi-assign-owner');
+    var assignGoal = document.getElementById('kpi-assign-goal');
+    var assignSubmit = document.getElementById('kpi-assign-submit');
+    var assignCancel = document.getElementById('kpi-assign-cancel');
+    var assignKpiId = null;
+
+    document.querySelectorAll('.kpi-add-person').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        assignKpiId = btn.getAttribute('data-kpi-id');
+        if (assignTitle) assignTitle.textContent = btn.getAttribute('data-kpi-title') || 'this KPI';
+        if (assignOwner) assignOwner.value = '';
+        if (assignGoal) assignGoal.value = '';
+        if (assignPanel) {
+          assignPanel.style.display = 'block';
+          assignPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    });
+
+    if (assignCancel) assignCancel.addEventListener('click', function() {
+      if (assignPanel) assignPanel.style.display = 'none';
+      assignKpiId = null;
+    });
+
+    if (assignSubmit) assignSubmit.addEventListener('click', async function() {
+      if (!assignKpiId) return;
+      var val = assignOwner ? assignOwner.value : '';
+      if (!val) { alert('Pick a person first.'); return; }
+      var parts = val.split(':');
+      var body = {
+        ownerEntityType: parts[0],
+        ownerExternalId: parts[1],
+        ownerName: parts.slice(2).join(':'),
+      };
+      var goalRaw = assignGoal ? assignGoal.value.trim() : '';
+      if (goalRaw !== '') body.goalValue = Number(goalRaw);
+      assignSubmit.disabled = true;
+      try {
+        var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(assignKpiId) + '/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          var err = await resp.json().catch(function() { return {}; });
+          alert('Assign failed: ' + (err.error && err.error.message ? err.error.message : resp.status));
+          assignSubmit.disabled = false;
+          return;
+        }
+        location.reload();
+      } catch (e) {
+        alert('Network error: ' + e.message);
+        assignSubmit.disabled = false;
+      }
+    });
+
+    document.querySelectorAll('.kpi-unshare').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Remove this person from the shared KPI? Their KPI row and its values stay -- it just stops rolling up.')) return;
+        btn.disabled = true;
+        try {
+          var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(btn.getAttribute('data-kpi-id')) + '/unshare', {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (!resp.ok) {
+            var err = await resp.json().catch(function() { return {}; });
+            alert('Failed: ' + (err.error && err.error.message ? err.error.message : resp.status));
+            btn.disabled = false;
+            return;
+          }
+          location.reload();
+        } catch (e) {
+          alert('Network error: ' + e.message);
+          btn.disabled = false;
         }
       });
     });

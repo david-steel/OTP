@@ -689,6 +689,10 @@ export const kpis = pgTable('kpis', {
   // Team scoping: which L10 scorecard this KPI belongs on. Backfill (in
   // ensure-kpis-rocks-team.ts) puts all existing KPIs on leadership.
   teamId: uuid('team_id'),
+  // Shared KPI: every per-person member of one shared KPI carries the same
+  // sharedGroupId. NULL = an ordinary single-owner KPI. Created in
+  // ensure-kpi-shared-group.ts.
+  sharedGroupId: uuid('shared_group_id'),
   ownerEntityType: kpiOwnerEntityTypeEnum('owner_entity_type').notNull(),
   ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
   title: varchar('title', { length: 255 }).notNull(),
@@ -713,6 +717,7 @@ export const kpis = pgTable('kpis', {
   orgIdx: index('kpis_org_idx').on(table.organizationId),
   ownerIdx: index('kpis_owner_idx').on(table.organizationId, table.ownerEntityType, table.ownerExternalId),
   groupIdx: index('kpis_group_idx').on(table.organizationId, table.groupName),
+  sharedGroupIdx: index('kpis_shared_group_idx').on(table.organizationId, table.sharedGroupId),
   grainIdx: index('kpis_grain_idx').on(table.organizationId, table.timeGrain),
   sectionIdx: index('kpis_section_idx').on(table.planSectionId),
   execItemIdx: index('kpis_exec_item_idx').on(table.executionItemId),

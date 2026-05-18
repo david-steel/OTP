@@ -2563,6 +2563,58 @@ export default async function pageRoutes(app: FastifyInstance) {
       .where(eq(teams.orgId, org.id))
       .orderBy(desc(teams.isDefault), asc(teams.name));
 
+    // Shared KPIs: members carry the same sharedGroupId -- roll them up so
+    // the scorecard can show one line with the summed goal + summed actual.
+    const sharedRollups: Array<{
+      groupId: string; title: string; unit: string | null; goalOperator: string | null;
+      goalSum: number | null; latestSum: number | null; memberCount: number;
+      members: { kpiId: string; ownerExternalId: string; ownerName: string; goalValue: number | null; latestValue: number | null }[];
+    }> = [];
+    try {
+      const sharedKpis = allKpis.filter(k => k.sharedGroupId);
+      if (sharedKpis.length > 0) {
+        const memberIds = sharedKpis.map(k => k.id);
+        const valRows = await db.select({ kpiId: kpiValues.kpiId, value: kpiValues.value, periodStart: kpiValues.periodStart })
+          .from(kpiValues)
+          .where(inArray(kpiValues.kpiId, memberIds))
+          .orderBy(desc(kpiValues.periodStart));
+        const latestByKpi = new Map<string, number | null>();
+        for (const v of valRows) {
+          if (!latestByKpi.has(v.kpiId)) latestByKpi.set(v.kpiId, v.value);
+        }
+        const ownerLabel = (ext: string) => {
+          const n = team.nodes.find(nn => nn.externalId === ext);
+          return n ? n.label : ext;
+        };
+        const groups = new Map<string, typeof sharedKpis>();
+        for (const k of sharedKpis) {
+          const arr = groups.get(k.sharedGroupId as string) || [];
+          arr.push(k);
+          groups.set(k.sharedGroupId as string, arr);
+        }
+        groups.forEach((members, groupId) => {
+          let goalSum = 0, anyGoal = false, latestSum = 0, anyLatest = false;
+          const memberOut = members.map(m => {
+            const lv = latestByKpi.get(m.id) ?? null;
+            if (m.goalValue != null) { goalSum += m.goalValue; anyGoal = true; }
+            if (lv != null) { latestSum += lv; anyLatest = true; }
+            return { kpiId: m.id, ownerExternalId: m.ownerExternalId, ownerName: ownerLabel(m.ownerExternalId), goalValue: m.goalValue, latestValue: lv };
+          });
+          sharedRollups.push({
+            groupId,
+            title: members[0].title,
+            unit: members[0].unit,
+            goalOperator: members[0].goalOperator,
+            goalSum: anyGoal ? goalSum : null,
+            latestSum: anyLatest ? latestSum : null,
+            memberCount: members.length,
+            members: memberOut,
+          });
+        });
+        sharedRollups.sort((a, b) => a.title.localeCompare(b.title));
+      }
+    } catch { /* best-effort: the scorecard still renders without rollups */ }
+
     return reply.view('pages/dashboard-kpis', {
       title: 'KPIs - Dashboard - OTP',
       description: 'Scoreboard view of every measurable on your org chart.',
@@ -2576,6 +2628,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       grain,
       view,
       orgTeams: orgTeamsKpi,
+      sharedRollups,
       isSuperAdmin: (request as any).isSuperAdmin,
     });
   });

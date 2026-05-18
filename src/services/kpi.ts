@@ -10,6 +10,7 @@ import { kpis, kpiValues, kpiDependencies } from '../db/schema.js';
 import { and, eq, isNull, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import { periodFor, bucketPeriods, type KpiTimeGrain as PeriodGrain } from './kpi-periods.js';
 import { parseFormula, extractRefs, evaluate, detectCycle, FormulaError, type Ast } from './kpi-formula.js';
+import { randomUUID } from 'node:crypto';
 
 export type KpiOwnerEntityType = 'agent' | 'human';
 export type KpiGoalOperator = 'gte' | 'lte' | 'eq' | 'gt' | 'lt';
@@ -163,6 +164,92 @@ export async function deleteKpi(orgId: string, kpiId: string) {
     .returning({ id: kpis.id });
   if (!row) throw new KpiError('NOT_FOUND', 'KPI not found', 404);
   return { id: row.id, deleted: true };
+}
+
+// ---- Shared KPIs -------------------------------------------------------
+// A shared KPI is one metric assigned to several people. Each person keeps
+// their own kpis row (own owner, own goal, own values); every member of the
+// shared KPI carries the same sharedGroupId. The scorecard sums them.
+
+export interface AssignKpiInput {
+  ownerEntityType: KpiOwnerEntityType;
+  ownerExternalId: string;
+  ownerName?: string | null;
+  goalValue?: number | null;
+}
+
+// Add another person to an existing KPI: stamps a shared group on the source
+// KPI (if it has none) and creates a sibling KPI for the new person.
+export async function assignKpiToOwner(
+  orgId: string,
+  sourceKpiId: string,
+  input: AssignKpiInput,
+  createdBy: string,
+) {
+  if (!input.ownerExternalId.trim()) throw new KpiError('INVALID_OWNER', 'ownerExternalId is required');
+
+  const [source] = await db.select().from(kpis)
+    .where(and(eq(kpis.id, sourceKpiId), eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
+    .limit(1);
+  if (!source) throw new KpiError('NOT_FOUND', 'KPI not found', 404);
+  if (source.formula) throw new KpiError('INVALID_SHARE', 'A formula KPI cannot be shared across people');
+  if (source.ownerExternalId === input.ownerExternalId) {
+    throw new KpiError('DUPLICATE_OWNER', 'That person already owns this KPI');
+  }
+
+  let groupId = source.sharedGroupId;
+  if (groupId) {
+    const dup = await db.select({ id: kpis.id }).from(kpis)
+      .where(and(
+        eq(kpis.organizationId, orgId),
+        eq(kpis.sharedGroupId, groupId),
+        eq(kpis.ownerExternalId, input.ownerExternalId),
+        isNull(kpis.deletedAt),
+      )).limit(1);
+    if (dup.length > 0) throw new KpiError('DUPLICATE_OWNER', 'That person already has this KPI');
+  } else {
+    groupId = randomUUID();
+    await db.update(kpis).set({ sharedGroupId: groupId, updatedAt: new Date() }).where(eq(kpis.id, source.id));
+  }
+
+  const [member] = await db.insert(kpis).values({
+    organizationId: orgId,
+    teamId: source.teamId,
+    sharedGroupId: groupId,
+    ownerEntityType: input.ownerEntityType,
+    ownerExternalId: input.ownerExternalId,
+    title: source.title,
+    description: source.description,
+    groupName: source.groupName,
+    goalOperator: source.goalOperator,
+    goalValue: input.goalValue ?? null,
+    unit: source.unit,
+    timeGrain: source.timeGrain,
+    aggregationMethod: source.aggregationMethod,
+    createdBy,
+  }).returning();
+
+  return { groupId, member };
+}
+
+// Remove a KPI from its shared group. If that leaves a single member, the
+// group collapses (the lone member becomes an ordinary KPI again).
+export async function unshareKpi(orgId: string, kpiId: string) {
+  const [kpi] = await db.select().from(kpis)
+    .where(and(eq(kpis.id, kpiId), eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)))
+    .limit(1);
+  if (!kpi) throw new KpiError('NOT_FOUND', 'KPI not found', 404);
+  if (!kpi.sharedGroupId) return { ok: true };
+
+  const groupId = kpi.sharedGroupId;
+  await db.update(kpis).set({ sharedGroupId: null, updatedAt: new Date() }).where(eq(kpis.id, kpiId));
+
+  const remaining = await db.select({ id: kpis.id }).from(kpis)
+    .where(and(eq(kpis.organizationId, orgId), eq(kpis.sharedGroupId, groupId), isNull(kpis.deletedAt)));
+  if (remaining.length === 1) {
+    await db.update(kpis).set({ sharedGroupId: null, updatedAt: new Date() }).where(eq(kpis.id, remaining[0].id));
+  }
+  return { ok: true };
 }
 
 export async function getKpi(orgId: string, kpiId: string) {

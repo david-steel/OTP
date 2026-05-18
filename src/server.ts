@@ -817,6 +817,14 @@ try {
 }
 
 try {
+  const { ensureKpiSharedGroupColumn } = await import('./db/ensure-kpi-shared-group.js');
+  await ensureKpiSharedGroupColumn();
+  app.log.info('kpis.shared_group_id is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureKpiSharedGroupColumn failed -- shared KPIs will not work until resolved');
+}
+
+try {
   const { ensureManagerAgentsTable } = await import('./db/ensure-manager-agents.js');
   await ensureManagerAgentsTable();
   app.log.info('manager_agents table is ready');

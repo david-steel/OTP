@@ -28,6 +28,8 @@ import {
   deleteKpiValue,
   getScoreboard,
   recomputeKpi,
+  assignKpiToOwner,
+  unshareKpi,
   KpiError,
 } from '../../services/kpi.js';
 import {
@@ -189,6 +191,48 @@ export default async function kpiRoutes(app: FastifyInstance) {
       if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
       request.log.error(e);
       return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to delete KPI' } });
+    }
+  });
+
+  // ---- Shared KPIs ------------------------------------------------------
+  const assignSchema = z.object({
+    ownerEntityType: ownerTypeSchema,
+    ownerExternalId: z.string().min(1).max(120),
+    ownerName: z.string().max(255).nullable().optional(),
+    goalValue: z.number().finite().nullable().optional(),
+  });
+
+  // POST /api/v1/kpis/:id/assign -- add another person to this KPI
+  app.post<{ Params: { id: string } }>('/kpis/:id/assign', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+
+    const body = assignSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
+    }
+    try {
+      const result = await assignKpiToOwner(org.id, request.params.id, body.data, getCreatedBy(request));
+      return reply.status(201).send(result);
+    } catch (e) {
+      if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to assign KPI' } });
+    }
+  });
+
+  // POST /api/v1/kpis/:id/unshare -- remove this KPI from its shared group
+  app.post<{ Params: { id: string } }>('/kpis/:id/unshare', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    try {
+      return await unshareKpi(org.id, request.params.id);
+    } catch (e) {
+      if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to unshare KPI' } });
     }
   });
 
