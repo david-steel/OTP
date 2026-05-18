@@ -3332,6 +3332,44 @@ Founder, OTP</p>
     });
   });
 
+  // Dashboard: CEO Dashboard — the calm, whole, read-only view of the org's vision.
+  // The Operating Plan is where the vision is authored (its Vision tab: foundation,
+  // market_command, destination, annual_game_plan). This page is where it is seen:
+  // one screen, presented to be read, not edited. Reads the same plan sections; no
+  // separate data model. Page-level access: any authed org member.
+  app.get('/dashboard/ceo', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.redirect('/dashboard');
+
+    const planArr = await db
+      .select()
+      .from(oosOperatingPlans)
+      .where(and(eq(oosOperatingPlans.organizationId, org.id), eq(oosOperatingPlans.status, 'active')))
+      .orderBy(desc(oosOperatingPlans.createdAt))
+      .limit(1);
+    const plan = planArr[0] || null;
+
+    let sections: typeof oosOperatingPlanSections.$inferSelect[] = [];
+    if (plan) {
+      sections = await db
+        .select()
+        .from(oosOperatingPlanSections)
+        .where(eq(oosOperatingPlanSections.planId, plan.id))
+        .orderBy(oosOperatingPlanSections.sortOrder);
+    }
+
+    return reply.view('pages/dashboard-ceo', {
+      title: 'CEO Dashboard - OTP',
+      description: 'The company vision, whole and in one place.',
+      noindex: true,
+      org,
+      plan,
+      sections,
+    });
+  });
+
   // Create the org's first OOS Operating Plan (idempotent: returns existing if present).
   // Seeds the 8 standard sections so the UI has something to render.
   app.post('/dashboard/oos-operating-plan/create', async (request, reply) => {
