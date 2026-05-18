@@ -141,11 +141,14 @@ export default async function headlineRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: { code: 'NOT_INTEGRATOR', message: 'Only the Integrator can mark headlines read' } });
     }
 
+    // Headlines are team-scoped: the meeting page shows the team's headlines,
+    // which may belong (by meetingId) to a different meeting of the same team.
+    // Scope the lookup to the headline id + org, and stamp THIS meeting as the
+    // one that addressed it so it reads as "addressed here".
     const [updated] = await db.update(meetingHeadlines)
-      .set({ readAt: new Date(), readByUserId: ctx.userId, updatedAt: new Date() })
+      .set({ readAt: new Date(), readByUserId: ctx.userId, meetingId: id, updatedAt: new Date() })
       .where(and(
         eq(meetingHeadlines.id, hid),
-        eq(meetingHeadlines.meetingId, id),
         eq(meetingHeadlines.orgId, ctx.org.id),
       ))
       .returning();
@@ -173,7 +176,6 @@ export default async function headlineRoutes(app: FastifyInstance) {
       .set({ readAt: null, readByUserId: null, updatedAt: new Date() })
       .where(and(
         eq(meetingHeadlines.id, hid),
-        eq(meetingHeadlines.meetingId, id),
         eq(meetingHeadlines.orgId, ctx.org.id),
       ))
       .returning();
