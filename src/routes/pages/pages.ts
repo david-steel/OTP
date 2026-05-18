@@ -5440,6 +5440,12 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       }
     }
 
+    // Structured headline items for this meeting so the page can render and
+    // flag them. Scoped by meetingId -- meeting is already org-scoped above.
+    const headlineItems = await db.select().from(meetingHeadlines)
+      .where(eq(meetingHeadlines.meetingId, meeting.id))
+      .orderBy(desc(meetingHeadlines.createdAt));
+
     return reply.view('pages/l8-leadership', {
       title: meeting.title + ' -- OTP',
       description: 'Weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
@@ -5451,6 +5457,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       rocks: rocksData,
       issues: orgIssues,
       todos: orgTodos,
+      headlineItems,
       teamMembers,
       availableOwners,
       orgTeams: orgTeamsList,

@@ -137,6 +137,7 @@
                 <th class="text-right p-2">Goal</th>
                 <th class="text-right p-2">Latest</th>
                 <th class="text-center p-2">On Track</th>
+                <th class="text-center p-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -181,6 +182,12 @@
                     <% if (onTrack === true) { %><span class="text-emerald-600 font-bold">✓</span><% } %>
                     <% if (onTrack === false) { %><span class="text-red-600 font-bold">✗</span><% } %>
                     <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
+                  </td>
+                  <td class="p-2 text-center">
+                    <button class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200"
+                            data-flag-kpi="<%= k.id %>"
+                            data-flag-title="<%= String('KPI: ' + (k.title || '')).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>"
+                            data-owner="<%= (k.ownerEntityType && k.ownerExternalId) ? (k.ownerEntityType + ':' + k.ownerExternalId) : '' %>">→ Issue</button>
                   </td>
                 </tr>
               <% }); %>
@@ -260,6 +267,44 @@
   <!-- 4. Headlines -->
   <section id="headlines" class="mb-12">
     <h2 class="text-xl font-bold mb-3">4. Customer &amp; Employee Headlines <span class="text-sm text-gray-400 font-normal">5 min</span></h2>
+
+    <!-- Structured headline items -->
+    <div class="space-y-2 mb-3">
+      <% (headlineItems || []).forEach(function(h) {
+           const kindClass = h.kind === 'customer' ? 'bg-blue-100 text-blue-800' :
+                             h.kind === 'employee' ? 'bg-purple-100 text-purple-800' :
+                             'bg-gray-100 text-gray-700';
+      %>
+        <div class="border rounded p-3 flex items-start justify-between gap-3" data-headline-id="<%= h.id %>">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs px-2 py-0.5 rounded <%= kindClass %>"><%= h.kind %></span>
+              <% if (h.authorName) { %><span class="text-xs text-gray-500"><%= h.authorName %></span><% } %>
+            </div>
+            <div class="text-sm"><%= h.body %></div>
+          </div>
+          <button class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200 flex-shrink-0"
+                  data-flag-headline="<%= h.id %>"
+                  data-flag-title="<%= String(h.body || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>">→ Issue</button>
+        </div>
+      <% }); %>
+      <% if ((headlineItems || []).length === 0) { %>
+        <div class="text-sm text-gray-500 italic">No headlines yet.</div>
+      <% } %>
+    </div>
+
+    <!-- Add headline -->
+    <div class="flex gap-2 mb-4">
+      <select id="new-headline-kind" class="border rounded p-2 text-sm">
+        <option value="customer">customer</option>
+        <option value="employee">employee</option>
+        <option value="other" selected>other</option>
+      </select>
+      <input id="new-headline-body" type="text" placeholder="Notable win or loss with a customer or team member..." class="flex-1 border rounded p-2 text-sm">
+      <button id="add-headline" class="px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">Add</button>
+    </div>
+
+    <label class="block text-xs uppercase tracking-wider text-gray-500 mb-1">Cascading preview (free text)</label>
     <textarea id="headlines-notes" class="w-full border rounded p-3 text-sm h-24" placeholder="Notable wins or losses with customers and team..."><%= meeting.headlines || '' %></textarea>
     <button data-save="headlines" class="mt-2 text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
   </section>
@@ -479,6 +524,30 @@
       </details>
     <% } %>
   </section>
+
+  <!-- Shared flag-to-issue form (hidden; moved next to the flagged item on click) -->
+  <div id="flag-issue-form" class="hidden border border-otp-300 rounded p-3 bg-otp-50 mb-3">
+    <div class="text-xs uppercase tracking-wider text-otp-800 font-medium mb-2">Flag as an issue</div>
+    <input id="flag-title" type="text" placeholder="Issue title" class="w-full border rounded p-2 text-sm mb-2">
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <select id="flag-team" class="border rounded p-2 text-sm">
+        <option value="">(no team)</option>
+        <% (orgTeams || []).forEach(function(tm) { %>
+          <option value="<%= tm.id %>" <%= tm.id === meeting.teamId ? 'selected' : '' %>><%= tm.name %></option>
+        <% }); %>
+      </select>
+      <select id="flag-owner" class="border rounded p-2 text-sm">
+        <option value="">(no owner)</option>
+        <% (availableOwners || []).forEach(function(a) { %>
+          <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button id="flag-create" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400 font-medium">Create Issue</button>
+      <button id="flag-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+    </div>
+  </div>
 
   <!-- 7. Conclude -->
   <section id="conclude" class="mb-8">
@@ -1099,6 +1168,104 @@
       await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus: 'open', solvedInMeetingId: null }) });
       location.reload();
     });
+  });
+
+  // ===== Add headline =====
+  const addHeadlineBtn = document.getElementById('add-headline');
+  if (addHeadlineBtn) addHeadlineBtn.addEventListener('click', async () => {
+    const kind = (document.getElementById('new-headline-kind') || {}).value || 'other';
+    const body = (document.getElementById('new-headline-body') || {}).value.trim();
+    if (!body) return alert('Headline text is required.');
+    addHeadlineBtn.disabled = true; addHeadlineBtn.textContent = 'Adding...';
+    const res = await api('/meetings/' + meetingId + '/headlines', {
+      method: 'POST',
+      body: JSON.stringify({ kind, body }),
+    });
+    if (res?.error || !res?.headline) {
+      alert('Add failed: ' + errMsg(res));
+      addHeadlineBtn.disabled = false; addHeadlineBtn.textContent = 'Add';
+      return;
+    }
+    location.reload();
+  });
+
+  // ===== Shared flag-to-issue form =====
+  // One hidden form, moved next to whatever item was flagged. Used by both
+  // headline items (§4) and Scorecard KPI rows (§2).
+  const flagForm = document.getElementById('flag-issue-form');
+  const flagTitle = document.getElementById('flag-title');
+  const flagTeam = document.getElementById('flag-team');
+  const flagOwner = document.getElementById('flag-owner');
+  const MEETING_TITLE = <%- JSON.stringify(meeting.title || '') %>;
+  let flagSource = null; // 'Headlines' | 'Scorecard'
+
+  function openFlagForm(btn, source) {
+    flagSource = source;
+    flagTitle.value = btn.getAttribute('data-flag-title') || '';
+    flagTeam.value = <%- JSON.stringify(meeting.teamId || '') %>;
+    const ownerKey = btn.getAttribute('data-owner') || '';
+    // Owner option values are entityType:externalId:name -- match on the
+    // entityType:externalId prefix that the KPI button carries.
+    flagOwner.value = '';
+    if (ownerKey) {
+      Array.from(flagOwner.options).forEach(opt => {
+        if (opt.value && opt.value.startsWith(ownerKey + ':')) flagOwner.value = opt.value;
+      });
+    }
+    // Move the form directly after the flagged item's container.
+    const anchor = btn.closest('[data-headline-id]') || btn.closest('tr');
+    if (anchor && anchor.parentNode) {
+      if (anchor.tagName === 'TR') {
+        // Inside a table -- park the form after the whole table instead.
+        const table = anchor.closest('table');
+        if (table && table.parentNode) table.parentNode.insertBefore(flagForm, table.nextSibling);
+      } else {
+        anchor.parentNode.insertBefore(flagForm, anchor.nextSibling);
+      }
+    }
+    flagForm.classList.remove('hidden');
+    flagTitle.focus();
+  }
+
+  document.querySelectorAll('[data-flag-headline]').forEach(btn => {
+    btn.addEventListener('click', () => openFlagForm(btn, 'Headlines'));
+  });
+  document.querySelectorAll('[data-flag-kpi]').forEach(btn => {
+    btn.addEventListener('click', () => openFlagForm(btn, 'Scorecard'));
+  });
+
+  document.getElementById('flag-cancel')?.addEventListener('click', () => {
+    flagForm.classList.add('hidden');
+  });
+
+  document.getElementById('flag-create')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const title = flagTitle.value.trim();
+    if (title.length < 5) return alert('Issue title must be at least 5 characters.');
+    const description = 'Flagged as an issue from the ' + (flagSource || 'meeting') +
+      ' of meeting: ' + MEETING_TITLE;
+    const body = {
+      title,
+      description,
+      category: 'other',
+      priority: 'medium',
+    };
+    const selectedTeam = flagTeam.value;
+    if (selectedTeam) body.teamId = selectedTeam;
+    const owner = parseOwner(flagOwner.value);
+    if (owner) {
+      body.ownerEntityType = owner.entityType;
+      body.ownerExternalId = owner.externalId;
+      body.ownerName = owner.name;
+    }
+    btn.disabled = true; btn.textContent = 'Creating...';
+    const res = await api('/tickets', { method: 'POST', body: JSON.stringify(body) });
+    if (res?.error || !res?.ticket?.id) {
+      alert('Flag failed: ' + errMsg(res));
+      btn.disabled = false; btn.textContent = 'Create Issue';
+      return;
+    }
+    location.reload();
   });
 })();
 </script>
