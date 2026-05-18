@@ -714,6 +714,18 @@ ${claimSections.join('\n')}`.trim();
       }
     });
 
+    // Refresh the cross-org pattern view so get_patterns reflects this publish.
+    // Post-commit + fire-and-forget: REFRESH ... CONCURRENTLY cannot run inside
+    // a transaction, and a refresh failure must not fail the publish.
+    setImmediate(async () => {
+      try {
+        await db.execute(sql`REFRESH MATERIALIZED VIEW CONCURRENTLY coordination_patterns`);
+        console.log(`[patterns] coordination_patterns refreshed after publishing OOS ${oosIdForSim}`);
+      } catch (err) {
+        console.error(`[patterns] Failed to refresh coordination_patterns for OOS ${oosIdForSim}:`, err);
+      }
+    });
+
     return {
       oosFile: published,
       qualityTier: qualityResult.tier,
