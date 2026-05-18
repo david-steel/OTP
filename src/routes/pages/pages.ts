@@ -4395,6 +4395,96 @@ Founder, OTP</p>
       accountabilityGaps = { seatsNoMeasurable: [], orphanedWork: [], agentsNoHuman: [] };
     }
 
+    // ---- Delegate-and-Elevate: owners carrying a heavy recurring load that
+    // could be handed to a lower seat or an agent. ----
+    let delegateElevate: { externalId: string; name: string; count: number; oldestTitle: string; oldestDays: number }[] = [];
+    try {
+      const recurringRows = await db.select({
+        owner: todos.ownerExternalId,
+        ownerName: todos.ownerName,
+        title: todos.title,
+        createdAt: todos.createdAt,
+      }).from(todos).where(and(
+        eq(todos.organizationId, org.id),
+        isNull(todos.deletedAt),
+        sql`${todos.recurrenceRule} IS NOT NULL`,
+      ));
+      const byOwner = new Map<string, { name: string; items: { title: string; createdAt: Date }[] }>();
+      for (const r of recurringRows) {
+        if (!r.owner) continue;
+        const entry = byOwner.get(r.owner) || { name: r.ownerName || r.owner, items: [] };
+        entry.items.push({ title: r.title, createdAt: r.createdAt });
+        byOwner.set(r.owner, entry);
+      }
+      const nowMs = Date.now();
+      const HANDOFF_MIN_COUNT = 3;
+      const HANDOFF_AGE_DAYS = 90;
+      byOwner.forEach((entry, externalId) => {
+        const oldest = entry.items.reduce((a, b) => (a.createdAt <= b.createdAt ? a : b));
+        const oldestDays = Math.floor((nowMs - oldest.createdAt.getTime()) / 86400000);
+        if (entry.items.length >= HANDOFF_MIN_COUNT || oldestDays >= HANDOFF_AGE_DAYS) {
+          delegateElevate.push({
+            externalId,
+            name: entry.name,
+            count: entry.items.length,
+            oldestTitle: oldest.title,
+            oldestDays,
+          });
+        }
+      });
+      delegateElevate.sort((a, b) => b.count - a.count);
+    } catch {
+      delegateElevate = [];
+    }
+
+    // ---- Founder-Dependency: share of open work owned by the top human
+    // seat (the chart's CEO -- a human with nobody above). ----
+    let founderDependency: {
+      hasTopSeat: boolean; pct: number; ownedByTop: number; totalOpen: number; topNames: string[];
+    } = { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] };
+    try {
+      const reportsToSources = new Set(
+        teamGraphForAgents.edges.filter(e => e.type === 'reports_to').map(e => e.sourceId),
+      );
+      const topHumans = teamGraphForAgents.nodes.filter(
+        n => n.type === 'human' && !reportsToSources.has(n.id),
+      );
+      if (topHumans.length > 0) {
+        const topIds = new Set(topHumans.map(n => n.externalId));
+        const [fdRocks, fdKpis, fdTickets, fdTodos] = await Promise.all([
+          db.select({ owner: rocks.ownerExternalId }).from(rocks)
+            .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
+          db.select({ owner: kpis.ownerExternalId }).from(kpis)
+            .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt))),
+          db.select({ owner: tickets.ownerExternalId }).from(tickets)
+            .where(and(
+              eq(tickets.orgId, org.id),
+              isNull(tickets.deletedAt),
+              sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+            )),
+          db.select({ owner: todos.ownerExternalId }).from(todos)
+            .where(and(
+              eq(todos.organizationId, org.id),
+              isNull(todos.deletedAt),
+              isNull(todos.doneAt),
+              sql`${todos.recurrenceRule} IS NULL`,
+            )),
+        ]);
+        const allOpen = [...fdRocks, ...fdKpis, ...fdTickets, ...fdTodos];
+        const totalOpen = allOpen.length;
+        const ownedByTop = allOpen.filter(r => r.owner && topIds.has(r.owner)).length;
+        founderDependency = {
+          hasTopSeat: true,
+          pct: totalOpen > 0 ? Math.round((ownedByTop / totalOpen) * 100) : 0,
+          ownedByTop,
+          totalOpen,
+          topNames: topHumans.map(n => n.label),
+        };
+      }
+    } catch {
+      founderDependency = { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] };
+    }
+
     return reply.view('pages/dashboard-daily', {
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
@@ -4424,6 +4514,8 @@ Founder, OTP</p>
       myAgents,
       mcpStatus,
       accountabilityGaps,
+      delegateElevate,
+      founderDependency,
       orgTeams,
       selectedTeamId,
       previewRole: previewActive ? previewParam : '',

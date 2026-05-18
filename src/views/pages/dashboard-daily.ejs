@@ -577,6 +577,25 @@
         <% } %>
       </section>
 
+      <!-- Founder Dependency -->
+      <% var fd = locals.founderDependency || { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] }; %>
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">Founder Dependency</h2>
+        <% if (!fd.hasTopSeat) { %>
+          <p class="text-xs text-gray-500">No top human seat on the chart yet -- add the seat that reports to nobody to track this.</p>
+        <% } else if (fd.totalOpen === 0) { %>
+          <p class="text-xs text-gray-500">No open work to measure yet.</p>
+        <% } else { var fdHigh = fd.pct >= 50; %>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-bold <%= fdHigh ? 'text-amber-600' : 'text-emerald-600' %>"><%= fd.pct %>%</span>
+            <span class="text-xs font-semibold <%= fdHigh ? 'text-amber-700' : 'text-emerald-700' %>"><%= fdHigh ? 'High -- absorb more onto the team' : 'Healthy' %></span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            <%= fd.ownedByTop %> of <%= fd.totalOpen %> open items (rocks, KPIs, issues, to-dos) sit on <%= fd.topNames.join(', ') %>.
+          </p>
+        <% } %>
+      </section>
+
       <!-- Accountability Gaps (chart <-> work reconciliation) -->
       <%
         var accGaps = locals.accountabilityGaps || {};
@@ -730,6 +749,32 @@
             </div>
           </div>
           <p id="gap-empty" class="hidden text-xs text-gray-500 mt-2">No gaps match this filter.</p>
+        <% } %>
+      </section>
+
+      <!-- Delegate and Elevate: recurring-load hand-off candidates -->
+      <% var handoffs = locals.delegateElevate || []; %>
+      <section class="rounded-lg border border-gray-200 bg-white p-5">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">Hand-off candidates</h2>
+        <% if (handoffs.length === 0) { %>
+          <p class="text-xs text-emerald-700 flex items-center gap-1.5">
+            <span class="text-emerald-600">&#10003;</span>
+            No one is carrying a heavy recurring load.
+          </p>
+        <% } else { %>
+          <ul class="space-y-1.5">
+            <% handoffs.forEach(function(h){ %>
+              <li class="text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-2">
+                <div class="flex items-center justify-between gap-2">
+                  <a href="/team/<%= encodeURIComponent(h.externalId) %>" class="font-medium text-amber-900 hover:underline"><%= h.name %></a>
+                  <span class="text-amber-600 text-[11px] font-semibold"><%= h.count %> recurring</span>
+                </div>
+                <div class="text-amber-700 text-[11px] mt-0.5">
+                  Oldest: "<%= h.oldestTitle %>" -- held <%= h.oldestDays %> days. Consider a lower seat or an agent.
+                </div>
+              </li>
+            <% }); %>
+          </ul>
         <% } %>
       </section>
 
