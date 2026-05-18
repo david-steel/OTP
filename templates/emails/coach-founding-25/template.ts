@@ -266,7 +266,7 @@ export function renderCoachFoundingEmail(vars: CoachEmailVars): {
                       <td valign="top" style="padding-left:8px;">
                         <h3 style="margin:0 0 6px;font-size:18px;font-weight:700;color:${C.text};">Look at the page we built.</h3>
                         <p style="margin:0;font-size:14px;line-height:1.65;color:${C.textMuted};">
-                          We seeded it from your public EOS Worldwide® directory listing. Name, headline, tier, location. No invented bio, nothing pretending to be from you. Look at it. If it's wrong, you can fix it after claim or have us remove it entirely.
+                          We built it from your public EOS Worldwide® directory listing: your name, headline, location, photo, bio, and key points, reproduced as they appear there. Nothing invented, nothing rewritten. Look at it. If anything is wrong, you can fix it after you claim, or have us remove the page entirely.
                         </p>
                       </td>
                     </tr>
