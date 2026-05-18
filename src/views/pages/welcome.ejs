@@ -23,7 +23,8 @@
 
     <% if (isDone) { %>
       <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-6 sm:p-8 mb-10 text-center max-w-xl mx-auto">
-        <div class="text-4xl mb-3">🎉</div>
+        <img src="/public/images/orgy-celebrate.webp" alt="The OTP mascot celebrating"
+             class="mx-auto mb-3 w-[116px] h-auto">
         <h2 class="text-xl font-bold text-gray-900 mb-2">You're set up.</h2>
         <p class="text-sm text-gray-700 mb-4">
           You have <strong><%= seatCount %></strong> teammate<%= seatCount === 1 ? '' : 's' %> and <strong><%= agentCount %></strong> AI agent<%= agentCount === 1 ? '' : 's' %> on the chart. <% if (attribution && attribution.coach_name) { %><%= (attribution.coach_name||'Your coach').split(' ')[0] %> can see this now.<% } %>
