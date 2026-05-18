@@ -106,6 +106,8 @@ const updateSchema = z.object({
   planSectionId: z.string().uuid().nullable().optional(),
   executionItemId: z.string().uuid().nullable().optional(),
   teamId: z.string().uuid().nullable().optional(),
+  ownerEntityType: ownerTypeSchema.optional(),
+  ownerExternalId: z.string().min(1).max(120).optional(),
 }).refine((p) => Object.keys(p).length > 0, { message: 'patch must contain at least one field' });
 
 const listQuerySchema = z.object({

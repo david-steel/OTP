@@ -585,7 +585,7 @@
         var agentsNoHuman = accGaps.agentsNoHuman || [];
         var accAllClear = seatsNoMeasurable.length === 0 && orphanedWork.length === 0 && agentsNoHuman.length === 0;
       %>
-      <section class="rounded-lg border border-gray-200 bg-white p-5">
+      <section class="rounded-lg border border-gray-200 bg-white p-5" id="acc-gaps">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Accountability Gaps</h2>
           <a href="/dashboard/team" class="text-xs text-otp-600 font-semibold hover:underline">View chart &rarr;</a>
@@ -596,55 +596,140 @@
             Chart and work reconcile -- every seat has a measurable, every item has a seat.
           </p>
         <% } else { %>
-          <div class="space-y-4">
-            <% if (seatsNoMeasurable.length > 0) { %>
-              <div>
-                <div class="text-[11px] uppercase tracking-wide font-bold text-amber-700 mb-1.5">
-                  Seats with no measurable <span class="text-amber-500 font-semibold">(<%= seatsNoMeasurable.length %>)</span>
-                </div>
-                <ul class="space-y-1">
-                  <% seatsNoMeasurable.forEach(function(s){ %>
-                    <li class="text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-1.5">
-                      <span class="font-medium text-amber-900"><%= s.label %></span>
-                      <% if (s.type) { %><span class="text-amber-600 text-[11px]">(<%= s.type %>)</span><% } %>
-                      <span class="text-amber-700"> -- owns no KPI or Rock.</span>
-                    </li>
-                  <% }); %>
-                </ul>
-              </div>
-            <% } %>
-            <% if (orphanedWork.length > 0) { %>
-              <div>
-                <div class="text-[11px] uppercase tracking-wide font-bold text-amber-700 mb-1.5">
-                  Work with no seat <span class="text-amber-500 font-semibold">(<%= orphanedWork.length %>)</span>
-                </div>
-                <ul class="space-y-1">
-                  <% orphanedWork.forEach(function(w){ %>
-                    <li class="text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-1.5">
-                      <span class="font-medium text-amber-900"><%= w.externalId %></span>
-                      <% if (w.kind) { %><span class="text-amber-600 text-[11px]">(<%= w.kind %>)</span><% } %>
-                      <span class="text-amber-700"> -- owned by someone not on the chart.</span>
-                    </li>
-                  <% }); %>
-                </ul>
-              </div>
-            <% } %>
-            <% if (agentsNoHuman.length > 0) { %>
-              <div>
-                <div class="text-[11px] uppercase tracking-wide font-bold text-amber-700 mb-1.5">
-                  Agents with no human accountable <span class="text-amber-500 font-semibold">(<%= agentsNoHuman.length %>)</span>
-                </div>
-                <ul class="space-y-1">
-                  <% agentsNoHuman.forEach(function(a){ %>
-                    <li class="text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-1.5">
-                      <span class="font-medium text-amber-900"><%= a.label %></span>
-                      <span class="text-amber-700"> -- no human seat above this agent.</span>
-                    </li>
-                  <% }); %>
-                </ul>
-              </div>
-            <% } %>
+          <div id="gap-filter" class="flex flex-wrap items-center gap-1 text-[11px] mb-3" data-active="all">
+            <button type="button" data-gap-filter="all" class="gap-filter-btn rounded px-2 py-1 font-semibold border border-gray-300 bg-gray-100 text-gray-700">All</button>
+            <button type="button" data-gap-filter="human" class="gap-filter-btn rounded px-2 py-1 font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50">All Human</button>
+            <button type="button" data-gap-filter="agent" class="gap-filter-btn rounded px-2 py-1 font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50">All Agents</button>
+            <button type="button" data-gap-filter="reports" class="gap-filter-btn rounded px-2 py-1 font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50">Direct Reports</button>
+            <button type="button" data-gap-filter="noseat" class="gap-filter-btn rounded px-2 py-1 font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50">No Seat</button>
           </div>
+          <div class="space-y-4" id="gap-buckets">
+            <div data-gap-section="seat"<% if (seatsNoMeasurable.length === 0) { %> class="hidden"<% } %>>
+              <div class="text-[11px] uppercase tracking-wide font-bold text-amber-700 mb-1.5">
+                Seats with no measurable <span class="gap-section-count text-amber-500 font-semibold">(<%= seatsNoMeasurable.length %>)</span>
+              </div>
+              <ul class="space-y-1">
+                <% seatsNoMeasurable.forEach(function(s){ %>
+                  <li class="gap-item text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-1.5"
+                      data-gap-cat="<%= s.type === 'agent' ? 'agent' : 'human' %>"
+                      data-gap-reportsto="<%= s.reportsTo || '' %>"
+                      data-seat-id="<%= s.externalId %>">
+                    <div class="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <span class="font-medium text-amber-900"><%= s.label %></span>
+                        <% if (s.type) { %><span class="text-amber-600 text-[11px]">(<%= s.type %>)</span><% } %>
+                        <span class="text-amber-700"> -- owns no KPI or Rock.</span>
+                      </div>
+                      <div class="flex gap-1.5 shrink-0">
+                        <button type="button" class="gap-add-kpi rounded border border-amber-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100">+ Add KPI</button>
+                        <button type="button" class="gap-add-rock rounded border border-amber-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100">+ Add Rock</button>
+                      </div>
+                    </div>
+                    <form class="gap-kpi-form hidden mt-2 flex flex-col gap-1.5 border-t border-amber-100 pt-2">
+                      <input type="text" name="title" required maxlength="255" placeholder="KPI title (e.g. Weekly qualified calls)" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                      <div class="flex gap-1.5 flex-wrap">
+                        <select name="timeGrain" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="quarterly">Quarterly</option>
+                          <option value="annual">Annual</option>
+                        </select>
+                        <select name="goalOperator" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                          <option value="gte">&ge; at least</option>
+                          <option value="lte">&le; at most</option>
+                          <option value="eq">= exactly</option>
+                          <option value="gt">&gt; more than</option>
+                          <option value="lt">&lt; less than</option>
+                        </select>
+                        <input type="number" name="goalValue" step="any" placeholder="Goal" class="w-20 rounded border border-gray-300 px-2 py-1 text-xs">
+                        <input type="text" name="unit" maxlength="40" placeholder="Unit" class="w-20 rounded border border-gray-300 px-2 py-1 text-xs">
+                      </div>
+                      <div class="flex gap-1.5">
+                        <button type="submit" class="rounded bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700">Create KPI</button>
+                        <button type="button" class="gap-cancel rounded border border-gray-300 px-2.5 py-1 text-[11px] text-gray-600 hover:bg-gray-50">Cancel</button>
+                      </div>
+                    </form>
+                    <form class="gap-rock-form hidden mt-2 flex flex-col gap-1.5 border-t border-amber-100 pt-2">
+                      <input type="text" name="title" required minlength="3" maxlength="500" placeholder="Rock title (a 90-day priority)" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                      <div class="flex gap-1.5 items-center flex-wrap">
+                        <label class="text-[10px] uppercase tracking-wide text-gray-500">Due</label>
+                        <input type="date" name="dueDate" required class="rounded border border-gray-300 px-2 py-1 text-xs">
+                        <span class="text-[10px] text-gray-400">Quarter <%= currentQuarter %></span>
+                      </div>
+                      <div class="flex gap-1.5">
+                        <button type="submit" class="rounded bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700">Create Rock</button>
+                        <button type="button" class="gap-cancel rounded border border-gray-300 px-2.5 py-1 text-[11px] text-gray-600 hover:bg-gray-50">Cancel</button>
+                      </div>
+                    </form>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+            <div data-gap-section="orphan"<% if (orphanedWork.length === 0) { %> class="hidden"<% } %>>
+              <div class="text-[11px] uppercase tracking-wide font-bold text-amber-700 mb-1.5">
+                Work with no seat <span class="gap-section-count text-amber-500 font-semibold">(<%= orphanedWork.length %>)</span>
+              </div>
+              <ul class="space-y-1">
+                <% orphanedWork.forEach(function(w){ %>
+                  <li class="gap-item text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-1.5"
+                      data-gap-cat="noseat"
+                      data-record-id="<%= w.recordId %>"
+                      data-record-kind="<%= w.kind %>">
+                    <div class="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <span class="font-medium text-amber-900"><%= w.label %></span>
+                        <span class="text-amber-600 text-[11px]">(<%= w.kind %>)</span>
+                        <span class="text-amber-700"> -- owned by <%= w.ownerExternalId %>, not on the chart.</span>
+                      </div>
+                      <button type="button" class="gap-reassign-btn rounded border border-amber-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 shrink-0">Reassign</button>
+                    </div>
+                    <form class="gap-reassign-form hidden mt-2 flex gap-1.5 items-center flex-wrap border-t border-amber-100 pt-2">
+                      <select name="seat" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                        <option value="">Pick a seat...</option>
+                        <% (locals.assignablePeople || []).forEach(function(p){ %>
+                          <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+                        <% }); %>
+                      </select>
+                      <button type="submit" class="rounded bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700">Move</button>
+                      <button type="button" class="gap-cancel rounded border border-gray-300 px-2.5 py-1 text-[11px] text-gray-600 hover:bg-gray-50">Cancel</button>
+                    </form>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+            <div data-gap-section="agent"<% if (agentsNoHuman.length === 0) { %> class="hidden"<% } %>>
+              <div class="text-[11px] uppercase tracking-wide font-bold text-amber-700 mb-1.5">
+                Agents with no human accountable <span class="gap-section-count text-amber-500 font-semibold">(<%= agentsNoHuman.length %>)</span>
+              </div>
+              <ul class="space-y-1">
+                <% agentsNoHuman.forEach(function(a){ %>
+                  <li class="gap-item text-sm rounded border border-amber-100 bg-amber-50/60 px-3 py-1.5"
+                      data-gap-cat="agent"
+                      data-gap-reportsto="<%= a.reportsTo || '' %>"
+                      data-agent-id="<%= a.externalId %>">
+                    <div class="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <span class="font-medium text-amber-900"><%= a.label %></span>
+                        <span class="text-amber-700"> -- no human seat above this agent.</span>
+                      </div>
+                      <button type="button" class="gap-setmgr-btn rounded border border-amber-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 shrink-0">Set manager</button>
+                    </div>
+                    <form class="gap-setmgr-form hidden mt-2 flex gap-1.5 items-center flex-wrap border-t border-amber-100 pt-2">
+                      <select name="manager" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                        <option value="">Pick a human seat...</option>
+                        <% (locals.assignablePeople || []).filter(function(p){ return p.entityType === 'human'; }).forEach(function(p){ %>
+                          <option value="<%= p.externalId %>"><%= p.name %></option>
+                        <% }); %>
+                      </select>
+                      <button type="submit" class="rounded bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700">Save</button>
+                      <button type="button" class="gap-cancel rounded border border-gray-300 px-2.5 py-1 text-[11px] text-gray-600 hover:bg-gray-50">Cancel</button>
+                    </form>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+          </div>
+          <p id="gap-empty" class="hidden text-xs text-gray-500 mt-2">No gaps match this filter.</p>
         <% } %>
       </section>
 
@@ -941,5 +1026,163 @@
   if (document.getElementById('issue-filter')) applyIssueFilter('open');
 
   // --- Agents: row clicks navigate to /dashboard/team (no JS handlers needed) ---
+
+  // --- Accountability Gaps: filter + inline fixes ---
+  (function(){
+    var gapEl = document.getElementById('acc-gaps');
+    if (!gapEl) return;
+    var gapQuarter = <%- JSON.stringify(currentQuarter || '') %>;
+    var meSeat = <%- JSON.stringify(locals.meExternalId || '') %>;
+
+    var filterBar = document.getElementById('gap-filter');
+    if (filterBar) {
+      var fbtns = filterBar.querySelectorAll('.gap-filter-btn');
+      var applyGapFilter = function(mode){
+        gapEl.querySelectorAll('.gap-item').forEach(function(li){
+          var cat = li.dataset.gapCat || '';
+          var rt = li.dataset.gapReportsto || '';
+          var show = mode === 'all'
+            || (mode === 'human' && cat === 'human')
+            || (mode === 'agent' && cat === 'agent')
+            || (mode === 'noseat' && cat === 'noseat')
+            || (mode === 'reports' && !!rt && !!meSeat && rt === meSeat);
+          li.classList.toggle('hidden', !show);
+        });
+        var anyVisible = false;
+        gapEl.querySelectorAll('[data-gap-section]').forEach(function(sec){
+          var vis = sec.querySelectorAll('.gap-item:not(.hidden)').length;
+          sec.classList.toggle('hidden', vis === 0);
+          var cnt = sec.querySelector('.gap-section-count');
+          if (cnt) cnt.textContent = '(' + vis + ')';
+          if (vis > 0) anyVisible = true;
+        });
+        var emptyEl = document.getElementById('gap-empty');
+        if (emptyEl) emptyEl.classList.toggle('hidden', anyVisible);
+        filterBar.dataset.active = mode;
+        fbtns.forEach(function(b){
+          var on = b.dataset.gapFilter === mode;
+          b.classList.toggle('bg-gray-100', on);
+          b.classList.toggle('text-gray-700', on);
+          b.classList.toggle('border-gray-300', on);
+          b.classList.toggle('text-gray-500', !on);
+          b.classList.toggle('border-gray-200', !on);
+        });
+      };
+      fbtns.forEach(function(b){
+        b.addEventListener('click', function(){ applyGapFilter(b.dataset.gapFilter); });
+      });
+    }
+
+    function showGapForm(li, form){
+      li.querySelectorAll('form').forEach(function(f){ if (f !== form) f.classList.add('hidden'); });
+      if (form) form.classList.toggle('hidden');
+    }
+    function bindToggle(sel, formSel){
+      gapEl.querySelectorAll(sel).forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var li = btn.closest('.gap-item');
+          showGapForm(li, li.querySelector(formSel));
+        });
+      });
+    }
+    bindToggle('.gap-add-kpi', '.gap-kpi-form');
+    bindToggle('.gap-add-rock', '.gap-rock-form');
+    bindToggle('.gap-reassign-btn', '.gap-reassign-form');
+    bindToggle('.gap-setmgr-btn', '.gap-setmgr-form');
+    gapEl.querySelectorAll('.gap-cancel').forEach(function(btn){
+      btn.addEventListener('click', function(){ btn.closest('form').classList.add('hidden'); });
+    });
+
+    function gapBusy(form, on){
+      var sub = form.querySelector('button[type=submit]');
+      if (!sub) return;
+      if (on) { sub.dataset.label = sub.dataset.label || sub.textContent; sub.disabled = true; sub.textContent = 'Saving...'; }
+      else { sub.disabled = false; sub.textContent = sub.dataset.label || sub.textContent; }
+    }
+    function gapSubmit(form, handler){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var req = handler(form);
+        if (!req) return;
+        gapBusy(form, true);
+        req.then(reload).catch(function(err){
+          gapBusy(form, false);
+          alert((err && err.message) || 'Action failed');
+        });
+      });
+    }
+
+    gapEl.querySelectorAll('.gap-kpi-form').forEach(function(form){
+      gapSubmit(form, function(f){
+        var li = f.closest('.gap-item');
+        var fd = new FormData(f);
+        var title = (fd.get('title') || '').toString().trim();
+        if (!title) { alert('A KPI needs a title.'); return null; }
+        var body = {
+          ownerEntityType: li.dataset.gapCat === 'agent' ? 'agent' : 'human',
+          ownerExternalId: li.dataset.seatId,
+          title: title,
+          timeGrain: (fd.get('timeGrain') || 'weekly').toString(),
+        };
+        var gv = (fd.get('goalValue') || '').toString().trim();
+        if (gv !== '') {
+          body.goalOperator = (fd.get('goalOperator') || 'gte').toString();
+          body.goalValue = Number(gv);
+        }
+        var unit = (fd.get('unit') || '').toString().trim();
+        if (unit) body.unit = unit;
+        return api('POST', '/kpis', body);
+      });
+    });
+
+    gapEl.querySelectorAll('.gap-rock-form').forEach(function(form){
+      gapSubmit(form, function(f){
+        var li = f.closest('.gap-item');
+        var fd = new FormData(f);
+        var title = (fd.get('title') || '').toString().trim();
+        var due = (fd.get('dueDate') || '').toString();
+        if (title.length < 3 || !due) { alert('A Rock needs a title (3+ chars) and a due date.'); return null; }
+        return api('POST', '/rocks', {
+          ownerEntityType: li.dataset.gapCat === 'agent' ? 'agent' : 'human',
+          ownerExternalId: li.dataset.seatId,
+          title: title,
+          quarter: gapQuarter,
+          dueDate: new Date(due + 'T12:00:00Z').toISOString(),
+        });
+      });
+    });
+
+    gapEl.querySelectorAll('.gap-reassign-form').forEach(function(form){
+      gapSubmit(form, function(f){
+        var li = f.closest('.gap-item');
+        var val = (new FormData(f).get('seat') || '').toString();
+        if (!val) { alert('Pick a seat first.'); return null; }
+        var parts = val.split(':');
+        var entityType = parts[0];
+        var externalId = parts[1];
+        var name = parts.slice(2).join(':');
+        var kind = li.dataset.recordKind;
+        var id = li.dataset.recordId;
+        if (kind === 'kpi') {
+          return api('PATCH', '/kpis/' + id, { ownerEntityType: entityType, ownerExternalId: externalId });
+        }
+        var path = kind === 'rock' ? '/rocks/' + id : '/tickets/' + id;
+        return api('PUT', path, { ownerEntityType: entityType, ownerExternalId: externalId, ownerName: name });
+      });
+    });
+
+    gapEl.querySelectorAll('.gap-setmgr-form').forEach(function(form){
+      gapSubmit(form, function(f){
+        var li = f.closest('.gap-item');
+        var mgr = (new FormData(f).get('manager') || '').toString();
+        if (!mgr) { alert('Pick a human seat first.'); return null; }
+        return api('PATCH', '/team/entity', {
+          type: 'agent',
+          externalId: li.dataset.agentId,
+          patch: { reports_to: mgr },
+        });
+      });
+    });
+  })();
 })();
 </script>

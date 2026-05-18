@@ -53,6 +53,8 @@ export interface UpdateKpiInput {
   planSectionId?: string | null;
   executionItemId?: string | null;
   teamId?: string | null;
+  ownerEntityType?: KpiOwnerEntityType;
+  ownerExternalId?: string;
 }
 
 export interface KpiListFilters {
@@ -129,6 +131,8 @@ export async function updateKpi(orgId: string, kpiId: string, patch: UpdateKpiIn
   if (patch.planSectionId !== undefined) update.planSectionId = patch.planSectionId;
   if (patch.executionItemId !== undefined) update.executionItemId = patch.executionItemId;
   if (patch.teamId !== undefined) update.teamId = patch.teamId;
+  if (patch.ownerEntityType !== undefined) update.ownerEntityType = patch.ownerEntityType;
+  if (patch.ownerExternalId !== undefined) update.ownerExternalId = patch.ownerExternalId;
 
   const [row] = await db
     .update(kpis)

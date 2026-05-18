@@ -4297,22 +4297,32 @@ Founder, OTP</p>
     //   - work owned by an external id that has no seat on the chart
     //   - agents that escalate/report to nobody human
     let accountabilityGaps: {
-      seatsNoMeasurable: { externalId: string; label: string; type: string }[];
-      orphanedWork: { externalId: string; kind: 'kpi' | 'rock' | 'issue' }[];
-      agentsNoHuman: { externalId: string; label: string }[];
+      seatsNoMeasurable: { externalId: string; label: string; type: string; reportsTo: string | null }[];
+      orphanedWork: { recordId: string; kind: 'kpi' | 'rock' | 'issue'; label: string; ownerExternalId: string }[];
+      agentsNoHuman: { externalId: string; label: string; reportsTo: string | null }[];
     } = { seatsNoMeasurable: [], orphanedWork: [], agentsNoHuman: [] };
     try {
       const seatNodes = teamGraphForAgents.nodes.filter(n => n.type === 'human' || n.type === 'agent');
       const seatIds = new Set(seatNodes.map(n => n.externalId));
 
-      const [kpiOwnerRows, rockOwnerRows, ticketOwnerRows] = await Promise.all([
-        db.selectDistinct({ ownerExternalId: kpis.ownerExternalId })
+      // Node lookup + "which seat does this node report to" (external id of the manager).
+      const nodeById = new Map(teamGraphForAgents.nodes.map(n => [n.id, n]));
+      const reportsToOf = (nodeId: string): string | null => {
+        const e = teamGraphForAgents.edges.find(ed => ed.type === 'reports_to' && ed.sourceId === nodeId);
+        if (!e) return null;
+        const tgt = nodeById.get(e.targetId);
+        return tgt ? tgt.externalId : null;
+      };
+
+      // Every KPI / rock / open issue as an individual record, with its owner.
+      const [kpiRows, rockRows, ticketRows] = await Promise.all([
+        db.select({ id: kpis.id, title: kpis.title, owner: kpis.ownerExternalId })
           .from(kpis)
           .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt))),
-        db.selectDistinct({ ownerExternalId: rocks.ownerExternalId })
+        db.select({ id: rocks.id, title: rocks.title, owner: rocks.ownerExternalId })
           .from(rocks)
           .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
-        db.selectDistinct({ ownerExternalId: tickets.ownerExternalId })
+        db.select({ id: tickets.id, title: tickets.title, owner: tickets.ownerExternalId })
           .from(tickets)
           .where(and(
             eq(tickets.orgId, org.id),
@@ -4320,37 +4330,34 @@ Founder, OTP</p>
             sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
           )),
       ]);
-      const kpiOwners = new Set(kpiOwnerRows.map(r => r.ownerExternalId).filter(Boolean) as string[]);
-      const rockOwners = new Set(rockOwnerRows.map(r => r.ownerExternalId).filter(Boolean) as string[]);
-      const ticketOwners = new Set(ticketOwnerRows.map(r => r.ownerExternalId).filter(Boolean) as string[]);
+      const kpiOwners = new Set(kpiRows.map(r => r.owner).filter(Boolean) as string[]);
+      const rockOwners = new Set(rockRows.map(r => r.owner).filter(Boolean) as string[]);
 
       // Seats carrying no measurable: not a KPI owner AND not a rock owner.
       accountabilityGaps.seatsNoMeasurable = seatNodes
         .filter(n => !kpiOwners.has(n.externalId) && !rockOwners.has(n.externalId))
-        .map(n => ({ externalId: n.externalId, label: n.label, type: n.type }));
+        .map(n => ({ externalId: n.externalId, label: n.label, type: n.type, reportsTo: reportsToOf(n.id) }));
 
-      // Work whose owner is not a seat on the chart.
-      const orphanSeen = new Set<string>();
-      const orphanedWork: { externalId: string; kind: 'kpi' | 'rock' | 'issue' }[] = [];
-      const collectOrphans = (owners: Set<string>, kind: 'kpi' | 'rock' | 'issue') => {
-        for (const ext of owners) {
-          if (seatIds.has(ext)) continue;
-          const key = ext + '|' + kind;
-          if (orphanSeen.has(key)) continue;
-          orphanSeen.add(key);
-          orphanedWork.push({ externalId: ext, kind });
+      // Each work record whose owner is not a seat on the chart.
+      const orphanedWork: { recordId: string; kind: 'kpi' | 'rock' | 'issue'; label: string; ownerExternalId: string }[] = [];
+      const collectOrphans = (
+        rows: { id: string; title: string; owner: string | null }[],
+        kind: 'kpi' | 'rock' | 'issue',
+      ) => {
+        for (const row of rows) {
+          if (!row.owner || seatIds.has(row.owner)) continue;
+          orphanedWork.push({ recordId: row.id, kind, label: row.title, ownerExternalId: row.owner });
         }
       };
-      collectOrphans(kpiOwners, 'kpi');
-      collectOrphans(rockOwners, 'rock');
-      collectOrphans(ticketOwners, 'issue');
+      collectOrphans(kpiRows, 'kpi');
+      collectOrphans(rockRows, 'rock');
+      collectOrphans(ticketRows, 'issue');
       accountabilityGaps.orphanedWork = orphanedWork;
 
       // Agents that never reach a human by walking reports_to/escalates_to upward.
       const upwardEdges = teamGraphForAgents.edges.filter(
         e => e.type === 'reports_to' || e.type === 'escalates_to',
       );
-      const nodeById = new Map(teamGraphForAgents.nodes.map(n => [n.id, n]));
       const reachesHuman = (startId: string): boolean => {
         const visited = new Set<string>([startId]);
         let frontier = [startId];
@@ -4371,7 +4378,7 @@ Founder, OTP</p>
       };
       accountabilityGaps.agentsNoHuman = teamGraphForAgents.nodes
         .filter(n => n.type === 'agent' && !reachesHuman(n.id))
-        .map(n => ({ externalId: n.externalId, label: n.label }));
+        .map(n => ({ externalId: n.externalId, label: n.label, reportsTo: reportsToOf(n.id) }));
     } catch {
       accountabilityGaps = { seatsNoMeasurable: [], orphanedWork: [], agentsNoHuman: [] };
     }
