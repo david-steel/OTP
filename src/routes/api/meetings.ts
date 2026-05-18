@@ -9,6 +9,8 @@ import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
+import { isAttendee } from '../../services/meeting-access.js';
+import { deliverToAgentInbox } from '../../services/agent-inbox.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -101,7 +103,7 @@ async function checkMeetingEdit(
   }
 
   // manager / managee / member: must belong to the meeting's team.
-  const [m] = await db.select({ teamId: meetings.teamId })
+  const [m] = await db.select({ teamId: meetings.teamId, attendees: meetings.attendees })
     .from(meetings)
     .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
     .limit(1);
@@ -117,6 +119,21 @@ async function checkMeetingEdit(
     .where(and(eq(teamMemberships.teamId, m.teamId), eq(teamMemberships.memberId, member.id)))
     .limit(1);
   if (!tm) {
+    // Not on the meeting's team -- still allow if the requester is a human
+    // attendee of the meeting itself.
+    const { orgMembers } = await import('../../db/schema.js');
+    const [fullMember] = await db.select({
+      id: orgMembers.id,
+      email: orgMembers.email,
+      displayName: orgMembers.displayName,
+      claimedEntityIds: orgMembers.claimedEntityIds,
+    })
+      .from(orgMembers)
+      .where(eq(orgMembers.id, member.id))
+      .limit(1);
+    if (fullMember && isAttendee(fullMember, { attendees: m.attendees })) {
+      return true;
+    }
     reply.status(403).send({ error: { code: 'NOT_ON_TEAM', message: 'You are not on this meeting\'s team' } });
     return false;
   }
@@ -341,6 +358,28 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return { meeting: updated };
   });
 
+  // DELETE /api/v1/meetings/:id  (soft-delete -- any status is deletable)
+  app.delete<{ Params: { id: string } }>('/meetings/:id', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    const [deleted] = await db.update(meetings)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)))
+      .returning();
+    if (!deleted) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+
+    await db.insert(auditLogs).values(createAuditEntry('meeting.deleted', 'meeting', {
+      orgId: org.id, entityId: id,
+    }));
+
+    return { deleted: true };
+  });
+
   // PUT /api/v1/meetings/:id  (update notes/headlines/ratings/etc)
   app.put<{ Params: { id: string } }>('/meetings/:id', async (request, reply) => {
     const id = requireUuidParam(request, reply);
@@ -454,6 +493,47 @@ export default async function meetingRoutes(app: FastifyInstance) {
     }));
 
     return { meeting: updated, cascadingMessage };
+  });
+
+  // POST /api/v1/meetings/:id/cascade
+  // Delivers the meeting's cascading message into the local L8 agent message
+  // bus -- one INFORM block per agent attendee. Requires the cascading
+  // message to already exist (rebuild it first).
+  app.post<{ Params: { id: string } }>('/meetings/:id/cascade', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    const [meeting] = await db.select().from(meetings)
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+      .limit(1);
+    if (!meeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+
+    if (!meeting.cascadingMessage || !meeting.cascadingMessage.trim()) {
+      return reply.status(400).send({ error: { code: 'NOTHING_TO_CASCADE', message: 'Cascading message is empty -- rebuild it first.' } });
+    }
+
+    const attendees = Array.isArray(meeting.attendees) ? (meeting.attendees as any[]) : [];
+    const deliveries: { agent: string; delivered: boolean }[] = [];
+    for (const a of attendees) {
+      if (!a || (a.entityType !== 'agent' && a.type !== 'agent')) continue;
+      if (typeof a.externalId !== 'string' || !a.externalId.trim()) {
+        deliveries.push({ agent: String(a.externalId ?? ''), delivered: false });
+        continue;
+      }
+      const result = await deliverToAgentInbox(a.externalId, meeting.title, meeting.cascadingMessage);
+      deliveries.push({ agent: a.externalId, delivered: result.delivered });
+    }
+
+    const deliveredCount = deliveries.filter(d => d.delivered).length;
+    await db.insert(auditLogs).values(createAuditEntry('meeting.cascaded', 'meeting', {
+      orgId: org.id, entityId: id, details: { agentCount: deliveries.length, deliveredCount },
+    }));
+
+    return { cascaded: true, deliveries };
   });
 
   // GET /api/v1/meetings/:id/agenda  (pulls everything the L8 page needs in one call)

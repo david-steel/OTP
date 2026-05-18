@@ -20,6 +20,7 @@
           End Meeting
         </button>
       <% } %>
+      <button id="delete-meeting" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-100">Delete meeting</button>
     </div>
   </div>
 
@@ -30,10 +31,16 @@
       <button id="edit-attendees-btn" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100">Edit</button>
     </div>
     <div id="attendees-display" class="flex flex-wrap gap-2">
-      <% (meeting.attendees || []).forEach(function(a) { %>
+      <% (meeting.attendees || []).forEach(function(a) {
+           const isAgent = a.entityType === 'agent' || a.type === 'agent';
+           const run = (isAgent && typeof agentRuns !== 'undefined' && agentRuns && agentRuns[a.externalId]) ? agentRuns[a.externalId] : null;
+      %>
         <span class="text-xs px-2 py-1 rounded-full <%= a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>" data-attendee="<%= a.entityType + ':' + a.externalId %>">
           <%= a.name || a.externalId %>
           <span class="text-gray-500">(<%= a.entityType %>)</span>
+          <% if (run) { %>
+            <span class="text-gray-500"> &middot; last run <%= run.status %> <%= run.lastRunAt ? new Date(run.lastRunAt).toLocaleDateString() : '' %></span>
+          <% } %>
         </span>
       <% }); %>
       <% if (!meeting.attendees || meeting.attendees.length === 0) { %>
@@ -126,7 +133,21 @@
                   <td class="p-2 text-right text-gray-700"><%
                     const opSym = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
                   %><%= opSym %> <%= k.goalValue != null ? k.goalValue : '—' %><% if (k.unit) { %> <span class="text-gray-400 text-xs"><%= k.unit %></span><% } %></td>
-                  <td class="p-2 text-right font-medium"><%= v ? v.value : '—' %></td>
+                  <td class="p-2 text-right font-medium" data-kpi-id="<%= k.id %>" data-period-start="<%= v ? new Date(v.periodStart).toISOString() : '' %>">
+                    <div data-kpi-display class="cursor-pointer hover:text-otp-600" title="Click to edit">
+                      <%= v ? v.value : '—' %>
+                      <% if (v) { %>
+                        <div class="text-xs text-gray-400 font-normal">as of <%= new Date(v.periodEnd).toLocaleDateString() %></div>
+                      <% } %>
+                    </div>
+                    <div data-kpi-editor class="hidden">
+                      <input type="number" step="any" data-kpi-input class="w-20 border rounded p-1 text-sm text-right" value="<%= v ? v.value : '' %>">
+                      <div class="flex gap-1 justify-end mt-1">
+                        <button data-kpi-save class="text-xs px-2 py-0.5 bg-otp-500 text-white rounded hover:bg-otp-400">Save</button>
+                        <button data-kpi-cancel class="text-xs px-2 py-0.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+                      </div>
+                    </div>
+                  </td>
                   <td class="p-2 text-center">
                     <% if (onTrack === true) { %><span class="text-emerald-600 font-bold">✓</span><% } %>
                     <% if (onTrack === false) { %><span class="text-red-600 font-bold">✗</span><% } %>
@@ -438,6 +459,7 @@
     <div class="mt-2 flex gap-2 items-center">
       <button data-save="cascadingMessage" class="text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
       <button id="rebuild-cascading" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Rebuild draft from meeting</button>
+      <button id="cascade-to-team" class="text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500">Cascade to team</button>
       <span id="cascading-status" class="text-xs text-gray-500"></span>
     </div>
   </section>
@@ -566,6 +588,25 @@
     rebuildBtn.disabled = false; rebuildBtn.textContent = orig;
   });
 
+  // Cascade meeting to team agent inboxes
+  const cascadeBtn = document.getElementById('cascade-to-team');
+  if (cascadeBtn) cascadeBtn.addEventListener('click', async () => {
+    const orig = cascadeBtn.textContent;
+    cascadeBtn.disabled = true; cascadeBtn.textContent = 'Cascading...';
+    const res = await api('/meetings/' + meetingId + '/cascade', { method: 'POST' });
+    if (res?.cascaded) {
+      const status = document.getElementById('cascading-status');
+      if (status) {
+        const delivered = (res.deliveries || []).filter(d => d.delivered).length;
+        status.textContent = 'Cascaded to ' + delivered + ' agent inbox(es)';
+        setTimeout(() => { status.textContent = ''; }, 4000);
+      }
+    } else {
+      alert('Cascade failed: ' + errMsg(res));
+    }
+    cascadeBtn.disabled = false; cascadeBtn.textContent = orig;
+  });
+
   // Save segue / headlines / cascading message
   document.querySelectorAll('[data-save]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -590,6 +631,20 @@
     if (!confirm('End the meeting?')) return;
     await api('/meetings/' + meetingId + '/end', { method: 'POST' });
     location.reload();
+  });
+
+  // Delete meeting
+  const deleteMeetingBtn = document.getElementById('delete-meeting');
+  if (deleteMeetingBtn) deleteMeetingBtn.addEventListener('click', async () => {
+    if (!confirm('Delete this meeting? It will be removed from the L8 list.')) return;
+    deleteMeetingBtn.disabled = true; deleteMeetingBtn.textContent = 'Deleting...';
+    const res = await api('/meetings/' + meetingId, { method: 'DELETE' });
+    if (res?.deleted) {
+      window.location.href = withOrg('/l8');
+    } else {
+      alert('Delete failed: ' + errMsg(res));
+      deleteMeetingBtn.disabled = false; deleteMeetingBtn.textContent = 'Delete meeting';
+    }
   });
 
   // Attendees
@@ -654,6 +709,39 @@
     box.addEventListener('change', async () => {
       const todoId = box.closest('[data-todo-id]').dataset.todoId;
       await api('/todos/' + todoId, { method: 'PUT', body: JSON.stringify({ done: box.checked }) });
+    });
+  });
+
+  // ===== Editable KPI value =====
+  document.querySelectorAll('[data-kpi-id]').forEach(cell => {
+    const kpiId = cell.dataset.kpiId;
+    const display = cell.querySelector('[data-kpi-display]');
+    const editor = cell.querySelector('[data-kpi-editor]');
+    const input = cell.querySelector('[data-kpi-input]');
+    const saveBtn = cell.querySelector('[data-kpi-save]');
+    const cancelBtn = cell.querySelector('[data-kpi-cancel]');
+
+    display?.addEventListener('click', () => {
+      display.classList.add('hidden');
+      editor.classList.remove('hidden');
+      input?.focus();
+    });
+    cancelBtn?.addEventListener('click', () => {
+      editor.classList.add('hidden');
+      display.classList.remove('hidden');
+    });
+    saveBtn?.addEventListener('click', async () => {
+      const raw = input.value.trim();
+      const value = raw === '' ? null : parseFloat(raw);
+      const periodStart = cell.dataset.periodStart || new Date().toISOString();
+      saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
+      const res = await api('/kpis/' + kpiId + '/values', { method: 'POST', body: JSON.stringify({ periodStart, value }) });
+      if (res?.error) {
+        alert('Save failed: ' + errMsg(res));
+        saveBtn.disabled = false; saveBtn.textContent = 'Save';
+        return;
+      }
+      location.reload();
     });
   });
 

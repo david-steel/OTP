@@ -22,6 +22,7 @@ import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECK
 import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
+import { isAttendee } from '../../services/meeting-access.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -5168,21 +5169,36 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .limit(1);
     if (!meeting) return reply.status(404).send('Meeting not found');
 
-    // Team-membership gate: 404 if the requester isn't on this meeting's
-    // team. Prevents a direct URL to "David x Dan" from leaking to anyone
-    // outside that team. Members must be on the team; meetings with NULL
-    // team_id stay invisible until backfilled.
+    // Access gate: 404 if the requester isn't on this meeting's team AND
+    // isn't a human attendee of the meeting. Prevents a direct URL to
+    // "David x Dan" from leaking outside that team, while still letting a
+    // human who is on the meeting's attendee list view it even if they
+    // aren't on the team. Meetings with NULL team_id rely solely on the
+    // attendee check.
     const _member = (request as any).orgMember as { id: string } | null;
     if (_member) {
-      if (!meeting.teamId) return reply.status(404).send('Meeting not found');
-      const [tm] = await db.select({ teamId: teamMemberships.teamId })
-        .from(teamMemberships)
-        .where(and(
-          eq(teamMemberships.memberId, _member.id),
-          eq(teamMemberships.teamId, meeting.teamId),
-        ))
+      let onTeam = false;
+      if (meeting.teamId) {
+        const [tm] = await db.select({ teamId: teamMemberships.teamId })
+          .from(teamMemberships)
+          .where(and(
+            eq(teamMemberships.memberId, _member.id),
+            eq(teamMemberships.teamId, meeting.teamId),
+          ))
+          .limit(1);
+        onTeam = !!tm;
+      }
+      const [fullMember] = await db.select({
+        id: orgMembers.id,
+        email: orgMembers.email,
+        displayName: orgMembers.displayName,
+        claimedEntityIds: orgMembers.claimedEntityIds,
+      })
+        .from(orgMembers)
+        .where(eq(orgMembers.id, _member.id))
         .limit(1);
-      if (!tm) return reply.status(404).send('Meeting not found');
+      const allowed = onTeam || isAttendee(fullMember, meeting);
+      if (!allowed) return reply.status(404).send('Meeting not found');
     }
     // If _member is null, the requester is the legacy founder who got past
     // l8ResolveOrg via clerkOrgId === auth.userId. They retain full access.
@@ -5286,6 +5302,41 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .where(eq(teams.orgId, org.id))
       .orderBy(desc(teams.isDefault), asc(teams.name));
 
+    // Agent last-run data: for every agent attendee, surface its most recent
+    // run so the UI can badge each agent with status + last-run time. The
+    // agent_runs table is created via raw DDL (ensure-agent-runtime.ts) and
+    // has no Drizzle table object, so this uses raw SQL. The whole block is
+    // best-effort -- if agent_runs is missing or errors, agentRuns is {}.
+    const agentRuns: Record<string, { status: string; lastRunAt: string | null }> = {};
+    const agentExternalIds = Array.from(new Set(
+      ((meeting.attendees || []) as Array<Record<string, unknown>>)
+        .filter((a) => a && typeof a === 'object' && (a.entityType === 'agent' || a.type === 'agent'))
+        .map((a) => (typeof a.externalId === 'string' ? a.externalId : ''))
+        .filter((x): x is string => x.length > 0)
+    ));
+    if (agentExternalIds.length > 0) {
+      try {
+        for (const agentId of agentExternalIds) {
+          const res = await db.execute(sql`
+            SELECT DISTINCT ON (agent_external_id)
+              agent_external_id, status, started_at, completed_at, created_at
+            FROM agent_runs
+            WHERE org_id = ${org.id} AND agent_external_id = ${agentId}
+            ORDER BY agent_external_id, created_at DESC
+          `);
+          const row = (res as any).rows?.[0];
+          if (row) {
+            agentRuns[row.agent_external_id] = {
+              status: row.status,
+              lastRunAt: row.completed_at || row.started_at || row.created_at || null,
+            };
+          }
+        }
+      } catch {
+        // agent_runs unavailable -- leave agentRuns empty.
+      }
+    }
+
     return reply.view('pages/l8-leadership', {
       title: meeting.title + ' -- OTP',
       description: 'Weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
@@ -5299,6 +5350,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       todos: orgTodos,
       availableOwners,
       orgTeams: orgTeamsList,
+      agentRuns,
       devOrgIdParam,
     });
   });
