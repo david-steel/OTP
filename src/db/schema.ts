@@ -961,6 +961,22 @@ export const meetingHeadlines = pgTable('meeting_headlines', {
   unreadIdx: index('mhl_unread_idx').on(table.meetingId, table.readAt),
 }));
 
+// ---- Seat responsibilities (structured role accountabilities per chart seat) ----
+// Created in ensure-seat-responsibilities.ts.
+
+export const seatResponsibilities = pgTable('seat_responsibilities', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  seatExternalId: varchar('seat_external_id', { length: 120 }).notNull(),
+  responsibilities: jsonb('responsibilities').notNull().default([]).$type<string[]>(),
+  updatedBy: varchar('updated_by', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgSeatIdx: uniqueIndex('seat_resp_org_seat_uk').on(table.orgId, table.seatExternalId),
+  orgIdx: index('seat_resp_org_idx').on(table.orgId),
+}));
+
 // ---- Manager agents (user-uploaded CLAUDE.md / Agent.md per dashboard) ----
 // Created in ensure-manager-agents.ts.
 

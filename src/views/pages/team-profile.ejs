@@ -95,6 +95,32 @@
       </section>
 
       <section>
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700">Responsibilities</h2>
+          <button type="button" id="resp-edit-btn" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-50">Edit</button>
+        </div>
+        <% var resp = (responsibilities || []); %>
+        <div id="resp-view">
+          <% if (resp.length === 0) { %>
+            <div class="text-sm text-gray-500 italic border rounded p-3">No responsibilities defined yet.</div>
+          <% } else { %>
+            <ul class="space-y-1 list-disc list-inside border rounded p-3 bg-white text-sm text-gray-700">
+              <% resp.forEach(function(item) { %>
+                <li><%= item %></li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </div>
+        <div id="resp-edit" class="hidden">
+          <textarea id="resp-textarea" rows="6" class="w-full border rounded p-2 text-sm font-mono" placeholder="One responsibility per line"><%= resp.join('\n') %></textarea>
+          <div class="flex gap-2 mt-2">
+            <button type="button" id="resp-save-btn" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500">Save</button>
+            <button type="button" id="resp-cancel-btn" class="text-xs px-3 py-1.5 bg-white border rounded hover:bg-gray-50">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
         <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Open To-Dos (<%= openTodos.length %>)</h2>
         <% if (openTodos.length === 0) { %>
           <div class="text-sm text-gray-500 italic border rounded p-3">Nothing open.</div>
@@ -231,3 +257,45 @@
   </div>
 
 </div>
+
+<script>
+  (function () {
+    var seatId = <%- JSON.stringify(profile.externalId) %>;
+    var editBtn = document.getElementById('resp-edit-btn');
+    var saveBtn = document.getElementById('resp-save-btn');
+    var cancelBtn = document.getElementById('resp-cancel-btn');
+    var viewEl = document.getElementById('resp-view');
+    var editEl = document.getElementById('resp-edit');
+    var textarea = document.getElementById('resp-textarea');
+
+    editBtn.addEventListener('click', function () {
+      viewEl.classList.add('hidden');
+      editBtn.classList.add('hidden');
+      editEl.classList.remove('hidden');
+      textarea.focus();
+    });
+
+    cancelBtn.addEventListener('click', function () {
+      editEl.classList.add('hidden');
+      viewEl.classList.remove('hidden');
+      editBtn.classList.remove('hidden');
+    });
+
+    saveBtn.addEventListener('click', function () {
+      var list = textarea.value.split('\n').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+      saveBtn.disabled = true;
+      fetch('/api/v1/seats/' + encodeURIComponent(seatId) + '/responsibilities', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ responsibilities: list })
+      }).then(function (res) {
+        if (!res.ok) { throw new Error('Save failed (' + res.status + ')'); }
+        location.reload();
+      }).catch(function (err) {
+        saveBtn.disabled = false;
+        alert(err.message || 'Could not save responsibilities.');
+      });
+    });
+  })();
+</script>

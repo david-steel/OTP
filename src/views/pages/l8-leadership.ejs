@@ -316,9 +316,17 @@
             </div>
             <div class="text-sm"><%= h.body %></div>
           </div>
-          <button class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200 flex-shrink-0"
-                  data-flag-headline="<%= h.id %>"
-                  data-flag-title="<%= String(h.body || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>">→ Issue</button>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <% if (h.readAt) { %>
+              <span class="text-xs px-2 py-1 text-emerald-700">✓ addressed</span>
+            <% } else { %>
+              <button class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200"
+                      data-headline-done="<%= h.id %>">✓ Addressed</button>
+            <% } %>
+            <button class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200"
+                    data-flag-headline="<%= h.id %>"
+                    data-flag-title="<%= String(h.body || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>">→ Issue</button>
+          </div>
         </div>
       <% }); %>
       <% if ((headlineItems || []).length === 0) { %>
@@ -1264,6 +1272,21 @@
 
   document.querySelectorAll('[data-flag-headline]').forEach(btn => {
     btn.addEventListener('click', () => openFlagForm(btn, 'Headlines'));
+  });
+
+  // ===== Mark headline addressed =====
+  document.querySelectorAll('[data-headline-done]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-headline-done');
+      btn.disabled = true; btn.textContent = 'Marking...';
+      const res = await api('/meetings/' + meetingId + '/headlines/' + id + '/read', { method: 'POST' });
+      if (res?.error) {
+        alert('Failed: ' + errMsg(res));
+        btn.disabled = false; btn.textContent = '✓ Addressed';
+        return;
+      }
+      location.reload();
+    });
   });
   document.querySelectorAll('[data-flag-kpi]').forEach(btn => {
     btn.addEventListener('click', () => openFlagForm(btn, 'Scorecard'));

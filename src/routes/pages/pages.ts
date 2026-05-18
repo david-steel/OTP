@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser } from '../../services/membership.js';
@@ -4025,11 +4025,11 @@ Founder, OTP</p>
     let headlinesList: any[] = [];
     if (teamFilterActive) {
       headlinesList = await db.select().from(meetingHeadlines)
-        .where(and(eq(meetingHeadlines.teamId, selectedTeamId), eq(meetingHeadlines.orgId, org.id)))
+        .where(and(eq(meetingHeadlines.teamId, selectedTeamId), eq(meetingHeadlines.orgId, org.id), isNull(meetingHeadlines.readAt)))
         .orderBy(desc(meetingHeadlines.createdAt));
     } else if (selectedMeetingId) {
       headlinesList = await db.select().from(meetingHeadlines)
-        .where(and(eq(meetingHeadlines.meetingId, selectedMeetingId), eq(meetingHeadlines.orgId, org.id)))
+        .where(and(eq(meetingHeadlines.meetingId, selectedMeetingId), eq(meetingHeadlines.orgId, org.id), isNull(meetingHeadlines.readAt)))
         .orderBy(desc(meetingHeadlines.createdAt));
     }
 
@@ -4290,6 +4290,92 @@ Founder, OTP</p>
       keyPrefix: liveKey?.keyPrefix || (orgKeys[0]?.keyPrefix || null),
     };
 
+    // ---- Chart <-> work reconciliation ----
+    // Cross-check the org chart (the seats) against the work attached to
+    // those seats (KPIs, rocks, open issues). Surfaces three gaps:
+    //   - seats with no measurable (no KPI, no rock)
+    //   - work owned by an external id that has no seat on the chart
+    //   - agents that escalate/report to nobody human
+    let accountabilityGaps: {
+      seatsNoMeasurable: { externalId: string; label: string; type: string }[];
+      orphanedWork: { externalId: string; kind: 'kpi' | 'rock' | 'issue' }[];
+      agentsNoHuman: { externalId: string; label: string }[];
+    } = { seatsNoMeasurable: [], orphanedWork: [], agentsNoHuman: [] };
+    try {
+      const seatNodes = teamGraphForAgents.nodes.filter(n => n.type === 'human' || n.type === 'agent');
+      const seatIds = new Set(seatNodes.map(n => n.externalId));
+
+      const [kpiOwnerRows, rockOwnerRows, ticketOwnerRows] = await Promise.all([
+        db.selectDistinct({ ownerExternalId: kpis.ownerExternalId })
+          .from(kpis)
+          .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt))),
+        db.selectDistinct({ ownerExternalId: rocks.ownerExternalId })
+          .from(rocks)
+          .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
+        db.selectDistinct({ ownerExternalId: tickets.ownerExternalId })
+          .from(tickets)
+          .where(and(
+            eq(tickets.orgId, org.id),
+            isNull(tickets.deletedAt),
+            sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+          )),
+      ]);
+      const kpiOwners = new Set(kpiOwnerRows.map(r => r.ownerExternalId).filter(Boolean) as string[]);
+      const rockOwners = new Set(rockOwnerRows.map(r => r.ownerExternalId).filter(Boolean) as string[]);
+      const ticketOwners = new Set(ticketOwnerRows.map(r => r.ownerExternalId).filter(Boolean) as string[]);
+
+      // Seats carrying no measurable: not a KPI owner AND not a rock owner.
+      accountabilityGaps.seatsNoMeasurable = seatNodes
+        .filter(n => !kpiOwners.has(n.externalId) && !rockOwners.has(n.externalId))
+        .map(n => ({ externalId: n.externalId, label: n.label, type: n.type }));
+
+      // Work whose owner is not a seat on the chart.
+      const orphanSeen = new Set<string>();
+      const orphanedWork: { externalId: string; kind: 'kpi' | 'rock' | 'issue' }[] = [];
+      const collectOrphans = (owners: Set<string>, kind: 'kpi' | 'rock' | 'issue') => {
+        for (const ext of owners) {
+          if (seatIds.has(ext)) continue;
+          const key = ext + '|' + kind;
+          if (orphanSeen.has(key)) continue;
+          orphanSeen.add(key);
+          orphanedWork.push({ externalId: ext, kind });
+        }
+      };
+      collectOrphans(kpiOwners, 'kpi');
+      collectOrphans(rockOwners, 'rock');
+      collectOrphans(ticketOwners, 'issue');
+      accountabilityGaps.orphanedWork = orphanedWork;
+
+      // Agents that never reach a human by walking reports_to/escalates_to upward.
+      const upwardEdges = teamGraphForAgents.edges.filter(
+        e => e.type === 'reports_to' || e.type === 'escalates_to',
+      );
+      const nodeById = new Map(teamGraphForAgents.nodes.map(n => [n.id, n]));
+      const reachesHuman = (startId: string): boolean => {
+        const visited = new Set<string>([startId]);
+        let frontier = [startId];
+        while (frontier.length > 0) {
+          const next: string[] = [];
+          for (const id of frontier) {
+            for (const e of upwardEdges) {
+              if (e.sourceId !== id || visited.has(e.targetId)) continue;
+              const tgt = nodeById.get(e.targetId);
+              if (tgt && tgt.type === 'human') return true;
+              visited.add(e.targetId);
+              next.push(e.targetId);
+            }
+          }
+          frontier = next;
+        }
+        return false;
+      };
+      accountabilityGaps.agentsNoHuman = teamGraphForAgents.nodes
+        .filter(n => n.type === 'agent' && !reachesHuman(n.id))
+        .map(n => ({ externalId: n.externalId, label: n.label }));
+    } catch {
+      accountabilityGaps = { seatsNoMeasurable: [], orphanedWork: [], agentsNoHuman: [] };
+    }
+
     return reply.view('pages/dashboard-daily', {
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
@@ -4318,6 +4404,7 @@ Founder, OTP</p>
       myIssues,
       myAgents,
       mcpStatus,
+      accountabilityGaps,
       orgTeams,
       selectedTeamId,
       previewRole: previewActive ? previewParam : '',
@@ -5631,6 +5718,12 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
 
+    const [seatRespRow] = await db.select().from(seatResponsibilities).where(and(
+      eq(seatResponsibilities.orgId, org.id),
+      eq(seatResponsibilities.seatExternalId, request.params.externalId),
+    )).limit(1);
+    const responsibilities = seatRespRow?.responsibilities ?? [];
+
     return reply.view('pages/team-profile', {
       title: displayName + ' -- Team Profile -- OTP',
       description: 'Accountability profile for ' + displayName,
@@ -5653,6 +5746,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       openIssues, solvedIssues,
       upcomingMeetings: upcoming,
       pastMeetings: past,
+      responsibilities,
       devOrgIdParam,
     });
   });

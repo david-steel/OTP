@@ -667,6 +667,7 @@ await app.register(import('./routes/api/api-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/recommendations.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meetings.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/headlines.js'), { prefix: '/api/v1' });
@@ -796,6 +797,14 @@ try {
   app.log.info('meeting_headlines table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureMeetingHeadlinesTable failed -- daily dashboard headlines will not persist until resolved');
+}
+
+try {
+  const { ensureSeatResponsibilitiesTable } = await import('./db/ensure-seat-responsibilities.js');
+  await ensureSeatResponsibilitiesTable();
+  app.log.info('seat_responsibilities table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureSeatResponsibilitiesTable failed -- seat responsibilities will not persist until resolved');
 }
 
 try {
