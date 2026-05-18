@@ -861,6 +861,8 @@ export const todos = pgTable('todos', {
   title: varchar('title', { length: 500 }).notNull(),
   description: text('description'),
   dueAt: timestamp('due_at'),
+  // Append-only log of due/promised-date changes: { from, to, at, by }.
+  dueAtHistory: jsonb('due_at_history').notNull().default([]),
   doneAt: timestamp('done_at'),
   // Verification: when/who confirmed the delegated todo was done right.
   verifiedAt: timestamp('verified_at'),

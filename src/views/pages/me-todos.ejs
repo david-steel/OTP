@@ -172,6 +172,7 @@
         <option value="p3" selected>P3 normal</option>
         <option value="p4">P4 low</option>
       </select>
+      <label id="me-date-label" for="new-todo-quickdate" style="font-size:13px; color:#666;">When</label>
       <select id="new-todo-quickdate" title="When">
         <option value="">No date</option>
         <option value="today-afternoon">This afternoon</option>
@@ -183,13 +184,13 @@
         <option value="custom">Custom...</option>
       </select>
       <input id="new-todo-custom-date" type="datetime-local" style="display:none;" />
+      <label for="new-todo-delegate" style="font-size:13px; color:#666;">Delegate to</label>
       <select id="new-todo-delegate" title="Delegate to">
         <option value="">Just me</option>
         <% (assignablePeople || []).forEach(function(p) { %>
           <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
         <% }); %>
       </select>
-      <input id="new-todo-promised" type="datetime-local" title="Promised by" />
       <select id="new-todo-recur" title="Recurrence">
         <option value="">No repeat</option>
         <option value="FREQ=DAILY">Daily</option>
@@ -256,6 +257,18 @@
           <% if (t.recurrenceParentId) { %><span class="me-recur">recurring instance</span><% } %>
         </div>
         <h2 class="me-title"><%= cleanTitle %></h2>
+        <% var dueHistory = t.dueAtHistory || []; %>
+        <% if (dueHistory.length > 0) { %>
+          <div class="me-meta" style="margin-top:-4px;">
+            <% dueHistory.forEach(function(h) {
+              var fromTxt = h.from ? new Date(h.from).toLocaleDateString() : 'none';
+              var toTxt = h.to ? new Date(h.to).toLocaleDateString() : 'none';
+              var atTxt = h.at ? new Date(h.at).toLocaleDateString() : '';
+            %>
+              <span>📅 date changed: <%= fromTxt %> → <%= toTxt %><%= atTxt ? ' (' + atTxt + ')' : '' %></span>
+            <% }); %>
+          </div>
+        <% } %>
         <% if (desc) { %>
           <div class="me-desc" onclick="toggleDesc(this)"><%= desc %></div>
           <% if (desc.length > 120 || (desc.match(/\n/g) || []).length > 2) { %>
@@ -288,6 +301,12 @@
             <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR" <%= t.recurrenceRule === 'FREQ=WEEKLY;BYDAY=MO,WE,FR' ? 'selected' : '' %>>M / W / F</option>
             <option value="FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR" <%= t.recurrenceRule === 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' ? 'selected' : '' %>>Weekdays</option>
             <option value="FREQ=MONTHLY" <%= t.recurrenceRule === 'FREQ=MONTHLY' ? 'selected' : '' %>>Monthly</option>
+          </select>
+          <select class="me-edit-reassign" title="Reassign to">
+            <option value="">Keep with me</option>
+            <% (assignablePeople || []).forEach(function(p) { %>
+              <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+            <% }); %>
           </select>
         </div>
         <div class="me-actions">
@@ -386,6 +405,19 @@ async function saveEdit(btn, id) {
   const dueAt = dueStr ? new Date(dueStr).toISOString() : null;
   const recurrenceRule = (card.querySelector('.me-edit-recur') || {}).value || null;
   const body = { title, description, priority, dueAt, recurrenceRule };
+  // Reassign: if a person is picked, transfer ownership to them and stamp
+  // the current user as the delegator. Value format is
+  // "<entityType>:<externalId>:<name>". "Keep with me" sends nothing.
+  const reassignVal = (card.querySelector('.me-edit-reassign') || {}).value || '';
+  if (reassignVal) {
+    const parts = reassignVal.split(':');
+    body.ownerEntityType = parts[0];
+    body.ownerExternalId = parts[1];
+    body.ownerName = parts.slice(2).join(':');
+    body.delegatorEntityType = <%- JSON.stringify(meEntityType || 'human') %>;
+    body.delegatorExternalId = <%- JSON.stringify(meExternalId || '') %>;
+    body.delegatorName = <%- JSON.stringify(meName || '') %>;
+  }
   btn.disabled = true;
   btn.textContent = 'Saving...';
   try {
@@ -456,6 +488,16 @@ document.addEventListener('DOMContentLoaded', () => {
       custom.style.display = quick.value === 'custom' ? '' : 'none';
     });
   }
+  // Flip the date label depending on whether the todo is delegated.
+  const delegate = document.getElementById('new-todo-delegate');
+  const dateLabel = document.getElementById('me-date-label');
+  if (delegate && dateLabel) {
+    const syncDateLabel = () => {
+      dateLabel.textContent = delegate.value ? 'Promised by' : 'When';
+    };
+    delegate.addEventListener('change', syncDateLabel);
+    syncDateLabel();
+  }
 });
 
 async function createTodo(btn) {
@@ -507,10 +549,6 @@ async function createTodo(btn) {
     body.delegatorEntityType = <%- JSON.stringify(meEntityType || 'human') %>;
     body.delegatorExternalId = <%- JSON.stringify(meExternalId || '') %>;
     body.delegatorName = <%- JSON.stringify(meName || '') %>;
-  }
-  const promisedVal = (document.getElementById('new-todo-promised') || {}).value || '';
-  if (promisedVal) {
-    body.dueAt = new Date(promisedVal).toISOString();
   }
 
   btn.disabled = true;

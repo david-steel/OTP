@@ -336,6 +336,41 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return { meeting: updated };
   });
 
+  // POST /api/v1/meetings/:id/refresh-scorecard
+  // Re-snapshots scorecard + rocks for an in-progress meeting so the user can
+  // pull fresh KPI values (e.g. after an agent ran) without restarting the
+  // meeting. Unlike /start, this does not touch status or startedAt.
+  app.post<{ Params: { id: string } }>('/meetings/:id/refresh-scorecard', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    const [meeting] = await db.select().from(meetings)
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+      .limit(1);
+    if (!meeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+
+    const [scorecardSnapshot, rocksSnapshot] = await Promise.all([
+      buildScorecardSnapshot(org.id),
+      buildRocksSnapshot(org.id),
+    ]);
+
+    const [updated] = await db.update(meetings)
+      .set({ scorecardSnapshot, rocksSnapshot, updatedAt: new Date() })
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+      .returning();
+    if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+
+    await db.insert(auditLogs).values(createAuditEntry('meeting.scorecard.refreshed', 'meeting', {
+      orgId: org.id, entityId: id, details: { kpiCount: scorecardSnapshot.kpiCount },
+    }));
+
+    return { meeting: updated };
+  });
+
   // POST /api/v1/meetings/:id/end
   app.post<{ Params: { id: string } }>('/meetings/:id/end', async (request, reply) => {
     const id = requireUuidParam(request, reply);

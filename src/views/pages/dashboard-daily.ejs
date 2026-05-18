@@ -264,17 +264,22 @@
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
           <input type="text" name="title" required maxlength="500" placeholder="What to do" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
-          <div class="flex gap-2 flex-wrap">
-            <select id="todo-delegate-to" class="rounded border border-gray-300 px-2 py-1 text-xs">
-              <option value="">Just me (personal)</option>
-              <% (locals.assignablePeople || []).forEach(function(p){ %>
-                <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
-              <% }); %>
-            </select>
-            <input type="datetime-local" id="todo-promised-by" title="Promised by" class="rounded border border-gray-300 px-2 py-1 text-xs">
+          <div class="flex gap-3 flex-wrap">
+            <div class="flex flex-col gap-0.5">
+              <label for="todo-delegate-to" class="text-[10px] uppercase tracking-wide text-gray-500">Delegate to</label>
+              <select id="todo-delegate-to" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                <option value="">Just me (personal)</option>
+                <% (locals.assignablePeople || []).forEach(function(p){ %>
+                  <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <label for="todo-date-input" id="todo-date-label" class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
+              <input type="date" id="todo-date-input" name="dueAt" class="rounded border border-gray-300 px-2 py-1 text-xs">
+            </div>
           </div>
           <div class="flex gap-2">
-            <input type="date" name="dueAt" class="rounded border border-gray-300 px-2 py-1 text-xs">
             <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Save</button>
           </div>
         </form>
@@ -381,10 +386,32 @@
                           <button type="button" class="todo-edit-btn text-otp-600 font-semibold hover:underline">Edit</button>
                           <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
                         </div>
+                        <% if ((t.dueAtHistory || []).length > 0) { %>
+                          <div class="mt-1 space-y-0.5">
+                            <% (t.dueAtHistory || []).forEach(function(h){ %>
+                              <div class="text-xs text-gray-500">📅 date changed: <%= h.from ? new Date(h.from).toLocaleDateString() : 'none' %> → <%= h.to ? new Date(h.to).toLocaleDateString() : 'none' %><%= h.at ? ' (' + new Date(h.at).toLocaleDateString() + ')' : '' %></div>
+                            <% }); %>
+                          </div>
+                        <% } %>
                       </div>
                       <form class="todo-edit hidden space-y-1.5">
                         <input type="text" name="title" required maxlength="500" value="<%= t.title %>" class="w-full rounded border border-gray-300 px-2 py-1 text-sm">
                         <textarea name="description" rows="2" placeholder="Description (optional)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"><%= t.description || '' %></textarea>
+                        <div class="flex gap-3 flex-wrap">
+                          <div class="flex flex-col gap-0.5">
+                            <label class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
+                            <input type="date" name="dueAt" value="<%= t.dueAt ? new Date(t.dueAt).toISOString().slice(0,10) : '' %>" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                          </div>
+                          <div class="flex flex-col gap-0.5">
+                            <label class="text-[10px] uppercase tracking-wide text-gray-500">Reassign to</label>
+                            <select name="reassignTo" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                              <option value="">Keep with me</option>
+                              <% (locals.assignablePeople || []).forEach(function(p){ %>
+                                <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+                              <% }); %>
+                            </select>
+                          </div>
+                        </div>
                         <div class="flex gap-2 items-center">
                           <button type="button" class="todo-edit-cancel text-xs text-gray-500 font-semibold hover:underline">Cancel</button>
                           <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Save</button>
@@ -622,6 +649,14 @@
   var todoForm = document.getElementById('todo-add-form');
   if (todoToggle && todoForm) {
     todoToggle.addEventListener('click', function(){ todoForm.classList.toggle('hidden'); });
+    // Relabel the single date field based on whether the to-do is delegated.
+    var delegateSelEl = document.getElementById('todo-delegate-to');
+    var dateLabelEl = document.getElementById('todo-date-label');
+    if (delegateSelEl && dateLabelEl) {
+      delegateSelEl.addEventListener('change', function(){
+        dateLabelEl.textContent = delegateSelEl.value ? 'Promised by' : 'Due date';
+      });
+    }
     todoForm.addEventListener('submit', function(e){
       e.preventDefault();
       var fd = new FormData(todoForm);
@@ -640,8 +675,6 @@
         body.delegatorEntityType = <%- JSON.stringify(locals.meEntityType || '') %>;
         body.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
         body.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
-        var promisedBy = document.getElementById('todo-promised-by');
-        if (promisedBy && promisedBy.value) body.dueAt = new Date(promisedBy.value).toISOString();
       }
       api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + (err.message || 'unknown')); });
     });
@@ -679,7 +712,20 @@
       var fd = new FormData(form);
       var title = (fd.get('title') || '').toString().trim();
       if (!title) { alert('Title cannot be empty.'); return; }
-      api('PUT', '/todos/' + tid, { title: title, description: (fd.get('description') || '').toString() })
+      var editBody = { title: title, description: (fd.get('description') || '').toString() };
+      var editDue = (fd.get('dueAt') || '').toString();
+      editBody.dueAt = editDue ? new Date(editDue + 'T17:00:00').toISOString() : null;
+      var reassignVal = (fd.get('reassignTo') || '').toString();
+      if (reassignVal) {
+        var rParts = reassignVal.split(':');
+        editBody.ownerEntityType = rParts[0];
+        editBody.ownerExternalId = rParts[1];
+        editBody.ownerName = rParts.slice(2).join(':');
+        editBody.delegatorEntityType = <%- JSON.stringify(locals.meEntityType || '') %>;
+        editBody.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
+        editBody.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
+      }
+      api('PUT', '/todos/' + tid, editBody)
         .then(reload)
         .catch(function(err){ alert('Save failed: ' + (err.message || 'unknown')); });
     });

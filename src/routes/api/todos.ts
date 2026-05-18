@@ -223,7 +223,26 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (d.ownerEntityType !== undefined) updates.ownerEntityType = d.ownerEntityType;
     if (d.ownerExternalId !== undefined) updates.ownerExternalId = d.ownerExternalId;
     if (d.ownerName !== undefined) updates.ownerName = d.ownerName;
-    if (d.dueAt !== undefined) updates.dueAt = d.dueAt ? new Date(d.dueAt) : null;
+    if (d.dueAt !== undefined) {
+      const newDue = d.dueAt ? new Date(d.dueAt) : null;
+      updates.dueAt = newDue;
+      // Track date changes: append to dueAtHistory only when the resolved
+      // value actually differs from the current value (null vs a date
+      // counts as a difference). No-op edits don't pollute the history.
+      const currentDue = existing.dueAt ? new Date(existing.dueAt) : null;
+      const currentIso = currentDue ? currentDue.toISOString() : null;
+      const newIso = newDue ? newDue.toISOString() : null;
+      if (currentIso !== newIso) {
+        const record = {
+          from: currentIso,
+          to: newIso,
+          at: new Date().toISOString(),
+          by: getAuth(request).userId || 'api_key',
+        };
+        const priorHistory = Array.isArray(existing.dueAtHistory) ? existing.dueAtHistory : [];
+        updates.dueAtHistory = [...priorHistory, record];
+      }
+    }
     if (d.done === true) updates.doneAt = new Date();
     if (d.done === false) {
       updates.doneAt = null;

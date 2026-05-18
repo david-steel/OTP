@@ -4080,6 +4080,7 @@ Founder, OTP</p>
           title: todos.title,
           description: todos.description,
           dueAt: todos.dueAt,
+          dueAtHistory: todos.dueAtHistory,
           doneAt: todos.doneAt,
           kind: todos.kind,
           priority: todos.priority,
@@ -4123,6 +4124,7 @@ Founder, OTP</p>
           title: todos.title,
           description: todos.description,
           dueAt: todos.dueAt,
+          dueAtHistory: todos.dueAtHistory,
           doneAt: todos.doneAt,
           kind: todos.kind,
           priority: todos.priority,
@@ -4150,6 +4152,7 @@ Founder, OTP</p>
           title: todos.title,
           description: todos.description,
           dueAt: todos.dueAt,
+          dueAtHistory: todos.dueAtHistory,
           doneAt: todos.doneAt,
           kind: todos.kind,
           priority: todos.priority,
@@ -5334,6 +5337,21 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .orderBy(desc(tickets.createdAt))
       .limit(100);
 
+    // Full team roster for this meeting's team -- the set of members on
+    // meeting.team_id. Empty when the meeting has a NULL team_id.
+    let teamMembers: any[] = [];
+    if (meeting.teamId) {
+      teamMembers = await db.select({
+        memberId: orgMembers.id,
+        name: orgMembers.displayName,
+        email: orgMembers.email,
+        role: orgMembers.role,
+      })
+        .from(teamMemberships)
+        .innerJoin(orgMembers, eq(teamMemberships.memberId, orgMembers.id))
+        .where(eq(teamMemberships.teamId, meeting.teamId));
+    }
+
     // L10 todos only -- filter by kind='l10' AND the meeting's team so
     // personal todos from /me/todos can never leak into a leadership L10.
     // Recurrence templates hidden by default; only instances appear.
@@ -5433,6 +5451,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       rocks: rocksData,
       issues: orgIssues,
       todos: orgTodos,
+      teamMembers,
       availableOwners,
       orgTeams: orgTeamsList,
       agentRuns,

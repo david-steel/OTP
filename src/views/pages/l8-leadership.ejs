@@ -25,14 +25,31 @@
   </div>
 
   <!-- Attendees panel -->
+  <%
+    // Normalize attendees to a single shape. meeting.attendees jsonb entries
+    // come in two shapes: the editor shape { entityType, externalId, name } and
+    // the auto-populate shape { type, memberId, externalIds, name } (agents:
+    // { type:'agent', externalId, name }). Collapse both to { entityType, externalId, name }.
+    const normalizedAttendees = (meeting.attendees || []).map(function(a) {
+      const entityType = a.entityType || a.type;
+      const externalId = a.externalId || (Array.isArray(a.externalIds) && a.externalIds[0]) || a.memberId || '';
+      const name = a.name || a.externalId || '';
+      return { entityType: entityType, externalId: externalId, name: name };
+    }).filter(function(a) { return !!a.externalId; });
+    const attendeeKeys = {};
+    normalizedAttendees.forEach(function(a) { attendeeKeys[a.entityType + ':' + a.externalId] = true; });
+    const ownersNotAttending = (availableOwners || []).filter(function(o) {
+      return !attendeeKeys[o.entityType + ':' + o.externalId];
+    });
+  %>
   <div class="mb-6 border rounded-lg p-3 bg-gray-50">
     <div class="flex items-center justify-between mb-2">
       <div class="text-xs uppercase tracking-wider text-gray-700 font-medium">Attendees &amp; Access</div>
       <button id="edit-attendees-btn" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100">Edit</button>
     </div>
     <div id="attendees-display" class="flex flex-wrap gap-2">
-      <% (meeting.attendees || []).forEach(function(a) {
-           const isAgent = a.entityType === 'agent' || a.type === 'agent';
+      <% normalizedAttendees.forEach(function(a) {
+           const isAgent = a.entityType === 'agent';
            const run = (isAgent && typeof agentRuns !== 'undefined' && agentRuns && agentRuns[a.externalId]) ? agentRuns[a.externalId] : null;
       %>
         <span class="text-xs px-2 py-1 rounded-full <%= a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>" data-attendee="<%= a.entityType + ':' + a.externalId %>">
@@ -43,17 +60,25 @@
           <% } %>
         </span>
       <% }); %>
-      <% if (!meeting.attendees || meeting.attendees.length === 0) { %>
+      <% if (normalizedAttendees.length === 0) { %>
         <span class="text-xs text-gray-500 italic">No attendees yet -- click Edit to add</span>
       <% } %>
     </div>
+    <% if ((teamMembers || []).length > 0) { %>
+      <div class="text-xs text-gray-500 mt-2">
+        Team (has meeting access): <%= (teamMembers || []).map(function(m) { return (m.name || m.memberId) + (m.role ? ' (' + m.role + ')' : ''); }).join(', ') %>
+      </div>
+    <% } %>
     <div id="attendees-editor" class="hidden mt-3">
-      <p class="text-xs text-gray-600 mb-1">One per line, format: <code>type:externalId:Display Name</code> &middot; type is <code>human</code> or <code>agent</code></p>
-      <textarea id="attendees-textarea" class="w-full border rounded p-2 text-sm font-mono h-32"><% (meeting.attendees || []).forEach(function(a) { %><%= a.entityType %>:<%= a.externalId %>:<%= a.name || '' %>
-<% }); %></textarea>
-      <div class="flex gap-2 mt-2">
-        <button id="save-attendees" class="px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Save</button>
-        <button id="cancel-attendees" class="px-3 py-1 bg-gray-200 text-xs rounded hover:bg-gray-300">Cancel</button>
+      <div id="attendees-chips" class="flex flex-wrap gap-2 mb-2"></div>
+      <div class="flex gap-2">
+        <select id="attendee-add-select" class="flex-1 border rounded p-2 text-sm">
+          <option value="">-- add attendee --</option>
+          <% ownersNotAttending.forEach(function(o) { %>
+            <option value="<%= o.entityType %>:<%= o.externalId %>:<%= o.name || o.externalId %>"><%= o.name || o.externalId %> (<%= o.entityType %>)</option>
+          <% }); %>
+        </select>
+        <button id="attendee-add-btn" class="px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Add</button>
       </div>
     </div>
   </div>
@@ -81,7 +106,11 @@
 
   <!-- 2. Scorecard -->
   <section id="scorecard" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span></h2>
+    <h2 class="text-xl font-bold mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span>
+      <% if (meeting.status === 'in_progress') { %>
+        <button id="refresh-scorecard" class="ml-2 text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100 font-normal align-middle">↻ Refresh</button>
+      <% } %>
+    </h2>
     <% if (!scorecard.kpis || scorecard.kpis.length === 0) { %>
       <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm">
         No KPIs yet for this org. Push values via <code>/tally</code> or POST to <code>/api/v1/kpis/values</code>.
@@ -647,27 +676,84 @@
     }
   });
 
-  // Attendees
+  // Attendees -- normalized list held in JS, edited via chips + add-select.
   const attendeesEditBtn = document.getElementById('edit-attendees-btn');
   const attendeesEditor = document.getElementById('attendees-editor');
   const attendeesDisplay = document.getElementById('attendees-display');
+  let attendees = <%- JSON.stringify(normalizedAttendees) %>;
+
   if (attendeesEditBtn) attendeesEditBtn.addEventListener('click', () => {
     attendeesEditor.classList.toggle('hidden');
     attendeesDisplay.classList.toggle('hidden');
   });
-  document.getElementById('cancel-attendees')?.addEventListener('click', () => {
-    attendeesEditor.classList.add('hidden');
-    attendeesDisplay.classList.remove('hidden');
+
+  function renderAttendeeChips() {
+    const wrap = document.getElementById('attendees-chips');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (attendees.length === 0) {
+      const empty = document.createElement('span');
+      empty.className = 'text-xs text-gray-500 italic';
+      empty.textContent = 'No attendees -- add one below';
+      wrap.appendChild(empty);
+      return;
+    }
+    attendees.forEach(a => {
+      const chip = document.createElement('span');
+      chip.className = 'text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 ' +
+        (a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800');
+      const label = document.createElement('span');
+      label.textContent = (a.name || a.externalId) + ' (' + a.entityType + ')';
+      chip.appendChild(label);
+      const x = document.createElement('button');
+      x.textContent = '✕';
+      x.className = 'text-gray-500 hover:text-red-600 font-bold';
+      x.setAttribute('data-remove-attendee', a.entityType + ':' + a.externalId);
+      chip.appendChild(x);
+      wrap.appendChild(chip);
+    });
+  }
+
+  async function saveAttendees() {
+    const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees }) });
+    if (res?.error) { alert(errMsg(res)); return; }
+    location.reload();
+  }
+
+  document.getElementById('attendees-chips')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-attendee]');
+    if (!btn) return;
+    const key = btn.getAttribute('data-remove-attendee');
+    const idx = attendees.findIndex(a => (a.entityType + ':' + a.externalId) === key);
+    if (idx === -1) return;
+    attendees.splice(idx, 1);
+    saveAttendees();
   });
-  document.getElementById('save-attendees')?.addEventListener('click', async () => {
-    const lines = document.getElementById('attendees-textarea').value.split('\n').map(l => l.trim()).filter(Boolean);
-    const attendees = lines.map(l => {
-      const [entityType, externalId, ...rest] = l.split(':');
-      if (!entityType || !externalId) return null;
-      if (entityType !== 'human' && entityType !== 'agent') return null;
-      return { entityType, externalId, name: rest.join(':') || externalId };
-    }).filter(Boolean);
-    await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees }) });
+
+  document.getElementById('attendee-add-btn')?.addEventListener('click', () => {
+    const sel = document.getElementById('attendee-add-select');
+    const val = sel && sel.value;
+    if (!val) return;
+    const [entityType, externalId, ...rest] = val.split(':');
+    if (!entityType || !externalId) return;
+    if (attendees.some(a => a.entityType === entityType && a.externalId === externalId)) return;
+    attendees.push({ entityType, externalId, name: rest.join(':') || externalId });
+    saveAttendees();
+  });
+
+  renderAttendeeChips();
+
+  // Refresh scorecard (only rendered while the meeting is in progress)
+  const refreshScorecardBtn = document.getElementById('refresh-scorecard');
+  if (refreshScorecardBtn) refreshScorecardBtn.addEventListener('click', async () => {
+    const orig = refreshScorecardBtn.textContent;
+    refreshScorecardBtn.disabled = true; refreshScorecardBtn.textContent = 'Refreshing...';
+    const res = await api('/meetings/' + meetingId + '/refresh-scorecard', { method: 'POST' });
+    if (res?.error) {
+      alert('Refresh failed: ' + errMsg(res));
+      refreshScorecardBtn.disabled = false; refreshScorecardBtn.textContent = orig;
+      return;
+    }
     location.reload();
   });
 

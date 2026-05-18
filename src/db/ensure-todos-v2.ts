@@ -81,6 +81,12 @@ const DDL = [
      ALTER TABLE "todos" ADD COLUMN "verified_by" varchar(255);
    EXCEPTION WHEN duplicate_column THEN null; END $$;`,
 
+  // Due/promised-date change log. Array of { from, to, at, by } objects;
+  // an entry is appended each time a todo's due_at changes.
+  `DO $$ BEGIN
+     ALTER TABLE "todos" ADD COLUMN "due_at_history" jsonb NOT NULL DEFAULT '[]'::jsonb;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
   // Backfill kind: anything tied to a leadership-team meeting becomes l10.
   // Everything else defaults to personal. Idempotent on the WHERE clause.
   `UPDATE "todos" t SET "kind" = 'l10', "team_id" = m."team_id"
