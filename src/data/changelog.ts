@@ -11,12 +11,46 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 18, 2026 ----
+
+  {
+    date: '2026-05-18',
+    tags: ['Major', 'Tools'],
+    title: 'The People layer ships -- rate seat fit, run a People Review, close accountability gaps inline, and share one KPI across a team',
+    summary: 'OTP\'s org chart is now a people operating system. The Accountability Gaps panel fixes gaps inline instead of just listing them; every seat gets a Seat Fit rating on Understands / Wants / Capacity; a new People Review grid scores everyone against your organization\'s values with a verdict per person; the dashboard flags who is buried in recurring work and how much of the open load still sits on the founder; and a single KPI can be assigned to several people at once, goals and actuals summed on the scorecard.',
+    details: `<p>The org chart has been a picture of who reports to whom. As of today it runs the people side of the operating system: who fits their seat, who is overloaded, where accountability is leaking, and how dependent the company still is on the founder. Four updates shipped today, each as its own deploy.</p>
+
+<h3>Accountability Gaps -- now actionable</h3>
+<p>The Accountability Gaps panel on <a href="/dashboard" class="text-otp-600 hover:text-otp-500 underline">/dashboard</a> used to just list problems. Now it fixes them inline:</p>
+<ul>
+<li>A seat with no measurable gets <strong>+ Add KPI</strong> / <strong>+ Add Rock</strong> forms right in the panel, pre-targeted to that seat.</li>
+<li>Work owned by someone not on the chart gets a <strong>Reassign</strong> picker that moves it to a real seat.</li>
+<li>An agent with no human above it gets a <strong>Set manager</strong> picker.</li>
+<li>A filter bar -- All, All Human, All Agents, Direct Reports, No Seat -- narrows the panel to what you own.</li>
+</ul>
+
+<h3>Seat Fit</h3>
+<p>Every seat profile now carries a <strong>Seat Fit</strong> rating: does the person <strong>Understand</strong> the role, do they <strong>Want</strong> it, do they have the <strong>Capacity</strong> for it. Click to cycle each axis; it saves on the spot. A clean, honest read on whether the right person is in the seat.</p>
+
+<h3>People Review</h3>
+<p>A new grid at <a href="/team/review" class="text-otp-600 hover:text-otp-500 underline">/team/review</a>: every person down the side, the three Seat Fit axes plus each of your organization's values across the top. Click any cell to rate it. Each row gets a computed verdict -- solid, needs conversation, or wrong seat. Your value list is managed right on the page.</p>
+
+<h3>Delegate-and-Elevate + Founder Dependency</h3>
+<ul>
+<li><strong>Hand-off candidates</strong> -- the dashboard flags anyone carrying a heavy recurring-to-do load, with a prompt to push the work down to a lower seat or an agent.</li>
+<li><strong>Founder Dependency</strong> -- a tile showing the share of all open work (priorities, KPIs, issues, to-dos) that still sits on the top seat. The number that tells you whether the team is actually absorbing the load.</li>
+</ul>
+
+<h3>Shared KPIs</h3>
+<p>A KPI can now be assigned to several people at once. Each person has their own goal; the scorecard sums the goals into one total and sums what each person reports into one actual. On <a href="/dashboard/kpis" class="text-otp-600 hover:text-otp-500 underline">/dashboard/kpis</a>, hit <strong>+ person</strong> on any KPI, pick who and their goal -- a "Shared KPIs" section then shows the rolled-up total with the per-person breakdown.</p>`,
+  },
+
   // ---- May 14, 2026 ----
 
   {
     date: '2026-05-14',
     tags: ['Major', 'Coaches'],
-    title: 'The Coach Ecosystem ships — Founder Certified badge, the Practice dashboard, and the full activation loop',
+    title: 'The Coach Ecosystem ships -- Founder Certified badge, the Practice dashboard, and the full activation loop',
     summary: 'The Founder 25 coach-and-client ecosystem went live today: every claimed coach gets a Founder Certified Coach badge, a personal /dashboard/practice with side-by-side client visibility, a shareable invite link, and perpetual GHL-style commission attribution on every client they bring. Joel Swanson became the first cold-email-driven claim within four hours.',
     details: `<p>Today shipped fifteen contained pieces that together turn the Founder 25 cohort from a marketing line into a working product. The thing the platform has been missing -- a real reason for a coach to come back tomorrow -- is now there.</p>
 
