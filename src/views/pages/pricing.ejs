@@ -1,5 +1,6 @@
-<%# /pricing -- v7 layout (light, editorial). Free open network vs
-    Enterprise. Contact form, why-free, FAQ, install CTA.
+<%# /pricing -- v7 layout (light, editorial). Free = the meeting product
+    (chart + humans + agents + Radar). Paid = everything else (network,
+    intelligence, private layer). Custom pricing, contact form.
     Rendered via reply.view('pages/pricing', data, { layout: 'layouts/v7' }). %>
 <style>
   .pr-check { width:20px; height:20px; flex:none; margin-top:1px; }
@@ -20,10 +21,6 @@
     transition:border-color .15s ease;
   }
   .pr-field:focus { border-color:var(--blue); }
-  .pr-input {
-    background:var(--ink); border-radius:12px;
-    padding:14px 18px; font-family:'JetBrains Mono',monospace;
-  }
   .pr-tilt { animation:pr-tilt 6s ease-in-out infinite; transform-origin:60% 90%; }
   @keyframes pr-tilt { 0%,100%{transform:rotate(-7deg);} 50%{transform:rotate(8deg);} }
   @media (prefers-reduced-motion:reduce){ .pr-tilt{ animation:none; } }
@@ -37,10 +34,10 @@
     </div>
     <h1 class="font-display text-[var(--ink)]"
         style="font-size:clamp(2.1rem,4.4vw,3.4rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
-      The open network is free.<br>Enterprise keeps it private.
+      Free to run the meeting.<br>Paid for everything else.
     </h1>
     <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[38rem] mx-auto mt-5">
-      Publish, browse, search, compare, and learn from the entire Intelligence Graph at no cost. Enterprise adds a private intelligence layer for organizations that need control.
+      Everything you need to run a leadership meeting with your humans and your AI agents is free, forever. The cross-organization network and the private intelligence layer are where OTP charges.
     </p>
   </div>
 </section>
@@ -50,29 +47,26 @@
   <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
     <div class="grid md:grid-cols-2 gap-6">
 
-      <!-- FREE -->
+      <!-- FREE -- the meeting product -->
       <div class="card p-8 sm:p-9 flex flex-col">
-        <div class="eyebrow mb-3" style="color:var(--green-deep);">Open Network</div>
+        <div class="eyebrow mb-3" style="color:var(--green-deep);">Run the meeting</div>
         <div class="flex items-baseline gap-2 mb-3">
           <span class="font-display text-[var(--ink)] text-[3rem] font-bold leading-none">Free</span>
           <span class="font-mono text-[13px] text-[var(--ink-mute)]">forever</span>
         </div>
         <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
-          Everything you need to publish your OOS, learn from the network, and get smarter every morning. No credit card. No gates. No trial period.
+          Everything it takes to run a real leadership meeting with humans and AI agents on one chart. No credit card. No trial. No seat limits.
         </p>
         <div class="border-t border-[var(--line)] pt-6 flex-1">
           <ul class="space-y-3">
             <% var freeFeatures = [
-              ['Publish unlimited OOS files', ' with version history'],
-              ['Browse and search', ' the entire Intelligence Graph'],
-              ['Compare', ' any two OOS files side-by-side'],
-              ['Intelligence inbox', ' with Scout recommendations from other orgs'],
-              ['Cross-org pattern discovery', ' across all published OOS files'],
-              ['Full MCP server', ' with 16 tools and 5 slash commands'],
-              ['API key', ' for full read/write access'],
-              ['Quality tier badges', ' (Bronze through Platinum)'],
-              ['PII scanning', ' before anything publishes'],
-              ['Morning briefings', ' via the /otp-morning command']
+              ['Your org chart', ' -- every human and every AI agent on one accountability layer'],
+              ['Unlimited seats', ' -- no cap on teammates or agents, each with a role and a KPI'],
+              ['Radar, your AI Chief of Staff', ' -- built in, runs the meeting alongside you'],
+              ['The full leadership meeting', ' -- agenda, scorecard, rocks, issues, and to-dos'],
+              ['SOPs your team writes', ' -- inherited at runtime by the agents under each human'],
+              ['Run it every week', ' -- the whole meeting, start to finish, in the browser'],
+              ['No credit card, ever', ' -- the whole meeting product, not a trial']
             ]; %>
             <% freeFeatures.forEach(function(f){ %>
             <li class="flex items-start gap-3">
@@ -83,37 +77,36 @@
           </ul>
         </div>
         <div class="mt-8">
-          <a href="/guide#install" class="btn-ink block w-full text-center px-6 py-3.5 text-[15px]">Install Now</a>
-          <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">One command. 30 seconds.</p>
+          <a href="/sign-up" class="btn-ink block w-full text-center px-6 py-3.5 text-[15px]">Get Started</a>
+          <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">Build your chart in minutes. No card.</p>
         </div>
       </div>
 
-      <!-- ENTERPRISE -->
+      <!-- PAID -- everything else -->
       <div class="card p-8 sm:p-9 flex flex-col relative border-t-[3px]"
            style="border-top-color:var(--blue);">
-        <span class="absolute -top-3 right-7 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-full text-white"
-              style="background:var(--blue);">Coming soon</span>
-        <div class="eyebrow mb-3" style="color:var(--blue-deep);">Enterprise</div>
+        <div class="eyebrow mb-3" style="color:var(--blue-deep);">Everything else</div>
         <div class="flex items-baseline gap-2 mb-3">
           <span class="font-display text-[var(--ink)] text-[3rem] font-bold leading-none">Custom</span>
           <span class="font-mono text-[13px] text-[var(--ink-mute)]">pricing</span>
         </div>
         <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
-          A private intelligence layer for your organization. Your departments publish internally, compare across teams, and merge learnings. Nothing leaves your walls.
+          When you outgrow your own meeting: publish your operating system, learn from every other organization on the network, and run it all behind your own walls.
         </p>
         <div class="border-t border-[var(--line)] pt-6 flex-1">
           <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--blue-deep)] mb-4">Everything in Free, plus:</p>
           <ul class="space-y-3">
-            <% var entFeatures = [
-              ['Private OOS vault', ' for departments and teams'],
-              ['Internal Intelligence Graph', ' across your organization'],
-              ['Data never leaves your organization.', ' No model training on enterprise data.'],
-              ['SSO and admin controls', ''],
-              ['Compliance and audit trail', ''],
-              ['Team API keys', ' with role-based access'],
+            <% var paidFeatures = [
+              ['Publish your operating system', ' -- your full OOS, with version history'],
+              ['The cross-organization network', ' -- browse, search, and compare other organizations'],
+              ['The Intelligence Graph', ' -- cross-org pattern discovery and Scout recommendations'],
+              ['Full MCP server and API', ' -- programmatic read and write access, 16 tools'],
+              ['Private intelligence layer', ' -- a private vault and an internal graph across your teams'],
+              ['Data isolation', ' -- nothing leaves your walls, no model training on your data'],
+              ['SSO, admin controls, and audit trail', ' -- with team API keys and role-based access'],
               ['Priority support', '']
             ]; %>
-            <% entFeatures.forEach(function(f){ %>
+            <% paidFeatures.forEach(function(f){ %>
             <li class="flex items-start gap-3">
               <svg class="pr-check" fill="none" stroke="var(--blue)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
               <span class="text-[14px] text-[var(--ink-soft)] leading-[1.55]"><strong class="text-[var(--ink)] font-semibold"><%= f[0] %></strong><%= f[1] %></span>
@@ -122,7 +115,7 @@
           </ul>
         </div>
         <div class="mt-8">
-          <button onclick="document.getElementById('enterprise-form').scrollIntoView({behavior:'smooth'})" class="btn-primary block w-full text-center px-6 py-3.5 text-[15px] cursor-pointer">Contact Us</button>
+          <button onclick="document.getElementById('paid-form').scrollIntoView({behavior:'smooth'})" class="btn-primary block w-full text-center px-6 py-3.5 text-[15px] cursor-pointer">Contact Us</button>
           <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">We will scope it to your organization.</p>
         </div>
       </div>
@@ -131,17 +124,17 @@
   </div>
 </section>
 
-<!-- ================= ENTERPRISE CONTACT FORM ================= -->
+<!-- ================= PAID CONTACT FORM ================= -->
 <section class="bg-[var(--white)]">
-  <div id="enterprise-form" class="max-w-[680px] mx-auto px-6 py-20 sm:py-24">
+  <div id="paid-form" class="max-w-[680px] mx-auto px-6 py-20 sm:py-24">
     <div class="text-center mb-8">
       <div class="eyebrow mb-3">Get in touch</div>
       <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15]"
           style="font-size:clamp(1.7rem,3.2vw,2.3rem); font-weight:700;">
-        Talk to us about Enterprise.
+        Talk to us about the paid plan.
       </h2>
       <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] mt-3">
-        Tell us about your organization and what you need. We will get back to you within 24 hours.
+        Tell us about your organization and what you need beyond the meeting. We will get back to you within 24 hours.
       </p>
     </div>
 
@@ -175,7 +168,7 @@
       </div>
       <div>
         <label class="block text-[13px] font-medium text-[var(--ink)] mb-1.5">What are you looking to do?</label>
-        <textarea name="message" rows="4" required class="pr-field resize-none" placeholder="Tell us about your AI setup and what you need from OTP Enterprise..."></textarea>
+        <textarea name="message" rows="4" required class="pr-field resize-none" placeholder="Tell us about your AI setup and what you need beyond the meeting..."></textarea>
       </div>
       <button type="submit" id="submit-btn" class="btn-ink w-full px-6 py-3.5 text-[15px]">Send Inquiry</button>
       <div id="form-success" class="hidden text-center py-4">
@@ -187,26 +180,26 @@
   </div>
 </section>
 
-<!-- ================= WHY FREE ================= -->
+<!-- ================= WHY THE MEETING IS FREE ================= -->
 <section class="bg-[var(--grey)]">
   <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-24">
     <div class="eyebrow mb-4">The model</div>
     <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15] mb-6"
         style="font-size:clamp(1.7rem,3.2vw,2.3rem); font-weight:700;">
-      Why is the open network free?
+      Why is running the meeting free?
     </h2>
     <div class="card p-7 sm:p-9">
       <p class="text-[16px] text-[var(--ink)] font-semibold leading-[1.7] mb-4">
-        Because the Intelligence Graph only works if people publish to it.
+        Because getting your humans and your agents into one meeting is the thing every organization needs first.
       </p>
       <p class="text-[15px] text-[var(--ink-soft)] leading-[1.75] mb-4">
-        Every organization that publishes an OOS makes the network more valuable for every other organization. Gating publishing behind a paywall would kill the network before it reaches critical mass. That is the opposite of what we want.
+        An org chart that leaves out the AI agents already doing the work is a fiction. The fastest way to make it true is one meeting where humans and agents share the same agenda, the same scorecard, and the same accountability. We are not putting that behind a paywall. It is the whole point.
       </p>
       <p class="text-[15px] text-[var(--ink-soft)] leading-[1.75] mb-4">
-        The free tier is not a trial. It is not a limited version. It is the full product. Publish, browse, search, compare, discover intelligence, get morning briefings. Everything.
+        The free tier is the entire meeting product. Chart, unlimited seats, Radar, scorecard, issues, to-dos, SOPs. Not a trial. Not a stripped-down version.
       </p>
       <p class="text-[15px] text-[var(--ink)] font-medium leading-[1.75]">
-        Enterprise exists for organizations that need the same capabilities behind their own walls. Private vault, internal graph, data isolation, compliance. That is a different problem with different requirements. That is where revenue lives.
+        OTP charges for what comes after your own meeting: publishing your operating system, learning from every other organization on the network, and running it all behind your own walls. That is everything else. That is where revenue lives.
       </p>
     </div>
   </div>
@@ -218,14 +211,16 @@
     <div class="eyebrow mb-4">Questions</div>
     <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.15] mb-9"
         style="font-size:clamp(1.7rem,3.2vw,2.3rem); font-weight:700;">
-      What people ask before they install.
+      Common questions.
     </h2>
     <div class="space-y-3">
       <% var faqs = [
-        ['Will the free tier stay free?', 'Yes. The open network will always be free. We may add premium features in the future (advanced analytics, priority Scout scanning, white-label reports), but the core capabilities listed above will remain free.'],
-        ['Is my data used to train AI models?', 'No. Published OOS files are used to power the Intelligence Graph (cross-org patterns, comparisons, recommendations). They are never sent to third-party AI models for training. Enterprise tier adds full data isolation.'],
-        ['What about sensitive information in my OOS?', 'Every OOS is scanned for PII (client names, employee data, proprietary pricing) before publishing. Your org name is pseudonymized by default. The OOS captures coordination patterns and operational intelligence, not trade secrets. If something slips through, you can unpublish instantly.'],
-        ['What platforms does OTP work with?', 'Any MCP-compatible AI client: Claude Code, Cline, Roo Code, Cursor, Windsurf, and more. The web UI works in any browser. The OOS format is platform-agnostic. Claude, GPT, Gemini, open-source models, it does not matter which AI you use.']
+        ['Will the free tier stay free?', 'Yes. Everything needed to run your leadership meeting with humans and AI agents stays free, forever. Paid only covers what is beyond your own meeting.'],
+        ['What exactly do I get for free?', 'Your org chart with unlimited human and AI seats, Radar your AI Chief of Staff, the full meeting (agenda, scorecard, rocks, issues, to-dos), and the SOPs your team writes for the agents to inherit. The complete meeting product, no credit card.'],
+        ['What do I pay for?', 'Everything beyond running your own meeting: publishing your operating system, browsing and comparing other organizations, the cross-org Intelligence Graph, the full MCP server and API, and the private intelligence layer with data isolation, SSO, and compliance.'],
+        ['Is my data used to train AI models?', 'No. Nothing you put in OTP is sent to third-party models for training. The paid private layer adds full data isolation, so nothing leaves your organization at all.'],
+        ['What does OTP work with?', 'The meeting runs in any browser. The paid network layer connects to any MCP-compatible AI client, including Claude, Cursor, and Windsurf, and is model-agnostic.'],
+        ['How do I get the paid plan?', 'Pricing is scoped to your organization. Tell us what you need in the form above and we will get back to you within 24 hours.']
       ]; %>
       <% faqs.forEach(function(q){ %>
       <details class="pr-faq">
@@ -236,13 +231,6 @@
         <div class="pr-faq-body"><%= q[1] %></div>
       </details>
       <% }); %>
-      <details class="pr-faq">
-        <summary>
-          When will Enterprise be available?
-          <svg class="pr-chev" width="16" height="16" fill="none" stroke="var(--ink-mute)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </summary>
-        <div class="pr-faq-body">We are building it now. If your organization is interested, reach out at <a href="mailto:dsteel@sneeze.it" class="text-[var(--blue-deep)] link-u">dsteel@sneeze.it</a> and we will work with you on early access.</div>
-      </details>
     </div>
   </div>
 </section>
@@ -255,17 +243,14 @@
            class="pr-tilt absolute hidden sm:block" style="width:80px; height:auto; top:-6px; right:24px;">
       <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]"
           style="font-size:clamp(1.8rem,3.6vw,2.6rem); font-weight:700;">
-        Start publishing in 30 seconds.
+        Get your humans and agents in one meeting.
       </h2>
       <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-4">
-        One command installs the MCP server and slash commands. No account required to browse. Sign up free to publish.
+        Build your chart, add your first three seats, and run your first meeting. Free, no credit card.
       </p>
-      <div class="pr-input max-w-[460px] mx-auto mt-7">
-        <code class="text-[13px] sm:text-[14px]" style="color:var(--orgy);">curl -fsSL https://orgtp.com/install.sh | bash</code>
-      </div>
       <div class="flex flex-wrap gap-3 justify-center mt-7">
-        <a href="/guide#install" class="btn-primary px-7 py-3.5 text-[15px]">Installation Guide</a>
-        <a href="/browse" class="btn-ghost px-7 py-3.5 text-[15px]">Browse the Network</a>
+        <a href="/sign-up" class="btn-primary px-7 py-3.5 text-[15px]">Get Started</a>
+        <a href="/meet-radar" class="btn-ghost px-7 py-3.5 text-[15px]">Meet Radar</a>
       </div>
     </div>
   </div>
@@ -291,7 +276,7 @@ document.getElementById('contact-form').addEventListener('submit', async functio
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: '[Enterprise Inquiry] ' + company + ' - ' + name,
+        title: '[Paid plan inquiry] ' + company + ' - ' + name,
         description: 'Name: ' + name + '\nEmail: ' + email + '\nCompany: ' + company + '\nTeam Size: ' + (size || 'Not specified') + '\n\n' + message,
         category: 'other',
         priority: 'high',
