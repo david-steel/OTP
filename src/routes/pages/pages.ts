@@ -3972,6 +3972,19 @@ Founder, OTP</p>
       orgListBasic.push({ id: org.id, name: org.name });
     }
 
+    // ---- Optional team filter ----
+    // When a real teamId is supplied, every list below is additionally
+    // scoped to that team. '' or 'all' means no filter (byte-for-byte
+    // unchanged behavior). orgTeams powers the selector dropdown.
+    const selectedTeamIdRaw = (request.query as any)?.teamId || '';
+    const selectedTeamId = (selectedTeamIdRaw === 'all') ? '' : selectedTeamIdRaw;
+    const teamFilterActive = !!selectedTeamId;
+    const orgTeams = await db
+      .select({ id: teams.id, name: teams.name, slug: teams.slug })
+      .from(teams)
+      .where(eq(teams.orgId, org.id))
+      .orderBy(asc(teams.name));
+
     // ---- Meetings ----
     // Strict team-membership scope: a member only sees meetings on teams
     // they belong to. Private teams (e.g. "David x Dan") never leak to
@@ -3991,6 +4004,7 @@ Founder, OTP</p>
             eq(meetings.organizationId, org.id),
             isNull(meetings.deletedAt),
             inArray(meetings.teamId, myTeamIds),
+            ...(teamFilterActive ? [eq(meetings.teamId, selectedTeamId)] : []),
           ))
           .orderBy(desc(meetings.scheduledAt))
           .limit(50);
@@ -4032,6 +4046,7 @@ Founder, OTP</p>
           isNull(rocks.deletedAt),
           eq(rocks.quarter, currentQuarter),
           eq(rocks.ownerExternalId, myExternalId),
+          ...(teamFilterActive ? [eq(rocks.teamId, selectedTeamId)] : []),
         ))
         .orderBy(desc(rocks.dueDate));
     }
@@ -4045,6 +4060,7 @@ Founder, OTP</p>
           eq(kpis.organizationId, org.id),
           isNull(kpis.deletedAt),
           eq(kpis.ownerExternalId, myExternalId),
+          ...(teamFilterActive ? [eq(kpis.teamId, selectedTeamId)] : []),
         ))
         .orderBy(kpis.title);
       for (const k of myKpis) {
@@ -4105,6 +4121,7 @@ Founder, OTP</p>
           isNull(todos.parentTodoId),
           isNull(todos.recurrenceRule),
           inArray(todos.ownerExternalId, ownerCandidates),
+          ...(teamFilterActive ? [eq(todos.teamId, selectedTeamId)] : []),
         ))
         .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
         .limit(100);
@@ -4142,6 +4159,7 @@ Founder, OTP</p>
           inArray(todos.delegatorExternalId, ownerCandidates),
           isNull(todos.doneAt),
           isNull(todos.recurrenceRule),
+          ...(teamFilterActive ? [eq(todos.teamId, selectedTeamId)] : []),
         ))
         .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
         .limit(100);
@@ -4171,6 +4189,7 @@ Founder, OTP</p>
           isNotNull(todos.doneAt),
           isNull(todos.verifiedAt),
           isNull(todos.recurrenceRule),
+          ...(teamFilterActive ? [eq(todos.teamId, selectedTeamId)] : []),
         ))
         .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
         .limit(100);
@@ -4185,6 +4204,7 @@ Founder, OTP</p>
           isNull(tickets.deletedAt),
           eq(tickets.ownerExternalId, myExternalId),
           sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+          ...(teamFilterActive ? [eq(tickets.teamId, selectedTeamId)] : []),
         ))
         .orderBy(desc(tickets.createdAt))
         .limit(50);
@@ -4196,6 +4216,7 @@ Founder, OTP</p>
           eq(tickets.orgId, org.id),
           isNull(tickets.deletedAt),
           sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+          ...(teamFilterActive ? [eq(tickets.teamId, selectedTeamId)] : []),
         ))
         .orderBy(desc(tickets.createdAt))
         .limit(20);
@@ -4291,6 +4312,8 @@ Founder, OTP</p>
       myIssues,
       myAgents,
       mcpStatus,
+      orgTeams,
+      selectedTeamId,
       previewRole: previewActive ? previewParam : '',
     });
   });
@@ -5301,16 +5324,20 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         isNull(kpis.deletedAt),
       ));
     const latestValues: Record<string, any> = {};
+    const previousValues: Record<string, any> = {};
     for (const k of orgKpis) {
-      const [latest] = await db.select().from(kpiValues)
+      const recentRows = await db.select().from(kpiValues)
         .where(eq(kpiValues.kpiId, k.id))
         .orderBy(desc(kpiValues.periodStart))
-        .limit(1);
+        .limit(2);
+      const latest = recentRows[0];
+      const previous = recentRows[1];
       if (latest) latestValues[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
+      if (previous) previousValues[k.id] = { value: previous.value, periodStart: previous.periodStart, periodEnd: previous.periodEnd };
     }
     const scorecard = meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis
       ? meeting.scorecardSnapshot
-      : { kpis: orgKpis, latestValues, kpiCount: orgKpis.length };
+      : { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
 
     const orgRocks = await db.select().from(rocks)
       .where(and(

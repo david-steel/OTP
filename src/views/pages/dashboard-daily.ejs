@@ -34,6 +34,8 @@
   var mcp = locals.mcpStatus || { connected: false, hasKey: false, lastUsedAt: null };
   var quarter = locals.currentQuarter || '';
   var isIntegrator = !!locals.isIntegrator;
+  var orgTeams = locals.orgTeams || [];
+  var selectedTeamId = locals.selectedTeamId || '';
   var greeting = (function(){
     var h = new Date().getHours();
     if (h < 12) return 'Good morning';
@@ -122,6 +124,19 @@
             <%= new Date(selectedMeeting.scheduledAt).toLocaleString() %>
           </span>
         <% } %>
+      </form>
+    <% } %>
+    <% if ((orgTeams || []).length > 0) { %>
+      <form method="GET" action="/dashboard" class="mt-3 text-sm">
+        <% if (orgs.length > 1) { %><input type="hidden" name="orgId" value="<%= locals.org.id %>"><% } %>
+        <% if (selectedMeetingId) { %><input type="hidden" name="meetingId" value="<%= selectedMeetingId %>"><% } %>
+        <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Team</label>
+        <select name="teamId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+          <option value="" <%= selectedTeamId === '' ? 'selected' : '' %>>All teams</option>
+          <% (orgTeams || []).forEach(function(t){ %>
+            <option value="<%= t.id %>" <%= t.id === selectedTeamId ? 'selected' : '' %>><%= t.name %></option>
+          <% }); %>
+        </select>
       </form>
     <% } %>
   </section>
@@ -278,6 +293,17 @@
               <label for="todo-date-input" id="todo-date-label" class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
               <input type="date" id="todo-date-input" name="dueAt" class="rounded border border-gray-300 px-2 py-1 text-xs">
             </div>
+            <% if ((orgTeams || []).length > 0) { %>
+              <div class="flex flex-col gap-0.5">
+                <label for="todo-team-select" class="text-[10px] uppercase tracking-wide text-gray-500">Team</label>
+                <select id="todo-team-select" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                  <option value="" <%= selectedTeamId === '' ? 'selected' : '' %>>Personal (no team)</option>
+                  <% (orgTeams || []).forEach(function(t){ %>
+                    <option value="<%= t.id %>" <%= t.id === selectedTeamId ? 'selected' : '' %>><%= t.name %></option>
+                  <% }); %>
+                </select>
+              </div>
+            <% } %>
           </div>
           <div class="flex gap-2">
             <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Save</button>
@@ -675,6 +701,13 @@
         body.delegatorEntityType = <%- JSON.stringify(locals.meEntityType || '') %>;
         body.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
         body.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
+      }
+      // Team scoping: if a team is picked, this becomes an L10 (team) to-do.
+      var teamSel = document.getElementById('todo-team-select');
+      var teamVal = teamSel ? teamSel.value : '';
+      if (teamVal) {
+        body.teamId = teamVal;
+        body.kind = 'l10';
       }
       api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + (err.message || 'unknown')); });
     });

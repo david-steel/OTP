@@ -144,14 +144,18 @@ async function buildScorecardSnapshot(orgId: string) {
   const orgKpis = await db.select().from(kpis).where(and(eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)));
   const kpiIds = orgKpis.map(k => k.id);
   const latestValues: Record<string, any> = {};
+  const previousValues: Record<string, any> = {};
   for (const k of orgKpis) {
-    const [latest] = await db.select().from(kpiValues)
+    const rows = await db.select().from(kpiValues)
       .where(eq(kpiValues.kpiId, k.id))
       .orderBy(desc(kpiValues.periodStart))
-      .limit(1);
+      .limit(2);
+    const latest = rows[0];
+    const previous = rows[1];
     if (latest) latestValues[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
+    if (previous) previousValues[k.id] = { value: previous.value, periodStart: previous.periodStart, periodEnd: previous.periodEnd };
   }
-  return { kpis: orgKpis, latestValues, capturedAt: new Date().toISOString(), kpiCount: kpiIds.length };
+  return { kpis: orgKpis, latestValues, previousValues, capturedAt: new Date().toISOString(), kpiCount: kpiIds.length };
 }
 
 async function buildRocksSnapshot(orgId: string) {

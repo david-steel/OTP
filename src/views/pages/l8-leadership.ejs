@@ -135,6 +135,7 @@
                 <th class="text-left p-2">KPI</th>
                 <th class="text-left p-2">Owner</th>
                 <th class="text-right p-2">Goal</th>
+                <th class="text-right p-2">Previous</th>
                 <th class="text-right p-2">Latest</th>
                 <th class="text-center p-2">On Track</th>
                 <th class="text-center p-2"></th>
@@ -163,6 +164,15 @@
                   <td class="p-2 text-right text-gray-700"><%
                     const opSym = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
                   %><%= opSym %> <%= k.goalValue != null ? k.goalValue : '—' %><% if (k.unit) { %> <span class="text-gray-400 text-xs"><%= k.unit %></span><% } %></td>
+                  <% const pv = (scorecard.previousValues || {})[k.id]; %>
+                  <td class="p-2 text-right text-gray-500">
+                    <% if (pv) { %>
+                      <%= pv.value %>
+                      <div class="text-xs text-gray-400">as of <%= new Date(pv.periodEnd).toLocaleDateString() %></div>
+                    <% } else { %>
+                      —
+                    <% } %>
+                  </td>
                   <td class="p-2 text-right font-medium" data-kpi-id="<%= k.id %>" data-period-start="<%= v ? new Date(v.periodStart).toISOString() : '' %>">
                     <div data-kpi-display class="cursor-pointer hover:text-otp-600" title="Click to edit">
                       <%= v ? v.value : '—' %>
@@ -246,14 +256,19 @@
       <div id="rock-add-form" class="hidden mt-3 border rounded p-3 bg-gray-50">
         <div class="grid grid-cols-12 gap-2">
           <input id="new-rock-title" type="text" placeholder="Priority title (e.g. 'Move to Trello -- full Accelo decommission')" class="col-span-12 border rounded p-2 text-sm">
-          <select id="new-rock-owner" class="col-span-5 border rounded p-2 text-sm">
+          <select id="new-rock-owner" class="col-span-4 border rounded p-2 text-sm">
             <option value="">-- owner --</option>
             <% (availableOwners || []).forEach(function(a) { %>
               <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
             <% }); %>
           </select>
-          <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-3 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
-          <input id="new-rock-due" type="date" class="col-span-4 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3); var endMonth=q*3+2; var end=new Date(d.getFullYear(),endMonth+1,0); return end.toISOString().slice(0,10); })() %>">
+          <select id="new-rock-team" class="col-span-4 border rounded p-2 text-sm">
+            <% (orgTeams || []).forEach(function(tm) { %>
+              <option value="<%= tm.id %>" <%= tm.id === meeting.teamId ? 'selected' : '' %>><%= tm.name %></option>
+            <% }); %>
+          </select>
+          <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-4 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
+          <input id="new-rock-due" type="date" class="col-span-12 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3); var endMonth=q*3+2; var end=new Date(d.getFullYear(),endMonth+1,0); return end.toISOString().slice(0,10); })() %>">
           <textarea id="new-rock-status" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Initial status note (optional)"></textarea>
         </div>
         <div class="flex gap-2 mt-2">
@@ -888,7 +903,8 @@
     saveBtn?.addEventListener('click', async () => {
       const raw = input.value.trim();
       const value = raw === '' ? null : parseFloat(raw);
-      const periodStart = cell.dataset.periodStart || new Date().toISOString();
+      // Always write a new dated value: prior value becomes "Previous", this one becomes "Latest" with today's date.
+      const periodStart = new Date().toISOString();
       saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
       const res = await api('/kpis/' + kpiId + '/values', { method: 'POST', body: JSON.stringify({ periodStart, value }) });
       if (res?.error) {
@@ -930,7 +946,7 @@
       dueDate,
       onTrack: true,
       statusNote: statusNote || undefined,
-      teamId: teamId || undefined,
+      teamId: (document.getElementById('new-rock-team') || {}).value || teamId || undefined,
     })});
     if (res?.error) { alert('Add failed: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Add Priority'; return; }
     location.reload();
