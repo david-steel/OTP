@@ -264,11 +264,42 @@
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
           <input type="text" name="title" required maxlength="500" placeholder="What to do" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+          <div class="flex gap-2 flex-wrap">
+            <select id="todo-delegate-to" class="rounded border border-gray-300 px-2 py-1 text-xs">
+              <option value="">Just me (personal)</option>
+              <% (locals.assignablePeople || []).forEach(function(p){ %>
+                <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+              <% }); %>
+            </select>
+            <input type="datetime-local" id="todo-promised-by" title="Promised by" class="rounded border border-gray-300 px-2 py-1 text-xs">
+          </div>
           <div class="flex gap-2">
             <input type="date" name="dueAt" class="rounded border border-gray-300 px-2 py-1 text-xs">
             <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Save</button>
           </div>
         </form>
+        <% var delegatedVerifyList = locals.delegatedVerify || []; %>
+        <% if (delegatedVerifyList.length > 0) { %>
+          <div class="mb-4 rounded-lg bg-amber-50 border border-amber-300 p-3">
+            <div class="text-[11px] uppercase tracking-wide font-bold text-amber-800 mb-2">
+              &#9888; Verify these happened <span class="text-amber-600 font-semibold">(<%= delegatedVerifyList.length %>)</span>
+            </div>
+            <ul class="space-y-1.5">
+              <% delegatedVerifyList.forEach(function(t){ %>
+                <li class="flex items-start gap-2 text-sm rounded border border-amber-200 bg-white px-3 py-2" data-verify-row-id="<%= t.id %>">
+                  <div class="flex-1 min-w-0">
+                    <div class="text-gray-900 break-words"><%= t.title %></div>
+                    <div class="text-[11px] text-gray-500 mt-0.5"><%= t.ownerName %> marked done</div>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" class="rounded bg-emerald-600 text-white text-[11px] font-semibold px-2 py-0.5 hover:bg-emerald-700" data-verify-id="<%= t.id %>">Verify</button>
+                    <button type="button" class="rounded bg-gray-100 text-gray-700 text-[11px] font-semibold px-2 py-0.5 hover:bg-gray-200" data-reopen-id="<%= t.id %>">Reopen</button>
+                  </div>
+                </li>
+              <% }); %>
+            </ul>
+          </div>
+        <% } %>
         <% if (myTodos.length === 0) { %>
           <p class="text-xs text-gray-500">No open to-dos. Nice.</p>
         <% } else {
@@ -367,6 +398,31 @@
           <% }); %>
         <% } %>
       </section>
+
+      <!-- Waiting on others (delegated, still in progress) -->
+      <% var delegatedWaitingList = locals.delegatedWaiting || []; %>
+      <% if (delegatedWaitingList.length > 0) { %>
+        <section class="rounded-lg border border-gray-200 bg-white p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
+          </div>
+          <ul class="space-y-1">
+            <% delegatedWaitingList.forEach(function(t){
+                 var promised = t.dueAt ? new Date(t.dueAt) : null;
+            %>
+              <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-waiting-id="<%= t.id %>">
+                <div class="flex-1 min-w-0">
+                  <div class="text-gray-900 break-words"><%= t.title %></div>
+                  <div class="text-[11px] text-gray-500 mt-0.5">
+                    waiting on <%= t.ownerName %>
+                    <%= promised ? ' · promised ' + promised.toLocaleDateString() : '' %>
+                  </div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        </section>
+      <% } %>
 
       <!-- IDS Issues -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
@@ -573,6 +629,20 @@
       var due = fd.get('dueAt');
       if (due) body.dueAt = new Date(due + 'T17:00:00').toISOString();
       if (meetingId) body.meetingId = meetingId;
+      // Delegation: if a person is picked, reassign owner and stamp the delegator.
+      var delegateSel = document.getElementById('todo-delegate-to');
+      var delegateVal = delegateSel ? delegateSel.value : '';
+      if (delegateVal) {
+        var parts = delegateVal.split(':');
+        body.ownerEntityType = parts[0];
+        body.ownerExternalId = parts[1];
+        body.ownerName = parts.slice(2).join(':');
+        body.delegatorEntityType = <%- JSON.stringify(locals.meEntityType || '') %>;
+        body.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
+        body.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
+        var promisedBy = document.getElementById('todo-promised-by');
+        if (promisedBy && promisedBy.value) body.dueAt = new Date(promisedBy.value).toISOString();
+      }
       api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + (err.message || 'unknown')); });
     });
   }
@@ -634,6 +704,24 @@
       var li = btn.closest('[data-todo-id]');
       var tid = li.dataset.todoId;
       api('DELETE', '/todos/' + tid).then(reload).catch(function(err){ alert(err.message || 'Failed'); });
+    });
+  });
+
+  // --- Delegated to-dos: verify / reopen ---
+  document.querySelectorAll('[data-verify-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var tid = btn.dataset.verifyId;
+      api('PUT', '/todos/' + tid, { verified: true })
+        .then(reload)
+        .catch(function(err){ alert('Verify failed: ' + (err.message || 'unknown')); });
+    });
+  });
+  document.querySelectorAll('[data-reopen-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var tid = btn.dataset.reopenId;
+      api('PUT', '/todos/' + tid, { done: false })
+        .then(reload)
+        .catch(function(err){ alert('Reopen failed: ' + (err.message || 'unknown')); });
     });
   });
 

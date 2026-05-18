@@ -25,6 +25,9 @@ const createTodoSchema = z.object({
   ownerEntityType: z.enum(['agent', 'human']),
   ownerExternalId: z.string().min(1).max(120),
   ownerName: z.string().max(255).optional(),
+  delegatorEntityType: z.enum(['agent', 'human']).optional(),
+  delegatorExternalId: z.string().min(1).max(120).optional(),
+  delegatorName: z.string().max(255).optional(),
   title: z.string().min(3).max(500),
   description: z.string().optional(),
   dueAt: z.string().datetime().optional(),
@@ -44,8 +47,12 @@ const updateTodoSchema = z.object({
   ownerEntityType: z.enum(['agent', 'human']).optional(),
   ownerExternalId: z.string().max(120).optional(),
   ownerName: z.string().max(255).optional(),
+  delegatorEntityType: z.enum(['agent', 'human']).nullable().optional(),
+  delegatorExternalId: z.string().max(120).nullable().optional(),
+  delegatorName: z.string().max(255).nullable().optional(),
   dueAt: z.string().datetime().nullable().optional(),
   done: z.boolean().optional(),
+  verified: z.boolean().optional(),
   recurrenceRule: z.string().max(500).nullable().optional(),
   parentTodoId: z.string().uuid().nullable().optional(),
   position: z.number().int().min(0).max(10_000).optional(),
@@ -124,6 +131,9 @@ export default async function todoRoutes(app: FastifyInstance) {
       ownerEntityType: d.ownerEntityType,
       ownerExternalId: d.ownerExternalId,
       ownerName: d.ownerName,
+      delegatorEntityType: d.delegatorEntityType,
+      delegatorExternalId: d.delegatorExternalId,
+      delegatorName: d.delegatorName,
       title: d.title,
       description: d.description,
       dueAt: d.dueAt ? new Date(d.dueAt) : null,
@@ -215,7 +225,22 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (d.ownerName !== undefined) updates.ownerName = d.ownerName;
     if (d.dueAt !== undefined) updates.dueAt = d.dueAt ? new Date(d.dueAt) : null;
     if (d.done === true) updates.doneAt = new Date();
-    if (d.done === false) updates.doneAt = null;
+    if (d.done === false) {
+      updates.doneAt = null;
+      updates.verifiedAt = null;
+      updates.verifiedBy = null;
+    }
+    if (d.verified === true) {
+      updates.verifiedAt = new Date();
+      updates.verifiedBy = getAuth(request).userId || 'api_key';
+    }
+    if (d.verified === false) {
+      updates.verifiedAt = null;
+      updates.verifiedBy = null;
+    }
+    if (d.delegatorEntityType !== undefined) updates.delegatorEntityType = d.delegatorEntityType || null;
+    if (d.delegatorExternalId !== undefined) updates.delegatorExternalId = d.delegatorExternalId || null;
+    if (d.delegatorName !== undefined) updates.delegatorName = d.delegatorName || null;
     if (d.parentTodoId !== undefined) updates.parentTodoId = d.parentTodoId;
     if (d.position !== undefined) updates.position = d.position;
     if (d.recurrenceRule !== undefined) {

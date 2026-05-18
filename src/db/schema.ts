@@ -854,10 +854,17 @@ export const todos = pgTable('todos', {
   ownerEntityType: ownerEntityTypeEnum('owner_entity_type').notNull(),
   ownerExternalId: varchar('owner_external_id', { length: 120 }).notNull(),
   ownerName: varchar('owner_name', { length: 255 }),
+  // Delegation: who handed this todo down. Nullable; normal todos leave null.
+  delegatorEntityType: ownerEntityTypeEnum('delegator_entity_type'),
+  delegatorExternalId: varchar('delegator_external_id', { length: 120 }),
+  delegatorName: varchar('delegator_name', { length: 255 }),
   title: varchar('title', { length: 500 }).notNull(),
   description: text('description'),
   dueAt: timestamp('due_at'),
   doneAt: timestamp('done_at'),
+  // Verification: when/who confirmed the delegated todo was done right.
+  verifiedAt: timestamp('verified_at'),
+  verifiedBy: varchar('verified_by', { length: 255 }),
   // Recurrence: iCal RRULE on a template, and the FK back to the template
   // on every generated instance. Templates never appear in user-facing
   // lists (only their instances do).
@@ -879,6 +886,7 @@ export const todos = pgTable('todos', {
   kindTeamIdx: index('todos_kind_team_idx').on(table.organizationId, table.kind, table.teamId),
   parentIdx: index('todos_parent_idx').on(table.parentTodoId, table.position),
   recurrenceParentIdx: index('todos_recurrence_parent_idx').on(table.recurrenceParentId),
+  delegatorIdx: index('todos_delegator_idx').on(table.organizationId, table.delegatorExternalId),
 }));
 
 // IDS extension columns on tickets are added via raw SQL in the migration:

@@ -60,6 +60,27 @@ const DDL = [
      ALTER TABLE "todos" ADD COLUMN "position" integer NOT NULL DEFAULT 0;
    EXCEPTION WHEN duplicate_column THEN null; END $$;`,
 
+  // Delegation / verification columns (all nullable; normal todos leave null).
+  `DO $$ BEGIN
+     ALTER TABLE "todos" ADD COLUMN "delegator_entity_type" "owner_entity_type";
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  `DO $$ BEGIN
+     ALTER TABLE "todos" ADD COLUMN "delegator_external_id" varchar(120);
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  `DO $$ BEGIN
+     ALTER TABLE "todos" ADD COLUMN "delegator_name" varchar(255);
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  `DO $$ BEGIN
+     ALTER TABLE "todos" ADD COLUMN "verified_at" timestamp;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  `DO $$ BEGIN
+     ALTER TABLE "todos" ADD COLUMN "verified_by" varchar(255);
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
   // Backfill kind: anything tied to a leadership-team meeting becomes l10.
   // Everything else defaults to personal. Idempotent on the WHERE clause.
   `UPDATE "todos" t SET "kind" = 'l10', "team_id" = m."team_id"
@@ -86,6 +107,8 @@ const DDL = [
      ON "todos" ("parent_todo_id", "position");`,
   `CREATE INDEX IF NOT EXISTS "todos_recurrence_parent_idx"
      ON "todos" ("recurrence_parent_id");`,
+  `CREATE INDEX IF NOT EXISTS "todos_delegator_idx"
+     ON "todos" ("organization_id", "delegator_external_id");`,
 ];
 
 export async function ensureTodosV2(): Promise<void> {

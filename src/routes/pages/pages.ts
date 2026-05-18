@@ -8,7 +8,7 @@ import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPracti
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser } from '../../services/membership.js';
-import { isNull } from 'drizzle-orm';
+import { isNull, isNotNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
@@ -4109,6 +4109,70 @@ Founder, OTP</p>
         .limit(100);
     }
 
+    // ---- Delegated To-Dos ----
+    // Todos this user delegated to someone else. Owned by the assignee, but
+    // the delegator* columns point back to the current user.
+    //   delegatedWaiting -- still in progress (assignee hasn't finished).
+    //   delegatedVerify  -- assignee marked done, delegator hasn't verified.
+    let delegatedWaiting: any[] = [];
+    let delegatedVerify: any[] = [];
+    if (ownerCandidates.length > 0) {
+      delegatedWaiting = await db
+        .select({
+          id: todos.id,
+          title: todos.title,
+          description: todos.description,
+          dueAt: todos.dueAt,
+          doneAt: todos.doneAt,
+          kind: todos.kind,
+          priority: todos.priority,
+          ownerEntityType: todos.ownerEntityType,
+          ownerExternalId: todos.ownerExternalId,
+          ownerName: todos.ownerName,
+          createdAt: todos.createdAt,
+          verifiedAt: todos.verifiedAt,
+          delegatorName: todos.delegatorName,
+        })
+        .from(todos)
+        .where(and(
+          eq(todos.organizationId, org.id),
+          isNull(todos.deletedAt),
+          inArray(todos.delegatorExternalId, ownerCandidates),
+          isNull(todos.doneAt),
+          isNull(todos.recurrenceRule),
+        ))
+        .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
+        .limit(100);
+
+      delegatedVerify = await db
+        .select({
+          id: todos.id,
+          title: todos.title,
+          description: todos.description,
+          dueAt: todos.dueAt,
+          doneAt: todos.doneAt,
+          kind: todos.kind,
+          priority: todos.priority,
+          ownerEntityType: todos.ownerEntityType,
+          ownerExternalId: todos.ownerExternalId,
+          ownerName: todos.ownerName,
+          createdAt: todos.createdAt,
+          verifiedAt: todos.verifiedAt,
+          delegatorName: todos.delegatorName,
+        })
+        .from(todos)
+        .where(and(
+          eq(todos.organizationId, org.id),
+          isNull(todos.deletedAt),
+          inArray(todos.delegatorExternalId, ownerCandidates),
+          isNotNull(todos.doneAt),
+          isNull(todos.verifiedAt),
+          isNull(todos.recurrenceRule),
+        ))
+        .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
+        .limit(100);
+    }
+
     // ---- My Issues (open IDS) ----
     let myIssues: any[] = [];
     if (myExternalId) {
@@ -4168,6 +4232,21 @@ Founder, OTP</p>
       };
     }).sort((a, b) => (b.score || 0) - (a.score || 0));
 
+    // ---- Assignable people (for delegating todos) ----
+    // Humans + agents from the org chart graph, humans first then agents,
+    // alphabetical within each group.
+    const assignablePeople = teamGraphForAgents.nodes
+      .filter(n => n.type === 'human' || n.type === 'agent')
+      .map(n => ({ entityType: n.type, externalId: n.externalId, name: n.label }))
+      .sort((a, b) => a.entityType !== b.entityType
+        ? (a.entityType === 'human' ? -1 : 1)
+        : a.name.localeCompare(b.name));
+
+    // ---- Delegator identity (current user as the one delegating) ----
+    const meExternalId = ownerCandidates[0] || '';
+    const meName = member?.displayName || org.name;
+    const meEntityType = 'human';
+
     // ---- MCP status ----
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const orgKeys = await db.select().from(apiKeys)
@@ -4200,6 +4279,12 @@ Founder, OTP</p>
       myKpis,
       kpiValues: kpiValuesMap,
       myTodos,
+      delegatedWaiting,
+      delegatedVerify,
+      assignablePeople,
+      meExternalId,
+      meName,
+      meEntityType,
       myIssues,
       myAgents,
       mcpStatus,
