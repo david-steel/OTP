@@ -5752,6 +5752,50 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .limit(20);
     const upcomingMeetings = upcomingMeetingRows.filter(m => m.scheduledAt <= twoWeeksFromNow);
 
+    // Todos David delegated to others -- mirrors what /dashboard shows.
+    // delegator* points back to whoever is waiting; the todo is owned by the assignee.
+    const delegatedWaiting = await db.select()
+      .from(todos)
+      .where(and(
+        eq(todos.organizationId, org.id),
+        eq(todos.delegatorExternalId, ownerExternalId),
+        isNull(todos.doneAt),
+        isNull(todos.deletedAt),
+        isNull(todos.recurrenceRule),
+      ))
+      .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
+
+    // Delegated todos the assignee marked done but David hasn't verified yet.
+    const delegatedVerify = await db.select()
+      .from(todos)
+      .where(and(
+        eq(todos.organizationId, org.id),
+        eq(todos.delegatorExternalId, ownerExternalId),
+        isNotNull(todos.doneAt),
+        isNull(todos.verifiedAt),
+        isNull(todos.deletedAt),
+        isNull(todos.recurrenceRule),
+      ))
+      .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
+
+    // People David can delegate to -- humans and agents from the team graph.
+    const meGraph = await getOrgTeamGraph(org.id, org.name);
+    const assignablePeople = meGraph.nodes
+      .filter(n => n.type === 'human' || n.type === 'agent')
+      .map(n => ({ entityType: n.type, externalId: n.externalId, name: n.label }))
+      .sort((a, b) => a.entityType !== b.entityType
+        ? (a.entityType === 'human' ? -1 : 1)
+        : a.name.localeCompare(b.name));
+
+    // Delegator identity for the create form.
+    const meExternalId = ownerExternalId;
+    const meEntityType = 'human';
+    const [meMember] = await db.select({ displayName: orgMembers.displayName })
+      .from(orgMembers)
+      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+      .limit(1);
+    const meName = meMember?.displayName || org.name || 'Me';
+
     return reply.view('pages/me-todos', {
       title: 'My Todos - OTP',
       description: 'Open action items from your agents.',
@@ -5762,6 +5806,12 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       justDone,
       ownerExternalId,
       upcomingMeetings,
+      delegatedWaiting,
+      delegatedVerify,
+      assignablePeople,
+      meExternalId,
+      meName,
+      meEntityType,
     });
   });
 }

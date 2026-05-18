@@ -183,6 +183,13 @@
         <option value="custom">Custom...</option>
       </select>
       <input id="new-todo-custom-date" type="datetime-local" style="display:none;" />
+      <select id="new-todo-delegate" title="Delegate to">
+        <option value="">Just me</option>
+        <% (assignablePeople || []).forEach(function(p) { %>
+          <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+        <% }); %>
+      </select>
+      <input id="new-todo-promised" type="datetime-local" title="Promised by" />
       <select id="new-todo-recur" title="Recurrence">
         <option value="">No repeat</option>
         <option value="FREQ=DAILY">Daily</option>
@@ -205,6 +212,22 @@
       <button class="me-btn primary" onclick="createTodo(this)">Add to queue</button>
     </div>
   </div>
+
+  <% if ((delegatedVerify || []).length > 0) { %>
+    <div class="me-card" style="border-left:4px solid #f59e0b; background:#fffbeb;">
+      <h2 class="me-title">⚠ Verify these happened (<%= (delegatedVerify || []).length %>)</h2>
+      <% (delegatedVerify || []).forEach(function(t) { %>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #fde68a;">
+          <div style="font-weight: 600; color: #111;"><%= t.title %></div>
+          <div class="me-meta"><span><%= t.ownerName || 'someone' %> marked done</span></div>
+          <div class="me-actions">
+            <button class="me-btn primary" onclick="verifyTodo(this,'<%= t.id %>')">Verify</button>
+            <button class="me-btn secondary" onclick="reopenTodo(this,'<%= t.id %>')">Reopen</button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
 
   <% if (todos.length === 0) { %>
     <div class="me-empty">
@@ -274,6 +297,19 @@
       </div>
     </div>
   <% }); %>
+
+  <% if ((delegatedWaiting || []).length > 0) { %>
+    <div class="me-section-h">Waiting on others</div>
+    <% (delegatedWaiting || []).forEach(function(t) { %>
+      <div class="me-card">
+        <h2 class="me-title"><%= t.title %></h2>
+        <div class="me-meta">
+          <span>waiting on <%= t.ownerName || 'someone' %></span>
+          <% if (t.dueAt) { %><span>promised <%= new Date(t.dueAt).toLocaleDateString() %></span><% } %>
+        </div>
+      </div>
+    <% }); %>
+  <% } %>
 
   <% if (l10Todos && l10Todos.length > 0) { %>
     <div class="me-section-l10">
@@ -460,6 +496,23 @@ async function createTodo(btn) {
     recurrenceRule: recurrenceRule || undefined,
   };
 
+  // Delegation: if a person is picked, reassign ownership to them and stamp
+  // David as the delegator. Value format is "<entityType>:<externalId>:<name>".
+  const delegateVal = (document.getElementById('new-todo-delegate') || {}).value || '';
+  if (delegateVal) {
+    const parts = delegateVal.split(':');
+    body.ownerEntityType = parts[0];
+    body.ownerExternalId = parts[1];
+    body.ownerName = parts.slice(2).join(':');
+    body.delegatorEntityType = <%- JSON.stringify(meEntityType || 'human') %>;
+    body.delegatorExternalId = <%- JSON.stringify(meExternalId || '') %>;
+    body.delegatorName = <%- JSON.stringify(meName || '') %>;
+  }
+  const promisedVal = (document.getElementById('new-todo-promised') || {}).value || '';
+  if (promisedVal) {
+    body.dueAt = new Date(promisedVal).toISOString();
+  }
+
   btn.disabled = true;
   const origText = btn.textContent;
   btn.textContent = 'Adding...';
@@ -529,6 +582,44 @@ async function markDone(btn, id) {
     btn.disabled = false;
     btn.textContent = 'Done';
     alert('Could not mark done: ' + e.message);
+  }
+}
+
+async function verifyTodo(btn, id) {
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  try {
+    const r = await fetch('/api/v1/todos/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ verified: true }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    location.reload();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Verify';
+    alert('Could not verify: ' + e.message);
+  }
+}
+
+async function reopenTodo(btn, id) {
+  btn.disabled = true;
+  btn.textContent = 'Reopening...';
+  try {
+    const r = await fetch('/api/v1/todos/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ done: false }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    location.reload();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Reopen';
+    alert('Could not reopen: ' + e.message);
   }
 }
 
