@@ -38,6 +38,21 @@ const DDL: string[] = [
   `CREATE INDEX IF NOT EXISTS "mhl_meeting_idx" ON "meeting_headlines" ("meeting_id", "created_at" DESC);`,
   `CREATE INDEX IF NOT EXISTS "mhl_author_idx" ON "meeting_headlines" ("org_id", "author_user_id");`,
   `CREATE INDEX IF NOT EXISTS "mhl_unread_idx" ON "meeting_headlines" ("meeting_id", "read_at");`,
+
+  // A headline is fundamentally team-scoped; the meeting link is optional.
+  `DO $$ BEGIN
+     ALTER TABLE "meeting_headlines" ADD COLUMN "team_id" uuid;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  `ALTER TABLE "meeting_headlines" ALTER COLUMN "meeting_id" DROP NOT NULL;`,
+
+  `UPDATE "meeting_headlines" mh
+   SET "team_id" = m."team_id"
+   FROM "meetings" m
+   WHERE mh."meeting_id" = m."id"
+     AND mh."team_id" IS NULL;`,
+
+  `CREATE INDEX IF NOT EXISTS "mhl_team_idx" ON "meeting_headlines" ("team_id");`,
 ];
 
 export async function ensureMeetingHeadlinesTable(): Promise<void> {

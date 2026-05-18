@@ -46,6 +46,19 @@ const DDL = [
    WHERE r."team_id" IS NULL
      AND lt."org_id" = r."organization_id"
      AND lt."slug" = 'leadership';`,
+
+  // rocks -> OOS operating plan links (mirror of kpis.plan_section_id /
+  // kpis.execution_item_id). Plain uuid columns -- no FK constraint in raw
+  // SQL, matching how nullable cross-refs are handled here.
+  `DO $$ BEGIN
+     ALTER TABLE "rocks"
+       ADD COLUMN "plan_section_id" uuid;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  `DO $$ BEGIN
+     ALTER TABLE "rocks"
+       ADD COLUMN "execution_item_id" uuid;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
 ];
 
 export async function ensureKpisRocksTeam(): Promise<void> {

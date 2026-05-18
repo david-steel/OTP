@@ -35,6 +35,7 @@ const rl = createRateLimiter({ windowMs: 60_000, maxRequests: 60 });
 const createSchema = z.object({
   body: z.string().min(1).max(2000),
   kind: z.enum(['customer', 'employee', 'other']).optional().default('other'),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 const updateSchema = z.object({
@@ -96,6 +97,7 @@ export default async function headlineRoutes(app: FastifyInstance) {
     const [created] = await db.insert(meetingHeadlines).values({
       meetingId: id,
       orgId: ctx.org.id,
+      teamId: body.data.teamId !== undefined ? body.data.teamId : meeting.teamId,
       authorUserId: ctx.userId,
       authorName: ctx.displayName,
       kind: body.data.kind,

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import ejs from 'ejs';
 import { fileURLToPath } from 'node:url';
 import { getAuth } from '@clerk/fastify';
-import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
@@ -4019,9 +4019,15 @@ Founder, OTP</p>
       selectedMeetingId = upcoming?.id || meetingsList[0]?.id || '';
     }
 
-    // ---- Headlines for selected meeting ----
+    // ---- Headlines ----
+    // When a team filter is active, scope headlines to that team. Otherwise
+    // keep the legacy behavior: headlines for the selected meeting.
     let headlinesList: any[] = [];
-    if (selectedMeetingId) {
+    if (teamFilterActive) {
+      headlinesList = await db.select().from(meetingHeadlines)
+        .where(and(eq(meetingHeadlines.teamId, selectedTeamId), eq(meetingHeadlines.orgId, org.id)))
+        .orderBy(desc(meetingHeadlines.createdAt));
+    } else if (selectedMeetingId) {
       headlinesList = await db.select().from(meetingHeadlines)
         .where(and(eq(meetingHeadlines.meetingId, selectedMeetingId), eq(meetingHeadlines.orgId, org.id)))
         .orderBy(desc(meetingHeadlines.createdAt));
@@ -5467,11 +5473,47 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       }
     }
 
-    // Structured headline items for this meeting so the page can render and
-    // flag them. Scoped by meetingId -- meeting is already org-scoped above.
-    const headlineItems = await db.select().from(meetingHeadlines)
-      .where(eq(meetingHeadlines.meetingId, meeting.id))
-      .orderBy(desc(meetingHeadlines.createdAt));
+    // Structured headline items so the page can render and flag them.
+    // Headlines now carry a teamId: a team's headlines surface in that
+    // team's meeting -- the team's unaddressed (unread) headlines plus any
+    // already addressed in THIS meeting. Teamless meetings fall back to the
+    // legacy meetingId scoping so they still work.
+    const headlineItems = meeting.teamId
+      ? await db.select().from(meetingHeadlines)
+          .where(and(
+            eq(meetingHeadlines.teamId, meeting.teamId),
+            or(
+              isNull(meetingHeadlines.readAt),
+              eq(meetingHeadlines.meetingId, meeting.id),
+            ),
+          ))
+          .orderBy(desc(meetingHeadlines.createdAt))
+          .limit(100)
+      : await db.select().from(meetingHeadlines)
+          .where(eq(meetingHeadlines.meetingId, meeting.id))
+          .orderBy(desc(meetingHeadlines.createdAt));
+
+    // 90-day execution items for the org's active operating plan -- powers
+    // the Rock -> plan picker. Graceful: if the plan model yields nothing,
+    // default to an empty list rather than crashing the page.
+    let executionItems: Array<{ id: string; label: string }> = [];
+    try {
+      const [activePlan] = await db.select().from(oosOperatingPlans)
+        .where(and(
+          eq(oosOperatingPlans.organizationId, org.id),
+          eq(oosOperatingPlans.status, 'active'),
+        ))
+        .orderBy(desc(oosOperatingPlans.createdAt))
+        .limit(1);
+      if (activePlan) {
+        const items = await db.select().from(oosExecutionItems)
+          .where(eq(oosExecutionItems.planId, activePlan.id))
+          .orderBy(desc(oosExecutionItems.createdAt));
+        executionItems = items.map((i) => ({ id: i.id, label: i.title }));
+      }
+    } catch {
+      executionItems = [];
+    }
 
     return reply.view('pages/l8-leadership', {
       title: meeting.title + ' -- OTP',
@@ -5485,6 +5527,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       issues: orgIssues,
       todos: orgTodos,
       headlineItems,
+      executionItems,
       teamMembers,
       availableOwners,
       orgTeams: orgTeamsList,

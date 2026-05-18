@@ -125,6 +125,15 @@
       const groupOrder = ['Leadership Scorecard', 'Agent Scorecard', 'OTP Scorecard'];
       const otherGroups = Object.keys(groups).filter(g => !groupOrder.includes(g)).sort();
       const orderedGroups = [...groupOrder.filter(g => groups[g]), ...otherGroups];
+      // A KPI is stale if it has no latest value, or its period end is older than
+      // a grace window sized to the KPI's time grain.
+      const staleWindowDays = { daily: 2, weekly: 10, monthly: 38, quarterly: 100, yearly: 380 };
+      const isKpiStale = function(k, v) {
+        if (!v || !v.periodEnd) return true;
+        const ageMs = Date.now() - new Date(v.periodEnd).getTime();
+        const windowDays = staleWindowDays[k && k.timeGrain] || 14;
+        return ageMs > windowDays * 24 * 60 * 60 * 1000;
+      };
     %>
       <% orderedGroups.forEach(function(groupName) { %>
         <div class="mb-6">
@@ -178,6 +187,9 @@
                       <%= v ? v.value : '—' %>
                       <% if (v) { %>
                         <div class="text-xs text-gray-400 font-normal">as of <%= new Date(v.periodEnd).toLocaleDateString() %></div>
+                      <% } %>
+                      <% if (isKpiStale(k, v)) { %>
+                        <div class="text-[10px] text-amber-700 bg-amber-100 rounded px-1 inline-block mt-0.5">⚠ <%= v ? 'stale' : 'no data' %></div>
                       <% } %>
                     </div>
                     <div data-kpi-editor class="hidden">
@@ -256,18 +268,24 @@
       <div id="rock-add-form" class="hidden mt-3 border rounded p-3 bg-gray-50">
         <div class="grid grid-cols-12 gap-2">
           <input id="new-rock-title" type="text" placeholder="Priority title (e.g. 'Move to Trello -- full Accelo decommission')" class="col-span-12 border rounded p-2 text-sm">
-          <select id="new-rock-owner" class="col-span-4 border rounded p-2 text-sm">
+          <select id="new-rock-owner" class="col-span-3 border rounded p-2 text-sm">
             <option value="">-- owner --</option>
             <% (availableOwners || []).forEach(function(a) { %>
               <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
             <% }); %>
           </select>
-          <select id="new-rock-team" class="col-span-4 border rounded p-2 text-sm">
+          <select id="new-rock-team" class="col-span-3 border rounded p-2 text-sm">
             <% (orgTeams || []).forEach(function(tm) { %>
               <option value="<%= tm.id %>" <%= tm.id === meeting.teamId ? 'selected' : '' %>><%= tm.name %></option>
             <% }); %>
           </select>
-          <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-4 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
+          <select id="new-rock-exec" class="col-span-3 border rounded p-2 text-sm" title="Link this priority to a 90-day execution item">
+            <option value="">— no plan link —</option>
+            <% (executionItems || []).forEach(function(it) { %>
+              <option value="<%= it.id %>"><%= it.label %></option>
+            <% }); %>
+          </select>
+          <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-3 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
           <input id="new-rock-due" type="date" class="col-span-12 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3); var endMonth=q*3+2; var end=new Date(d.getFullYear(),endMonth+1,0); return end.toISOString().slice(0,10); })() %>">
           <textarea id="new-rock-status" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Initial status note (optional)"></textarea>
         </div>
@@ -947,6 +965,7 @@
       onTrack: true,
       statusNote: statusNote || undefined,
       teamId: (document.getElementById('new-rock-team') || {}).value || teamId || undefined,
+      executionItemId: (document.getElementById('new-rock-exec') || {}).value || undefined,
     })});
     if (res?.error) { alert('Add failed: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Add Priority'; return; }
     location.reload();

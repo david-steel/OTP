@@ -23,6 +23,8 @@ const createRockSchema = z.object({
   onTrack: z.boolean().optional().default(true),
   statusNote: z.string().optional(),
   teamId: z.string().uuid().nullable().optional(),
+  planSectionId: z.string().uuid().nullable().optional(),
+  executionItemId: z.string().uuid().nullable().optional(),
 });
 
 const updateRockSchema = z.object({
@@ -37,6 +39,8 @@ const updateRockSchema = z.object({
   statusNote: z.string().optional(),
   completed: z.boolean().optional(),
   teamId: z.string().uuid().nullable().optional(),
+  planSectionId: z.string().uuid().nullable().optional(),
+  executionItemId: z.string().uuid().nullable().optional(),
 });
 
 function authedOrFail(request: any, reply: any) {
@@ -87,6 +91,8 @@ export default async function rockRoutes(app: FastifyInstance) {
       statusNote: body.data.statusNote,
       statusUpdatedAt: body.data.statusNote ? new Date() : null,
       teamId: body.data.teamId || null,
+      planSectionId: body.data.planSectionId || null,
+      executionItemId: body.data.executionItemId || null,
       createdBy,
     }).returning();
 
@@ -157,6 +163,8 @@ export default async function rockRoutes(app: FastifyInstance) {
     if (d.completed === true) updates.completedAt = new Date();
     if (d.completed === false) updates.completedAt = null;
     if (d.teamId !== undefined) updates.teamId = d.teamId;
+    if (d.planSectionId !== undefined) updates.planSectionId = d.planSectionId;
+    if (d.executionItemId !== undefined) updates.executionItemId = d.executionItemId;
 
     const [updated] = await db.update(rocks)
       .set(updates)

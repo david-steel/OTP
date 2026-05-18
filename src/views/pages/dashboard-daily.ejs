@@ -161,6 +161,15 @@
         </div>
 
         <% if (selectedMeetingId) { %>
+          <%
+            var headlineTeamName = '';
+            if (selectedTeamId) {
+              for (var ti = 0; ti < (orgTeams || []).length; ti++) {
+                if (orgTeams[ti].id === selectedTeamId) { headlineTeamName = orgTeams[ti].name; break; }
+              }
+            }
+          %>
+          <p class="text-[11px] text-gray-500 mb-1">Headline for: <span class="font-semibold text-gray-700"><%= headlineTeamName || "current meeting's team" %></span></p>
           <form id="headline-form" class="mb-3 flex gap-2" data-meeting-id="<%= selectedMeetingId %>">
             <select name="kind" class="rounded border border-gray-300 bg-white px-2 py-1 text-xs">
               <option value="customer">Customer</option>
@@ -613,12 +622,17 @@
   function reload() { window.location.reload(); }
 
   // --- Headlines ---
+  var headlineTeamId = <%- JSON.stringify(selectedTeamId || '') %>;
   var hlForm = document.getElementById('headline-form');
   if (hlForm) {
     hlForm.addEventListener('submit', function(e){
       e.preventDefault();
       var fd = new FormData(hlForm);
-      api('POST', '/meetings/' + meetingId + '/headlines', { body: fd.get('body'), kind: fd.get('kind') })
+      var hlBody = { body: fd.get('body'), kind: fd.get('kind') };
+      // Connect the headline to the active team filter; otherwise the endpoint
+      // falls back to the selected meeting's team.
+      if (headlineTeamId) hlBody.teamId = headlineTeamId;
+      api('POST', '/meetings/' + meetingId + '/headlines', hlBody)
         .then(reload)
         .catch(function(err){ alert('Headline failed: ' + (err.message || 'unknown')); });
     });

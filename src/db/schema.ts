@@ -799,6 +799,8 @@ export const rocks = pgTable('rocks', {
   ownerName: varchar('owner_name', { length: 255 }),
   title: varchar('title', { length: 500 }).notNull(),
   description: text('description'),
+  planSectionId: uuid('plan_section_id').references(() => oosOperatingPlanSections.id, { onDelete: 'set null' }),
+  executionItemId: uuid('execution_item_id').references(() => oosExecutionItems.id, { onDelete: 'set null' }),
   quarter: varchar('quarter', { length: 10 }).notNull(),
   dueDate: timestamp('due_date').notNull(),
   onTrack: boolean('on_track').notNull().default(true),
@@ -942,7 +944,8 @@ export const meetingHeadlineKindEnum = pgEnum('meeting_headline_kind', ['custome
 
 export const meetingHeadlines = pgTable('meeting_headlines', {
   id: uuid('id').defaultRandom().primaryKey(),
-  meetingId: uuid('meeting_id').references(() => meetings.id, { onDelete: 'cascade' }).notNull(),
+  meetingId: uuid('meeting_id').references(() => meetings.id, { onDelete: 'cascade' }),
+  teamId: uuid('team_id'),
   orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   authorUserId: varchar('author_user_id', { length: 255 }).notNull(),
   authorName: varchar('author_name', { length: 255 }),
