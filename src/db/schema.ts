@@ -977,6 +977,59 @@ export const seatResponsibilities = pgTable('seat_responsibilities', {
   orgIdx: index('seat_resp_org_idx').on(table.orgId),
 }));
 
+// ---- People layer Phase 2: Seat Fit, Values, People Review ----
+// Created in ensure-people-review.ts.
+
+export const seatFitRatingEnum = pgEnum('seat_fit_rating', ['yes', 'partial', 'no']);
+
+// One row per seat per period: how the person rates against their seat
+// on Understands / Wants / Capacity.
+export const seatFitReviews = pgTable('seat_fit_reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  seatExternalId: varchar('seat_external_id', { length: 120 }).notNull(),
+  period: varchar('period', { length: 20 }).notNull(),
+  understands: seatFitRatingEnum('understands'),
+  wants: seatFitRatingEnum('wants'),
+  capacity: seatFitRatingEnum('capacity'),
+  note: text('note'),
+  ratedBy: varchar('rated_by', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgSeatPeriodIdx: uniqueIndex('seat_fit_org_seat_period_uk').on(table.orgId, table.seatExternalId, table.period),
+  orgIdx: index('seat_fit_org_idx').on(table.orgId),
+}));
+
+// The organization's values (its value list -- columns of the People Review).
+export const orgValues = pgTable('org_values', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 120 }).notNull(),
+  description: text('description'),
+  position: integer('position').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('org_values_org_idx').on(table.orgId),
+}));
+
+// One row per seat per value per period: how the person rates on that value.
+export const valueReviews = pgTable('value_reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  seatExternalId: varchar('seat_external_id', { length: 120 }).notNull(),
+  valueId: uuid('value_id').references(() => orgValues.id, { onDelete: 'cascade' }).notNull(),
+  period: varchar('period', { length: 20 }).notNull(),
+  rating: seatFitRatingEnum('rating'),
+  note: text('note'),
+  ratedBy: varchar('rated_by', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgSeatValuePeriodIdx: uniqueIndex('value_rev_org_seat_value_period_uk').on(table.orgId, table.seatExternalId, table.valueId, table.period),
+  orgIdx: index('value_rev_org_idx').on(table.orgId),
+  seatIdx: index('value_rev_seat_idx').on(table.seatExternalId),
+}));
+
 // ---- Manager agents (user-uploaded CLAUDE.md / Agent.md per dashboard) ----
 // Created in ensure-manager-agents.ts.
 

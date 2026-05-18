@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser } from '../../services/membership.js';
@@ -14,6 +14,7 @@ import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
 import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
+import { currentPeriod } from '../../shared/period.js';
 import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
@@ -38,6 +39,17 @@ function bc(...items: Array<{ name: string; url: string }>) {
 function quarterLabel(d: Date): string {
   const q = Math.floor(d.getMonth() / 3) + 1;
   return `Q${q}-${d.getFullYear()}`;
+}
+
+// People Review verdict from one person's ratings (Understands / Wants /
+// Capacity plus each value). null = unrated.
+function peopleReviewVerdict(
+  ratings: (string | null)[],
+): 'solid' | 'needs-conversation' | 'wrong-seat' | 'unrated' {
+  if (ratings.every(r => r == null)) return 'unrated';
+  if (ratings.some(r => r === 'no')) return 'wrong-seat';
+  if (ratings.some(r => r === 'partial' || r == null)) return 'needs-conversation';
+  return 'solid';
 }
 
 // v7 pages render the page view + layouts/v7.ejs manually. @fastify/view's
@@ -5631,6 +5643,60 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
   });
 
   // ---------- Team member profile (per-person accountability page) ----------
+  // ---------- People Review (grid: human seats x seat fit + values) ----------
+  app.get('/team/review', async (request, reply) => {
+    const org = await l8ResolveOrg(request, reply);
+    if (!org) return;
+
+    const period = currentPeriod();
+    const graph = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const humanSeats = graph.nodes
+      .filter(n => n.type === 'human')
+      .map(n => ({ externalId: n.externalId, name: n.label }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const [valueRows, fitRows, reviewRows] = await Promise.all([
+      db.select().from(orgValues).where(eq(orgValues.orgId, org.id)).orderBy(orgValues.position),
+      db.select().from(seatFitReviews).where(and(
+        eq(seatFitReviews.orgId, org.id),
+        eq(seatFitReviews.period, period),
+      )),
+      db.select().from(valueReviews).where(and(
+        eq(valueReviews.orgId, org.id),
+        eq(valueReviews.period, period),
+      )),
+    ]);
+
+    const fitBySeat = new Map(fitRows.map(r => [r.seatExternalId, r]));
+    const reviewByKey = new Map(reviewRows.map(r => [r.seatExternalId + '|' + r.valueId, r.rating]));
+
+    const rows = humanSeats.map(seat => {
+      const fit = fitBySeat.get(seat.externalId);
+      const understands = fit?.understands ?? null;
+      const wants = fit?.wants ?? null;
+      const capacity = fit?.capacity ?? null;
+      const valueCells = valueRows.map(v => ({
+        valueId: v.id,
+        rating: reviewByKey.get(seat.externalId + '|' + v.id) ?? null,
+      }));
+      const verdict = peopleReviewVerdict([
+        understands, wants, capacity, ...valueCells.map(c => c.rating),
+      ]);
+      return { externalId: seat.externalId, name: seat.name, understands, wants, capacity, valueCells, verdict };
+    });
+
+    return reply.view('pages/team-review', {
+      title: 'People Review -- OTP',
+      description: 'Rate each person against their seat and the organization\'s values.',
+      canonical: BASE_URL + '/team/review',
+      noindex: true,
+      org,
+      period,
+      values: valueRows,
+      rows,
+    });
+  });
+
   app.get<{ Params: { externalId: string } }>('/team/:externalId', async (request, reply) => {
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
@@ -5731,6 +5797,20 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     )).limit(1);
     const responsibilities = seatRespRow?.responsibilities ?? [];
 
+    const fitPeriod = currentPeriod();
+    const [seatFitRow] = await db.select().from(seatFitReviews).where(and(
+      eq(seatFitReviews.orgId, org.id),
+      eq(seatFitReviews.seatExternalId, request.params.externalId),
+      eq(seatFitReviews.period, fitPeriod),
+    )).limit(1);
+    const seatFit = {
+      period: fitPeriod,
+      understands: seatFitRow?.understands ?? null,
+      wants: seatFitRow?.wants ?? null,
+      capacity: seatFitRow?.capacity ?? null,
+      note: seatFitRow?.note ?? null,
+    };
+
     return reply.view('pages/team-profile', {
       title: displayName + ' -- Team Profile -- OTP',
       description: 'Accountability profile for ' + displayName,
@@ -5754,6 +5834,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       upcomingMeetings: upcoming,
       pastMeetings: past,
       responsibilities,
+      seatFit,
       devOrgIdParam,
     });
   });

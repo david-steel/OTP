@@ -668,6 +668,7 @@ await app.register(import('./routes/api/recommendations.js'), { prefix: '/api/v1
 await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/values.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meetings.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/headlines.js'), { prefix: '/api/v1' });
@@ -805,6 +806,14 @@ try {
   app.log.info('seat_responsibilities table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureSeatResponsibilitiesTable failed -- seat responsibilities will not persist until resolved');
+}
+
+try {
+  const { ensurePeopleReviewTables } = await import('./db/ensure-people-review.js');
+  await ensurePeopleReviewTables();
+  app.log.info('people review tables are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensurePeopleReviewTables failed -- seat fit / values / people review will not persist until resolved');
 }
 
 try {

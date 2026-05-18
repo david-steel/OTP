@@ -1,0 +1,242 @@
+<%
+  var RATING_LABEL = { '': 'Not rated', 'yes': 'Yes', 'partial': 'Partial', 'no': 'No' };
+  var RATING_CLS = {
+    '': 'bg-gray-50 text-gray-500 border-gray-300',
+    'yes': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+    'partial': 'bg-amber-100 text-amber-800 border-amber-300',
+    'no': 'bg-red-100 text-red-800 border-red-300'
+  };
+  var VERDICT_LABEL = {
+    'solid': 'Solid', 'needs-conversation': 'Needs conversation',
+    'wrong-seat': 'Wrong seat', 'unrated': 'Not reviewed'
+  };
+  var VERDICT_CLS = {
+    'solid': 'bg-emerald-100 text-emerald-800',
+    'needs-conversation': 'bg-amber-100 text-amber-800',
+    'wrong-seat': 'bg-red-100 text-red-800',
+    'unrated': 'bg-gray-100 text-gray-500'
+  };
+%>
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Breadcrumb -->
+  <div class="text-xs text-gray-500 mb-4">
+    <a href="/dashboard/team" class="hover:text-otp-600">Team</a>
+    <span class="mx-1">/</span>
+    <span class="text-gray-700">People Review</span>
+  </div>
+
+  <div class="flex items-start justify-between gap-4 mb-6 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-bold">People Review</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Rate each person against their seat and your organization's values. Period
+        <span class="font-mono text-gray-700"><%= period %></span>.
+      </p>
+    </div>
+    <a href="/dashboard/team" class="text-xs px-3 py-1.5 bg-white border rounded hover:bg-gray-50">&larr; Org Chart</a>
+  </div>
+
+  <!-- Manage values -->
+  <section class="border rounded-lg bg-white mb-6">
+    <button type="button" id="mv-toggle" class="w-full flex items-center justify-between px-4 py-3 text-left">
+      <span class="text-sm font-semibold uppercase tracking-wider text-gray-700">Values (<%= values.length %>)</span>
+      <span class="text-xs text-otp-600 font-semibold">Manage</span>
+    </button>
+    <div id="mv-panel" class="hidden border-t px-4 py-3 space-y-2">
+      <% values.forEach(function(v){ %>
+        <div class="flex items-center gap-2" data-value-id="<%= v.id %>">
+          <input type="text" class="mv-name flex-1 border rounded px-2 py-1 text-sm" value="<%= v.name %>" maxlength="120">
+          <button type="button" class="mv-save text-xs px-2.5 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500">Save</button>
+          <button type="button" class="mv-delete text-xs px-2.5 py-1 bg-white border border-red-300 text-red-700 rounded hover:bg-red-50">Delete</button>
+        </div>
+      <% }); %>
+      <div class="flex items-center gap-2 pt-1">
+        <input type="text" id="mv-new" class="flex-1 border rounded px-2 py-1 text-sm" placeholder="Add a value (e.g. Hungry, Humble, Smart)" maxlength="120">
+        <button type="button" id="mv-add" class="text-xs px-2.5 py-1 bg-otp-600 text-white rounded hover:bg-otp-500">Add</button>
+      </div>
+      <% if (values.length === 0) { %>
+        <p class="text-xs text-gray-400 pt-1">No values yet. Add a few -- they become columns in the grid below.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- The grid -->
+  <% if (rows.length === 0) { %>
+    <div class="border rounded-lg p-8 text-center text-sm text-gray-500">
+      No human seats on the org chart yet. Add people to the chart to review them.
+    </div>
+  <% } else { %>
+    <div class="border rounded-lg bg-white overflow-x-auto">
+      <table class="w-full text-sm" id="review-grid">
+        <thead>
+          <tr class="border-b bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+            <th class="text-left font-semibold px-3 py-2 sticky left-0 bg-gray-50">Person</th>
+            <th class="font-semibold px-3 py-2">Understands</th>
+            <th class="font-semibold px-3 py-2">Wants</th>
+            <th class="font-semibold px-3 py-2">Capacity</th>
+            <% values.forEach(function(v){ %>
+              <th class="font-semibold px-3 py-2"><%= v.name %></th>
+            <% }); %>
+            <th class="font-semibold px-3 py-2">Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(row){ %>
+            <tr class="border-b last:border-0" data-seat-id="<%= row.externalId %>">
+              <td class="px-3 py-2 sticky left-0 bg-white">
+                <a href="/team/<%= encodeURIComponent(row.externalId) %>" class="font-medium text-gray-800 hover:text-otp-600"><%= row.name %></a>
+              </td>
+              <% var fitAxes = [['understands', row.understands], ['wants', row.wants], ['capacity', row.capacity]]; %>
+              <% fitAxes.forEach(function(pair){ var r = pair[1] || ''; %>
+                <td class="px-2 py-2 text-center">
+                  <button type="button" class="rv-cell text-xs font-semibold px-2 py-1 rounded border <%= RATING_CLS[r] %>"
+                          data-kind="fit" data-axis="<%= pair[0] %>" data-rating="<%= r %>"><%= RATING_LABEL[r] %></button>
+                </td>
+              <% }); %>
+              <% row.valueCells.forEach(function(c){ var r = c.rating || ''; %>
+                <td class="px-2 py-2 text-center">
+                  <button type="button" class="rv-cell text-xs font-semibold px-2 py-1 rounded border <%= RATING_CLS[r] %>"
+                          data-kind="value" data-value-id="<%= c.valueId %>" data-rating="<%= r %>"><%= RATING_LABEL[r] %></button>
+                </td>
+              <% }); %>
+              <td class="px-3 py-2 text-center">
+                <span class="rv-verdict text-xs font-semibold px-2 py-1 rounded <%= VERDICT_CLS[row.verdict] %>"><%= VERDICT_LABEL[row.verdict] %></span>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-gray-400 mt-2">Click a cell to cycle Not rated &rarr; Yes &rarr; Partial &rarr; No. The verdict updates as you rate.</p>
+  <% } %>
+
+</div>
+
+<script>
+(function(){
+  function vapi(method, path, body) {
+    var opts = { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch('/api/v1' + path, opts).then(function(r){
+      if (!r.ok) return r.json().catch(function(){ return {}; }).then(function(j){ throw (j.error || { message: 'Failed (' + r.status + ')' }); });
+      return r.json();
+    });
+  }
+
+  // --- Manage values (add / rename / delete change columns -> reload) ---
+  var mvToggle = document.getElementById('mv-toggle');
+  var mvPanel = document.getElementById('mv-panel');
+  if (mvToggle && mvPanel) {
+    mvToggle.addEventListener('click', function(){ mvPanel.classList.toggle('hidden'); });
+  }
+  var mvAdd = document.getElementById('mv-add');
+  var mvNew = document.getElementById('mv-new');
+  if (mvAdd && mvNew) {
+    mvAdd.addEventListener('click', function(){
+      var name = mvNew.value.trim();
+      if (!name) { alert('Enter a value name.'); return; }
+      mvAdd.disabled = true;
+      vapi('POST', '/values', { name: name })
+        .then(function(){ location.reload(); })
+        .catch(function(e){ mvAdd.disabled = false; alert(e.message || 'Could not add value.'); });
+    });
+  }
+  document.querySelectorAll('#mv-panel [data-value-id]').forEach(function(rowEl){
+    var id = rowEl.dataset.valueId;
+    var nameInput = rowEl.querySelector('.mv-name');
+    var saveBtn = rowEl.querySelector('.mv-save');
+    var delBtn = rowEl.querySelector('.mv-delete');
+    saveBtn.addEventListener('click', function(){
+      var name = nameInput.value.trim();
+      if (!name) { alert('Value name cannot be empty.'); return; }
+      saveBtn.disabled = true;
+      vapi('PUT', '/values/' + id, { name: name })
+        .then(function(){ location.reload(); })
+        .catch(function(e){ saveBtn.disabled = false; alert(e.message || 'Could not save.'); });
+    });
+    delBtn.addEventListener('click', function(){
+      if (!confirm('Delete this value? Its ratings will be removed.')) return;
+      delBtn.disabled = true;
+      vapi('DELETE', '/values/' + id)
+        .then(function(){ location.reload(); })
+        .catch(function(e){ delBtn.disabled = false; alert(e.message || 'Could not delete.'); });
+    });
+  });
+
+  // --- Rating grid (cell edits, no reload) ---
+  var grid = document.getElementById('review-grid');
+  if (!grid) return;
+
+  var RATING_ORDER = ['', 'yes', 'partial', 'no'];
+  var RATING_PAINT = {
+    '':        { text: 'Not rated', cls: 'bg-gray-50 text-gray-500 border-gray-300' },
+    'yes':     { text: 'Yes',       cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+    'partial': { text: 'Partial',   cls: 'bg-amber-100 text-amber-800 border-amber-300' },
+    'no':      { text: 'No',        cls: 'bg-red-100 text-red-800 border-red-300' }
+  };
+  var VERDICT_PAINT = {
+    'solid':              { text: 'Solid',              cls: 'bg-emerald-100 text-emerald-800' },
+    'needs-conversation': { text: 'Needs conversation', cls: 'bg-amber-100 text-amber-800' },
+    'wrong-seat':         { text: 'Wrong seat',         cls: 'bg-red-100 text-red-800' },
+    'unrated':            { text: 'Not reviewed',       cls: 'bg-gray-100 text-gray-500' }
+  };
+  var CELL_ALLCLS = 'bg-gray-50 text-gray-500 border-gray-300 bg-emerald-100 text-emerald-800 border-emerald-300 bg-amber-100 text-amber-800 border-amber-300 bg-red-100 text-red-800 border-red-300'.split(' ');
+  var VERDICT_ALLCLS = 'bg-emerald-100 text-emerald-800 bg-amber-100 text-amber-800 bg-red-100 text-red-800 bg-gray-100 text-gray-500'.split(' ');
+
+  function paintCell(btn) {
+    var p = RATING_PAINT[btn.dataset.rating || ''];
+    btn.textContent = p.text;
+    CELL_ALLCLS.forEach(function(c){ btn.classList.remove(c); });
+    p.cls.split(' ').forEach(function(c){ btn.classList.add(c); });
+  }
+  function verdictOf(ratings) {
+    if (ratings.every(function(r){ return !r; })) return 'unrated';
+    if (ratings.some(function(r){ return r === 'no'; })) return 'wrong-seat';
+    if (ratings.some(function(r){ return r === 'partial' || !r; })) return 'needs-conversation';
+    return 'solid';
+  }
+  function recomputeVerdict(tr) {
+    var ratings = [];
+    tr.querySelectorAll('.rv-cell').forEach(function(b){ ratings.push(b.dataset.rating || ''); });
+    var span = tr.querySelector('.rv-verdict');
+    if (!span) return;
+    var p = VERDICT_PAINT[verdictOf(ratings)];
+    span.textContent = p.text;
+    VERDICT_ALLCLS.forEach(function(c){ span.classList.remove(c); });
+    p.cls.split(' ').forEach(function(c){ span.classList.add(c); });
+  }
+
+  grid.querySelectorAll('.rv-cell').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var tr = btn.closest('tr');
+      var seatId = tr.dataset.seatId;
+      var prev = btn.dataset.rating || '';
+      var next = RATING_ORDER[(RATING_ORDER.indexOf(prev) + 1) % RATING_ORDER.length];
+      btn.dataset.rating = next;
+      paintCell(btn);
+      recomputeVerdict(tr);
+      btn.disabled = true;
+
+      var path, body;
+      if (btn.dataset.kind === 'fit') {
+        path = '/seats/' + encodeURIComponent(seatId) + '/fit';
+        body = {};
+        body[btn.dataset.axis] = next || null;
+      } else {
+        path = '/seats/' + encodeURIComponent(seatId) + '/value-reviews';
+        body = { valueId: btn.dataset.valueId, rating: next || null };
+      }
+      vapi('PUT', path, body)
+        .then(function(){ btn.disabled = false; })
+        .catch(function(e){
+          btn.dataset.rating = prev;
+          paintCell(btn);
+          recomputeVerdict(tr);
+          btn.disabled = false;
+          alert(e.message || 'Could not save rating.');
+        });
+    });
+  });
+})();
+</script>

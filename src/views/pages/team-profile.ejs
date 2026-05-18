@@ -121,6 +121,41 @@
       </section>
 
       <section>
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700">Seat Fit</h2>
+          <span class="text-xs text-gray-400"><%= seatFit.period %></span>
+        </div>
+        <%
+          var FIT_LABELS = { '': 'Not rated', 'yes': 'Yes', 'partial': 'Partial', 'no': 'No' };
+          var FIT_CLS = {
+            '': 'bg-gray-50 text-gray-500 border-gray-300',
+            'yes': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            'partial': 'bg-amber-100 text-amber-800 border-amber-300',
+            'no': 'bg-red-100 text-red-800 border-red-300'
+          };
+          var fitAxes = [
+            { key: 'understands', label: 'Understands the role' },
+            { key: 'wants', label: 'Wants the role' },
+            { key: 'capacity', label: 'Has the capacity' }
+          ];
+        %>
+        <div id="seat-fit" class="border rounded p-3 bg-white space-y-2">
+          <% fitAxes.forEach(function(axis){ var val = (seatFit[axis.key] || ''); %>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-sm text-gray-700"><%= axis.label %></span>
+              <button type="button"
+                      class="fit-cell text-xs font-semibold px-2.5 py-1 rounded border <%= FIT_CLS[val] %>"
+                      data-axis="<%= axis.key %>" data-rating="<%= val %>"><%= FIT_LABELS[val] %></button>
+            </div>
+          <% }); %>
+          <div class="pt-1">
+            <textarea id="fit-note" rows="2" class="w-full border rounded p-2 text-xs" placeholder="Optional note on this person's fit"><%= seatFit.note || '' %></textarea>
+            <button type="button" id="fit-note-save" class="mt-1 text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500">Save note</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
         <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-2">Open To-Dos (<%= openTodos.length %>)</h2>
         <% if (openTodos.length === 0) { %>
           <div class="text-sm text-gray-500 italic border rounded p-3">Nothing open.</div>
@@ -297,5 +332,70 @@
         alert(err.message || 'Could not save responsibilities.');
       });
     });
+
+    // --- Seat Fit ---
+    var fitEl = document.getElementById('seat-fit');
+    if (fitEl) {
+      var FIT_ORDER = ['', 'yes', 'partial', 'no'];
+      var FIT_PAINT = {
+        '':        { text: 'Not rated', cls: 'bg-gray-50 text-gray-500 border-gray-300' },
+        'yes':     { text: 'Yes',       cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+        'partial': { text: 'Partial',   cls: 'bg-amber-100 text-amber-800 border-amber-300' },
+        'no':      { text: 'No',        cls: 'bg-red-100 text-red-800 border-red-300' }
+      };
+      var FIT_ALLCLS = 'bg-gray-50 text-gray-500 border-gray-300 bg-emerald-100 text-emerald-800 border-emerald-300 bg-amber-100 text-amber-800 border-amber-300 bg-red-100 text-red-800 border-red-300'.split(' ');
+      var paintFit = function (btn) {
+        var p = FIT_PAINT[btn.dataset.rating || ''];
+        btn.textContent = p.text;
+        FIT_ALLCLS.forEach(function (c) { btn.classList.remove(c); });
+        p.cls.split(' ').forEach(function (c) { btn.classList.add(c); });
+      };
+      fitEl.querySelectorAll('.fit-cell').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var prev = btn.dataset.rating || '';
+          var next = FIT_ORDER[(FIT_ORDER.indexOf(prev) + 1) % FIT_ORDER.length];
+          btn.dataset.rating = next;
+          paintFit(btn);
+          btn.disabled = true;
+          var patch = {};
+          patch[btn.dataset.axis] = next || null;
+          fetch('/api/v1/seats/' + encodeURIComponent(seatId) + '/fit', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(patch)
+          }).then(function (res) {
+            btn.disabled = false;
+            if (!res.ok) { throw new Error('Save failed (' + res.status + ')'); }
+          }).catch(function (err) {
+            btn.dataset.rating = prev;
+            paintFit(btn);
+            btn.disabled = false;
+            alert(err.message || 'Could not save seat fit.');
+          });
+        });
+      });
+      var fitNoteSave = document.getElementById('fit-note-save');
+      var fitNote = document.getElementById('fit-note');
+      if (fitNoteSave && fitNote) {
+        fitNoteSave.addEventListener('click', function () {
+          fitNoteSave.disabled = true;
+          fetch('/api/v1/seats/' + encodeURIComponent(seatId) + '/fit', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ note: fitNote.value })
+          }).then(function (res) {
+            fitNoteSave.disabled = false;
+            if (!res.ok) { throw new Error('Save failed (' + res.status + ')'); }
+            fitNoteSave.textContent = 'Saved';
+            setTimeout(function () { fitNoteSave.textContent = 'Save note'; }, 1500);
+          }).catch(function (err) {
+            fitNoteSave.disabled = false;
+            alert(err.message || 'Could not save note.');
+          });
+        });
+      }
+    }
   })();
 </script>
