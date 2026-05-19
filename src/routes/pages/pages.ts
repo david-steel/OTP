@@ -3085,6 +3085,20 @@ Founder, OTP</p>
       safeCount(sql`SELECT COUNT(*) AS c FROM manager_agents WHERE org_id = ${cid}::uuid`),
     ]);
 
+    // Meeting cadence -- the coach's core accountability signal: is the client
+    // actually running their weekly L10? Drizzle query so the column mapping
+    // is handled, and best-effort so a legacy schema never 500s this page.
+    let meetingCount = 0;
+    let lastMeetingAt: string | null = null;
+    try {
+      const _mtgs = await db.select({ scheduledAt: meetings.scheduledAt })
+        .from(meetings)
+        .where(and(eq(meetings.organizationId, clientOrgId), isNull(meetings.deletedAt)))
+        .orderBy(desc(meetings.scheduledAt));
+      meetingCount = _mtgs.length;
+      lastMeetingAt = _mtgs[0]?.scheduledAt ? new Date(_mtgs[0].scheduledAt).toISOString() : null;
+    } catch { meetingCount = 0; lastMeetingAt = null; }
+
     return reply.view('pages/dashboard-practice-client', {
       title: `${clientOrg.name} - Coach View - OTP`,
       description: `Coach-view summary of ${clientOrg.name}.`,
@@ -3099,8 +3113,9 @@ Founder, OTP</p>
         oosFiles: oosCount,
         charts: chartCount,
         agents: agentCount,
-        empty: memberCount + teamCount + kpiCount + oosCount + chartCount + agentCount === 0,
+        empty: memberCount + teamCount + kpiCount + oosCount + chartCount + agentCount + meetingCount === 0,
       },
+      cadence: { meetingCount, lastMeetingAt },
     });
   });
 

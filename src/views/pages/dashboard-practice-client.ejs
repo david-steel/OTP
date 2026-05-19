@@ -70,6 +70,35 @@
 
     <% } else { %>
 
+      <!-- Meeting cadence: the coach's core accountability signal. -->
+      <%
+        var _lastMtg = (typeof cadence !== 'undefined' && cadence && cadence.lastMeetingAt) ? new Date(cadence.lastMeetingAt) : null;
+        var _daysSince = _lastMtg ? Math.floor((Date.now() - _lastMtg.getTime()) / 86400000) : null;
+        var _cadenceClass = _daysSince === null ? 'border-gray-200 bg-gray-50'
+                          : _daysSince <= 10 ? 'border-emerald-200 bg-emerald-50'
+                          : _daysSince <= 21 ? 'border-amber-200 bg-amber-50'
+                          : 'border-red-200 bg-red-50';
+      %>
+      <div class="rounded-xl border-2 <%= _cadenceClass %> p-5 mb-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-1">Weekly meeting cadence</div>
+          <% if (_lastMtg) { %>
+            <div class="text-sm text-gray-800">Last L10: <strong><%= _lastMtg.toLocaleDateString() %></strong>
+              <span class="text-gray-500">(<%= _daysSince === 0 ? 'today' : _daysSince + ' day' + (_daysSince === 1 ? '' : 's') + ' ago' %>)</span>
+            </div>
+          <% } else { %>
+            <div class="text-sm text-gray-700">No meeting has been run in OTP yet.</div>
+          <% } %>
+        </div>
+        <div class="text-3xl font-extrabold text-gray-900"><%= (typeof cadence !== 'undefined' && cadence) ? cadence.meetingCount : 0 %><span class="text-sm font-medium text-gray-500 ml-1.5">meetings run</span></div>
+        <div class="ml-auto text-xs <%= (_daysSince !== null && _daysSince > 21) ? 'text-red-700 font-semibold' : 'text-gray-500' %>">
+          <% if (_daysSince === null) { %>Get them running their weekly L10.
+          <% } else if (_daysSince > 21) { %>Cadence has gone quiet &mdash; nudge them.
+          <% } else if (_daysSince > 10) { %>A bit overdue for this week's meeting.
+          <% } else { %>Cadence is healthy.<% } %>
+        </div>
+      </div>
+
       <!-- Summary stats grid -->
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         <% var cards = [
