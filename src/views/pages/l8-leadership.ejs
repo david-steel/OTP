@@ -170,7 +170,8 @@
     <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">7. Conclude <span class="text-gray-500">5m</span></a>
     <span id="meeting-clock" class="ml-3 px-2 py-1 rounded bg-gray-900 text-white font-mono text-xs whitespace-nowrap">--:--</span>
     <button id="timer-toggle" class="ml-1 px-2 py-1 bg-otp-500 text-white rounded text-xs hover:bg-otp-400">Start</button>
-    <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Advance to next section">Next →</button>
+    <button id="timer-prev"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Previous section  (  [  )">← Prev</button>
+    <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Next section  (  ]  )  ·  space toggles the timer">Next →</button>
   </nav>
 
   <!-- 1. Segue -->
@@ -886,7 +887,24 @@
   }
   toggleBtn?.addEventListener('click', () => { timerState.running ? pauseTimer() : startTimer(); });
   skipBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx + 1); });
+  const prevBtn = document.getElementById('timer-prev');
+  prevBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx - 1); });
   chips.forEach((c, i) => c.addEventListener('click', () => { jumpTo(i); if (!timerState.running) startTimer(); }));
+
+  // Keyboard flow: space = pause/resume the timer, [ / ] = prev / next section.
+  // Ignored while typing in a field so it never eats meeting notes.
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      timerState.running ? pauseTimer() : startTimer();
+    } else if (e.key === ']') {
+      jumpTo(timerState.sectionIdx + 1);
+    } else if (e.key === '[') {
+      jumpTo(timerState.sectionIdx - 1);
+    }
+  });
   // Resume ticking if a running timer was restored from a prior page load.
   if (timerState.running && !timerState.intervalId) {
     timerState.intervalId = setInterval(tick, 1000);
