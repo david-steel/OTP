@@ -24,6 +24,20 @@
     </div>
   </div>
 
+  <!-- Direction strip: the plan's destination, framing the meeting. -->
+  <% if (typeof planDirection !== 'undefined' && planDirection && (planDirection.threeYear || planDirection.annualObjective || planDirection.tenYear)) { %>
+    <div class="mb-6 border border-otp-100 bg-otp-50 rounded-lg px-4 py-2.5 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs">
+      <span class="uppercase tracking-wider text-otp-700 font-semibold">Driving toward</span>
+      <% if (planDirection.threeYear) { %>
+        <span><span class="text-gray-500">3-5yr<%= planDirection.threeYearYear ? ' (' + planDirection.threeYearYear + ')' : '' %>:</span> <span class="text-gray-800 font-medium"><%= planDirection.threeYear %></span></span>
+      <% } %>
+      <% if (planDirection.annualObjective) { %>
+        <span><span class="text-gray-500">This year:</span> <span class="text-gray-800 font-medium"><%= planDirection.annualObjective %></span></span>
+      <% } %>
+      <a href="/dashboard/ceo" class="text-otp-600 hover:underline font-medium ml-auto">CEO Dashboard &rarr;</a>
+    </div>
+  <% } %>
+
   <!-- Attendees panel -->
   <%
     // Normalize attendees to a single shape. meeting.attendees jsonb entries
@@ -294,6 +308,7 @@
         No quarterly priorities yet. Add one below.
       </div>
     <% } else { %>
+      <% var _execLabel = {}; (executionItems || []).forEach(function(it){ _execLabel[it.id] = it.label; }); %>
       <div class="space-y-2">
         <% (rocks.rocks || []).forEach(function(r) { %>
           <div class="border rounded p-3 flex items-start justify-between" data-rock-id="<%= r.id %>">
@@ -307,6 +322,11 @@
               </div>
               <div class="font-medium text-sm"><%= r.title %></div>
               <div class="text-xs text-gray-600 mt-0.5">Owner: <%= r.ownerName || r.ownerExternalId %></div>
+              <% if (r.executionItemId && _execLabel[r.executionItemId]) { %>
+                <div class="text-xs text-otp-700 mt-0.5">&#8627; Serves plan: <%= _execLabel[r.executionItemId] %></div>
+              <% } else { %>
+                <div class="text-xs text-amber-700 mt-0.5">&#9888; Not laddered to the 90-day plan</div>
+              <% } %>
               <% if (r.statusNote) { %>
                 <div class="text-xs text-gray-500 mt-1 italic">"<%= r.statusNote %>"</div>
               <% } %>

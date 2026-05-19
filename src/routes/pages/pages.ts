@@ -5863,6 +5863,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // the Rock -> plan picker. Graceful: if the plan model yields nothing,
     // default to an empty list rather than crashing the page.
     let executionItems: Array<{ id: string; label: string }> = [];
+    let planDirection: { threeYear: string; threeYearYear: string; tenYear: string; annualObjective: string } | null = null;
     try {
       const [activePlan] = await db.select().from(oosOperatingPlans)
         .where(and(
@@ -5876,6 +5877,22 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
           .where(eq(oosExecutionItems.planId, activePlan.id))
           .orderBy(desc(oosExecutionItems.createdAt));
         executionItems = items.map((i) => ({ id: i.id, label: i.title }));
+        // Plan direction -- frames the meeting with where the company is headed.
+        const planSecRows = await db.select().from(oosOperatingPlanSections)
+          .where(eq(oosOperatingPlanSections.planId, activePlan.id));
+        const _secBy: Record<string, any> = {};
+        for (const s of planSecRows) {
+          _secBy[s.sectionKey] = (s.contentJson && typeof s.contentJson === 'object') ? s.contentJson : {};
+        }
+        const _dest = _secBy['destination'] || {};
+        const _annual = _secBy['annual_game_plan'] || {};
+        const _str = (v: unknown) => (v === null || v === undefined) ? '' : String(v).trim();
+        planDirection = {
+          threeYear: _str(_dest.year_target),
+          threeYearYear: _str(_dest.year_target_year),
+          tenYear: _str(_dest.ten_year_target),
+          annualObjective: _str(_annual.primary_objective),
+        };
       }
     } catch {
       executionItems = [];
@@ -5894,6 +5911,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       todos: orgTodos,
       headlineItems,
       executionItems,
+      planDirection,
       teamMembers,
       availableOwners,
       orgTeams: orgTeamsList,
