@@ -118,6 +118,10 @@
     <% } else {
       // Group KPIs by groupName so Leadership / Agent / OTP scorecards render separately.
       const groups = {};
+      // Resolve a KPI owner's external id to a friendly name via the chart roster.
+      const _ownerNames = {};
+      (availableOwners || []).forEach(function(o){ _ownerNames[o.externalId] = o.name; });
+      const ownerName = function(extId){ return _ownerNames[extId] || extId; };
       (scorecard.kpis || []).forEach(function(k) {
         const g = k.groupName || 'Scorecard';
         (groups[g] = groups[g] || []).push(k);
@@ -168,7 +172,7 @@
                   <td class="p-2"><%= k.title %></td>
                   <td class="p-2 text-gray-600">
                     <span class="text-xs px-1.5 py-0.5 rounded mr-1 <%= k.ownerEntityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>"><%= k.ownerEntityType %></span>
-                    <%= k.ownerExternalId %>
+                    <%= ownerName(k.ownerExternalId) %>
                   </td>
                   <td class="p-2 text-right text-gray-700"><%
                     const opSym = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
@@ -593,6 +597,54 @@
   <!-- 7. Conclude -->
   <section id="conclude" class="mb-8">
     <h2 class="text-xl font-bold mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span></h2>
+
+    <!-- To-dos created in this meeting -->
+    <% var meetingTodos = (todos || []).filter(function(t){ return t.meetingId === meeting.id; }); %>
+    <div class="mb-5 border rounded-lg p-3 bg-gray-50">
+      <div class="text-xs uppercase tracking-wider text-gray-600 font-medium mb-2">To-Dos from this meeting (<%= meetingTodos.length %>)</div>
+      <% if (meetingTodos.length === 0) { %>
+        <div class="text-xs text-gray-500 italic">No to-dos created in this meeting yet. Capture 7-day commitments in section 5 or by solving an issue.</div>
+      <% } else { %>
+        <ul class="space-y-1">
+          <% meetingTodos.forEach(function(t){ %>
+            <li class="text-sm flex items-center gap-2">
+              <span class="<%= t.doneAt ? 'text-emerald-600' : 'text-gray-400' %>"><%= t.doneAt ? '✓' : '○' %></span>
+              <span><%= t.title %></span>
+              <span class="text-xs text-gray-500"><%= t.ownerName || t.ownerExternalId %><% if (t.dueAt) { %> &middot; due <%= new Date(t.dueAt).toLocaleDateString() %><% } %></span>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+
+    <!-- Meeting rating -->
+    <%
+      var humanAttendees = normalizedAttendees.filter(function(a){ return a.entityType === 'human'; });
+      var savedRatings = (meeting.ratings && typeof meeting.ratings === 'object') ? meeting.ratings : {};
+    %>
+    <div class="mb-5 border rounded-lg p-3">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase tracking-wider text-gray-600 font-medium">Meeting Rating <span class="text-gray-400 normal-case">&mdash; each person, 1 to 10. Aim for an 8+ average.</span></div>
+        <span id="rating-avg" class="text-sm font-bold text-gray-700"></span>
+      </div>
+      <% if (humanAttendees.length === 0) { %>
+        <div class="text-xs text-gray-500 italic">No human attendees to rate the meeting. Add attendees above.</div>
+      <% } else { %>
+        <div class="flex flex-wrap gap-3 mb-2">
+          <% humanAttendees.forEach(function(a){ %>
+            <label class="flex items-center gap-1.5 text-sm">
+              <span><%= a.name || a.externalId %></span>
+              <input type="number" min="1" max="10" data-rating-input data-attendee-key="<%= a.externalId %>"
+                     value="<%= savedRatings[a.externalId] != null ? savedRatings[a.externalId] : '' %>"
+                     class="w-14 border rounded p-1 text-sm text-center">
+            </label>
+          <% }); %>
+        </div>
+        <button id="save-ratings" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Save ratings</button>
+        <span id="ratings-status" class="text-xs text-gray-500 ml-2"></span>
+      <% } %>
+    </div>
+
     <label class="block text-sm font-medium mb-1">Cascading message <span class="text-xs text-gray-500 font-normal">-- auto-appended on each Solve. Use Rebuild to regenerate from headlines + solved issues + new to-dos.</span></label>
     <textarea id="cascading-message" class="w-full border rounded p-3 text-sm h-48 font-mono"><%= meeting.cascadingMessage || '' %></textarea>
     <div class="mt-2 flex gap-2 items-center">
@@ -757,6 +809,11 @@
   if (timerState.running && !timerState.intervalId) {
     timerState.intervalId = setInterval(tick, 1000);
     toggleBtn.textContent = 'Pause';
+  } else if (!localStorage.getItem(TIMER_KEY)) {
+    // First load of an in-progress meeting with no timer yet: start the clock
+    // automatically, so "Start Meeting" and the section timer are one action.
+    const _statusEl = document.getElementById('meeting-status');
+    if (_statusEl && _statusEl.textContent.trim() === 'in_progress') startTimer();
   }
   render();
 
@@ -809,6 +866,19 @@
       await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
       btn.textContent = 'Saved';
       setTimeout(() => btn.textContent = 'Save', 1500);
+    });
+  });
+
+  // Save-on-blur for the free-text segments, so notes are never lost by
+  // forgetting to click Save.
+  [['segueNotes','segue-notes'],['headlines','headlines-notes'],['cascadingMessage','cascading-message']].forEach(function(pair){
+    const el = document.getElementById(pair[1]);
+    if (!el) return;
+    let lastSaved = el.value;
+    el.addEventListener('blur', async function(){
+      if (el.value === lastSaved) return;
+      lastSaved = el.value;
+      await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [pair[0]]: el.value }) });
     });
   });
 
@@ -1394,6 +1464,30 @@
       return;
     }
     reloadKeep();
+  });
+
+  // ===== Meeting rating (Conclude) =====
+  function renderRatingAvg() {
+    const inputs = Array.from(document.querySelectorAll('[data-rating-input]'));
+    const vals = inputs.map(i => parseFloat(i.value)).filter(v => !isNaN(v) && v >= 1 && v <= 10);
+    const avgEl = document.getElementById('rating-avg');
+    if (avgEl) avgEl.textContent = vals.length ? ('avg ' + (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : '';
+  }
+  document.querySelectorAll('[data-rating-input]').forEach(i => i.addEventListener('input', renderRatingAvg));
+  renderRatingAvg();
+  const saveRatingsBtn = document.getElementById('save-ratings');
+  if (saveRatingsBtn) saveRatingsBtn.addEventListener('click', async () => {
+    const ratings = {};
+    document.querySelectorAll('[data-rating-input]').forEach(i => {
+      const v = parseFloat(i.value);
+      if (!isNaN(v) && v >= 1 && v <= 10) ratings[i.dataset.attendeeKey] = v;
+    });
+    const status = document.getElementById('ratings-status');
+    saveRatingsBtn.disabled = true; saveRatingsBtn.textContent = 'Saving...';
+    const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ ratings }) });
+    saveRatingsBtn.disabled = false; saveRatingsBtn.textContent = 'Save ratings';
+    if (res && res.error) { if (status) status.textContent = 'Error: ' + errMsg(res); return; }
+    if (status) { status.textContent = 'Saved'; setTimeout(() => { status.textContent = ''; }, 2000); }
   });
 })();
 </script>
