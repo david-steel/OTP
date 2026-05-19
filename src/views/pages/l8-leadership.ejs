@@ -83,6 +83,68 @@
     </div>
   </div>
 
+  <!-- Agent reports: per-agent view of what each AI seat carries into the meeting. -->
+  <%
+    var agentAttendees = normalizedAttendees.filter(function(a){ return a.entityType === 'agent'; });
+    var scKpis = (scorecard && scorecard.kpis) ? scorecard.kpis : [];
+    var scLatest = (scorecard && scorecard.latestValues) ? scorecard.latestValues : {};
+    var allRocks = (rocks && rocks.rocks) ? rocks.rocks : [];
+    function agentKpiOnTrack(k){
+      var v = scLatest[k.id];
+      if (!v || k.goalValue == null || !k.goalOperator) return null;
+      var l = v.value, r = k.goalValue, op = k.goalOperator;
+      return (op==='gte'&&l>=r)||(op==='gt'&&l>r)||(op==='lte'&&l<=r)||(op==='lt'&&l<r)||(op==='eq'&&l===r);
+    }
+  %>
+  <% if (agentAttendees.length > 0) { %>
+    <details class="mb-6 border rounded-lg bg-white" open>
+      <summary class="cursor-pointer px-3 py-2 text-xs uppercase tracking-wider text-gray-700 font-medium hover:bg-gray-50">
+        Agent Reports &mdash; what your <%= agentAttendees.length %> AI seat<%= agentAttendees.length === 1 ? '' : 's' %> carry into this meeting
+      </summary>
+      <div class="px-3 pb-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <% agentAttendees.forEach(function(a){
+             var run = (typeof agentRuns !== 'undefined' && agentRuns && agentRuns[a.externalId]) ? agentRuns[a.externalId] : null;
+             var myKpis = scKpis.filter(function(k){ return k.ownerExternalId === a.externalId; });
+             var myRocks = allRocks.filter(function(r){ return r.ownerExternalId === a.externalId; });
+             var myIssues = (issues || []).filter(function(i){ return i.ownerExternalId === a.externalId && i.idsStatus !== 'solved'; });
+             var myTodos = (todos || []).filter(function(t){ return t.ownerExternalId === a.externalId && !t.doneAt; });
+             var kpiOff = myKpis.filter(function(k){ return agentKpiOnTrack(k) === false; }).length;
+             var rockOff = myRocks.filter(function(r){ return !r.onTrack; }).length;
+        %>
+          <div class="border rounded-lg p-3">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-sm font-semibold text-purple-800"><%= a.name || a.externalId %></span>
+              <% if (run) { %>
+                <span class="text-[10px] px-1.5 py-0.5 rounded <%= (run.status === 'completed' || run.status === 'success') ? 'bg-emerald-100 text-emerald-700' : (run.status === 'failed' || run.status === 'error') ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' %>">
+                  <%= run.status %><%= run.lastRunAt ? ' ' + new Date(run.lastRunAt).toLocaleDateString() : '' %>
+                </span>
+              <% } else { %>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">no recent run</span>
+              <% } %>
+            </div>
+            <div class="grid grid-cols-4 gap-1 text-center">
+              <div><div class="text-sm font-bold text-gray-900"><%= myKpis.length %></div><div class="text-[10px] text-gray-500">KPIs</div></div>
+              <div><div class="text-sm font-bold <%= kpiOff > 0 ? 'text-red-600' : 'text-gray-900' %>"><%= kpiOff %></div><div class="text-[10px] text-gray-500">off goal</div></div>
+              <div><div class="text-sm font-bold <%= rockOff > 0 ? 'text-red-600' : 'text-gray-900' %>"><%= rockOff %>/<%= myRocks.length %></div><div class="text-[10px] text-gray-500">rocks off</div></div>
+              <div><div class="text-sm font-bold <%= myIssues.length > 0 ? 'text-amber-700' : 'text-gray-900' %>"><%= myIssues.length %></div><div class="text-[10px] text-gray-500">issues</div></div>
+            </div>
+            <% if (myKpis.length || myTodos.length) { %>
+              <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-600 space-y-0.5">
+                <% myKpis.slice(0,3).forEach(function(k){ var ot = agentKpiOnTrack(k); %>
+                  <div class="flex items-center gap-1.5">
+                    <span class="<%= ot === true ? 'text-emerald-600' : ot === false ? 'text-red-600' : 'text-gray-300' %>"><%= ot === false ? '✗' : ot === true ? '✓' : '–' %></span>
+                    <span class="truncate"><%= k.title %></span>
+                  </div>
+                <% }); %>
+                <% if (myTodos.length) { %><div class="text-gray-500"><%= myTodos.length %> open to-do<%= myTodos.length === 1 ? '' : 's' %></div><% } %>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    </details>
+  <% } %>
+
   <!-- Agenda nav (single-line, with per-section start-timer) -->
   <nav id="agenda-nav" class="flex items-center gap-1 mb-6 text-xs whitespace-nowrap overflow-x-auto" data-active="">
     <a href="#segue"     data-section="segue"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">1. Checkin <span class="text-gray-500">5m</span></a>
