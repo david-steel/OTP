@@ -1810,8 +1810,10 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Create an OTP account and claim your founding spot.',
       canonical: BASE_URL + '/sign-up',
       noindex: true,
-      // Loads the Google Ads tag (AW-18159119434) on /sign-up so the
-      // conversion_event_signup event in the view can register a conversion.
+      // Loads the Google Ads tag (AW-18159119434) on /sign-up for pageview
+      // tracking + remarketing audiences. The actual signup conversion event
+      // fires post-registration on /onboarding/profile (the Clerk
+      // afterSignUpUrl), not here -- see views/pages/onboarding-profile.ejs.
       googleAdsId: 'AW-18159119434',
     });
   });

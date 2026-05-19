@@ -217,3 +217,15 @@
   document.getElementById('ob-form').addEventListener('submit', function(e){ e.preventDefault(); submit(); });
 })();
 </script>
+
+<%# Google Ads: signup conversion. Fires once when a brand-new user lands on
+    Step 1 with no org yet (i.e., Clerk just completed registration and
+    redirected here via afterSignUpUrl). Returning users with an org won't
+    re-fire it. Base tag is loaded by layouts/onboarding.ejs. %>
+<% if (!org) { %>
+<script>
+  if (typeof gtag === 'function') {
+    gtag('event', 'conversion_event_signup');
+  }
+</script>
+<% } %>
