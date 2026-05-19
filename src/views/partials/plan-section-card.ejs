@@ -4,18 +4,43 @@
     Renders one section in the always-open card style used on both the
     /plan preview and /dashboard/oos-operating-plan tabbed view.
 
-    Expects in scope:
-      s          — section row from oos_operating_plan_sections
-      sectionMeta — the full meta lookup with tagline + fields per section key
+    Field kinds (derived from the field key + the multiline flag):
+      list  - repeatable individual entries, stored as a JSON array of strings
+      prose - multi-line free text, stored as a string
+      text  - single-line free text, stored as a string
 
-    All data-section-* attributes preserved so the existing edit JS
-    (data-section-edit / -save / -cancel / -input / -row / -msg) keeps
-    working without changes.
+    List entries used to be a single newline-delimited string. Renderers
+    accept both shapes via toList(); the editor always saves the array shape.
+
+    Expects in scope: s, sectionMeta.
+    Edit JS lives in oos-operating-plan.ejs (data-section-* and data-list-*).
   */
 %>
 <% var meta = sectionMeta[s.sectionKey]; %>
 <% var content = (s.contentJson && typeof s.contentJson === 'object') ? s.contentJson : {}; %>
-<% var anyValue = meta && meta.fields ? meta.fields.some(function(f) { var v = content[f.key]; return v !== undefined && v !== null && String(v).trim() !== ''; }) : false; %>
+<%
+  // Field keys that are repeatable lists. Everything else is prose or text.
+  var LIST_KEYS = ['values','proof_points','strategic_initiatives','key_outcomes',
+    'quarterly_targets','weekly_kpis','leading_indicators','lagging_indicators',
+    'benchmarks','bottlenecks','risks','required_resources','opportunities',
+    'key_decisions','open_issues'];
+  function kindOf(f) {
+    if (LIST_KEYS.indexOf(f.key) !== -1) return 'list';
+    return f.multiline ? 'prose' : 'text';
+  }
+  // Accept both the new array shape and the legacy newline-string shape.
+  function toList(v) {
+    if (Array.isArray(v)) return v.map(function (x) { return String(x).trim(); }).filter(Boolean);
+    if (v === null || v === undefined) return [];
+    return String(v).split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  function hasValue(f) {
+    var v = content[f.key];
+    if (kindOf(f) === 'list') return toList(v).length > 0;
+    return v !== undefined && v !== null && String(v).trim() !== '';
+  }
+  var anyValue = meta && meta.fields ? meta.fields.some(hasValue) : false;
+%>
 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
   <div class="px-6 sm:px-7 py-5 border-b border-gray-100 flex items-start justify-between gap-4">
     <div class="flex-1 min-w-0">
@@ -28,7 +53,7 @@
       <span class="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-mono whitespace-nowrap">
         <%= s.sectionKey.replace(/_/g, ' ') %>
       </span>
-      <!-- Pencil icon — same action as the in-card Edit button. -->
+      <!-- Pencil icon - same action as the in-card Edit button. -->
       <button type="button" data-section-edit="<%= s.id %>" title="Edit this section" aria-label="Edit"
               class="text-gray-400 hover:text-otp-500 hover:bg-otp-50 rounded-lg p-1.5 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -41,17 +66,27 @@
     <div data-section-view>
       <% if (anyValue) { %>
         <dl class="space-y-3">
-          <% meta.fields.forEach(function(f) { var v = content[f.key]; if (v !== undefined && v !== null && String(v).trim() !== '') { %>
+          <% meta.fields.forEach(function (f) { if (!hasValue(f)) return; var kind = kindOf(f); %>
             <div>
               <dt class="text-xs font-semibold text-gray-800"><%= f.label %></dt>
-              <dd class="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap"><%= String(v) %></dd>
+              <% if (kind === 'list') { %>
+                <dd class="mt-1">
+                  <ul class="space-y-0.5">
+                    <% toList(content[f.key]).forEach(function (item) { %>
+                      <li class="flex gap-2 text-sm text-gray-700"><span class="text-otp-400">&bull;</span><span><%= item %></span></li>
+                    <% }) %>
+                  </ul>
+                </dd>
+              <% } else { %>
+                <dd class="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap"><%= String(content[f.key]) %></dd>
+              <% } %>
             </div>
-          <% } }) %>
+          <% }) %>
         </dl>
       <% } else if (meta && meta.fields && meta.fields.length > 0) { %>
         <p class="text-xs text-gray-500 italic mb-2">No content yet. This section captures:</p>
         <ul class="text-xs text-gray-600 space-y-1 mb-2">
-          <% meta.fields.forEach(function(f) { %>
+          <% meta.fields.forEach(function (f) { %>
             <li><strong class="text-gray-800"><%= f.label %>:</strong> <%= f.desc %></li>
           <% }) %>
         </ul>
@@ -61,14 +96,34 @@
       <button class="mt-3 px-3 py-1.5 bg-otp-500 text-white rounded-lg text-xs hover:bg-otp-600 font-medium" data-section-edit="<%= s.id %>"><%= anyValue ? 'Edit' : 'Add content' %></button>
     </div>
     <div data-section-editor class="hidden space-y-3">
-      <% if (meta && meta.fields) { meta.fields.forEach(function(f) { var v = content[f.key] !== undefined && content[f.key] !== null ? String(content[f.key]) : ''; %>
+      <% if (meta && meta.fields) { meta.fields.forEach(function (f) { var kind = kindOf(f); var raw = content[f.key]; %>
         <div>
           <label class="block text-xs font-semibold text-gray-800 mb-0.5"><%= f.label %></label>
           <p class="text-xs text-gray-500 mb-1.5"><%= f.desc %></p>
-          <% if (f.multiline) { %>
-            <textarea data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" rows="3" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>"><%= v %></textarea>
+          <% if (kind === 'list') { %>
+            <%
+              var listVals = toList(raw);
+              if (listVals.length === 0) listVals = [''];   // always render one empty starter row
+            %>
+            <div data-list-field="<%= s.id %>" data-field-key="<%= f.key %>" class="space-y-1.5">
+              <% listVals.forEach(function (item) { %>
+                <div data-list-row class="flex items-center gap-2">
+                  <input data-list-input="<%= s.id %>" data-field-key="<%= f.key %>" type="text" value="<%= item %>"
+                         class="flex-1 px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500"
+                         placeholder="One <%= f.label.toLowerCase() %> entry">
+                  <button type="button" data-list-remove aria-label="Remove entry"
+                          class="shrink-0 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded p-1.5 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              <% }) %>
+              <button type="button" data-list-add="<%= s.id %>" data-field-key="<%= f.key %>"
+                      class="text-xs font-semibold text-otp-600 hover:text-otp-700 hover:underline">+ Add another</button>
+            </div>
+          <% } else if (kind === 'prose') { %>
+            <textarea data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" rows="3" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>"><%= (raw !== undefined && raw !== null) ? String(raw) : '' %></textarea>
           <% } else { %>
-            <input data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" type="text" value="<%= v %>" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>">
+            <input data-section-input="<%= s.id %>" data-field-key="<%= f.key %>" type="text" value="<%= (raw !== undefined && raw !== null) ? String(raw) : '' %>" class="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="<%= f.desc %>">
           <% } %>
         </div>
       <% }) } %>

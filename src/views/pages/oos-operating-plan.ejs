@@ -835,7 +835,7 @@
         var row = getRow(id);
         var msgEl = row.querySelector('[data-section-msg="' + id + '"]');
 
-        // Collect every per-field input/textarea inside this section row.
+        // Collect prose + text fields (one input/textarea each).
         var inputs = row.querySelectorAll('[data-section-input="' + id + '"]');
         var contentJson = {};
         inputs.forEach(function(el) {
@@ -844,6 +844,17 @@
           // Store empty string as omitted so view-mode treats it as missing.
           if (v === null || v === undefined || String(v).trim() === '') return;
           contentJson[k] = v;
+        });
+        // Collect list fields: each [data-list-field] container holds one row
+        // per entry. Non-empty rows become a string array; empty fields omitted.
+        row.querySelectorAll('[data-list-field="' + id + '"]').forEach(function(container) {
+          var k = container.getAttribute('data-field-key');
+          var vals = [];
+          container.querySelectorAll('[data-list-input="' + id + '"]').forEach(function(inp) {
+            var t = String(inp.value || '').trim();
+            if (t) vals.push(t);
+          });
+          if (vals.length > 0) contentJson[k] = vals;
         });
 
         msgEl.textContent = 'Saving...';
@@ -868,6 +879,44 @@
           msgEl.className = 'text-xs text-red-600';
         }
       });
+    });
+
+    // ---------- List-field rows: add / remove ----------
+    // Delegated click handler so rows added after page load also work.
+    document.addEventListener('click', function(e) {
+      var listAddBtn = e.target.closest('[data-list-add]');
+      if (listAddBtn) {
+        var sid = listAddBtn.getAttribute('data-list-add');
+        var fkey = listAddBtn.getAttribute('data-field-key');
+        var newRow = document.createElement('div');
+        newRow.setAttribute('data-list-row', '');
+        newRow.className = 'flex items-center gap-2';
+        newRow.innerHTML =
+          '<input data-list-input="' + sid + '" data-field-key="' + fkey + '" type="text" ' +
+          'class="flex-1 px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" placeholder="One more entry">' +
+          '<button type="button" data-list-remove aria-label="Remove entry" ' +
+          'class="shrink-0 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded p-1.5 transition-colors">' +
+          '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>' +
+          '</button>';
+        listAddBtn.parentNode.insertBefore(newRow, listAddBtn);
+        var ni = newRow.querySelector('input');
+        if (ni) ni.focus();
+        return;
+      }
+      var listRmBtn = e.target.closest('[data-list-remove]');
+      if (listRmBtn) {
+        var listRow = listRmBtn.closest('[data-list-row]');
+        var fieldC = listRmBtn.closest('[data-list-field]');
+        if (listRow && fieldC) {
+          if (fieldC.querySelectorAll('[data-list-row]').length > 1) {
+            listRow.remove();
+          } else {
+            var onlyInput = listRow.querySelector('input');
+            if (onlyInput) onlyInput.value = '';
+          }
+        }
+        return;
+      }
     });
 
     // ---------- Add execution item ----------
