@@ -233,7 +233,7 @@
           <div class="border rounded p-3 flex items-start justify-between" data-rock-id="<%= r.id %>">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-xs px-2 py-0.5 rounded <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' %>">
+                <span data-rock-status-badge class="text-xs px-2 py-0.5 rounded <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' %>">
                   <%= r.onTrack ? 'On Track' : 'Off Track' %>
                 </span>
                 <span class="text-xs text-gray-500"><%= r.quarter %></span>
@@ -417,7 +417,7 @@
         <div class="border rounded p-3 bg-white" data-ticket-id="<%= i.id %>" data-ticket-title="<%= i.title.replace(/"/g, '&quot;') %>">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs px-2 py-0.5 rounded
+              <span data-ids-pill class="text-xs px-2 py-0.5 rounded
                 <%= i.idsStatus === 'open' ? 'bg-gray-100 text-gray-700' :
                    i.idsStatus === 'identified' ? 'bg-blue-100 text-blue-800' :
                    i.idsStatus === 'discussed' ? 'bg-amber-100 text-amber-800' :
@@ -643,12 +643,58 @@
     return { entityType, externalId, name: rest.join(':') || externalId };
   }
 
+  // ===== Reload helpers =====
+  // Some actions still re-render via a full reload. reloadKeep() stashes the
+  // scroll position first and restoreScroll() puts it back on load, so a live
+  // meeting on a shared screen does not jump to the top on every change.
+  const SCROLL_KEY = 'otp-l8-scroll-' + meetingId;
+  function reloadKeep() {
+    try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch (e) {}
+    window.location.assign(window.location.href);
+  }
+  (function restoreScroll() {
+    try {
+      const y = sessionStorage.getItem(SCROLL_KEY);
+      if (y !== null) {
+        sessionStorage.removeItem(SCROLL_KEY);
+        window.requestAnimationFrame(function () { window.scrollTo(0, parseInt(y, 10) || 0); });
+      }
+    } catch (e) {}
+  })();
+
   // ===== Per-section timer =====
   const chips = Array.from(document.querySelectorAll('.agenda-chip'));
   const clock = document.getElementById('meeting-clock');
   const toggleBtn = document.getElementById('timer-toggle');
   const skipBtn = document.getElementById('timer-skip');
   let timerState = { running: false, sectionIdx: 0, elapsed: 0, intervalId: null };
+  const TIMER_KEY = 'otp-l8-timer-' + meetingId;
+
+  // Restore a persisted timer. If it was running, add the wall-clock seconds
+  // that passed while the page was away so the meeting clock stays true
+  // through the reloads some actions still trigger.
+  try {
+    const _savedTimer = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null');
+    if (_savedTimer && typeof _savedTimer.elapsed === 'number') {
+      timerState.sectionIdx = Math.min(Math.max(0, _savedTimer.sectionIdx || 0), Math.max(0, chips.length - 1));
+      timerState.elapsed = _savedTimer.elapsed;
+      timerState.running = !!_savedTimer.running;
+      if (timerState.running && _savedTimer.savedAt) {
+        timerState.elapsed += Math.max(0, Math.floor((Date.now() - _savedTimer.savedAt) / 1000));
+      }
+    }
+  } catch (e) { /* corrupt timer state -- start fresh */ }
+
+  function saveTimer() {
+    try {
+      localStorage.setItem(TIMER_KEY, JSON.stringify({
+        sectionIdx: timerState.sectionIdx,
+        elapsed: timerState.elapsed,
+        running: timerState.running,
+        savedAt: Date.now(),
+      }));
+    } catch (e) { /* storage unavailable -- timer still works for this page */ }
+  }
 
   function activeChip() { return chips[timerState.sectionIdx]; }
   function activeBudgetSec() { return parseInt(activeChip()?.dataset.budget || '5', 10) * 60; }
@@ -684,6 +730,7 @@
       clock.classList.add('bg-gray-900');
     }
     paintChip();
+    saveTimer();
   }
   function startTimer() {
     timerState.running = true;
@@ -695,6 +742,7 @@
     timerState.running = false;
     if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
     toggleBtn.textContent = 'Resume';
+    render();
   }
   function jumpTo(idx) {
     timerState.sectionIdx = Math.max(0, Math.min(chips.length - 1, idx));
@@ -705,6 +753,11 @@
   toggleBtn?.addEventListener('click', () => { timerState.running ? pauseTimer() : startTimer(); });
   skipBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx + 1); });
   chips.forEach((c, i) => c.addEventListener('click', () => { jumpTo(i); if (!timerState.running) startTimer(); }));
+  // Resume ticking if a running timer was restored from a prior page load.
+  if (timerState.running && !timerState.intervalId) {
+    timerState.intervalId = setInterval(tick, 1000);
+    toggleBtn.textContent = 'Pause';
+  }
   render();
 
   // Rebuild cascading message from meeting state
@@ -763,13 +816,13 @@
   const startBtn = document.getElementById('start-meeting');
   if (startBtn) startBtn.addEventListener('click', async () => {
     await api('/meetings/' + meetingId + '/start', { method: 'POST' });
-    location.reload();
+    reloadKeep();
   });
   const endBtn = document.getElementById('end-meeting');
   if (endBtn) endBtn.addEventListener('click', async () => {
     if (!confirm('End the meeting?')) return;
     await api('/meetings/' + meetingId + '/end', { method: 'POST' });
-    location.reload();
+    reloadKeep();
   });
 
   // Delete meeting
@@ -827,7 +880,7 @@
   async function saveAttendees() {
     const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees }) });
     if (res?.error) { alert(errMsg(res)); return; }
-    location.reload();
+    reloadKeep();
   }
 
   document.getElementById('attendees-chips')?.addEventListener('click', (e) => {
@@ -864,16 +917,23 @@
       refreshScorecardBtn.disabled = false; refreshScorecardBtn.textContent = orig;
       return;
     }
-    location.reload();
+    reloadKeep();
   });
 
   // Rock toggle
   document.querySelectorAll('[data-rock-toggle]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const rockId = btn.closest('[data-rock-id]').dataset.rockId;
+      const card = btn.closest('[data-rock-id]');
       const onTrack = btn.dataset.rockToggle === 'on';
-      await api('/rocks/' + rockId, { method: 'PUT', body: JSON.stringify({ onTrack }) });
-      location.reload();
+      const res = await api('/rocks/' + card.dataset.rockId, { method: 'PUT', body: JSON.stringify({ onTrack }) });
+      if (res && res.error) { alert('Update failed: ' + errMsg(res)); return; }
+      // In-place: repaint the status badge, no reload.
+      const badge = card.querySelector('[data-rock-status-badge]');
+      if (badge) {
+        badge.textContent = onTrack ? 'On Track' : 'Off Track';
+        badge.className = 'text-xs px-2 py-0.5 rounded ' +
+          (onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800');
+      }
     });
   });
 
@@ -938,7 +998,7 @@
         saveBtn.disabled = false; saveBtn.textContent = 'Save';
         return;
       }
-      location.reload();
+      reloadKeep();
     });
   });
 
@@ -976,7 +1036,7 @@
       executionItemId: (document.getElementById('new-rock-exec') || {}).value || undefined,
     })});
     if (res?.error) { alert('Add failed: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Add Priority'; return; }
-    location.reload();
+    reloadKeep();
   });
 
   // ===== Add issue =====
@@ -1015,7 +1075,7 @@
       return;
     }
     // Owner + teamId now go through POST in createBody, no follow-up PUT needed.
-    location.reload();
+    reloadKeep();
   });
 
   // Add new to-do
@@ -1035,7 +1095,7 @@
     };
     if (recurrenceRule) body.recurrenceRule = recurrenceRule;
     await api('/todos', { method: 'POST', body: JSON.stringify(body) });
-    location.reload();
+    reloadKeep();
   });
 
   // ===== IDS issue actions =====
@@ -1053,8 +1113,18 @@
     card.querySelectorAll('[data-ids-set]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const idsStatus = btn.dataset.idsSet;
-        await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus }) });
-        location.reload();
+        const res = await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus }) });
+        if (res && res.error) { alert('Update failed: ' + errMsg(res)); return; }
+        // In-place: repaint the IDS status pill, no reload.
+        const pill = card.querySelector('[data-ids-pill]');
+        if (pill) {
+          pill.textContent = idsStatus;
+          const cls = idsStatus === 'identified' ? 'bg-blue-100 text-blue-800'
+                    : idsStatus === 'discussed' ? 'bg-amber-100 text-amber-800'
+                    : idsStatus === 'solved' ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-gray-100 text-gray-700';
+          pill.className = 'text-xs px-2 py-0.5 rounded ' + cls;
+        }
       });
     });
 
@@ -1134,7 +1204,7 @@
       if (deleteAfter) {
         await api('/tickets/' + ticketId, { method: 'DELETE' });
       }
-      location.reload();
+      reloadKeep();
     });
 
     // Move to a different team -- PATCH /tickets/:id { teamId } then
@@ -1182,7 +1252,7 @@
       }
       btn.disabled = true; btn.textContent = 'Saving...';
       await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify(body) });
-      location.reload();
+      reloadKeep();
     });
 
     // Delete (works on both open and solved cards) -- removes the row instantly,
@@ -1209,7 +1279,7 @@
     // Reopen (only on solved-list cards) -- moves it back to open IDS lifecycle.
     card.querySelector('[data-action="reopen"]')?.addEventListener('click', async () => {
       await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus: 'open', solvedInMeetingId: null }) });
-      location.reload();
+      reloadKeep();
     });
   });
 
@@ -1229,7 +1299,7 @@
       addHeadlineBtn.disabled = false; addHeadlineBtn.textContent = 'Add';
       return;
     }
-    location.reload();
+    reloadKeep();
   });
 
   // ===== Shared flag-to-issue form =====
@@ -1285,7 +1355,7 @@
         btn.disabled = false; btn.textContent = '✓ Addressed';
         return;
       }
-      location.reload();
+      reloadKeep();
     });
   });
   document.querySelectorAll('[data-flag-kpi]').forEach(btn => {
@@ -1323,7 +1393,7 @@
       btn.disabled = false; btn.textContent = 'Create Issue';
       return;
     }
-    location.reload();
+    reloadKeep();
   });
 })();
 </script>
