@@ -5,14 +5,24 @@
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2CGLFY76YW"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2CGLFY76YW');</script>
+<!-- Google Ads -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18159119434"></script>
+<script>gtag('config','AW-18159119434');</script>
+<script>
+  function gtagSendEvent(url){
+    var cb=function(){ if(typeof url==='string'){ window.location=url; } };
+    gtag('event','ads_conversion_PURCHASE_1',{'event_callback':cb,'event_timeout':2000});
+    return false;
+  }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OTP - Run your people and AI agents as one team</title>
-<meta name="description" content="OTP is the operating platform for teams of people and AI agents. One chart, one scoreboard, one weekly meeting. Free for your whole team in beta.">
+<meta name="description" content="For EOS®-run companies adding AI to the team: OTP gives every agent a real seat, starting with an AI Chief of Staff. One chart, one scoreboard, one weekly meeting. Free in beta.">
 <link rel="canonical" href="https://orgtp.com/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://orgtp.com/">
 <meta property="og:title" content="OTP - Run your people and AI agents as one team">
-<meta property="og:description" content="The operating platform for teams of people and AI agents. One chart, one scoreboard, one weekly meeting.">
+<meta property="og:description" content="For EOS®-run companies adding AI to the team. OTP gives every agent a real seat, starting with an AI Chief of Staff. One chart, one scoreboard, one weekly meeting.">
 <meta property="og:image" content="https://orgtp.com/public/images/og-otp-home.png">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"OTP - Organization Transport Protocol","url":"https://orgtp.com","logo":"https://orgtp.com/public/favicon-192x192.png","description":"The operating platform for teams of people and AI agents.","founder":{"@type":"Person","name":"David Steel","url":"https://orgtp.com/about","jobTitle":"Founder"},"foundingDate":"2026-03","sameAs":["https://www.linkedin.com/company/orgtp","https://x.com/OTP_OOS"]}</script>
@@ -127,9 +137,9 @@
       <a href="/browse" class="hover:text-[var(--ink)] transition-colors">Browse</a>
       <a href="/whats-new" class="hover:text-[var(--ink)] transition-colors">What's New</a>
       <a href="/sign-in" class="hover:text-[var(--ink)] transition-colors">Sign in</a>
-      <a href="/sign-up" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
     </div>
-    <a href="/sign-up" class="btn-primary md:hidden px-4 py-2 text-[13px]">Get started</a>
+    <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary md:hidden px-4 py-2 text-[13px]">Get started</a>
   </div>
 </nav>
 
@@ -247,7 +257,7 @@
   <div class="hero2-wrap">
     <div class="eyebrow flex items-center gap-3 mb-3 rise" style="animation-delay:.05s">
       <span class="tick bg-[var(--blue)]"></span>
-      The operating platform for teams of people and AI agents
+      For EOS&reg;-run companies adding AI to the team
     </div>
 
     <div class="hero2-grid">
@@ -257,10 +267,10 @@
           Your Org was built before <span class="text-[var(--blue)]">AI&nbsp;agents.</span>
         </h1>
         <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.55] max-w-md mt-5 rise" style="animation-delay:.22s">
-          OTP&trade; is the operating layer underneath, so the structure stops failing you.
+          EOS&reg; gave your people an operating system. OTP&trade; gives your AI agents the same, starting with an AI Chief of Staff that finally has a real seat, SOP, and scoreboard.
         </p>
         <div class="flex flex-wrap gap-3 mt-7 rise" style="animation-delay:.32s">
-          <a href="/sign-up" class="btn-primary px-7 py-3.5 text-[15px]">Get started →</a>
+          <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-7 py-3.5 text-[15px]">Get started →</a>
           <a href="/what-is-otp" class="btn-ghost px-7 py-3.5 text-[15px]">What is OTP</a>
         </div>
       </div>
@@ -684,7 +694,7 @@
         <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Operating System Template</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">A commented YAML you fill in to describe your organization. Ready to use.</span></span>
         <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Download →</span>
       </a>
-      <a href="/sign-up" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="idx-row grid grid-cols-[auto_1fr_auto] gap-x-6 sm:gap-x-10 items-center py-6 px-2">
         <span class="font-display text-[2.2rem] leading-none" style="font-weight:800; color:var(--blue);">02</span>
         <span><span class="font-display text-[1.2rem] text-[var(--ink)]" style="font-weight:700;">Org Chart Builder</span><span class="block text-[13px] text-[var(--ink-soft)] mt-1">Add humans and AI agents as named seats. Author SOPs. Track KPIs.</span></span>
         <span class="font-mono text-[12px] whitespace-nowrap" style="color:var(--blue-deep);">Open →</span>
@@ -729,7 +739,7 @@
         OTP is free for your whole team while we are in beta. The first 50 founding members lock that in for good: every tool, every layer, free for life. Once the 50 seats are gone, they are gone.
       </p>
       <div class="flex flex-wrap gap-3 justify-center mt-9">
-        <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Claim your founding seat &rarr;</a>
+        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-8 py-4 text-[16px]">Claim your founding seat &rarr;</a>
       </div>
       <div class="eyebrow mt-6" style="color:var(--ink-mute);">No credit card &middot; Your whole team included &middot; Only 50 seats</div>
     </div>
@@ -747,7 +757,7 @@
       Either you build a chart and run on OTP this week, or you read the four-stage arc that explains why the chart matters in the first place.
     </p>
     <div class="flex flex-wrap gap-3 justify-center mt-10">
-      <a href="/sign-up" class="btn-ink px-8 py-4 text-[16px]">Get started →</a>
+      <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-ink px-8 py-4 text-[16px]">Get started →</a>
       <a href="/blog/the-robots-are-coming" class="px-8 py-4 text-[16px] font-semibold rounded-[10px] border border-[#14161c]/30 text-[var(--ink)] hover:bg-[#14161c]/8 transition-colors">Read the four-stage arc</a>
     </div>
   </div>
@@ -778,7 +788,7 @@
       </div>
     </div>
     <p class="text-[10px] text-[#5f6878] mt-10 leading-[1.6] max-w-2xl">
-      OTP is an independent platform. Best practices in the library are sourced from publicly available content and attributed to their original authors. OTP is not affiliated with, endorsed by, or sponsored by any third-party organizations referenced.
+      OTP is an independent platform. Best practices in the library are sourced from publicly available content and attributed to their original authors. OTP is not affiliated with, endorsed by, or sponsored by any third-party organizations referenced. EOS&reg; and the Entrepreneurial Operating System&reg; are registered trademarks of EOS Worldwide, LLC.
     </p>
   </div>
 </footer>
