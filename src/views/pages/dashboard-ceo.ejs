@@ -1,57 +1,64 @@
 <section class="bg-gray-50 min-h-screen">
-<div class="max-w-5xl mx-auto px-6 sm:px-8 py-10">
+<div class="max-w-6xl mx-auto px-6 sm:px-8 py-10">
 
 <%
-  // CEO Dashboard — the read surface for the org's vision.
-  // Data source: the active Operating Plan's strategic sections, authored on
-  // /dashboard/oos-operating-plan. This page never writes; it only renders.
+  // CEO Dashboard — the whole-company cockpit.
+  // Reads four sources: the Operating Plan (direction), the KPI scoreboard,
+  // the current quarter's execution items, and the org chart (seats). This
+  // page only renders; the Operating Plan is where the inputs are authored.
   var byKey = {};
   (sections || []).forEach(function (s) { byKey[s.sectionKey] = s; });
 
-  // Read one field out of a section's content_json. Returns '' when absent.
-  function fld(sectionKey, fieldKey) {
-    var s = byKey[sectionKey];
+  function fld(sk, fk) {
+    var s = byKey[sk];
     if (!s || !s.contentJson || typeof s.contentJson !== 'object') return '';
-    var v = s.contentJson[fieldKey];
+    var v = s.contentJson[fk];
     return (v === null || v === undefined) ? '' : String(v).trim();
   }
-  // Split a "one per line" field into a trimmed, non-empty array.
   function lines(str) {
     if (!str) return [];
     return String(str).split(/\r?\n/).map(function (x) { return x.trim(); })
       .filter(function (x) { return x.length > 0; });
   }
-  function any() {
-    for (var i = 0; i < arguments.length; i++) { if (arguments[i]) return true; }
-    return false;
+  function ownerBadge(t) {
+    if (t === 'agent') return 'bg-purple-100 text-purple-700';
+    if (t === 'human' || t === 'employee') return 'bg-blue-100 text-blue-700';
+    if (t === 'hybrid') return 'bg-indigo-100 text-indigo-700';
+    return 'bg-gray-100 text-gray-500';
+  }
+  function goalText(k) {
+    if (!k.goalOperator || k.goalValue === null || k.goalValue === undefined) return '';
+    var sym = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
+    return sym + ' ' + k.goalValue + (k.unit ? ' ' + k.unit : '');
+  }
+  function valText(k) {
+    if (k.latestValue === null || k.latestValue === undefined) return '—';
+    return k.latestValue + (k.unit ? ' ' + k.unit : '');
   }
 
-  var purpose       = fld('foundation', 'purpose');
-  var mission       = fld('foundation', 'mission');
-  var values        = lines(fld('foundation', 'values'));
-  var idealCustomer = fld('foundation', 'ideal_customer');
+  // Direction — from the Operating Plan
+  var threeYear       = fld('destination', 'year_target');
+  var threeYearWhen   = fld('destination', 'year_target_year');
+  var tenYear         = fld('destination', 'ten_year_target');
+  var tenYearWhen     = fld('destination', 'ten_year_target_year');
+  var revenueGoal     = fld('destination', 'revenue_goal');
+  var definingMetric  = fld('destination', 'defining_metric');
+  var annualObjective = fld('annual_game_plan', 'primary_objective');
+  var annualOutcomes  = lines(fld('annual_game_plan', 'key_outcomes'));
+  var quarterNarrative = fld('ninety_day_engine', 'quarter_narrative');
+  var quarterTargets   = lines(fld('ninety_day_engine', 'quarterly_targets'));
+  var openIssues       = lines(fld('alignment_accountability', 'open_issues'));
 
-  var category        = fld('market_command', 'category');
-  var uniqueAdvantage = fld('market_command', 'unique_advantage');
-  var brandPromise    = fld('market_command', 'brand_promise');
-  var proofPoints     = lines(fld('market_command', 'proof_points'));
+  var items   = executionItems || [];
+  var atRisk  = items.filter(function (i) { return i.status === 'at_risk'; });
+  var kpisAll = kpis || [];
+  var kpisOff = kpisAll.filter(function (k) { return k.meetsGoal === false; });
 
-  var tenYear        = fld('destination', 'ten_year_target');
-  var tenYearYear    = fld('destination', 'ten_year_target_year');
-  var yearTarget     = fld('destination', 'year_target');
-  var yearTargetYear = fld('destination', 'year_target_year');
-  var revenueGoal    = fld('destination', 'revenue_goal');
-  var profitGoal     = fld('destination', 'profit_goal');
-  var definingMetric = fld('destination', 'defining_metric');
+  var humans = (seats || []).filter(function (s) { return s.type === 'human'; });
+  var agents = (seats || []).filter(function (s) { return s.type === 'agent'; });
 
-  var primaryObjective     = fld('annual_game_plan', 'primary_objective');
-  var strategicInitiatives = lines(fld('annual_game_plan', 'strategic_initiatives'));
-  var keyOutcomes          = lines(fld('annual_game_plan', 'key_outcomes'));
-
-  var hasVision = any(purpose, mission, values.length, idealCustomer,
-    category, uniqueAdvantage, brandPromise, proofPoints.length,
-    tenYear, yearTarget, revenueGoal, profitGoal, definingMetric,
-    primaryObjective, strategicInitiatives.length, keyOutcomes.length);
+  var hasDirection = !!(threeYear || tenYear || annualObjective || quarterNarrative || quarterTargets.length);
+  var attentionCount = atRisk.length + kpisOff.length + openIssues.length;
 %>
 
   <!-- Header -->
@@ -59,178 +66,243 @@
     <div class="min-w-0">
       <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %></p>
       <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">CEO Dashboard</h1>
-      <p class="text-sm text-gray-500 mt-2 max-w-xl leading-relaxed">Your company's vision, whole and in one place. Authored in the Operating Plan, seen here.</p>
+      <p class="text-sm text-gray-500 mt-2 max-w-2xl leading-relaxed">The whole company in one view: where you're going, whether the numbers say you're on pace, who is on the bus, and what needs you. The Operating Plan feeds this page.</p>
     </div>
     <a href="/dashboard/oos-operating-plan" class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:border-otp-400 hover:text-otp-700 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-      Edit in Operating Plan
+      Edit the Plan
     </a>
   </div>
 
-  <% if (!plan) { %>
-
-    <!-- No operating plan yet -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-      <div class="mx-auto w-12 h-12 rounded-full bg-otp-50 flex items-center justify-center mb-4">
-        <svg class="w-6 h-6 text-otp-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+  <!-- ============ 1. DIRECTION ============ -->
+  <div class="mb-8">
+    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-3">Direction</p>
+    <% if (!hasDirection) { %>
+      <div class="bg-white border border-gray-200 rounded-2xl p-8 text-center">
+        <p class="text-gray-600 text-sm mb-4 max-w-md mx-auto leading-relaxed">No direction set yet. Fill in Destination and the Annual Game Plan in the Operating Plan, and the company's 3-year, yearly, and quarterly course appears here.</p>
+        <a href="/dashboard/oos-operating-plan" class="inline-block px-5 py-2.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-600 text-sm transition-colors">Set the direction</a>
       </div>
-      <h2 class="text-xl font-bold text-gray-900 mb-2">Your vision lives here</h2>
-      <p class="text-gray-600 text-sm mb-6 max-w-md mx-auto leading-relaxed">Create your Operating Plan and fill in the strategic sections. This page then shows your whole vision in one calm view: why you exist, your values, where you're headed, and this year's focus.</p>
-      <a href="/dashboard/oos-operating-plan" class="inline-block px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-600 text-sm transition-colors">Go to the Operating Plan</a>
-    </div>
-
-  <% } else if (!hasVision) { %>
-
-    <!-- Plan exists, strategic sections still empty -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-      <h2 class="text-xl font-bold text-gray-900 mb-2">Nothing to show yet</h2>
-      <p class="text-gray-600 text-sm mb-6 max-w-md mx-auto leading-relaxed">Your Operating Plan exists, but the strategic sections are still empty. Fill in Foundation, Market Command, Destination, and the Annual Game Plan, and your vision appears here.</p>
-      <a href="/dashboard/oos-operating-plan" class="inline-block px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-600 text-sm transition-colors">Fill in the vision</a>
-    </div>
-
-  <% } else { %>
-
-    <!-- Purpose: the heart of the vision -->
-    <% if (purpose) { %>
-      <div class="bg-white border border-gray-200 rounded-2xl p-8 sm:p-10 mb-6">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-3">Why we exist</p>
-        <p class="text-2xl sm:text-[28px] font-semibold text-gray-900 leading-snug"><%= purpose %></p>
-        <% if (mission) { %>
-          <p class="text-base text-gray-600 leading-relaxed mt-5 pt-5 border-t border-gray-100"><span class="font-semibold text-gray-800">How we do it. </span><%= mission %></p>
-        <% } %>
-      </div>
-    <% } else if (mission) { %>
-      <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-3">Our mission</p>
-        <p class="text-xl font-semibold text-gray-900 leading-snug"><%= mission %></p>
-      </div>
-    <% } %>
-
-    <!-- Core values + who we serve -->
-    <% if (values.length || idealCustomer) { %>
-      <div class="grid sm:grid-cols-2 gap-6 mb-6">
-        <% if (values.length) { %>
-          <div class="bg-white border border-gray-200 rounded-2xl p-7">
-            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-4">Core values</p>
-            <div class="flex flex-wrap gap-2">
-              <% values.forEach(function (v) { %>
-                <span class="inline-block px-3 py-1.5 rounded-full bg-otp-50 border border-otp-100 text-sm font-medium text-gray-800"><%= v %></span>
-              <% }); %>
+    <% } else { %>
+      <% if (tenYear) { %>
+        <div class="bg-white border border-gray-200 rounded-2xl px-6 py-4 mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400">10-year north star<% if (tenYearWhen) { %> · <%= tenYearWhen %><% } %></span>
+          <span class="text-sm font-semibold text-gray-800"><%= tenYear %></span>
+        </div>
+      <% } %>
+      <div class="grid md:grid-cols-3 gap-5">
+        <!-- 3-5 year -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">3-5 Year Target<% if (threeYearWhen) { %> · <%= threeYearWhen %><% } %></p>
+          <% if (threeYear) { %>
+            <p class="text-base font-semibold text-gray-900 leading-snug"><%= threeYear %></p>
+          <% } else { %>
+            <p class="text-sm text-gray-400">Not set</p>
+          <% } %>
+          <% if (revenueGoal || definingMetric) { %>
+            <div class="mt-4 pt-4 border-t border-gray-100 space-y-2">
+              <% if (revenueGoal) { %><div class="flex justify-between gap-3"><span class="text-xs text-gray-500">Revenue goal</span><span class="text-xs font-bold text-gray-900"><%= revenueGoal %></span></div><% } %>
+              <% if (definingMetric) { %><div class="flex justify-between gap-3"><span class="text-xs text-gray-500">Defining metric</span><span class="text-xs font-bold text-gray-900"><%= definingMetric %></span></div><% } %>
             </div>
+          <% } %>
+        </div>
+        <!-- this year -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">This Year</p>
+          <% if (annualObjective) { %>
+            <p class="text-base font-semibold text-gray-900 leading-snug"><%= annualObjective %></p>
+          <% } else { %>
+            <p class="text-sm text-gray-400">No annual objective set</p>
+          <% } %>
+          <% if (annualOutcomes.length) { %>
+            <ul class="mt-4 pt-4 border-t border-gray-100 space-y-1">
+              <% annualOutcomes.slice(0, 4).forEach(function (o) { %>
+                <li class="flex gap-2 text-xs text-gray-700"><span class="text-otp-400">&bull;</span><span><%= o %></span></li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </div>
+        <!-- this quarter -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">This Quarter · <%= currentQuarter %></p>
+          <% if (quarterNarrative) { %>
+            <p class="text-sm text-gray-800 leading-relaxed"><%= quarterNarrative %></p>
+          <% } else if (quarterTargets.length) { %>
+            <ul class="space-y-1">
+              <% quarterTargets.slice(0, 5).forEach(function (t) { %>
+                <li class="flex gap-2 text-sm text-gray-800"><span class="text-otp-400">&bull;</span><span><%= t %></span></li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <p class="text-sm text-gray-400">No quarter plan set</p>
+          <% } %>
+          <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between gap-3">
+            <span class="text-xs text-gray-500">Priorities this quarter</span>
+            <span class="text-xs font-bold text-gray-900"><%= items.length %></span>
           </div>
-        <% } %>
-        <% if (idealCustomer) { %>
-          <div class="bg-white border border-gray-200 rounded-2xl p-7">
-            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-4">Who we serve</p>
-            <p class="text-sm text-gray-700 leading-relaxed"><%= idealCustomer %></p>
-          </div>
-        <% } %>
+        </div>
       </div>
     <% } %>
+  </div>
 
-    <!-- How we win -->
-    <% if (category || uniqueAdvantage || brandPromise || proofPoints.length) { %>
-      <div class="bg-white border border-gray-200 rounded-2xl p-7 sm:p-8 mb-6">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-5">How we win</p>
-        <div class="space-y-5">
-          <% if (category) { %>
-            <div><p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Category</p><p class="text-sm text-gray-800 leading-relaxed"><%= category %></p></div>
-          <% } %>
-          <% if (uniqueAdvantage) { %>
-            <div><p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Unique advantage</p><p class="text-sm text-gray-800 leading-relaxed"><%= uniqueAdvantage %></p></div>
-          <% } %>
-          <% if (brandPromise) { %>
-            <div><p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Brand promise</p><p class="text-sm text-gray-800 leading-relaxed"><%= brandPromise %></p></div>
-          <% } %>
-          <% if (proofPoints.length) { %>
+  <!-- ============ 2. SCOREBOARD ============ -->
+  <div class="mb-8">
+    <div class="flex items-baseline justify-between mb-3">
+      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600">Scoreboard</p>
+      <a href="/dashboard/kpis" class="text-xs font-medium text-otp-600 hover:underline">Full scoreboard &rarr;</a>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+      <% if (kpiSummary.total === 0) { %>
+        <p class="text-sm text-gray-400">No KPIs yet. Add measurables to seats on the org chart and they roll up here.</p>
+      <% } else { %>
+        <div class="flex flex-wrap items-end gap-x-8 gap-y-3 mb-5">
+          <div>
+            <p class="text-3xl font-bold text-gray-900 leading-none"><%= kpiSummary.onGoal %> <span class="text-lg text-gray-400">/ <%= kpiSummary.total %></span></p>
+            <p class="text-xs text-gray-500 mt-1 uppercase tracking-wide">KPIs on goal</p>
+          </div>
+          <div class="flex gap-2">
+            <% if (kpiSummary.offGoal > 0) { %><span class="px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-semibold"><%= kpiSummary.offGoal %> off goal</span><% } %>
+            <% if (kpiSummary.noData > 0) { %><span class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-500 border border-gray-200 text-xs font-semibold"><%= kpiSummary.noData %> no data</span><% } %>
+            <% if (kpiSummary.offGoal === 0 && kpiSummary.noData === 0) { %><span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">All on goal</span><% } %>
+          </div>
+        </div>
+        <div class="divide-y divide-gray-100 -mb-2">
+          <%
+            // Off-goal first (they need the eye), then the rest.
+            var kpiOrder = kpisOff.concat(kpisAll.filter(function (k) { return k.meetsGoal !== false; }));
+          %>
+          <% kpiOrder.slice(0, 12).forEach(function (k) { %>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+              <span class="w-2 h-2 rounded-full <%= k.meetsGoal === true ? 'bg-emerald-500' : k.meetsGoal === false ? 'bg-red-500' : 'bg-gray-300' %>"></span>
+              <span class="text-sm font-medium text-gray-900 flex-1 min-w-[40%]"><%= k.title %></span>
+              <% if (k.ownerName) { %><span class="px-2 py-0.5 rounded-full text-[11px] font-medium <%= ownerBadge(k.ownerType) %>"><%= k.ownerName %></span><% } %>
+              <span class="text-sm font-semibold text-gray-900 tabular-nums"><%= valText(k) %></span>
+              <% if (goalText(k)) { %><span class="text-xs text-gray-400">vs <%= goalText(k) %></span><% } %>
+            </div>
+          <% }); %>
+        </div>
+        <% if (kpiOrder.length > 12) { %>
+          <p class="text-xs text-gray-400 mt-3"><%= kpiOrder.length - 12 %> more on the full scoreboard.</p>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ============ 3. THIS QUARTER ============ -->
+  <div class="mb-8">
+    <div class="flex items-baseline justify-between mb-3">
+      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600">This Quarter &mdash; <%= currentQuarter %></p>
+      <a href="/dashboard/oos-operating-plan" class="text-xs font-medium text-otp-600 hover:underline">Open the 90-day plan &rarr;</a>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+      <% if (items.length === 0) { %>
+        <p class="text-sm text-gray-400">No execution items for <%= currentQuarter %> yet. Set this quarter's priorities in the Operating Plan.</p>
+      <% } else { %>
+        <p class="text-sm text-gray-600 mb-4"><span class="font-bold text-gray-900"><%= items.length %></span> priorit<%= items.length === 1 ? 'y' : 'ies' %><% if (atRisk.length) { %>, <span class="font-bold text-amber-700"><%= atRisk.length %> at risk</span><% } %></p>
+        <div class="divide-y divide-gray-100 -mb-2">
+          <% items.slice(0, 12).forEach(function (it) {
+               var prio = { critical: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700', medium: 'bg-blue-100 text-blue-700', low: 'bg-gray-100 text-gray-600' }[it.priority] || 'bg-gray-100 text-gray-600';
+               var stat = { proposed: 'bg-gray-100 text-gray-600', accepted: 'bg-blue-100 text-blue-700', in_progress: 'bg-otp-100 text-otp-700', at_risk: 'bg-amber-100 text-amber-800', completed: 'bg-green-100 text-green-700', deferred: 'bg-gray-100 text-gray-500' }[it.status] || 'bg-gray-100 text-gray-600';
+          %>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 <%= it.status === 'at_risk' ? 'bg-amber-50/60 -mx-2 px-2 rounded' : '' %>">
+              <span class="text-sm font-medium text-gray-900 flex-1 min-w-[40%]"><%= it.title %></span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-medium <%= prio %>"><%= it.priority %></span>
+              <% if (it.assignedOwnerName) { %>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium <%= ownerBadge(it.assignedOwnerType) %>"><%= it.assignedOwnerName %></span>
+              <% } else { %>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-400">unassigned</span>
+              <% } %>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-medium <%= stat %>"><%= String(it.status).replace('_', ' ') %></span>
+            </div>
+          <% }); %>
+        </div>
+        <% if (items.length > 12) { %>
+          <p class="text-xs text-gray-400 mt-3"><%= items.length - 12 %> more in the Operating Plan.</p>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ============ 4. THE TEAM ============ -->
+  <div class="mb-8">
+    <div class="flex items-baseline justify-between mb-3">
+      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600">The Team</p>
+      <a href="/dashboard/team" class="text-xs font-medium text-otp-600 hover:underline">Open the org chart &rarr;</a>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+      <% if (humans.length === 0 && agents.length === 0) { %>
+        <p class="text-sm text-gray-400">No seats yet. Map your humans and agents on the org chart.</p>
+      <% } else { %>
+        <p class="text-sm text-gray-600 mb-4">
+          <span class="font-bold text-gray-900"><%= seatCounts.humans %></span> human<%= seatCounts.humans === 1 ? '' : 's' %>
+          <span class="text-gray-300 mx-1">·</span>
+          <span class="font-bold text-gray-900"><%= seatCounts.agents %></span> agent<%= seatCounts.agents === 1 ? '' : 's' %>
+          on the bus
+        </p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <% (seats || []).forEach(function (s) { %>
+            <div class="flex items-center gap-2.5 border border-gray-200 rounded-lg px-3 py-2">
+              <span class="shrink-0 w-2.5 h-2.5 rounded-sm <%= s.type === 'agent' ? 'bg-purple-500' : 'bg-blue-500' %>"></span>
+              <span class="min-w-0">
+                <span class="block text-sm font-semibold text-gray-900 truncate"><%= s.label %></span>
+                <span class="block text-xs text-gray-500 truncate"><%= s.role || (s.type === 'agent' ? 'Agent' : 'Human') %></span>
+              </span>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ============ 5. NEEDS YOUR ATTENTION ============ -->
+  <div class="mb-8">
+    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-3">Needs Your Attention</p>
+    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+      <% if (attentionCount === 0) { %>
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <p class="text-sm text-gray-700">All clear. Every KPI is on goal, nothing this quarter is at risk, and there are no open issues. The org is pointed at the plan.</p>
+        </div>
+      <% } else { %>
+        <div class="space-y-4">
+          <% if (kpisOff.length) { %>
             <div>
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Proof</p>
-              <ul class="space-y-1.5">
-                <% proofPoints.forEach(function (p) { %>
-                  <li class="flex gap-2 text-sm text-gray-800"><span class="text-otp-500 font-bold">✓</span><span class="leading-relaxed"><%= p %></span></li>
+              <p class="text-sm font-semibold text-gray-900 mb-1.5"><span class="text-red-600"><%= kpisOff.length %></span> KPI<%= kpisOff.length === 1 ? '' : 's' %> off goal</p>
+              <ul class="space-y-1">
+                <% kpisOff.slice(0, 5).forEach(function (k) { %>
+                  <li class="flex flex-wrap items-center gap-2 text-xs text-gray-600"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span><span class="font-medium text-gray-800"><%= k.title %></span><% if (k.ownerName) { %><span class="text-gray-400">— <%= k.ownerName %></span><% } %><span class="text-gray-400"><%= valText(k) %><% if (goalText(k)) { %> vs <%= goalText(k) %><% } %></span></li>
+                <% }); %>
+              </ul>
+            </div>
+          <% } %>
+          <% if (atRisk.length) { %>
+            <div>
+              <p class="text-sm font-semibold text-gray-900 mb-1.5"><span class="text-amber-700"><%= atRisk.length %></span> execution item<%= atRisk.length === 1 ? '' : 's' %> at risk</p>
+              <ul class="space-y-1">
+                <% atRisk.slice(0, 5).forEach(function (it) { %>
+                  <li class="flex flex-wrap items-center gap-2 text-xs text-gray-600"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="font-medium text-gray-800"><%= it.title %></span><% if (it.assignedOwnerName) { %><span class="text-gray-400">— <%= it.assignedOwnerName %></span><% } %></li>
+                <% }); %>
+              </ul>
+            </div>
+          <% } %>
+          <% if (openIssues.length) { %>
+            <div>
+              <p class="text-sm font-semibold text-gray-900 mb-1.5"><span class="text-gray-700"><%= openIssues.length %></span> open issue<%= openIssues.length === 1 ? '' : 's' %></p>
+              <ul class="space-y-1">
+                <% openIssues.slice(0, 5).forEach(function (o) { %>
+                  <li class="flex items-center gap-2 text-xs text-gray-600"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span><span class="text-gray-800"><%= o %></span></li>
                 <% }); %>
               </ul>
             </div>
           <% } %>
         </div>
-      </div>
-    <% } %>
-
-    <!-- Destination: where we're going -->
-    <% if (tenYear || yearTarget || revenueGoal || profitGoal || definingMetric) { %>
-      <div class="bg-white border border-gray-200 rounded-2xl p-7 sm:p-8 mb-6">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-5">Where we're going</p>
-        <% if (tenYear) { %>
-          <div class="mb-5">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">10-year target<% if (tenYearYear) { %> &middot; <%= tenYearYear %><% } %></p>
-            <p class="text-xl sm:text-2xl font-semibold text-gray-900 leading-snug"><%= tenYear %></p>
-          </div>
-        <% } %>
-        <% if (yearTarget) { %>
-          <div class="mb-5">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">3-5 year target<% if (yearTargetYear) { %> &middot; <%= yearTargetYear %><% } %></p>
-            <p class="text-lg font-semibold text-gray-800 leading-snug"><%= yearTarget %></p>
-          </div>
-        <% } %>
-        <% if (revenueGoal || profitGoal || definingMetric) { %>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5 border-t border-gray-100">
-            <% if (revenueGoal) { %>
-              <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Revenue goal</p><p class="text-lg font-bold text-gray-900"><%= revenueGoal %></p></div>
-            <% } %>
-            <% if (profitGoal) { %>
-              <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Profit goal</p><p class="text-lg font-bold text-gray-900"><%= profitGoal %></p></div>
-            <% } %>
-            <% if (definingMetric) { %>
-              <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Defining metric</p><p class="text-lg font-bold text-gray-900"><%= definingMetric %></p></div>
-            <% } %>
-          </div>
-        <% } %>
-      </div>
-    <% } %>
-
-    <!-- This year -->
-    <% if (primaryObjective || strategicInitiatives.length || keyOutcomes.length) { %>
-      <div class="bg-white border border-gray-200 rounded-2xl p-7 sm:p-8 mb-6">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-5">This year</p>
-        <% if (primaryObjective) { %>
-          <div class="mb-6">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Primary objective</p>
-            <p class="text-lg font-semibold text-gray-900 leading-snug"><%= primaryObjective %></p>
-          </div>
-        <% } %>
-        <% if (strategicInitiatives.length || keyOutcomes.length) { %>
-          <div class="grid sm:grid-cols-2 gap-6">
-            <% if (strategicInitiatives.length) { %>
-              <div>
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Strategic initiatives</p>
-                <ul class="space-y-1.5">
-                  <% strategicInitiatives.forEach(function (x) { %>
-                    <li class="flex gap-2 text-sm text-gray-800"><span class="text-otp-400">&bull;</span><span class="leading-relaxed"><%= x %></span></li>
-                  <% }); %>
-                </ul>
-              </div>
-            <% } %>
-            <% if (keyOutcomes.length) { %>
-              <div>
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Key outcomes</p>
-                <ul class="space-y-1.5">
-                  <% keyOutcomes.forEach(function (x) { %>
-                    <li class="flex gap-2 text-sm text-gray-800"><span class="text-otp-400">&bull;</span><span class="leading-relaxed"><%= x %></span></li>
-                  <% }); %>
-                </ul>
-              </div>
-            <% } %>
-          </div>
-        <% } %>
-      </div>
-    <% } %>
-
-    <!-- Close -->
-    <div class="text-center py-4">
-      <p class="text-sm text-gray-500">This is your vision as the company sees it. <a href="/dashboard/oos-operating-plan" class="text-otp-600 font-medium hover:underline">Refine it in the Operating Plan</a>.</p>
+      <% } %>
     </div>
+  </div>
 
-  <% } %>
+  <!-- Close -->
+  <div class="text-center py-2">
+    <p class="text-sm text-gray-500">Everything here is driven by the <a href="/dashboard/oos-operating-plan" class="text-otp-600 font-medium hover:underline">Operating Plan</a>. Change the plan, and the cockpit moves with it.</p>
+  </div>
 
 </div>
 </section>

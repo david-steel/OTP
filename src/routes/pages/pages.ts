@@ -3332,17 +3332,21 @@ Founder, OTP</p>
     });
   });
 
-  // Dashboard: CEO Dashboard — the calm, whole, read-only view of the org's vision.
-  // The Operating Plan is where the vision is authored (its Vision tab: foundation,
-  // market_command, destination, annual_game_plan). This page is where it is seen:
-  // one screen, presented to be read, not edited. Reads the same plan sections; no
-  // separate data model. Page-level access: any authed org member.
+  // Dashboard: CEO Dashboard — the whole-company cockpit.
+  // Synthesizes four sources into one steering view: the Operating Plan
+  // (direction — 3-year, annual, this quarter), the KPI scoreboard, the
+  // current quarter's execution items, and the org chart (seats: humans and
+  // agents). The Operating Plan feeds this page; this page reads, never writes.
+  // Page-level access: any authed org member.
   app.get('/dashboard/ceo', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
+    const currentQuarter = quarterLabel(new Date());
+
+    // --- Operating Plan: direction sections + current-quarter execution items ---
     const planArr = await db
       .select()
       .from(oosOperatingPlans)
@@ -3352,21 +3356,94 @@ Founder, OTP</p>
     const plan = planArr[0] || null;
 
     let sections: typeof oosOperatingPlanSections.$inferSelect[] = [];
+    let executionItems: typeof oosExecutionItems.$inferSelect[] = [];
     if (plan) {
       sections = await db
         .select()
         .from(oosOperatingPlanSections)
         .where(eq(oosOperatingPlanSections.planId, plan.id))
         .orderBy(oosOperatingPlanSections.sortOrder);
+      executionItems = await db
+        .select()
+        .from(oosExecutionItems)
+        .where(and(eq(oosExecutionItems.planId, plan.id), eq(oosExecutionItems.quarter, currentQuarter)))
+        .orderBy(desc(oosExecutionItems.createdAt));
     }
+
+    // --- Org chart: the seats (humans + agents) ---
+    const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const seats = team.nodes
+      .filter((n) => n.type === 'agent' || n.type === 'human')
+      .map((n) => ({
+        externalId: n.externalId,
+        type: n.type,
+        label: n.label,
+        role: ((n.properties as any) && (n.properties as any).role) ? String((n.properties as any).role) : '',
+      }));
+
+    // --- KPI scoreboard: latest value per KPI, then on-goal / off-goal ---
+    function meetsGoalFn(value: number | null, op: string | null, target: number | null): boolean | null {
+      if (value === null || op === null || target === null) return null;
+      if (op === 'gte') return value >= target;
+      if (op === 'lte') return value <= target;
+      if (op === 'gt') return value > target;
+      if (op === 'lt') return value < target;
+      if (op === 'eq') return value === target;
+      return null;
+    }
+    const { listKpis } = await import('../../services/kpi.js');
+    const allKpis = await listKpis(org.id, {});
+    const kpiIds = allKpis.map((k: any) => k.id as string);
+    const latestByKpi = new Map<string, number | null>();
+    if (kpiIds.length > 0) {
+      const valRows = await db
+        .select({ kpiId: kpiValues.kpiId, value: kpiValues.value, periodStart: kpiValues.periodStart })
+        .from(kpiValues)
+        .where(inArray(kpiValues.kpiId, kpiIds))
+        .orderBy(desc(kpiValues.periodStart));
+      for (const v of valRows) {
+        if (!latestByKpi.has(v.kpiId)) latestByKpi.set(v.kpiId, v.value);
+      }
+    }
+    const nodeLabel = new Map(team.nodes.map((n) => [n.externalId, n.label] as [string, string]));
+    const kpis = allKpis.map((k: any) => {
+      const latest = latestByKpi.has(k.id) ? (latestByKpi.get(k.id) ?? null) : null;
+      return {
+        id: k.id as string,
+        title: k.title as string,
+        groupName: (k.groupName ?? null) as string | null,
+        ownerName: (nodeLabel.get(k.ownerExternalId) ?? k.ownerExternalId ?? '') as string,
+        ownerType: (k.ownerEntityType ?? null) as string | null,
+        unit: (k.unit ?? null) as string | null,
+        goalOperator: (k.goalOperator ?? null) as string | null,
+        goalValue: (k.goalValue ?? null) as number | null,
+        latestValue: latest,
+        meetsGoal: meetsGoalFn(latest, k.goalOperator ?? null, k.goalValue ?? null),
+      };
+    });
+    const kpiSummary = {
+      total: kpis.length,
+      onGoal: kpis.filter((k) => k.meetsGoal === true).length,
+      offGoal: kpis.filter((k) => k.meetsGoal === false).length,
+      noData: kpis.filter((k) => k.meetsGoal === null).length,
+    };
 
     return reply.view('pages/dashboard-ceo', {
       title: 'CEO Dashboard - OTP',
-      description: 'The company vision, whole and in one place.',
+      description: 'The whole company in one view: direction, scoreboard, seats, and this quarter.',
       noindex: true,
       org,
       plan,
       sections,
+      executionItems,
+      currentQuarter,
+      seats,
+      seatCounts: {
+        humans: seats.filter((s) => s.type === 'human').length,
+        agents: seats.filter((s) => s.type === 'agent').length,
+      },
+      kpis,
+      kpiSummary,
     });
   });
 
