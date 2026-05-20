@@ -218,14 +218,18 @@
 })();
 </script>
 
-<%# Google Ads: signup conversion. Fires once when a brand-new user lands on
-    Step 1 with no org yet (i.e., Clerk just completed registration and
-    redirected here via afterSignUpUrl). Returning users with an org won't
-    re-fire it. Base tag is loaded by layouts/onboarding.ejs. %>
-<% if (!org) { %>
-<script>
-  if (typeof gtag === 'function') {
-    gtag('event', 'conversion_event_signup');
-  }
-</script>
-<% } %>
+<%# Google Ads SIGNUP conversion is now fired server-side from
+    src/routes/pages/onboarding.ts (the route handler for this page).
+    Reasons:
+      1. Server-side fire only counts a conversion when a real Clerk
+         user exists and is on this page for the first time.
+      2. Server has access to the gclid captured by
+         src/middleware/gclid-capture.ts, so the conversion is properly
+         attributed to the original ad click via offline upload.
+      3. Idempotent via the conversion_log table -- page reloads or
+         session refreshes do not refire.
+    The client-side page-view tag that lived here over-counted by 1 on
+    2026-05-19 (recorded a conversion with 0 Clerk users created) and
+    has been intentionally removed. Do not re-add gtag('event', ...)
+    here unless you have a very specific reason and have audited the
+    server-side path first. %>

@@ -10,12 +10,15 @@
 // Steps 2-7 require an org; a user without one is bounced back to step 1.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { getAuth } from '@clerk/fastify';
+import { createClerkClient } from '@clerk/backend';
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import {
   organizations, orgMembers, orgInvitations,
   teams, teamMemberships, rocks, kpis, managerAgents,
+  conversionLog,
 } from '../../db/schema.js';
+import { uploadSignupConversion } from '../../lib/google-ads-conversions.js';
 
 const LAYOUT = { layout: 'layouts/onboarding' };
 
@@ -41,6 +44,83 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
     if (!org) {
       [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     }
+
+    // ---- Server-side Google Ads SIGNUP conversion -------------------
+    // Fires once per Clerk user, only when (a) this is a brand-new user
+    // (no org yet) and (b) we captured a gclid from the landing URL.
+    // Idempotent via conversion_log. Wrapped tight: this branch never
+    // breaks the page render. Replaces the page-view tag that lived in
+    // pages/onboarding-profile.ejs and over-counted on 2026-05-19.
+    if (!org && auth.userId) {
+      try {
+        const cookies = (request as unknown as { cookies?: Record<string, string> }).cookies ?? {};
+        const gclid = typeof cookies.otp_gclid === 'string' ? cookies.otp_gclid : undefined;
+        if (gclid) {
+          const [already] = await db
+            .select({ id: conversionLog.id })
+            .from(conversionLog)
+            .where(
+              and(
+                eq(conversionLog.clerkUserId, auth.userId),
+                inArray(conversionLog.status, ['success', 'partial']),
+              ),
+            )
+            .limit(1);
+          if (!already) {
+            let email: string | null = null;
+            const secretKey = process.env.CLERK_SECRET_KEY;
+            if (secretKey) {
+              try {
+                const clerk = createClerkClient({ secretKey });
+                const u = await clerk.users.getUser(auth.userId);
+                email = u.primaryEmailAddress?.emailAddress ?? null;
+                const existingMeta =
+                  (u.publicMetadata as Record<string, unknown> | null) ?? {};
+                if (!existingMeta.gclid) {
+                  await clerk.users.updateUser(auth.userId, {
+                    publicMetadata: {
+                      ...existingMeta,
+                      gclid,
+                      clickTs: cookies.otp_click_ts ?? new Date().toISOString(),
+                    },
+                  });
+                }
+              } catch (err) {
+                request.log.warn(
+                  { err },
+                  'gclid -> Clerk publicMetadata bridge failed (non-blocking)',
+                );
+              }
+            }
+
+            const result = await uploadSignupConversion({
+              gclid,
+              email,
+              when: new Date(),
+            });
+            await db.insert(conversionLog).values({
+              clerkUserId: auth.userId,
+              conversionActionId:
+                process.env.GOOGLE_ADS_SIGNUP_CONVERSION_ACTION_ID ?? 'unknown',
+              gclid,
+              status: result.status,
+              errorMessage: result.errorMessage ?? null,
+              rawResponse: (result.raw as Record<string, unknown> | undefined) ?? null,
+            });
+            request.log.info(
+              { userId: auth.userId, status: result.status },
+              'google-ads conversion attempt',
+            );
+          }
+        }
+      } catch (err) {
+        request.log.error(
+          { err },
+          'google-ads server-side conversion failed (non-blocking; page render continues)',
+        );
+      }
+    }
+
     return reply.view('pages/onboarding-profile', {
       title: 'Set up your seat · OTP',
       org: org || null,

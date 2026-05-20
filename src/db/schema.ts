@@ -1118,3 +1118,32 @@ export const coachClientAccess = pgTable('coach_client_access', {
   revokedAt: timestamp('revoked_at'),
   revokedByUserId: varchar('revoked_by_user_id', { length: 255 }),
 });
+
+// =====================================================================
+// Google Ads server-side conversion log -- ensure-conversion-log.ts
+// =====================================================================
+// One row per upload attempt against the SIGNUP conversion action. The
+// /onboarding/profile route checks this table for an existing successful
+// or partial row before firing again -- this is what makes the
+// server-side path idempotent across page reloads and Clerk session
+// refreshes. Replaces the client-side page-view tag that over-counted
+// on 2026-05-19 (1 conversion logged with 0 Clerk users created).
+
+export const conversionLog = pgTable('conversion_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull(),
+  conversionActionId: varchar('conversion_action_id', { length: 64 }).notNull(),
+  gclid: varchar('gclid', { length: 512 }),
+  gbraid: varchar('gbraid', { length: 512 }),
+  wbraid: varchar('wbraid', { length: 512 }),
+  value: real('value'),
+  currency: varchar('currency', { length: 8 }).default('USD'),
+  status: varchar('status', { length: 24 }).notNull(),
+  errorMessage: text('error_message'),
+  rawResponse: jsonb('raw_response'),
+}, (table) => ({
+  clerkUserIdx: index('conversion_log_clerk_user_idx').on(table.clerkUserId),
+  statusIdx: index('conversion_log_status_idx').on(table.status),
+  createdAtIdx: index('conversion_log_created_at_idx').on(table.createdAt),
+}));

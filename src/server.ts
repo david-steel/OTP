@@ -7,6 +7,7 @@ import fastifyCookie from '@fastify/cookie';
 import { clerkPlugin } from '@clerk/fastify';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { gclidCaptureHook } from './middleware/gclid-capture.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,6 +26,13 @@ await app.register(fastifyRateLimit, {
 await app.register(fastifyCookie, {
   secret: process.env.IMPERSONATION_SECRET || process.env.CLERK_SECRET_KEY || 'dev-cookie-secret',
 });
+
+// Capture Google Ads click identifiers (gclid/gbraid/wbraid) from
+// landing URLs into 90-day cookies. Required for server-side SIGNUP
+// conversions fired from /onboarding/profile -- see
+// src/middleware/gclid-capture.ts and src/lib/google-ads-conversions.ts.
+// Registered after @fastify/cookie so reply.setCookie is available.
+app.addHook('onRequest', gclidCaptureHook);
 
 // Accept application/x-www-form-urlencoded bodies for plain HTML form posts
 // (impersonation buttons, /l8/create form, accept-invite, etc). Fastify
@@ -742,6 +750,14 @@ try {
   app.log.info('partner_signups table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensurePartnerSignupsTable failed -- /partners and /admin/partners may 500 until resolved');
+}
+
+try {
+  const { ensureConversionLogTable } = await import('./db/ensure-conversion-log.js');
+  await ensureConversionLogTable();
+  app.log.info('conversion_log table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureConversionLogTable failed -- Google Ads server-side conversions will fail to log until resolved');
 }
 
 try {
