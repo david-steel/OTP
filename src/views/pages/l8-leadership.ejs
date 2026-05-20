@@ -756,12 +756,30 @@
     // DELETE/GET with Content-Type:application/json and an empty body
     // (FST_ERR_CTP_EMPTY_JSON_BODY).
     if (hasBody) headers['Content-Type'] = 'application/json';
+    // Hard 30s timeout so a hanging request never leaves a Saving... button
+    // stuck on screen during a slow deploy.
+    const ctl = new AbortController();
+    const timer = setTimeout(function () { ctl.abort(); }, 30000);
     return fetch('/api/v1' + withOrg(path), {
       method: 'GET',
       credentials: 'include',
       ...opts,
       headers,
-    }).then(r => r.json());
+      signal: ctl.signal,
+    }).then(async function (r) {
+      // Always try to parse JSON, even on error responses (server errors come
+      // back as { error: {...} } JSON). Fall back to the HTTP status.
+      let parsed = null;
+      try { parsed = await r.json(); } catch (e) { parsed = null; }
+      if (!r.ok) {
+        if (parsed && parsed.error) return parsed;
+        return { error: { code: 'HTTP_' + r.status, message: (parsed && parsed.message) || r.statusText || ('HTTP ' + r.status) } };
+      }
+      return parsed === null ? { ok: true } : parsed;
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return { error: { code: 'TIMEOUT', message: 'Request timed out after 30s.' } };
+      return { error: { code: 'NETWORK', message: (err && err.message) || 'network error' } };
+    }).finally(function () { clearTimeout(timer); });
   };
   function errMsg(res) {
     // Normalize both shapes: my own {error:{code,message}} and Fastify's {error,message,statusCode}.

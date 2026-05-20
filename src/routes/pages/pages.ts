@@ -5703,6 +5703,100 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // If _member is null, the requester is the legacy founder who got past
     // l8ResolveOrg via clerkOrgId === auth.userId. They retain full access.
 
+    // Lazy-populate attendees if the meeting was created with an empty list
+    // (the /l8/create form route inserts attendees:[]). Mirrors the API
+    // POST /meetings auto-populate so the quick-create path produces a
+    // working meeting: humans from the team, agents reporting under them,
+    // and the requester themselves as a final fallback so there is always
+    // at least one rateable human in the room.
+    if (!Array.isArray(meeting.attendees) || (meeting.attendees as any[]).length === 0) {
+      const _auth = getAuth(request);
+      let resolvedAttendees: any[] = [];
+      if (meeting.teamId) {
+        const teamHumans = await db
+          .select({
+            memberId: orgMembers.id,
+            displayName: orgMembers.displayName,
+            email: orgMembers.email,
+            role: orgMembers.role,
+            claimedEntityIds: orgMembers.claimedEntityIds,
+          })
+          .from(teamMemberships)
+          .innerJoin(orgMembers, eq(teamMemberships.memberId, orgMembers.id))
+          .where(eq(teamMemberships.teamId, meeting.teamId));
+        const humanTileIds: string[] = [];
+        for (const h of teamHumans) {
+          const tiles = (h.claimedEntityIds as string[] | null) || [];
+          for (const t of tiles) if (t) humanTileIds.push(t);
+          resolvedAttendees.push({
+            type: 'human',
+            memberId: h.memberId,
+            name: h.displayName || h.email || 'member',
+            externalIds: tiles,
+            role: h.role,
+          });
+        }
+        if (humanTileIds.length > 0) {
+          try {
+            const { getOrgTeamGraph: _getGraph } = await import('../../services/team-graph.js');
+            const _graph = await _getGraph(org.id, '');
+            const _visited = new Set<string>(humanTileIds);
+            const _queue = [...humanTileIds];
+            while (_queue.length > 0) {
+              const _node = _queue.shift()!;
+              for (const _edge of _graph.edges) {
+                if (_edge.type !== 'reports_to') continue;
+                if (_edge.targetId === _node && !_visited.has(_edge.sourceId)) {
+                  _visited.add(_edge.sourceId);
+                  _queue.push(_edge.sourceId);
+                }
+              }
+            }
+            for (const _n of _graph.nodes) {
+              if (_n.type === 'agent' && _visited.has(_n.externalId)) {
+                resolvedAttendees.push({ type: 'agent', externalId: _n.externalId, name: _n.label });
+              }
+            }
+          } catch { /* chart unavailable -- humans only */ }
+        }
+      }
+      // Fallback: meeting has no team, or the team has no humans (founder
+      // path). Add the requester so the meeting always has at least one
+      // rateable human.
+      if (resolvedAttendees.length === 0 && _auth.userId) {
+        const [_self] = await db.select({
+          id: orgMembers.id, displayName: orgMembers.displayName, email: orgMembers.email,
+          role: orgMembers.role, claimedEntityIds: orgMembers.claimedEntityIds,
+        }).from(orgMembers)
+          .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, _auth.userId)))
+          .limit(1);
+        if (_self) {
+          resolvedAttendees.push({
+            type: 'human',
+            memberId: _self.id,
+            name: _self.displayName || _self.email || 'You',
+            externalIds: (_self.claimedEntityIds as string[] | null) || [],
+            role: _self.role,
+          });
+        } else {
+          // Founder path: no org_members row. Minimal placeholder so the
+          // rating section still works; the editor can replace this later.
+          resolvedAttendees.push({
+            type: 'human',
+            externalId: 'user:' + _auth.userId,
+            memberId: _auth.userId,
+            name: 'You',
+          });
+        }
+      }
+      if (resolvedAttendees.length > 0) {
+        await db.update(meetings)
+          .set({ attendees: resolvedAttendees, updatedAt: new Date() })
+          .where(eq(meetings.id, meeting.id));
+        meeting.attendees = resolvedAttendees as any;
+      }
+    }
+
     // Build agenda data scoped to THIS meeting's team. KPIs / Rocks / Issues
     // all filter strictly by meeting.team_id so private teams (e.g. "David
     // x Dan") don't leak into Leadership L10s and vice versa.
@@ -5792,10 +5886,31 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // chart, with isAttendee flag for the UI to badge the in-room subset.
     const { getOrgTeamGraph } = await import('../../services/team-graph.js');
     const teamGraph = await getOrgTeamGraph(org.id, org.name);
-    const attendeeKeys = new Set<string>(
-      ((meeting.attendees || []) as Array<{ entityType: string; externalId: string }>)
-        .map((a) => `${a.entityType}:${a.externalId}`)
-    );
+    // Build attendee keys from every shape an attendee row can take. The
+    // auto-populate uses { type:'human', memberId, externalIds:[...] } while
+    // the editor uses { entityType, externalId }. Match against all of them
+    // so chart nodes light up as "in room" whether they were claimed via a
+    // chart tile, added by memberId, or added directly by externalId.
+    const attendeeKeys = new Set<string>();
+    for (const _a of ((meeting.attendees || []) as Array<Record<string, unknown>>)) {
+      if (!_a) continue;
+      const _t = (typeof _a.entityType === 'string' && _a.entityType)
+        || (typeof _a.type === 'string' && _a.type)
+        || '';
+      if (!_t) continue;
+      if (typeof _a.externalId === 'string' && _a.externalId) {
+        attendeeKeys.add(`${_t}:${_a.externalId}`);
+      }
+      const _xids = (_a as any).externalIds;
+      if (Array.isArray(_xids)) {
+        for (const _x of _xids) {
+          if (typeof _x === 'string' && _x) attendeeKeys.add(`${_t}:${_x}`);
+        }
+      }
+      if (typeof (_a as any).memberId === 'string' && (_a as any).memberId) {
+        attendeeKeys.add(`${_t}:${(_a as any).memberId}`);
+      }
+    }
     const availableOwners = teamGraph.nodes
       .filter((n) => n.type === 'agent' || n.type === 'human')
       .map((n) => ({
