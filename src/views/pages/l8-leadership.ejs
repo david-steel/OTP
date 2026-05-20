@@ -48,7 +48,14 @@
       const entityType = a.entityType || a.type;
       const externalId = a.externalId || (Array.isArray(a.externalIds) && a.externalIds[0]) || a.memberId || '';
       const name = a.name || a.externalId || '';
-      return { entityType: entityType, externalId: externalId, name: name };
+      return {
+        entityType: entityType,
+        externalId: externalId,
+        name: name,
+        memberId: a.memberId || '',
+        checkinText: a.checkinText || '',
+        checkinAt: a.checkinAt || null,
+      };
     }).filter(function(a) { return !!a.externalId; });
     const attendeeKeys = {};
     normalizedAttendees.forEach(function(a) { attendeeKeys[a.entityType + ':' + a.externalId] = true; });
@@ -174,11 +181,54 @@
     <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Next section  (  ]  )  ·  space toggles the timer">Next →</button>
   </nav>
 
-  <!-- 1. Segue -->
+  <!-- 1. Segue / Check-in -- one card per attendee, saves with name + time -->
   <section id="segue" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal &amp; business best from each attendee</span></h2>
-    <textarea id="segue-notes" class="w-full border rounded p-3 text-sm h-24" placeholder="One personal best, one business best from each attendee..."><%= meeting.segueNotes || '' %></textarea>
-    <button data-save="segueNotes" class="mt-2 text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
+    <h2 class="text-xl font-bold mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span></h2>
+    <% var _checkinsDone = normalizedAttendees.filter(function(a){ return a.checkinText && String(a.checkinText).trim(); }).length; %>
+    <div class="text-xs text-gray-500 mb-2"><%= _checkinsDone %> of <%= normalizedAttendees.length %> checked in</div>
+    <div class="space-y-2">
+      <% if (normalizedAttendees.length === 0) { %>
+        <div class="text-sm text-gray-500 italic">No attendees yet -- add some in the panel above so each can check in.</div>
+      <% } %>
+      <% normalizedAttendees.forEach(function(a){
+           var ckey = a.externalId || a.memberId || '';
+           var hasCheckin = a.checkinText && String(a.checkinText).trim() !== '';
+           var badgeClass = a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+      %>
+        <div class="border rounded-lg p-3" data-checkin-attendee="<%= ckey %>">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs px-2 py-0.5 rounded-full <%= badgeClass %>"><%= a.name || a.externalId %></span>
+            <% if (hasCheckin) { %>
+              <span class="text-xs text-emerald-700 font-medium">&#10003; checked in<% if (a.checkinAt) { %> &middot; <%= new Date(a.checkinAt).toLocaleString() %><% } %></span>
+            <% } else { %>
+              <span class="text-xs text-gray-400">not yet checked in</span>
+            <% } %>
+          </div>
+          <% if (hasCheckin) { %>
+            <div data-checkin-display>
+              <div class="text-sm text-gray-800 whitespace-pre-wrap mb-2"><%= a.checkinText %></div>
+              <button type="button" class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" data-checkin-edit>Edit</button>
+            </div>
+            <div data-checkin-editor class="hidden">
+              <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."><%= a.checkinText || '' %></textarea>
+              <div class="flex gap-2 mt-2 items-center">
+                <button type="button" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400" data-checkin-save>Save</button>
+                <button type="button" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" data-checkin-cancel>Cancel</button>
+                <span class="text-xs text-gray-500" data-checkin-msg></span>
+              </div>
+            </div>
+          <% } else { %>
+            <div data-checkin-editor>
+              <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."></textarea>
+              <div class="flex gap-2 mt-2 items-center">
+                <button type="button" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400" data-checkin-save>Save</button>
+                <span class="text-xs text-gray-500" data-checkin-msg></span>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
   </section>
 
   <!-- 2. Scorecard -->
@@ -801,16 +851,29 @@
   // scroll position first and restoreScroll() puts it back on load, so a live
   // meeting on a shared screen does not jump to the top on every change.
   const SCROLL_KEY = 'otp-l8-scroll-' + meetingId;
+  const FOCUS_KEY = 'otp-l8-focus-' + meetingId;
   function reloadKeep() {
     try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch (e) {}
+    try {
+      const ae = document.activeElement;
+      if (ae && ae.id) sessionStorage.setItem(FOCUS_KEY, ae.id);
+    } catch (e) {}
     window.location.assign(window.location.href);
   }
-  (function restoreScroll() {
+  (function restoreScrollAndFocus() {
     try {
       const y = sessionStorage.getItem(SCROLL_KEY);
       if (y !== null) {
         sessionStorage.removeItem(SCROLL_KEY);
         window.requestAnimationFrame(function () { window.scrollTo(0, parseInt(y, 10) || 0); });
+      }
+      const fid = sessionStorage.getItem(FOCUS_KEY);
+      if (fid) {
+        sessionStorage.removeItem(FOCUS_KEY);
+        window.requestAnimationFrame(function () {
+          const el = document.getElementById(fid);
+          if (el && typeof el.focus === 'function') el.focus();
+        });
       }
     } catch (e) {}
   })();
@@ -984,6 +1047,55 @@
       await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
       btn.textContent = 'Saved';
       setTimeout(() => btn.textContent = 'Save', 1500);
+    });
+  });
+
+  // ===== Per-attendee check-in (Segue) =====
+  // Each attendee card has its own input + Save. Saving writes that
+  // attendee's checkinText + checkinAt onto the entry in meeting.attendees
+  // (matched by externalId, externalIds[*], or memberId) and reloads.
+  document.querySelectorAll('[data-checkin-attendee]').forEach(function(card) {
+    const key = card.getAttribute('data-checkin-attendee');
+    const editor = card.querySelector('[data-checkin-editor]');
+    const display = card.querySelector('[data-checkin-display]');
+    const input = card.querySelector('[data-checkin-input]');
+    const saveBtn = card.querySelector('[data-checkin-save]');
+    const editBtn = card.querySelector('[data-checkin-edit]');
+    const cancelBtn = card.querySelector('[data-checkin-cancel]');
+    const msgEl = card.querySelector('[data-checkin-msg]');
+
+    if (editBtn) editBtn.addEventListener('click', function() {
+      if (display) display.classList.add('hidden');
+      if (editor) editor.classList.remove('hidden');
+      if (input) input.focus();
+    });
+    if (cancelBtn) cancelBtn.addEventListener('click', function() {
+      if (editor) editor.classList.add('hidden');
+      if (display) display.classList.remove('hidden');
+      if (msgEl) msgEl.textContent = '';
+    });
+    if (saveBtn) saveBtn.addEventListener('click', async function() {
+      const text = ((input && input.value) || '').trim();
+      if (msgEl) { msgEl.textContent = 'Saving...'; msgEl.className = 'text-xs text-gray-500'; }
+      saveBtn.disabled = true;
+      const nowIso = new Date().toISOString();
+      const newAttendees = (attendees || []).map(function(a) {
+        if (!a) return a;
+        const aKey = a.externalId || a.memberId || '';
+        const inExternalIds = Array.isArray(a.externalIds) && a.externalIds.indexOf(key) !== -1;
+        if (aKey === key || inExternalIds || a.memberId === key) {
+          return Object.assign({}, a, { checkinText: text, checkinAt: nowIso });
+        }
+        return a;
+      });
+      const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees: newAttendees }) });
+      saveBtn.disabled = false;
+      if (res && res.error) {
+        if (msgEl) { msgEl.textContent = 'Error: ' + errMsg(res); msgEl.className = 'text-xs text-red-600'; }
+        return;
+      }
+      attendees = newAttendees;
+      reloadKeep();
     });
   });
 

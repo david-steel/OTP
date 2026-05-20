@@ -33,7 +33,11 @@ const updateMeetingSchema = z.object({
   meetingType: z.string().max(60).optional(),
   status: z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']).optional(),
   scheduledAt: z.string().datetime().optional(),
-  attendees: z.array(attendeeSchema).optional(),
+  // Relaxed for the per-attendee check-in feature: attendee rows now carry
+  // extra fields (checkinText, checkinAt, memberId, externalIds[], type)
+  // that the strict attendeeSchema does not allow. The frontend manages the
+  // shape; the column is jsonb, so we accept any object.
+  attendees: z.array(z.record(z.string(), z.unknown())).optional(),
   segueNotes: z.string().optional(),
   headlines: z.string().optional(),
   cascadingMessage: z.string().optional(),

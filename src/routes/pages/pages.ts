@@ -5797,6 +5797,61 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       }
     }
 
+    // Ensure the requester is in the attendees list even when the meeting
+    // already had entries. Catches the "Dan was auto-added but David
+    // wasn't" pattern, and the founder path where the auto-populate ran
+    // but didn't include the viewer.
+    {
+      const _ensureAuth = getAuth(request);
+      if (_ensureAuth.userId) {
+        const _currentList: any[] = Array.isArray(meeting.attendees) ? [...(meeting.attendees as any[])] : [];
+        const [_self2] = await db.select({
+          id: orgMembers.id,
+          displayName: orgMembers.displayName,
+          email: orgMembers.email,
+          role: orgMembers.role,
+          claimedEntityIds: orgMembers.claimedEntityIds,
+        }).from(orgMembers)
+          .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, _ensureAuth.userId)))
+          .limit(1);
+        const _selfTiles2: string[] = _self2 ? (((_self2.claimedEntityIds as string[] | null) || [])) : [];
+        const _alreadyIn = _currentList.some((a: any) => {
+          if (!a) return false;
+          if (_self2 && typeof a.memberId === 'string' && a.memberId === _self2.id) return true;
+          if (typeof a.memberId === 'string' && a.memberId === _ensureAuth.userId) return true;
+          if (Array.isArray(a.externalIds)) {
+            for (const _x of a.externalIds) {
+              if (typeof _x === 'string' && _selfTiles2.includes(_x)) return true;
+            }
+          }
+          if (typeof a.externalId === 'string' && _selfTiles2.includes(a.externalId)) return true;
+          return false;
+        });
+        if (!_alreadyIn) {
+          if (_self2) {
+            _currentList.push({
+              type: 'human',
+              memberId: _self2.id,
+              name: _self2.displayName || _self2.email || 'You',
+              externalIds: _selfTiles2,
+              role: _self2.role,
+            });
+          } else {
+            _currentList.push({
+              type: 'human',
+              externalId: 'user:' + _ensureAuth.userId,
+              memberId: _ensureAuth.userId,
+              name: 'You',
+            });
+          }
+          await db.update(meetings)
+            .set({ attendees: _currentList, updatedAt: new Date() })
+            .where(eq(meetings.id, meeting.id));
+          meeting.attendees = _currentList as any;
+        }
+      }
+    }
+
     // Build agenda data scoped to THIS meeting's team. KPIs / Rocks / Issues
     // all filter strictly by meeting.team_id so private teams (e.g. "David
     // x Dan") don't leak into Leadership L10s and vice versa.
