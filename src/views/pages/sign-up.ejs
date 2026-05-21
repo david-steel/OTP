@@ -102,8 +102,7 @@
           <noscript>
             <div class="text-center py-6">
               <p class="text-[14px] text-[var(--ink)] mb-2 font-semibold">JavaScript is required to create an account.</p>
-              <p class="text-[13px] text-[var(--ink-soft)]">Enable JavaScript and reload, or email
-                <a href="mailto:dsteel@sneeze.it" class="text-[var(--blue)] underline">dsteel@sneeze.it</a> and we'll create your account by hand.</p>
+              <p class="text-[13px] text-[var(--ink-soft)]">Enable JavaScript in your browser and reload this page.</p>
             </div>
           </noscript>
         </div>
@@ -147,7 +146,6 @@
           <div class="space-y-2 text-[12px]" style="color:var(--ink-soft);">
             <p>Authentication by <strong class="text-[var(--ink)]">Clerk</strong> (SOC 2 Type II).</p>
             <p>No card required during beta. Cancel anytime.</p>
-            <p>Questions? <a href="mailto:dsteel@sneeze.it" class="text-[var(--ink)] underline underline-offset-2">dsteel@sneeze.it</a></p>
           </div>
         </div>
       </aside>
@@ -165,7 +163,11 @@
       }
       var slot = document.getElementById('clerk-sign-up');
       if (!slot) return;
-      // Clerk replaces slot.innerHTML on mount, blowing away the skeleton.
+      // Clerk's mountSignUp APPENDS to the slot, it does not clear children.
+      // Wipe the skeleton ourselves first so it does not stack above the
+      // Clerk widget (caught 2026-05-21 by David in a real preview).
+      slot.innerHTML = '';
+      slot.classList.remove('min-h-[440px]'); // let Clerk size itself
       window.Clerk.mountSignUp(slot, {
         afterSignInUrl: '/dashboard',
         afterSignUpUrl: '/onboarding/profile',
