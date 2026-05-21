@@ -4100,14 +4100,18 @@ Founder, OTP</p>
 
   // Dashboard -- requires auth, shows registration if no org
   // Sign in -- v7-styled returning-user landing. Same minimal-nav +
-  // brand-themed Clerk pattern as /sign-up, but trimmed: just hero +
-  // form (returning users want speed, no value bullets or sidebar
-  // earn their place here). Hero subhead is the locked OTP thesis so
-  // a lapsed user remembers what they're back for. Description copy
-  // updated 2026-05-21 -- old "publish OOS files, explore best
-  // practices" framing contradicted the locked operator positioning
-  // (project_otp_positioning_wedge memory).
+  // brand-themed Clerk pattern as /sign-up, plus a "What's New" sidebar
+  // pulling the latest changelog entry so returning users see motion
+  // ("oh, OTP shipped X this week") instead of a thin form-only page.
+  // Description copy updated 2026-05-21 -- old "publish OOS files,
+  // explore best practices" framing contradicted the locked operator
+  // positioning (project_otp_positioning_wedge memory).
   app.get('/sign-in', async (_request, reply) => {
+    // changelog is reverse-chronological, so [0] is the latest entry.
+    // Same data source the /whats-new page reads from -- single source
+    // of truth, auto-updates here when product ships.
+    const { changelog } = await import('../../data/changelog.js');
+    const latestUpdate = changelog[0] || null;
     return renderV7(reply, 'sign-in', {
       title: 'Sign in - OTP',
       description: 'Sign in to OTP, the operating platform where your people and AI agents run as one team.',
@@ -4120,6 +4124,7 @@ Founder, OTP</p>
       navVariant: 'minimal',
       navAltLabel: 'Create account',
       navAltHref: '/sign-up',
+      latestUpdate,
     });
   });
 

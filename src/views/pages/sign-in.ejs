@@ -29,7 +29,7 @@
 
 <!-- ================= HERO ================= -->
 <section class="bg-[var(--white)]">
-  <div class="max-w-[640px] mx-auto px-6 pt-[104px] pb-8 sm:pt-[128px] sm:pb-10 text-center">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[104px] pb-8 sm:pt-[128px] sm:pb-10 text-center">
     <h1 class="font-display text-[var(--ink)]"
         style="font-size:clamp(2rem,4.4vw,3.1rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
       Welcome back.
@@ -40,31 +40,78 @@
   </div>
 </section>
 
-<!-- ================= FORM ================= -->
+<!-- ================= FORM + WHAT'S NEW ================= -->
 <section class="bg-[var(--white)] pb-20">
-  <div class="max-w-[440px] mx-auto px-6">
-    <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 sm:p-8" style="box-shadow:0 1px 2px rgba(20,22,28,0.04), 0 12px 32px rgba(20,22,28,0.05);">
-      <div id="clerk-sign-in" class="min-h-[360px]">
-        <div class="si-skel">
-          <div class="si-skel-input"></div>
-          <div class="si-skel-input"></div>
-          <div class="si-skel-row" style="width:60%; height:2.4rem; margin-top:1.4rem;"></div>
+  <div class="max-w-[1080px] mx-auto px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 lg:gap-14 items-start">
+
+      <!-- LEFT: Clerk SignIn form -->
+      <div>
+        <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 sm:p-8" style="box-shadow:0 1px 2px rgba(20,22,28,0.04), 0 12px 32px rgba(20,22,28,0.05);">
+          <div id="clerk-sign-in" class="min-h-[360px]">
+            <div class="si-skel">
+              <div class="si-skel-input"></div>
+              <div class="si-skel-input"></div>
+              <div class="si-skel-row" style="width:60%; height:2.4rem; margin-top:1.4rem;"></div>
+            </div>
+            <p class="text-center text-[12px] mt-6" style="color:var(--ink-mute);">Loading secure sign-in…</p>
+          </div>
+
+          <noscript>
+            <div class="text-center py-6">
+              <p class="text-[14px] text-[var(--ink)] mb-2 font-semibold">JavaScript is required to sign in.</p>
+              <p class="text-[13px] text-[var(--ink-soft)]">Enable JavaScript in your browser and reload this page.</p>
+            </div>
+          </noscript>
         </div>
-        <p class="text-center text-[12px] mt-6" style="color:var(--ink-mute);">Loading secure sign-in…</p>
+
+        <p class="text-center text-[13px] mt-5" style="color:var(--ink-soft);">
+          New to OTP?
+          <a href="/sign-up" class="text-[var(--ink)] underline underline-offset-2 hover:text-[var(--blue)] transition-colors">Create an account</a>.
+        </p>
       </div>
 
-      <noscript>
-        <div class="text-center py-6">
-          <p class="text-[14px] text-[var(--ink)] mb-2 font-semibold">JavaScript is required to sign in.</p>
-          <p class="text-[13px] text-[var(--ink-soft)]">Enable JavaScript in your browser and reload this page.</p>
-        </div>
-      </noscript>
-    </div>
+      <!-- RIGHT: "What's New" -- latest changelog entry, auto-updates from
+           data/changelog.ts (same source /whats-new reads). Mono date +
+           tag chips reinforce the operator vibe; summary clamps to 4
+           lines to keep the tile from dominating the form on tall views. -->
+      <aside>
+        <% if (typeof latestUpdate !== 'undefined' && latestUpdate) {
+          var _d = new Date(latestUpdate.date);
+          var _dateLabel = _d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        %>
+        <div class="rounded-2xl border border-[var(--line-soft)] p-6 sm:p-7" style="background:#fbfaf5;">
+          <div class="flex items-baseline justify-between gap-3 mb-3">
+            <p class="eyebrow">What's new</p>
+            <span class="font-mono text-[11px]" style="color:var(--ink-mute);"><%= _dateLabel %></span>
+          </div>
 
-    <p class="text-center text-[13px] mt-5" style="color:var(--ink-soft);">
-      New to OTP?
-      <a href="/sign-up" class="text-[var(--ink)] underline underline-offset-2 hover:text-[var(--blue)] transition-colors">Create an account</a>.
-    </p>
+          <% if (Array.isArray(latestUpdate.tags) && latestUpdate.tags.length > 0) { %>
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <% latestUpdate.tags.slice(0, 3).forEach(function(t) { %>
+                <span class="font-mono text-[10px] px-2 py-0.5 rounded-full" style="background:var(--white);border:1px solid var(--line-soft);color:var(--ink-soft);letter-spacing:.05em;text-transform:uppercase;"><%= t %></span>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <p class="text-[15px] font-semibold text-[var(--ink)] leading-snug mb-2" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+            <%= latestUpdate.title %>
+          </p>
+
+          <% if (latestUpdate.summary) { %>
+            <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">
+              <%= latestUpdate.summary %>
+            </p>
+          <% } %>
+
+          <a href="/whats-new" class="inline-flex items-center gap-1 mt-4 text-[12px] font-semibold" style="color:var(--blue);">
+            Read all updates
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+        <% } %>
+      </aside>
+    </div>
   </div>
 </section>
 
