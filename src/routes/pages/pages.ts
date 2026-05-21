@@ -4099,12 +4099,27 @@ Founder, OTP</p>
   });
 
   // Dashboard -- requires auth, shows registration if no org
-  // Sign In page
-  app.get('/sign-in', async (request, reply) => {
-    return reply.view('pages/sign-in', {
-      title: 'Sign In - OTP',
-      description: 'Sign in to access your OTP dashboard, publish OOS files, and explore best practices.',
+  // Sign in -- v7-styled returning-user landing. Same minimal-nav +
+  // brand-themed Clerk pattern as /sign-up, but trimmed: just hero +
+  // form (returning users want speed, no value bullets or sidebar
+  // earn their place here). Hero subhead is the locked OTP thesis so
+  // a lapsed user remembers what they're back for. Description copy
+  // updated 2026-05-21 -- old "publish OOS files, explore best
+  // practices" framing contradicted the locked operator positioning
+  // (project_otp_positioning_wedge memory).
+  app.get('/sign-in', async (_request, reply) => {
+    return renderV7(reply, 'sign-in', {
+      title: 'Sign in - OTP',
+      description: 'Sign in to OTP, the operating platform where your people and AI agents run as one team.',
+      canonical: BASE_URL + '/sign-in',
       noindex: true,
+      loadClerk: true,
+      // Conversion-page nav: [OTP] logo + Create account (sends new users
+      // to /sign-up, since they're already on /sign-in). Strips Protocol/
+      // Pricing/Browse/What's New/Get started. One funnel.
+      navVariant: 'minimal',
+      navAltLabel: 'Create account',
+      navAltHref: '/sign-up',
     });
   });
 

@@ -1,10 +1,72 @@
-<div class="max-w-md mx-auto px-4 py-16">
-  <div class="text-center mb-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Sign in to OTP</h1>
-    <p class="text-gray-500 text-sm">Access your dashboard, publish OOS files, and explore best practices.</p>
+<%# /sign-in -- v7-styled returning-user landing. Mirrors /sign-up's
+   minimal-nav + brand-themed Clerk pattern but for returning users.
+   Hero is shorter (no value bullets, no "What happens next" sidebar --
+   returning users want SPEED, the form is the whole job). The thesis
+   subhead reinforces what OTP is in one line so a lapsed user remembers
+   why they're back. All the existing redirect/satellite logic is
+   preserved verbatim below. %>
+<style>
+  /* Loading skeleton (replaced by Clerk when mountSignIn runs) */
+  @keyframes si-shimmer { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+  .si-skel-row { height: 0.95rem; background: var(--line-soft); border-radius: 6px; }
+  .si-skel-row + .si-skel-row { margin-top: 0.75rem; }
+  .si-skel-input { height: 2.6rem; background: var(--line-soft); border-radius: 10px; }
+  .si-skel-input + .si-skel-input { margin-top: 0.75rem; }
+  .si-skel { animation: si-shimmer 1.6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .si-skel { animation: none; } }
+
+  /* Soften Clerk's default card chrome so it sits flat inside our v7 card */
+  #clerk-sign-in .cl-rootBox,
+  #clerk-sign-in .cl-card {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[640px] mx-auto px-6 pt-[104px] pb-8 sm:pt-[128px] sm:pb-10 text-center">
+    <h1 class="font-display text-[var(--ink)]"
+        style="font-size:clamp(2rem,4.4vw,3.1rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+      Welcome back.
+    </h1>
+    <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-4">
+      The operating platform where your people and AI agents run as one team.
+    </p>
   </div>
-  <div id="clerk-sign-in" class="flex justify-center"></div>
-</div>
+</section>
+
+<!-- ================= FORM ================= -->
+<section class="bg-[var(--white)] pb-20">
+  <div class="max-w-[440px] mx-auto px-6">
+    <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 sm:p-8" style="box-shadow:0 1px 2px rgba(20,22,28,0.04), 0 12px 32px rgba(20,22,28,0.05);">
+      <div id="clerk-sign-in" class="min-h-[360px]">
+        <div class="si-skel">
+          <div class="si-skel-input"></div>
+          <div class="si-skel-input"></div>
+          <div class="si-skel-row" style="width:60%; height:2.4rem; margin-top:1.4rem;"></div>
+        </div>
+        <p class="text-center text-[12px] mt-6" style="color:var(--ink-mute);">Loading secure sign-in…</p>
+      </div>
+
+      <noscript>
+        <div class="text-center py-6">
+          <p class="text-[14px] text-[var(--ink)] mb-2 font-semibold">JavaScript is required to sign in.</p>
+          <p class="text-[13px] text-[var(--ink-soft)]">Enable JavaScript in your browser and reload this page.</p>
+        </div>
+      </noscript>
+    </div>
+
+    <p class="text-center text-[13px] mt-5" style="color:var(--ink-soft);">
+      New to OTP?
+      <a href="/sign-up" class="text-[var(--ink)] underline underline-offset-2 hover:text-[var(--blue)] transition-colors">Create an account</a>.
+    </p>
+  </div>
+</section>
 
 <script>
   // Trusted satellite domains that may receive cross-domain post-sign-in
@@ -48,15 +110,54 @@
         window.location.href = returnUrl;
         return;
       }
-      window.Clerk.mountSignIn(document.getElementById('clerk-sign-in'), {
+      var slot = document.getElementById('clerk-sign-in');
+      if (!slot) return;
+      // Clerk's mountSignIn APPENDS to the slot, it does not clear children.
+      // Wipe the skeleton ourselves first so it does not stack above the
+      // Clerk widget (same fix as /sign-up).
+      slot.innerHTML = '';
+      slot.classList.remove('min-h-[360px]'); // let Clerk size itself
+      window.Clerk.mountSignIn(slot, {
         afterSignInUrl: returnUrl,
         afterSignUpUrl: '/register',
+        // Theme the widget to the OTP v7 brand: orgy-green primary button on
+        // dark ink text, Inter font, 10px radius. Hide Clerk's duplicate
+        // "Sign in to OTP" header since our page H1 already says it.
+        appearance: {
+          variables: {
+            colorPrimary: '#bdd622',
+            colorText: '#14161c',
+            colorTextOnPrimaryBackground: '#14161c',
+            colorBackground: '#ffffff',
+            colorInputBackground: '#ffffff',
+            colorInputText: '#14161c',
+            borderRadius: '10px',
+            fontFamily: 'Inter, sans-serif',
+          },
+          elements: {
+            rootBox: { width: '100%' },
+            card: { boxShadow: 'none', border: '0', padding: '0', background: 'transparent' },
+            header: { display: 'none' },
+            headerTitle: { display: 'none' },
+            headerSubtitle: { display: 'none' },
+            formButtonPrimary: {
+              backgroundColor: '#bdd622',
+              color: '#14161c',
+              fontWeight: '700',
+              textTransform: 'none',
+            },
+            footer: { display: 'none' }, // hides "Secured by Clerk" footer
+          },
+        },
       });
     }).catch(function() {
-      document.getElementById('clerk-sign-in').innerHTML =
-        '<div class="text-center py-8">' +
-        '<p class="text-gray-500 text-sm mb-4">Authentication is loading...</p>' +
-        '<button onclick="location.reload()" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm hover:bg-otp-400">Retry</button>' +
+      var slot = document.getElementById('clerk-sign-in');
+      if (!slot) return;
+      slot.innerHTML =
+        '<div style="text-align:center; padding:2.5rem 0;">' +
+          '<p style="font-size:14px; color:var(--ink); margin-bottom:0.75rem; font-weight:600;">Sign-in didn\'t load.</p>' +
+          '<p style="font-size:13px; color:var(--ink-soft); margin-bottom:1rem;">This is usually a browser extension or ad blocker.</p>' +
+          '<button onclick="location.reload()" class="btn-primary" style="padding:0.55rem 1.25rem; font-size:13px;">Retry</button>' +
         '</div>';
     });
   })();

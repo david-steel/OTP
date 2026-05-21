@@ -1,14 +1,23 @@
-<%# v7 minimal nav -- conversion pages only (/sign-up, /sign-in).
-   Strips Protocol / Pricing / Browse / What's New / Get started so the
-   user has nowhere to click that ISN'T the form. Keeps [OTP] logo as the
-   only home link and Sign in for returning users on /sign-up.
-   Pass navVariant: 'minimal' from the route to opt in. %>
+<%# v7 minimal nav -- conversion pages only (/sign-up, /sign-in,
+   /accept-invite). Strips Protocol / Pricing / Browse / What's New /
+   Get started so the user has nowhere to click that ISN'T the form.
+   Keeps [OTP] logo (home link) and one alternate-action link.
+
+   Pass from the route:
+     navVariant: 'minimal'
+     navAltLabel: 'Sign in' | 'Create account' | etc  (default: 'Sign in')
+     navAltHref:  '/sign-in' | '/sign-up' | etc        (default: '/sign-in')
+%>
+<%
+  var _altLabel = (typeof navAltLabel !== 'undefined' && navAltLabel) ? navAltLabel : 'Sign in';
+  var _altHref  = (typeof navAltHref  !== 'undefined' && navAltHref)  ? navAltHref  : '/sign-in';
+%>
 <nav class="fixed top-0 inset-x-0 z-50 bg-[var(--white)]/90 backdrop-blur-md border-b border-[var(--line-soft)]">
   <div class="max-w-[1180px] mx-auto px-6 h-[64px] flex items-center justify-between">
     <a href="/" class="flex items-baseline gap-2.5">
       <span class="font-mono font-semibold text-[18px] tracking-tight"><span class="text-[var(--blue)]">[</span><span class="text-[var(--ink)]">OTP</span><span class="text-[var(--blue)]">]</span></span>
       <span class="eyebrow text-[9px] hidden sm:inline">Organization&nbsp;Transport&nbsp;Protocol</span>
     </a>
-    <a href="/sign-in" class="text-[14px] text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors">Sign in</a>
+    <a href="<%= _altHref %>" class="text-[14px] text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors"><%= _altLabel %></a>
   </div>
 </nav>
