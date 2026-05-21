@@ -1855,6 +1855,21 @@ export default async function pageRoutes(app: FastifyInstance) {
       ORDER BY published_at DESC NULLS LAST
       LIMIT 5
     `);
+    // Total real publishers all-time -- powers the "FOUNDING-50 X OF 50
+    // CLAIMED" counter in the proof strip. Same seed blocklist as the
+    // recent-rows query but NO 8-week filter, so the count is the true
+    // scarcity number across all time. Counter does the scarcity work,
+    // recent rows do the freshness work.
+    const claimedRow = await db.execute(sql`
+      SELECT COUNT(DISTINCT o.id)::int AS n
+      FROM oos_files f
+      JOIN organizations o ON f.org_id = o.id
+      WHERE f.status = 'published'
+        AND (o.clerk_org_id IS NULL OR o.clerk_org_id NOT LIKE 'template_%')
+        AND o.name NOT IN ('R3V', 'Synthwave', 'Synthwave Labs', 'DevForge', 'Learnwell', 'Brightpath', 'Brightpath Academy', 'Artifact Studios')
+    `);
+    const founding50Claimed = ((claimedRow.rows as any[])[0]?.n) || 0;
+
     return renderV7(reply, 'sign-up', {
       title: 'Create your OTP account',
       description: 'Free for your whole team during beta. Founding-50 status, locked in for life.',
@@ -1867,6 +1882,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       // New/Get started). One funnel, no distractions.
       navVariant: 'minimal',
       recentPublishers: pubRows.rows || [],
+      founding50Claimed,
     });
   });
 
