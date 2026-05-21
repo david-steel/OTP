@@ -113,29 +113,29 @@
         </p>
       </div>
 
-      <!-- RIGHT: what happens next + trust -->
+      <!-- RIGHT: what happens next (Orgy hand-numbers, same vocabulary as home-v7) + trust -->
       <aside>
-        <div class="rounded-2xl border border-[var(--line-soft)] p-7" style="background:#fbfaf5;">
+        <div class="rounded-2xl border border-[var(--line-soft)] p-6 sm:p-7" style="background:#fbfaf5;">
           <p class="eyebrow mb-5">What happens next</p>
-          <ol class="space-y-5">
-            <li class="flex gap-3">
-              <span class="font-mono shrink-0" style="font-size:11px; color:var(--blue-deep); margin-top:3px;">01</span>
+          <ol class="space-y-1">
+            <li class="grid grid-cols-[72px_1fr] gap-x-4 items-center py-3">
+              <span class="flex justify-center shrink-0"><img src="/public/hand-1.png" alt="1" style="height:64px;width:auto;" loading="lazy"></span>
               <div>
-                <p class="text-[14px] font-semibold text-[var(--ink)] mb-0.5">Verify your email</p>
+                <p class="text-[15px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Verify your email</p>
                 <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);">A 6-digit code from Clerk. Thirty seconds.</p>
               </div>
             </li>
-            <li class="flex gap-3">
-              <span class="font-mono shrink-0" style="font-size:11px; color:var(--blue-deep); margin-top:3px;">02</span>
+            <li class="grid grid-cols-[72px_1fr] gap-x-4 items-center py-3">
+              <span class="flex justify-center shrink-0"><img src="/public/hand-2.png" alt="2" style="height:64px;width:auto;" loading="lazy"></span>
               <div>
-                <p class="text-[14px] font-semibold text-[var(--ink)] mb-0.5">Name your organization</p>
+                <p class="text-[15px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Name your organization</p>
                 <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);">One field. Your team's home in OTP.</p>
               </div>
             </li>
-            <li class="flex gap-3">
-              <span class="font-mono shrink-0" style="font-size:11px; color:var(--blue-deep); margin-top:3px;">03</span>
+            <li class="grid grid-cols-[72px_1fr] gap-x-4 items-center py-3">
+              <span class="flex justify-center shrink-0"><img src="/public/hand-3.png" alt="3" style="height:64px;width:auto;" loading="lazy"></span>
               <div>
-                <p class="text-[14px] font-semibold text-[var(--ink)] mb-0.5">Place your first chart tile</p>
+                <p class="text-[15px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Place your first chart tile</p>
                 <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);">A guided three-minute walk-through. Skip anytime.</p>
               </div>
             </li>
@@ -171,6 +171,36 @@
       window.Clerk.mountSignUp(slot, {
         afterSignInUrl: '/dashboard',
         afterSignUpUrl: '/onboarding/profile',
+        // Theme the widget to the OTP v7 brand: orgy-green primary button
+        // (Clerk's default blue clashes with our editorial light style), and
+        // hide Clerk's duplicate "Create your account / to continue to OTP"
+        // header since our page H1 already says it.
+        appearance: {
+          variables: {
+            colorPrimary: '#bdd622',
+            colorText: '#14161c',
+            colorTextOnPrimaryBackground: '#14161c',
+            colorBackground: '#ffffff',
+            colorInputBackground: '#ffffff',
+            colorInputText: '#14161c',
+            borderRadius: '10px',
+            fontFamily: 'Inter, sans-serif',
+          },
+          elements: {
+            rootBox: { width: '100%' },
+            card: { boxShadow: 'none', border: '0', padding: '0', background: 'transparent' },
+            header: { display: 'none' },
+            headerTitle: { display: 'none' },
+            headerSubtitle: { display: 'none' },
+            formButtonPrimary: {
+              backgroundColor: '#bdd622',
+              color: '#14161c',
+              fontWeight: '700',
+              textTransform: 'none',
+            },
+            footer: { display: 'none' }, // hides "Secured by Clerk" footer
+          },
+        },
       });
     }).catch(function() {
       var slot = document.getElementById('clerk-sign-up');

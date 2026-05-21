@@ -268,9 +268,17 @@ app.addHook('onSend', async (request, reply) => {
   reply.header('X-Frame-Options', 'SAMEORIGIN');
   reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Google Ads conversion + remarketing needs three extra origins beyond
+  // googletagmanager.com: the gtag library's view-through pixel loads from
+  // googleads.g.doubleclick.net (script), and ccm/collect + rmkt/collect
+  // requests go to www.google.com (connect). Without these, the gtag
+  // library loads but every conversion fetch is CSP-blocked, so /sign-up
+  // pageviews and the post-signup PURCHASE_1 event never reach Google Ads.
+  // Diagnosed 2026-05-21 from a live /sign-up audit -- 5 CSP errors per
+  // pageload, all of them ads attribution.
   reply.header(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.orgtp.com https://d3js.org https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com https://assets.calendly.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com https://assets.calendly.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://clerk.orgtp.com https://www.google-analytics.com https://orgtp.com https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com https://calendly.com; frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.orgtp.com https://www.youtube.com https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com https://calendly.com;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://googleads.g.doubleclick.net https://www.google.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.orgtp.com https://d3js.org https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com https://assets.calendly.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com https://assets.calendly.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://clerk.orgtp.com https://www.google-analytics.com https://www.google.com https://googleads.g.doubleclick.net https://orgtp.com https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com https://calendly.com; frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.orgtp.com https://www.youtube.com https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com https://calendly.com;"
   );
   // Suppress Clerk internal headers from public responses
   reply.removeHeader('x-clerk-auth-status');
