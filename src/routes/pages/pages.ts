@@ -1816,60 +1816,14 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Sign-up page -- v7-styled landing that mounts the Clerk SignUp widget
-  // AND a live "recently published" proof strip pulled from real OOS files
-  // (seed/template orgs filtered out via clerk_org_id NOT LIKE 'template_%';
-  // see scripts/seed-template-orgs.ts for the demo set). The proof strip is
-  // the "these people know their shit" element -- shows real operator names
-  // and recency, makes the conversion page feel like a live network, not a
-  // generic signup form. Mirrors the /browse DISTINCT ON pattern so the same
-  // org doesn't appear 7 times when it re-publishes.
+  // Sign-up page -- v7-styled landing that mounts the Clerk SignUp widget.
+  // Stripped to: hero, form, "What happens next" sidebar, minimal [OTP] +
+  // Sign in nav. Nothing else. David's call 2026-05-21: "every pixel below
+  // the form that isn't pushing the user back to the form is bloat." That
+  // killed the founding-50 counter, the latest-publisher proof row, and
+  // the founder signature lockup. See
+  // feedback_only_form_helping_pixels_on_conversion_pages.md.
   app.get('/sign-up', async (_request, reply) => {
-    // Live proof strip on /sign-up. Filters:
-    //   1. template_* clerk_org_id   -> demo orgs from seed-template-orgs.ts
-    //   2. explicit name blocklist   -> legacy seed orgs that landed in the
-    //      DB without the template_ prefix (R3V, Synthwave, DevForge,
-    //      Learnwell, Brightpath, Artifact Studios -- per memory
-    //      project_otp_first_publisher.md, "those are NOT real publishers")
-    //   3. published_at within 8 weeks -> the strip's eyebrow says
-    //      "Recently published," so stale rows undermine the claim. If
-    //      the row has NULL published_at or it's older than 8 weeks, hide
-    //      it. Honest beats long.
-    const pubRows = await db.execute(sql`
-      SELECT * FROM (
-        SELECT DISTINCT ON (o.id)
-               o.name AS org_name,
-               o.agentic_level,
-               o.badge,
-               f.published_at,
-               f.id AS oos_file_id
-        FROM oos_files f
-        JOIN organizations o ON f.org_id = o.id
-        WHERE f.status = 'published'
-          AND f.published_at IS NOT NULL
-          AND f.published_at > NOW() - INTERVAL '8 weeks'
-          AND (o.clerk_org_id IS NULL OR o.clerk_org_id NOT LIKE 'template_%')
-          AND o.name NOT IN ('R3V', 'Synthwave', 'Synthwave Labs', 'DevForge', 'Learnwell', 'Brightpath', 'Brightpath Academy', 'Artifact Studios')
-        ORDER BY o.id, f.published_at DESC NULLS LAST
-      ) latest
-      ORDER BY published_at DESC NULLS LAST
-      LIMIT 5
-    `);
-    // Total real publishers all-time -- powers the "FOUNDING-50 X OF 50
-    // CLAIMED" counter in the proof strip. Same seed blocklist as the
-    // recent-rows query but NO 8-week filter, so the count is the true
-    // scarcity number across all time. Counter does the scarcity work,
-    // recent rows do the freshness work.
-    const claimedRow = await db.execute(sql`
-      SELECT COUNT(DISTINCT o.id)::int AS n
-      FROM oos_files f
-      JOIN organizations o ON f.org_id = o.id
-      WHERE f.status = 'published'
-        AND (o.clerk_org_id IS NULL OR o.clerk_org_id NOT LIKE 'template_%')
-        AND o.name NOT IN ('R3V', 'Synthwave', 'Synthwave Labs', 'DevForge', 'Learnwell', 'Brightpath', 'Brightpath Academy', 'Artifact Studios')
-    `);
-    const founding50Claimed = ((claimedRow.rows as any[])[0]?.n) || 0;
-
     return renderV7(reply, 'sign-up', {
       title: 'Create your OTP account',
       description: 'Free for your whole team during beta. Founding-50 status, locked in for life.',
@@ -1881,8 +1835,6 @@ export default async function pageRoutes(app: FastifyInstance) {
       // links the full v7-nav carries (Protocol/Pricing/Browse/What's
       // New/Get started). One funnel, no distractions.
       navVariant: 'minimal',
-      recentPublishers: pubRows.rows || [],
-      founding50Claimed,
     });
   });
 
