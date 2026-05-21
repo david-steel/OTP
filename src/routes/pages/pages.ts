@@ -1816,13 +1816,32 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Sign-up page -- v7-styled landing that mounts the Clerk SignUp widget.
-  // Uses renderV7 (not reply.view) so the v7 layout wraps the page with the
-  // editorial nav/footer + opt-in Clerk loader (loadClerk:true). The Google
-  // Ads conversion event still fires post-registration on /onboarding/profile
-  // (the Clerk afterSignUpUrl), not on /sign-up itself -- this page just
-  // loads the gtag library for pageview tracking + remarketing audiences.
+  // Sign-up page -- v7-styled landing that mounts the Clerk SignUp widget
+  // AND a live "recently published" proof strip pulled from real OOS files
+  // (seed/template orgs filtered out via clerk_org_id NOT LIKE 'template_%';
+  // see scripts/seed-template-orgs.ts for the demo set). The proof strip is
+  // the "these people know their shit" element -- shows real operator names
+  // and recency, makes the conversion page feel like a live network, not a
+  // generic signup form. Mirrors the /browse DISTINCT ON pattern so the same
+  // org doesn't appear 7 times when it re-publishes.
   app.get('/sign-up', async (_request, reply) => {
+    const pubRows = await db.execute(sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (o.id)
+               o.name AS org_name,
+               o.agentic_level,
+               o.badge,
+               f.published_at,
+               f.id AS oos_file_id
+        FROM oos_files f
+        JOIN organizations o ON f.org_id = o.id
+        WHERE f.status = 'published'
+          AND (o.clerk_org_id IS NULL OR o.clerk_org_id NOT LIKE 'template_%')
+        ORDER BY o.id, f.published_at DESC NULLS LAST
+      ) latest
+      ORDER BY published_at DESC NULLS LAST
+      LIMIT 5
+    `);
     return renderV7(reply, 'sign-up', {
       title: 'Create your OTP account',
       description: 'Free for your whole team during beta. Founding-50 status, locked in for life.',
@@ -1830,6 +1849,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       noindex: true,
       loadClerk: true,
       googleAdsId: 'AW-18159119434',
+      recentPublishers: pubRows.rows || [],
     });
   });
 

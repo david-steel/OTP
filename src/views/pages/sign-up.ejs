@@ -62,30 +62,14 @@
 </section>
 
 <!-- ================= FORM + WHAT'S NEXT ================= -->
-<section class="bg-[var(--white)] pb-24">
+<section class="bg-[var(--white)] pb-14">
   <div class="max-w-[1080px] mx-auto px-6">
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 lg:gap-14 items-start">
 
-      <!-- LEFT: value bullets + Clerk widget -->
+      <!-- LEFT: Clerk widget (value bullets removed -- generic SaaS-list
+           feel was killing the editorial confidence of the page; the hero
+           subhead already covers the value prop) -->
       <div>
-        <div class="mb-7">
-          <p class="eyebrow mb-3">What you're claiming</p>
-          <ul class="space-y-2.5 text-[15px] text-[var(--ink)]">
-            <li class="flex items-start gap-2.5">
-              <span class="mt-[8px] inline-block w-1.5 h-1.5 rounded-full bg-[var(--blue)] shrink-0"></span>
-              <span>A free OTP workspace for your whole team. No card required.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="mt-[8px] inline-block w-1.5 h-1.5 rounded-full bg-[var(--blue)] shrink-0"></span>
-              <span>Your operating system in one place: chart, scoreboard, weekly meeting.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="mt-[8px] inline-block w-1.5 h-1.5 rounded-full bg-[var(--blue)] shrink-0"></span>
-              <span>Founding-50 status, locked in for life when paid plans turn on.</span>
-            </li>
-          </ul>
-        </div>
-
         <!-- Clerk slot. Skeleton inside is replaced by Clerk.mountSignUp(). -->
         <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 sm:p-8" style="box-shadow:0 1px 2px rgba(20,22,28,0.04), 0 12px 32px rgba(20,22,28,0.05);">
           <div id="clerk-sign-up" class="min-h-[440px]">
@@ -113,35 +97,38 @@
         </p>
       </div>
 
-      <!-- RIGHT: what happens next (Orgy hand-numbers, same vocabulary as home-v7) + trust -->
+      <!-- RIGHT: what happens next. Hands are inline bullet-numbering at
+           22px (the hand IS the number, so no "01/02/03" duplication).
+           Same Orgy vocabulary as home-v7's hand-1/2/3 but sized down to
+           bullet weight. -->
       <aside>
         <div class="rounded-2xl border border-[var(--line-soft)] p-6 sm:p-7" style="background:#fbfaf5;">
           <p class="eyebrow mb-5">What happens next</p>
-          <ol class="space-y-1">
-            <li class="grid grid-cols-[72px_1fr] gap-x-4 items-center py-3">
-              <span class="flex justify-center shrink-0"><img src="/public/hand-1.png" alt="1" style="height:64px;width:auto;" loading="lazy"></span>
+          <ol class="space-y-4">
+            <li class="flex items-start gap-3">
+              <img src="/public/hand-1.png" alt="1" class="shrink-0" style="height:22px;width:auto;margin-top:2px;" loading="lazy">
               <div>
-                <p class="text-[15px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Verify your email</p>
-                <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);">A 6-digit code from Clerk. Thirty seconds.</p>
+                <p class="text-[14px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Verify your email</p>
+                <p class="text-[12.5px] leading-relaxed" style="color:var(--ink-soft);">A 6-digit code from Clerk. Thirty seconds.</p>
               </div>
             </li>
-            <li class="grid grid-cols-[72px_1fr] gap-x-4 items-center py-3">
-              <span class="flex justify-center shrink-0"><img src="/public/hand-2.png" alt="2" style="height:64px;width:auto;" loading="lazy"></span>
+            <li class="flex items-start gap-3">
+              <img src="/public/hand-2.png" alt="2" class="shrink-0" style="height:22px;width:auto;margin-top:2px;" loading="lazy">
               <div>
-                <p class="text-[15px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Name your organization</p>
-                <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);">One field. Your team's home in OTP.</p>
+                <p class="text-[14px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Name your organization</p>
+                <p class="text-[12.5px] leading-relaxed" style="color:var(--ink-soft);">One field. Your team's home in OTP.</p>
               </div>
             </li>
-            <li class="grid grid-cols-[72px_1fr] gap-x-4 items-center py-3">
-              <span class="flex justify-center shrink-0"><img src="/public/hand-3.png" alt="3" style="height:64px;width:auto;" loading="lazy"></span>
+            <li class="flex items-start gap-3">
+              <img src="/public/hand-3.png" alt="3" class="shrink-0" style="height:22px;width:auto;margin-top:2px;" loading="lazy">
               <div>
-                <p class="text-[15px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Place your first chart tile</p>
-                <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft);">A guided three-minute walk-through. Skip anytime.</p>
+                <p class="text-[14px] font-semibold text-[var(--ink)] mb-0.5 leading-tight">Place your first chart tile</p>
+                <p class="text-[12.5px] leading-relaxed" style="color:var(--ink-soft);">A guided three-minute walk-through. Skip anytime.</p>
               </div>
             </li>
           </ol>
 
-          <hr class="my-6" style="border-color:var(--line-soft);">
+          <hr class="my-5" style="border-color:var(--line-soft);">
 
           <div class="space-y-2 text-[12px]" style="color:var(--ink-soft);">
             <p>Authentication by <strong class="text-[var(--ink)]">Clerk</strong> (SOC 2 Type II).</p>
@@ -152,6 +139,58 @@
     </div>
   </div>
 </section>
+
+<%
+  // Inline relative-time formatter for the proof strip. EJS-side so we
+  // don't ship JS just for "3d ago" math. Caps at "8w+" to avoid making
+  // older publishes look stale on a low-traffic launch period.
+  function rel(d) {
+    if (!d) return '';
+    var t = (Date.now() - new Date(d).getTime()) / 1000;
+    if (t < 60) return 'just now';
+    if (t < 3600) return Math.floor(t/60) + 'm ago';
+    if (t < 86400) return Math.floor(t/3600) + 'h ago';
+    if (t < 86400*7) return Math.floor(t/86400) + 'd ago';
+    if (t < 86400*56) return Math.floor(t/(86400*7)) + 'w ago';
+    return '';
+  }
+  var publishers = (typeof recentPublishers !== 'undefined' && recentPublishers) ? recentPublishers : [];
+%>
+
+<!-- ================= PROOF STRIP (live publishers) ================= -->
+<% if (publishers.length > 0) { %>
+<section style="background:#fbfaf5;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);">
+  <div class="max-w-[1080px] mx-auto px-6 py-12 sm:py-14">
+    <div class="flex items-baseline justify-between mb-6">
+      <p class="eyebrow">Recently published on OTP</p>
+      <a href="/browse" class="text-[12px] underline underline-offset-2 hover:text-[var(--blue)] transition-colors" style="color:var(--ink-soft);">See all &rarr;</a>
+    </div>
+    <ul class="divide-y" style="border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);">
+      <% publishers.forEach(function(p) { %>
+        <li class="flex items-center justify-between gap-4 py-3">
+          <div class="flex items-baseline gap-3 min-w-0">
+            <span class="font-mono text-[14px] sm:text-[15px] tracking-tight truncate" style="color:var(--ink);">
+              <span style="color:var(--blue);">[</span><%= p.org_name %><span style="color:var(--blue);">]</span>
+            </span>
+            <% if (p.published_at && rel(p.published_at)) { %>
+              <span class="text-[12px] hidden sm:inline" style="color:var(--ink-mute);">published <%= rel(p.published_at) %></span>
+            <% } %>
+          </div>
+          <% if (p.agentic_level) { %>
+            <span class="font-mono text-[11px] px-2 py-1 rounded-full shrink-0" style="background:var(--white);border:1px solid var(--line-soft);color:var(--ink-soft);letter-spacing:.05em;">L<%= p.agentic_level %></span>
+          <% } %>
+        </li>
+      <% }); %>
+    </ul>
+
+    <!-- Founder signature lockup -->
+    <div class="text-center mt-10">
+      <p class="font-display text-[var(--ink)]" style="font-size:18px; font-weight:600; letter-spacing:-0.01em;">— David Steel</p>
+      <p class="eyebrow mt-2" style="font-size:10px;">CEO, Sneeze It &middot; OTP early publisher</p>
+    </div>
+  </div>
+</section>
+<% } %>
 
 <script>
   (function waitForClerk() {
