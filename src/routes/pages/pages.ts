@@ -57,9 +57,22 @@ function peopleReviewVerdict(
 // is configured, so v7 routes call renderV7 instead of reply.view.
 const V7_VIEWS = fileURLToPath(new URL('../../views', import.meta.url));
 
+// Threads Clerk env (publishable key + frontend instance domain) into the
+// v7 layout so opt-in pages (loadClerk:true) can mount Clerk widgets without
+// falling back to main.ejs. Mirrors how server.ts:162-164 derives these.
+const V7_CLERK_PUB_KEY = process.env.CLERK_PUBLISHABLE_KEY || '';
+const V7_CLERK_INSTANCE = V7_CLERK_PUB_KEY.startsWith('pk_')
+  ? Buffer.from(V7_CLERK_PUB_KEY.split('_').slice(2).join('_'), 'base64').toString().replace(/\$$/, '')
+  : '';
+
 async function renderV7(reply: any, page: string, data: Record<string, any> = {}) {
-  const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, data);
-  const html = await ejs.renderFile(`${V7_VIEWS}/layouts/v7.ejs`, { ...data, body });
+  const ctx = {
+    clerkPubKey: V7_CLERK_PUB_KEY,
+    clerkInstance: V7_CLERK_INSTANCE,
+    ...data,
+  };
+  const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, ctx);
+  const html = await ejs.renderFile(`${V7_VIEWS}/layouts/v7.ejs`, { ...ctx, body });
   return reply.type('text/html').send(html);
 }
 
@@ -1803,17 +1816,19 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Sign-up page (dedicated, mounts Clerk SignUp directly)
-  app.get('/sign-up', async (request, reply) => {
-    return reply.view('pages/sign-up', {
+  // Sign-up page -- v7-styled landing that mounts the Clerk SignUp widget.
+  // Uses renderV7 (not reply.view) so the v7 layout wraps the page with the
+  // editorial nav/footer + opt-in Clerk loader (loadClerk:true). The Google
+  // Ads conversion event still fires post-registration on /onboarding/profile
+  // (the Clerk afterSignUpUrl), not on /sign-up itself -- this page just
+  // loads the gtag library for pageview tracking + remarketing audiences.
+  app.get('/sign-up', async (_request, reply) => {
+    return renderV7(reply, 'sign-up', {
       title: 'Create your OTP account',
-      description: 'Create an OTP account and claim your founding spot.',
+      description: 'Free for your whole team during beta. Founding-50 status, locked in for life.',
       canonical: BASE_URL + '/sign-up',
       noindex: true,
-      // Loads the Google Ads tag (AW-18159119434) on /sign-up for pageview
-      // tracking + remarketing audiences. The actual signup conversion event
-      // fires post-registration on /onboarding/profile (the Clerk
-      // afterSignUpUrl), not here -- see views/pages/onboarding-profile.ejs.
+      loadClerk: true,
       googleAdsId: 'AW-18159119434',
     });
   });

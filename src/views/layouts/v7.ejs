@@ -17,10 +17,13 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=<%= googleAdsId %>"></script>
 <script>gtag('config','<%= googleAdsId %>');</script>
 <script>
+  // gtagSendEvent: fire the Google Ads conversion in the background and let
+  // the anchor's default navigation proceed. Returning true means the click
+  // is NOT canceled, so if gtag stalls or is blocked the user still lands on
+  // the target URL. Mirrors the home-v7.html fix.
   function gtagSendEvent(url){
-    var cb=function(){ if(typeof url==='string'){ window.location=url; } };
-    gtag('event','ads_conversion_PURCHASE_1',{'event_callback':cb,'event_timeout':2000});
-    return false;
+    try { gtag('event','ads_conversion_PURCHASE_1',{'event_timeout':2000}); } catch(e) {}
+    return true;
   }
 </script>
 <% } %>
@@ -55,5 +58,17 @@
 <%- include('../partials/v7-nav') %>
 <%- body %>
 <%- include('../partials/v7-footer') %>
+<%# Opt-in Clerk loader: routes pass loadClerk:true and renderV7 threads
+    clerkPubKey/clerkInstance from env so v7 pages can mount Clerk widgets
+    without falling back to the heavy main.ejs layout. %>
+<% if (typeof loadClerk !== 'undefined' && loadClerk && typeof clerkPubKey !== 'undefined' && clerkPubKey && typeof clerkInstance !== 'undefined' && clerkInstance) { %>
+<script
+  async
+  crossorigin="anonymous"
+  data-clerk-publishable-key="<%= clerkPubKey %>"
+  src="https://<%= clerkInstance %>/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  type="text/javascript"
+></script>
+<% } %>
 </body>
 </html>
