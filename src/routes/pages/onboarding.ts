@@ -9,6 +9,8 @@
 // Step 1 (profile) is reachable without an org -- it CREATES the org.
 // Steps 2-7 require an org; a user without one is bounced back to step 1.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { fileURLToPath } from 'node:url';
+import ejs from 'ejs';
 import { getAuth } from '@clerk/fastify';
 import { createClerkClient } from '@clerk/backend';
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
@@ -20,7 +22,21 @@ import {
 } from '../../db/schema.js';
 import { uploadSignupConversion } from '../../lib/google-ads-conversions.js';
 
-const LAYOUT = { layout: 'layouts/onboarding' };
+// renderOnboarding mirrors renderV7 in routes/pages/pages.ts: @fastify/view
+// throws "A layout can either be set globally or on render, not both" when a
+// per-route layout is passed while a global layout is configured (server.ts
+// registers layouts/main globally). Manually composing page + layout via
+// ejs.renderFile bypasses that machinery and lets the onboarding flow use
+// its standalone wizard chrome. Caught 2026-05-21 by a real mobile signup
+// test that hit /onboarding/profile and got served raw JSON 500 -- every
+// signup since the regression was bouncing here, root cause of the
+// 0/50 founding-spots gap.
+const O_VIEWS = fileURLToPath(new URL('../../views', import.meta.url));
+async function renderOnboarding(reply: FastifyReply, page: string, data: Record<string, any> = {}) {
+  const body = await ejs.renderFile(`${O_VIEWS}/pages/${page}.ejs`, data);
+  const html = await ejs.renderFile(`${O_VIEWS}/layouts/onboarding.ejs`, { ...data, body });
+  return reply.type('text/html').send(html);
+}
 
 export default async function onboardingPageRoutes(app: FastifyInstance) {
 
@@ -121,11 +137,11 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
       }
     }
 
-    return reply.view('pages/onboarding-profile', {
+    return renderOnboarding(reply, 'onboarding-profile', {
       title: 'Set up your seat · OTP',
       org: org || null,
       member: member || null,
-    }, LAYOUT);
+    });
   });
 
   // Steps 2-7 share this guard: authed + has an org, else bounce to step 1.
@@ -160,10 +176,10 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
     const invites = await db.select().from(orgInvitations)
       .where(and(eq(orgInvitations.orgId, c.org.id), eq(orgInvitations.status, 'pending')))
       .orderBy(desc(orgInvitations.createdAt));
-    return reply.view('pages/onboarding-team', {
+    return renderOnboarding(reply, 'onboarding-team', {
       title: 'Add your team · OTP', org: c.org, members, invites,
       currentUserId: c.auth.userId,
-    }, LAYOUT);
+    });
   });
 
   // ---- Step 3: goals -------------------------------------------------
@@ -173,10 +189,10 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
     const goals = await db.select().from(rocks)
       .where(and(eq(rocks.organizationId, c.org.id), isNull(rocks.deletedAt)))
       .orderBy(desc(rocks.createdAt));
-    return reply.view('pages/onboarding-goals', {
+    return renderOnboarding(reply, 'onboarding-goals', {
       title: 'Set your goals · OTP', org: c.org, members, goals,
       currentUserId: c.auth.userId,
-    }, LAYOUT);
+    });
   });
 
   // ---- Step 4: kpis --------------------------------------------------
@@ -186,10 +202,10 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
     const rows = await db.select().from(kpis)
       .where(and(eq(kpis.organizationId, c.org.id), isNull(kpis.deletedAt)))
       .orderBy(desc(kpis.createdAt));
-    return reply.view('pages/onboarding-kpis', {
+    return renderOnboarding(reply, 'onboarding-kpis', {
       title: 'Set your KPIs · OTP', org: c.org, members, kpis: rows,
       currentUserId: c.auth.userId,
-    }, LAYOUT);
+    });
   });
 
   // ---- Step 5: agents ------------------------------------------------
@@ -199,10 +215,10 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
     const rows = await db.select().from(managerAgents)
       .where(and(eq(managerAgents.orgId, c.org.id), isNull(managerAgents.deletedAt)))
       .orderBy(desc(managerAgents.createdAt));
-    return reply.view('pages/onboarding-agents', {
+    return renderOnboarding(reply, 'onboarding-agents', {
       title: 'Add your agents · OTP', org: c.org, members, agents: rows,
       currentUserId: c.auth.userId,
-    }, LAYOUT);
+    });
   });
 
   // ---- Step 6: teams -------------------------------------------------
@@ -226,10 +242,10 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
         members: tmRows.filter((r) => r.teamId === t.id),
       }));
     }
-    return reply.view('pages/onboarding-teams', {
+    return renderOnboarding(reply, 'onboarding-teams', {
       title: 'Set up your teams · OTP', org: c.org, members, teams: withMembers,
       currentUserId: c.auth.userId,
-    }, LAYOUT);
+    });
   });
 
   // ---- Step 7: first meeting (finale) --------------------------------
@@ -243,7 +259,7 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
       db.select({ id: teams.id, name: teams.name, isDefault: teams.isDefault }).from(teams).where(eq(teams.orgId, c.org.id)),
     ]);
     const leadTeam = teamRows.find((t) => t.isDefault) || teamRows[0] || null;
-    return reply.view('pages/onboarding-meeting', {
+    return renderOnboarding(reply, 'onboarding-meeting', {
       title: 'Your first meeting · OTP',
       org: c.org,
       members,
@@ -255,6 +271,6 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
         agents: agentRows.length,
         teams: teamRows.length,
       },
-    }, LAYOUT);
+    });
   });
 }
