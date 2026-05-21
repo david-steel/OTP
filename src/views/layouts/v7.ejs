@@ -55,7 +55,14 @@
 <% if (typeof headExtra !== 'undefined' && headExtra) { %><%- headExtra %><% } %>
 </head>
 <body>
+<%# Nav variant: routes pass navVariant:'minimal' to opt into the stripped
+    nav for conversion pages (/sign-up etc). Anything else falls back to
+    the full v7-nav (Protocol/Pricing/Browse/What's New/Sign in/Get started). %>
+<% if (typeof navVariant !== 'undefined' && navVariant === 'minimal') { %>
+<%- include('../partials/v7-nav-minimal') %>
+<% } else { %>
 <%- include('../partials/v7-nav') %>
+<% } %>
 <%- body %>
 <%- include('../partials/v7-footer') %>
 <%# Opt-in Clerk loader: routes pass loadClerk:true and renderV7 threads
