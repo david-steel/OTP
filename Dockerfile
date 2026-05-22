@@ -16,13 +16,13 @@ RUN npm run build
 # Production
 FROM base AS runner
 ENV NODE_ENV=production
+# dist/ is self-sufficient -- the npm `build:assets` step copies views,
+# protocol, and db/migrations into it. public/ and content/ stay at the
+# repo root because they're served as cwd-relative static dirs.
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/src/views ./dist/views
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/src/protocol ./dist/protocol
-COPY --from=builder /app/src/db/migrations ./dist/db/migrations
 COPY --from=builder /app/content ./content
 
 EXPOSE 3000
