@@ -1980,7 +1980,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       WHERE cp.slug = ${slug} AND cp.published = true
     `) as any;
     const profile = (profileRows.rows || [])[0];
-    if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
+    if (!profile) return renderV7(reply.status(404), '404', { title: 'Expert Not Found - OTP' });
 
     const oosRows = await db.execute(sql`
       SELECT f.*, o.name as org_name FROM oos_files f
@@ -2074,7 +2074,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       WHERE cp.slug = ${slug} AND cp.published = true
     `) as any;
     const profile = (profileRows.rows || [])[0];
-    if (!profile) return reply.status(404).view('pages/home', { title: 'Expert Not Found - OTP' });
+    if (!profile) return renderV7(reply.status(404), '404', { title: 'Expert Not Found - OTP' });
 
     return renderV7(reply, 'expert-contact', {
       title: 'Contact ' + profile.display_name + ' - OTP',
@@ -3746,7 +3746,7 @@ Founder, OTP</p>
 
     const wsRows = await db.execute(sql`SELECT w.* FROM workspaces w JOIN workspace_members wm ON wm.workspace_id = w.id AND wm.org_id = ${org.id} WHERE w.id = ${id}`) as any;
     const workspace = (wsRows.rows || [])[0];
-    if (!workspace) return reply.status(404).view('pages/home', { title: 'Workspace Not Found' });
+    if (!workspace) return renderV7(reply.status(404), '404', { title: 'Workspace Not Found' });
 
     const memberRows = await db.execute(sql`SELECT * FROM workspace_members WHERE workspace_id = ${id} ORDER BY invited_at`) as any;
     const oosRows = await db.execute(sql`SELECT f.*, o.name as org_name FROM oos_files f JOIN organizations o ON o.id = f.org_id WHERE f.workspace_id = ${id} ORDER BY f.created_at DESC`) as any;
@@ -3787,7 +3787,7 @@ Founder, OTP</p>
 
     const docRows = await db.execute(sql`SELECT * FROM source_documents WHERE id = ${id} AND org_id = ${org.id}`) as any;
     const document = (docRows.rows || [])[0];
-    if (!document) return reply.status(404).view('pages/home', { title: 'Document Not Found' });
+    if (!document) return renderV7(reply.status(404), '404', { title: 'Document Not Found' });
 
     const oosRows = await db.execute(sql`SELECT f.* FROM oos_files f WHERE f.source_document_id = ${id} ORDER BY f.created_at DESC`) as any;
     return reply.view('pages/dashboard-source-doc-detail', {
