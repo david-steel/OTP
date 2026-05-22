@@ -1303,10 +1303,88 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!/^[A-Za-z0-9_]{10,80}$/.test(targetClerkId)) {
       return reply.status(400).send({ error: 'INVALID_CLERK_USER_ID' });
     }
-    const [m] = await db.select().from(orgMembers)
+    // Primary path: modern membership table.
+    let [m] = await db.select().from(orgMembers)
       .where(eq(orgMembers.clerkUserId, targetClerkId))
       .limit(1);
-    if (!m) return reply.status(404).send({ error: 'NO_MEMBER_ROW: target has not joined any org via membership table' });
+
+    // Legacy founder fallback: pre-membership-table founders stored their
+    // Clerk user id directly on organizations.clerk_org_id. Find the org
+    // they own and then resolve to the implicit owner member row (if any
+    // was backfilled). Without this, the admin viewer 404s legitimate
+    // founder accounts who predate the org_members migration.
+    if (!m) {
+      const [legacy] = await db.select().from(organizations)
+        .where(eq(organizations.clerkOrgId, targetClerkId))
+        .limit(1);
+      if (legacy) {
+        const [fm] = await db.select().from(orgMembers)
+          .where(and(eq(orgMembers.orgId, legacy.id), eq(orgMembers.role, 'owner')))
+          .limit(1);
+        if (fm) m = fm;
+      }
+    }
+
+    // Truly stranded: Clerk user with no membership, no founder org. Render
+    // a v7 admin diagnostic page instead of the old NO_MEMBER_ROW JSON
+    // error. Pulls best-effort Clerk metadata + DB footprint to help the
+    // admin decide bot-vs-real and what to do next. Caught 2026-05-22 by
+    // David hitting /admin -> view-as on two bot-likely Clerk signups.
+    if (!m) {
+      let clerkEmail: string | null = null;
+      let clerkName: string | null = null;
+      let signedUpAt: number | null = null;
+      let lastSignInAt: number | null = null;
+      try {
+        const secretKey = process.env.CLERK_SECRET_KEY;
+        if (secretKey) {
+          const { createClerkClient } = await import('@clerk/backend');
+          const clerk = createClerkClient({ secretKey });
+          const u = await clerk.users.getUser(targetClerkId);
+          clerkEmail = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
+            || u.emailAddresses[0]?.emailAddress || null;
+          clerkName = [u.firstName, u.lastName].filter(Boolean).join(' ') || null;
+          signedUpAt = u.createdAt;
+          lastSignInAt = u.lastSignInAt ?? null;
+        }
+      } catch { /* Clerk lookup failed -- still render the diagnostic page */ }
+
+      const onbRes = await db.execute(sql`
+        SELECT 1 FROM onboarding_sequence WHERE clerk_user_id = ${targetClerkId} LIMIT 1
+      `) as any;
+      const hasOnbSequence = (onbRes.rows || []).length > 0;
+
+      let inviteCount = 0;
+      if (clerkEmail) {
+        const invRes = await db.execute(sql`
+          SELECT COUNT(*)::int AS n FROM org_invitations WHERE LOWER(email) = LOWER(${clerkEmail})
+        `) as any;
+        inviteCount = Number(invRes.rows[0]?.n || 0);
+      }
+
+      // Heuristic bot signal -- mirror the script logic so the page's
+      // recommendation matches what scripts/investigate-stranded-users-db.ts
+      // would produce.
+      const local = clerkEmail ? (clerkEmail.split('@')[0] || '') : '';
+      const half = Math.floor(local.length / 2);
+      const isDoubled = half >= 3 && local.slice(0, half) === local.slice(half, half * 2);
+      const digitCount = (local.match(/\d/g) || []).length;
+      const digitsHeavy = local.length > 0 && digitCount / local.length > 0.5;
+      const emailLooksBotty = isDoubled || digitsHeavy || /^\d{4,}/.test(local);
+
+      return renderV7(reply.status(200), 'admin-stranded-user', {
+        title: 'Stranded user - OTP Admin',
+        noindex: true,
+        clerkUserId: targetClerkId,
+        email: clerkEmail,
+        name: clerkName,
+        signedUpAt,
+        lastSignInAt,
+        hasOnbSequence,
+        inviteCount,
+        emailLooksBotty,
+      });
+    }
 
     const { startImpersonation, IMPERSONATION_COOKIE_NAME } = await import('../../middleware/impersonation.js');
     try {

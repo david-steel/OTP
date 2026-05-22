@@ -1,0 +1,85 @@
+<%# /admin/impersonate/by-clerk/:clerkUserId fallback view.
+   Shown when a Clerk user exists but has NO membership in any org (no
+   org_members row + no legacy founder organizations row). Replaces the
+   raw "NO_MEMBER_ROW" JSON error with a useful admin diagnostic page. %>
+<main class="pt-[88px] pb-20">
+  <section class="max-w-[720px] mx-auto px-6">
+    <p class="eyebrow mb-3" style="color:var(--ink-mute);">
+      <a href="/admin" class="hover:text-[var(--ink)] transition-colors">&larr; back to /admin</a>
+    </p>
+    <p class="eyebrow mb-3" style="color:var(--orange-deep);">Stranded user</p>
+    <h1 class="font-display text-[var(--ink)] mb-4" style="font-size:clamp(1.8rem,3.6vw,2.6rem); line-height:1.1; font-weight:700; letter-spacing:-0.02em;">
+      This user signed up but never joined an org.
+    </h1>
+    <p class="text-[16px] leading-[1.7] text-[var(--ink-soft)] mb-8">
+      They exist in Clerk but have zero footprint in our database &mdash; no membership, no organization, no completed onboarding. There is nothing to impersonate. They are likely either a bot signup or a real human who bailed before completing step 1 of onboarding.
+    </p>
+
+    <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 sm:p-7">
+      <p class="eyebrow mb-4">Clerk user</p>
+      <dl class="space-y-3 text-[14px]">
+        <div class="grid grid-cols-[120px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">Clerk ID</dt>
+          <dd class="font-mono text-[12.5px] break-all" style="color:var(--ink);"><%= clerkUserId %></dd>
+        </div>
+        <% if (typeof email !== 'undefined' && email) { %>
+        <div class="grid grid-cols-[120px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">Email</dt>
+          <dd class="font-mono text-[13px]" style="color:var(--ink);"><%= email %></dd>
+        </div>
+        <% } %>
+        <% if (typeof name !== 'undefined' && name) { %>
+        <div class="grid grid-cols-[120px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">Name</dt>
+          <dd style="color:var(--ink);"><%= name %></dd>
+        </div>
+        <% } %>
+        <% if (typeof signedUpAt !== 'undefined' && signedUpAt) { %>
+        <div class="grid grid-cols-[120px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">Signed up</dt>
+          <dd style="color:var(--ink);"><%= new Date(signedUpAt).toLocaleString('en-US') %></dd>
+        </div>
+        <% } %>
+        <% if (typeof lastSignInAt !== 'undefined') { %>
+        <div class="grid grid-cols-[120px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">Last sign-in</dt>
+          <dd style="color:var(--ink);"><%= lastSignInAt ? new Date(lastSignInAt).toLocaleString('en-US') : 'never' %></dd>
+        </div>
+        <% } %>
+      </dl>
+
+      <hr class="my-6" style="border-color:var(--line-soft);">
+
+      <p class="eyebrow mb-3">DB footprint</p>
+      <dl class="space-y-2 text-[13px]">
+        <div class="grid grid-cols-[140px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">onboarding_sequence</dt>
+          <dd class="font-mono" style="color:var(--ink);"><%= typeof hasOnbSequence !== 'undefined' && hasOnbSequence ? 'yes' : '0 rows (webhook never wrote a row)' %></dd>
+        </div>
+        <div class="grid grid-cols-[140px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">org_members</dt>
+          <dd class="font-mono" style="color:var(--ink);">0 rows</dd>
+        </div>
+        <div class="grid grid-cols-[140px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">organizations (founder)</dt>
+          <dd class="font-mono" style="color:var(--ink);">0 rows</dd>
+        </div>
+        <div class="grid grid-cols-[140px_1fr] gap-3">
+          <dt style="color:var(--ink-soft);">org_invitations to email</dt>
+          <dd class="font-mono" style="color:var(--ink);"><%= typeof inviteCount !== 'undefined' ? inviteCount : 0 %> rows</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="mt-8 rounded-2xl border border-[var(--line-soft)] p-5" style="background:#fff7e6;">
+      <p class="eyebrow mb-2" style="color:var(--orange-deep);">Recommended action</p>
+      <p class="text-[13.5px] leading-[1.65]" style="color:var(--ink-soft);">
+        <% if (typeof emailLooksBotty !== 'undefined' && emailLooksBotty) { %>
+          Email shape is bot-like (digit-heavy or pattern-repeating). Safe to delete from the Clerk dashboard. While you are there, check <strong>User &amp; Authentication &rarr; Attack protection &rarr; Bot signup protection</strong> to ensure Turnstile is in "always" mode.
+        <% } else { %>
+          Email looks plausibly human. They may have bailed before completing onboarding step 1 (which creates the org). Optionally send a recovery email, or delete from Clerk to tidy up.
+        <% } %>
+      </p>
+    </div>
+  </section>
+</main>
