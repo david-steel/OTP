@@ -148,15 +148,60 @@
       <a href="/sign-in" class="hover:text-[var(--ink)] transition-colors">Sign in</a>
       <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
     </div>
-    <!-- Mobile: Sign in + Get started. The desktop nav block above is
-         hidden on mobile, so without these the small screen had no path
-         to either auth flow. -->
-    <div class="md:hidden flex items-center gap-3">
-      <a href="/sign-in" class="text-[13px] text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors">Sign in</a>
+    <!-- Mobile: Get started CTA stays one-tap visible (primary conversion
+         action, never hidden inside a menu), plus a hamburger that opens
+         the secondary nav (Protocol/Pricing/Browse/What's New/Blog/About
+         + Sign in). -->
+    <div class="md:hidden flex items-center gap-2">
       <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
+      <button id="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu" class="ml-1 p-2 -mr-2 text-[var(--ink)] hover:text-[var(--blue)] transition-colors">
+        <svg id="mobile-menu-icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="3" y1="7" x2="21" y2="7"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="17" x2="21" y2="17"/>
+        </svg>
+        <svg id="mobile-menu-icon-close" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="5" y1="5" x2="19" y2="19"/>
+          <line x1="19" y1="5" x2="5" y2="19"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu panel: slides down from under the nav bar when the
+       hamburger is tapped. Hidden by default and on md+ viewports. -->
+  <div id="mobile-menu" class="md:hidden hidden border-t border-[var(--line-soft)] bg-[var(--white)]">
+    <div class="px-6 py-3 flex flex-col">
+      <a href="/protocol" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Protocol</a>
+      <a href="/pricing" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Pricing</a>
+      <a href="/browse" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Browse</a>
+      <a href="/whats-new" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">What's New</a>
+      <a href="/blog" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Blog</a>
+      <a href="/about" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">About</a>
+      <a href="/sign-in" class="block py-3 mt-1 pt-4 text-[15px] text-[var(--ink-soft)] hover:text-[var(--ink)] border-t border-[var(--line-soft)] transition-colors">Sign in</a>
     </div>
   </div>
 </nav>
+
+<script>
+  // Hamburger toggle for the mobile menu. Swaps the open/close icons,
+  // updates aria-expanded for screen readers, and shows/hides the panel.
+  (function() {
+    var btn = document.getElementById('mobile-menu-btn');
+    var panel = document.getElementById('mobile-menu');
+    var openIcon = document.getElementById('mobile-menu-icon-open');
+    var closeIcon = document.getElementById('mobile-menu-icon-close');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', function() {
+      var isHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+      openIcon.classList.toggle('hidden');
+      closeIcon.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', String(isHidden));
+      btn.setAttribute('aria-label', isHidden ? 'Close menu' : 'Open menu');
+    });
+  })();
+</script>
 
 <!-- ================= HERO (live composed scene) ================= -->
 <style>
@@ -814,7 +859,7 @@
           The operating platform where your people and AI agents run as one team. One chart, one scoreboard, one weekly meeting.
         </p>
       </div>
-      <div class="flex gap-x-10 gap-y-3 flex-wrap font-mono text-[12px]">
+      <div class="flex gap-x-5 sm:gap-x-10 gap-y-3 flex-wrap font-mono text-[12px]">
         <a href="/protocol" class="hover:text-white transition-colors">Protocol</a>
         <a href="/pricing" class="hover:text-white transition-colors">Pricing</a>
         <a href="/browse" class="hover:text-white transition-colors">Browse</a>
