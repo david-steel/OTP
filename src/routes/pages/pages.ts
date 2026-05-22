@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, onboardingSequence } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser } from '../../services/membership.js';
@@ -973,26 +973,34 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
 
     // Batch-query the DB for membership / onboarding / founder presence.
-    // One query each, returning a set of clerk_user_ids -- avoids N+1.
+    // One query each, returning a Set of clerk_user_ids -- avoids N+1.
+    // Uses Drizzle's typed inArray() helper because raw `sql.ANY(${arr})`
+    // doesn't bind a JS array as a Postgres array -- it expands to a
+    // comma list of placeholders, which ANY() rejects with code 42809
+    // "op ANY/ALL (array) requires array on right side". inArray()
+    // handles the array binding correctly.
     const clerkIds = clerkUsers.map(u => u.id);
     let hasOnbSeqIds = new Set<string>();
     let hasMembershipIds = new Set<string>();
     let hasFounderOrgIds = new Set<string>();
     if (clerkIds.length > 0) {
-      const onbRes = await db.execute(sql`
-        SELECT clerk_user_id FROM onboarding_sequence WHERE clerk_user_id = ANY(${clerkIds})
-      `) as any;
-      hasOnbSeqIds = new Set<string>((onbRes.rows || []).map((r: any) => r.clerk_user_id));
+      const onbRows = await db
+        .select({ clerkUserId: onboardingSequence.clerkUserId })
+        .from(onboardingSequence)
+        .where(inArray(onboardingSequence.clerkUserId, clerkIds));
+      hasOnbSeqIds = new Set(onbRows.map(r => r.clerkUserId));
 
-      const memRes = await db.execute(sql`
-        SELECT DISTINCT clerk_user_id FROM org_members WHERE clerk_user_id = ANY(${clerkIds})
-      `) as any;
-      hasMembershipIds = new Set<string>((memRes.rows || []).map((r: any) => r.clerk_user_id));
+      const memRows = await db
+        .selectDistinct({ clerkUserId: orgMembers.clerkUserId })
+        .from(orgMembers)
+        .where(inArray(orgMembers.clerkUserId, clerkIds));
+      hasMembershipIds = new Set(memRows.map(r => r.clerkUserId));
 
-      const orgRes = await db.execute(sql`
-        SELECT DISTINCT clerk_org_id FROM organizations WHERE clerk_org_id = ANY(${clerkIds})
-      `) as any;
-      hasFounderOrgIds = new Set<string>((orgRes.rows || []).map((r: any) => r.clerk_org_id));
+      const orgRows = await db
+        .selectDistinct({ clerkOrgId: organizations.clerkOrgId })
+        .from(organizations)
+        .where(inArray(organizations.clerkOrgId, clerkIds));
+      hasFounderOrgIds = new Set(orgRows.map(r => r.clerkOrgId).filter((v): v is string => !!v));
     }
 
     function isBottyEmail(email: string | null): boolean {
