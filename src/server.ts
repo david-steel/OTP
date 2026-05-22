@@ -707,6 +707,7 @@ await app.register(import('./routes/api/onboarding.js'), { prefix: '/api/v1' });
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/sections/blog.js'));
+await app.register(import('./routes/pages/sections/dashboard.js'));
 await app.register(import('./routes/pages/coach-claim.js'));
 await app.register(import('./routes/pages/coach-invite.js'));
 await app.register(import('./routes/pages/onboarding.js'));
