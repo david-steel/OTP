@@ -1825,8 +1825,8 @@ export default async function pageRoutes(app: FastifyInstance) {
   // feedback_only_form_helping_pixels_on_conversion_pages.md.
   app.get('/sign-up', async (_request, reply) => {
     return renderV7(reply, 'sign-up', {
-      title: 'Create your OTP account',
-      description: 'Free for your whole team during beta. Founding-50 status, locked in for life.',
+      title: 'Create your free OTP workspace',
+      description: 'The free meeting software for EOS® teams. Run your weekly Level 10® on OTP. Free for your team, forever.',
       canonical: BASE_URL + '/sign-up',
       noindex: true,
       loadClerk: true,
