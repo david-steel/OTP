@@ -1,91 +1,184 @@
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-2xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8 sm:pb-10">
-    <div class="text-xs uppercase tracking-wider text-otp-400 font-bold mb-3">Team invitation</div>
+<%# /accept-invite -- v7-styled team invitation acceptance page.
+   Single column, centered, one job per state. Five state branches:
+     pending           -- main happy path; "claim your seat" CTA opens
+                          Clerk modal pre-filled with the invited email
+     accepted          -- re-visit after acceptance; CTA opens team chart
+     accepted_already  -- already-accepted state from server; Sign in CTA
+     expired           -- info only; ask the org owner to resend
+     revoked           -- info only
+     invalid / error   -- info only, fallback copy
+   loadClerk:true is required because the pending state calls
+   window.__clerk.openSignIn(). Other states don't strictly need it but
+   loading it harmlessly is simpler than branching the layout. %>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[680px] mx-auto px-6 pt-[104px] pb-6 sm:pt-[128px] sm:pb-8 text-center">
+    <p class="eyebrow mb-4" style="color:var(--blue-deep);">Team invitation</p>
+
     <% if (state === 'pending') { %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight"><%= orgName %> invited you to OTP</h1>
-      <p class="text-gray-400 mt-3 max-w-xl">Sign in (or create an account) and you will be added to the org chart with edit rights on the tile held for you. AI agents under your tile will inherit the SOPs you author.</p>
+      <h1 class="font-display text-[var(--ink)]"
+          style="font-size:clamp(1.9rem,4.4vw,2.9rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+        <%= orgName %> invited you to
+        <span class="font-mono"><span style="color:var(--blue);">[</span><span style="color:var(--ink);">OTP</span><span style="color:var(--blue);">]</span></span>.
+      </h1>
+      <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+        Claim your seat on the team chart. The tile held for you is ready, and any AI agents under it will inherit the SOPs you author.
+      </p>
+
     <% } else if (state === 'accepted') { %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">You are in.</h1>
-      <p class="text-gray-400 mt-3 max-w-xl">Welcome to <%= orgName %>. Open the team chart to claim your tile and start authoring SOPs.</p>
+      <h1 class="font-display text-[var(--ink)]"
+          style="font-size:clamp(1.9rem,4.4vw,2.9rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+        You're in.
+      </h1>
+      <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+        Welcome to <strong class="text-[var(--ink)]"><%= orgName %></strong>. Open the team chart to claim your tile and start authoring SOPs.
+      </p>
+
+    <% } else if (state === 'accepted_already') { %>
+      <h1 class="font-display text-[var(--ink)]"
+          style="font-size:clamp(1.9rem,4.4vw,2.9rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+        Already accepted.
+      </h1>
+      <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+        You're already a member of <strong class="text-[var(--ink)]"><%= typeof orgName !== 'undefined' ? orgName : 'this org' %></strong>. Sign in to open your dashboard.
+      </p>
+
     <% } else if (state === 'expired') { %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">This invitation has expired</h1>
-      <p class="text-gray-400 mt-3 max-w-xl"><%= message %></p>
+      <h1 class="font-display text-[var(--ink)]"
+          style="font-size:clamp(1.9rem,4.4vw,2.9rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+        This invitation has expired.
+      </h1>
+      <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+        <%= typeof orgName !== 'undefined' ? orgName : 'The org owner' %> sent this a while ago. Ask them to resend it.
+      </p>
+
     <% } else if (state === 'revoked') { %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Invitation revoked</h1>
-      <p class="text-gray-400 mt-3 max-w-xl"><%= message %></p>
-    <% } else if (state === 'accepted_already' || state === 'accepted') { %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Already accepted</h1>
-      <p class="text-gray-400 mt-3 max-w-xl"><%= message %></p>
+      <h1 class="font-display text-[var(--ink)]"
+          style="font-size:clamp(1.9rem,4.4vw,2.9rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+        Invitation revoked.
+      </h1>
+      <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+        <%= typeof message !== 'undefined' ? message : 'This invitation is no longer usable.' %>
+      </p>
+
     <% } else { %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Invitation</h1>
-      <p class="text-gray-400 mt-3 max-w-xl"><%= typeof message !== 'undefined' ? message : 'This invitation is no longer usable.' %></p>
+      <h1 class="font-display text-[var(--ink)]"
+          style="font-size:clamp(1.9rem,4.4vw,2.9rem); line-height:1.07; font-weight:700; letter-spacing:-0.025em;">
+        Invitation unusable.
+      </h1>
+      <p class="text-[16px] sm:text-[17px] text-[var(--ink-soft)] leading-[1.6] max-w-[34rem] mx-auto mt-5">
+        <%= typeof message !== 'undefined' ? message : 'This invitation link is invalid or has already been used.' %>
+      </p>
     <% } %>
   </div>
 </section>
 
-<section class="bg-white py-10 sm:py-14">
-  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+<!-- ================= ACTION TILE ================= -->
+<section class="bg-[var(--white)] pb-24">
+  <div class="max-w-[480px] mx-auto px-6">
 
     <% if (state === 'pending') { %>
-      <div class="bg-gray-50 rounded-xl border border-gray-200 p-6 mb-6">
-        <div class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Invitation details</div>
-        <div class="text-sm text-gray-700 leading-relaxed space-y-1">
-          <div><span class="text-gray-500">Org:</span> <strong class="text-gray-900"><%= orgName %></strong></div>
-          <div><span class="text-gray-500">Sent to:</span> <strong class="text-gray-900"><%= invitedEmail %></strong></div>
+      <!-- Invitation details + accept CTA. The accept button opens Clerk's
+           modal via window.__clerk.openSignIn() pre-filled with the invited
+           email, which handles both new-user signup and returning-user
+           sign-in through one widget. -->
+      <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 sm:p-7" style="box-shadow:0 1px 2px rgba(20,22,28,0.04), 0 12px 32px rgba(20,22,28,0.05);">
+        <p class="eyebrow mb-4">Invitation details</p>
+        <dl class="space-y-2.5 text-[14px]">
+          <div class="flex items-baseline justify-between gap-3">
+            <dt style="color:var(--ink-soft);">Org</dt>
+            <dd class="font-semibold text-[var(--ink)] truncate"><%= orgName %></dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt style="color:var(--ink-soft);">Sent to</dt>
+            <dd class="font-mono text-[12.5px] text-[var(--ink)] truncate"><%= invitedEmail %></dd>
+          </div>
           <% if (typeof claimedEntityId !== 'undefined' && claimedEntityId) { %>
-            <div><span class="text-gray-500">Tile reserved:</span> <code class="text-xs bg-white border border-gray-200 px-1.5 py-0.5 rounded"><%= claimedEntityId %></code></div>
+            <div class="flex items-baseline justify-between gap-3">
+              <dt style="color:var(--ink-soft);">Tile reserved</dt>
+              <dd class="font-mono text-[11.5px] px-2 py-0.5 rounded" style="background:var(--grey);color:var(--ink);"><%= claimedEntityId %></dd>
+            </div>
           <% } %>
           <% if (typeof expiresAt !== 'undefined' && expiresAt) { %>
-            <div><span class="text-gray-500">Expires:</span> <%= new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+            <div class="flex items-baseline justify-between gap-3">
+              <dt style="color:var(--ink-soft);">Expires</dt>
+              <dd class="text-[var(--ink)]"><%= new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></dd>
+            </div>
           <% } %>
-        </div>
-      </div>
+        </dl>
 
-      <div id="invite-cta" class="flex">
-        <button id="invite-accept-btn" class="px-6 py-3 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold transition-colors">Continue &amp; accept invitation</button>
+        <button id="invite-accept-btn" type="button" class="btn-primary w-full mt-6 px-6 py-3 text-[14px]">
+          Continue &amp; claim your seat
+        </button>
+        <p class="text-[12px] text-center mt-3" style="color:var(--ink-mute);">
+          Clerk will create your account if you're new, or sign you in if you already have one.
+        </p>
       </div>
-      <p class="text-xs text-gray-400 mt-4">Clerk will create your account if you're new, or sign you in if you already have one. Either way you land on your dashboard.</p>
 
       <script>
         (function() {
           var redirectUrl = window.location.href; // /accept-invite?token=... preserved
           var invitedEmail = <%- JSON.stringify(typeof invitedEmail !== 'undefined' ? invitedEmail : '') %>;
-          document.getElementById('invite-accept-btn').addEventListener('click', function() {
+          var btn = document.getElementById('invite-accept-btn');
+          if (!btn) return;
+          btn.addEventListener('click', function() {
             if (!window.__clerk) {
-              alert('Sign-in is loading. Please try again in a moment.');
+              // Clerk script hasn't loaded yet -- wait briefly then retry once.
+              setTimeout(function() {
+                if (window.__clerk) { window.__clerk.openSignIn(buildOpts()); }
+                else { window.location.href = '/sign-in?redirect=' + encodeURIComponent(redirectUrl); }
+              }, 400);
               return;
             }
-            // openSignIn handles both new and returning users via Clerk's
-            // internal "I already have an account" toggle. Pre-fills email.
-            window.__clerk.openSignIn({
+            window.__clerk.openSignIn(buildOpts());
+          });
+          function buildOpts() {
+            return {
               redirectUrl: redirectUrl,
               afterSignInUrl: redirectUrl,
               afterSignUpUrl: redirectUrl,
               initialValues: invitedEmail ? { emailAddress: invitedEmail } : undefined,
-            });
-          });
+            };
+          }
         })();
       </script>
 
     <% } else if (state === 'accepted') { %>
-      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-6">
-        <div class="font-semibold text-emerald-800 mb-1">Welcome aboard.</div>
+      <div class="rounded-2xl p-6 sm:p-7 text-center" style="background:#eefae0;border:1px solid #cfeaa3;">
+        <p class="eyebrow mb-2" style="color:var(--green-deep);">Welcome aboard</p>
         <% if (typeof claimedEntityId !== 'undefined' && claimedEntityId) { %>
-          <p class="text-sm text-emerald-700">You have been bound to tile <code class="bg-white border border-emerald-200 px-1.5 py-0.5 rounded text-xs"><%= claimedEntityId %></code>. The org chart will mark it claimed by you.</p>
+          <p class="text-[14px]" style="color:var(--ink);">
+            You're bound to tile
+            <code class="font-mono text-[12px] px-1.5 py-0.5 rounded" style="background:var(--white);border:1px solid var(--line-soft);color:var(--ink);"><%= claimedEntityId %></code>
+            on the chart.
+          </p>
         <% } else { %>
-          <p class="text-sm text-emerald-700">You are now a member of the org. Open the team chart to author SOPs and connect your AI agents.</p>
+          <p class="text-[14px]" style="color:var(--ink);">You're a member of the org. Open the team chart to author SOPs and connect your AI agents.</p>
         <% } %>
       </div>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <a href="<%= dashboardUrl || '/dashboard/team' %>" class="px-5 py-3 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold text-center transition-colors">Open the team chart</a>
-        <a href="/dashboard" class="px-5 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold text-center hover:bg-gray-50 transition-colors">Go to dashboard</a>
-      </div>
+      <a href="<%= typeof dashboardUrl !== 'undefined' && dashboardUrl ? dashboardUrl : '/dashboard/team' %>" class="btn-primary block text-center w-full mt-5 px-6 py-3 text-[14px]">
+        Open the team chart
+      </a>
+
+    <% } else if (state === 'accepted_already') { %>
+      <a href="/sign-in" class="btn-primary block text-center w-full px-6 py-3 text-[14px]">
+        Sign in to OTP
+      </a>
 
     <% } else { %>
-      <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
-        <p class="text-sm text-gray-700"><%= typeof message !== 'undefined' ? message : 'No further action available.' %></p>
-        <a href="/" class="text-sm text-otp-600 hover:text-otp-700 mt-3 inline-block">Back to home &rarr;</a>
-      </div>
+      <!-- expired, revoked, invalid, error -- info-only states. No CTA;
+           the inviter has to resend or there's nothing the recipient can
+           do here. No "Back to home" exit ramp; on a conversion-class
+           page, dead ends stay dead. -->
+      <% if (state === 'expired' && typeof expiresAt !== 'undefined' && expiresAt) { %>
+        <div class="rounded-2xl border border-[var(--line-soft)] p-5 text-center" style="background:#fbfaf5;">
+          <p class="text-[13px]" style="color:var(--ink-soft);">
+            Expired
+            <span class="font-mono text-[12px]"><%= new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+          </p>
+        </div>
+      <% } %>
     <% } %>
 
   </div>

@@ -2659,7 +2659,12 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { token?: string } }>('/accept-invite', async (request, reply) => {
     const token = String(request.query.token || '').trim();
     if (!token || !/^[A-Za-z0-9_\-]{16,128}$/.test(token)) {
-      return reply.view('pages/accept-invite', {
+      return renderV7(reply, 'accept-invite', {
+        loadClerk: true,
+        navVariant: 'minimal',
+        navAltLabel: 'Sign in',
+        navAltHref: '/sign-in',
+        canonical: BASE_URL + '/accept-invite',
         title: 'Accept invitation - OTP',
         noindex: true,
         state: 'invalid',
@@ -2678,7 +2683,12 @@ export default async function pageRoutes(app: FastifyInstance) {
     `);
     const invRow = (invRows.rows || [])[0] as any;
     if (!invRow) {
-      return reply.view('pages/accept-invite', {
+      return renderV7(reply, 'accept-invite', {
+        loadClerk: true,
+        navVariant: 'minimal',
+        navAltLabel: 'Sign in',
+        navAltHref: '/sign-in',
+        canonical: BASE_URL + '/accept-invite',
         title: 'Accept invitation - OTP',
         noindex: true,
         state: 'invalid',
@@ -2686,7 +2696,12 @@ export default async function pageRoutes(app: FastifyInstance) {
       });
     }
     if (invRow.status !== 'pending') {
-      return reply.view('pages/accept-invite', {
+      return renderV7(reply, 'accept-invite', {
+        loadClerk: true,
+        navVariant: 'minimal',
+        navAltLabel: 'Sign in',
+        navAltHref: '/sign-in',
+        canonical: BASE_URL + '/accept-invite',
         title: 'Accept invitation - OTP',
         noindex: true,
         state: invRow.status,
@@ -2696,7 +2711,12 @@ export default async function pageRoutes(app: FastifyInstance) {
       });
     }
     if (new Date(invRow.expires_at) < new Date()) {
-      return reply.view('pages/accept-invite', {
+      return renderV7(reply, 'accept-invite', {
+        loadClerk: true,
+        navVariant: 'minimal',
+        navAltLabel: 'Sign in',
+        navAltHref: '/sign-in',
+        canonical: BASE_URL + '/accept-invite',
         title: 'Accept invitation - OTP',
         noindex: true,
         state: 'expired',
@@ -2732,7 +2752,12 @@ export default async function pageRoutes(app: FastifyInstance) {
         return reply.redirect('/dashboard');
       } catch (e) {
         if (e instanceof MembershipError) {
-          return reply.view('pages/accept-invite', {
+          return renderV7(reply, 'accept-invite', {
+        loadClerk: true,
+        navVariant: 'minimal',
+        navAltLabel: 'Sign in',
+        navAltHref: '/sign-in',
+        canonical: BASE_URL + '/accept-invite',
             title: 'Accept invitation - OTP',
             noindex: true,
             state: 'error',
@@ -2746,7 +2771,12 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     // Not logged in: render the landing page with sign-in / sign-up CTAs that
     // preserve the token in the redirect.
-    return reply.view('pages/accept-invite', {
+    return renderV7(reply, 'accept-invite', {
+      loadClerk: true,
+      navVariant: 'minimal',
+      navAltLabel: 'Sign in',
+      navAltHref: '/sign-in',
+      canonical: BASE_URL + '/accept-invite',
       title: 'Accept invitation - OTP',
       noindex: true,
       state: 'pending',
