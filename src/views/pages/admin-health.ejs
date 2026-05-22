@@ -1,0 +1,141 @@
+<%# /admin/health -- Clerk webhook + funnel health audit dashboard.
+   Super-admin only. Renders cohort breakdown across all Clerk users:
+   webhook coverage, completed-onboarding %, stranded users, bot signals. %>
+<main class="pt-[88px] pb-20">
+  <section class="max-w-[1080px] mx-auto px-6">
+
+    <p class="eyebrow mb-3" style="color:var(--ink-mute);">
+      <a href="/admin" class="hover:text-[var(--ink)] transition-colors">&larr; back to /admin</a>
+    </p>
+    <h1 class="font-display text-[var(--ink)] mb-3" style="font-size:clamp(1.9rem,3.8vw,2.7rem); line-height:1.1; font-weight:700; letter-spacing:-0.02em;">
+      Clerk + funnel health.
+    </h1>
+    <p class="text-[15px] text-[var(--ink-soft)] mb-10 max-w-[40rem]">
+      Cross-references the live Clerk user list against the OTP database. Surfaces webhook gaps, onboarding completion, and stranded-vs-bot-vs-real signups.
+    </p>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="rounded-2xl border p-6 mb-6" style="background:#fff1f1;border-color:#ffd0d0;">
+        <p class="font-semibold text-[var(--ink)] mb-1">Error</p>
+        <p class="text-[13.5px]" style="color:var(--ink-soft);"><%= error %></p>
+      </div>
+    <% } else { %>
+
+    <!-- Top-line counts -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+      <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+        <p class="eyebrow mb-2">Clerk users</p>
+        <p class="font-display text-[var(--ink)] leading-none" style="font-size:36px; font-weight:700;"><%= counts.total %></p>
+      </div>
+      <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+        <p class="eyebrow mb-2" style="color:var(--green-deep);">Completed onboarding</p>
+        <p class="font-display text-[var(--ink)] leading-none" style="font-size:36px; font-weight:700;"><%= counts.completedOnboarding %></p>
+        <p class="text-[12px] mt-1" style="color:var(--ink-mute);"><%= counts.total > 0 ? Math.round(counts.completedOnboarding * 100 / counts.total) : 0 %>% of all signups</p>
+      </div>
+      <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+        <p class="eyebrow mb-2" style="color:var(--orange-deep);">Stranded</p>
+        <p class="font-display text-[var(--ink)] leading-none" style="font-size:36px; font-weight:700;"><%= counts.stranded %></p>
+        <p class="text-[12px] mt-1" style="color:var(--ink-mute);">Clerk-only, no org</p>
+      </div>
+      <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+        <p class="eyebrow mb-2" style="color:var(--blue-deep);">Bot-likely stranded</p>
+        <p class="font-display text-[var(--ink)] leading-none" style="font-size:36px; font-weight:700;"><%= counts.strandedBotty %></p>
+        <p class="text-[12px] mt-1" style="color:var(--ink-mute);">Of <%= counts.stranded %> stranded</p>
+      </div>
+    </div>
+
+    <!-- Webhook health -->
+    <div class="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 mb-10">
+      <p class="eyebrow mb-4">Webhook health: <code class="font-mono text-[12px]" style="color:var(--ink-soft);">user.created</code> -&gt; <code class="font-mono text-[12px]" style="color:var(--ink-soft);">onboarding_sequence</code></p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Hits (row exists)</p>
+          <p class="font-display text-[var(--ink)] leading-none" style="font-size:28px; font-weight:700; color:var(--green-deep);"><%= counts.onbHits %></p>
+          <p class="text-[12px] mt-1" style="color:var(--ink-mute);"><%= counts.total > 0 ? Math.round(counts.onbHits * 100 / counts.total) : 0 %>% of Clerk users</p>
+        </div>
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Misses (no row)</p>
+          <p class="font-display text-[var(--ink)] leading-none" style="font-size:28px; font-weight:700; color:<%= counts.onbMisses > counts.onbHits * 0.1 ? 'var(--orange-deep)' : 'var(--ink)' %>;"><%= counts.onbMisses %></p>
+          <p class="text-[12px] mt-1" style="color:var(--ink-mute);"><%= counts.total > 0 ? Math.round(counts.onbMisses * 100 / counts.total) : 0 %>% of Clerk users</p>
+        </div>
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Verdict</p>
+          <% var missRate = counts.total > 0 ? counts.onbMisses / counts.total : 0; %>
+          <% if (missRate < 0.05) { %>
+            <p class="text-[14px] font-semibold" style="color:var(--green-deep);">Webhook healthy</p>
+            <p class="text-[12px] mt-1" style="color:var(--ink-mute);">&lt;5% miss is normal noise.</p>
+          <% } else if (missRate < 0.25) { %>
+            <p class="text-[14px] font-semibold" style="color:var(--orange-deep);">Webhook flaky</p>
+            <p class="text-[12px] mt-1" style="color:var(--ink-mute);">5-25% miss. Check Clerk webhook delivery log.</p>
+          <% } else { %>
+            <p class="text-[14px] font-semibold" style="color:#c0392b;">Webhook broken</p>
+            <p class="text-[12px] mt-1" style="color:var(--ink-mute);">&gt;25% miss. Webhook is failing or unwired.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stranded breakdown -->
+    <% if (counts.stranded > 0) { %>
+    <div class="rounded-2xl border border-[var(--line-soft)] p-6 mb-10" style="background:#fbfaf5;">
+      <p class="eyebrow mb-4">Stranded users (<%= counts.stranded %> total)</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Bot-likely</p>
+          <p class="text-[20px] font-bold text-[var(--ink)]"><%= counts.strandedBotty %></p>
+          <p class="text-[12px]" style="color:var(--ink-mute);">Digit-heavy / pattern-repeating emails. Safe to delete.</p>
+        </div>
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Human-likely</p>
+          <p class="text-[20px] font-bold text-[var(--ink)]"><%= counts.strandedHumanLikely %></p>
+          <p class="text-[12px]" style="color:var(--ink-mute);">Plausible emails. Bailed before step 1, or webhook missed them.</p>
+        </div>
+      </div>
+
+      <% if (recentStranded && recentStranded.length > 0) { %>
+      <p class="eyebrow mb-2" style="font-size:10px;">Most recent <%= recentStranded.length %></p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[13px]">
+          <thead>
+            <tr class="text-left" style="color:var(--ink-soft);">
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Email</th>
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Signed up</th>
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Bot signal</th>
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Webhook</th>
+              <th class="pb-2 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentStranded.forEach(function(u) { %>
+              <tr style="border-top:1px solid var(--line-soft);">
+                <td class="py-2.5 pr-4 font-mono" style="font-size:12.5px; color:var(--ink);"><%= u.email || '(no email)' %></td>
+                <td class="py-2.5 pr-4" style="color:var(--ink-soft);"><%= u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '?' %></td>
+                <td class="py-2.5 pr-4">
+                  <% if (u.botty) { %>
+                    <span class="font-mono text-[11px] px-2 py-0.5 rounded-full" style="background:#fff1e0;color:#b06c08;border:1px solid #f5c97f;">bot-likely</span>
+                  <% } else { %>
+                    <span class="font-mono text-[11px] px-2 py-0.5 rounded-full" style="background:var(--white);border:1px solid var(--line-soft);color:var(--ink-soft);">human-likely</span>
+                  <% } %>
+                </td>
+                <td class="py-2.5 pr-4">
+                  <% if (u.hasOnb) { %>
+                    <span class="font-mono text-[11px] px-2 py-0.5 rounded-full" style="background:#eefae0;color:var(--green-deep);border:1px solid #cfeaa3;">hit</span>
+                  <% } else { %>
+                    <span class="font-mono text-[11px] px-2 py-0.5 rounded-full" style="background:#fff1f1;color:#c0392b;border:1px solid #ffd0d0;">miss</span>
+                  <% } %>
+                </td>
+                <td class="py-2.5">
+                  <a href="/admin/impersonate/by-clerk/<%= u.id %>" class="text-[12px] underline underline-offset-2" style="color:var(--blue);">diagnose &rarr;</a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% } %>
+  </section>
+</main>
