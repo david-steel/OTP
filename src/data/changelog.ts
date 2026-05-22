@@ -11,6 +11,28 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 21, 2026 ----
+
+  {
+    date: '2026-05-21',
+    tags: ['Polish', 'Auth'],
+    title: 'Sign-up and sign-in get the v7 editorial treatment, post-signup flow operational end-to-end',
+    summary: 'The sign-up and sign-in pages now match the home page editorial style -- one funnel, no exit ramps, brand-themed Clerk widget on orgy green, minimal nav. Sign-in carries a live What\'s New tile pulling from this changelog. The 7-step post-signup onboarding flow was hardened end-to-end: every wizard step now renders the proper layout, Google Ads conversion attribution is wired through CSP, and mobile sign-up is verified end-to-end with a real submit.',
+    details: `<p>The front door has been quietly sharpened over the last three days. The conversion pages are the place new founders first decide whether OTP is real -- they should look like the rest of the product, not like a generic Clerk template glued onto an old layer.</p>
+
+<h3>Sign-up: v7 editorial rebrand</h3>
+<p>The /sign-up page now matches the home page visual language: light editorial backdrop, mono <code>[OTP]</code> lockup in a minimal nav (logo + Sign in, no exit ramps), big Schibsted Grotesk hero, and Clerk's SignUp widget themed to the orgy-green primary on dark ink text. A "What happens next" sidebar with hand-1 / hand-2 / hand-3 numbering tells new founders the three steps after submission. Loading skeleton inside the Clerk slot replaces the empty-box-while-the-widget-loads dead time.</p>
+
+<h3>Sign-in: matches the new sign-up, plus a live What's New tile</h3>
+<p>The /sign-in page got the same minimal nav, "Welcome back" hero with the operating-platform thesis as subhead, and a sidebar tile that auto-pulls the latest entry from this changelog. Returning users see what shipped recently the moment they sign in -- the platform feels like it is moving because it is.</p>
+
+<h3>Post-signup flow: layout conflict fixed, all 7 onboarding steps operational</h3>
+<p>The 7-step post-signup onboarding wizard (profile, team, goals, KPIs, agents, teams, first meeting) had a layout-rendering conflict that was returning an error on the first step for new accounts. Rebuilt on a manual ejs.renderFile pattern that bypasses the global-layout collision; the full wizard now flows end-to-end. Mobile sign-up was verified with a real submit -- Clerk's Cloudflare Turnstile fires correctly, the verification email lands, and the post-signup wizard renders.</p>
+
+<h3>Google Ads attribution unblocked</h3>
+<p>The Content Security Policy was blocking <code>googleads.g.doubleclick.net</code> and <code>www.google.com/ccm/collect</code>, so even successful sign-ups never reached Google Ads as a conversion. Added those origins to the script-src and connect-src directives. The server-side conversion upload that fires on /onboarding/profile (gclid-based, idempotent via the conversion_log table) is now end-to-end operational.</p>`,
+  },
+
   // ---- May 18, 2026 ----
 
   {
