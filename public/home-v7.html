@@ -169,17 +169,20 @@
   </div>
 
   <!-- Mobile menu panel: slides down from under the nav bar when the
-       hamburger is tapped. Hidden by default and on md+ viewports. -->
-  <div id="mobile-menu" class="md:hidden hidden border-t border-[var(--line-soft)] bg-[var(--white)]">
-    <div class="px-6 py-3 flex flex-col">
-      <a href="/protocol" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Protocol</a>
-      <a href="/pricing" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Pricing</a>
-      <a href="/browse" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Browse</a>
-      <a href="/whats-new" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">What's New</a>
-      <a href="/blog" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">Blog</a>
-      <a href="/about" class="block py-3 text-[15px] text-[var(--ink)] hover:text-[var(--blue)] transition-colors">About</a>
-      <a href="/sign-in" class="block py-3 mt-1 pt-4 text-[15px] text-[var(--ink-soft)] hover:text-[var(--ink)] border-t border-[var(--line-soft)] transition-colors">Sign in</a>
-    </div>
+       hamburger is tapped. Hidden by default (Tailwind `hidden` class is
+       in v7.css and works) and on md+ viewports. Layout uses inline
+       styles -- pre-built v7.css doesn't include `flex-col`, `block`, or
+       arbitrary text/spacing utilities I'd want here. Inline is safer. -->
+  <div id="mobile-menu" class="md:hidden hidden" style="border-top:1px solid var(--line-soft); background:var(--white);">
+    <nav style="padding:6px 24px 18px; display:flex; flex-direction:column;">
+      <a href="/protocol" style="display:block; padding:13px 0; font-size:15px; color:var(--ink); text-decoration:none;">Protocol</a>
+      <a href="/pricing" style="display:block; padding:13px 0; font-size:15px; color:var(--ink); text-decoration:none;">Pricing</a>
+      <a href="/browse" style="display:block; padding:13px 0; font-size:15px; color:var(--ink); text-decoration:none;">Browse</a>
+      <a href="/whats-new" style="display:block; padding:13px 0; font-size:15px; color:var(--ink); text-decoration:none;">What&rsquo;s New</a>
+      <a href="/blog" style="display:block; padding:13px 0; font-size:15px; color:var(--ink); text-decoration:none;">Blog</a>
+      <a href="/about" style="display:block; padding:13px 0; font-size:15px; color:var(--ink); text-decoration:none;">About</a>
+      <a href="/sign-in" style="display:block; padding:14px 0 6px; margin-top:6px; font-size:15px; color:var(--ink-soft); text-decoration:none; border-top:1px solid var(--line-soft);">Sign in</a>
+    </nav>
   </div>
 </nav>
 
