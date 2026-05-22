@@ -125,7 +125,14 @@
                   <% } %>
                 </td>
                 <td class="py-2.5">
-                  <a href="/admin/impersonate/by-clerk/<%= u.id %>" class="text-[12px] underline underline-offset-2" style="color:var(--blue);">diagnose &rarr;</a>
+                  <%# /admin/impersonate/by-clerk/:id is a POST handler (it
+                     mutates server state for users who DO have membership).
+                     For stranded users it just renders the diagnostic view,
+                     but a GET request still 404s, so we wrap the action in a
+                     form to POST it. %>
+                  <form action="/admin/impersonate/by-clerk/<%= u.id %>" method="post" style="display:inline;">
+                    <button type="submit" class="text-[12px] underline underline-offset-2" style="color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font:inherit;">diagnose &rarr;</button>
+                  </form>
                 </td>
               </tr>
             <% }); %>
