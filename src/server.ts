@@ -710,10 +710,15 @@ await app.register(import('./routes/pages/coach-claim.js'));
 await app.register(import('./routes/pages/coach-invite.js'));
 await app.register(import('./routes/pages/onboarding.js'));
 
-// Custom 404 handler -- return HTML instead of Fastify's default JSON
+// Custom 404 handler -- return HTML instead of Fastify's default JSON.
+// Uses renderV7 (light v7 layout) instead of reply.view (which wraps the
+// 404 view in layouts/main.ejs, the OLD dark/heavy nav). Caught
+// 2026-05-22 by David hitting /admin while logged-out -- he saw the
+// old "protocol for AI agent coordination" content because main.ejs
+// + pages/home.ejs was rendering as the 404 fallback.
 app.setNotFoundHandler(async (request, reply) => {
-  reply.status(404);
-  return reply.view('pages/404', {
+  const { renderV7 } = await import('./routes/pages/pages.js');
+  return renderV7(reply.status(404), '404', {
     title: 'Page Not Found - OTP',
     description: 'The page you are looking for does not exist.',
     canonical: 'https://orgtp.com/',

@@ -65,7 +65,7 @@ const V7_CLERK_INSTANCE = V7_CLERK_PUB_KEY.startsWith('pk_')
   ? Buffer.from(V7_CLERK_PUB_KEY.split('_').slice(2).join('_'), 'base64').toString().replace(/\$$/, '')
   : '';
 
-async function renderV7(reply: any, page: string, data: Record<string, any> = {}) {
+export async function renderV7(reply: any, page: string, data: Record<string, any> = {}) {
   const ctx = {
     clerkPubKey: V7_CLERK_PUB_KEY,
     clerkInstance: V7_CLERK_INSTANCE,
@@ -180,9 +180,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   // OOS Detail
   app.get<{ Params: { id: string } }>('/oos/:id', async (request, reply) => {
     const id = validateUuidParam(request.params.id);
-    if (!id) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!id) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     const [oosFile] = await db.select().from(oosFiles).where(eq(oosFiles.id, id)).limit(1);
-    if (!oosFile) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!oosFile) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const [org] = await db.select().from(organizations).where(eq(organizations.id, oosFile.orgId)).limit(1);
     const claimRows = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
@@ -212,10 +212,10 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get<{ Params: { idA: string; idB: string } }>('/compare/:idA/:idB', async (request, reply) => {
     const idA = validateUuidParam(request.params.idA);
     const idB = validateUuidParam(request.params.idB);
-    if (!idA || !idB) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!idA || !idB) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     const [oosA] = await db.select().from(oosFiles).where(eq(oosFiles.id, idA)).limit(1);
     const [oosB] = await db.select().from(oosFiles).where(eq(oosFiles.id, idB)).limit(1);
-    if (!oosA || !oosB) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!oosA || !oosB) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const [orgA] = await db.select().from(organizations).where(eq(organizations.id, oosA.orgId)).limit(1);
     const [orgB] = await db.select().from(organizations).where(eq(organizations.id, oosB.orgId)).limit(1);
@@ -235,10 +235,10 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get<{ Params: { sourceId: string; targetId: string } }>('/merge/:sourceId/:targetId', async (request, reply) => {
     const sourceId = validateUuidParam(request.params.sourceId);
     const targetId = validateUuidParam(request.params.targetId);
-    if (!sourceId || !targetId) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!sourceId || !targetId) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     const [sourceOos] = await db.select().from(oosFiles).where(eq(oosFiles.id, sourceId)).limit(1);
     const [targetOos] = await db.select().from(oosFiles).where(eq(oosFiles.id, targetId)).limit(1);
-    if (!sourceOos || !targetOos) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!sourceOos || !targetOos) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const [sourceOrg] = await db.select().from(organizations).where(eq(organizations.id, sourceOos.orgId)).limit(1);
     const [targetOrg] = await db.select().from(organizations).where(eq(organizations.id, targetOos.orgId)).limit(1);
@@ -257,9 +257,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Org Profile
   app.get<{ Params: { id: string } }>('/org/:id', async (request, reply) => {
     const id = validateUuidParam(request.params.id);
-    if (!id) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!id) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     const [org] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
-    if (!org) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const pubFiles = await db.select().from(oosFiles).where(and(eq(oosFiles.orgId, id), eq(oosFiles.status, 'published'))).orderBy(desc(oosFiles.publishedAt));
     const totalClaims = pubFiles.reduce((s, f) => s + f.claimCount, 0);
@@ -1047,7 +1047,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Super Admin Dashboard
   app.get('/admin', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin;
-    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!isAdmin) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     // ---- Users (funnel: signup -> return -> org -> MCP -> publish) ----
     const { createClerkClient } = await import('@clerk/backend');
@@ -1194,7 +1194,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Super Admin: Pre-signup subscribers page (founder-add UI + list)
   app.get('/admin/subscribers', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin;
-    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!isAdmin) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const subs = await db
       .select()
@@ -1227,7 +1227,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Allows ?key=otp-founding-2026 fallback so David can review without full Clerk session.
   app.get<{ Querystring: { status?: string; key?: string } }>('/admin/partners', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
-    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!isAdmin) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const requestedStatus = request.query.status;
     const validStatuses = ['pending', 'reviewing', 'approved', 'declined', 'onboarded'] as const;
@@ -1264,7 +1264,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // POST /admin/impersonate/exit        -- clear cookie + audit log
   app.post<{ Params: { memberId: string } }>('/admin/impersonate/:memberId', async (request, reply) => {
     if (!(request as any).isSuperAdmin) {
-      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
     const auth = getAuth(request);
     if (!auth.userId) return reply.status(401).send({ error: 'AUTH_REQUIRED' });
@@ -1294,7 +1294,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // which doesn't already have member ids on hand.
   app.post<{ Params: { clerkUserId: string } }>('/admin/impersonate/by-clerk/:clerkUserId', async (request, reply) => {
     if (!(request as any).isSuperAdmin) {
-      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
     const auth = getAuth(request);
     if (!auth.userId) return reply.status(401).send({ error: 'AUTH_REQUIRED' });
@@ -1603,7 +1603,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   app.get<{ Querystring: { key?: string } }>('/admin/skills', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
-    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!isAdmin) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const data = await buildSkillsInventory();
 
@@ -1696,7 +1696,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Super Admin: Improvements / roadmap tracker
   app.get<{ Querystring: { status?: string; key?: string } }>('/admin/improvements', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin === true || request.query.key === 'otp-founding-2026';
-    if (!isAdmin) return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+    if (!isAdmin) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     // Default view: only "open" items (idea + in_progress). Closed items
     // (completed, wont_do) hide unless the user explicitly opts in via
@@ -2095,7 +2095,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
     if (!ALLOWED.includes(viewerRole)) {
-      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
 
     const { listMembers, listPendingInvites } = await import('../../services/membership.js');
@@ -2218,7 +2218,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
     if (!ALLOWED.includes(viewerRole)) {
-      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
 
     const filterTeamId = (request.query.teamId || '').toString();
@@ -2283,7 +2283,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
     if (!ALLOWED.includes(viewerRole)) {
-      return reply.status(404).view('pages/home', { title: 'Not Found', noindex: true });
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
 
     const orgTeams = await db.select().from(teams)
