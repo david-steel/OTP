@@ -1715,10 +1715,13 @@ export default async function pageRoutes(app: FastifyInstance) {
       noindex: true,
       loadClerk: true,
       googleAdsId: 'AW-18159119434',
-      // Conversion-page nav: [OTP] logo + Sign in only. Strips the 6 exit
-      // links the full v7-nav carries (Protocol/Pricing/Browse/What's
-      // New/Get started). One funnel, no distractions.
+      // Conversion-page nav + footer: [OTP] logo + Sign in only. Strips
+      // the 6 nav exit links (Protocol/Pricing/Browse/What's New/Get
+      // started) and the 5 footer exit links (Protocol/Pricing/Browse/
+      // Blog/About). One funnel, no distractions. Trademark and
+      // independence disclaimers stay in the minimal footer.
       navVariant: 'minimal',
+      footerVariant: 'minimal',
     });
   });
 
@@ -2273,8 +2276,10 @@ export default async function pageRoutes(app: FastifyInstance) {
       loadClerk: true,
       // Conversion-page nav: [OTP] logo + Create account (sends new users
       // to /sign-up, since they're already on /sign-in). Strips Protocol/
-      // Pricing/Browse/What's New/Get started. One funnel.
+      // Pricing/Browse/What's New/Get started in the nav and Protocol/
+      // Pricing/Browse/Blog/About in the footer. One funnel.
       navVariant: 'minimal',
+      footerVariant: 'minimal',
       navAltLabel: 'Create account',
       navAltHref: '/sign-up',
       latestUpdate,

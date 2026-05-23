@@ -64,7 +64,14 @@
 <%- include('../partials/v7-nav') %>
 <% } %>
 <%- body %>
+<%# Footer variant: routes pass footerVariant:'minimal' for conversion pages
+    (sign-up, sign-in). Mirrors the navVariant pattern -- same dark slab,
+    no exit links. Anything else gets the full footer with site nav. %>
+<% if (typeof footerVariant !== 'undefined' && footerVariant === 'minimal') { %>
+<%- include('../partials/v7-footer-minimal') %>
+<% } else { %>
 <%- include('../partials/v7-footer') %>
+<% } %>
 <%# Opt-in Clerk loader: routes pass loadClerk:true and renderV7 threads
     clerkPubKey/clerkInstance from env so v7 pages can mount Clerk widgets
     without falling back to the heavy main.ejs layout. %>
