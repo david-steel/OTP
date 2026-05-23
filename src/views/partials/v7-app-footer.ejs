@@ -2,50 +2,56 @@
     3-column nav structure (Platform / Learn / Company) for orientation when
     you're deep in the app. Same dark slab and brand mark as the marketing
     v7-footer, just denser link grouping. The lighter marketing footer with
-    the mascot peeking out stays on layouts/v7.ejs landings. %>
+    the mascot peeking out stays on layouts/v7.ejs landings.
+
+    Uses standard flex (no bracket-notation grid) so Tailwind's purge picks
+    up every class. Mirrors the structure of the previous bg-otp-950 footer
+    that worked, only re-skinned to v7 visual identity. %>
 <footer class="bg-[#0c1626] text-[#aeb7c6] relative overflow-hidden">
   <img src="/public/orgy-clean.png" alt="" aria-hidden="true"
        class="pointer-events-none select-none absolute hidden lg:block"
        style="right:48px; bottom:-118px; width:212px; z-index:0; opacity:0.55;">
   <div class="max-w-[1180px] mx-auto px-6 pt-14 pb-12 relative" style="z-index:1;">
-    <div class="grid gap-10 sm:grid-cols-[1.4fr_repeat(3,1fr)] sm:gap-12">
-      <div>
+    <div class="flex flex-col sm:flex-row justify-between gap-10">
+      <div class="max-w-xs">
         <div class="flex items-baseline gap-2.5">
           <span class="font-mono font-semibold text-[18px]"><span style="color:var(--blue);">[</span><span class="text-white">OTP</span><span style="color:var(--blue);">]</span></span>
-          <span class="eyebrow text-[9px] text-[#7d8696]">Organization Transport Protocol</span>
+          <span class="eyebrow text-[9px] text-[#7d8696]">Organization&nbsp;Transport&nbsp;Protocol</span>
         </div>
-        <p class="text-[13px] mt-3 max-w-xs leading-[1.6] text-[#8893a4]">
+        <p class="text-[13px] mt-3 leading-[1.6] text-[#8893a4]">
           The operating platform where your people and AI agents run as one team. One chart, one scoreboard, one weekly meeting.
         </p>
       </div>
-      <div>
-        <div class="font-mono text-[10px] text-[#7d8696] uppercase tracking-[0.12em] mb-3">Platform</div>
-        <div class="flex flex-col gap-2 text-[13px]">
-          <a href="/browse" class="hover:text-white transition-colors">Browse</a>
-          <a href="/graph" class="hover:text-white transition-colors">Graph</a>
-          <a href="/pricing" class="hover:text-white transition-colors">Pricing</a>
-          <a href="/publish" class="hover:text-white transition-colors">Publish</a>
-          <a href="/protocol" class="hover:text-white transition-colors">Protocol</a>
+      <div class="flex gap-12 text-sm">
+        <div>
+          <div class="font-mono text-[10px] text-[#7d8696] uppercase tracking-wider mb-3">Platform</div>
+          <div class="flex flex-col gap-2 text-[13px]">
+            <a href="/browse" class="hover:text-white transition-colors">Browse</a>
+            <a href="/graph" class="hover:text-white transition-colors">Graph</a>
+            <a href="/pricing" class="hover:text-white transition-colors">Pricing</a>
+            <a href="/publish" class="hover:text-white transition-colors">Publish</a>
+            <a href="/protocol" class="hover:text-white transition-colors">Protocol</a>
+          </div>
         </div>
-      </div>
-      <div>
-        <div class="font-mono text-[10px] text-[#7d8696] uppercase tracking-[0.12em] mb-3">Learn</div>
-        <div class="flex flex-col gap-2 text-[13px]">
-          <a href="/glossary" class="hover:text-white transition-colors">Glossary</a>
-          <a href="/faq" class="hover:text-white transition-colors">FAQ</a>
-          <a href="/answers" class="hover:text-white transition-colors">Answers</a>
-          <a href="/guide" class="hover:text-white transition-colors">Guide</a>
-          <a href="/blog" class="hover:text-white transition-colors">Blog</a>
-          <a href="/mcp" class="hover:text-white transition-colors">MCP Hub</a>
+        <div>
+          <div class="font-mono text-[10px] text-[#7d8696] uppercase tracking-wider mb-3">Learn</div>
+          <div class="flex flex-col gap-2 text-[13px]">
+            <a href="/glossary" class="hover:text-white transition-colors">Glossary</a>
+            <a href="/faq" class="hover:text-white transition-colors">FAQ</a>
+            <a href="/answers" class="hover:text-white transition-colors">Answers</a>
+            <a href="/guide" class="hover:text-white transition-colors">Guide</a>
+            <a href="/blog" class="hover:text-white transition-colors">Blog</a>
+            <a href="/mcp" class="hover:text-white transition-colors">MCP Hub</a>
+          </div>
         </div>
-      </div>
-      <div>
-        <div class="font-mono text-[10px] text-[#7d8696] uppercase tracking-[0.12em] mb-3">Company</div>
-        <div class="flex flex-col gap-2 text-[13px]">
-          <a href="/about" class="hover:text-white transition-colors">About</a>
-          <a href="/partners" class="hover:text-white transition-colors">Partners</a>
-          <a href="/whats-new" class="hover:text-white transition-colors">What's New</a>
-          <a href="/investors" class="hover:text-white transition-colors">Investors</a>
+        <div>
+          <div class="font-mono text-[10px] text-[#7d8696] uppercase tracking-wider mb-3">Company</div>
+          <div class="flex flex-col gap-2 text-[13px]">
+            <a href="/about" class="hover:text-white transition-colors">About</a>
+            <a href="/partners" class="hover:text-white transition-colors">Partners</a>
+            <a href="/whats-new" class="hover:text-white transition-colors">What's New</a>
+            <a href="/investors" class="hover:text-white transition-colors">Investors</a>
+          </div>
         </div>
       </div>
     </div>
