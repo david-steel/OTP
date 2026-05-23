@@ -25,8 +25,7 @@
   </script>
   <% } %>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
-  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fcfcfd">
   <title><%= typeof title !== 'undefined' ? title : 'OTP - A protocol for AI agent coordination' %></title>
   <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the operating platform for teams of people and AI agents. One chart, one scoreboard, one weekly meeting. Free for your whole team in beta.' %>">
   <% if (typeof noindex !== 'undefined' && noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
@@ -52,9 +51,8 @@
   <meta property="article:section" content="AI Coordination">
   <% } %>
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/public/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/public/favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/public/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/public/favicon-orgy.png">
+  <link rel="apple-touch-icon" href="/public/favicon-orgy-512.png">
 
   <!-- PWA manifest + iOS home-screen install hints (added 2026-05-07).
        Stays-signed-in pattern: tap Share → Add to Home Screen on /me/todos.
@@ -62,12 +60,16 @@
        store and don't force re-sign-in like in-app webviews do. -->
   <link rel="manifest" href="/public/manifest.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="OTP">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- v7 font stack: Schibsted Grotesk display, Inter body, JetBrains Mono mark/eyebrow -->
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/styles.css">
+  <!-- v7.css: design tokens (--ink, --blue, --orgy, --grey, etc.) + base classes
+       used across both marketing (layouts/v7) and interior (layouts/main). -->
+  <link rel="stylesheet" href="/public/v7.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
 
@@ -103,7 +105,7 @@
 
     /* Cards */
     .card-hover { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
 
     /* Badges */
     .badge-founding { background: linear-gradient(135deg, #f59e0b, #d97706); }
@@ -131,40 +133,43 @@
 
     /* Claim cards */
     .claim-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-    .claim-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .claim-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
 
     /* Clerk */
     .cl-userButtonBox { height: 32px; }
 
-    /* Gradient text */
-    .gradient-text {
-      background: linear-gradient(135deg, #0095ff 0%, #7c3aed 50%, #0095ff 100%);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradient-shift 4s ease infinite;
+    /* v7 interior nav: white slab with soft border, ink text, [OTP] mono mark.
+       Replaces the old bg-black/text-white treatment so the authenticated app
+       reads as the same product as the marketing pages. */
+    .v7-nav {
+      background: #fcfcfd;
+      border-bottom: 1px solid rgba(20,22,28,0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
-    @keyframes gradient-shift { 0% { background-position: 0% center; } 50% { background-position: 100% center; } 100% { background-position: 0% center; } }
-
-    /* Grid background */
-    .bg-grid {
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
+    .v7-nav a, .v7-nav button { color: var(--ink); }
+    .v7-nav a:hover, .v7-nav button:hover { color: var(--blue-deep); }
+    .v7-nav-link { font-size: 14px; font-weight: 500; transition: color .15s ease; }
+    .v7-cta-publish {
+      display: inline-flex; align-items: center;
+      background: var(--orgy); color: var(--ink);
+      padding: 0.55rem 1.1rem; border-radius: 10px;
+      font-size: 14px; font-weight: 600;
+      transition: filter .15s ease, transform .15s ease;
     }
-
-    /* Glow effects */
-    .glow-blue { box-shadow: 0 0 60px rgba(0, 149, 255, 0.15); }
-    .glow-purple { box-shadow: 0 0 60px rgba(124, 58, 237, 0.15); }
-
-    /* Flow line */
-    .flow-line { animation: flow-pulse 3s ease-in-out infinite; }
-    @keyframes flow-pulse { 0%, 100% { opacity: 0.15; background-position: 0% center; } 50% { opacity: 0.4; background-position: 100% center; } }
-
-    /* Nav */
-    .nav-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .v7-cta-publish:hover { filter: brightness(0.96); color: var(--ink); }
+    .v7-dropdown {
+      background: #fff; border: 1px solid rgba(20,22,28,0.08);
+      border-radius: 10px; box-shadow: 0 14px 40px -16px rgba(20,22,28,0.18);
+      padding: 6px;
+    }
+    .v7-dropdown a { display: block; padding: 8px 12px; border-radius: 6px; font-size: 14px; color: var(--ink); transition: background .12s ease; white-space: nowrap; }
+    .v7-dropdown a:hover { background: rgba(13,125,242,0.06); color: var(--blue-deep); }
+    .v7-dropdown .v7-dd-divider { height: 1px; background: rgba(20,22,28,0.06); margin: 6px 4px; }
+    .v7-mobile-menu { background: #fcfcfd; border-top: 1px solid rgba(20,22,28,0.08); }
+    .v7-mobile-menu a, .v7-mobile-menu button { color: var(--ink); }
+    .v7-mobile-menu a:hover { color: var(--blue-deep); background: rgba(13,125,242,0.06); }
+    .v7-mobile-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); padding: 0 12px; }
   </style>
 
   <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
@@ -187,34 +192,30 @@
   <% } %>
 
   <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-white/10">
+  <nav class="v7-nav fixed top-0 left-0 right-0 z-50">
   <% if (typeof minimalNav !== 'undefined' && minimalNav) { %>
     <!-- Minimal landing-page header: logo + single conversion CTA, no escape hatches. -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-      <a href="/" class="flex items-center" aria-label="OTP — Organization Transport Protocol">
-        <img src="/public/images/otp-lockup-white.webp"
-             srcset="/public/images/otp-lockup-white-1x.png 1x, /public/images/otp-lockup-white-2x.png 2x"
-             alt="OTP — Organization Transport Protocol"
-             class="h-6 md:h-7 w-auto" />
+      <a href="/" class="flex items-baseline gap-2.5" aria-label="OTP — Organization Transport Protocol">
+        <span class="font-mono font-semibold text-[18px]"><span style="color:var(--blue);">[</span><span style="color:var(--ink);">OTP</span><span style="color:var(--blue);">]</span></span>
+        <span class="hidden sm:inline-block font-mono text-[9px] uppercase tracking-[0.12em]" style="color:var(--ink-mute);">Organization Transport Protocol</span>
       </a>
       <div class="flex items-center gap-3 sm:gap-4 text-sm">
-        <a href="/sign-in" class="text-white hover:text-white/70 transition-colors">Sign in</a>
-        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors whitespace-nowrap">Create free account</a>
+        <a href="/sign-in" class="v7-nav-link">Sign in</a>
+        <a href="/sign-up" onclick="return gtagSendEvent('/sign-up')" class="v7-cta-publish whitespace-nowrap">Create free account</a>
       </div>
     </div>
   <% } else { %>
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-      <a href="/" class="flex items-center" aria-label="OTP — Organization Transport Protocol">
-        <img src="/public/images/otp-lockup-white.webp"
-             srcset="/public/images/otp-lockup-white-1x.png 1x, /public/images/otp-lockup-white-2x.png 2x"
-             alt="OTP — Organization Transport Protocol"
-             class="h-6 md:h-7 w-auto" />
+      <a href="/" class="flex items-baseline gap-2.5" aria-label="OTP — Organization Transport Protocol">
+        <span class="font-mono font-semibold text-[18px]"><span style="color:var(--blue);">[</span><span style="color:var(--ink);">OTP</span><span style="color:var(--blue);">]</span></span>
+        <span class="hidden md:inline-block font-mono text-[9px] uppercase tracking-[0.12em]" style="color:var(--ink-mute);">Organization Transport Protocol</span>
       </a>
 
       <!-- Mobile: auth + hamburger -->
       <div class="flex md:hidden items-center gap-3">
         <div id="auth-nav-header" class="flex items-center gap-2 text-sm"></div>
-        <button id="mobile-menu-btn" class="p-1.5 rounded-lg hover:bg-white/10 transition-colors" aria-label="Menu">
+        <button id="mobile-menu-btn" class="p-1.5 rounded-lg transition-colors" style="color:var(--ink);" aria-label="Menu">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
@@ -222,49 +223,49 @@
       </div>
 
       <!-- Desktop nav -->
-      <div class="hidden md:flex items-center gap-8 text-sm">
-        <a href="/protocol" class="text-white hover:text-white/70 font-medium transition-colors">Protocol</a>
-        <a href="/pricing" class="text-white hover:text-white/70 transition-colors">Pricing</a>
+      <div class="hidden md:flex items-center gap-7 text-sm">
+        <a href="/protocol" class="v7-nav-link font-medium">Protocol</a>
+        <a href="/pricing" class="v7-nav-link">Pricing</a>
 
         <!-- Explore dropdown -->
         <div class="relative group">
-          <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
+          <button class="v7-nav-link flex items-center gap-1 cursor-pointer">
             Explore
             <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
-          <div class="absolute top-full left-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 160px;">
-            <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
-              <a href="/browse" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Browse</a>
-              <a href="/search" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Search</a>
-              <a href="/graph" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Graph</a>
-              <a href="/claims" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Claims</a>
-              <a href="/experts" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Experts</a>
+          <div class="absolute top-full left-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 180px;">
+            <div class="v7-dropdown">
+              <a href="/browse">Browse</a>
+              <a href="/search">Search</a>
+              <a href="/graph">Graph</a>
+              <a href="/claims">Claims</a>
+              <a href="/experts">Experts</a>
             </div>
           </div>
         </div>
 
         <!-- Learn dropdown -->
         <div class="relative group">
-          <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
+          <button class="v7-nav-link flex items-center gap-1 cursor-pointer">
             Learn
             <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
-          <div class="absolute top-full left-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 160px;">
-            <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
-              <a href="/blog" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Blog</a>
-              <a href="/guide" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Guide</a>
-              <a href="/faq" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">FAQ</a>
-              <a href="/answers" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Answers</a>
-              <a href="/glossary" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Glossary</a>
-              <div class="border-t border-white/10 my-1"></div>
-              <a href="/agent-onboarding" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Agent Onboarding</a>
-              <a href="/machine-commerce" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">Machine Commerce</a>
-              <a href="/mcp" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors">MCP Hub</a>
+          <div class="absolute top-full left-0 pt-2 hidden group-hover:block group-focus-within:block" style="min-width: 200px;">
+            <div class="v7-dropdown">
+              <a href="/blog">Blog</a>
+              <a href="/guide">Guide</a>
+              <a href="/faq">FAQ</a>
+              <a href="/answers">Answers</a>
+              <a href="/glossary">Glossary</a>
+              <div class="v7-dd-divider"></div>
+              <a href="/agent-onboarding">Agent Onboarding</a>
+              <a href="/machine-commerce">Machine Commerce</a>
+              <a href="/mcp">MCP Hub</a>
             </div>
           </div>
         </div>
 
-        <a href="/whats-new" class="text-white hover:text-white/70 transition-colors">What's New</a>
+        <a href="/whats-new" class="v7-nav-link">What's New</a>
         <div id="auth-nav" class="flex items-center gap-3">
           <% if (typeof authUserId !== 'undefined' && authUserId) {
                // Role-gated dashboard links. Mirrors dashboard-tabs.ejs buckets.
@@ -281,60 +282,60 @@
           %>
             <!-- Dashboard dropdown (signed-in users) -->
             <div class="relative group z-50">
-              <button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">
+              <button class="v7-nav-link flex items-center gap-1 cursor-pointer">
                 Dashboard
                 <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <!-- Invisible bridge keeps :hover continuous from trigger to panel -->
-              <div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 220px;">
+              <div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 240px;">
                 <div class="h-2"></div>
-                <div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">
-                  <% if (_has(_ALL)) { %><a href="/dashboard" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Daily <span class="text-white/50 text-xs">- run my day</span></a><% } %>
-                  <% if (_has(_ALL)) { %><a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Meetings <span class="text-white/50 text-xs">- L8 / L10</span></a><% } %>
-                  <% if (_has(_ALL)) { %><a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Team chart</a><% } %>
-                  <% if (_has(_ALL)) { %><a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">KPIs / Scoreboard</a><% } %>
-                  <% if (_has(_ORG_WIDE) || _has(_INVITER)) { %><div class="border-t border-white/10 my-1"></div><% } %>
-                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Operating plan</a><% } %>
-                  <% if (_has(_INVITER)) { %><a href="/dashboard/members" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Members</a><% } %>
-                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/publisher" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">Publisher</a><% } %>
-                  <% if (_has(_ORG_WIDE)) { %><a href="/settings/api" class="block px-4 py-2 text-white hover:bg-white/10 transition-colors whitespace-nowrap">MCP / API keys</a><% } %>
+                <div class="v7-dropdown">
+                  <% if (_has(_ALL)) { %><a href="/dashboard">Daily <span style="color:var(--ink-mute); font-size:11px;">— run my day</span></a><% } %>
+                  <% if (_has(_ALL)) { %><a href="/l8">Meetings <span style="color:var(--ink-mute); font-size:11px;">— L8 / L10</span></a><% } %>
+                  <% if (_has(_ALL)) { %><a href="/dashboard/team">Team chart</a><% } %>
+                  <% if (_has(_ALL)) { %><a href="/dashboard/kpis">KPIs / Scoreboard</a><% } %>
+                  <% if (_has(_ORG_WIDE) || _has(_INVITER)) { %><div class="v7-dd-divider"></div><% } %>
+                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/oos-operating-plan">Operating plan</a><% } %>
+                  <% if (_has(_INVITER)) { %><a href="/dashboard/members">Members</a><% } %>
+                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/publisher">Publisher</a><% } %>
+                  <% if (_has(_ORG_WIDE)) { %><a href="/settings/api">MCP / API keys</a><% } %>
                 </div>
               </div>
             </div>
-            <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
+            <a href="/publish" class="v7-cta-publish">Publish</a>
             <div id="auth-user-button-desktop"></div>
           <% } else { %>
-            <a href="/sign-in" class="text-white hover:text-white/70 transition-colors">Sign In</a>
-            <a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>
+            <a href="/sign-in" class="v7-nav-link">Sign In</a>
+            <a href="/publish" class="v7-cta-publish">Publish</a>
           <% } %>
         </div>
       </div>
     </div>
 
     <!-- Mobile menu -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-white/10 bg-black">
+    <div id="mobile-menu" class="hidden md:hidden v7-mobile-menu">
       <div class="px-4 py-4 flex flex-col gap-1 text-sm">
-        <a href="/protocol" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 font-medium transition-colors">Protocol</a>
-        <a href="/pricing" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Pricing</a>
+        <a href="/protocol" class="py-2.5 px-3 rounded-lg font-medium transition-colors">Protocol</a>
+        <a href="/pricing" class="py-2.5 px-3 rounded-lg transition-colors">Pricing</a>
 
-        <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-3 pb-1">Explore</div>
-        <a href="/browse" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Browse</a>
-        <a href="/search" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Search</a>
-        <a href="/graph" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Graph</a>
-        <a href="/claims" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Claims</a>
+        <div class="v7-mobile-section-label pt-3 pb-1">Explore</div>
+        <a href="/browse" class="py-2 px-6 rounded-lg transition-colors">Browse</a>
+        <a href="/search" class="py-2 px-6 rounded-lg transition-colors">Search</a>
+        <a href="/graph" class="py-2 px-6 rounded-lg transition-colors">Graph</a>
+        <a href="/claims" class="py-2 px-6 rounded-lg transition-colors">Claims</a>
 
-        <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-3 pb-1">Learn</div>
-        <a href="/blog" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Blog</a>
-        <a href="/guide" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Guide</a>
-        <a href="/faq" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">FAQ</a>
-        <a href="/answers" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Answers</a>
-        <a href="/glossary" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Glossary</a>
-        <a href="/agent-onboarding" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Agent Onboarding</a>
-        <a href="/machine-commerce" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Machine Commerce</a>
-        <a href="/mcp" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP Hub</a>
+        <div class="v7-mobile-section-label pt-3 pb-1">Learn</div>
+        <a href="/blog" class="py-2 px-6 rounded-lg transition-colors">Blog</a>
+        <a href="/guide" class="py-2 px-6 rounded-lg transition-colors">Guide</a>
+        <a href="/faq" class="py-2 px-6 rounded-lg transition-colors">FAQ</a>
+        <a href="/answers" class="py-2 px-6 rounded-lg transition-colors">Answers</a>
+        <a href="/glossary" class="py-2 px-6 rounded-lg transition-colors">Glossary</a>
+        <a href="/agent-onboarding" class="py-2 px-6 rounded-lg transition-colors">Agent Onboarding</a>
+        <a href="/machine-commerce" class="py-2 px-6 rounded-lg transition-colors">Machine Commerce</a>
+        <a href="/mcp" class="py-2 px-6 rounded-lg transition-colors">MCP Hub</a>
 
-        <a href="/whats-new" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors mt-1">What's New</a>
-        <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t border-white/10">
+        <a href="/whats-new" class="py-2.5 px-3 rounded-lg transition-colors mt-1">What's New</a>
+        <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t" style="border-color:rgba(20,22,28,0.08);">
           <% if (typeof authUserId !== 'undefined' && authUserId) {
                var _mRole = (locals.memberRole || '').toString();
                var _mORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
@@ -346,20 +347,20 @@
                  return false;
                }
           %>
-            <div class="text-xs text-white/60 uppercase tracking-wider px-3 pt-1 pb-1">Dashboard</div>
-            <a href="/dashboard" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Daily</a>
-            <a href="/l8" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Meetings</a>
-            <a href="/dashboard/team" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Team chart</a>
-            <a href="/dashboard/kpis" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>
-            <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Operating plan</a><% } %>
-            <% if (_mHas(_mINVITER))  { %><a href="/dashboard/members" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Members</a><% } %>
-            <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/publisher" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">Publisher</a><% } %>
-            <% if (_mHas(_mORG_WIDE)) { %><a href="/settings/api" class="text-white hover:text-white/70 py-2 px-6 rounded-lg hover:bg-white/10 transition-colors">MCP / API</a><% } %>
-            <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors mt-2">Publish</a>
+            <div class="v7-mobile-section-label pt-1 pb-1">Dashboard</div>
+            <a href="/dashboard" class="py-2 px-6 rounded-lg transition-colors">Daily</a>
+            <a href="/l8" class="py-2 px-6 rounded-lg transition-colors">Meetings</a>
+            <a href="/dashboard/team" class="py-2 px-6 rounded-lg transition-colors">Team chart</a>
+            <a href="/dashboard/kpis" class="py-2 px-6 rounded-lg transition-colors">KPIs</a>
+            <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="py-2 px-6 rounded-lg transition-colors">Operating plan</a><% } %>
+            <% if (_mHas(_mINVITER))  { %><a href="/dashboard/members" class="py-2 px-6 rounded-lg transition-colors">Members</a><% } %>
+            <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/publisher" class="py-2 px-6 rounded-lg transition-colors">Publisher</a><% } %>
+            <% if (_mHas(_mORG_WIDE)) { %><a href="/settings/api" class="py-2 px-6 rounded-lg transition-colors">MCP / API</a><% } %>
+            <a href="/publish" class="v7-cta-publish text-center mt-2">Publish</a>
             <div id="auth-user-button-mobile" class="pt-2"></div>
           <% } else { %>
-            <a href="/sign-in" class="text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors text-center">Sign In</a>
-            <a href="/publish" class="px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors">Publish</a>
+            <a href="/sign-in" class="py-2.5 px-3 rounded-lg transition-colors text-center">Sign In</a>
+            <a href="/publish" class="v7-cta-publish text-center">Publish</a>
           <% } %>
         </div>
       </div>
@@ -386,56 +387,7 @@
   </main>
 
   <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
-  <footer class="bg-otp-950 text-gray-400 border-t border-white/5">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      <div class="flex flex-col sm:flex-row justify-between gap-8">
-        <div>
-          <a href="/" class="inline-block mb-3" aria-label="OTP — Organization Transport Protocol">
-            <img src="/public/images/otp-lockup-white.webp"
-                 alt="OTP — Organization Transport Protocol"
-                 class="h-7 w-auto" />
-          </a>
-          <p class="text-sm text-gray-500 max-w-xs">The operating platform where your people and AI agents run as one team. One chart, one scoreboard, one weekly meeting.</p>
-        </div>
-        <div class="flex gap-12 text-sm">
-          <div>
-            <div class="font-semibold text-gray-300 mb-3">Platform</div>
-            <div class="flex flex-col gap-2">
-              <a href="/browse" class="hover:text-white transition-colors">Browse</a>
-              <a href="/search" class="hover:text-white transition-colors">Search</a>
-              <a href="/graph" class="hover:text-white transition-colors">Graph</a>
-              <a href="/pricing" class="hover:text-white transition-colors">Pricing</a>
-              <a href="/publish" class="hover:text-white transition-colors">Publish</a>
-            </div>
-          </div>
-          <div>
-            <div class="font-semibold text-gray-300 mb-3">Learn</div>
-            <div class="flex flex-col gap-2">
-              <a href="/glossary" class="hover:text-white transition-colors">Glossary</a>
-              <a href="/faq" class="hover:text-white transition-colors">FAQ</a>
-              <a href="/answers" class="hover:text-white transition-colors">Answers</a>
-              <a href="/guide" class="hover:text-white transition-colors">Guide</a>
-              <a href="/blog" class="hover:text-white transition-colors">Blog</a>
-              <a href="/mcp" class="hover:text-white transition-colors">MCP Hub</a>
-            </div>
-          </div>
-          <div>
-            <div class="font-semibold text-gray-300 mb-3">Company</div>
-            <div class="flex flex-col gap-2">
-              <a href="/about" class="hover:text-white transition-colors">About</a>
-              <a href="/partners" class="hover:text-white transition-colors">Partners</a>
-              <a href="/whats-new" class="hover:text-white transition-colors">What's New</a>
-              <a href="/investors" class="hover:text-white transition-colors">Investors</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="mt-10 pt-6 border-t border-white/5 text-xs text-gray-600 flex flex-col sm:flex-row justify-between gap-2">
-        <span>ORGTP.com</span>
-        <span>Organization Transport Protocol&trade;</span>
-      </div>
-    </div>
-  </footer>
+  <%- include('../partials/v7-app-footer') %>
   <% } %>
 
   <!-- Scroll reveal script -->
@@ -466,17 +418,17 @@
       clerk.load().then(function() {
       window.__clerk = clerk;
 
-      function makeSignInBtn(cls) {
+      function makeSignInBtn() {
         var btn = document.createElement('button');
         btn.textContent = 'Sign In';
-        btn.className = cls + ' cursor-pointer';
+        btn.className = 'v7-nav-link cursor-pointer';
         btn.addEventListener('click', function() { clerk.openSignIn({ redirectUrl: window.location.href }); });
         return btn;
       }
-      function makeSignUpBtn(cls) {
+      function makeSignUpBtn() {
         var btn = document.createElement('button');
         btn.textContent = 'Sign Up';
-        btn.className = cls + ' cursor-pointer';
+        btn.className = 'v7-cta-publish cursor-pointer';
         btn.addEventListener('click', function() { clerk.openSignUp({ redirectUrl: '/publish' }); });
         return btn;
       }
@@ -497,16 +449,16 @@
         desktopNav.innerHTML = '';
         var fallbackHtml =
           '<div class="relative group z-50">' +
-            '<button class="text-white hover:text-white/70 transition-colors flex items-center gap-1 cursor-pointer">Dashboard' +
+            '<button class="v7-nav-link flex items-center gap-1 cursor-pointer">Dashboard' +
               '<svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
             '</button>' +
-            '<div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 220px;">' +
+            '<div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 240px;">' +
               '<div class="h-2"></div>' +
-              '<div class="bg-black border border-white/10 rounded-lg shadow-xl py-1.5">' +
-                '<a href="/dashboard" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Daily</a>' +
-                '<a href="/l8" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Meetings</a>' +
-                '<a href="/dashboard/team" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">Team chart</a>' +
-                '<a href="/dashboard/kpis" class="block px-4 py-2 text-white hover:bg-white/10 whitespace-nowrap">KPIs / Scoreboard</a>' +
+              '<div class="v7-dropdown">' +
+                '<a href="/dashboard">Daily</a>' +
+                '<a href="/l8">Meetings</a>' +
+                '<a href="/dashboard/team">Team chart</a>' +
+                '<a href="/dashboard/kpis">KPIs / Scoreboard</a>' +
                 // Role-gated items (Operating plan / Members / Publisher / MCP) intentionally
                 // omitted here -- this fallback fires when server thought signed-out but Clerk
                 // says signed-in, so memberRole is unknown. The server-rendered nav on the
@@ -514,7 +466,7 @@
               '</div>' +
             '</div>' +
           '</div>' +
-          '<a href="/publish" class="px-4 py-2 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium transition-colors">Publish</a>' +
+          '<a href="/publish" class="v7-cta-publish">Publish</a>' +
           '<div id="auth-user-button-desktop"></div>';
         desktopNav.innerHTML = fallbackHtml;
         var slot = document.getElementById('auth-user-button-desktop');
@@ -531,8 +483,8 @@
         if (clerk.user) {
           var h1 = document.createElement('div'); headerNav.appendChild(h1); clerk.mountUserButton(h1, { afterSignOutUrl: '/' });
         } else {
-          headerNav.appendChild(makeSignInBtn('text-white hover:text-white/70 text-sm transition-colors'));
-          headerNav.appendChild(makeSignUpBtn('px-3 py-1.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-sm transition-colors'));
+          headerNav.appendChild(makeSignInBtn());
+          headerNav.appendChild(makeSignUpBtn());
         }
       }
 
@@ -547,11 +499,11 @@
         mobileNav.innerHTML = '';
         var mDashWrap = document.createElement('div');
         mDashWrap.innerHTML =
-          '<a href="/dashboard" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Daily</a>' +
-          '<a href="/l8" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Meetings</a>' +
-          '<a href="/dashboard/team" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">Team chart</a>' +
-          '<a href="/dashboard/kpis" class="block text-white hover:text-white/70 py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors">KPIs</a>' +
-          '<a href="/publish" class="block px-4 py-2.5 bg-otp-500 rounded-lg hover:bg-otp-400 font-medium text-center transition-colors mt-2">Publish</a>';
+          '<a href="/dashboard" class="block py-2.5 px-3 rounded-lg transition-colors">Daily</a>' +
+          '<a href="/l8" class="block py-2.5 px-3 rounded-lg transition-colors">Meetings</a>' +
+          '<a href="/dashboard/team" class="block py-2.5 px-3 rounded-lg transition-colors">Team chart</a>' +
+          '<a href="/dashboard/kpis" class="block py-2.5 px-3 rounded-lg transition-colors">KPIs</a>' +
+          '<a href="/publish" class="v7-cta-publish text-center mt-2">Publish</a>';
         mobileNav.appendChild(mDashWrap);
       }
 
