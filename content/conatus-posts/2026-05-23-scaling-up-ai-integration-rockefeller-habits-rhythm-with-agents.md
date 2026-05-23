@@ -4,7 +4,7 @@ date: 2026-05-23
 author: David Steel
 slug: rockefeller-habits-rhythm-with-agents
 type: founder_essay
-status: draft
+status: published
 series: scaling-up-ai-integration
 series_part: 3
 keywords:

@@ -4,7 +4,7 @@ date: 2026-05-23
 author: David Steel
 slug: opsp-is-the-system-prompt
 type: founder_essay
-status: draft
+status: published
 series: scaling-up-ai-integration
 series_part: 2
 keywords:
