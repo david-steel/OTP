@@ -99,7 +99,7 @@ export default async function seatRoutes(app: FastifyInstance) {
     }
 
     await db.insert(auditLogs).values(createAuditEntry('seat.responsibilities.updated', 'seat', {
-      orgId: org.id, entityId: externalId, details: { count: responsibilities.length },
+      orgId: org.id, details: { seatExternalId: externalId, count: responsibilities.length },
     }));
 
     return { responsibilities };
@@ -183,7 +183,7 @@ export default async function seatRoutes(app: FastifyInstance) {
     }
 
     await db.insert(auditLogs).values(createAuditEntry('seat.fit.updated', 'seat', {
-      orgId: org.id, entityId: externalId, details: { period },
+      orgId: org.id, details: { seatExternalId: externalId, period },
     }));
 
     const [row] = await db.select().from(seatFitReviews)
