@@ -513,49 +513,63 @@
         <% } %>
       </section>
 
-      <!-- My Agents (compact) -->
-      <section class="rounded-lg border border-gray-200 bg-white p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My Agents</h2>
-          <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline">View chart &rarr;</a>
+      <!-- My Agents (compact, collapsible -- David flagged 2026-05-24 that
+           the full agent list took up too much space in the right column.
+           Same <details>/<summary> pattern as OTP Insights. Summary line
+           always shows the at-a-glance health (count + avg + red/yellow).
+           User's open/closed preference is persisted in localStorage via
+           the small script at the bottom of this page. -->
+      <%
+         var agentRedCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
+         var agentYellowCount = myAgents.filter(function(a){ return (a.score||0) >= 3 && (a.score||0) < 6; }).length;
+         var agentAvg = myAgents.length > 0 ? (myAgents.reduce(function(s,a){ return s + (a.score||0); }, 0) / myAgents.length) : 0;
+      %>
+      <details id="my-agents-details" class="rounded-lg border border-gray-200 bg-white">
+        <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
+          <span class="flex items-center gap-3 flex-wrap min-w-0">
+            <span class="text-sm font-bold uppercase tracking-wide text-gray-700">My Agents</span>
+            <% if (myAgents.length > 0) { %>
+              <span class="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
+                <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
+                <span>avg <strong class="text-gray-700"><%= agentAvg.toFixed(1) %>/8</strong></span>
+                <% if (agentRedCount > 0) { %><span class="text-rose-600 font-semibold"><%= agentRedCount %> red</span><% } %>
+                <% if (agentYellowCount > 0) { %><span class="text-amber-600 font-semibold"><%= agentYellowCount %> yellow</span><% } %>
+              </span>
+            <% } else { %>
+              <span class="text-[11px] text-gray-500">No agents yet</span>
+            <% } %>
+          </span>
+          <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline shrink-0 ml-3" onclick="event.stopPropagation()">View chart &rarr;</a>
+        </summary>
+        <div class="px-5 pb-5 pt-1 border-t border-gray-100">
+          <% if (myAgents.length === 0) { %>
+            <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600 mt-3">
+              No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-orgy-blue font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
+            </div>
+          <% } else { %>
+            <ul class="divide-y divide-gray-100 -mx-2 mt-2">
+              <% myAgents.forEach(function(a){
+                   var score = a.score || 0;
+                   var pct = Math.round((score / 8) * 100);
+                   var color = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : score > 0 ? 'bg-rose-400' : 'bg-gray-300';
+                   var kpiN = (typeof a.kpiCount === 'number') ? a.kpiCount : 0;
+              %>
+                <li>
+                  <a href="/dashboard/team" class="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-gray-50 rounded" data-agent-id="<%= a.id %>">
+                    <span class="inline-block w-2 h-2 rounded-full <%= color %> shrink-0"></span>
+                    <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
+                    <span class="hidden sm:inline-block w-24 h-1 bg-gray-200 rounded overflow-hidden shrink-0">
+                      <span class="block h-full <%= color %>" style="width: <%= pct %>%"></span>
+                    </span>
+                    <span class="text-[11px] font-semibold text-gray-700 tabular-nums w-10 text-right shrink-0"><%= score.toFixed ? score.toFixed(1) : score %></span>
+                    <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= kpiN %> KPI<%= kpiN === 1 ? '' : 's' %></span>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
         </div>
-        <% if (myAgents.length === 0) { %>
-          <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600">
-            No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-orgy-blue font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
-          </div>
-        <% } else {
-             var redCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
-             var yellowCount = myAgents.filter(function(a){ return (a.score||0) >= 3 && (a.score||0) < 6; }).length;
-             var avg = myAgents.reduce(function(s,a){ return s + (a.score||0); }, 0) / myAgents.length;
-        %>
-          <div class="text-[11px] text-gray-500 mb-2 flex items-center gap-3 flex-wrap">
-            <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
-            <span>avg <strong class="text-gray-700"><%= avg.toFixed(1) %>/8</strong></span>
-            <% if (redCount > 0) { %><span class="text-rose-600 font-semibold"><%= redCount %> red</span><% } %>
-            <% if (yellowCount > 0) { %><span class="text-amber-600 font-semibold"><%= yellowCount %> yellow</span><% } %>
-          </div>
-          <ul class="divide-y divide-gray-100 -mx-2">
-            <% myAgents.forEach(function(a){
-                 var score = a.score || 0;
-                 var pct = Math.round((score / 8) * 100);
-                 var color = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : score > 0 ? 'bg-rose-400' : 'bg-gray-300';
-                 var kpiN = (typeof a.kpiCount === 'number') ? a.kpiCount : 0;
-            %>
-              <li>
-                <a href="/dashboard/team" class="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-gray-50 rounded" data-agent-id="<%= a.id %>">
-                  <span class="inline-block w-2 h-2 rounded-full <%= color %> shrink-0"></span>
-                  <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
-                  <span class="hidden sm:inline-block w-24 h-1 bg-gray-200 rounded overflow-hidden shrink-0">
-                    <span class="block h-full <%= color %>" style="width: <%= pct %>%"></span>
-                  </span>
-                  <span class="text-[11px] font-semibold text-gray-700 tabular-nums w-10 text-right shrink-0"><%= score.toFixed ? score.toFixed(1) : score %></span>
-                  <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= kpiN %> KPI<%= kpiN === 1 ? '' : 's' %></span>
-                </a>
-              </li>
-            <% }); %>
-          </ul>
-        <% } %>
-      </section>
+      </details>
 
     </div><!-- /right -->
   </div>
@@ -1251,6 +1265,25 @@
           patch: { reports_to: mgr },
         });
       });
+    });
+  })();
+
+  // Persist My Agents open/closed state across page loads. <details> is
+  // native browser collapse but doesn't remember state on its own.
+  // Default state: collapsed (David flagged the section as too tall in the
+  // right column on 2026-05-24). First-time visitors see the summary line;
+  // expand once and the choice sticks for them.
+  (function persistAgentDetails() {
+    var d = document.getElementById('my-agents-details');
+    if (!d) return;
+    var KEY = 'otp-dashboard-my-agents-open';
+    try {
+      var saved = localStorage.getItem(KEY);
+      if (saved === '1') d.setAttribute('open', '');
+      // saved === '0' OR null both leave it collapsed (the default)
+    } catch (e) { /* localStorage blocked, fall through to default */ }
+    d.addEventListener('toggle', function(){
+      try { localStorage.setItem(KEY, d.open ? '1' : '0'); } catch (e) { /* ignore */ }
     });
   })();
 })();
