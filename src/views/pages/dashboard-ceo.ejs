@@ -1,4 +1,6 @@
-<section class="bg-gray-50 min-h-screen">
+<%- include('../partials/orgy-palette'); %>
+
+<section class="min-h-screen">
 <div class="max-w-6xl mx-auto px-6 sm:px-8 py-10">
 
 <%
@@ -62,14 +64,31 @@
   var attentionCount = atRisk.length + kpisOff.length + openIssues.length;
 %>
 
-  <!-- Header -->
-  <div class="flex flex-wrap items-start justify-between gap-4 mb-8">
-    <div class="min-w-0">
-      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %></p>
-      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">CEO Dashboard</h1>
-      <p class="text-sm text-gray-500 mt-2 max-w-2xl leading-relaxed">The whole company in one view: where you're going, whether the numbers say you're on pace, who is on the bus, and what needs you. The Operating Plan feeds this page.</p>
+  <!-- Header (CEO hero -- big mascot, CEO View pill in Orgy green pop,
+       attention badge inline when there are off-track items, action button
+       in Orgy blue for confidence. 2026-05-24 brand pass: "should pop of
+       the CEO" -- the page should feel like THE place a CEO would land.) -->
+  <div class="mb-10 flex flex-wrap items-end justify-between gap-6">
+    <div class="flex items-start gap-5 min-w-0 flex-1">
+      <img src="/public/images/onboarding-orgy-coach.webp" alt="" class="orgy-mascot-wave w-20 sm:w-24 shrink-0 drop-shadow-sm" loading="eager" decoding="async">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orgy text-gray-900 text-[11px] font-extrabold uppercase tracking-wider shadow-sm">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-gray-900"></span>
+            CEO View
+          </span>
+          <% if (attentionCount > 0) { %>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">
+              <%= attentionCount %> need<%= attentionCount === 1 ? 's' : '' %> attention
+            </span>
+          <% } %>
+        </div>
+        <p class="text-[12px] font-bold uppercase tracking-[0.18em] text-orgy mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %></p>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-[1.05] tracking-tight">The whole company, in one view.</h1>
+        <p class="text-sm text-gray-500 mt-3 max-w-2xl leading-relaxed">Where you're going, whether the numbers say you're on pace, who's on the bus, what needs you. The Operating Plan feeds this page.</p>
+      </div>
     </div>
-    <a href="/dashboard/oos-operating-plan" class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:border-otp-400 hover:text-otp-700 transition-colors">
+    <a href="/dashboard/oos-operating-plan" class="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-orgy-blue text-white text-sm font-semibold hover:bg-orgy-blue-deep transition-colors shadow-sm">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
       Edit the Plan
     </a>
@@ -77,11 +96,11 @@
 
   <!-- ============ 1. DIRECTION ============ -->
   <div class="mb-8">
-    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-3">Direction</p>
+    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-3">Direction</p>
     <% if (!hasDirection) { %>
       <div class="bg-white border border-gray-200 rounded-2xl p-8 text-center">
         <p class="text-gray-600 text-sm mb-4 max-w-md mx-auto leading-relaxed">No direction set yet. Fill in Destination and the Annual Game Plan in the Operating Plan, and the company's 3-year, yearly, and quarterly course appears here.</p>
-        <a href="/dashboard/oos-operating-plan" class="inline-block px-5 py-2.5 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-600 text-sm transition-colors">Set the direction</a>
+        <a href="/dashboard/oos-operating-plan" class="inline-block px-5 py-2.5 bg-orgy-blue text-white rounded-lg font-semibold hover:bg-orgy-blue-deep text-sm transition-colors">Set the direction</a>
       </div>
     <% } else { %>
       <% if (tenYear) { %>
@@ -117,7 +136,7 @@
           <% if (annualOutcomes.length) { %>
             <ul class="mt-4 pt-4 border-t border-gray-100 space-y-1">
               <% annualOutcomes.slice(0, 4).forEach(function (o) { %>
-                <li class="flex gap-2 text-xs text-gray-700"><span class="text-otp-400">&bull;</span><span><%= o %></span></li>
+                <li class="flex gap-2 text-xs text-gray-700"><span class="text-orgy">&bull;</span><span><%= o %></span></li>
               <% }); %>
             </ul>
           <% } %>
@@ -130,7 +149,7 @@
           <% } else if (quarterTargets.length) { %>
             <ul class="space-y-1">
               <% quarterTargets.slice(0, 5).forEach(function (t) { %>
-                <li class="flex gap-2 text-sm text-gray-800"><span class="text-otp-400">&bull;</span><span><%= t %></span></li>
+                <li class="flex gap-2 text-sm text-gray-800"><span class="text-orgy">&bull;</span><span><%= t %></span></li>
               <% }); %>
             </ul>
           <% } else { %>
@@ -148,8 +167,8 @@
   <!-- ============ 2. SCOREBOARD ============ -->
   <div class="mb-8">
     <div class="flex items-baseline justify-between mb-3">
-      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600">Scoreboard</p>
-      <a href="/dashboard/kpis" class="text-xs font-medium text-otp-600 hover:underline">Full scoreboard &rarr;</a>
+      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue">Scoreboard</p>
+      <a href="/dashboard/kpis" class="text-xs font-medium text-orgy-blue hover:underline">Full scoreboard &rarr;</a>
     </div>
     <div class="bg-white border border-gray-200 rounded-2xl p-6">
       <% if (kpiSummary.total === 0) { %>
@@ -191,8 +210,8 @@
   <!-- ============ 3. THIS QUARTER ============ -->
   <div class="mb-8">
     <div class="flex items-baseline justify-between mb-3">
-      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600">This Quarter &mdash; <%= currentQuarter %></p>
-      <a href="/dashboard/oos-operating-plan" class="text-xs font-medium text-otp-600 hover:underline">Open the 90-day plan &rarr;</a>
+      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue">This Quarter &mdash; <%= currentQuarter %></p>
+      <a href="/dashboard/oos-operating-plan" class="text-xs font-medium text-orgy-blue hover:underline">Open the 90-day plan &rarr;</a>
     </div>
     <div class="bg-white border border-gray-200 rounded-2xl p-6">
       <% if (items.length === 0) { %>
@@ -202,7 +221,7 @@
         <div class="divide-y divide-gray-100 -mb-2">
           <% items.slice(0, 12).forEach(function (it) {
                var prio = { critical: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700', medium: 'bg-blue-100 text-blue-700', low: 'bg-gray-100 text-gray-600' }[it.priority] || 'bg-gray-100 text-gray-600';
-               var stat = { proposed: 'bg-gray-100 text-gray-600', accepted: 'bg-blue-100 text-blue-700', in_progress: 'bg-otp-100 text-otp-700', at_risk: 'bg-amber-100 text-amber-800', completed: 'bg-green-100 text-green-700', deferred: 'bg-gray-100 text-gray-500' }[it.status] || 'bg-gray-100 text-gray-600';
+               var stat = { proposed: 'bg-gray-100 text-gray-600', accepted: 'bg-blue-100 text-blue-700', in_progress: 'bg-orgy-soft text-orgy-on-light', at_risk: 'bg-amber-100 text-amber-800', completed: 'bg-green-100 text-green-700', deferred: 'bg-gray-100 text-gray-500' }[it.status] || 'bg-gray-100 text-gray-600';
           %>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 <%= it.status === 'at_risk' ? 'bg-amber-50/60 -mx-2 px-2 rounded' : '' %>">
               <span class="text-sm font-medium text-gray-900 flex-1 min-w-[40%]"><%= it.title %></span>
@@ -226,8 +245,8 @@
   <!-- ============ 4. THE TEAM ============ -->
   <div class="mb-8">
     <div class="flex items-baseline justify-between mb-3">
-      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600">The Team</p>
-      <a href="/dashboard/team" class="text-xs font-medium text-otp-600 hover:underline">Open the org chart &rarr;</a>
+      <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue">The Team</p>
+      <a href="/dashboard/team" class="text-xs font-medium text-orgy-blue hover:underline">Open the org chart &rarr;</a>
     </div>
     <div class="bg-white border border-gray-200 rounded-2xl p-6">
       <% if (humans.length === 0 && agents.length === 0) { %>
@@ -256,7 +275,7 @@
 
   <!-- ============ 5. NEEDS YOUR ATTENTION ============ -->
   <div class="mb-8">
-    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-otp-600 mb-3">Needs Your Attention</p>
+    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-3">Needs Your Attention</p>
     <div class="bg-white border border-gray-200 rounded-2xl p-6">
       <% if (attentionCount === 0) { %>
         <div class="flex items-center gap-2.5">
@@ -302,7 +321,7 @@
 
   <!-- Close -->
   <div class="text-center py-2">
-    <p class="text-sm text-gray-500">Everything here is driven by the <a href="/dashboard/oos-operating-plan" class="text-otp-600 font-medium hover:underline">Operating Plan</a>. Change the plan, and the cockpit moves with it.</p>
+    <p class="text-sm text-gray-500">Everything here is driven by the <a href="/dashboard/oos-operating-plan" class="text-orgy-blue font-medium hover:underline">Operating Plan</a>. Change the plan, and the cockpit moves with it.</p>
   </div>
 
 </div>
