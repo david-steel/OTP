@@ -1,3 +1,4 @@
+<%- include('../partials/orgy-palette'); %>
 <div class="max-w-6xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between mb-6">
     <div>
@@ -13,7 +14,7 @@
   <div class="mb-4 flex flex-wrap gap-2 items-center text-sm">
     <span class="text-xs uppercase tracking-wide text-gray-500 font-semibold mr-1">Team</span>
     <a href="/dashboard/ids<%= filterIdsStatus ? '?idsStatus=' + filterIdsStatus : '' %>"
-       class="px-2 py-1 rounded-full border <%= !filterTeamId ? 'bg-otp-100 border-otp-300 text-otp-800 font-semibold' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' %>">All teams</a>
+       class="px-2 py-1 rounded-full border <%= !filterTeamId ? 'bg-orgy-soft border-orgy-soft text-orgy-blue font-semibold' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' %>">All teams</a>
     <% (orgTeams || []).forEach(function(t) {
       const qs = new URLSearchParams();
       qs.set('teamId', t.id);

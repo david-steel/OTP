@@ -1,3 +1,4 @@
+<%- include('../partials/orgy-palette'); %>
 <%
   // Employee dashboard. Shown to manager / managee / observer / free roles.
   // Owners, admins, and implementers see pages/dashboard-admin instead.
@@ -27,7 +28,7 @@
     <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Hi <%= firstName %>.</h1>
     <p class="text-sm text-gray-600 mt-1">
       <span class="inline-flex items-center gap-1.5">
-        <span class="px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= role %></span>
+        <span class="px-2 py-0.5 rounded bg-orgy-tint text-orgy-blue text-xs font-semibold uppercase tracking-wide"><%= role %></span>
         <% if (teams.length > 0) { %>
           <span class="text-gray-400">on</span>
           <% teams.forEach(function(t, i) { %>
@@ -47,7 +48,7 @@
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
         No meetings scheduled today.
         <% if (capabilities.canEditAssignedItems) { %>
-          <a href="/l8" class="text-otp-600 font-semibold hover:text-otp-700">Open the meeting tool &rarr;</a>
+          <a href="/l8" class="text-orgy-blue font-semibold hover:text-orgy-blue">Open the meeting tool &rarr;</a>
         <% } %>
       </div>
     <% } else { %>
@@ -61,7 +62,7 @@
                   <%= m.meetingType %> &middot; <%= new Date(m.scheduledAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) %>
                 </div>
               </div>
-              <span class="text-xs text-otp-600 font-semibold whitespace-nowrap">Open &rarr;</span>
+              <span class="text-xs text-orgy-blue font-semibold whitespace-nowrap">Open &rarr;</span>
             </div>
           </a>
         <% }) %>
@@ -71,17 +72,17 @@
 
   <!-- Quick actions -->
   <section class="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <a href="/dashboard/team" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-otp-300 hover:shadow-sm transition-all">
+    <a href="/dashboard/team" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-orgy-soft hover:shadow-sm transition-all">
       <div class="text-base font-bold text-gray-900 mb-1">Org Chart</div>
       <p class="text-xs text-gray-600 mb-3">See how your team is structured. View-only for your role <% if (capabilities.canEditAssignedItems) { %>(edit your own seat)<% } %>.</p>
-      <span class="text-otp-600 text-xs font-semibold">View chart &rarr;</span>
+      <span class="text-orgy-blue text-xs font-semibold">View chart &rarr;</span>
     </a>
 
     <% if (capabilities.canEditAssignedItems) { %>
-      <a href="/l8" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-otp-300 hover:shadow-sm transition-all">
+      <a href="/l8" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-orgy-soft hover:shadow-sm transition-all">
         <div class="text-base font-bold text-gray-900 mb-1">L8 Meetings</div>
         <p class="text-xs text-gray-600 mb-3">Run your weekly L8 meeting -- the cadence that drives the org to agentic maturity.</p>
-        <span class="text-otp-600 text-xs font-semibold">Open meeting tool &rarr;</span>
+        <span class="text-orgy-blue text-xs font-semibold">Open meeting tool &rarr;</span>
       </a>
     <% } else { %>
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-5">

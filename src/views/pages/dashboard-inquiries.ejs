@@ -1,6 +1,7 @@
+<%- include('../partials/orgy-palette'); %>
 <div class="max-w-6xl mx-auto px-4 py-8">
   <div class="mb-6">
-    <a href="/dashboard" class="text-sm text-otp-500 hover:text-otp-400 inline-flex items-center gap-1">
+    <a href="/dashboard" class="text-sm text-orgy-blue hover:text-orgy inline-flex items-center gap-1">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back to Dashboard
     </a>
@@ -31,7 +32,7 @@
                 <span class="text-sm font-medium text-gray-900"><%= inq.sender_name %></span>
               </div>
               <div class="sm:col-span-2">
-                <a href="mailto:<%= inq.sender_email %>" class="text-sm text-otp-500 hover:text-otp-400 truncate block" onclick="event.stopPropagation()"><%= inq.sender_email %></a>
+                <a href="mailto:<%= inq.sender_email %>" class="text-sm text-orgy-blue hover:text-orgy truncate block" onclick="event.stopPropagation()"><%= inq.sender_email %></a>
               </div>
               <div class="sm:col-span-1">
                 <span class="text-sm text-gray-500 truncate block"><%= inq.sender_org || '-' %></span>
@@ -68,13 +69,13 @@
                 </div>
                 <div class="flex items-center gap-3">
                   <label class="text-xs text-gray-500">Status:</label>
-                  <select class="text-xs border rounded px-2 py-1 focus:ring-1 focus:ring-otp-500 focus:border-otp-500 outline-none" onchange="updateStatus('<%= inq.id %>', this.value)">
+                  <select class="text-xs border rounded px-2 py-1 focus:ring-1 focus:ring-orgy-blue focus:border-orgy-blue outline-none" onchange="updateStatus('<%= inq.id %>', this.value)">
                     <option value="new" <%= inq.status === 'new' ? 'selected' : '' %>>New</option>
                     <option value="read" <%= inq.status === 'read' ? 'selected' : '' %>>Read</option>
                     <option value="replied" <%= inq.status === 'replied' ? 'selected' : '' %>>Replied</option>
                     <option value="closed" <%= inq.status === 'closed' ? 'selected' : '' %>>Closed</option>
                   </select>
-                  <a href="mailto:<%= inq.sender_email %>" class="text-xs text-otp-500 hover:text-otp-400 ml-2">Reply via email</a>
+                  <a href="mailto:<%= inq.sender_email %>" class="text-xs text-orgy-blue hover:text-orgy ml-2">Reply via email</a>
                 </div>
               </div>
             </div>

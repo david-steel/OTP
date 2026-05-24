@@ -1,3 +1,4 @@
+<%- include('../partials/orgy-palette'); %>
 <% if (typeof authState !== 'undefined' && authState === 'unauthenticated') { %>
   <div class="max-w-xl mx-auto px-4 py-20 text-center" id="dashboard-loading">
     <div class="animate-pulse">
@@ -8,7 +9,7 @@
   <div class="max-w-xl mx-auto px-4 py-20 text-center hidden" id="dashboard-signin">
     <h1 class="text-2xl font-bold mb-4">Publisher Dashboard</h1>
     <p class="text-gray-500 mb-8">Sign in to view your dashboard, manage your OOS files, and track your publisher stats.</p>
-    <button id="dashboard-sign-in" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400">
+    <button id="dashboard-sign-in" class="px-6 py-3 bg-orgy-blue text-white rounded-lg font-medium hover:bg-orgy-blue-deep">
       Sign In to Continue
     </button>
   </div>
@@ -84,12 +85,12 @@
           </div>
           <div class="flex items-center gap-2">
             <% if (score !== null) { %>
-              <button onclick="shareScore(<%= score %>, '<%= grade %>', <%= dashboard.stats.totalClaims %>)" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-otp-500 text-white rounded-lg text-sm font-medium hover:from-purple-500 hover:to-otp-400 transition-all flex items-center gap-1.5 cursor-pointer">
+              <button onclick="shareScore(<%= score %>, '<%= grade %>', <%= dashboard.stats.totalClaims %>)" class="px-4 py-2 bg-gradient-to-r from-orgy-blue to-orgy-blue text-white rounded-lg text-sm font-medium hover:from-orgy-blue hover:to-orgy-blue-deep transition-all flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                 Share
               </button>
             <% } %>
-            <a href="/publish" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-medium hover:bg-otp-400 transition-colors">Re-scan</a>
+            <a href="/publish" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-medium hover:bg-orgy-blue-deep transition-colors">Re-scan</a>
           </div>
         </div>
 
@@ -143,13 +144,13 @@
                   </div>
                 </div>
               <% }); %>
-              <p class="text-xs text-gray-400 mt-2">Based on <%= dashboard.stats.totalClaims %> claims &middot; <a href="/publish" class="text-otp-500 hover:underline">Re-scan for precise dimensions</a></p>
+              <p class="text-xs text-gray-400 mt-2">Based on <%= dashboard.stats.totalClaims %> claims &middot; <a href="/publish" class="text-orgy-blue hover:underline">Re-scan for precise dimensions</a></p>
             </div>
           </div>
         <% } else { %>
           <div class="text-center py-8">
             <p class="text-gray-500 mb-4">Publish or re-scan your OOS to generate your Coordination Score</p>
-            <a href="/publish" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-medium hover:bg-otp-400 transition-colors">Scan Your OOS</a>
+            <a href="/publish" class="px-6 py-3 bg-orgy-blue text-white rounded-lg font-medium hover:bg-orgy-blue-deep transition-colors">Scan Your OOS</a>
           </div>
         <% } %>
       </div>
@@ -166,14 +167,14 @@
         </div>
         <h2 class="text-xl font-bold text-gray-900 mb-2"><%= dashboard.profile.name %></h2>
         <p class="text-gray-500 mb-6">Upload your CLAUDE.md to get your Coordination Score and join the network.</p>
-        <a href="/publish" class="px-6 py-3 bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400 transition-colors">Publish Your OOS</a>
+        <a href="/publish" class="px-6 py-3 bg-orgy-blue text-white rounded-lg font-semibold hover:bg-orgy-blue-deep transition-colors">Publish Your OOS</a>
       </div>
     <% } %>
 
     <!-- B. Quick Stats Row -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
       <div class="bg-white p-5 border rounded-xl text-center">
-        <div class="text-3xl font-black text-otp-600"><%= dashboard.stats.totalClaims %></div>
+        <div class="text-3xl font-black text-orgy-blue"><%= dashboard.stats.totalClaims %></div>
         <div class="text-xs text-gray-500 mt-1">Published Claims</div>
         <% if (dashboard.updateHistory.length > 1) { %>
           <% var prev = dashboard.updateHistory[1]; %>
@@ -188,24 +189,24 @@
         <% } %>
       </div>
       <div class="bg-white p-5 border rounded-xl text-center">
-        <div class="text-3xl font-black text-otp-600"><%= dashboard.bestPracticeMatchCount %></div>
+        <div class="text-3xl font-black text-orgy-blue"><%= dashboard.bestPracticeMatchCount %></div>
         <div class="text-xs text-gray-500 mt-1">Best Practices Matched</div>
       </div>
       <div class="bg-white p-5 border rounded-xl text-center">
-        <div class="text-3xl font-black text-otp-600"><%= dashboard.learningsCount %></div>
+        <div class="text-3xl font-black text-orgy-blue"><%= dashboard.learningsCount %></div>
         <div class="text-xs text-gray-500 mt-1">Learnings Captured</div>
       </div>
       <div class="bg-white p-5 border rounded-xl text-center">
-        <div class="text-3xl font-black text-otp-600"><%= dashboard.stats.connectedOrgs %></div>
+        <div class="text-3xl font-black text-orgy-blue"><%= dashboard.stats.connectedOrgs %></div>
         <div class="text-xs text-gray-500 mt-1">Connected Orgs</div>
       </div>
     </div>
 
     <!-- C. Quick Actions -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-      <a href="/graph" class="group bg-white border rounded-xl p-5 hover:border-otp-400 hover:shadow-md transition-all flex items-center gap-4">
-        <div class="w-10 h-10 bg-otp-50 rounded-lg flex items-center justify-center group-hover:bg-otp-100 transition-colors flex-shrink-0">
-          <svg class="w-5 h-5 text-otp-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      <a href="/graph" class="group bg-white border rounded-xl p-5 hover:border-orgy hover:shadow-md transition-all flex items-center gap-4">
+        <div class="w-10 h-10 bg-orgy-tint rounded-lg flex items-center justify-center group-hover:bg-orgy-soft transition-colors flex-shrink-0">
+          <svg class="w-5 h-5 text-orgy-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
         </div>
         <div>
           <div class="font-semibold text-sm text-gray-900">Capture a Learning</div>
@@ -213,9 +214,9 @@
         </div>
       </a>
       <% if (dashboard.latestOos) { %>
-        <a href="/oos/<%= dashboard.latestOos.id %>" class="group bg-white border rounded-xl p-5 hover:border-otp-400 hover:shadow-md transition-all flex items-center gap-4">
-          <div class="w-10 h-10 bg-otp-50 rounded-lg flex items-center justify-center group-hover:bg-otp-100 transition-colors flex-shrink-0">
-            <svg class="w-5 h-5 text-otp-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+        <a href="/oos/<%= dashboard.latestOos.id %>" class="group bg-white border rounded-xl p-5 hover:border-orgy hover:shadow-md transition-all flex items-center gap-4">
+          <div class="w-10 h-10 bg-orgy-tint rounded-lg flex items-center justify-center group-hover:bg-orgy-soft transition-colors flex-shrink-0">
+            <svg class="w-5 h-5 text-orgy-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
           </div>
           <div>
             <div class="font-semibold text-sm text-gray-900">View System Prompt</div>
@@ -223,9 +224,9 @@
           </div>
         </a>
       <% } else { %>
-        <a href="/publish" class="group bg-white border rounded-xl p-5 hover:border-otp-400 hover:shadow-md transition-all flex items-center gap-4">
-          <div class="w-10 h-10 bg-otp-50 rounded-lg flex items-center justify-center group-hover:bg-otp-100 transition-colors flex-shrink-0">
-            <svg class="w-5 h-5 text-otp-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+        <a href="/publish" class="group bg-white border rounded-xl p-5 hover:border-orgy hover:shadow-md transition-all flex items-center gap-4">
+          <div class="w-10 h-10 bg-orgy-tint rounded-lg flex items-center justify-center group-hover:bg-orgy-soft transition-colors flex-shrink-0">
+            <svg class="w-5 h-5 text-orgy-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
           </div>
           <div>
             <div class="font-semibold text-sm text-gray-900">Publish Your OOS</div>
@@ -233,9 +234,9 @@
           </div>
         </a>
       <% } %>
-      <a href="/publish" class="group bg-white border rounded-xl p-5 hover:border-otp-400 hover:shadow-md transition-all flex items-center gap-4">
-        <div class="w-10 h-10 bg-otp-50 rounded-lg flex items-center justify-center group-hover:bg-otp-100 transition-colors flex-shrink-0">
-          <svg class="w-5 h-5 text-otp-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <a href="/publish" class="group bg-white border rounded-xl p-5 hover:border-orgy hover:shadow-md transition-all flex items-center gap-4">
+        <div class="w-10 h-10 bg-orgy-tint rounded-lg flex items-center justify-center group-hover:bg-orgy-soft transition-colors flex-shrink-0">
+          <svg class="w-5 h-5 text-orgy-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
         <div>
           <div class="font-semibold text-sm text-gray-900">Scan for Insights</div>
@@ -256,7 +257,7 @@
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           Members
         </a>
-        <a href="/dashboard/oos-operating-plan" class="text-xs px-3 py-1.5 bg-white border border-otp-300 text-otp-700 rounded-lg hover:bg-otp-50 font-medium transition-colors inline-flex items-center gap-1.5">
+        <a href="/dashboard/oos-operating-plan" class="text-xs px-3 py-1.5 bg-white border border-orgy-soft text-orgy-blue rounded-lg hover:bg-orgy-tint font-medium transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
           Operating Plan
         </a>
@@ -276,7 +277,7 @@
         <% dashboard.oosFiles.forEach(function(oos) { %>
           <div class="bg-white rounded-xl border hover:shadow-md transition-shadow p-5 <%= oos.isStale ? 'border-amber-300' : '' %>" id="oos-row-<%= oos.id %>">
             <div class="flex items-start justify-between mb-3">
-              <a href="/oos/<%= oos.id %>" class="font-semibold text-otp-600 hover:text-otp-500 capitalize text-sm">
+              <a href="/oos/<%= oos.id %>" class="font-semibold text-orgy-blue hover:text-orgy-blue capitalize text-sm">
                 <span class="oos-name"><%= oos.name || (oos.template.replace('_', ' ') + ' OOS') %></span>
               </a>
               <div class="flex items-center gap-1.5">
@@ -298,18 +299,18 @@
               <span title="Last updated (MCP activity updates this)">updated: <%= new Date(oos.updatedAt).toLocaleDateString() %></span>
             </div>
             <div class="flex items-center gap-2 border-t pt-3">
-              <button onclick="renameOos('<%= oos.id %>')" class="text-gray-400 hover:text-otp-600 p-1.5 rounded-lg hover:bg-otp-50 transition-colors" title="Rename">
+              <button onclick="renameOos('<%= oos.id %>')" class="text-gray-400 hover:text-orgy-blue p-1.5 rounded-lg hover:bg-orgy-tint transition-colors" title="Rename">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
               </button>
               <% if (oos.status === 'draft') { %>
-                <button onclick="publishDraft('<%= oos.id %>')" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded-lg hover:bg-otp-400 font-medium transition-colors cursor-pointer" title="Publish this draft">
+                <button onclick="publishDraft('<%= oos.id %>')" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded-lg hover:bg-orgy-blue-deep font-medium transition-colors cursor-pointer" title="Publish this draft">
                   Publish
                 </button>
-                <a href="/publish?edit=<%= oos.id %>" class="text-gray-400 hover:text-otp-600 p-1.5 rounded-lg hover:bg-otp-50 transition-colors" title="Edit draft">
+                <a href="/publish?edit=<%= oos.id %>" class="text-gray-400 hover:text-orgy-blue p-1.5 rounded-lg hover:bg-orgy-tint transition-colors" title="Edit draft">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </a>
               <% } else if (oos.status === 'published') { %>
-                <button onclick="newVersion('<%= oos.id %>')" class="text-gray-400 hover:text-otp-600 p-1.5 rounded-lg hover:bg-otp-50 transition-colors" title="Create new version">
+                <button onclick="newVersion('<%= oos.id %>')" class="text-gray-400 hover:text-orgy-blue p-1.5 rounded-lg hover:bg-orgy-tint transition-colors" title="Create new version">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                 </button>
               <% } %>
@@ -324,7 +325,7 @@
       <div class="text-center py-12 text-gray-400 text-sm bg-white rounded-xl border mb-10">
         <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <p class="mb-1">No OOS files yet.</p>
-        <a href="/publish" class="text-otp-500 hover:underline font-medium">Publish your first one</a>
+        <a href="/publish" class="text-orgy-blue hover:underline font-medium">Publish your first one</a>
       </div>
     <% } %>
 
@@ -342,7 +343,7 @@
                   <p class="text-xs text-gray-500 mb-2"><%= nl.why %></p>
                 <% } %>
                 <div class="flex items-center gap-3 text-xs text-gray-400">
-                  <span class="font-medium text-otp-600"><%= nl.org_name %></span>
+                  <span class="font-medium text-orgy-blue"><%= nl.org_name %></span>
                   <% if (nl.agent_name) { %>
                     <span>via <%= nl.agent_name %></span>
                   <% } %>
@@ -516,10 +517,10 @@
             '<div class="text-6xl font-black text-white mb-1">' + score + '</div>' +
             '<div class="text-sm font-bold" style="color: ' + (score >= 80 ? '#059669' : score >= 65 ? '#0095ff' : score >= 50 ? '#d97706' : '#dc2626') + '">Grade: ' + grade + '</div>' +
             '<div class="flex items-center justify-center gap-2 text-xs text-gray-500 mt-3">' +
-              '<span>Scanned by</span><span class="text-otp-400 font-semibold">orgtp.com</span>' +
+              '<span>Scanned by</span><span class="text-orgy font-semibold">orgtp.com</span>' +
             '</div>' +
           '</div>' +
-          '<textarea id="dash-share-text" rows="3" class="w-full border rounded-lg p-3 text-sm resize-none mb-4 focus:border-otp-500 focus:ring-1 focus:ring-otp-500">' + text.replace(/</g, '&lt;') + '</textarea>' +
+          '<textarea id="dash-share-text" rows="3" class="w-full border rounded-lg p-3 text-sm resize-none mb-4 focus:border-orgy-blue focus:ring-1 focus:ring-orgy-blue">' + text.replace(/</g, '&lt;') + '</textarea>' +
           '<div class="flex gap-2">' +
             '<button onclick="window.open(\'https://x.com/intent/tweet?text=\' + encodeURIComponent(document.getElementById(\'dash-share-text\').value), \'_blank\', \'width=600,height=400\')" class="flex-1 px-4 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer">Post on X</button>' +
             '<button onclick="window.open(\'https://www.linkedin.com/sharing/share-offsite/?url=\' + encodeURIComponent(\'https://orgtp.com\'), \'_blank\', \'width=600,height=500\')" class="flex-1 px-4 py-2.5 bg-[#0A66C2] text-white rounded-lg text-sm font-medium hover:bg-[#004182] transition-colors cursor-pointer">Share on LinkedIn</button>' +
