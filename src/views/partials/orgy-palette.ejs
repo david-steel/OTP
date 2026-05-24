@@ -1,20 +1,23 @@
-<%# Orgy brand palette (per the mascot brand kit -- half-organic / half-circuit).
-    Inlined as utility classes via a <style> block so we don't depend on
-    Tailwind config picking these classnames up at build time (the v7.css
-    purge has bitten us before -- see feedback_static_html_tailwind_purge).
-    Belt + suspenders.
+<!-- Orgy brand palette (per the mascot brand kit -- half-organic / half-circuit).
+     Inlined as utility classes via a <style> block so we don't depend on
+     Tailwind config picking these classnames up at build time (the v7.css
+     purge has bitten us before -- see feedback_static_html_tailwind_purge).
+     Belt + suspenders.
 
-    Include this once per page that wants the Orgy palette:
-      <%- include('../partials/orgy-palette'); %>
+     Include this once per page that wants the Orgy palette using the
+     standard partial syntax. Then use these utility classes in markup:
+       Action buttons:   bg-orgy-blue text-white hover:bg-orgy-blue-deep
+       Soft highlight:   bg-orgy-soft  /  bg-orgy-tint
+       Link / accent:    text-orgy-blue
+       Focus ring:       focus:ring-orgy-blue
+       Borders:          border-orgy  /  border-orgy-soft
+       Mascot wave:      .orgy-mascot-wave  (subtle 4s rocking idle)
 
-    Then use the utility classes in markup:
-      Action buttons:   bg-orgy-blue text-white hover:bg-orgy-blue-deep
-      Soft highlight:   bg-orgy-soft  /  bg-orgy-tint
-      Link / accent:    text-orgy-blue
-      Focus ring:       focus:ring-orgy-blue
-      Borders:          border-orgy  /  border-orgy-soft
-      Mascot wave:      .orgy-mascot-wave  (subtle 4s rocking idle)
-%>
+     NOTE: do NOT use EJS comments (<%# ... %>) here -- they close on the
+     first %> they encounter, which broke 2026-05-24 when a usage example
+     containing %> inside the comment ate the terminator and crashed
+     /dashboard/kpis with a 500. HTML comments are inert to the EJS
+     parser, so this block is safe. -->
 <style>
   :root {
     --orgy-green: #A8E63A;
