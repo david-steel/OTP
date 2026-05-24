@@ -620,8 +620,8 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
   if (words > 15000) {
     unfixable.push({ code: 'WORD_COUNT_HIGH', field: 'content', message: `Word count is ${words}. Maximum is 15000. Tighten your language or split into separate OOS versions.` });
   }
-  if (claimCount < 10) {
-    unfixable.push({ code: 'CLAIM_COUNT_LOW', field: 'claims', message: `Only ${claimCount} claims found. Minimum is 10. Add more claims covering failure_patterns and human_ai_boundary_conditions.` });
+  if (claimCount < 3) {
+    unfixable.push({ code: 'CLAIM_COUNT_LOW', field: 'claims', message: `Only ${claimCount} claim${claimCount === 1 ? '' : 's'} found. The protocol minimum is 3 -- enough for the confidence/evidence patterns to show. Add at least ${3 - claimCount} more, ideally covering at least one failure_patterns rule.` });
   }
 
   // Check for claims missing required fields

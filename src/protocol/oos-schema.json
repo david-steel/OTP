@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://orgtp.com/schemas/oos/v1.0",
-  "title": "Organizational Operating System (OOS) v1.0",
-  "description": "Schema for the OOS artifact -- structured, machine-readable capture of organizational AI coordination intelligence",
+  "$id": "https://orgtp.com/schemas/oos/v1.1",
+  "title": "Organizational Operating System (OOS) v1.1",
+  "description": "Schema for the OOS artifact -- structured, machine-readable capture of organizational AI coordination intelligence. v1.1 lowers the claim_count floor from 10 to 3 so solo operators and compact teams can publish real artifacts without padding.",
   "type": "object",
   "required": ["frontmatter", "claims"],
   "properties": {
@@ -26,7 +26,7 @@
         "version": { "type": "integer", "minimum": 1 },
         "parent_version": { "type": ["integer", "null"], "minimum": 1 },
         "word_count": { "type": "integer", "minimum": 500, "maximum": 15000 },
-        "claim_count": { "type": "integer", "minimum": 10 },
+        "claim_count": { "type": "integer", "minimum": 3 },
         "confidence_distribution": {
           "type": "object",
           "required": ["high", "medium", "low"],
@@ -44,7 +44,7 @@
     },
     "claims": {
       "type": "array",
-      "minItems": 10,
+      "minItems": 3,
       "items": {
         "type": "object",
         "required": ["claim_id", "section", "rule", "why", "failure_mode", "confidence", "evidence", "scope"],

@@ -56,13 +56,25 @@ export function validateOOS(parsed: ParseResult, template: TemplateType): Valida
   }
 
   // 2. Minimum claim count
-  if (parsed.claims.length < 10) {
+  // OOS v1.1 (2026-05-24): floor lowered from 10 -> 3 so solo operators
+  // and compact teams can publish real artifacts without padding. The
+  // 10-claim "network norm" survives as a non-blocking warning below,
+  // because under ~10 the confidence/evidence distributions still don't
+  // have much statistical signal -- but a 3-claim OOS with sharp,
+  // honestly-rated rules is more valuable than a padded 10.
+  if (parsed.claims.length < 3) {
     errors.push({
       code: 'CLAIM_COUNT_BELOW_MINIMUM',
       field: 'claimCount',
-      message: `Only ${parsed.claims.length} claims found. Minimum is 10.`,
+      message: `Only ${parsed.claims.length} claim${parsed.claims.length === 1 ? '' : 's'} found. The protocol minimum is 3 -- enough for the confidence/evidence patterns to show. Add at least ${3 - parsed.claims.length} more before publishing.`,
       value: parsed.claims.length,
-      expected: 10,
+      expected: 3,
+    });
+  } else if (parsed.claims.length < 10) {
+    warnings.push({
+      code: 'CLAIM_COUNT_BELOW_NETWORK_NORM',
+      field: 'claimCount',
+      message: `Only ${parsed.claims.length} claims found. That's fine for a compact OOS. The network norm is 10+ if you want richer confidence and evidence distributions.`,
     });
   }
 
