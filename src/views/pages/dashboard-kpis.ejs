@@ -41,18 +41,22 @@
   .sb-spark .dot.missed { fill: #ef4444; }
   .sb-spark-summary { font-size: 11px; color: #6b7280; margin-top: 2px; }
 </style>
+<%- include('../partials/orgy-palette'); %>
 
 <section class="bg-white border-b border-gray-100">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-6">
     <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-      <a href="/dashboard" class="hover:text-otp-600">Dashboard</a>
+      <a href="/dashboard" class="hover:text-orgy-blue">Dashboard</a>
       <span>/</span>
       <span class="text-gray-700 font-medium">KPIs</span>
     </div>
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Scoreboard</h1>
-        <p class="text-sm text-gray-500 mt-1">Every measurable on your org chart, indexed by the seat that owns it. Add new KPIs from the <a href="/dashboard/team" class="text-otp-600 hover:underline">Team chart</a>.</p>
+      <div class="flex items-center gap-3">
+        <img src="/public/images/onboarding-orgy-kpi.webp" alt="" class="orgy-mascot-wave w-14 sm:w-16 shrink-0" loading="eager" decoding="async">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Scoreboard</h1>
+          <p class="text-sm text-gray-500 mt-1">Every measurable on your org chart, indexed by the seat that owns it. Add new KPIs from the <a href="/dashboard/team" class="text-orgy-blue hover:underline">Team chart</a>.</p>
+        </div>
       </div>
       <% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin) { %>
         <div class="flex items-center gap-2">
@@ -156,7 +160,7 @@
     <% if (scoreboard.rows.length === 0) { %>
       <div class="sb-shell sb-empty">
         <p style="font-size:14px; margin-bottom:0.5rem;"><strong>No KPIs yet.</strong></p>
-        <p style="font-size:13px;">Open the <a href="/dashboard/team" class="text-otp-600 hover:underline">Team chart</a>, click any agent or human, scroll to the KPIs section, and click "+ Add KPI".</p>
+        <p style="font-size:13px;">Open the <a href="/dashboard/team" class="text-orgy-blue hover:underline">Team chart</a>, click any agent or human, scroll to the KPIs section, and click "+ Add KPI".</p>
       </div>
     <% } else { %>
       <%

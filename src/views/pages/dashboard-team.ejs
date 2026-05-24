@@ -243,18 +243,22 @@
   .edit-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.3); z-index: 55; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
   .edit-overlay.open { opacity: 1; pointer-events: auto; }
 </style>
+<%- include('../partials/orgy-palette'); %>
 
 <section class="bg-white border-b border-gray-100">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-6">
     <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-      <a href="/dashboard" class="hover:text-otp-600">Dashboard</a>
+      <a href="/dashboard" class="hover:text-orgy-blue">Dashboard</a>
       <span>/</span>
       <span class="text-gray-700 font-medium">Team</span>
     </div>
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Team</h1>
-        <p class="text-sm text-gray-500 mt-1">Click any agent or human to edit. Edits save to a draft until you publish.</p>
+      <div class="flex items-center gap-3">
+        <img src="/public/images/onboarding-orgy-coach.webp" alt="" class="orgy-mascot-wave w-14 sm:w-16 shrink-0" loading="eager" decoding="async">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Team</h1>
+          <p class="text-sm text-gray-500 mt-1">Click any agent or human to edit. Edits save to a draft until you publish.</p>
+        </div>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
         <% if (teamMeta.hasDraft) { %>
@@ -280,7 +284,7 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
             People Review
           </a>
-          <button onclick="openCreateDrawer('human')" class="text-xs px-3 py-1.5 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold inline-flex items-center gap-1.5">
+          <button onclick="openCreateDrawer('human')" class="text-xs px-3 py-1.5 bg-orgy-blue hover:bg-orgy-blue-deep text-white rounded-lg font-semibold inline-flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Add to chart
           </button>
@@ -321,7 +325,7 @@
         </div>
         <h2 class="text-lg font-bold text-gray-900 mb-1">No agents or humans on the chart yet</h2>
         <p class="text-sm text-gray-500 max-w-md mx-auto mb-5">Publish an OOS with an `agents` or `humans` section and they'll appear here automatically.</p>
-        <a href="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold text-sm transition-colors">
+        <a href="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 bg-orgy-blue hover:bg-orgy-blue-deep text-white rounded-lg font-semibold text-sm transition-colors">
           Back to Dashboard
         </a>
       </div>
@@ -428,7 +432,7 @@
   </div>
   <div class="edit-panel-footer" style="justify-content: flex-end;">
     <button onclick="closeImportDrawer()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
-    <button id="imp-submit" onclick="submitImport()" disabled class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Import</button>
+    <button id="imp-submit" onclick="submitImport()" disabled class="px-4 py-1.5 text-sm bg-orgy-blue hover:bg-orgy-blue-deep text-white font-semibold rounded-lg disabled:opacity-50">Import</button>
   </div>
 </aside>
 <% } %>
@@ -484,7 +488,7 @@
   </div>
   <div style="padding:0.75rem 1.5rem 1.25rem 1.5rem; border-top: 1px solid #f3f4f6; display:flex; gap:0.5rem; justify-content:flex-end;">
     <button onclick="closeInviteNewModal()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
-    <button id="inv-new-submit" onclick="submitInviteNew()" class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Create tile &amp; send invite</button>
+    <button id="inv-new-submit" onclick="submitInviteNew()" class="px-4 py-1.5 text-sm bg-orgy-blue hover:bg-orgy-blue-deep text-white font-semibold rounded-lg disabled:opacity-50">Create tile &amp; send invite</button>
   </div>
 </div>
 
@@ -623,7 +627,7 @@
         <button type="button" id="ef-create-type-human" onclick="setCreateType('human')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border" style="flex:1;">Human</button>
         <button type="button" id="ef-create-type-agent" onclick="setCreateType('agent')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border" style="flex:1;">Agent</button>
       </div>
-      <button type="button" id="ef-open-agent-builder" onclick="openAgentBuilderModal()" class="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-otp-50 text-otp-700 border border-otp-200 hover:bg-otp-100" style="display:none;">
+      <button type="button" id="ef-open-agent-builder" onclick="openAgentBuilderModal()" class="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-orgy-tint text-orgy-blue border border-orgy-soft hover:bg-orgy-soft" style="display:none;">
         ✨ Use Agent Builder to fill this form
       </button>
     </div>
@@ -704,7 +708,7 @@
       <div id="ef-invite-claimed-by" style="font-size: 11px; color: #047857; margin-bottom: 0.5rem; display:none;"></div>
       <div style="display:flex; gap:0.4rem; align-items:flex-start;">
         <input id="ef-invite-email" type="email" placeholder="name@company.com" style="flex:1; padding:0.5rem 0.625rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:13px;" />
-        <button id="ef-invite-btn" type="button" onclick="sendInvite()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Send invite</button>
+        <button id="ef-invite-btn" type="button" onclick="sendInvite()" class="px-3 py-1.5 text-xs bg-orgy-blue hover:bg-orgy-blue-deep text-white font-semibold rounded-lg disabled:opacity-50">Send invite</button>
       </div>
       <div id="ef-invite-status" style="font-size: 11px; margin-top: 0.5rem;"></div>
     </div>
@@ -781,7 +785,7 @@
           <option value="cursor">.cursorrules (Cursor)</option>
           <option value="generic">Generic system prompt (.md)</option>
         </select>
-        <button type="button" id="ef-copy-context" onclick="copyAgentContext()" class="px-3 py-1.5 text-xs bg-otp-500 hover:bg-otp-400 text-white rounded-lg font-semibold">Copy as Agents.md / Claude.md</button>
+        <button type="button" id="ef-copy-context" onclick="copyAgentContext()" class="px-3 py-1.5 text-xs bg-orgy-blue hover:bg-orgy-blue-deep text-white rounded-lg font-semibold">Copy as Agents.md / Claude.md</button>
       </div>
       <span id="ef-copy-context-status" style="font-size: 11px; color: #059669; margin-left: 0.25rem; display:inline-block; margin-top:0.4rem;"></span>
     </div>
@@ -790,7 +794,7 @@
     <button id="ef-delete" onclick="deleteCurrentEntity()" class="px-3 py-1.5 text-sm text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-lg transition-colors">Delete</button>
     <div style="display:flex; gap:0.5rem;">
       <button onclick="closeEdit()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">Cancel</button>
-      <button id="ef-save" onclick="saveEdit()" class="px-4 py-1.5 text-sm bg-otp-500 hover:bg-otp-400 text-white font-semibold rounded-lg disabled:opacity-50">Save to draft</button>
+      <button id="ef-save" onclick="saveEdit()" class="px-4 py-1.5 text-sm bg-orgy-blue hover:bg-orgy-blue-deep text-white font-semibold rounded-lg disabled:opacity-50">Save to draft</button>
     </div>
   </div>
 </aside>

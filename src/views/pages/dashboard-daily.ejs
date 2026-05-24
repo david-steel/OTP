@@ -44,41 +44,7 @@
   })();
 %>
 
-<style>
-  /* Orgy brand palette (per the brand kit) — locally scoped to the dashboard.
-     Defined as utility classes so we don't depend on Tailwind config picking
-     them up at build time (the v7.css purge has bitten us before -- see
-     feedback_static_html_tailwind_purge). */
-  :root {
-    --orgy-green: #A8E63A;
-    --orgy-green-soft: #D6F59C;
-    --orgy-green-deep: #8BC42A;
-    --orgy-blue: #2563EB;
-    --orgy-blue-soft: #E6F0FF;
-    --orgy-bg: #F5F7FA;
-  }
-  body { background: var(--orgy-bg); }
-  .bg-orgy { background-color: var(--orgy-green); }
-  .bg-orgy-soft { background-color: var(--orgy-green-soft); }
-  .bg-orgy-tint { background-color: rgba(168, 230, 58, 0.08); }
-  .text-orgy { color: var(--orgy-green-deep); }
-  .text-orgy-on-light { color: #5a7d1f; }   /* readable green on white bg */
-  .bg-orgy:hover, .hover\:bg-orgy-deep:hover { background-color: var(--orgy-green-deep); }
-  .text-orgy-blue { color: var(--orgy-blue); }
-  .hover\:text-orgy-blue:hover { color: var(--orgy-blue); }
-  .bg-orgy-blue { background-color: var(--orgy-blue); }
-  .hover\:bg-orgy-blue-deep:hover { background-color: #1d4ed8; }
-  .bg-orgy-blue-soft { background-color: var(--orgy-blue-soft); }
-  .focus\:ring-orgy:focus { box-shadow: 0 0 0 2px var(--orgy-green); }
-  .focus\:ring-orgy-blue:focus { box-shadow: 0 0 0 2px var(--orgy-blue); }
-  .border-orgy { border-color: var(--orgy-green); }
-  /* Mascot float-in for the header — subtle so it doesn't yell. */
-  .orgy-mascot-wave { animation: orgy-wave 4s ease-in-out infinite; transform-origin: bottom center; }
-  @keyframes orgy-wave {
-    0%, 100% { transform: rotate(-1deg); }
-    50% { transform: rotate(2deg); }
-  }
-</style>
+<%- include('../partials/orgy-palette'); %>
 
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
