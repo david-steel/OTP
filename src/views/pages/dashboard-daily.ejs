@@ -44,6 +44,42 @@
   })();
 %>
 
+<style>
+  /* Orgy brand palette (per the brand kit) — locally scoped to the dashboard.
+     Defined as utility classes so we don't depend on Tailwind config picking
+     them up at build time (the v7.css purge has bitten us before -- see
+     feedback_static_html_tailwind_purge). */
+  :root {
+    --orgy-green: #A8E63A;
+    --orgy-green-soft: #D6F59C;
+    --orgy-green-deep: #8BC42A;
+    --orgy-blue: #2563EB;
+    --orgy-blue-soft: #E6F0FF;
+    --orgy-bg: #F5F7FA;
+  }
+  body { background: var(--orgy-bg); }
+  .bg-orgy { background-color: var(--orgy-green); }
+  .bg-orgy-soft { background-color: var(--orgy-green-soft); }
+  .bg-orgy-tint { background-color: rgba(168, 230, 58, 0.08); }
+  .text-orgy { color: var(--orgy-green-deep); }
+  .text-orgy-on-light { color: #5a7d1f; }   /* readable green on white bg */
+  .bg-orgy:hover, .hover\:bg-orgy-deep:hover { background-color: var(--orgy-green-deep); }
+  .text-orgy-blue { color: var(--orgy-blue); }
+  .hover\:text-orgy-blue:hover { color: var(--orgy-blue); }
+  .bg-orgy-blue { background-color: var(--orgy-blue); }
+  .hover\:bg-orgy-blue-deep:hover { background-color: #1d4ed8; }
+  .bg-orgy-blue-soft { background-color: var(--orgy-blue-soft); }
+  .focus\:ring-orgy:focus { box-shadow: 0 0 0 2px var(--orgy-green); }
+  .focus\:ring-orgy-blue:focus { box-shadow: 0 0 0 2px var(--orgy-blue); }
+  .border-orgy { border-color: var(--orgy-green); }
+  /* Mascot float-in for the header — subtle so it doesn't yell. */
+  .orgy-mascot-wave { animation: orgy-wave 4s ease-in-out infinite; transform-origin: bottom center; }
+  @keyframes orgy-wave {
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(2deg); }
+  }
+</style>
+
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
      data-meeting-id="<%= selectedMeetingId %>"
@@ -52,21 +88,24 @@
 
   <!-- Header: greeting + org switcher + role -->
   <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-    <div>
-      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= greeting %>, <%= firstName %>.</h1>
-      <p class="text-sm text-gray-600 mt-1">
-        <span class="px-2 py-0.5 rounded bg-otp-50 text-otp-700 text-xs font-semibold uppercase tracking-wide"><%= role %></span>
-        <% if (quarter) { %>
-          <span class="text-gray-400 ml-2">Quarter <%= quarter %></span>
-        <% } %>
-      </p>
+    <div class="flex items-center gap-3">
+      <img src="/public/images/orgy-idle.webp" alt="" class="orgy-mascot-wave w-14 sm:w-16 shrink-0" loading="eager" decoding="async">
+      <div>
+        <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= greeting %>, <%= firstName %>.</h1>
+        <p class="text-sm text-gray-600 mt-1">
+          <span class="px-2 py-0.5 rounded bg-orgy-soft text-orgy-on-light text-xs font-semibold uppercase tracking-wide"><%= role %></span>
+          <% if (quarter) { %>
+            <span class="text-gray-400 ml-2">Quarter <%= quarter %></span>
+          <% } %>
+        </p>
+      </div>
     </div>
 
     <% if (orgs.length > 1) { %>
       <form method="GET" action="/dashboard" class="text-sm">
         <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Organization</label>
-        <select name="orgId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+        <select name="orgId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
           <% orgs.forEach(function(o){ %>
             <option value="<%= o.id %>" <%= o.id === (locals.org && locals.org.id) ? 'selected' : '' %>><%= o.name %></option>
           <% }); %>
@@ -102,15 +141,15 @@
     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
       <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Meeting</h2>
       <% if (caps.canEditAssignedItems) { %>
-        <a href="/l8" class="text-xs text-otp-600 font-semibold">Open the L8 tool &rarr;</a>
+        <a href="/l8" class="text-xs text-orgy-blue font-semibold">Open the L8 tool &rarr;</a>
       <% } %>
     </div>
     <% if (meetings.length === 0) { %>
-      <p class="text-sm text-gray-600">No meetings yet. <% if (caps.canCreateTeams) { %><a href="/l8" class="text-otp-600 underline">Create one</a>.<% } %></p>
+      <p class="text-sm text-gray-600">No meetings yet. <% if (caps.canCreateTeams) { %><a href="/l8" class="text-orgy-blue underline">Create one</a>.<% } %></p>
     <% } else { %>
       <form method="GET" action="/dashboard" class="flex flex-wrap items-center gap-3">
         <% if (orgs.length > 1) { %><input type="hidden" name="orgId" value="<%= locals.org.id %>"><% } %>
-        <select name="meetingId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm flex-1 min-w-[260px] focus:outline-none focus:ring-2 focus:ring-otp-500">
+        <select name="meetingId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm flex-1 min-w-[260px] focus:outline-none focus:ring-2 focus:ring-orgy-blue">
           <% meetings.forEach(function(m){ %>
             <option value="<%= m.id %>" <%= m.id === selectedMeetingId ? 'selected' : '' %>>
               <%= m.title %> -- <%= new Date(m.scheduledAt).toLocaleDateString() %>
@@ -131,7 +170,7 @@
         <% if (orgs.length > 1) { %><input type="hidden" name="orgId" value="<%= locals.org.id %>"><% } %>
         <% if (selectedMeetingId) { %><input type="hidden" name="meetingId" value="<%= selectedMeetingId %>"><% } %>
         <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Team</label>
-        <select name="teamId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+        <select name="teamId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
           <option value="" <%= selectedTeamId === '' ? 'selected' : '' %>>All teams</option>
           <% (orgTeams || []).forEach(function(t){ %>
             <option value="<%= t.id %>" <%= t.id === selectedTeamId ? 'selected' : '' %>><%= t.name %></option>
@@ -152,11 +191,11 @@
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">
             Headlines
             <% if (headlines.filter(function(h){return !h.readAt;}).length > 0) { %>
-              <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-otp-100 text-otp-700 text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
+              <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-blue text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
             <% } %>
           </h2>
           <% if (isIntegrator) { %>
-            <span class="text-[10px] uppercase tracking-wide text-otp-700 bg-otp-50 rounded px-1.5 py-0.5">Integrator</span>
+            <span class="text-[10px] uppercase tracking-wide text-orgy-blue bg-orgy-tint rounded px-1.5 py-0.5">Integrator</span>
           <% } %>
         </div>
 
@@ -176,8 +215,8 @@
               <option value="employee">Employee</option>
               <option value="other" selected>Other</option>
             </select>
-            <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
-            <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-otp-700">Add</button>
+            <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
+            <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1.5 hover:bg-orgy-blue-deep">Add</button>
           </form>
         <% } %>
 
@@ -242,7 +281,7 @@
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My KPIs</h2>
-          <a href="/dashboard/kpis" class="text-xs text-otp-600 font-semibold">Scoreboard &rarr;</a>
+          <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
         </div>
         <% if (myKpis.length === 0) { %>
           <p class="text-xs text-gray-500">No KPIs assigned to you yet.</p>
@@ -284,7 +323,7 @@
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My To-Dos</h2>
-          <button id="todo-add-toggle" class="text-xs text-otp-600 font-semibold">+ Add</button>
+          <button id="todo-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
           <input type="text" name="title" required maxlength="500" placeholder="What to do" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
@@ -315,7 +354,7 @@
             <% } %>
           </div>
           <div class="flex gap-2">
-            <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Save</button>
+            <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1 hover:bg-orgy-blue-deep">Save</button>
           </div>
         </form>
         <% var delegatedVerifyList = locals.delegatedVerify || []; %>
@@ -418,7 +457,7 @@
                             <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Recurring instance">↻ recurring</span>
                           <% } %>
                           <span class="<%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= due ? (overdue ? 'OVERDUE — ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
-                          <button type="button" class="todo-edit-btn text-otp-600 font-semibold hover:underline">Edit</button>
+                          <button type="button" class="todo-edit-btn text-orgy-blue font-semibold hover:underline">Edit</button>
                           <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
                         </div>
                         <% if ((t.dueAtHistory || []).length > 0) { %>
@@ -449,7 +488,7 @@
                         </div>
                         <div class="flex gap-2 items-center">
                           <button type="button" class="todo-edit-cancel text-xs text-gray-500 font-semibold hover:underline">Cancel</button>
-                          <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700 ml-auto">Save</button>
+                          <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1 hover:bg-orgy-blue-deep ml-auto">Save</button>
                         </div>
                       </form>
                     </div>
@@ -465,12 +504,12 @@
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Issues (IDS)</h2>
-          <button id="issue-add-toggle" class="text-xs text-otp-600 font-semibold">+ Add</button>
+          <button id="issue-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="issue-add-form" class="hidden mb-3 space-y-2">
           <input type="text" name="title" required maxlength="500" placeholder="Issue title" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
           <textarea name="description" rows="2" placeholder="Why does this matter?" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></textarea>
-          <button type="submit" class="rounded bg-otp-600 text-white text-xs font-semibold px-3 py-1 hover:bg-otp-700">Add issue</button>
+          <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1 hover:bg-orgy-blue-deep">Add issue</button>
         </form>
         <% if (myIssues.length === 0) { %>
           <p class="text-xs text-gray-500">No open issues for you. Use this list at L10 -- Identify, Discuss, Solve.</p>
@@ -481,7 +520,7 @@
             var totalOpen = issueCounts.open + issueCounts.identified + issueCounts.discussed;
           %>
           <div id="issue-filter" class="flex items-center gap-1 text-[11px] mb-2 flex-wrap" data-active="open">
-            <button type="button" data-filter="open"       class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-otp-600 text-white">Open <span class="opacity-70">(<%= issueCounts.open %>)</span></button>
+            <button type="button" data-filter="open"       class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-orgy-blue text-white">Open <span class="opacity-70">(<%= issueCounts.open %>)</span></button>
             <button type="button" data-filter="identified" class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200">Identified <span class="opacity-70">(<%= issueCounts.identified %>)</span></button>
             <button type="button" data-filter="discussed"  class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200">Discussed <span class="opacity-70">(<%= issueCounts.discussed %>)</span></button>
             <button type="button" data-filter="all"        class="issue-filter-btn rounded px-2 py-0.5 font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200">All open <span class="opacity-70">(<%= totalOpen %>)</span></button>
@@ -512,11 +551,11 @@
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My Agents</h2>
-          <a href="/dashboard/team" class="text-xs text-otp-600 font-semibold hover:underline">View chart &rarr;</a>
+          <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline">View chart &rarr;</a>
         </div>
         <% if (myAgents.length === 0) { %>
           <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600">
-            No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-otp-600 font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
+            No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-orgy-blue font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
           </div>
         <% } else {
              var redCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
@@ -562,8 +601,11 @@
        by default; one click expands. Same data, same JS handlers (the form
        and section IDs are preserved), just behind a click. -->
   <details class="mt-8">
-    <summary class="cursor-pointer select-none rounded-lg border border-gray-200 bg-gray-50 px-5 py-3 flex items-center justify-between hover:bg-gray-100 transition">
-      <span class="text-sm font-bold uppercase tracking-wide text-gray-700">OTP Insights</span>
+    <summary class="cursor-pointer select-none rounded-lg border border-orgy bg-orgy-tint px-5 py-3 flex items-center justify-between hover:bg-orgy-soft transition" style="border-color: var(--orgy-green);">
+      <span class="flex items-center gap-2.5">
+        <img src="/public/images/orgy-magnify.webp" alt="" class="w-8 shrink-0" loading="lazy" decoding="async">
+        <span class="text-sm font-bold uppercase tracking-wide text-gray-700">OTP Insights</span>
+      </span>
       <span class="text-[11px] text-gray-500 font-medium">Diagnostics &middot; click to expand</span>
     </summary>
     <div class="space-y-6 mt-4">
@@ -623,7 +665,7 @@
       <section class="rounded-lg border border-gray-200 bg-white p-5" id="acc-gaps">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Accountability Gaps</h2>
-          <a href="/dashboard/team" class="text-xs text-otp-600 font-semibold hover:underline">View chart &rarr;</a>
+          <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline">View chart &rarr;</a>
         </div>
         <% if (accAllClear) { %>
           <p class="text-xs text-emerald-700 flex items-center gap-1.5">
@@ -809,7 +851,7 @@
   <footer class="mt-10 text-xs text-gray-400">
     Daily dashboard v1. Run an L10 from this page every week. Push KPIs and pull rocks via MCP.
     <% if (caps.canEditOrgSettings) { %>
-      &middot; <a href="/dashboard/publisher" class="underline hover:text-otp-600">Switch to publisher view</a>
+      &middot; <a href="/dashboard/publisher" class="underline hover:text-orgy-blue">Switch to publisher view</a>
     <% } %>
   </footer>
 </div>
@@ -1073,7 +1115,7 @@
       bar.dataset.active = filter;
       bar.querySelectorAll('.issue-filter-btn').forEach(function(b){
         var on = b.dataset.filter === filter;
-        b.classList.toggle('bg-otp-600', on);
+        b.classList.toggle('bg-orgy-blue', on);
         b.classList.toggle('text-white', on);
         b.classList.toggle('bg-gray-100', !on);
         b.classList.toggle('text-gray-700', !on);
