@@ -26,6 +26,8 @@ import {
 import { ORG_SIZES } from '../../shared/enums.js';
 import { issueInvite, MembershipError, type Role } from '../../services/membership.js';
 import { sendEmail } from '../../config/email.js';
+import { ONBOARDING_ROLE_KEYS } from '../../data/onboarding-roles.js';
+import { placeOwnerOnStarterChart } from '../../services/starter-chart.js';
 
 // ---- helpers --------------------------------------------------------
 
@@ -117,11 +119,16 @@ function inviteEmailHtml(opts: { orgName: string; inviterName: string; acceptUrl
 export default async function onboardingApiRoutes(app: FastifyInstance) {
 
   // ---- STEP 1: profile -> organization + owner member ----------------
+  // `role` is the closed-list dropdown from data/onboarding-roles.ts. It
+  // drives chart placement (see services/starter-chart.ts). The legacy
+  // free-text `title` field is accepted for backward-compat with any
+  // cached client JS but ignored by the placement logic.
   const profileSchema = z.object({
     company: z.string().trim().min(1).max(255),
     industry: z.string().trim().min(1).max(255),
     size: z.enum(ORG_SIZES),
     displayName: z.string().trim().min(1).max(200),
+    role: z.enum(ONBOARDING_ROLE_KEYS as [string, ...string[]]).optional(),
     title: z.string().trim().max(200).optional(),
   });
 
@@ -174,6 +181,26 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
         email,
         displayName,
       });
+    }
+
+    // Auto-place the owner on the accountability chart per their role.
+    // Wrapped tight: a chart-placement hiccup must not 500 the profile
+    // submit. The user can be backfilled later via
+    // scripts/backfill-chart-placement.ts and they will at least make it
+    // to step 2. Tracked 2026-05-24 (first solo-operator signup, Dawson).
+    try {
+      const roleKey = parsed.data.role || 'other';
+      await placeOwnerOnStarterChart({
+        orgId: org.id,
+        orgName: company,
+        industry,
+        orgSize: size,
+        ownerDisplayName: displayName,
+        ownerEmail: email,
+        roleKey,
+      });
+    } catch (err) {
+      request.log.error({ err, orgId: org.id }, 'starter chart placement failed (non-blocking)');
     }
 
     return { ok: true, orgId: org.id };

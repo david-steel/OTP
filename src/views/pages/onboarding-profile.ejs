@@ -141,9 +141,14 @@
                      value="<%= member && member.displayName ? member.displayName : '' %>">
             </div>
             <div class="field rise" style="animation-delay:.78s">
-              <label for="ob-title">Your role</label>
-              <input type="text" id="ob-title" placeholder="CEO, Founder, Operator...">
-              <p class="hint">The seat you hold on the chart. Optional, you can set it later.</p>
+              <label for="ob-role">Your role</label>
+              <select id="ob-role">
+                <option value="" disabled selected>Pick the seat you hold</option>
+                <% (typeof roles !== 'undefined' && roles ? roles : []).forEach(function(r){ %>
+                  <option value="<%= r.key %>"><%= r.label %></option>
+                <% }); %>
+              </select>
+              <p class="hint">We'll place you on the accountability chart based on what you pick. You can change it later.</p>
             </div>
           </div>
         </form>
@@ -172,26 +177,27 @@
     industry: document.getElementById('ob-industry'),
     size: document.getElementById('ob-size'),
     displayName: document.getElementById('ob-name'),
-    title: document.getElementById('ob-title'),
+    role: document.getElementById('ob-role'),
   };
   function showErr(msg){ err.textContent = msg; err.classList.add('show'); }
   function clearErr(){ err.classList.remove('show'); }
 
   async function submit(){
     clearErr();
-    [fields.company, fields.industry, fields.displayName].forEach(function(f){ f.classList.remove('bad'); });
+    [fields.company, fields.industry, fields.displayName, fields.role].forEach(function(f){ f.classList.remove('bad'); });
     var payload = {
       company: fields.company.value.trim(),
       industry: fields.industry.value.trim(),
       size: fields.size.value,
       displayName: fields.displayName.value.trim(),
-      title: fields.title.value.trim(),
+      role: fields.role.value,
     };
     var missing = false;
     if(!payload.company){ fields.company.classList.add('bad'); missing = true; }
     if(!payload.industry){ fields.industry.classList.add('bad'); missing = true; }
     if(!payload.displayName){ fields.displayName.classList.add('bad'); missing = true; }
-    if(missing){ showErr('Fill in your company name, industry, and your name.'); return; }
+    if(!payload.role){ fields.role.classList.add('bad'); missing = true; }
+    if(missing){ showErr('Fill in your company name, industry, your name, and pick your role.'); return; }
 
     btn.disabled = true; btn.firstChild.textContent = 'Creating your org ';
     try {

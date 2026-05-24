@@ -21,6 +21,7 @@ import {
   conversionLog,
 } from '../../db/schema.js';
 import { uploadSignupConversion } from '../../lib/google-ads-conversions.js';
+import { ONBOARDING_ROLES } from '../../data/onboarding-roles.js';
 
 // renderOnboarding mirrors renderV7 in routes/pages/pages.ts: @fastify/view
 // throws "A layout can either be set globally or on render, not both" when a
@@ -141,6 +142,7 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
       title: 'Set up your seat · OTP',
       org: org || null,
       member: member || null,
+      roles: ONBOARDING_ROLES,
     });
   });
 
