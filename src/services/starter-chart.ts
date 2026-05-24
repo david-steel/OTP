@@ -172,25 +172,43 @@ export async function placeOwnerOnStarterChart(input: PlaceStarterInput): Promis
     input.orgSize ?? null,
   );
 
-  // Idempotency check: if there's already a human entity for this email on
-  // the chart, don't re-create it (this happens when the user goes back to
-  // step 1 and resubmits, or when the backfill script re-runs).
-  if (input.ownerEmail) {
-    const [existing] = await db.select({ frontmatter: oosFiles.frontmatter })
-      .from(oosFiles)
-      .where(and(eq(oosFiles.orgId, input.orgId), eq(oosFiles.chartId, chartId)))
-      .limit(1);
-    const humans = ((existing?.frontmatter as any)?.entities?.humans || []) as any[];
-    const match = humans.find((h) => String(h?.contact_email || '').toLowerCase() === input.ownerEmail!.toLowerCase());
-    if (match) {
-      return {
-        ok: true,
-        ownerExternalId: String(match.id || ''),
-        visionaryExternalId: null,
-        agentExternalIds: [],
-        skipped: true,
-      };
-    }
+  // Idempotency check: don't duplicate a human that's already on the chart.
+  // Email match is strongest. When the existing entity has NO contact_email
+  // (common for hand-built charts or earlier ad-hoc imports), fall back to
+  // a case-insensitive, whitespace-collapsed name match -- otherwise the
+  // owner gets a "<Name>_1" duplicate every re-run. Caught 2026-05-24 on
+  // Sneeze It's chart where the original HUM_DAVIDSTEEL had no email and
+  // the backfill created HUM_DAVIDSTEEL_1.
+  const normalizeName = (s: unknown) => String(s ?? '').toLowerCase().trim().replace(/\s+/g, ' ');
+  const targetEmail = input.ownerEmail?.toLowerCase() || null;
+  const targetName = normalizeName(input.ownerDisplayName);
+
+  const [existing] = await db.select({ frontmatter: oosFiles.frontmatter })
+    .from(oosFiles)
+    .where(and(eq(oosFiles.orgId, input.orgId), eq(oosFiles.chartId, chartId)))
+    .limit(1);
+  const humans = ((existing?.frontmatter as any)?.entities?.humans || []) as any[];
+  const match = humans.find((h) => {
+    const existingEmail = String(h?.contact_email || '').toLowerCase();
+    const existingName = normalizeName(h?.name);
+    // Strong match: emails on both sides agree.
+    if (targetEmail && existingEmail && existingEmail === targetEmail) return true;
+    // Soft match: existing entity has no email, name matches. This treats a
+    // pre-existing entity that was never linked to an email as the same
+    // person, on the assumption that two distinct people with the same
+    // name on the same chart with no contact info is rare enough that the
+    // (very recoverable) false positive is preferable to a duplicate seat.
+    if (!existingEmail && targetName && existingName === targetName) return true;
+    return false;
+  });
+  if (match) {
+    return {
+      ok: true,
+      ownerExternalId: String(match.id || ''),
+      visionaryExternalId: null,
+      agentExternalIds: [],
+      skipped: true,
+    };
   }
 
   // 1) Visionary FIRST (if Integrator picked this role), so we have its
