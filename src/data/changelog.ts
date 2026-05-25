@@ -11,6 +11,25 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 24, 2026 ----
+
+  {
+    date: '2026-05-24',
+    tags: ['Polish', 'People', 'Brand'],
+    title: 'Every dashboard gets the Orgy brand pass, People Review respects the org chart, and the seat-save bugs are gone',
+    summary: 'All 17 dashboards now share a single Orgy palette and a coach-mascot hero on the CEO view. People Review only shows the seats that report up to you instead of the whole org -- and the Seat Fit / People Review save endpoints no longer 500 (a uuid column was rejecting external IDs like HUM_DAVIDSTEEL). People Review is now linkable from the main dashboard and the CEO view so it is actually discoverable.',
+    details: `<p>Three threads shipped today, each as a separate deploy.</p>
+
+<h3>Brand pass across every dashboard</h3>
+<p>The full Orgy palette -- lime green <code>#A8E63A</code> for accents, deep blue <code>#2563EB</code> for action, a warm <code>#F5F7FA</code> page background, and the half-organic / half-circuit mascot -- now runs across all 17 dashboards. The CEO view at <a href="/dashboard/ceo" class="text-otp-600 hover:text-otp-500 underline">/dashboard/ceo</a> got a hero treatment: 96px coach mascot, a green "CEO View" pill, amber attention badge when something needs you, and a real display headline instead of a row of pill chips. Main <a href="/dashboard" class="text-otp-600 hover:text-otp-500 underline">/dashboard</a> was rebalanced into a Ninety-style 3-and-3 grid (Headlines / Rocks / KPIs on the left, To-Dos / Issues / Agents on the right) so the right column no longer towers over the left. The four coaching panels -- Waiting on others, Founder Dependency, Accountability Gaps, Hand-off candidates -- moved into a single collapsible "OTP Insights" tray below the grid. The My Agents card became a one-line summary that expands on click, opening state remembered across loads.</p>
+
+<h3>People Review: only the seats that report to you</h3>
+<p>The People Analyzer grid at <a href="/team/review" class="text-otp-600 hover:text-otp-500 underline">/team/review</a> was showing every human in the org, which made the page noisy and out-of-frame -- you rate your direct and indirect reports, not your peers or yourself. The grid now walks the <code>reports_to</code> subtree from whatever seats you have claimed on the chart and filters to that set, excluding your own tiles. Empty states added: "claim your seat" when you aren't on the chart yet, "no one reports to you yet" when you are. Same People Review was added as a visible banner on the daily dashboard and a "Review People (GWC + Values)" link in the CEO view's Team section, so it stops being a hidden feature.</p>
+
+<h3>Seat Fit and People Review saves no longer 500</h3>
+<p>The PUT endpoints for seat fit (<code>/api/v1/seats/:externalId/fit</code>) and seat responsibilities were 500-ing because the audit-log insert was sending the seat's varchar external ID (e.g. <code>HUM_DAVIDSTEEL</code>) into <code>audit_logs.entity_id</code>, which is typed as a Postgres uuid. The same bug surfaced through People Review's G/W/C columns as "Could not save rating." Fixed by passing the seat's external ID through <code>details.seatExternalId</code> on the audit row instead, where it belongs. Both save paths now work end-to-end.</p>`,
+  },
+
   // ---- May 21, 2026 ----
 
   {
