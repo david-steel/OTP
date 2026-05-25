@@ -1,3 +1,4 @@
+<%- include('../partials/api-save-handler'); %>
 <style>
   .sb-shell { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
   .sb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -394,32 +395,23 @@
     var publishBtn = document.getElementById('btn-publish-all-kpis');
     var publishMsg = document.getElementById('publish-msg');
     if (publishBtn) {
-      publishBtn.addEventListener('click', async function() {
+      publishBtn.addEventListener('click', function() {
         if (!confirm('Push every KPI definition into your published OOS as a structured claim? This is load-bearing — agents reading the OOS will see what each seat is measured on.')) return;
-        publishBtn.disabled = true;
-        publishMsg.textContent = 'Publishing...';
-        try {
-          var resp = await fetch('/api/v1/kpis/publish-all', { method: 'POST', credentials: 'include' });
-          var data = await resp.json();
-          if (!resp.ok || data.error) {
-            publishMsg.textContent = 'Error: ' + (data.error && data.error.message ? data.error.message : resp.status);
-            publishMsg.style.color = '#b91c1c';
-            publishBtn.disabled = false;
-            return;
-          }
-          publishMsg.textContent = 'Published ' + data.published + ' KPI' + (data.published === 1 ? '' : 's') + (data.failed.length > 0 ? '; ' + data.failed.length + ' failed' : '') + '.';
-          publishMsg.style.color = '#047857';
-          publishBtn.disabled = false;
-        } catch (e) {
-          publishMsg.textContent = 'Network error: ' + e.message;
-          publishMsg.style.color = '#b91c1c';
-          publishBtn.disabled = false;
-        }
+        OTP.apiSave({
+          method: 'POST', url: '/api/v1/kpis/publish-all',
+          msgEl: publishMsg, btnEl: publishBtn,
+          errorContext: 'Publish all KPIs',
+          onSuccess: function(data) {
+            var failed = (data.failed && data.failed.length) || 0;
+            publishMsg.textContent = 'Published ' + data.published + ' KPI' + (data.published === 1 ? '' : 's') + (failed > 0 ? '; ' + failed + ' failed' : '') + '.';
+            publishMsg.style.color = '#047857';
+          },
+        });
       });
     }
 
     document.querySelectorAll('.sb-cell input').forEach(function(inp) {
-      inp.addEventListener('blur', async function() {
+      inp.addEventListener('blur', function() {
         var tr = inp.closest('tr');
         var td = inp.closest('.sb-cell');
         var kpiId = tr.getAttribute('data-kpi-id');
@@ -427,30 +419,32 @@
         var orig = inp.getAttribute('data-orig') || '';
         var newVal = inp.value;
         if (orig === newVal) return;
-        try {
-          if (newVal === '') {
-            // Delete
-            var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(kpiId) + '/values?periodStart=' + encodeURIComponent(periodStart), {
-              method: 'DELETE',
-              credentials: 'include',
-            });
-            if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Delete failed: ' + (err.error && err.error.message ? err.error.message : resp.status)); inp.value = orig; return; }
-          } else {
-            var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(kpiId) + '/values', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ periodStart: periodStart, value: Number(newVal) }),
-            });
-            if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Save failed: ' + (err.error && err.error.message ? err.error.message : resp.status)); inp.value = orig; return; }
-          }
+        var saveOpts;
+        if (newVal === '') {
+          saveOpts = {
+            method: 'DELETE',
+            url: '/api/v1/kpis/' + encodeURIComponent(kpiId) + '/values?periodStart=' + encodeURIComponent(periodStart),
+            errorContext: 'Delete KPI value',
+          };
+        } else {
+          saveOpts = {
+            method: 'POST',
+            url: '/api/v1/kpis/' + encodeURIComponent(kpiId) + '/values',
+            body: { periodStart: periodStart, value: Number(newVal) },
+            errorContext: 'Save KPI value',
+          };
+        }
+        // Optimistic: input already shows newVal. Rollback to orig in
+        // onError; the helper then surfaces the real server message
+        // (e.g. "value must be a number", "period is closed") instead
+        // of "Save failed: 422".
+        saveOpts.onError = function() { inp.value = orig; };
+        saveOpts.onSuccess = function() {
           inp.setAttribute('data-orig', newVal);
           recomputeRowSummary(tr);
           paintRowGoals(tr);
-        } catch (e) {
-          alert('Network error: ' + e.message);
-          inp.value = orig;
-        }
+        };
+        OTP.apiSave(saveOpts);
       });
       inp.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
@@ -459,33 +453,25 @@
 
     // KPI team mover -- admin-only dropdown next to each KPI title.
     document.querySelectorAll('.kpi-team-mover').forEach(function(sel) {
-      sel.addEventListener('change', async function(e) {
+      sel.addEventListener('change', function(e) {
         var newTeamId = e.currentTarget.value;
         if (!newTeamId) return;
         var tr = e.currentTarget.closest('tr');
         if (!tr) return;
         var kpiId = tr.dataset.kpiId;
-        e.currentTarget.disabled = true;
-        try {
-          var r = await fetch('/api/v1/kpis/' + kpiId, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ teamId: newTeamId }),
-          });
-          if (!r.ok) {
-            var body = await r.json().catch(function(){ return {}; });
-            throw new Error(body && body.error ? (body.error.message || body.error.code) : ('HTTP ' + r.status));
-          }
-          // Fade the row out -- it now belongs to a different team scoreboard.
-          tr.style.transition = 'opacity 0.25s';
-          tr.style.opacity = '0';
-          setTimeout(function(){ tr.remove(); }, 250);
-        } catch (err) {
-          alert('Move failed: ' + (err.message || 'unknown'));
-          e.currentTarget.disabled = false;
-          e.currentTarget.value = '';
-        }
+        OTP.apiSave({
+          method: 'PATCH', url: '/api/v1/kpis/' + encodeURIComponent(kpiId),
+          body: { teamId: newTeamId },
+          btnEl: e.currentTarget,
+          errorContext: 'Move KPI to team',
+          onSuccess: function() {
+            // Fade the row out -- it now belongs to a different team scoreboard.
+            tr.style.transition = 'opacity 0.25s';
+            tr.style.opacity = '0';
+            setTimeout(function(){ tr.remove(); }, 250);
+          },
+          onError: function() { e.currentTarget.value = ''; },
+        });
       });
     });
 
@@ -516,7 +502,7 @@
       assignKpiId = null;
     });
 
-    if (assignSubmit) assignSubmit.addEventListener('click', async function() {
+    if (assignSubmit) assignSubmit.addEventListener('click', function() {
       if (!assignKpiId) return;
       var val = assignOwner ? assignOwner.value : '';
       if (!val) { alert('Pick a person first.'); return; }
@@ -528,47 +514,24 @@
       };
       var goalRaw = assignGoal ? assignGoal.value.trim() : '';
       if (goalRaw !== '') body.goalValue = Number(goalRaw);
-      assignSubmit.disabled = true;
-      try {
-        var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(assignKpiId) + '/assign', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok) {
-          var err = await resp.json().catch(function() { return {}; });
-          alert('Assign failed: ' + (err.error && err.error.message ? err.error.message : resp.status));
-          assignSubmit.disabled = false;
-          return;
-        }
-        location.reload();
-      } catch (e) {
-        alert('Network error: ' + e.message);
-        assignSubmit.disabled = false;
-      }
+      OTP.apiSave({
+        method: 'POST', url: '/api/v1/kpis/' + encodeURIComponent(assignKpiId) + '/assign',
+        body: body,
+        btnEl: assignSubmit,
+        errorContext: 'Assign KPI',
+        onSuccess: function() { location.reload(); },
+      });
     });
 
     document.querySelectorAll('.kpi-unshare').forEach(function(btn) {
-      btn.addEventListener('click', async function() {
+      btn.addEventListener('click', function() {
         if (!confirm('Remove this person from the shared KPI? Their KPI row and its values stay -- it just stops rolling up.')) return;
-        btn.disabled = true;
-        try {
-          var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(btn.getAttribute('data-kpi-id')) + '/unshare', {
-            method: 'POST',
-            credentials: 'include',
-          });
-          if (!resp.ok) {
-            var err = await resp.json().catch(function() { return {}; });
-            alert('Failed: ' + (err.error && err.error.message ? err.error.message : resp.status));
-            btn.disabled = false;
-            return;
-          }
-          location.reload();
-        } catch (e) {
-          alert('Network error: ' + e.message);
-          btn.disabled = false;
-        }
+        OTP.apiSave({
+          method: 'POST', url: '/api/v1/kpis/' + encodeURIComponent(btn.getAttribute('data-kpi-id')) + '/unshare',
+          btnEl: btn,
+          errorContext: 'Unshare KPI',
+          onSuccess: function() { location.reload(); },
+        });
       });
     });
   });

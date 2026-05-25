@@ -1,3 +1,4 @@
+<%- include('../partials/api-save-handler'); %>
 <div class="max-w-6xl mx-auto px-4 py-8">
 
   <!-- Breadcrumb -->
@@ -318,18 +319,13 @@
 
     saveBtn.addEventListener('click', function () {
       var list = textarea.value.split('\n').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
-      saveBtn.disabled = true;
-      fetch('/api/v1/seats/' + encodeURIComponent(seatId) + '/responsibilities', {
+      OTP.apiSave({
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ responsibilities: list })
-      }).then(function (res) {
-        if (!res.ok) { throw new Error('Save failed (' + res.status + ')'); }
-        location.reload();
-      }).catch(function (err) {
-        saveBtn.disabled = false;
-        alert(err.message || 'Could not save responsibilities.');
+        url: '/api/v1/seats/' + encodeURIComponent(seatId) + '/responsibilities',
+        body: { responsibilities: list },
+        btnEl: saveBtn,
+        errorContext: 'Save responsibilities',
+        onSuccess: function () { location.reload(); },
       });
     });
 
@@ -356,22 +352,17 @@
           var next = FIT_ORDER[(FIT_ORDER.indexOf(prev) + 1) % FIT_ORDER.length];
           btn.dataset.rating = next;
           paintFit(btn);
-          btn.disabled = true;
           var patch = {};
           patch[btn.dataset.axis] = next || null;
-          fetch('/api/v1/seats/' + encodeURIComponent(seatId) + '/fit', {
+          // Optimistic-UI rollback in onError; the helper then surfaces
+          // the actual server error.message instead of "Save failed (X)".
+          OTP.apiSave({
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify(patch)
-          }).then(function (res) {
-            btn.disabled = false;
-            if (!res.ok) { throw new Error('Save failed (' + res.status + ')'); }
-          }).catch(function (err) {
-            btn.dataset.rating = prev;
-            paintFit(btn);
-            btn.disabled = false;
-            alert(err.message || 'Could not save seat fit.');
+            url: '/api/v1/seats/' + encodeURIComponent(seatId) + '/fit',
+            body: patch,
+            btnEl: btn,
+            errorContext: 'Save ' + btn.dataset.axis + ' rating',
+            onError: function () { btn.dataset.rating = prev; paintFit(btn); },
           });
         });
       });
@@ -379,20 +370,16 @@
       var fitNote = document.getElementById('fit-note');
       if (fitNoteSave && fitNote) {
         fitNoteSave.addEventListener('click', function () {
-          fitNoteSave.disabled = true;
-          fetch('/api/v1/seats/' + encodeURIComponent(seatId) + '/fit', {
+          OTP.apiSave({
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ note: fitNote.value })
-          }).then(function (res) {
-            fitNoteSave.disabled = false;
-            if (!res.ok) { throw new Error('Save failed (' + res.status + ')'); }
-            fitNoteSave.textContent = 'Saved';
-            setTimeout(function () { fitNoteSave.textContent = 'Save note'; }, 1500);
-          }).catch(function (err) {
-            fitNoteSave.disabled = false;
-            alert(err.message || 'Could not save note.');
+            url: '/api/v1/seats/' + encodeURIComponent(seatId) + '/fit',
+            body: { note: fitNote.value },
+            btnEl: fitNoteSave,
+            errorContext: 'Save seat fit note',
+            onSuccess: function () {
+              fitNoteSave.textContent = 'Saved';
+              setTimeout(function () { fitNoteSave.textContent = 'Save note'; }, 1500);
+            },
           });
         });
       }

@@ -1,3 +1,4 @@
+<%- include('../partials/api-save-handler'); %>
 <section class="bg-gray-50 min-h-screen">
 <div class="max-w-7xl mx-auto px-6 sm:px-8 py-8">
 
@@ -632,31 +633,21 @@
           var kpiOwnerType = ownerType === 'employee' ? 'human' : 'agent';
           var defaultTitle = window.prompt('KPI title:', 'KPI for: ' + itemTitle);
           if (!defaultTitle) return;
-          try {
-            var res = await fetch('/api/v1/kpis', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({
-                ownerEntityType: kpiOwnerType,
-                ownerExternalId: ownerId,
-                title: defaultTitle,
-                description: 'Success metric for ' + itemTitle,
-                groupName: 'Operating Plan',
-                timeGrain: 'weekly',
-                aggregationMethod: 'sum',
-                executionItemId: itemId,
-              }),
-            });
-            if (!res.ok) {
-              var err = await res.json().catch(function() { return {}; });
-              alert('Failed to create KPI: ' + (err.error && err.error.message ? err.error.message : res.status));
-              return;
-            }
-            window.location.reload();
-          } catch (err) {
-            alert('Network error: ' + err.message);
-          }
+          OTP.apiSave({
+            method: 'POST', url: '/api/v1/kpis',
+            body: {
+              ownerEntityType: kpiOwnerType,
+              ownerExternalId: ownerId,
+              title: defaultTitle,
+              description: 'Success metric for ' + itemTitle,
+              groupName: 'Operating Plan',
+              timeGrain: 'weekly',
+              aggregationMethod: 'sum',
+              executionItemId: itemId,
+            },
+            errorContext: 'Create KPI for execution item',
+            onSuccess: function() { window.location.reload(); },
+          });
           return;
         }
 

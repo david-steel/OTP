@@ -1,3 +1,4 @@
+<%- include('../partials/api-save-handler'); %>
 <%
   var RATING_LABEL = { '': 'Not rated', 'yes': 'Yes', 'partial': 'Partial', 'no': 'No' };
   var RATING_CLS = {
@@ -144,10 +145,11 @@
     mvAdd.addEventListener('click', function(){
       var name = mvNew.value.trim();
       if (!name) { alert('Enter a value name.'); return; }
-      mvAdd.disabled = true;
-      vapi('POST', '/values', { name: name })
-        .then(function(){ location.reload(); })
-        .catch(function(e){ mvAdd.disabled = false; alert(e.message || 'Could not add value.'); });
+      OTP.apiSave({
+        method: 'POST', url: '/api/v1/values', body: { name: name },
+        btnEl: mvAdd, errorContext: 'Add value',
+        onSuccess: function(){ location.reload(); },
+      });
     });
   }
   document.querySelectorAll('#mv-panel [data-value-id]').forEach(function(rowEl){
@@ -158,17 +160,19 @@
     saveBtn.addEventListener('click', function(){
       var name = nameInput.value.trim();
       if (!name) { alert('Value name cannot be empty.'); return; }
-      saveBtn.disabled = true;
-      vapi('PUT', '/values/' + id, { name: name })
-        .then(function(){ location.reload(); })
-        .catch(function(e){ saveBtn.disabled = false; alert(e.message || 'Could not save.'); });
+      OTP.apiSave({
+        method: 'PUT', url: '/api/v1/values/' + encodeURIComponent(id), body: { name: name },
+        btnEl: saveBtn, errorContext: 'Rename value',
+        onSuccess: function(){ location.reload(); },
+      });
     });
     delBtn.addEventListener('click', function(){
       if (!confirm('Delete this value? Its ratings will be removed.')) return;
-      delBtn.disabled = true;
-      vapi('DELETE', '/values/' + id)
-        .then(function(){ location.reload(); })
-        .catch(function(e){ delBtn.disabled = false; alert(e.message || 'Could not delete.'); });
+      OTP.apiSave({
+        method: 'DELETE', url: '/api/v1/values/' + encodeURIComponent(id),
+        btnEl: delBtn, errorContext: 'Delete value',
+        onSuccess: function(){ location.reload(); },
+      });
     });
   });
 
@@ -226,24 +230,31 @@
       recomputeVerdict(tr);
       btn.disabled = true;
 
-      var path, body;
+      var path, body, context;
       if (btn.dataset.kind === 'fit') {
-        path = '/seats/' + encodeURIComponent(seatId) + '/fit';
+        path = '/api/v1/seats/' + encodeURIComponent(seatId) + '/fit';
         body = {};
         body[btn.dataset.axis] = next || null;
+        context = 'Save ' + btn.dataset.axis + ' rating';
       } else {
-        path = '/seats/' + encodeURIComponent(seatId) + '/value-reviews';
+        path = '/api/v1/seats/' + encodeURIComponent(seatId) + '/value-reviews';
         body = { valueId: btn.dataset.valueId, rating: next || null };
+        context = 'Save value rating';
       }
-      vapi('PUT', path, body)
-        .then(function(){ btn.disabled = false; })
-        .catch(function(e){
+      // Optimistic UI: revert this cell on any error, then let the
+      // shared helper render the actual server message (or network /
+      // status fallback) -- no more "Could not save rating" trap.
+      OTP.apiSave({
+        method: 'PUT', url: path, body: body,
+        btnEl: btn, errorContext: context,
+        onError: function() {
           btn.dataset.rating = prev;
           paintCell(btn);
           recomputeVerdict(tr);
-          btn.disabled = false;
-          alert(e.message || 'Could not save rating.');
-        });
+          // Don't return true -- we WANT the helper's toast with the
+          // actual server message to fire after our rollback.
+        },
+      });
     });
   });
 })();

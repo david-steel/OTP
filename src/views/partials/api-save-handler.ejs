@@ -1,0 +1,184 @@
+<!-- Shared API save handler (bulletproof errors, 2026-05-25).
+
+     Exposes `window.OTP.apiSave(opts)` -- one helper every save call
+     on the platform goes through. The contract:
+
+       OTP.apiSave({
+         method: 'PUT' | 'POST' | 'DELETE',  required
+         url:    '/api/v1/...',              required (path without origin OK)
+         body:   { ... } | undefined,        optional JSON body
+
+         msgEl:          HTMLElement,        optional inline status text
+         btnEl:          HTMLElement,        optional button to disable/re-enable
+         successMessage: 'Saved',            optional default-success text
+         errorContext:   'Save KPI value',   optional prefix for fallback errors
+         onSuccess:      function(data) {},  optional
+         onError:        function(err) {},   optional -- called BEFORE the default
+                                              render so callers can do an
+                                              optimistic-UI rollback. Return true
+                                              to suppress the default error
+                                              message.
+       })
+       returns Promise<{ ok, data, status, error }>
+
+     Why one helper: every save endpoint on the platform returns
+     { error: { code, message, details? } } on failure. The server
+     already does the work of writing a human-readable message.
+     Caller code that throws that away and shows "Save failed (422)"
+     is the bug. This helper forces the server's message through,
+     formats details as bullets when present, and gives callers a
+     hook for optimistic rollback without forcing them to re-implement
+     the same alert/toast machinery.
+
+     Same shape as OTP.publishOOS but for the broader save-without-modal
+     case. The two helpers coexist on window.OTP. -->
+<script>
+(function() {
+  if (window.OTP && window.OTP.apiSave) return;  // idempotent across includes
+  window.OTP = window.OTP || {};
+
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function setStatus(opts, text, color) {
+    if (opts.msgEl) {
+      opts.msgEl.textContent = text;
+      opts.msgEl.style.color = color || '';
+      return;
+    }
+    // No inline msgEl -- use a transient toast at the bottom-right.
+    // Errors stay visible (5s) so the user can read them; successes
+    // auto-dismiss faster (2s).
+    var t = document.getElementById('otp-apisave-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'otp-apisave-toast';
+      t.style.cssText = 'position:fixed; bottom:24px; right:24px; padding:10px 16px; border-radius:8px; font-size:13px; z-index:201; box-shadow:0 10px 30px rgba(0,0,0,0.3); max-width:360px; line-height:1.4;';
+      document.body.appendChild(t);
+    }
+    var isError = color && (color === '#b91c1c' || color === '#dc2626');
+    t.style.background = isError ? '#7f1d1d' : '#111827';
+    t.style.color = '#fff';
+    t.textContent = text;
+    clearTimeout(t._dismissTimer);
+    t._dismissTimer = setTimeout(function() { if (t.parentNode) t.remove(); }, isError ? 5000 : 2000);
+  }
+
+  function setStatusHtml(opts, html, color) {
+    if (opts.msgEl) {
+      opts.msgEl.style.color = color || '';
+      opts.msgEl.innerHTML = html;
+      return;
+    }
+    // For HTML status with no msgEl, fall back to a styled toast that
+    // strips the tags. Callers that need rich error display should
+    // pass an msgEl.
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    setStatus(opts, tmp.textContent || '', color);
+  }
+
+  // Builds the displayed error message from the server's error object,
+  // a network exception, or a bare status code. Always returns
+  // something a human can read; never a naked "(422)".
+  function renderError(opts, errorInfo) {
+    var prefix = opts.errorContext ? (opts.errorContext + ' failed: ') : '';
+
+    if (errorInfo.networkError) {
+      setStatus(opts, prefix + 'network error -- ' + errorInfo.message, '#b91c1c');
+      return;
+    }
+
+    var msg = errorInfo.message || ('request failed (' + errorInfo.status + ')');
+    if (errorInfo.details && errorInfo.details.length > 0) {
+      var lines = errorInfo.details.slice(0, 8).map(function(d) {
+        // Common error.details shapes the platform uses:
+        //   { field, issue, value, expected }       (PII, validation)
+        //   { field, message }                       (zod)
+        //   { path, message }                        (zod alt)
+        //   string
+        if (typeof d === 'string') return '• ' + d;
+        var label = d.field || d.issue || d.path || (d.code ? d.code : 'field');
+        var detail = d.expected || d.message || d.issue || '';
+        var val = d.value != null ? ' ("' + d.value + '")' : '';
+        return '• ' + label + val + (detail ? ': ' + detail : '');
+      });
+      if (errorInfo.details.length > 8) lines.push('• (... ' + (errorInfo.details.length - 8) + ' more)');
+      setStatusHtml(opts,
+        '<strong>' + escHtml(prefix + msg) + '</strong>' +
+        '<br/><span style="font-size:11px; line-height:1.6;">' +
+        lines.map(escHtml).join('<br/>') + '</span>',
+        '#b91c1c'
+      );
+    } else {
+      setStatus(opts, prefix + msg, '#b91c1c');
+    }
+  }
+
+  /**
+   * Make a save API call with full error handling. No surface using
+   * this helper ever sees a naked status code; the server's
+   * error.message is always surfaced, with details rendered as bullets
+   * if present. Optimistic-UI callers pass onError to roll back state.
+   */
+  window.OTP.apiSave = async function apiSave(opts) {
+    if (!opts || !opts.url) throw new Error('OTP.apiSave: url required');
+    var method = opts.method || 'POST';
+    if (opts.btnEl) opts.btnEl.disabled = true;
+
+    var fetchOpts = {
+      method: method,
+      credentials: 'same-origin',
+      headers: {},
+    };
+    if (opts.body !== undefined && method !== 'GET' && method !== 'DELETE') {
+      fetchOpts.headers['Content-Type'] = 'application/json';
+      fetchOpts.body = JSON.stringify(opts.body);
+    } else if (opts.body !== undefined && method === 'DELETE') {
+      // Some DELETE endpoints accept a JSON body; preserve the caller's intent.
+      fetchOpts.headers['Content-Type'] = 'application/json';
+      fetchOpts.body = JSON.stringify(opts.body);
+    }
+
+    var resp;
+    try {
+      resp = await fetch(opts.url, fetchOpts);
+    } catch (e) {
+      var errInfo = { networkError: true, message: e.message || 'unknown', status: 0 };
+      var handled = typeof opts.onError === 'function' ? opts.onError(errInfo) : false;
+      if (!handled) renderError(opts, errInfo);
+      if (opts.btnEl) opts.btnEl.disabled = false;
+      return { ok: false, error: errInfo, status: 0 };
+    }
+
+    var data = {};
+    try { data = await resp.json(); } catch (_) {}
+
+    if (resp.ok) {
+      if (opts.successMessage) setStatus(opts, opts.successMessage, '#047857');
+      else if (opts.msgEl) setStatus(opts, '', '');  // clear any prior error
+      if (opts.btnEl) opts.btnEl.disabled = false;
+      if (typeof opts.onSuccess === 'function') opts.onSuccess(data);
+      return { ok: true, data: data, status: resp.status };
+    }
+
+    // Non-OK. Build a uniform errorInfo for the caller and the default renderer.
+    var err = (data && data.error) || {};
+    var errInfo = {
+      networkError: false,
+      status: resp.status,
+      code: err.code || '',
+      message: err.message || '',
+      details: Array.isArray(err.details) ? err.details : null,
+      raw: data,
+    };
+    var handled = typeof opts.onError === 'function' ? opts.onError(errInfo) : false;
+    if (!handled) renderError(opts, errInfo);
+    if (opts.btnEl) opts.btnEl.disabled = false;
+    return { ok: false, error: errInfo, status: resp.status };
+  };
+})();
+</script>

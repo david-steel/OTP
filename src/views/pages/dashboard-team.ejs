@@ -245,6 +245,7 @@
 </style>
 <%- include('../partials/orgy-palette'); %>
 <%- include('../partials/oos-publish-handler'); %>
+<%- include('../partials/api-save-handler'); %>
 
 <section class="bg-white border-b border-gray-100">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-6">
@@ -1939,22 +1940,18 @@
         aggregationMethod: 'sum',
         groupName: 'Winning Scoreboard',
       };
-      try {
-        var resp = await fetch('/api/v1/kpis', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(draft),
-        });
-        if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Could not create KPI: ' + (err.error && err.error.message ? err.error.message : resp.status)); return; }
-        var created = await resp.json();
-        currentKpis.unshift(created);
-        editingKpiId = created.id;
-        renderKpiList();
-      } catch (e) { alert('Failed to create KPI: ' + e.message); }
+      OTP.apiSave({
+        method: 'POST', url: '/api/v1/kpis', body: draft,
+        errorContext: 'Create KPI',
+        onSuccess: function(created) {
+          currentKpis.unshift(created);
+          editingKpiId = created.id;
+          renderKpiList();
+        },
+      });
     };
 
-    window.saveKpi = async function(id) {
+    window.saveKpi = function(id) {
       var kpi = currentKpis.find(function(k) { return k.id === id; });
       if (!kpi) return;
       var patch = {
@@ -1968,31 +1965,29 @@
         aggregationMethod: kpi.aggregationMethod || 'sum',
         formula: kpi.formula || null,
       };
-      try {
-        var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(id), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(patch),
-        });
-        if (!resp.ok) { var err = await resp.json().catch(function() { return {}; }); alert('Could not save: ' + (err.error && err.error.message ? err.error.message : resp.status)); return; }
-        var updated = await resp.json();
-        var idx = currentKpis.findIndex(function(k) { return k.id === id; });
-        if (idx >= 0) currentKpis[idx] = updated;
-        editingKpiId = null;
-        renderKpiList();
-      } catch (e) { alert('Save failed: ' + e.message); }
+      OTP.apiSave({
+        method: 'PATCH', url: '/api/v1/kpis/' + encodeURIComponent(id), body: patch,
+        errorContext: 'Save KPI',
+        onSuccess: function(updated) {
+          var idx = currentKpis.findIndex(function(k) { return k.id === id; });
+          if (idx >= 0) currentKpis[idx] = updated;
+          editingKpiId = null;
+          renderKpiList();
+        },
+      });
     };
 
-    window.deleteKpi = async function(id) {
+    window.deleteKpi = function(id) {
       if (!confirm('Delete this KPI? Time-series values will be archived but the definition will be removed from the scorecard.')) return;
-      try {
-        var resp = await fetch('/api/v1/kpis/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include' });
-        if (!resp.ok) { alert('Delete failed: ' + resp.status); return; }
-        currentKpis = currentKpis.filter(function(k) { return k.id !== id; });
-        if (editingKpiId === id) editingKpiId = null;
-        renderKpiList();
-      } catch (e) { alert('Delete failed: ' + e.message); }
+      OTP.apiSave({
+        method: 'DELETE', url: '/api/v1/kpis/' + encodeURIComponent(id),
+        errorContext: 'Delete KPI',
+        onSuccess: function() {
+          currentKpis = currentKpis.filter(function(k) { return k.id !== id; });
+          if (editingKpiId === id) editingKpiId = null;
+          renderKpiList();
+        },
+      });
     };
 
     function renderInheritedFor(d) {
