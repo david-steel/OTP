@@ -153,6 +153,103 @@
   @media (prefers-color-scheme: dark) {
     .me-edit-row select, .me-edit-row input[type="datetime-local"] { background: #27272a; border-color: #3f3f46; color: #fafafa; }
   }
+
+  /* =================================================================
+     Mobile rebuild (2026-05-25): thumb-reachable sticky add bar at
+     the bottom of the viewport, swipe-left-to-complete on cards, and
+     a single-tap PWA install banner. Desktop layout is unchanged --
+     the bar and FAB are display:none above 760px. */
+
+  /* Sticky bottom bar: position fixed, safe-area inset, always visible. */
+  .me-mobile-add {
+    display: none;
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid #e7e5e4;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+    box-shadow: 0 -4px 16px rgba(15,23,42,0.08);
+    z-index: 40;
+  }
+  .me-mobile-add form { display: flex; gap: 8px; align-items: center; }
+  .me-mobile-add input {
+    flex: 1; min-height: 44px;
+    border: 1px solid #d4d4d8; border-radius: 10px;
+    padding: 0 14px; font-size: 16px;  /* >=16px stops iOS zoom on focus */
+    background: #fafafa; color: inherit;
+    -webkit-appearance: none;
+  }
+  .me-mobile-add input:focus { outline: none; border-color: #8BC42A; box-shadow: 0 0 0 3px rgba(168,230,58,0.25); background: #fff; }
+  .me-mobile-add button {
+    min-height: 44px; min-width: 56px;
+    border: none; border-radius: 10px;
+    background: #A8E63A; color: #14161c;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .me-mobile-add button:active { background: #8BC42A; }
+  .me-mobile-add button[disabled] { opacity: 0.6; }
+  @media (prefers-color-scheme: dark) {
+    .me-mobile-add { background: #18181b; border-top-color: #27272a; box-shadow: 0 -4px 16px rgba(0,0,0,0.3); }
+    .me-mobile-add input { background: #27272a; border-color: #3f3f46; color: #fafafa; }
+    .me-mobile-add input:focus { background: #18181b; }
+  }
+
+  /* Swipe-to-complete: the card sits over a green "Done" zone that
+     reveals as the user drags left. Past 100px, releasing fires
+     markDone. The transform comes off touchmove; the snap-back /
+     fly-out comes off touchend. */
+  .me-card[data-id] { position: relative; touch-action: pan-y; }
+  .me-card[data-id] .me-swipe-bg {
+    position: absolute; inset: 0;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 24px;
+    background: linear-gradient(90deg, transparent 0%, #A8E63A 60%, #8BC42A 100%);
+    color: #14161c; font-weight: 700; font-size: 15px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 120ms ease;
+  }
+  .me-card[data-id].swiping { transition: none; }
+  .me-card[data-id].swiping .me-swipe-bg { opacity: 1; }
+  .me-card[data-id] .me-card-body { background: inherit; border-radius: inherit; position: relative; transition: transform 200ms cubic-bezier(0.4, 0.0, 0.2, 1); }
+  .me-card[data-id].swiping .me-card-body { transition: none; }
+
+  /* Mobile-only layout swaps. */
+  @media (max-width: 760px) {
+    .me-wrap { padding-bottom: 90px; }  /* clear the sticky bar */
+    .me-mobile-add { display: block; }
+    /* Hide the desktop create card on mobile -- the sticky bar is the
+       way you add. Power features (priority, due date, delegation,
+       recurrence) live in the per-card Edit drawer instead. */
+    .me-create-card { display: none; }
+  }
+
+  /* PWA install nudge: shows once if the browser supports
+     beforeinstallprompt, hidden via .hidden class until JS reveals it. */
+  .me-install {
+    display: none;
+    margin: 12px 4px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #ECFCCB; color: #14161c;
+    border: 1px solid #A8E63A;
+    font-size: 13px;
+    align-items: center; gap: 10px;
+  }
+  .me-install.shown { display: flex; }
+  .me-install button {
+    margin-left: auto;
+    min-height: 36px; padding: 0 12px;
+    border: none; border-radius: 8px;
+    background: #A8E63A; color: #14161c;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+  }
+  .me-install .me-install-dismiss {
+    background: transparent; color: #14161c; padding: 6px 8px;
+    font-weight: 500;
+  }
 </style>
 
 <div class="me-wrap">
@@ -362,6 +459,28 @@
   <div class="me-foot">
     OTP · <a href="/dashboard">Daily dashboard</a> · <a href="/dashboard/kpis">KPIs</a>
   </div>
+
+  <!-- PWA install nudge (hidden until JS reveals it once
+       beforeinstallprompt fires or, for iOS Safari, on the second
+       visit). Sits inside .me-wrap so the bottom bar covers it
+       without overlap. -->
+  <div id="me-install" class="me-install" role="region" aria-label="Install OTP">
+    <span><strong>Install OTP</strong> on your home screen for one-tap todo capture.</span>
+    <button id="me-install-go" type="button">Install</button>
+    <button id="me-install-dismiss" type="button" class="me-install-dismiss" aria-label="Dismiss">Later</button>
+  </div>
+</div>
+
+<!-- Sticky bottom add bar (mobile-only, hidden >760px). One title
+     input + send button. Power features (priority / due date /
+     delegation / recurrence) live in the desktop create card and in
+     each todo's Edit drawer -- the mobile bar is for capture speed,
+     not configuration. -->
+<div class="me-mobile-add" role="region" aria-label="Quick add to-do">
+  <form id="me-mobile-add-form" autocomplete="off">
+    <input id="me-mobile-add-input" type="text" name="title" placeholder="Add a to-do..." maxlength="500" enterkeyhint="send" />
+    <button type="submit" id="me-mobile-add-btn">Add</button>
+  </form>
 </div>
 
 <script>
@@ -706,6 +825,184 @@ function checkEmpty() {
     location.reload();
   }
 }
+
+// ============================================================
+// Mobile rebuild (2026-05-25)
+// ============================================================
+
+// ---- Sticky bottom quick-add bar ------------------------------------
+(function wireMobileAdd() {
+  var form = document.getElementById('me-mobile-add-form');
+  if (!form) return;
+  var input = document.getElementById('me-mobile-add-input');
+  var btn = document.getElementById('me-mobile-add-btn');
+  var OWNER = '<%= ownerExternalId %>';
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var title = (input.value || '').trim();
+    if (!title) { input.focus(); return; }
+    btn.disabled = true;
+    var origLabel = btn.textContent;
+    btn.textContent = '…';
+    try {
+      var r = await fetch('/api/v1/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          kind: 'personal',
+          priority: 'p3',
+          title: title,
+          ownerEntityType: 'human',
+          ownerExternalId: OWNER,
+        }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      input.value = '';
+      // Reload to re-render the queue with the new todo in place. Cheap
+      // here; the page is light and reload preserves scroll on iOS.
+      location.reload();
+    } catch (err) {
+      btn.textContent = origLabel;
+      btn.disabled = false;
+      alert('Could not add: ' + err.message);
+    }
+  });
+})();
+
+// ---- Swipe-left-to-complete on each todo card -----------------------
+(function wireSwipeToComplete() {
+  // Only worth wiring on touch devices.
+  if (!('ontouchstart' in window)) return;
+  var THRESHOLD = 90;  // px the user has to drag left before release fires Done
+  var MAX = 220;        // clamp transform so the card can't fly off entirely
+
+  document.querySelectorAll('.me-card[data-id]').forEach(function(card) {
+    // Wrap existing children in a .me-card-body so we can transform
+    // it independently of the .me-swipe-bg sibling we're about to add.
+    if (!card.querySelector('.me-card-body')) {
+      var bg = document.createElement('div');
+      bg.className = 'me-swipe-bg';
+      bg.textContent = '✓ Done';
+      var body = document.createElement('div');
+      body.className = 'me-card-body';
+      while (card.firstChild) body.appendChild(card.firstChild);
+      card.appendChild(bg);
+      card.appendChild(body);
+    }
+    var body = card.querySelector('.me-card-body');
+
+    var startX = 0, startY = 0, dx = 0, dy = 0, isSwiping = false, locked = false;
+
+    card.addEventListener('touchstart', function(e) {
+      // Ignore swipes that start on a button / link / input.
+      var t = e.target;
+      if (t.closest && t.closest('button, a, input, select, textarea, .me-desc-toggle')) return;
+      var p = e.touches[0];
+      startX = p.clientX; startY = p.clientY; dx = 0; dy = 0;
+      isSwiping = true; locked = false;
+    }, { passive: true });
+
+    card.addEventListener('touchmove', function(e) {
+      if (!isSwiping) return;
+      var p = e.touches[0];
+      dx = p.clientX - startX;
+      dy = p.clientY - startY;
+      if (!locked) {
+        // First decisive movement decides whether this is a swipe or a
+        // vertical scroll. Once locked vertical, stay out of the way.
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 6) { isSwiping = false; return; }
+        if (Math.abs(dx) > 6) locked = true;
+      }
+      if (!locked) return;
+      // Only animate left-swipes; right-swipes do nothing.
+      var clamped = Math.max(-MAX, Math.min(0, dx));
+      card.classList.add('swiping');
+      body.style.transform = 'translateX(' + clamped + 'px)';
+    }, { passive: true });
+
+    card.addEventListener('touchend', function() {
+      if (!isSwiping) return;
+      isSwiping = false;
+      card.classList.remove('swiping');
+      if (dx < -THRESHOLD) {
+        // Fly out, then trigger the existing markDone path on this card's
+        // Done button so optimistic UI + audit logging stay consistent.
+        body.style.transform = 'translateX(-100%)';
+        var doneBtn = card.querySelector('.me-actions .me-btn.primary');
+        if (doneBtn) {
+          // The existing markDone(btn, id) handler reads id from the
+          // bound onclick attribute -- so we just .click() it.
+          setTimeout(function() { doneBtn.click(); }, 160);
+        } else {
+          // No Done button (shouldn't happen) -- snap back.
+          body.style.transform = '';
+        }
+      } else {
+        body.style.transform = '';
+      }
+    });
+
+    card.addEventListener('touchcancel', function() {
+      isSwiping = false;
+      card.classList.remove('swiping');
+      body.style.transform = '';
+    });
+  });
+})();
+
+// ---- PWA install nudge ----------------------------------------------
+(function wireInstall() {
+  var banner = document.getElementById('me-install');
+  var goBtn = document.getElementById('me-install-go');
+  var dismissBtn = document.getElementById('me-install-dismiss');
+  if (!banner) return;
+
+  // Don't show in standalone (already installed).
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+
+  var DISMISS_KEY = 'otp-install-nudge-dismissed';
+  if (localStorage.getItem(DISMISS_KEY)) return;
+
+  var deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    banner.classList.add('shown');
+  });
+
+  // iOS Safari doesn't fire beforeinstallprompt -- show the nudge with
+  // a tap-to-instructions fallback on the second visit.
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) {
+    var visits = parseInt(localStorage.getItem('otp-me-visits') || '0', 10) + 1;
+    localStorage.setItem('otp-me-visits', String(visits));
+    if (visits >= 2) {
+      goBtn.textContent = 'How';
+      banner.classList.add('shown');
+    }
+  }
+
+  goBtn.addEventListener('click', async function() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) { /* user dismissed */ }
+      deferredPrompt = null;
+      banner.classList.remove('shown');
+      localStorage.setItem(DISMISS_KEY, '1');
+    } else if (isIOS) {
+      alert('In Safari: tap the Share button, then "Add to Home Screen".');
+      localStorage.setItem(DISMISS_KEY, '1');
+      banner.classList.remove('shown');
+    }
+  });
+  dismissBtn.addEventListener('click', function() {
+    banner.classList.remove('shown');
+    localStorage.setItem(DISMISS_KEY, '1');
+  });
+})();
 </script>
 
 <%
