@@ -12,6 +12,7 @@ import { eq, and, lte, sql } from 'drizzle-orm';
 import { randomBytes, createHash } from 'crypto';
 import { db } from '../config/database.js';
 import { orgMembers, orgInvitations, organizations } from '../db/schema.js';
+import { reconcileChartClaimByEmail } from './chart-claim-reconcile.js';
 
 export const INVITATION_TTL_DAYS = 30;
 
@@ -327,11 +328,18 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
       acceptedByUserId: clerkUserId,
     }).where(eq(orgInvitations.id, inv.id));
 
+    // Final reconcile by email -- catches stubs the invite-specified
+    // claim set didn't, and fixes wrong primary claims by matching the
+    // member's email against chart human contact_email values.
+    try { await reconcileChartClaimByEmail(inv.orgId, reactivated.id); } catch { /* best-effort */ }
+
+    const [reread] = await db.select().from(orgMembers).where(eq(orgMembers.id, reactivated.id)).limit(1);
+
     return {
       ok: true,
       orgId: inv.orgId,
-      role: reactivated.role as Role,
-      claimedEntityId: reactivated.claimedEntityId || inv.claimedEntityId,
+      role: (reread?.role || reactivated.role) as Role,
+      claimedEntityId: reread?.claimedEntityId || reactivated.claimedEntityId || inv.claimedEntityId,
       memberId: reactivated.id,
     };
   }
@@ -441,11 +449,18 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     } catch { /* import failure -- skip auto-populate */ }
   }
 
+  // Final reconcile by email -- catches stubs the invite-specified
+  // claim set didn't, and fixes wrong primary claims by matching the
+  // member's email against chart human contact_email values.
+  try { await reconcileChartClaimByEmail(inv.orgId, member.id); } catch { /* best-effort */ }
+
+  const [reread] = await db.select().from(orgMembers).where(eq(orgMembers.id, member.id)).limit(1);
+
   return {
     ok: true,
     orgId: inv.orgId,
-    role: member.role as Role,
-    claimedEntityId: member.claimedEntityId,
+    role: (reread?.role || member.role) as Role,
+    claimedEntityId: reread?.claimedEntityId || member.claimedEntityId,
     memberId: member.id,
   };
 }

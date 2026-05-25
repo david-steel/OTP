@@ -28,6 +28,7 @@ import { issueInvite, MembershipError, type Role } from '../../services/membersh
 import { sendEmail } from '../../config/email.js';
 import { ONBOARDING_ROLE_KEYS } from '../../data/onboarding-roles.js';
 import { placeOwnerOnStarterChart } from '../../services/starter-chart.js';
+import { reconcileChartClaimByEmail } from '../../services/chart-claim-reconcile.js';
 
 // ---- helpers --------------------------------------------------------
 
@@ -201,6 +202,19 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
       });
     } catch (err) {
       request.log.error({ err, orgId: org.id }, 'starter chart placement failed (non-blocking)');
+    }
+
+    // Link the owner's org_members row to the chart tile that now
+    // carries their email. Without this the owner shows up on the chart
+    // but their org_members.claimed_entity_id stays null, which makes
+    // /team/review (which filters by reports_to from your claimed tile)
+    // think you're not on the chart at all. Best-effort -- a stale
+    // claim won't block onboarding.
+    try {
+      const m = await getMember(org.id, auth.userId);
+      if (m) await reconcileChartClaimByEmail(org.id, m.id);
+    } catch (err) {
+      request.log.error({ err, orgId: org.id }, 'chart claim reconcile failed (non-blocking)');
     }
 
     return { ok: true, orgId: org.id };
