@@ -880,9 +880,35 @@
     };
     if (body) opts.body = JSON.stringify(body);
     return fetch('/api/v1' + path, opts).then(function(r){
-      if (!r.ok) return r.json().catch(function(){ return {}; }).then(function(j){ throw j.error || { code: 'API_ERROR', message: 'API ' + r.status }; });
+      if (!r.ok) {
+        return r.text().then(function(text){
+          var j = {};
+          try { j = text ? JSON.parse(text) : {}; } catch (e) { /* non-JSON body */ }
+          var inner = j.error || {};
+          var err = {
+            status: r.status,
+            code: inner.code || 'API_ERROR',
+            message: inner.message || ('HTTP ' + r.status + (text && text.length < 200 ? ' ' + text : '')),
+            details: inner.details,
+          };
+          console.error('[api]', method, path, err);
+          throw err;
+        });
+      }
       return r.json();
+    }, function(networkErr){
+      var err = { status: 0, code: 'NETWORK', message: networkErr && networkErr.message || 'Network error' };
+      console.error('[api]', method, path, err);
+      throw err;
     });
+  }
+  function fmtApiError(err) {
+    if (!err) return 'Unknown error';
+    var parts = [];
+    if (err.status) parts.push(err.status);
+    if (err.code) parts.push(err.code);
+    var head = parts.join(' ');
+    return (head ? head + ' — ' : '') + (err.message || 'Failed');
   }
 
   function reload() { window.location.reload(); }
@@ -900,7 +926,7 @@
       if (headlineTeamId) hlBody.teamId = headlineTeamId;
       api('POST', '/meetings/' + meetingId + '/headlines', hlBody)
         .then(reload)
-        .catch(function(err){ alert('Headline failed: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Headline failed: ' + fmtApiError(err)); });
     });
   }
   document.querySelectorAll('.headline-read-cb').forEach(function(cb){
@@ -911,7 +937,7 @@
       var path = cb.checked ? '/read' : '/unread';
       api('POST', '/meetings/' + meetingId + '/headlines/' + hid + path, {})
         .then(reload)
-        .catch(function(err){ cb.checked = !cb.checked; alert(err.message || 'Failed'); });
+        .catch(function(err){ cb.checked = !cb.checked; alert(fmtApiError(err)); });
     });
   });
 
@@ -924,7 +950,7 @@
       var next = !current;
       api('PUT', '/rocks/' + rid, { onTrack: next })
         .then(reload)
-        .catch(function(err){ alert('Could not update rock: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Could not update rock: ' + fmtApiError(err)); });
     });
   });
 
@@ -945,7 +971,7 @@
         var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
         api('POST', '/kpis/' + kid + '/values', { periodStart: weekStart.toISOString(), periodEnd: weekEnd.toISOString(), value: val, source: 'manual' })
           .then(function(){ inp.classList.add('ring-1'); inp.classList.add('ring-emerald-400'); setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800); })
-          .catch(function(err){ alert('KPI save failed: ' + (err.message || 'unknown')); });
+          .catch(function(err){ alert('KPI save failed: ' + fmtApiError(err)); });
       }, 300);
     });
   });
@@ -991,7 +1017,7 @@
         body.teamId = teamVal;
         body.kind = 'l10';
       }
-      api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + (err.message || 'unknown')); });
+      api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + fmtApiError(err)); });
     });
   }
   document.querySelectorAll('.todo-done-cb').forEach(function(cb){
@@ -1000,7 +1026,7 @@
       var tid = li.dataset.todoId;
       api('PUT', '/todos/' + tid, { done: cb.checked })
         .then(reload)
-        .catch(function(err){ cb.checked = !cb.checked; alert(err.message || 'Failed'); });
+        .catch(function(err){ cb.checked = !cb.checked; alert(fmtApiError(err)); });
     });
   });
   document.querySelectorAll('.todo-edit-btn').forEach(function(btn){
@@ -1042,7 +1068,7 @@
       }
       api('PUT', '/todos/' + tid, editBody)
         .then(reload)
-        .catch(function(err){ alert('Save failed: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Save failed: ' + fmtApiError(err)); });
     });
   });
   document.querySelectorAll('.todo-delete-btn').forEach(function(btn){
@@ -1064,7 +1090,7 @@
       }
       var li = btn.closest('[data-todo-id]');
       var tid = li.dataset.todoId;
-      api('DELETE', '/todos/' + tid).then(reload).catch(function(err){ alert(err.message || 'Failed'); });
+      api('DELETE', '/todos/' + tid).then(reload).catch(function(err){ alert(fmtApiError(err)); });
     });
   });
 
@@ -1074,7 +1100,7 @@
       var tid = btn.dataset.verifyId;
       api('PUT', '/todos/' + tid, { verified: true })
         .then(reload)
-        .catch(function(err){ alert('Verify failed: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Verify failed: ' + fmtApiError(err)); });
     });
   });
   document.querySelectorAll('[data-reopen-id]').forEach(function(btn){
@@ -1082,7 +1108,7 @@
       var tid = btn.dataset.reopenId;
       api('PUT', '/todos/' + tid, { done: false })
         .then(reload)
-        .catch(function(err){ alert('Reopen failed: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Reopen failed: ' + fmtApiError(err)); });
     });
   });
 
@@ -1096,7 +1122,7 @@
       var fd = new FormData(issForm);
       api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium' })
         .then(reload)
-        .catch(function(err){ alert('Add issue failed: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Add issue failed: ' + fmtApiError(err)); });
     });
   }
   document.querySelectorAll('.issue-solve-btn').forEach(function(btn){
@@ -1105,7 +1131,7 @@
       var iid = li.dataset.issueId;
       api('PUT', '/tickets/' + iid, { idsStatus: 'solved', solvedInMeetingId: meetingId || null })
         .then(reload)
-        .catch(function(err){ alert('Could not mark solved: ' + (err.message || 'unknown')); });
+        .catch(function(err){ alert('Could not mark solved: ' + fmtApiError(err)); });
     });
   });
   function applyIssueFilter(filter) {
