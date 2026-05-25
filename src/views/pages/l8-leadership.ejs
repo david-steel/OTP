@@ -1,3 +1,4 @@
+<%- include('../partials/orgy-palette') %>
 <div class="max-w-6xl mx-auto px-4 py-8" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
 
   <!-- Header -->
@@ -31,7 +32,7 @@
 
   <!-- Direction strip: the plan's destination, framing the meeting. -->
   <% if (typeof planDirection !== 'undefined' && planDirection && (planDirection.threeYear || planDirection.annualObjective || planDirection.tenYear)) { %>
-    <div class="mb-6 border border-orgy-soft bg-orgy-blue-soft rounded-lg px-4 py-2.5 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs">
+    <div class="mb-6 border border-orgy bg-orgy-soft rounded-lg px-4 py-2.5 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs">
       <span class="uppercase tracking-wider text-orgy-blue font-semibold">Driving toward</span>
       <% if (planDirection.threeYear) { %>
         <span><span class="text-gray-500">3-5yr<%= planDirection.threeYearYear ? ' (' + planDirection.threeYearYear + ')' : '' %>:</span> <span class="text-gray-800 font-medium"><%= planDirection.threeYear %></span></span>
@@ -74,8 +75,8 @@
     <div class="flex items-center justify-between mb-2">
       <div class="text-xs uppercase tracking-wider text-gray-700 font-medium flex items-center gap-2">
         Attendees &amp; Access
-        <span id="meeting-live-indicator" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium" title="Connected to live updates">
-          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 align-middle animate-pulse"></span>
+        <span id="meeting-live-indicator" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light font-medium" title="Connected to live updates">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-orgy align-middle animate-pulse"></span>
           Live <span id="meeting-watcher-count">1</span>
         </span>
       </div>
@@ -186,7 +187,7 @@
     <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip flex-[1.5] px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">3. Quarterly Priorities <span class="text-gray-500">5m</span></a>
     <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">4. Headlines <span class="text-gray-500">5m</span></a>
     <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">5. To-Dos <span class="text-gray-500">5m</span></a>
-    <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-orgy-blue-soft rounded hover:bg-orgy-tint text-center font-medium min-w-0">6. Issues <span class="text-gray-600">60m</span></a>
+    <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-orgy-blue-soft rounded hover:bg-orgy-soft text-center font-medium min-w-0">6. Issues <span class="text-gray-600">60m</span></a>
     <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">7. Conclude <span class="text-gray-500">5m</span></a>
     <span id="meeting-clock" class="ml-3 px-2 py-1 rounded bg-gray-900 text-white font-mono text-xs whitespace-nowrap">--:--</span>
     <button id="timer-toggle" class="ml-1 px-2 py-1 bg-orgy-blue text-white rounded text-xs hover:bg-orgy-blue-deep">Start</button>
@@ -356,7 +357,7 @@
                     <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
                   </td>
                   <td class="p-2 text-center">
-                    <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-tint"
+                    <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft"
                             data-flag-kpi="<%= k.id %>"
                             data-flag-title="<%= String('KPI: ' + (k.title || '')).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>"
                             data-owner="<%= (k.ownerEntityType && k.ownerExternalId) ? (k.ownerEntityType + ':' + k.ownerExternalId) : '' %>">→ Issue</button>
@@ -487,7 +488,7 @@
               <button class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200"
                       data-headline-done="<%= h.id %>">✓ Addressed</button>
             <% } %>
-            <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-tint"
+            <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft"
                     data-flag-headline="<%= h.id %>"
                     data-flag-title="<%= String(h.body || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>">→ Issue</button>
           </div>
@@ -625,7 +626,7 @@
               <button data-ids-set="identified" class="text-xs px-2 py-1 bg-blue-100 rounded hover:bg-blue-200">Identify</button>
               <button data-ids-set="discussed"  class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Discuss</button>
               <button data-action="solve"       class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200 font-medium">Solve</button>
-              <button data-action="convert"     class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-tint">→ To-Do</button>
+              <button data-action="convert"     class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft">→ To-Do</button>
               <button data-action="edit"        class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Edit</button>
               <button data-action="delete"      class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
             </div>
@@ -748,7 +749,7 @@
   </section>
 
   <!-- Shared flag-to-issue form (hidden; moved next to the flagged item on click) -->
-  <div id="flag-issue-form" class="hidden border border-orgy-blue rounded p-3 bg-orgy-blue-soft mb-3">
+  <div id="flag-issue-form" class="hidden border border-orgy rounded p-3 bg-orgy-blue-soft mb-3">
     <div class="text-xs uppercase tracking-wider text-orgy-blue font-medium mb-2">Flag as an issue</div>
     <input id="flag-title" type="text" placeholder="Issue title" class="w-full border rounded p-2 text-sm mb-2">
     <div class="grid grid-cols-2 gap-2 mb-2">
@@ -967,8 +968,8 @@
   }
   function paintChip() {
     chips.forEach((c, i) => {
-      c.classList.remove('ring-2', 'ring-orgy-blue');
-      if (i === timerState.sectionIdx) c.classList.add('ring-2', 'ring-orgy-blue');
+      c.classList.remove('ring-2', 'ring-orgy');
+      if (i === timerState.sectionIdx) c.classList.add('ring-2', 'ring-orgy');
     });
   }
   function tick() {
