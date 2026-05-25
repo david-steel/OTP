@@ -251,6 +251,26 @@ export function scanForPII(text: string, location: string = 'content'): PIIScanR
   return { clean: flags.length === 0, flags, summary };
 }
 
+/**
+ * Strip chart-spec contact fields (contact_email, contact_phone, slack_id)
+ * from raw OOS content before PII scanning. These are first-class fields
+ * of agent_army / org_chart / value_chain templates -- by including them
+ * the chart-author is declaring "this is the team's published contact
+ * surface", not accidentally leaking PII. Free-form PII (an email pasted
+ * inside a description, say) still hits the scanner because it isn't on
+ * one of these YAML lines.
+ *
+ * Caught 2026-05-25 when David tried to publish team chart v30 and the
+ * scanner flagged dsteel@sneeze.it / alexey@sneeze.it / 2016186752 --
+ * those were all in chart entity contact fields.
+ */
+export function stripChartContactFields(rawContent: string): string {
+  return rawContent.replace(
+    /^([ \t]+)(contact_email|contact_phone|slack_id):[^\n]*\n?/gm,
+    ''
+  );
+}
+
 export function scanOOSContent(rawContent: string): PIIScanResult {
   const allFlags: PIIFlag[] = [];
 

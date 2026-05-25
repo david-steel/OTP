@@ -6,7 +6,7 @@ import { organizations, oosFiles, claims, claimSimilarities, auditLogs } from '.
 import { createOOSSchema, updateOOSSchema, renameOOSSchema } from '../../shared/validation.js';
 import { parseOOS } from '../../services/claim-parser.js';
 import { validateOOS } from '../../services/format-validator.js';
-import { scanOOSContent } from '../../services/pii-scanner.js';
+import { scanOOSContent, stripChartContactFields } from '../../services/pii-scanner.js';
 import { calculateQualityTier } from '../../services/badge-calculator.js';
 import { calculateAgenticLevel } from '../../services/agentic-level-calculator.js';
 import { computeAllSimilarities } from '../../services/similarity.js';
@@ -72,8 +72,13 @@ export default async function oosRoutes(app: FastifyInstance) {
     const parsed = parseOOS(result.fixed, template || 'agent_army');
     const validation = validateOOS(parsed, template || 'agent_army');
 
-    // Run PII scan on the fixed content
-    const piiResult = scanOOSContent(result.fixed);
+    // Run PII scan on the fixed content. Chart-style templates carry
+    // contact_email / contact_phone / slack_id as first-class spec
+    // fields; strip those before scanning so the scanner only flags
+    // free-form PII the user didn't mean to publish.
+    const isChartTemplate = template === 'agent_army' || template === 'org_chart' || template === 'value_chain';
+    const scanInput = isChartTemplate ? stripChartContactFields(result.fixed) : result.fixed;
+    const piiResult = scanOOSContent(scanInput);
 
     return {
       fixed: result.fixed,
@@ -559,8 +564,17 @@ ${claimSections.join('\n')}`.trim();
       });
     }
 
-    // Step 2: PII scan
-    const piiResult = scanOOSContent(oosFile.rawContent);
+    // Step 2: PII scan. Chart-style templates (agent_army, org_chart,
+    // value_chain) carry contact_email / contact_phone / slack_id as
+    // first-class spec fields -- those are not accidental PII, they're
+    // the chart's stated contact surface. Strip them from the scan
+    // input so the scanner only flags free-form PII the user didn't
+    // mean to publish. (The stored rawContent is unchanged; this is
+    // only about what we pass to the scanner.)
+    const tmpl = oosFile.template as string;
+    const isChartTemplate = tmpl === 'agent_army' || tmpl === 'org_chart' || tmpl === 'value_chain';
+    const piiScanInput = isChartTemplate ? stripChartContactFields(oosFile.rawContent) : oosFile.rawContent;
+    const piiResult = scanOOSContent(piiScanInput);
     if (!piiResult.clean) {
       // Dedupe by (location, text). The scanner can match the same string
       // against multiple rules (e.g. "$2,000/mo" hits both 'revenue' and
