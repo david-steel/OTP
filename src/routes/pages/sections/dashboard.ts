@@ -25,6 +25,7 @@ import type { ParsedClaim } from '../../../shared/types.js';
 import { AGENTIC_LEVEL_LABELS } from '../../../shared/enums.js';
 import { validateUuidParam } from '../../../shared/param-validation.js';
 import { currentPeriod } from '../../../shared/period.js';
+import { renderDescription } from '../../../shared/markdown-lite.js';
 import { annotateOosStaleness } from '../../../services/oos-staleness.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../../services/team-graph.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../../services/checkup-scoring.js';
@@ -2380,6 +2381,7 @@ Founder, OTP</p>
     return reply.view('pages/dashboard-daily', {
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
+      renderDescription,
       ogImage: BASE_URL + '/public/og-image.png',
       noindex: true,
       org,

@@ -12,6 +12,7 @@ import { isNull, isNotNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
 import type { ParsedClaim } from '../../shared/types.js';
+import { renderDescription } from '../../shared/markdown-lite.js';
 import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
 import { currentPeriod } from '../../shared/period.js';
@@ -3268,6 +3269,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       teamMembers,
       availableOwners,
       orgTeams: orgTeamsList,
+      renderDescription,
       agentRuns,
       devOrgIdParam,
     });
@@ -3750,6 +3752,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       meExternalId,
       meName,
       meEntityType,
+      renderDescription,
     });
   });
 }

@@ -293,6 +293,8 @@
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
           <input type="text" name="title" required maxlength="500" placeholder="What to do" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+          <%- include('../partials/rich-description-editor', { targetId: 'todo-add-desc' }) %>
+          <textarea id="todo-add-desc" name="description" rows="2" placeholder="Description (optional). Markdown: **bold**, *italic*, [link](https://...)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"></textarea>
           <div class="flex gap-3 flex-wrap">
             <div class="flex flex-col gap-0.5">
               <label for="todo-delegate-to" class="text-[10px] uppercase tracking-wide text-gray-500">Delegate to</label>
@@ -415,7 +417,7 @@
                       <div class="todo-view">
                         <div class="<%= t.doneAt ? 'line-through text-gray-500' : 'text-gray-900' %> break-words"><%= t.title %></div>
                         <% if (t.description) { %>
-                          <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap break-words"><%= t.description %></p>
+                          <div class="text-xs text-gray-600 mt-1 break-words"><%- renderDescription(t.description) %></div>
                         <% } %>
                         <div class="text-[11px] flex items-center gap-2 mt-1 flex-wrap">
                           <span class="px-1.5 py-0.5 rounded font-medium <%= sourceClass %>"><%= sourceLabel %></span>
@@ -436,7 +438,8 @@
                       </div>
                       <form class="todo-edit hidden space-y-1.5">
                         <input type="text" name="title" required maxlength="500" value="<%= t.title %>" class="w-full rounded border border-gray-300 px-2 py-1 text-sm">
-                        <textarea name="description" rows="2" placeholder="Description (optional)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"><%= t.description || '' %></textarea>
+                        <%- include('../partials/rich-description-editor', { targetId: 'desc-edit-' + t.id }) %>
+                        <textarea id="desc-edit-<%= t.id %>" name="description" rows="2" placeholder="Description (optional). Markdown: **bold**, *italic*, [link](https://...)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"><%= t.description || '' %></textarea>
                         <div class="flex gap-3 flex-wrap">
                           <div class="flex flex-col gap-0.5">
                             <label class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
@@ -955,6 +958,8 @@
       e.preventDefault();
       var fd = new FormData(todoForm);
       var body = { title: fd.get('title'), ownerEntityType: 'human', ownerExternalId: '<%= (locals.memberClaimedEntityIds && locals.memberClaimedEntityIds[0]) || (locals.member && locals.member.email) || "self" %>' };
+      var descVal = (fd.get('description') || '').toString().trim();
+      if (descVal) body.description = descVal;
       var due = fd.get('dueAt');
       if (due) body.dueAt = new Date(due + 'T17:00:00').toISOString();
       if (meetingId) body.meetingId = meetingId;

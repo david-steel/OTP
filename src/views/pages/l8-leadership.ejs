@@ -499,6 +499,9 @@
             <input type="checkbox" data-todo-toggle <%= t.doneAt ? 'checked' : '' %> class="w-4 h-4">
             <div class="flex-1">
               <div class="text-sm <%= t.doneAt ? 'line-through text-gray-400' : '' %>"><%= t.title %></div>
+              <% if (t.description) { %>
+                <div class="text-xs text-gray-600 mt-0.5 break-words"><%- renderDescription(t.description) %></div>
+              <% } %>
               <div class="text-xs text-gray-500">
                 <%= t.ownerName || t.ownerExternalId %>
                 <% if (t.dueAt) { %> &middot; due <%= new Date(t.dueAt).toLocaleDateString() %><% } %>
@@ -510,7 +513,8 @@
     <% } %>
 
     <!-- New todo quick-add -->
-    <div class="mt-3 grid grid-cols-12 gap-2">
+    <div class="mt-3 space-y-2">
+    <div class="grid grid-cols-12 gap-2">
       <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="col-span-6 border rounded p-2 text-sm">
       <select id="new-todo-owner" class="col-span-3 border rounded p-2 text-sm">
         <option value="">-- assign owner --</option>
@@ -532,6 +536,11 @@
         <option value="FREQ=MONTHLY">monthly</option>
       </select>
       <button id="add-todo" class="col-span-1 px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">Add</button>
+    </div>
+    <div>
+      <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
+      <textarea id="new-todo-desc" rows="2" placeholder="Description (optional). Markdown: **bold**, *italic*, [link](https://...)" class="w-full border rounded p-2 text-sm"></textarea>
+    </div>
     </div>
   </section>
 
@@ -1387,12 +1396,14 @@
     if (!title || !owner) return alert('Title and owner required');
     const priority = (document.getElementById('new-todo-priority') || {}).value || 'p3';
     const recurrenceRule = (document.getElementById('new-todo-recur') || {}).value || null;
+    const description = (document.getElementById('new-todo-desc') || {}).value || '';
     const dueAt = new Date(); dueAt.setDate(dueAt.getDate() + 7);
     const body = {
       kind: 'l10', teamId, priority,
       title, ownerExternalId: owner.externalId, ownerEntityType: owner.entityType, ownerName: owner.name,
       meetingId, dueAt: dueAt.toISOString(),
     };
+    if (description.trim()) body.description = description.trim();
     if (recurrenceRule) body.recurrenceRule = recurrenceRule;
     await api('/todos', { method: 'POST', body: JSON.stringify(body) });
     reloadKeep();

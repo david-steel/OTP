@@ -164,7 +164,8 @@
   <!-- New todo create form -->
   <div class="me-create-card">
     <input id="new-todo-title" type="text" placeholder="What needs to happen?" maxlength="500" class="me-create-title" />
-    <textarea id="new-todo-desc" placeholder="Description (optional)" class="me-create-desc"></textarea>
+    <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
+    <textarea id="new-todo-desc" placeholder="Description (optional). Markdown supported: **bold**, *italic*, [link](https://...)" class="me-create-desc"></textarea>
     <div class="me-create-row">
       <select id="new-todo-priority" title="Priority">
         <option value="p1">P1 critical</option>
@@ -270,7 +271,7 @@
           </div>
         <% } %>
         <% if (desc) { %>
-          <div class="me-desc" onclick="toggleDesc(this)"><%= desc %></div>
+          <div class="me-desc" onclick="toggleDesc(this)"><%- renderDescription(desc) %></div>
           <% if (desc.length > 120 || (desc.match(/\n/g) || []).length > 2) { %>
             <div class="me-desc-toggle" onclick="toggleDesc(this.previousElementSibling)">Tap description to expand</div>
           <% } %>

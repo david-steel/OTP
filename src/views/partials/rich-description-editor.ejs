@@ -1,0 +1,103 @@
+<!-- Reusable rich-text toolbar for description textareas.
+
+     Renders three buttons above the textarea -- B / I / link -- that
+     wrap the current selection (or insert a placeholder) with markdown
+     syntax that matches src/shared/markdown-lite.ts on the render
+     side. No editor library, no contenteditable: the textarea stays a
+     textarea so what the user sees in the box is what gets stored.
+
+     Usage:
+       <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
+       <textarea id="new-todo-desc"></textarea>
+
+     The toolbar finds the textarea by id. Multiple instances are safe
+     -- the global wireDescToolbar() runs once and binds every
+     [data-desc-toolbar] block on the page. -->
+<div class="desc-toolbar" data-desc-toolbar data-target="<%= targetId %>"
+     style="display:inline-flex; gap:4px; margin-bottom:4px;">
+  <button type="button" data-cmd="bold" title="Bold (Ctrl/Cmd+B)" aria-label="Bold"
+          style="font-family:'Inter',system-ui,sans-serif; font-weight:700; font-size:13px; line-height:1; width:28px; height:26px; border:1px solid #d1d5db; background:#fff; border-radius:5px; cursor:pointer; color:#374151;">B</button>
+  <button type="button" data-cmd="italic" title="Italic (Ctrl/Cmd+I)" aria-label="Italic"
+          style="font-family:'Inter',system-ui,sans-serif; font-style:italic; font-weight:600; font-size:13px; line-height:1; width:28px; height:26px; border:1px solid #d1d5db; background:#fff; border-radius:5px; cursor:pointer; color:#374151;">I</button>
+  <button type="button" data-cmd="link" title="Link (Ctrl/Cmd+K)" aria-label="Insert link"
+          style="font-family:'Inter',system-ui,sans-serif; font-size:13px; line-height:1; width:28px; height:26px; border:1px solid #d1d5db; background:#fff; border-radius:5px; cursor:pointer; color:#374151;">🔗</button>
+  <span style="align-self:center; font-size:11px; color:#9ca3af; margin-left:6px;">
+    <strong>**bold**</strong> &middot; <em>*italic*</em> &middot; [label](url)
+  </span>
+</div>
+
+<%
+   // The script block below registers a single delegated handler the
+   // first time the partial is rendered on a page. The guard variable
+   // is on window so the second include on the same page no-ops.
+%>
+<script>
+(function() {
+  if (window.__descToolbarWired) return;
+  window.__descToolbarWired = true;
+
+  function wrap(textarea, before, after, placeholder) {
+    var start = textarea.selectionStart;
+    var end   = textarea.selectionEnd;
+    var sel   = textarea.value.substring(start, end);
+    var inner = sel || placeholder || '';
+    var insert = before + inner + after;
+    textarea.value =
+      textarea.value.substring(0, start) +
+      insert +
+      textarea.value.substring(end);
+    var caret = sel ? start + insert.length : start + before.length;
+    var caretEnd = sel ? caret : caret + inner.length;
+    textarea.focus();
+    textarea.setSelectionRange(caret, caretEnd);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function applyCmd(textarea, cmd) {
+    if (cmd === 'bold')   return wrap(textarea, '**', '**', 'bold text');
+    if (cmd === 'italic') return wrap(textarea, '*',  '*',  'italic text');
+    if (cmd === 'link') {
+      var url = window.prompt('Link URL (https://...)', 'https://');
+      if (!url || url === 'https://') return;
+      // Light client-side guard. The server-side renderer also rejects
+      // anything that's not http/https/mailto -- this is just to spare
+      // the user a no-op after typing a label.
+      if (!/^(https?:|mailto:)/i.test(url)) {
+        alert('Use an http://, https://, or mailto: URL.');
+        return;
+      }
+      var start = textarea.selectionStart;
+      var end   = textarea.selectionEnd;
+      var sel   = textarea.value.substring(start, end);
+      var label = sel || window.prompt('Link text', '') || url;
+      wrap(textarea, '[' + label + '](' + url + ')', '', '');
+      // The label/url are baked into `before`, so the caret lands after
+      // the whole insert -- that's what we want.
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest && e.target.closest('.desc-toolbar [data-cmd]');
+    if (!btn) return;
+    var bar = btn.closest('[data-desc-toolbar]');
+    var ta = document.getElementById(bar.getAttribute('data-target'));
+    if (!ta) return;
+    e.preventDefault();
+    applyCmd(ta, btn.getAttribute('data-cmd'));
+  });
+
+  // Ctrl/Cmd+B, +I, +K inside any wired textarea.
+  document.addEventListener('keydown', function(e) {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    var ta = e.target;
+    if (!ta || ta.tagName !== 'TEXTAREA') return;
+    // Only act inside a textarea that has a toolbar pointing at it.
+    var bar = document.querySelector('[data-desc-toolbar][data-target="' + ta.id + '"]');
+    if (!bar) return;
+    var k = e.key.toLowerCase();
+    if (k === 'b') { e.preventDefault(); applyCmd(ta, 'bold'); }
+    else if (k === 'i') { e.preventDefault(); applyCmd(ta, 'italic'); }
+    else if (k === 'k') { e.preventDefault(); applyCmd(ta, 'link'); }
+  });
+})();
+</script>
