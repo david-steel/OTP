@@ -244,6 +244,7 @@
   .edit-overlay.open { opacity: 1; pointer-events: auto; }
 </style>
 <%- include('../partials/orgy-palette'); %>
+<%- include('../partials/oos-publish-handler'); %>
 
 <section class="bg-white border-b border-gray-100">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-6">
@@ -878,124 +879,22 @@
     // Show / hide custom authority input based on dropdown choice.
     document.addEventListener('DOMContentLoaded', function() {
       // Publish-draft button (only present when there's an unpublished draft).
-      // Two-stage publish to support the chart-contacts confirmation
-      // (Layer 1, 2026-05-25). First POST has no publishMode. If the
-      // server returns 409 PII_CONTACTS_NEED_DECISION, we show a modal
-      // with the contact fields and let the user pick strip vs include;
-      // selection re-POSTs with publishMode set.
+      // All response handling -- including the chart-contacts choice
+      // modal, real-PII bullets, and any future error code -- lives in
+      // the shared OTP.publishOOS helper from the include below. Drift
+      // between publish surfaces is impossible by construction.
       var publishBtn = document.getElementById('btn-publish-team');
       var publishMsg = document.getElementById('publish-team-msg');
-      function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
-      async function postPublish(oosFileId, publishMode) {
-        var body = publishMode ? { publishMode: publishMode } : {};
-        var resp = await fetch('/api/v1/oos/' + encodeURIComponent(oosFileId) + '/publish', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body),
-        });
-        var data = await resp.json().catch(function() { return {}; });
-        return { resp: resp, data: data };
-      }
-      function showContactsModal(oosFileId, errDetails, choices) {
-        // Render the modal lazily so we don't litter the DOM until needed.
-        var prior = document.getElementById('pii-contacts-modal');
-        if (prior) prior.remove();
-        var primary = (choices && choices[0]) || { mode: 'strip_contacts', label: 'Strip contacts and publish' };
-        var secondary = (choices && choices[1]) || { mode: 'include_contacts', label: 'Publish with contacts visible' };
-        var listHtml = (errDetails || []).slice(0, 12).map(function(d) {
-          return '<li style="font-family:ui-monospace,monospace; font-size:12px; color:#374151; padding:4px 0;"><strong>' + escHtml(d.issue) + ':</strong> ' + escHtml(d.value) + '</li>';
-        }).join('');
-        var moreNote = (errDetails && errDetails.length > 12) ? '<div style="font-size:11px; color:#9ca3af; margin-top:4px;">... and ' + (errDetails.length - 12) + ' more</div>' : '';
-        var wrap = document.createElement('div');
-        wrap.id = 'pii-contacts-modal';
-        wrap.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;';
-        wrap.innerHTML = (
-          '<div role="dialog" aria-labelledby="pii-modal-title" style="background:#fff; border-radius:14px; max-width:540px; width:100%; box-shadow:0 30px 80px rgba(15,23,42,0.30); overflow:hidden;">' +
-          '  <div style="padding:20px 22px 12px 22px; border-bottom:1px solid #e5e7eb;">' +
-          '    <h2 id="pii-modal-title" style="margin:0; font-size:17px; font-weight:700; color:#111827;">Publish this chart with contacts visible?</h2>' +
-          '    <p style="margin:6px 0 0 0; font-size:13px; color:#4b5563; line-height:1.5;">Your draft has structured contact fields on chart entities. Publishing to OTP makes the chart browsable to other organizations on the network.</p>' +
-          '  </div>' +
-          '  <div style="padding:14px 22px; max-height:240px; overflow:auto;">' +
-          '    <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#6b7280; letter-spacing:0.05em; margin-bottom:6px;">Contact fields detected</div>' +
-          '    <ul style="margin:0; padding:0; list-style:none;">' + listHtml + '</ul>' + moreNote +
-          '  </div>' +
-          '  <div style="padding:16px 22px 20px 22px; border-top:1px solid #e5e7eb; display:flex; flex-direction:column; gap:8px;">' +
-          '    <button type="button" data-mode="' + escHtml(primary.mode) + '" style="padding:10px 14px; border:none; border-radius:8px; background:#A8E63A; color:#14161c; font-weight:700; font-size:14px; cursor:pointer;">' + escHtml(primary.label) + '</button>' +
-          '    <div style="font-size:11px; color:#6b7280; padding:0 4px 4px 4px;">' + escHtml(primary.description || '') + '</div>' +
-          '    <button type="button" data-mode="' + escHtml(secondary.mode) + '" style="padding:10px 14px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-weight:600; font-size:14px; cursor:pointer;">' + escHtml(secondary.label) + '</button>' +
-          '    <div style="font-size:11px; color:#6b7280; padding:0 4px 4px 4px;">' + escHtml(secondary.description || '') + '</div>' +
-          '    <button type="button" data-mode="cancel" style="padding:8px; border:none; background:transparent; color:#6b7280; font-size:13px; cursor:pointer; margin-top:4px;">Cancel</button>' +
-          '  </div>' +
-          '</div>'
-        );
-        document.body.appendChild(wrap);
-        wrap.addEventListener('click', async function(e) {
-          var t = e.target.closest('button[data-mode]');
-          if (!t) {
-            if (e.target === wrap) { wrap.remove(); publishBtn.disabled = false; if (publishMsg) { publishMsg.textContent = ''; } }
-            return;
-          }
-          var mode = t.getAttribute('data-mode');
-          if (mode === 'cancel') {
-            wrap.remove();
-            publishBtn.disabled = false;
-            if (publishMsg) { publishMsg.textContent = ''; }
-            return;
-          }
-          wrap.remove();
-          if (publishMsg) { publishMsg.textContent = 'Publishing (' + mode.replace('_', ' ') + ')...'; publishMsg.style.color = '#6b7280'; }
-          var second = await postPublish(oosFileId, mode);
-          if (!second.resp.ok) {
-            var emsg = (second.data.error && second.data.error.message) || ('Publish failed (' + second.resp.status + ')');
-            if (publishMsg) { publishMsg.textContent = emsg; publishMsg.style.color = '#b91c1c'; }
-            publishBtn.disabled = false;
-            return;
-          }
-          if (publishMsg) { publishMsg.textContent = 'Published! Reloading...'; publishMsg.style.color = '#047857'; }
-          setTimeout(function() { window.location.reload(); }, 800);
-        });
-      }
       if (publishBtn) {
-        publishBtn.addEventListener('click', async function() {
+        publishBtn.addEventListener('click', function() {
           var oosFileId = publishBtn.getAttribute('data-oos-file-id');
           if (!oosFileId) return;
-          if (!confirm('Publish this team chart draft as the new live OOS for your org? Other agents reading the OOS will see the new structure.')) return;
-          publishBtn.disabled = true;
-          if (publishMsg) { publishMsg.textContent = 'Publishing...'; publishMsg.style.color = '#6b7280'; }
-          try {
-            var first = await postPublish(oosFileId, null);
-            if (first.resp.ok) {
-              if (publishMsg) { publishMsg.textContent = 'Published! Reloading...'; publishMsg.style.color = '#047857'; }
-              setTimeout(function() { window.location.reload(); }, 800);
-              return;
-            }
-            var err = first.data.error || {};
-            // Chart-contacts confirmation path -- show modal, let user choose.
-            if (err.code === 'PII_CONTACTS_NEED_DECISION') {
-              showContactsModal(oosFileId, err.details || [], err.choices || null);
-              return;
-            }
-            // Real PII -- hard block, show what the user has to fix.
-            if (err.code === 'PII_DETECTED' && Array.isArray(err.details)) {
-              var lines = err.details.slice(0, 8).map(function(d) {
-                return '• ' + d.issue + ': "' + (d.value || '') + '" -> ' + (d.expected || 'remove or generalize');
-              });
-              if (err.details.length > 8) lines.push('• (...' + (err.details.length - 8) + ' more)');
-              if (publishMsg) {
-                publishMsg.style.color = '#b91c1c';
-                publishMsg.innerHTML = '<strong>' + escHtml(err.message || 'PII detected') + '</strong><br/><span style="font-size:11px; line-height:1.6;">' + lines.map(function(l) { return escHtml(l); }).join('<br/>') + '</span>';
-              }
-              publishBtn.disabled = false;
-              return;
-            }
-            // Other errors.
-            if (publishMsg) { publishMsg.textContent = err.message || ('Publish failed (' + first.resp.status + ')'); publishMsg.style.color = '#b91c1c'; }
-            publishBtn.disabled = false;
-          } catch (e) {
-            if (publishMsg) { publishMsg.textContent = 'Network error: ' + e.message; publishMsg.style.color = '#b91c1c'; }
-            publishBtn.disabled = false;
-          }
+          OTP.publishOOS({
+            oosFileId: oosFileId,
+            msgEl: publishMsg,
+            btnEl: publishBtn,
+            initialConfirm: 'Publish this team chart draft as the new live OOS for your org? Other agents reading the OOS will see the new structure.',
+          });
         });
       }
 

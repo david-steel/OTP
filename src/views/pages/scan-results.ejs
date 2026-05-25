@@ -1,3 +1,4 @@
+<%- include('../partials/oos-publish-handler'); %>
 <div class="max-w-4xl mx-auto px-4 py-8">
 
   <!-- Loading State -->
@@ -982,32 +983,26 @@
         return;
       }
 
-      // Step 3: Publish
-      var pubResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
-      var pubData = await pubResp.json();
-
-      if (!pubResp.ok) {
-        status.textContent = pubData.error?.message || 'Failed to publish. Try from the publish page.';
-        status.style.color = '#dc2626';
-        renderPublishErrorDetails(pubData.error?.details);
-        btn.textContent = 'Publish to OTP Network';
-        btn.disabled = false;
-        return;
-      }
-
-      // Success!
-      localStorage.removeItem('otp_generated_oos');
-      localStorage.removeItem('otp_scan_result');
-      btn.textContent = 'Published!';
-      btn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
-      btn.classList.add('bg-green-600');
-      status.textContent = 'Your OOS is live on the network.';
-      status.style.color = '#059669';
-
-      // Redirect to OOS detail after 2 seconds
-      setTimeout(function() {
-        window.location.href = '/oos/' + createData.oosFile.id;
-      }, 2000);
+      // Step 3: Publish via the shared helper -- it owns the chart
+      // contacts choice modal, the real-PII bullet list, and any
+      // future error code the server adds. Surfaces never render
+      // a naked status code; every path has a human-readable message.
+      await OTP.publishOOS({
+        oosFileId: createData.oosFile.id,
+        msgEl: status,
+        btnEl: btn,
+        onSuccess: function() {
+          localStorage.removeItem('otp_generated_oos');
+          localStorage.removeItem('otp_scan_result');
+          btn.textContent = 'Published!';
+          btn.classList.remove('bg-otp-500', 'hover:bg-otp-400');
+          btn.classList.add('bg-green-600');
+          status.textContent = 'Your OOS is live on the network.';
+          status.style.color = '#059669';
+          setTimeout(function() { window.location.href = '/oos/' + createData.oosFile.id; }, 2000);
+        },
+        onCancel: function() { btn.textContent = 'Publish to OTP Network'; btn.disabled = false; },
+      });
 
     } catch (e) {
       status.textContent = 'Network error: ' + e.message;

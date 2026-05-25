@@ -1,3 +1,4 @@
+<%- include('../partials/oos-publish-handler'); %>
 <div class="max-w-3xl mx-auto px-4 py-8">
 
   <!-- Header -->
@@ -997,16 +998,26 @@ async function publishOOS() {
     var createData = await createResp.json();
     if (handleAuthError(createData, createResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
     if (createData.validation && !createData.validation.valid) { showFixResults(fixData); showValidation(createData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
-    var pubResp = await fetch('/api/v1/oos/' + createData.oosFile.id + '/publish', { method: 'POST' });
-    var pubData = await pubResp.json();
-    if (handleAuthError(pubData, pubResp.status)) { btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
-    if (pubData.error) { showFixResults(fixData); showValidation(pubData); btn.textContent = 'Publish to OTP'; btn.disabled = false; return; }
+    // Delegate the publish call (and ALL its possible response paths --
+    // chart-contacts choice modal, real-PII bullets, etc.) to the
+    // shared OTP.publishOOS helper. No surface gets a naked status code.
     showFixResults(fixData);
-    document.getElementById('validation-results').classList.remove('hidden');
-    document.getElementById('validation-success').classList.remove('hidden');
-    document.getElementById('published-link').href = '/oos/' + createData.oosFile.id;
-    btn.textContent = 'Published!';
-  } catch (e) { alert('Something went wrong.'); btn.textContent = 'Publish to OTP'; btn.disabled = false; }
+    await OTP.publishOOS({
+      oosFileId: createData.oosFile.id,
+      btnEl: btn,
+      onSuccess: function() {
+        document.getElementById('validation-results').classList.remove('hidden');
+        document.getElementById('validation-success').classList.remove('hidden');
+        document.getElementById('published-link').href = '/oos/' + createData.oosFile.id;
+        btn.textContent = 'Published!';
+      },
+      onCancel: function() { btn.textContent = 'Publish to OTP'; btn.disabled = false; },
+    });
+  } catch (e) {
+    // Surface the actual error -- no "Something went wrong" trap.
+    alert('Publish failed: ' + (e && e.message ? e.message : 'unknown error'));
+    btn.textContent = 'Publish to OTP'; btn.disabled = false;
+  }
 }
 
 function showFixResults(data) {

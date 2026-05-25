@@ -1,0 +1,250 @@
+<!-- Shared OOS publish handler (Layer 1 hardening, 2026-05-25).
+
+     Exposes `window.OTP.publishOOS(opts)` -- a single client-side
+     function every publish surface (dashboard-team, publish, scan-results,
+     dashboard-admin, future ones) calls. The contract:
+
+       OTP.publishOOS({
+         oosFileId: 'uuid',           required
+         msgEl:     HTMLElement,      optional -- inline status text
+         btnEl:     HTMLElement,      optional -- button to disable/re-enable
+         onSuccess: function() {},    optional -- called on 200
+         onCancel:  function() {},    optional -- called when modal cancelled
+         initialConfirm: 'message'    optional -- confirm() string before first POST
+       });
+
+     Why one helper: the server can return 409 PII_CONTACTS_NEED_DECISION
+     when a chart-style OOS has PII only in structured contact fields.
+     That response is self-describing -- it carries the human-readable
+     message, the contact list, AND a choices[] array. Any surface
+     that doesn't render the choices traps the user with a bare error
+     code. Centralizing the handler kills the drift before it happens.
+
+     Every response shape the publish endpoint can return is handled
+     here. New error codes added on the server propagate to every
+     surface automatically as long as the error has a `message` --
+     no surface ever shows a naked status code. -->
+<script>
+(function() {
+  if (window.OTP && window.OTP.publishOOS) return;  // idempotent across includes
+  window.OTP = window.OTP || {};
+
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  // Status writer. Prefers inline msgEl. Falls back to a transient
+  // toast if no msgEl was passed -- bare alert() is too noisy for
+  // intermediate states like "Publishing...".
+  function setStatus(opts, text, color) {
+    if (opts.msgEl) {
+      opts.msgEl.textContent = text;
+      opts.msgEl.style.color = color || '';
+      return;
+    }
+    // Lightweight toast for surfaces without msgEl.
+    var t = document.getElementById('otp-publish-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'otp-publish-toast';
+      t.style.cssText = 'position:fixed; bottom:24px; right:24px; background:#111827; color:#fff; padding:10px 16px; border-radius:8px; font-size:13px; z-index:201; box-shadow:0 10px 30px rgba(0,0,0,0.3); max-width:340px;';
+      document.body.appendChild(t);
+    }
+    t.style.color = color || '#fff';
+    t.textContent = text;
+    if (!color || color === '#047857' || color === '#059669') {
+      setTimeout(function() { if (t.parentNode) t.remove(); }, 3000);
+    }
+  }
+
+  // For terminal errors that have a list of actionable details (PII
+  // flag list, validation errors), render the message + bullets in
+  // msgEl if we have one, fall back to alert() if not.
+  function showDetailedError(opts, message, details) {
+    var lines = (details || []).slice(0, 8).map(function(d) {
+      var label = d.issue || d.field || 'issue';
+      var val = d.value != null ? String(d.value) : '';
+      var fix = d.expected || d.message || 'review and fix';
+      return '• ' + label + ': "' + val + '" → ' + fix;
+    });
+    if ((details || []).length > 8) lines.push('• (... ' + (details.length - 8) + ' more)');
+    if (opts.msgEl) {
+      opts.msgEl.style.color = '#b91c1c';
+      opts.msgEl.innerHTML = '<strong>' + escHtml(message) + '</strong>' +
+        (lines.length ? '<br/><span style="font-size:11px; line-height:1.6;">' +
+          lines.map(escHtml).join('<br/>') + '</span>' : '');
+    } else {
+      alert(message + (lines.length ? '\n\n' + lines.join('\n') : ''));
+    }
+  }
+
+  // Build and show the chart-contacts confirmation modal. Resolves to
+  // the chosen publishMode string, or null if cancelled.
+  function showContactsModal(errMsg, details, choices) {
+    return new Promise(function(resolve) {
+      var existing = document.getElementById('otp-pii-contacts-modal');
+      if (existing) existing.remove();
+
+      var safeChoices = Array.isArray(choices) && choices.length >= 2
+        ? choices
+        : [
+          { mode: 'strip_contacts',   label: 'Strip contacts and publish', primary: true,  description: 'Remove contact fields from the published chart.' },
+          { mode: 'include_contacts', label: 'Publish with contacts visible', primary: false, description: 'Visible to anyone browsing your org on the network.' },
+        ];
+      var primary   = safeChoices.find(function(c) { return c.primary; }) || safeChoices[0];
+      var secondary = safeChoices.find(function(c) { return c !== primary; }) || safeChoices[1];
+
+      var listHtml = (details || []).slice(0, 12).map(function(d) {
+        return '<li style="font-family:ui-monospace,monospace; font-size:12px; color:#374151; padding:4px 0;">' +
+          '<strong>' + escHtml(d.issue || d.field || 'field') + ':</strong> ' + escHtml(d.value || '') +
+          '</li>';
+      }).join('');
+      var moreNote = (details || []).length > 12
+        ? '<div style="font-size:11px; color:#9ca3af; margin-top:4px;">... and ' + (details.length - 12) + ' more</div>'
+        : '';
+
+      var wrap = document.createElement('div');
+      wrap.id = 'otp-pii-contacts-modal';
+      wrap.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;';
+      wrap.innerHTML = (
+        '<div role="dialog" aria-labelledby="otp-pii-modal-title" style="background:#fff; border-radius:14px; max-width:540px; width:100%; box-shadow:0 30px 80px rgba(15,23,42,0.30); overflow:hidden;">' +
+        '  <div style="padding:20px 22px 12px 22px; border-bottom:1px solid #e5e7eb;">' +
+        '    <h2 id="otp-pii-modal-title" style="margin:0; font-size:17px; font-weight:700; color:#111827;">' + escHtml(errMsg || 'Choose how to publish this chart') + '</h2>' +
+        '    <p style="margin:6px 0 0 0; font-size:13px; color:#4b5563; line-height:1.5;">Your draft has structured contact fields on chart entities. Pick how the published version should treat them.</p>' +
+        '  </div>' +
+        '  <div style="padding:14px 22px; max-height:240px; overflow:auto;">' +
+        '    <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#6b7280; letter-spacing:0.05em; margin-bottom:6px;">Contact fields detected</div>' +
+        '    <ul style="margin:0; padding:0; list-style:none;">' + listHtml + '</ul>' + moreNote +
+        '  </div>' +
+        '  <div style="padding:16px 22px 20px 22px; border-top:1px solid #e5e7eb; display:flex; flex-direction:column; gap:8px;">' +
+        '    <button type="button" data-mode="' + escHtml(primary.mode) + '" style="padding:10px 14px; border:none; border-radius:8px; background:#A8E63A; color:#14161c; font-weight:700; font-size:14px; cursor:pointer;">' + escHtml(primary.label) + '</button>' +
+        '    <div style="font-size:11px; color:#6b7280; padding:0 4px 4px 4px;">' + escHtml(primary.description || '') + '</div>' +
+        '    <button type="button" data-mode="' + escHtml(secondary.mode) + '" style="padding:10px 14px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-weight:600; font-size:14px; cursor:pointer;">' + escHtml(secondary.label) + '</button>' +
+        '    <div style="font-size:11px; color:#6b7280; padding:0 4px 4px 4px;">' + escHtml(secondary.description || '') + '</div>' +
+        '    <button type="button" data-mode="cancel" style="padding:8px; border:none; background:transparent; color:#6b7280; font-size:13px; cursor:pointer; margin-top:4px;">Cancel</button>' +
+        '  </div>' +
+        '</div>'
+      );
+      document.body.appendChild(wrap);
+
+      wrap.addEventListener('click', function(e) {
+        var btn = e.target.closest && e.target.closest('button[data-mode]');
+        if (!btn) {
+          if (e.target === wrap) { wrap.remove(); resolve(null); }
+          return;
+        }
+        var mode = btn.getAttribute('data-mode');
+        wrap.remove();
+        resolve(mode === 'cancel' ? null : mode);
+      });
+
+      document.addEventListener('keydown', function escListener(ev) {
+        if (ev.key === 'Escape') {
+          document.removeEventListener('keydown', escListener);
+          var m = document.getElementById('otp-pii-contacts-modal');
+          if (m) { m.remove(); resolve(null); }
+        }
+      });
+    });
+  }
+
+  async function postPublish(oosFileId, publishMode) {
+    var body = publishMode ? { publishMode: publishMode } : {};
+    var resp = await fetch('/api/v1/oos/' + encodeURIComponent(oosFileId) + '/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    var data = {};
+    try { data = await resp.json(); } catch (_) {}
+    return { resp: resp, data: data };
+  }
+
+  /**
+   * Publish an OOS file. Handles every response code the publish
+   * endpoint can return -- success, format-invalid, real-PII block,
+   * chart-contacts choice, already-published, auth, server error,
+   * network error. The caller never sees a naked status code.
+   */
+  window.OTP.publishOOS = async function publishOOS(opts) {
+    if (!opts || !opts.oosFileId) {
+      throw new Error('OTP.publishOOS: oosFileId required');
+    }
+    if (opts.initialConfirm && !confirm(opts.initialConfirm)) {
+      if (typeof opts.onCancel === 'function') opts.onCancel();
+      return;
+    }
+    if (opts.btnEl) opts.btnEl.disabled = true;
+    setStatus(opts, 'Publishing...', '#6b7280');
+
+    var attempt;
+    try {
+      attempt = await postPublish(opts.oosFileId, null);
+    } catch (e) {
+      setStatus(opts, 'Network error: ' + e.message, '#b91c1c');
+      if (opts.btnEl) opts.btnEl.disabled = false;
+      return;
+    }
+
+    while (true) {
+      // Success.
+      if (attempt.resp.ok) {
+        setStatus(opts, 'Published! Reloading...', '#047857');
+        if (typeof opts.onSuccess === 'function') {
+          opts.onSuccess(attempt.data);
+        } else {
+          setTimeout(function() { window.location.reload(); }, 800);
+        }
+        return;
+      }
+
+      var err = (attempt.data && attempt.data.error) || {};
+      var code = err.code || '';
+      var msg = err.message || ('Publish failed (' + attempt.resp.status + ')');
+
+      // Chart-contacts confirmation -- modal, then retry with publishMode.
+      if (code === 'PII_CONTACTS_NEED_DECISION') {
+        var picked = await showContactsModal(msg, err.details, err.choices);
+        if (!picked) {
+          setStatus(opts, '', '');
+          if (opts.btnEl) opts.btnEl.disabled = false;
+          if (typeof opts.onCancel === 'function') opts.onCancel();
+          return;
+        }
+        setStatus(opts, 'Publishing (' + picked.replace(/_/g, ' ') + ')...', '#6b7280');
+        try {
+          attempt = await postPublish(opts.oosFileId, picked);
+          continue;  // re-enter the response handler
+        } catch (e) {
+          setStatus(opts, 'Network error: ' + e.message, '#b91c1c');
+          if (opts.btnEl) opts.btnEl.disabled = false;
+          return;
+        }
+      }
+
+      // Real PII -- hard block with per-flag bullets so user knows what to fix.
+      if (code === 'PII_DETECTED' && Array.isArray(err.details)) {
+        showDetailedError(opts, msg, err.details);
+        if (opts.btnEl) opts.btnEl.disabled = false;
+        return;
+      }
+
+      // Format invalid -- show validation errors as a bullet list.
+      if (code === 'FORMAT_INVALID' && Array.isArray(err.details)) {
+        showDetailedError(opts, msg, err.details);
+        if (opts.btnEl) opts.btnEl.disabled = false;
+        return;
+      }
+
+      // Everything else -- always have a human-readable message.
+      // Surfaces never see a bare status code.
+      setStatus(opts, msg, '#b91c1c');
+      if (opts.btnEl) opts.btnEl.disabled = false;
+      return;
+    }
+  };
+})();
+</script>

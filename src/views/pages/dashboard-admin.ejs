@@ -1,4 +1,5 @@
 <%- include('../partials/orgy-palette'); %>
+<%- include('../partials/oos-publish-handler'); %>
 <% if (typeof authState !== 'undefined' && authState === 'unauthenticated') { %>
   <div class="max-w-xl mx-auto px-4 py-20 text-center" id="dashboard-loading">
     <div class="animate-pulse">
@@ -395,19 +396,16 @@
   </div>
 
   <script>
-    async function publishDraft(id) {
-      if (!confirm('Publish this draft? It will replace your current published OOS and become visible on the network.')) return;
-      try {
-        var res = await fetch('/api/v1/oos/' + id + '/publish', { method: 'POST' });
-        var data = await res.json();
-        if (!res.ok) {
-          alert('Failed to publish: ' + (data.error?.message || 'Unknown error'));
-          return;
-        }
-        window.location.reload();
-      } catch (e) {
-        alert('Failed to publish: ' + e.message);
-      }
+    function publishDraft(id) {
+      // Delegates every response path -- chart-contacts choice modal,
+      // real-PII bullets, future error codes -- to the shared helper.
+      // No naked alert('Failed to publish: 409') for admins either.
+      OTP.publishOOS({
+        oosFileId: id,
+        initialConfirm: 'Publish this draft? It will replace your current published OOS and become visible on the network.',
+        // No msgEl/btnEl on this admin surface -- the helper will use
+        // its toast fallback and reload on success.
+      });
     }
 
     async function renameOos(id) {
