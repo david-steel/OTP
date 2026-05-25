@@ -371,16 +371,24 @@
             return new Date(a.dueAt) - new Date(b.dueAt);
           });
           var sections = [
-            { name: 'Overdue', items: overdueT, color: 'text-rose-600', alwaysShow: false },
-            { name: 'Today',   items: todayT,   color: 'text-gray-700', alwaysShow: true },
-            { name: 'Upcoming',items: upcomingT,color: 'text-gray-600', alwaysShow: false }
+            { name: 'Overdue', items: overdueT, color: 'text-rose-600', alwaysShow: false, collapsible: true,  defaultOpen: false },
+            { name: 'Today',   items: todayT,   color: 'text-gray-700', alwaysShow: true,  collapsible: false, defaultOpen: true  },
+            { name: 'Upcoming',items: upcomingT,color: 'text-gray-600', alwaysShow: false, collapsible: false, defaultOpen: true  }
           ];
         %>
           <% sections.forEach(function(section){
                if (!section.alwaysShow && section.items.length === 0) return; %>
+            <% if (section.collapsible) { %>
+            <details class="mt-3 first:mt-0 group" <%= section.defaultOpen ? 'open' : '' %>>
+              <summary class="text-[11px] uppercase tracking-wide font-bold <%= section.color %> mb-1.5 cursor-pointer select-none list-none flex items-center gap-1 hover:opacity-80">
+                <span class="inline-block transition-transform group-open:rotate-90 text-gray-400">▸</span>
+                <%= section.name %> <span class="text-gray-400 font-semibold">(<%= section.items.length %>)</span>
+              </summary>
+            <% } else { %>
             <div class="text-[11px] uppercase tracking-wide font-bold <%= section.color %> mt-3 mb-1.5 first:mt-0">
               <%= section.name %> <span class="text-gray-400 font-semibold">(<%= section.items.length %>)</span>
             </div>
+            <% } %>
             <% if (section.items.length === 0) { %>
               <p class="text-xs text-gray-400 italic ml-1">Nothing for today.</p>
             <% } else { %>
@@ -465,6 +473,7 @@
                 <% }); %>
               </ul>
             <% } %>
+            <% if (section.collapsible) { %></details><% } %>
           <% }); %>
         <% } %>
       </section>
