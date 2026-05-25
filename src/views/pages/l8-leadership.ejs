@@ -243,17 +243,23 @@
         No KPIs yet for this org. Push values via <code>/tally</code> or POST to <code>/api/v1/kpis/values</code>.
       </div>
     <% } else {
-      // Group KPIs by groupName so Leadership / Agent / OTP scorecards render separately.
+      // Group KPIs by groupName so Leadership / OTP scorecards render
+      // separately. Agent-owned KPIs and the "Agent Scorecard" group are
+      // hidden from the L10 main agenda by default -- they surface in the
+      // Agent Reports section when agents are explicitly added to the
+      // meeting. EOS L10 convention: humans-only scorecard.
       const groups = {};
       // Resolve a KPI owner's external id to a friendly name via the chart roster.
       const _ownerNames = {};
       (availableOwners || []).forEach(function(o){ _ownerNames[o.externalId] = o.name; });
       const ownerName = function(extId){ return _ownerNames[extId] || extId; };
       (scorecard.kpis || []).forEach(function(k) {
+        if (k.ownerEntityType === 'agent') return; // hide agent-owned KPIs from L10
         const g = k.groupName || 'Scorecard';
+        if (g === 'Agent Scorecard') return; // hide the agent-scorecard group too
         (groups[g] = groups[g] || []).push(k);
       });
-      const groupOrder = ['Leadership Scorecard', 'Agent Scorecard', 'OTP Scorecard'];
+      const groupOrder = ['Leadership Scorecard', 'OTP Scorecard'];
       const otherGroups = Object.keys(groups).filter(g => !groupOrder.includes(g)).sort();
       const orderedGroups = [...groupOrder.filter(g => groups[g]), ...otherGroups];
       // A KPI is stale if it has no latest value, or its period end is older than
@@ -354,14 +360,22 @@
   <!-- 3. Rocks -->
   <section id="rocks" class="mb-12">
     <h2 class="text-xl font-bold mb-3">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
-    <% if (!rocks.rocks || rocks.rocks.length === 0) { %>
+    <% // Hide agent-owned rocks from the L10 main agenda. Humans own
+       // quarterly priorities in EOS; agent commitments belong in the
+       // agent's own review surface.
+       var _humanRocks = (rocks.rocks || []).filter(function(r){
+         if (r && r.ownerEntityType === 'agent') return false;
+         if (r && typeof r.ownerExternalId === 'string' && r.ownerExternalId.indexOf('AGT_') === 0) return false;
+         return true;
+       }); %>
+    <% if (_humanRocks.length === 0) { %>
       <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm mb-3">
         No quarterly priorities yet. Add one below.
       </div>
     <% } else { %>
       <% var _execLabel = {}; (executionItems || []).forEach(function(it){ _execLabel[it.id] = it.label; }); %>
       <div class="space-y-2">
-        <% (rocks.rocks || []).forEach(function(r) { %>
+        <% _humanRocks.forEach(function(r) { %>
           <div class="border rounded p-3 flex items-start justify-between" data-rock-id="<%= r.id %>">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
@@ -547,12 +561,20 @@
   <!-- 6. IDS -->
   <section id="ids" class="mb-12 bg-otp-50 -mx-4 px-4 py-6 rounded-lg">
     <h2 class="text-xl font-bold mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span></h2>
-    <% // Open: anything not yet solved.
+    <% // Open: anything not yet solved AND owned by a human (or unowned).
+       // EOS leadership L10 is humans-only by convention -- agent-owned
+       // issues belong in an agent review, not the main IDS list.
        // Solved this meeting: only issues whose solvedInMeetingId matches
        // THIS meeting. Issues solved in prior meetings are gone -- they
        // shouldn't clutter a fresh L10 agenda.
-       const openIssues = (issues || []).filter(function(i){ return i.idsStatus !== 'solved'; });
-       const solvedIssues = (issues || []).filter(function(i){ return i.idsStatus === 'solved' && i.solvedInMeetingId === meeting.id; }); %>
+       function _isAgentOwner(o) {
+         if (!o) return false;
+         if (o.ownerEntityType === 'agent') return true;
+         if (typeof o.ownerExternalId === 'string' && o.ownerExternalId.startsWith('AGT_')) return true;
+         return false;
+       }
+       const openIssues = (issues || []).filter(function(i){ return i.idsStatus !== 'solved' && !_isAgentOwner(i); });
+       const solvedIssues = (issues || []).filter(function(i){ return i.idsStatus === 'solved' && i.solvedInMeetingId === meeting.id && !_isAgentOwner(i); }); %>
 
     <div class="mb-2 text-sm text-gray-600">
       <%= openIssues.length %> open &middot; <%= solvedIssues.length %> solved

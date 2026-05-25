@@ -233,37 +233,12 @@ export default async function meetingRoutes(app: FastifyInstance) {
       // Walk the chart to find agents reporting (transitively) to any of
       // these humans' tiles. If the chart isn't published or the team has
       // no claimed humans, this list is empty -- not an error.
-      if (humanTileIds.length > 0) {
-        try {
-          const { getOrgTeamGraph } = await import('../../services/team-graph.js');
-          const graph = await getOrgTeamGraph(org.id, '');
-          // Find every node reachable downward through reports_to edges
-          // starting from each human's tiles. Then keep the agents.
-          const visited = new Set<string>(humanTileIds);
-          const queue = [...humanTileIds];
-          while (queue.length > 0) {
-            const node = queue.shift()!;
-            for (const edge of graph.edges) {
-              if (edge.type !== 'reports_to') continue;
-              if (edge.targetId === node && !visited.has(edge.sourceId)) {
-                visited.add(edge.sourceId);
-                queue.push(edge.sourceId);
-              }
-            }
-          }
-          for (const n of graph.nodes) {
-            if (n.type === 'agent' && visited.has(n.externalId)) {
-              resolvedAttendees.push({
-                type: 'agent',
-                externalId: n.externalId,
-                name: n.label,
-              });
-            }
-          }
-        } catch {
-          // Chart unavailable -- proceed with humans only.
-        }
-      }
+      // Auto-add humans only. EOS leadership meetings are humans-only by
+      // convention; agents under those humans get tracked through their
+      // own KPIs/rocks/issues/todos. To bring an agent into a specific
+      // meeting, the user adds it explicitly via the attendee editor.
+      // David flagged 2026-05-25 that auto-adding Dirk was wrong.
+      void humanTileIds; // referenced above for human auto-populate only
     }
 
     const createdBy = getAuth(request).userId || 'api_key';

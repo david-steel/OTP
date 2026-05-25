@@ -2903,29 +2903,13 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
             role: h.role,
           });
         }
-        if (humanTileIds.length > 0) {
-          try {
-            const { getOrgTeamGraph: _getGraph } = await import('../../services/team-graph.js');
-            const _graph = await _getGraph(org.id, '');
-            const _visited = new Set<string>(humanTileIds);
-            const _queue = [...humanTileIds];
-            while (_queue.length > 0) {
-              const _node = _queue.shift()!;
-              for (const _edge of _graph.edges) {
-                if (_edge.type !== 'reports_to') continue;
-                if (_edge.targetId === _node && !_visited.has(_edge.sourceId)) {
-                  _visited.add(_edge.sourceId);
-                  _queue.push(_edge.sourceId);
-                }
-              }
-            }
-            for (const _n of _graph.nodes) {
-              if (_n.type === 'agent' && _visited.has(_n.externalId)) {
-                resolvedAttendees.push({ type: 'agent', externalId: _n.externalId, name: _n.label });
-              }
-            }
-          } catch { /* chart unavailable -- humans only */ }
-        }
+        // Auto-add humans only. EOS leadership meetings are humans-only
+        // by convention; agents that report under those humans get tracked
+        // through their own KPIs/rocks/issues/todos and surface in the
+        // "Agent Reports" section of the meeting view when explicitly
+        // added. To add an agent to a specific meeting, use the attendee
+        // editor (the Edit button in the Attendees panel). David flagged
+        // 2026-05-25 that auto-adding Dirk to Leadership L10 was wrong.
       }
       // Fallback: meeting has no team, or the team has no humans (founder
       // path). Add the requester so the meeting always has at least one
@@ -3087,12 +3071,16 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // L10 todos only -- filter by kind='l10' AND the meeting's team so
     // personal todos from /me/todos can never leak into a leadership L10.
     // Recurrence templates hidden by default; only instances appear.
+    // OPEN ONLY: EOS L10 convention is that completed to-dos drop off
+    // and only carry-forward open ones surface. David flagged 2026-05-25
+    // that done items lingered with strikethrough -- killed.
     const orgTodos = await db.select().from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
         eq(todos.kind, 'l10'),
         meeting.teamId ? eq(todos.teamId, meeting.teamId) : isNull(todos.teamId),
         isNull(todos.deletedAt),
+        isNull(todos.doneAt),
         isNull(todos.recurrenceRule),
       ))
       .orderBy(desc(todos.createdAt))
