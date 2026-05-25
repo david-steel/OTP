@@ -1158,10 +1158,13 @@
     }
 
     // ---- Layout + render ----
+    // NODE_H = 104 fits the worst-case employee tile (2-line role +
+    // meta + contacts row); was 80 and the bottom was getting clipped
+    // for humans with contact pills. David flagged 2026-05-24.
     var NODE_W = 200;
-    var NODE_H = 80;
+    var NODE_H = 104;
     var H_GAP  = 18;
-    var V_GAP  = 56;
+    var V_GAP  = 44;
 
     function buildHierarchy(filterFn) {
       var pm = computeParents(filterFn);
