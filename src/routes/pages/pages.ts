@@ -3024,7 +3024,14 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       if (latest) latestValues[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
       if (previous) previousValues[k.id] = { value: previous.value, periodStart: previous.periodStart, periodEnd: previous.periodEnd };
     }
-    const scorecard = meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis
+    // Snapshot lifecycle: a meeting can carry frozen scorecard/rocks JSON
+    // from a previous /start. EOS wants the discussion anchored to what
+    // was true at meeting start, so we honor the snapshot during
+    // in_progress and completed states. But for a SCHEDULED meeting,
+    // edits should flow through live -- David flagged 2026-05-25 that
+    // updating a rock or KPI before the meeting didn't refresh.
+    const _useSnapshot = meeting.status === 'in_progress' || meeting.status === 'completed';
+    const scorecard = _useSnapshot && meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis
       ? meeting.scorecardSnapshot
       : { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
 
@@ -3035,7 +3042,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         isNull(rocks.deletedAt),
       ))
       .orderBy(desc(rocks.dueDate));
-    const rocksData = meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
+    const rocksData = _useSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
       ? meeting.rocksSnapshot
       : { rocks: orgRocks, count: orgRocks.length };
 
