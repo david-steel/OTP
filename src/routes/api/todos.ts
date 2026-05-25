@@ -147,6 +147,11 @@ export default async function todoRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: todo.id, details: { title: todo.title, kind, priority: todo.priority },
     }));
 
+    if (todo.kind === 'l10') {
+      const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+      publishToTeamMeetings(todo.teamId, { kind: 'todo', action: 'created', entityId: todo.id });
+    }
+
     return reply.status(201).send({ todo });
   });
 
@@ -313,6 +318,11 @@ export default async function todoRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: id, details: updates,
     }));
 
+    if (updated.kind === 'l10') {
+      const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+      publishToTeamMeetings(updated.teamId, { kind: 'todo', action: 'updated', entityId: id });
+    }
+
     return { todo: updated };
   });
 
@@ -333,6 +343,12 @@ export default async function todoRoutes(app: FastifyInstance) {
     await db.insert(auditLogs).values(createAuditEntry('todo.deleted', 'todo', {
       orgId: org.id, entityId: id,
     }));
+
+    if (deleted.kind === 'l10') {
+      const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+      publishToTeamMeetings(deleted.teamId, { kind: 'todo', action: 'deleted', entityId: id });
+    }
+
     return { ok: true };
   });
 

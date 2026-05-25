@@ -65,7 +65,13 @@
   %>
   <div class="mb-6 border rounded-lg p-3 bg-gray-50">
     <div class="flex items-center justify-between mb-2">
-      <div class="text-xs uppercase tracking-wider text-gray-700 font-medium">Attendees &amp; Access</div>
+      <div class="text-xs uppercase tracking-wider text-gray-700 font-medium flex items-center gap-2">
+        Attendees &amp; Access
+        <span id="meeting-live-indicator" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium" title="Connected to live updates">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 align-middle animate-pulse"></span>
+          Live <span id="meeting-watcher-count">1</span>
+        </span>
+      </div>
       <button id="edit-attendees-btn" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100">Edit</button>
     </div>
     <div id="attendees-display" class="flex flex-wrap gap-2">
@@ -1752,5 +1758,127 @@
     if (res && res.error) { if (status) status.textContent = 'Error: ' + errMsg(res); return; }
     if (status) { status.textContent = 'Saved'; setTimeout(() => { status.textContent = ''; }, 2000); }
   });
+
+  // ----- Live updates (SSE) + presence dots -----
+  //
+  // Connects to /api/v1/meetings/:id/events and listens for two events:
+  //   meeting-updated -- something in this meeting's data changed; reload
+  //   presence -- the list of viewers changed; update green dots
+  // The same EventSource connection is the heartbeat for presence; when
+  // the tab closes, the server sees the disconnect and drops us from the
+  // viewer list.
+  (function liveUpdates() {
+    if (typeof EventSource === 'undefined') return; // very old browser
+    const liveBadge = document.getElementById('meeting-live-indicator');
+    const countEl = document.getElementById('meeting-watcher-count');
+    let es = null;
+    let reloadTimer = null;
+    let reconnectMs = 1000;
+
+    function scheduleReload(reason) {
+      // Don't yank the page out from under the user mid-edit. If a
+      // textarea or input is focused, defer the reload until they blur
+      // or the next change comes through.
+      const active = document.activeElement;
+      if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.isContentEditable)) {
+        // Mark dirty; reload on blur instead.
+        document.body.dataset.pendingReload = '1';
+        return;
+      }
+      if (reloadTimer) return;
+      reloadTimer = setTimeout(() => { window.location.reload(); }, 600);
+    }
+
+    function applyPresence(presence) {
+      if (!Array.isArray(presence)) return;
+      if (countEl) countEl.textContent = String(presence.length);
+      if (liveBadge) liveBadge.classList.remove('hidden');
+      // Build a set of externalIds currently watching.
+      const watchingIds = new Set(presence.map(p => p && p.externalId).filter(Boolean));
+      const watchingMemberIds = new Set(presence.map(p => p && p.subscriberId).filter(Boolean));
+      document.querySelectorAll('[data-attendee]').forEach(el => {
+        const key = el.dataset.attendee || '';
+        const parts = key.split(':');
+        const extId = parts[1] || '';
+        const isHere = extId && watchingIds.has(extId);
+        // Add or remove a small green dot indicator.
+        let dot = el.querySelector('[data-presence-dot]');
+        if (isHere) {
+          if (!dot) {
+            dot = document.createElement('span');
+            dot.setAttribute('data-presence-dot', '1');
+            dot.title = 'Watching now';
+            dot.style.cssText = 'display:inline-block;width:0.5rem;height:0.5rem;border-radius:9999px;background:#10b981;margin-right:4px;vertical-align:middle;animation:pulse 2s ease-in-out infinite;';
+            el.insertBefore(dot, el.firstChild);
+          }
+        } else if (dot) {
+          dot.remove();
+        }
+      });
+      // Also annotate segue cards with presence dots.
+      document.querySelectorAll('[data-checkin-attendee]').forEach(el => {
+        const key = el.dataset.checkinAttendee || '';
+        const isHere = key && watchingIds.has(key);
+        let dot = el.querySelector('[data-presence-dot-segue]');
+        if (isHere) {
+          if (!dot) {
+            const badge = el.querySelector('.flex.items-center.gap-2.mb-2');
+            if (badge) {
+              dot = document.createElement('span');
+              dot.setAttribute('data-presence-dot-segue', '1');
+              dot.title = 'Viewing now';
+              dot.style.cssText = 'display:inline-block;width:0.5rem;height:0.5rem;border-radius:9999px;background:#10b981;animation:pulse 2s ease-in-out infinite;';
+              badge.appendChild(dot);
+            }
+          }
+        } else if (dot) {
+          dot.remove();
+        }
+      });
+    }
+
+    function connect() {
+      try { es && es.close(); } catch (e) { /* ignore */ }
+      es = new EventSource('/api/v1/meetings/' + meetingId + '/events');
+      es.addEventListener('open', () => { reconnectMs = 1000; });
+      es.addEventListener('presence', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          applyPresence(payload.presence || []);
+        } catch (err) { /* ignore */ }
+      });
+      es.addEventListener('meeting-updated', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          scheduleReload(payload.kind || 'updated');
+        } catch (err) { scheduleReload('unknown'); }
+      });
+      es.addEventListener('error', () => {
+        if (liveBadge) liveBadge.classList.add('hidden');
+        try { es && es.close(); } catch (e) { /* ignore */ }
+        // Exponential backoff capped at 30s.
+        setTimeout(connect, reconnectMs);
+        reconnectMs = Math.min(reconnectMs * 2, 30_000);
+      });
+    }
+
+    // Reload when input loses focus if an update came in mid-edit.
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (document.body.dataset.pendingReload === '1') {
+          delete document.body.dataset.pendingReload;
+          window.location.reload();
+        }
+      }, 200);
+    });
+
+    // Close cleanly on unload so presence drops fast.
+    window.addEventListener('beforeunload', () => { try { es && es.close(); } catch (e) { /* ignore */ } });
+
+    connect();
+  })();
 })();
 </script>
+<style>
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>

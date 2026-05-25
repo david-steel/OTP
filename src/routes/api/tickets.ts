@@ -90,6 +90,9 @@ export default async function ticketRoutes(app: FastifyInstance) {
       })
     );
 
+    const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+    publishToTeamMeetings(ticket.teamId, { kind: 'issue', action: 'created', entityId: ticket.id });
+
     return reply.status(201).send({ ticket });
   });
 
@@ -191,6 +194,9 @@ export default async function ticketRoutes(app: FastifyInstance) {
         details: updates,
       })
     );
+
+    const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+    publishToTeamMeetings(updated.teamId, { kind: 'issue', action: 'updated', entityId: id });
 
     return { ticket: updated };
   });

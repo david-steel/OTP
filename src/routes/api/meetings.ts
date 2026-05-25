@@ -11,6 +11,7 @@ import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { deliverToAgentInbox } from '../../services/agent-inbox.js';
+import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -316,6 +317,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
       details: { kpiCount: scorecardSnapshot.kpiCount, rockCount: rocksSnapshot.count },
     }));
 
+    publishMeetingUpdate(id, { kind: 'meeting', action: 'started' });
     return { meeting: updated };
   });
 
@@ -351,6 +353,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: id, details: { kpiCount: scorecardSnapshot.kpiCount },
     }));
 
+    publishMeetingUpdate(id, { kind: 'kpi', action: 'refreshed' });
     return { meeting: updated };
   });
 
@@ -373,6 +376,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: id,
     }));
 
+    publishMeetingUpdate(id, { kind: 'meeting', action: 'ended' });
     return { meeting: updated };
   });
 
@@ -433,6 +437,14 @@ export default async function meetingRoutes(app: FastifyInstance) {
     await db.insert(auditLogs).values(createAuditEntry('meeting.updated', 'meeting', {
       orgId: org.id, entityId: id, details: { fields: Object.keys(updates) },
     }));
+
+    // Real-time fan-out: any open SSE subscribers on this meeting get a
+    // "meeting-updated" event so their view refreshes. Covers segue
+    // saves (attendees jsonb), attendee edits, rating, status changes.
+    publishMeetingUpdate(id, {
+      kind: 'attendees' in updates ? 'attendees' : 'meeting',
+      action: 'updated',
+    });
 
     return { meeting: updated };
   });
@@ -577,4 +589,120 @@ export default async function meetingRoutes(app: FastifyInstance) {
 
     return { meeting, scorecard, rocks: rocksList, issues: openTickets, todos: openTodos };
   });
+
+  // GET /api/v1/meetings/:id/events  (Server-Sent Events stream)
+  //
+  // Holds an open text/event-stream connection. The client subscribes
+  // when it loads /l8/meeting/:id and listens for two event types:
+  //
+  //   event: presence
+  //   data: { meetingId, presence: [{ subscriberId, name, externalId, ... }] }
+  //
+  //   event: meeting-updated
+  //   data: { meetingId, kind: 'rock'|'kpi'|'todo'|'issue'|'headline'|'checkin'|'attendees'|'meeting'|'rating', at }
+  //
+  // Plus periodic ":keepalive" comments so proxies don't drop the
+  // connection. The connection itself is the heartbeat for presence --
+  // when the client closes the EventSource, the server removes it from
+  // the presence set.
+  app.get<{ Params: { id: string } }>('/meetings/:id/events', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+
+    const [meeting] = await db.select().from(meetings)
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+      .limit(1);
+    if (!meeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+
+    // Same access rule as /l8/meeting/:id: on the meeting's team OR a
+    // listed human attendee. Read-only stream, so observers/managees
+    // are allowed.
+    const member = (request as any).orgMember as { id: string } | null;
+    let presenceName = 'Viewer';
+    let presenceExternalId: string | null = null;
+    if (member) {
+      let onTeam = false;
+      if (meeting.teamId) {
+        const { teamMemberships } = await import('../../db/schema.js');
+        const [tm] = await db.select({ teamId: teamMemberships.teamId })
+          .from(teamMemberships)
+          .where(and(
+            eq(teamMemberships.memberId, member.id),
+            eq(teamMemberships.teamId, meeting.teamId),
+          ))
+          .limit(1);
+        onTeam = !!tm;
+      }
+      const { orgMembers } = await import('../../db/schema.js');
+      const [fullMember] = await db.select({
+        id: orgMembers.id,
+        email: orgMembers.email,
+        displayName: orgMembers.displayName,
+        claimedEntityIds: orgMembers.claimedEntityIds,
+      }).from(orgMembers).where(eq(orgMembers.id, member.id)).limit(1);
+      const allowed = onTeam || isAttendee(fullMember, meeting);
+      if (!allowed) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+      if (fullMember) {
+        presenceName = fullMember.displayName || fullMember.email || 'Viewer';
+        const tiles = (fullMember.claimedEntityIds as string[] | null) || [];
+        presenceExternalId = tiles[0] || null;
+      }
+    }
+
+    // Take over the raw socket. Fastify doesn't have a built-in SSE
+    // helper, so we write the headers and chunks manually. hijack() tells
+    // Fastify not to try to send its own response afterward.
+    reply.hijack();
+    const raw = reply.raw;
+    raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    // Padding so some proxies start streaming immediately.
+    raw.write(':' + ' '.repeat(2048) + '\n\n');
+    raw.write('retry: 5000\n\n');
+
+    function sseSend(event: string, data: unknown) {
+      if (raw.writableEnded) return;
+      raw.write('event: ' + event + '\n');
+      raw.write('data: ' + JSON.stringify(data) + '\n\n');
+    }
+
+    const subscription = subscribeToMeeting({
+      meetingId: id,
+      teamId: meeting.teamId,
+      name: presenceName,
+      externalId: presenceExternalId,
+      send: sseSend,
+      close: () => { try { raw.end(); } catch { /* ignore */ } },
+    });
+
+    // Keepalive ping every 25s -- below Heroku/Railway's 30s idle cap.
+    const keepalive = setInterval(() => {
+      if (raw.writableEnded) return;
+      try {
+        raw.write(': keepalive ' + Date.now() + '\n\n');
+        subscription.touch();
+      } catch { /* ignore */ }
+    }, 25_000);
+    keepalive.unref?.();
+
+    // Cleanup on client disconnect.
+    const cleanup = () => {
+      clearInterval(keepalive);
+      subscription.unsubscribe();
+    };
+    request.raw.on('close', cleanup);
+    request.raw.on('error', cleanup);
+    // No return -- reply.hijack() above told Fastify we're handling
+    // the response. The raw stream stays open until the client closes.
+  });
 }
+
+// Re-export for routes that need to publish meeting updates without
+// importing the bus directly.
+export { publishMeetingUpdate, publishToTeamMeetings } from '../../services/meeting-bus.js';

@@ -100,6 +100,9 @@ export default async function rockRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: rock.id, details: { title: rock.title, quarter: rock.quarter },
     }));
 
+    const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+    publishToTeamMeetings(rock.teamId, { kind: 'rock', action: 'created', entityId: rock.id });
+
     return reply.status(201).send({ rock });
   });
 
@@ -176,6 +179,9 @@ export default async function rockRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: id, details: updates,
     }));
 
+    const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+    publishToTeamMeetings(updated.teamId, { kind: 'rock', action: 'updated', entityId: id });
+
     return { rock: updated };
   });
 
@@ -196,6 +202,10 @@ export default async function rockRoutes(app: FastifyInstance) {
     await db.insert(auditLogs).values(createAuditEntry('rock.deleted', 'rock', {
       orgId: org.id, entityId: id,
     }));
+
+    const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+    publishToTeamMeetings(deleted.teamId, { kind: 'rock', action: 'deleted', entityId: id });
+
     return { ok: true };
   });
 }

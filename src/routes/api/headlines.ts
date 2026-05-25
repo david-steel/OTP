@@ -108,6 +108,9 @@ export default async function headlineRoutes(app: FastifyInstance) {
       orgId: ctx.org.id, entityId: created.id, details: { meetingId: id, kind: body.data.kind },
     }));
 
+    const { publishMeetingUpdate } = await import('../../services/meeting-bus.js');
+    publishMeetingUpdate(id, { kind: 'headline', action: 'created', entityId: created.id });
+
     return reply.status(201).send({ headline: created });
   });
 
