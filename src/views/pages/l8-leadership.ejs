@@ -38,7 +38,9 @@
       <% if (planDirection.annualObjective) { %>
         <span><span class="text-gray-500">This year:</span> <span class="text-gray-800 font-medium"><%= planDirection.annualObjective %></span></span>
       <% } %>
-      <a href="/dashboard/ceo" class="text-otp-600 hover:underline font-medium ml-auto">CEO Dashboard &rarr;</a>
+      <% var _role = (locals.memberRole || '').toString(); if (_role === 'owner' || _role === 'visionary') { %>
+        <a href="/dashboard/ceo" class="text-otp-600 hover:underline font-medium ml-auto">CEO Dashboard &rarr;</a>
+      <% } %>
     </div>
   <% } %>
 
@@ -180,7 +182,7 @@
   <nav id="agenda-nav" class="flex items-center gap-1 mb-6 text-xs whitespace-nowrap overflow-x-auto" data-active="">
     <a href="#segue"     data-section="segue"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">1. Checkin <span class="text-gray-500">5m</span></a>
     <a href="#scorecard" data-section="scorecard" data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">2. Scorecard <span class="text-gray-500">5m</span></a>
-    <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">3. Quarterly Priorities <span class="text-gray-500">5m</span></a>
+    <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip flex-[1.5] px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">3. Quarterly Priorities <span class="text-gray-500">5m</span></a>
     <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">4. Headlines <span class="text-gray-500">5m</span></a>
     <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">5. To-Dos <span class="text-gray-500">5m</span></a>
     <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-otp-100 rounded hover:bg-otp-200 text-center font-medium min-w-0">6. Issues <span class="text-gray-600">60m</span></a>

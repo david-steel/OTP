@@ -103,7 +103,9 @@
       });
     %>
     <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-2 text-xs">
-      <a href="/dashboard/ceo" class="px-3 py-1.5 bg-white text-otp-700 border border-otp-300 rounded-lg hover:bg-otp-50 transition-colors font-semibold">CEO Dashboard &rarr;</a>
+      <% var _role = (locals.memberRole || '').toString(); if (_role === 'owner' || _role === 'visionary') { %>
+        <a href="/dashboard/ceo" class="px-3 py-1.5 bg-white text-otp-700 border border-otp-300 rounded-lg hover:bg-otp-50 transition-colors font-semibold">CEO Dashboard &rarr;</a>
+      <% } %>
       <button id="btn-generate" class="px-3 py-1.5 bg-otp-50 text-otp-700 border border-otp-200 rounded-lg hover:bg-otp-100 transition-colors font-medium" data-action="generate" data-plan-id="<%= plan.id %>">Generate 90-Day Plan</button>
       <button id="btn-recalc" class="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors font-medium" data-action="recalculate" data-plan-id="<%= plan.id %>">Recalculate Assignments</button>
       <button id="btn-preview" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors font-medium" data-action="preview" data-plan-id="<%= plan.id %>">Preview OOS Update</button>

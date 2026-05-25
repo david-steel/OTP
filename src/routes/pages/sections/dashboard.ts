@@ -1361,12 +1361,21 @@ Founder, OTP</p>
   // (direction — 3-year, annual, this quarter), the KPI scoreboard, the
   // current quarter's execution items, and the org chart (seats: humans and
   // agents). The Operating Plan feeds this page; this page reads, never writes.
-  // Page-level access: any authed org member.
+  // Page-level access: org owner OR EOS Visionary only. Integrators (COO
+  // role), managers, implementers don't see it. David flagged 2026-05-25
+  // that the page was leaking to non-CEO roles via direct URL.
   app.get('/dashboard/ceo', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
+
+    // Role gate -- bounce non-CEOs back to the Daily dashboard.
+    // orgMember is attached by registerOrgMemberDecorator middleware.
+    const memberRole = ((request as any).orgMember?.role || '').toString();
+    if (memberRole !== 'owner' && memberRole !== 'visionary') {
+      return reply.redirect('/dashboard');
+    }
 
     const currentQuarter = quarterLabel(new Date());
 

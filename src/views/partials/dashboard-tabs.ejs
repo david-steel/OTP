@@ -23,6 +23,10 @@
      var INTEGRATOR_LIKE = ['owner','admin','integrator','implementer'];
      var ORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
      var INVITER = ['owner','admin','manager','visionary','integrator'];
+     // CEO Dashboard is the founder/CEO's cockpit -- restrict to the org
+     // owner and the EOS Visionary seat. Integrator (COO), managers, and
+     // implementers don't see it. David flagged 2026-05-25.
+     var CEO_ONLY = ['owner','visionary'];
      var ALL_AUTHED = ALL; // anyone with an org
 
      function hasRole(allowed){
@@ -42,7 +46,7 @@
        { href: '/dashboard/kpis',               label: 'KPIs',      allow: ALL_AUTHED },
        { href: '/dashboard/practice',           label: 'My Practice ★', allow: ALL_AUTHED, coachOnly: true },
        { href: '/dashboard/ids',                label: 'Issues',    allow: INVITER },
-       { href: '/dashboard/ceo',                label: 'CEO',       allow: ORG_WIDE },
+       { href: '/dashboard/ceo',                label: 'CEO',       allow: CEO_ONLY },
        { href: '/dashboard/oos-operating-plan', label: 'Plan',      allow: ORG_WIDE },
        { href: '/dashboard/members',            label: 'Members',   allow: INVITER },
        { href: '/dashboard/teams',              label: 'Teams',     allow: INVITER },
