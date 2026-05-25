@@ -64,7 +64,15 @@
   <!-- The grid -->
   <% if (rows.length === 0) { %>
     <div class="border rounded-lg p-8 text-center text-sm text-gray-500">
-      No human seats on the org chart yet. Add people to the chart to review them.
+      <% if (locals.noClaim) { %>
+        You're not placed on the org chart yet, so there's no one reporting to you to review.
+        <a href="/dashboard/team" class="text-orgy-blue font-medium hover:underline">Claim your seat &rarr;</a>
+      <% } else if (locals.noReports) { %>
+        No one reports to you on the org chart yet. People Review rates your direct and indirect reports.
+        <a href="/dashboard/team" class="text-orgy-blue font-medium hover:underline">Open the org chart &rarr;</a>
+      <% } else { %>
+        No human seats on the org chart yet. Add people to the chart to review them.
+      <% } %>
     </div>
   <% } else { %>
     <div class="border rounded-lg bg-white overflow-x-auto">

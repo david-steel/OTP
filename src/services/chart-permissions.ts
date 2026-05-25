@@ -28,7 +28,7 @@ interface MemberLike {
  * set of every tile reachable -- including the starts themselves. The
  * walk is breadth-first with a visited guard so cycles are safe.
  */
-function reportsSubtree(graph: TeamGraph, startIds: string[]): Set<string> {
+export function reportsSubtree(graph: TeamGraph, startIds: string[]): Set<string> {
   const out = new Set<string>(startIds);
   const queue = [...startIds];
   while (queue.length > 0) {

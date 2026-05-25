@@ -18,6 +18,7 @@ import { currentPeriod } from '../../shared/period.js';
 import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
+import { reportsSubtree } from '../../services/chart-permissions.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
 import { sendEmail } from '../../config/email.js';
@@ -3280,10 +3281,37 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     const period = currentPeriod();
     const graph = await getOrgTeamGraph(org.id, org.name || 'Organization');
+
+    // People Review shows ONLY the seats that report up to the current user.
+    // Rating your peers or yourself isn't the People Analyzer model -- you
+    // rate your direct + transitive reports. David flagged 2026-05-24 that
+    // showing the whole org made the page noisy and out-of-frame.
+    const auth = getAuth(request);
+    const [me] = auth.userId
+      ? await db.select({ claimedEntityId: orgMembers.claimedEntityId, claimedEntityIds: orgMembers.claimedEntityIds })
+          .from(orgMembers)
+          .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+          .limit(1)
+      : [null];
+    const myTiles: string[] = [];
+    if (me?.claimedEntityIds && Array.isArray(me.claimedEntityIds)) {
+      for (const id of me.claimedEntityIds) if (id) myTiles.push(id);
+    }
+    if (me?.claimedEntityId && !myTiles.includes(me.claimedEntityId)) myTiles.push(me.claimedEntityId);
+
+    const myTileSet = new Set(myTiles);
+    const subtree = myTiles.length > 0 ? reportsSubtree(graph, myTiles) : new Set<string>();
+    // Subtree includes the starting tiles -- People Review is "people under
+    // me", not "me + people under me", so exclude my own tiles.
+    for (const t of myTiles) subtree.delete(t);
+
     const humanSeats = graph.nodes
-      .filter(n => n.type === 'human')
+      .filter(n => n.type === 'human' && subtree.has(n.externalId))
       .map(n => ({ externalId: n.externalId, name: n.label }))
       .sort((a, b) => a.name.localeCompare(b.name));
+
+    const noReports = humanSeats.length === 0;
+    const noClaim = myTiles.length === 0;
 
     const [valueRows, fitRows, reviewRows] = await Promise.all([
       db.select().from(orgValues).where(eq(orgValues.orgId, org.id)).orderBy(orgValues.position),
@@ -3324,6 +3352,8 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       period,
       values: valueRows,
       rows,
+      noReports,
+      noClaim,
     });
   });
 
