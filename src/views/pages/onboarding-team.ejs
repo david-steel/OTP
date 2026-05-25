@@ -7,7 +7,7 @@ function ob_initials(name){
   var p = n.split(/\s+/);
   return ((p[0][0]||'') + (p.length>1 ? (p[p.length-1][0]||'') : '')).toUpperCase() || '?';
 }
-var ob_palette = ['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+var ob_palette = ['#14161c','#ff7a1a','#0d7df2','#0a9d63','#8BC42A'];
 function ob_color(i){ return ob_palette[i % ob_palette.length]; }
 function ob_role(r){
   var m = { owner:'Owner', admin:'Admin', manager:'Manager', managee:'Team member',
@@ -24,13 +24,13 @@ var ob_seatCount = members.length + invites.length;
     --blue:#0d7df2; --blue-deep:#0a56b0;
     --orange:#ff7a1a; --orange-deep:#d4540a;
     --green:#0a9d63; --green-deep:#06724a;
-    --orgy:#bdd622; --orgy-deep:#a3ba17;
+    --orgy:#A8E63A; --orgy-deep:#8BC42A;
     --red:#d4332a;
     --line:rgba(20,22,28,0.12); --line-soft:rgba(20,22,28,0.07);
   }
   html{-webkit-font-smoothing:antialiased;}
   body{font-family:'Inter',sans-serif; background:var(--white); color:var(--ink); margin:0;
-    background-image:radial-gradient(circle at 84% 8%, rgba(189,214,34,0.10), transparent 38%),
+    background-image:radial-gradient(circle at 84% 8%, rgba(168,230,58,0.10), transparent 38%),
                      radial-gradient(circle at 12% 92%, rgba(13,125,242,0.07), transparent 40%);}
   .font-display{font-family:'Schibsted Grotesk','Inter',sans-serif;}
   .mono{font-family:'JetBrains Mono',monospace;}
@@ -66,7 +66,7 @@ var ob_seatCount = members.length + invites.length;
   .btn-ink:hover{background:#24272f;transform:translateY(-2px);}
   .step-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
     border-radius:99px;padding:4px 12px 4px 5px;}
-  .addbox{background:#fafbf3;border:1.5px dashed rgba(163,186,23,0.55);border-radius:14px;}
+  .addbox{background:#fafbf3;border:1.5px dashed rgba(139,196,42,0.55);border-radius:14px;}
   .person{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
     border-radius:12px;padding:10px 13px;}
   .av{width:38px;height:38px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;
@@ -104,7 +104,7 @@ var ob_seatCount = members.length + invites.length;
       </div>
       <div class="relative pop" style="animation-delay:.2s">
         <div class="orgy-glow absolute left-1/2 -translate-x-1/2 bottom-4 w-[78%] h-[37%] rounded-full -z-10"
-             style="background:radial-gradient(ellipse, rgba(189,214,34,0.30), transparent 70%);"></div>
+             style="background:radial-gradient(ellipse, rgba(168,230,58,0.30), transparent 70%);"></div>
         <img src="/public/images/onboarding-orgy-welcome.webp" alt="Orgy" class="orgy relative w-[324px]">
       </div>
     </div>
@@ -202,7 +202,7 @@ var ob_seatCount = members.length + invites.length;
   var err = document.getElementById('tm-err');
   var list = document.getElementById('tm-list');
   var countEl = document.getElementById('tm-count');
-  var palette = ['#14161c','#ff7a1a','#0d7df2','#0a9d63','#a3ba17'];
+  var palette = ['#14161c','#ff7a1a','#0d7df2','#0a9d63','#8BC42A'];
   var seats = <%= ob_seatCount %>;
   var roleLabel = { managee:'Team member', manager:'Manager', admin:'Admin', observer:'Observer' };
 
