@@ -1402,29 +1402,24 @@
     }
     function hideDragStatus() { if (dragStatusEl) dragStatusEl.classList.remove('visible'); }
 
-    async function handleHierarchyDrop(srcNode, targetNode) {
+    function handleHierarchyDrop(srcNode, targetNode) {
       var fieldKey = srcNode.type === 'agent' ? 'escalates_to' : 'reports_to';
       var patch = {};
       patch[fieldKey] = targetNode.externalId;
       showDragStatus('Saving ' + srcNode.label + ' -> ' + targetNode.label + '…');
-      try {
-        var res = await fetch('/api/v1/team/entity', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: srcNode.type, externalId: srcNode.externalId, patch: patch }),
-        });
-        if (!res.ok) {
-          var err = await res.json().catch(function() { return {}; });
-          showDragStatus('Save failed: ' + ((err.error && err.error.message) || res.status), true);
+      OTP.apiSave({
+        method: 'PATCH', url: '/api/v1/team/entity',
+        body: { type: srcNode.type, externalId: srcNode.externalId, patch: patch },
+        onSuccess: function() {
+          showDragStatus('Saved. Reloading…');
+          window.location.reload();
+        },
+        onError: function(err) {
+          showDragStatus(OTP.formatError(err, 'Save failed'), true);
           setTimeout(hideDragStatus, 2400);
-          return;
-        }
-        showDragStatus('Saved. Reloading…');
-        window.location.reload();
-      } catch (e) {
-        showDragStatus('Network error: ' + e.message, true);
-        setTimeout(hideDragStatus, 2400);
-      }
+          return true;
+        },
+      });
     }
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
@@ -2605,28 +2600,20 @@
           return out;
         });
       patch.sops = cleanSops;
-      btn.disabled = true; btn.textContent = 'Saving…';
-      try {
-        var res = await fetch('/api/v1/team/entity', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: currentNode.type, externalId: currentNode.externalId, patch: patch }),
-        });
-        if (!res.ok) {
-          var err = await res.json().catch(function() { return {}; });
-          banner.textContent = (err.error && err.error.message) || ('Save failed (' + res.status + ')');
+      btn.textContent = 'Saving…';
+      OTP.apiSave({
+        method: 'PATCH', url: '/api/v1/team/entity',
+        body: { type: currentNode.type, externalId: currentNode.externalId, patch: patch },
+        btnEl: btn,
+        onSuccess: function() { window.location.reload(); },
+        onError: function(err) {
+          banner.textContent = OTP.formatError(err, 'Save failed');
           banner.classList.add('error');
           banner.style.display = '';
-          btn.disabled = false; btn.textContent = 'Save to draft';
-          return;
-        }
-        window.location.reload();
-      } catch (e) {
-        banner.textContent = 'Network error: ' + e.message;
-        banner.classList.add('error');
-        banner.style.display = '';
-        btn.disabled = false; btn.textContent = 'Save to draft';
-      }
+          btn.textContent = 'Save to draft';
+          return true;
+        },
+      });
     };
     document.addEventListener('keydown', function(ev) {
       if (ev.key === 'Escape') {
@@ -2866,40 +2853,37 @@
       btn.disabled = true; btn.textContent = 'Importing…';
       document.getElementById('imp-banner').style.display = 'none';
 
-      try {
-        var res = await fetch('/api/v1/team/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: mode, rows: importedRows }),
-        });
-        var data = await res.json().catch(function() { return {}; });
-        if (!res.ok) {
-          showImportBanner((data.error && data.error.message) || ('Import failed (' + res.status + ')'), 'error');
-          btn.disabled = false; btn.textContent = 'Import';
-          return;
-        }
-        var resultEl = document.getElementById('imp-result');
-        var warnHtml = '';
-        if (data.warnings && data.warnings.length > 0) {
-          warnHtml = '<div style="margin-top:0.5rem; color:#92400e;"><strong>' + data.warnings.length + ' warning' + (data.warnings.length === 1 ? '' : 's') + ':</strong><ul style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">' +
-            data.warnings.slice(0, 10).map(function(w) {
-              return '<li>Row ' + (w.rowIndex + 1) + ' (' + escapeHtml(w.field) + '): ' + escapeHtml(w.message) + '</li>';
-            }).join('') +
-            (data.warnings.length > 10 ? '<li>… and ' + (data.warnings.length - 10) + ' more</li>' : '') +
-            '</ul></div>';
-        }
-        resultEl.innerHTML = '<strong>Done.</strong> ' +
-          (data.created || 0) + ' created · ' +
-          (data.updated || 0) + ' updated' +
-          (data.deleted ? ' · ' + data.deleted + ' deleted' : '') +
-          '. Reloading…' + warnHtml;
-        resultEl.style.display = '';
-        btn.textContent = 'Imported';
-        setTimeout(function() { window.location.reload(); }, 1800);
-      } catch (e) {
-        showImportBanner('Network error: ' + e.message, 'error');
-        btn.disabled = false; btn.textContent = 'Import';
+      var importBtn = btn;
+      var importResult = await OTP.apiSave({
+        method: 'POST', url: '/api/v1/team/import',
+        body: { mode: mode, rows: importedRows },
+        btnEl: importBtn,
+        onError: function(err) {
+          showImportBanner(OTP.formatError(err, 'Import failed'), 'error');
+          importBtn.textContent = 'Import';
+          return true;
+        },
+      });
+      if (!importResult || !importResult.ok) return;
+      var data = importResult.data;
+      var resultEl = document.getElementById('imp-result');
+      var warnHtml = '';
+      if (data.warnings && data.warnings.length > 0) {
+        warnHtml = '<div style="margin-top:0.5rem; color:#92400e;"><strong>' + data.warnings.length + ' warning' + (data.warnings.length === 1 ? '' : 's') + ':</strong><ul style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">' +
+          data.warnings.slice(0, 10).map(function(w) {
+            return '<li>Row ' + (w.rowIndex + 1) + ' (' + escapeHtml(w.field) + '): ' + escapeHtml(w.message) + '</li>';
+          }).join('') +
+          (data.warnings.length > 10 ? '<li>… and ' + (data.warnings.length - 10) + ' more</li>' : '') +
+          '</ul></div>';
       }
+      resultEl.innerHTML = '<strong>Done.</strong> ' +
+        (data.created || 0) + ' created · ' +
+        (data.updated || 0) + ' updated' +
+        (data.deleted ? ' · ' + data.deleted + ' deleted' : '') +
+        '. Reloading…' + warnHtml;
+      resultEl.style.display = '';
+      importBtn.textContent = 'Imported';
+      setTimeout(function() { window.location.reload(); }, 1800);
     };
 
     // ========================================================
@@ -3145,118 +3129,88 @@
       }
     };
 
-    window.sendInvite = async function() {
+    window.sendInvite = function() {
       if (!currentNode || currentNode.type !== 'human') return;
       var emailInput = document.getElementById('ef-invite-email');
       var btn = document.getElementById('ef-invite-btn');
       var status = document.getElementById('ef-invite-status');
       var email = (emailInput.value || '').trim();
       if (!email) { status.style.color = '#b91c1c'; status.textContent = 'Email required.'; return; }
-      btn.disabled = true; btn.textContent = 'Sending…';
+      btn.textContent = 'Sending…';
       status.style.color = '#6b7280';
       status.textContent = '';
-      try {
-        var res = await fetch('/api/v1/team/invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, claimedEntityId: currentNode.externalId, role: 'member' }),
-        });
-        if (!res.ok) {
-          var err = await res.json().catch(function() { return {}; });
+      OTP.apiSave({
+        method: 'POST', url: '/api/v1/team/invite',
+        body: { email: email, claimedEntityId: currentNode.externalId, role: 'member' },
+        btnEl: btn,
+        onSuccess: function(data) {
+          status.style.color = '#059669';
+          status.textContent = 'Invite sent to ' + data.email + '. Expires ' + new Date(data.expiresAt).toLocaleDateString() + '.';
+          emailInput.value = '';
+          btn.textContent = 'Send invite';
+          setTimeout(function() { window.location.reload(); }, 2500);
+        },
+        onError: function(err) {
           status.style.color = '#b91c1c';
-          status.textContent = (err.error && err.error.message) || ('Send failed (' + res.status + ')');
-          btn.disabled = false; btn.textContent = 'Send invite';
-          return;
-        }
-        var data = await res.json();
-        status.style.color = '#059669';
-        status.textContent = 'Invite sent to ' + data.email + '. Expires ' + new Date(data.expiresAt).toLocaleDateString() + '.';
-        emailInput.value = '';
-        btn.disabled = false; btn.textContent = 'Send invite';
-        // Soft refresh after 2.5s so the pending-invites drawer reflects reality
-        setTimeout(function() { window.location.reload(); }, 2500);
-      } catch (e) {
-        status.style.color = '#b91c1c';
-        status.textContent = 'Network error: ' + e.message;
-        btn.disabled = false; btn.textContent = 'Send invite';
-      }
+          status.textContent = OTP.formatError(err, 'Send failed');
+          btn.textContent = 'Send invite';
+          return true;
+        },
+      });
     };
 
-    window.resendInvite = async function(invitationId, btn) {
+    window.resendInvite = function(invitationId, btn) {
       var originalText = btn ? btn.textContent : 'Resend';
-      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-      try {
-        var res = await fetch('/api/v1/team/invitations/' + invitationId + '/resend', {
-          method: 'POST',
-        });
-        if (!res.ok) {
-          var err = await res.json().catch(function() { return {}; });
-          alert('Resend failed: ' + ((err.error && err.error.message) || res.status));
-          if (btn) { btn.disabled = false; btn.textContent = originalText; }
-          return;
-        }
-        var data = await res.json().catch(function() { return {}; });
-        if (btn) { btn.textContent = 'Sent ✓'; }
-        // Update the expiry meta line on the row to reflect the new date.
-        var row = document.querySelector('.invite-row[data-invite-id="' + invitationId + '"]');
-        if (row && data.expiresAt) {
-          var meta = row.querySelector('.meta');
-          if (meta) {
-            var d = new Date(data.expiresAt);
-            meta.innerHTML = meta.innerHTML.replace(/Expires [A-Z][a-z]+ \d+/, 'Expires ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      if (btn) btn.textContent = 'Sending…';
+      OTP.apiSave({
+        method: 'POST', url: '/api/v1/team/invitations/' + encodeURIComponent(invitationId) + '/resend',
+        btnEl: btn,
+        errorContext: 'Resend invite',
+        onSuccess: function(data) {
+          if (btn) btn.textContent = 'Sent ✓';
+          // Update the expiry meta line on the row to reflect the new date.
+          var row = document.querySelector('.invite-row[data-invite-id="' + invitationId + '"]');
+          if (row && data && data.expiresAt) {
+            var meta = row.querySelector('.meta');
+            if (meta) {
+              var d = new Date(data.expiresAt);
+              meta.innerHTML = meta.innerHTML.replace(/Expires [A-Z][a-z]+ \d+/, 'Expires ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            }
           }
-        }
-        setTimeout(function() {
-          if (btn) { btn.disabled = false; btn.textContent = originalText; }
-        }, 2000);
-      } catch (e) {
-        alert('Network error: ' + e.message);
-        if (btn) { btn.disabled = false; btn.textContent = originalText; }
-      }
+          setTimeout(function() { if (btn) btn.textContent = originalText; }, 2000);
+        },
+        onError: function() { if (btn) btn.textContent = originalText; },
+      });
     };
 
-    window.revokeInvite = async function(invitationId) {
+    window.revokeInvite = function(invitationId) {
       if (!confirm('Revoke this invitation? The link in the email stops working immediately.')) return;
-      try {
-        var res = await fetch('/api/v1/team/invitations/' + invitationId, { method: 'DELETE' });
-        if (!res.ok) {
-          var err = await res.json().catch(function() { return {}; });
-          alert('Revoke failed: ' + ((err.error && err.error.message) || res.status));
-          return;
-        }
-        // Remove the row visually
-        var row = document.querySelector('.invite-row[data-invite-id="' + invitationId + '"]');
-        if (row) row.remove();
-        // If empty now, soft-reload to update the count badge in header
-        var body = document.getElementById('invites-drawer-body');
-        if (body && body.querySelectorAll('.invite-row').length === 0) {
-          window.location.reload();
-        }
-      } catch (e) {
-        alert('Network error: ' + e.message);
-      }
+      OTP.apiSave({
+        method: 'DELETE', url: '/api/v1/team/invitations/' + encodeURIComponent(invitationId),
+        errorContext: 'Revoke invite',
+        onSuccess: function() {
+          var row = document.querySelector('.invite-row[data-invite-id="' + invitationId + '"]');
+          if (row) row.remove();
+          var body = document.getElementById('invites-drawer-body');
+          if (body && body.querySelectorAll('.invite-row').length === 0) window.location.reload();
+        },
+      });
     };
 
-    window.deleteCurrentEntity = async function() {
+    window.deleteCurrentEntity = function() {
       if (!currentNode) return;
       if (currentNode.type === 'organization') return;
       if (!confirm('Delete ' + currentNode.label + ' from your draft? This removes the entity from the OOS YAML and clears any references to it (escalates_to, reports_to, override_authority).')) return;
       var btn = document.getElementById('ef-delete');
-      btn.disabled = true; btn.textContent = 'Deleting…';
-      try {
-        var qs = '?type=' + encodeURIComponent(currentNode.type) + '&externalId=' + encodeURIComponent(currentNode.externalId);
-        var res = await fetch('/api/v1/team/entity' + qs, { method: 'DELETE' });
-        if (!res.ok) {
-          var err = await res.json().catch(function() { return {}; });
-          alert('Delete failed: ' + ((err.error && err.error.message) || res.status));
-          btn.disabled = false; btn.textContent = 'Delete';
-          return;
-        }
-        window.location.reload();
-      } catch (e) {
-        alert('Network error: ' + e.message);
-        btn.disabled = false; btn.textContent = 'Delete';
-      }
+      btn.textContent = 'Deleting…';
+      var qs = '?type=' + encodeURIComponent(currentNode.type) + '&externalId=' + encodeURIComponent(currentNode.externalId);
+      OTP.apiSave({
+        method: 'DELETE', url: '/api/v1/team/entity' + qs,
+        btnEl: btn,
+        errorContext: 'Delete entity',
+        onSuccess: function() { window.location.reload(); },
+        onError: function() { btn.textContent = 'Delete'; },
+      });
     };
   })();
 </script>

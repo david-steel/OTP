@@ -64,24 +64,16 @@
           var btn = document.getElementById('btn-create-plan');
           var msg = document.getElementById('create-plan-msg');
           if (!btn) return;
-          btn.addEventListener('click', async function() {
-            btn.disabled = true;
+          btn.addEventListener('click', function() {
             msg.textContent = 'Creating...';
-            try {
-              var res = await fetch('/dashboard/oos-operating-plan/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: '{}',
-              });
-              if (res.redirected) { window.location.href = res.url; return; }
-              if (res.ok) { window.location.reload(); return; }
-              var data = await res.json().catch(function() { return null; });
-              msg.textContent = 'Error: ' + (data && data.error && data.error.message ? data.error.message : ('HTTP ' + res.status));
-              btn.disabled = false;
-            } catch (e) {
-              msg.textContent = 'Error: ' + e.message;
-              btn.disabled = false;
-            }
+            msg.style.color = '';
+            OTP.apiSave({
+              method: 'POST', url: '/dashboard/oos-operating-plan/create', body: {},
+              msgEl: msg, btnEl: btn,
+              errorContext: 'Create plan',
+              successMessage: 'Created. Reloading...',
+              onSuccess: function() { window.location.reload(); },
+            });
           });
         })();
       </script>
@@ -511,28 +503,15 @@
           'the button disappears.'
         )) return;
 
-        seedBtn.disabled = true;
-        var originalLabel = seedBtn.innerHTML;
+        var seedOriginalLabel = seedBtn.innerHTML;
         seedBtn.innerHTML = 'Seeding...';
-        try {
-          var res = await fetch('/dashboard/oos-operating-plan/seed-example', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: '{}',
-          });
-          var data = await res.json();
-          if (!res.ok || !data.ok) {
-            window.alert('Seed failed: ' + (data.error && data.error.message ? data.error.message : 'HTTP ' + res.status));
-            seedBtn.disabled = false;
-            seedBtn.innerHTML = originalLabel;
-            return;
-          }
-          window.location.reload();
-        } catch (e) {
-          window.alert('Seed failed: ' + e.message);
-          seedBtn.disabled = false;
-          seedBtn.innerHTML = originalLabel;
-        }
+        OTP.apiSave({
+          method: 'POST', url: '/dashboard/oos-operating-plan/seed-example', body: {},
+          btnEl: seedBtn,
+          errorContext: 'Seed example plan',
+          onSuccess: function() { window.location.reload(); },
+          onError: function() { seedBtn.innerHTML = seedOriginalLabel; },
+        });
       });
     }
 
@@ -552,28 +531,15 @@
           'remain in the archive for reference.'
         )) return;
 
-        copyBtn.disabled = true;
-        var originalLabel = copyBtn.innerHTML;
+        var copyOriginalLabel = copyBtn.innerHTML;
         copyBtn.innerHTML = '<span class="text-xs">Creating ' + nextYear + ' plan...</span>';
-        try {
-          var res = await fetch('/dashboard/oos-operating-plan/copy-forward', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: '{}',
-          });
-          var data = await res.json();
-          if (!res.ok || !data.ok) {
-            window.alert('Copy failed: ' + (data.error && data.error.message ? data.error.message : 'HTTP ' + res.status));
-            copyBtn.disabled = false;
-            copyBtn.innerHTML = originalLabel;
-            return;
-          }
-          window.location.reload();
-        } catch (e) {
-          window.alert('Copy failed: ' + e.message);
-          copyBtn.disabled = false;
-          copyBtn.innerHTML = originalLabel;
-        }
+        OTP.apiSave({
+          method: 'POST', url: '/dashboard/oos-operating-plan/copy-forward', body: {},
+          btnEl: copyBtn,
+          errorContext: 'Copy plan forward',
+          onSuccess: function() { window.location.reload(); },
+          onError: function() { copyBtn.innerHTML = copyOriginalLabel; },
+        });
       });
     }
 
@@ -656,51 +622,35 @@
         if (action === 'recalculate') {
           if (!confirm('Recalculate owner assignments for all unassigned and AI-generated items this quarter? Items you have explicitly edited will not be touched.')) return;
           showMsg('Recalculating...', 'info');
-          btn.disabled = true;
-          try {
-            var res = await fetch('/api/v1/oos-operating-plan/' + planId + '/recalculate-assignments', { method: 'POST' });
-            var data = await res.json();
-            if (!res.ok || data.error) {
-              showMsg('Error: ' + (data.error?.message || 'recalculate failed'), 'error');
-              btn.disabled = false;
-              return;
-            }
-            showMsg(
-              'Considered ' + data.itemsConsidered + ' items: ' + data.recommended +
-              ' assigned, ' + data.lowConfidence + ' need human review (confidence < 70%), ' +
-              data.unassigned + ' unassignable. Reloading...',
-              'ok'
-            );
-            setTimeout(function() { window.location.reload(); }, 1200);
-          } catch (err) {
-            showMsg('Error: ' + err.message, 'error');
-            btn.disabled = false;
-          }
+          OTP.apiSave({
+            method: 'POST', url: '/api/v1/oos-operating-plan/' + planId + '/recalculate-assignments',
+            btnEl: btn,
+            onSuccess: function(data) {
+              showMsg(
+                'Considered ' + data.itemsConsidered + ' items: ' + data.recommended +
+                ' assigned, ' + data.lowConfidence + ' need human review (confidence < 70%), ' +
+                data.unassigned + ' unassignable. Reloading...',
+                'ok'
+              );
+              setTimeout(function() { window.location.reload(); }, 1200);
+            },
+            onError: function(err) { showMsg(OTP.formatError(err, 'Recalculate failed'), 'error'); return true; },
+          });
           return;
         }
 
         if (action === 'preview') {
           showMsg('Building preview...', 'info');
-          btn.disabled = true;
-          try {
-            var res = await fetch('/api/v1/oos-operating-plan/' + planId + '/preview-sync', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({}),
-            });
-            var data = await res.json();
-            if (!res.ok || data.error) {
-              showMsg('Error: ' + (data.error?.message || 'preview failed'), 'error');
-              btn.disabled = false;
-              return;
-            }
-            renderPreview(data);
-            showMsg('Preview ready: ' + data.summary.total + ' claim' + (data.summary.total === 1 ? '' : 's') + '.', 'ok');
-          } catch (err) {
-            showMsg('Error: ' + err.message, 'error');
-          } finally {
-            btn.disabled = false;
-          }
+          OTP.apiSave({
+            method: 'POST', url: '/api/v1/oos-operating-plan/' + planId + '/preview-sync',
+            body: {},
+            btnEl: btn,
+            onSuccess: function(data) {
+              renderPreview(data);
+              showMsg('Preview ready: ' + data.summary.total + ' claim' + (data.summary.total === 1 ? '' : 's') + '.', 'ok');
+            },
+            onError: function(err) { showMsg(OTP.formatError(err, 'Preview failed'), 'error'); return true; },
+          });
           return;
         }
 
@@ -708,29 +658,20 @@
           if (!confirm('Push this quarter\'s execution items into the OOS as structured claims? This is a load-bearing write. Make sure you have run Preview first and reviewed what would change.')) return;
           if (!confirm('SECOND CONFIRM: This writes to the OOS. Reverting is per-claim and audit-logged but cannot un-publish. Proceed?')) return;
           showMsg('Pushing to OOS...', 'info');
-          btn.disabled = true;
-          try {
-            var res = await fetch('/api/v1/oos-operating-plan/' + planId + '/push-to-oos', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({}),
-            });
-            var data = await res.json();
-            if (!res.ok || data.error) {
-              showMsg('Error: ' + (data.error?.message || 'push failed'), 'error');
-              btn.disabled = false;
-              return;
-            }
-            showMsg(
-              'Pushed: ' + data.claimsCreated + ' new claim' + (data.claimsCreated === 1 ? '' : 's') +
-              ', ' + data.claimsUpdated + ' updated. Sync event ' + data.syncEventId + ' saved. Reloading...',
-              'ok'
-            );
-            setTimeout(function() { window.location.reload(); }, 1500);
-          } catch (err) {
-            showMsg('Error: ' + err.message, 'error');
-            btn.disabled = false;
-          }
+          OTP.apiSave({
+            method: 'POST', url: '/api/v1/oos-operating-plan/' + planId + '/push-to-oos',
+            body: {},
+            btnEl: btn,
+            onSuccess: function(data) {
+              showMsg(
+                'Pushed: ' + data.claimsCreated + ' new claim' + (data.claimsCreated === 1 ? '' : 's') +
+                ', ' + data.claimsUpdated + ' updated. Sync event ' + data.syncEventId + ' saved. Reloading...',
+                'ok'
+              );
+              setTimeout(function() { window.location.reload(); }, 1500);
+            },
+            onError: function(err) { showMsg(OTP.formatError(err, 'Push failed'), 'error'); return true; },
+          });
           return;
         }
 
@@ -852,25 +793,21 @@
 
         msgEl.textContent = 'Saving...';
         msgEl.className = 'text-xs text-gray-500';
-        try {
-          var res = await fetch('/api/v1/oos-operating-plan/sections/' + id, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contentJson: contentJson }),
-          });
-          var data = await res.json();
-          if (!res.ok || data.error) {
-            msgEl.textContent = 'Error: ' + (data.error?.message || 'save failed');
+        OTP.apiSave({
+          method: 'PATCH',
+          url: '/api/v1/oos-operating-plan/sections/' + encodeURIComponent(id),
+          body: { contentJson: contentJson },
+          onSuccess: function() {
+            msgEl.textContent = 'Saved. Reloading...';
+            msgEl.className = 'text-xs text-green-600';
+            setTimeout(function() { window.location.reload(); }, 600);
+          },
+          onError: function(err) {
+            msgEl.textContent = OTP.formatError(err, 'Section save failed');
             msgEl.className = 'text-xs text-red-600';
-            return;
-          }
-          msgEl.textContent = 'Saved. Reloading...';
-          msgEl.className = 'text-xs text-green-600';
-          setTimeout(function() { window.location.reload(); }, 600);
-        } catch (e) {
-          msgEl.textContent = 'Error: ' + e.message;
-          msgEl.className = 'text-xs text-red-600';
-        }
+            return true;
+          },
+        });
       });
     });
 
@@ -961,27 +898,22 @@
 
         aiMsg.textContent = 'Saving...';
         aiMsg.className = 'text-xs text-gray-500';
-
-        try {
-          var planId = document.querySelector('[data-plan-id]').getAttribute('data-plan-id');
-          var res = await fetch('/api/v1/oos-operating-plan/' + planId + '/items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-          var data = await res.json();
-          if (!res.ok || data.error) {
-            aiMsg.textContent = 'Error: ' + (data.error?.message || 'create failed');
+        var planIdLocal = document.querySelector('[data-plan-id]').getAttribute('data-plan-id');
+        OTP.apiSave({
+          method: 'POST',
+          url: '/api/v1/oos-operating-plan/' + encodeURIComponent(planIdLocal) + '/items',
+          body: body,
+          onSuccess: function() {
+            aiMsg.textContent = 'Added. Reloading...';
+            aiMsg.className = 'text-xs text-green-600';
+            setTimeout(function() { window.location.reload(); }, 500);
+          },
+          onError: function(err) {
+            aiMsg.textContent = OTP.formatError(err, 'Create failed');
             aiMsg.className = 'text-xs text-red-600';
-            return;
-          }
-          aiMsg.textContent = 'Added. Reloading...';
-          aiMsg.className = 'text-xs text-green-600';
-          setTimeout(function() { window.location.reload(); }, 500);
-        } catch (e) {
-          aiMsg.textContent = 'Error: ' + e.message;
-          aiMsg.className = 'text-xs text-red-600';
-        }
+            return true;
+          },
+        });
       });
     }
   })();

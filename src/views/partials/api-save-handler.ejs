@@ -119,6 +119,35 @@
   }
 
   /**
+   * Format an errInfo (from apiSave's onError) into a single concise
+   * string. Surfaces with their own status elements / custom styling
+   * call this from onError + return true (to suppress the default
+   * render), keeping every error path bulletproof without forcing
+   * them through apiSave's default toast / msgEl UI.
+   *
+   *   onError: function(err) {
+   *     myStyledMsg.textContent = OTP.formatError(err, 'save failed');
+   *     myStyledMsg.className = 'text-xs text-red-600';
+   *     return true;
+   *   }
+   */
+  window.OTP.formatError = function formatError(errInfo, fallback) {
+    if (!errInfo) return fallback || 'request failed';
+    if (errInfo.networkError) return 'Network error: ' + (errInfo.message || 'unknown');
+    var base = errInfo.message || fallback || ('request failed (' + (errInfo.status || '?') + ')');
+    if (!errInfo.details || !errInfo.details.length) return base;
+    var detailStr = errInfo.details.slice(0, 4).map(function(d) {
+      if (typeof d === 'string') return d;
+      var label = d.field || d.issue || d.path || 'field';
+      var v = d.value != null ? ' ("' + d.value + '")' : '';
+      var msg = d.expected || d.message || d.issue || '';
+      return label + v + (msg ? ': ' + msg : '');
+    }).join('; ');
+    if (errInfo.details.length > 4) detailStr += '; ... ' + (errInfo.details.length - 4) + ' more';
+    return base + ' — ' + detailStr;
+  };
+
+  /**
    * Make a save API call with full error handling. No surface using
    * this helper ever sees a naked status code; the server's
    * error.message is always surfaced, with details rendered as bullets
