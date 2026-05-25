@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc, asc, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or, desc, asc, isNull, isNotNull } from 'drizzle-orm';
 import { z } from 'zod';
 import pkg from 'rrule';
 const { RRule } = pkg;
@@ -173,8 +173,9 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (q.includeTemplates !== 'true') {
       // A recurrence template is a row that has a rule AND no due_at (the
       // template itself is never assigned a date; only instances are).
-      // Exclude them from default listings.
-      conditions.push(isNull(todos.recurrenceRule));
+      // Exclude THOSE from default listings. A row with a rule AND a due_at
+      // is just a recurring task with a next-occurrence anchor — show it.
+      conditions.push(or(isNull(todos.recurrenceRule), isNotNull(todos.dueAt))!);
     }
 
     // Sort: priority asc (p1 first) → due_at asc nulls last → created desc.
