@@ -1,18 +1,19 @@
 <div class="max-w-6xl mx-auto px-4 py-8" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-4 border-b pb-4">
+  <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
     <div>
-      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Weekly Leadership Meeting</div>
-      <h1 class="text-2xl font-bold"><%= meeting.title %></h1>
-      <p class="text-sm text-gray-600">
-        Scheduled <%= new Date(meeting.scheduledAt).toLocaleString() %> &middot;
-        Status <span class="font-medium" id="meeting-status"><%= meeting.status %></span>
+      <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %> &middot; Weekly Leadership L10</div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-[1.05] tracking-tight"><%= meeting.title %></h1>
+      <p class="text-sm text-gray-600 mt-1.5">
+        Scheduled <%= new Date(meeting.scheduledAt).toLocaleString() %>
+        <span class="mx-1.5 text-gray-300">&middot;</span>
+        Status <span class="font-semibold text-gray-800" id="meeting-status"><%= meeting.status %></span>
       </p>
     </div>
     <div class="flex gap-2 items-center">
       <% if (meeting.status === 'scheduled') { %>
-        <button id="start-meeting" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-semibold hover:bg-otp-400" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">
+        <button id="start-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">
           ▶ Start meeting
         </button>
       <% } else if (meeting.status === 'in_progress') { %>
@@ -30,8 +31,8 @@
 
   <!-- Direction strip: the plan's destination, framing the meeting. -->
   <% if (typeof planDirection !== 'undefined' && planDirection && (planDirection.threeYear || planDirection.annualObjective || planDirection.tenYear)) { %>
-    <div class="mb-6 border border-otp-100 bg-otp-50 rounded-lg px-4 py-2.5 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs">
-      <span class="uppercase tracking-wider text-otp-700 font-semibold">Driving toward</span>
+    <div class="mb-6 border border-orgy-soft bg-orgy-blue-soft rounded-lg px-4 py-2.5 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs">
+      <span class="uppercase tracking-wider text-orgy-blue font-semibold">Driving toward</span>
       <% if (planDirection.threeYear) { %>
         <span><span class="text-gray-500">3-5yr<%= planDirection.threeYearYear ? ' (' + planDirection.threeYearYear + ')' : '' %>:</span> <span class="text-gray-800 font-medium"><%= planDirection.threeYear %></span></span>
       <% } %>
@@ -39,7 +40,7 @@
         <span><span class="text-gray-500">This year:</span> <span class="text-gray-800 font-medium"><%= planDirection.annualObjective %></span></span>
       <% } %>
       <% var _role = (locals.memberRole || '').toString(); if (_role === 'owner' || _role === 'visionary') { %>
-        <a href="/dashboard/ceo" class="text-otp-600 hover:underline font-medium ml-auto">CEO Dashboard &rarr;</a>
+        <a href="/dashboard/ceo" class="text-orgy-blue hover:underline font-medium ml-auto">CEO Dashboard &rarr;</a>
       <% } %>
     </div>
   <% } %>
@@ -111,7 +112,7 @@
             <option value="<%= o.entityType %>:<%= o.externalId %>:<%= o.name || o.externalId %>"><%= o.name || o.externalId %> (<%= o.entityType %>)</option>
           <% }); %>
         </select>
-        <button id="attendee-add-btn" class="px-3 py-1 bg-otp-500 text-white text-xs rounded hover:bg-otp-400">Add</button>
+        <button id="attendee-add-btn" class="px-3 py-1 bg-orgy-blue text-white text-xs rounded hover:bg-orgy-blue-deep">Add</button>
       </div>
     </div>
   </div>
@@ -185,17 +186,17 @@
     <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip flex-[1.5] px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">3. Quarterly Priorities <span class="text-gray-500">5m</span></a>
     <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">4. Headlines <span class="text-gray-500">5m</span></a>
     <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">5. To-Dos <span class="text-gray-500">5m</span></a>
-    <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-otp-100 rounded hover:bg-otp-200 text-center font-medium min-w-0">6. Issues <span class="text-gray-600">60m</span></a>
+    <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-orgy-blue-soft rounded hover:bg-orgy-tint text-center font-medium min-w-0">6. Issues <span class="text-gray-600">60m</span></a>
     <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">7. Conclude <span class="text-gray-500">5m</span></a>
     <span id="meeting-clock" class="ml-3 px-2 py-1 rounded bg-gray-900 text-white font-mono text-xs whitespace-nowrap">--:--</span>
-    <button id="timer-toggle" class="ml-1 px-2 py-1 bg-otp-500 text-white rounded text-xs hover:bg-otp-400">Start</button>
+    <button id="timer-toggle" class="ml-1 px-2 py-1 bg-orgy-blue text-white rounded text-xs hover:bg-orgy-blue-deep">Start</button>
     <button id="timer-prev"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Previous section  (  [  )">← Prev</button>
     <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Next section  (  ]  )  ·  space toggles the timer">Next →</button>
   </nav>
 
   <!-- 1. Segue / Check-in -- one card per attendee, saves with name + time -->
   <section id="segue" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span></h2>
     <% var _checkinsDone = normalizedAttendees.filter(function(a){ return a.checkinText && String(a.checkinText).trim(); }).length; %>
     <div class="text-xs text-gray-500 mb-2"><%= _checkinsDone %> of <%= normalizedAttendees.length %> checked in</div>
     <div class="space-y-2">
@@ -224,7 +225,7 @@
             <div data-checkin-editor class="hidden">
               <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."><%= a.checkinText || '' %></textarea>
               <div class="flex gap-2 mt-2 items-center">
-                <button type="button" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400" data-checkin-save>Save</button>
+                <button type="button" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" data-checkin-save>Save</button>
                 <button type="button" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" data-checkin-cancel>Cancel</button>
                 <span class="text-xs text-gray-500" data-checkin-msg></span>
               </div>
@@ -233,7 +234,7 @@
             <div data-checkin-editor>
               <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."></textarea>
               <div class="flex gap-2 mt-2 items-center">
-                <button type="button" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400" data-checkin-save>Save</button>
+                <button type="button" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" data-checkin-save>Save</button>
                 <span class="text-xs text-gray-500" data-checkin-msg></span>
               </div>
             </div>
@@ -245,7 +246,7 @@
 
   <!-- 2. Scorecard -->
   <section id="scorecard" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span>
       <% if (meeting.status === 'in_progress') { %>
         <button id="refresh-scorecard" class="ml-2 text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100 font-normal align-middle">↻ Refresh</button>
       <% } %>
@@ -332,7 +333,7 @@
                     <% } %>
                   </td>
                   <td class="p-2 text-right font-medium" data-kpi-id="<%= k.id %>" data-period-start="<%= v ? new Date(v.periodStart).toISOString() : '' %>">
-                    <div data-kpi-display class="cursor-pointer hover:text-otp-600" title="Click to edit">
+                    <div data-kpi-display class="cursor-pointer hover:text-orgy-blue" title="Click to edit">
                       <%= v ? v.value : '—' %>
                       <% if (v) { %>
                         <div class="text-xs text-gray-400 font-normal">as of <%= new Date(v.periodEnd).toLocaleDateString() %></div>
@@ -344,7 +345,7 @@
                     <div data-kpi-editor class="hidden">
                       <input type="number" step="any" data-kpi-input class="w-20 border rounded p-1 text-sm text-right" value="<%= v ? v.value : '' %>">
                       <div class="flex gap-1 justify-end mt-1">
-                        <button data-kpi-save class="text-xs px-2 py-0.5 bg-otp-500 text-white rounded hover:bg-otp-400">Save</button>
+                        <button data-kpi-save class="text-xs px-2 py-0.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save</button>
                         <button data-kpi-cancel class="text-xs px-2 py-0.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
                       </div>
                     </div>
@@ -355,7 +356,7 @@
                     <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
                   </td>
                   <td class="p-2 text-center">
-                    <button class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200"
+                    <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-tint"
                             data-flag-kpi="<%= k.id %>"
                             data-flag-title="<%= String('KPI: ' + (k.title || '')).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>"
                             data-owner="<%= (k.ownerEntityType && k.ownerExternalId) ? (k.ownerEntityType + ':' + k.ownerExternalId) : '' %>">→ Issue</button>
@@ -371,7 +372,7 @@
 
   <!-- 3. Rocks -->
   <section id="rocks" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
     <% // Hide agent-owned rocks from the L10 main agenda. Humans own
        // quarterly priorities in EOS; agent commitments belong in the
        // agent's own review surface.
@@ -400,7 +401,7 @@
               <div class="font-medium text-sm"><%= r.title %></div>
               <div class="text-xs text-gray-600 mt-0.5">Owner: <%= r.ownerName || r.ownerExternalId %></div>
               <% if (r.executionItemId && _execLabel[r.executionItemId]) { %>
-                <div class="text-xs text-otp-700 mt-0.5">&#8627; Serves plan: <%= _execLabel[r.executionItemId] %></div>
+                <div class="text-xs text-orgy-blue mt-0.5">&#8627; Serves plan: <%= _execLabel[r.executionItemId] %></div>
               <% } else { %>
                 <div class="text-xs text-amber-700 mt-0.5">&#9888; Not laddered to the 90-day plan</div>
               <% } %>
@@ -427,7 +428,7 @@
 
     <!-- Add quarterly priority (collapsed by default) -->
     <div class="mt-3">
-      <button id="rock-add-toggle" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400">+ Add quarterly priority</button>
+      <button id="rock-add-toggle" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">+ Add quarterly priority</button>
       <div id="rock-add-form" class="hidden mt-3 border rounded p-3 bg-gray-50">
         <div class="grid grid-cols-12 gap-2">
           <input id="new-rock-title" type="text" placeholder="Priority title (e.g. 'Move to Trello -- full Accelo decommission')" class="col-span-12 border rounded p-2 text-sm">
@@ -462,7 +463,7 @@
 
   <!-- 4. Headlines -->
   <section id="headlines" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">4. Customer &amp; Employee Headlines <span class="text-sm text-gray-400 font-normal">5 min</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">4. Customer &amp; Employee Headlines <span class="text-sm text-gray-400 font-normal">5 min</span></h2>
 
     <!-- Structured headline items -->
     <div class="space-y-2 mb-3">
@@ -486,7 +487,7 @@
               <button class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200"
                       data-headline-done="<%= h.id %>">✓ Addressed</button>
             <% } %>
-            <button class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200"
+            <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-tint"
                     data-flag-headline="<%= h.id %>"
                     data-flag-title="<%= String(h.body || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>">→ Issue</button>
           </div>
@@ -505,7 +506,7 @@
         <option value="other" selected>other</option>
       </select>
       <input id="new-headline-body" type="text" placeholder="Notable win or loss with a customer or team member..." class="flex-1 border rounded p-2 text-sm">
-      <button id="add-headline" class="px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">Add</button>
+      <button id="add-headline" class="px-3 py-2 bg-orgy-blue text-white text-sm rounded hover:bg-orgy-blue-deep">Add</button>
     </div>
 
     <label class="block text-xs uppercase tracking-wider text-gray-500 mb-1">Cascading preview (free text)</label>
@@ -515,7 +516,7 @@
 
   <!-- 5. To-Dos -->
   <section id="todos" class="mb-12">
-    <h2 class="text-xl font-bold mb-3">5. To-Dos <span class="text-sm text-gray-400 font-normal">5 min &middot; 7-day commitments from prior meeting</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">5. To-Dos <span class="text-sm text-gray-400 font-normal">5 min &middot; 7-day commitments from prior meeting</span></h2>
     <% if (!todos || todos.length === 0) { %>
       <div class="bg-gray-50 border rounded p-4 text-sm text-gray-600">No open to-dos.</div>
     <% } else { %>
@@ -561,7 +562,7 @@
         <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR">M/W/F</option>
         <option value="FREQ=MONTHLY">monthly</option>
       </select>
-      <button id="add-todo" class="col-span-1 px-3 py-2 bg-otp-500 text-white text-sm rounded hover:bg-otp-400">Add</button>
+      <button id="add-todo" class="col-span-1 px-3 py-2 bg-orgy-blue text-white text-sm rounded hover:bg-orgy-blue-deep">Add</button>
     </div>
     <div>
       <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
@@ -571,8 +572,8 @@
   </section>
 
   <!-- 6. IDS -->
-  <section id="ids" class="mb-12 bg-otp-50 -mx-4 px-4 py-6 rounded-lg">
-    <h2 class="text-xl font-bold mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span></h2>
+  <section id="ids" class="mb-12 bg-orgy-blue-soft -mx-4 px-4 py-6 rounded-lg">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span></h2>
     <% // Open: anything not yet solved AND owned by a human (or unowned).
        // EOS leadership L10 is humans-only by convention -- agent-owned
        // issues belong in an agent review, not the main IDS list.
@@ -606,7 +607,7 @@
               </span>
               <span class="text-xs text-gray-500">priority: <%= i.priority %></span>
               <% if (i.priorityRank != null) { %>
-                <span class="text-xs font-medium text-otp-700">#<%= i.priorityRank %></span>
+                <span class="text-xs font-medium text-orgy-blue">#<%= i.priorityRank %></span>
               <% } %>
               <% if (i.ownerExternalId) { %>
                 <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-800 rounded">owner: <%= i.ownerName || i.ownerExternalId %></span>
@@ -624,7 +625,7 @@
               <button data-ids-set="identified" class="text-xs px-2 py-1 bg-blue-100 rounded hover:bg-blue-200">Identify</button>
               <button data-ids-set="discussed"  class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Discuss</button>
               <button data-action="solve"       class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200 font-medium">Solve</button>
-              <button data-action="convert"     class="text-xs px-2 py-1 bg-otp-100 rounded hover:bg-otp-200">→ To-Do</button>
+              <button data-action="convert"     class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-tint">→ To-Do</button>
               <button data-action="edit"        class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Edit</button>
               <button data-action="delete"      class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
             </div>
@@ -643,7 +644,7 @@
               <% }); %>
             </select>
             <div class="flex gap-2 mt-2">
-              <button data-action="edit-save" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Save</button>
+              <button data-action="edit-save" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save</button>
               <button data-action="edit-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
             </div>
           </div>
@@ -671,8 +672,8 @@
           </div>
 
           <!-- Inline convert-to-todo form (hidden by default) -->
-          <div data-form="convert" class="hidden mt-3 border-t pt-3 bg-otp-50/40 -mx-3 -mb-3 px-3 pb-3">
-            <label class="block text-xs font-medium text-otp-900 mb-1">Convert this issue to a 7-day to-do</label>
+          <div data-form="convert" class="hidden mt-3 border-t pt-3 bg-orgy-blue-soft/40 -mx-3 -mb-3 px-3 pb-3">
+            <label class="block text-xs font-medium text-orgy-blue mb-1">Convert this issue to a 7-day to-do</label>
             <input data-field="convert-title" type="text" value="<%= i.title %>" class="w-full border rounded p-2 text-sm mb-2">
             <select data-field="convert-owner" class="border rounded p-2 text-sm w-full mb-2">
               <option value="">-- to-do owner --</option>
@@ -684,7 +685,7 @@
               <input type="checkbox" data-field="delete-after-convert"> Also delete this issue after creating the to-do
             </label>
             <div class="flex gap-2">
-              <button data-action="convert-confirm" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Create To-Do</button>
+              <button data-action="convert-confirm" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Create To-Do</button>
               <button data-action="convert-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
             </div>
           </div>
@@ -698,7 +699,7 @@
 
     <!-- Add issue (collapsed by default) -->
     <div class="mt-3">
-      <button id="issue-add-toggle" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400">+ Add issue</button>
+      <button id="issue-add-toggle" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">+ Add issue</button>
       <div id="issue-add-form" class="hidden mt-3 border rounded p-3 bg-white">
         <div class="grid grid-cols-12 gap-2">
           <input id="new-issue-title" type="text" placeholder="Issue title (the thing the team needs to identify, discuss, solve)" class="col-span-12 border rounded p-2 text-sm">
@@ -747,8 +748,8 @@
   </section>
 
   <!-- Shared flag-to-issue form (hidden; moved next to the flagged item on click) -->
-  <div id="flag-issue-form" class="hidden border border-otp-300 rounded p-3 bg-otp-50 mb-3">
-    <div class="text-xs uppercase tracking-wider text-otp-800 font-medium mb-2">Flag as an issue</div>
+  <div id="flag-issue-form" class="hidden border border-orgy-blue rounded p-3 bg-orgy-blue-soft mb-3">
+    <div class="text-xs uppercase tracking-wider text-orgy-blue font-medium mb-2">Flag as an issue</div>
     <input id="flag-title" type="text" placeholder="Issue title" class="w-full border rounded p-2 text-sm mb-2">
     <div class="grid grid-cols-2 gap-2 mb-2">
       <select id="flag-team" class="border rounded p-2 text-sm">
@@ -765,14 +766,14 @@
       </select>
     </div>
     <div class="flex gap-2">
-      <button id="flag-create" class="text-xs px-3 py-1.5 bg-otp-500 text-white rounded hover:bg-otp-400 font-medium">Create Issue</button>
+      <button id="flag-create" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Create Issue</button>
       <button id="flag-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
     </div>
   </div>
 
   <!-- 7. Conclude -->
   <section id="conclude" class="mb-8">
-    <h2 class="text-xl font-bold mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span></h2>
 
     <!-- To-dos created in this meeting -->
     <% var meetingTodos = (todos || []).filter(function(t){ return t.meetingId === meeting.id; }); %>
@@ -816,7 +817,7 @@
             </label>
           <% }); %>
         </div>
-        <button id="save-ratings" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Save ratings</button>
+        <button id="save-ratings" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save ratings</button>
         <span id="ratings-status" class="text-xs text-gray-500 ml-2"></span>
       <% } %>
     </div>
@@ -825,7 +826,7 @@
     <textarea id="cascading-message" class="w-full border rounded p-3 text-sm h-48 font-mono"><%= meeting.cascadingMessage || '' %></textarea>
     <div class="mt-2 flex gap-2 items-center">
       <button data-save="cascadingMessage" class="text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
-      <button id="rebuild-cascading" class="text-xs px-3 py-1 bg-otp-500 text-white rounded hover:bg-otp-400">Rebuild draft from meeting</button>
+      <button id="rebuild-cascading" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Rebuild draft from meeting</button>
       <button id="cascade-to-team" class="text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500">Cascade to team</button>
       <span id="cascading-status" class="text-xs text-gray-500"></span>
     </div>
@@ -966,8 +967,8 @@
   }
   function paintChip() {
     chips.forEach((c, i) => {
-      c.classList.remove('ring-2', 'ring-otp-500');
-      if (i === timerState.sectionIdx) c.classList.add('ring-2', 'ring-otp-500');
+      c.classList.remove('ring-2', 'ring-orgy-blue');
+      if (i === timerState.sectionIdx) c.classList.add('ring-2', 'ring-orgy-blue');
     });
   }
   function tick() {
