@@ -11,6 +11,28 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 25, 2026 ----
+
+  {
+    date: '2026-05-25',
+    tags: ['Major', 'Todos', 'Mobile'],
+    title: 'Your queue replaces Todoist -- one mobile todo app for you and every AI agent on your team',
+    summary: 'OTP /me/todos was rebuilt for one-handed phone use (sticky bottom add bar, swipe-to-complete, PWA-installable), and every AI agent on the army now pushes action items there instead of to Todoist. To-do create forms also got a description field with bold / italic / link formatting, so the context an agent gives you is finally readable. Todoist is deprecated; one less app on the home screen.',
+    details: `<p>The to-do system is the most-touched surface in OTP, and until today there was a split: the platform had <a href="/me/todos" class="text-otp-600 hover:text-otp-500 underline">/me/todos</a>, but the AI agents pushed their action items to Todoist, so the queue was actually in two places. As of today, it's one place -- and that place is built for the phone.</p>
+
+<h3>The mobile queue is the queue</h3>
+<p>The <a href="/me/todos" class="text-otp-600 hover:text-otp-500 underline">/me/todos</a> page was rebuilt as a thumb-reachable mobile app: sticky bottom add bar that's always visible (one input + send, no priority/date upfront -- those live in the per-todo Edit drawer), <strong>swipe-left-to-complete</strong> on any card, iOS safe-area padding so the FAB clears the home indicator, and a PWA install nudge so you can drop the app on your home screen and treat it like any other phone app. Theme color matches the rest of the brand (orgy lime). Desktop layout is unchanged.</p>
+
+<h3>Your AI agents create todos directly</h3>
+<p>Every agent on the Sneeze It army -- Radar, Pepper, Dirk, Arin, AIO, and the rest -- has been migrated off Todoist and onto OTP's API. When an agent identifies an action item for you, it lands on your queue in seconds, tagged with the agent's name so you can see which one pushed it. The migration replaces 50+ touchpoints across the agent system; the canonical path now is a single shell wrapper (<code>~/.claude/otp-todo.sh</code>) every agent calls.</p>
+
+<h3>Descriptions with formatting</h3>
+<p>The to-do create form (on /me/todos, /dashboard, and inside L10 meetings) now has a description field with a small toolbar: <strong>**bold**</strong>, <em>*italic*</em>, and <code>[label](url)</code> link insertion. Cmd/Ctrl+B / +I / +K shortcut too. What you type is what gets stored -- no editor library, no contenteditable surprises -- and the renderer is gated so a malicious link can't inject javascript: URLs.</p>
+
+<h3>Todoist is deprecated</h3>
+<p>Todoist was the bridge while OTP built its own todo layer. That bridge is no longer needed. A migration script (<code>~/.claude/scripts/import-todoist-todos.sh</code>) mirrors any remaining open Todoist tasks into OTP on demand -- run once when you're ready to flip the switch. Agent surfaces still in the codebase reference Todoist only in DEPRECATED sections so the history stays readable.</p>`,
+  },
+
   // ---- May 24, 2026 ----
 
   {
