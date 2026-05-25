@@ -370,6 +370,33 @@
           todayT.sort(function(a,b){ return new Date(a.dueAt) - new Date(b.dueAt); });
           upcomingT.sort(function(a,b){ return new Date(a.dueAt) - new Date(b.dueAt); });
           noDateT.sort(function(a,b){ return (a.title || '').localeCompare(b.title || ''); });
+          // Map an iCalendar RRULE to one of our preset choices so the edit
+          // form can pre-select it and the view row can show a friendly
+          // cadence label. Unknown/exotic rules fall through to 'custom'
+          // which the form preserves on save.
+          function recurrencePreset(rule) {
+            if (!rule) return { key: 'none', label: null };
+            // Normalize: uppercase, strip whitespace, sort the part list AND
+            // the comma-separated values inside each part (so MO,TU,WE,TH,FR
+            // matches FR,MO,TH,TU,WE for the Weekdays preset).
+            var parts = String(rule).toUpperCase().replace(/\s+/g,'').split(';').filter(Boolean)
+              .map(function(p){
+                var eq = p.indexOf('=');
+                if (eq < 0) return p;
+                var k = p.slice(0, eq);
+                var v = p.slice(eq + 1).split(',').sort().join(',');
+                return k + '=' + v;
+              })
+              .sort();
+            var norm = parts.join(';');
+            if (norm === 'FREQ=DAILY')                                return { key: 'daily',    label: 'Daily' };
+            if (norm === 'BYDAY=FR,MO,TH,TU,WE;FREQ=WEEKLY')          return { key: 'weekdays', label: 'Weekdays' };
+            if (norm === 'FREQ=WEEKLY')                               return { key: 'weekly',   label: 'Weekly' };
+            if (norm === 'FREQ=WEEKLY;INTERVAL=2')                    return { key: 'biweekly', label: 'Every 2 weeks' };
+            if (norm === 'FREQ=MONTHLY')                              return { key: 'monthly',  label: 'Monthly' };
+            if (norm === 'FREQ=YEARLY')                               return { key: 'yearly',   label: 'Yearly' };
+            return { key: 'custom', label: 'Custom' };
+          }
           var sections = [
             { id: 'overdue',  name: 'Overdue',  items: overdueT,  color: 'text-rose-600', alwaysShow: false, collapsible: true,  defaultOpen: false },
             { id: 'today',    name: 'Today',    items: todayT,    color: 'text-gray-700', alwaysShow: true,  collapsible: false, defaultOpen: true  },
@@ -430,8 +457,11 @@
                         <% } %>
                         <div class="text-[11px] flex items-center gap-2 mt-1 flex-wrap">
                           <span class="px-1.5 py-0.5 rounded font-medium <%= sourceClass %>"><%= sourceLabel %></span>
+                          <% var rp = recurrencePreset(t.recurrenceRule); %>
                           <% if (t.recurrenceParentId) { %>
-                            <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Recurring instance">↻ recurring</span>
+                            <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Spawned from a recurring template">↻ from template</span>
+                          <% } else if (rp.key !== 'none') { %>
+                            <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Repeats: <%= t.recurrenceRule %>">↻ <%= rp.label %></span>
                           <% } %>
                           <span class="<%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= due ? (overdue ? 'OVERDUE — ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
                           <button type="button" class="todo-edit-btn text-orgy-blue font-semibold hover:underline">Edit</button>
@@ -454,6 +484,23 @@
                             <label class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
                             <input type="date" name="dueAt" value="<%= t.dueAt ? new Date(t.dueAt).toISOString().slice(0,10) : '' %>" class="rounded border border-gray-300 px-2 py-1 text-xs">
                           </div>
+                          <% if (!t.recurrenceParentId) { %>
+                            <div class="flex flex-col gap-0.5">
+                              <label class="text-[10px] uppercase tracking-wide text-gray-500">Repeats</label>
+                              <select name="recurrence" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                                <option value="none"     <%= rp.key === 'none'     ? 'selected' : '' %>>Does not repeat</option>
+                                <option value="daily"    <%= rp.key === 'daily'    ? 'selected' : '' %>>Daily</option>
+                                <option value="weekdays" <%= rp.key === 'weekdays' ? 'selected' : '' %>>Weekdays (Mon–Fri)</option>
+                                <option value="weekly"   <%= rp.key === 'weekly'   ? 'selected' : '' %>>Weekly</option>
+                                <option value="biweekly" <%= rp.key === 'biweekly' ? 'selected' : '' %>>Every 2 weeks</option>
+                                <option value="monthly"  <%= rp.key === 'monthly'  ? 'selected' : '' %>>Monthly</option>
+                                <option value="yearly"   <%= rp.key === 'yearly'   ? 'selected' : '' %>>Yearly</option>
+                                <% if (rp.key === 'custom') { %>
+                                  <option value="custom" selected>Custom (keep as-is)</option>
+                                <% } %>
+                              </select>
+                            </div>
+                          <% } %>
                           <div class="flex flex-col gap-0.5">
                             <label class="text-[10px] uppercase tracking-wide text-gray-500">Reassign to</label>
                             <select name="reassignTo" class="rounded border border-gray-300 px-2 py-1 text-xs">
@@ -1062,6 +1109,19 @@
       var editBody = { title: title, description: (fd.get('description') || '').toString() };
       var editDue = (fd.get('dueAt') || '').toString();
       editBody.dueAt = editDue ? new Date(editDue + 'T17:00:00').toISOString() : null;
+      // Recurrence: 'none' clears the rule, presets map to RRULE strings,
+      // 'custom' leaves the existing rule untouched (we omit the field).
+      var recKey = (fd.get('recurrence') || '').toString();
+      var recMap = {
+        none:     null,
+        daily:    'FREQ=DAILY',
+        weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+        weekly:   'FREQ=WEEKLY',
+        biweekly: 'FREQ=WEEKLY;INTERVAL=2',
+        monthly:  'FREQ=MONTHLY',
+        yearly:   'FREQ=YEARLY',
+      };
+      if (recKey && recKey !== 'custom') editBody.recurrenceRule = recMap[recKey];
       var reassignVal = (fd.get('reassignTo') || '').toString();
       if (reassignVal) {
         var rParts = reassignVal.split(':');
