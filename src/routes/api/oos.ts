@@ -564,23 +564,42 @@ ${claimSections.join('\n')}`.trim();
       });
     }
 
-    // Step 2: PII scan. Chart-style templates (agent_army, org_chart,
-    // value_chain) carry contact_email / contact_phone / slack_id as
-    // first-class spec fields -- those are not accidental PII, they're
-    // the chart's stated contact surface. Strip them from the scan
-    // input so the scanner only flags free-form PII the user didn't
-    // mean to publish. (The stored rawContent is unchanged; this is
-    // only about what we pass to the scanner.)
+    // Step 2: PII scan + chart-contact decision (Layer 1, 2026-05-25).
+    //
+    // Background: chart-style templates (agent_army, org_chart, value_chain)
+    // carry contact_email / contact_phone / slack_id as first-class fields
+    // of the spec. A naive PII scanner flags those as accidental leaks and
+    // blocks publish, which surprised David on team chart v30. But "strip
+    // them silently" (the first fix) is also wrong -- it bakes in a hidden
+    // default that some orgs won't share.
+    //
+    // The right behavior: when a chart has PII *only* in those structured
+    // contact fields, don't block -- ask. The client gets a 409 with the
+    // choice (publish-with-contacts-visible vs strip-contacts-and-publish)
+    // and re-POSTs with `publishMode` set. Free-form PII (an email pasted
+    // into a description, say) still hard-blocks; that's a real leak.
     const tmpl = oosFile.template as string;
     const isChartTemplate = tmpl === 'agent_army' || tmpl === 'org_chart' || tmpl === 'value_chain';
-    const piiScanInput = isChartTemplate ? stripChartContactFields(oosFile.rawContent) : oosFile.rawContent;
-    const piiResult = scanOOSContent(piiScanInput);
-    if (!piiResult.clean) {
-      // Dedupe by (location, text). The scanner can match the same string
-      // against multiple rules (e.g. "$2,000/mo" hits both 'revenue' and
-      // 'pricing'); users care about distinct strings to fix, not rule hits.
-      const seen = new Map<string, typeof piiResult.flags[number] & { types: string[] }>();
-      for (const f of piiResult.flags) {
+
+    const requestBody = (request.body as { publishMode?: 'strip_contacts' | 'include_contacts' } | undefined) || {};
+    const publishMode = requestBody.publishMode;
+
+    // Scan the FULL rawContent (no pre-strip), then split flags into the
+    // two buckets so we know which ones are the safe-to-confirm chart
+    // surface and which are real leaks.
+    const fullScan = scanOOSContent(oosFile.rawContent);
+    const contactLineRegex = /^[ \t]+(contact_email|contact_phone|slack_id):\s*[^\n]*$/gm;
+    const contactLines = oosFile.rawContent.match(contactLineRegex) || [];
+    const isChartContactFlag = (text: string) =>
+      isChartTemplate && contactLines.some(line => line.indexOf(text) !== -1);
+
+    const contactFieldFlags = fullScan.flags.filter(f => isChartContactFlag(f.text));
+    const otherFlags = fullScan.flags.filter(f => !isChartContactFlag(f.text));
+
+    // Dedupe helper used by both error paths.
+    const dedupFlags = (flags: typeof fullScan.flags) => {
+      const seen = new Map<string, typeof flags[number] & { types: string[] }>();
+      for (const f of flags) {
         const key = `${f.location}::${f.text}`;
         const existing = seen.get(key);
         if (existing) {
@@ -589,27 +608,74 @@ ${claimSections.join('\n')}`.trim();
           seen.set(key, { ...f, types: [f.type] });
         }
       }
-      const dedup = Array.from(seen.values());
+      return Array.from(seen.values()).map(f => ({
+        field: f.location,
+        issue: f.types.join(' / '),
+        value: f.text,
+        expected: f.suggestion,
+      }));
+    };
 
+    // Real PII (anything outside chart contact fields) -- hard block.
+    if (otherFlags.length > 0) {
+      const dedup = dedupFlags(otherFlags);
       await db.insert(auditLogs).values(
         createAuditEntry(AUDIT_ACTIONS.PII_SCAN_FLAGGED, 'oos_file', {
           orgId: org.id, entityId: id,
-          details: { flagCount: dedup.length, rawFlagCount: piiResult.flags.length, flags: piiResult.flags },
+          details: { flagCount: dedup.length, rawFlagCount: otherFlags.length, flags: otherFlags },
         })
       );
       return reply.status(422).send({
         error: {
           code: 'PII_DETECTED',
           message: `PII scan found ${dedup.length} issue${dedup.length === 1 ? '' : 's'}. Resolve before publishing.`,
-          details: dedup.map(f => ({
-            field: f.location,
-            issue: f.types.join(' / '),
-            value: f.text,
-            expected: f.suggestion,
-          })),
+          details: dedup,
         },
-        piiFlags: piiResult.flags,
+        piiFlags: otherFlags,
       });
+    }
+
+    // Chart contact fields present -- but no decision yet. Return a 409
+    // with the choice. The UI shows a confirmation modal with three
+    // buttons and re-POSTs with publishMode set.
+    if (contactFieldFlags.length > 0 && !publishMode) {
+      const dedup = dedupFlags(contactFieldFlags);
+      return reply.status(409).send({
+        error: {
+          code: 'PII_CONTACTS_NEED_DECISION',
+          message: `This chart has ${dedup.length} contact field${dedup.length === 1 ? '' : 's'}. Publishing makes them visible to the network. Pick one.`,
+          details: dedup,
+          choices: [
+            { mode: 'strip_contacts',  label: 'Strip contacts and publish',  primary: true,  description: 'Remove contact_email / contact_phone / slack_id from the published chart. Internal draft also gets scrubbed -- you can re-add later.' },
+            { mode: 'include_contacts', label: 'Publish with contacts visible', primary: false, description: 'Anyone browsing your org on orgtp.com will see these contact details. Use this for a public "team" page.' },
+          ],
+        },
+      });
+    }
+
+    // If the user chose strip, scrub the rawContent + frontmatter before
+    // we publish. Both surfaces (raw markdown text + parsed jsonb) carry
+    // the contact data; scrubbing only one would leak through the other.
+    let publishRawContent = oosFile.rawContent;
+    let publishFrontmatter: any = oosFile.frontmatter;
+    if (publishMode === 'strip_contacts' && isChartTemplate) {
+      publishRawContent = stripChartContactFields(oosFile.rawContent);
+      const fm = (oosFile.frontmatter as any) || {};
+      if (fm.entities && Array.isArray(fm.entities.humans)) {
+        publishFrontmatter = {
+          ...fm,
+          entities: {
+            ...fm.entities,
+            humans: fm.entities.humans.map((h: any) => {
+              const cleaned = { ...h };
+              delete cleaned.contact_email;
+              delete cleaned.contact_phone;
+              delete cleaned.slack_id;
+              return cleaned;
+            }),
+          },
+        };
+      }
     }
 
     // Step 3: Calculate quality tier
@@ -621,7 +687,10 @@ ${claimSections.join('\n')}`.trim();
     // a half-built graph.
     const now = new Date();
     const agenticResult = calculateAgenticLevel(parsed.claims, parsed.frontmatter as unknown as Record<string, unknown>);
-    const entities = (oosFile.frontmatter as any)?.entities || null;
+    // entities + rawContent come from the (possibly scrubbed) publish
+    // copies, not the in-memory oosFile row, so a strip-on-publish flows
+    // through to the graph rebuild too.
+    const entities = (publishFrontmatter as any)?.entities || null;
     const graphData = extractGraph(id, org.id, entities, parsed.claims.map(c => ({
       claim_id: c.claimId,
       section: c.section,
@@ -632,8 +701,18 @@ ${claimSections.join('\n')}`.trim();
     })), org.pseudonym || org.name);
 
     const published = await db.transaction(async (tx) => {
+      // Persist the scrubbed copies (if the user picked strip_contacts)
+      // alongside the status flip so the published row matches what the
+      // network will browse. If publishMode wasn't strip, these are
+      // identity-equal to the original and the writes are no-ops.
       const [pubRow] = await tx.update(oosFiles)
-        .set({ status: 'published', publishedAt: now, updatedAt: now })
+        .set({
+          status: 'published',
+          publishedAt: now,
+          updatedAt: now,
+          rawContent: publishRawContent,
+          frontmatter: publishFrontmatter,
+        })
         .where(eq(oosFiles.id, id))
         .returning();
 
