@@ -226,6 +226,8 @@ export default async function teamRoutes(app: FastifyInstance) {
     const org = await getOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
     const chartIdParam = request.query.chartId;
+
+    let team;
     if (chartIdParam) {
       const { getChartTeamGraph, chartBelongsToOrg } = await import('../../services/team-graph.js');
       if (!/^[0-9a-f-]{36}$/i.test(chartIdParam)) {
@@ -234,9 +236,38 @@ export default async function teamRoutes(app: FastifyInstance) {
       if (!(await chartBelongsToOrg(chartIdParam, org.id))) {
         return reply.status(403).send({ error: { code: 'CHART_NOT_IN_ORG', message: 'Chart does not belong to your org' } });
       }
-      return getChartTeamGraph(chartIdParam, org.name);
+      team = await getChartTeamGraph(chartIdParam, org.name);
+    } else {
+      team = await getOrgTeamGraph(org.id, org.name);
     }
-    return getOrgTeamGraph(org.id, org.name);
+
+    // View scoping (added 2026-05-26 with /dashboard/team Phase 4):
+    // mirror the page-route filter so the d3 client-side chart can never
+    // fetch the unfiltered graph by hitting this API endpoint directly.
+    // owner/admin/implementer keep full visibility; manager sees own +
+    // reports_to subtree; managee/observer/inactive/free see own tiles
+    // only. Legacy founder fallback: if no org_members row exists for
+    // this user but organizations.clerkOrgId matches their Clerk user
+    // ID, treat as 'owner' so the founder never loses chart visibility.
+    const { getAuth } = await import('@clerk/fastify');
+    const _auth = getAuth(request);
+    let viewerMember = (request as any).orgMember as { role?: string; claimedEntityId?: string | null; claimedEntityIds?: string[] | null } | null;
+    if (!viewerMember && _auth.userId && (org as any).clerkOrgId === _auth.userId) {
+      viewerMember = { role: 'owner', claimedEntityId: null, claimedEntityIds: null };
+    }
+
+    const { computeViewableTiles } = await import('../../services/chart-permissions.js');
+    const viewable = computeViewableTiles(viewerMember as any, team);
+    if (viewable.size < team.nodes.length) {
+      team = {
+        ...team,
+        nodes: team.nodes.filter(n => viewable.has(n.externalId)),
+        edges: team.edges.filter(e =>
+          viewable.has(e.sourceId) && viewable.has(e.targetId)
+        ),
+      };
+    }
+    return team;
   });
 
   // ============================================================

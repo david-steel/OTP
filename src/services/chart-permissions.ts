@@ -99,3 +99,67 @@ export function canEditTile(
 ): boolean {
   return computeEditableTiles(member, graph).has(externalId);
 }
+
+/**
+ * Computes which org-chart tiles a given member is allowed to SEE.
+ *
+ * Rules (per David 2026-05-26, after Kristen saw all Sneeze It agents
+ * on her first L8):
+ *   owner / admin / implementer  -> every tile (full chart visible)
+ *   manager                      -> own tiles + reports_to subtree below them
+ *   managee / member             -> only own claimed tiles
+ *   observer / inactive / free   -> only own claimed tiles (read-only seat)
+ *
+ * Same shape as computeEditableTiles for owner/admin/implementer/manager
+ * (those rules are intentionally identical). Diverges for managee/observer/
+ * inactive/free -- they can VIEW their own seat even if they cannot EDIT
+ * anything. Keeping the two helpers separate so future divergence
+ * (e.g. team-scoped visibility) lands cleanly.
+ *
+ * Returns empty Set for a null member, OR for a real member with no
+ * claimed tile in any non-admin role -- safer to render an empty chart
+ * than to leak. Callers (route handlers) MUST filter graph.nodes AND
+ * graph.edges by this Set before passing to the view; otherwise the
+ * unfiltered graph still ends up in the rendered HTML.
+ */
+export function computeViewableTiles(
+  member: MemberLike | null,
+  graph: TeamGraph,
+): Set<string> {
+  if (!member) return new Set();
+
+  if (
+    member.role === 'owner' ||
+    member.role === 'admin' ||
+    member.role === 'implementer'
+  ) {
+    return new Set(graph.nodes.map(n => n.externalId));
+  }
+
+  const myTiles: string[] = [];
+  if (member.claimedEntityIds && Array.isArray(member.claimedEntityIds)) {
+    for (const id of member.claimedEntityIds) {
+      if (id) myTiles.push(id);
+    }
+  }
+  if (member.claimedEntityId && !myTiles.includes(member.claimedEntityId)) {
+    myTiles.push(member.claimedEntityId);
+  }
+
+  if (myTiles.length === 0) return new Set();
+
+  if (member.role === 'manager') {
+    return reportsSubtree(graph, myTiles);
+  }
+
+  // managee / member / observer / inactive / free: own tiles only
+  return new Set(myTiles);
+}
+
+export function canViewTile(
+  member: MemberLike | null,
+  graph: TeamGraph,
+  externalId: string,
+): boolean {
+  return computeViewableTiles(member, graph).has(externalId);
+}

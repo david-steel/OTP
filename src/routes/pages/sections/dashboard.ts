@@ -382,7 +382,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const highlightSkill = (request.query.highlightSkill || '').toString().slice(0, 120);
     const highlightCommand = (request.query.highlightCommand || '').toString().slice(0, 120);
 
-    const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    let team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { SOP_TEMPLATE_GROUPS } = await import('../../../data/sop-templates.js');
     const { SKILLS_CATALOG } = await import('../../../data/skills-catalog.js');
     const { listMembers, listPendingInvites } = await import('../../../services/membership.js');
@@ -447,15 +447,45 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       }
     }
 
-    // Phase 3: gated edit. Compute the set of tile externalIds the current
-    // viewer is allowed to edit. The whole chart stays visible to everyone;
-    // edit affordances (button states, drag handles) are gated client-side
-    // by this list, and every chart-mutation API endpoint enforces it
-    // server-side as well.
-    const { computeEditableTiles } = await import('../../../services/chart-permissions.js');
-    const viewerMember = (request as any).orgMember;
+    // Phase 3 (edit gating) + Phase 4 (view gating, 2026-05-26).
+    //   editable: which tiles this viewer can mutate (button states, drag
+    //             handles, API write checks). Unchanged from Phase 3.
+    //   viewable: which tiles this viewer can SEE at all. Phase 4 flipped
+    //             the prior "whole chart visible to everyone" design after
+    //             Kristen surfaced that she could see every agent under
+    //             David on her first L8. New rules per David: owner/admin/
+    //             implementer see all; manager sees own + reports_to
+    //             subtree; managee/observer/inactive/free see only own
+    //             claimed tiles. Filter applied to BOTH nodes AND edges
+    //             before the graph reaches the view.
+    const { computeEditableTiles, computeViewableTiles } = await import('../../../services/chart-permissions.js');
+    // Resolve viewer's chart-permission context. Legacy founders may not
+    // have a row in org_members (their identity comes from organizations.
+    // clerkOrgId matching their Clerk user ID); resolveOrgForUser already
+    // synthesized their role as 'owner' on `resolved`. Fall back to that
+    // synthesized shape so owner gets the full set instead of an empty one.
+    const viewerMember = (request as any).orgMember || {
+      role: role,
+      claimedEntityId: claimedEntityId || null,
+    };
     const editableTilesSet = computeEditableTiles(viewerMember, team);
     const editableTiles = Array.from(editableTilesSet);
+    const viewableTilesSet = computeViewableTiles(viewerMember, team);
+
+    // Apply view scoping to the graph. Owner/admin/implementer roles get
+    // every tile in viewableTilesSet, so they see the unfiltered chart.
+    // Lower roles get a strict subset; edges are filtered so dangling
+    // arrows don't point off the visible chart.
+    const fullNodeCount = team.nodes.length;
+    if (viewableTilesSet.size < fullNodeCount) {
+      team = {
+        ...team,
+        nodes: team.nodes.filter(n => viewableTilesSet.has(n.externalId)),
+        edges: team.edges.filter(e =>
+          viewableTilesSet.has(e.sourceId) && viewableTilesSet.has(e.targetId)
+        ),
+      };
+    }
 
     return reply.view('pages/dashboard-team', {
       title: 'Team - Dashboard - OTP',
