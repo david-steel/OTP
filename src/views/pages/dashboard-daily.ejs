@@ -45,6 +45,7 @@
 %>
 
 <%- include('../partials/orgy-palette'); %>
+<%- include('../partials/api-save-handler'); %>
 
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
@@ -146,6 +147,95 @@
     <% } %>
   </section>
 
+  <%
+    // ================================================================
+    // GTD-style "Today's Next Actions" hero (Phase 1, 2026-05-25).
+    // Pulls one concrete physical step per priority: rocks with a
+    // next_action set, issues with a next_action set, and any overdue
+    // personal todo (the todo's title IS its next action by definition).
+    // Items without a next_action don't show up here -- they instead get
+    // a red friction nudge in their own panel below, prompting the user
+    // to set one. That's the self-correcting loop David's after.
+    // ================================================================
+    var _now = Date.now();
+    function _rockOverdue(r) { return r.dueDate && !r.completedAt && new Date(r.dueDate).getTime() < _now; }
+    var nextActionItems = [];
+    myRocks.forEach(function(r) {
+      if (!r.nextAction) return;
+      nextActionItems.push({
+        kind: 'rock', id: r.id, action: r.nextAction,
+        sourceLabel: r.title, sourceTag: 'Rock',
+        urgent: _rockOverdue(r),
+        dueAt: r.dueDate ? new Date(r.dueDate) : null,
+      });
+    });
+    myIssues.forEach(function(t) {
+      if (!t.nextAction) return;
+      nextActionItems.push({
+        kind: 'issue', id: t.id, action: t.nextAction,
+        sourceLabel: t.title, sourceTag: 'Issue',
+        urgent: false, dueAt: null,
+      });
+    });
+    (myTodos || []).forEach(function(t) {
+      if (t.doneAt) return;
+      var due = t.dueAt ? new Date(t.dueAt) : null;
+      var overdue = due && due.getTime() < _now;
+      if (!overdue) return;  // only overdue todos make the hero; the rest live in the to-do panel
+      nextActionItems.push({
+        kind: 'todo', id: t.id, action: t.title,
+        sourceLabel: '', sourceTag: 'To-do',
+        urgent: true, dueAt: due,
+      });
+    });
+    // Urgent first, then by due date ascending (no-date last).
+    nextActionItems.sort(function(a, b) {
+      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+      if (!a.dueAt && !b.dueAt) return 0;
+      if (!a.dueAt) return 1;
+      if (!b.dueAt) return -1;
+      return a.dueAt.getTime() - b.dueAt.getTime();
+    });
+    // Cap at 8 so the hero doesn't become a 30-line wall on busy days.
+    var nextActionItemsTop = nextActionItems.slice(0, 8);
+    var rocksMissingNext = myRocks.filter(function(r){ return !r.nextAction && !r.completedAt; }).length;
+    var issuesMissingNext = myIssues.filter(function(t){ return !t.nextAction; }).length;
+  %>
+  <section class="rounded-lg border border-orgy-soft bg-white mb-6 overflow-hidden">
+    <div class="flex items-baseline justify-between px-5 pt-4 pb-2">
+      <h2 class="text-[11px] font-bold uppercase tracking-[0.16em] text-orgy-on-light">Today's Next Actions</h2>
+      <span class="text-[11px] text-gray-500"><%= nextActionItems.length %> queued<% if (rocksMissingNext || issuesMissingNext) { %> &middot; <span class="text-rose-600 font-semibold"><%= rocksMissingNext + issuesMissingNext %> need one</span><% } %></span>
+    </div>
+    <% if (nextActionItemsTop.length === 0) { %>
+      <div class="px-5 pb-5 pt-1 text-sm text-gray-600">
+        <% if (rocksMissingNext || issuesMissingNext) { %>
+          No Next Actions set yet. <strong class="text-rose-700"><%= rocksMissingNext %> rock<%= rocksMissingNext === 1 ? '' : 's' %><% if (rocksMissingNext && issuesMissingNext) { %> and <% } %><%= issuesMissingNext ? issuesMissingNext + ' issue' + (issuesMissingNext === 1 ? '' : 's') : '' %></strong> need one — scroll down and set the next concrete move on each.
+        <% } else { %>
+          All clear. No rocks, issues, or overdue to-dos waiting on you.
+        <% } %>
+      </div>
+    <% } else { %>
+      <ul class="divide-y divide-gray-100 px-1">
+        <% nextActionItemsTop.forEach(function(n) { %>
+          <li class="px-4 py-2.5 flex items-start gap-3 hover:bg-gray-50/60">
+            <span class="inline-block w-1.5 h-1.5 rounded-full mt-2 shrink-0 <%= n.urgent ? 'bg-rose-500' : 'bg-orgy' %>"></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-gray-900 break-words"><%= n.action %></div>
+              <div class="text-[11px] text-gray-500 mt-0.5">
+                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium uppercase tracking-wide text-[10px]"><%= n.sourceTag %></span>
+                <% if (n.sourceLabel) { %><span class="ml-1.5 text-gray-500"><%= n.sourceLabel %></span><% } %>
+                <% if (n.dueAt) { %><span class="ml-1.5 <%= n.urgent ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= n.urgent ? 'OVERDUE ' : 'due ' %><%= n.dueAt.toLocaleDateString() %></span><% } %>
+              </div>
+            </div>
+          </li>
+        <% }); %>
+        <% if (nextActionItems.length > nextActionItemsTop.length) { %>
+          <li class="px-4 py-2 text-[11px] text-gray-500"><%= nextActionItems.length - nextActionItemsTop.length %> more below in the Rocks / Issues / To-dos panels.</li>
+        <% } %>
+      </ul>
+    <% } %>
+  </section>
+
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
     <!-- LEFT COLUMN -->
@@ -220,7 +310,8 @@
                  var due = r.dueDate ? new Date(r.dueDate) : null;
                  var overdue = due && !r.completedAt && due < new Date();
             %>
-              <li class="rounded border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm" data-rock-id="<%= r.id %>">
+              <% var needsNext = !r.nextAction && !r.completedAt; %>
+              <li class="rounded border <%= needsNext ? 'border-rose-200 border-l-4 border-l-rose-500 bg-rose-50/30' : 'border-gray-100 bg-gray-50/60' %> px-3 py-2 text-sm" data-rock-id="<%= r.id %>" data-entity-kind="rock">
                 <div class="flex items-start gap-3">
                   <button class="rock-track-toggle text-[11px] font-semibold uppercase rounded px-2 py-0.5 <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' %>" data-on-track="<%= r.onTrack ? '1' : '0' %>">
                     <%= r.onTrack ? 'On track' : 'Off track' %>
@@ -235,6 +326,25 @@
                     <% if (r.statusNote) { %>
                       <p class="text-xs text-gray-600 mt-1"><%= r.statusNote %></p>
                     <% } %>
+                    <!-- Next Action row: GTD discipline. The Rock title is the
+                         destination; this is the literal next move. -->
+                    <div class="next-action mt-2 text-xs" data-na-id="<%= r.id %>" data-na-kind="rock">
+                      <% if (r.nextAction) { %>
+                        <div class="na-view flex items-start gap-1.5 text-gray-700">
+                          <span class="text-orgy-on-light shrink-0">👉</span>
+                          <span class="na-text flex-1 break-words"><%= r.nextAction %></span>
+                          <button type="button" class="na-edit text-[10px] text-orgy-blue font-semibold hover:underline shrink-0">edit</button>
+                          <button type="button" class="na-done text-[10px] text-emerald-700 font-semibold hover:underline shrink-0">done</button>
+                        </div>
+                      <% } else if (!r.completedAt) { %>
+                        <button type="button" class="na-edit text-[11px] text-rose-700 font-semibold hover:underline">+ Set Next Action</button>
+                      <% } %>
+                      <form class="na-edit-form hidden mt-1 flex gap-1.5">
+                        <input type="text" class="na-input flex-1 rounded border border-gray-300 px-2 py-1 text-xs" placeholder="One concrete physical step..." maxlength="500" value="<%= r.nextAction || '' %>">
+                        <button type="submit" class="na-save text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button>
+                        <button type="button" class="na-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               </li>
@@ -553,14 +663,32 @@
           </div>
           <p id="issue-empty-msg" class="text-xs text-gray-500 hidden">No issues with that status.</p>
           <ul id="issue-list" class="space-y-1">
-            <% myIssues.forEach(function(t){ %>
-              <li class="issue-row text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-issue-id="<%= t.id %>" data-status="<%= t.idsStatus %>">
+            <% myIssues.forEach(function(t){ var iNeedsNext = !t.nextAction; %>
+              <li class="issue-row text-sm rounded border <%= iNeedsNext ? 'border-rose-200 border-l-4 border-l-rose-500 bg-rose-50/30' : 'border-gray-100 bg-gray-50/60' %> px-3 py-2" data-issue-id="<%= t.id %>" data-status="<%= t.idsStatus %>">
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex-1 min-w-0">
                     <div class="font-semibold text-gray-900"><%= t.title %></div>
                     <% if (t.description) { %><p class="text-xs text-gray-600 mt-0.5"><%= t.description %></p><% } %>
                     <div class="text-[11px] text-gray-500 mt-0.5">
                       <%= t.idsStatus %><%= t.priorityRank ? ' &middot; #' + t.priorityRank : '' %>
+                    </div>
+                    <!-- Next Action: same machinery as Rocks. -->
+                    <div class="next-action mt-2 text-xs" data-na-id="<%= t.id %>" data-na-kind="issue">
+                      <% if (t.nextAction) { %>
+                        <div class="na-view flex items-start gap-1.5 text-gray-700">
+                          <span class="text-orgy-on-light shrink-0">👉</span>
+                          <span class="na-text flex-1 break-words"><%= t.nextAction %></span>
+                          <button type="button" class="na-edit text-[10px] text-orgy-blue font-semibold hover:underline shrink-0">edit</button>
+                          <button type="button" class="na-done text-[10px] text-emerald-700 font-semibold hover:underline shrink-0">done</button>
+                        </div>
+                      <% } else { %>
+                        <button type="button" class="na-edit text-[11px] text-rose-700 font-semibold hover:underline">+ Set Next Action</button>
+                      <% } %>
+                      <form class="na-edit-form hidden mt-1 flex gap-1.5">
+                        <input type="text" class="na-input flex-1 rounded border border-gray-300 px-2 py-1 text-xs" placeholder="One concrete physical step..." maxlength="500" value="<%= t.nextAction || '' %>">
+                        <button type="submit" class="na-save text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button>
+                        <button type="button" class="na-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
+                      </form>
                     </div>
                   </div>
                   <% if (isIntegrator) { %>
@@ -1423,6 +1551,86 @@
       } catch (e) { /* localStorage blocked, fall through to default */ }
       d.addEventListener('toggle', function(){
         try { localStorage.setItem(KEY, d.open ? '1' : '0'); } catch (e) { /* ignore */ }
+      });
+    });
+  })();
+
+  // ================================================================
+  // Inline Next Action edit/save/done (Phase 1, 2026-05-25).
+  // Event delegation so it works for rocks + issues without per-row
+  // binding. The endpoint URL is picked by data-na-kind. Server
+  // stamps next_action_set_at on every change.
+  // ================================================================
+  (function wireNextActions() {
+    function urlFor(kind, id) {
+      if (kind === 'rock')  return '/api/v1/rocks/'   + encodeURIComponent(id);
+      if (kind === 'issue') return '/api/v1/tickets/' + encodeURIComponent(id);
+      return null;
+    }
+    document.addEventListener('click', function(e) {
+      var editBtn = e.target.closest('.next-action .na-edit');
+      var cancelBtn = e.target.closest('.next-action .na-cancel');
+      var doneBtn = e.target.closest('.next-action .na-done');
+      if (editBtn) {
+        var wrap = editBtn.closest('.next-action');
+        var view = wrap.querySelector('.na-view');
+        var form = wrap.querySelector('.na-edit-form');
+        if (view) view.classList.add('hidden');
+        if (editBtn.tagName === 'BUTTON' && !view) editBtn.classList.add('hidden');
+        form.classList.remove('hidden');
+        var inp = form.querySelector('.na-input');
+        if (inp) { inp.focus(); inp.select(); }
+        return;
+      }
+      if (cancelBtn) {
+        var wrap = cancelBtn.closest('.next-action');
+        var view = wrap.querySelector('.na-view');
+        var form = wrap.querySelector('.na-edit-form');
+        form.classList.add('hidden');
+        if (view) view.classList.remove('hidden');
+        // For empty-state (no view), restore the "+ Set Next Action" button.
+        var addBtn = wrap.querySelector('.na-edit');
+        if (!view && addBtn) addBtn.classList.remove('hidden');
+        return;
+      }
+      if (doneBtn) {
+        var wrap = doneBtn.closest('.next-action');
+        var kind = wrap.getAttribute('data-na-kind');
+        var id = wrap.getAttribute('data-na-id');
+        var url = urlFor(kind, id);
+        if (!url) return;
+        // Clear the next action -- the empty-state nudge will then
+        // prompt the user to set the next next action, keeping the
+        // GTD chain alive.
+        OTP.apiSave({
+          method: kind === 'issue' ? 'PUT' : 'PUT',
+          url: url,
+          body: { nextAction: null },
+          btnEl: doneBtn,
+          errorContext: 'Mark Next Action done',
+          onSuccess: function() { window.location.reload(); },
+        });
+      }
+    });
+    document.addEventListener('submit', function(e) {
+      var form = e.target.closest('.next-action .na-edit-form');
+      if (!form) return;
+      e.preventDefault();
+      var wrap = form.closest('.next-action');
+      var kind = wrap.getAttribute('data-na-kind');
+      var id = wrap.getAttribute('data-na-id');
+      var inp = form.querySelector('.na-input');
+      var value = (inp.value || '').trim();
+      var url = urlFor(kind, id);
+      if (!url) return;
+      var saveBtn = form.querySelector('.na-save');
+      OTP.apiSave({
+        method: 'PUT',
+        url: url,
+        body: { nextAction: value || null },
+        btnEl: saveBtn,
+        errorContext: 'Save Next Action',
+        onSuccess: function() { window.location.reload(); },
       });
     });
   })();

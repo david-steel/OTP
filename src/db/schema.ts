@@ -197,6 +197,11 @@ export const tickets = pgTable('tickets', {
   ownerEntityType: ownerEntityTypeEnum('owner_entity_type'),
   ownerExternalId: varchar('owner_external_id', { length: 120 }),
   ownerName: varchar('owner_name', { length: 255 }),
+  // GTD Next Action: one concrete physical step. Surfaced on /dashboard
+  // hero; the bare title isn't always actionable. Added via
+  // ensure-next-actions.ts boot DDL.
+  nextAction: text('next_action'),
+  nextActionSetAt: timestamp('next_action_set_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
@@ -812,6 +817,11 @@ export const rocks = pgTable('rocks', {
   statusNote: text('status_note'),
   statusUpdatedAt: timestamp('status_updated_at'),
   completedAt: timestamp('completed_at'),
+  // GTD Next Action: one concrete physical step toward completing the
+  // rock. Surfaced on /dashboard hero; the rock title is the destination,
+  // not the next move. Added via ensure-next-actions.ts boot DDL.
+  nextAction: text('next_action'),
+  nextActionSetAt: timestamp('next_action_set_at'),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

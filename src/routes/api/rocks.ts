@@ -41,6 +41,10 @@ const updateRockSchema = z.object({
   teamId: z.string().uuid().nullable().optional(),
   planSectionId: z.string().uuid().nullable().optional(),
   executionItemId: z.string().uuid().nullable().optional(),
+  // GTD Next Action layer (added 2026-05-25). Pass null to clear.
+  // Server stamps nextActionSetAt = now whenever this field changes
+  // so the L8 weekly review can flag stale Next Actions.
+  nextAction: z.string().max(500).nullable().optional(),
 });
 
 function authedOrFail(request: any, reply: any) {
@@ -168,6 +172,13 @@ export default async function rockRoutes(app: FastifyInstance) {
     if (d.teamId !== undefined) updates.teamId = d.teamId;
     if (d.planSectionId !== undefined) updates.planSectionId = d.planSectionId;
     if (d.executionItemId !== undefined) updates.executionItemId = d.executionItemId;
+    // Stamp next_action_set_at whenever next_action changes (including
+    // being cleared). The L8 weekly review uses this to age out stale
+    // Next Actions (>14 days old prompts "still right?").
+    if (d.nextAction !== undefined) {
+      updates.nextAction = d.nextAction;
+      updates.nextActionSetAt = d.nextAction ? new Date() : null;
+    }
 
     const [updated] = await db.update(rocks)
       .set(updates)

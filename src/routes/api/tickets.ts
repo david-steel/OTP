@@ -38,6 +38,10 @@ const updateTicketSchema = z.object({
   ownerExternalId: z.string().max(120).nullable().optional(),
   ownerName: z.string().max(255).nullable().optional(),
   teamId: z.string().uuid().nullable().optional(),
+  // GTD Next Action layer (added 2026-05-25). Pass null to clear.
+  // Server stamps nextActionSetAt = now whenever this field changes
+  // so the L8 weekly review can flag stale Next Actions.
+  nextAction: z.string().max(500).nullable().optional(),
 });
 
 const solveTicketSchema = z.object({
@@ -179,6 +183,13 @@ export default async function ticketRoutes(app: FastifyInstance) {
     if (body.data.ownerExternalId !== undefined) updates.ownerExternalId = body.data.ownerExternalId;
     if (body.data.ownerName !== undefined) updates.ownerName = body.data.ownerName;
     if (body.data.teamId !== undefined) updates.teamId = body.data.teamId;
+    // Stamp next_action_set_at whenever next_action changes (including
+    // being cleared). The L8 weekly review uses this to age out stale
+    // Next Actions (>14 days old prompts "still right?").
+    if (body.data.nextAction !== undefined) {
+      updates.nextAction = body.data.nextAction;
+      updates.nextActionSetAt = body.data.nextAction ? new Date() : null;
+    }
 
     const [updated] = await db.update(tickets)
       .set(updates)

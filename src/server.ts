@@ -864,6 +864,14 @@ try {
 }
 
 try {
+  const { ensureNextActionColumns } = await import('./db/ensure-next-actions.js');
+  await ensureNextActionColumns();
+  app.log.info('rocks/tickets next_action columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureNextActionColumns failed -- GTD Next Action layer will not persist until resolved');
+}
+
+try {
   const { ensureChartsTable } = await import('./db/ensure-charts.js');
   await ensureChartsTable();
   app.log.info('charts table is ready (multi-chart Phase C)');
