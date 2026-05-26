@@ -543,13 +543,14 @@
     <!-- New todo quick-add -->
     <div class="mt-3 space-y-2">
     <div class="grid grid-cols-12 gap-2">
-      <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="col-span-6 border rounded p-2 text-sm">
+      <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="col-span-5 border rounded p-2 text-sm">
       <select id="new-todo-owner" class="col-span-3 border rounded p-2 text-sm">
         <option value="">-- assign owner --</option>
         <% (availableOwners || []).forEach(function(a) { %>
           <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
         <% }); %>
       </select>
+      <input id="new-todo-due" type="date" class="col-span-2 border rounded p-2 text-sm" title="due date (default: 7 days from today)">
       <select id="new-todo-priority" class="col-span-1 border rounded p-2 text-sm" title="priority">
         <option value="p1">P1</option>
         <option value="p2">P2</option>
@@ -563,7 +564,7 @@
         <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR">M/W/F</option>
         <option value="FREQ=MONTHLY">monthly</option>
       </select>
-      <button id="add-todo" class="col-span-1 px-3 py-2 bg-orgy-blue text-white text-sm rounded hover:bg-orgy-blue-deep">Add</button>
+      <button id="add-todo" class="col-span-12 px-3 py-2 bg-orgy-blue text-white text-sm rounded hover:bg-orgy-blue-deep">Add</button>
     </div>
     <div>
       <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
@@ -897,12 +898,52 @@
   // meeting on a shared screen does not jump to the top on every change.
   const SCROLL_KEY = 'otp-l8-scroll-' + meetingId;
   const FOCUS_KEY = 'otp-l8-focus-' + meetingId;
+  const DRAFT_KEY = 'otp-l8-drafts-' + meetingId;
+
+  // Snapshot every textarea / text-shaped input / contenteditable that has
+  // a stable id and a non-empty value. Restored on the next page load so
+  // typed content survives both manual reloadKeep() saves AND SSE-triggered
+  // reloads from teammates. Before 2026-05-26 only scroll + focus were
+  // preserved; David lost mid-segue typing when Kristen saved hers.
+  function snapshotDrafts() {
+    try {
+      const drafts = {};
+      const sel = 'textarea, input[type="text"], input[type="date"], input[type="number"], [contenteditable="true"]';
+      document.querySelectorAll(sel).forEach(function(el) {
+        if (!el.id) return;
+        const v = el.isContentEditable ? el.innerHTML : el.value;
+        if (typeof v === 'string' && v.length > 0) drafts[el.id] = v;
+      });
+      if (Object.keys(drafts).length > 0) {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
+      }
+    } catch (e) {}
+  }
+  function restoreDrafts() {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(DRAFT_KEY);
+      const drafts = JSON.parse(raw) || {};
+      Object.keys(drafts).forEach(function(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.isContentEditable) {
+          el.innerHTML = drafts[id];
+        } else {
+          el.value = drafts[id];
+        }
+      });
+    } catch (e) {}
+  }
+
   function reloadKeep() {
     try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch (e) {}
     try {
       const ae = document.activeElement;
       if (ae && ae.id) sessionStorage.setItem(FOCUS_KEY, ae.id);
     } catch (e) {}
+    snapshotDrafts();
     window.location.assign(window.location.href);
   }
   (function restoreScrollAndFocus() {
@@ -920,6 +961,9 @@
           if (el && typeof el.focus === 'function') el.focus();
         });
       }
+      // Restore draft content AFTER scroll/focus so input.focus() doesn't
+      // accidentally clear the value we just put back.
+      window.requestAnimationFrame(restoreDrafts);
     } catch (e) {}
   })();
 
@@ -1433,7 +1477,20 @@
     const priority = (document.getElementById('new-todo-priority') || {}).value || 'p3';
     const recurrenceRule = (document.getElementById('new-todo-recur') || {}).value || null;
     const description = (document.getElementById('new-todo-desc') || {}).value || '';
-    const dueAt = new Date(); dueAt.setDate(dueAt.getDate() + 7);
+    // Custom due date wins; fall back to 7-day default if the user leaves it
+    // blank. Default behavior preserved -- pre-2026-05-26 every L10 todo was
+    // stamped with this auto-default and there was no way to override it
+    // from inside the L10 view.
+    const dueOverride = (document.getElementById('new-todo-due') || {}).value || '';
+    let dueAt;
+    if (dueOverride) {
+      // <input type="date"> returns YYYY-MM-DD; anchor to end-of-day local
+      // so a "due today" pick doesn't show overdue at 9 AM the same day.
+      const [y, m, d] = dueOverride.split('-').map(Number);
+      dueAt = new Date(y, (m || 1) - 1, d || 1, 23, 59, 0);
+    } else {
+      dueAt = new Date(); dueAt.setDate(dueAt.getDate() + 7);
+    }
     const body = {
       kind: 'l10', teamId, priority,
       title, ownerExternalId: owner.externalId, ownerEntityType: owner.entityType, ownerName: owner.name,
@@ -1794,7 +1851,10 @@
         return;
       }
       if (reloadTimer) return;
-      reloadTimer = setTimeout(() => { window.location.reload(); }, 600);
+      // Snapshot typed content so any non-focused-but-still-in-flight
+      // edit (e.g. user typed in a textarea, then clicked away to a
+      // non-input element while waiting) survives the reload.
+      reloadTimer = setTimeout(() => { snapshotDrafts(); window.location.reload(); }, 600);
     }
 
     function applyPresence(presence) {
@@ -1870,11 +1930,14 @@
       });
     }
 
-    // Reload when input loses focus if an update came in mid-edit.
+    // Reload when input loses focus if an update came in mid-edit. Snapshot
+    // drafts before the reload so the typed content the user just blurred
+    // away from is preserved across the round-trip.
     document.addEventListener('focusout', () => {
       setTimeout(() => {
         if (document.body.dataset.pendingReload === '1') {
           delete document.body.dataset.pendingReload;
+          snapshotDrafts();
           window.location.reload();
         }
       }, 200);
