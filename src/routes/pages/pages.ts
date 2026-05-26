@@ -2828,6 +2828,81 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     if (!validateUuidParam(id)) {
       return reply.status(400).send('Invalid meeting id');
     }
+
+    // Public preview branch for UNAUTHENTICATED requests (humans clicking a
+    // shared meeting link AND link-unfurl bots: Slackbot, Twitterbot,
+    // LinkedInBot, facebookexternalhit). Before 2026-05-26 these all hit
+    // l8ResolveOrg which 302'd to /sign-in, and Slack/etc. unfurled the
+    // sign-in page's marketing OG meta -- David shared a meeting link with
+    // Kristen and the preview was "Sign in to OTP / Free in Beta" with the
+    // monster mascot. That read as cold ad outreach, not "your 1:1." Fix:
+    // when unauth, render pages/meeting-preview with meeting-specific title +
+    // description + attendee names. Body never leaks agenda contents,
+    // scorecard, rocks, ratings, segue, headlines, cascading message --
+    // only public-safe fields: title, scheduledAt, attendee NAMES.
+    let _authForPreview: { userId: string | null } = { userId: null };
+    try { _authForPreview = { userId: getAuth(request).userId || null }; } catch { _authForPreview = { userId: null }; }
+    if (!_authForPreview.userId) {
+      const [previewMeeting] = await db.select({
+        id: meetings.id,
+        title: meetings.title,
+        meetingType: meetings.meetingType,
+        scheduledAt: meetings.scheduledAt,
+        attendees: meetings.attendees,
+      })
+        .from(meetings)
+        .where(and(eq(meetings.id, id), isNull(meetings.deletedAt)))
+        .limit(1);
+
+      const signInUrl = '/sign-in?redirect=' + encodeURIComponent(request.url);
+
+      if (!previewMeeting) {
+        return reply.status(404).view('pages/meeting-preview', {
+          title: 'Meeting not found -- OTP',
+          description: 'This meeting link is invalid or the meeting has been removed.',
+          canonical: BASE_URL + request.url,
+          noindex: true,
+          notFound: true,
+          meetingTitle: 'Meeting not found',
+          dateLabel: '',
+          timeLabel: '',
+          attendeeNames: [],
+          signInUrl,
+        });
+      }
+
+      const attendeeNames = (Array.isArray(previewMeeting.attendees) ? previewMeeting.attendees as any[] : [])
+        .map((a: any) => (a && typeof a === 'object' ? String(a.name || '') : ''))
+        .filter((n: string) => n.length > 0);
+
+      const scheduledAt = previewMeeting.scheduledAt instanceof Date
+        ? previewMeeting.scheduledAt
+        : new Date(previewMeeting.scheduledAt as any);
+      const dateLabel = scheduledAt.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+      });
+      const timeLabel = scheduledAt.toLocaleTimeString('en-US', {
+        hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
+      });
+
+      const descParts: string[] = [dateLabel];
+      if (attendeeNames.length > 0) descParts.push(attendeeNames.join(', '));
+      const description = descParts.join(' · ');
+
+      return reply.view('pages/meeting-preview', {
+        title: previewMeeting.title + ' -- OTP',
+        description,
+        canonical: BASE_URL + request.url,
+        noindex: true,
+        notFound: false,
+        meetingTitle: previewMeeting.title,
+        dateLabel,
+        timeLabel,
+        attendeeNames,
+        signInUrl,
+      });
+    }
+
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
@@ -3613,22 +3688,49 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     }
     if (!org) return reply.redirect('/dashboard');
 
-    // V1: hardcoded HUM_DAVIDSTEEL until org_members carries an external_id mapping.
-    // The watchdog and other agents push to this exact owner. Future: resolve from
-    // org_members.user_id -> external_id, fall back to HUM_<USERNAME>.
-    const ownerExternalId = 'HUM_DAVIDSTEEL';
+    // Resolve which seat(s) THIS user owns -- /me/todos is personal-by-default,
+    // so it must return only todos owned by the requesting member, NOT a
+    // hardcoded ID. Prior to 2026-05-26 this was literally `HUM_DAVIDSTEEL`
+    // (placeholder from /me/todos v1, 2026-05-07) which leaked David's todo
+    // queue to every other org member -- Kristen flagged it mid-meeting on
+    // her first L8 with David.
+    //
+    // Resolution order:
+    //   1. org_members.claimedEntityIds  -- the canonical chart-tile claim
+    //      list. A member may claim multiple seats (founder-CEO, etc.) so
+    //      we accept ANY claimed externalId as "mine".
+    //   2. Legacy founder fallback: if no claim exists AND the user's
+    //      clerkOrgId === organizations.clerkOrgId, default to HUM_DAVIDSTEEL.
+    //      This preserves the pre-fix behavior for the founder seat
+    //      regardless of whether the chart was claimed yet.
+    //   3. Otherwise: empty list, no todos shown. Safer than leaking.
+    const [me] = await db.select({
+      id: orgMembers.id,
+      claimedEntityIds: orgMembers.claimedEntityIds,
+    })
+      .from(orgMembers)
+      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+      .limit(1);
+
+    let ownerExternalIds: string[] = [];
+    if (me?.claimedEntityIds && Array.isArray(me.claimedEntityIds)) {
+      ownerExternalIds = (me.claimedEntityIds as string[]).filter(x => typeof x === 'string' && x.length > 0);
+    }
+    if (ownerExternalIds.length === 0 && (org as any).clerkOrgId === auth.userId) {
+      ownerExternalIds = ['HUM_DAVIDSTEEL'];
+    }
 
     // Personal todos only here. L10 todos owned by the user are shown as a
     // separate read-only section so /me stays personal-by-default.
     // Recurrence templates (rule set + no due_at) never appear -- only their
     // generated instances do.
-    const myTodos = await db.select()
+    const myTodos = ownerExternalIds.length === 0 ? [] : await db.select()
       .from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
         eq(todos.kind, 'personal'),
         eq(todos.ownerEntityType, 'human'),
-        eq(todos.ownerExternalId, ownerExternalId),
+        inArray(todos.ownerExternalId, ownerExternalIds),
         isNull(todos.doneAt),
         isNull(todos.deletedAt),
         isNull(todos.parentTodoId),       // top-level only; subtasks expand
@@ -3637,13 +3739,13 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
 
     // L10 todos assigned to me, read-only here (managed in /l8).
-    const myL10Todos = await db.select()
+    const myL10Todos = ownerExternalIds.length === 0 ? [] : await db.select()
       .from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
         eq(todos.kind, 'l10'),
         eq(todos.ownerEntityType, 'human'),
-        eq(todos.ownerExternalId, ownerExternalId),
+        inArray(todos.ownerExternalId, ownerExternalIds),
         isNull(todos.doneAt),
         isNull(todos.deletedAt),
         isNull(todos.recurrenceRule),
@@ -3652,12 +3754,12 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     // Recently resolved (last 24h) -- across both kinds.
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentlyDone = await db.select()
+    const recentlyDone = ownerExternalIds.length === 0 ? [] : await db.select()
       .from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
         eq(todos.ownerEntityType, 'human'),
-        eq(todos.ownerExternalId, ownerExternalId),
+        inArray(todos.ownerExternalId, ownerExternalIds),
         isNull(todos.deletedAt),
       ))
       .orderBy(desc(todos.createdAt))
@@ -3687,25 +3789,28 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .limit(20);
     const upcomingMeetings = upcomingMeetingRows.filter(m => m.scheduledAt <= twoWeeksFromNow);
 
-    // Todos David delegated to others -- mirrors what /dashboard shows.
-    // delegator* points back to whoever is waiting; the todo is owned by the assignee.
-    const delegatedWaiting = await db.select()
+    // Todos THIS user delegated to others. delegator* points back to whoever
+    // is waiting; the todo is owned by the assignee. Same multi-claim logic
+    // as the owner queries above -- match ANY of the requester's claimed
+    // externalIds. Empty case returns [] so non-claimed members see nothing
+    // instead of leaking the founder's delegation queue.
+    const delegatedWaiting = ownerExternalIds.length === 0 ? [] : await db.select()
       .from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
-        eq(todos.delegatorExternalId, ownerExternalId),
+        inArray(todos.delegatorExternalId, ownerExternalIds),
         isNull(todos.doneAt),
         isNull(todos.deletedAt),
         isNull(todos.recurrenceRule),
       ))
       .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
 
-    // Delegated todos the assignee marked done but David hasn't verified yet.
-    const delegatedVerify = await db.select()
+    // Delegated todos the assignee marked done but THIS user hasn't verified yet.
+    const delegatedVerify = ownerExternalIds.length === 0 ? [] : await db.select()
       .from(todos)
       .where(and(
         eq(todos.organizationId, org.id),
-        eq(todos.delegatorExternalId, ownerExternalId),
+        inArray(todos.delegatorExternalId, ownerExternalIds),
         isNotNull(todos.doneAt),
         isNull(todos.verifiedAt),
         isNull(todos.deletedAt),
@@ -3713,7 +3818,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       ))
       .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt));
 
-    // People David can delegate to -- humans and agents from the team graph.
+    // People THIS user can delegate to -- humans and agents from the team graph.
     const meGraph = await getOrgTeamGraph(org.id, org.name);
     const assignablePeople = meGraph.nodes
       .filter(n => n.type === 'human' || n.type === 'agent')
@@ -3722,8 +3827,12 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         ? (a.entityType === 'human' ? -1 : 1)
         : a.name.localeCompare(b.name));
 
-    // Delegator identity for the create form.
-    const meExternalId = ownerExternalId;
+    // Delegator identity for the create form. The view template treats
+    // ownerExternalId as a single string (used as the default owner when
+    // creating a new personal todo), so we pass the primary claimed seat.
+    // Multi-claim members get their first claim as the default; they can
+    // re-assign on creation if needed.
+    const meExternalId = ownerExternalIds[0] || '';
     const meEntityType = 'human';
     const [meMember] = await db.select({ displayName: orgMembers.displayName })
       .from(orgMembers)
@@ -3739,7 +3848,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       todos: myTodos,
       l10Todos: myL10Todos,
       justDone,
-      ownerExternalId,
+      ownerExternalId: meExternalId,
       upcomingMeetings,
       delegatedWaiting,
       delegatedVerify,
