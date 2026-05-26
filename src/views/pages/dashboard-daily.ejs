@@ -201,36 +201,46 @@
     var rocksMissingNext = myRocks.filter(function(r){ return !r.nextAction && !r.completedAt; }).length;
     var issuesMissingNext = myIssues.filter(function(t){ return !t.nextAction; }).length;
   %>
-  <section class="rounded-lg border border-orgy-soft bg-white mb-6 overflow-hidden">
-    <div class="flex items-baseline justify-between px-5 pt-4 pb-2">
-      <h2 class="text-[11px] font-bold uppercase tracking-[0.16em] text-orgy-on-light">Today's Next Actions</h2>
-      <span class="text-[11px] text-gray-500"><%= nextActionItems.length %> queued<% if (rocksMissingNext || issuesMissingNext) { %> &middot; <span class="text-rose-600 font-semibold"><%= rocksMissingNext + issuesMissingNext %> need one</span><% } %></span>
+  <!-- Today's Next Actions: peer card to Headlines/Rocks/KPIs/Issues
+       below. Same border/padding/header treatment so it reads as the
+       first item in the workspace, not a marketing banner above it. -->
+  <section class="rounded-lg border border-gray-200 bg-white p-5 mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">
+        Next Actions
+        <% if (nextActionItems.length > 0) { %>
+          <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold"><%= nextActionItems.length %></span>
+        <% } %>
+        <% if (rocksMissingNext + issuesMissingNext > 0) { %>
+          <span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= rocksMissingNext + issuesMissingNext %> need one</span>
+        <% } %>
+      </h2>
     </div>
     <% if (nextActionItemsTop.length === 0) { %>
-      <div class="px-5 pb-5 pt-1 text-sm text-gray-600">
+      <p class="text-xs text-gray-500">
         <% if (rocksMissingNext || issuesMissingNext) { %>
-          No Next Actions set yet. <strong class="text-rose-700"><%= rocksMissingNext %> rock<%= rocksMissingNext === 1 ? '' : 's' %><% if (rocksMissingNext && issuesMissingNext) { %> and <% } %><%= issuesMissingNext ? issuesMissingNext + ' issue' + (issuesMissingNext === 1 ? '' : 's') : '' %></strong> need one — scroll down and set the next concrete move on each.
+          Nothing queued yet. Set a Next Action on each rock or issue below to populate this list.
         <% } else { %>
-          All clear. No rocks, issues, or overdue to-dos waiting on you.
+          All clear -- no rocks, issues, or overdue to-dos waiting on you.
         <% } %>
-      </div>
+      </p>
     <% } else { %>
-      <ul class="divide-y divide-gray-100 px-1">
+      <ul class="space-y-1.5">
         <% nextActionItemsTop.forEach(function(n) { %>
-          <li class="px-4 py-2.5 flex items-start gap-3 hover:bg-gray-50/60">
-            <span class="inline-block w-1.5 h-1.5 rounded-full mt-2 shrink-0 <%= n.urgent ? 'bg-rose-500' : 'bg-orgy' %>"></span>
+          <li class="flex items-start gap-2.5 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2">
+            <span class="inline-block w-1.5 h-1.5 rounded-full mt-2 shrink-0 <%= n.urgent ? 'bg-rose-500' : 'bg-orgy-deep' %>"></span>
             <div class="flex-1 min-w-0">
-              <div class="text-sm text-gray-900 break-words"><%= n.action %></div>
-              <div class="text-[11px] text-gray-500 mt-0.5">
-                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium uppercase tracking-wide text-[10px]"><%= n.sourceTag %></span>
-                <% if (n.sourceLabel) { %><span class="ml-1.5 text-gray-500"><%= n.sourceLabel %></span><% } %>
-                <% if (n.dueAt) { %><span class="ml-1.5 <%= n.urgent ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= n.urgent ? 'OVERDUE ' : 'due ' %><%= n.dueAt.toLocaleDateString() %></span><% } %>
+              <div class="text-gray-900 break-words"><%= n.action %></div>
+              <div class="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 items-baseline">
+                <span class="font-mono uppercase text-[10px] tracking-wide text-gray-400"><%= n.sourceTag %></span>
+                <% if (n.sourceLabel) { %><span class="text-gray-500 truncate"><%= n.sourceLabel %></span><% } %>
+                <% if (n.dueAt) { %><span class="<%= n.urgent ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= n.urgent ? 'OVERDUE ' : 'due ' %><%= n.dueAt.toLocaleDateString() %></span><% } %>
               </div>
             </div>
           </li>
         <% }); %>
         <% if (nextActionItems.length > nextActionItemsTop.length) { %>
-          <li class="px-4 py-2 text-[11px] text-gray-500"><%= nextActionItems.length - nextActionItemsTop.length %> more below in the Rocks / Issues / To-dos panels.</li>
+          <li class="text-[11px] text-gray-500 px-3 pt-1"><%= nextActionItems.length - nextActionItemsTop.length %> more in the panels below</li>
         <% } %>
       </ul>
     <% } %>
