@@ -15,8 +15,26 @@ export async function getAuthOrg(request: FastifyRequest) {
   // Try Clerk auth first
   const auth = getAuth(request);
   if (auth.userId) {
+    // Path 1: legacy founder -- their Clerk user ID is stored as
+    // organizations.clerkOrgId (single-tenant founder pattern).
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     if (orgArr[0]) return orgArr[0];
+
+    // Path 2: team-member invite. The user joined an existing org via
+    // org_members and the guards middleware resolves their active membership
+    // onto request.orgMember. Without this path, invited members are
+    // implicitly read-only against every API write -- which is exactly
+    // why Kristen got "Authentication required" trying to edit her segue
+    // mid-meeting on 2026-05-26 while still being able to see the page
+    // (the page route's l8ResolveOrg already honored this path; the API
+    // gate didn't). The two resolvers must agree. See also
+    // checkMeetingEdit in routes/api/meetings.ts which already handles
+    // the team-membership-or-attendee rule once the org is resolved.
+    const member = (request as any).orgMember as { orgId: string } | null;
+    if (member?.orgId) {
+      const memberOrgArr = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
+      if (memberOrgArr[0]) return memberOrgArr[0];
+    }
   }
 
   // Fall back to API key auth

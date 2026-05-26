@@ -11,9 +11,17 @@ import { z } from 'zod';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
 
+// Title/description lower bounds intentionally permissive (min 1). The L10
+// meeting "Add Issue" UI promises "title required, description optional"
+// (placeholder text on l8-leadership.ejs:707) and pre-fills a default
+// description when blank. Stricter min-char rules here broke that contract:
+// 2026-05-26 Kristen tried to add an issue mid-meeting with a short title
+// and got "Add failed: invalid ticket data" because the server required
+// title>=5 / description>=10. Spam control lives in the rate limiter
+// (10 req/min per IP), not in min-length validation.
 const createTicketSchema = z.object({
-  title: z.string().min(5).max(500),
-  description: z.string().min(10),
+  title: z.string().min(1).max(500),
+  description: z.string().min(1).max(10000),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
   category: z.enum(['bug', 'feature', 'question', 'other']).optional().default('bug'),
   reporterEmail: z.string().email().optional(),
