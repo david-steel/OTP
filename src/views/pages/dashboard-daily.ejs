@@ -196,8 +196,12 @@
       if (!b.dueAt) return -1;
       return a.dueAt.getTime() - b.dueAt.getTime();
     });
-    // Cap at 8 so the hero doesn't become a 30-line wall on busy days.
-    var nextActionItemsTop = nextActionItems.slice(0, 8);
+    // Show top 5 by default; the rest hide behind a "+ Show N more"
+    // toggle so the card doesn't eat the whole above-the-fold view
+    // when a busy day produces 10+ next actions.
+    var DEFAULT_VISIBLE = 5;
+    var nextActionItemsTop = nextActionItems.slice(0, DEFAULT_VISIBLE);
+    var nextActionItemsRest = nextActionItems.slice(DEFAULT_VISIBLE);
     var rocksMissingNext = myRocks.filter(function(r){ return !r.nextAction && !r.completedAt; }).length;
     var issuesMissingNext = myIssues.filter(function(t){ return !t.nextAction; }).length;
   %>
@@ -225,22 +229,43 @@
         <% } %>
       </p>
     <% } else { %>
-      <ul class="space-y-1.5">
-        <% nextActionItemsTop.forEach(function(n) { %>
-          <li class="flex items-start gap-2.5 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2">
-            <span class="inline-block w-1.5 h-1.5 rounded-full mt-2 shrink-0 <%= n.urgent ? 'bg-rose-500' : 'bg-orgy-deep' %>"></span>
+      <ul class="space-y-1.5" id="next-action-list">
+        <%
+          // Render helper for one row -- used twice (visible + hidden behind toggle)
+          function _renderNa(n, hidden) {
+        %>
+          <li class="<%= hidden ? 'na-row-extra hidden ' : '' %>flex items-center gap-2.5 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2 group" data-na-row-kind="<%= n.kind %>" data-na-row-id="<%= n.id %>">
+            <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0 <%= n.urgent ? 'bg-rose-500' : 'bg-orgy-deep' %>"></span>
             <div class="flex-1 min-w-0">
-              <div class="text-gray-900 break-words"><%= n.action %></div>
+              <div class="text-gray-900 break-words leading-snug"><%= n.action %></div>
               <div class="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 items-baseline">
                 <span class="font-mono uppercase text-[10px] tracking-wide text-gray-400"><%= n.sourceTag %></span>
                 <% if (n.sourceLabel) { %><span class="text-gray-500 truncate"><%= n.sourceLabel %></span><% } %>
                 <% if (n.dueAt) { %><span class="<%= n.urgent ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= n.urgent ? 'OVERDUE ' : 'due ' %><%= n.dueAt.toLocaleDateString() %></span><% } %>
               </div>
             </div>
+            <!-- Action buttons. Always available, no hover-only -- this
+                 is a workspace, not a marketing site. ✓ applies to all
+                 (To-dos: complete the todo; Rocks/Issues: clear the
+                 next_action so the chain prompts for a new one).
+                 Snooze + Drop only render for To-dos since they're the
+                 only kind with a due date you can push, or that you can
+                 delete from this view. -->
+            <div class="shrink-0 flex items-center gap-1">
+              <button type="button" class="na-act na-done px-2 py-1 rounded text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50" title="Mark done">✓ Done</button>
+              <% if (n.kind === 'todo') { %>
+                <button type="button" class="na-act na-snooze px-2 py-1 rounded text-[11px] font-semibold text-gray-600 hover:bg-gray-100" title="Push due date by 1 week">Snooze 1w</button>
+                <button type="button" class="na-act na-drop px-2 py-1 rounded text-[11px] font-semibold text-rose-600 hover:bg-rose-50" title="Delete this to-do">Drop</button>
+              <% } %>
+            </div>
           </li>
-        <% }); %>
-        <% if (nextActionItems.length > nextActionItemsTop.length) { %>
-          <li class="text-[11px] text-gray-500 px-3 pt-1"><%= nextActionItems.length - nextActionItemsTop.length %> more in the panels below</li>
+        <% } %>
+        <% nextActionItemsTop.forEach(function(n){ _renderNa(n, false); }); %>
+        <% nextActionItemsRest.forEach(function(n){ _renderNa(n, true); }); %>
+        <% if (nextActionItemsRest.length > 0) { %>
+          <li class="px-1 pt-1">
+            <button type="button" id="na-toggle-more" class="text-[11px] text-orgy-blue font-semibold hover:underline">+ Show <%= nextActionItemsRest.length %> more</button>
+          </li>
         <% } %>
       </ul>
     <% } %>
@@ -1642,6 +1667,92 @@
         errorContext: 'Save Next Action',
         onSuccess: function() { window.location.reload(); },
       });
+    });
+  })();
+
+  // ================================================================
+  // Next Actions hero: per-row action buttons + show-more toggle.
+  // For Rocks/Issues, ✓ clears the next_action (the empty-state
+  // prompt then asks for the next next-action -- GTD chain stays
+  // alive). For To-dos, ✓ marks the todo done; Snooze pushes dueAt
+  // by 7 days; Drop soft-deletes the todo via DELETE /todos/:id.
+  // ================================================================
+  (function wireNextActionsHero() {
+    var moreBtn = document.getElementById('na-toggle-more');
+    if (moreBtn) {
+      moreBtn.addEventListener('click', function() {
+        document.querySelectorAll('.na-row-extra').forEach(function(el){ el.classList.remove('hidden'); });
+        moreBtn.parentNode.remove();
+      });
+    }
+
+    function rowKindAndId(btn) {
+      var li = btn.closest('[data-na-row-kind]');
+      if (!li) return null;
+      return { kind: li.getAttribute('data-na-row-kind'), id: li.getAttribute('data-na-row-id'), li: li };
+    }
+    function removeRowOptimistic(li) {
+      li.style.transition = 'opacity 180ms ease';
+      li.style.opacity = '0';
+      setTimeout(function() { if (li.parentNode) li.parentNode.removeChild(li); }, 180);
+    }
+
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('#next-action-list .na-act');
+      if (!btn) return;
+      var ctx = rowKindAndId(btn);
+      if (!ctx) return;
+
+      // ✓ Done
+      if (btn.classList.contains('na-done')) {
+        if (ctx.kind === 'todo') {
+          OTP.apiSave({
+            method: 'PUT', url: '/api/v1/todos/' + encodeURIComponent(ctx.id),
+            body: { done: true },
+            btnEl: btn,
+            errorContext: 'Mark to-do done',
+            onSuccess: function() { removeRowOptimistic(ctx.li); },
+          });
+        } else if (ctx.kind === 'rock' || ctx.kind === 'issue') {
+          // Clear the next_action -- the rock/issue stays; the
+          // empty-state nudge below now prompts for the next move.
+          OTP.apiSave({
+            method: 'PUT',
+            url: (ctx.kind === 'rock' ? '/api/v1/rocks/' : '/api/v1/tickets/') + encodeURIComponent(ctx.id),
+            body: { nextAction: null },
+            btnEl: btn,
+            errorContext: 'Mark Next Action done',
+            onSuccess: function() { window.location.reload(); },
+          });
+        }
+        return;
+      }
+
+      // Snooze 1 week (to-dos only -- they're the only kind with a due date you can push from here)
+      if (btn.classList.contains('na-snooze')) {
+        var newDue = new Date();
+        newDue.setDate(newDue.getDate() + 7);
+        OTP.apiSave({
+          method: 'PUT', url: '/api/v1/todos/' + encodeURIComponent(ctx.id),
+          body: { dueAt: newDue.toISOString() },
+          btnEl: btn,
+          errorContext: 'Snooze to-do',
+          onSuccess: function() { removeRowOptimistic(ctx.li); },
+        });
+        return;
+      }
+
+      // Drop -- soft delete the to-do
+      if (btn.classList.contains('na-drop')) {
+        if (!confirm('Drop this to-do? It will be soft-deleted.')) return;
+        OTP.apiSave({
+          method: 'DELETE', url: '/api/v1/todos/' + encodeURIComponent(ctx.id),
+          btnEl: btn,
+          errorContext: 'Drop to-do',
+          onSuccess: function() { removeRowOptimistic(ctx.li); },
+        });
+        return;
+      }
     });
   })();
 })();
