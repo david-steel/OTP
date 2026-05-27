@@ -153,16 +153,59 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
-    const { org, role: viewerRole } = resolved;
+    const { org } = resolved;
 
-    const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
+    // Impersonation-aware role read (see feedback_otp_orgmember_not_resolveorgforuser).
+    // resolveOrgForUser is session-only; orgMember is what guards.ts swaps
+    // to the impersonated user's row under "view as <user>".
+    const _viewerMembers = (request as any).orgMember as { role?: Role; id?: string; claimedEntityId?: string | null; claimedEntityIds?: string[] | null } | null;
+    const viewerRole: Role = (_viewerMembers?.role || resolved.role) as Role;
+
+    const ALLOWED: Role[] = ['owner', 'admin', 'manager', 'integrator', 'visionary', 'implementer'];
     if (!ALLOWED.includes(viewerRole)) {
       return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
 
     const { listMembers, listPendingInvites } = await import('../../../services/membership.js');
-    const members = await listMembers(org.id);
-    const invitations = await listPendingInvites(org.id);
+    let members = await listMembers(org.id);
+    let invitations = await listPendingInvites(org.id);
+
+    // Non-admin scoping (added 2026-05-27 per David's spec: members should
+    // only show her + her direct reports). owner/admin/implementer/visionary/
+    // integrator see all; manager sees self + reports_to subtree from
+    // their claimed tiles.
+    const isAdminLikeMembers = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'implementer' || viewerRole === 'visionary' || viewerRole === 'integrator';
+    if (!isAdminLikeMembers) {
+      const { reportsSubtree } = await import('../../../services/chart-permissions.js');
+      const { getOrgTeamGraph: _getGraphM } = await import('../../../services/team-graph.js');
+      const _graphM = await _getGraphM(org.id, org.name || 'Organization');
+      const _myTilesM: string[] = [];
+      if (_viewerMembers?.claimedEntityIds && Array.isArray(_viewerMembers.claimedEntityIds)) {
+        for (const id of _viewerMembers.claimedEntityIds) if (id) _myTilesM.push(id);
+      }
+      if (_viewerMembers?.claimedEntityId && !_myTilesM.includes(_viewerMembers.claimedEntityId)) {
+        _myTilesM.push(_viewerMembers.claimedEntityId);
+      }
+      // Defense-in-depth: strip HUM_DAVIDSTEEL for non-founders.
+      const _impM = (request as any).impersonation as { as?: string } | null;
+      const _effIdM = _impM?.as || auth.userId;
+      const _isLegacyM = !!(_effIdM && (org as any).clerkOrgId === _effIdM);
+      const _myTilesScrubbedM = _isLegacyM ? _myTilesM : _myTilesM.filter(t => t !== 'HUM_DAVIDSTEEL');
+      const _subtreeM = _myTilesScrubbedM.length > 0
+        ? reportsSubtree(_graphM, _myTilesScrubbedM)
+        : new Set<string>();
+      // Always include the viewer's OWN claimed tile in the visible set.
+      for (const t of _myTilesScrubbedM) _subtreeM.add(t);
+
+      members = members.filter(m => {
+        if (!m.claimedEntityId) return false;
+        return _subtreeM.has(m.claimedEntityId);
+      });
+      invitations = invitations.filter(inv => {
+        if (!inv.claimedEntityId) return false;
+        return _subtreeM.has(inv.claimedEntityId);
+      });
+    }
     const { FEATURE_TOGGLES, DATA_TOGGLES, ROLE_DEFAULT_TOGGLES } = await import('../../../data/access-toggles.js');
 
     // Pull team memberships for every member so the edit modal can pre-fill.
@@ -276,9 +319,12 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
-    const { org, role: viewerRole } = resolved;
+    const { org } = resolved;
+    // Impersonation-aware role read.
+    const _viewerIds = (request as any).orgMember as { role?: Role } | null;
+    const viewerRole: Role = (_viewerIds?.role || resolved.role) as Role;
 
-    const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
+    const ALLOWED: Role[] = ['owner', 'admin', 'manager', 'integrator', 'visionary', 'implementer'];
     if (!ALLOWED.includes(viewerRole)) {
       return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
@@ -341,16 +387,35 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
-    const { org, role: viewerRole } = resolved;
+    const { org } = resolved;
+    // Impersonation-aware role read.
+    const _viewerTeams = (request as any).orgMember as { role?: Role; id?: string } | null;
+    const viewerRole: Role = (_viewerTeams?.role || resolved.role) as Role;
 
-    const ALLOWED: Role[] = ['owner', 'admin', 'manager'];
+    const ALLOWED: Role[] = ['owner', 'admin', 'manager', 'integrator', 'visionary', 'implementer'];
     if (!ALLOWED.includes(viewerRole)) {
       return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     }
 
-    const orgTeams = await db.select().from(teams)
-      .where(eq(teams.orgId, org.id))
-      .orderBy(desc(teams.isDefault), asc(teams.name));
+    // Non-admin scoping (added 2026-05-27 per David's spec: teams should
+    // only show teams she is part of). owner/admin/implementer/visionary/
+    // integrator see all teams; manager sees only teams via team_memberships.
+    const isAdminLikeTeams = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'implementer' || viewerRole === 'visionary' || viewerRole === 'integrator';
+    let myTeamIdsForFilter: string[] | null = null;
+    if (!isAdminLikeTeams && _viewerTeams?.id) {
+      const rows = await db.select({ teamId: teamMemberships.teamId })
+        .from(teamMemberships)
+        .where(eq(teamMemberships.memberId, _viewerTeams.id));
+      myTeamIdsForFilter = rows.map(r => r.teamId);
+    }
+
+    const orgTeams = myTeamIdsForFilter !== null
+      ? (myTeamIdsForFilter.length === 0 ? [] : await db.select().from(teams)
+          .where(and(eq(teams.orgId, org.id), inArray(teams.id, myTeamIdsForFilter)))
+          .orderBy(desc(teams.isDefault), asc(teams.name)))
+      : await db.select().from(teams)
+          .where(eq(teams.orgId, org.id))
+          .orderBy(desc(teams.isDefault), asc(teams.name));
 
     // Membership counts + members per team (one round trip, grouped client-side).
     const tmRows = orgTeams.length === 0 ? [] : await db

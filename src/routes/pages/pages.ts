@@ -3358,11 +3358,20 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // Rating your peers or yourself isn't the People Analyzer model -- you
     // rate your direct + transitive reports. David flagged 2026-05-24 that
     // showing the whole org made the page noisy and out-of-frame.
+    //
+    // Impersonation-aware identity resolution (added 2026-05-27): under
+    // super-admin "view as <user>", auth.userId stays as the admin's
+    // session, so a raw DB lookup by auth.userId returns the admin's row
+    // and the page shows the admin's reports, not the impersonated
+    // user's. Use request.impersonation.as when present to query for the
+    // effective viewer's tiles. See feedback_otp_orgmember_not_resolveorgforuser.
     const auth = getAuth(request);
-    const [me] = auth.userId
+    const _impReview = (request as any).impersonation as { as?: string } | null;
+    const _effClerkReview = _impReview?.as || auth.userId;
+    const [me] = _effClerkReview
       ? await db.select({ claimedEntityId: orgMembers.claimedEntityId, claimedEntityIds: orgMembers.claimedEntityIds })
           .from(orgMembers)
-          .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+          .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, _effClerkReview)))
           .limit(1)
       : [null];
     const myTiles: string[] = [];
@@ -3370,6 +3379,13 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       for (const id of me.claimedEntityIds) if (id) myTiles.push(id);
     }
     if (me?.claimedEntityId && !myTiles.includes(me.claimedEntityId)) myTiles.push(me.claimedEntityId);
+    // Defense-in-depth: strip HUM_DAVIDSTEEL for non-founders.
+    const _isLegacyReview = !!(_effClerkReview && (org as any).clerkOrgId === _effClerkReview);
+    const _myTilesScrubbedReview = _isLegacyReview
+      ? myTiles
+      : myTiles.filter(t => t !== 'HUM_DAVIDSTEEL');
+    myTiles.length = 0;
+    for (const t of _myTilesScrubbedReview) myTiles.push(t);
 
     const myTileSet = new Set(myTiles);
     const subtree = myTiles.length > 0 ? reportsSubtree(graph, myTiles) : new Set<string>();
