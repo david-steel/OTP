@@ -3729,9 +3729,21 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
       .limit(1);
 
+    // Defense-in-depth: HUM_DAVIDSTEEL must NEVER appear in a non-founder's
+    // claimedEntityIds. The chart-claim-reconcile email-match path has a
+    // known drift pattern that can push the founder's canonical tile into
+    // another member's claims. If we trusted the DB blindly, Kristen with
+    // a drifted claim of HUM_DAVIDSTEEL would see David's full todo queue.
+    // Strip it here regardless of DB state. The legacy-founder fallback
+    // below adds HUM_DAVIDSTEEL back when the requester IS the founder.
+    // Caught 2026-05-27 alongside the /dashboard same-shape leak.
+    const _isLegacyFounderMeTodos = !!(auth.userId && (org as any).clerkOrgId === auth.userId);
     let ownerExternalIds: string[] = [];
     if (me?.claimedEntityIds && Array.isArray(me.claimedEntityIds)) {
-      ownerExternalIds = (me.claimedEntityIds as string[]).filter(x => typeof x === 'string' && x.length > 0);
+      const _raw = (me.claimedEntityIds as string[]).filter(x => typeof x === 'string' && x.length > 0);
+      ownerExternalIds = _isLegacyFounderMeTodos
+        ? _raw
+        : _raw.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
     }
     if (ownerExternalIds.length === 0 && (org as any).clerkOrgId === auth.userId) {
       ownerExternalIds = ['HUM_DAVIDSTEEL'];

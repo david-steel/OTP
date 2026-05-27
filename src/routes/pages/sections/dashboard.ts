@@ -1983,8 +1983,24 @@ Founder, OTP</p>
     const currentQuarter = `${now.getFullYear()}-Q${q}`;
 
     // ---- Owner identity for "my" filtering ----
-    // Use the member's first claimed entity id; fall back to email.
-    const claimedIds = ((member as any)?.claimedEntityIds as string[] | undefined) || [];
+    // Resolve legacy-founder context first so we can scrub claimed IDs.
+    // Defense-in-depth: HUM_DAVIDSTEEL must NEVER appear in a non-founder's
+    // claimedEntityIds. The chart-claim-reconcile path has a known drift
+    // pattern (Bogdan's row claimed HUM_DAVIDSTEEL via email-match) that
+    // can put the founder's canonical tile into someone else's claims. If
+    // that happens, every downstream "my X" query (myRocks, myKpis,
+    // myTodos, delegated*) starts returning the founder's data. Strip
+    // HUM_DAVIDSTEEL out for non-founders regardless of DB state.
+    // Caught 2026-05-27 when Kristen still saw David's todos on
+    // /dashboard despite the c874f7fd founder-only union fix -- the leak
+    // was upstream, in claimedIds itself.
+    const { getAuth: _getAuthForClaim } = await import('@clerk/fastify');
+    const _authForClaim = _getAuthForClaim(request);
+    const _isLegacyFounder = !!(_authForClaim.userId && (org as any).clerkOrgId === _authForClaim.userId);
+    const _rawClaimedIds = ((member as any)?.claimedEntityIds as string[] | undefined) || [];
+    const claimedIds = _isLegacyFounder
+      ? _rawClaimedIds
+      : _rawClaimedIds.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
     const myExternalId = claimedIds[0] || (member?.email || '');
 
     // ---- My Rocks ----
@@ -2033,9 +2049,7 @@ Founder, OTP</p>
     //     agent-pushed todos onto every invited member's /dashboard.
     // Fixed 2026-05-27 (commit 874f7fd) after the security audit caught
     // the same V1 placeholder pattern we fixed in /me/todos on 2026-05-26.
-    const { getAuth: _getAuthForOwner } = await import('@clerk/fastify');
-    const _authForOwner = _getAuthForOwner(request);
-    const _isLegacyFounder = !!(_authForOwner.userId && (org as any).clerkOrgId === _authForOwner.userId);
+    // _isLegacyFounder is computed above where claimedIds is built.
     const ownerCandidates = Array.from(new Set([
       ...claimedIds,
       ...(member?.email ? [member.email] : []),
