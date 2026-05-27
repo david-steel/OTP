@@ -1996,7 +1996,17 @@ Founder, OTP</p>
     // was upstream, in claimedIds itself.
     const { getAuth: _getAuthForClaim } = await import('@clerk/fastify');
     const _authForClaim = _getAuthForClaim(request);
-    const _isLegacyFounder = !!(_authForClaim.userId && (org as any).clerkOrgId === _authForClaim.userId);
+    // Under super-admin impersonation, Clerk auth.userId stays as the admin
+    // (David) while request.impersonation.as is the impersonated user's
+    // (Kristen's) Clerk ID. The legacy-founder check must use the EFFECTIVE
+    // viewer -- otherwise an admin "view as Kristen" still treats the
+    // session as the founder, the HUM_DAVIDSTEEL fallback fires, and
+    // David's todos leak into the impersonated view. Caught 2026-05-27
+    // after the morning hotfix's auth.userId check was still bypassed
+    // by impersonation.
+    const _imp = (request as any).impersonation as { as?: string } | null;
+    const _effectiveClerkId = _imp?.as || _authForClaim.userId;
+    const _isLegacyFounder = !!(_effectiveClerkId && (org as any).clerkOrgId === _effectiveClerkId);
     const _rawClaimedIds = ((member as any)?.claimedEntityIds as string[] | undefined) || [];
     const claimedIds = _isLegacyFounder
       ? _rawClaimedIds

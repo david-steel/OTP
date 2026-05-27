@@ -3736,8 +3736,15 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // a drifted claim of HUM_DAVIDSTEEL would see David's full todo queue.
     // Strip it here regardless of DB state. The legacy-founder fallback
     // below adds HUM_DAVIDSTEEL back when the requester IS the founder.
-    // Caught 2026-05-27 alongside the /dashboard same-shape leak.
-    const _isLegacyFounderMeTodos = !!(auth.userId && (org as any).clerkOrgId === auth.userId);
+    //
+    // Impersonation-aware: under super-admin "view as", auth.userId stays
+    // as the admin while request.impersonation.as is the impersonated
+    // user's Clerk ID. Use the EFFECTIVE viewer for the founder check so
+    // an admin "view as Kristen" does NOT see David's todos. Caught
+    // 2026-05-27 alongside the /dashboard same-shape leak.
+    const _impMeTodos = (request as any).impersonation as { as?: string } | null;
+    const _effectiveClerkIdMeTodos = _impMeTodos?.as || auth.userId;
+    const _isLegacyFounderMeTodos = !!(_effectiveClerkIdMeTodos && (org as any).clerkOrgId === _effectiveClerkIdMeTodos);
     let ownerExternalIds: string[] = [];
     if (me?.claimedEntityIds && Array.isArray(me.claimedEntityIds)) {
       const _raw = (me.claimedEntityIds as string[]).filter(x => typeof x === 'string' && x.length > 0);
@@ -3745,7 +3752,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         ? _raw
         : _raw.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
     }
-    if (ownerExternalIds.length === 0 && (org as any).clerkOrgId === auth.userId) {
+    if (ownerExternalIds.length === 0 && _isLegacyFounderMeTodos) {
       ownerExternalIds = ['HUM_DAVIDSTEEL'];
     }
 
