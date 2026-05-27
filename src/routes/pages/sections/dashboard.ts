@@ -2026,13 +2026,20 @@ Founder, OTP</p>
     // Owner resolution accepts ANY of the user's known external IDs:
     //   - claimedEntityIds (e.g., agent tiles they hold)
     //   - email (legacy fallback)
-    //   - canonical human tile (HUM_DAVIDSTEEL etc) — agents push here directly
-    // Added 2026-05-07: union with hardcoded HUM_DAVIDSTEEL so Watchdog/Pulse/etc.
-    // pushes are visible on /dashboard. Future: derive HUM_ id from member claim.
+    //   - canonical human tile (HUM_DAVIDSTEEL etc) — agents push here
+    //     directly. The HUM_DAVIDSTEEL fallback ONLY applies to the legacy
+    //     founder (org.clerkOrgId === auth.userId); for any other invited
+    //     member, unioning it would leak David's agent-pushed todos onto
+    //     their /dashboard. Caught 2026-05-27 in the security audit after
+    //     the same pattern was fixed in /me/todos on 2026-05-26 (c92154b)
+    //     but missed here.
+    const { getAuth: _getAuthForOwner } = await import('@clerk/fastify');
+    const _authForOwner = _getAuthForOwner(request);
+    const _isLegacyFounder = !!(_authForOwner.userId && (org as any).clerkOrgId === _authForOwner.userId);
     const ownerCandidates = Array.from(new Set([
       ...claimedIds,
       ...(member?.email ? [member.email] : []),
-      'HUM_DAVIDSTEEL',  // canonical human tile for the org owner; expand when org_members carries this mapping
+      ...(_isLegacyFounder ? ['HUM_DAVIDSTEEL'] : []),
     ].filter(Boolean) as string[]));
     // Enriched todos: include the meeting title + team name so the view
     // can show a source label per todo (Personal / From <meeting>).

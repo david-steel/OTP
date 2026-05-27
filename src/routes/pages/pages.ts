@@ -3436,6 +3436,23 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const externalId = decodeURIComponent(request.params.externalId);
     if (!externalId || externalId.length > 120) return reply.status(400).send('Invalid externalId');
 
+    // Visibility gate (added 2026-05-27 after audit found this page
+    // rendered ANY tile's rocks/todos/tickets to any authenticated
+    // org_member). Mirrors the API gate in routes/api/team-profile.ts
+    // and the chart-scoping rules from commit 2d9358b. 404 (not 403)
+    // to avoid confirming the tile exists.
+    {
+      const { computeViewableTiles } = await import('../../services/chart-permissions.js');
+      const _team = await getOrgTeamGraph(org.id, org.name || '');
+      const _auth = getAuth(request);
+      let _viewerMember = (request as any).orgMember as { role?: string; claimedEntityId?: string | null; claimedEntityIds?: string[] | null } | null;
+      if (!_viewerMember && _auth.userId && (org as any).clerkOrgId === _auth.userId) {
+        _viewerMember = { role: 'owner', claimedEntityId: null, claimedEntityIds: null };
+      }
+      const _viewable = computeViewableTiles(_viewerMember as any, _team);
+      if (!_viewable.has(externalId)) return reply.status(404).send('Member not found');
+    }
+
     // Aggregate the same data the API endpoint returns -- pulled inline here
     // so the page is server-rendered and works without JS.
     const [ownedRocks, ownedTodos, ownedTickets] = await Promise.all([

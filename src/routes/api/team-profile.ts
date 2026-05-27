@@ -20,6 +20,26 @@ export default async function teamProfileRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: { code: 'INVALID_PARAM', message: 'externalId required' } });
     }
 
+    // Visibility gate (added 2026-05-27 after audit found this endpoint
+    // returned ANY tile's rocks/todos/tickets to any authenticated
+    // org_member). Mirrors the chart-scoping rules from commit 2d9358b:
+    // owner/admin/implementer see all, manager sees own + reports_to
+    // subtree, managee/observer see own tiles only. 404 (not 403) to
+    // avoid confirming the tile exists.
+    const { computeViewableTiles } = await import('../../services/chart-permissions.js');
+    const { getOrgTeamGraph } = await import('../../services/team-graph.js');
+    const { getAuth } = await import('@clerk/fastify');
+    const team = await getOrgTeamGraph(org.id, org.name || '');
+    const _auth = getAuth(request);
+    let viewerMember = (request as any).orgMember as { role?: string; claimedEntityId?: string | null; claimedEntityIds?: string[] | null } | null;
+    if (!viewerMember && _auth.userId && (org as any).clerkOrgId === _auth.userId) {
+      viewerMember = { role: 'owner', claimedEntityId: null, claimedEntityIds: null };
+    }
+    const viewable = computeViewableTiles(viewerMember as any, team);
+    if (!viewable.has(externalId)) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Profile not found' } });
+    }
+
     // ---- Currently owns: rocks, open todos, open issues ----
     const [ownedRocks, ownedTodos, ownedTickets] = await Promise.all([
       db.select().from(rocks).where(and(
