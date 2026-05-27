@@ -171,10 +171,13 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     let invitations = await listPendingInvites(org.id);
 
     // Non-admin scoping (added 2026-05-27 per David's spec: members should
-    // only show her + her direct reports). owner/admin/implementer/visionary/
-    // integrator see all; manager sees self + reports_to subtree from
-    // their claimed tiles.
-    const isAdminLikeMembers = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'implementer' || viewerRole === 'visionary' || viewerRole === 'integrator';
+    // only show her + her direct reports). Tier matches the canonical
+    // chart-permissions.ts authority: only owner/admin/implementer are
+    // "see-all". Manager/integrator/visionary/managee/member/observer all
+    // get scoped to their reports_to subtree. Caught 2026-05-27 when
+    // Bogdan (integrator) was incorrectly seeing all teams/members because
+    // an earlier sweep widened the skip list to include EOS roles.
+    const isAdminLikeMembers = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'implementer';
     if (!isAdminLikeMembers) {
       const { reportsSubtree } = await import('../../../services/chart-permissions.js');
       const { getOrgTeamGraph: _getGraphM } = await import('../../../services/team-graph.js');
@@ -398,9 +401,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     }
 
     // Non-admin scoping (added 2026-05-27 per David's spec: teams should
-    // only show teams she is part of). owner/admin/implementer/visionary/
-    // integrator see all teams; manager sees only teams via team_memberships.
-    const isAdminLikeTeams = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'implementer' || viewerRole === 'visionary' || viewerRole === 'integrator';
+    // only show teams the viewer is part of). Tier matches
+    // chart-permissions.ts: only owner/admin/implementer skip the
+    // scope. Integrator/visionary/manager/etc are scoped to their
+    // team_memberships.
+    const isAdminLikeTeams = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'implementer';
     let myTeamIdsForFilter: string[] | null = null;
     if (!isAdminLikeTeams && _viewerTeams?.id) {
       const rows = await db.select({ teamId: teamMemberships.teamId })
