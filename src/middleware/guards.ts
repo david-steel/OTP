@@ -107,6 +107,15 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
             targetName: payload.name,
             targetMemberId: payload.memberId,
             bySuperAdmin: payload.by,
+            // The impersonated target's Clerk user ID. Downstream code (e.g.
+            // dashboard.ts legacy-founder check) needs this to evaluate
+            // "is the EFFECTIVE viewer the founder?" using Kristen's
+            // identity, not the super-admin session's auth.userId. Without
+            // exposing `as` here, the founder check evaluates against the
+            // admin's userId, which matches org.clerkOrgId for the founder,
+            // and the HUM_DAVIDSTEEL fallback leaks under impersonation.
+            // Caught 2026-05-27 via /api/v1/_debug/dashboard-state diagnostic.
+            as: payload.as,
           };
           return;
         }
