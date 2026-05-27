@@ -633,7 +633,14 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser(auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
-    const { org, role } = resolved;
+    // resolveOrgForUser uses auth.userId and is impersonation-BLIND -- under
+    // super-admin "view as <user>" it returns the admin's role, not the
+    // impersonated user's. The admin-bypass check below MUST read from
+    // request.orgMember (guards.ts swaps that to the impersonated row).
+    // See feedback_otp_orgmember_not_resolveorgforuser.md for the rule.
+    const { org } = resolved;
+    const _viewerKpiMember = (request as any).orgMember as { role?: Role } | null;
+    const role: Role = (_viewerKpiMember?.role || resolved.role) as Role;
 
     const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const { listKpis, getScoreboard } = await import('../../../services/kpi.js');
