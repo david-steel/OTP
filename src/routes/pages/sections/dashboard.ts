@@ -639,7 +639,49 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const { listKpis, getScoreboard } = await import('../../../services/kpi.js');
     const { formatPeriodLabel } = await import('../../../services/kpi-periods.js');
 
-    const allKpis = await listKpis(org.id, {});
+    let allKpis = await listKpis(org.id, {});
+
+    // Scope KPIs to the viewer (added 2026-05-27).
+    //   owner / admin / implementer  -> full org KPI list
+    //   manager / managee / member   -> KPIs they own (by claimed tile)
+    //                                   UNION KPIs on teams they belong to
+    // Without this, every invited member saw the entire org's scorecard.
+    // Same impersonation-aware founder check as the dashboard handler:
+    // when an admin "views as Kristen", the founder fallback must NOT
+    // fire against the admin's session.
+    const isAdminLikeKpis = role === 'owner' || role === 'admin' || role === 'implementer';
+    if (!isAdminLikeKpis) {
+      const viewerMemberKpis = (request as any).orgMember as { id?: string; claimedEntityId?: string | null; claimedEntityIds?: string[] | null } | null;
+      const impKpis = (request as any).impersonation as { as?: string } | null;
+      const effectiveClerkIdKpis = impKpis?.as || auth.userId;
+      const isLegacyFounderKpis = !!(effectiveClerkIdKpis && (org as any).clerkOrgId === effectiveClerkIdKpis);
+
+      const rawClaimsKpis: string[] = [];
+      if (viewerMemberKpis?.claimedEntityIds && Array.isArray(viewerMemberKpis.claimedEntityIds)) {
+        for (const id of viewerMemberKpis.claimedEntityIds) if (typeof id === 'string' && id) rawClaimsKpis.push(id);
+      }
+      if (viewerMemberKpis?.claimedEntityId && !rawClaimsKpis.includes(viewerMemberKpis.claimedEntityId)) {
+        rawClaimsKpis.push(viewerMemberKpis.claimedEntityId);
+      }
+      const claimedSetKpis = new Set(
+        isLegacyFounderKpis
+          ? rawClaimsKpis
+          : rawClaimsKpis.filter(id => id !== 'HUM_DAVIDSTEEL'),
+      );
+
+      const myTeamRowsKpis = viewerMemberKpis?.id
+        ? await db.select({ teamId: teamMemberships.teamId })
+            .from(teamMemberships)
+            .where(eq(teamMemberships.memberId, viewerMemberKpis.id))
+        : [];
+      const myTeamIdsKpis = new Set(myTeamRowsKpis.map(r => r.teamId));
+
+      allKpis = allKpis.filter(k =>
+        (k.ownerExternalId && claimedSetKpis.has(k.ownerExternalId))
+        || (k.teamId && myTeamIdsKpis.has(k.teamId)),
+      );
+    }
+
     const groupNames = Array.from(new Set(allKpis.map(k => k.groupName).filter((g): g is string => !!g)));
 
     const grainQ = String(request.query.grain || 'weekly').toLowerCase();
@@ -657,6 +699,18 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     else from = new Date(now.getUTCFullYear() - 4, 0, 1);
 
     const scoreboard = await getScoreboard(org.id, { timeGrain: grain, from, to: now });
+
+    // Mirror the allKpis scoping onto the scoreboard rows. allKpis above is
+    // the source of truth for "what this viewer can see"; the scoreboard
+    // pulled the full org list (the kpi service doesn't take an ID array
+    // filter today), so drop rows whose kpiId isn't in the visible set.
+    if (!isAdminLikeKpis && Array.isArray((scoreboard as any).rows)) {
+      const visibleKpiIdSet = new Set(allKpis.map(k => k.id));
+      (scoreboard as any).rows = (scoreboard as any).rows.filter((r: any) =>
+        r && typeof r.kpiId === 'string' && visibleKpiIdSet.has(r.kpiId),
+      );
+    }
+
     // Render with latest period on the LEFT (most recent first). Reverse both
     // the periods array and each row's per-period values so indices stay aligned.
     scoreboard.periods.reverse();
