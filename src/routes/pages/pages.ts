@@ -3379,10 +3379,17 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       for (const id of me.claimedEntityIds) if (id) myTiles.push(id);
     }
     if (me?.claimedEntityId && !myTiles.includes(me.claimedEntityId)) myTiles.push(me.claimedEntityId);
-    // Defense-in-depth: strip HUM_DAVIDSTEEL for non-founders.
+    // Defense-in-depth: strip HUM_DAVIDSTEEL for non-founders. SPREAD the
+    // legacy-founder case so the scrubbed list is a COPY, not the same
+    // reference. The earlier `myTiles.length = 0; refill` pattern was a
+    // reference-aliasing bug -- under legacy-founder, the scrubbed list was
+    // the same array, so clearing myTiles also cleared the source, leaving
+    // an empty subtree and a blank People Review page for the founder.
+    // Caught 2026-05-27 when David's /team/review rendered the
+    // "no one reports to you" empty state despite 16 humans on the chart.
     const _isLegacyReview = !!(_effClerkReview && (org as any).clerkOrgId === _effClerkReview);
     const _myTilesScrubbedReview = _isLegacyReview
-      ? myTiles
+      ? [...myTiles]
       : myTiles.filter(t => t !== 'HUM_DAVIDSTEEL');
     myTiles.length = 0;
     for (const t of _myTilesScrubbedReview) myTiles.push(t);
