@@ -11,6 +11,60 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 27, 2026 ----
+
+  {
+    date: '2026-05-27',
+    tags: ['Major', 'Security', 'Multi-tenant'],
+    title: 'Every page knows who is actually looking at it -- multi-tenant tightening across the dashboard',
+    summary: 'OTP started as a single-tenant tool, and the first real second-user session (a live L10 with two people in the room) exposed every place the code still assumed there was only one user. The dashboard, members, teams, KPIs, People Review, and the org chart now scope strictly by role and chart position. Owner / admin / implementer see the full org. Manager and EOS Integrator / Visionary see their own seat plus their reports-to subtree. Managee and member see only their own seat. The "My Practice" tab is now hidden from anyone who is not an owner or operating partner. And every check is impersonation-aware -- "view as <user>" from the admin panel now shows you exactly what that user sees, not a leaked admin view glued onto their name.',
+    details: `<p>Two days, fifteen commits, one root pattern. OTP was built first as a tool for a founder running their own org, and that meant the codebase had founder-only assumptions sprinkled across dozens of routes. The moment a second real human signed in -- a teammate joining a live L10 -- those assumptions started leaking the founder's data into the teammate's view. The remediation is a structural tightening: any check that gates data on "who is looking at this?" now reads from the request's resolved member, honors super-admin impersonation, and applies a single canonical role tier from the chart-permissions service.</p>
+
+<h3>Multi-tenant scoping across the dashboard</h3>
+<p>Every route that returns user-scoped data was checked against the rule "must scope by the requesting member's role and chart position." Findings shipped as a coordinated sweep:</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>/dashboard</strong>: rocks, KPIs, to-dos, delegated lists are scoped to the viewer's claimed chart tiles plus their email. The agent-pushed founder tile is only added to the candidate list when the requester actually IS the legacy founder.</li>
+<li><strong>/dashboard/kpis</strong>: scoped to KPIs the viewer owns plus KPIs on teams the viewer is a member of. Owner / admin / implementer keep full-org visibility.</li>
+<li><strong>/dashboard/members</strong>: scoped to the viewer plus everyone in their reports-to subtree. Inviters at integrator / visionary / manager rank get a scoped invite picker -- they can still onboard their cone but can no longer see the rest of the org's roster.</li>
+<li><strong>/dashboard/teams</strong>: scoped to teams the viewer is a member of via <code>team_memberships</code>. Empty list when the viewer is not on any team.</li>
+<li><strong>/dashboard/team</strong> (chart): nodes and edges filtered to the viewer's viewable tile set. Owner / admin / implementer see the entire chart; manager / integrator / visionary see their own seat plus their reports-to subtree; managee sees only their own seat. The same filter was applied to the underlying <code>/api/v1/team/graph</code> endpoint so a client-side d3 fetch cannot bypass the page-level scope.</li>
+<li><strong>/team/review</strong> (People Review): identity now resolves through the impersonation-aware path so "view as &lt;user&gt;" rates that user's reports, not yours.</li>
+<li><strong>/team/:externalId</strong> profile drill-in (page + JSON API): rocks, to-dos, and tickets for a given chart tile are now gated by <code>canViewTile</code>. Hitting the URL for a tile you cannot see returns a 404 (existence is private).</li>
+<li><strong>"My Practice" nav</strong>: the tab now requires an org-wide role (owner / admin / implementer / visionary / integrator). Managers, managees, and members no longer see the practice tab even when the org has a claimed consultant profile.</li>
+</ul>
+
+<h3>Impersonation: view-as that actually views as</h3>
+<p>Super-admin "view as &lt;user&gt;" was leaking the admin's data into the impersonated view because four separate code paths derived "who is the effective viewer?" from the Clerk session (always the admin) instead of from the impersonation cookie payload. All four are now routed through <code>request.impersonation.as || auth.userId</code> so every gate evaluates as the impersonated user. A super-admin-gated diagnostic endpoint at <code>/api/v1/_debug/dashboard-state</code> stays in place -- it returns the resolved identity, role, claimed tiles, and the actual results that would be returned for the current request, so the next tenant-isolation question gets answered in one request instead of guessed at.</p>
+
+<h3>The principle going forward</h3>
+<p>Two memory rules now sit alongside the code so the pattern does not need to be relearned. "Who is the viewer?" gates must read from <code>request.orgMember</code> and <code>request.impersonation.as</code>, never from <code>auth.userId</code> or <code>resolveOrgForUser(auth.userId)</code> (the first two honor impersonation; the second two do not). The canonical "see-all" tier is owner / admin / implementer, defined in <code>services/chart-permissions.ts</code>; EOS roles like Integrator and Visionary view through their reports-to subtree, same as Manager. Before any new class of user is invited to OTP -- first paid client, first partner-org, first coach managing multiple orgs -- a structured re-scan runs against the same five greps captured in <code>docs/security-audit-2026-05-27.md</code>. This is a posture, not a one-time cleanup.</p>`,
+  },
+
+  // ---- May 26, 2026 ----
+
+  {
+    date: '2026-05-26',
+    tags: ['Meetings', 'Polish'],
+    title: 'L10 day, hardened from inside the room -- segue saves, short titles, draft preservation, due dates, and Slack previews',
+    summary: 'A live Leadership L10 with two people in the room surfaced five UX cuts that all shipped inside the meeting: invited members can now save their segue without an Authentication error, short issue titles ("Reps") no longer reject as invalid ticket data, every reload preserves whatever you are typing, L10 to-do due dates accept a custom override instead of a hardcoded seven days from today, and meeting URLs pasted into Slack or WhatsApp finally render as the meeting page rather than as a generic sign-in marketing card.',
+    details: `<p>Most product bugs surface during demos. This one surfaced inside a real L10 with two people running it for the first time -- which means each fix had a 60-second turnaround window between the bug showing up and being deployed live to the meeting in progress.</p>
+
+<h3>The five inside-the-meeting fixes</h3>
+<ul class="list-disc pl-6 space-y-2">
+<li><strong>Segue / headlines / ratings save no longer errors out.</strong> The API auth resolver was only honoring the legacy-founder Clerk path; the invited-member path was missing. Any invited teammate trying to save a field got "Authentication required" even though they could see the meeting page. The resolver now honors both paths, matching what the page-level guard already does. Any invited org member can now run their L10 normally.</li>
+<li><strong>"Add Issue" no longer rejects short titles.</strong> The "Add Issue" UI hint promised "any non-empty title" but the server schema required five characters. A four-character title (<em>"Reps"</em> in the live meeting) returned "Add failed: invalid ticket data" with no explanation. Title and description validators were relaxed to one character minimum, matching the UI promise. Spam control already lives in the rate limiter; min-length validation does not need to do that job.</li>
+<li><strong>Saves no longer wipe what the other person is typing.</strong> Any save on the L10 page (segue, headline, rating, issue, to-do) fired an SSE event that triggered a full-page reload for every other attendee. The reload preserved scroll position and the focused element's ID, but not the contents of any input the other attendee was typing into. Now every reload path snapshots non-empty <code>textarea</code> / <code>input</code> / <code>contenteditable</code> values to <code>sessionStorage</code> before reloading and restores them on load. Typing in segue while a teammate saves their headline is now safe.</li>
+<li><strong>L10 to-do due dates accept a custom date.</strong> The to-do create form on the L10 page hardcoded the due date to seven days from today with no override field. A new date input next to the priority / recurrence selectors lets you pick any date; if you leave it blank, the seven-day default still applies. Picks anchor to end-of-day local so a "due today" to-do does not show overdue at 9 AM the same day.</li>
+<li><strong>Meeting links in Slack / WhatsApp render as the meeting page, not as a sign-in marketing card.</strong> Before today, pasting a meeting URL into Slack rendered the sign-in page's "Free in Beta" mascot card because the unfurl bot followed the auth redirect and scraped the sign-in meta tags. Now the meeting URL returns a public preview at the same path: meeting title, scheduled date in ET, attendee names, and a "Sign in to view" CTA. No agenda contents, scorecard, rocks, ratings, segue, or headlines leak -- public-safe metadata only. Sharing a meeting link with a teammate finally looks like sharing a meeting link.</li>
+</ul>
+
+<h3>Personal queue stopped leaking the founder's tasks</h3>
+<p>The same day, the <code>/me/todos</code> personal queue was found to hardcode the founder's external ID as a fallback owner -- a leftover from when the only user of OTP was the founder. Any invited org member who navigated to <code>/me/todos</code> got the founder's full personal to-do queue grafted onto their own. The fallback now only fires when the requester actually is the legacy founder; everyone else's queue scopes strictly to their own claimed tiles plus their email.</p>
+
+<h3>Org chart visibility tightened</h3>
+<p>The org chart at <code>/dashboard/team</code> previously rendered every node and edge to every authenticated org member. Visibility now matches the existing edit rules: owner / admin / implementer see the full chart, manager sees their own seat plus their reports-to subtree, managee sees their own seat only. The filter applies to both the page render and the underlying <code>/api/v1/team/graph</code> endpoint so a client-side d3 chart cannot bypass the scope by hitting the API directly.</p>`,
+  },
+
   // ---- May 25, 2026 ----
 
   {
