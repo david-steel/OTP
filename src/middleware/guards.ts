@@ -101,6 +101,14 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
             featureAccess: (ctx.member.featureAccess as Record<string, boolean>) || {},
             dataAccess: (ctx.member.dataAccess as Record<string, boolean>) || {},
             agentAccess: (ctx.member.agentAccess as Record<string, boolean>) || {},
+            // Chart-claim fields are required by computeViewableTiles /
+            // computeEditableTiles in services/chart-permissions.ts.
+            // Without them the chart, member list, and any other
+            // scoping helper sees an empty tile set and renders nothing
+            // (the "no humans or agents on the chart yet" symptom David
+            // reported 2026-05-27 while impersonating Kristen).
+            claimedEntityId: ctx.member.claimedEntityId || null,
+            claimedEntityIds: (ctx.member.claimedEntityIds as string[] | null) || null,
           };
           (request as any).impersonation = {
             active: true,
@@ -135,6 +143,13 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         featureAccess: orgMembers.featureAccess,
         dataAccess: orgMembers.dataAccess,
         agentAccess: orgMembers.agentAccess,
+        // Chart-claim fields required by chart-permissions.ts helpers
+        // (computeViewableTiles, computeEditableTiles, canViewTile).
+        // Added 2026-05-27 -- without these the chart was rendering
+        // empty under impersonation because the decorated member had
+        // no tile context to derive a subtree from.
+        claimedEntityId: orgMembers.claimedEntityId,
+        claimedEntityIds: orgMembers.claimedEntityIds,
       })
         .from(orgMembers)
         .where(and(
@@ -156,6 +171,8 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         featureAccess: (row.featureAccess as Record<string, boolean>) || {},
         dataAccess: (row.dataAccess as Record<string, boolean>) || {},
         agentAccess: (row.agentAccess as Record<string, boolean>) || {},
+        claimedEntityId: row.claimedEntityId || null,
+        claimedEntityIds: (row.claimedEntityIds as string[] | null) || null,
       };
     } catch (err) {
       // Fail-soft. Auth gates run independently; we just leave orgMember null.
