@@ -23,14 +23,20 @@ const attendeeSchema = z.object({
 
 const createMeetingSchema = z.object({
   meetingType: z.string().max(60).optional().default('leadership'),
-  title: z.string().min(3).max(255),
+  // Meeting create form at l8-list.ejs uses `required` only -- a user can
+  // type "L8" or "1:1" and submit. Relaxed from min(3) to min(1) on
+  // 2026-05-27 to match the UI promise. The form's prefilled default
+  // ("Leadership Meeting -- {date}") is the common case anyway.
+  title: z.string().min(1).max(255),
   scheduledAt: z.string().datetime(),
   attendees: z.array(attendeeSchema).optional().default([]),
   teamId: z.string().uuid().optional(),
 });
 
 const updateMeetingSchema = z.object({
-  title: z.string().min(3).max(255).optional(),
+  // Match createMeetingSchema.title -- the in-place title editor on the
+  // L8 page must accept the same values the create form does.
+  title: z.string().min(1).max(255).optional(),
   meetingType: z.string().max(60).optional(),
   status: z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']).optional(),
   scheduledAt: z.string().datetime().optional(),

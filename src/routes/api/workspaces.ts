@@ -8,7 +8,10 @@ import { requireUuidParam } from '../../shared/param-validation.js';
 import { z } from 'zod';
 
 const createWorkspaceSchema = z.object({
-  name: z.string().min(2).max(255),
+  // Workspace create form at dashboard-workspaces.ejs uses `required` only.
+  // Relaxed from min(2) to min(1) on 2026-05-27 to match the UI promise --
+  // a user can type "X" or "Q4" as a workspace name and submit.
+  name: z.string().min(1).max(255),
   description: z.string().max(2000).optional(),
 });
 

@@ -114,43 +114,50 @@ the next one live.
 
 ---
 
-## P2 — UI/API contract mismatches (same shape as yesterday's tickets bug)
+## P2 — UI/API contract mismatches (resolved 2026-05-27)
 
 These haven't fired live yet (no one's tried them with short input). Each is
 a latent "Add failed: invalid X data" mid-meeting waiting to happen.
+Reviewed and triaged 2026-05-27:
 
-| File:line | Field | Schema | UI promise (check) |
-|---|---|---|---|
-| `api/inquiries.ts:16` | `subject` | `min(2)` | likely placeholder; verify form |
-| `api/inquiries.ts:17` | `message` | `min(10)` | verify form copy |
-| `api/source-documents.ts:12` | `content` | `min(10)` | doc-import surface |
-| `api/meetings.ts:26` | meeting `title` | `min(3)` | UI accepts any non-empty? |
-| `api/workspaces.ts:11` | workspace `name` | `min(2)` | UI lets you type "X"? |
-| `api/consultants.ts:10` | `displayName` | `min(2)` | partner signup form |
+| File:line | Field | Schema | UI surface | Decision |
+|---|---|---|---|---|
+| `api/inquiries.ts:16` | `subject` | `min(2)` | Server-built (pricing.ejs:279 builds "[Paid plan inquiry] X - Y") | **Leave** — never reaches via UI |
+| `api/inquiries.ts:17` | `message` | `min(10)` | `expert-contact.ejs` textarea, `required` only | **Relaxed → min(1)** |
+| `api/source-documents.ts:12` | `content` | `min(10)` | No user-facing create form found | **Leave** — admin/API-only path |
+| `api/meetings.ts:26` | meeting `title` | `min(3)` | `l8-list.ejs` form, `required` only | **Relaxed → min(1)** |
+| `api/meetings.ts:37` | update `title` | `min(3)` | In-place title editor on L8 page | **Relaxed → min(1)** (match create) |
+| `api/workspaces.ts:11` | workspace `name` | `min(2)` | `dashboard-workspaces.ejs`, `required` only | **Relaxed → min(1)** |
+| `api/consultants.ts:10` | `displayName` | `min(2)` | No CREATE form (display-only profile pages) | **Leave** — profile field, not a form |
 
-**Fix pattern:** For each row, open the EJS form, see if the UI hint matches
-the schema. If UI promises less, relax schema to match (rate limiter is the
-spam control, not min-char rules — same logic as the tickets fix in
-commit `4f3511e`).
+**Net shipped:** 3 real schema relaxations (inquiries.message, meetings.title
+create + update, workspaces.name). The other 3 are correctly strict
+(server-built, no UI, profile field). Audit doc over-flagged on initial
+scan — corrected here. Shipped 2026-05-27 in commit `<TBD>`.
 
-**Effort:** ~5 min per row to verify + relax. ~30 min total.
-
-**Severity:** P2 — latent mid-meeting fires.
+**Severity:** P2 — latent mid-meeting fires (now closed).
 
 ---
 
-## P3 — Placeholder comments still naming a future revisit
+## P3 — Placeholder comments (resolved 2026-05-27)
 
-Each is a debt note David wrote to himself that's still outstanding.
+Re-triaged 2026-05-27:
 
-- `dashboard.ts:2031`: "Future: derive HUM_ id from member claim" — same as P0 #1.
-- `starter-chart.ts:180`: HUM_DAVIDSTEEL backfill logic, single-tenant assumption.
-- `chart-claim-reconcile.ts:28,153`: Bogdan/David Clerk-row reconciliation specifically.
+- `dashboard.ts:2031` (`Future: derive HUM_ id from member claim`) — **STALE.**
+  The code was fixed this morning in commit `874f7fd`. Comment was updated
+  to reflect new reality (founder-only fallback documented).
+- `starter-chart.ts:175-181` — **NOT a placeholder.** This is historical
+  context explaining why the email/name dedupe logic exists (caught the
+  HUM_DAVIDSTEEL_1 duplicate bug 2026-05-24). The comment correctly
+  documents an active bug fix. **Leave.**
+- `chart-claim-reconcile.ts:24-28, 148-153` — **NOT a placeholder.** Same
+  shape: documents the Bogdan/David Clerk-row chart drift the file was
+  written to fix. Historical context, not a debt note. **Leave.**
 
-**Fix:** Once #1 is fixed, these become low-priority cleanup. Mark resolved
-when the canonical "derive HUM_id from claim" pattern lands.
+**Net shipped:** 1 comment update in dashboard.ts. The other 2 were
+audit doc misreads — they document real fixes, not future work.
 
-**Severity:** P3 — code smell, not active leak.
+**Severity:** P3 — code documentation hygiene (now accurate).
 
 ---
 

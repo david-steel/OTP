@@ -2024,15 +2024,15 @@ Founder, OTP</p>
 
     // ---- My To-Dos (open) ----
     // Owner resolution accepts ANY of the user's known external IDs:
-    //   - claimedEntityIds (e.g., agent tiles they hold)
-    //   - email (legacy fallback)
-    //   - canonical human tile (HUM_DAVIDSTEEL etc) — agents push here
-    //     directly. The HUM_DAVIDSTEEL fallback ONLY applies to the legacy
-    //     founder (org.clerkOrgId === auth.userId); for any other invited
-    //     member, unioning it would leak David's agent-pushed todos onto
-    //     their /dashboard. Caught 2026-05-27 in the security audit after
-    //     the same pattern was fixed in /me/todos on 2026-05-26 (c92154b)
-    //     but missed here.
+    //   - claimedEntityIds (agent and human tiles this member has claimed)
+    //   - email (legacy fallback when no chart claim exists)
+    //   - canonical human tile (HUM_DAVIDSTEEL etc) — ONLY for the legacy
+    //     founder, so the agents that push to that tile by id still surface
+    //     on the founder's dashboard. For any non-founder member this
+    //     branch is skipped; otherwise we would leak the founder's
+    //     agent-pushed todos onto every invited member's /dashboard.
+    // Fixed 2026-05-27 (commit 874f7fd) after the security audit caught
+    // the same V1 placeholder pattern we fixed in /me/todos on 2026-05-26.
     const { getAuth: _getAuthForOwner } = await import('@clerk/fastify');
     const _authForOwner = _getAuthForOwner(request);
     const _isLegacyFounder = !!(_authForOwner.userId && (org as any).clerkOrgId === _authForOwner.userId);

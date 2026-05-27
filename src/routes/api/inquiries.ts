@@ -13,8 +13,14 @@ const createInquirySchema = z.object({
   senderName: z.string().min(1).max(255),
   senderEmail: z.string().email(),
   senderCompany: z.string().max(255).optional(),
+  // subject is server-/script-built (e.g. "[Paid plan inquiry] Acme - Jane"
+  // from pricing.ejs) so min(2) is fine -- it never reaches a min-2 fail
+  // through a UI field. message comes straight from the expert-contact
+  // <textarea required> with no minlength UI hint; relaxed from min(10)
+  // to min(1) on 2026-05-27 to match the UI's "any non-empty" promise.
+  // Spam control lives in the rate limiter, not min-char rules.
   subject: z.string().min(2).max(500),
-  message: z.string().min(10).max(5000),
+  message: z.string().min(1).max(5000),
 });
 
 const updateInquirySchema = z.object({
