@@ -115,6 +115,47 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         .limit(5);
     }
 
+    // Chart graph diagnostic for the People Review empty-page question.
+    // Returns node/edge counts and specifically any reports_to edge whose
+    // target is one of the viewer's claimed tiles -- that's the set People
+    // Review walks UP from. If that array is empty, the page IS empty
+    // because no one's tile reports to the viewer's tile.
+    let graphDiagnostic: any = null;
+    if (org) {
+      try {
+        const { getOrgTeamGraph } = await import('../../../services/team-graph.js');
+        const _graph = await getOrgTeamGraph(org.id, org.name || '');
+        const edgesByType: Record<string, number> = {};
+        for (const e of _graph.edges) {
+          const t = (e as any).type || 'unknown';
+          edgesByType[t] = (edgesByType[t] || 0) + 1;
+        }
+        const myTileSet = new Set([...rawClaimedIds, ...(fullRow?.claimedEntityId ? [fullRow.claimedEntityId] : [])]);
+        const reportsToMe = _graph.edges
+          .filter((e: any) => e.type === 'reports_to' && myTileSet.has(e.targetId))
+          .map((e: any) => ({ sourceId: e.sourceId, targetId: e.targetId }));
+        const sampleReportsToEdges = _graph.edges
+          .filter((e: any) => e.type === 'reports_to')
+          .slice(0, 10)
+          .map((e: any) => ({ sourceId: e.sourceId, targetId: e.targetId }));
+        const myTileNodes = _graph.nodes
+          .filter((n: any) => myTileSet.has(n.externalId))
+          .map((n: any) => ({ externalId: n.externalId, type: n.type, label: n.label }));
+        graphDiagnostic = {
+          nodeCount: _graph.nodes.length,
+          edgeCount: _graph.edges.length,
+          edgesByType,
+          myTiles: Array.from(myTileSet),
+          myTileNodesFoundOnChart: myTileNodes,
+          reportsToMyTilesCount: reportsToMe.length,
+          reportsToMyTilesSample: reportsToMe.slice(0, 20),
+          sampleAnyReportsToEdges: sampleReportsToEdges,
+        };
+      } catch (e) {
+        graphDiagnostic = { error: String((e as Error).message || e) };
+      }
+    }
+
     return reply.send({
       session: {
         clerkUserId: auth.userId,
@@ -145,6 +186,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         ownerCandidates,
       },
       firstTodosReturned: firstTodos,
+      graphDiagnostic,
     });
   });
 
