@@ -43,6 +43,111 @@ function toParsedClaim(c: any): ParsedClaim {
 }
 
 export default async function dashboardRoutes(app: FastifyInstance) {
+  // SUPER-ADMIN DEBUG ENDPOINT (added 2026-05-27 to diagnose Kristen
+  // impersonation leak). Returns the resolved state for the current
+  // request so we can see what the server actually sees vs what the
+  // dashboard handler computes. SAFE to leave in -- super-admin gated
+  // so non-admins get 404. Remove after the leak is closed.
+  app.get('/api/v1/_debug/dashboard-state', async (request, reply) => {
+    const { isSuperAdmin } = await import('../../../middleware/super-admin.js');
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(404).send({ error: 'not found' });
+    if (!isSuperAdmin(request)) return reply.status(404).send({ error: 'not found' });
+
+    const imp = (request as any).impersonation || null;
+    const orgMember = (request as any).orgMember || null;
+
+    // Resolve org the same way the dashboard does.
+    let org: any = null;
+    if (orgMember?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, orgMember.orgId)).limit(1);
+      if (m) org = m;
+    }
+    if (!org && auth.userId) {
+      const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+      if (legacy) org = legacy;
+    }
+
+    // Pull the FULL org_members row for whoever we're effectively viewing as
+    // (impersonation target if active, else the session user).
+    const effectiveClerkId = imp?.as || auth.userId;
+    const [fullRow] = effectiveClerkId
+      ? await db.select().from(orgMembers).where(eq(orgMembers.clerkUserId, effectiveClerkId)).limit(1)
+      : [null as any];
+
+    // Replicate the dashboard's owner resolution to see what it computes.
+    const member = orgMember as any;
+    const isLegacyFounder = !!(effectiveClerkId && org && (org as any).clerkOrgId === effectiveClerkId);
+    const rawClaimedIds = (member?.claimedEntityIds as string[] | undefined) || [];
+    const claimedIds = isLegacyFounder
+      ? rawClaimedIds
+      : rawClaimedIds.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
+    const myExternalId = claimedIds[0] || (member?.email || '');
+    const ownerCandidates = Array.from(new Set([
+      ...claimedIds,
+      ...(member?.email ? [member.email] : []),
+      ...(isLegacyFounder ? ['HUM_DAVIDSTEEL'] : []),
+    ].filter(Boolean) as string[]));
+
+    // Run the actual myTodos query and return the first 5 with their owners
+    // so we can see what's being returned.
+    let firstTodos: any[] = [];
+    if (ownerCandidates.length > 0 && org) {
+      firstTodos = await db.select({
+        id: todos.id,
+        title: todos.title,
+        ownerEntityType: todos.ownerEntityType,
+        ownerExternalId: todos.ownerExternalId,
+        ownerName: todos.ownerName,
+        kind: todos.kind,
+        dueAt: todos.dueAt,
+        doneAt: todos.doneAt,
+      })
+        .from(todos)
+        .where(and(
+          eq(todos.organizationId, org.id),
+          isNull(todos.deletedAt),
+          inArray(todos.ownerExternalId, ownerCandidates),
+          isNull(todos.doneAt),
+          isNull(todos.parentTodoId),
+          isNull(todos.recurrenceRule),
+        ))
+        .limit(5);
+    }
+
+    return reply.send({
+      session: {
+        clerkUserId: auth.userId,
+        isSuperAdmin: true,
+      },
+      impersonation: imp,
+      effectiveClerkId,
+      orgMemberDecoration: orgMember,
+      orgMemberFromDB: fullRow ? {
+        id: fullRow.id,
+        clerkUserId: fullRow.clerkUserId,
+        email: fullRow.email,
+        displayName: fullRow.displayName,
+        role: fullRow.role,
+        claimedEntityId: fullRow.claimedEntityId,
+        claimedEntityIds: fullRow.claimedEntityIds,
+      } : null,
+      org: org ? {
+        id: org.id,
+        clerkOrgId: org.clerkOrgId,
+        name: org.name,
+      } : null,
+      resolved: {
+        isLegacyFounder,
+        rawClaimedIds,
+        claimedIdsAfterScrub: claimedIds,
+        myExternalId,
+        ownerCandidates,
+      },
+      firstTodosReturned: firstTodos,
+    });
+  });
+
   app.get('/dashboard/members', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
