@@ -40,11 +40,11 @@
         <button id="start-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">
           ▶ Start meeting
         </button>
-        <button id="end-meeting" class="px-4 py-2 border border-emerald-600 text-emerald-700 rounded-lg text-sm font-semibold hover:bg-emerald-50" title="Mark this meeting complete (you don't have to Start it first)">
+        <button id="end-meeting" class="px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Mark this meeting complete (you don't have to Start it first)">
           ✓ End meeting
         </button>
       <% } else if (meeting.status === 'in_progress') { %>
-        <button id="end-meeting" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-500">
+        <button id="end-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">
           ✓ End meeting
         </button>
       <% } else if (meeting.status === 'completed') { %>
@@ -489,8 +489,8 @@
                   <% }); %>
                 </select>
               <% } %>
-              <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200">On</button>
-              <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-red-100 rounded hover:bg-red-200">Off</button>
+              <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80">On</button>
+              <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-status-offtrack-soft rounded hover:opacity-80">Off</button>
             </div>
           </div>
         <% }); %>
@@ -525,7 +525,7 @@
           <textarea id="new-rock-status" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Initial status note (optional)"></textarea>
         </div>
         <div class="flex gap-2 mt-2">
-          <button id="new-rock-save" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500 font-medium">Add Priority</button>
+          <button id="new-rock-save" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Add Priority</button>
           <button id="new-rock-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
         </div>
       </div>
@@ -555,7 +555,7 @@
             <% if (h.readAt) { %>
               <span class="text-xs px-2 py-1 text-emerald-700">✓ addressed</span>
             <% } else { %>
-              <button class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200"
+              <button class="text-xs px-2 py-1 bg-status-ontrack-soft text-status-ontrack rounded hover:opacity-80"
                       data-headline-done="<%= h.id %>">✓ Addressed</button>
             <% } %>
             <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft"
@@ -694,9 +694,9 @@
                   <% }); %>
                 </select>
               <% } %>
-              <button data-ids-set="identified" class="text-xs px-2 py-1 bg-blue-100 rounded hover:bg-blue-200">Identify</button>
+              <button data-ids-set="identified" class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:opacity-80">Identify</button>
               <button data-ids-set="discussed"  class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Discuss</button>
-              <button data-action="solve"       class="text-xs px-2 py-1 bg-emerald-100 rounded hover:bg-emerald-200 font-medium">Solve</button>
+              <button data-action="solve"       class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80 font-medium">Solve</button>
               <button data-action="convert"     class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft">→ To-Do</button>
               <button data-action="edit"        class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Edit</button>
               <button data-action="delete"      class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
@@ -738,7 +738,7 @@
               </select>
             </div>
             <div class="flex gap-2 mt-3">
-              <button data-action="solve-confirm" class="text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500 font-medium">Solve + Cascade</button>
+              <button data-action="solve-confirm" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Solve + Cascade</button>
               <button data-action="solve-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
             </div>
           </div>
@@ -790,7 +790,7 @@
           </select>
         </div>
         <div class="flex gap-2 mt-2">
-          <button id="new-issue-save" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-500 font-medium">Add Issue</button>
+          <button id="new-issue-save" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Add Issue</button>
           <button id="new-issue-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
         </div>
       </div>
@@ -899,7 +899,7 @@
     <div class="mt-2 flex gap-2 items-center">
       <button data-save="cascadingMessage" class="text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
       <button id="rebuild-cascading" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Rebuild draft from meeting</button>
-      <button id="cascade-to-team" class="text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-500">Cascade to team</button>
+      <button id="cascade-to-team" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Cascade to team</button>
       <span id="cascading-status" class="text-xs text-gray-500"></span>
     </div>
   </section>
