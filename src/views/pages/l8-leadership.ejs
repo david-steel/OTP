@@ -463,7 +463,7 @@
           <div class="border rounded p-3 flex items-start justify-between" data-rock-id="<%= r.id %>">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <span data-rock-status-badge class="text-xs px-2 py-0.5 rounded <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' %>">
+                <span data-rock-status-badge class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>">
                   <%= r.onTrack ? 'On Track' : 'Off Track' %>
                 </span>
                 <span class="text-xs text-gray-500"><%= r.quarter %></span>
@@ -1543,8 +1543,8 @@
       const badge = card.querySelector('[data-rock-status-badge]');
       if (badge) {
         badge.textContent = onTrack ? 'On Track' : 'Off Track';
-        badge.className = 'text-xs px-2 py-0.5 rounded ' +
-          (onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800');
+        badge.className = 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ' +
+          (onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack');
       }
     });
   });
