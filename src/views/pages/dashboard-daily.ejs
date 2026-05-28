@@ -307,19 +307,21 @@
     <!-- LEFT COLUMN -->
     <div class="space-y-6">
 
-      <!-- Headlines -->
-      <section class="rounded-lg border border-gray-200 bg-white p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">
+      <!-- Headlines: collapsed by default (reference, captured in the meeting).
+           Auto-opens when there are unread headlines so nothing is buried. -->
+      <details class="rounded-lg border border-gray-200 bg-white" <%= headlines.filter(function(h){return !h.readAt;}).length > 0 ? 'open' : '' %>>
+        <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
+          <span class="text-sm font-bold uppercase tracking-wide text-gray-700">
             Headlines
             <% if (headlines.filter(function(h){return !h.readAt;}).length > 0) { %>
               <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-blue text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
             <% } %>
-          </h2>
+          </span>
           <% if (isIntegrator) { %>
             <span class="text-[10px] uppercase tracking-wide text-orgy-blue bg-orgy-tint rounded px-1.5 py-0.5">Integrator</span>
           <% } %>
-        </div>
+        </summary>
+        <div class="px-5 pb-5">
 
         <% if (selectedMeetingId) { %>
           <%
@@ -361,13 +363,24 @@
             <% }); %>
           </ul>
         <% } %>
-      </section>
-
-      <!-- My Rocks -->
-      <section class="rounded-lg border border-gray-200 bg-white p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My Rocks <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %></h2>
         </div>
+      </details>
+
+      <!-- My Rocks: collapsed by default. Quarterly priorities are weekly
+           reference; actionable rocks already surface in Next Actions above.
+           Count + off-track flag show in the summary. -->
+      <%
+        var _rocksOpen = myRocks.filter(function(r){ return !r.onTrack && !r.completedAt; }).length;
+      %>
+      <details class="rounded-lg border border-gray-200 bg-white" <%= _rocksOpen > 0 ? 'open' : '' %>>
+        <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
+          <span class="text-sm font-bold uppercase tracking-wide text-gray-700">My Rocks
+            <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %>
+            <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px]">(<%= myRocks.length %>)</span><% } %>
+            <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
+          </span>
+        </summary>
+        <div class="px-5 pb-5">
         <% if (myRocks.length === 0) { %>
           <p class="text-xs text-gray-500">No rocks claimed for this quarter.</p>
         <% } else { %>
@@ -417,7 +430,8 @@
             <% }); %>
           </ul>
         <% } %>
-      </section>
+        </div>
+      </details>
 
       <!-- My KPIs -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
