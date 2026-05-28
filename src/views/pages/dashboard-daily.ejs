@@ -117,10 +117,9 @@
       <p class="text-sm text-gray-600">No meetings yet. <% if (caps.canCreateTeams) { %><a href="/l8" class="text-orgy-blue underline">Create one</a>.<% } %></p>
     <% } else { %>
       <%
-        // Preserve org / team context when switching meetings.
-        var _qsSuffix = '';
-        if (orgs.length > 1) _qsSuffix += '&orgId=' + encodeURIComponent(locals.org.id);
-        if (typeof selectedTeamId !== 'undefined' && selectedTeamId) _qsSuffix += '&teamId=' + encodeURIComponent(selectedTeamId);
+        // Clicking a meeting opens the meeting page. Preserve org context for
+        // multi-org / dev impersonation (the L8 page reads ?orgId).
+        var _mtgQ = (orgs.length > 1) ? ('?orgId=' + encodeURIComponent(locals.org.id)) : '';
       %>
       <div class="space-y-4">
         <div>
@@ -130,7 +129,7 @@
           <% } else { %>
             <div class="space-y-1.5">
               <% upcomingMeetings.forEach(function(m){ var sel = (m.id === selectedMeetingId); %>
-                <a href="/dashboard?meetingId=<%= m.id %><%= _qsSuffix %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
+                <a href="/l8/meeting/<%= m.id %><%= _mtgQ %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
                   <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-gray-900 truncate"><%= m.title %></span>
                     <span class="text-xs text-gray-500 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>, <%= new Date(m.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></span>
@@ -149,7 +148,7 @@
             <summary class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1.5 cursor-pointer select-none">Past (<%= pastMeetings.length %>)</summary>
             <div class="space-y-1.5 mt-1.5">
               <% pastMeetings.forEach(function(m){ var sel = (m.id === selectedMeetingId); %>
-                <a href="/dashboard?meetingId=<%= m.id %><%= _qsSuffix %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
+                <a href="/l8/meeting/<%= m.id %><%= _mtgQ %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
                   <div class="flex items-center justify-between gap-2">
                     <span class="text-sm text-gray-700 truncate"><%= m.title %></span>
                     <span class="text-xs text-gray-400 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
