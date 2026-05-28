@@ -135,7 +135,7 @@
                     <span class="text-xs text-gray-500 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>, <%= new Date(m.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></span>
                   </div>
                   <div class="text-xs text-gray-500 mt-0.5">
-                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %><% if (m.status === 'in_progress') { %> &middot; <span class="text-emerald-600 font-medium">live</span><% } else if (m.status === 'completed') { %> &middot; <span class="text-gray-500 font-medium">completed</span><% } %>
+                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %><% if (m.status === 'in_progress') { %> &middot; <span class="text-emerald-600 font-medium">live</span><% } else if (m.status === 'completed') { %> &middot; <span class="text-gray-500 font-medium">completed</span><% if (m.ratingAvg != null) { %> &middot; <span class="text-gray-600 font-medium"><%= m.ratingAvg.toFixed(1) %>/10</span><% } %><% } %>
                   </div>
                 </a>
               <% }); %>
@@ -154,7 +154,7 @@
                     <span class="text-xs text-gray-400 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
                   </div>
                   <div class="text-xs text-gray-400 mt-0.5">
-                    <%= m.meetingType %><% if (m.status === 'completed') { %> &middot; completed<% } else if (m.status === 'cancelled') { %> &middot; cancelled<% } %>
+                    <%= m.meetingType %><% if (m.status === 'completed') { %> &middot; completed<% if (m.ratingAvg != null) { %> &middot; <%= m.ratingAvg.toFixed(1) %>/10<% } %><% } else if (m.status === 'cancelled') { %> &middot; cancelled<% } %>
                   </div>
                 </a>
               <% }); %>

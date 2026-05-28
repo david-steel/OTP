@@ -2254,9 +2254,15 @@ Founder, OTP</p>
     // you see it wrap up before it drops into Past when the day rolls over.
     const _isPast = (m: typeof meetingsList[number]) =>
       m.status === 'cancelled' || new Date(m.scheduledAt) < _startOfToday;
+    const _ratingAvg = (m: typeof meetingsList[number]): number | null => {
+      const r = m.ratings && typeof m.ratings === 'object' ? Object.values(m.ratings as Record<string, unknown>) : [];
+      const nums = r.filter((v): v is number => typeof v === 'number');
+      return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+    };
     const _withLabel = (m: typeof meetingsList[number]) => ({
       ...m,
       recurrenceLabel: ruleToLabel(m.recurrenceRule, m.scheduledAt),
+      ratingAvg: _ratingAvg(m),
     });
     const upcomingMeetings = meetingsList
       .filter(m => !_isPast(m))
