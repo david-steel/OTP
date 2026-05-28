@@ -1,0 +1,24 @@
+<%
+  /* Status pill. EOS-style status chip in the Orgy palette.
+     Include via the EJS include() helper passing { status: 'ontrack' }.
+     Optional override label: { status: 'ontrack', label: 'On Track' }
+     Known statuses: ontrack, offtrack, watch, done, notdone.
+     (No EJS delimiters in this comment -- a stray close-tag closes the scriptlet early.)
+
+     Class strings are written out IN FULL per branch (never concatenated) so the
+     Tailwind JIT scanner sees them in source and does not purge them. status-*
+     and the soft/solid pairs are defined in tailwind.config.js. */
+  var _pill = (typeof status !== 'undefined') ? String(status) : 'watch';
+  var _pillMap = {
+    ontrack:  { cls: 'bg-status-ontrack-soft text-status-ontrack',   text: 'On-Track' },
+    done:     { cls: 'bg-status-ontrack-soft text-status-ontrack',   text: 'Done' },
+    offtrack: { cls: 'bg-status-offtrack-soft text-status-offtrack', text: 'Off-Track' },
+    notdone:  { cls: 'bg-status-offtrack-soft text-status-offtrack', text: 'Not Done' },
+    watch:    { cls: 'bg-status-watch-soft text-status-watch',       text: 'Watch' }
+  };
+  var _p = _pillMap[_pill] || _pillMap.watch;
+  var _label = (typeof label !== 'undefined' && label) ? label : _p.text;
+%>
+<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold <%= _p.cls %>">
+  <span class="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-70"></span><%= _label %>
+</span>

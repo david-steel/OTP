@@ -1,3 +1,47 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Orgy palette -- non-tokenizable bits.
+   Color utilities (bg-orgy*, text-orgy*, border-orgy*, ring-orgy*) are generated
+   from tailwind.config.js. The pieces below cannot be expressed as Tailwind color
+   tokens (a base surface color, an animation, custom box-shadow focus rings, an
+   rgba tint), so they live here in the globally compiled stylesheet. This is what
+   makes them partial-independent: every page that loads /public/styles.css gets
+   them, whether or not it includes partials/orgy-palette.ejs.
+
+   Declared as plain CSS after @tailwind utilities so, for any class name that also
+   exists as a generated utility, these exact legacy values win by source order and
+   the 18 live dashboard pages render identically to before.
+
+   NOTE: do NOT use #000/#fff or cold greys per DESIGN.md, but the orgy direction
+   was an explicit founder call (2026-05-28); these values mirror the prior partial.
+--------------------------------------------------------------------------- */
+:root {
+  --orgy-green: #A8E63A;
+  --orgy-green-soft: #D6F59C;
+  --orgy-green-deep: #8BC42A;
+  --orgy-blue: #2563EB;
+  --orgy-blue-soft: #E6F0FF;
+  --orgy-bg: #F5F7FA;
+}
+body { background: var(--orgy-bg); }
+.bg-orgy { background-color: var(--orgy-green); }
+.bg-orgy-tint { background-color: rgba(168, 230, 58, 0.08); }
+.text-orgy { color: var(--orgy-green-deep); }
+.text-orgy-on-light { color: #5a7d1f; }
+.focus\:ring-orgy:focus { box-shadow: 0 0 0 2px var(--orgy-green); }
+.focus\:ring-orgy-blue:focus { box-shadow: 0 0 0 2px var(--orgy-blue); }
+.focus\:border-orgy:focus { border-color: var(--orgy-green); }
+.focus\:border-orgy-blue:focus { border-color: var(--orgy-blue); }
+
+/* Mascot float-in -- subtle so it doesn't yell. */
+.orgy-mascot-wave { animation: orgy-wave 4s ease-in-out infinite; transform-origin: bottom center; }
+@keyframes orgy-wave {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orgy-mascot-wave { animation: none; }
+}

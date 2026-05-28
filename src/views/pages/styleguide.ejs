@@ -1,0 +1,121 @@
+<!-- OTP UI styleguide / kitchen sink (public, /styleguide).
+     Proves the Orgy design tokens compile and the component partials render.
+     EOS-structural patterns (module card, status pill, scorecard heatmap,
+     to-do rows) rendered in the Orgy palette. Canonical markup to copy from. -->
+<div class="max-w-5xl mx-auto px-6 py-12">
+
+  <!-- Eyebrow + page title -->
+  <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.22em] text-orgy-on-light mb-3">
+    <span class="inline-block w-2 h-2 bg-orgy"></span>OTP UI KIT
+  </div>
+  <h1 class="text-3xl font-extrabold text-gray-900 mb-1">Component Styleguide</h1>
+  <p class="text-gray-500 mb-10">Orgy palette, EOS-structural patterns. If this renders in color, the tokens survived the build.</p>
+
+  <!-- Buttons -->
+  <section class="mb-12">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-4">Buttons</h2>
+    <div class="flex flex-wrap items-center gap-3">
+      <button class="bg-orgy-blue text-white hover:bg-orgy-blue-deep px-4 py-2 rounded-lg font-semibold focus:outline-none focus:ring-orgy-blue transition-colors">Primary action</button>
+      <button class="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium transition-colors">Secondary</button>
+      <button class="bg-orgy text-orgy-on-light hover:bg-orgy-deep px-4 py-2 rounded-lg font-semibold transition-colors">Accent</button>
+    </div>
+  </section>
+
+  <!-- Status pills -->
+  <section class="mb-12">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-4">Status Pills</h2>
+    <div class="flex flex-wrap items-center gap-3">
+      <%- include('partials/ui-pill', { status: 'ontrack' }) %>
+      <%- include('partials/ui-pill', { status: 'offtrack' }) %>
+      <%- include('partials/ui-pill', { status: 'watch' }) %>
+      <%- include('partials/ui-pill', { status: 'done' }) %>
+      <%- include('partials/ui-pill', { status: 'notdone' }) %>
+    </div>
+  </section>
+
+  <!-- Module cards (EOS dashboard pattern) -->
+  <section class="mb-12">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-4">Module Cards</h2>
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <!-- MEETINGS card -->
+      <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <span class="w-10 h-10 rounded-full bg-orgy-blue-soft text-orgy-blue flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </span>
+          <h3 class="text-sm font-bold tracking-wide uppercase text-gray-700">Meetings</h3>
+          <span class="text-sm font-semibold text-gray-400">(4)</span>
+          <button class="ml-auto w-7 h-7 rounded-full text-orgy-blue hover:bg-orgy-blue-soft flex items-center justify-center transition-colors" aria-label="Add">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-4 divide-y divide-gray-100">
+          <div class="flex items-center justify-between py-3">
+            <div><div class="font-semibold text-gray-900">Leadership Team Meeting</div><div class="text-sm text-gray-500">Wednesdays at 2pm</div></div>
+            <button class="bg-orgy-blue text-white hover:bg-orgy-blue-deep text-sm font-semibold px-3 py-1.5 rounded-md transition-colors">Join</button>
+          </div>
+          <div class="flex items-center justify-between py-3">
+            <div><div class="font-semibold text-gray-900">Marketing Department</div><div class="text-sm text-gray-500">Tuesdays at 6pm</div></div>
+            <button class="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 text-sm font-medium px-3 py-1.5 rounded-md transition-colors">Join</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TO-DOS card -->
+      <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <span class="w-10 h-10 rounded-full bg-orgy-tint text-orgy-on-light flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          </span>
+          <h3 class="text-sm font-bold tracking-wide uppercase text-gray-700">To-Dos</h3>
+          <span class="text-sm font-semibold text-gray-400">(3)</span>
+        </div>
+        <div class="px-6 py-2 divide-y divide-gray-100">
+          <label class="flex items-center gap-3 py-3 cursor-pointer"><input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orgy-blue focus:ring-orgy-blue"><span class="text-gray-800">Connect with Tom on Adwords ideas</span><%- include('partials/ui-pill', { status: 'watch', label: 'Jul 3' }) %></label>
+          <label class="flex items-center gap-3 py-3 cursor-pointer"><input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orgy-blue focus:ring-orgy-blue"><span class="text-gray-800">Update contact information</span></label>
+          <label class="flex items-center gap-3 py-3 cursor-pointer"><input type="checkbox" checked class="w-4 h-4 rounded border-gray-300 text-orgy-blue focus:ring-orgy-blue"><span class="text-gray-400 line-through">Create new hire packet</span></label>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Scorecard heatmap -->
+  <section class="mb-12">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-4">Scorecard Heatmap</h2>
+    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500 border-b border-gray-100">
+            <th class="px-5 py-3 font-semibold">Measurable</th>
+            <th class="px-5 py-3 font-semibold">Goal</th>
+            <th class="px-1 py-3 font-semibold text-center font-mono text-xs">5/13</th>
+            <th class="px-1 py-3 font-semibold text-center font-mono text-xs">5/20</th>
+            <th class="px-1 py-3 font-semibold text-center font-mono text-xs">5/27</th>
+            <th class="px-1 py-3 font-semibold text-center font-mono text-xs">6/3</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr>
+            <td class="px-5 py-3 font-medium text-gray-900">Revenue Collected</td>
+            <td class="px-5 py-3 text-gray-500">&gt; $25,000</td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '$27,000', state: 'good' }) %></td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '$23,500', state: 'bad' }) %></td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '$26,500', state: 'good' }) %></td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '$31,000', state: 'good' }) %></td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 font-medium text-gray-900">Leads Generated</td>
+            <td class="px-5 py-3 text-gray-500">&gt; 50</td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '55', state: 'good' }) %></td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '60', state: 'good' }) %></td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '48', state: 'bad' }) %></td>
+            <td class="p-0.5"><%- include('partials/ui-stat-cell', { value: '52', state: 'watch' }) %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

@@ -285,6 +285,13 @@ app.addHook('onSend', async (request, reply) => {
   reply.removeHeader('x-clerk-auth-reason');
 });
 
+// UI styleguide / kitchen sink (public). Verifiable proof surface for the
+// design-system foundation -- renders the Orgy tokens + component partials with
+// no auth, so it can be screenshotted (Clerk-gated pages can't be visually verified).
+app.get('/styleguide', async (request, reply) => {
+  return reply.view('pages/styleguide', { title: 'UI Styleguide' });
+});
+
 // install.sh at root -- one-line installer for Claude Code
 app.get('/install.sh', async (request, reply) => {
   reply.header('Content-Type', 'text/plain; charset=utf-8');

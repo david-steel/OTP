@@ -1,57 +1,17 @@
-<!-- Orgy brand palette (per the mascot brand kit -- half-organic / half-circuit).
-     Inlined as utility classes via a <style> block so we don't depend on
-     Tailwind config picking these classnames up at build time (the v7.css
-     purge has bitten us before -- see feedback_static_html_tailwind_purge).
-     Belt + suspenders.
+<!-- Orgy brand palette -- now a no-op stub.
 
-     Include this once per page that wants the Orgy palette using the
-     standard partial syntax. Then use these utility classes in markup:
-       Action buttons:   bg-orgy-blue text-white hover:bg-orgy-blue-deep
-       Soft highlight:   bg-orgy-soft  /  bg-orgy-tint
-       Link / accent:    text-orgy-blue
-       Focus ring:       focus:ring-orgy-blue
-       Borders:          border-orgy  /  border-orgy-soft
-       Mascot wave:      .orgy-mascot-wave  (subtle 4s rocking idle)
+     As of 2026-05-28 the orgy palette is promoted into the globally compiled
+     stylesheet, so it no longer depends on this per-page include:
+       - color utilities (bg-orgy*, text-orgy*, border-orgy*, ring-orgy*)
+         are generated from tailwind.config.js
+       - the non-tokenizable bits (warm body background, .orgy-mascot-wave
+         animation, custom focus-ring box-shadows, .bg-orgy-tint,
+         .text-orgy-on-light) live in src/styles/input.css
 
-     NOTE: do NOT use EJS comments (<%# ... %>) here -- they close on the
-     first %> they encounter, which broke 2026-05-24 when a usage example
-     containing %> inside the comment ate the terminator and crashed
-     /dashboard/kpis with a 500. HTML comments are inert to the EJS
-     parser, so this block is safe. -->
-<style>
-  :root {
-    --orgy-green: #A8E63A;
-    --orgy-green-soft: #D6F59C;
-    --orgy-green-deep: #8BC42A;
-    --orgy-blue: #2563EB;
-    --orgy-blue-soft: #E6F0FF;
-    --orgy-bg: #F5F7FA;
-  }
-  body { background: var(--orgy-bg); }
-  .bg-orgy { background-color: var(--orgy-green); }
-  .bg-orgy-soft { background-color: var(--orgy-green-soft); }
-  .bg-orgy-tint { background-color: rgba(168, 230, 58, 0.08); }
-  .text-orgy { color: var(--orgy-green-deep); }
-  .text-orgy-on-light { color: #5a7d1f; }   /* readable green on white bg */
-  .bg-orgy:hover, .hover\:bg-orgy-deep:hover { background-color: var(--orgy-green-deep); }
-  .text-orgy-blue { color: var(--orgy-blue); }
-  .hover\:text-orgy-blue:hover { color: var(--orgy-blue); }
-  .bg-orgy-blue { background-color: var(--orgy-blue); }
-  .hover\:bg-orgy-blue-deep:hover { background-color: #1d4ed8; }
-  .bg-orgy-blue-soft { background-color: var(--orgy-blue-soft); }
-  .focus\:ring-orgy:focus { box-shadow: 0 0 0 2px var(--orgy-green); }
-  .focus\:ring-orgy-blue:focus { box-shadow: 0 0 0 2px var(--orgy-blue); }
-  .focus\:border-orgy:focus { border-color: var(--orgy-green); }
-  .focus\:border-orgy-blue:focus { border-color: var(--orgy-blue); }
-  .border-orgy { border-color: var(--orgy-green); }
-  .border-orgy-soft { border-color: var(--orgy-green-soft); }
-  .hover\:border-orgy:hover { border-color: var(--orgy-green); }
-  .hover\:border-orgy-soft:hover { border-color: var(--orgy-green-soft); }
-  .hover\:border-orgy-blue:hover { border-color: var(--orgy-blue); }
-  /* Mascot float-in -- subtle so it doesn't yell. */
-  .orgy-mascot-wave { animation: orgy-wave 4s ease-in-out infinite; transform-origin: bottom center; }
-  @keyframes orgy-wave {
-    0%, 100% { transform: rotate(-1deg); }
-    50% { transform: rotate(2deg); }
-  }
-</style>
+     This stub is kept so the ~18 pages that still `include` it do not 404.
+     New pages do NOT need to include it. Safe to delete once no page references
+     it. Do NOT reintroduce a <style> block here -- that was the silent-purge /
+     partial-dependency bug this change fixes.
+
+     HTML comments only in this file (EJS <%# %> and <% %> evaluate even inside
+     HTML comments and have 500'd /dashboard before -- see memory). -->

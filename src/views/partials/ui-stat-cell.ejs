@@ -1,0 +1,21 @@
+<%
+  /* Scorecard heatmap cell. EOS-style solid green/red weekly cell.
+     Include via the EJS include() helper passing { value: '$31,000', state: 'good' }.
+     States: good (hit goal), bad (missed), watch (close), neutral (no goal/empty).
+     (No EJS delimiters in this comment -- a stray close-tag closes the scriptlet early.)
+
+     Full class strings per branch so the Tailwind scanner keeps them. Solid status
+     colors are defined in tailwind.config.js. */
+  var _v = (typeof value !== 'undefined' && value !== null) ? String(value) : '';
+  var _state = (typeof state !== 'undefined') ? String(state) : 'neutral';
+  // Same color treatment as ui-pill.ejs (soft bg + solid text) so cells and pills
+  // share one color language. Square + tiled instead of rounded + floating.
+  var _cellMap = {
+    good:    'bg-status-ontrack-soft text-status-ontrack',
+    bad:     'bg-status-offtrack-soft text-status-offtrack',
+    watch:   'bg-status-watch-soft text-status-watch',
+    neutral: 'bg-gray-50 text-gray-400'
+  };
+  var _c = _cellMap[_state] || _cellMap.neutral;
+%>
+<div class="block w-full px-2 py-2.5 text-center text-sm font-bold tabular-nums rounded-[3px] <%= _c %>"><%= _v %></div>
