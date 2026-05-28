@@ -175,7 +175,7 @@ await app.register(fastifyView, {
     // Per-deploy cache-buster for /public/* assets. They are served
     // immutable/max-age=1yr, so without a versioned URL a new styles.css is
     // never picked up at the edge. The commit SHA changes every deploy.
-    assetVersion: (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'dev').slice(0, 12),
+    assetVersion: (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || ('t' + Date.now().toString(36))).slice(0, 12),
   },
 });
 

@@ -22,12 +22,17 @@ const V7_CLERK_INSTANCE = V7_CLERK_PUB_KEY.startsWith('pk_')
   ? Buffer.from(V7_CLERK_PUB_KEY.split('_').slice(2).join('_'), 'base64').toString().replace(/\$$/, '')
   : '';
 
+// Per-deploy cache-buster for /public/* (served immutable/1yr). Commit SHA
+// when Railway provides it, else a per-boot token (a new container per deploy
+// yields a new token). Computed ONCE at module load -- never per request, which
+// would defeat caching by minting a fresh URL on every page view.
+const ASSET_VERSION = (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || ('t' + Date.now().toString(36))).slice(0, 12);
+
 export async function renderV7(reply: any, page: string, data: Record<string, any> = {}) {
   const ctx = {
     clerkPubKey: V7_CLERK_PUB_KEY,
     clerkInstance: V7_CLERK_INSTANCE,
-    // Per-deploy cache-buster for /public/* (served immutable/1yr).
-    assetVersion: (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'dev').slice(0, 12),
+    assetVersion: ASSET_VERSION,
     ...data,
   };
   const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, ctx);
