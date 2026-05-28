@@ -50,6 +50,10 @@ const updateMeetingSchema = z.object({
   cascadingMessage: z.string().optional(),
   ratings: z.record(z.number().min(1).max(10)).optional(),
   teamId: z.string().uuid().nullable().optional(),
+  // Phase 0 meeting scheduler (manual paste path): a user-pasted video link.
+  // Empty string clears it. Loose URL cap at 2048 to match the column; we
+  // accept any string (a user might paste a Teams/Zoom/Meet URL of any shape).
+  videoLink: z.string().max(2048).optional(),
 });
 
 async function authedOrFail(request: any, reply: any) {
@@ -433,6 +437,8 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (d.headlines !== undefined) updates.headlines = d.headlines;
     if (d.cascadingMessage !== undefined) updates.cascadingMessage = d.cascadingMessage;
     if (d.ratings !== undefined) updates.ratings = d.ratings;
+    // Trim then store; empty string clears the link.
+    if (d.videoLink !== undefined) updates.videoLink = d.videoLink.trim() || null;
 
     const [updated] = await db.update(meetings)
       .set(updates)

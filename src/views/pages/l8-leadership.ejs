@@ -24,9 +24,40 @@
       <% } else if (meeting.status === 'completed') { %>
         <span class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium" title="Meeting ended; data is frozen as the historical record">Ended</span>
       <% } %>
+      <button id="cal-toggle" class="px-4 py-2 border border-orgy text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-soft" title="Get a link to paste into a Google Calendar or Outlook invite">Add to calendar</button>
       <!-- Delete is intentionally low-visibility; full meeting delete is rare
            and should never be a one-click neighbor of "End meeting". -->
       <button id="delete-meeting" class="text-xs text-gray-400 hover:text-red-600 hover:underline" title="Delete this meeting permanently (soft delete)">Delete</button>
+    </div>
+  </div>
+
+  <!-- Add to calendar (Phase 0: manual paste path -- no OAuth). Hand the user
+       a copyable block to drop into a recurring invite they build themselves
+       in Google Calendar or Microsoft 365 (Outlook). Provider-neutral. -->
+  <div id="cal-panel" class="hidden mb-6 border border-orgy bg-orgy-soft rounded-lg px-4 py-4">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1">Add to calendar</div>
+        <p class="text-xs text-gray-600 max-w-xl">Create your recurring invite in Google Calendar or Outlook, set the recurrence and attendees there, then paste the block below into the invite. Works whether your team is on Google or Microsoft 365.</p>
+      </div>
+      <button id="cal-close" class="text-xs text-gray-400 hover:text-gray-700" title="Close">Close</button>
+    </div>
+
+    <div class="mt-3 flex flex-wrap items-end gap-2">
+      <label class="flex-1 min-w-[240px]">
+        <span class="block text-xs font-medium text-orgy-blue mb-1">Video link (optional)</span>
+        <input id="cal-video-input" type="url" placeholder="Paste a Meet, Teams, or Zoom link" value="<%= meeting.videoLink || '' %>" class="w-full border border-orgy rounded px-2 py-1.5 text-sm" />
+      </label>
+      <button id="cal-video-save" class="px-3 py-1.5 bg-orgy-blue text-white rounded text-xs font-semibold hover:bg-orgy-blue-deep">Save link</button>
+    </div>
+
+    <div class="mt-3">
+      <span class="block text-xs font-medium text-orgy-blue mb-1">Paste this into your calendar invite</span>
+      <textarea id="cal-block" readonly rows="3" class="w-full border border-orgy rounded px-2 py-1.5 text-xs font-mono bg-white text-gray-800"></textarea>
+      <div class="mt-2 flex items-center gap-2">
+        <button id="cal-copy" class="px-3 py-1.5 bg-orgy-blue text-white rounded text-xs font-semibold hover:bg-orgy-blue-deep">Copy</button>
+        <span id="cal-copy-status" class="text-xs text-gray-500"></span>
+      </div>
     </div>
   </div>
 
@@ -891,6 +922,67 @@
     const [entityType, externalId, ...rest] = val.split(':');
     return { entityType, externalId, name: rest.join(':') || externalId };
   }
+
+  // ===== Add to calendar (Phase 0: manual paste path) =====
+  // No OAuth. Hand the user a copyable block (OTP meeting link + an optional
+  // pasted video link) to drop into a recurring invite they build in Google
+  // Calendar or Outlook. Reuses api()/errMsg() from this IIFE.
+  (function initAddToCalendar(){
+    const toggle = document.getElementById('cal-toggle');
+    const panel = document.getElementById('cal-panel');
+    const closeBtn = document.getElementById('cal-close');
+    const block = document.getElementById('cal-block');
+    const copyBtn = document.getElementById('cal-copy');
+    const copyStatus = document.getElementById('cal-copy-status');
+    const videoInput = document.getElementById('cal-video-input');
+    const videoSave = document.getElementById('cal-video-save');
+    if (!toggle || !panel || !block) return;
+
+    const meetingTitle = <%- JSON.stringify(meeting.title || 'Meeting') %>;
+    const meetingUrl = location.origin + '/l8/meeting/' + meetingId;
+
+    function buildBlock() {
+      const lines = [meetingTitle, '', 'Open in OTP: ' + meetingUrl];
+      const v = ((videoInput && videoInput.value) || '').trim();
+      if (v) lines.push('Join video: ' + v);
+      block.value = lines.join('\n');
+    }
+    function flash(msg) {
+      if (!copyStatus) return;
+      copyStatus.textContent = msg;
+      setTimeout(function(){ copyStatus.textContent = ''; }, 2000);
+    }
+
+    toggle.addEventListener('click', function(){
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) buildBlock();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', function(){ panel.classList.add('hidden'); });
+    if (videoInput) videoInput.addEventListener('input', buildBlock);
+
+    if (copyBtn) copyBtn.addEventListener('click', function(){
+      block.select();
+      const done = function(){ flash('Copied'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(block.value).then(done).catch(function(){ try { document.execCommand('copy'); done(); } catch(e){} });
+      } else {
+        try { document.execCommand('copy'); done(); } catch(e){}
+      }
+    });
+
+    if (videoSave) videoSave.addEventListener('click', async function(){
+      if (videoSave.disabled) return;
+      videoSave.disabled = true;
+      const label = videoSave.textContent;
+      videoSave.textContent = 'Saving...';
+      const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ videoLink: ((videoInput.value) || '').trim() }) });
+      videoSave.disabled = false;
+      videoSave.textContent = label;
+      if (res && res.error) { flash(errMsg(res)); return; }
+      buildBlock();
+      flash('Link saved');
+    });
+  })();
 
   // ===== Reload helpers =====
   // Some actions still re-render via a full reload. reloadKeep() stashes the

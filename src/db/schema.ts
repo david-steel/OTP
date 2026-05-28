@@ -846,6 +846,12 @@ export const meetings = pgTable('meetings', {
   segueNotes: text('segue_notes'),
   headlines: text('headlines'),
   cascadingMessage: text('cascading_message'),
+  // Phase 0 of the meeting scheduler (manual paste path): a user-pasted
+  // video link (Meet / Teams / Zoom). Surfaced in the "Add to calendar"
+  // copyable block so it can be pasted into a Google or Outlook invite.
+  // Column added by ensure-meeting-video-link.ts on boot (Drizzle migrate
+  // is broken; schema self-heals).
+  videoLink: varchar('video_link', { length: 2048 }),
   ratings: jsonb('ratings').notNull().default({}),
   scorecardSnapshot: jsonb('scorecard_snapshot'),
   rocksSnapshot: jsonb('rocks_snapshot'),

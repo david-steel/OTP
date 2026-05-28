@@ -832,6 +832,14 @@ try {
 }
 
 try {
+  const { ensureMeetingVideoLinkColumn } = await import('./db/ensure-meeting-video-link.js');
+  await ensureMeetingVideoLinkColumn();
+  app.log.info('meetings.video_link column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingVideoLinkColumn failed -- "Add to calendar" video link will not persist until resolved');
+}
+
+try {
   const { ensureSeatResponsibilitiesTable } = await import('./db/ensure-seat-responsibilities.js');
   await ensureSeatResponsibilitiesTable();
   app.log.info('seat_responsibilities table is ready');
