@@ -1179,6 +1179,14 @@
   // for a visible button -- the value used to save silently on blur with no
   // affordance, which read as "no way to submit." Added 2026-05-28.
   function saveKpiValueInput(inp, btn) {
+    // Guard against the double-fire race: clicking Save blurs the input,
+    // which fires the debounced `change` auto-save ~300ms later. Without
+    // this guard, the second call captured btn.textContent ("Saving…") as
+    // its reset label and restored the button to "Saving…" forever. The
+    // button-disabled check skips the redundant second save outright, and
+    // the reset label is now the literal "Save" (never the live text).
+    // Caught 2026-05-28 -- Recurring Monthly Revenue row stuck on Saving….
+    if (btn && btn.disabled) return;
     var tr = inp.closest('[data-kpi-id]');
     if (!tr) return;
     var kid = tr.dataset.kpiId;
@@ -1188,7 +1196,6 @@
     var dow = now.getDay(); // 0 Sun .. 6 Sat
     var weekStart = new Date(now); weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
     var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
-    var originalLabel = btn ? btn.textContent : null;
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
     api('POST', '/kpis/' + kid + '/values', { periodStart: weekStart.toISOString(), periodEnd: weekEnd.toISOString(), value: val, source: 'manual' })
       .then(function(){
@@ -1196,10 +1203,10 @@
         setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800);
         var latestCell = tr.querySelector('[data-kpi-latest]');
         if (latestCell) latestCell.textContent = val;
-        if (btn) { btn.textContent = 'Saved ✓'; btn.disabled = false; setTimeout(function(){ btn.textContent = originalLabel || 'Save'; }, 1200); }
+        if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.textContent = 'Save'; btn.disabled = false; }, 1200); }
       })
       .catch(function(err){
-        if (btn) { btn.disabled = false; btn.textContent = originalLabel || 'Save'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
         alert('KPI save failed: ' + fmtApiError(err));
       });
   }
