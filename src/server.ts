@@ -840,6 +840,14 @@ try {
 }
 
 try {
+  const { ensureMeetingRecurrenceColumns } = await import('./db/ensure-meeting-recurrence.js');
+  await ensureMeetingRecurrenceColumns();
+  app.log.info('meetings recurrence columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingRecurrenceColumns failed -- recurring meetings will not work until resolved');
+}
+
+try {
   const { ensureSeatResponsibilitiesTable } = await import('./db/ensure-seat-responsibilities.js');
   await ensureSeatResponsibilitiesTable();
   app.log.info('seat_responsibilities table is ready');

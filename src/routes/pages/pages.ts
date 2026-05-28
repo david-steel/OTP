@@ -20,6 +20,7 @@ import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
 import { reportsSubtree } from '../../services/chart-permissions.js';
+import { ruleToLabel, RECURRENCE_OPTIONS } from '../../services/meeting-recurrence.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
 import { sendEmail } from '../../config/email.js';
@@ -3342,6 +3343,8 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       renderDescription,
       agentRuns,
       devOrgIdParam,
+      recurrenceLabel: ruleToLabel(meeting.recurrenceRule, meeting.scheduledAt),
+      recurrenceOptions: RECURRENCE_OPTIONS,
     });
   });
 

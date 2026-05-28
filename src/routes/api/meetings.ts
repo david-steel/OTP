@@ -12,6 +12,7 @@ import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { deliverToAgentInbox } from '../../services/agent-inbox.js';
 import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
+import { ensureNextOccurrence } from '../../services/meeting-recurrence.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -54,6 +55,10 @@ const updateMeetingSchema = z.object({
   // Empty string clears it. Loose URL cap at 2048 to match the column; we
   // accept any string (a user might paste a Teams/Zoom/Meet URL of any shape).
   videoLink: z.string().max(2048).optional(),
+  // Recurrence (OTP owns the series). An iCal RRULE subset (FREQ=WEEKLY etc),
+  // empty string clears it back to one-time. The UI only sends the four
+  // RECURRENCE_OPTIONS values; we accept any short string defensively.
+  recurrenceRule: z.string().max(255).optional(),
 });
 
 async function authedOrFail(request: any, reply: any) {
@@ -386,8 +391,25 @@ export default async function meetingRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: id,
     }));
 
+    // If this meeting is part of a recurring series, roll the next occurrence
+    // forward so an upcoming meeting always exists. Best-effort: a recurrence
+    // failure must not block ending the meeting.
+    let nextOccurrence: typeof updated | null = null;
+    if (updated.recurrenceRule) {
+      try {
+        nextOccurrence = await ensureNextOccurrence(updated);
+        if (nextOccurrence) {
+          await db.insert(auditLogs).values(createAuditEntry('meeting.recurrence.rolled', 'meeting', {
+            orgId: org.id, entityId: nextOccurrence.id, details: { fromMeetingId: id, scheduledAt: nextOccurrence.scheduledAt },
+          }));
+        }
+      } catch (err) {
+        request.log.error({ err, meetingId: id }, 'ensureNextOccurrence failed on meeting end');
+      }
+    }
+
     publishMeetingUpdate(id, { kind: 'meeting', action: 'ended' });
-    return { meeting: updated };
+    return { meeting: updated, nextOccurrence };
   });
 
   // DELETE /api/v1/meetings/:id  (soft-delete -- any status is deletable)
@@ -439,6 +461,8 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (d.ratings !== undefined) updates.ratings = d.ratings;
     // Trim then store; empty string clears the link.
     if (d.videoLink !== undefined) updates.videoLink = d.videoLink.trim() || null;
+    // Empty string clears recurrence back to one-time.
+    if (d.recurrenceRule !== undefined) updates.recurrenceRule = d.recurrenceRule.trim() || null;
 
     const [updated] = await db.update(meetings)
       .set(updates)

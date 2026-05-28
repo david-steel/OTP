@@ -10,6 +10,8 @@
         Scheduled <%= new Date(meeting.scheduledAt).toLocaleString() %>
         <span class="mx-1.5 text-gray-300">&middot;</span>
         Status <span class="font-semibold text-gray-800" id="meeting-status"><%= meeting.status %></span>
+        <span class="mx-1.5 text-gray-300">&middot;</span>
+        <span id="meeting-recurrence-label" class="<%= meeting.recurrenceRule ? 'font-semibold text-gray-800' : 'text-gray-400' %>"><%= meeting.recurrenceRule ? (typeof recurrenceLabel !== 'undefined' && recurrenceLabel ? recurrenceLabel : 'Repeats') : 'One-time' %></span>
       </p>
     </div>
     <div class="flex gap-2 items-center">
@@ -42,6 +44,19 @@
       </div>
       <button id="cal-close" class="text-xs text-gray-400 hover:text-gray-700" title="Close">Close</button>
     </div>
+
+    <div class="mt-3 flex flex-wrap items-end gap-2">
+      <label class="min-w-[200px]">
+        <span class="block text-xs font-medium text-orgy-blue mb-1">Repeats</span>
+        <select id="cal-repeat-select" class="w-full border border-orgy rounded px-2 py-1.5 text-sm">
+          <% (typeof recurrenceOptions !== 'undefined' ? recurrenceOptions : []).forEach(function(opt){ %>
+            <option value="<%= opt.value %>" <%= (meeting.recurrenceRule || '') === opt.value ? 'selected' : '' %>><%= opt.label %></option>
+          <% }); %>
+        </select>
+      </label>
+      <span id="cal-repeat-status" class="text-xs text-gray-500 pb-2"></span>
+    </div>
+    <p class="mt-1 text-[11px] text-gray-500">When this is set, OTP creates the next meeting automatically once you end the current one. Set the matching recurrence in your Google or Outlook invite too.</p>
 
     <div class="mt-3 flex flex-wrap items-end gap-2">
       <label class="flex-1 min-w-[240px]">
@@ -936,6 +951,9 @@
     const copyStatus = document.getElementById('cal-copy-status');
     const videoInput = document.getElementById('cal-video-input');
     const videoSave = document.getElementById('cal-video-save');
+    const repeatSelect = document.getElementById('cal-repeat-select');
+    const repeatStatus = document.getElementById('cal-repeat-status');
+    const recurrenceLabelEl = document.getElementById('meeting-recurrence-label');
     if (!toggle || !panel || !block) return;
 
     const meetingTitle = <%- JSON.stringify(meeting.title || 'Meeting') %>;
@@ -945,6 +963,10 @@
       const lines = [meetingTitle, '', 'Open in OTP: ' + meetingUrl];
       const v = ((videoInput && videoInput.value) || '').trim();
       if (v) lines.push('Join video: ' + v);
+      if (repeatSelect && repeatSelect.value) {
+        const opt = repeatSelect.options[repeatSelect.selectedIndex];
+        lines.push('Repeats: ' + (opt ? opt.text : 'yes'));
+      }
       block.value = lines.join('\n');
     }
     function flash(msg) {
@@ -981,6 +1003,26 @@
       if (res && res.error) { flash(errMsg(res)); return; }
       buildBlock();
       flash('Link saved');
+    });
+
+    if (repeatSelect) repeatSelect.addEventListener('change', async function(){
+      repeatSelect.disabled = true;
+      if (repeatStatus) repeatStatus.textContent = 'Saving...';
+      const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ recurrenceRule: repeatSelect.value }) });
+      repeatSelect.disabled = false;
+      if (res && res.error) { if (repeatStatus) repeatStatus.textContent = errMsg(res); return; }
+      if (repeatStatus) { repeatStatus.textContent = 'Saved'; setTimeout(function(){ repeatStatus.textContent = ''; }, 2000); }
+      if (recurrenceLabelEl) {
+        const opt = repeatSelect.options[repeatSelect.selectedIndex];
+        if (repeatSelect.value) {
+          recurrenceLabelEl.textContent = (opt ? opt.text : 'Repeats');
+          recurrenceLabelEl.className = 'font-semibold text-gray-800';
+        } else {
+          recurrenceLabelEl.textContent = 'One-time';
+          recurrenceLabelEl.className = 'text-gray-400';
+        }
+      }
+      buildBlock();
     });
   })();
 

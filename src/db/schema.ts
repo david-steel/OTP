@@ -852,6 +852,14 @@ export const meetings = pgTable('meetings', {
   // Column added by ensure-meeting-video-link.ts on boot (Drizzle migrate
   // is broken; schema self-heals).
   videoLink: varchar('video_link', { length: 2048 }),
+  // Recurring meeting series (OTP owns the series). recurrenceRule is an iCal
+  // RRULE (e.g. FREQ=WEEKLY;BYDAY=TU); null = one-time. The first meeting a
+  // user makes recurring is the series anchor (recurrenceParentId null, rule
+  // set); each generated occurrence carries the same rule and points back at
+  // the anchor via recurrenceParentId. Columns added by
+  // ensure-meeting-recurrence.ts on boot.
+  recurrenceRule: varchar('recurrence_rule', { length: 255 }),
+  recurrenceParentId: uuid('recurrence_parent_id'),
   ratings: jsonb('ratings').notNull().default({}),
   scorecardSnapshot: jsonb('scorecard_snapshot'),
   rocksSnapshot: jsonb('rocks_snapshot'),

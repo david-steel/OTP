@@ -19,6 +19,8 @@
   var caps = locals.capabilities || {};
   var orgs = locals.orgs || [];
   var meetings = locals.meetings || [];
+  var upcomingMeetings = locals.upcomingMeetings || [];
+  var pastMeetings = locals.pastMeetings || [];
   var selectedMeetingId = locals.selectedMeetingId || '';
   var selectedMeeting = null;
   for (var i = 0; i < meetings.length; i++) {
@@ -114,23 +116,53 @@
     <% if (meetings.length === 0) { %>
       <p class="text-sm text-gray-600">No meetings yet. <% if (caps.canCreateTeams) { %><a href="/l8" class="text-orgy-blue underline">Create one</a>.<% } %></p>
     <% } else { %>
-      <form method="GET" action="/dashboard" class="flex flex-wrap items-center gap-3">
-        <% if (orgs.length > 1) { %><input type="hidden" name="orgId" value="<%= locals.org.id %>"><% } %>
-        <select name="meetingId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm flex-1 min-w-[260px] focus:outline-none focus:ring-2 focus:ring-orgy-blue">
-          <% meetings.forEach(function(m){ %>
-            <option value="<%= m.id %>" <%= m.id === selectedMeetingId ? 'selected' : '' %>>
-              <%= m.title %> -- <%= new Date(m.scheduledAt).toLocaleDateString() %>
-              <%= m.status === 'completed' ? '(completed)' : '' %>
-            </option>
-          <% }); %>
-        </select>
-        <% if (selectedMeeting) { %>
-          <span class="text-xs text-gray-500">
-            <%= selectedMeeting.meetingType %> &middot;
-            <%= new Date(selectedMeeting.scheduledAt).toLocaleString() %>
-          </span>
+      <%
+        // Preserve org / team context when switching meetings.
+        var _qsSuffix = '';
+        if (orgs.length > 1) _qsSuffix += '&orgId=' + encodeURIComponent(locals.org.id);
+        if (typeof selectedTeamId !== 'undefined' && selectedTeamId) _qsSuffix += '&teamId=' + encodeURIComponent(selectedTeamId);
+      %>
+      <div class="space-y-4">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wide text-orgy-blue mb-1.5">Upcoming</div>
+          <% if (upcomingMeetings.length === 0) { %>
+            <p class="text-xs text-gray-500">No upcoming meetings. <% if (caps.canCreateTeams) { %><a href="/l8" class="text-orgy-blue underline">Schedule one</a> or set a meeting to repeat.<% } %></p>
+          <% } else { %>
+            <div class="space-y-1.5">
+              <% upcomingMeetings.forEach(function(m){ var sel = (m.id === selectedMeetingId); %>
+                <a href="/dashboard?meetingId=<%= m.id %><%= _qsSuffix %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium text-gray-900 truncate"><%= m.title %></span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>, <%= new Date(m.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></span>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-0.5">
+                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %><% if (m.status === 'in_progress') { %> &middot; <span class="text-emerald-600 font-medium">live</span><% } %>
+                  </div>
+                </a>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+
+        <% if (pastMeetings.length > 0) { %>
+          <details <%= (upcomingMeetings.length === 0 ? 'open' : '') %>>
+            <summary class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1.5 cursor-pointer select-none">Past (<%= pastMeetings.length %>)</summary>
+            <div class="space-y-1.5 mt-1.5">
+              <% pastMeetings.forEach(function(m){ var sel = (m.id === selectedMeetingId); %>
+                <a href="/dashboard?meetingId=<%= m.id %><%= _qsSuffix %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm text-gray-700 truncate"><%= m.title %></span>
+                    <span class="text-xs text-gray-400 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                  </div>
+                  <div class="text-xs text-gray-400 mt-0.5">
+                    <%= m.meetingType %><% if (m.status === 'completed') { %> &middot; completed<% } else if (m.status === 'cancelled') { %> &middot; cancelled<% } %>
+                  </div>
+                </a>
+              <% }); %>
+            </div>
+          </details>
         <% } %>
-      </form>
+      </div>
     <% } %>
     <% if ((orgTeams || []).length > 0) { %>
       <form method="GET" action="/dashboard" class="mt-3 text-sm">

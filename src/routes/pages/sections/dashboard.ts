@@ -33,6 +33,7 @@ import { sendEmail } from '../../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../../data/aeo-clusters.js';
 import { isAttendee } from '../../../services/meeting-access.js';
+import { ensureUpcomingForOrg, ruleToLabel } from '../../../services/meeting-recurrence.js';
 import { BASE_URL, bc, renderV7, escapeHtml } from '../_shared.js';
 import { resolveRequestOrg, quarterLabel } from '../pages.js';
 
@@ -2213,6 +2214,15 @@ Founder, OTP</p>
     // anyone outside them, regardless of role. Meetings with NULL team_id
     // are treated as unassigned and stay invisible until backfilled to a
     // team. To restore visibility, add the user to the relevant team.
+    // Roll recurring series forward so an upcoming occurrence always exists.
+    // Lazy + idempotent (no cron): the first dashboard load of the day creates
+    // any missing next occurrence; later loads are no-ops. Best-effort.
+    try {
+      await ensureUpcomingForOrg(org.id);
+    } catch (err) {
+      request.log.error({ err, orgId: org.id }, 'ensureUpcomingForOrg failed on dashboard load');
+    }
+
     const myTeamIdRows = member
       ? await db.select({ teamId: teamMemberships.teamId })
           .from(teamMemberships)
@@ -2230,6 +2240,24 @@ Founder, OTP</p>
           ))
           .orderBy(desc(meetings.scheduledAt))
           .limit(50);
+
+    // Split for the dashboard list: upcoming (soonest first) on top, past
+    // (most recent first) on the bottom. A meeting counts as past once it is
+    // completed/cancelled OR its scheduled time has passed. Each row carries a
+    // recurrence label for display.
+    const _now = Date.now();
+    const _withLabel = (m: typeof meetingsList[number]) => ({
+      ...m,
+      recurrenceLabel: ruleToLabel(m.recurrenceRule, m.scheduledAt),
+    });
+    const upcomingMeetings = meetingsList
+      .filter(m => m.status !== 'completed' && m.status !== 'cancelled' && new Date(m.scheduledAt).getTime() >= _now)
+      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+      .map(_withLabel);
+    const pastMeetings = meetingsList
+      .filter(m => !(m.status !== 'completed' && m.status !== 'cancelled' && new Date(m.scheduledAt).getTime() >= _now))
+      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+      .map(_withLabel);
 
     let selectedMeetingId = (request.query as any)?.meetingId as string | undefined;
     if (!selectedMeetingId || !meetingsList.find(m => m.id === selectedMeetingId)) {
@@ -2739,6 +2767,8 @@ Founder, OTP</p>
       capabilities: capabilitiesFor(effectiveRole),
       isIntegrator: canIntegrate(effectiveRole),
       meetings: meetingsList,
+      upcomingMeetings,
+      pastMeetings,
       selectedMeetingId,
       headlines: headlinesList,
       currentQuarter,
