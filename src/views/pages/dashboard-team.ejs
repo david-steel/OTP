@@ -599,7 +599,7 @@
         Not on any team yet.
       </div>
       <div id="ef-invite-row" style="display:none;">
-        <button type="button" id="ef-invite-btn" onclick="inviteFromTile()"
+        <button type="button" id="ef-tile-invite-btn" onclick="inviteFromTile()"
           style="width:100%; padding:0.45rem 0.65rem; background:#10b981; color:#fff; border:none; border-radius:0.4rem; font-size:0.75rem; font-weight:600; cursor:pointer;">
           ✉️ Invite to OTP
         </button>
@@ -1696,7 +1696,7 @@
 
       // Invite row: only for human tiles that aren't already claimed.
       var inviteRow = document.getElementById('ef-invite-row');
-      var inviteBtn = document.getElementById('ef-invite-btn');
+      var inviteBtn = document.getElementById('ef-tile-invite-btn');
       var pendingEl = document.getElementById('ef-invite-pending');
       var pendingEmailEl = document.getElementById('ef-invite-pending-email');
       var claimedEl = document.getElementById('ef-invite-claimed');
@@ -1723,30 +1723,46 @@
 
     // Opens the existing "Invite a new member" modal pre-filled with the
     // currently-open tile so the admin can send an invite in one click.
+    // Invite the EXISTING tile to OTP. Janine (and every other person already
+    // on the chart) has a tile -- inviting them must tie the invitation to
+    // that tile's externalId, NOT create a new tile. The old implementation
+    // opened the "create new tile" modal via modal.classList.add('open'),
+    // but that modal is shown/hidden by inline styles (opacity/pointer-
+    // events), so the class toggle was a no-op and nothing appeared --
+    // "the button does nothing." And even if it had opened, submitInviteNew
+    // would have POSTed /api/v1/team/entity and created a DUPLICATE tile.
+    // Rewritten 2026-05-28 to invite the existing tile directly, mirroring
+    // sendInvite(). Email comes from the tile's contactEmail; if absent, we
+    // prompt for it once.
     window.inviteFromTile = function() {
-      if (!currentTile) return;
-      // Pull the tile's contact email (filled by openEditPanel into ef-jobdesc etc;
-      // safest path is to re-read from the chart nodes data structure)
+      if (!currentTile || !currentTile.externalId) return;
       var match = nodes.find(function(n) { return n.id === currentTile.id; });
       var props = match && match.properties ? match.properties : {};
-      var nameEl = document.getElementById('inv-new-name');
-      var emailEl = document.getElementById('inv-new-email');
-      var roleEl = document.getElementById('inv-new-role');
-      var reportsToEl = document.getElementById('inv-new-reportsto');
-      var claimsEl = document.getElementById('inv-new-claims');
-      var overlay = document.getElementById('invite-new-overlay');
-      var modal = document.getElementById('invite-new-modal');
-      if (nameEl) nameEl.value = currentTile.label || '';
-      if (emailEl) emailEl.value = (props.contactEmail || '');
-      if (roleEl) roleEl.value = (props.role || '');
-      // Pre-select claimed tile if the field exists.
-      if (claimsEl) {
-        Array.from(claimsEl.options || []).forEach(function(o) {
-          o.selected = (o.value === currentTile.externalId);
-        });
+      var email = (props.contactEmail || '').trim();
+      if (!email) {
+        email = (window.prompt('Email to invite ' + (currentTile.label || 'this person') + ' to OTP:') || '').trim();
+        if (!email) return;
       }
-      if (overlay) overlay.classList.add('open');
-      if (modal) modal.classList.add('open');
+      var btn = document.getElementById('ef-tile-invite-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      OTP.apiSave({
+        method: 'POST', url: '/api/v1/team/invite',
+        body: { email: email, claimedEntityId: currentTile.externalId, role: 'member' },
+        btnEl: btn,
+        onSuccess: function(data) {
+          var pendingEl = document.getElementById('ef-invite-pending');
+          var pendingEmailEl = document.getElementById('ef-invite-pending-email');
+          if (pendingEmailEl) pendingEmailEl.textContent = data.email;
+          if (pendingEl) pendingEl.style.display = '';
+          if (btn) btn.style.display = 'none';
+          setTimeout(function() { window.location.reload(); }, 1500);
+        },
+        onError: function(err) {
+          if (btn) { btn.disabled = false; btn.textContent = '✉️ Invite to OTP'; }
+          window.alert(OTP.formatError ? OTP.formatError(err, 'Invite failed') : 'Invite failed. Try again.');
+          return true;
+        },
+      });
     };
 
     async function loadMeetingsForEntity(externalId) {
