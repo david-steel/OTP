@@ -172,6 +172,10 @@ await app.register(fastifyView, {
   defaultContext: {
     clerkPubKey,
     clerkInstance,
+    // Per-deploy cache-buster for /public/* assets. They are served
+    // immutable/max-age=1yr, so without a versioned URL a new styles.css is
+    // never picked up at the edge. The commit SHA changes every deploy.
+    assetVersion: (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'dev').slice(0, 12),
   },
 });
 

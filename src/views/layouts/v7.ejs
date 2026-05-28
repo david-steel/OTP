@@ -48,7 +48,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/public/v7.css">
+<link rel="stylesheet" href="/public/v7.css?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>">
 <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
 <script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
 <% } %>

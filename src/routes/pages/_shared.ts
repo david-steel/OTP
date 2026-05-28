@@ -26,6 +26,8 @@ export async function renderV7(reply: any, page: string, data: Record<string, an
   const ctx = {
     clerkPubKey: V7_CLERK_PUB_KEY,
     clerkInstance: V7_CLERK_INSTANCE,
+    // Per-deploy cache-buster for /public/* (served immutable/1yr).
+    assetVersion: (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'dev').slice(0, 12),
     ...data,
   };
   const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, ctx);

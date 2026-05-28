@@ -66,10 +66,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- v7 font stack: Schibsted Grotesk display, Inter body, JetBrains Mono mark/eyebrow -->
   <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/public/styles.css">
+  <link rel="stylesheet" href="/public/styles.css?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>">
   <!-- v7.css: design tokens (--ink, --blue, --orgy, --grey, etc.) + base classes
-       used across both marketing (layouts/v7) and interior (layouts/main). -->
-  <link rel="stylesheet" href="/public/v7.css">
+       used across both marketing (layouts/v7) and interior (layouts/main).
+       ?v= cache-buster: /public/* is served immutable/1yr, so the URL must
+       change per deploy or a new build is never picked up at the edge. -->
+  <link rel="stylesheet" href="/public/v7.css?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
 
