@@ -129,13 +129,20 @@
           <% } else { %>
             <div class="space-y-1.5">
               <% upcomingMeetings.forEach(function(m){ var sel = (m.id === selectedMeetingId); %>
-                <a href="/l8/meeting/<%= m.id %><%= _mtgQ %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
-                  <div class="flex items-center justify-between gap-2">
+                <a href="/l8/meeting/<%= m.id %><%= _mtgQ %>" class="block rounded border px-3 py-2 transition-colors <%= sel ? 'border-orgy bg-orgy-tint' : 'border-gray-200 hover:bg-gray-50' %>">
+                  <div class="flex items-start justify-between gap-2">
                     <span class="text-sm font-medium text-gray-900 truncate"><%= m.title %></span>
-                    <span class="text-xs text-gray-500 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>, <%= new Date(m.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></span>
+                    <div class="text-right shrink-0">
+                      <div class="text-xs text-gray-500 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>, <%= new Date(m.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></div>
+                      <% if (m.status === 'in_progress') { %>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wide">Live</span>
+                      <% } else if (m.status === 'completed') { %>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold uppercase tracking-wide">Completed<% if (m.ratingAvg != null) { %> &middot; <%= m.ratingAvg.toFixed(1) %><% } %></span>
+                      <% } %>
+                    </div>
                   </div>
                   <div class="text-xs text-gray-500 mt-0.5">
-                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %><% if (m.status === 'in_progress') { %> &middot; <span class="text-emerald-600 font-medium">live</span><% } else if (m.status === 'completed') { %> &middot; <span class="text-gray-500 font-medium">completed</span><% if (m.ratingAvg != null) { %> &middot; <span class="text-gray-600 font-medium"><%= m.ratingAvg.toFixed(1) %>/10</span><% } %><% } %>
+                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %>
                   </div>
                 </a>
               <% }); %>
@@ -148,13 +155,20 @@
             <summary class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1.5 cursor-pointer select-none">Past (<%= pastMeetings.length %>)</summary>
             <div class="space-y-1.5 mt-1.5">
               <% pastMeetings.forEach(function(m){ var sel = (m.id === selectedMeetingId); %>
-                <a href="/l8/meeting/<%= m.id %><%= _mtgQ %>" class="block rounded border px-3 py-2 <%= sel ? 'border-orgy-blue bg-orgy-blue-soft' : 'border-gray-200 hover:bg-gray-50' %>">
-                  <div class="flex items-center justify-between gap-2">
+                <a href="/l8/meeting/<%= m.id %><%= _mtgQ %>" class="block rounded border px-3 py-2 transition-colors <%= sel ? 'border-orgy bg-orgy-tint' : 'border-gray-200 hover:bg-gray-50' %>">
+                  <div class="flex items-start justify-between gap-2">
                     <span class="text-sm text-gray-700 truncate"><%= m.title %></span>
-                    <span class="text-xs text-gray-400 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                    <div class="text-right shrink-0">
+                      <div class="text-xs text-gray-400 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+                      <% if (m.status === 'completed') { %>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold uppercase tracking-wide">Completed<% if (m.ratingAvg != null) { %> &middot; <%= m.ratingAvg.toFixed(1) %><% } %></span>
+                      <% } else if (m.status === 'cancelled') { %>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wide">Cancelled</span>
+                      <% } %>
+                    </div>
                   </div>
                   <div class="text-xs text-gray-400 mt-0.5">
-                    <%= m.meetingType %><% if (m.status === 'completed') { %> &middot; completed<% if (m.ratingAvg != null) { %> &middot; <%= m.ratingAvg.toFixed(1) %>/10<% } %><% } else if (m.status === 'cancelled') { %> &middot; cancelled<% } %>
+                    <%= m.meetingType %>
                   </div>
                 </a>
               <% }); %>
