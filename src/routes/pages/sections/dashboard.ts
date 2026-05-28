@@ -2242,31 +2242,33 @@ Founder, OTP</p>
           .limit(50);
 
     // Split for the dashboard list: upcoming (soonest first) on top, past
-    // (most recent first) on the bottom. A meeting counts as past once it is
-    // completed/cancelled OR its scheduled time has passed. Each row carries a
-    // recurrence label for display.
-    const _now = Date.now();
+    // (most recent first) on the bottom. A meeting is "past" only once it is
+    // completed/cancelled OR its scheduled DAY is before today -- NOT the
+    // instant its start time passes. Bucketing by start time wrongly demoted a
+    // meeting to Past mid-day (e.g. a noon 1:1 viewed at 5pm), even one you're
+    // about to run. Today's and in-progress meetings stay in Upcoming.
+    const _startOfToday = new Date();
+    _startOfToday.setHours(0, 0, 0, 0);
+    const _isPast = (m: typeof meetingsList[number]) =>
+      m.status === 'completed' || m.status === 'cancelled' || new Date(m.scheduledAt) < _startOfToday;
     const _withLabel = (m: typeof meetingsList[number]) => ({
       ...m,
       recurrenceLabel: ruleToLabel(m.recurrenceRule, m.scheduledAt),
     });
     const upcomingMeetings = meetingsList
-      .filter(m => m.status !== 'completed' && m.status !== 'cancelled' && new Date(m.scheduledAt).getTime() >= _now)
+      .filter(m => !_isPast(m))
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
       .map(_withLabel);
     const pastMeetings = meetingsList
-      .filter(m => !(m.status !== 'completed' && m.status !== 'cancelled' && new Date(m.scheduledAt).getTime() >= _now))
+      .filter(m => _isPast(m))
       .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
       .map(_withLabel);
 
     let selectedMeetingId = (request.query as any)?.meetingId as string | undefined;
     if (!selectedMeetingId || !meetingsList.find(m => m.id === selectedMeetingId)) {
-      // Default to the next upcoming meeting; fall back to the most recent.
-      const now = new Date();
-      const upcoming = meetingsList
-        .filter(m => new Date(m.scheduledAt) >= now)
-        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
-      selectedMeetingId = upcoming?.id || meetingsList[0]?.id || '';
+      // Default to the soonest upcoming meeting (same bucketing as the list);
+      // fall back to the most recent past one.
+      selectedMeetingId = upcomingMeetings[0]?.id || meetingsList[0]?.id || '';
     }
 
     // ---- Headlines ----
