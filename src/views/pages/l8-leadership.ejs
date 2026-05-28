@@ -1159,6 +1159,11 @@
       }
     }
   } catch (e) { /* corrupt timer state -- start fresh */ }
+  // A finished meeting never has a running clock, no matter what localStorage
+  // says (covers ending from another tab/device).
+  if (<%- JSON.stringify(meeting.status) %> === 'completed' || <%- JSON.stringify(meeting.status) %> === 'cancelled') {
+    timerState.running = false;
+  }
 
   function saveTimer() {
     try {
@@ -1380,6 +1385,10 @@
   const endBtn = document.getElementById('end-meeting');
   if (endBtn) endBtn.addEventListener('click', async () => {
     if (!confirm('End the meeting?')) return;
+    // Stop the agenda clock and clear its persisted state so it doesn't
+    // resurrect as "running" after the reload.
+    try { pauseTimer(); } catch (e) { /* timer not initialized */ }
+    try { localStorage.removeItem(TIMER_KEY); } catch (e) { /* storage unavailable */ }
     await api('/meetings/' + meetingId + '/end', { method: 'POST' });
     reloadKeep();
   });

@@ -2249,8 +2249,11 @@ Founder, OTP</p>
     // about to run. Today's and in-progress meetings stay in Upcoming.
     const _startOfToday = new Date();
     _startOfToday.setHours(0, 0, 0, 0);
+    // "Past" = cancelled, or the scheduled day is before today. A meeting
+    // COMPLETED today stays in the current list (with a "completed" badge) so
+    // you see it wrap up before it drops into Past when the day rolls over.
     const _isPast = (m: typeof meetingsList[number]) =>
-      m.status === 'completed' || m.status === 'cancelled' || new Date(m.scheduledAt) < _startOfToday;
+      m.status === 'cancelled' || new Date(m.scheduledAt) < _startOfToday;
     const _withLabel = (m: typeof meetingsList[number]) => ({
       ...m,
       recurrenceLabel: ruleToLabel(m.recurrenceRule, m.scheduledAt),

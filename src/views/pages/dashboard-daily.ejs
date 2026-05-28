@@ -135,7 +135,7 @@
                     <span class="text-xs text-gray-500 whitespace-nowrap"><%= new Date(m.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>, <%= new Date(m.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></span>
                   </div>
                   <div class="text-xs text-gray-500 mt-0.5">
-                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %><% if (m.status === 'in_progress') { %> &middot; <span class="text-emerald-600 font-medium">live</span><% } %>
+                    <%= m.meetingType %><% if (m.recurrenceLabel && m.recurrenceLabel !== 'Does not repeat') { %> &middot; <%= m.recurrenceLabel %><% } %><% if (m.status === 'in_progress') { %> &middot; <span class="text-emerald-600 font-medium">live</span><% } else if (m.status === 'completed') { %> &middot; <span class="text-gray-500 font-medium">completed</span><% } %>
                   </div>
                 </a>
               <% }); %>
