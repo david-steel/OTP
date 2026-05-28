@@ -414,9 +414,12 @@
                 <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>">
                   <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
                   <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
-                  <td class="py-2 pr-3 text-gray-700"><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
+                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
                   <td class="py-2">
-                    <input type="number" step="any" class="kpi-value-input rounded border border-gray-300 px-2 py-1 text-xs w-20" placeholder="value" value="<%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '' %>">
+                    <div class="flex items-center gap-1.5">
+                      <input type="number" step="any" class="kpi-value-input rounded border border-gray-300 px-2 py-1 text-xs w-20" placeholder="value" value="<%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '' %>">
+                      <button type="button" class="kpi-save-btn rounded bg-orgy-blue px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-orgy-blue-deep disabled:opacity-50">Save</button>
+                    </div>
                   </td>
                 </tr>
               <% }); %>
@@ -1171,24 +1174,59 @@
   });
 
   // --- KPIs: inline value entry ---
+  // One save path, three triggers: the Save button (explicit), Enter in the
+  // input (keyboard), and blur/change (auto-save convenience). David asked
+  // for a visible button -- the value used to save silently on blur with no
+  // affordance, which read as "no way to submit." Added 2026-05-28.
+  function saveKpiValueInput(inp, btn) {
+    var tr = inp.closest('[data-kpi-id]');
+    if (!tr) return;
+    var kid = tr.dataset.kpiId;
+    var val = inp.value === '' ? null : parseFloat(inp.value);
+    if (val === null || Number.isNaN(val)) { alert('Enter a number first.'); inp.focus(); return; }
+    var now = new Date();
+    var dow = now.getDay(); // 0 Sun .. 6 Sat
+    var weekStart = new Date(now); weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
+    var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
+    var originalLabel = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    api('POST', '/kpis/' + kid + '/values', { periodStart: weekStart.toISOString(), periodEnd: weekEnd.toISOString(), value: val, source: 'manual' })
+      .then(function(){
+        inp.classList.add('ring-1'); inp.classList.add('ring-emerald-400');
+        setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800);
+        var latestCell = tr.querySelector('[data-kpi-latest]');
+        if (latestCell) latestCell.textContent = val;
+        if (btn) { btn.textContent = 'Saved ✓'; btn.disabled = false; setTimeout(function(){ btn.textContent = originalLabel || 'Save'; }, 1200); }
+      })
+      .catch(function(err){
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel || 'Save'; }
+        alert('KPI save failed: ' + fmtApiError(err));
+      });
+  }
+
   document.querySelectorAll('.kpi-value-input').forEach(function(inp){
+    // Enter saves immediately.
+    inp.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var b = inp.closest('[data-kpi-id]').querySelector('.kpi-save-btn');
+        saveKpiValueInput(inp, b);
+      }
+    });
+    // Auto-save on blur/change preserved as a convenience.
     var debounce = null;
     inp.addEventListener('change', function(){
       clearTimeout(debounce);
       debounce = setTimeout(function(){
-        var tr = inp.closest('[data-kpi-id]');
-        var kid = tr.dataset.kpiId;
-        var val = inp.value === '' ? null : parseFloat(inp.value);
-        if (val === null || Number.isNaN(val)) return;
-        // Push current week as the period.
-        var now = new Date();
-        var dow = now.getDay(); // 0 Sun .. 6 Sat
-        var weekStart = new Date(now); weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
-        var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
-        api('POST', '/kpis/' + kid + '/values', { periodStart: weekStart.toISOString(), periodEnd: weekEnd.toISOString(), value: val, source: 'manual' })
-          .then(function(){ inp.classList.add('ring-1'); inp.classList.add('ring-emerald-400'); setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800); })
-          .catch(function(err){ alert('KPI save failed: ' + fmtApiError(err)); });
+        var b = inp.closest('[data-kpi-id]').querySelector('.kpi-save-btn');
+        saveKpiValueInput(inp, b);
       }, 300);
+    });
+  });
+  document.querySelectorAll('.kpi-save-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var inp = btn.closest('[data-kpi-id]').querySelector('.kpi-value-input');
+      saveKpiValueInput(inp, btn);
     });
   });
 
