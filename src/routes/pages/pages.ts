@@ -2790,11 +2790,11 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
   });
 
   // POST /l8/create  -- quick create handler (form post)
-  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string; teamId?: string } }>('/l8/create', async (request, reply) => {
+  app.post<{ Body: { title?: string; scheduledAt?: string; meetingType?: string; teamId?: string; recurrenceRule?: string } }>('/l8/create', async (request, reply) => {
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
     const auth = getAuth(request);
-    const { title, scheduledAt, meetingType, teamId } = request.body || {};
+    const { title, scheduledAt, meetingType, teamId, recurrenceRule } = request.body || {};
     if (!title || !scheduledAt) {
       return reply.status(400).send('title and scheduledAt required');
     }
@@ -2817,6 +2817,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       meetingType: meetingType || 'leadership',
       scheduledAt: new Date(scheduledAt),
       attendees: [],
+      recurrenceRule: (recurrenceRule || '').trim() || null,
       createdBy: auth.userId || 'unknown',
     }).returning();
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';

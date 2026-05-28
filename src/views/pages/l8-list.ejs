@@ -45,6 +45,12 @@
         <option value="1on1">1-on-1</option>
         <option value="other">Other</option>
       </select>
+      <select name="recurrenceRule" class="border rounded p-2 text-sm" title="Repeat this meeting? OTP rolls the next one forward automatically.">
+        <option value="">Does not repeat</option>
+        <option value="FREQ=WEEKLY">Weekly</option>
+        <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
+        <option value="FREQ=MONTHLY">Monthly</option>
+      </select>
       <% if (teamsList.length > 0) { %>
         <select name="teamId" class="border rounded p-2 text-sm" title="Which team is meeting?">
           <% teamsList.forEach(function(t) { %>
