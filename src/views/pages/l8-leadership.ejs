@@ -422,8 +422,8 @@
                     </div>
                   </td>
                   <td class="p-2 text-center">
-                    <% if (onTrack === true) { %><span class="text-emerald-600 font-bold">✓</span><% } %>
-                    <% if (onTrack === false) { %><span class="text-red-600 font-bold">✗</span><% } %>
+                    <% if (onTrack === true) { %><%- include('partials/ui-pill', { status: 'ontrack' }) %><% } %>
+                    <% if (onTrack === false) { %><%- include('partials/ui-pill', { status: 'offtrack' }) %><% } %>
                     <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
                   </td>
                   <td class="p-2 text-center">
