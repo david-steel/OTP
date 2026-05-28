@@ -64,15 +64,40 @@ const promoteSchema = z.object({
 });
 
 /**
- * Parse an iCalendar RRULE and compute the next occurrence after `after`.
- * Returns null if the rule is invalid or has no future occurrences.
+ * Build an RRule from rule text, anchoring DTSTART to `fallbackStart` when the
+ * rule omits one. The UI sends bare bodies (e.g. "FREQ=WEEKLY;BYDAY=MO,WE,FR")
+ * with no DTSTART; without an anchor rrule defaults to construction time, which
+ * makes interval-based cadences drift. Anchoring to the completed/seed date
+ * keeps the series on its true grid.
  */
-function nextOccurrence(ruleText: string, after: Date): Date | null {
+function buildRule(ruleText: string, fallbackStart: Date) {
+  const opts = RRule.parseString(ruleText);
+  if (!opts.dtstart) opts.dtstart = fallbackStart;
+  return new RRule(opts);
+}
+
+/**
+ * Compute the next occurrence relative to `base`. `inclusive` returns `base`
+ * itself when it is an occurrence (used to seed the first instance at/after
+ * now); pass false to get the strictly-next occurrence (used when spawning the
+ * follow-up from a just-completed instance whose dueAt IS an occurrence).
+ * Returns null if the rule is invalid or the series is exhausted.
+ */
+function nextOccurrence(ruleText: string, base: Date, inclusive: boolean): Date | null {
   try {
-    const rule = RRule.fromString(ruleText);
-    return rule.after(after, true);
+    return buildRule(ruleText, base).after(base, inclusive);
   } catch {
     return null;
+  }
+}
+
+/** True if `ruleText` parses into a constructable RRULE. */
+function isValidRule(ruleText: string): boolean {
+  try {
+    buildRule(ruleText, new Date());
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -117,12 +142,12 @@ export default async function todoRoutes(app: FastifyInstance) {
     const kind = d.kind ?? (d.teamId || d.meetingId ? 'l10' : 'personal');
 
     // Validate recurrence rule at create time so a bad template can't be saved.
-    if (d.recurrenceRule) {
-      try { RRule.fromString(d.recurrenceRule); }
-      catch { return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } }); }
+    if (d.recurrenceRule && !isValidRule(d.recurrenceRule)) {
+      return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } });
     }
 
-    const [todo] = await db.insert(todos).values({
+    // Fields shared by a plain todo, a recurrence template, and its instances.
+    const shared = {
       organizationId: org.id,
       kind,
       priority: d.priority ?? 'p3',
@@ -136,12 +161,47 @@ export default async function todoRoutes(app: FastifyInstance) {
       delegatorName: d.delegatorName,
       title: d.title,
       description: d.description,
-      dueAt: d.dueAt ? new Date(d.dueAt) : null,
-      recurrenceRule: d.recurrenceRule || null,
       parentTodoId: d.parentTodoId || null,
       position: d.position ?? 0,
       createdBy,
-    }).returning();
+    };
+
+    let todo;
+    if (d.recurrenceRule) {
+      // Recurring: the rule lives on a hidden template (rule set, no due_at);
+      // the user only ever sees generated instances. Seed the first instance
+      // now -- at the caller's due date if given (e.g. "due today"), otherwise
+      // the next occurrence at/after now -- so the series is immediately
+      // visible and self-perpetuates as each instance is completed.
+      const [template] = await db.insert(todos).values({
+        ...shared,
+        dueAt: null,
+        recurrenceRule: d.recurrenceRule,
+        recurrenceParentId: null,
+      }).returning();
+
+      const firstDue = d.dueAt ? new Date(d.dueAt) : nextOccurrence(d.recurrenceRule, new Date(), true);
+      if (firstDue) {
+        const [instance] = await db.insert(todos).values({
+          ...shared,
+          dueAt: firstDue,
+          recurrenceRule: null,
+          recurrenceParentId: template.id,
+        }).returning();
+        todo = instance;
+      } else {
+        // Rule has no future occurrence -- return the template so the caller
+        // still gets a 201 rather than a confusing empty success.
+        todo = template;
+      }
+    } else {
+      const [plain] = await db.insert(todos).values({
+        ...shared,
+        dueAt: d.dueAt ? new Date(d.dueAt) : null,
+        recurrenceRule: null,
+      }).returning();
+      todo = plain;
+    }
 
     await db.insert(auditLogs).values(createAuditEntry('todo.created', 'todo', {
       orgId: org.id, entityId: todo.id, details: { title: todo.title, kind, priority: todo.priority },
@@ -269,9 +329,8 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (d.parentTodoId !== undefined) updates.parentTodoId = d.parentTodoId;
     if (d.position !== undefined) updates.position = d.position;
     if (d.recurrenceRule !== undefined) {
-      if (d.recurrenceRule) {
-        try { RRule.fromString(d.recurrenceRule); }
-        catch { return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } }); }
+      if (d.recurrenceRule && !isValidRule(d.recurrenceRule)) {
+        return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } });
       }
       updates.recurrenceRule = d.recurrenceRule;
     }
@@ -282,35 +341,59 @@ export default async function todoRoutes(app: FastifyInstance) {
       .returning();
     if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Todo not found' } });
 
-    // Recurrence spawn: when a todo with a recurrenceRule is marked done,
-    // immediately create the next instance, linked back via
-    // recurrence_parent_id. Skip if the todo is itself a child instance --
-    // only the template (or a one-off recurring todo) spawns. Skip if rule
-    // produces no future occurrence (finite series exhausted).
-    if (d.done === true && updated.recurrenceRule && !updated.recurrenceParentId) {
-      const base = updated.dueAt ?? new Date();
-      const next = nextOccurrence(updated.recurrenceRule, base);
-      if (next) {
-        await db.insert(todos).values({
-          organizationId: org.id,
-          kind: updated.kind,
-          priority: updated.priority,
-          teamId: updated.teamId,
-          meetingId: updated.meetingId,
-          ownerEntityType: updated.ownerEntityType,
-          ownerExternalId: updated.ownerExternalId,
-          ownerName: updated.ownerName,
-          title: updated.title,
-          description: updated.description,
-          dueAt: next,
-          // Do NOT carry the rule forward -- only the originating template
-          // owns it. Instances are one-off and don't spawn further children.
-          recurrenceRule: null,
-          recurrenceParentId: updated.id,
-          parentTodoId: updated.parentTodoId,
-          position: updated.position,
-          createdBy: updated.createdBy,
-        });
+    // Recurrence spawn: completing a recurring instance generates the next one.
+    // The RRULE lives on a hidden template; each visible instance links to it
+    // via recurrence_parent_id. On the null->done transition we resolve the
+    // governing template (the parent, or this row itself if it carries the
+    // rule directly), compute the next occurrence strictly after this
+    // instance's due date, and create the follow-up instance. Gating on the
+    // transition (was-open -> now-done) means re-toggling a todo can't
+    // double-spawn, and a per-(series,date) dedupe guards the rest.
+    if (d.done === true && !existing.doneAt) {
+      let ruleText: string | null = null;
+      let template = updated;
+      if (updated.recurrenceParentId) {
+        const [parent] = await db.select().from(todos)
+          .where(and(eq(todos.id, updated.recurrenceParentId), eq(todos.organizationId, org.id))).limit(1);
+        if (parent) { template = parent; ruleText = parent.recurrenceRule; }
+      } else if (updated.recurrenceRule) {
+        ruleText = updated.recurrenceRule;
+      }
+
+      if (ruleText) {
+        const next = nextOccurrence(ruleText, updated.dueAt ?? new Date(), false);
+        if (next) {
+          const [dupe] = await db.select({ id: todos.id }).from(todos)
+            .where(and(
+              eq(todos.organizationId, org.id),
+              eq(todos.recurrenceParentId, template.id),
+              eq(todos.dueAt, next),
+              isNull(todos.deletedAt),
+            )).limit(1);
+          if (!dupe) {
+            await db.insert(todos).values({
+              organizationId: org.id,
+              kind: template.kind,
+              priority: template.priority,
+              teamId: template.teamId,
+              meetingId: template.meetingId,
+              ownerEntityType: template.ownerEntityType,
+              ownerExternalId: template.ownerExternalId,
+              ownerName: template.ownerName,
+              delegatorEntityType: template.delegatorEntityType,
+              delegatorExternalId: template.delegatorExternalId,
+              delegatorName: template.delegatorName,
+              title: template.title,
+              description: template.description,
+              dueAt: next,
+              recurrenceRule: null,
+              recurrenceParentId: template.id,
+              parentTodoId: template.parentTodoId,
+              position: template.position,
+              createdBy: template.createdBy,
+            });
+          }
+        }
       }
     }
 
