@@ -38,6 +38,15 @@
   var isIntegrator = !!locals.isIntegrator;
   var orgTeams = locals.orgTeams || [];
   var selectedTeamId = locals.selectedTeamId || '';
+  // teamId -> name, for the "which meeting is this tied to" label on each item.
+  var teamNameById = {};
+  orgTeams.forEach(function(t){ teamNameById[t.id] = t.name; });
+  // Reusable team-tag markup for an item's teamId.
+  function teamTag(tid){
+    if (!tid || !teamNameById[tid]) return '';
+    return '<span class="ml-1 inline-flex items-center gap-1 text-[10px] font-semibold text-orgy-blue bg-orgy-blue-soft rounded px-1.5 py-0.5 whitespace-nowrap">→ ' +
+      String(teamNameById[tid]).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+  }
   var greeting = (function(){
     var h = new Date().getHours();
     if (h < 12) return 'Good morning';
@@ -402,7 +411,7 @@
                   </form>
                   <% } %>
                   <div class="text-[11px] text-gray-500 mt-0.5">
-                    <span class="uppercase tracking-wide"><%= h.kind %></span>
+                    <span class="uppercase tracking-wide"><%= h.kind %></span><%- teamTag(h.teamId) %>
                     &middot; <%= h.authorName || h.authorUserId %>
                     <%= h.readAt ? ' &middot; read ' + new Date(h.readAt).toLocaleString() : '' %>
                     <% if (isIntegrator) { %><button type="button" class="headline-edit-btn ml-2 text-orgy-blue font-semibold hover:underline">edit</button><% } %>
@@ -449,7 +458,7 @@
                     <div class="text-[11px] text-gray-500 mt-0.5">
                       <%= due ? 'Due ' + due.toLocaleDateString() : 'No due date' %>
                       <%= overdue ? ' -- OVERDUE' : '' %>
-                      <%= r.completedAt ? ' -- Done' : '' %>
+                      <%= r.completedAt ? ' -- Done' : '' %><%- teamTag(r.teamId) %>
                     </div>
                     <% if (r.statusNote) { %>
                       <p class="text-xs text-gray-600 mt-1"><%= r.statusNote %></p>
@@ -810,7 +819,7 @@
                     <div class="font-semibold text-gray-900"><%= t.title %></div>
                     <% if (t.description) { %><p class="text-xs text-gray-600 mt-0.5"><%= t.description %></p><% } %>
                     <div class="text-[11px] text-gray-500 mt-0.5">
-                      <%= t.idsStatus %><%= t.priorityRank ? ' &middot; #' + t.priorityRank : '' %>
+                      <%= t.idsStatus %><%= t.priorityRank ? ' &middot; #' + t.priorityRank : '' %><%- teamTag(t.teamId) %>
                     </div>
                     <!-- Next Action: same machinery as Rocks. -->
                     <div class="next-action mt-2 text-xs" data-na-id="<%= t.id %>" data-na-kind="issue">
