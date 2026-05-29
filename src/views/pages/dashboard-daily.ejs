@@ -364,15 +364,24 @@
               }
             }
           %>
-          <p class="text-[11px] text-gray-500 mb-1">Headline for: <span class="font-semibold text-gray-700"><%= headlineTeamName || "current meeting's team" %></span></p>
-          <form id="headline-form" class="mb-3 flex gap-2" data-meeting-id="<%= selectedMeetingId %>">
-            <select name="kind" class="rounded border border-gray-300 bg-white px-2 py-1 text-xs">
-              <option value="customer">Customer</option>
-              <option value="employee">Employee</option>
-              <option value="other" selected>Other</option>
+          <form id="headline-form" class="mb-3 space-y-2" data-meeting-id="<%= selectedMeetingId %>">
+            <div class="flex gap-2">
+              <select name="kind" class="rounded border border-gray-300 bg-white px-2 py-1 text-xs">
+                <option value="customer">Customer</option>
+                <option value="employee">Employee</option>
+                <option value="other" selected>Other</option>
+              </select>
+              <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
+              <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1.5 hover:bg-orgy-blue-deep">Add</button>
+            </div>
+            <% if ((orgTeams || []).length > 0) { %>
+            <label class="block text-[11px] font-semibold text-gray-500">Team <span class="font-normal text-gray-400">&middot; shows on this team's meeting</span></label>
+            <select name="teamId" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+              <% (orgTeams || []).forEach(function(tm){ %>
+                <option value="<%= tm.id %>" <%= tm.id === selectedTeamId ? 'selected' : '' %>><%= tm.name %></option>
+              <% }); %>
             </select>
-            <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
-            <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1.5 hover:bg-orgy-blue-deep">Add</button>
+            <% } %>
           </form>
         <% } %>
 
@@ -384,11 +393,19 @@
               <li class="flex items-start gap-2 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2" data-headline-id="<%= h.id %>">
                 <input type="checkbox" class="headline-read-cb mt-1" <%= h.readAt ? 'checked' : '' %> <%= isIntegrator ? '' : 'disabled' %>>
                 <div class="flex-1 min-w-0">
-                  <div class="<%= h.readAt ? 'line-through text-gray-500' : 'text-gray-900' %>"><%= h.body %></div>
+                  <div class="headline-body <%= h.readAt ? 'line-through text-gray-500' : 'text-gray-900' %>"><%= h.body %></div>
+                  <% if (isIntegrator) { %>
+                  <form class="headline-edit-form hidden mt-1 flex gap-1.5">
+                    <input type="text" class="headline-edit-input flex-1 rounded border border-gray-300 px-2 py-1 text-xs" maxlength="2000" value="<%= h.body %>">
+                    <button type="submit" class="text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button>
+                    <button type="button" class="headline-edit-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
+                  </form>
+                  <% } %>
                   <div class="text-[11px] text-gray-500 mt-0.5">
                     <span class="uppercase tracking-wide"><%= h.kind %></span>
                     &middot; <%= h.authorName || h.authorUserId %>
                     <%= h.readAt ? ' &middot; read ' + new Date(h.readAt).toLocaleString() : '' %>
+                    <% if (isIntegrator) { %><button type="button" class="headline-edit-btn ml-2 text-orgy-blue font-semibold hover:underline">edit</button><% } %>
                   </div>
                 </div>
               </li>
@@ -1225,9 +1242,10 @@
       e.preventDefault();
       var fd = new FormData(hlForm);
       var hlBody = { body: fd.get('body'), kind: fd.get('kind') };
-      // Connect the headline to the active team filter; otherwise the endpoint
-      // falls back to the selected meeting's team.
-      if (headlineTeamId) hlBody.teamId = headlineTeamId;
+      // Route to the team chosen in the selector; fall back to the active
+      // team filter. The headline surfaces on that team's meeting via teamId.
+      var _hlTeam = fd.get('teamId') || headlineTeamId;
+      if (_hlTeam) hlBody.teamId = _hlTeam;
       api('POST', '/meetings/' + meetingId + '/headlines', hlBody)
         .then(reload)
         .catch(function(err){ alert('Headline failed: ' + fmtApiError(err)); });
@@ -1242,6 +1260,33 @@
       api('POST', '/meetings/' + meetingId + '/headlines/' + hid + path, {})
         .then(reload)
         .catch(function(err){ cb.checked = !cb.checked; alert(fmtApiError(err)); });
+    });
+  });
+  // Headline inline edit (author or Integrator; PUT body/kind).
+  document.querySelectorAll('.headline-edit-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-headline-id]');
+      li.querySelector('.headline-body').classList.add('hidden');
+      li.querySelector('.headline-edit-form').classList.remove('hidden');
+      var inp = li.querySelector('.headline-edit-input'); if (inp) inp.focus();
+    });
+  });
+  document.querySelectorAll('.headline-edit-cancel').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-headline-id]');
+      li.querySelector('.headline-edit-form').classList.add('hidden');
+      li.querySelector('.headline-body').classList.remove('hidden');
+    });
+  });
+  document.querySelectorAll('.headline-edit-form').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var li = form.closest('[data-headline-id]');
+      var hid = li.dataset.headlineId;
+      var val = li.querySelector('.headline-edit-input').value;
+      api('PUT', '/meetings/' + meetingId + '/headlines/' + hid, { body: val })
+        .then(reload)
+        .catch(function(err){ alert('Edit failed: ' + fmtApiError(err)); });
     });
   });
 
