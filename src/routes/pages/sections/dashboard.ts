@@ -2202,6 +2202,7 @@ Founder, OTP</p>
     const selectedTeamIdRaw = (request.query as any)?.teamId || '';
     const selectedTeamId = (selectedTeamIdRaw === 'all') ? '' : selectedTeamIdRaw;
     const teamFilterActive = !!selectedTeamId;
+    const scopeMine = ((request.query as any)?.scope) === 'mine';
     const orgTeams = await db
       .select({ id: teams.id, name: teams.name, slug: teams.slug })
       .from(teams)
@@ -2236,7 +2237,9 @@ Founder, OTP</p>
     // to one team. David flagged 2026-05-29 that his 1:1 issues weren't showing
     // because the Daily was owner-scoped, not meeting/team-scoped.
     const ccScope = (teamCol: any, ownerCol: any) => {
-      if (teamFilterActive) return eq(teamCol, selectedTeamId);
+      const ownerEq = myExternalId ? eq(ownerCol, myExternalId) : sql`false`;
+      if (teamFilterActive) return scopeMine ? and(eq(teamCol, selectedTeamId), ownerEq) : eq(teamCol, selectedTeamId);
+      if (scopeMine) return ownerEq;
       const parts: any[] = [];
       if (myTeamIds.length > 0) parts.push(inArray(teamCol, myTeamIds));
       if (myExternalId) parts.push(eq(ownerCol, myExternalId));
@@ -2431,11 +2434,15 @@ Founder, OTP</p>
           isNull(todos.doneAt),
           isNull(todos.parentTodoId),
           isNull(todos.recurrenceRule),
-          teamFilterActive
-            ? eq(todos.teamId, selectedTeamId)
-            : (myTeamIds.length > 0
-                ? or(inArray(todos.teamId, myTeamIds), inArray(todos.ownerExternalId, ownerCandidates))
-                : inArray(todos.ownerExternalId, ownerCandidates)),
+          scopeMine
+            ? (teamFilterActive
+                ? and(eq(todos.teamId, selectedTeamId), inArray(todos.ownerExternalId, ownerCandidates))
+                : inArray(todos.ownerExternalId, ownerCandidates))
+            : (teamFilterActive
+                ? eq(todos.teamId, selectedTeamId)
+                : (myTeamIds.length > 0
+                    ? or(inArray(todos.teamId, myTeamIds), inArray(todos.ownerExternalId, ownerCandidates))
+                    : inArray(todos.ownerExternalId, ownerCandidates))),
         ))
         .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
         .limit(100);
@@ -2840,6 +2847,7 @@ Founder, OTP</p>
       founderDependency,
       orgTeams,
       selectedTeamId,
+      scopeMine,
       previewRole: previewActive ? previewParam : '',
     });
   });
