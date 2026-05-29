@@ -2229,6 +2229,20 @@ Founder, OTP</p>
           .where(eq(teamMemberships.memberId, member.id))
       : [];
     const myTeamIds = myTeamIdRows.map(r => r.teamId);
+
+    // Control-center scope. The Daily reflects EVERY meeting I'm in, not just
+    // items I personally own: show items on any team I'm a member of
+    // (regardless of owner), plus my own teamless items. A team filter narrows
+    // to one team. David flagged 2026-05-29 that his 1:1 issues weren't showing
+    // because the Daily was owner-scoped, not meeting/team-scoped.
+    const ccScope = (teamCol: any, ownerCol: any) => {
+      if (teamFilterActive) return eq(teamCol, selectedTeamId);
+      const parts: any[] = [];
+      if (myTeamIds.length > 0) parts.push(inArray(teamCol, myTeamIds));
+      if (myExternalId) parts.push(eq(ownerCol, myExternalId));
+      if (parts.length === 0) return sql`false`;
+      return parts.length === 1 ? parts[0] : or(...parts);
+    };
     const meetingsList = myTeamIds.length === 0
       ? []
       : await db.select().from(meetings)
@@ -2288,9 +2302,10 @@ Founder, OTP</p>
       headlinesList = await db.select().from(meetingHeadlines)
         .where(and(eq(meetingHeadlines.teamId, selectedTeamId), eq(meetingHeadlines.orgId, org.id), isNull(meetingHeadlines.readAt)))
         .orderBy(desc(meetingHeadlines.createdAt));
-    } else if (selectedMeetingId) {
+    } else if (myTeamIds.length > 0) {
+      // Control center: all unread headlines across the teams I'm in.
       headlinesList = await db.select().from(meetingHeadlines)
-        .where(and(eq(meetingHeadlines.meetingId, selectedMeetingId), eq(meetingHeadlines.orgId, org.id), isNull(meetingHeadlines.readAt)))
+        .where(and(inArray(meetingHeadlines.teamId, myTeamIds), eq(meetingHeadlines.orgId, org.id), isNull(meetingHeadlines.readAt)))
         .orderBy(desc(meetingHeadlines.createdAt));
     }
 
@@ -2338,8 +2353,7 @@ Founder, OTP</p>
           eq(rocks.organizationId, org.id),
           isNull(rocks.deletedAt),
           eq(rocks.quarter, currentQuarter),
-          eq(rocks.ownerExternalId, myExternalId),
-          ...(teamFilterActive ? [eq(rocks.teamId, selectedTeamId)] : []),
+          ccScope(rocks.teamId, rocks.ownerExternalId),
         ))
         .orderBy(desc(rocks.dueDate));
     }
@@ -2352,8 +2366,7 @@ Founder, OTP</p>
         .where(and(
           eq(kpis.organizationId, org.id),
           isNull(kpis.deletedAt),
-          eq(kpis.ownerExternalId, myExternalId),
-          ...(teamFilterActive ? [eq(kpis.teamId, selectedTeamId)] : []),
+          ccScope(kpis.teamId, kpis.ownerExternalId),
         ))
         .orderBy(kpis.title);
       for (const k of myKpis) {
@@ -2418,8 +2431,11 @@ Founder, OTP</p>
           isNull(todos.doneAt),
           isNull(todos.parentTodoId),
           isNull(todos.recurrenceRule),
-          inArray(todos.ownerExternalId, ownerCandidates),
-          ...(teamFilterActive ? [eq(todos.teamId, selectedTeamId)] : []),
+          teamFilterActive
+            ? eq(todos.teamId, selectedTeamId)
+            : (myTeamIds.length > 0
+                ? or(inArray(todos.teamId, myTeamIds), inArray(todos.ownerExternalId, ownerCandidates))
+                : inArray(todos.ownerExternalId, ownerCandidates)),
         ))
         .orderBy(asc(todos.priority), asc(todos.dueAt), desc(todos.createdAt))
         .limit(100);
@@ -2500,9 +2516,8 @@ Founder, OTP</p>
         .where(and(
           eq(tickets.orgId, org.id),
           isNull(tickets.deletedAt),
-          eq(tickets.ownerExternalId, myExternalId),
+          ccScope(tickets.teamId, tickets.ownerExternalId),
           sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed') AND ${tickets.status} NOT IN ('resolved', 'closed')`,
-          ...(teamFilterActive ? [eq(tickets.teamId, selectedTeamId)] : []),
         ))
         .orderBy(desc(tickets.createdAt))
         .limit(50);
