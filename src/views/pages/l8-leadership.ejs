@@ -297,6 +297,20 @@
     </details>
   <% } %>
 
+  <!-- Live-preview banner: a scheduled meeting renders the team's CURRENT
+       live scorecard/priorities/to-dos/issues (so edits flow through before
+       the meeting). This makes that explicit so a future meeting doesn't read
+       as today's meeting. The data freezes into a snapshot on Start. -->
+  <% if (meeting.status === 'scheduled') { %>
+    <div class="mb-5 flex items-start gap-3 rounded-xl border border-orgy-soft bg-orgy-tint px-4 py-3">
+      <svg class="w-5 h-5 mt-0.5 shrink-0 text-orgy-on-light" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 8h.01M11 12h1v4h1"/></svg>
+      <div class="text-sm leading-relaxed">
+        <span class="font-bold text-orgy-on-light">Live preview &middot; not started.</span>
+        <span class="text-gray-700">The scorecard, priorities, to-dos, and issues below show your team's <strong>current</strong> data and update live as you edit. They snapshot into this meeting's record when you press <strong>Start meeting</strong>.</span>
+      </div>
+    </div>
+  <% } %>
+
   <!-- Agenda nav (single-line, with per-section start-timer) -->
   <nav id="agenda-nav" class="flex items-center gap-1 mb-6 text-xs whitespace-nowrap overflow-x-auto" data-active="">
     <a href="#segue"     data-section="segue"     data-budget="5"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">1. Checkin <span class="text-gray-500">5m</span></a>
