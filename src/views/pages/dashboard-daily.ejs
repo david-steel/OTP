@@ -760,6 +760,14 @@
         <form id="issue-add-form" class="hidden mb-3 space-y-2">
           <input type="text" name="title" required maxlength="500" placeholder="Issue title" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
           <textarea name="description" rows="2" placeholder="Why does this matter?" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></textarea>
+          <% if ((orgTeams || []).length > 0) { %>
+          <label class="block text-[11px] font-semibold text-gray-500">Team <span class="font-normal text-gray-400">&middot; shows on this team's meeting to solve</span></label>
+          <select name="teamId" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+            <% (orgTeams || []).forEach(function(tm){ %>
+              <option value="<%= tm.id %>" <%= tm.id === selectedTeamId ? 'selected' : '' %>><%= tm.name %></option>
+            <% }); %>
+          </select>
+          <% } %>
           <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1 hover:bg-orgy-blue-deep">Add issue</button>
         </form>
         <% if (myIssues.length === 0) { %>
@@ -807,7 +815,7 @@
                     </div>
                   </div>
                   <% if (isIntegrator) { %>
-                    <button class="issue-solve-btn text-[11px] font-semibold rounded px-2 py-0.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">Solved</button>
+                    <button class="issue-solve-btn text-[11px] font-semibold rounded px-2 py-0.5 bg-white border border-gray-300 text-gray-700 hover:border-status-ontrack hover:text-status-ontrack whitespace-nowrap">&#10003; Mark solved</button>
                   <% } %>
                 </div>
               </li>
@@ -1471,7 +1479,7 @@
     issForm.addEventListener('submit', function(e){
       e.preventDefault();
       var fd = new FormData(issForm);
-      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium' })
+      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium', teamId: fd.get('teamId') || null })
         .then(reload)
         .catch(function(err){ alert('Add issue failed: ' + fmtApiError(err)); });
     });
@@ -1512,7 +1520,7 @@
   document.querySelectorAll('.issue-filter-btn').forEach(function(b){
     b.addEventListener('click', function(){ applyIssueFilter(b.dataset.filter); });
   });
-  if (document.getElementById('issue-filter')) applyIssueFilter('open');
+  if (document.getElementById('issue-filter')) applyIssueFilter('all');
 
   // --- Agents: row clicks navigate to /dashboard/team (no JS handlers needed) ---
 
