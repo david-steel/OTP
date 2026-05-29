@@ -60,6 +60,10 @@
     padding: 22px 26px !important;
   }
   #daily-dashboard section h2 { color: var(--ink, #14161c) !important; letter-spacing: .04em; }
+  /* icon-circle injected into section headers */
+  #daily-dashboard .otp-dic-h2 { display: flex; align-items: center; gap: 11px; }
+  #daily-dashboard .otp-dic { flex: none; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+  #daily-dashboard .otp-dic svg { width: 18px; height: 18px; }
 </style>
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
@@ -120,7 +124,7 @@
   <!-- Meeting selector -->
   <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Meeting</h2>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Meeting</h2>
       <% if (caps.canEditAssignedItems) { %>
         <a href="/l8" class="text-xs text-orgy-blue font-semibold">Open the L8 tool &rarr;</a>
       <% } %>
@@ -462,7 +466,7 @@
       <!-- My KPIs -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My KPIs</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#f1fadd;color:#5a7d1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>My KPIs</h2>
           <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
         </div>
         <% if (myKpis.length === 0) { %>
@@ -507,7 +511,7 @@
       <!-- My To-Dos -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">My To-Dos</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>My To-Dos</h2>
           <button id="todo-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
@@ -748,7 +752,7 @@
       <!-- IDS Issues -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Issues (IDS)</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 10-10 10L2 12z"/></svg></span>Issues (IDS)</h2>
           <button id="issue-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="issue-add-form" class="hidden mb-3 space-y-2">
@@ -907,7 +911,7 @@
       <% if (delegatedWaitingList.length > 0) { %>
         <section class="rounded-lg border border-gray-200 bg-white p-5">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
           </div>
           <ul class="space-y-1">
             <% delegatedWaitingList.forEach(function(t){
@@ -930,7 +934,7 @@
       <!-- Founder Dependency -->
       <% var fd = locals.founderDependency || { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] }; %>
       <section class="rounded-lg border border-gray-200 bg-white p-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">Founder Dependency</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2 otp-dic-h2"><span class="otp-dic" style="background:#f1fadd;color:#5a7d1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/></svg></span>Founder Dependency</h2>
         <% if (!fd.hasTopSeat) { %>
           <p class="text-xs text-gray-500">No top human seat on the chart yet -- add the seat that reports to nobody to track this.</p>
         <% } else if (fd.totalOpen === 0) { %>
@@ -956,7 +960,7 @@
       %>
       <section class="rounded-lg border border-gray-200 bg-white p-5" id="acc-gaps">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Accountability Gaps</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#fef3c7;color:#92610a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>Accountability Gaps</h2>
           <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline">View chart &rarr;</a>
         </div>
         <% if (accAllClear) { %>
