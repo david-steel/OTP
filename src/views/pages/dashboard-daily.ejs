@@ -820,7 +820,27 @@
                     <% if (t.description) { %><p class="text-xs text-gray-600 mt-0.5"><%= t.description %></p><% } %>
                     <div class="text-[11px] text-gray-500 mt-0.5">
                       <%= t.idsStatus %><%= t.priorityRank ? ' &middot; #' + t.priorityRank : '' %><%- teamTag(t.teamId) %>
+                      <% if (isIntegrator) { %><button type="button" class="ix-manage-toggle ml-1 text-gray-400 hover:text-gray-700 font-semibold">&middot;&middot;&middot; manage</button><% } %>
                     </div>
+                    <% if (isIntegrator) { %>
+                    <div class="ix-manage hidden mt-2 pt-2 border-t border-gray-100 flex flex-wrap items-center gap-2 text-[11px]">
+                      <select class="ix-team rounded border border-gray-300 px-1.5 py-1" title="Move to team / meeting">
+                        <option value="">&mdash; no team &mdash;</option>
+                        <% orgTeams.forEach(function(_t){ %><option value="<%= _t.id %>" <%= _t.id === t.teamId ? 'selected' : '' %>><%= _t.name %></option><% }); %>
+                      </select>
+                      <select class="ix-owner rounded border border-gray-300 px-1.5 py-1" title="Reassign owner">
+                        <option value="">&mdash; owner &mdash;</option>
+                        <% (locals.assignablePeople || []).forEach(function(p){ %><option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>" <%= p.externalId === t.ownerExternalId ? 'selected' : '' %>><%= p.name %></option><% }); %>
+                      </select>
+                      <button type="button" class="ix-edit text-orgy-blue font-semibold hover:underline">edit</button>
+                      <button type="button" class="ix-delete text-rose-600 font-semibold hover:underline ml-auto">delete</button>
+                    </div>
+                    <form class="ix-edit-form hidden mt-1 flex gap-1.5">
+                      <input type="text" class="ix-edit-input flex-1 rounded border border-gray-300 px-2 py-1 text-xs" maxlength="500" value="<%= t.title %>">
+                      <button type="submit" class="text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button>
+                      <button type="button" class="ix-edit-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
+                    </form>
+                    <% } %>
                     <!-- Next Action: same machinery as Rocks. -->
                     <div class="next-action mt-2 text-xs" data-na-id="<%= t.id %>" data-na-kind="issue">
                       <% if (t.nextAction) { %>
@@ -1579,6 +1599,54 @@
   document.querySelectorAll('.issue-filter-btn').forEach(function(b){
     b.addEventListener('click', function(){ applyIssueFilter(b.dataset.filter); });
   });
+  // Issue manage strip: change team / reassign owner / edit title / delete.
+  document.querySelectorAll('.ix-manage-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      btn.closest('[data-issue-id]').querySelector('.ix-manage').classList.toggle('hidden');
+    });
+  });
+  document.querySelectorAll('.ix-team').forEach(function(sel){
+    sel.addEventListener('change', function(){
+      var id = sel.closest('[data-issue-id]').dataset.issueId;
+      api('PUT', '/tickets/' + id, { teamId: sel.value || null })
+        .then(reload).catch(function(err){ alert('Move failed: ' + fmtApiError(err)); });
+    });
+  });
+  document.querySelectorAll('.ix-owner').forEach(function(sel){
+    sel.addEventListener('change', function(){
+      var id = sel.closest('[data-issue-id]').dataset.issueId;
+      var p = (sel.value || '').split(':');
+      api('PUT', '/tickets/' + id, { ownerEntityType: p[0] || null, ownerExternalId: p[1] || null, ownerName: p.slice(2).join(':') || null })
+        .then(reload).catch(function(err){ alert('Reassign failed: ' + fmtApiError(err)); });
+    });
+  });
+  document.querySelectorAll('.ix-edit').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-issue-id]');
+      li.querySelector('.ix-edit-form').classList.remove('hidden');
+      var i = li.querySelector('.ix-edit-input'); if (i) i.focus();
+    });
+  });
+  document.querySelectorAll('.ix-edit-cancel').forEach(function(btn){
+    btn.addEventListener('click', function(){ btn.closest('[data-issue-id]').querySelector('.ix-edit-form').classList.add('hidden'); });
+  });
+  document.querySelectorAll('.ix-edit-form').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var li = form.closest('[data-issue-id]');
+      var val = li.querySelector('.ix-edit-input').value;
+      api('PUT', '/tickets/' + li.dataset.issueId, { title: val })
+        .then(reload).catch(function(err){ alert('Edit failed: ' + fmtApiError(err)); });
+    });
+  });
+  document.querySelectorAll('.ix-delete').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if (!confirm('Delete this issue? This cannot be undone.')) return;
+      api('DELETE', '/tickets/' + btn.closest('[data-issue-id]').dataset.issueId)
+        .then(reload).catch(function(err){ alert('Delete failed: ' + fmtApiError(err)); });
+    });
+  });
+
   if (document.getElementById('issue-filter')) applyIssueFilter('all');
 
   // --- Agents: row clicks navigate to /dashboard/team (no JS handlers needed) ---
