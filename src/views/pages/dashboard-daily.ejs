@@ -49,6 +49,18 @@
 <%- include('../partials/orgy-palette'); %>
 <%- include('../partials/api-save-handler'); %>
 
+<style>
+  /* Daily dashboard: EOS-clean card polish. Scoped to #daily-dashboard so it
+     touches nothing else. CSS-only -- upgrades the existing bordered section
+     cards to the softer rounded/shadowed module-card look, keeps all content
+     and JS. Matches the L8 meeting + mockup treatment. */
+  #daily-dashboard section.rounded-lg {
+    border-radius: 18px !important; border-color: var(--line, #e6e8ec) !important;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
+    padding: 22px 26px !important;
+  }
+  #daily-dashboard section h2 { color: var(--ink, #14161c) !important; letter-spacing: .04em; }
+</style>
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
      data-meeting-id="<%= selectedMeetingId %>"

@@ -1,40 +1,40 @@
 <%- include('../partials/orgy-palette') %>
 <style>
   /* L8 meeting: EOS-clean card treatment. Scoped to this page via the
-     [data-meeting-id] root so it touches nothing else. CSS-only (no DOM
+     #l8-meeting root so it touches nothing else. CSS-only (no DOM
      surgery) so all section forms and their JS wiring stay intact. */
-  [data-meeting-id] #segue, [data-meeting-id] #scorecard, [data-meeting-id] #rocks,
-  [data-meeting-id] #headlines, [data-meeting-id] #todos, [data-meeting-id] #ids,
-  [data-meeting-id] #conclude {
+  #l8-meeting #segue, #l8-meeting #scorecard, #l8-meeting #rocks,
+  #l8-meeting #headlines, #l8-meeting #todos, #l8-meeting #ids,
+  #l8-meeting #conclude {
     background: #fff; border: 1px solid var(--line, #e6e8ec); border-radius: 18px;
     padding: 20px 26px 24px; margin-bottom: 18px;
     box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
   }
   /* neutralize the old IDS inline highlight (-mx-4 / blue-soft / rounded-lg) */
-  [data-meeting-id] #ids { margin-left: 0 !important; margin-right: 0 !important; }
+  #l8-meeting #ids { margin-left: 0 !important; margin-right: 0 !important; }
   /* section header -> compact uppercase card-head */
-  [data-meeting-id] section > h2 {
+  #l8-meeting section > h2 {
     font-size: 14px !important; font-weight: 800 !important; text-transform: uppercase;
     letter-spacing: .06em; color: var(--ink, #14161c) !important;
     margin: 0 0 16px !important; padding-bottom: 13px; border-bottom: 1px solid #f1f3f6;
     display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
   }
-  [data-meeting-id] section > h2 > span {
+  #l8-meeting section > h2 > span {
     text-transform: none !important; letter-spacing: 0 !important; font-weight: 500 !important;
     color: var(--ink-mute, #888c96) !important; font-size: 12.5px !important;
   }
   /* agenda strip -> clean stepper chips */
-  [data-meeting-id] .agenda-chip {
+  #l8-meeting .agenda-chip {
     background: #fff !important; border: 1px solid var(--line, #e6e8ec);
     border-radius: 10px; color: var(--ink-soft, #494d57) !important; font-weight: 600;
   }
-  [data-meeting-id] .agenda-chip:hover { background: #f4f6f8 !important; border-color: #d6dbe2; }
-  [data-meeting-id] .agenda-chip.bg-orgy-blue-soft {
+  #l8-meeting .agenda-chip:hover { background: #f4f6f8 !important; border-color: #d6dbe2; }
+  #l8-meeting .agenda-chip.bg-orgy-blue-soft {
     background: var(--orgy-tint, #f1fadd) !important; border-color: var(--orgy-soft, #D6F59C);
     color: var(--orgy-onlight, #5a7d1f) !important;
   }
 </style>
-<div class="max-w-6xl mx-auto px-4 py-8" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
+<div class="max-w-6xl mx-auto px-4 py-8" id="l8-meeting" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
 
   <!-- Header -->
   <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
@@ -943,7 +943,7 @@
 
 <script>
 (function(){
-  const meetingId = document.querySelector('[data-meeting-id]').dataset.meetingId;
+  const meetingId = document.querySelector('#l8-meeting').dataset.meetingId;
   const teamId = document.querySelector('[data-team-id]').dataset.teamId || null;
   const DEV_ORG = <%- JSON.stringify(devOrgIdParam || '') %>;
   function withOrg(path) {
