@@ -1,12 +1,14 @@
 <%
-  // Dashboard nav strip. Renders horizontally above the page content for any
-  // path under /dashboard or /l8. Role-filtered.
+  // App shell: fixed left sidebar nav for /dashboard/* and /l8/* (role-filtered).
+  // Rewritten 2026-05-28 from a horizontal strip into the EOS-style left rail.
+  // Self-contained: emits a scoped <style> that pads <main> left and paints the
+  // app canvas, so this needs NO edit to layouts/main.ejs (marketing pages and
+  // Clerk wiring untouched). No-op when unauth or outside the dashboard area.
   //
-  // Inputs (all from view-wrapper defaults; falls back gracefully):
-  //   currentPath -- request URL path
-  //   memberRole  -- one of the Role enum values, or null when unauth
-  //
-  // No-op return if not authenticated or path is not a dashboard page.
+  // Use plain JS line comments here, and never put EJS tag delimiters in a
+  // comment: a stray close-delimiter ends the scriptlet early and has 500'd
+  // dashboards before (see memory). That is also why the icon strings below
+  // are kept free of any percent-greater-than sequence.
   var path = locals.currentPath || '';
   var role = (locals.memberRole || '').toString();
   var isCoach = !!locals.isCoach;
@@ -18,71 +20,109 @@
 %>
 
 <% if (authed && inDashArea) {
-     // Role buckets (mirror permissions.ts)
      var ALL = ['owner','admin','manager','managee','observer','implementer','visionary','integrator','free','member'];
-     var INTEGRATOR_LIKE = ['owner','admin','integrator','implementer'];
      var ORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
      var INVITER = ['owner','admin','manager','visionary','integrator'];
-     // CEO Dashboard is the founder/CEO's cockpit -- restrict to the org
-     // owner and the EOS Visionary seat. Integrator (COO), managers, and
-     // implementers don't see it. David flagged 2026-05-25.
      var CEO_ONLY = ['owner','visionary'];
-     var ALL_AUTHED = ALL; // anyone with an org
-
+     var ALL_AUTHED = ALL;
      function hasRole(allowed){
        if (!role) return false;
        for (var i=0;i<allowed.length;i++){ if (allowed[i]===role) return true; }
        return false;
      }
-
-     // Tab definitions. Order matters -- left to right.
-     // `coachOnly: true` gates a tab on the request-level isCoach flag set
-     // by the coach-status preHandler in server.ts (only true when the
-     // current org has a claimed consultant_profile).
-     var tabs = [
-       { href: '/dashboard',                    label: 'Daily',     allow: ALL_AUTHED },
-       { href: '/l8',                           label: 'Meetings',  allow: ALL_AUTHED },
-       { href: '/dashboard/team',               label: 'Team',      allow: ALL_AUTHED },
-       { href: '/dashboard/kpis',               label: 'KPIs',      allow: ALL_AUTHED },
-       { href: '/dashboard/practice',           label: 'My Practice ★', allow: ORG_WIDE, coachOnly: true },
-       { href: '/dashboard/ids',                label: 'Issues',    allow: INVITER },
-       { href: '/dashboard/ceo',                label: 'CEO',       allow: CEO_ONLY },
-       { href: '/dashboard/oos-operating-plan', label: 'Plan',      allow: ORG_WIDE },
-       { href: '/dashboard/members',            label: 'Members',   allow: INVITER },
-       { href: '/dashboard/teams',              label: 'Teams',     allow: INVITER },
-       { href: '/dashboard/source-documents',   label: 'Docs',      allow: ORG_WIDE },
-       { href: '/dashboard/workspaces',         label: 'Workspaces',allow: ORG_WIDE },
-       { href: '/dashboard/inquiries',          label: 'Inquiries', allow: ORG_WIDE },
-       { href: '/dashboard/publisher',          label: 'Publisher', allow: ORG_WIDE },
-       { href: '/settings/api',                label: 'MCP / API', allow: ORG_WIDE },
+     // icon = inline SVG inner markup (stroke-based, currentColor).
+     var I = {
+       grid:    '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+       cal:     '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+       chart2:  '<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-2h12v2"/>',
+       line:    '<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>',
+       diamond: '<path d="M12 2l10 10-10 10L2 12z"/>',
+       star:    '<path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.5 5.7 21l2.3-7.1-6-4.5h7.6z"/>',
+       clip:    '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+       people:  '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/>',
+       teams:   '<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>',
+       doc:     '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/>',
+       folder:  '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
+       inbox:   '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
+       send:    '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+       api:     '<path d="M4 17l6-6-6-6M12 19h8"/>'
+     };
+     // Primary group + a Workspace group, in our terms. Mirrors permissions.ts.
+     var primary = [
+       { href:'/dashboard',                    label:'Daily',     icon:I.grid,   allow:ALL_AUTHED },
+       { href:'/l8',                            label:'Meetings',  icon:I.cal,    allow:ALL_AUTHED },
+       { href:'/dashboard/team',                label:'Team',      icon:I.chart2, allow:ALL_AUTHED },
+       { href:'/dashboard/kpis',                label:'KPIs',      icon:I.line,   allow:ALL_AUTHED },
+       { href:'/dashboard/ids',                 label:'Issues',    icon:I.diamond,allow:INVITER },
+       { href:'/dashboard/oos-operating-plan',  label:'Plan',      icon:I.clip,   allow:ORG_WIDE },
+       { href:'/dashboard/practice',            label:'My Practice', icon:I.star, allow:ORG_WIDE, coachOnly:true },
+       { href:'/dashboard/ceo',                 label:'CEO',       icon:I.star,   allow:CEO_ONLY }
      ];
-
-     // Active match: longest-prefix wins. /dashboard/team beats /dashboard.
+     var workspace = [
+       { href:'/dashboard/members',             label:'Members',   icon:I.people, allow:INVITER },
+       { href:'/dashboard/teams',               label:'Teams',     icon:I.teams,  allow:INVITER },
+       { href:'/dashboard/source-documents',    label:'Docs',      icon:I.doc,    allow:ORG_WIDE },
+       { href:'/dashboard/workspaces',          label:'Workspaces',icon:I.folder, allow:ORG_WIDE },
+       { href:'/dashboard/inquiries',           label:'Inquiries', icon:I.inbox,  allow:ORG_WIDE },
+       { href:'/dashboard/publisher',           label:'Publisher', icon:I.send,   allow:ORG_WIDE },
+       { href:'/settings/api',                  label:'MCP / API', icon:I.api,    allow:ORG_WIDE }
+     ];
+     var all = primary.concat(workspace);
      var activeHref = '';
-     for (var i=0;i<tabs.length;i++){
-       var t = tabs[i];
+     for (var i=0;i<all.length;i++){
+       var t = all[i];
        if (path === t.href || (t.href !== '/dashboard' && path.indexOf(t.href) === 0)) {
          if (t.href.length > activeHref.length) activeHref = t.href;
        }
      }
      if (!activeHref && (path === '/dashboard' || path === '/l8' || path.indexOf('/l8/') === 0)) {
-       activeHref = path === '/dashboard' ? '/dashboard' : '/l8';
+       activeHref = (path === '/dashboard') ? '/dashboard' : '/l8';
+     }
+     function renderItem(t){
+       if (!hasRole(t.allow)) return '';
+       if (t.coachOnly && !isCoach) return '';
+       var active = (t.href === activeHref);
+       return '<a href="'+t.href+'" class="otp-rail-link'+(active?' active':'')+'">'
+         + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg>'
+         + '<span>'+t.label+'</span></a>';
      }
 %>
-  <div class="border-b border-gray-200 bg-white sticky top-[60px] z-30">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <nav class="flex gap-1 overflow-x-auto -mb-px text-sm" aria-label="Dashboard">
-        <% tabs.forEach(function(t){
-             if (!hasRole(t.allow)) return;
-             if (t.coachOnly && !isCoach) return;
-             var active = t.href === activeHref;
-        %>
-          <a href="<%= t.href %>"
-             class="whitespace-nowrap px-3 py-2.5 border-b-2 font-medium transition-colors <%= active ? 'border-otp-600 text-otp-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' %>">
-            <%= t.label %>
-          </a>
-        <% }); %>
-      </nav>
-    </div>
-  </div>
+  <style>
+    /* App shell: fixed left rail + padded content. Scoped to dashboard/l8 pages. */
+    :root { --otp-rail-w: 244px; }
+    main { padding-left: var(--otp-rail-w); background: var(--grey, #f0f1f3); min-height: 100vh; }
+    .otp-rail {
+      position: fixed; top: 65px; left: 0; bottom: 0; width: var(--otp-rail-w);
+      background: var(--white, #fcfcfd); border-right: 1px solid var(--line, #e6e8ec);
+      display: flex; flex-direction: column; overflow-y: auto; z-index: 40;
+    }
+    .otp-rail-org {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px; font-weight: 800; font-size: 15px; color: var(--ink, #14161c);
+      border-bottom: 1px solid var(--line, #e6e8ec);
+    }
+    .otp-rail-nav { padding: 12px; display: flex; flex-direction: column; gap: 3px; }
+    .otp-rail-grp { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-mute, #888c96); padding: 14px 14px 6px; }
+    .otp-rail-link {
+      position: relative; display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: 10px; color: var(--ink-soft, #494d57);
+      text-decoration: none; font-weight: 600; font-size: 14.5px;
+    }
+    .otp-rail-link svg { width: 18px; height: 18px; flex: none; }
+    .otp-rail-link:hover { background: #f4f6f8; color: var(--ink, #14161c); }
+    .otp-rail-link.active { background: var(--orgy-tint, #f1fadd); color: var(--orgy-onlight, #5a7d1f); }
+    .otp-rail-link.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--orgy-deep, #8BC42A); }
+    @media (max-width: 860px) {
+      .otp-rail { display: none; }
+      main { padding-left: 0; }
+    }
+  </style>
+  <aside class="otp-rail" aria-label="App navigation">
+    <div class="otp-rail-org"><span><%= (locals.orgName || 'Workspace') %></span><span style="color:var(--ink-mute,#888c96)">&#9662;</span></div>
+    <nav class="otp-rail-nav">
+      <%- primary.map(renderItem).join('') %>
+      <div class="otp-rail-grp">Workspace</div>
+      <%- workspace.map(renderItem).join('') %>
+    </nav>
+  </aside>
 <% } %>
