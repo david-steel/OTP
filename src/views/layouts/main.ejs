@@ -182,6 +182,18 @@
   <% } %>
 </head>
 <body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %>">
+<%
+  // _inApp: authed user on a dashboard/l8/settings page. Used to streamline the
+  // top nav (hide marketing links) and suppress the marketing footer so the app
+  // shell (left sidebar) reads as a product, not a marketing site. Mirrors the
+  // inDashArea logic in partials/dashboard-tabs.ejs.
+  var _inApp = (typeof authUserId !== 'undefined' && authUserId) && (function(){
+    var p = (locals.currentPath || '');
+    return p === '/dashboard' || p.indexOf('/dashboard/') === 0
+        || p === '/l8' || p.indexOf('/l8/') === 0
+        || p === '/settings/api' || p === '/settings/coaches';
+  })();
+%>
 
   <% if (typeof impersonation !== 'undefined' && impersonation && impersonation.active) { %>
     <div style="position:sticky;top:0;z-index:60;background:#fef3c7;border-bottom:2px solid #f59e0b;padding:0.55rem 1rem;font-size:13px;color:#92400e;display:flex;justify-content:space-between;align-items:center;font-family:Inter,system-ui,sans-serif;">
@@ -226,6 +238,7 @@
 
       <!-- Desktop nav -->
       <div class="hidden md:flex items-center gap-7 text-sm">
+        <% if (!_inApp) { %>
         <a href="/protocol" class="v7-nav-link font-medium">Protocol</a>
         <a href="/pricing" class="v7-nav-link">Pricing</a>
 
@@ -268,6 +281,7 @@
         </div>
 
         <a href="/whats-new" class="v7-nav-link">What's New</a>
+        <% } %>
         <div id="auth-nav" class="flex items-center gap-3">
           <% if (typeof authUserId !== 'undefined' && authUserId) {
                // Role-gated dashboard links. Mirrors dashboard-tabs.ejs buckets.
@@ -317,6 +331,7 @@
     <!-- Mobile menu -->
     <div id="mobile-menu" class="hidden md:hidden v7-mobile-menu">
       <div class="px-4 py-4 flex flex-col gap-1 text-sm">
+        <% if (!_inApp) { %>
         <a href="/protocol" class="py-2.5 px-3 rounded-lg font-medium transition-colors">Protocol</a>
         <a href="/pricing" class="py-2.5 px-3 rounded-lg transition-colors">Pricing</a>
 
@@ -337,6 +352,7 @@
         <a href="/mcp" class="py-2 px-6 rounded-lg transition-colors">MCP Hub</a>
 
         <a href="/whats-new" class="py-2.5 px-3 rounded-lg transition-colors mt-1">What's New</a>
+        <% } %>
         <div id="auth-nav-mobile" class="flex flex-col gap-2 pt-3 mt-2 border-t" style="border-color:rgba(20,22,28,0.08);">
           <% if (typeof authUserId !== 'undefined' && authUserId) {
                var _mRole = (locals.memberRole || '').toString();
@@ -388,7 +404,7 @@
     <%- body %>
   </main>
 
-  <% if (typeof isEmbed === 'undefined' || !isEmbed) { %>
+  <% if ((typeof isEmbed === 'undefined' || !isEmbed) && !_inApp) { %>
   <%- include('../partials/v7-app-footer') %>
   <% } %>
 

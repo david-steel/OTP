@@ -1,7 +1,15 @@
 <%- include('../partials/orgy-palette'); %>
 
+<style>
+  /* CEO dashboard polish: soften card borders + add the subtle module-card
+     shadow. Scoped to #ceo-dashboard. Cards are already rounded-2xl. */
+  #ceo-dashboard .rounded-2xl.border {
+    border-color: var(--line, #e6e8ec) !important;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
+  }
+</style>
 <section class="min-h-screen">
-<div class="max-w-6xl mx-auto px-6 sm:px-8 py-10">
+<div class="max-w-6xl mx-auto px-6 sm:px-8 py-10" id="ceo-dashboard">
 
 <%
   // CEO Dashboard — the whole-company cockpit.
