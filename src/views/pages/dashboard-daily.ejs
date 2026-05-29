@@ -1397,7 +1397,11 @@
       if (descVal) body.description = descVal;
       var due = fd.get('dueAt');
       if (due) body.dueAt = new Date(due + 'T17:00:00').toISOString();
-      if (meetingId) body.meetingId = meetingId;
+      // NOTE: do NOT auto-stamp meetingId from the page. To-dos route to a
+      // meeting by teamId (the visible Team selector below), so pinning the
+      // on-screen meeting only mislabels it (e.g. "From Janine 1:1" for a
+      // to-do you didn't mean to put there). The Team selector is the single
+      // source of truth. David flagged 2026-05-29.
       // Delegation: if a person is picked, reassign owner and stamp the delegator.
       var delegateSel = document.getElementById('todo-delegate-to');
       var delegateVal = delegateSel ? delegateSel.value : '';
