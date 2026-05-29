@@ -271,7 +271,8 @@
        first item in the workspace, not a marketing banner above it. -->
   <section class="rounded-lg border border-gray-200 bg-white p-5 mb-6">
     <div class="flex items-center justify-between mb-3">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
+        <span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span>
         Next Actions
         <% if (nextActionItems.length > 0) { %>
           <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold"><%= nextActionItems.length %></span>
@@ -341,7 +342,8 @@
            Auto-opens when there are unread headlines so nothing is buried. -->
       <details class="rounded-lg border border-gray-200 bg-white" <%= headlines.filter(function(h){return !h.readAt;}).length > 0 ? 'open' : '' %>>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
-          <span class="text-sm font-bold uppercase tracking-wide text-gray-700">
+          <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
+            <span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 13z"/><path d="M11.6 16.8a3 3 0 0 1-5.8-1.6"/></svg></span>
             Headlines
             <% if (headlines.filter(function(h){return !h.readAt;}).length > 0) { %>
               <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-blue text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
@@ -404,7 +406,7 @@
       %>
       <details class="rounded-lg border border-gray-200 bg-white" <%= _rocksOpen > 0 ? 'open' : '' %>>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
-          <span class="text-sm font-bold uppercase tracking-wide text-gray-700">My Rocks
+          <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#f1fadd;color:#5a7d1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 7-3 11H6L3 9z"/></svg></span>Quarterly Priorities
             <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %>
             <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px]">(<%= myRocks.length %>)</span><% } %>
             <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
@@ -828,7 +830,7 @@
       <details id="my-agents-details" class="rounded-lg border border-gray-200 bg-white">
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="flex items-center gap-3 flex-wrap min-w-0">
-            <span class="text-sm font-bold uppercase tracking-wide text-gray-700">My Agents</span>
+            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="6" width="14" height="13" rx="2"/><path d="M9 3v3M15 3v3M9 13h.01M15 13h.01M9 17h6"/></svg></span>My Agents</span>
             <% if (myAgents.length > 0) { %>
               <span class="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
                 <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
