@@ -73,6 +73,7 @@
   #daily-dashboard .otp-dic-h2 { display: flex; align-items: center; gap: 11px; }
   #daily-dashboard .otp-dic { flex: none; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
   #daily-dashboard .otp-dic svg { width: 18px; height: 18px; }
+  #daily-dashboard .otp-dic-img { flex: none; width: 38px; height: 38px; object-fit: contain; border-radius: 8px; }
 </style>
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
@@ -133,7 +134,7 @@
   <!-- Meeting selector -->
   <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Meeting</h2>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/meeting.png" alt="">Meeting</h2>
       <% if (caps.canEditAssignedItems) { %>
         <a href="/l8" class="text-xs text-orgy-blue font-semibold">Open the L8 tool &rarr;</a>
       <% } %>
@@ -281,7 +282,7 @@
   <section class="rounded-lg border border-gray-200 bg-white p-5 mb-6">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
-        <span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span>
+        <img class="otp-dic-img" src="/public/images/orgy/next-action.png" alt="">
         Next Actions
         <% if (nextActionItems.length > 0) { %>
           <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold"><%= nextActionItems.length %></span>
@@ -352,7 +353,7 @@
       <details class="rounded-lg border border-gray-200 bg-white" <%= headlines.filter(function(h){return !h.readAt;}).length > 0 ? 'open' : '' %>>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
-            <span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 13z"/><path d="M11.6 16.8a3 3 0 0 1-5.8-1.6"/></svg></span>
+            <img class="otp-dic-img" src="/public/images/orgy/headlines.png" alt="">
             Headlines
             <% if (headlines.filter(function(h){return !h.readAt;}).length > 0) { %>
               <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-blue text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
@@ -432,7 +433,7 @@
       %>
       <details class="rounded-lg border border-gray-200 bg-white" <%= _rocksOpen > 0 ? 'open' : '' %>>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
-          <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#f1fadd;color:#5a7d1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 7-3 11H6L3 9z"/></svg></span>Quarterly Priorities
+          <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/quarterly-priorities.png" alt="">Quarterly Priorities
             <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %>
             <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px]">(<%= myRocks.length %>)</span><% } %>
             <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
@@ -494,7 +495,7 @@
       <!-- My KPIs -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#f1fadd;color:#5a7d1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>My KPIs</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/kpis.png" alt="">My KPIs</h2>
           <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
         </div>
         <% if (myKpis.length === 0) { %>
@@ -539,7 +540,7 @@
       <!-- My To-Dos -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>My To-Dos</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/todos.png" alt="">My To-Dos</h2>
           <button id="todo-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
@@ -780,7 +781,7 @@
       <!-- IDS Issues -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 10-10 10L2 12z"/></svg></span>Issues (IDS)</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/issues.png" alt="">Issues (IDS)</h2>
           <button id="issue-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="issue-add-form" class="hidden mb-3 space-y-2">
@@ -884,7 +885,7 @@
       <details id="my-agents-details" class="rounded-lg border border-gray-200 bg-white">
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="flex items-center gap-3 flex-wrap min-w-0">
-            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="6" width="14" height="13" rx="2"/><path d="M9 3v3M15 3v3M9 13h.01M15 13h.01M9 17h6"/></svg></span>My Agents</span>
+            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/agents.png" alt="">My Agents</span>
             <% if (myAgents.length > 0) { %>
               <span class="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
                 <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
@@ -967,7 +968,7 @@
       <% if (delegatedWaitingList.length > 0) { %>
         <section class="rounded-lg border border-gray-200 bg-white p-5">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#e7f1fe;color:#0d7df2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/checking.png" alt="">Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
           </div>
           <ul class="space-y-1">
             <% delegatedWaitingList.forEach(function(t){
