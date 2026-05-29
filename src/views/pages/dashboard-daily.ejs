@@ -415,7 +415,7 @@
                     <span class="uppercase tracking-wide"><%= h.kind %></span><%- teamTag(h.teamId) %>
                     &middot; <%= h.authorName || h.authorUserId %>
                     <%= h.readAt ? ' &middot; read ' + new Date(h.readAt).toLocaleString() : '' %>
-                    <% if (isIntegrator) { %><button type="button" class="headline-edit-btn ml-2 text-orgy-blue font-semibold hover:underline">edit</button><% } %>
+                    <% if (isIntegrator) { %><button type="button" class="headline-edit-btn ml-2 text-orgy-blue font-semibold hover:underline">edit</button><select class="hl-team ml-1 rounded border border-gray-300 px-1 py-0.5 text-[10px]" title="Move to team"><option value="">&mdash; team &mdash;</option><% orgTeams.forEach(function(_t){ %><option value="<%= _t.id %>" <%= _t.id === h.teamId ? 'selected' : '' %>><%= _t.name %></option><% }); %></select><button type="button" class="hl-delete ml-1 text-rose-600 font-semibold hover:underline">delete</button><% } %>
                   </div>
                 </div>
               </li>
@@ -461,6 +461,18 @@
                       <%= overdue ? ' -- OVERDUE' : '' %>
                       <%= r.completedAt ? ' -- Done' : '' %><%- teamTag(r.teamId) %>
                     </div>
+                    <% if (isIntegrator) { %>
+                    <div class="rk-mng">
+                      <button type="button" class="rk-toggle text-[10px] text-gray-400 hover:text-gray-700 font-semibold mt-1">&middot;&middot;&middot; manage</button>
+                      <div class="rk-strip hidden mt-2 pt-2 border-t border-gray-100 flex flex-wrap items-center gap-2 text-[11px]">
+                        <select class="rk-team rounded border border-gray-300 px-1.5 py-1" title="Move to team"><option value="">&mdash; no team &mdash;</option><% orgTeams.forEach(function(_t){ %><option value="<%= _t.id %>" <%= _t.id === r.teamId ? 'selected' : '' %>><%= _t.name %></option><% }); %></select>
+                        <select class="rk-owner rounded border border-gray-300 px-1.5 py-1" title="Reassign owner"><option value="">&mdash; owner &mdash;</option><% (locals.assignablePeople||[]).forEach(function(p){ %><option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>" <%= p.externalId === r.ownerExternalId ? 'selected' : '' %>><%= p.name %></option><% }); %></select>
+                        <button type="button" class="rk-edit text-orgy-blue font-semibold hover:underline">edit</button>
+                        <button type="button" class="rk-delete text-rose-600 font-semibold hover:underline ml-auto">delete</button>
+                      </div>
+                      <form class="rk-edit-form hidden mt-1 flex gap-1.5"><input type="text" class="rk-edit-input flex-1 rounded border border-gray-300 px-2 py-1 text-xs" value="<%= r.title %>"><button type="submit" class="text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button><button type="button" class="rk-edit-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button></form>
+                    </div>
+                    <% } %>
                     <% if (r.statusNote) { %>
                       <p class="text-xs text-gray-600 mt-1"><%= r.statusNote %></p>
                     <% } %>
@@ -735,6 +747,10 @@
                           <div class="flex flex-col gap-0.5">
                             <label class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
                             <input type="date" name="dueAt" value="<%= t.dueAt ? new Date(t.dueAt).toISOString().slice(0,10) : '' %>" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                          </div>
+                          <div class="flex flex-col gap-0.5">
+                            <label class="text-[10px] uppercase tracking-wide text-gray-500">Team</label>
+                            <select name="todoTeam" class="rounded border border-gray-300 px-2 py-1 text-xs"><option value="">Personal (no team)</option><% orgTeams.forEach(function(_t){ %><option value="<%= _t.id %>" <%= _t.id === t.teamId ? 'selected' : '' %>><%= _t.name %></option><% }); %></select>
                           </div>
                           <% if (!t.recurrenceParentId) { %>
                             <div class="flex flex-col gap-0.5">
@@ -1504,6 +1520,7 @@
         editBody.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
         editBody.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
       }
+      editBody.teamId = (fd.get('todoTeam') || '').toString() || null;
       api('PUT', '/todos/' + tid, editBody)
         .then(reload)
         .catch(function(err){ alert('Save failed: ' + fmtApiError(err)); });
@@ -1647,6 +1664,18 @@
         .then(reload).catch(function(err){ alert('Delete failed: ' + fmtApiError(err)); });
     });
   });
+
+  // Rock manage strip
+  document.querySelectorAll('.rk-toggle').forEach(function(b){ b.addEventListener('click',function(){ b.closest('[data-rock-id]').querySelector('.rk-strip').classList.toggle('hidden'); }); });
+  document.querySelectorAll('.rk-team').forEach(function(sel){ sel.addEventListener('change',function(){ var id=sel.closest('[data-rock-id]').dataset.rockId; api('PUT','/rocks/'+id,{teamId:sel.value||null}).then(reload).catch(function(e){alert('Move failed: '+fmtApiError(e));}); }); });
+  document.querySelectorAll('.rk-owner').forEach(function(sel){ sel.addEventListener('change',function(){ var id=sel.closest('[data-rock-id]').dataset.rockId; var p=(sel.value||'').split(':'); api('PUT','/rocks/'+id,{ownerEntityType:p[0]||null,ownerExternalId:p[1]||null,ownerName:p.slice(2).join(':')||null}).then(reload).catch(function(e){alert('Reassign failed: '+fmtApiError(e));}); }); });
+  document.querySelectorAll('.rk-edit').forEach(function(b){ b.addEventListener('click',function(){ var c=b.closest('[data-rock-id]'); c.querySelector('.rk-edit-form').classList.remove('hidden'); var i=c.querySelector('.rk-edit-input'); if(i)i.focus(); }); });
+  document.querySelectorAll('.rk-edit-cancel').forEach(function(b){ b.addEventListener('click',function(){ b.closest('[data-rock-id]').querySelector('.rk-edit-form').classList.add('hidden'); }); });
+  document.querySelectorAll('.rk-edit-form').forEach(function(fm){ fm.addEventListener('submit',function(e){ e.preventDefault(); var c=fm.closest('[data-rock-id]'); api('PUT','/rocks/'+c.dataset.rockId,{title:c.querySelector('.rk-edit-input').value}).then(reload).catch(function(e){alert('Edit failed: '+fmtApiError(e));}); }); });
+  document.querySelectorAll('.rk-delete').forEach(function(b){ b.addEventListener('click',function(){ if(!confirm('Delete this priority? This cannot be undone.'))return; api('DELETE','/rocks/'+b.closest('[data-rock-id]').dataset.rockId).then(reload).catch(function(e){alert('Delete failed: '+fmtApiError(e));}); }); });
+  // Headline team-change + delete
+  document.querySelectorAll('.hl-team').forEach(function(sel){ sel.addEventListener('change',function(){ var id=sel.closest('[data-headline-id]').dataset.headlineId; api('PUT','/meetings/'+meetingId+'/headlines/'+id,{teamId:sel.value||null}).then(reload).catch(function(e){alert('Move failed: '+fmtApiError(e));}); }); });
+  document.querySelectorAll('.hl-delete').forEach(function(b){ b.addEventListener('click',function(){ if(!confirm('Delete this headline?'))return; var id=b.closest('[data-headline-id]').dataset.headlineId; api('DELETE','/meetings/'+meetingId+'/headlines/'+id).then(reload).catch(function(e){alert('Delete failed: '+fmtApiError(e));}); }); });
 
   if (document.getElementById('issue-filter')) applyIssueFilter('all');
 

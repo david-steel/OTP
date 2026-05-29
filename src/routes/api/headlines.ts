@@ -41,6 +41,7 @@ const createSchema = z.object({
 const updateSchema = z.object({
   body: z.string().min(1).max(2000).optional(),
   kind: z.enum(['customer', 'employee', 'other']).optional(),
+  teamId: z.string().uuid().nullable().optional(),
 });
 
 async function authedMember(request: any, reply: any) {
@@ -211,6 +212,7 @@ export default async function headlineRoutes(app: FastifyInstance) {
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (body.data.body !== undefined) updates.body = body.data.body;
     if (body.data.kind !== undefined) updates.kind = body.data.kind;
+    if (body.data.teamId !== undefined) updates.teamId = body.data.teamId;
 
     const [updated] = await db.update(meetingHeadlines).set(updates)
       .where(eq(meetingHeadlines.id, hid))

@@ -55,6 +55,7 @@ const updateTodoSchema = z.object({
   dueAt: z.string().datetime().nullable().optional(),
   done: z.boolean().optional(),
   verified: z.boolean().optional(),
+  teamId: z.string().uuid().nullable().optional(),
   recurrenceRule: z.string().max(500).nullable().optional(),
   parentTodoId: z.string().uuid().nullable().optional(),
   position: z.number().int().min(0).max(10_000).optional(),
@@ -253,6 +254,10 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (d.ownerEntityType !== undefined) updates.ownerEntityType = d.ownerEntityType;
     if (d.ownerExternalId !== undefined) updates.ownerExternalId = d.ownerExternalId;
     if (d.ownerName !== undefined) updates.ownerName = d.ownerName;
+    if (d.teamId !== undefined) {
+      updates.teamId = d.teamId;
+      updates.kind = d.teamId ? 'l10' : 'personal';
+    }
     if (d.dueAt !== undefined) {
       const newDue = d.dueAt ? new Date(d.dueAt) : null;
       updates.dueAt = newDue;
