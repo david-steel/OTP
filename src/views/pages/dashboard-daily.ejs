@@ -1479,7 +1479,8 @@
     issForm.addEventListener('submit', function(e){
       e.preventDefault();
       var fd = new FormData(issForm);
-      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium', teamId: fd.get('teamId') || null })
+      var _meExt = <%- JSON.stringify(locals.meExternalId || '') %>;
+      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium', teamId: fd.get('teamId') || null, ownerExternalId: _meExt || null, ownerEntityType: _meExt ? 'human' : null, ownerName: <%- JSON.stringify(firstName || '') %> || null })
         .then(reload)
         .catch(function(err){ alert('Add issue failed: ' + fmtApiError(err)); });
     });

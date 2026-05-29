@@ -2501,7 +2501,7 @@ Founder, OTP</p>
           eq(tickets.orgId, org.id),
           isNull(tickets.deletedAt),
           eq(tickets.ownerExternalId, myExternalId),
-          sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+          sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed') AND ${tickets.status} NOT IN ('resolved', 'closed')`,
           ...(teamFilterActive ? [eq(tickets.teamId, selectedTeamId)] : []),
         ))
         .orderBy(desc(tickets.createdAt))
@@ -2513,7 +2513,7 @@ Founder, OTP</p>
         .where(and(
           eq(tickets.orgId, org.id),
           isNull(tickets.deletedAt),
-          sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+          sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed') AND ${tickets.status} NOT IN ('resolved', 'closed')`,
           ...(teamFilterActive ? [eq(tickets.teamId, selectedTeamId)] : []),
         ))
         .orderBy(desc(tickets.createdAt))
@@ -2527,9 +2527,33 @@ Founder, OTP</p>
     // (Bassim writes this); KPI count from kpis table joined on external id.
     const teamGraphForAgents = await getOrgTeamGraph(org.id, org.name || 'Organization');
     const allAgentNodes = teamGraphForAgents.nodes.filter(n => n.type === 'agent');
-    const ownedAgentNodes = claimedIds.length > 0
-      ? allAgentNodes.filter(n => claimedIds.includes(n.externalId))
-      : allAgentNodes;
+    // "My Agents" = agents that escalate up (transitively) to a seat I've
+    // claimed. Org-wide roles and the legacy founder see every agent.
+    // Previously this matched only agents whose OWN externalId was claimed,
+    // but humans claim their human seat, not the agent tiles -- so it always
+    // came back empty even when the chart had agents. David flagged 2026-05-29.
+    const _ORG_WIDE_AGENT_ROLES = ['owner', 'admin', 'visionary', 'integrator', 'implementer'];
+    const _seesAllAgents = _isLegacyFounder || _ORG_WIDE_AGENT_ROLES.includes(String((member as any)?.role || ''));
+    const _agentParentOf: Record<string, string> = {};
+    for (const _n of teamGraphForAgents.nodes) {
+      const _props = (_n.properties as any) || {};
+      const _p = _props.escalatesTo || _props.reportsTo;
+      if (_p) _agentParentOf[_n.externalId] = String(_p);
+    }
+    const _claimedSet = new Set(claimedIds);
+    const _reportsUpToMe = (extId: string): boolean => {
+      let cur: string | undefined = extId;
+      let hops = 0;
+      while (cur && hops < 25) {
+        if (_claimedSet.has(cur)) return true;
+        cur = _agentParentOf[cur];
+        hops++;
+      }
+      return false;
+    };
+    const ownedAgentNodes = _seesAllAgents
+      ? allAgentNodes
+      : (claimedIds.length > 0 ? allAgentNodes.filter(n => _reportsUpToMe(n.externalId)) : allAgentNodes);
     const orgKpisForAgents = await db.select({ ownerExternalId: kpis.ownerExternalId })
       .from(kpis)
       .where(eq(kpis.organizationId, org.id));
@@ -2619,7 +2643,7 @@ Founder, OTP</p>
           .where(and(
             eq(tickets.orgId, org.id),
             isNull(tickets.deletedAt),
-            sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+            sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed') AND ${tickets.status} NOT IN ('resolved', 'closed')`,
           )),
       ]);
       const kpiOwners = new Set(kpiRows.map(r => r.owner).filter(Boolean) as string[]);
@@ -2740,7 +2764,7 @@ Founder, OTP</p>
             .where(and(
               eq(tickets.orgId, org.id),
               isNull(tickets.deletedAt),
-              sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed')`,
+              sql`${tickets.idsStatus} IN ('open', 'identified', 'discussed') AND ${tickets.status} NOT IN ('resolved', 'closed')`,
             )),
           db.select({ owner: todos.ownerExternalId }).from(todos)
             .where(and(
