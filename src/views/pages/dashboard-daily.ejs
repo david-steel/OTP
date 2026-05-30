@@ -135,7 +135,7 @@
   <!-- Meeting selector -->
   <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/meeting.png" alt="">Meeting</h2>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/meeting.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Meeting</h2>
       <% if (caps.canEditAssignedItems) { %>
         <a href="/l8" class="text-xs text-orgy-blue font-semibold">Open the L8 tool &rarr;</a>
       <% } %>
@@ -293,7 +293,7 @@
   <section class="rounded-lg border border-gray-200 bg-white p-5 mb-6">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
-        <img class="otp-dic-img" src="/public/images/orgy/next-action.png" alt="">
+        <img class="otp-dic-img" src="/public/images/orgy/next-action.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">
         Next Actions
         <% if (nextActionItems.length > 0) { %>
           <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold"><%= nextActionItems.length %></span>
@@ -364,7 +364,7 @@
       <details class="rounded-lg border border-gray-200 bg-white" <%= headlines.filter(function(h){return !h.readAt;}).length > 0 ? 'open' : '' %>>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
-            <img class="otp-dic-img" src="/public/images/orgy/headlines.png" alt="">
+            <img class="otp-dic-img" src="/public/images/orgy/headlines.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">
             Headlines
             <% if (headlines.filter(function(h){return !h.readAt;}).length > 0) { %>
               <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-blue text-[10px] font-bold"><%= headlines.filter(function(h){return !h.readAt;}).length %> unread</span>
@@ -444,7 +444,7 @@
       %>
       <details class="rounded-lg border border-gray-200 bg-white" <%= _rocksOpen > 0 ? 'open' : '' %>>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
-          <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/quarterly-priorities.png" alt="">Quarterly Priorities
+          <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/quarterly-priorities.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Quarterly Priorities
             <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %>
             <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px]">(<%= myRocks.length %>)</span><% } %>
             <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
@@ -518,7 +518,7 @@
       <!-- My KPIs -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/kpis.png" alt="">My KPIs</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/kpis.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My KPIs</h2>
           <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
         </div>
         <% if (myKpis.length === 0) { %>
@@ -563,7 +563,7 @@
       <!-- My To-Dos -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/todos.png" alt="">My To-Dos</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/todos.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My To-Dos</h2>
           <button id="todo-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="todo-add-form" class="hidden mb-3 space-y-2">
@@ -808,7 +808,7 @@
       <!-- IDS Issues -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/issues.png" alt="">Issues (IDS)</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/issues.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Issues (IDS)</h2>
           <button id="issue-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="issue-add-form" class="hidden mb-3 space-y-2">
@@ -912,7 +912,7 @@
       <details id="my-agents-details" class="rounded-lg border border-gray-200 bg-white">
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="flex items-center gap-3 flex-wrap min-w-0">
-            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/agents.png" alt="">My Agents</span>
+            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/agents.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My Agents</span>
             <% if (myAgents.length > 0) { %>
               <span class="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
                 <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
@@ -995,7 +995,7 @@
       <% if (delegatedWaitingList.length > 0) { %>
         <section class="rounded-lg border border-gray-200 bg-white p-5">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/checking.png" alt="">Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/checking.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Waiting on others <span class="text-gray-400 font-normal text-[10px]">(<%= delegatedWaitingList.length %>)</span></h2>
           </div>
           <ul class="space-y-1">
             <% delegatedWaitingList.forEach(function(t){
