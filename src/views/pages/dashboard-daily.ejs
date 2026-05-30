@@ -467,7 +467,7 @@
               <% var needsNext = !r.nextAction && !r.completedAt; %>
               <li class="rounded border <%= needsNext ? 'border-rose-200 border-l-4 border-l-rose-500 bg-rose-50/30' : 'border-gray-100 bg-gray-50/60' %> px-3 py-2 text-sm" data-rock-id="<%= r.id %>" data-entity-kind="rock">
                 <div class="flex items-start gap-3">
-                  <button class="rock-track-toggle text-[11px] font-semibold uppercase rounded px-2 py-0.5 <%= r.onTrack ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' %>" data-on-track="<%= r.onTrack ? '1' : '0' %>">
+                  <button class="rock-track-toggle text-[11px] font-semibold uppercase rounded px-2 py-0.5 <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>" data-on-track="<%= r.onTrack ? '1' : '0' %>">
                     <%= r.onTrack ? 'On track' : 'Off track' %>
                   </button>
                   <div class="flex-1 min-w-0">
