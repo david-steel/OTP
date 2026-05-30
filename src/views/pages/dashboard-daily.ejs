@@ -85,7 +85,7 @@
   <!-- Header: greeting + org switcher + role -->
   <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
     <div class="flex items-center gap-3">
-      <img src="/public/images/orgy-idle.webp" alt="" class="orgy-mascot-wave w-14 sm:w-16 shrink-0" loading="eager" decoding="async">
+      <img src="/public/images/orgy/<%= greeting === 'Good morning' ? 'good-morning' : (greeting === 'Good afternoon' ? 'good-afternoon' : 'good-evening') %>.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="" class="orgy-mascot-wave w-14 sm:w-16 shrink-0" loading="eager" decoding="async">
       <div>
         <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= greeting %>, <%= firstName %>.</h1>
@@ -1018,7 +1018,7 @@
       <!-- Founder Dependency -->
       <% var fd = locals.founderDependency || { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] }; %>
       <section class="rounded-lg border border-gray-200 bg-white p-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2 otp-dic-h2"><span class="otp-dic" style="background:#f1fadd;color:#5a7d1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/></svg></span>Founder Dependency</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/founder-dependency.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Founder Dependency</h2>
         <% if (!fd.hasTopSeat) { %>
           <p class="text-xs text-gray-500">No top human seat on the chart yet -- add the seat that reports to nobody to track this.</p>
         <% } else if (fd.totalOpen === 0) { %>
@@ -1044,7 +1044,7 @@
       %>
       <section class="rounded-lg border border-gray-200 bg-white p-5" id="acc-gaps">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><span class="otp-dic" style="background:#fef3c7;color:#92610a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>Accountability Gaps</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/accountability-gaps.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Accountability Gaps</h2>
           <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline">View chart &rarr;</a>
         </div>
         <% if (accAllClear) { %>

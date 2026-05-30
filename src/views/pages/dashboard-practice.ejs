@@ -12,13 +12,13 @@
     <!-- Header -->
     <div class="mb-6">
       <div class="text-xs font-bold uppercase tracking-[0.18em] text-amber-700 mb-1">My Practice</div>
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900"><img src="/public/images/orgy/coach.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="" class="inline-block align-middle w-11 h-11 mr-2.5">
+      <div class="flex items-center gap-3 sm:gap-4"><img src="/public/images/orgy/coach.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="" class="w-14 sm:w-16 shrink-0" loading="eager" decoding="async"><h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
         <% if (coachProfile) { %>
           <%= coachProfile.display_name %>'s Practice
         <% } else { %>
           Your Practice
         <% } %>
-      </h1>
+      </h1></div>
       <% if (coachProfile) { %>
         <p class="mt-2 text-sm text-gray-600">All your linked client orgs. Side-by-side. As a Founder Certified Coach, every client you bring is yours in perpetuity.</p>
       <% } %>
