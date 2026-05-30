@@ -49,6 +49,28 @@ export default async function adminRoutes(app: FastifyInstance) {
   });
 
   // ============================================================
+  // GET /api/v1/admin/meeting-debug?key=...&q=Bogdan -- TEMP diagnostic.
+  // Read-only. Returns recurrence/status fields for meetings whose title
+  // matches q, so we can inspect a recurring-series state. Remove after use.
+  // ============================================================
+  app.get<{ Querystring: { key?: string; q?: string } }>('/admin/meeting-debug', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+    const q = (request.query.q || '').slice(0, 80);
+    const result = await db.execute(sql`
+      SELECT m.id, o.name AS org_name, m.title, m.status,
+             m.scheduled_at, m.ended_at, m.recurrence_rule, m.recurrence_parent_id,
+             m.deleted_at, m.created_at, m.created_by
+      FROM meetings m JOIN organizations o ON m.organization_id = o.id
+      WHERE m.title ILIKE ${'%' + q + '%'}
+      ORDER BY m.recurrence_parent_id NULLS FIRST, m.scheduled_at
+      LIMIT 100
+    `);
+    return { count: (result.rows || []).length, rows: result.rows || [] };
+  });
+
+  // ============================================================
   // DELETE /api/v1/admin/oos/:id -- Admin delete (no ownership check)
   // ============================================================
   app.delete<{ Params: { id: string } }>('/admin/oos/:id', async (request, reply) => {
