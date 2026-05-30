@@ -48,24 +48,25 @@
        api:     '<path d="M4 17l6-6-6-6M12 19h8"/>'
      };
      // Primary group + a Workspace group, in our terms. Mirrors permissions.ts.
+     var _v = (locals.assetVersion || 'dev');
      var primary = [
-       { href:'/dashboard',                    label:'Daily',     icon:I.grid,   allow:ALL_AUTHED },
-       { href:'/l8',                            label:'Meetings',  icon:I.cal,    allow:ALL_AUTHED },
-       { href:'/dashboard/team',                label:'Team',      icon:I.chart2, allow:ALL_AUTHED },
-       { href:'/dashboard/kpis',                label:'KPIs',      icon:I.line,   allow:ALL_AUTHED },
-       { href:'/dashboard/ids',                 label:'Issues',    icon:I.diamond,allow:INVITER },
-       { href:'/dashboard/oos-operating-plan',  label:'Plan',      icon:I.clip,   allow:ORG_WIDE },
-       { href:'/dashboard/practice',            label:'My Practice', icon:I.star, allow:ORG_WIDE, coachOnly:true },
-       { href:'/dashboard/ceo',                 label:'CEO',       icon:I.star,   allow:CEO_ONLY }
+       { href:'/dashboard',                    label:'Daily',     img:'daily',    allow:ALL_AUTHED },
+       { href:'/l8',                            label:'Meetings',  img:'meetings', allow:ALL_AUTHED },
+       { href:'/dashboard/team',                label:'Team',      img:'team',     allow:ALL_AUTHED },
+       { href:'/dashboard/kpis',                label:'KPIs',      img:'kpis',     allow:ALL_AUTHED },
+       { href:'/dashboard/ids',                 label:'Issues',    img:'issues',   allow:INVITER },
+       { href:'/dashboard/oos-operating-plan',  label:'Plan',      img:'plan',     allow:ORG_WIDE },
+       { href:'/dashboard/practice',            label:'My Practice', img:'coach',  allow:ORG_WIDE, coachOnly:true },
+       { href:'/dashboard/ceo',                 label:'CEO',       img:'ceo',      allow:CEO_ONLY }
      ];
      var workspace = [
-       { href:'/dashboard/members',             label:'Members',   icon:I.people, allow:INVITER },
-       { href:'/dashboard/teams',               label:'Teams',     icon:I.teams,  allow:INVITER },
-       { href:'/dashboard/source-documents',    label:'Docs',      icon:I.doc,    allow:ORG_WIDE },
-       { href:'/dashboard/workspaces',          label:'Workspaces',icon:I.folder, allow:ORG_WIDE },
-       { href:'/dashboard/inquiries',           label:'Inquiries', icon:I.inbox,  allow:ORG_WIDE },
-       { href:'/dashboard/publisher',           label:'Publisher', icon:I.send,   allow:ORG_WIDE },
-       { href:'/settings/api',                  label:'MCP / API', icon:I.api,    allow:ORG_WIDE }
+       { href:'/dashboard/members',             label:'Members',   img:'members',    allow:INVITER },
+       { href:'/dashboard/teams',               label:'Teams',     img:'teams',      allow:INVITER },
+       { href:'/dashboard/source-documents',    label:'Docs',      img:'doc',        allow:ORG_WIDE },
+       { href:'/dashboard/workspaces',          label:'Workspaces',img:'workspaces', allow:ORG_WIDE },
+       { href:'/dashboard/inquiries',           label:'Inquiries', img:'inquiries',  allow:ORG_WIDE },
+       { href:'/dashboard/publisher',           label:'Publisher', img:'publisher',  allow:ORG_WIDE },
+       { href:'/settings/api',                  label:'MCP / API', img:'mcp-api',    allow:ORG_WIDE }
      ];
      var all = primary.concat(workspace);
      var activeHref = '';
@@ -83,7 +84,7 @@
        if (t.coachOnly && !isCoach) return '';
        var active = (t.href === activeHref);
        return '<a href="'+t.href+'" class="otp-rail-link'+(active?' active':'')+'">'
-         + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg>'
+         + '<img class="otp-rail-img" src="/public/images/orgy/'+t.img+'.png?v='+_v+'" alt="">'
          + '<span>'+t.label+'</span></a>';
      }
 %>
@@ -109,6 +110,7 @@
       text-decoration: none; font-weight: 600; font-size: 14.5px;
     }
     .otp-rail-link svg { width: 18px; height: 18px; flex: none; }
+    .otp-rail-img { width: 28px; height: 28px; flex: none; object-fit: contain; margin: -4px 0; }
     .otp-rail-link:hover { background: #f4f6f8; color: var(--ink, #14161c); }
     .otp-rail-link.active { background: var(--orgy-tint, #f1fadd); color: var(--orgy-onlight, #5a7d1f); }
     .otp-rail-link.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--orgy-deep, #8BC42A); }
