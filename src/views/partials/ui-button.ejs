@@ -1,0 +1,51 @@
+<%
+  /* One button component. Renders an <a> when href is given, otherwise a <button>.
+     This is how we enforce "one primary action per screen" -- only variant 'primary'
+     gets the filled orgy-blue treatment (bg-orgy-blue hover:bg-orgy-blue-deep, the
+     same tokens as .kpi-save-btn and the Add buttons on the dashboard pages).
+
+     Params (all via include locals):
+       variant - 'primary' | 'secondary' | 'ghost'  (default 'primary')
+                   primary   = solid orgy-blue, white text
+                   secondary = white, bordered, gray text
+                   ghost     = text-only orgy-blue, no border/bg
+       label   - button text (string; rendered raw so &mdash; etc. work)
+       href    - OPTIONAL. If present renders <a href>, else <button>.
+       type    - OPTIONAL button type (default 'button'); ignored for <a>
+       id      - OPTIONAL element id
+       size    - 'sm' | 'md'  (default 'md')
+       icon    - OPTIONAL raw svg inner markup, placed before the label
+
+     Usage (close-tag not shown literally in this comment by design):
+       include('../partials/ui-button', { label: 'Save', type: 'submit', id: 'kpi-save' })
+       include('../partials/ui-button', { variant: 'secondary', label: 'Cancel', href: '/dashboard' })
+
+     Class strings are written out IN FULL per branch (never concatenated from
+     fragments) so the Tailwind JIT scanner keeps them and does not purge them. */
+  var _btn_variant = (typeof variant !== 'undefined' && variant) ? String(variant) : 'primary';
+  var _btn_label   = (typeof label !== 'undefined' && label) ? label : '';
+  var _btn_href    = (typeof href !== 'undefined' && href) ? String(href) : '';
+  var _btn_type    = (typeof type !== 'undefined' && type) ? String(type) : 'button';
+  var _btn_id      = (typeof id !== 'undefined' && id) ? String(id) : '';
+  var _btn_size    = (typeof size !== 'undefined' && size) ? String(size) : 'md';
+  var _btn_icon    = (typeof icon !== 'undefined' && icon) ? icon : '';
+
+  var _btn_sizeCls = (_btn_size === 'sm')
+    ? 'text-xs px-3 py-1.5 gap-1.5'
+    : 'text-sm px-4 py-2 gap-2';
+
+  var _btn_variantMap = {
+    primary:   'bg-orgy-blue text-white hover:bg-orgy-blue-deep border border-transparent shadow-sm',
+    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+    ghost:     'bg-transparent text-orgy-blue border border-transparent hover:bg-orgy-blue-soft'
+  };
+  var _btn_variantCls = _btn_variantMap[_btn_variant] || _btn_variantMap.primary;
+
+  var _btn_base = 'inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-orgy-blue disabled:opacity-50';
+  var _btn_cls  = _btn_base + ' ' + _btn_sizeCls + ' ' + _btn_variantCls;
+%>
+<% if (_btn_href) { %>
+  <a<% if (_btn_id) { %> id="<%= _btn_id %>"<% } %> href="<%= _btn_href %>" class="<%= _btn_cls %>"><% if (_btn_icon) { %><span class="inline-flex shrink-0"><%- _btn_icon %></span><% } %><%- _btn_label %></a>
+<% } else { %>
+  <button<% if (_btn_id) { %> id="<%= _btn_id %>"<% } %> type="<%= _btn_type %>" class="<%= _btn_cls %>"><% if (_btn_icon) { %><span class="inline-flex shrink-0"><%- _btn_icon %></span><% } %><%- _btn_label %></button>
+<% } %>

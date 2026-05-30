@@ -1,0 +1,50 @@
+<%
+  /* Standard page header. Mascot + title (+ optional subtitle) on the left,
+     ONE optional primary CTA on the right. Matches the dashboard-daily /
+     dashboard-kpis mascot page-header treatment (orgy-mascot-wave, width-only
+     mascot sizing so non-square art never distorts).
+
+     Params (all via include locals):
+       mascot   - orgy image basename, e.g. 'team' (resolves to /public/images/orgy/team.png)
+       title    - string, may contain HTML entities (rendered raw via the entity-safe slot)
+       subtitle - OPTIONAL string shown under the title
+       eyebrow  - OPTIONAL tiny uppercase label above the title (e.g. org name)
+       cta      - OPTIONAL { label, href, variant } -- rendered through ui-button as the
+                  single primary action on the screen. variant defaults to 'primary'.
+
+     Usage (no EJS close-tag shown literally in this comment so the scriptlet
+     does not close early -- see memory: stray close-tags 500 the dashboards):
+       include('../partials/ui-page-header', { mascot: 'team', title: 'Acme &mdash; Scoreboard',
+         subtitle: 'Every measurable on your org chart.',
+         cta: { label: 'Add KPI', href: '/dashboard/team' } })
+
+     Optional locals are guarded with typeof so a page can omit any of them. */
+  var _ph_mascot   = (typeof mascot !== 'undefined' && mascot) ? String(mascot) : '';
+  var _ph_title    = (typeof title !== 'undefined' && title) ? title : '';
+  var _ph_subtitle = (typeof subtitle !== 'undefined' && subtitle) ? subtitle : '';
+  var _ph_eyebrow  = (typeof eyebrow !== 'undefined' && eyebrow) ? eyebrow : '';
+  var _ph_cta      = (typeof cta !== 'undefined' && cta && cta.label && cta.href) ? cta : null;
+  var _ph_ver      = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
+%>
+<div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div class="flex items-center gap-3 min-w-0">
+    <% if (_ph_mascot) { %>
+      <img src="/public/images/orgy/<%= _ph_mascot %>.png?v=<%= _ph_ver %>" alt=""
+           class="orgy-mascot-wave w-12 sm:w-14 shrink-0" loading="eager" decoding="async">
+    <% } %>
+    <div class="min-w-0">
+      <% if (_ph_eyebrow) { %>
+        <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= _ph_eyebrow %></div>
+      <% } %>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%- _ph_title %></h1>
+      <% if (_ph_subtitle) { %>
+        <p class="text-sm text-gray-600 mt-1"><%- _ph_subtitle %></p>
+      <% } %>
+    </div>
+  </div>
+  <% if (_ph_cta) { %>
+    <div class="shrink-0">
+      <%- include('./ui-button', { variant: (_ph_cta.variant || 'primary'), label: _ph_cta.label, href: _ph_cta.href }) %>
+    </div>
+  <% } %>
+</div>

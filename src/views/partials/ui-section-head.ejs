@@ -1,0 +1,44 @@
+<%
+  /* EOS-One section header. The [mascot or icon-circle] + ALL-CAPS label + optional
+     count badge row that sits at the top of every dashboard section card. This is a
+     HEADER-ONLY partial -- EJS includes can't take a body block, so the caller wraps
+     it in their own white card and renders the body themselves:
+
+       <section class="rounded-lg border border-gray-200 bg-white p-5">
+         <div class="flex items-center justify-between mb-3">
+           include('../partials/ui-section-head', { mascot: 'kpis', label: 'My KPIs', count: 4 })
+           (... optional right-side action here, e.g. a ui-button or a link ...)
+         </div>
+         (... section body ...)
+       </section>
+
+     Mirrors the otp-dic-h2 + otp-dic-img markup used across dashboard-daily.ejs so
+     the .otp-dic-* CSS on the consuming page styles it for free. When that scoped CSS
+     is absent the fallback Tailwind sizing (w-9 / icon circle) still looks right.
+
+     Params (all via include locals):
+       mascot - orgy image basename (e.g. 'kpis'). Renders an <img class="otp-dic-img">.
+       icon   - OPTIONAL raw svg inner markup. Used only when no mascot is given;
+                rendered inside an orgy-tinted .otp-dic circle.
+       label  - the heading text. Displayed via uppercase utility, so pass natural case.
+       count  - OPTIONAL number/string badge shown after the label.
+
+     (Usage close-tag intentionally not shown literally in this comment -- a stray
+      EJS close-tag closes the scriptlet early and has 500'd dashboards before.) */
+  var _sh_mascot = (typeof mascot !== 'undefined' && mascot) ? String(mascot) : '';
+  var _sh_icon   = (typeof icon !== 'undefined' && icon) ? icon : '';
+  var _sh_label  = (typeof label !== 'undefined' && label) ? label : '';
+  var _sh_count  = (typeof count !== 'undefined' && count !== null && count !== '') ? count : null;
+  var _sh_ver    = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
+%>
+<h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2 flex items-center gap-2.5">
+  <% if (_sh_mascot) { %>
+    <img class="otp-dic-img w-9 h-9 object-contain rounded-lg shrink-0" src="/public/images/orgy/<%= _sh_mascot %>.png?v=<%= _sh_ver %>" alt="">
+  <% } else if (_sh_icon) { %>
+    <span class="otp-dic inline-flex items-center justify-center w-9 h-9 rounded-full bg-orgy-blue-soft text-orgy-blue shrink-0"><%- _sh_icon %></span>
+  <% } %>
+  <span><%- _sh_label %></span>
+  <% if (_sh_count !== null) { %>
+    <span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold"><%= _sh_count %></span>
+  <% } %>
+</h2>

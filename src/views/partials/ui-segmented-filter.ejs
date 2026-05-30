@@ -1,0 +1,44 @@
+<%
+  /* Segmented button-group filter. Generalizes the Human/Agent/All owner filter
+     used on dashboard-kpis.ejs (.kpi-owner-seg) and dashboard-daily.ejs
+     (.dk-own-seg). Emits the button group MARKUP ONLY -- the consuming page keeps
+     its own JS filter behavior and reads the data attrs:
+         container: data-seg="<name>"
+         buttons:   data-seg-btn data-value="<value>" (active one also has .active)
+
+     The active styling here matches the existing segmented look (active = filled
+     orgy-blue, white text; inactive = white, gray text, hover gray). Class strings
+     are full per state so the Tailwind scanner keeps them.
+
+     Params (all via include locals):
+       name    - identifier for the data-seg attr / the page's localStorage key
+       options - array of { value, label }
+       active  - OPTIONAL value to mark active (defaults to first option's value)
+
+     Usage (close-tag intentionally not shown literally -- a stray EJS close-tag
+     closes the scriptlet early and has 500'd dashboards before):
+       include('../partials/ui-segmented-filter', {
+         name: 'kpi-owner',
+         options: [ {value:'all',label:'All'}, {value:'human',label:'Human'}, {value:'agent',label:'Agent'} ],
+         active: 'all'
+       })
+     The page then wires clicks: el.querySelectorAll('[data-seg="kpi-owner"] [data-seg-btn]') */
+  var _sf_name    = (typeof name !== 'undefined' && name) ? String(name) : 'filter';
+  var _sf_options = (typeof options !== 'undefined' && Array.isArray(options)) ? options : [];
+  var _sf_active  = (typeof active !== 'undefined' && active !== null && active !== '')
+                      ? String(active)
+                      : (_sf_options.length ? String(_sf_options[0].value) : '');
+%>
+<span class="inline-flex rounded-lg border border-gray-200 overflow-hidden" role="group" data-seg="<%= _sf_name %>" aria-label="Filter by <%= _sf_name %>">
+  <% _sf_options.forEach(function(opt, _i){
+       var _v = String(opt.value);
+       var _isActive = (_v === _sf_active);
+       var _cls = _isActive
+         ? 'bg-orgy-blue text-white'
+         : 'bg-white text-gray-500 hover:bg-gray-50';
+       var _border = (_i === 0) ? '' : 'border-l border-gray-200';
+  %>
+    <button type="button" data-seg-btn data-value="<%= _v %>"
+            class="text-xs font-semibold px-3 py-1.5 cursor-pointer transition-colors <%= _border %> <%= _cls %> <%= _isActive ? 'active' : '' %>"><%- opt.label %></button>
+  <% }); %>
+</span>

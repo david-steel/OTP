@@ -1,0 +1,48 @@
+<%
+  /* Scorecard heatmap cell that computes its own green/red tint from a goal.
+     ui-stat-cell.ejs takes a precomputed state; this is the convenience wrapper
+     that derives that state from (value, goalOp, goalValue) using the same
+     meetsGoal logic as dashboard-kpis.ejs, then delegates rendering to
+     ui-stat-cell so the cell styling stays single-sourced (do NOT redefine the
+     cell classes here).
+
+     Params (all via include locals):
+       value     - the cell value (number or numeric string). Empty/null -> neutral.
+       goalOp    - comparison operator: gte | lte | gt | lt | eq
+                   (also accepts the symbols >= <= > < =). Missing -> neutral tint.
+       goalValue - the goal threshold (number). Missing -> neutral tint.
+
+     Tint: green when value meets goal, red when it misses, neutral (gray) when
+     there's no value or no goal. (There is no 'watch'/amber band here -- a single
+     value either meets the goal or it doesn't.)
+
+     Usage (close-tag intentionally not shown literally -- a stray EJS close-tag
+     closes the scriptlet early and has 500'd dashboards before):
+       include('../partials/ui-heatmap-cell', { value: 31000, goalOp: 'gte', goalValue: 25000 })
+       include('../partials/ui-heatmap-cell', { value: p.value, goalOp: k.goalOperator, goalValue: k.goalValue }) */
+  var _hc_rawVal  = (typeof value !== 'undefined') ? value : null;
+  var _hc_op      = (typeof goalOp !== 'undefined' && goalOp !== null) ? String(goalOp) : '';
+  var _hc_goalRaw = (typeof goalValue !== 'undefined') ? goalValue : null;
+
+  // Normalize symbol operators to the gte/lte/... names ui code uses elsewhere.
+  var _hc_opMap = { '>=': 'gte', '<=': 'lte', '>': 'gt', '<': 'lt', '=': 'eq', '≥': 'gte', '≤': 'lte' };
+  if (_hc_opMap[_hc_op]) _hc_op = _hc_opMap[_hc_op];
+
+  function _hc_meets(v, op, t) {
+    if (v === null || v === undefined || v === '' || isNaN(Number(v))) return null;
+    if (!op || t === null || t === undefined || t === '' || isNaN(Number(t))) return null;
+    var nv = Number(v), nt = Number(t);
+    switch (op) {
+      case 'gte': return nv >= nt;
+      case 'lte': return nv <= nt;
+      case 'gt':  return nv > nt;
+      case 'lt':  return nv < nt;
+      case 'eq':  return nv === nt;
+    }
+    return null;
+  }
+  var _hc_m = _hc_meets(_hc_rawVal, _hc_op, _hc_goalRaw);
+  var _hc_state = _hc_m === true ? 'good' : (_hc_m === false ? 'bad' : 'neutral');
+  var _hc_display = (_hc_rawVal === null || _hc_rawVal === undefined) ? '' : _hc_rawVal;
+%>
+<%- include('./ui-stat-cell', { value: _hc_display, state: _hc_state }) %>

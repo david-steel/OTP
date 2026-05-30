@@ -1,0 +1,37 @@
+<%
+  /* Semantic status pill. The ONE place green/amber/red is mapped to meaning.
+     Pages pass a semantic status; this maps it to a color role and delegates the
+     actual chip rendering to ui-pill.ejs so the pill styling stays single-sourced
+     (do NOT redefine pill classes here -- extend ui-pill instead).
+
+     Color language (matches ui-pill / ui-stat-cell):
+       green  = on-track, done
+       red    = off-track, not-done
+       amber  = at-risk, stale
+
+     Params (all via include locals):
+       status - one of: on-track | off-track | done | not-done | at-risk | stale
+                (hyphen or camel both accepted; unknown -> amber 'watch')
+       label  - OPTIONAL override text (else a sensible default per status)
+
+     Usage (close-tag intentionally not shown literally -- a stray EJS close-tag
+     closes the scriptlet early and has 500'd dashboards before):
+       include('../partials/ui-status-pill', { status: 'on-track' })
+       include('../partials/ui-status-pill', { status: 'stale', label: 'No data 9d' })
+
+     ui-pill known keys: ontrack, done, offtrack, notdone, watch. at-risk and stale
+     both map to the amber 'watch' role, with their own default label. */
+  var _sp_in = (typeof status !== 'undefined' && status) ? String(status).toLowerCase().replace(/[\s_]+/g, '-') : '';
+  // semantic status -> { pill: ui-pill key, text: default label }
+  var _sp_map = {
+    'on-track':  { pill: 'ontrack',  text: 'On-Track'  },
+    'done':      { pill: 'done',     text: 'Done'      },
+    'off-track': { pill: 'offtrack', text: 'Off-Track' },
+    'not-done':  { pill: 'notdone',  text: 'Not Done'  },
+    'at-risk':   { pill: 'watch',    text: 'At Risk'   },
+    'stale':     { pill: 'watch',    text: 'Stale'     }
+  };
+  var _sp = _sp_map[_sp_in] || { pill: 'watch', text: 'Watch' };
+  var _sp_label = (typeof label !== 'undefined' && label) ? label : _sp.text;
+%>
+<%- include('./ui-pill', { status: _sp.pill, label: _sp_label }) %>
