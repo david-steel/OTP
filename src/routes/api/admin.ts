@@ -70,6 +70,17 @@ export default async function adminRoutes(app: FastifyInstance) {
       `);
       return { reopened: r.rows || [] };
     }
+    // One-shot soft-delete: ?action=softdelete&id=<uuid>. Removes a stray
+    // recurrence row (the prematurely-spawned June-11 Bogdan 1:1). Removed with
+    // this endpoint.
+    if (action === 'softdelete' && targetId) {
+      const r = await db.execute(sql`
+        UPDATE meetings SET deleted_at = now(), updated_at = now()
+        WHERE id = ${targetId} AND deleted_at IS NULL
+        RETURNING id, title, scheduled_at, deleted_at
+      `);
+      return { softDeleted: r.rows || [] };
+    }
     const q = (request.query.q || '').slice(0, 80);
     const result = await db.execute(sql`
       SELECT m.id, o.name AS org_name, m.title, m.status,

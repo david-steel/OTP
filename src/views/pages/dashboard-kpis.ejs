@@ -41,6 +41,11 @@
   .sb-spark .dot.met { fill: #10b981; }
   .sb-spark .dot.missed { fill: #ef4444; }
   .sb-spark-summary { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .kpi-owner-seg { display:inline-flex; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
+  .kpi-owner-btn { font-size:12px; font-weight:600; padding:3px 11px; background:#fff; color:#6b7280; border:none; border-left:1px solid #e5e7eb; cursor:pointer; line-height:1.4; }
+  .kpi-owner-btn:first-child { border-left:none; }
+  .kpi-owner-btn.active { background:#2563eb; color:#fff; }
+  .kpi-owner-btn:not(.active):hover { background:#f3f4f6; }
 </style>
 <%- include('../partials/orgy-palette'); %>
 
@@ -94,14 +99,18 @@
       <span class="sb-filter" title="Phase later: filter by team">Team: All</span>
       <span class="sb-filter">View by: <%= grainLabels[grain] %></span>
       <span class="sb-filter">Date Range: <%= rangeLabels[grain] %></span>
-      <span class="sb-filter" title="Phase later: group filter">Group: All</span>
+      <span class="kpi-owner-seg" role="group" aria-label="Filter KPIs by owner type">
+        <button type="button" class="kpi-owner-btn active" data-mode="all">All</button>
+        <button type="button" class="kpi-owner-btn" data-mode="human">Human</button>
+        <button type="button" class="kpi-owner-btn" data-mode="agent">Agent</button>
+      </span>
     </div>
 
     <!-- Shared KPIs: one metric assigned to several people, goals + actuals summed. -->
     <% var rollups = (typeof sharedRollups !== 'undefined' && sharedRollups) ? sharedRollups : []; %>
     <% var SB_OP = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }; %>
     <% if (rollups.length > 0) { %>
-      <div class="sb-shell" style="margin-bottom: 1.25rem;">
+      <div class="sb-shell" data-shell-kind="shared" style="margin-bottom: 1.25rem;">
         <div class="sb-group-header">
           <div class="sb-group-title">Shared KPIs <span class="sb-group-count"><%= rollups.length %></span></div>
         </div>
@@ -228,7 +237,7 @@
                     const kpiTeam = (orgTeams || []).find(function(t) { return t.id === k.teamId; });
                     const isKpiAdmin = ['owner','admin','manager','visionary','integrator'].indexOf(viewerRole || '') >= 0;
                   %>
-                  <tr data-kpi-id="<%= k.id %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>">
+                  <tr data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>">
                     <td>
                       <div class="sb-title"><%= k.title %><% if (k.formula) { %><span class="sb-fx-pill">fx</span><% } %></div>
                       <% if (k.description) { %><div class="sb-meta"><%= k.description.length > 70 ? k.description.slice(0, 70) + '...' : k.description %></div><% } %>
@@ -534,5 +543,39 @@
         });
       });
     });
+
+    // KPI owner-type filter: All / Human / Agent. Client-side show/hide on the
+    // already-rendered rows; collapses emptied groups + updates counts;
+    // persists the choice per browser.
+    (function(){
+      function applyOwnerFilter(mode){
+        document.querySelectorAll('tr[data-owner-type]').forEach(function(tr){
+          tr.style.display = (mode === 'all' || tr.getAttribute('data-owner-type') === mode) ? '' : 'none';
+        });
+        document.querySelectorAll('.sb-shell').forEach(function(shell){
+          if (shell.getAttribute('data-shell-kind') === 'shared'){
+            shell.style.display = (mode === 'agent') ? 'none' : '';
+            return;
+          }
+          var rows = shell.querySelectorAll('tr[data-owner-type]');
+          if (rows.length === 0) return;
+          var visible = 0;
+          rows.forEach(function(r){ if (r.style.display !== 'none') visible++; });
+          shell.style.display = visible ? '' : 'none';
+          var badge = shell.querySelector('.sb-group-count');
+          if (badge) badge.textContent = visible;
+        });
+        document.querySelectorAll('.kpi-owner-btn').forEach(function(b){
+          b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+        });
+        try { localStorage.setItem('otp-kpi-owner-filter', mode); } catch(e){}
+      }
+      document.querySelectorAll('.kpi-owner-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){ applyOwnerFilter(btn.getAttribute('data-mode')); });
+      });
+      var saved = 'all';
+      try { saved = localStorage.getItem('otp-kpi-owner-filter') || 'all'; } catch(e){}
+      if (saved !== 'all') applyOwnerFilter(saved);
+    })();
   });
 </script>

@@ -75,6 +75,11 @@
   #daily-dashboard .otp-dic { flex: none; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
   #daily-dashboard .otp-dic svg { width: 18px; height: 18px; }
   #daily-dashboard .otp-dic-img { flex: none; width: 38px; height: 38px; object-fit: contain; border-radius: 8px; }
+  #daily-dashboard .dk-own-seg { display:inline-flex; border:1px solid #e5e7eb; border-radius:7px; overflow:hidden; }
+  #daily-dashboard .dk-own-btn { font-size:11px; font-weight:600; padding:2px 9px; background:#fff; color:#6b7280; border:none; border-left:1px solid #e5e7eb; cursor:pointer; line-height:1.5; }
+  #daily-dashboard .dk-own-btn:first-child { border-left:none; }
+  #daily-dashboard .dk-own-btn.active { background:#2563eb; color:#fff; }
+  #daily-dashboard .dk-own-btn:not(.active):hover { background:#f3f4f6; }
 </style>
 <div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
@@ -516,7 +521,7 @@
       </details>
 
       <!-- My KPIs -->
-      <section class="rounded-lg border border-gray-200 bg-white p-5">
+      <section id="daily-my-kpis" class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/kpis.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My KPIs</h2>
           <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
@@ -524,6 +529,14 @@
         <% if (myKpis.length === 0) { %>
           <p class="text-xs text-gray-500">No KPIs assigned to you yet.</p>
         <% } else { %>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Show</span>
+            <span class="dk-own-seg" role="group" aria-label="Filter KPIs by owner type">
+              <button type="button" class="dk-own-btn active" data-mode="all">All</button>
+              <button type="button" class="dk-own-btn" data-mode="human">Human</button>
+              <button type="button" class="dk-own-btn" data-mode="agent">Agent</button>
+            </span>
+          </div>
           <table class="w-full text-sm">
             <thead>
               <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 border-b border-gray-200">
@@ -538,7 +551,7 @@
                    var latest = kpiValues[k.id];
                    var goalSym = { gte: '>=', lte: '<=', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
               %>
-                <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>">
+                <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>">
                   <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
                   <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
                   <td class="py-2 pr-3 text-gray-700" data-kpi-latest><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
@@ -552,8 +565,38 @@
               <% }); %>
             </tbody>
           </table>
+          <p class="dk-own-empty text-xs text-gray-500 mt-2" style="display:none">No KPIs for this owner type.</p>
         <% } %>
       </section>
+      <script>
+        // My KPIs owner-type filter (All / Human / Agent). Shares the
+        // 'otp-kpi-owner-filter' localStorage key with the full Scoreboard so the
+        // choice carries across both surfaces. Client-side row show/hide only.
+        (function(){
+          var sec = document.getElementById('daily-my-kpis');
+          if (!sec) return;
+          function apply(mode){
+            var vis = 0;
+            sec.querySelectorAll('tr[data-owner-type]').forEach(function(tr){
+              var show = (mode === 'all' || tr.getAttribute('data-owner-type') === mode);
+              tr.style.display = show ? '' : 'none';
+              if (show) vis++;
+            });
+            var empty = sec.querySelector('.dk-own-empty');
+            if (empty) empty.style.display = vis ? 'none' : '';
+            sec.querySelectorAll('.dk-own-btn').forEach(function(b){
+              b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+            });
+            try { localStorage.setItem('otp-kpi-owner-filter', mode); } catch(e){}
+          }
+          sec.querySelectorAll('.dk-own-btn').forEach(function(b){
+            b.addEventListener('click', function(){ apply(b.getAttribute('data-mode')); });
+          });
+          var saved = 'all';
+          try { saved = localStorage.getItem('otp-kpi-owner-filter') || 'all'; } catch(e){}
+          if (saved !== 'all') apply(saved);
+        })();
+      </script>
 
     </div><!-- /left -->
 
