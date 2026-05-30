@@ -112,8 +112,12 @@ export async function ensureNextOccurrence(meeting: MeetingRow): Promise<Meeting
     ));
   if (rows.length === 0) return null;
 
-  // A future occurrence already exists -> nothing to roll.
-  if (rows.some(r => new Date(r.scheduledAt) >= now)) return null;
+  // A future occurrence already exists -> nothing to roll. A *completed* row
+  // does not count as "upcoming" even if its scheduledAt is in the future:
+  // ending a future-dated instance early must still roll the next one, or the
+  // series looks finished with nothing on the calendar. (Bug: completing the
+  // June-4 Bogdan 1:1 on May 29 left the series with no upcoming meeting.)
+  if (rows.some(r => r.status !== 'completed' && new Date(r.scheduledAt) >= now)) return null;
 
   const latest = rows.reduce((a, b) => (new Date(a.scheduledAt) >= new Date(b.scheduledAt) ? a : b));
   const next = nextOccurrenceDate(meeting.recurrenceRule, new Date(latest.scheduledAt), now);

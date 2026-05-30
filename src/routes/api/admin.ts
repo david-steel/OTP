@@ -57,6 +57,19 @@ export default async function adminRoutes(app: FastifyInstance) {
     if (!requireAdminOrKey(request)) {
       return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
     }
+    // One-shot reopen: ?action=reopen&id=<uuid> flips a single completed
+    // meeting back to scheduled (clears ended_at). Used to undo the accidental
+    // completion of the future-dated Bogdan 1:1. Removed with this endpoint.
+    const action = (request.query as { action?: string }).action;
+    const targetId = (request.query as { id?: string }).id;
+    if (action === 'reopen' && targetId) {
+      const r = await db.execute(sql`
+        UPDATE meetings SET status = 'scheduled', ended_at = NULL, updated_at = now()
+        WHERE id = ${targetId} AND status = 'completed'
+        RETURNING id, title, status, scheduled_at, ended_at
+      `);
+      return { reopened: r.rows || [] };
+    }
     const q = (request.query.q || '').slice(0, 80);
     const result = await db.execute(sql`
       SELECT m.id, o.name AS org_name, m.title, m.status,
