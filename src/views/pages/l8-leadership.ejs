@@ -324,6 +324,7 @@
     <button id="timer-toggle" class="ml-1 px-2 py-1 bg-orgy-blue text-white rounded text-xs hover:bg-orgy-blue-deep">Start</button>
     <button id="timer-prev"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Previous section  (  [  )">← Prev</button>
     <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Next section  (  ]  )  ·  space toggles the timer">Next →</button>
+    <button id="focus-toggle" class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Focus mode: show only the active section  (  F  )">Focus</button>
   </nav>
 
   <!-- 1. Segue / Check-in -- one card per attendee, saves with name + time -->
@@ -1342,7 +1343,12 @@
   function jumpTo(idx) {
     timerState.sectionIdx = Math.max(0, Math.min(chips.length - 1, idx));
     timerState.elapsed = 0;
-    chips[timerState.sectionIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    applyFocus();
+    if (focusMode) {
+      document.getElementById('agenda-nav')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      chips[timerState.sectionIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     render();
   }
   toggleBtn?.addEventListener('click', () => { timerState.running ? pauseTimer() : startTimer(); });
@@ -1350,6 +1356,32 @@
   const prevBtn = document.getElementById('timer-prev');
   prevBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx - 1); });
   chips.forEach((c, i) => c.addEventListener('click', () => { jumpTo(i); if (!timerState.running) startTimer(); }));
+
+  // Focus mode: EOS-style single-section view. Shows only the active agenda
+  // section in the main pane; the rest hide. Rides the same sectionIdx the
+  // timer already tracks, so Prev/Next and the chips drive it for free.
+  // Persisted per browser.
+  const FOCUS_KEY = 'otp-l8-focus';
+  const sections = chips.map(c => document.getElementById(c.dataset.section));
+  let focusMode = false;
+  try { focusMode = localStorage.getItem(FOCUS_KEY) === '1'; } catch (e) { /* no storage */ }
+  const focusBtn = document.getElementById('focus-toggle');
+  function applyFocus() {
+    sections.forEach((s, i) => { if (s) s.style.display = (focusMode && i !== timerState.sectionIdx) ? 'none' : ''; });
+    if (focusBtn) {
+      focusBtn.textContent = focusMode ? 'Focus: on' : 'Focus';
+      focusBtn.classList.toggle('bg-orgy-blue', focusMode);
+      focusBtn.classList.toggle('text-white', focusMode);
+      focusBtn.classList.toggle('bg-gray-200', !focusMode);
+    }
+  }
+  function setFocus(on) {
+    focusMode = on;
+    try { localStorage.setItem(FOCUS_KEY, on ? '1' : '0'); } catch (e) { /* no storage */ }
+    applyFocus();
+  }
+  focusBtn?.addEventListener('click', () => setFocus(!focusMode));
+  applyFocus();
 
   // Keyboard flow: space = pause/resume the timer, [ / ] = prev / next section.
   // Ignored while typing in a field so it never eats meeting notes.
@@ -1363,6 +1395,8 @@
       jumpTo(timerState.sectionIdx + 1);
     } else if (e.key === '[') {
       jumpTo(timerState.sectionIdx - 1);
+    } else if (e.key === 'f' || e.key === 'F') {
+      setFocus(!focusMode);
     }
   });
   // Resume ticking if a running timer was restored from a prior page load.
