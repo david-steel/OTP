@@ -49,52 +49,6 @@ export default async function adminRoutes(app: FastifyInstance) {
   });
 
   // ============================================================
-  // GET /api/v1/admin/meeting-debug?key=...&q=Bogdan -- TEMP diagnostic.
-  // Read-only. Returns recurrence/status fields for meetings whose title
-  // matches q, so we can inspect a recurring-series state. Remove after use.
-  // ============================================================
-  app.get<{ Querystring: { key?: string; q?: string } }>('/admin/meeting-debug', async (request, reply) => {
-    if (!requireAdminOrKey(request)) {
-      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
-    }
-    // One-shot reopen: ?action=reopen&id=<uuid> flips a single completed
-    // meeting back to scheduled (clears ended_at). Used to undo the accidental
-    // completion of the future-dated Bogdan 1:1. Removed with this endpoint.
-    const action = (request.query as { action?: string }).action;
-    const targetId = (request.query as { id?: string }).id;
-    if (action === 'reopen' && targetId) {
-      const r = await db.execute(sql`
-        UPDATE meetings SET status = 'scheduled', ended_at = NULL, updated_at = now()
-        WHERE id = ${targetId} AND status = 'completed'
-        RETURNING id, title, status, scheduled_at, ended_at
-      `);
-      return { reopened: r.rows || [] };
-    }
-    // One-shot soft-delete: ?action=softdelete&id=<uuid>. Removes a stray
-    // recurrence row (the prematurely-spawned June-11 Bogdan 1:1). Removed with
-    // this endpoint.
-    if (action === 'softdelete' && targetId) {
-      const r = await db.execute(sql`
-        UPDATE meetings SET deleted_at = now(), updated_at = now()
-        WHERE id = ${targetId} AND deleted_at IS NULL
-        RETURNING id, title, scheduled_at, deleted_at
-      `);
-      return { softDeleted: r.rows || [] };
-    }
-    const q = (request.query.q || '').slice(0, 80);
-    const result = await db.execute(sql`
-      SELECT m.id, o.name AS org_name, m.title, m.status,
-             m.scheduled_at, m.ended_at, m.recurrence_rule, m.recurrence_parent_id,
-             m.deleted_at, m.created_at, m.created_by
-      FROM meetings m JOIN organizations o ON m.organization_id = o.id
-      WHERE m.title ILIKE ${'%' + q + '%'}
-      ORDER BY m.recurrence_parent_id NULLS FIRST, m.scheduled_at
-      LIMIT 100
-    `);
-    return { count: (result.rows || []).length, rows: result.rows || [] };
-  });
-
-  // ============================================================
   // DELETE /api/v1/admin/oos/:id -- Admin delete (no ownership check)
   // ============================================================
   app.delete<{ Params: { id: string } }>('/admin/oos/:id', async (request, reply) => {
