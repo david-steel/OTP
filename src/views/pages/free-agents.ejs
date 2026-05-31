@@ -24,6 +24,28 @@
   .accent { color:var(--blue,#0d7df2); }
   .reg { font-size:.58em; vertical-align:super; line-height:0; font-weight:inherit; margin-left:1px; }
 
+  /* two-column hero (text left, Agent Army group shot right) — mirrors home/vs */
+  .fa-hgrid { display:flex; gap:40px; align-items:center; flex-wrap:wrap; }
+  .fa-hcopy { flex:1 1 430px; min-width:320px; text-align:left; }
+  .fa-hcopy .fa-h1 { margin:0; max-width:16ch; }
+  .fa-hcopy .fa-lead { margin-left:0; margin-right:0; max-width:34rem; }
+  .fa-hart { flex:1 1 420px; min-width:300px; display:flex; justify-content:center; }
+  .fa-hart img { width:100%; max-width:520px; height:auto; display:block; filter:drop-shadow(0 26px 44px rgba(20,22,28,.20)); }
+  .fa-cta-row { display:flex; gap:12px; flex-wrap:nowrap; margin-top:32px; }
+  .fa-cta-row a { white-space:nowrap; }
+  @media (max-width:860px){
+    .fa-hcopy { flex-basis:100%; text-align:center; }
+    .fa-hcopy .fa-h1 { margin-left:auto; margin-right:auto; }
+    .fa-hcopy .fa-lead { margin-left:auto; margin-right:auto; }
+    .fa-cta-row { justify-content:center; }
+    .fa-hart { flex-basis:100%; }
+    .fa-hart img { max-width:400px; }
+  }
+  @media (max-width:520px){
+    .fa-cta-row { flex-wrap:wrap; }
+    .fa-cta-row a { flex:1 1 100%; text-align:center; }
+  }
+
   /* steps band */
   .fa-steps { display:grid; gap:14px; margin-top:36px; grid-template-columns:1fr; }
   @media (min-width:760px){ .fa-steps { grid-template-columns:repeat(3,1fr); } }
@@ -62,15 +84,22 @@
 
 <!-- ================= HERO ================= -->
 <section class="fa-paper">
-  <div class="fa-wrap fa-hero fa-center">
-    <div class="fa-eyebrow fa-mb4" style="justify-content:center;"><span class="fa-tick"></span>Free OTP agents</div>
-    <h1 class="fa-h1">Hire your first AI employees. <span class="accent">Free.</span></h1>
-    <p class="fa-lead fa-mt5 fa-max42" style="margin-left:auto;margin-right:auto;">
-      Five agents, built and battle-tested running our own company. Download one, drop it into Claude Code, and it sets itself up <em>with you</em> &mdash; one question at a time &mdash; then takes a seat in your OTP chart.
-    </p>
-    <div class="fa-mt8" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
-      <a href="#agents" class="btn-primary px-8 py-4 text-[16px]">Browse the agents &darr;</a>
-      <a href="/otp-vs-ninety-eos-one" class="btn-ghost px-8 py-4 text-[16px]">See OTP vs Ninety &amp; EOS One</a>
+  <div class="fa-wrap fa-hero">
+    <div class="fa-hgrid">
+      <div class="fa-hcopy">
+        <div class="fa-eyebrow fa-mb4"><span class="fa-tick"></span>Free OTP agents</div>
+        <h1 class="fa-h1">Hire your first AI employees. <span class="accent">Free.</span></h1>
+        <p class="fa-lead fa-mt5">
+          Five agents, built and battle-tested running our own company. Download one, drop it into Claude Code, and it sets itself up <em>with you</em> &mdash; one question at a time &mdash; then takes a seat in your OTP chart.
+        </p>
+        <div class="fa-cta-row">
+          <a href="#agents" class="btn-primary px-8 py-4 text-[16px]">Browse the agents &darr;</a>
+          <a href="/otp-vs-ninety-eos-one" class="btn-ghost px-8 py-4 text-[16px]">See OTP vs Ninety &amp; EOS One</a>
+        </div>
+      </div>
+      <div class="fa-hart reveal">
+        <img class="fa-float" src="/public/images/vs/agent-army.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP agent army — five AI agent mascots standing with their human teammate, each holding the tools of their role">
+      </div>
     </div>
 
     <!-- the steps -->
