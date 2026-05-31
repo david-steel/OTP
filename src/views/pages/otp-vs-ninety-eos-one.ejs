@@ -1,0 +1,189 @@
+<%# /otp-vs-ninety-eos-one -- v7 (light, editorial). Bottom-funnel comparison
+    page. Rule: do NOT out-checkbox the incumbents on Stage-1 EOS features (we
+    lose that). Concede two rows honestly, then dominate every row about agents
+    + the pricing flip (humans free / agents paid), where they are structurally
+    N/A. Single primary CTA -> /sign-up. Tone: confident, not insulting; the
+    table does the hitting. %>
+<style>
+  .cmp-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .cmp { width:100%; border-collapse:separate; border-spacing:0; min-width:640px; font-size:15px; }
+  .cmp th, .cmp td { padding:14px 16px; text-align:center; border-bottom:1px solid var(--line,#e6e8ec); vertical-align:middle; }
+  .cmp th { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:14px; }
+  .cmp td:first-child, .cmp th:first-child { text-align:left; color:var(--ink-soft,#494d57); font-weight:600; }
+  .cmp .col-otp { background:rgba(255,122,26,0.06); border-left:2px solid var(--orange,#ff7a1a); border-right:2px solid var(--orange,#ff7a1a); }
+  .cmp thead .col-otp { border-top:2px solid var(--orange,#ff7a1a); border-top-left-radius:12px; border-top-right-radius:12px; color:var(--orange-deep,#d65a00); }
+  .cmp tr:last-child .col-otp { border-bottom:2px solid var(--orange,#ff7a1a); }
+  .cmp .yes { color:var(--orange-deep,#d65a00); font-weight:800; }
+  .cmp .no  { color:#c2c6cd; font-weight:700; }
+  .cmp .price { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; color:var(--ink,#14161c); }
+  .cmp .free { color:var(--orange-deep,#d65a00); font-weight:800; }
+  .cmp .muted { color:var(--ink-mute,#888c96); font-size:13px; }
+  .cmp-note { font-size:13px; color:var(--ink-mute,#888c96); margin-top:14px; line-height:1.6; }
+  .stack { display:grid; gap:0; }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[120px] pb-12 sm:pt-[140px] sm:pb-16 text-center">
+    <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center">
+      <span class="tick" style="background:var(--orange);"></span>OTP vs Ninety vs EOS One
+    </div>
+    <h1 class="font-display text-[var(--ink)] mx-auto max-w-[20ch]"
+        style="font-size:clamp(2.2rem,4.6vw,3.7rem); line-height:1.05; font-weight:700; letter-spacing:-0.025em;">
+      Ninety and EOS One run your EOS. <span class="text-[var(--orange-deep)]">OTP lets you hire agents into it.</span>
+    </h1>
+    <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[40rem] mx-auto mt-5">
+      They're good EOS&reg; software &mdash; they digitize the system you already run. OTP runs the same system, and lets AI agents take real seats next to your people, with real numbers to hit and real work to do. Your whole team is free. You only pay for the agents.
+    </p>
+    <div class="flex flex-wrap gap-3 justify-center mt-8">
+      <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
+      <a href="#pricing" class="btn-ghost px-8 py-4 text-[16px]">See the difference</a>
+    </div>
+    <p class="eyebrow mt-7 justify-center flex gap-2 flex-wrap">
+      <span>Whole team free</span><span style="color:var(--ink-mute);">&middot;</span>
+      <span style="color:var(--orange-deep);">Agents do the work</span><span style="color:var(--ink-mute);">&middot;</span>
+      <span style="color:var(--blue-deep);">Built on the EOS you run</span>
+    </p>
+  </div>
+</section>
+
+<!-- ================= THE PRICING WEAPON ================= -->
+<section id="pricing" class="bg-[var(--grey)]">
+  <div class="max-w-[920px] mx-auto px-6 py-18 sm:py-24">
+    <div class="max-w-[640px] mb-10">
+      <div class="eyebrow mb-4">The difference, in two seconds</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]" style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        Everyone gives the first user away. Only OTP gives your whole team away.
+      </h2>
+    </div>
+    <div class="cmp-wrap rounded-[14px] bg-[var(--white)]" style="box-shadow:0 1px 0 rgba(20,22,28,.04), 0 18px 40px rgba(20,22,28,.06);">
+      <table class="cmp">
+        <thead>
+          <tr><th></th><th>Ninety</th><th>EOS One</th><th class="col-otp">OTP</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>First user</td><td>Free</td><td>Free</td><td class="col-otp free">Free</td></tr>
+          <tr><td>Every other user</td><td class="price">$11<span class="muted">/mo each</span></td><td class="price">$10<span class="muted">/mo each</span></td><td class="col-otp free">Free</td></tr>
+          <tr><td>AI agents that do the work</td><td class="muted">Not available</td><td class="muted">Not available</td><td class="col-otp price">$11<span class="muted">/mo per agent*</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note max-w-[640px]">
+      You used to pay $11 for one more human seat. On OTP your people are free, and $11 buys an agent that works around the clock and never forgets a thing. <span class="muted">*Founding price. Per active agent seat. Humans always free.</span>
+    </p>
+  </div>
+</section>
+
+<!-- ================= WHAT NONE OF THEM CAN DO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[920px] mx-auto px-6 py-18 sm:py-24">
+    <div class="max-w-[640px] mb-10">
+      <div class="eyebrow mb-4">Where the comparison ends</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]" style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        They added an AI assistant. OTP gives you AI employees.
+      </h2>
+      <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5">
+        EOS One has Atlas. Ninety has a Rock companion. They answer questions about your business. OTP's agents <em>are</em> the business &mdash; they take a seat, own a number, and do the work between meetings. Here's where the two paths split.
+      </p>
+    </div>
+    <div class="cmp-wrap rounded-[14px] bg-[var(--white)]" style="box-shadow:0 1px 0 rgba(20,22,28,.04), 0 18px 40px rgba(20,22,28,.06);">
+      <table class="cmp">
+        <thead>
+          <tr><th></th><th>Ninety</th><th>EOS One</th><th class="col-otp">OTP</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Full EOS toolset (chart, scorecard, priorities, weekly meeting)</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>The <em>official</em> EOS product</td><td class="no">&mdash;</td><td class="yes">&#10003;</td><td class="col-otp no">&mdash;</td></tr>
+          <tr><td>AI in the product</td><td class="muted">Assistant</td><td class="muted">Assistant (Atlas)</td><td class="col-otp" style="color:var(--orange-deep);font-weight:800;">Employees</td></tr>
+          <tr><td>An AI agent can hold a seat on your chart</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Agents carry their own KPIs on the scorecard</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Agents do work <em>between</em> meetings</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>An agent that runs your weekly meeting</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003; <span class="muted">Dan</span></td></tr>
+          <tr><td>Your whole team, free</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Your company learns from every other company on it</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>A working agent the day you sign up</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003; <span class="muted">Dan</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note max-w-[640px]">Yes &mdash; they're real, polished, established EOS software, and EOS One is the official one. We'll give them that. Everything below those two rows, their data model can't do: it assumes every seat is a human, and they charge you per human.</p>
+  </div>
+</section>
+
+<!-- ================= MEET DAN ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1000px] mx-auto px-6 py-18 sm:py-24">
+    <div class="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+      <div class="relative shrink-0" style="width:230px; max-width:55vw;">
+        <img src="/public/images/orgy/coach.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Dan, the OTP EOS-facilitator agent" class="block w-full" style="filter:drop-shadow(0 20px 32px rgba(20,22,28,.18));">
+      </div>
+      <div class="flex-1 text-center md:text-left">
+        <div class="eyebrow mb-4">Meet your first agent</div>
+        <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]" style="font-size:clamp(1.7rem,3.2vw,2.4rem); font-weight:700;">
+          Atlas talks. Dan runs the meeting.
+        </h2>
+        <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-5 max-w-[40rem]">
+          You don't start with an empty chart. The day you sign up, you get Dan &mdash; an agent that takes the facilitator seat, holds you to your quarterly priorities, runs the issues list, and shows up to your weekly meeting with the work already prepped. Not a chatbot you ask questions. A teammate with a job. It's the version of "an AI in your leadership meeting" that's real today &mdash; and the seat is ready for the rest as the tech catches up.
+        </p>
+        <div class="mt-7"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Get Dan free &rarr;</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE 3 STAGES ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1000px] mx-auto px-6 py-18 sm:py-24">
+    <div class="max-w-[640px] mb-12">
+      <div class="eyebrow mb-4">Where this goes</div>
+      <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]" style="font-size:clamp(1.8rem,3.4vw,2.6rem); font-weight:700;">
+        You don't tear down what you built. You build on it.
+      </h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5">
+      <div class="rounded-[14px] bg-[var(--grey)] p-7">
+        <div class="font-display text-[var(--orange-deep)]" style="font-size:13px;font-weight:800;letter-spacing:.12em;">STAGE 1</div>
+        <h3 class="font-display text-[var(--ink)] mt-2" style="font-size:1.15rem;font-weight:700;">The company you have</h3>
+        <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] mt-2">You run on EOS. Right people, right seats, one scorecard, the weekly meeting. It works.</p>
+      </div>
+      <div class="rounded-[14px] bg-[var(--grey)] p-7">
+        <div class="font-display text-[var(--orange-deep)]" style="font-size:13px;font-weight:800;letter-spacing:.12em;">STAGE 2</div>
+        <h3 class="font-display text-[var(--ink)] mt-2" style="font-size:1.15rem;font-weight:700;">The company you want</h3>
+        <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] mt-2">Agents working alongside your team &mdash; same chart, same accountability. The company that runs while you sleep.</p>
+      </div>
+      <div class="rounded-[14px] bg-[var(--grey)] p-7">
+        <div class="font-display text-[var(--orange-deep)]" style="font-size:13px;font-weight:800;letter-spacing:.12em;">STAGE 3</div>
+        <h3 class="font-display text-[var(--ink)] mt-2" style="font-size:1.15rem;font-weight:700;">The company that compounds</h3>
+        <p class="text-[15px] text-[var(--ink-soft)] leading-[1.6] mt-2">Every company on OTP teaches every other one. Your operation doesn't just gain AI &mdash; it learns from everyone else's.</p>
+      </div>
+    </div>
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.65] mt-8 max-w-[640px]">OTP is the bridge between them, built on the EOS you already run. Same chart, same scorecard, same meeting &mdash; agents just take seats in it. You don't start over.</p>
+  </div>
+</section>
+
+<!-- ================= DOGFOOD PROOF ================= -->
+<section class="bg-[var(--ink)]" style="background:var(--ink,#14161c);">
+  <div class="max-w-[820px] mx-auto px-6 py-18 sm:py-24 text-center">
+    <div class="eyebrow mb-4 justify-center" style="color:var(--orange);">The proof</div>
+    <h2 class="font-display text-white tracking-[-0.02em] leading-[1.12]" style="font-size:clamp(1.7rem,3.2vw,2.4rem); font-weight:700;">
+      We run our own company on these exact agents.
+    </h2>
+    <p class="text-[17px] leading-[1.65] mt-5 max-w-[40rem] mx-auto" style="color:rgba(255,255,255,.74);">
+      OTP isn't a deck. The team you'd hire &mdash; Dan, Radar, Pepper and more &mdash; is the same team that runs the company that built OTP, live, on this platform. No incumbent can say that. They sell you software to manage your people. We hand you a workforce and show you ours, working.
+    </p>
+    <div class="mt-8"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a></div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[760px] mx-auto px-6 py-18 sm:py-24 text-center">
+    <h2 class="font-display text-[var(--ink)] tracking-[-0.02em] leading-[1.1]" style="font-size:clamp(1.9rem,3.6vw,2.7rem); font-weight:700;">
+      Keep your EOS. Add a workforce.
+    </h2>
+    <p class="text-[17px] text-[var(--ink-soft)] leading-[1.6] mt-5 max-w-[34rem] mx-auto">
+      Your whole team is free. Your first agent is free. You only pay when an agent earns its seat.
+    </p>
+    <div class="mt-8 flex justify-center"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a></div>
+    <p class="cmp-note mt-8">EOS&reg; and Level 10 Meeting&reg; are trademarks of EOS Worldwide. Ninety and EOS One are trademarks of their respective owners. OTP is independent and not affiliated with, or endorsed by, any of them.</p>
+  </div>
+</section>

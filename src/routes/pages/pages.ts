@@ -393,6 +393,25 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /otp-vs-ninety-eos-one -- bottom-funnel comparison page. Concede Stage-1
+  // EOS parity, win on agents-as-employees + humans-free/agents-paid pricing.
+  app.get('/otp-vs-ninety-eos-one', async (_request, reply) => {
+    return renderV7(reply, 'otp-vs-ninety-eos-one', {
+      title: 'OTP vs Ninety vs EOS One - Run the Same EOS, Plus a Workforce',
+      description: 'Ninety and EOS One are EOS software. OTP runs the same EOS and lets AI agents take real seats with real KPIs and real work. Your whole team is free; you only pay for agents. See the side-by-side.',
+      canonical: BASE_URL + '/otp-vs-ninety-eos-one',
+      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      breadcrumbs: bc({ name: 'OTP vs Ninety vs EOS One', url: BASE_URL + '/otp-vs-ninety-eos-one' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'OTP vs Ninety vs EOS One',
+        description: 'Side-by-side: OTP vs Ninety vs EOS One. Humans free, agents paid; agents take seats with KPIs and do the work.',
+        url: BASE_URL + '/otp-vs-ninety-eos-one',
+      },
+    });
+  });
+
   // Coach landing -- conversion page for coaches, consultants, advisors with clients
   app.get('/coach', async (request, reply) => {
     return renderV7(reply, 'coach', {
