@@ -2,7 +2,7 @@
     Bottom-funnel comparison. Concede Stage-1 EOS parity; win on agents-as-
     employees + the pricing flip. v7.css is PREBUILT: arbitrary Tailwind classes
     silently no-op, so ALL layout/color is scoped CSS + design tokens
-    (--orgy #a8e63a, --green #0a9d63, --green-deep #06724a, --blue #0d7df2).
+    (--orgy #a8e63a, on-light green #5a7d1f, --orgy-deep #8bc42a, --blue #0d7df2).
     Real product screenshots (chart/kpi/l10) prove the claims. Screenshot-verified. %>
 <style>
   /* layout (specific padding-* props so stacked classes compose, never clobber) */
@@ -25,7 +25,7 @@
   .vs-max640 { max-width:640px; } .vs-max40 { max-width:40rem; }
   .vs-mt5{margin-top:20px;} .vs-mt7{margin-top:28px;} .vs-mt8{margin-top:32px;} .vs-mb4{margin-bottom:16px;} .vs-mb10{margin-bottom:40px;} .vs-mb12{margin-bottom:48px;}
   .vs-cta-row { display:flex; flex-wrap:wrap; gap:12px; }
-  .accent { color:var(--green,#0a9d63); }
+  .accent { color:#5a7d1f; }
 
   /* framed product screenshots */
   .vs-shotwrap { max-width:980px; margin:36px auto 0; }
@@ -40,11 +40,11 @@
   .cmp th { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:14px; color:var(--ink,#14161c); }
   .cmp td:first-child, .cmp th:first-child { text-align:left; color:var(--ink-soft,#494d57); font-weight:600; }
   .cmp .col-otp { background:rgba(168,230,58,0.13); }
-  .cmp thead .col-otp { color:var(--green-deep,#06724a); box-shadow: inset 0 -3px 0 var(--orgy,#a8e63a); }
-  .cmp .yes { color:var(--green,#0a9d63); font-weight:800; }
+  .cmp thead .col-otp { color:#5a7d1f; box-shadow: inset 0 -3px 0 var(--orgy,#a8e63a); }
+  .cmp .yes { color:#5a7d1f; font-weight:800; }
   .cmp .no  { color:#c2c6cd; font-weight:700; }
   .cmp .price { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; color:var(--ink,#14161c); }
-  .cmp .free { color:var(--green,#0a9d63); font-weight:800; }
+  .cmp .free { color:#5a7d1f; font-weight:800; }
   .cmp .muted { color:var(--ink-mute,#888c96); font-size:13px; }
   .cmp tr:last-child td { border-bottom:none; }
   .cmp-note { font-size:13px; color:var(--ink-mute,#888c96); margin-top:14px; line-height:1.6; }
@@ -53,14 +53,22 @@
   .vs-stages { display:grid; gap:18px; }
   @media (min-width:768px){ .vs-stages { grid-template-columns:repeat(3,1fr); } }
   .vs-stage { border-radius:14px; background:var(--grey,#f0f1f3); padding:26px; }
-  .vs-stage-n { font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:12px; font-weight:800; letter-spacing:.12em; color:var(--green-deep,#06724a); }
+  .vs-stage-n { font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:12px; font-weight:800; letter-spacing:.12em; color:#5a7d1f; }
+
+  /* subtle motion (matches home page); disabled for reduced-motion + no-JS-safe via body.vs-anim */
+  @media (prefers-reduced-motion: no-preference){
+    body.vs-anim .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    body.vs-anim .reveal.in { opacity:1; transform:none; }
+    .vs-float { animation:vs-float 5.5s ease-in-out infinite; }
+    @keyframes vs-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  }
 </style>
 
 <!-- ================= HERO + CHART SHOT ================= -->
 <section class="vs-paper">
   <div class="vs-wrap vs-hero vs-center">
     <div class="vs-eyebrow vs-mb4" style="justify-content:center;"><span class="vs-tick"></span>OTP vs Ninety vs EOS One</div>
-    <h1 class="vs-h1">Ninety and EOS One run your EOS. <span class="accent">OTP lets you hire agents into it.</span></h1>
+    <h1 class="vs-h1">Ninety and EOS One run your EOS&reg;. <span class="accent">OTP lets you hire agents into it.</span></h1>
     <p class="vs-lead vs-mt5 vs-max40" style="margin-left:auto;margin-right:auto;">
       They're good EOS&reg; software &mdash; they digitize the system you already run. OTP runs the same system, and lets AI agents take real seats next to your people, with real numbers to hit and real work to do. Your whole team is free. You only pay for the agents.
     </p>
@@ -71,9 +79,9 @@
     <div class="vs-eyebrow vs-mt7" style="justify-content:center;flex-wrap:wrap;gap:8px;">
       <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
       <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
-      <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS you run</span>
+      <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS&reg; you run</span>
     </div>
-    <div class="vs-shotwrap">
+    <div class="vs-shotwrap reveal">
       <img class="vs-shot" src="/public/images/vs/chart.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP accountability chart with AI agents holding seats next to people, each with skills, integrations and SOPs">
       <p class="vs-shotcap">Your org chart on OTP. The green <strong>AGENT</strong> seats are real employees &mdash; skills, integrations, a job to do. Humans and agents, one chart.</p>
     </div>
@@ -87,7 +95,7 @@
       <div class="vs-eyebrow vs-mb4">The difference, in two seconds</div>
       <h2 class="vs-h2">Everyone gives the first user away. Only OTP gives your whole team away.</h2>
     </div>
-    <div class="cmp-card cmp-wrap" style="max-width:860px;">
+    <div class="cmp-card cmp-wrap reveal" style="max-width:860px;">
       <table class="cmp">
         <thead><tr><th></th><th>Ninety</th><th>EOS One</th><th class="col-otp">OTP</th></tr></thead>
         <tbody>
@@ -109,13 +117,13 @@
       <h2 class="vs-h2">They added an AI assistant. OTP gives you AI employees.</h2>
       <p class="vs-body vs-mt5">EOS One has Atlas. Ninety has a Rock companion. They answer questions about your business. OTP's agents <em>are</em> the business &mdash; they take a seat, own a number, and do the work between meetings. Here's where the two paths split.</p>
     </div>
-    <div class="cmp-card cmp-wrap">
+    <div class="cmp-card cmp-wrap reveal">
       <table class="cmp">
         <thead><tr><th></th><th>Ninety</th><th>EOS One</th><th class="col-otp">OTP</th></tr></thead>
         <tbody>
-          <tr><td>Full EOS toolset (chart, scorecard, priorities, weekly meeting)</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Full EOS&reg; toolset (chart, scorecard, priorities, weekly meeting)</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="col-otp yes">&#10003;</td></tr>
           <tr><td>The <em>official</em> EOS product</td><td class="no">&mdash;</td><td class="yes">&#10003;</td><td class="col-otp no">&mdash;</td></tr>
-          <tr><td>AI in the product</td><td class="muted">Assistant</td><td class="muted">Assistant (Atlas)</td><td class="col-otp" style="color:var(--green-deep,#06724a);font-weight:800;">Employees</td></tr>
+          <tr><td>AI in the product</td><td class="muted">Assistant</td><td class="muted">Assistant (Atlas)</td><td class="col-otp" style="color:#5a7d1f;font-weight:800;">Employees</td></tr>
           <tr><td>An AI agent can hold a seat on your chart</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
           <tr><td>Agents carry their own KPIs on the scorecard</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
           <tr><td>Agents do work <em>between</em> meetings</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
@@ -127,7 +135,7 @@
       </table>
     </div>
     <p class="cmp-note vs-max640">Yes &mdash; they're real, polished, established EOS software, and EOS One is the official one. We'll give them that. Everything below those two rows, their data model can't do: it assumes every seat is a human, and they charge you per human.</p>
-    <div class="vs-shotwrap">
+    <div class="vs-shotwrap reveal">
       <img class="vs-shot" src="/public/images/vs/kpi.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP scoreboard, with a Human / Agent filter, showing each seat's KPI and goal">
       <p class="vs-shotcap">One scoreboard for the whole company. Filter by <strong>Human</strong> or <strong>Agent</strong> &mdash; every seat owns a number, people and agents alike.</p>
     </div>
@@ -137,12 +145,12 @@
 <!-- ================= MEET DAN + L10 SHOT ================= -->
 <section class="vs-grey">
   <div class="vs-wrap vs-sec vs-center">
-    <img src="/public/images/orgy/coach.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Dan, the OTP EOS-facilitator agent" style="width:96px;height:auto;display:block;margin:0 auto 14px;filter:drop-shadow(0 14px 24px rgba(20,22,28,.16));">
+    <img src="/public/images/orgy/coach.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Dan, the OTP EOS-facilitator agent" class="vs-float" style="width:96px;height:auto;display:block;margin:0 auto 14px;filter:drop-shadow(0 14px 24px rgba(20,22,28,.16));">
     <div class="vs-eyebrow vs-mb4" style="justify-content:center;">Meet your first agent</div>
-    <h2 class="vs-h2">Atlas talks. Dan runs the meeting.</h2>
+    <h2 class="vs-h2">Atlas answers questions. Dan drives your weekly meeting.</h2>
     <p class="vs-body vs-mt5 vs-max40" style="margin-left:auto;margin-right:auto;">You don't start with an empty chart. The day you sign up, you get Dan &mdash; an agent that takes the facilitator seat, holds you to your quarterly priorities, runs the issues list, and shows up to your weekly meeting with the work already prepped. Not a chatbot you ask questions. A teammate with a job. It's the version of "an AI in your leadership meeting" that's real today &mdash; and the seat is ready for the rest as the tech catches up.</p>
     <div class="vs-mt7" style="display:flex;justify-content:center;"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Get Dan free &rarr;</a></div>
-    <div class="vs-shotwrap">
+    <div class="vs-shotwrap reveal">
       <img class="vs-shot" src="/public/images/vs/l10.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP weekly leadership meeting with a timed agenda, live scorecard and a focus mode">
       <p class="vs-shotcap">The weekly meeting Dan facilitates &mdash; timed agenda, live scorecard, focus mode. The meeting runs itself.</p>
     </div>
@@ -156,12 +164,12 @@
       <div class="vs-eyebrow vs-mb4">Where this goes</div>
       <h2 class="vs-h2">You don't tear down what you built. You build on it.</h2>
     </div>
-    <div class="vs-stages">
-      <div class="vs-stage"><div class="vs-stage-n">STAGE 1</div><h3 class="vs-h3">The company you have</h3><p class="vs-body" style="margin-top:8px;">You run on EOS. Right people, right seats, one scorecard, the weekly meeting. It works.</p></div>
+    <div class="vs-stages reveal">
+      <div class="vs-stage"><div class="vs-stage-n">STAGE 1</div><h3 class="vs-h3">The company you have</h3><p class="vs-body" style="margin-top:8px;">You run on EOS&reg;. Right people, right seats, one scorecard, the weekly meeting. It works.</p></div>
       <div class="vs-stage"><div class="vs-stage-n">STAGE 2</div><h3 class="vs-h3">The company you want</h3><p class="vs-body" style="margin-top:8px;">Agents working alongside your team &mdash; same chart, same accountability. The company that runs while you sleep.</p></div>
       <div class="vs-stage"><div class="vs-stage-n">STAGE 3</div><h3 class="vs-h3">The company that compounds</h3><p class="vs-body" style="margin-top:8px;">Every company on OTP teaches every other one. Your operation doesn't just gain AI &mdash; it learns from everyone else's.</p></div>
     </div>
-    <p class="vs-body vs-mt8 vs-max640">OTP is the bridge between them, built on the EOS you already run. Same chart, same scorecard, same meeting &mdash; agents just take seats in it. You don't start over.</p>
+    <p class="vs-body vs-mt8 vs-max640">OTP is the bridge between them, built on the EOS&reg; you already run. Same chart, same scorecard, same meeting &mdash; agents just take seats in it. You don't start over.</p>
   </div>
 </section>
 
@@ -178,9 +186,19 @@
 <!-- ================= FINAL CTA ================= -->
 <section class="vs-grey">
   <div class="vs-wrap vs-sec vs-center" style="max-width:760px;">
-    <h2 class="vs-h2">Keep your EOS. Add a workforce.</h2>
+    <h2 class="vs-h2">Keep your EOS&reg;. Add a workforce.</h2>
     <p class="vs-lead vs-mt5" style="max-width:34rem;margin-left:auto;margin-right:auto;">Your whole team is free. Your first agent is free. You only pay when an agent earns its seat.</p>
     <div class="vs-mt8" style="display:flex;justify-content:center;"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a></div>
     <p class="cmp-note vs-mt8">EOS&reg; and Level 10 Meeting&reg; are trademarks of EOS Worldwide. Ninety and EOS One are trademarks of their respective owners. OTP is independent and not affiliated with, or endorsed by, any of them.</p>
   </div>
 </section>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('vs-anim');
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px -8% 0px', threshold:0.05 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+</script>
