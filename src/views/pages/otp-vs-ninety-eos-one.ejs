@@ -6,15 +6,18 @@
     utilities. Screenshot-verified. %>
 <style>
   /* ---- layout scaffolding (prebuilt-CSS-proof: scoped, not Tailwind arbitraries) ---- */
-  .vs-sec   { padding: 80px 0; }
-  .vs-hero  { padding: 132px 0 56px; }   /* clears the 64px fixed nav with air */
-  .vs-wrap  { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  /* NOTE: use specific padding-* props, never the `padding` shorthand — vs-wrap
+     and vs-hero/vs-sec stack on the same element, and a shorthand on the
+     later-defined class clobbers the other's top padding (caused hero-under-nav). */
+  .vs-sec   { padding-top: 80px; padding-bottom: 80px; }
+  .vs-hero  { padding-top: 132px; padding-bottom: 56px; }   /* clears the 64px fixed nav with air */
+  .vs-wrap  { max-width: 1040px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
   .vs-narrow{ max-width: 760px; margin: 0 auto; }
   .vs-center{ text-align: center; }
   .vs-paper { background: var(--white, #fcfcfd); }
   .vs-grey  { background: var(--grey, #f0f1f3); }
   .vs-ink   { background: var(--ink, #14161c); }
-  @media (max-width: 640px) { .vs-sec { padding: 52px 0; } .vs-hero { padding: 100px 0 40px; } }
+  @media (max-width: 640px) { .vs-sec { padding-top: 52px; padding-bottom: 52px; } .vs-hero { padding-top: 100px; padding-bottom: 40px; } }
 
   .vs-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; gap:10px; }
   .vs-tick { width:8px; height:8px; border-radius:50%; background:var(--orange,#ff7a1a); display:inline-block; }
