@@ -85,10 +85,18 @@ const V7_CLERK_INSTANCE = V7_CLERK_PUB_KEY.startsWith('pk_')
   ? Buffer.from(V7_CLERK_PUB_KEY.split('_').slice(2).join('_'), 'base64').toString().replace(/\$$/, '')
   : '';
 
+// Per-deploy cache-buster for /public/* (served immutable/1yr). Commit SHA when
+// Railway provides it, else a per-boot token (new container per deploy => new
+// token). Computed ONCE at module load. Without this, every v7 page emitted
+// ?v=dev and assets froze forever under the immutable cache -- the recurring
+// "my image/CSS didn't update" bug. Mirrors _shared.ts and server.ts.
+const ASSET_VERSION = (process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || ('t' + Date.now().toString(36))).slice(0, 12);
+
 export async function renderV7(reply: any, page: string, data: Record<string, any> = {}) {
   const ctx = {
     clerkPubKey: V7_CLERK_PUB_KEY,
     clerkInstance: V7_CLERK_INSTANCE,
+    assetVersion: ASSET_VERSION,
     ...data,
   };
   const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, ctx);
