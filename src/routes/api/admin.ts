@@ -48,6 +48,27 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { oosFiles: result.rows || [] };
   });
 
+  // GET /api/v1/admin/conv-debug?key=... -- TEMP read-only: is the server-side
+  // Google Ads signup conversion enabled, configured, and firing? Remove after use.
+  app.get('/admin/conv-debug', async (request, reply) => {
+    if (!requireAdminOrKey(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Admin access required' } });
+    }
+    let counts: unknown[] = []; let recent: unknown[] = [];
+    try { counts = (await db.execute(sql`SELECT status, count(*) AS n FROM conversion_log GROUP BY status`)).rows || []; } catch (e) { counts = [{ error: (e as Error).message }]; }
+    try { recent = (await db.execute(sql`SELECT status, error_message, (gclid IS NOT NULL) AS has_gclid, created_at FROM conversion_log ORDER BY created_at DESC LIMIT 15`)).rows || []; } catch (e) { recent = [{ error: (e as Error).message }]; }
+    return {
+      env: {
+        enabled: process.env.ENABLE_GOOGLE_ADS_CONVERSIONS === 'true',
+        hasDevToken: !!process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+        hasOAuth: !!(process.env.GOOGLE_ADS_OAUTH_CLIENT_ID && process.env.GOOGLE_ADS_OAUTH_REFRESH_TOKEN),
+        customerId: process.env.GOOGLE_ADS_CUSTOMER_ID || null,
+        conversionActionId: process.env.GOOGLE_ADS_SIGNUP_CONVERSION_ACTION_ID || null,
+      },
+      counts, recent,
+    };
+  });
+
   // ============================================================
   // DELETE /api/v1/admin/oos/:id -- Admin delete (no ownership check)
   // ============================================================
