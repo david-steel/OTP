@@ -123,12 +123,14 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Homepage. Serves the v7 redesign (public/home-v7.html) as a standalone
   // static document -- compiled CSS, SEO meta + JSON-LD, and GA baked into the
   // file's head. No layout, no DB. /home-v7 and /public/home-v7.html match.
-  app.get('/', async (request, reply) => {
-    const { readFile } = await import('node:fs/promises');
-    const { fileURLToPath } = await import('node:url');
-    const p = fileURLToPath(new URL('../../../public/home-v7.html', import.meta.url));
-    const html = await readFile(p, 'utf8');
-    return reply.type('text/html').send(html);
+  app.get('/', async (_request, reply) => {
+    return renderV7(reply, 'home-v8', {
+      title: 'OTP - Run your company with people and AI agents',
+      description: 'OTP is the operating system for teams of people and AI agents. One chart, one scoreboard, one weekly meeting - built on the EOS you already run. Your whole team is free; you only pay for the agents.',
+      canonical: BASE_URL + '/',
+      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents.' },
+    });
   });
 
   // Browse

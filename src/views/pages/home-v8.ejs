@@ -1,0 +1,167 @@
+<%# / (homepage) -- v7 layout, ORGY branding. The front door: the cliff->bridge
+    wedge, the "AI as employees" differentiator, the 3 Steps (Run EOS free -> take
+    five agents free -> marketplace), dogfood proof, real signup CTA. v7.css is
+    PREBUILT, so ALL layout/color is scoped .hp-* CSS + design tokens, never
+    arbitrary Tailwind. Mirrors otp-vs-ninety-eos-one.ejs / free-agents.ejs. %>
+<style>
+  .hp-sec   { padding-top: 84px; padding-bottom: 84px; }
+  .hp-hero  { padding-top: 132px; padding-bottom: 56px; }   /* clears 64px fixed nav */
+  .hp-wrap  { max-width: 1040px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .hp-center{ text-align: center; }
+  .hp-paper { background: var(--white, #fcfcfd); }
+  .hp-grey  { background: var(--grey, #f0f1f3); }
+  .hp-blue  { background: var(--blue-block, #0d5fd6); }
+  @media (max-width: 640px){ .hp-sec { padding-top: 54px; padding-bottom: 54px; } .hp-hero { padding-top: 100px; padding-bottom: 40px; } }
+
+  .hp-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; gap:10px; }
+  .hp-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .hp-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.04; font-size:clamp(2.3rem,5vw,3.8rem); color:var(--ink,#14161c); margin:0 auto; max-width:18ch; }
+  .hp-h2 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.02em; line-height:1.1; font-size:clamp(1.8rem,3.4vw,2.6rem); color:var(--ink,#14161c); }
+  .hp-lead { font-size:18px; line-height:1.62; color:var(--ink-soft,#494d57); }
+  .hp-body { font-size:16px; line-height:1.65; color:var(--ink-soft,#494d57); }
+  .hp-max640{max-width:640px;} .hp-max44{max-width:44rem;}
+  .hp-mt5{margin-top:20px;} .hp-mt8{margin-top:32px;} .hp-mb4{margin-bottom:16px;} .hp-mb10{margin-bottom:40px;}
+  .accent { color:var(--blue,#0d7df2); }
+  .reg { font-size:.58em; vertical-align:super; line-height:0; font-weight:inherit; margin-left:1px; }
+  .hp-shotwrap { max-width:960px; margin:40px auto 0; }
+  .hp-shot { display:block; width:100%; height:auto; border-radius:14px; border:1px solid var(--line,#e6e8ec); box-shadow:0 24px 60px rgba(20,22,28,.16); }
+
+  /* agents row */
+  .hp-agents { display:grid; gap:14px; margin-top:36px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .hp-agent { border-radius:14px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); padding:16px 12px 18px; text-align:center; }
+  .hp-agent img { width:96px; height:96px; object-fit:contain; display:block; margin:0 auto 6px; }
+  .hp-agentname { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:15px; color:var(--ink,#14161c); }
+  .hp-agentrole { font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--blue,#0d7df2); margin-top:2px; }
+
+  /* steps */
+  .hp-steps { display:grid; gap:18px; margin-top:8px; grid-template-columns:1fr; }
+  @media (min-width:760px){ .hp-steps { grid-template-columns:repeat(3,1fr); } }
+  .hp-step { border-radius:16px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); box-shadow:0 10px 28px rgba(20,22,28,.05); padding:28px 24px; }
+  .hp-step.is-soon { background:var(--grey,#f0f1f3); box-shadow:none; }
+  .hp-hand { width:58px; height:58px; object-fit:contain; object-position:center bottom; display:block; margin-bottom:10px; }
+  .hp-steph { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.2rem; color:var(--ink,#14161c); }
+  .hp-steplink { display:inline-block; margin-top:12px; font-weight:700; font-size:14px; color:var(--blue,#0d7df2); text-decoration:none; }
+  .hp-soon { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
+  .hp-note { font-size:13px; color:var(--ink-mute,#888c96); line-height:1.6; }
+
+  @media (prefers-reduced-motion: no-preference){
+    body.hp-anim .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    body.hp-anim .reveal.in { opacity:1; transform:none; }
+    .hp-float { animation:hp-float 5.5s ease-in-out infinite; }
+    @keyframes hp-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-9px);} }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="hp-paper">
+  <div class="hp-wrap hp-hero hp-center">
+    <div class="hp-eyebrow hp-mb4" style="justify-content:center;"><span class="hp-tick"></span>The operating system for human + AI teams</div>
+    <h1 class="hp-h1">Run your company with people <span class="accent">and AI agents.</span></h1>
+    <p class="hp-lead hp-mt5 hp-max44" style="margin-left:auto;margin-right:auto;">
+      OTP is the chart, scoreboard, and weekly meeting your team already needs &mdash; and the first place your AI agents get a seat, a number, and a real job. Built on the EOS<sup class="reg">&reg;</sup> you already run. Your whole team is free; you only pay for the agents.
+    </p>
+    <div class="hp-mt8" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+      <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
+      <a href="#steps" class="btn-ghost px-8 py-4 text-[16px]">See how it works</a>
+    </div>
+    <div class="hp-eyebrow hp-mt8" style="justify-content:center;flex-wrap:wrap;gap:8px;">
+      <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
+      <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
+      <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS<sup class="reg">&reg;</sup> you run</span>
+    </div>
+    <div class="hp-shotwrap reveal">
+      <img class="hp-shot" src="/public/images/vs/chart.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP accountability chart with AI agents holding seats next to people">
+    </div>
+  </div>
+</section>
+
+<!-- ================= DIFFERENTIATOR + AGENTS ================= -->
+<section class="hp-grey">
+  <div class="hp-wrap hp-sec hp-center">
+    <div class="hp-max640" style="margin:0 auto;">
+      <div class="hp-eyebrow hp-mb4" style="justify-content:center;">The difference</div>
+      <h2 class="hp-h2">Everyone else added an AI assistant. OTP gives you AI employees.</h2>
+      <p class="hp-body hp-mt5" style="margin-left:auto;margin-right:auto;">An assistant answers questions. An employee takes a seat on your chart, owns a KPI on your scoreboard, and does the work between meetings. Meet the five you get free.</p>
+    </div>
+    <% var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
+       var team = [
+         { name:'Radar',  role:'Chief of Staff',      slug:'radar' },
+         { name:'Dan',    role:'The Strategist',      slug:'dan' },
+         { name:'Pepper', role:'Exec Assistant',      slug:'pepper' },
+         { name:'Dash',   role:'The Analyst',         slug:'dash' },
+         { name:'Tally',  role:'The Scorekeeper',     slug:'tally' }
+       ]; %>
+    <div class="hp-agents reveal">
+      <% team.forEach(function(a){ %>
+        <div class="hp-agent">
+          <img src="/public/images/vs/<%= a.slug %>.png?v=<%= _v %>" alt="<%= a.name %>, the OTP <%= a.role %> agent" loading="lazy">
+          <div class="hp-agentname"><%= a.name %></div>
+          <div class="hp-agentrole"><%= a.role %></div>
+        </div>
+      <% }); %>
+    </div>
+    <div class="hp-mt8" style="display:flex;justify-content:center;"><a href="/free-agents" class="btn-primary px-8 py-4 text-[16px]">Meet the free agents &rarr;</a></div>
+  </div>
+</section>
+
+<!-- ================= THE STEPS ================= -->
+<section id="steps" class="hp-paper">
+  <div class="hp-wrap hp-sec">
+    <div class="hp-max640 hp-mb10">
+      <div class="hp-eyebrow hp-mb4">How it works</div>
+      <h2 class="hp-h2">Three steps. Start today.</h2>
+    </div>
+    <div class="hp-steps reveal">
+      <div class="hp-step">
+        <img class="hp-hand" src="/public/images/onboarding-hand-1.webp?v=<%= _v %>" alt="Step 1">
+        <div class="hp-steph">Run your EOS<sup class="reg">&reg;</sup>, free</div>
+        <p class="hp-body" style="margin-top:8px;">Free meeting software for your whole team &mdash; chart, scoreboard, weekly meeting. Keep the system you already run.</p>
+        <a class="hp-steplink" href="/otp-vs-ninety-eos-one">See how we compare &rarr;</a>
+      </div>
+      <div class="hp-step">
+        <img class="hp-hand" src="/public/images/onboarding-hand-2.webp?v=<%= _v %>" alt="Step 2">
+        <div class="hp-steph">Hire your first agents, free</div>
+        <p class="hp-body" style="margin-top:8px;">No AI employees of your own yet? Download five, drop them into your chart, and put them to work today.</p>
+        <a class="hp-steplink" href="/free-agents">Get the free agents &rarr;</a>
+      </div>
+      <div class="hp-step is-soon">
+        <img class="hp-hand" src="/public/images/onboarding-hand-3.webp?v=<%= _v %>" alt="Step 3">
+        <div class="hp-soon">Coming soon</div>
+        <div class="hp-steph" style="color:var(--ink-mute,#888c96);">Grow into the marketplace</div>
+        <p class="hp-body" style="margin-top:8px;">Hire more agents that snap into accountable seats on your chart &mdash; governed, scored, and yours.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DOGFOOD PROOF ================= -->
+<section class="hp-blue">
+  <div class="hp-wrap hp-sec hp-center" style="max-width:820px;">
+    <div class="hp-eyebrow hp-mb4" style="justify-content:center;color:var(--orgy,#a8e63a);">The proof</div>
+    <h2 class="hp-h2" style="color:#fff;">We run our own company on these exact agents.</h2>
+    <p class="hp-lead hp-mt5 hp-max44" style="margin-left:auto;margin-right:auto;color:rgba(255,255,255,.82);">OTP isn't a deck. Radar, Dan, Pepper, Dash and Tally are the same team that runs the company that built OTP &mdash; live, on this platform. No one else can hand you a workforce and show you theirs, working.</p>
+    <div class="hp-mt8" style="display:flex;justify-content:center;"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a></div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="hp-grey">
+  <div class="hp-wrap hp-sec hp-center" style="max-width:760px;">
+    <h2 class="hp-h2">Keep your people. Keep your system. Add a workforce.</h2>
+    <p class="hp-lead hp-mt5 hp-max44" style="margin-left:auto;margin-right:auto;">Your whole team is free. Your first five agents are free. You only pay when an agent earns its seat.</p>
+    <div class="hp-mt8" style="display:flex;justify-content:center;"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Create your free account &rarr;</a></div>
+    <p class="hp-note" style="margin-top:14px;">Free forever for your team. No credit card.</p>
+    <p class="hp-note" style="margin-top:24px;">EOS<sup class="reg">&reg;</sup> and Level 10 Meeting<sup class="reg">&reg;</sup> are trademarks of EOS Worldwide. OTP is independent and not affiliated with, or endorsed by, EOS Worldwide.</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('hp-anim');
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px 5% 0px', threshold:0.01 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  setTimeout(function(){ document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); }); }, 1400);
+})();
+</script>
