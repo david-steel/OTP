@@ -97,12 +97,23 @@
   .h-bar i { display:block; height:100%; border-radius:3px; background:var(--blue,#0d7df2); transform:scaleX(0); transform-origin:left; animation:h-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
   @keyframes h-grow { to{transform:scaleX(1);} }
   @media (max-width:1100px){ .hero2-stage{ transform:scale(.82); transform-origin:top right; margin:-20px 0 -90px; } }
+  /* CTAs side-by-side on desktop; full-width stacked only on small phones */
+  .hp-cta-row { display:flex; gap:12px; flex-wrap:nowrap; margin-top:32px; }
+  .hp-cta-row a { white-space:nowrap; }
+  /* trust strip: centered, sits under the whole hero (under the graphic) */
+  .hp-trust { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px;
+    margin-top:48px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
   @media (max-width:860px){
     .hero2-stage{ display:none; }
     .hero2-copy{ min-width:0; text-align:center; }
+    .hp-cta-row{ justify-content:center; }
     .hero2-mascot-m{ display:flex; justify-content:center; position:relative; margin-top:24px; }
     .hero2-mascot-m img{ position:relative; width:min(280px,72vw); display:block; animation:h-float 5.5s ease-in-out infinite; }
     .hero2-mascot-m::before{ content:""; position:absolute; left:50%; bottom:5%; transform:translateX(-50%); width:66%; height:32%; background:radial-gradient(ellipse, rgba(13,125,242,0.20), transparent 70%); animation:h-breathe 5.5s ease-in-out infinite; }
+  }
+  @media (max-width:520px){
+    .hp-cta-row{ flex-wrap:wrap; }
+    .hp-cta-row a{ flex:1 1 100%; text-align:center; }
   }
 </style>
 
@@ -114,14 +125,9 @@
         <div class="hp-eyebrow hp-mb4"><span class="hp-tick"></span>Free meeting software for EOS<sup class="reg">&reg;</sup> teams</div>
         <h1 class="hp-h1" style="margin:0;max-width:none;">Where your people and <span class="accent">AI agents</span> work as one team.</h1>
         <p class="hp-lead hp-mt5" style="max-width:34rem;">OTP gives your whole team free meeting software &mdash; chart, scoreboard, weekly meeting. Then it gives your AI agents a seat, a number, and a real job, right next to your people. No agents of your own yet? Start with five of ours, free.</p>
-        <div class="hp-mt8" style="display:flex;flex-wrap:wrap;gap:12px;">
+        <div class="hp-cta-row">
           <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
           <a href="/otp-vs-ninety-eos-one" class="btn-ghost px-8 py-4 text-[16px]">See OTP vs Ninety &amp; EOS One</a>
-        </div>
-        <div class="hp-eyebrow hp-mt8" style="flex-wrap:wrap;gap:8px;">
-          <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
-          <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
-          <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS<sup class="reg">&reg;</sup> you run</span>
         </div>
       </div>
 
@@ -149,6 +155,11 @@
       </div>
     </div>
     <div class="hero2-mascot-m"><img src="/public/orgy-cut.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Orgy, the OTP mascot"></div>
+    <div class="hp-trust">
+      <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
+      <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
+      <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS<sup class="reg">&reg;</sup> you run</span>
+    </div>
   </div>
 </section>
 

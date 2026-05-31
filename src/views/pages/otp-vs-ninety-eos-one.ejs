@@ -31,6 +31,27 @@
   .vs-shotwrap { max-width:980px; margin:36px auto 0; }
   .vs-shot { display:block; width:100%; height:auto; border-radius:14px; border:1px solid var(--line,#e6e8ec); box-shadow:0 24px 60px rgba(20,22,28,.16); }
   .vs-shotcap { font-size:14px; line-height:1.55; color:var(--ink-soft,#494d57); text-align:center; margin:16px auto 0; max-width:620px; }
+  /* two-column hero (text left, team-chart image right) — mirrors the home hero */
+  .vs-hgrid { display:flex; gap:44px; align-items:center; flex-wrap:wrap; }
+  .vs-hcopy { flex:1 1 430px; min-width:320px; text-align:left; }
+  .vs-hcopy .vs-h1 { margin:0; max-width:18ch; }
+  .vs-hcopy .vs-lead { margin-left:0; margin-right:0; max-width:34rem; }
+  .vs-hart  { flex:1 1 460px; min-width:320px; }
+  .vs-hart .vs-shot { box-shadow:0 24px 60px -24px rgba(20,22,28,.3); }
+  .vs-hart .vs-shotcap { text-align:left; margin-left:0; margin-right:0; max-width:none; }
+  .vs-trust { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px; margin-top:48px; }
+  @media (max-width:860px){
+    .vs-hcopy { flex-basis:100%; text-align:center; }
+    .vs-hcopy .vs-h1 { margin-left:auto; margin-right:auto; }
+    .vs-hcopy .vs-lead { margin-left:auto; margin-right:auto; }
+    .vs-hcopy .vs-cta-row { justify-content:center; }
+    .vs-hart { flex-basis:100%; }
+    .vs-hart .vs-shotcap { text-align:center; }
+  }
+  @media (max-width:520px){
+    .vs-hcopy .vs-cta-row { flex-wrap:wrap; }
+    .vs-hcopy .vs-cta-row a { flex:1 1 100%; text-align:center; }
+  }
 
   /* comparison tables */
   .cmp-card { border-radius:14px; background:var(--white,#fcfcfd); box-shadow:0 1px 0 rgba(20,22,28,.04), 0 18px 40px rgba(20,22,28,.06); overflow:hidden; }
@@ -81,24 +102,28 @@
 
 <!-- ================= HERO + CHART SHOT ================= -->
 <section class="vs-paper">
-  <div class="vs-wrap vs-hero vs-center">
-    <div class="vs-eyebrow vs-mb4" style="justify-content:center;"><span class="vs-tick"></span>OTP vs Ninety vs EOS One</div>
-    <h1 class="vs-h1">Ninety and EOS One run your EOS<sup class="reg">&reg;</sup>. <span class="accent">OTP lets you hire agents into it.</span></h1>
-    <p class="vs-lead vs-mt5 vs-max40" style="margin-left:auto;margin-right:auto;">
-      They're good EOS<sup class="reg">&reg;</sup> software &mdash; they digitize the system you already run. OTP runs the same system, and lets AI agents take real seats next to your people, with real numbers to hit and real work to do. Your whole team is free. You only pay for the agents.
-    </p>
-    <div class="vs-cta-row vs-mt8" style="justify-content:center;">
-      <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
-      <a href="#pricing" class="btn-ghost px-8 py-4 text-[16px]">See the difference</a>
+  <div class="vs-wrap vs-hero">
+    <div class="vs-hgrid">
+      <div class="vs-hcopy">
+        <div class="vs-eyebrow vs-mb4"><span class="vs-tick"></span>OTP vs Ninety vs EOS One</div>
+        <h1 class="vs-h1">Ninety and EOS One run your EOS<sup class="reg">&reg;</sup>. <span class="accent">OTP lets you hire agents into it.</span></h1>
+        <p class="vs-lead vs-mt5">
+          They're good EOS<sup class="reg">&reg;</sup> software &mdash; they digitize the system you already run. OTP runs the same system, and lets AI agents take real seats next to your people, with real numbers to hit and real work to do. Your whole team is free. You only pay for the agents.
+        </p>
+        <div class="vs-cta-row vs-mt8">
+          <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
+          <a href="#pricing" class="btn-ghost px-8 py-4 text-[16px]">See the difference</a>
+        </div>
+      </div>
+      <div class="vs-hart reveal">
+        <img class="vs-shot" src="/public/images/vs/chart.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP accountability chart with AI agents holding seats next to people, each with skills, integrations and SOPs">
+        <p class="vs-shotcap">Your org chart on OTP. The green <strong>AGENT</strong> seats are real employees &mdash; skills, integrations, a job to do. Humans and agents, one chart.</p>
+      </div>
     </div>
-    <div class="vs-eyebrow vs-mt7" style="justify-content:center;flex-wrap:wrap;gap:8px;">
+    <div class="vs-eyebrow vs-trust">
       <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
       <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
       <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS<sup class="reg">&reg;</sup> you run</span>
-    </div>
-    <div class="vs-shotwrap reveal">
-      <img class="vs-shot" src="/public/images/vs/chart.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP accountability chart with AI agents holding seats next to people, each with skills, integrations and SOPs">
-      <p class="vs-shotcap">Your org chart on OTP. The green <strong>AGENT</strong> seats are real employees &mdash; skills, integrations, a job to do. Humans and agents, one chart.</p>
     </div>
   </div>
 </section>
