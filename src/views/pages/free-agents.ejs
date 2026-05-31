@@ -34,11 +34,11 @@
 
   /* agent cards */
   .fa-grid { display:grid; gap:18px; margin-top:40px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); text-align:left; }
-  .fa-card { border-radius:16px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); box-shadow:0 10px 28px rgba(20,22,28,.06); padding:24px; display:flex; flex-direction:column; }
+  .fa-card { border-radius:16px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); box-shadow:0 10px 28px rgba(20,22,28,.06); padding:24px 22px 26px; display:flex; flex-direction:column; align-items:center; text-align:center; }
   .fa-cardtop { display:flex; align-items:center; gap:14px; }
-  .fa-mascot { width:64px; height:64px; flex:none; object-fit:contain; }
+  .fa-mascot { width:150px; height:150px; flex:none; object-fit:contain; margin-bottom:6px; }
   .fa-badge { width:56px; height:56px; flex:none; border-radius:50%; background:rgba(13,125,242,.10); color:var(--blue,#0d7df2); display:flex; align-items:center; justify-content:center; font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:22px; }
-  .fa-name { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:19px; color:var(--ink,#14161c); }
+  .fa-name { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:20px; color:var(--ink,#14161c); margin-top:4px; }
   .fa-role { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--blue,#0d7df2); margin-top:2px; }
   .fa-desc { font-size:14.5px; line-height:1.55; color:var(--ink-soft,#494d57); margin-top:14px; flex:1 1 auto; }
   .fa-dl { margin-top:18px; }
@@ -48,6 +48,7 @@
   @media (min-width:760px){ .fa-how { grid-template-columns:repeat(3,1fr); } }
   .fa-howcard { border-radius:14px; background:var(--grey,#f0f1f3); padding:26px; }
   .fa-hown { font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:13px; font-weight:800; color:var(--blue,#0d7df2); }
+  .fa-handnum { width:52px; height:auto; display:block; margin-bottom:10px; }
   .fa-howh { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.12rem; color:var(--ink,#14161c); margin-top:6px; }
   .fa-note { font-size:13px; color:var(--ink-mute,#888c96); line-height:1.6; }
 
@@ -104,24 +105,16 @@
     <div class="fa-grid reveal">
       <% var team = [
         { slug:'radar',  name:'Radar',  role:'Chief of Staff',      desc:'Runs your weekly meeting and daily briefing, tracks who owes what, and flags problems early.', img:'/public/images/vs/radar.png' },
-        { slug:'dan',    name:'Dan',    role:'The Strategist',      desc:'Challenges your priorities, runs your issues to a real decision (IDS), and keeps you honest.', img:'/public/images/orgy/coach.png' },
-        { slug:'pepper', name:'Pepper', role:'Executive Assistant', desc:'Triages your inbox, drafts replies in your voice, and surfaces the few things that are actually urgent.', img:null },
-        { slug:'dash',   name:'Dash',   role:'The Analyst',         desc:'Reads your numbers across their sources and flags the patterns that matter — data, not opinions.', img:null },
-        { slug:'tally',  name:'Tally',  role:'The Scorekeeper',     desc:'Pulls each KPI from its real source and keeps your scoreboard current and honest, automatically.', img:null }
+        { slug:'dan',    name:'Dan',    role:'The Strategist',      desc:'Challenges your priorities, runs your issues to a real decision (IDS), and keeps you honest.', img:'/public/images/vs/dan.png' },
+        { slug:'pepper', name:'Pepper', role:'Executive Assistant', desc:'Triages your inbox, drafts replies in your voice, and surfaces the few things that are actually urgent.', img:'/public/images/vs/pepper.png' },
+        { slug:'dash',   name:'Dash',   role:'The Analyst',         desc:'Reads your numbers across their sources and flags the patterns that matter — data, not opinions.', img:'/public/images/vs/dash.png' },
+        { slug:'tally',  name:'Tally',  role:'The Scorekeeper',     desc:'Pulls each KPI from its real source and keeps your scoreboard current and honest, automatically.', img:'/public/images/vs/tally.png' }
       ]; var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev'); %>
       <% team.forEach(function(a){ %>
         <div class="fa-card">
-          <div class="fa-cardtop">
-            <% if (a.img) { %>
-              <img class="fa-mascot" src="<%= a.img %>?v=<%= _v %>" alt="<%= a.name %>, an OTP agent">
-            <% } else { %>
-              <div class="fa-badge"><%= a.name.charAt(0) %></div>
-            <% } %>
-            <div>
-              <div class="fa-name"><%= a.name %></div>
-              <div class="fa-role"><%= a.role %></div>
-            </div>
-          </div>
+          <img class="fa-mascot" src="<%= a.img %>?v=<%= _v %>" alt="<%= a.name %>, the OTP <%= a.role %> agent" loading="lazy">
+          <div class="fa-name"><%= a.name %></div>
+          <div class="fa-role"><%= a.role %></div>
           <p class="fa-desc"><%= a.desc %></p>
           <div class="fa-dl"><a href="/free-agents/<%= a.slug %>/download" class="btn-primary px-6 py-3 text-[15px]">Download .md &rarr;</a></div>
         </div>
@@ -139,9 +132,9 @@
       <h2 class="fa-h2">Download. Drop in. It builds itself with you.</h2>
     </div>
     <div class="fa-how reveal">
-      <div class="fa-howcard"><div class="fa-hown">1</div><div class="fa-howh">Download the .md</div><p class="fa-body" style="margin-top:8px;">One Markdown file per agent. Free with your account.</p></div>
-      <div class="fa-howcard"><div class="fa-hown">2</div><div class="fa-howh">Drop it into Claude Code</div><p class="fa-body" style="margin-top:8px;">It wakes up and interviews you &mdash; its name, what it does, which of your tools to connect &mdash; one question at a time. You build it together.</p></div>
-      <div class="fa-howcard"><div class="fa-hown">3</div><div class="fa-howh">Connect it to OTP</div><p class="fa-body" style="margin-top:8px;">It claims a seat on your chart, carries its KPIs on your scoreboard, and joins your weekly meeting &mdash; accountable like everyone else.</p></div>
+      <div class="fa-howcard"><img class="fa-handnum" src="/public/images/onboarding-hand-1.webp?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Step 1" loading="lazy"><div class="fa-howh">Download the .md</div><p class="fa-body" style="margin-top:8px;">One Markdown file per agent. Free with your account.</p></div>
+      <div class="fa-howcard"><img class="fa-handnum" src="/public/images/onboarding-hand-2.webp?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Step 2" loading="lazy"><div class="fa-howh">Drop it into Claude Code</div><p class="fa-body" style="margin-top:8px;">It wakes up and interviews you &mdash; its name, what it does, which of your tools to connect &mdash; one question at a time. You build it together.</p></div>
+      <div class="fa-howcard"><img class="fa-handnum" src="/public/images/onboarding-hand-3.webp?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Step 3" loading="lazy"><div class="fa-howh">Connect it to OTP</div><p class="fa-body" style="margin-top:8px;">It claims a seat on your chart, carries its KPIs on your scoreboard, and joins your weekly meeting &mdash; accountable like everyone else.</p></div>
     </div>
   </div>
 </section>
@@ -149,9 +142,10 @@
 <!-- ================= FINAL CTA ================= -->
 <section class="fa-blue">
   <div class="fa-wrap fa-sec fa-center" style="max-width:760px;">
-    <h2 class="fa-h2" style="color:#fff;">Hire your first agent. Free.</h2>
-    <p class="fa-lead fa-mt5 fa-max42" style="margin-left:auto;margin-right:auto;color:rgba(255,255,255,.82);">No agents of your own yet? Start with the five that run our company. Download one, give it a home in OTP, and put it to work today.</p>
-    <div class="fa-mt8" style="display:flex;justify-content:center;"><a href="#agents" class="btn-primary px-8 py-4 text-[16px]">Browse the agents &darr;</a></div>
+    <h2 class="fa-h2" style="color:#fff;">Hire five AI employees by this afternoon.</h2>
+    <p class="fa-lead fa-mt5 fa-max42" style="margin-left:auto;margin-right:auto;color:rgba(255,255,255,.85);">Your competitors are still bolting chatbots onto broken systems. You could have five accountable agents &mdash; with seats, KPIs, and a weekly meeting &mdash; working on the EOS<sup class="reg">&reg;</sup> you already run. Free, for your whole team.</p>
+    <div class="fa-mt8" style="display:flex;justify-content:center;"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Create your free account &rarr;</a></div>
+    <div class="fa-note" style="margin-top:14px;color:rgba(255,255,255,.72);">Free forever for your team. No credit card.</div>
     <p class="fa-note fa-mt8" style="color:rgba(255,255,255,.6);">EOS<sup class="reg">&reg;</sup> and Level 10 Meeting<sup class="reg">&reg;</sup> are trademarks of EOS Worldwide. Ninety and EOS One are trademarks of their respective owners. OTP is independent and not affiliated with, or endorsed by, any of them.</p>
   </div>
 </section>
