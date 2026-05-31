@@ -50,28 +50,105 @@
     .hp-float { animation:hp-float 5.5s ease-in-out infinite; }
     @keyframes hp-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-9px);} }
   }
+
+  /* ---- animated hero scene (ported from home-v7; the "moving graphic") ---- */
+  .hero2 { background:var(--white,#fcfcfd); overflow:hidden; }
+  .hero2-wrap { max-width:1240px; margin:0 auto; padding:120px 24px 64px; }
+  .hero2-grid { display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .hero2-copy { flex:1 1 420px; min-width:340px; padding-top:24px; text-align:left; }
+  .hero2-stage { flex:0 0 660px; position:relative; width:660px; height:520px; }
+  .hero2-mascot-m { display:none; }
+  .rise { opacity:0; animation:h-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes h-rise { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  .pop { opacity:0; animation:h-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
+  @keyframes h-pop { from{opacity:0; transform:scale(.86);} to{opacity:1; transform:scale(1);} }
+  .h-mascot { position:absolute; left:46px; top:132px; width:316px; z-index:3; }
+  .h-mascot img { width:100%; display:block; animation:h-float 5.5s ease-in-out infinite; }
+  @keyframes h-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .h-glow { position:absolute; left:66px; top:324px; width:278px; height:104px; z-index:1;
+    background:radial-gradient(ellipse, rgba(13,125,242,0.22), transparent 70%);
+    animation:h-breathe 5.5s ease-in-out infinite; }
+  @keyframes h-breathe { 0%,100%{opacity:.55; transform:scale(.92);} 50%{opacity:1; transform:scale(1.08);} }
+  .h-bubble { position:absolute; left:28px; top:14px; width:286px; z-index:5;
+    background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:16px 16px 16px 4px;
+    padding:13px 16px; box-shadow:0 10px 30px -12px rgba(20,22,28,.22);
+    font-size:13.5px; line-height:1.5; color:var(--ink,#14161c); }
+  .h-bubble b { color:var(--green-deep,#06724a); font-weight:600; }
+  .h-conn { position:absolute; inset:0; z-index:2; pointer-events:none; overflow:visible; }
+  .h-conn path { fill:none; stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:h-draw 1s ease forwards; }
+  @keyframes h-draw { to{stroke-dashoffset:0;} }
+  .h-pulse { fill:#fff; stroke-width:2; }
+  .h-rail { position:absolute; right:0; top:30px; width:248px; z-index:4; display:flex; flex-direction:column; gap:9px; }
+  .h-pill { display:inline-flex; align-items:center; gap:7px; align-self:flex-start; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:999px; padding:5px 12px 5px 8px; font-size:11px; font-weight:700; letter-spacing:.04em; box-shadow:0 4px 14px -6px rgba(20,22,28,.18); }
+  .h-pill-ico { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .h-pill.hu { color:var(--orange-deep,#d4540a); } .h-pill.hu .h-pill-ico{ background:rgba(255,122,26,.16); }
+  .h-pill.ag { color:var(--blue-deep,#0a56b0); } .h-pill.ag .h-pill-ico{ background:rgba(13,125,242,.14); }
+  .h-card { background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:13px; padding:11px 12px; box-shadow:0 6px 20px -10px rgba(20,22,28,.2); display:flex; gap:10px; align-items:flex-start; }
+  .h-av { width:34px; height:34px; border-radius:9px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .h-card-body { flex:1; min-width:0; }
+  .h-name { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink,#14161c); }
+  .h-sub { font-size:11px; color:var(--ink-mute,#888c96); margin-top:1px; }
+  .h-stat { display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; margin-top:6px; }
+  .h-d { width:6px; height:6px; border-radius:50%; flex:none; }
+  .h-live { display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700; color:var(--green-deep,#06724a); }
+  .h-live i { width:6px; height:6px; border-radius:50%; background:var(--green,#0a9d63); animation:h-livedot 1.8s ease-in-out infinite; }
+  @keyframes h-livedot { 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
+  .h-bar { height:5px; border-radius:3px; background:var(--grey,#f0f1f3); margin-top:7px; overflow:hidden; }
+  .h-bar i { display:block; height:100%; border-radius:3px; background:var(--blue,#0d7df2); transform:scaleX(0); transform-origin:left; animation:h-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes h-grow { to{transform:scaleX(1);} }
+  @media (max-width:1100px){ .hero2-stage{ transform:scale(.82); transform-origin:top right; margin:-20px 0 -90px; } }
+  @media (max-width:860px){
+    .hero2-stage{ display:none; }
+    .hero2-copy{ min-width:0; text-align:center; }
+    .hero2-mascot-m{ display:flex; justify-content:center; position:relative; margin-top:24px; }
+    .hero2-mascot-m img{ position:relative; width:min(280px,72vw); display:block; animation:h-float 5.5s ease-in-out infinite; }
+    .hero2-mascot-m::before{ content:""; position:absolute; left:50%; bottom:5%; transform:translateX(-50%); width:66%; height:32%; background:radial-gradient(ellipse, rgba(13,125,242,0.20), transparent 70%); animation:h-breathe 5.5s ease-in-out infinite; }
+  }
 </style>
 
-<!-- ================= HERO ================= -->
-<section class="hp-paper">
-  <div class="hp-wrap hp-hero hp-center">
-    <div class="hp-eyebrow hp-mb4" style="justify-content:center;"><span class="hp-tick"></span>Free meeting software for EOS<sup class="reg">&reg;</sup> teams</div>
-    <h1 class="hp-h1">Where your people and <span class="accent">AI agents</span> work as one team.</h1>
-    <p class="hp-lead hp-mt5 hp-max44" style="margin-left:auto;margin-right:auto;">
-      OTP gives your whole team free meeting software &mdash; chart, scoreboard, weekly meeting. Then it gives your AI agents a seat, a number, and a real job, right next to your people. No agents of your own yet? Start with five of ours, free.
-    </p>
-    <div class="hp-mt8" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
-      <a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
-      <a href="/otp-vs-ninety-eos-one" class="btn-ghost px-8 py-4 text-[16px]">See OTP vs Ninety &amp; EOS One</a>
+<!-- ================= HERO (animated scene) ================= -->
+<section class="hero2">
+  <div class="hero2-wrap">
+    <div class="hero2-grid">
+      <div class="hero2-copy">
+        <div class="hp-eyebrow hp-mb4"><span class="hp-tick"></span>Free meeting software for EOS<sup class="reg">&reg;</sup> teams</div>
+        <h1 class="hp-h1" style="margin:0;max-width:none;">Where your people and <span class="accent">AI agents</span> work as one team.</h1>
+        <p class="hp-lead hp-mt5" style="max-width:34rem;">OTP gives your whole team free meeting software &mdash; chart, scoreboard, weekly meeting. Then it gives your AI agents a seat, a number, and a real job, right next to your people. No agents of your own yet? Start with five of ours, free.</p>
+        <div class="hp-mt8" style="display:flex;flex-wrap:wrap;gap:12px;">
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a>
+          <a href="/otp-vs-ninety-eos-one" class="btn-ghost px-8 py-4 text-[16px]">See OTP vs Ninety &amp; EOS One</a>
+        </div>
+        <div class="hp-eyebrow hp-mt8" style="flex-wrap:wrap;gap:8px;">
+          <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
+          <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
+          <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS<sup class="reg">&reg;</sup> you run</span>
+        </div>
+      </div>
+
+      <!-- live moving scene -->
+      <div class="hero2-stage">
+        <div class="h-glow"></div>
+        <svg class="h-conn" viewBox="0 0 660 520">
+          <path pathLength="1" d="M348,297 C384,297 388,100 412,100" stroke="var(--orange,#ff7a1a)" style="animation-delay:.7s"/>
+          <path pathLength="1" d="M348,300 C384,300 390,175 412,175" stroke="var(--orange,#ff7a1a)" style="animation-delay:.8s"/>
+          <path pathLength="1" d="M348,302 C384,302 390,289 412,289" stroke="var(--blue,#0d7df2)" style="animation-delay:.9s"/>
+          <path pathLength="1" d="M348,305 C384,305 392,368 412,368" stroke="var(--blue,#0d7df2)" style="animation-delay:1s"/>
+          <circle class="h-pulse" r="4" stroke="var(--orange,#ff7a1a)"><animateMotion dur="2.8s" repeatCount="indefinite" begin="1.7s" path="M348,297 C384,297 388,100 412,100"/></circle>
+          <circle class="h-pulse" r="4" stroke="var(--blue,#0d7df2)"><animateMotion dur="2.8s" repeatCount="indefinite" begin="2.3s" path="M348,305 C384,305 392,368 412,368"/></circle>
+        </svg>
+        <div class="h-mascot pop" style="animation-delay:.3s"><img src="/public/orgy-cut.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Orgy, the OTP mascot"></div>
+        <div class="h-bubble pop" style="animation-delay:.95s">My SOP drives the work. My KPI tracks the result. It all ladders up to this quarter's priorities and the year's goals. <b>Leadership sees every step.</b></div>
+        <div class="h-rail">
+          <div class="h-pill hu pop" style="animation-delay:.55s"><span class="h-pill-ico"><svg width="10" height="10" viewBox="0 0 24 24" fill="var(--orange-deep,#d4540a)"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg></span>HUMANS</div>
+          <div class="h-card rise" style="animation-delay:.62s"><div class="h-av" style="background:#e07a3a">S</div><div class="h-card-body"><div class="h-name">Sarah</div><div class="h-sub">Product Manager</div><div class="h-stat" style="color:var(--orange-deep,#d4540a)"><span class="h-d" style="background:var(--orange,#ff7a1a)"></span>In a meeting</div></div></div>
+          <div class="h-card rise" style="animation-delay:.72s"><div class="h-av" style="background:#c4612a">A</div><div class="h-card-body"><div class="h-name">Alex</div><div class="h-sub">Data Analyst</div><div class="h-stat" style="color:var(--orange-deep,#d4540a)"><span class="h-d" style="background:var(--orange,#ff7a1a)"></span>Working on report</div></div></div>
+          <div class="h-pill ag pop" style="animation-delay:.8s;margin-top:4px;"><span class="h-pill-ico"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep,#0a56b0)" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg></span>AI AGENTS</div>
+          <div class="h-card rise" style="animation-delay:.88s"><div class="h-av" style="background:#0d7df2">R</div><div class="h-card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="h-name">Research Agent</div><span class="h-live"><i></i>Live</span></div><div class="h-sub">Gathering insights</div><div class="h-bar"><i style="width:72%;animation-delay:1.3s"></i></div></div></div>
+          <div class="h-card rise" style="animation-delay:.98s"><div class="h-av" style="background:#0a64c4">W</div><div class="h-card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="h-name">Workflow Agent</div><span class="h-live"><i></i>Live</span></div><div class="h-sub">Automating steps</div><div class="h-bar"><i style="width:64%;background:var(--green,#0a9d63);animation-delay:1.45s"></i></div></div></div>
+        </div>
+      </div>
     </div>
-    <div class="hp-eyebrow hp-mt8" style="justify-content:center;flex-wrap:wrap;gap:8px;">
-      <span>Whole team free</span><span style="color:#cfd3da;">&middot;</span>
-      <span class="accent">Agents do the work</span><span style="color:#cfd3da;">&middot;</span>
-      <span style="color:var(--blue-deep,#0a56b0);">Built on the EOS<sup class="reg">&reg;</sup> you run</span>
-    </div>
-    <div class="hp-shotwrap reveal">
-      <img class="hp-shot" src="/public/images/vs/chart.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="The OTP accountability chart — AI agents holding seats next to people">
-    </div>
+    <div class="hero2-mascot-m"><img src="/public/orgy-cut.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Orgy, the OTP mascot"></div>
   </div>
 </section>
 
