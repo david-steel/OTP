@@ -412,6 +412,40 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /free-agents -- Step 2 of the funnel: the free starter agents (.md files).
+  app.get('/free-agents', async (_request, reply) => {
+    return renderV7(reply, 'free-agents', {
+      title: 'Free AI Agents for Your Team - OTP',
+      description: 'Five battle-tested AI agents - Radar, Dan, Pepper, Dash, Tally. Download one, drop it into Claude Code, and it sets itself up with you. Free with an OTP account.',
+      canonical: BASE_URL + '/free-agents',
+      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      breadcrumbs: bc({ name: 'Free Agents', url: BASE_URL + '/free-agents' }),
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Free AI Agents for Your Team', description: 'Five free AI agents you can download and run.', url: BASE_URL + '/free-agents' },
+    });
+  });
+
+  // Gated download: the .md agent files live in content/free-agents/ (outside
+  // /public), so the only way to get one is signed in. Unauth -> sign-up, return here.
+  app.get<{ Params: { slug: string } }>('/free-agents/:slug/download', async (request, reply) => {
+    const SLUGS = ['radar', 'dan', 'pepper', 'dash', 'tally'];
+    const slug = request.params.slug;
+    if (!SLUGS.includes(slug)) return reply.status(404).send('Unknown agent');
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.redirect('/sign-up?redirect_url=' + encodeURIComponent('/free-agents/' + slug + '/download'));
+    }
+    try {
+      const { readFile } = await import('node:fs/promises');
+      const p = fileURLToPath(new URL('../../../content/free-agents/' + slug + '.md', import.meta.url));
+      const md = await readFile(p, 'utf8');
+      reply.header('Content-Type', 'text/markdown; charset=utf-8');
+      reply.header('Content-Disposition', 'attachment; filename="' + slug + '.md"');
+      return reply.send(md);
+    } catch {
+      return reply.status(404).send('Agent file not found');
+    }
+  });
+
   // Coach landing -- conversion page for coaches, consultants, advisors with clients
   app.get('/coach', async (request, reply) => {
     return renderV7(reply, 'coach', {

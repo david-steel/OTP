@@ -1,0 +1,167 @@
+<%# /free-agents -- v7 layout, ORGY branding. Step 2 of the funnel: "don't have an
+    agent yet? take five, free." Each agent is a downloadable .md gated behind
+    signup (route /free-agents/:slug/download requires Clerk auth). v7.css is
+    PREBUILT, so ALL layout/color is scoped .fa-* CSS + design tokens, never
+    arbitrary Tailwind. Mirrors otp-vs-ninety-eos-one.ejs. %>
+<style>
+  .fa-sec   { padding-top: 80px; padding-bottom: 80px; }
+  .fa-hero  { padding-top: 132px; padding-bottom: 56px; }   /* clears 64px fixed nav */
+  .fa-wrap  { max-width: 1040px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .fa-center{ text-align: center; }
+  .fa-paper { background: var(--white, #fcfcfd); }
+  .fa-grey  { background: var(--grey, #f0f1f3); }
+  .fa-blue  { background: var(--blue-block, #0d5fd6); }
+  @media (max-width: 640px) { .fa-sec { padding-top: 52px; padding-bottom: 52px; } .fa-hero { padding-top: 100px; padding-bottom: 40px; } }
+
+  .fa-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; gap:10px; }
+  .fa-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .fa-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.05; font-size:clamp(2.1rem,4.4vw,3.5rem); color:var(--ink,#14161c); margin:0 auto; max-width:18ch; }
+  .fa-h2 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.02em; line-height:1.1; font-size:clamp(1.7rem,3.3vw,2.45rem); color:var(--ink,#14161c); }
+  .fa-lead { font-size:18px; line-height:1.62; color:var(--ink-soft,#494d57); }
+  .fa-body { font-size:16px; line-height:1.65; color:var(--ink-soft,#494d57); }
+  .fa-max640{max-width:640px;} .fa-max42{max-width:42rem;}
+  .fa-mt5{margin-top:20px;} .fa-mt7{margin-top:28px;} .fa-mt8{margin-top:32px;} .fa-mb4{margin-bottom:16px;} .fa-mb10{margin-bottom:40px;}
+  .accent { color:var(--blue,#0d7df2); }
+  .reg { font-size:.58em; vertical-align:super; line-height:0; font-weight:inherit; margin-left:1px; }
+
+  /* steps band */
+  .fa-steps { display:grid; gap:14px; margin-top:36px; grid-template-columns:1fr; }
+  @media (min-width:760px){ .fa-steps { grid-template-columns:repeat(3,1fr); } }
+  .fa-step { border-radius:14px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); padding:22px; text-align:left; }
+  .fa-step.is-now { border-color:var(--blue,#0d7df2); box-shadow:0 10px 30px rgba(13,125,242,.10); }
+  .fa-stepn { font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:12px; font-weight:800; letter-spacing:.12em; color:var(--blue,#0d7df2); }
+  .fa-soon { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
+
+  /* agent cards */
+  .fa-grid { display:grid; gap:18px; margin-top:40px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); text-align:left; }
+  .fa-card { border-radius:16px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); box-shadow:0 10px 28px rgba(20,22,28,.06); padding:24px; display:flex; flex-direction:column; }
+  .fa-cardtop { display:flex; align-items:center; gap:14px; }
+  .fa-mascot { width:64px; height:64px; flex:none; object-fit:contain; }
+  .fa-badge { width:56px; height:56px; flex:none; border-radius:50%; background:rgba(13,125,242,.10); color:var(--blue,#0d7df2); display:flex; align-items:center; justify-content:center; font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:22px; }
+  .fa-name { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:19px; color:var(--ink,#14161c); }
+  .fa-role { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--blue,#0d7df2); margin-top:2px; }
+  .fa-desc { font-size:14.5px; line-height:1.55; color:var(--ink-soft,#494d57); margin-top:14px; flex:1 1 auto; }
+  .fa-dl { margin-top:18px; }
+
+  /* how it works */
+  .fa-how { display:grid; gap:18px; margin-top:8px; grid-template-columns:1fr; }
+  @media (min-width:760px){ .fa-how { grid-template-columns:repeat(3,1fr); } }
+  .fa-howcard { border-radius:14px; background:var(--grey,#f0f1f3); padding:26px; }
+  .fa-hown { font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:13px; font-weight:800; color:var(--blue,#0d7df2); }
+  .fa-howh { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.12rem; color:var(--ink,#14161c); margin-top:6px; }
+  .fa-note { font-size:13px; color:var(--ink-mute,#888c96); line-height:1.6; }
+
+  @media (prefers-reduced-motion: no-preference){
+    body.fa-anim .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    body.fa-anim .reveal.in { opacity:1; transform:none; }
+    .fa-float { animation:fa-float 5.5s ease-in-out infinite; }
+    @keyframes fa-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-9px);} }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="fa-paper">
+  <div class="fa-wrap fa-hero fa-center">
+    <div class="fa-eyebrow fa-mb4" style="justify-content:center;"><span class="fa-tick"></span>Free OTP agents</div>
+    <h1 class="fa-h1">Hire your first AI employees. <span class="accent">Free.</span></h1>
+    <p class="fa-lead fa-mt5 fa-max42" style="margin-left:auto;margin-right:auto;">
+      Five agents, built and battle-tested running our own company. Download one, drop it into Claude Code, and it sets itself up <em>with you</em> &mdash; one question at a time &mdash; then takes a seat in your OTP chart.
+    </p>
+    <div class="fa-mt8" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+      <a href="#agents" class="btn-primary px-8 py-4 text-[16px]">Browse the agents &darr;</a>
+      <a href="/otp-vs-ninety-eos-one" class="btn-ghost px-8 py-4 text-[16px]">See OTP vs Ninety &amp; EOS One</a>
+    </div>
+
+    <!-- the steps -->
+    <div class="fa-steps reveal">
+      <a class="fa-step" href="/otp-vs-ninety-eos-one" style="text-decoration:none;">
+        <div class="fa-stepn">STEP 1</div>
+        <div class="fa-howh">Run your EOS<sup class="reg">&reg;</sup>, free</div>
+        <p class="fa-body" style="margin-top:6px;">Free meeting software for your whole team. Chart, scoreboard, weekly meeting.</p>
+      </a>
+      <div class="fa-step is-now">
+        <div class="fa-stepn">STEP 2 &middot; YOU'RE HERE</div>
+        <div class="fa-howh">No agents yet? Take five.</div>
+        <p class="fa-body" style="margin-top:6px;">Don't have AI employees built? Start with ours &mdash; free &mdash; and put them to work today.</p>
+      </div>
+      <div class="fa-step">
+        <div class="fa-soon">Step 3 &middot; coming</div>
+        <div class="fa-howh" style="color:var(--ink-mute,#888c96);">The marketplace</div>
+        <p class="fa-body" style="margin-top:6px;">Hire more agents that snap into accountable seats. Soon.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= AGENT GRID ================= -->
+<section id="agents" class="fa-grey">
+  <div class="fa-wrap fa-sec">
+    <div class="fa-max640 fa-mb10">
+      <div class="fa-eyebrow fa-mb4">Your free starter team</div>
+      <h2 class="fa-h2">Five agents. The same ones running our company.</h2>
+      <p class="fa-body fa-mt5">Each one wakes up and interviews you to configure itself, connects to the tools you already use, and tells you honestly what it can't do yet. Download is free &mdash; you'll just need an account so your agent has a home to work in.</p>
+    </div>
+    <div class="fa-grid reveal">
+      <% var team = [
+        { slug:'radar',  name:'Radar',  role:'Chief of Staff',      desc:'Runs your weekly meeting and daily briefing, tracks who owes what, and flags problems early.', img:'/public/images/vs/radar.png' },
+        { slug:'dan',    name:'Dan',    role:'The Strategist',      desc:'Challenges your priorities, runs your issues to a real decision (IDS), and keeps you honest.', img:'/public/images/orgy/coach.png' },
+        { slug:'pepper', name:'Pepper', role:'Executive Assistant', desc:'Triages your inbox, drafts replies in your voice, and surfaces the few things that are actually urgent.', img:null },
+        { slug:'dash',   name:'Dash',   role:'The Analyst',         desc:'Reads your numbers across their sources and flags the patterns that matter — data, not opinions.', img:null },
+        { slug:'tally',  name:'Tally',  role:'The Scorekeeper',     desc:'Pulls each KPI from its real source and keeps your scoreboard current and honest, automatically.', img:null }
+      ]; var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev'); %>
+      <% team.forEach(function(a){ %>
+        <div class="fa-card">
+          <div class="fa-cardtop">
+            <% if (a.img) { %>
+              <img class="fa-mascot" src="<%= a.img %>?v=<%= _v %>" alt="<%= a.name %>, an OTP agent">
+            <% } else { %>
+              <div class="fa-badge"><%= a.name.charAt(0) %></div>
+            <% } %>
+            <div>
+              <div class="fa-name"><%= a.name %></div>
+              <div class="fa-role"><%= a.role %></div>
+            </div>
+          </div>
+          <p class="fa-desc"><%= a.desc %></p>
+          <div class="fa-dl"><a href="/free-agents/<%= a.slug %>/download" class="btn-primary px-6 py-3 text-[15px]">Download .md &rarr;</a></div>
+        </div>
+      <% }); %>
+    </div>
+    <p class="fa-note" style="margin-top:18px;">Each download is a single Markdown file. Free with an OTP account &mdash; we'll ask you to sign in first.</p>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="fa-paper">
+  <div class="fa-wrap fa-sec">
+    <div class="fa-max640 fa-mb10">
+      <div class="fa-eyebrow fa-mb4">How it works</div>
+      <h2 class="fa-h2">Download. Drop in. It builds itself with you.</h2>
+    </div>
+    <div class="fa-how reveal">
+      <div class="fa-howcard"><div class="fa-hown">1</div><div class="fa-howh">Download the .md</div><p class="fa-body" style="margin-top:8px;">One Markdown file per agent. Free with your account.</p></div>
+      <div class="fa-howcard"><div class="fa-hown">2</div><div class="fa-howh">Drop it into Claude Code</div><p class="fa-body" style="margin-top:8px;">It wakes up and interviews you &mdash; its name, what it does, which of your tools to connect &mdash; one question at a time. You build it together.</p></div>
+      <div class="fa-howcard"><div class="fa-hown">3</div><div class="fa-howh">Connect it to OTP</div><p class="fa-body" style="margin-top:8px;">It claims a seat on your chart, carries its KPIs on your scoreboard, and joins your weekly meeting &mdash; accountable like everyone else.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="fa-blue">
+  <div class="fa-wrap fa-sec fa-center" style="max-width:760px;">
+    <h2 class="fa-h2" style="color:#fff;">Hire your first agent. Free.</h2>
+    <p class="fa-lead fa-mt5 fa-max42" style="margin-left:auto;margin-right:auto;color:rgba(255,255,255,.82);">No agents of your own yet? Start with the five that run our company. Download one, give it a home in OTP, and put it to work today.</p>
+    <div class="fa-mt8" style="display:flex;justify-content:center;"><a href="#agents" class="btn-primary px-8 py-4 text-[16px]">Browse the agents &darr;</a></div>
+    <p class="fa-note fa-mt8" style="color:rgba(255,255,255,.6);">EOS<sup class="reg">&reg;</sup> and Level 10 Meeting<sup class="reg">&reg;</sup> are trademarks of EOS Worldwide. Ninety and EOS One are trademarks of their respective owners. OTP is independent and not affiliated with, or endorsed by, any of them.</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('fa-anim');
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px -8% 0px', threshold:0.05 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+</script>
