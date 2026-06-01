@@ -817,6 +817,10 @@ export const rocks = pgTable('rocks', {
   statusNote: text('status_note'),
   statusUpdatedAt: timestamp('status_updated_at'),
   completedAt: timestamp('completed_at'),
+  // Archived (killed/deprioritized) rocks. Distinct from completedAt and
+  // from deletedAt: archived rocks are hidden from the default Rock Review
+  // but fully recoverable (Reopen clears it). Added via ensure-kpis-rocks-team.ts.
+  archivedAt: timestamp('archived_at'),
   // GTD Next Action: one concrete physical step toward completing the
   // rock. Surfaced on /dashboard hero; the rock title is the destination,
   // not the next move. Added via ensure-next-actions.ts boot DDL.

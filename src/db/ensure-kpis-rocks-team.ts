@@ -66,6 +66,13 @@ const DDL = [
      ALTER TABLE "rocks"
        ADD COLUMN "position" integer;
    EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  // Archived rocks (killed/deprioritized). Hidden from the default Rock
+  // Review, recoverable via Reopen. Distinct from completed_at / deleted_at.
+  `DO $$ BEGIN
+     ALTER TABLE "rocks"
+       ADD COLUMN "archived_at" timestamp;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
 ];
 
 export async function ensureKpisRocksTeam(): Promise<void> {

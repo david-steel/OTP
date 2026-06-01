@@ -188,7 +188,12 @@ async function buildScorecardSnapshot(orgId: string) {
 
 async function buildRocksSnapshot(orgId: string) {
   const orgRocks = await db.select().from(rocks)
-    .where(and(eq(rocks.organizationId, orgId), isNull(rocks.deletedAt)))
+    .where(and(
+      eq(rocks.organizationId, orgId),
+      isNull(rocks.deletedAt),
+      isNull(rocks.completedAt),
+      isNull(rocks.archivedAt),
+    ))
     .orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
   return { rocks: orgRocks, capturedAt: new Date().toISOString(), count: orgRocks.length };
 }

@@ -515,7 +515,17 @@
 
   <!-- 3. Rocks -->
   <section id="rocks" class="mb-12">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
+    <% var _devQ = (typeof devOrgIdParam !== 'undefined' && devOrgIdParam) ? ('&orgId=' + devOrgIdParam) : '';
+       var _rocksFilter = (typeof rocksFilter !== 'undefined') ? rocksFilter : 'active';
+       var _hiddenCount = (typeof hiddenRocksCount !== 'undefined') ? hiddenRocksCount : 0; %>
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <h2 class="text-2xl font-extrabold tracking-tight text-gray-900">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
+      <% if (_rocksFilter === 'all') { %>
+        <a href="?rocks=active<%= _devQ %>#rocks" class="text-xs px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50 whitespace-nowrap">Hide completed &amp; archived</a>
+      <% } else if (_hiddenCount > 0) { %>
+        <a href="?rocks=all<%= _devQ %>#rocks" class="text-xs px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50 whitespace-nowrap">Show completed &amp; archived (<%= _hiddenCount %>)</a>
+      <% } %>
+    </div>
     <% // Hide agent-owned rocks from the L10 main agenda. Humans own
        // quarterly priorities in EOS; agent commitments belong in the
        // agent's own review surface.
@@ -523,21 +533,38 @@
          if (r && r.ownerEntityType === 'agent') return false;
          if (r && typeof r.ownerExternalId === 'string' && r.ownerExternalId.indexOf('AGT_') === 0) return false;
          return true;
-       }); %>
+       });
+       // Active first, then completed/archived (only present when ?rocks=all).
+       var _activeRocks = _humanRocks.filter(function(r){ return !(r.completedAt || r.archivedAt); });
+       var _hiddenRocks = _humanRocks.filter(function(r){ return !!(r.completedAt || r.archivedAt); });
+       var _orderedRocks = _activeRocks.concat(_hiddenRocks); %>
     <% if (_humanRocks.length === 0) { %>
       <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm mb-3">
-        No quarterly priorities yet. Add one below.
+        <% if (_hiddenCount > 0) { %>
+          No active quarterly priorities. <%= _hiddenCount %> completed/archived &mdash; use &ldquo;Show completed &amp; archived&rdquo; above to view them.
+        <% } else { %>
+          No quarterly priorities yet. Add one below.
+        <% } %>
       </div>
     <% } else { %>
       <% var _execLabel = {}; (executionItems || []).forEach(function(it){ _execLabel[it.id] = it.label; }); %>
       <div class="space-y-2">
-        <% _humanRocks.forEach(function(r) { %>
-          <div class="border rounded p-3 flex items-start justify-between" data-rock-id="<%= r.id %>">
+        <% _orderedRocks.forEach(function(r) {
+             var _completed = !!r.completedAt;
+             var _archived = !!r.archivedAt;
+             var _hidden = _completed || _archived; %>
+          <div class="border rounded p-3 flex items-start justify-between <%= _hidden ? 'bg-gray-50 opacity-75' : '' %>" data-rock-id="<%= r.id %>">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <span data-rock-status-badge class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>">
-                  <%= r.onTrack ? 'On Track' : 'Off Track' %>
-                </span>
+                <% if (_completed) { %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-status-ontrack-soft text-status-ontrack">&#128077; Completed</span>
+                <% } else if (_archived) { %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-gray-200 text-gray-600">&#128078; Archived</span>
+                <% } else { %>
+                  <span data-rock-status-badge class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>">
+                    <%= r.onTrack ? 'On Track' : 'Off Track' %>
+                  </span>
+                <% } %>
                 <span class="text-xs text-gray-500"><%= r.quarter %></span>
                 <span class="text-xs text-gray-500">Due <%= new Date(r.dueDate).toLocaleDateString() %></span>
               </div>
@@ -553,20 +580,26 @@
               <% } %>
             </div>
             <div class="flex gap-1 ml-4 items-center">
-              <input type="number" min="1" step="1" data-rock-position
-                     value="<%= (r.position === null || r.position === undefined) ? '' : r.position %>"
-                     class="w-12 text-xs px-1 py-1 border rounded text-gray-600 text-center"
-                     title="Display order for the Rock Review (lower sorts first). Leave blank to sort by due date.">
-              <% if ((orgTeams || []).length > 1) { %>
-                <select data-rock-move-team class="text-xs px-1 py-1 border rounded text-gray-500" title="Move this priority to a different team">
-                  <option value="">move…</option>
-                  <% (orgTeams || []).forEach(function(tm) { if (tm.id === r.teamId) return; %>
-                    <option value="<%= tm.id %>"><%= tm.name %></option>
-                  <% }); %>
-                </select>
+              <% if (_hidden) { %>
+                <button data-rock-reopen class="text-xs px-2 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" title="Restore this priority to the active Rock Review">Reopen</button>
+              <% } else { %>
+                <input type="number" min="1" step="1" data-rock-position
+                       value="<%= (r.position === null || r.position === undefined) ? '' : r.position %>"
+                       class="w-12 text-xs px-1 py-1 border rounded text-gray-600 text-center"
+                       title="Display order for the Rock Review (lower sorts first). Leave blank to sort by due date.">
+                <% if ((orgTeams || []).length > 1) { %>
+                  <select data-rock-move-team class="text-xs px-1 py-1 border rounded text-gray-500" title="Move this priority to a different team">
+                    <option value="">move…</option>
+                    <% (orgTeams || []).forEach(function(tm) { if (tm.id === r.teamId) return; %>
+                      <option value="<%= tm.id %>"><%= tm.name %></option>
+                    <% }); %>
+                  </select>
+                <% } %>
+                <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80">On</button>
+                <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-status-offtrack-soft rounded hover:opacity-80">Off</button>
+                <button data-rock-complete class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80" title="Mark complete (hides from the active Rock Review)">&#128077;</button>
+                <button data-rock-archive class="text-xs px-2 py-1 bg-gray-100 rounded hover:opacity-80" title="Archive / kill this priority (hides it, recoverable)">&#128078;</button>
               <% } %>
-              <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80">On</button>
-              <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-status-offtrack-soft rounded hover:opacity-80">Off</button>
             </div>
           </div>
         <% }); %>
@@ -1718,6 +1751,37 @@
       }
       reloadKeep();
     });
+  });
+
+  // Rock complete / archive / reopen. Complete (thumbs-up) and Archive
+  // (thumbs-down) both hide the rock from the active Rock Review; Reopen
+  // restores it. Each fades the card then reloadKeep() re-renders.
+  async function rockStatusWrite(btn, patch, failLabel) {
+    const card = btn.closest('[data-rock-id]');
+    if (!card) return;
+    const rockId = card.dataset.rockId;
+    btn.disabled = true;
+    const res = await api('/rocks/' + rockId, { method: 'PUT', body: JSON.stringify(patch) });
+    if (res?.error) {
+      alert(failLabel + ' failed: ' + errMsg(res));
+      btn.disabled = false;
+      return;
+    }
+    card.style.transition = 'opacity 0.25s';
+    card.style.opacity = '0';
+    setTimeout(() => reloadKeep(), 200);
+  }
+  document.querySelectorAll('[data-rock-complete]').forEach(btn => {
+    btn.addEventListener('click', () => rockStatusWrite(btn, { completed: true }, 'Complete'));
+  });
+  document.querySelectorAll('[data-rock-archive]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Archive this priority? It will be hidden from the active Rock Review (you can Reopen it later).')) return;
+      rockStatusWrite(btn, { archived: true }, 'Archive');
+    });
+  });
+  document.querySelectorAll('[data-rock-reopen]').forEach(btn => {
+    btn.addEventListener('click', () => rockStatusWrite(btn, { completed: false, archived: false }, 'Reopen'));
   });
 
   // To-do toggle

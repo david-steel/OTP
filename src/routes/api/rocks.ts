@@ -38,6 +38,9 @@ const updateRockSchema = z.object({
   onTrack: z.boolean().optional(),
   statusNote: z.string().optional(),
   completed: z.boolean().optional(),
+  // Archive (kill/deprioritize) a rock without deleting it. true stamps
+  // archivedAt; false (Reopen) clears it. Hidden from the default Rock Review.
+  archived: z.boolean().optional(),
   teamId: z.string().uuid().nullable().optional(),
   planSectionId: z.string().uuid().nullable().optional(),
   executionItemId: z.string().uuid().nullable().optional(),
@@ -172,6 +175,8 @@ export default async function rockRoutes(app: FastifyInstance) {
     }
     if (d.completed === true) updates.completedAt = new Date();
     if (d.completed === false) updates.completedAt = null;
+    if (d.archived === true) updates.archivedAt = new Date();
+    if (d.archived === false) updates.archivedAt = null;
     if (d.teamId !== undefined) updates.teamId = d.teamId;
     if (d.planSectionId !== undefined) updates.planSectionId = d.planSectionId;
     if (d.executionItemId !== undefined) updates.executionItemId = d.executionItemId;

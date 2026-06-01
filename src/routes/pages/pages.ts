@@ -3200,13 +3200,32 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       ? meeting.scorecardSnapshot
       : { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
 
+    // Rock Review hides completed + archived rocks by default; ?rocks=all
+    // reveals them (rendered at the bottom with a Reopen button).
+    const _showHiddenRocks = (request.query as any)?.rocks === 'all';
+    const _rockConds = [
+      eq(rocks.organizationId, org.id),
+      meeting.teamId ? eq(rocks.teamId, meeting.teamId) : isNull(rocks.teamId),
+      isNull(rocks.deletedAt),
+    ];
+    if (!_showHiddenRocks) {
+      _rockConds.push(isNull(rocks.completedAt), isNull(rocks.archivedAt));
+    }
     const orgRocks = await db.select().from(rocks)
+      .where(and(..._rockConds))
+      .orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
+    // Count of human-owned completed-or-archived rocks for the toggle label
+    // (mirrors the EJS agent-rock filter so the count matches what renders).
+    const _hiddenRows = await db.select({ oet: rocks.ownerEntityType, oeid: rocks.ownerExternalId }).from(rocks)
       .where(and(
         eq(rocks.organizationId, org.id),
         meeting.teamId ? eq(rocks.teamId, meeting.teamId) : isNull(rocks.teamId),
         isNull(rocks.deletedAt),
-      ))
-      .orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
+        or(isNotNull(rocks.completedAt), isNotNull(rocks.archivedAt)),
+      ));
+    const hiddenRocksCount = _hiddenRows.filter(
+      (r) => r.oet !== 'agent' && !(typeof r.oeid === 'string' && r.oeid.startsWith('AGT_')),
+    ).length;
     const rocksData = _useSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
       ? meeting.rocksSnapshot
       : { rocks: orgRocks, count: orgRocks.length };
@@ -3421,6 +3440,8 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       meeting,
       scorecard,
       rocks: rocksData,
+      rocksFilter: _showHiddenRocks ? 'all' : 'active',
+      hiddenRocksCount,
       issues: orgIssues,
       todos: orgTodos,
       headlineItems,
