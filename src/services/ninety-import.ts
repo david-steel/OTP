@@ -86,6 +86,98 @@ function resolveTitle(row: Record<string, unknown>): string {
   return hit ? hit.value : '';
 }
 
+const DUE_HEADERS = ['due date', 'due', 'deadline', 'due on', 'target date'];
+const STATUS_HEADERS = ['on track', 'on-track', 'status', 'progress'];
+const DONE_HEADERS = ['completed', 'complete', 'is complete', 'done'];
+const DESC_HEADERS = ['description', 'details', 'notes', 'detail'];
+const GOAL_HEADERS = ['goal', 'target'];
+const UNIT_HEADERS = ['unit', 'units'];
+
+// Parse a loose date string (header or cell) to an ISO date (YYYY-MM-DD), or null.
+export function parseDateLoose(s: unknown): string | null {
+  const raw = String(s ?? '').trim();
+  if (!raw) return null;
+  let d = new Date(raw);
+  if (isNaN(d.getTime())) {
+    const m = raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/); // dig a date out of "Week of 6/1/2026"
+    if (m) d = new Date(`${m[3].length === 2 ? '20' + m[3] : m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`);
+  }
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+// Parse the first number out of a cell ("$61,000" -> 61000, "12%" -> 12), or null.
+export function parseNumber(s: unknown): number | null {
+  const m = String(s ?? '').replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : null;
+}
+
+export type GoalOp = 'gte' | 'lte' | 'gt' | 'lt' | 'eq';
+// Parse a Ninety goal string ("> 10", ">= 50,000", "= 100", "10") into operator+value.
+// createKpi requires operator and value to be BOTH set or BOTH null, so we only
+// return a pair when a number is present.
+export function parseGoal(s: unknown): { operator: GoalOp; value: number } | null {
+  const raw = String(s ?? '').trim();
+  if (!raw) return null;
+  const value = parseNumber(raw);
+  if (value == null) return null;
+  let operator: GoalOp = 'gte';
+  if (/>=|≥/.test(raw)) operator = 'gte';
+  else if (/<=|≤/.test(raw)) operator = 'lte';
+  else if (/>/.test(raw)) operator = 'gt';
+  else if (/</.test(raw)) operator = 'lt';
+  else if (/=/.test(raw)) operator = 'eq';
+  return { operator, value };
+}
+
+function truthy(s: unknown): boolean {
+  return /^(yes|y|true|done|complete|completed|1|on track|on-track|green)$/i.test(String(s ?? '').trim());
+}
+function offTrack(s: unknown): boolean {
+  return /(off|behind|at risk|red|late|overdue)/i.test(String(s ?? '').trim());
+}
+
+// Build the module-specific `extra` payload that the commit step needs to write.
+function extractExtra(module: NinetyModule, row: Record<string, unknown>): Record<string, unknown> {
+  if (module === 'rocks') {
+    const status = pick(row, STATUS_HEADERS)?.value ?? '';
+    return {
+      dueDate: parseDateLoose(pick(row, DUE_HEADERS)?.value),
+      onTrack: !offTrack(status), // default true unless clearly off track
+      description: pick(row, DESC_HEADERS)?.value ?? null,
+    };
+  }
+  if (module === 'todos') {
+    const done = pick(row, DONE_HEADERS)?.value ?? '';
+    return {
+      dueAt: parseDateLoose(pick(row, DUE_HEADERS)?.value),
+      done: truthy(done),
+      description: pick(row, DESC_HEADERS)?.value ?? null,
+    };
+  }
+  if (module === 'issues') {
+    return { description: pick(row, DESC_HEADERS)?.value ?? null };
+  }
+  if (module === 'scorecard') {
+    const goal = parseGoal(pick(row, GOAL_HEADERS)?.value);
+    const reserved = new Set([...OWNER_HEADERS, ...TITLE_HEADERS, ...GOAL_HEADERS, ...UNIT_HEADERS].map(norm));
+    const values: Array<{ periodStart: string; value: number }> = [];
+    for (const key of Object.keys(row)) {
+      if (reserved.has(norm(key)) || !DATE_HEADER_RE.test(key)) continue;
+      const periodStart = parseDateLoose(key);
+      const value = parseNumber(row[key]);
+      if (periodStart && value != null) values.push({ periodStart, value });
+    }
+    return {
+      goalOperator: goal?.operator ?? null,
+      goalValue: goal?.value ?? null,
+      unit: pick(row, UNIT_HEADERS)?.value ?? null,
+      values,
+    };
+  }
+  return {};
+}
+
 // A header that looks like a scorecard period column (a date or week label).
 const DATE_HEADER_RE = /(\d{1,2}[\/\-]\d{1,2})|(\d{4})|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(week|wk|w\/e|w\/c)/i;
 
@@ -123,7 +215,7 @@ function parseSheet(filename: string, sheetName: string, rows: Record<string, un
     const title = resolveTitle(row);
     const owner = resolveOwner(row);
     if (!title && !owner) continue; // skip blank/spacer rows
-    records.push({ module, title: title || '(untitled)', owner, extra: {} });
+    records.push({ module, title: title || '(untitled)', owner, extra: extractExtra(module, row) });
   }
 
   if (module === 'issues' && headers.some(k => /comment/i.test(k)) === false) {
@@ -219,9 +311,14 @@ export function buildPreview(sheets: ParsedSheet[]): ImportPreview {
   };
 }
 
-// Top-level: parse many uploaded files into one preview.
-export function previewNinetyImport(uploads: Array<{ filename: string; buffer: Buffer }>): ImportPreview {
+// Parse many uploaded files into normalized sheets (shared by preview + commit).
+export function parseNinetyUploads(uploads: Array<{ filename: string; buffer: Buffer }>): ParsedSheet[] {
   const sheets: ParsedSheet[] = [];
   for (const u of uploads) sheets.push(...parseNinetyFile(u.buffer, u.filename));
-  return buildPreview(sheets);
+  return sheets;
+}
+
+// Top-level: parse many uploaded files into one preview.
+export function previewNinetyImport(uploads: Array<{ filename: string; buffer: Buffer }>): ImportPreview {
+  return buildPreview(parseNinetyUploads(uploads));
 }

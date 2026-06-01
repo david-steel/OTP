@@ -10,6 +10,7 @@
 
   .ni-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; justify-content:center; gap:10px; }
   .ni-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .ni-mascot { display:block; width:min(440px,80%); height:auto; margin:20px auto 2px; filter:drop-shadow(0 18px 40px rgba(20,22,28,.16)); border-radius:16px; }
   .ni-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.06; font-size:clamp(2rem,4.2vw,3.1rem); color:var(--ink,#14161c); margin:14px auto 0; max-width:18ch; }
   .ni-lead { font-size:18px; line-height:1.6; color:var(--ink-soft,#494d57); max-width:40rem; margin:18px auto 0; }
   .ni-accent { color:var(--blue,#0d7df2); }
@@ -65,6 +66,9 @@
   .ni-final h3 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.35rem; color:#fff; margin:0; }
   .ni-final p { color:#c9cdd6; font-size:15px; margin:10px auto 0; max-width:34rem; line-height:1.55; }
   .ni-final .ni-btn { margin-top:18px; }
+  .ni-done { list-style:none; padding:0; margin:18px auto 0; max-width:30rem; display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .ni-done li { background:rgba(255,255,255,.08); border-radius:10px; padding:12px 14px; color:#e7eaf0; font-size:14px; text-align:left; }
+  .ni-done li b { font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:1.3rem; color:#fff; display:block; }
 
   .ni-err { display:none; margin:22px auto 0; max-width:640px; background:#fdecec; border:1px solid #f3c9c9; color:#a23535; border-radius:10px; padding:13px 16px; font-size:14px; text-align:center; }
   .ni-err.show { display:block; }
@@ -76,6 +80,7 @@
 <section class="ni-hero">
   <div class="ni-wrap">
     <div class="ni-eyebrow"><span class="ni-tick"></span> Switch from Ninety</div>
+    <img class="ni-mascot" src="/public/images/import-orgy.png?v=<%= assetVersion %>" alt="OTP mascot carrying a box of files into OTP" width="440" height="293" loading="eager" decoding="async">
     <h1 class="ni-h1">Bring your Ninety data into OTP</h1>
     <p class="ni-lead">Drop your Ninety exports below. We rebuild your accountability chart from <span class="ni-accent">who owns your Rocks, KPIs, and Issues</span>, then you seat your AI agents next to your people. Nothing is saved on this page. It is a preview.</p>
   </div>
@@ -119,10 +124,11 @@
 
       <div class="ni-warns" id="warns"></div>
 
-      <div class="ni-final">
-        <h3>This is the part Ninety can't do</h3>
-        <p>Next, you seat your AI agents next to these people, with their own KPIs and their own work. Create your OTP workspace and we'll carry this roster in.</p>
-        <a href="/sign-up" class="ni-btn">Create my OTP workspace</a>
+      <div class="ni-final" id="final">
+        <h3>Bring this into your workspace</h3>
+        <p>We'll write these Rocks, To-Dos, Issues, and KPIs into your OTP org and seat these people on your chart. Then you add your AI agents next to them. Safe to run once; re-running will not create duplicates.</p>
+        <button type="button" class="ni-btn" id="commit">Import into my workspace</button>
+        <div class="ni-spin" id="commit-spin" style="color:#c9cdd6;">Importing into your workspace...</div>
       </div>
     </div>
 
@@ -139,6 +145,7 @@
   var spin = document.getElementById('spin');
   var err = document.getElementById('err');
   var results = document.getElementById('results');
+  var lastFiles = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
   function showErr(m) { err.textContent = m; err.classList.add('show'); spin.classList.remove('show'); }
@@ -150,12 +157,15 @@
   drop.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) upload(e.dataTransfer.files); });
   input.addEventListener('change', function () { if (input.files.length) upload(input.files); });
 
+  function filesToForm(files) { var fd = new FormData(); for (var i = 0; i < files.length; i++) fd.append('files', files[i], files[i].name); return fd; }
+
   function upload(files) {
     err.classList.remove('show');
     results.classList.remove('show');
+    lastFiles = files;
     var names = [];
-    var fd = new FormData();
-    for (var i = 0; i < files.length; i++) { fd.append('files', files[i], files[i].name); names.push(files[i].name); }
+    for (var i = 0; i < files.length; i++) names.push(files[i].name);
+    var fd = filesToForm(files);
     filelist.textContent = names.join(', ');
     spin.classList.add('show');
 
@@ -189,6 +199,40 @@
 
     results.classList.add('show');
     results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---- commit (authed write) ----
+  var commitBtn = document.getElementById('commit');
+  var commitSpin = document.getElementById('commit-spin');
+  var final = document.getElementById('final');
+
+  commitBtn.addEventListener('click', function () {
+    if (!lastFiles || !lastFiles.length) { showErr('Upload your Ninety exports first.'); return; }
+    commitBtn.disabled = true;
+    commitSpin.classList.add('show');
+    fetch('/api/v1/import/ninety/commit', { method: 'POST', body: filesToForm(lastFiles), credentials: 'include' })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function (res) {
+        commitSpin.classList.remove('show');
+        if (res.status === 401) { renderSignup(); return; }
+        if (!res.ok) { commitBtn.disabled = false; showErr((res.j && res.j.error && res.j.error.message) || 'Import failed.'); return; }
+        renderCommit(res.j.result);
+      })
+      .catch(function () { commitSpin.classList.remove('show'); commitBtn.disabled = false; showErr('Network error during import. Please try again.'); });
+  });
+
+  function renderSignup() {
+    final.innerHTML = '<h3>Create your OTP workspace to finish</h3>'
+      + '<p>Your preview looks good. Create your free workspace, then come back to this page and click Import. Your files stay on your machine until then.</p>'
+      + '<a href="/sign-up" class="ni-btn">Create my OTP workspace</a>';
+  }
+  function renderCommit(r) {
+    var c = r.created || {};
+    var items = [['People seated', c.humans], ['Rocks', c.rocks], ['To-Dos', c.todos], ['Issues', c.issues], ['KPIs', c.kpis]]
+      .map(function (x) { return '<li><b>' + (x[1] || 0) + '</b>' + esc(x[0]) + '</li>'; }).join('');
+    var warn = (r.warnings && r.warnings.length) ? '<p style="font-size:13px;color:#c9cdd6;margin-top:14px;">' + esc(r.warnings[0]) + '</p>' : '';
+    final.innerHTML = '<h3>Imported into your workspace</h3><ul class="ni-done">' + items + '</ul>' + warn
+      + '<a href="/dashboard/team" class="ni-btn">See my chart</a>';
   }
 })();
 </script>

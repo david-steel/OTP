@@ -3,7 +3,7 @@
 // previewNinetyImport over the buffers, and asserts the reconstruction.
 // Run: npx tsx scripts/verify-ninety-import.ts
 import * as XLSX from 'xlsx';
-import { previewNinetyImport, detectModule } from '../src/services/ninety-import.js';
+import { previewNinetyImport, detectModule, parseNinetyUploads, parseGoal, parseDateLoose } from '../src/services/ninety-import.js';
 
 function xlsxBuf(sheets: Record<string, Record<string, unknown>[]>): Buffer {
   const wb = XLSX.utils.book_new();
@@ -98,6 +98,56 @@ else {
   if (david.kpis !== 1) errs.push(`David kpis expected 1 got ${david.kpis}`);
 }
 if (preview.roster.length !== 3) errs.push(`roster size expected 3 got ${preview.roster.length}`);
+
+// --- write-prep transform checks (increment 2) ---
+console.log('\n=== goal parsing ===');
+const goalCases: Array<[string, string | null, number | null]> = [
+  ['> 10', 'gt', 10], ['>= 50,000', 'gte', 50000], ['<= 5', 'lte', 5], ['< 3', 'lt', 3],
+  ['= 100', 'eq', 100], ['10', 'gte', 10], ['', null, null], ['n/a', null, null],
+];
+for (const [inp, op, val] of goalCases) {
+  const g = parseGoal(inp);
+  const got = g ? `${g.operator}/${g.value}` : 'null';
+  const want = op ? `${op}/${val}` : 'null';
+  console.log(`  "${inp}" -> ${got}`);
+  if (got !== want) errs.push(`parseGoal("${inp}") expected ${want} got ${got}`);
+}
+
+console.log('\n=== date parsing ===');
+const dateCases: Array<[string, string | null]> = [
+  ['06/01/2026', '2026-06-01'], ['2026-06-15', '2026-06-15'], ['Week of 6/8/2026', '2026-06-08'], ['nonsense', null],
+];
+for (const [inp, want] of dateCases) {
+  const got = parseDateLoose(inp);
+  console.log(`  "${inp}" -> ${got}`);
+  if (got !== want) errs.push(`parseDateLoose("${inp}") expected ${want} got ${got}`);
+}
+
+console.log('\n=== extra payloads (what commit writes) ===');
+const sheets = parseNinetyUploads([
+  { filename: 'Rocks.xlsx', buffer: rocks },
+  { filename: 'To-Dos.xlsx', buffer: todos },
+  { filename: 'Scorecard.csv', buffer: scorecard },
+]);
+const allRecs = sheets.flatMap(s => s.records);
+const rockRec = allRecs.find(r => r.module === 'rocks' && r.title === 'Hire 2 setters');
+if (!rockRec) errs.push('rock "Hire 2 setters" not found');
+else {
+  console.log('  rock onTrack (Off Track ->):', rockRec.extra.onTrack, '| dueDate:', rockRec.extra.dueDate);
+  if (rockRec.extra.onTrack !== false) errs.push('Off Track rock should have onTrack=false');
+  if (rockRec.extra.dueDate !== '2026-06-30') errs.push('rock dueDate parse failed: ' + rockRec.extra.dueDate);
+}
+const todoDone = allRecs.find(r => r.module === 'todos' && r.title === 'Update scorecard');
+if (todoDone && todoDone.extra.done !== true) errs.push('completed todo should have done=true');
+const kpiRec = allRecs.find(r => r.module === 'scorecard' && r.title === 'Qualified calls');
+if (!kpiRec) errs.push('kpi "Qualified calls" not found');
+else {
+  const v = (kpiRec.extra.values as any[]) || [];
+  console.log('  kpi goal:', kpiRec.extra.goalOperator, kpiRec.extra.goalValue, '| values:', v.length);
+  if (kpiRec.extra.goalOperator !== 'gt' || kpiRec.extra.goalValue !== 10) errs.push('kpi goal parse failed');
+  if (v.length !== 3) errs.push('kpi should have 3 period values, got ' + v.length);
+  if (v[0] && v[0].periodStart !== '2026-06-01') errs.push('kpi period parse failed: ' + (v[0] && v[0].periodStart));
+}
 
 if (errs.length) {
   console.error('\nFAILED:\n' + errs.map(e => '  - ' + e).join('\n'));

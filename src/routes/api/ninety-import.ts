@@ -11,40 +11,70 @@
 // the parsed records into the caller's org (rocks/todos/tickets/headlines/kpis)
 // and seeds the chart from the roster. This file does not write.
 import type { FastifyInstance } from 'fastify';
+import { getAuth } from '@clerk/fastify';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
-import { previewNinetyImport } from '../../services/ninety-import.js';
+import { previewNinetyImport, parseNinetyUploads } from '../../services/ninety-import.js';
+import { commitNinetyImport } from '../../services/ninety-commit.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 
 const rl = createRateLimiter({ windowMs: 60_000, maxRequests: 20 });
+const commitRl = createRateLimiter({ windowMs: 60_000, maxRequests: 6 });
+
+// Read uploaded multipart files into in-memory buffers. Returns null after
+// sending an error response (caller does `if (!uploads) return`).
+async function readUploads(request: any, reply: any): Promise<Array<{ filename: string; buffer: Buffer }> | null> {
+  if (!request.isMultipart()) {
+    reply.status(400).send({ error: { code: 'NOT_MULTIPART', message: 'Upload your Ninety export files as multipart/form-data.' } });
+    return null;
+  }
+  const uploads: Array<{ filename: string; buffer: Buffer }> = [];
+  try {
+    for await (const part of request.parts()) {
+      if (part.type !== 'file') continue;
+      const buffer = await part.toBuffer();
+      if (buffer.length > 0) uploads.push({ filename: part.filename || 'upload', buffer });
+    }
+  } catch (err: any) {
+    const tooBig = String(err?.code || '').includes('FST_') || /limit/i.test(String(err?.message));
+    reply.status(tooBig ? 413 : 400).send({
+      error: { code: tooBig ? 'FILE_TOO_LARGE' : 'UPLOAD_FAILED', message: tooBig ? 'A file exceeded the 8MB limit, or too many files were sent (max 12).' : 'Could not read the uploaded files.' },
+    });
+    return null;
+  }
+  if (!uploads.length) {
+    reply.status(400).send({ error: { code: 'NO_FILES', message: 'No files received. Export Rocks, To-Dos, Issues, Headlines, and your Scorecard from Ninety, then drop them here.' } });
+    return null;
+  }
+  return uploads;
+}
 
 export default async function ninetyImportRoutes(app: FastifyInstance) {
+  // PREVIEW -- public, write-free.
   app.post('/import/ninety/preview', async (request, reply) => {
     if (!rl(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } });
     }
-    if (!request.isMultipart()) {
-      return reply.status(400).send({ error: { code: 'NOT_MULTIPART', message: 'Upload your Ninety export files as multipart/form-data.' } });
-    }
+    const uploads = await readUploads(request, reply);
+    if (!uploads) return;
+    return reply.status(200).send({ preview: previewNinetyImport(uploads) });
+  });
 
-    const uploads: Array<{ filename: string; buffer: Buffer }> = [];
-    try {
-      for await (const part of request.parts()) {
-        if (part.type !== 'file') continue;
-        const buffer = await part.toBuffer(); // bounded by the 8MB/file limit in server.ts
-        if (buffer.length > 0) uploads.push({ filename: part.filename || 'upload', buffer });
-      }
-    } catch (err: any) {
-      // @fastify/multipart throws on limit breaches (file too big / too many files)
-      const tooBig = String(err?.code || '').includes('FST_') || /limit/i.test(String(err?.message));
-      return reply.status(tooBig ? 413 : 400).send({
-        error: { code: tooBig ? 'FILE_TOO_LARGE' : 'UPLOAD_FAILED', message: tooBig ? 'A file exceeded the 8MB limit, or too many files were sent (max 12).' : 'Could not read the uploaded files.' },
-      });
+  // COMMIT -- authed. Writes the parsed records into the caller's org. Re-parses
+  // server-side (never trusts client-sent parse output). Idempotent on re-run.
+  app.post('/import/ninety/commit', async (request, reply) => {
+    if (!commitRl(request.ip)) {
+      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } });
     }
-
-    if (!uploads.length) {
-      return reply.status(400).send({ error: { code: 'NO_FILES', message: 'No files received. Export Rocks, To-Dos, Issues, Headlines, and your Scorecard from Ninety, then drop them here.' } });
+    const org = await getAuthOrg(request);
+    if (!org) {
+      return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Create your OTP workspace and sign in to import.' } });
     }
+    const uploads = await readUploads(request, reply);
+    if (!uploads) return;
 
-    const preview = previewNinetyImport(uploads);
-    return reply.status(200).send({ preview });
+    const sheets = parseNinetyUploads(uploads);
+    const createdBy = getAuth(request).userId || 'import:ninety';
+    const result = await commitNinetyImport(org.id, org.name, sheets, createdBy);
+    return reply.status(200).send({ result });
   });
 }
