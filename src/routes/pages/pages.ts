@@ -412,6 +412,12 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'Export your Rocks, To-Dos, Issues, Headlines, and Scorecard from Ninety and drop them in. OTP rebuilds your accountability chart from who owns what, then you seat your AI agents. Free preview, nothing stored.',
       canonical: BASE_URL + '/import/ninety',
       navVariant: 'minimal',
+      // Sign-in from this page must return HERE, not dump the user on
+      // /dashboard. The sign-in page reads ?redirect and (for already-signed-in
+      // users) bounces straight back, so a logged-in visitor round-trips to the
+      // importer instead of landing on their daily.
+      navAltLabel: 'Sign in',
+      navAltHref: '/sign-in?redirect=' + encodeURIComponent('/import/ninety'),
       jsonLd: {
         '@context': 'https://schema.org',
         '@type': 'WebPage',

@@ -222,9 +222,12 @@
   });
 
   function renderSignup() {
-    final.innerHTML = '<h3>Create your OTP workspace to finish</h3>'
-      + '<p>Your preview looks good. Create your free workspace, then come back to this page and click Import. Your files stay on your machine until then.</p>'
-      + '<a href="/sign-up" class="ni-btn">Create my OTP workspace</a>';
+    final.innerHTML = '<h3>Sign in to finish the import</h3>'
+      + '<p>Your preview looks good. Sign in, or create your free workspace, and you will land right back on this page. Re-drop the same files and click Import. Nothing is uploaded until you do.</p>'
+      + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;">'
+      + '<a href="/sign-in?redirect=%2Fimport%2Fninety" class="ni-btn">Sign in</a>'
+      + '<a href="/sign-up?redirect_url=%2Fimport%2Fninety" class="ni-btn secondary">Create my workspace</a>'
+      + '</div>';
   }
   function renderCommit(r) {
     var c = r.created || {};
