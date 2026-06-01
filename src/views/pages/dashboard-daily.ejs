@@ -464,8 +464,15 @@
                  var due = r.dueDate ? new Date(r.dueDate) : null;
                  var overdue = due && !r.completedAt && due < new Date();
             %>
-              <% var needsNext = !r.nextAction && !r.completedAt; %>
-              <li class="rounded border <%= needsNext ? 'border-rose-200 border-l-4 border-l-rose-500 bg-rose-50/30' : 'border-gray-100 bg-gray-50/60' %> px-3 py-2 text-sm" data-rock-id="<%= r.id %>" data-entity-kind="rock">
+              <% // Card accent follows the track status so it matches the On/Off
+                 // Track badge: green = on track, red = off track. (Was keyed to
+                 // "missing next action", which painted on-track rocks red and
+                 // clashed with their green badge.) The "+ Set Next Action"
+                 // button below remains the next-action nudge. %>
+              <% var rkAccent = r.completedAt ? 'border-gray-100 bg-gray-50/60'
+                   : (r.onTrack ? 'border-emerald-200 border-l-4 border-l-emerald-400 bg-emerald-50/30'
+                                : 'border-rose-200 border-l-4 border-l-rose-500 bg-rose-50/30'); %>
+              <li class="rounded border <%= rkAccent %> px-3 py-2 text-sm" data-rock-id="<%= r.id %>" data-entity-kind="rock">
                 <div class="flex items-start gap-3">
                   <button class="rock-track-toggle text-[11px] font-semibold uppercase rounded px-2 py-0.5 <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>" data-on-track="<%= r.onTrack ? '1' : '0' %>">
                     <%= r.onTrack ? 'On track' : 'Off track' %>
