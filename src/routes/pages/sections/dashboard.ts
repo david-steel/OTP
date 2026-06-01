@@ -2355,6 +2355,11 @@ Founder, OTP</p>
         .where(and(
           eq(rocks.organizationId, org.id),
           isNull(rocks.deletedAt),
+          // Hide completed + archived from the glanceable "My Rocks" list,
+          // matching the meeting Rock Review. Manage them on the L8 meeting
+          // page (Show completed & archived / Reopen).
+          isNull(rocks.completedAt),
+          isNull(rocks.archivedAt),
           eq(rocks.quarter, currentQuarter),
           ccScope(rocks.teamId, rocks.ownerExternalId),
         ))
