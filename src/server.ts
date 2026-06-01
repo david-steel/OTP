@@ -815,6 +815,14 @@ try {
 }
 
 try {
+  const { ensureOosFilesName } = await import('./db/ensure-oos-files-name.js');
+  await ensureOosFilesName();
+  app.log.info('oos_files.name column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureOosFilesName failed -- chart edits on published-no-draft orgs will 500 until resolved');
+}
+
+try {
   const { ensureTeamsTables } = await import('./db/ensure-teams.js');
   await ensureTeamsTables();
   app.log.info('teams + team_memberships tables are ready');
