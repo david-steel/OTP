@@ -1361,10 +1361,10 @@
   // section in the main pane; the rest hide. Rides the same sectionIdx the
   // timer already tracks, so Prev/Next and the chips drive it for free.
   // Persisted per browser.
-  const FOCUS_KEY = 'otp-l8-focus';
+  const FOCUS_MODE_KEY = 'otp-l8-focus-mode';
   const sections = chips.map(c => document.getElementById(c.dataset.section));
   let focusMode = false;
-  try { focusMode = localStorage.getItem(FOCUS_KEY) === '1'; } catch (e) { /* no storage */ }
+  try { focusMode = localStorage.getItem(FOCUS_MODE_KEY) === '1'; } catch (e) { /* no storage */ }
   const focusBtn = document.getElementById('focus-toggle');
   function applyFocus() {
     sections.forEach((s, i) => { if (s) s.style.display = (focusMode && i !== timerState.sectionIdx) ? 'none' : ''; });
@@ -1377,7 +1377,7 @@
   }
   function setFocus(on) {
     focusMode = on;
-    try { localStorage.setItem(FOCUS_KEY, on ? '1' : '0'); } catch (e) { /* no storage */ }
+    try { localStorage.setItem(FOCUS_MODE_KEY, on ? '1' : '0'); } catch (e) { /* no storage */ }
     applyFocus();
   }
   focusBtn?.addEventListener('click', () => setFocus(!focusMode));
