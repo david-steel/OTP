@@ -309,66 +309,6 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return { meeting };
   });
 
-  // GET /api/v1/meetings/:id/debug-auth -- TEMPORARY read-only diagnostic.
-  // Reports how the CURRENT session resolves for meeting-edit so we can see
-  // exactly which guard blocks an owner in the browser. Reveals only the
-  // requester's own auth context. Remove once the Start/Save bug is fixed.
-  app.get<{ Params: { id: string } }>('/meetings/:id/debug-auth', async (request, reply) => {
-    const id = requireUuidParam(request, reply);
-    if (!id) return;
-    const auth = getAuth(request);
-    const org = await getAuthOrg(request);
-    const apiKeyCtx = await resolveApiKey(request);
-    const member = (request as any).orgMember as { id?: string; role?: any; orgId?: string } | null;
-
-    let ownerOrgClerkOrgId: string | null = null;
-    if (org) {
-      const [o] = await db.select({ clerkOrgId: organizations.clerkOrgId })
-        .from(organizations).where(eq(organizations.id, org.id)).limit(1);
-      ownerOrgClerkOrgId = (o as any)?.clerkOrgId ?? null;
-    }
-
-    let meetingInfo: any = null;
-    let onMeetingTeam: boolean | null = null;
-    let attendeeMatch: boolean | null = null;
-    if (org) {
-      const [m] = await db.select({ teamId: meetings.teamId, attendees: meetings.attendees })
-        .from(meetings).where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id))).limit(1);
-      if (m) {
-        meetingInfo = {
-          teamId: m.teamId,
-          attendeeExternalIds: ((m.attendees as any[]) || []).flatMap((a: any) => a.externalIds || (a.externalId ? [a.externalId] : [])),
-        };
-        if (member?.id && m.teamId) {
-          const { teamMemberships } = await import('../../db/schema.js');
-          const [tm] = await db.select().from(teamMemberships)
-            .where(and(eq(teamMemberships.teamId, m.teamId), eq(teamMemberships.memberId, member.id))).limit(1);
-          onMeetingTeam = !!tm;
-        }
-        if (member?.id) {
-          const { orgMembers } = await import('../../db/schema.js');
-          const [fm] = await db.select({
-            id: orgMembers.id, email: orgMembers.email,
-            displayName: orgMembers.displayName, claimedEntityIds: orgMembers.claimedEntityIds,
-          }).from(orgMembers).where(eq(orgMembers.id, member.id)).limit(1);
-          attendeeMatch = fm ? isAttendee(fm as any, { attendees: m.attendees }) : null;
-        }
-      }
-    }
-
-    return {
-      authUserId: auth.userId || null,
-      viaApiKey: !!apiKeyCtx,
-      resolvedOrgId: org ? org.id : null,
-      ownerOrgClerkOrgId,
-      founderCheck_clerkOrgId_eq_userId: !!(ownerOrgClerkOrgId && auth.userId && ownerOrgClerkOrgId === auth.userId),
-      orgMember: member ? { id: member.id ?? null, role: member.role ?? null, orgId: member.orgId ?? null } : null,
-      meeting: meetingInfo,
-      onMeetingTeam,
-      attendeeMatch,
-    };
-  });
-
   // POST /api/v1/meetings/:id/start  (snapshot scorecard + rocks at meeting start)
   app.post<{ Params: { id: string } }>('/meetings/:id/start', async (request, reply) => {
     const id = requireUuidParam(request, reply);
