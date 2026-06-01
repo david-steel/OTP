@@ -822,6 +822,10 @@ export const rocks = pgTable('rocks', {
   // not the next move. Added via ensure-next-actions.ts boot DDL.
   nextAction: text('next_action'),
   nextActionSetAt: timestamp('next_action_set_at'),
+  // Manual display order for the Rock Review. Lower sorts first; NULL
+  // (unnumbered) sorts after all numbered rocks by soonest due date.
+  // Added via ensure-kpis-rocks-team.ts boot DDL.
+  position: integer('position'),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

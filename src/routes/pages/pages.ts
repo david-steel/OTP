@@ -3206,7 +3206,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         meeting.teamId ? eq(rocks.teamId, meeting.teamId) : isNull(rocks.teamId),
         isNull(rocks.deletedAt),
       ))
-      .orderBy(desc(rocks.dueDate));
+      .orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
     const rocksData = _useSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
       ? meeting.rocksSnapshot
       : { rocks: orgRocks, count: orgRocks.length };

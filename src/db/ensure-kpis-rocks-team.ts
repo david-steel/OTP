@@ -59,6 +59,13 @@ const DDL = [
      ALTER TABLE "rocks"
        ADD COLUMN "execution_item_id" uuid;
    EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  // Manual rock ordering for the Rock Review. Nullable: un-numbered rocks
+  // fall back to due-date sort. Idempotent.
+  `DO $$ BEGIN
+     ALTER TABLE "rocks"
+       ADD COLUMN "position" integer;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
 ];
 
 export async function ensureKpisRocksTeam(): Promise<void> {

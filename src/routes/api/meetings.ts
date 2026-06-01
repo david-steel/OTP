@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { meetings, rocks, kpis, kpiValues, tickets, todos, auditLogs, organizations } from '../../db/schema.js';
@@ -189,7 +189,7 @@ async function buildScorecardSnapshot(orgId: string) {
 async function buildRocksSnapshot(orgId: string) {
   const orgRocks = await db.select().from(rocks)
     .where(and(eq(rocks.organizationId, orgId), isNull(rocks.deletedAt)))
-    .orderBy(desc(rocks.dueDate));
+    .orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
   return { rocks: orgRocks, capturedAt: new Date().toISOString(), count: orgRocks.length };
 }
 

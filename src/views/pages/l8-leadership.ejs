@@ -553,6 +553,10 @@
               <% } %>
             </div>
             <div class="flex gap-1 ml-4 items-center">
+              <input type="number" min="1" step="1" data-rock-position
+                     value="<%= (r.position === null || r.position === undefined) ? '' : r.position %>"
+                     class="w-12 text-xs px-1 py-1 border rounded text-gray-600 text-center"
+                     title="Display order for the Rock Review (lower sorts first). Leave blank to sort by due date.">
               <% if ((orgTeams || []).length > 1) { %>
                 <select data-rock-move-team class="text-xs px-1 py-1 border rounded text-gray-500" title="Move this priority to a different team">
                   <option value="">move…</option>
@@ -1688,6 +1692,31 @@
       card.style.transition = 'opacity 0.25s';
       card.style.opacity = '0';
       setTimeout(() => card.remove(), 250);
+    });
+  });
+
+  // Rock manual ordering: PUT /rocks/:id { position } then reloadKeep() so
+  // the list re-sorts (numbered first ascending, un-numbered after by due
+  // date). Blank input clears the order (position = null).
+  document.querySelectorAll('[data-rock-position]').forEach(inp => {
+    inp.addEventListener('change', async (e) => {
+      const card = e.currentTarget.closest('[data-rock-id]');
+      if (!card) return;
+      const rockId = card.dataset.rockId;
+      const raw = e.currentTarget.value.trim();
+      const position = raw === '' ? null : parseInt(raw, 10);
+      if (position !== null && (isNaN(position) || position < 0)) {
+        alert('Enter a positive number, or leave blank to sort by due date.');
+        return;
+      }
+      e.currentTarget.disabled = true;
+      const res = await api('/rocks/' + rockId, { method: 'PUT', body: JSON.stringify({ position }) });
+      if (res?.error) {
+        alert('Save failed: ' + errMsg(res));
+        e.currentTarget.disabled = false;
+        return;
+      }
+      reloadKeep();
     });
   });
 

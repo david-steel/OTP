@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { rocks, auditLogs } from '../../db/schema.js';
@@ -45,6 +45,9 @@ const updateRockSchema = z.object({
   // Server stamps nextActionSetAt = now whenever this field changes
   // so the L8 weekly review can flag stale Next Actions.
   nextAction: z.string().max(500).nullable().optional(),
+  // Manual display order for the Rock Review (lower sorts first).
+  // null clears the order, returning the rock to due-date fallback sort.
+  position: z.number().int().nullable().optional(),
 });
 
 function authedOrFail(request: any, reply: any) {
@@ -124,7 +127,7 @@ export default async function rockRoutes(app: FastifyInstance) {
       conditions.push(eq(rocks.teamId, request.query.teamId));
     }
 
-    const results = await db.select().from(rocks).where(and(...conditions)).orderBy(desc(rocks.dueDate));
+    const results = await db.select().from(rocks).where(and(...conditions)).orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
     return { rocks: results, total: results.length };
   });
 
@@ -179,6 +182,7 @@ export default async function rockRoutes(app: FastifyInstance) {
       updates.nextAction = d.nextAction;
       updates.nextActionSetAt = d.nextAction ? new Date() : null;
     }
+    if (d.position !== undefined) updates.position = d.position;
 
     const [updated] = await db.update(rocks)
       .set(updates)
