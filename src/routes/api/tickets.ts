@@ -115,19 +115,25 @@ export default async function ticketRoutes(app: FastifyInstance) {
   }
 
   // GET /api/v1/tickets -- List tickets (requires authentication, scoped to org)
-  app.get<{ Querystring: { status?: string; category?: string; limit?: string; page?: string } }>(
+  app.get<{ Querystring: { status?: string; category?: string; teamId?: string; limit?: string; page?: string } }>(
     '/tickets',
     async (request, reply) => {
       const org = await getAuthOrg(request);
       if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required to list tickets' } });
 
-      const { status, category, limit: limitStr, page: pageStr } = request.query;
+      const { status, category, teamId, limit: limitStr, page: pageStr } = request.query;
       const limit = Math.min(parseInt(limitStr || '50', 10), 100);
       const page = Math.max(1, parseInt(pageStr || '1', 10));
 
       const conditions = [eq(tickets.orgId, org.id), isNull(tickets.deletedAt)];
       if (status) conditions.push(eq(tickets.status, status as 'open' | 'in_progress' | 'resolved' | 'closed'));
       if (category) conditions.push(eq(tickets.category, category as 'bug' | 'feature' | 'question' | 'other'));
+      // Honor the teamId filter so callers get team-scoped results instead of
+      // the whole org. 'none'/'null' means explicitly unscoped (team_id IS NULL).
+      // Without this the param was silently ignored and a team's private 1-on-1
+      // tickets came back on any teamId query (6/1 IDS leak in agent tooling).
+      if (teamId === 'none' || teamId === 'null') conditions.push(isNull(tickets.teamId));
+      else if (teamId) conditions.push(eq(tickets.teamId, teamId));
 
       const whereClause = and(...conditions);
 
