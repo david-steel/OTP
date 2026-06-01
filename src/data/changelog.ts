@@ -11,6 +11,31 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- May 31, 2026 ----
+
+  {
+    date: '2026-05-31',
+    tags: ['Major', 'Migration'],
+    title: 'Switch from Ninety: drop your exports and OTP rebuilds your chart from who owns what',
+    summary: 'There is now a one-page way to move from Ninety.io to OTP. Export your Rocks, To-Dos, Issues, Headlines, and Scorecard from Ninety, drop the files at /import/ninety, and OTP reconstructs your accountability chart from the owner of every Rock, KPI, and Issue, because Ninety has no structured chart export. The preview runs with no account and stores nothing; once you have a workspace, one click writes it all in: people seated on the chart, Rocks, To-Dos, Issues, and Scorecard KPIs with their weekly history. Re-running never duplicates. Alongside it, a new eight-part comparison series explains where OTP sits relative to Scaling Up, OKRs, 4DX, Holacracy, Agile/Scrum, Lean/Six Sigma, V2MOM, and the Great Game of Business.',
+    details: `<p>The biggest thing keeping anyone on their current operating-system tool is the cost of switching. This release attacks that directly for Ninety.io, the most common place EOS-style teams keep their Rocks, scorecard, and issues today.</p>
+
+<h3>The hard part, and the trick that beats it</h3>
+<p>We looked at exactly what Ninety lets you export. The five list modules come out clean as spreadsheets: <strong>Rocks, To-Dos, Issues, Headlines</strong> as XLSX and the <strong>Scorecard</strong> as CSV. But the one thing OTP cares about most, the <strong>Accountability Chart</strong>, has no structured export at all. Ninety only prints it to PDF, and the detailed PDF drops the seat descriptions. There is also no public API.</p>
+<p>So we do not need Ninety's chart. Every clean export carries an <strong>owner name</strong> on each row. OTP reads those owner columns across your Rocks, KPIs, To-Dos, Issues, and Headlines and rebuilds your roster from who-owns-what. That is the demo moment: you drop five files and watch your chart come back, seat by seat, reconstructed from accountability rather than from a picture.</p>
+
+<h3>How it works</h3>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Preview, no account, nothing stored.</strong> Drop your files at <code>/import/ninety</code>. They are parsed in memory and discarded. You immediately see counts per module and your reconstructed roster, each person with what they own.</li>
+<li><strong>One-click commit.</strong> Once you are signed in, Import into my workspace writes it all in: people seated on your chart, then Rocks, To-Dos, Issues, and Scorecard KPIs (with each weekly value as real history).</li>
+<li><strong>Idempotent.</strong> Re-running the import never creates duplicates. It dedupes by title and owner, so you can import again safely after fixing an export.</li>
+<li><strong>Honest about the gaps.</strong> The flow tells you what Ninety itself loses on export (Issue comments are dropped; Scorecard history is bounded by the date range you set), and reminds you to export before you cancel Ninety, since Ninety disables export access the moment a subscription lapses.</li>
+</ul>
+
+<h3>Where OTP sits next to the frameworks you already run</h3>
+<p>We also published an eight-part comparison series: OTP vs Scaling Up, OKRs, 4DX, Holacracy, Agile and Scrum, Lean and Six Sigma, V2MOM, and the Great Game of Business. The through-line is the same in every one: OTP is not a rival framework. The framework decides what the company should do; OTP is the operating layer underneath where the work gets executed by a team that is now part human and part AI, each seat with a scorecard and a KPI. Start at the <a href="/blog/otp-vs-frameworks-series-index">series index</a>.</p>`,
+  },
+
   // ---- May 27, 2026 ----
 
   {
