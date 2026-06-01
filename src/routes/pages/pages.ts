@@ -428,6 +428,42 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /import/bloom -- SECONDARY migration tool (Bloom Growth). Same source-agnostic
+  // engine + view as /import/ninety, passed Bloom-specific copy + the neutral
+  // /import/eos/* endpoints. Intentionally not pushed front-and-center.
+  app.get('/import/bloom', async (_request, reply) => {
+    return renderV7(reply, 'import-ninety', {
+      title: 'Import your Bloom Growth data into OTP - Switch from Bloom',
+      description: 'Export your Rocks, To-Dos, Issues, Headlines, and Scorecard from Bloom Growth, unzip, and drop the CSVs in. OTP rebuilds your accountability chart from who owns what, then you seat your AI agents. Free preview, nothing stored.',
+      canonical: BASE_URL + '/import/bloom',
+      navVariant: 'minimal',
+      navAltLabel: 'Sign in',
+      navAltHref: '/sign-in?redirect=' + encodeURIComponent('/import/bloom'),
+      importSource: {
+        tool: 'Bloom Growth',
+        previewUrl: '/api/v1/import/eos/preview',
+        commitUrl: '/api/v1/import/eos/commit',
+        returnPath: '/import/bloom',
+        accept: '.csv,.xlsx,.xls',
+        fileHint: 'The CSV files from your unzipped Bloom export',
+        helpUrl: 'https://help.bloomgrowth.com/en/exporting-data',
+        steps: [
+          'In Bloom Growth, open a meeting, click the three dots, and choose <b>Export All</b> (hold <b>Shift</b> while hovering it to include notes). Repeat per meeting; a 5-minute wait applies between exports.',
+          'Bloom downloads a <b>ZIP</b>. Unzip it and drop the CSVs inside: <b>Quarterly Priorities (Goals)</b>, <b>To-Dos</b>, <b>O&amp;O (Issues)</b>, <b>KPI (Metrics)</b>, and <b>Headlines</b>.',
+          '<b>Export before you cancel Bloom.</b> Pull your data while the subscription is still active.',
+        ],
+        cross: { href: '/import/ninety', label: 'On Ninety instead? Import from Ninety' },
+      },
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Import your Bloom Growth data into OTP',
+        description: 'Migrate from Bloom Growth to OTP. Drop your Bloom CSV exports and OTP reconstructs your accountability chart from the owners of your Rocks, KPIs, and Issues.',
+        url: BASE_URL + '/import/bloom',
+      },
+    });
+  });
+
   // /otp-vs-ninety-eos-one -- bottom-funnel comparison page. Concede Stage-1
   // EOS parity, win on agents-as-employees + humans-free/agents-paid pricing.
   app.get('/otp-vs-ninety-eos-one', async (_request, reply) => {

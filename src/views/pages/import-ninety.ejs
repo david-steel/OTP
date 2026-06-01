@@ -1,7 +1,25 @@
-<%# /import/ninety -- v7 layout, ORGY palette. Top-of-funnel migration tool.
-    Drop Ninety exports -> POST /api/v1/import/ninety/preview -> render the
-    roster reconstructed from owner columns. Write-free preview (increment 1).
+<%# Shared EOS-import view -- serves /import/ninety AND /import/bloom.
+    Source-specific copy/endpoints come in via the `importSource` local
+    (defaults below = Ninety, so the original route is unchanged). Drop exports
+    -> POST previewUrl -> render the roster reconstructed from owner columns.
     v7.css is PREBUILT: all layout/color is scoped .ni-* CSS + design tokens. %>
+<%
+  var src = (typeof importSource !== 'undefined' && importSource) ? importSource : {};
+  var tool = src.tool || 'Ninety';
+  var previewUrl = src.previewUrl || '/api/v1/import/ninety/preview';
+  var commitUrl = src.commitUrl || '/api/v1/import/ninety/commit';
+  var returnPath = src.returnPath || '/import/ninety';
+  var returnEnc = encodeURIComponent(returnPath);
+  var accept = src.accept || '.xlsx,.xls,.csv';
+  var fileHint = src.fileHint || 'XLSX and CSV';
+  var helpUrl = src.helpUrl || 'https://help.ninety.io/account-options/exporting-and-printing';
+  var steps = src.steps || [
+    'In Ninety, export each of these to a file: <b>Rocks</b>, <b>To-Dos</b>, <b>Issues</b>, <b>Headlines</b> (XLSX) and your <b>Scorecard</b> (CSV). One team at a time.',
+    'For the Scorecard, <b>widen the date range first</b> so you capture full history, not just the current weeks.',
+    '<b>Export before you cancel ' + tool + '.</b> ' + tool + ' turns off export access the moment a subscription lapses.'
+  ];
+  var cross = src.cross || { href: '/import/bloom', label: 'On Bloom Growth instead? Import from Bloom' };
+%>
 <style>
   .ni-wrap { max-width: 920px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
   .ni-hero { padding-top: 132px; padding-bottom: 40px; text-align: center; }
@@ -75,14 +93,16 @@
   .ni-spin { display:none; margin-top:20px; font-size:14px; color:var(--ink-mute,#888c96); }
   .ni-spin.show { display:block; }
   .ni-note { font-size:12.5px; color:var(--ink-mute,#888c96); margin-top:22px; text-align:center; line-height:1.6; }
+  .ni-cross { font-size:13.5px; text-align:center; margin-top:14px; }
+  .ni-cross a { color:var(--blue,#0d7df2); }
 </style>
 
 <section class="ni-hero">
   <div class="ni-wrap">
-    <div class="ni-eyebrow"><span class="ni-tick"></span> Switch from Ninety</div>
+    <div class="ni-eyebrow"><span class="ni-tick"></span> Switch from <%= tool %></div>
     <img class="ni-mascot" src="/public/images/import-orgy.png?v=<%= assetVersion %>" alt="OTP mascot carrying a box of files into OTP" width="440" height="293" loading="eager" decoding="async">
-    <h1 class="ni-h1">Bring your Ninety data into OTP</h1>
-    <p class="ni-lead">Drop your Ninety exports below. We rebuild your accountability chart from <span class="ni-accent">who owns your Rocks, KPIs, and Issues</span>, then you seat your AI agents next to your people. Nothing is saved on this page. It is a preview.</p>
+    <h1 class="ni-h1">Bring your <%= tool %> data into OTP</h1>
+    <p class="ni-lead">Drop your <%= tool %> exports below. We rebuild your accountability chart from <span class="ni-accent">who owns your Rocks, KPIs, and Issues</span>, then you seat your AI agents next to your people. Nothing is saved on this page. It is a preview.</p>
   </div>
 </section>
 
@@ -90,18 +110,18 @@
   <div class="ni-wrap">
 
     <div class="ni-steps">
-      <div class="ni-step"><span class="ni-num">1</span><span>In Ninety, export each of these to a file: <b>Rocks</b>, <b>To-Dos</b>, <b>Issues</b>, <b>Headlines</b> (XLSX) and your <b>Scorecard</b> (CSV). One team at a time.</span></div>
-      <div class="ni-step"><span class="ni-num">2</span><span>For the Scorecard, <b>widen the date range first</b> so you capture full history, not just the current weeks.</span></div>
-      <div class="ni-step"><span class="ni-num">3</span><span><b>Export before you cancel Ninety.</b> Ninety turns off export access the moment a subscription lapses.</span></div>
+      <% steps.forEach(function (s, i) { %>
+      <div class="ni-step"><span class="ni-num"><%= i + 1 %></span><span><%- s %></span></div>
+      <% }) %>
     </div>
-    <p class="ni-help">Need the exact buttons? See Ninety's <a href="https://help.ninety.io/account-options/exporting-and-printing" target="_blank" rel="noopener">exporting and printing guide</a>.</p>
+    <p class="ni-help">Need the exact buttons? See <%= tool %>'s <a href="<%= helpUrl %>" target="_blank" rel="noopener">export guide</a>.</p>
 
     <div class="ni-drop" id="drop">
       <div class="ni-cloud">☁</div>
-      <h3>Drop your Ninety exports here</h3>
-      <p>XLSX and CSV. Up to 12 files, 8MB each. Drag in, or</p>
+      <h3>Drop your <%= tool %> exports here</h3>
+      <p><%= fileHint %>. Up to 12 files, 8MB each. Drag in, or</p>
       <button type="button" class="ni-btn" id="browse">Choose files</button>
-      <input type="file" id="file" accept=".xlsx,.xls,.csv" multiple hidden>
+      <input type="file" id="file" accept="<%= accept %>" multiple hidden>
       <div class="ni-files" id="filelist"></div>
     </div>
 
@@ -114,7 +134,7 @@
       <div class="ni-grid" id="stats"></div>
 
       <h2 class="ni-h2">Your chart, rebuilt from who owns what</h2>
-      <p class="ni-sub">Ninety has no structured chart export, so we reconstructed your roster from the owner of every Rock, To-Do, Issue, Headline, and KPI. This is the seat list OTP will start you with.</p>
+      <p class="ni-sub"><%= tool %> has no structured chart export, so we reconstructed your roster from the owner of every Rock, To-Do, Issue, Headline, and KPI. This is the seat list OTP will start you with.</p>
       <div class="ni-card ni-tablewrap">
         <table class="ni-tbl" id="roster">
           <thead><tr><th>Person</th><th>Rocks</th><th>To-Dos</th><th>Issues</th><th>Headlines</th><th>KPIs</th><th>Total owned</th></tr></thead>
@@ -133,11 +153,17 @@
     </div>
 
     <p class="ni-note"><strong>The preview is free and private:</strong> your files are read in memory and never stored, and no account is needed to run it. <strong>Importing into your workspace</strong> signs you in and writes the data into your OTP org, where you can edit or delete any of it anytime.</p>
+    <p class="ni-cross"><a href="<%= cross.href %>"><%= cross.label %></a></p>
   </div>
 </section>
 
 <script>
 (function () {
+  var PREVIEW_URL = '<%= previewUrl %>';
+  var COMMIT_URL = '<%= commitUrl %>';
+  var RETURN_ENC = '<%= returnEnc %>';
+  var TOOL = '<%= tool %>';
+
   var drop = document.getElementById('drop');
   var input = document.getElementById('file');
   var browse = document.getElementById('browse');
@@ -169,7 +195,7 @@
     filelist.textContent = names.join(', ');
     spin.classList.add('show');
 
-    fetch('/api/v1/import/ninety/preview', { method: 'POST', body: fd })
+    fetch(PREVIEW_URL, { method: 'POST', body: fd })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         spin.classList.remove('show');
@@ -207,10 +233,10 @@
   var final = document.getElementById('final');
 
   commitBtn.addEventListener('click', function () {
-    if (!lastFiles || !lastFiles.length) { showErr('Upload your Ninety exports first.'); return; }
+    if (!lastFiles || !lastFiles.length) { showErr('Upload your ' + TOOL + ' exports first.'); return; }
     commitBtn.disabled = true;
     commitSpin.classList.add('show');
-    fetch('/api/v1/import/ninety/commit', { method: 'POST', body: filesToForm(lastFiles), credentials: 'include' })
+    fetch(COMMIT_URL, { method: 'POST', body: filesToForm(lastFiles), credentials: 'include' })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
       .then(function (res) {
         commitSpin.classList.remove('show');
@@ -225,8 +251,8 @@
     final.innerHTML = '<h3>Sign in to finish the import</h3>'
       + '<p>Your preview looks good. Sign in, or create your free workspace, and you will land right back on this page. Re-drop the same files and click Import. Nothing is uploaded until you do.</p>'
       + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;">'
-      + '<a href="/sign-in?redirect=%2Fimport%2Fninety" class="ni-btn">Sign in</a>'
-      + '<a href="/sign-up?redirect_url=%2Fimport%2Fninety" class="ni-btn secondary">Create my workspace</a>'
+      + '<a href="/sign-in?redirect=' + RETURN_ENC + '" class="ni-btn">Sign in</a>'
+      + '<a href="/sign-up?redirect_url=' + RETURN_ENC + '" class="ni-btn secondary">Create my workspace</a>'
       + '</div>';
   }
   function renderCommit(r) {

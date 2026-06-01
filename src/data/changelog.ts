@@ -11,6 +11,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 1, 2026 ----
+
+  {
+    date: '2026-06-01',
+    tags: ['Migration'],
+    title: 'The importer now speaks Bloom Growth too',
+    summary: 'The same drop-your-exports importer that moves teams off Ninety now also handles Bloom Growth at /import/bloom. Export your meeting data from Bloom (it ships a ZIP of CSVs: Quarterly Priorities, To-Dos, O&O Issues, KPI Metrics, Headlines), unzip, and drop the CSVs in. OTP rebuilds your accountability chart from who owns what and writes your Rocks, To-Dos, Issues, and Scorecard in, exactly like the Ninety flow. The engine is shared, so the same idempotent, write-free-preview behavior applies.',
+    details: `<p>The import engine was built source-agnostic on purpose: it reconstructs your chart from the owner column that every clean EOS export carries, regardless of which tool produced it. Adding Bloom Growth was mostly teaching the parser Bloom's file names.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>New page at <code>/import/bloom</code></strong> with Bloom-specific export steps (Bloom exports per meeting, as a ZIP you unzip). Same preview-then-commit flow, same mascot, same "rebuild the chart from who owns what" result.</li>
+<li><strong>Bloom's quirky file names handled</strong> — its To-Dos file is literally named "To-Dos (KPI (Metrics))", which naive detection would mistake for a scorecard. The parser now matches explicit module names first and treats the scorecard as the fallback, so To-Dos, Quarterly Priorities (Goals), and O&O (Issues) all land in the right place.</li>
+<li><strong>Secondary by design.</strong> Ninety stays the headline; Bloom is a quieter second door. The two import pages cross-link, and the engine, endpoints, and commit logic are shared.</li>
+</ul>
+<p>Note: like Ninety, Bloom's accountability chart is print-only on export, so OTP reconstructs it from owners rather than parsing a chart file. Bloom also has a REST API, which is a cleaner future path than CSVs; for now the drop-the-files flow keeps it consistent with Ninety.</p>`,
+  },
+
   // ---- May 31, 2026 ----
 
   {

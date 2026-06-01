@@ -42,39 +42,47 @@ async function readUploads(request: any, reply: any): Promise<Array<{ filename: 
     return null;
   }
   if (!uploads.length) {
-    reply.status(400).send({ error: { code: 'NO_FILES', message: 'No files received. Export Rocks, To-Dos, Issues, Headlines, and your Scorecard from Ninety, then drop them here.' } });
+    reply.status(400).send({ error: { code: 'NO_FILES', message: 'No files received. Export your Rocks, To-Dos, Issues, Headlines, and Scorecard from your EOS tool, then drop the files here.' } });
     return null;
   }
   return uploads;
 }
 
+// PREVIEW -- public, write-free. Source-agnostic (Ninety + Bloom Growth).
+async function previewHandler(request: any, reply: any) {
+  if (!rl(request.ip)) {
+    return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } });
+  }
+  const uploads = await readUploads(request, reply);
+  if (!uploads) return;
+  return reply.status(200).send({ preview: previewNinetyImport(uploads) });
+}
+
+// COMMIT -- authed. Writes the parsed records into the caller's org. Re-parses
+// server-side (never trusts client-sent parse output). Idempotent on re-run.
+async function commitHandler(request: any, reply: any) {
+  if (!commitRl(request.ip)) {
+    return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } });
+  }
+  const org = await getAuthOrg(request);
+  if (!org) {
+    return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Create your OTP workspace and sign in to import.' } });
+  }
+  const uploads = await readUploads(request, reply);
+  if (!uploads) return;
+
+  const sheets = parseNinetyUploads(uploads);
+  const createdBy = getAuth(request).userId || 'import:eos';
+  const result = await commitNinetyImport(org.id, org.name, sheets, createdBy);
+  return reply.status(200).send({ result });
+}
+
 export default async function ninetyImportRoutes(app: FastifyInstance) {
-  // PREVIEW -- public, write-free.
-  app.post('/import/ninety/preview', async (request, reply) => {
-    if (!rl(request.ip)) {
-      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } });
-    }
-    const uploads = await readUploads(request, reply);
-    if (!uploads) return;
-    return reply.status(200).send({ preview: previewNinetyImport(uploads) });
-  });
-
-  // COMMIT -- authed. Writes the parsed records into the caller's org. Re-parses
-  // server-side (never trusts client-sent parse output). Idempotent on re-run.
-  app.post('/import/ninety/commit', async (request, reply) => {
-    if (!commitRl(request.ip)) {
-      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } });
-    }
-    const org = await getAuthOrg(request);
-    if (!org) {
-      return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Create your OTP workspace and sign in to import.' } });
-    }
-    const uploads = await readUploads(request, reply);
-    if (!uploads) return;
-
-    const sheets = parseNinetyUploads(uploads);
-    const createdBy = getAuth(request).userId || 'import:ninety';
-    const result = await commitNinetyImport(org.id, org.name, sheets, createdBy);
-    return reply.status(200).send({ result });
-  });
+  // Same handlers under a Ninety-named path (front-and-center funnel) and a
+  // source-neutral /import/eos path (used by the secondary Bloom Growth page).
+  // The parser is source-agnostic; the URL is cosmetic.
+  app.post('/import/ninety/preview', previewHandler);
+  app.post('/import/ninety/commit', commitHandler);
+  app.post('/import/eos/preview', previewHandler);
+  app.post('/import/eos/commit', commitHandler);
 }

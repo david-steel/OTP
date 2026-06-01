@@ -581,6 +581,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/meet-radar', priority: '0.95', changefreq: 'weekly' },
     { loc: '/otp-vs-ninety-eos-one', priority: '0.9', changefreq: 'monthly' },
     { loc: '/import/ninety', priority: '0.85', changefreq: 'monthly' },
+    { loc: '/import/bloom', priority: '0.6', changefreq: 'monthly' },
     { loc: '/plan', priority: '0.7', changefreq: 'monthly' },
     { loc: '/glossary', priority: '0.9', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.8', changefreq: 'monthly' },

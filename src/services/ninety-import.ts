@@ -188,18 +188,25 @@ function looksLikeScorecard(headers: string[]): boolean {
   return hasMeasurable || (dateCols >= 3 && hasGoal) || dateCols >= 4;
 }
 
-// Decide which Ninety module a sheet is, from sheet name + filename + headers.
+// Decide which EOS module a sheet is, from sheet name + filename + headers.
+// Works across tools: Ninety (Rocks/To-Dos/Issues/Headlines/Scorecard) and
+// Bloom Growth (Quarterly Priorities (Goals) / To-Dos (KPI (Metrics)) /
+// O&O (Issues) / Headlines / KPI (Metrics)).
+//
+// Order matters: explicit module names are matched FIRST, and the scorecard
+// check runs LAST because it is the fuzziest (date-column heuristic) and
+// because Bloom's To-Dos file is literally named "To-Dos (KPI (Metrics))" --
+// the "kpi" substring must NOT make it a scorecard.
 export function detectModule(sheetName: string, filename: string, headers: string[]): NinetyModule {
   const hay = `${norm(sheetName)} ${norm(filename)}`;
   const h = headers.map(norm);
   const hasHeader = (re: RegExp) => h.some(x => re.test(x));
 
-  if (/scorecard|measurable|kpi|metric/.test(hay) || looksLikeScorecard(headers)) return 'scorecard';
-  if (/milestone/.test(hay)) return 'rocks'; // rocks export ships a Milestones tab
-  if (/\brock/.test(hay) || hasHeader(/^rock\b/)) return 'rocks';
-  if (/headline/.test(hay) || hasHeader(/headline/)) return 'headlines';
-  if (/issue|short[- ]term|long[- ]term|ids/.test(hay) || hasHeader(/^issue/)) return 'issues';
   if (/to[- ]?do|todo|task/.test(hay) || hasHeader(/to[- ]?do/)) return 'todos';
+  if (/headline/.test(hay) || hasHeader(/headline/)) return 'headlines';
+  if (/o&o|issue|short[- ]term|long[- ]term|\bids\b/.test(hay) || hasHeader(/^issue/)) return 'issues';
+  if (/\brock|milestone|quarterly priorit|\bgoals?\b/.test(hay) || hasHeader(/^rock\b/)) return 'rocks';
+  if (/scorecard|measurable|kpi|metric/.test(hay) || looksLikeScorecard(headers)) return 'scorecard';
   return 'unknown';
 }
 
