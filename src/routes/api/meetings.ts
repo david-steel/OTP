@@ -100,16 +100,24 @@ async function checkMeetingEdit(
   const auth = getAuth(request);
   if (!auth.userId) return true; // API-key path
 
+  // Legacy founder: their Clerk user id is stored as organizations.clerkOrgId
+  // (the same identity getAuthOrg Path 1 uses to resolve the org). They own
+  // this org and may always edit its meetings -- regardless of whether an
+  // org_members row exists or what role it carries. This MUST run before the
+  // member/role checks below, or a founder who also has a non-privileged
+  // org_members row gets wrongly blocked (the 6/1 "Start button does nothing"
+  // bug: the page resolver honored this identity but the API gate did not).
+  const [ownerOrg] = await db.select({ clerkOrgId: organizations.clerkOrgId })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+  if (ownerOrg && (ownerOrg as any).clerkOrgId === auth.userId) return true;
+
   const member = (request as any).orgMember as
     | { id: string; role: any }
     | null;
 
   if (!member) {
-    // Legacy "I am the org owner via clerkOrgId" fallback
-    const [legacy] = await db.select().from(organizations)
-      .where(eq(organizations.id, orgId))
-      .limit(1);
-    if (legacy && (legacy as any).clerkOrgId === auth.userId) return true;
     reply.status(403).send({ error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this org' } });
     return false;
   }
