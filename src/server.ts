@@ -59,6 +59,15 @@ await app.register(fastifyCors, {
   credentials: true,
 });
 
+// Multipart file uploads (Ninety.io importer at /import/ninety). Adds a parser
+// for multipart/form-data only -- JSON/urlencoded handlers are untouched.
+// Handlers opt in via request.parts()/request.file(). Caps keep a stray big
+// upload from exhausting memory; the importer parses buffers in-memory and
+// persists nothing.
+await app.register(import('@fastify/multipart'), {
+  limits: { fileSize: 8 * 1024 * 1024, files: 12, fieldSize: 1024 * 1024 },
+});
+
 // Healthcheck — registered BEFORE Clerk plugin so Clerk's global preHandler
 // does not run on /health. Otherwise, if Clerk rejects the key
 // ("Publishable key not valid"), every request including /health returns 500
@@ -714,6 +723,7 @@ await app.register(import('./routes/api/lead-signup.js'), { prefix: '/api/v1' })
 await app.register(import('./routes/api/oos-operating-plan.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/clerk-webhook.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/onboarding.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/ninety-import.js'), { prefix: '/api/v1' });
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));

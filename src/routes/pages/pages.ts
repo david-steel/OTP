@@ -403,6 +403,25 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /import/ninety -- Ninety.io migration tool. Drop exports, see the chart
+  // rebuilt from owner columns. Write-free preview (increment 1); the commit
+  // step is authed and lives behind sign-up.
+  app.get('/import/ninety', async (_request, reply) => {
+    return renderV7(reply, 'import-ninety', {
+      title: 'Import your Ninety data into OTP - Switch from Ninety',
+      description: 'Export your Rocks, To-Dos, Issues, Headlines, and Scorecard from Ninety and drop them in. OTP rebuilds your accountability chart from who owns what, then you seat your AI agents. Free preview, nothing stored.',
+      canonical: BASE_URL + '/import/ninety',
+      navVariant: 'minimal',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Import your Ninety data into OTP',
+        description: 'Migrate from Ninety.io to OTP. Drop your Ninety exports and OTP reconstructs your accountability chart from the owners of your Rocks, KPIs, and Issues.',
+        url: BASE_URL + '/import/ninety',
+      },
+    });
+  });
+
   // /otp-vs-ninety-eos-one -- bottom-funnel comparison page. Concede Stage-1
   // EOS parity, win on agents-as-employees + humans-free/agents-paid pricing.
   app.get('/otp-vs-ninety-eos-one', async (_request, reply) => {

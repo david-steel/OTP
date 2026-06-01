@@ -1,0 +1,194 @@
+<%# /import/ninety -- v7 layout, ORGY palette. Top-of-funnel migration tool.
+    Drop Ninety exports -> POST /api/v1/import/ninety/preview -> render the
+    roster reconstructed from owner columns. Write-free preview (increment 1).
+    v7.css is PREBUILT: all layout/color is scoped .ni-* CSS + design tokens. %>
+<style>
+  .ni-wrap { max-width: 920px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .ni-hero { padding-top: 132px; padding-bottom: 40px; text-align: center; }
+  .ni-sec  { padding-top: 28px; padding-bottom: 64px; }
+  @media (max-width: 640px) { .ni-hero { padding-top: 104px; } }
+
+  .ni-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; justify-content:center; gap:10px; }
+  .ni-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .ni-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.06; font-size:clamp(2rem,4.2vw,3.1rem); color:var(--ink,#14161c); margin:14px auto 0; max-width:18ch; }
+  .ni-lead { font-size:18px; line-height:1.6; color:var(--ink-soft,#494d57); max-width:40rem; margin:18px auto 0; }
+  .ni-accent { color:var(--blue,#0d7df2); }
+
+  /* export checklist */
+  .ni-steps { display:grid; gap:10px; margin:26px auto 0; max-width:640px; text-align:left; }
+  .ni-step { display:flex; gap:12px; align-items:flex-start; background:var(--grey,#f0f1f3); border-radius:12px; padding:14px 16px; }
+  .ni-step b { color:var(--ink,#14161c); font-family:'Schibsted Grotesk','Inter',sans-serif; }
+  .ni-step span { font-size:14.5px; line-height:1.5; color:var(--ink-soft,#494d57); }
+  .ni-num { flex:none; width:24px; height:24px; border-radius:50%; background:var(--blue,#0d7df2); color:#fff; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; font-family:'Schibsted Grotesk','Inter',sans-serif; }
+  .ni-help { font-size:13.5px; color:var(--ink-mute,#888c96); margin-top:12px; text-align:center; }
+  .ni-help a { color:var(--blue,#0d7df2); }
+
+  /* drop zone */
+  .ni-drop { margin:28px auto 0; max-width:640px; border:2px dashed var(--line,#e6e8ec); border-radius:16px; background:var(--white,#fcfcfd); padding:40px 24px; text-align:center; cursor:pointer; transition:border-color .2s, background .2s; }
+  .ni-drop:hover, .ni-drop.drag { border-color:var(--blue,#0d7df2); background:rgba(13,125,242,0.04); }
+  .ni-drop h3 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.1rem; color:var(--ink,#14161c); margin:0; }
+  .ni-drop p { font-size:14px; color:var(--ink-mute,#888c96); margin:8px 0 0; }
+  .ni-cloud { font-size:30px; line-height:1; }
+  .ni-btn { display:inline-block; margin-top:16px; background:var(--blue,#0d7df2); color:#fff; font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:15px; border:none; border-radius:10px; padding:12px 22px; cursor:pointer; }
+  .ni-btn:disabled { opacity:.5; cursor:default; }
+  .ni-btn.secondary { background:var(--ink,#14161c); }
+  .ni-files { font-size:13.5px; color:var(--ink-soft,#494d57); margin-top:14px; }
+
+  /* results */
+  .ni-results { margin-top:34px; display:none; }
+  .ni-results.show { display:block; }
+  .ni-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  @media (max-width:640px){ .ni-grid { grid-template-columns:repeat(2,1fr); } }
+  .ni-stat { background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); border-radius:12px; padding:16px; text-align:center; }
+  .ni-stat .n { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:1.7rem; color:var(--ink,#14161c); line-height:1; }
+  .ni-stat .l { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-mute,#888c96); margin-top:6px; }
+
+  .ni-h2 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.4rem; color:var(--ink,#14161c); margin:34px 0 6px; }
+  .ni-sub { font-size:14.5px; color:var(--ink-soft,#494d57); margin:0 0 14px; }
+
+  .ni-card { border-radius:14px; background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); overflow:hidden; }
+  .ni-tablewrap { overflow-x:auto; }
+  table.ni-tbl { width:100%; border-collapse:separate; border-spacing:0; min-width:560px; font-size:14.5px; }
+  table.ni-tbl th, table.ni-tbl td { padding:12px 14px; border-bottom:1px solid var(--line,#e6e8ec); text-align:center; }
+  table.ni-tbl th { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12.5px; color:var(--ink,#14161c); text-transform:uppercase; letter-spacing:.05em; }
+  table.ni-tbl td:first-child, table.ni-tbl th:first-child { text-align:left; }
+  table.ni-tbl .who { font-weight:700; color:var(--ink,#14161c); }
+  table.ni-tbl .tot { font-weight:800; color:var(--blue,#0d7df2); }
+  table.ni-tbl tr:last-child td { border-bottom:none; }
+  table.ni-tbl .z { color:#c2c6cd; }
+
+  .ni-warns { margin-top:18px; }
+  .ni-warn { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.5; color:var(--ink-soft,#494d57); background:#fff8ec; border:1px solid #f1e2c4; border-radius:10px; padding:11px 14px; margin-top:8px; }
+  .ni-warn b { color:#b6791f; }
+
+  .ni-final { margin-top:30px; text-align:center; background:var(--ink,#14161c); border-radius:16px; padding:34px 24px; }
+  .ni-final h3 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.35rem; color:#fff; margin:0; }
+  .ni-final p { color:#c9cdd6; font-size:15px; margin:10px auto 0; max-width:34rem; line-height:1.55; }
+  .ni-final .ni-btn { margin-top:18px; }
+
+  .ni-err { display:none; margin:22px auto 0; max-width:640px; background:#fdecec; border:1px solid #f3c9c9; color:#a23535; border-radius:10px; padding:13px 16px; font-size:14px; text-align:center; }
+  .ni-err.show { display:block; }
+  .ni-spin { display:none; margin-top:20px; font-size:14px; color:var(--ink-mute,#888c96); }
+  .ni-spin.show { display:block; }
+  .ni-note { font-size:12.5px; color:var(--ink-mute,#888c96); margin-top:22px; text-align:center; line-height:1.6; }
+</style>
+
+<section class="ni-hero">
+  <div class="ni-wrap">
+    <div class="ni-eyebrow"><span class="ni-tick"></span> Switch from Ninety</div>
+    <h1 class="ni-h1">Bring your Ninety data into OTP</h1>
+    <p class="ni-lead">Drop your Ninety exports below. We rebuild your accountability chart from <span class="ni-accent">who owns your Rocks, KPIs, and Issues</span>, then you seat your AI agents next to your people. Nothing is saved on this page. It is a preview.</p>
+  </div>
+</section>
+
+<section class="ni-sec">
+  <div class="ni-wrap">
+
+    <div class="ni-steps">
+      <div class="ni-step"><span class="ni-num">1</span><span>In Ninety, export each of these to a file: <b>Rocks</b>, <b>To-Dos</b>, <b>Issues</b>, <b>Headlines</b> (XLSX) and your <b>Scorecard</b> (CSV). One team at a time.</span></div>
+      <div class="ni-step"><span class="ni-num">2</span><span>For the Scorecard, <b>widen the date range first</b> so you capture full history, not just the current weeks.</span></div>
+      <div class="ni-step"><span class="ni-num">3</span><span><b>Export before you cancel Ninety.</b> Ninety turns off export access the moment a subscription lapses.</span></div>
+    </div>
+    <p class="ni-help">Need the exact buttons? See Ninety's <a href="https://help.ninety.io/account-options/exporting-and-printing" target="_blank" rel="noopener">exporting and printing guide</a>.</p>
+
+    <div class="ni-drop" id="drop">
+      <div class="ni-cloud">☁</div>
+      <h3>Drop your Ninety exports here</h3>
+      <p>XLSX and CSV. Up to 12 files, 8MB each. Drag in, or</p>
+      <button type="button" class="ni-btn" id="browse">Choose files</button>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv" multiple hidden>
+      <div class="ni-files" id="filelist"></div>
+    </div>
+
+    <div class="ni-spin" id="spin">Reading your exports and rebuilding the chart...</div>
+    <div class="ni-err" id="err"></div>
+
+    <div class="ni-results" id="results">
+      <h2 class="ni-h2">What we found</h2>
+      <p class="ni-sub" id="found-sub"></p>
+      <div class="ni-grid" id="stats"></div>
+
+      <h2 class="ni-h2">Your chart, rebuilt from who owns what</h2>
+      <p class="ni-sub">Ninety has no structured chart export, so we reconstructed your roster from the owner of every Rock, To-Do, Issue, Headline, and KPI. This is the seat list OTP will start you with.</p>
+      <div class="ni-card ni-tablewrap">
+        <table class="ni-tbl" id="roster">
+          <thead><tr><th>Person</th><th>Rocks</th><th>To-Dos</th><th>Issues</th><th>Headlines</th><th>KPIs</th><th>Total owned</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="ni-warns" id="warns"></div>
+
+      <div class="ni-final">
+        <h3>This is the part Ninety can't do</h3>
+        <p>Next, you seat your AI agents next to these people, with their own KPIs and their own work. Create your OTP workspace and we'll carry this roster in.</p>
+        <a href="/sign-up" class="ni-btn">Create my OTP workspace</a>
+      </div>
+    </div>
+
+    <p class="ni-note">Preview only. Your files are parsed in memory and never stored. No account required to try this.</p>
+  </div>
+</section>
+
+<script>
+(function () {
+  var drop = document.getElementById('drop');
+  var input = document.getElementById('file');
+  var browse = document.getElementById('browse');
+  var filelist = document.getElementById('filelist');
+  var spin = document.getElementById('spin');
+  var err = document.getElementById('err');
+  var results = document.getElementById('results');
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  function showErr(m) { err.textContent = m; err.classList.add('show'); spin.classList.remove('show'); }
+
+  browse.addEventListener('click', function (e) { e.stopPropagation(); input.click(); });
+  drop.addEventListener('click', function () { input.click(); });
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+  drop.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) upload(e.dataTransfer.files); });
+  input.addEventListener('change', function () { if (input.files.length) upload(input.files); });
+
+  function upload(files) {
+    err.classList.remove('show');
+    results.classList.remove('show');
+    var names = [];
+    var fd = new FormData();
+    for (var i = 0; i < files.length; i++) { fd.append('files', files[i], files[i].name); names.push(files[i].name); }
+    filelist.textContent = names.join(', ');
+    spin.classList.add('show');
+
+    fetch('/api/v1/import/ninety/preview', { method: 'POST', body: fd })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        spin.classList.remove('show');
+        if (!res.ok) { showErr((res.j && res.j.error && res.j.error.message) || 'Something went wrong reading those files.'); return; }
+        render(res.j.preview);
+      })
+      .catch(function () { showErr('Network error. Please try again.'); });
+  }
+
+  function render(p) {
+    var labels = [['rocks', 'Rocks'], ['todos', 'To-Dos'], ['issues', 'Issues'], ['headlines', 'Headlines'], ['scorecard', 'KPIs']];
+    var stats = labels.map(function (kv) {
+      return '<div class="ni-stat"><div class="n">' + (p.counts[kv[0]] || 0) + '</div><div class="l">' + kv[1] + '</div></div>';
+    }).join('');
+    document.getElementById('stats').innerHTML = stats;
+    document.getElementById('found-sub').textContent =
+      p.totalRecords + ' records across ' + p.roster.length + ' people' + (p.unassigned ? ', plus ' + p.unassigned + ' unassigned' : '') + '.';
+
+    var rows = p.roster.map(function (m) {
+      function c(n) { return n ? '<td>' + n + '</td>' : '<td class="z">0</td>'; }
+      return '<tr><td class="who">' + esc(m.name) + '</td>' + c(m.rocks) + c(m.todos) + c(m.issues) + c(m.headlines) + c(m.kpis) + '<td class="tot">' + m.total + '</td></tr>';
+    }).join('');
+    document.querySelector('#roster tbody').innerHTML = rows || '<tr><td colspan="7" class="z">No owners found in those files.</td></tr>';
+
+    var warns = (p.warnings || []).map(function (w) { return '<div class="ni-warn"><b>!</b><span>' + esc(w) + '</span></div>'; }).join('');
+    document.getElementById('warns').innerHTML = warns;
+
+    results.classList.add('show');
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+})();
+</script>
