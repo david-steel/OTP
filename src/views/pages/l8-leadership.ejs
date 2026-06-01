@@ -566,7 +566,12 @@
                   </span>
                 <% } %>
                 <span class="text-xs text-gray-500"><%= r.quarter %></span>
-                <span class="text-xs text-gray-500">Due <%= new Date(r.dueDate).toLocaleDateString() %></span>
+                <label class="text-xs text-gray-500 inline-flex items-center gap-1">Due
+                  <input type="date" data-rock-due
+                         value="<%= r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : '' %>"
+                         class="text-xs border rounded px-1 py-0.5 text-gray-600 bg-white"
+                         title="Change this priority's due date">
+                </label>
               </div>
               <div class="font-medium text-sm"><%= r.title %></div>
               <div class="text-xs text-gray-600 mt-0.5">Owner: <%= r.ownerName || r.ownerExternalId %></div>
@@ -595,8 +600,8 @@
                     <% }); %>
                   </select>
                 <% } %>
-                <button data-rock-toggle="on"  class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80">On</button>
-                <button data-rock-toggle="off" class="text-xs px-2 py-1 bg-status-offtrack-soft rounded hover:opacity-80">Off</button>
+                <button data-rock-toggle="on"  class="text-xs px-2 py-1 rounded hover:opacity-80 <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack font-bold' : 'bg-gray-100 text-gray-400' %>" title="Mark this priority On Track (green)">On</button>
+                <button data-rock-toggle="off" class="text-xs px-2 py-1 rounded hover:opacity-80 <%= r.onTrack === false ? 'bg-status-offtrack-soft text-status-offtrack font-bold' : 'bg-gray-100 text-gray-400' %>" title="Mark this priority Off Track (red)">Off</button>
                 <button data-rock-complete class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80" title="Mark complete (hides from the active Rock Review)">&#128077;</button>
                 <button data-rock-archive class="text-xs px-2 py-1 bg-gray-100 rounded hover:opacity-80" title="Archive / kill this priority (hides it, recoverable)">&#128078;</button>
               <% } %>
@@ -1702,6 +1707,27 @@
         badge.className = 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ' +
           (onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack');
       }
+      // Repaint the On/Off buttons so the active state is obvious.
+      const onBtn = card.querySelector('[data-rock-toggle="on"]');
+      const offBtn = card.querySelector('[data-rock-toggle="off"]');
+      if (onBtn) onBtn.className = 'text-xs px-2 py-1 rounded hover:opacity-80 ' + (onTrack ? 'bg-status-ontrack-soft text-status-ontrack font-bold' : 'bg-gray-100 text-gray-400');
+      if (offBtn) offBtn.className = 'text-xs px-2 py-1 rounded hover:opacity-80 ' + (!onTrack ? 'bg-status-offtrack-soft text-status-offtrack font-bold' : 'bg-gray-100 text-gray-400');
+    });
+  });
+
+  // Rock due-date edit: PUT /rocks/:id { dueDate } on change. Noon local
+  // avoids a UTC-midnight rollback showing the prior day.
+  document.querySelectorAll('[data-rock-due]').forEach(inp => {
+    inp.addEventListener('change', async (e) => {
+      const card = e.currentTarget.closest('[data-rock-id]');
+      if (!card) return;
+      const val = e.currentTarget.value;
+      if (!val) return;
+      const dueDate = new Date(val + 'T12:00:00').toISOString();
+      e.currentTarget.disabled = true;
+      const res = await api('/rocks/' + card.dataset.rockId, { method: 'PUT', body: JSON.stringify({ dueDate }) });
+      e.currentTarget.disabled = false;
+      if (res?.error) { alert('Due-date save failed: ' + errMsg(res)); return; }
     });
   });
 
