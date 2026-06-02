@@ -1300,6 +1300,39 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /admin/demo-acme/signin-link -- one-click magic sign-in for the Acme
+  // demo (Clerk sign-in token). No password needed. Open it signed-out (or in
+  // an incognito window) and you land in Acme as Wile. Super-admin only.
+  // Single-use, ~1 hour. Far more reliable than the Backend-set password.
+  app.get('/admin/demo-acme/signin-link', async (request, reply) => {
+    if (!(request as any).isSuperAdmin) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) return reply.status(500).send({ error: 'CLERK_SECRET_KEY missing from env' });
+    try {
+      const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, 'demo_acme')).limit(1);
+      if (!org) return reply.send({ error: 'Acme demo org not found.' });
+      const [owner] = await db.select().from(orgMembers)
+        .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.role, 'owner'))).limit(1);
+      if (!owner?.clerkUserId || owner.clerkUserId === 'demo_acme_owner') {
+        return reply.send({ error: 'Hit /admin/demo-acme/login first so the Clerk user exists.' });
+      }
+      const { createClerkClient } = await import('@clerk/backend');
+      const clerk = createClerkClient({ secretKey });
+      const tok: any = await clerk.signInTokens.createSignInToken({ userId: owner.clerkUserId, expiresInSeconds: 60 * 60 });
+      const ticket = tok?.token;
+      if (!ticket) return reply.status(500).send({ error: 'Clerk did not return a sign-in token', raw: tok });
+      return reply.send({
+        ok: true,
+        message: 'Sign out (or use an incognito window), then open signInLink -- you land in Acme as Wile. Single-use, ~1 hour.',
+        signInLink: `https://orgtp.com/sign-in?__clerk_ticket=${encodeURIComponent(ticket)}`,
+      });
+    } catch (err: any) {
+      return reply.status(500).send({ error: String(err?.message || err) });
+    }
+  });
+
   // POST /admin/impersonate/by-clerk/:clerkUserId  -- resolve member by Clerk
   // user id, then start impersonation. Convenience for /admin users table
   // which doesn't already have member ids on hand.
