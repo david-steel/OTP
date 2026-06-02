@@ -1245,29 +1245,55 @@ export default async function pageRoutes(app: FastifyInstance) {
       const { createClerkClient } = await import('@clerk/backend');
       const clerk = createClerkClient({ secretKey });
 
+      const diag: Record<string, unknown> = {};
       let userId: string | null = null;
       try {
         const list: any = await clerk.users.getUserList({ emailAddress: [EMAIL] });
         const arr = list?.data || list;
         if (Array.isArray(arr) && arr[0]) userId = arr[0].id;
-      } catch { /* fall through to create */ }
+      } catch (e: any) { diag.lookupError = String(e?.message || e); }
 
-      if (userId) {
-        try { await clerk.users.updateUser(userId, { password: PASSWORD, skipPasswordChecks: true } as any); } catch { /* leave existing password */ }
-      } else {
+      if (!userId) {
         const created: any = await clerk.users.createUser({ emailAddress: [EMAIL], password: PASSWORD, skipPasswordChecks: true } as any);
         userId = created.id;
+        diag.created = true;
       }
+
+      // Always force the password so a half-provisioned account gets a working one.
+      try { await clerk.users.updateUser(userId!, { password: PASSWORD, skipPasswordChecks: true } as any); }
+      catch (e: any) { diag.passwordError = String(e?.message || e); }
+
+      // Make sure the email is verified -- Clerk silently stalls password
+      // sign-in on an unverified email (the "spins, then nothing" symptom).
+      try {
+        const u: any = await clerk.users.getUser(userId!);
+        const primary = (u.emailAddresses || []).find((e: any) => e.id === u.primaryEmailAddressId) || (u.emailAddresses || [])[0];
+        diag.emailVerifiedBefore = primary?.verification?.status || null;
+        if (primary && primary.verification?.status !== 'verified') {
+          try { await clerk.emailAddresses.updateEmailAddress(primary.id, { verified: true } as any); diag.emailForcedVerified = true; }
+          catch (e: any) { diag.verifyError = String(e?.message || e); }
+        }
+      } catch (e: any) { diag.fetchError = String(e?.message || e); }
+
+      // Re-fetch final state so we can SEE whether it's actually usable.
+      try {
+        const f: any = await clerk.users.getUser(userId!);
+        const fp = (f.emailAddresses || []).find((e: any) => e.id === f.primaryEmailAddressId) || (f.emailAddresses || [])[0];
+        diag.passwordEnabled = f.passwordEnabled;
+        diag.emailVerified = fp?.verification?.status || null;
+      } catch (e: any) { diag.finalFetchError = String(e?.message || e); }
 
       await db.update(orgMembers).set({ clerkUserId: userId!, email: EMAIL }).where(eq(orgMembers.id, owner.id));
 
       return reply.send({
         ok: true,
-        message: 'Acme demo login is ready. Sign out of your admin account, then sign in with these at /sign-in.',
+        message: 'Acme demo login provisioned. Sign out, then sign in at /sign-in. If it still spins, send me the "diagnostics" below.',
         email: EMAIL,
         password: PASSWORD,
         signInUrl: 'https://orgtp.com/sign-in',
-        note: 'Real, editable login -- whoever has it can change the demo data. Requires email+password sign-in to be enabled in your Clerk instance.',
+        userId,
+        diagnostics: diag,
+        note: 'Real, editable login. Needs email+password sign-in enabled in Clerk (Clerk dashboard -> User & Authentication -> Email/Password).',
       });
     } catch (err: any) {
       return reply.status(500).send({ error: String(err?.message || err) });
