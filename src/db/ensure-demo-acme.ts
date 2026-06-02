@@ -15,6 +15,7 @@ import { db } from '../config/database.js';
 import {
   organizations, orgMembers, charts, oosFiles, teams, teamMemberships,
   kpis, rocks, tickets, todos, consultantProfiles,
+  oosOperatingPlans, oosOperatingPlanSections,
 } from './schema.js';
 
 const DEMO_CLERK_ORG = 'demo_acme';
@@ -99,6 +100,7 @@ async function wipeAcme(orgId: string): Promise<void> {
   await db.execute(sql`DELETE FROM tickets WHERE org_id = ${orgId}`);
   await db.execute(sql`DELETE FROM todos WHERE organization_id = ${orgId}`);
   await db.execute(sql`DELETE FROM consultant_profiles WHERE org_id = ${orgId}`);
+  await db.execute(sql`DELETE FROM oos_operating_plans WHERE organization_id = ${orgId}`);
   await db.execute(sql`DELETE FROM team_memberships WHERE team_id IN (SELECT id FROM teams WHERE org_id = ${orgId})`);
   await db.execute(sql`DELETE FROM teams WHERE org_id = ${orgId}`);
   await db.execute(sql`DELETE FROM oos_files WHERE org_id = ${orgId}`);
@@ -112,11 +114,12 @@ export async function ensureDemoAcme(): Promise<void> {
     const [existing] = await db.select({ id: organizations.id })
       .from(organizations).where(eq(organizations.clerkOrgId, DEMO_CLERK_ORG)).limit(1);
     if (existing) {
-      // v2 marker: the consultant profile. If present, the demo is current.
-      const [prof] = await db.select({ id: consultantProfiles.id })
-        .from(consultantProfiles).where(eq(consultantProfiles.orgId, existing.id)).limit(1);
-      if (prof) return;
-      await wipeAcme(existing.id); // old version -> rebuild
+      // v3 marker: the operating plan. Present => demo is current; absent =>
+      // an older seed, so wipe and rebuild to the latest content.
+      const [plan] = await db.select({ id: oosOperatingPlans.id })
+        .from(oosOperatingPlans).where(eq(oosOperatingPlans.organizationId, existing.id)).limit(1);
+      if (plan) return;
+      await wipeAcme(existing.id);
     }
 
     const [org] = await db.insert(organizations).values({
@@ -192,7 +195,49 @@ export async function ensureDemoAcme(): Promise<void> {
       contactEmail: 'wile@acme.example', published: true, isPublished: true,
     });
 
-    console.log('[demo] Acme Corp demo org seeded (v2, fully blown out) -- impersonate Wile E. Coyote via /admin.');
+    // Operating plan (V/TO) -- 4 strategic sections filled with Acme flavor,
+    // the rest created empty (ready to fill on screen during a demo).
+    const [plan] = await db.insert(oosOperatingPlans).values({
+      organizationId: org.id, title: 'Acme Corp Operating Plan', status: 'active', createdBy: DEMO_OWNER_CLERK,
+    }).returning();
+    const PLAN_SECTIONS: Array<{ key: any; title: string; sort: number; content: Record<string, unknown> }> = [
+      { key: 'foundation', title: 'Core Foundation', sort: 1, content: {
+        purpose: 'Catch the Road Runner.',
+        mission: 'Engineer ingenious solutions for high-speed desert pursuit -- and supply the world with everything from anvils to rocket skates.',
+        values: ['CHASE:', '• Cunning over brute force', '• Hustle relentlessly', '• Always iterate (the next plan WILL work)', '• Safety third', '• Embrace the boom'].join('\n'),
+        ideal_customer: 'Ambitious predators with a recurring quarry, a generous gadget budget, and zero fear of failure.',
+      } },
+      { key: 'market_command', title: 'Market Command', sort: 2, content: {
+        category: 'Premium pursuit hardware & rocket-propelled logistics.',
+        unique_advantage: ['1) Next-day anvil delivery to any canyon.', '2) In-house rocket R&D division.', '3) The only catalog shipping giant magnets, earthquake pills, and portable holes.'].join('\n'),
+        brand_promise: 'It works every time -- or your canyon back.',
+        proof_points: ['Over 9,000 traps shipped.', 'Rocket Skates v1 reached Mach 2 (briefly).', 'Trusted by coyotes across the American Southwest.'].join('\n'),
+      } },
+      { key: 'destination', title: 'Destination', sort: 3, content: {
+        year_target: 'Catch the Road Runner at least once. Hit $50M in anvil + rocket revenue. Open 3 new canyon territories.',
+        year_target_year: '2029',
+        ten_year_target: 'A successful catch on every continent, and an Acme product in every garage.',
+        ten_year_target_year: '2036',
+        revenue_goal: '$50M by 2029.',
+        profit_goal: '15% (after anvil insurance).',
+        defining_metric: 'Successful catches per quarter (current: 0).',
+      } },
+      { key: 'annual_game_plan', title: 'Annual Game Plan', sort: 4, content: {
+        primary_objective: 'Ship Rocket Skates v2, cut anvil-related incidents 20%, and finally catch the Road Runner.',
+        strategic_initiatives: ['Launch the Earthquake Pills product line', 'Open 3 desert-canyon territories', 'Stand up the Rocket Telemetry AI', 'Renegotiate the birdseed supply contract'],
+      } },
+      { key: 'ninety_day_engine', title: '90-Day Execution Engine', sort: 5, content: {} },
+      { key: 'performance_scorecard', title: 'Performance Scorecard', sort: 6, content: {} },
+      { key: 'constraints_leverage', title: 'Constraints & Leverage Points', sort: 7, content: {} },
+      { key: 'alignment_accountability', title: 'Alignment & Accountability', sort: 8, content: {} },
+    ];
+    for (const s of PLAN_SECTIONS) {
+      await db.insert(oosOperatingPlanSections).values({
+        planId: plan.id, sectionKey: s.key, title: s.title, contentJson: s.content as Record<string, unknown>, sortOrder: s.sort,
+      });
+    }
+
+    console.log('[demo] Acme Corp demo org seeded (v3, +operating plan) -- impersonate Wile E. Coyote via /admin.');
   } catch (err) {
     console.error('[demo] ensureDemoAcme failed (non-fatal):', err);
   }

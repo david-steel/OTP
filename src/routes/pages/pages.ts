@@ -1347,6 +1347,39 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /admin/view-as/:email -- one-click "switch my workspace" for demos.
+  // Super-admin only. Finds the org member with that email (owner preferred)
+  // and starts impersonation, landing on their dashboard. Bookmarkable:
+  //   /admin/view-as/wile@acme.example          (Acme demo)
+  //   /admin/view-as/dawson@juicedboxes.com     (Dawson)
+  app.get<{ Params: { email: string } }>('/admin/view-as/:email', async (request, reply) => {
+    if (!(request as any).isSuperAdmin) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'AUTH_REQUIRED' });
+    const email = decodeURIComponent(request.params.email || '').trim().toLowerCase();
+    if (!email) return reply.status(400).send({ error: 'email required' });
+
+    const matches = await db.select().from(orgMembers)
+      .where(sql`lower(${orgMembers.email}) = ${email}`);
+    if (!matches.length) return reply.status(404).send({ error: 'No member found with email ' + email });
+    // Prefer an owner seat if several rows share the email.
+    const target = matches.find((m: any) => m.role === 'owner') || matches[0];
+
+    const { startImpersonation, IMPERSONATION_COOKIE_NAME } = await import('../../middleware/impersonation.js');
+    try {
+      const started = await startImpersonation({ byClerkUserId: auth.userId, targetMemberId: (target as any).id });
+      reply.setCookie(IMPERSONATION_COOKIE_NAME, started.cookieValue, {
+        httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production',
+        maxAge: started.cookieMaxAgeSec, path: '/',
+      });
+      return reply.redirect('/dashboard');
+    } catch (e: any) {
+      return reply.status(400).send({ error: String(e?.message || 'Impersonation failed') });
+    }
+  });
+
   // POST /admin/impersonate/by-clerk/:clerkUserId  -- resolve member by Clerk
   // user id, then start impersonation. Convenience for /admin users table
   // which doesn't already have member ids on hand.
