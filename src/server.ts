@@ -34,9 +34,16 @@ await app.register(fastifyCookie, {
 // Registered after @fastify/cookie so reply.setCookie is available.
 app.addHook('onRequest', gclidCaptureHook);
 
+// Replace Fastify's default body parsers wholesale so we control both:
+//   - x-www-form-urlencoded forms (default Fastify rejects these 415), and
+//   - empty-body application/json (default 400s "Body cannot be empty...").
+// removeAllContentTypeParsers() clears the built-ins; we re-add the two the
+// app actually uses below. (addContentTypeParser('application/json',...) alone
+// throws "already present" because the built-in JSON parser is registered.)
+app.removeAllContentTypeParsers();
+
 // Accept application/x-www-form-urlencoded bodies for plain HTML form posts
-// (impersonation buttons, /l8/create form, accept-invite, etc). Fastify
-// default only handles JSON; without this it rejects forms with 415.
+// (impersonation buttons, /l8/create form, accept-invite, etc).
 app.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string' }, (_req, body, done) => {
   try {
     const parsed: Record<string, string> = {};
@@ -46,6 +53,27 @@ app.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string
     }
     done(null, parsed);
   } catch (err) {
+    done(err as Error, undefined);
+  }
+});
+
+// Tolerate EMPTY-body application/json requests. Many client api() calls set
+// Content-Type: application/json even on bodyless DELETE/POST (e.g. delete a
+// team, remove a member) -- Fastify's default JSON parser 400s those with
+// "Body cannot be empty when content-type is set to 'application/json'".
+// Parse an empty body to {} instead. Reported 2026-06-02 (delete team /
+// remove member). See feedback_fastify_empty_body_post.
+app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
+  const raw = typeof body === 'string' ? body : '';
+  // Preserve the exact raw body for routes that need it (Clerk/Svix webhook
+  // HMAC signature verification). This is the single global JSON parser; the
+  // webhook plugin relies on this rawBody rather than its own parser.
+  (req as unknown as { rawBody: string }).rawBody = raw;
+  if (raw.trim() === '') { done(null, {}); return; }
+  try {
+    done(null, JSON.parse(raw));
+  } catch (err) {
+    (err as any).statusCode = 400;
     done(err as Error, undefined);
   }
 });

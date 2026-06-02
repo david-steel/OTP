@@ -53,20 +53,10 @@ export async function sendOnboardingEmail1(email: string, firstName?: string | n
 }
 
 export default async function clerkWebhookRoutes(app: FastifyInstance) {
-  app.addContentTypeParser(
-    'application/json',
-    { parseAs: 'string' },
-    (req, body, done) => {
-      const raw = body as string;
-      try {
-        const parsed = raw.length ? JSON.parse(raw) : {};
-        (req as unknown as { rawBody: string }).rawBody = raw;
-        done(null, parsed);
-      } catch (err) {
-        done(err as Error, undefined);
-      }
-    },
-  );
+  // NOTE: the JSON body parser (which sets request.rawBody for the HMAC check
+  // below) is now the single GLOBAL parser in server.ts. A per-plugin
+  // application/json parser here would collide with it (Fastify v5: "content
+  // type parser already present"). Do not re-add one.
 
   app.post('/clerk/webhook', async (request, reply) => {
     const secret = process.env.CLERK_WEBHOOK_SECRET;
