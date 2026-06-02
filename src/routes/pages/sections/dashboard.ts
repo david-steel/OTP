@@ -194,7 +194,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get('/dashboard/members', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org } = resolved;
 
@@ -363,7 +363,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { teamId?: string; idsStatus?: string } }>('/dashboard/ids', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org } = resolved;
     // Impersonation-aware role read.
@@ -431,7 +431,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get('/dashboard/teams', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org } = resolved;
     // Impersonation-aware role read.
@@ -594,7 +594,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { highlightSkill?: string; highlightCommand?: string } }>('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
     const highlightSkill = (request.query.highlightSkill || '').toString().slice(0, 120);
@@ -744,7 +744,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { grain?: string; view?: string } }>('/dashboard/kpis', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     // resolveOrgForUser uses auth.userId and is impersonation-BLIND -- under
     // super-admin "view as <user>" it returns the admin's role, not the

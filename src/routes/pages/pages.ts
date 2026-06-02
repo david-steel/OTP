@@ -2841,6 +2841,17 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       reply.redirect('/sign-in?redirect=' + redirectTo);
       return null;
     }
+    // Impersonation MUST win over the legacy-founder lookup (mirrors
+    // getAuthOrg). Under "view as <user>" guards.ts sets request.orgMember to
+    // the target; resolve to their org so the meeting page shows the
+    // impersonated user's meetings, not the founder's. (2026-06-02)
+    const _impL8 = (request as any).impersonation as { active?: boolean } | null;
+    const _impMemberL8 = (request as any).orgMember as { orgId?: string } | null;
+    if (_impL8?.active && _impMemberL8?.orgId) {
+      const [impOrg] = await db.select().from(organizations).where(eq(organizations.id, _impMemberL8.orgId)).limit(1);
+      if (impOrg) return impOrg;
+    }
+
     const [legacyOrg] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     if (legacyOrg) return legacyOrg;
 

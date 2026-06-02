@@ -15,6 +15,19 @@ export async function getAuthOrg(request: FastifyRequest) {
   // Try Clerk auth first
   const auth = getAuth(request);
   if (auth.userId) {
+    // Impersonation MUST win over the legacy-founder path. Under super-admin
+    // "view as <user>", guards.ts swaps request.orgMember to the target's
+    // row -- resolve to THEIR org. Without this a founder (auth.userId ==
+    // their org.clerkOrgId) always resolves to their own org even while
+    // impersonating, so meetings/members/KPIs render the admin's data, not
+    // the impersonated user's. (2026-06-02, Victor / Open Skies leak.)
+    const _imp = (request as any).impersonation as { active?: boolean } | null;
+    const _impMember = (request as any).orgMember as { orgId?: string } | null;
+    if (_imp?.active && _impMember?.orgId) {
+      const impArr = await db.select().from(organizations).where(eq(organizations.id, _impMember.orgId)).limit(1);
+      if (impArr[0]) return impArr[0];
+    }
+
     // Path 1: legacy founder -- their Clerk user ID is stored as
     // organizations.clerkOrgId (single-tenant founder pattern).
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
