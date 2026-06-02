@@ -43,11 +43,43 @@
       <input type="text" name="display_name" value="<%= (typeof profile !== 'undefined' && profile && profile.display_name) ? profile.display_name : '' %>" required class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-orgy-blue focus:ring-1 focus:ring-orgy-blue outline-none" placeholder="Your Name">
     </div>
 
-    <!-- Photo URL -->
+    <!-- Profile Photo (upload + crop/move) -->
+    <% var _avatar = (typeof profile !== 'undefined' && profile && (profile.avatar_url || profile.photo_url)) ? (profile.avatar_url || profile.photo_url) : ''; %>
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Photo URL</label>
-      <input type="url" name="photo_url" value="<%= (typeof profile !== 'undefined' && profile && profile.photo_url) ? profile.photo_url : '' %>" class="w-full border rounded-lg px-4 py-2.5 text-sm focus:border-orgy-blue focus:ring-1 focus:ring-orgy-blue outline-none" placeholder="https://example.com/photo.jpg">
-      <p class="text-xs text-gray-400 mt-1">Direct link to your profile photo. Leave blank to show your initials.</p>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
+      <input type="hidden" name="photo_url" id="photo-url-input" value="<%= _avatar %>">
+      <div class="flex items-center gap-4">
+        <div id="avatar-preview" class="h-20 w-20 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center text-gray-400 text-2xl font-bold shrink-0">
+          <% if (_avatar) { %><img src="<%= _avatar %>" alt="" class="h-full w-full object-cover"><% } else { %><span>+</span><% } %>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <button type="button" id="photo-upload-btn" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded-lg font-semibold hover:bg-orgy-blue-deep w-max">Upload &amp; crop photo</button>
+          <button type="button" id="photo-remove-btn" class="text-xs text-gray-500 hover:text-rose-600 text-left <%= _avatar ? '' : 'hidden' %>">Remove photo</button>
+          <p class="text-[11px] text-gray-400">Square works best. Drag to reposition and zoom before saving.</p>
+        </div>
+      </div>
+      <input type="file" id="photo-file" accept="image/*" class="hidden">
+
+      <!-- Crop / move editor (hidden until an image is chosen) -->
+      <div id="photo-editor" class="hidden mt-3 border rounded-lg p-3 bg-gray-50">
+        <div id="crop-frame" style="position:relative; width:220px; height:220px; margin:0 auto; overflow:hidden; border-radius:9999px; background:#e5e7eb; cursor:move; touch-action:none;">
+          <img id="crop-img" alt="" draggable="false" style="position:absolute; left:0; top:0; user-select:none; -webkit-user-drag:none; max-width:none;">
+        </div>
+        <div class="flex items-center gap-2 mt-3">
+          <span class="text-xs text-gray-500">Zoom</span>
+          <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" class="flex-1">
+        </div>
+        <div class="flex gap-2 mt-3 justify-end">
+          <button type="button" id="crop-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+          <button type="button" id="crop-apply" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded-lg font-semibold hover:bg-orgy-blue-deep">Apply</button>
+        </div>
+      </div>
+
+      <details class="mt-2">
+        <summary class="text-[11px] text-gray-400 cursor-pointer">or paste an image URL</summary>
+        <input type="url" id="photo-url-text" value="<%= (_avatar && _avatar.indexOf('data:') !== 0) ? _avatar : '' %>" class="w-full mt-1 border rounded-lg px-3 py-2 text-sm" placeholder="https://example.com/photo.jpg">
+      </details>
+      <p class="text-xs text-gray-400 mt-1">Leave blank to show your initials.</p>
     </div>
 
     <!-- Bio -->
@@ -156,4 +188,138 @@ document.getElementById('consultant-form').addEventListener('submit', async func
   btn.disabled = false;
   btn.textContent = isEdit ? 'Save Changes' : 'Create Profile';
 });
+</script>
+
+<script>
+// Profile photo: upload -> drag to reposition + zoom -> Apply crops a square
+// to a 256x256 data URL stored in the hidden #photo-url-input (submitted as
+// avatarUrl). No server storage needed -- it rides in the existing text column.
+(function() {
+  var hidden = document.getElementById('photo-url-input');
+  if (!hidden) return;
+  var preview = document.getElementById('avatar-preview');
+  var fileInput = document.getElementById('photo-file');
+  var uploadBtn = document.getElementById('photo-upload-btn');
+  var removeBtn = document.getElementById('photo-remove-btn');
+  var editor = document.getElementById('photo-editor');
+  var frame = document.getElementById('crop-frame');
+  var img = document.getElementById('crop-img');
+  var zoom = document.getElementById('crop-zoom');
+  var applyBtn = document.getElementById('crop-apply');
+  var cancelBtn = document.getElementById('crop-cancel');
+  var urlText = document.getElementById('photo-url-text');
+
+  var F = 220, OUT = 256;
+  var natW = 0, natH = 0, baseScale = 1, left = 0, top = 0;
+
+  function dispW() { return natW * baseScale * parseFloat(zoom.value); }
+  function dispH() { return natH * baseScale * parseFloat(zoom.value); }
+  function paint() {
+    img.style.width = dispW() + 'px';
+    img.style.height = dispH() + 'px';
+    img.style.left = left + 'px';
+    img.style.top = top + 'px';
+  }
+  function clamp() {
+    var dw = dispW(), dh = dispH();
+    if (left > 0) left = 0;
+    if (top > 0) top = 0;
+    if (left < F - dw) left = F - dw;
+    if (top < F - dh) top = F - dh;
+  }
+  function setPreview(src) {
+    preview.innerHTML = '';
+    var im = document.createElement('img');
+    im.src = src; im.alt = '';
+    im.className = 'h-full w-full object-cover';
+    preview.appendChild(im);
+    if (removeBtn) removeBtn.classList.remove('hidden');
+  }
+
+  if (uploadBtn) uploadBtn.addEventListener('click', function() { fileInput.click(); });
+  if (fileInput) fileInput.addEventListener('change', function() {
+    var f = fileInput.files && fileInput.files[0];
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB). Try a smaller file.'); fileInput.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      img.onload = function() {
+        natW = img.naturalWidth; natH = img.naturalHeight;
+        if (!natW || !natH) { alert('Could not read that image.'); return; }
+        baseScale = F / Math.min(natW, natH); // cover the frame
+        zoom.value = 1;
+        left = (F - dispW()) / 2; top = (F - dispH()) / 2;
+        paint();
+        editor.classList.remove('hidden');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // Drag to pan (mouse + touch)
+  var dragging = false, sx = 0, sy = 0, sl = 0, st = 0;
+  function pt(e) { var t = e.touches && e.touches[0]; return { x: t ? t.clientX : e.clientX, y: t ? t.clientY : e.clientY }; }
+  function down(e) { dragging = true; var p = pt(e); sx = p.x; sy = p.y; sl = left; st = top; e.preventDefault(); }
+  function move(e) { if (!dragging) return; var p = pt(e); left = sl + (p.x - sx); top = st + (p.y - sy); clamp(); paint(); }
+  function up() { dragging = false; }
+  if (frame) {
+    frame.addEventListener('mousedown', down);
+    frame.addEventListener('touchstart', down, { passive: false });
+  }
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+  window.addEventListener('touchmove', move, { passive: false });
+  window.addEventListener('touchend', up);
+
+  if (zoom) zoom.addEventListener('input', function() {
+    // zoom around the frame center so it feels stable
+    var c = F / 2;
+    var dwOld = img.offsetWidth || dispW(), dhOld = img.offsetHeight || dispH();
+    var fx = dwOld ? (c - left) / dwOld : 0.5;
+    var fy = dhOld ? (c - top) / dhOld : 0.5;
+    var dwNew = dispW(), dhNew = dispH();
+    left = c - fx * dwNew; top = c - fy * dhNew;
+    clamp(); paint();
+  });
+
+  if (cancelBtn) cancelBtn.addEventListener('click', function() { editor.classList.add('hidden'); fileInput.value = ''; });
+
+  if (applyBtn) applyBtn.addEventListener('click', function() {
+    var fr = frame.getBoundingClientRect();
+    var ir = img.getBoundingClientRect();
+    if (!ir.width || !ir.height) return;
+    var sxr = natW / ir.width, syr = natH / ir.height;
+    var srcX = (fr.left - ir.left) * sxr;
+    var srcY = (fr.top - ir.top) * syr;
+    var srcW = fr.width * sxr;
+    var srcH = fr.height * syr;
+    var canvas = document.createElement('canvas');
+    canvas.width = OUT; canvas.height = OUT;
+    var ctx = canvas.getContext('2d');
+    try {
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUT, OUT);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      hidden.value = dataUrl;
+      if (urlText) urlText.value = '';
+      setPreview(dataUrl);
+    } catch (err) { alert('Could not crop that image: ' + err.message); }
+    editor.classList.add('hidden');
+    fileInput.value = '';
+  });
+
+  if (removeBtn) removeBtn.addEventListener('click', function() {
+    hidden.value = '';
+    if (urlText) urlText.value = '';
+    preview.innerHTML = '<span class="text-gray-400 text-2xl font-bold">+</span>';
+    removeBtn.classList.add('hidden');
+    editor.classList.add('hidden');
+  });
+
+  if (urlText) urlText.addEventListener('input', function() {
+    var v = urlText.value.trim();
+    hidden.value = v;
+    if (v) setPreview(v);
+  });
+})();
 </script>

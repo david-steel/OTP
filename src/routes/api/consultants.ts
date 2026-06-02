@@ -15,7 +15,8 @@ const createProfileSchema = z.object({
   contactEmail: z.string().email().optional(),
   website: z.string().url().optional(),
   linkedinUrl: z.string().url().optional(),
-  avatarUrl: z.string().url().optional(),
+  // Accept a normal image URL OR an uploaded image (data: URL from the crop editor).
+  avatarUrl: z.string().max(5_000_000).refine((s) => /^(https?:\/\/|data:image\/)/.test(s), 'Must be an image URL or an uploaded image').optional(),
   published: z.boolean().optional().default(false),
 });
 
@@ -28,7 +29,7 @@ const updateProfileSchema = z.object({
   contactEmail: z.string().email().nullable().optional(),
   website: z.string().url().nullable().optional(),
   linkedinUrl: z.string().url().nullable().optional(),
-  avatarUrl: z.string().url().nullable().optional(),
+  avatarUrl: z.string().max(5_000_000).refine((s) => /^(https?:\/\/|data:image\/)/.test(s), 'Must be an image URL or an uploaded image').nullable().optional(),
   published: z.boolean().optional(),
 });
 
@@ -72,6 +73,8 @@ export default async function consultantRoutes(app: FastifyInstance) {
       website: body.data.website || null,
       linkedinUrl: body.data.linkedinUrl || null,
       avatarUrl: body.data.avatarUrl || null,
+      // Mirror to photo_url too -- the edit form + some readers use that column.
+      photoUrl: body.data.avatarUrl || null,
       published: body.data.published,
     }).returning();
 
@@ -120,7 +123,7 @@ export default async function consultantRoutes(app: FastifyInstance) {
     if (body.data.contactEmail !== undefined) updates.contactEmail = body.data.contactEmail;
     if (body.data.website !== undefined) updates.website = body.data.website;
     if (body.data.linkedinUrl !== undefined) updates.linkedinUrl = body.data.linkedinUrl;
-    if (body.data.avatarUrl !== undefined) updates.avatarUrl = body.data.avatarUrl;
+    if (body.data.avatarUrl !== undefined) { updates.avatarUrl = body.data.avatarUrl; updates.photoUrl = body.data.avatarUrl; }
     if (body.data.published !== undefined) updates.published = body.data.published;
 
     const [updated] = await db.update(consultantProfiles)
