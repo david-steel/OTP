@@ -1061,7 +1061,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const org = await resolveRequestOrg(request);
     if (!org) return reply.redirect('/dashboard');
 
-    const isAdmin = (request as any).isSuperAdmin;
+    // A super-admin who is IMPERSONATING must see the impersonated user's own
+    // profile, NOT the global admin list (newest-first, which surfaces whoever
+    // signed up last -- e.g. Dawson while viewing as Victor). Suppress the
+    // admin branch under impersonation. (2026-06-02)
+    const isAdmin = (request as any).isSuperAdmin && !(request as any).impersonation?.active;
     const profileRows = isAdmin
       ? await db.execute(sql`SELECT cp.*, o.name as org_name FROM consultant_profiles cp JOIN organizations o ON o.id = cp.org_id ORDER BY cp.created_at DESC`) as any
       : await db.execute(sql`SELECT * FROM consultant_profiles WHERE org_id = ${org.id}`) as any;
