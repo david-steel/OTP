@@ -1222,142 +1222,30 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
   });
 
-  // GET /admin/demo-acme/login -- provision (or reset) a real email+password
-  // Clerk login wired to the Acme Corp demo owner, so it can be handed to a
-  // prospect or used directly instead of impersonating. Super-admin only.
-  // Returns the credentials. Idempotent: re-hitting just resets the password.
-  app.get('/admin/demo-acme/login', async (request, reply) => {
-    if (!(request as any).isSuperAdmin) {
-      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
-    }
-    const secretKey = process.env.CLERK_SECRET_KEY;
-    if (!secretKey) return reply.status(500).send({ error: 'CLERK_SECRET_KEY missing from env' });
-
-    const EMAIL = 'acme-demo@orgtp.com';
-    const PASSWORD = 'Acme-Anvil-Roadrunner-2026!';
-    try {
-      const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, 'demo_acme')).limit(1);
-      if (!org) return reply.send({ error: 'Acme demo org not found yet (boot seed may not have run).' });
-      const [owner] = await db.select().from(orgMembers)
-        .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.role, 'owner'))).limit(1);
-      if (!owner) return reply.send({ error: 'Acme owner member not found.' });
-
-      const { createClerkClient } = await import('@clerk/backend');
-      const clerk = createClerkClient({ secretKey });
-
-      const diag: Record<string, unknown> = {};
-      let userId: string | null = null;
-      try {
-        const list: any = await clerk.users.getUserList({ emailAddress: [EMAIL] });
-        const arr = list?.data || list;
-        if (Array.isArray(arr) && arr[0]) userId = arr[0].id;
-      } catch (e: any) { diag.lookupError = String(e?.message || e); }
-
-      if (!userId) {
-        const created: any = await clerk.users.createUser({ emailAddress: [EMAIL], password: PASSWORD, skipPasswordChecks: true } as any);
-        userId = created.id;
-        diag.created = true;
-      }
-
-      // Always force the password so a half-provisioned account gets a working one.
-      try { await clerk.users.updateUser(userId!, { password: PASSWORD, skipPasswordChecks: true } as any); }
-      catch (e: any) { diag.passwordError = String(e?.message || e); }
-
-      // Make sure the email is verified -- Clerk silently stalls password
-      // sign-in on an unverified email (the "spins, then nothing" symptom).
-      try {
-        const u: any = await clerk.users.getUser(userId!);
-        const primary = (u.emailAddresses || []).find((e: any) => e.id === u.primaryEmailAddressId) || (u.emailAddresses || [])[0];
-        diag.emailVerifiedBefore = primary?.verification?.status || null;
-        if (primary && primary.verification?.status !== 'verified') {
-          try { await clerk.emailAddresses.updateEmailAddress(primary.id, { verified: true } as any); diag.emailForcedVerified = true; }
-          catch (e: any) { diag.verifyError = String(e?.message || e); }
-        }
-      } catch (e: any) { diag.fetchError = String(e?.message || e); }
-
-      // Re-fetch final state so we can SEE whether it's actually usable.
-      try {
-        const f: any = await clerk.users.getUser(userId!);
-        const fp = (f.emailAddresses || []).find((e: any) => e.id === f.primaryEmailAddressId) || (f.emailAddresses || [])[0];
-        diag.passwordEnabled = f.passwordEnabled;
-        diag.emailVerified = fp?.verification?.status || null;
-      } catch (e: any) { diag.finalFetchError = String(e?.message || e); }
-
-      await db.update(orgMembers).set({ clerkUserId: userId!, email: EMAIL }).where(eq(orgMembers.id, owner.id));
-
-      return reply.send({
-        ok: true,
-        message: 'Acme demo login provisioned. Sign out, then sign in at /sign-in. If it still spins, send me the "diagnostics" below.',
-        email: EMAIL,
-        password: PASSWORD,
-        signInUrl: 'https://orgtp.com/sign-in',
-        userId,
-        diagnostics: diag,
-        note: 'Real, editable login. Needs email+password sign-in enabled in Clerk (Clerk dashboard -> User & Authentication -> Email/Password).',
-      });
-    } catch (err: any) {
-      return reply.status(500).send({ error: String(err?.message || err) });
-    }
-  });
-
-  // GET /demo-signin?token=<clerk sign-in token> -- PUBLIC. Consumes a Clerk
-  // sign-in token via the frontend SDK (signIn.create strategy 'ticket') and
-  // lands the visitor in the session. The token is the credential. Used by the
-  // Acme demo magic link. (The /sign-in?__clerk_ticket= flow is for org
-  // invitations, not sign-in tokens -- hence "ticket is invalid" there.)
-  app.get('/demo-signin', async (_request, reply) => {
-    return renderV7(reply, 'demo-signin', {
-      title: 'Signing in… - OTP',
-      description: 'Signing you into the demo.',
-      noindex: true,
-      loadClerk: true,
-    });
-  });
-
-  // GET /admin/demo-acme/signin-link -- one-click magic sign-in for the Acme
-  // demo (Clerk sign-in token). No password needed. Open it signed-out (or in
-  // an incognito window) and you land in Acme as Wile. Super-admin only.
-  // Single-use, ~1 hour. Far more reliable than the Backend-set password.
-  app.get('/admin/demo-acme/signin-link', async (request, reply) => {
-    if (!(request as any).isSuperAdmin) {
-      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
-    }
-    const secretKey = process.env.CLERK_SECRET_KEY;
-    if (!secretKey) return reply.status(500).send({ error: 'CLERK_SECRET_KEY missing from env' });
-    try {
-      const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, 'demo_acme')).limit(1);
-      if (!org) return reply.send({ error: 'Acme demo org not found.' });
-      const [owner] = await db.select().from(orgMembers)
-        .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.role, 'owner'))).limit(1);
-      if (!owner?.clerkUserId || owner.clerkUserId === 'demo_acme_owner') {
-        return reply.send({ error: 'Hit /admin/demo-acme/login first so the Clerk user exists.' });
-      }
-      const { createClerkClient } = await import('@clerk/backend');
-      const clerk = createClerkClient({ secretKey });
-      const tok: any = await clerk.signInTokens.createSignInToken({ userId: owner.clerkUserId, expiresInSeconds: 60 * 60 });
-      const ticket = tok?.token;
-      if (!ticket) return reply.status(500).send({ error: 'Clerk did not return a sign-in token', raw: tok });
-      return reply.send({
-        ok: true,
-        message: 'Sign out (or use an incognito window), then open signInLink -- you land in Acme as Wile. Single-use, ~1 hour.',
-        signInLink: `https://orgtp.com/demo-signin?token=${encodeURIComponent(ticket)}`,
-      });
-    } catch (err: any) {
-      return reply.status(500).send({ error: String(err?.message || err) });
-    }
-  });
-
   // GET /admin/view-as/:email -- one-click "switch my workspace" for demos.
-  // Super-admin only. Finds the org member with that email (owner preferred)
-  // and starts impersonation, landing on their dashboard. Bookmarkable:
+  // Finds the org member with that email (owner preferred) and starts
+  // impersonation, landing on their dashboard. Bookmarkable:
   //   /admin/view-as/wile@acme.example          (Acme demo)
   //   /admin/view-as/dawson@juicedboxes.com     (Dawson)
+  // Access: super-admins may view as anyone; an allow-listed demo presenter
+  // (Dawson, see middleware/demo-access.ts) may view as a canned demo org
+  // (Acme) ONLY -- never a real customer.
   app.get<{ Params: { email: string } }>('/admin/view-as/:email', async (request, reply) => {
-    if (!(request as any).isSuperAdmin) {
-      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
-    }
     const auth = getAuth(request);
     if (!auth.userId) return reply.status(401).send({ error: 'AUTH_REQUIRED' });
+
+    const isAdmin = !!(request as any).isSuperAdmin;
+    const { isDemoPresenterEmail, isDemoTargetOrg } = await import('../../middleware/demo-access.js');
+
+    // The caller's real identity (independent of any active impersonation).
+    const [caller] = await db.select({ email: orgMembers.email })
+      .from(orgMembers).where(eq(orgMembers.clerkUserId, auth.userId)).limit(1);
+    const isPresenter = isDemoPresenterEmail(caller?.email);
+
+    if (!isAdmin && !isPresenter) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+
     const email = decodeURIComponent(request.params.email || '').trim().toLowerCase();
     if (!email) return reply.status(400).send({ error: 'email required' });
 
@@ -1366,6 +1254,16 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!matches.length) return reply.status(404).send({ error: 'No member found with email ' + email });
     // Prefer an owner seat if several rows share the email.
     const target = matches.find((m: any) => m.role === 'owner') || matches[0];
+
+    // Demo presenters are confined to demo orgs. Resolve the target's org and
+    // bounce anything that is not a canned demo org.
+    if (!isAdmin) {
+      const [targetOrg] = await db.select({ clerkOrgId: organizations.clerkOrgId })
+        .from(organizations).where(eq(organizations.id, (target as any).orgId)).limit(1);
+      if (!isDemoTargetOrg(targetOrg?.clerkOrgId)) {
+        return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+      }
+    }
 
     const { startImpersonation, IMPERSONATION_COOKIE_NAME } = await import('../../middleware/impersonation.js');
     try {

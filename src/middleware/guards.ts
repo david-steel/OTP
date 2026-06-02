@@ -85,11 +85,18 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
       const { decodeImpersonationCookie, resolveImpersonatedContext } =
         await import('./impersonation.js');
       const { isSuperAdmin } = await import('./super-admin.js');
+      const { isDemoTargetOrg } = await import('./demo-access.js');
       const cookieRaw = (request as any).cookies?.otp_impersonation as string | undefined;
       const payload = decodeImpersonationCookie(cookieRaw);
-      if (payload && isSuperAdmin(request)) {
+      if (payload) {
+        // resolveImpersonatedContext enforces payload.by === userId, so a
+        // signed cookie only applies for the session it was issued to.
         const ctx = await resolveImpersonatedContext(payload, userId);
-        if (ctx) {
+        // Super admins may impersonate anyone. Allow-listed demo presenters
+        // (Dawson) may land ONLY in a canned demo org (Acme) -- never a real
+        // customer. The presenter gate itself lives at the issue point in
+        // /admin/view-as; this is the apply-time safety net.
+        if (ctx && (isSuperAdmin(request) || isDemoTargetOrg(ctx.org.clerkOrgId))) {
           (request as any).orgMember = {
             id: ctx.member.id,
             orgId: ctx.member.orgId,
