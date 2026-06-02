@@ -191,6 +191,72 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     });
   });
 
+  // Focused people/tile/invite diagnostic. Super-admin only. Honors
+  // impersonation (resolves the impersonated org). Returns the actual
+  // records so we trace data instead of guessing: members, ALL invites with
+  // status, and chart human tiles with who (if anyone) claimed them.
+  // Added 2026-06-02 to debug Open Skies "named tiles, 0 pending invites".
+  app.get('/api/v1/_debug/org-people', async (request, reply) => {
+    const { isSuperAdmin } = await import('../../../middleware/super-admin.js');
+    const auth = getAuth(request);
+    if (!auth.userId || !isSuperAdmin(request)) return reply.status(404).send({ error: 'not found' });
+
+    const imp = (request as any).impersonation || null;
+    const orgMember = (request as any).orgMember || null;
+    let org: any = null;
+    if (orgMember?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, orgMember.orgId)).limit(1);
+      if (m) org = m;
+    }
+    if (!org) {
+      const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
+      if (legacy) org = legacy;
+    }
+    if (!org) return reply.send({ error: 'no org resolved', impersonation: imp });
+
+    const { orgInvitations } = await import('../../../db/schema.js');
+    const members = await db.select({
+      id: orgMembers.id, displayName: orgMembers.displayName, email: orgMembers.email,
+      role: orgMembers.role, status: orgMembers.status,
+      claimedEntityId: orgMembers.claimedEntityId, claimedEntityIds: orgMembers.claimedEntityIds,
+    }).from(orgMembers).where(eq(orgMembers.orgId, org.id));
+
+    const invites = await db.select({
+      id: orgInvitations.id, email: orgInvitations.email, role: orgInvitations.role,
+      status: orgInvitations.status, claimedEntityId: orgInvitations.claimedEntityId,
+      expiresAt: orgInvitations.expiresAt,
+    }).from(orgInvitations).where(eq(orgInvitations.orgId, org.id));
+
+    const { getOrgTeamGraph } = await import('../../../services/team-graph.js');
+    const graph = await getOrgTeamGraph(org.id, org.name || 'Org');
+    const claimedBy: Record<string, string> = {};
+    for (const m of members) {
+      const label = m.displayName || m.email || m.id;
+      if (m.claimedEntityId) claimedBy[m.claimedEntityId] = label;
+      for (const c of ((m.claimedEntityIds as string[] | null) || [])) if (c) claimedBy[c] = label;
+    }
+    const chartHumans = graph.nodes.filter(n => n.type === 'human').map(n => ({
+      externalId: n.externalId,
+      label: n.label,
+      role: (n.properties as any)?.role ?? null,
+      contactEmail: (n.properties as any)?.contactEmail ?? null,
+      claimedBy: claimedBy[n.externalId] || null,
+    }));
+
+    return reply.send({
+      org: { id: org.id, name: org.name, clerkOrgId: org.clerkOrgId },
+      impersonation: imp ? { active: imp.active, as: imp.as, targetName: imp.targetName } : null,
+      counts: {
+        members: members.length,
+        invitesTotal: invites.length,
+        invitesPending: invites.filter((i) => i.status === 'pending').length,
+        chartHumans: chartHumans.length,
+        chartHumansClaimed: chartHumans.filter((h) => h.claimedBy).length,
+      },
+      members, invites, chartHumans,
+    });
+  });
+
   app.get('/dashboard/members', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
