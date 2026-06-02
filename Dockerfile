@@ -16,6 +16,12 @@ RUN npm run build
 # Production
 FROM base AS runner
 ENV NODE_ENV=production
+# Timezone: alpine ships no tz database, so server-side date formatting (EJS
+# toLocaleString with no explicit timeZone) defaulted to UTC -- rendering
+# headline/meeting times ~4-5h ahead. Install tzdata + default the whole
+# server to America/New_York. (Per-user override is a future setting.)
+RUN apk add --no-cache tzdata
+ENV TZ=America/New_York
 # dist/ is self-sufficient -- the npm `build:assets` step copies views,
 # protocol, and db/migrations into it. public/ and content/ stay at the
 # repo root because they're served as cwd-relative static dirs.
