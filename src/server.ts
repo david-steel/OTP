@@ -968,6 +968,16 @@ try {
 }
 
 try {
+  // Demo org for sales walkthroughs (Acme Corp / Looney Tunes). Idempotent +
+  // self-guarding; needs charts + teams ensures above to have run first.
+  const { ensureDemoAcme } = await import('./db/ensure-demo-acme.js');
+  await ensureDemoAcme();
+  app.log.info('Acme Corp demo org is ready (impersonate Wile E. Coyote to demo)');
+} catch (err) {
+  app.log.error({ err }, 'ensureDemoAcme failed (non-fatal) -- demo org may be missing');
+}
+
+try {
   const { ensureCoachClientTables } = await import('./db/ensure-coach-clients.js');
   await ensureCoachClientTables();
   app.log.info('coach-client ecosystem tables ready (invite_token, attribution, access)');
