@@ -1222,6 +1222,58 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /admin/demo-acme/login -- provision (or reset) a real email+password
+  // Clerk login wired to the Acme Corp demo owner, so it can be handed to a
+  // prospect or used directly instead of impersonating. Super-admin only.
+  // Returns the credentials. Idempotent: re-hitting just resets the password.
+  app.get('/admin/demo-acme/login', async (request, reply) => {
+    if (!(request as any).isSuperAdmin) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) return reply.status(500).send({ error: 'CLERK_SECRET_KEY missing from env' });
+
+    const EMAIL = 'acme-demo@orgtp.com';
+    const PASSWORD = 'Acme-Anvil-Roadrunner-2026!';
+    try {
+      const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, 'demo_acme')).limit(1);
+      if (!org) return reply.send({ error: 'Acme demo org not found yet (boot seed may not have run).' });
+      const [owner] = await db.select().from(orgMembers)
+        .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.role, 'owner'))).limit(1);
+      if (!owner) return reply.send({ error: 'Acme owner member not found.' });
+
+      const { createClerkClient } = await import('@clerk/backend');
+      const clerk = createClerkClient({ secretKey });
+
+      let userId: string | null = null;
+      try {
+        const list: any = await clerk.users.getUserList({ emailAddress: [EMAIL] });
+        const arr = list?.data || list;
+        if (Array.isArray(arr) && arr[0]) userId = arr[0].id;
+      } catch { /* fall through to create */ }
+
+      if (userId) {
+        try { await clerk.users.updateUser(userId, { password: PASSWORD, skipPasswordChecks: true } as any); } catch { /* leave existing password */ }
+      } else {
+        const created: any = await clerk.users.createUser({ emailAddress: [EMAIL], password: PASSWORD, skipPasswordChecks: true } as any);
+        userId = created.id;
+      }
+
+      await db.update(orgMembers).set({ clerkUserId: userId!, email: EMAIL }).where(eq(orgMembers.id, owner.id));
+
+      return reply.send({
+        ok: true,
+        message: 'Acme demo login is ready. Sign out of your admin account, then sign in with these at /sign-in.',
+        email: EMAIL,
+        password: PASSWORD,
+        signInUrl: 'https://orgtp.com/sign-in',
+        note: 'Real, editable login -- whoever has it can change the demo data. Requires email+password sign-in to be enabled in your Clerk instance.',
+      });
+    } catch (err: any) {
+      return reply.status(500).send({ error: String(err?.message || err) });
+    }
+  });
+
   // POST /admin/impersonate/by-clerk/:clerkUserId  -- resolve member by Clerk
   // user id, then start impersonation. Convenience for /admin users table
   // which doesn't already have member ids on hand.
