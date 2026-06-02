@@ -191,53 +191,6 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     });
   });
 
-  // Chart-blank diagnostic. Super-admin, read-only, impersonation-aware.
-  // Tells us WHY /dashboard/team is blank: empty data (humanNodes 0) vs
-  // scoping (viewableCount <= 1 while humanNodes > 0) vs fine-server/
-  // client-render. Run while impersonating the target. (2026-06-02)
-  app.get('/api/v1/_debug/chart-blank', async (request, reply) => {
-    const { isSuperAdmin } = await import('../../../middleware/super-admin.js');
-    const auth = getAuth(request);
-    if (!auth.userId || !isSuperAdmin(request)) return reply.status(404).send({ error: 'not found' });
-
-    const imp = (request as any).impersonation || null;
-    const viewerMember = (request as any).orgMember || null;
-    let org: any = null;
-    if (viewerMember?.orgId) {
-      const [m] = await db.select().from(organizations).where(eq(organizations.id, viewerMember.orgId)).limit(1);
-      if (m) org = m;
-    }
-    if (!org) {
-      const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
-      if (legacy) org = legacy;
-    }
-    if (!org) return reply.send({ error: 'no org resolved', impersonation: imp });
-
-    const { getOrgTeamGraph } = await import('../../../services/team-graph.js');
-    const { computeViewableTiles } = await import('../../../services/chart-permissions.js');
-    const graph = await getOrgTeamGraph(org.id, org.name || 'Org');
-    const humanNodes = graph.nodes.filter((n) => n.type === 'human');
-    const viewable = computeViewableTiles((viewerMember || { role: 'owner' }) as any, graph);
-
-    return reply.send({
-      org: { id: org.id, name: org.name },
-      impersonationActive: !!imp?.active,
-      viewer: {
-        fromOrgMember: !!viewerMember,
-        role: viewerMember?.role ?? null,
-        claimedEntityId: viewerMember?.claimedEntityId ?? null,
-        claimedEntityIds: viewerMember?.claimedEntityIds ?? null,
-      },
-      graph: { totalNodes: graph.nodes.length, humanNodes: humanNodes.length },
-      viewableCount: viewable.size,
-      diagnosis:
-        humanNodes.length === 0 ? 'EMPTY_DATA: org chart has no human tiles'
-        : viewable.size <= 1 ? 'SCOPING: viewer cannot see the tiles (role/claim issue)'
-        : 'SERVER_OK: data + scoping fine -> blank is client-render',
-      humanTiles: humanNodes.map((n) => ({ externalId: n.externalId, label: n.label, role: (n.properties as any)?.role ?? null })),
-    });
-  });
-
   app.get('/dashboard/members', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));

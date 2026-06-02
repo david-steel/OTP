@@ -1176,6 +1176,28 @@
 
     function renderChart(filterFn) {
       stage.innerHTML = '';
+      // If the active filter matches no people (e.g. "Agents only" on an org
+      // that has only humans, or vice versa), show a helpful message instead
+      // of a blank canvas that reads as broken. (2026-06-02 -- Clear Skies had
+      // 7 humans, 0 agents; a stale "Agents" filter rendered nothing.)
+      var visiblePeople = nodes.filter(function(n) { return n.type !== 'organization' && filterFn(n); });
+      if (visiblePeople.length === 0) {
+        var labelFor = (currentFilter === 'agent') ? 'agents' : (currentFilter === 'human') ? 'humans' : 'people';
+        var empty = document.createElement('div');
+        empty.style.cssText = 'padding:3rem 2rem; text-align:center; color:#6b7280; font-size:14px;';
+        empty.textContent = 'No ' + labelFor + ' on this chart yet. ';
+        var showAll = document.createElement('button');
+        showAll.type = 'button';
+        showAll.textContent = 'Show all';
+        showAll.style.cssText = 'color:#2563eb; font-weight:600; text-decoration:underline; background:none; border:none; cursor:pointer;';
+        showAll.addEventListener('click', function() {
+          var b = document.querySelector('.filter-btn[data-filter="all"]');
+          if (b) b.click();
+        });
+        empty.appendChild(showAll);
+        stage.appendChild(empty);
+        return;
+      }
       var root;
       try { root = buildHierarchy(filterFn); }
       catch (e) { stage.innerHTML = '<div style="padding:2rem;color:#6b7280;font-size:14px;">Could not build hierarchy: ' + e.message + '</div>'; return; }
