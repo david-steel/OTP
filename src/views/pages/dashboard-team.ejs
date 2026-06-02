@@ -1097,13 +1097,21 @@
         }
       });
 
-      // Find a CEO-ish human to anchor unparented nodes
+      // Find CEO-ish humans to anchor unparented nodes. MULTIPLE co-equal
+      // leaders (co-owners, co-CEOs, EOS Visionary + Integrator) all sit
+      // directly under the org, side by side -- not nested under the first
+      // one. `ceo` is just the first of them, used as the fallback parent for
+      // executives/operators/agents that have no explicit reports_to.
       var ceo = null, coo = null;
+      var topHumans = {};
       nodes.forEach(function(n) {
         if (!allowed[n.id]) return;
         if (n.type !== 'human') return;
         var p = n.properties || {};
-        if (p.authorityLevel === 'full' || /CEO|founder/i.test(p.role || '')) { if (!ceo) ceo = n.id; }
+        if (p.authorityLevel === 'full' || /CEO|founder|visionary/i.test(p.role || '')) {
+          topHumans[n.id] = true;
+          if (!ceo) ceo = n.id;
+        }
         if (p.authorityLevel === 'executive' || /COO/i.test(p.role || '')) { if (!coo) coo = n.id; }
       });
       var orgNode = nodes.find(function(n) { return n.type === 'organization' && allowed[n.id]; });
@@ -1117,8 +1125,8 @@
         if (parent[n.id]) return;
         var p = n.properties || {};
         if (n.type === 'human') {
-          if (n.id === ceo) {
-            parent[n.id] = orgId; // CEO is direct child of organization
+          if (topHumans[n.id]) {
+            parent[n.id] = orgId; // co-equal leaders: direct children of org, side by side
           } else if (n.id === coo) {
             parent[n.id] = ceo || orgId;
           } else {
