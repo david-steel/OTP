@@ -3065,7 +3065,15 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         .from(orgMembers)
         .where(eq(orgMembers.id, _member.id))
         .limit(1);
-      const allowed = onTeam || isAttendee(fullMember, meeting);
+      // The creator can always open a meeting they made. Without this, a
+      // brand-new owner -- not yet on any team (the boot-time team backfill
+      // hasn't run since signup), with a meeting auto-populated to an empty
+      // attendee list -- gets 404'd from the meeting they just created
+      // (reported 2026-06-02, Open Skies signup). Once past this gate the
+      // lazy attendee-populate below adds + persists them, so it self-heals.
+      const _creatorUserId = getAuth(request).userId;
+      const isCreator = !!_creatorUserId && meeting.createdBy === _creatorUserId;
+      const allowed = onTeam || isAttendee(fullMember, meeting) || isCreator;
       if (!allowed) return reply.status(404).send('Meeting not found');
     }
     // If _member is null, the requester is the legacy founder who got past

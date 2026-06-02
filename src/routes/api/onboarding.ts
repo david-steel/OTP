@@ -169,19 +169,57 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
     // Ensure the owner org_members row exists so getRoleForUser() returns
     // 'owner' -- required for Step 2 (issuing invitations).
     const existing = await getMember(org.id, auth.userId);
+    let ownerMemberId: string;
     if (existing) {
       await db.update(orgMembers)
         .set({ displayName, email: email || existing.email, status: 'active', updatedAt: new Date() })
         .where(eq(orgMembers.id, existing.id));
+      ownerMemberId = existing.id;
     } else {
-      await db.insert(orgMembers).values({
+      const [created] = await db.insert(orgMembers).values({
         orgId: org.id,
         clerkUserId: auth.userId,
         role: 'owner',
         status: 'active',
         email,
         displayName,
-      });
+      }).returning({ id: orgMembers.id });
+      ownerMemberId = created.id;
+    }
+
+    // Put the owner on their org's Leadership Team NOW, at signup -- don't wait
+    // for the boot-time ensure-teams backfill. Without this a brand-new owner
+    // has no team membership, so meetings auto-populate with no attendees and
+    // the access gate 404s them from their own first meeting (Open Skies,
+    // 2026-06-02). Mirrors ensure-teams.ts (leadership team + owner as leader).
+    // Idempotent and non-blocking -- a hiccup here must not 500 the profile submit.
+    try {
+      const { teams, teamMemberships } = await import('../../db/schema.js');
+      let [leadTeam] = await db.select({ id: teams.id })
+        .from(teams)
+        .where(and(eq(teams.orgId, org.id), eq(teams.slug, 'leadership')))
+        .limit(1);
+      if (!leadTeam) {
+        try {
+          [leadTeam] = await db.insert(teams)
+            .values({ orgId: org.id, name: 'Leadership Team', slug: 'leadership', type: 'leadership', isDefault: true })
+            .returning({ id: teams.id });
+        } catch { /* concurrent create -- re-read */ }
+        if (!leadTeam) {
+          [leadTeam] = await db.select({ id: teams.id })
+            .from(teams)
+            .where(and(eq(teams.orgId, org.id), eq(teams.slug, 'leadership')))
+            .limit(1);
+        }
+      }
+      if (leadTeam) {
+        try {
+          await db.insert(teamMemberships)
+            .values({ teamId: leadTeam.id, memberId: ownerMemberId, roleOnTeam: 'leader' });
+        } catch { /* unique (team_id, member_id) -- already on the team */ }
+      }
+    } catch (err) {
+      request.log.error({ err, orgId: org.id }, 'leadership-team membership provisioning failed (non-blocking)');
     }
 
     // Auto-place the owner on the accountability chart per their role.

@@ -691,7 +691,12 @@ export default async function meetingRoutes(app: FastifyInstance) {
         displayName: orgMembers.displayName,
         claimedEntityIds: orgMembers.claimedEntityIds,
       }).from(orgMembers).where(eq(orgMembers.id, member.id)).limit(1);
-      const allowed = onTeam || isAttendee(fullMember, meeting);
+      // The creator can always access a meeting they made (mirrors the
+      // /l8/meeting/:id page gate) so a brand-new owner isn't 404'd from
+      // their own meeting's live stream before the page self-heals attendees.
+      const _creatorUserId = getAuth(request).userId;
+      const isCreator = !!_creatorUserId && meeting.createdBy === _creatorUserId;
+      const allowed = onTeam || isAttendee(fullMember, meeting) || isCreator;
       if (!allowed) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
       if (fullMember) {
         presenceName = fullMember.displayName || fullMember.email || 'Viewer';
