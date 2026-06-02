@@ -1300,6 +1300,20 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /demo-signin?token=<clerk sign-in token> -- PUBLIC. Consumes a Clerk
+  // sign-in token via the frontend SDK (signIn.create strategy 'ticket') and
+  // lands the visitor in the session. The token is the credential. Used by the
+  // Acme demo magic link. (The /sign-in?__clerk_ticket= flow is for org
+  // invitations, not sign-in tokens -- hence "ticket is invalid" there.)
+  app.get('/demo-signin', async (_request, reply) => {
+    return renderV7(reply, 'demo-signin', {
+      title: 'Signing in… - OTP',
+      description: 'Signing you into the demo.',
+      noindex: true,
+      loadClerk: true,
+    });
+  });
+
   // GET /admin/demo-acme/signin-link -- one-click magic sign-in for the Acme
   // demo (Clerk sign-in token). No password needed. Open it signed-out (or in
   // an incognito window) and you land in Acme as Wile. Super-admin only.
@@ -1326,7 +1340,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       return reply.send({
         ok: true,
         message: 'Sign out (or use an incognito window), then open signInLink -- you land in Acme as Wile. Single-use, ~1 hour.',
-        signInLink: `https://orgtp.com/sign-in?__clerk_ticket=${encodeURIComponent(ticket)}`,
+        signInLink: `https://orgtp.com/demo-signin?token=${encodeURIComponent(ticket)}`,
       });
     } catch (err: any) {
       return reply.status(500).send({ error: String(err?.message || err) });
