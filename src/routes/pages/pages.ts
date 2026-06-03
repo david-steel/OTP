@@ -1176,9 +1176,52 @@ export default async function pageRoutes(app: FastifyInstance) {
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
       .slice(0, 20);
 
+    // ---- Email-send health -------------------------------------------------
+    // Surfaces the silently-swallowed render/send failures that hid the
+    // missing-template bug for weeks (both onboarding and re-engagement
+    // catch-and-return-false on a failed send, leaving no loud signal). Two
+    // red flags: (1) an onboarding row past the 1h grace whose welcome (#1)
+    // never sent; (2) any re-engagement failure in the last 24h. Either means
+    // mail is dying quietly -- usually templates absent from dist, or a bad
+    // Resend key / unverified from-domain.
+    const scalar = async (q: any): Promise<number> => Number(((await db.execute(q)).rows[0] as any)?.n ?? 0);
+    // onbStuck is a LIVE-regression detector, not a backlog counter: a real
+    // (non-internal) signup from the last 72h that is past the 1h grace and
+    // still has no welcome. The historical pre-fix backlog (older signups we
+    // deliberately route to re-engagement, so email #1 stays null forever) is
+    // excluded so the alert does not cry wolf -- that residue shows up only in
+    // the all-time "welcome sent X/Y" context stat below.
+    const [onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFail24] = await Promise.all([
+      scalar(sql`SELECT count(*)::int AS n FROM onboarding_sequence
+        WHERE email_1_sent_at IS NULL AND unsubscribed_at IS NULL
+          AND signup_at < now() - interval '1 hour'
+          AND signup_at > now() - interval '72 hours'
+          AND email NOT ILIKE '%@sneeze.it' AND email NOT ILIKE '%@orgtp.com'
+          AND email NOT ILIKE '%@acme.example' AND email NOT ILIKE '%@juicedboxes.com'`),
+      scalar(sql`SELECT count(*)::int AS n FROM onboarding_sequence WHERE email_1_sent_at IS NOT NULL`),
+      scalar(sql`SELECT count(*)::int AS n FROM onboarding_sequence`),
+      scalar(sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'sent' AND sent_at > now() - interval '7 days'`),
+      scalar(sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed' AND sent_at > now() - interval '7 days'`),
+      scalar(sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed' AND sent_at > now() - interval '24 hours'`),
+    ]);
+    const reFailRows = (await db.execute(sql`
+      SELECT user_email, template_key, send_error, sent_at
+      FROM user_engagement_log WHERE send_status = 'failed'
+      ORDER BY sent_at DESC LIMIT 5`)).rows as any[];
+    const emailHealth = {
+      onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFail24,
+      recentFailures: reFailRows.map(r => ({
+        email: r.user_email as string,
+        template: r.template_key as string,
+        error: (r.send_error as string | null) || '(no detail)',
+        at: r.sent_at as Date,
+      })),
+    };
+
     return renderV7(reply, 'admin-health', {
       title: 'Health -- Admin',
       noindex: true,
+      emailHealth,
       counts: {
         total,
         onbHits,

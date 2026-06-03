@@ -75,6 +75,69 @@
       </div>
     </div>
 
+    <!-- Email-send health (onboarding + re-engagement) -->
+    <% if (typeof emailHealth !== 'undefined' && emailHealth) {
+         var mailBroken = emailHealth.onbStuck > 0 || emailHealth.reFail24 > 0; %>
+    <div class="rounded-2xl border p-6 mb-10" style="<%= mailBroken ? 'background:#fff1f1;border-color:#ffd0d0;' : 'border-color:var(--line);background:var(--card);' %>">
+      <p class="eyebrow mb-4">Email-send health: onboarding welcome + re-engagement nudges</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-5">
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Onboarding stuck</p>
+          <p class="font-display leading-none" style="font-size:28px; font-weight:700; color:<%= emailHealth.onbStuck > 0 ? '#c0392b' : 'var(--green-deep)' %>;"><%= emailHealth.onbStuck %></p>
+          <p class="text-[12px] mt-1" style="color:var(--ink-mute);">new signup (72h), past 1h grace, no welcome</p>
+        </div>
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Re-engage fails (24h)</p>
+          <p class="font-display leading-none" style="font-size:28px; font-weight:700; color:<%= emailHealth.reFail24 > 0 ? '#c0392b' : 'var(--green-deep)' %>;"><%= emailHealth.reFail24 %></p>
+          <p class="text-[12px] mt-1" style="color:var(--ink-mute);">failed sends since yesterday</p>
+        </div>
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Re-engage 7d</p>
+          <p class="font-display leading-none" style="font-size:28px; font-weight:700; color:var(--ink);"><%= emailHealth.reSent7 %><span class="text-[15px]" style="color:var(--ink-mute);"> sent</span></p>
+          <p class="text-[12px] mt-1" style="color:<%= emailHealth.reFail7 > 0 ? '#c0392b' : 'var(--ink-mute)' %>;"><%= emailHealth.reFail7 %> failed</p>
+        </div>
+        <div>
+          <p class="text-[12.5px] mb-1" style="color:var(--ink-soft);">Welcome sent (all-time)</p>
+          <p class="font-display leading-none" style="font-size:28px; font-weight:700; color:var(--ink);"><%= emailHealth.onbE1Sent %><span class="text-[15px]" style="color:var(--ink-mute);">/<%= emailHealth.onbTotal %></span></p>
+          <p class="text-[12px] mt-1" style="color:var(--ink-mute);">onboarding rows with email #1</p>
+        </div>
+      </div>
+      <% if (mailBroken) { %>
+        <p class="text-[14px] font-semibold" style="color:#c0392b;">Emails are failing silently.</p>
+        <p class="text-[12.5px] mt-1" style="color:var(--ink-soft);">A stuck onboarding row or a recent re-engagement failure means sends are dying quietly. Most likely: email templates absent from <code class="font-mono text-[11px]">dist/templates/emails</code>, or a bad <code class="font-mono text-[11px]">RESEND_API_KEY</code> / unverified from-domain. Check the failure detail below and the Railway logs for <code class="font-mono text-[11px]">[email]</code> / <code class="font-mono text-[11px]">[onboarding-scheduler]</code>.</p>
+      <% } else { %>
+        <p class="text-[14px] font-semibold" style="color:var(--green-deep);">Email delivery healthy.</p>
+        <p class="text-[12px] mt-1" style="color:var(--ink-mute);">No stuck onboarding rows and no re-engagement failures in the last 24h.</p>
+      <% } %>
+
+      <% if (emailHealth.recentFailures && emailHealth.recentFailures.length > 0) { %>
+      <p class="eyebrow mt-5 mb-2" style="font-size:10px;">Most recent failures</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[13px]">
+          <thead>
+            <tr class="text-left" style="color:var(--ink-soft);">
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Recipient</th>
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Template</th>
+              <th class="pb-2 pr-4 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Error</th>
+              <th class="pb-2 font-mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% emailHealth.recentFailures.forEach(function(f) { %>
+              <tr style="border-top:1px solid var(--line-soft);">
+                <td class="py-2.5 pr-4 font-mono" style="font-size:12.5px; color:var(--ink);"><%= f.email %></td>
+                <td class="py-2.5 pr-4 font-mono" style="font-size:12px; color:var(--ink-soft);"><%= f.template %></td>
+                <td class="py-2.5 pr-4" style="color:#c0392b; max-width:380px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<%= f.error %>"><%= f.error.length > 80 ? f.error.slice(0, 80) + '…' : f.error %></td>
+                <td class="py-2.5" style="color:var(--ink-soft); white-space:nowrap;"><%= f.at ? new Date(f.at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '?' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+
     <!-- Stranded breakdown -->
     <% if (counts.stranded > 0) { %>
     <div class="rounded-2xl border border-[var(--line-soft)] p-6 mb-10" style="background:#fbfaf5;">
