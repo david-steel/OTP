@@ -61,7 +61,7 @@ const SUPPRESSED_EMAILS = new Set<string>([
   'krisg@jointher3volution.com', // EO relationship -- David reaches out personally
 ]);
 
-function isSuppressedRecipient(email: string): boolean {
+export function isSuppressedRecipient(email: string): boolean {
   const e = (email || '').trim().toLowerCase();
   if (!e) return true;
   if (SUPPRESSED_EMAILS.has(e)) return true;

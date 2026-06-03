@@ -29,6 +29,7 @@ import {
 import { sendEmail } from '../config/email.js';
 import { EMAILS, type LifecycleEmail } from '../data/email-series.js';
 import { renderLifecycleEmail } from './lifecycle-email.js';
+import { isSuppressedRecipient } from './re-engagement.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BATCH_LIMIT = 200;
@@ -194,12 +195,16 @@ export async function runLifecycleTick(): Promise<void> {
       .limit(BATCH_LIMIT);
 
     let sent = 0;
+    let suppressed = 0;
     for (const row of rows) {
+      // Never send lifecycle mail to internal staff, the demo org, or test
+      // aliases. Same suppression list the re-engagement service uses.
+      if (isSuppressedRecipient(row.email)) { suppressed++; continue; }
       const r = await processSignup(row);
       if (r === 'sent') sent++;
     }
     if (rows.length > 0) {
-      console.log(`[lifecycle] tick complete (${isLive() ? 'LIVE' : 'DRY-RUN'}). scanned=${rows.length} sent=${sent}`);
+      console.log(`[lifecycle] tick complete (${isLive() ? 'LIVE' : 'DRY-RUN'}). scanned=${rows.length} sent=${sent} suppressed=${suppressed}`);
     }
   } catch (err) {
     console.error('[lifecycle] tick failed:', err);
