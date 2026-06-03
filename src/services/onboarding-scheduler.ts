@@ -131,9 +131,10 @@ export function startOnboardingScheduler(): void {
   if (scheduled) return;
   scheduled = true;
 
-  cron.schedule('15 * * * *', () => {
-    void runOnboardingTick();
-  });
-
-  console.log('[onboarding-scheduler] started (runs at :15 every hour)');
+  // RETIRED 2026-06-03. The day-3 / day-7 onboarding drip is superseded by the
+  // 90-day lifecycle series (src/services/lifecycle-scheduler.ts), which owns
+  // every post-welcome email. The welcome itself (email #1) still fires on
+  // signup via the Clerk webhook -- that is unchanged. This scheduler no longer
+  // sends anything; runOnboardingTick is kept exported for manual/diagnostic use.
+  console.log('[onboarding-scheduler] retired -- post-welcome sends now handled by the lifecycle scheduler');
 }

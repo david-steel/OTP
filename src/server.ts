@@ -892,6 +892,14 @@ try {
 }
 
 try {
+  const { ensureLifecycleSendsTable } = await import('./db/ensure-lifecycle-sends.js');
+  await ensureLifecycleSendsTable();
+  app.log.info('lifecycle_sends table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureLifecycleSendsTable failed -- 90-day lifecycle email scheduler will not run until resolved');
+}
+
+try {
   const { ensureMeetingVideoLinkColumn } = await import('./db/ensure-meeting-video-link.js');
   await ensureMeetingVideoLinkColumn();
   app.log.info('meetings.video_link column is ready');
@@ -1039,6 +1047,14 @@ try {
   if (process.env.NODE_ENV === 'production' || process.env.ENABLE_REENGAGEMENT_SCHEDULER === 'true') {
     const { startReEngagementScheduler } = await import('./services/re-engagement-scheduler.js');
     startReEngagementScheduler();
+  }
+
+  // 90-day lifecycle series. Starts in prod (and via ENABLE flag) but runs in
+  // DRY-RUN until LIFECYCLE_EMAILS_LIVE=true -- it logs intended sends without
+  // delivering, so deploying this never blasts real signups by accident.
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_LIFECYCLE_SCHEDULER === 'true') {
+    const { startLifecycleScheduler } = await import('./services/lifecycle-scheduler.js');
+    startLifecycleScheduler();
   }
 } catch (err) {
   app.log.error(err);

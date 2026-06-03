@@ -525,6 +525,22 @@ export const onboardingSequence = pgTable('onboarding_sequence', {
   signupIdx: index('onb_signup_idx').on(table.signupAt),
 }));
 
+// ---- 90-day lifecycle email series (rungs 1-30) ----
+// One row per (signup, rung) actually sent. Idempotent log: the unique index
+// guarantees a rung is never double-sent to the same user. Skipped rungs are
+// recorded with skipped=true so the scheduler advances past them. Table is
+// self-healed on boot by ensure-lifecycle-sends.ts (Drizzle migrate is broken).
+export const lifecycleSends = pgTable('lifecycle_sends', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull(),
+  emailN: integer('email_n').notNull(),
+  skipped: boolean('skipped').notNull().default(false),
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+}, (table) => ({
+  userRungIdx: uniqueIndex('lifecycle_sends_user_rung_idx').on(table.clerkUserId, table.emailN),
+  userIdx: index('lifecycle_sends_user_idx').on(table.clerkUserId),
+}));
+
 // ---- Org membership (Phase 4.6 multi-user invitations) ----
 
 // Ninety-style roles. 'member' is a deprecated legacy value kept for backward
