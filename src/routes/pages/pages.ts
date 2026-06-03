@@ -1179,19 +1179,27 @@ export default async function pageRoutes(app: FastifyInstance) {
     // ---- Email-send health -------------------------------------------------
     // Surfaces the silently-swallowed render/send failures that hid the
     // missing-template bug for weeks (both onboarding and re-engagement
-    // catch-and-return-false on a failed send, leaving no loud signal). Two
-    // red flags: (1) an onboarding row past the 1h grace whose welcome (#1)
-    // never sent; (2) any re-engagement failure in the last 24h. Either means
-    // mail is dying quietly -- usually templates absent from dist, or a bad
-    // Resend key / unverified from-domain.
+    // catch-and-return-false on a failed send, leaving no loud signal).
+    //
+    // Two red flags, both designed to reflect CURRENT health, not stale
+    // residue:
+    //   (1) onbStuck -- a real (non-internal) signup from the last 72h, past
+    //       the 1h grace, whose welcome (#1) never sent. A live-regression
+    //       detector; the historical pre-fix backlog (signups we route to
+    //       re-engagement, so email #1 stays null forever) is excluded so the
+    //       alert does not cry wolf -- that residue shows only in the all-time
+    //       "welcome sent X/Y" context stat.
+    //   (2) reFailUnresolved -- re-engagement failures that occurred AFTER the
+    //       most recent SUCCESSFUL send. If the last activity succeeded, the
+    //       run is healthy regardless of earlier failures, so a fixed-then-
+    //       successful day reads green. Only a failure newer than the last
+    //       success (or failures with no success at all) trips red.
+    // Either usually means mail is dying quietly -- templates absent from
+    // dist, or a bad Resend key / unverified from-domain.
     const scalar = async (q: any): Promise<number> => Number(((await db.execute(q)).rows[0] as any)?.n ?? 0);
-    // onbStuck is a LIVE-regression detector, not a backlog counter: a real
-    // (non-internal) signup from the last 72h that is past the 1h grace and
-    // still has no welcome. The historical pre-fix backlog (older signups we
-    // deliberately route to re-engagement, so email #1 stays null forever) is
-    // excluded so the alert does not cry wolf -- that residue shows up only in
-    // the all-time "welcome sent X/Y" context stat below.
-    const [onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFail24] = await Promise.all([
+    const lastSentRow = (await db.execute(sql`SELECT max(sent_at) AS m FROM user_engagement_log WHERE send_status = 'sent'`)).rows[0] as any;
+    const lastSentAt: Date | null = lastSentRow?.m ? new Date(lastSentRow.m) : null;
+    const [onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFailUnresolved] = await Promise.all([
       scalar(sql`SELECT count(*)::int AS n FROM onboarding_sequence
         WHERE email_1_sent_at IS NULL AND unsubscribed_at IS NULL
           AND signup_at < now() - interval '1 hour'
@@ -1202,14 +1210,17 @@ export default async function pageRoutes(app: FastifyInstance) {
       scalar(sql`SELECT count(*)::int AS n FROM onboarding_sequence`),
       scalar(sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'sent' AND sent_at > now() - interval '7 days'`),
       scalar(sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed' AND sent_at > now() - interval '7 days'`),
-      scalar(sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed' AND sent_at > now() - interval '24 hours'`),
+      scalar(lastSentAt
+        ? sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed' AND sent_at > ${lastSentAt.toISOString()}`
+        : sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed'`),
     ]);
     const reFailRows = (await db.execute(sql`
       SELECT user_email, template_key, send_error, sent_at
       FROM user_engagement_log WHERE send_status = 'failed'
       ORDER BY sent_at DESC LIMIT 5`)).rows as any[];
     const emailHealth = {
-      onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFail24,
+      onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFailUnresolved,
+      lastSentAt,
       recentFailures: reFailRows.map(r => ({
         email: r.user_email as string,
         template: r.template_key as string,
