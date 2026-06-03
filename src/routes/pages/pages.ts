@@ -1199,7 +1199,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const scalar = async (q: any): Promise<number> => Number(((await db.execute(q)).rows[0] as any)?.n ?? 0);
     const lastSentRow = (await db.execute(sql`SELECT max(sent_at) AS m FROM user_engagement_log WHERE send_status = 'sent'`)).rows[0] as any;
     const lastSentAt: Date | null = lastSentRow?.m ? new Date(lastSentRow.m) : null;
-    const [onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFailUnresolved] = await Promise.all([
+    const [onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFailUnresolved, lifeTotal, lifeSent7, lifeSkipped] = await Promise.all([
       scalar(sql`SELECT count(*)::int AS n FROM onboarding_sequence
         WHERE email_1_sent_at IS NULL AND unsubscribed_at IS NULL
           AND signup_at < now() - interval '1 hour'
@@ -1213,6 +1213,11 @@ export default async function pageRoutes(app: FastifyInstance) {
       scalar(lastSentAt
         ? sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed' AND sent_at > ${lastSentAt.toISOString()}`
         : sql`SELECT count(*)::int AS n FROM user_engagement_log WHERE send_status = 'failed'`),
+      // 90-day lifecycle outreach series. Counts ACTUAL sends (skipped=false);
+      // stays 0 while the scheduler is in DRY-RUN, which is the honest signal.
+      scalar(sql`SELECT count(*)::int AS n FROM lifecycle_sends WHERE skipped = false`),
+      scalar(sql`SELECT count(*)::int AS n FROM lifecycle_sends WHERE skipped = false AND sent_at > now() - interval '7 days'`),
+      scalar(sql`SELECT count(*)::int AS n FROM lifecycle_sends WHERE skipped = true`),
     ]);
     const reFailRows = (await db.execute(sql`
       SELECT user_email, template_key, send_error, sent_at
@@ -1220,6 +1225,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       ORDER BY sent_at DESC LIMIT 5`)).rows as any[];
     const emailHealth = {
       onbStuck, onbE1Sent, onbTotal, reSent7, reFail7, reFailUnresolved,
+      lifeTotal, lifeSent7, lifeSkipped,
       lastSentAt,
       recentFailures: reFailRows.map(r => ({
         email: r.user_email as string,

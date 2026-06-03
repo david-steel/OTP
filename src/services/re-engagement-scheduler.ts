@@ -36,13 +36,14 @@ export function startReEngagementScheduler(): void {
   if (scheduled) return;
   scheduled = true;
 
+  // M-F only (no weekend sends) per David 2026-06-03. Cron day-of-week 1-5 = Mon-Fri.
   cron.schedule(
-    '0 9 * * *',
+    '0 9 * * 1-5',
     () => {
       void runReEngagementTick();
     },
     { timezone: 'America/New_York' },
   );
 
-  console.log('[reengage-scheduler] started (runs daily at 9:00 AM America/New_York)');
+  console.log('[reengage-scheduler] started (runs weekdays at 9:00 AM America/New_York)');
 }
