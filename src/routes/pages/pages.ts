@@ -848,6 +848,43 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Lifecycle email previews. Renders any rung of the 90-day series live, so the
+  // Google Sheet registry can deep-link to the real (always-current) email.
+  // Public + noindex; the content is marketing copy that gets sent anyway.
+  // /email-preview        -> index of all rungs
+  // /email-preview/07     -> rung 7 (?name=Alex to customize the greeting)
+  // /email-preview/re     -> the inactivity re-engagement email
+  app.get<{ Querystring: { name?: string } }>('/email-preview', async (_request, reply) => {
+    const { EMAILS, REENGAGE } = await import('../../data/email-series.js');
+    const rows = [...EMAILS, REENGAGE].map(e => {
+      const id = e.n === REENGAGE.n ? 're' : String(e.n).padStart(2, '0');
+      return `<tr><td style="padding:6px 10px;color:#888;font-weight:700;">${id}</td>`
+        + `<td style="padding:6px 10px;color:#888;">D${e.day}</td>`
+        + `<td style="padding:6px 10px;"><a href="/email-preview/${id}" style="color:#5a7d1f;font-weight:600;">${e.subject}</a></td>`
+        + `<td style="padding:6px 10px;color:#888;">${e.cta.label}</td></tr>`;
+    }).join('');
+    reply.header('X-Robots-Tag', 'noindex').type('text/html').send(
+      `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>OTP Lifecycle Email Previews</title>`
+      + `<style>body{font-family:-apple-system,sans-serif;background:#F5F7FA;color:#1a2e05;max-width:820px;margin:0 auto;padding:32px}`
+      + `table{border-collapse:collapse;width:100%;background:#fff;border-radius:10px;overflow:hidden;font-size:14px}`
+      + `td{border-bottom:1px solid #eee}h1{font-size:24px}</style></head><body>`
+      + `<h1>OTP 90-Day Email Series</h1><p>${EMAILS.length} lifecycle emails + 1 re-engagement. Click any subject to preview the live render.</p>`
+      + `<table>${rows}</table></body></html>`);
+  });
+
+  app.get<{ Params: { id: string }; Querystring: { name?: string } }>('/email-preview/:id', async (request, reply) => {
+    const { EMAILS, REENGAGE } = await import('../../data/email-series.js');
+    const { renderLifecycleEmail } = await import('../../services/lifecycle-email.js');
+    const id = (request.params.id || '').toLowerCase();
+    const name = request.query.name || 'Alex';
+    const e = (id === 're' || id === 'reengage')
+      ? REENGAGE
+      : EMAILS.find(x => Number(x.n) === parseInt(id, 10));
+    if (!e) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    const html = renderLifecycleEmail(e, name, 'you@example.com');
+    return reply.header('X-Robots-Tag', 'noindex').type('text/html').send(html);
+  });
+
   // Super Admin Dashboard
   app.get('/admin', async (request, reply) => {
     const isAdmin = (request as any).isSuperAdmin;
