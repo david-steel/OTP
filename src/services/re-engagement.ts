@@ -45,6 +45,31 @@ const SUBJECT_BY_SEGMENT: Record<Segment, string> = {
   clerk_post_oos: 'Your agents are still reading your OOS',
 };
 
+// Accounts that must NEVER receive an automated re-engagement nudge: internal
+// staff, the demo org, test aliases, and specific relationships David handles
+// personally. Domain entries suppress the whole domain (so dsteel+...@sneeze.it
+// aliases are caught too); address entries suppress a single inbox. Matched
+// case-insensitively. Keep this list short and obvious.
+const SUPPRESSED_DOMAINS = new Set<string>([
+  'sneeze.it',
+  'orgtp.com',
+  'acme.example',
+  'juicedboxes.com',
+  'example.com',
+]);
+const SUPPRESSED_EMAILS = new Set<string>([
+  'krisg@jointher3volution.com', // EO relationship -- David reaches out personally
+]);
+
+function isSuppressedRecipient(email: string): boolean {
+  const e = (email || '').trim().toLowerCase();
+  if (!e) return true;
+  if (SUPPRESSED_EMAILS.has(e)) return true;
+  const at = e.lastIndexOf('@');
+  if (at === -1) return true;
+  return SUPPRESSED_DOMAINS.has(e.slice(at + 1));
+}
+
 export interface Candidate {
   email: string;
   firstName: string | null;
@@ -240,6 +265,7 @@ export interface RunOptions {
 
 export interface RunResult {
   candidatesFound: number;
+  suppressed: number;
   capped: number;
   attempted: number;
   sent: number;
@@ -256,6 +282,7 @@ export async function runReEngagement(opts: RunOptions = {}): Promise<RunResult>
 
   const result: RunResult = {
     candidatesFound: 0,
+    suppressed: 0,
     capped: 0,
     attempted: 0,
     sent: 0,
@@ -271,6 +298,18 @@ export async function runReEngagement(opts: RunOptions = {}): Promise<RunResult>
   const preSignupCandidates = await pullPreSignupCandidates(clerkEmails);
   let candidates: Candidate[] = [...clerkCandidates, ...preSignupCandidates];
   result.candidatesFound = candidates.length;
+
+  // Suppression: never nudge internal staff, the demo org, test aliases, or
+  // hand-managed relationships. Runs before the cap/sample/limit stages so a
+  // suppressed address can never consume a send slot.
+  const suppressed = candidates.filter(c => isSuppressedRecipient(c.email));
+  if (suppressed.length) {
+    candidates = candidates.filter(c => !isSuppressedRecipient(c.email));
+    result.suppressed = suppressed.length;
+    for (const c of suppressed) {
+      result.details.push({ email: c.email, segment: c.segment, staleDays: c.staleDays, status: 'skipped', reason: 'suppressed (internal/relationship)' });
+    }
+  }
 
   // Self-test: when toEmail is set, deliver one sample of each unique segment
   // to the override address so the operator can preview rendering.
