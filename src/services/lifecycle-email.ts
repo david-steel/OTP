@@ -8,7 +8,7 @@
 
 import type { LifecycleEmail, LifecycleCard } from '../data/email-series.js';
 
-const IMG = 'https://orgtp.com/images';
+const IMG = 'https://orgtp.com/public/images';
 const GREEN = '#A8E63A';
 const GREEN_DEEP = '#8BC42A';
 const INK = '#1a2e05';
