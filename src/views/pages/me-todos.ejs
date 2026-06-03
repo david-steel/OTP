@@ -282,9 +282,8 @@
         <option value="custom">Custom...</option>
       </select>
       <input id="new-todo-custom-date" type="datetime-local" style="display:none;" />
-      <label for="new-todo-delegate" style="font-size:13px; color:#666;">Delegate to</label>
-      <select id="new-todo-delegate" title="Delegate to">
-        <option value="">Just me</option>
+      <label for="new-todo-delegate" style="font-size:13px; color:#666;">Assign to <span style="color:#999;">(pick one or more; none = just you)</span></label>
+      <select id="new-todo-delegate" title="Assign to one or more people. Each person gets their own copy of this to-do." multiple size="3" style="min-width:150px;">
         <% (assignablePeople || []).forEach(function(p) { %>
           <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
         <% }); %>
@@ -658,14 +657,17 @@ async function createTodo(btn) {
     recurrenceRule: recurrenceRule || undefined,
   };
 
-  // Delegation: if a person is picked, reassign ownership to them and stamp
-  // David as the delegator. Value format is "<entityType>:<externalId>:<name>".
-  const delegateVal = (document.getElementById('new-todo-delegate') || {}).value || '';
-  if (delegateVal) {
-    const parts = delegateVal.split(':');
-    body.ownerEntityType = parts[0];
-    body.ownerExternalId = parts[1];
-    body.ownerName = parts.slice(2).join(':');
+  // Multi-assignee: every selected person gets their own independent copy of
+  // this to-do (each owned and checked off separately). None selected = just me.
+  // Each option value is "<entityType>:<externalId>:<name>".
+  const assignSel = document.getElementById('new-todo-delegate');
+  const picked = assignSel ? Array.prototype.slice.call(assignSel.selectedOptions || []) : [];
+  if (picked.length > 0) {
+    body.owners = picked.map(function (opt) {
+      const parts = opt.value.split(':');
+      return { ownerEntityType: parts[0], ownerExternalId: parts[1], ownerName: parts.slice(2).join(':') };
+    });
+    // Stamp the creator as delegator on every copy.
     body.delegatorEntityType = <%- JSON.stringify(meEntityType || 'human') %>;
     body.delegatorExternalId = <%- JSON.stringify(meExternalId || '') %>;
     body.delegatorName = <%- JSON.stringify(meName || '') %>;

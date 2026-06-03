@@ -24,9 +24,17 @@ const createTodoSchema = z.object({
   kind: kindEnum.optional(),
   priority: priorityEnum.optional(),
   teamId: z.string().uuid().optional(),
-  ownerEntityType: z.enum(['agent', 'human']),
-  ownerExternalId: z.string().min(1).max(120),
+  // Single-owner (back-compat). Either these OR `owners` must be provided.
+  ownerEntityType: z.enum(['agent', 'human']).optional(),
+  ownerExternalId: z.string().min(1).max(120).optional(),
   ownerName: z.string().max(255).optional(),
+  // Multi-assignee: when present, the todo fans out into one independent record
+  // per owner (same title/due/priority/recurrence, separately checked off).
+  owners: z.array(z.object({
+    ownerEntityType: z.enum(['agent', 'human']),
+    ownerExternalId: z.string().min(1).max(120),
+    ownerName: z.string().max(255).optional(),
+  })).min(1).max(50).optional(),
   delegatorEntityType: z.enum(['agent', 'human']).optional(),
   delegatorExternalId: z.string().min(1).max(120).optional(),
   delegatorName: z.string().max(255).optional(),
@@ -40,7 +48,10 @@ const createTodoSchema = z.object({
   // Subtasks: parent_todo_id links a child to its parent.
   parentTodoId: z.string().uuid().optional(),
   position: z.number().int().min(0).max(10_000).optional(),
-});
+}).refine(
+  d => (d.owners && d.owners.length > 0) || (!!d.ownerEntityType && !!d.ownerExternalId),
+  { message: 'Provide owners[] or ownerEntityType + ownerExternalId' },
+);
 
 const updateTodoSchema = z.object({
   title: z.string().min(3).max(500).optional(),
@@ -111,16 +122,22 @@ export default async function todoRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } });
     }
 
-    // Fields shared by a plain todo, a recurrence template, and its instances.
-    const shared = {
+    // Multi-assignee fan-out: `owners[]` creates one independent record per
+    // person (each separately owned and checked off). Falls back to the single
+    // ownerEntityType/ownerExternalId for back-compat. The refine guarantees at
+    // least one source exists.
+    const targets = (d.owners && d.owners.length > 0)
+      ? d.owners
+      : [{ ownerEntityType: d.ownerEntityType!, ownerExternalId: d.ownerExternalId!, ownerName: d.ownerName }];
+
+    // Fields shared across every fanned-out copy (and, per copy, its recurrence
+    // template + first instance). Owner fields are layered in per target below.
+    const sharedBase = {
       organizationId: org.id,
       kind,
       priority: d.priority ?? 'p3',
       teamId: d.teamId || null,
       meetingId: d.meetingId || null,
-      ownerEntityType: d.ownerEntityType,
-      ownerExternalId: d.ownerExternalId,
-      ownerName: d.ownerName,
       delegatorEntityType: d.delegatorEntityType,
       delegatorExternalId: d.delegatorExternalId,
       delegatorName: d.delegatorName,
@@ -131,53 +148,66 @@ export default async function todoRoutes(app: FastifyInstance) {
       createdBy,
     };
 
-    let todo;
-    if (d.recurrenceRule) {
-      // Recurring: the rule lives on a hidden template (rule set, no due_at);
-      // the user only ever sees generated instances. Seed the first instance
-      // now -- at the caller's due date if given (e.g. "due today"), otherwise
-      // the next occurrence at/after now -- so the series is immediately
-      // visible and self-perpetuates as each instance is completed.
-      const [template] = await db.insert(todos).values({
-        ...shared,
-        dueAt: null,
-        recurrenceRule: d.recurrenceRule,
-        recurrenceParentId: null,
-      }).returning();
+    const created: typeof todos.$inferSelect[] = [];
+    for (const target of targets) {
+      const shared = {
+        ...sharedBase,
+        ownerEntityType: target.ownerEntityType,
+        ownerExternalId: target.ownerExternalId,
+        ownerName: target.ownerName,
+      };
 
-      const firstDue = d.dueAt ? new Date(d.dueAt) : nextOccurrence(d.recurrenceRule, new Date(), true);
-      if (firstDue) {
-        const [instance] = await db.insert(todos).values({
+      let todo;
+      if (d.recurrenceRule) {
+        // Recurring: the rule lives on a hidden template (rule set, no due_at);
+        // the user only ever sees generated instances. Seed the first instance
+        // now -- at the caller's due date if given (e.g. "due today"), otherwise
+        // the next occurrence at/after now -- so the series is immediately
+        // visible and self-perpetuates as each instance is completed.
+        const [template] = await db.insert(todos).values({
           ...shared,
-          dueAt: firstDue,
-          recurrenceRule: null,
-          recurrenceParentId: template.id,
+          dueAt: null,
+          recurrenceRule: d.recurrenceRule,
+          recurrenceParentId: null,
         }).returning();
-        todo = instance;
+
+        const firstDue = d.dueAt ? new Date(d.dueAt) : nextOccurrence(d.recurrenceRule, new Date(), true);
+        if (firstDue) {
+          const [instance] = await db.insert(todos).values({
+            ...shared,
+            dueAt: firstDue,
+            recurrenceRule: null,
+            recurrenceParentId: template.id,
+          }).returning();
+          todo = instance;
+        } else {
+          // Rule has no future occurrence -- return the template so the caller
+          // still gets a 201 rather than a confusing empty success.
+          todo = template;
+        }
       } else {
-        // Rule has no future occurrence -- return the template so the caller
-        // still gets a 201 rather than a confusing empty success.
-        todo = template;
+        const [plain] = await db.insert(todos).values({
+          ...shared,
+          dueAt: d.dueAt ? new Date(d.dueAt) : null,
+          recurrenceRule: null,
+        }).returning();
+        todo = plain;
       }
-    } else {
-      const [plain] = await db.insert(todos).values({
-        ...shared,
-        dueAt: d.dueAt ? new Date(d.dueAt) : null,
-        recurrenceRule: null,
-      }).returning();
-      todo = plain;
+
+      await db.insert(auditLogs).values(createAuditEntry('todo.created', 'todo', {
+        orgId: org.id, entityId: todo.id, details: { title: todo.title, kind, priority: todo.priority },
+      }));
+
+      if (todo.kind === 'l10') {
+        const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
+        publishToTeamMeetings(todo.teamId, { kind: 'todo', action: 'created', entityId: todo.id });
+      }
+
+      created.push(todo);
     }
 
-    await db.insert(auditLogs).values(createAuditEntry('todo.created', 'todo', {
-      orgId: org.id, entityId: todo.id, details: { title: todo.title, kind, priority: todo.priority },
-    }));
-
-    if (todo.kind === 'l10') {
-      const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
-      publishToTeamMeetings(todo.teamId, { kind: 'todo', action: 'created', entityId: todo.id });
-    }
-
-    return reply.status(201).send({ todo });
+    // Back-compat: `todo` is the first (or only) record; `todos` is the full set.
+    return reply.status(201).send({ todo: created[0], todos: created });
   });
 
   // GET /api/v1/todos?open=&meetingId=&ownerExternalId=&kind=&teamId=&parentTodoId=&includeTemplates=
