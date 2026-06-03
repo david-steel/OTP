@@ -728,8 +728,7 @@
     <div class="mt-3 space-y-2">
     <div class="grid grid-cols-12 gap-2">
       <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="col-span-5 border rounded p-2 text-sm">
-      <select id="new-todo-owner" class="col-span-3 border rounded p-2 text-sm">
-        <option value="">-- assign owner --</option>
+      <select id="new-todo-owner" class="col-span-3 border rounded p-2 text-sm" multiple size="3" title="Assign to one or more. Each person gets their own copy of this to-do.">
         <% (availableOwners || []).forEach(function(a) { %>
           <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
         <% }); %>
@@ -1932,9 +1931,13 @@
   const addTodo = document.getElementById('add-todo');
   if (addTodo) addTodo.addEventListener('click', async () => {
     const title = document.getElementById('new-todo-title').value.trim();
-    const ownerVal = document.getElementById('new-todo-owner').value;
-    const owner = parseOwner(ownerVal);
-    if (!title || !owner) return alert('Title and owner required');
+    // Multi-assignee: each selected person gets their own independent copy.
+    const ownerSel = document.getElementById('new-todo-owner');
+    const owners = Array.prototype.slice.call(ownerSel ? ownerSel.selectedOptions : [])
+      .map(function (o) { return parseOwner(o.value); })
+      .filter(Boolean)
+      .map(function (o) { return { ownerEntityType: o.entityType, ownerExternalId: o.externalId, ownerName: o.name }; });
+    if (!title || owners.length === 0) return alert('Title and at least one owner required');
     const priority = (document.getElementById('new-todo-priority') || {}).value || 'p3';
     const recurrenceRule = (document.getElementById('new-todo-recur') || {}).value || null;
     const description = (document.getElementById('new-todo-desc') || {}).value || '';
@@ -1954,7 +1957,7 @@
     }
     const body = {
       kind: 'l10', teamId, priority,
-      title, ownerExternalId: owner.externalId, ownerEntityType: owner.entityType, ownerName: owner.name,
+      title, owners,
       meetingId, dueAt: dueAt.toISOString(),
     };
     if (description.trim()) body.description = description.trim();
