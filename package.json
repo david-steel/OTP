@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "css:build": "tailwindcss -i src/styles/input.css -o public/styles.css --minify && tailwindcss -i src/styles/v7.css -o public/v7.css --minify",
     "css:watch": "tailwindcss -i src/styles/input.css -o public/styles.css --watch",
-    "build:assets": "rm -rf dist/views dist/protocol dist/db/migrations && mkdir -p dist/db && cp -R src/views dist/views && cp -R src/protocol dist/protocol && cp -R src/db/migrations dist/db/migrations",
+    "build:assets": "rm -rf dist/views dist/protocol dist/templates dist/db/migrations && mkdir -p dist/db && cp -R src/views dist/views && cp -R src/protocol dist/protocol && cp -R src/templates dist/templates && cp -R src/db/migrations dist/db/migrations",
     "build": "npm run css:build && tsc && npm run build:assets",
     "start": "node dist/server.js",
     "db:generate": "drizzle-kit generate",
