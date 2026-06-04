@@ -535,8 +535,13 @@
          return true;
        });
        // Active first, then completed/archived (only present when ?rocks=all).
-       var _activeRocks = _humanRocks.filter(function(r){ return !(r.completedAt || r.archivedAt); });
-       var _hiddenRocks = _humanRocks.filter(function(r){ return !!(r.completedAt || r.archivedAt); });
+       // A rock completed/archived DURING this live meeting (it has a
+       // rockChanges entry) stays in the active flow so its "this meeting" note
+       // is visible instead of the rock silently vanishing.
+       var _rockChanges = (typeof rockChanges !== 'undefined' && rockChanges) ? rockChanges : {};
+       var _rockBaseline = (typeof rockBaseline !== 'undefined' && rockBaseline) ? rockBaseline : {};
+       var _activeRocks = _humanRocks.filter(function(r){ return !(r.completedAt || r.archivedAt) || _rockChanges[r.id]; });
+       var _hiddenRocks = _humanRocks.filter(function(r){ return (r.completedAt || r.archivedAt) && !_rockChanges[r.id]; });
        var _orderedRocks = _activeRocks.concat(_hiddenRocks); %>
     <% if (_humanRocks.length === 0) { %>
       <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm mb-3">
@@ -553,7 +558,9 @@
              var _completed = !!r.completedAt;
              var _archived = !!r.archivedAt;
              var _hidden = _completed || _archived; %>
-          <div class="border rounded p-3 flex items-start justify-between <%= _hidden ? 'bg-gray-50 opacity-75' : '' %>" data-rock-id="<%= r.id %>">
+          <% var _chg = _rockChanges[r.id];
+             var _baseOnTrack = Object.prototype.hasOwnProperty.call(_rockBaseline, r.id) ? (_rockBaseline[r.id] ? 'on' : 'off') : 'none'; %>
+          <div class="border rounded p-3 flex items-start justify-between <%= _hidden ? 'bg-gray-50 opacity-75' : '' %>" data-rock-id="<%= r.id %>" data-rock-baseline="<%= _baseOnTrack %>">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <% if (_completed) { %>
@@ -575,6 +582,13 @@
               </div>
               <div class="font-medium text-sm"><%= r.title %></div>
               <div class="text-xs text-gray-600 mt-0.5">Owner: <%= r.ownerName || r.ownerExternalId %></div>
+              <%# "Changed this meeting" provenance. data-rock-change is updated
+                  client-side by the On/Off toggle so it stays accurate without a reload. %>
+              <div data-rock-change class="text-xs mt-1 font-semibold text-orgy-blue<%= _chg ? '' : ' hidden' %>">
+                <% if (_chg && _chg.kind === 'completed') { %>&#8627; Completed this meeting<% }
+                   else if (_chg && _chg.kind === 'archived') { %>&#8627; Archived this meeting<% }
+                   else if (_chg) { %>&#8627; Changed this meeting: <%= _chg.from ? 'On Track' : 'Off Track' %> &rarr; <%= _chg.to ? 'On Track' : 'Off Track' %><% } %>
+              </div>
               <% if (r.executionItemId && _execLabel[r.executionItemId]) { %>
                 <div class="text-xs text-orgy-blue mt-0.5">&#8627; Serves plan: <%= _execLabel[r.executionItemId] %></div>
               <% } else { %>
@@ -1711,6 +1725,20 @@
       const offBtn = card.querySelector('[data-rock-toggle="off"]');
       if (onBtn) onBtn.className = 'text-xs px-2 py-1 rounded hover:opacity-80 ' + (onTrack ? 'bg-status-ontrack-soft text-status-ontrack font-bold' : 'bg-gray-100 text-gray-400');
       if (offBtn) offBtn.className = 'text-xs px-2 py-1 rounded hover:opacity-80 ' + (!onTrack ? 'bg-status-offtrack-soft text-status-offtrack font-bold' : 'bg-gray-100 text-gray-400');
+      // Keep the "Changed this meeting" note accurate without a reload. Compare
+      // the new state to the meeting-start baseline (data-rock-baseline).
+      const note = card.querySelector('[data-rock-change]');
+      const base = card.dataset.rockBaseline; // 'on' | 'off' | 'none'
+      if (note && base && base !== 'none') {
+        const baseOn = base === 'on';
+        if (onTrack === baseOn) {
+          note.classList.add('hidden');
+          note.textContent = '';
+        } else {
+          note.classList.remove('hidden');
+          note.textContent = '↳ Changed this meeting: ' + (baseOn ? 'On Track' : 'Off Track') + ' → ' + (onTrack ? 'On Track' : 'Off Track');
+        }
+      }
     });
   });
 

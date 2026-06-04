@@ -3471,6 +3471,46 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       rocksData = { rocks: orgRocks, count: orgRocks.length };
     }
 
+    // "Changed this meeting" provenance. During a LIVE meeting, diff each rock
+    // against the /start baseline snapshot so a status change reads as
+    // decided-in-this-meeting, not a silent overwrite (David, 2026-06-04).
+    // rockChanges[id] = the transition; rockBaseline[id] = on-track-at-start so
+    // the client On/Off toggle can recompute the label without a reload.
+    const rockChanges: Record<string, { kind: 'flip' | 'completed' | 'archived'; from?: boolean; to?: boolean }> = {};
+    const rockBaseline: Record<string, boolean> = {};
+    if (meeting.status === 'in_progress' && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks) {
+      const _baseline = new Map<string, any>();
+      for (const br of (meeting.rocksSnapshot as any).rocks as any[]) {
+        if (belongsToMeetingTeam(br.teamId, meeting.teamId)) {
+          _baseline.set(br.id, br);
+          rockBaseline[br.id] = !!br.onTrack;
+        }
+      }
+      // Rocks active at start but completed/archived DURING this meeting have
+      // left the live active list -- pull them back so they stay visible with
+      // a "Completed/Archived this meeting" note instead of silently vanishing.
+      const _baseIds = [..._baseline.keys()];
+      if (_baseIds.length) {
+        const _leftActive = await db.select().from(rocks).where(and(
+          eq(rocks.organizationId, org.id),
+          inArray(rocks.id, _baseIds),
+          isNull(rocks.deletedAt),
+          or(isNotNull(rocks.completedAt), isNotNull(rocks.archivedAt)),
+        ));
+        const _byId = new Map<string, any>((rocksData.rocks as any[]).map((r: any) => [r.id, r]));
+        for (const r of _leftActive) if (!_byId.has(r.id)) _byId.set(r.id, r);
+        const _merged = [..._byId.values()];
+        rocksData = { rocks: _merged, count: _merged.length };
+      }
+      for (const r of rocksData.rocks as any[]) {
+        const b = _baseline.get(r.id);
+        if (!b) continue; // added this meeting -- status-change provenance only
+        if (r.completedAt) rockChanges[r.id] = { kind: 'completed' };
+        else if (r.archivedAt) rockChanges[r.id] = { kind: 'archived' };
+        else if (!!b.onTrack !== !!r.onTrack) rockChanges[r.id] = { kind: 'flip', from: !!b.onTrack, to: !!r.onTrack };
+      }
+    }
+
     // Team-scoped issues. Strict match on meeting.team_id so a Leadership
     // L10 never sees issues that another team (e.g. "David x Dan") owns.
     // Tickets with team_id IS NULL are hidden -- post-backfill they should
@@ -3681,6 +3721,8 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       meeting,
       scorecard,
       rocks: rocksData,
+      rockChanges,
+      rockBaseline,
       rocksFilter: _showHiddenRocks ? 'all' : 'active',
       hiddenRocksCount,
       issues: orgIssues,
