@@ -15,6 +15,7 @@
 import { and, eq, isNull, ne, sql } from 'drizzle-orm';
 import { db } from '../config/database.js';
 import { meetings } from '../db/schema.js';
+import { stripSegueCheckins } from './meeting-series.js';
 
 type MeetingRow = typeof meetings.$inferSelect;
 
@@ -129,7 +130,9 @@ export async function ensureNextOccurrence(meeting: MeetingRow): Promise<Meeting
     meetingType: latest.meetingType,
     title: rebaseTitle(latest.title, next),
     scheduledAt: next,
-    attendees: (latest.attendees as any) ?? [],
+    // Carry attendee identity forward, but NOT their prior-week segue check-in
+    // text -- the segue starts blank each occurrence (see stripSegueCheckins).
+    attendees: stripSegueCheckins(latest.attendees),
     videoLink: latest.videoLink,
     recurrenceRule: meeting.recurrenceRule,
     recurrenceParentId: anchor,

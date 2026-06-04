@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planSeriesDeletion, isDeleteScope } from './meeting-series.js';
+import { planSeriesDeletion, isDeleteScope, stripSegueCheckins } from './meeting-series.js';
 
 // A weekly series: anchor 6/04, then 6/11, 6/18, 6/25.
 const SERIES = [
@@ -46,5 +46,31 @@ describe('planSeriesDeletion', () => {
     expect(isDeleteScope('following')).toBe(true);
     expect(isDeleteScope('all')).toBe(false);
     expect(isDeleteScope(undefined)).toBe(false);
+  });
+});
+
+describe('stripSegueCheckins (fresh segue each occurrence)', () => {
+  // Regression: David 2026-06-04. A rolled recurring meeting opened with the
+  // prior week's segue check-ins already filled in, because the roll copied
+  // attendees verbatim. Identity must survive; check-in text must not.
+  it('drops checkinText/checkinAt, keeps identity', () => {
+    const out = stripSegueCheckins([
+      { name: 'David Steel', memberId: 'm1', entityType: 'human', externalId: 'HUM_DAVIDSTEEL', checkinText: 'last week stuff', checkinAt: '2026-05-28T16:06:06Z' },
+      { name: 'Janine', memberId: 'm2', entityType: 'human', externalId: 'HUM_JANINE', checkinText: "son's internship", checkinAt: '2026-05-28T16:08:16Z' },
+    ]);
+    expect(out).toEqual([
+      { name: 'David Steel', memberId: 'm1', entityType: 'human', externalId: 'HUM_DAVIDSTEEL' },
+      { name: 'Janine', memberId: 'm2', entityType: 'human', externalId: 'HUM_JANINE' },
+    ]);
+  });
+
+  it('handles empty / non-array input', () => {
+    expect(stripSegueCheckins([])).toEqual([]);
+    expect(stripSegueCheckins(null)).toEqual([]);
+    expect(stripSegueCheckins(undefined)).toEqual([]);
+  });
+
+  it('leaves an attendee with no check-in untouched', () => {
+    expect(stripSegueCheckins([{ name: 'X', memberId: 'm3' }])).toEqual([{ name: 'X', memberId: 'm3' }]);
   });
 });

@@ -1,4 +1,7 @@
-// Recurring-meeting deletion scope -- pure, no DB import (unit-testable).
+// Recurring-meeting series helpers -- pure, no DB import (unit-testable).
+//
+// Covers two series-lifecycle concerns: deletion scope (below) and sanitizing
+// attendees when rolling the next occurrence (stripSegueCheckins).
 //
 // Deleting a recurring meeting asks the user a scope, like every calendar app:
 //   occurrence -> just this one
@@ -54,4 +57,21 @@ export function planSeriesDeletion(
     else clearRuleIds.push(r.id);
   }
   return { deleteIds, clearRuleIds };
+}
+
+// The per-attendee segue check-in (checkinText / checkinAt) lives inside each
+// attendee object. When a recurring meeting rolls its next occurrence we copy
+// the attendee list for identity (name, memberId, entityType, externalId) but
+// must NOT carry last week's check-in text forward -- the segue starts blank
+// every meeting. David hit this 2026-06-04: a fresh Janine 1:1 opened with the
+// prior week's check-ins already filled in.
+export function stripSegueCheckins(attendees: unknown): any[] {
+  if (!Array.isArray(attendees)) return [];
+  return attendees.map((a) => {
+    if (!a || typeof a !== 'object') return a;
+    const { checkinText, checkinAt, ...identity } = a as Record<string, unknown>;
+    void checkinText;
+    void checkinAt;
+    return identity;
+  });
 }
