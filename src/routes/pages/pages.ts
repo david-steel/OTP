@@ -27,6 +27,7 @@ import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
 import { isAttendee } from '../../services/meeting-access.js';
+import { useScorecardSnapshot, useRockSnapshot } from '../../services/meeting-snapshot.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -3409,7 +3410,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // in_progress and completed states. But for a SCHEDULED meeting,
     // edits should flow through live -- David flagged 2026-05-25 that
     // updating a rock or KPI before the meeting didn't refresh.
-    const _useSnapshot = meeting.status === 'in_progress' || meeting.status === 'completed';
+    const _useSnapshot = useScorecardSnapshot(meeting.status);
     const scorecard = _useSnapshot && meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis
       ? meeting.scorecardSnapshot
       : { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
@@ -3440,7 +3441,17 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const hiddenRocksCount = _hiddenRows.filter(
       (r) => r.oet !== 'agent' && !(typeof r.oeid === 'string' && r.oeid.startsWith('AGT_')),
     ).length;
-    const rocksData = _useSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
+    // Rocks render LIVE during scheduled + in_progress. Unlike the scorecard
+    // (where EOS reviews KPI values as-of meeting start), the Rock Review IS
+    // the segment where owners set on-track/off-track and mark rocks complete.
+    // Freezing rocks to the /start snapshot made those live edits invisible
+    // until a manual scorecard refresh -- David flagged 2026-06-04 that
+    // marking a rock On Track / Completed mid-meeting "did not save" (it saved
+    // to the rocks table fine; the page just kept rendering the stale
+    // snapshot). Only a completed (frozen, read-only) meeting uses the
+    // snapshot, for the historical record.
+    const _useRockSnapshot = useRockSnapshot(meeting.status);
+    const rocksData = _useRockSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
       ? meeting.rocksSnapshot
       : { rocks: orgRocks, count: orgRocks.length };
 
