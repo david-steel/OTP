@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc, asc, sql, isNull } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, isNull, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { meetings, rocks, kpis, kpiValues, tickets, todos, auditLogs, organizations } from '../../db/schema.js';
@@ -13,6 +13,7 @@ import { isAttendee } from '../../services/meeting-access.js';
 import { deliverToAgentInbox } from '../../services/agent-inbox.js';
 import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
 import { ensureNextOccurrence } from '../../services/meeting-recurrence.js';
+import { planSeriesDeletion, isDeleteScope } from '../../services/meeting-series.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -457,17 +458,63 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!org) return;
     if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
-    const [deleted] = await db.update(meetings)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
+    const [target] = await db.select({
+      id: meetings.id,
+      scheduledAt: meetings.scheduledAt,
+      recurrenceRule: meetings.recurrenceRule,
+      recurrenceParentId: meetings.recurrenceParentId,
+    }).from(meetings)
       .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)))
-      .returning();
-    if (!deleted) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+      .limit(1);
+    if (!target) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+
+    const _isRecurring = !!(target.recurrenceRule || target.recurrenceParentId);
+    const _scopeRaw = (request.body as any)?.scope;
+    // Non-recurring meetings (or an unspecified scope) always delete just the
+    // one row -- unchanged behavior. Scope only matters for a series.
+    const scope = _isRecurring && isDeleteScope(_scopeRaw) ? _scopeRaw : 'occurrence';
+
+    if (!_isRecurring || scope === 'occurrence') {
+      await db.update(meetings)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id), isNull(meetings.deletedAt)));
+      await db.insert(auditLogs).values(createAuditEntry('meeting.deleted', 'meeting', {
+        orgId: org.id, entityId: id, details: { scope: 'occurrence', recurring: _isRecurring },
+      }));
+      return { deleted: true, scope: 'occurrence', count: 1 };
+    }
+
+    // Series-aware delete. Load every live row in the series (anchor + its
+    // occurrences), decide what to delete and which survivors must lose their
+    // recurrence rule (so ensureUpcomingForOrg won't resurrect the series),
+    // then apply both in one pass.
+    const anchor = target.recurrenceParentId || target.id;
+    const seriesRows = await db.select({ id: meetings.id, scheduledAt: meetings.scheduledAt })
+      .from(meetings)
+      .where(and(
+        eq(meetings.organizationId, org.id),
+        isNull(meetings.deletedAt),
+        sql`(${meetings.id} = ${anchor} OR ${meetings.recurrenceParentId} = ${anchor})`,
+      ));
+    const plan = planSeriesDeletion(seriesRows, id, scope);
+
+    if (plan.deleteIds.length) {
+      await db.update(meetings)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(meetings.organizationId, org.id), inArray(meetings.id, plan.deleteIds), isNull(meetings.deletedAt)));
+    }
+    if (plan.clearRuleIds.length) {
+      await db.update(meetings)
+        .set({ recurrenceRule: null, updatedAt: new Date() })
+        .where(and(eq(meetings.organizationId, org.id), inArray(meetings.id, plan.clearRuleIds)));
+    }
 
     await db.insert(auditLogs).values(createAuditEntry('meeting.deleted', 'meeting', {
       orgId: org.id, entityId: id,
+      details: { scope, deletedCount: plan.deleteIds.length, ruleClearedCount: plan.clearRuleIds.length },
     }));
 
-    return { deleted: true };
+    return { deleted: true, scope, count: plan.deleteIds.length };
   });
 
   // PUT /api/v1/meetings/:id  (update notes/headlines/ratings/etc)

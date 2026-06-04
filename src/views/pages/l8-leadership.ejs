@@ -1611,12 +1611,52 @@
     reloadKeep();
   });
 
-  // Delete meeting
+  // Delete meeting. A recurring meeting asks for a scope (this one / this and
+  // following / the whole series), like any calendar app; a one-off keeps the
+  // plain confirm.
+  const IS_RECURRING = <%- (meeting.recurrenceRule || meeting.recurrenceParentId) ? 'true' : 'false' %>;
+
+  function chooseDeleteScope() {
+    return new Promise((resolve) => {
+      const btn = 'display:block;width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:1px solid #d9e2da;background:#f7faf6;font-size:14px;font-weight:600;color:#16241b;cursor:pointer;';
+      const danger = 'display:block;width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:1px solid #f0c9c9;background:#fdf3f3;font-size:14px;font-weight:600;color:#a3271f;cursor:pointer;';
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,27,20,.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      ov.innerHTML =
+        '<div style="background:#fff;border-radius:12px;max-width:430px;width:90%;padding:24px;font-family:Inter,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
+          '<div style="font-weight:800;font-size:18px;color:#16241b;margin-bottom:6px;">Delete recurring meeting</div>' +
+          '<div style="font-size:13.5px;color:#5d6b60;line-height:1.5;margin-bottom:18px;">This meeting repeats. Choose what to delete.</div>' +
+          '<div style="display:flex;flex-direction:column;gap:9px;">' +
+            '<button data-scope="occurrence" style="' + btn + '">Only this meeting<div style="font-weight:400;color:#5d6b60;font-size:12px;margin-top:2px;">Future occurrences stay on the calendar.</div></button>' +
+            '<button data-scope="following" style="' + btn + '">This and all following<div style="font-weight:400;color:#5d6b60;font-size:12px;margin-top:2px;">Ends the series from here forward.</div></button>' +
+            '<button data-scope="series" style="' + danger + '">The entire series<div style="font-weight:400;color:#a3271f;opacity:.8;font-size:12px;margin-top:2px;">Removes every meeting in this series.</div></button>' +
+          '</div>' +
+          '<button data-scope="" style="display:block;width:100%;text-align:center;margin-top:14px;padding:9px;background:none;border:none;color:#5d6b60;font-size:13px;cursor:pointer;">Cancel</button>' +
+        '</div>';
+      const cleanup = () => ov.remove();
+      ov.addEventListener('click', (e) => {
+        if (e.target === ov) { cleanup(); resolve(null); return; }
+        const b = e.target.closest('[data-scope]');
+        if (!b) return;
+        const s = b.getAttribute('data-scope');
+        cleanup();
+        resolve(s || null);
+      });
+      document.body.appendChild(ov);
+    });
+  }
+
   const deleteMeetingBtn = document.getElementById('delete-meeting');
   if (deleteMeetingBtn) deleteMeetingBtn.addEventListener('click', async () => {
-    if (!confirm('Delete this meeting? It will be removed from the L8 list.')) return;
+    let scope = 'occurrence';
+    if (IS_RECURRING) {
+      scope = await chooseDeleteScope();
+      if (!scope) return; // cancelled
+    } else if (!confirm('Delete this meeting? It will be removed from the L8 list.')) {
+      return;
+    }
     deleteMeetingBtn.disabled = true; deleteMeetingBtn.textContent = 'Deleting...';
-    const res = await api('/meetings/' + meetingId, { method: 'DELETE' });
+    const res = await api('/meetings/' + meetingId, { method: 'DELETE', body: JSON.stringify({ scope }) });
     if (res?.deleted) {
       window.location.href = withOrg('/l8');
     } else {
