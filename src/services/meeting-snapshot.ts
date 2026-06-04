@@ -32,3 +32,21 @@ export function useScorecardSnapshot(status: MeetingStatus): boolean {
 export function useRockSnapshot(status: MeetingStatus): boolean {
   return status === 'completed';
 }
+
+// Whether a team-scoped entity (KPI or rock) belongs on a given meeting.
+//
+// The meeting scorecard/rocks are team-scoped, but the /start snapshot was
+// historically built org-wide (buildScorecardSnapshot / buildRocksSnapshot had
+// no team filter), so an older snapshot can carry other teams' rows. The L8
+// page filters the snapshot through this at render so a KPI on the AI Army team
+// ("OTP -- Real signups") never surfaces on the Leadership L10 -- the leak
+// David flagged 2026-06-04. An org-level meeting (teamId null) owns only
+// unteamed entities.
+export function belongsToMeetingTeam(
+  entityTeamId: string | null | undefined,
+  meetingTeamId: string | null | undefined,
+): boolean {
+  return meetingTeamId
+    ? entityTeamId === meetingTeamId
+    : entityTeamId === null || entityTeamId === undefined;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { useScorecardSnapshot, useRockSnapshot } from './meeting-snapshot.js';
+import { useScorecardSnapshot, useRockSnapshot, belongsToMeetingTeam } from './meeting-snapshot.js';
 
 describe('meeting snapshot selection', () => {
   describe('scorecard', () => {
@@ -27,6 +27,32 @@ describe('meeting snapshot selection', () => {
 
     it('uses the snapshot only for a completed (frozen) meeting', () => {
       expect(useRockSnapshot('completed')).toBe(true);
+    });
+  });
+
+  describe('belongsToMeetingTeam (cross-team leak guard)', () => {
+    const LEADERSHIP = 'team-leadership';
+    const AI_ARMY = 'team-ai-army';
+
+    it('keeps an entity on its own team', () => {
+      expect(belongsToMeetingTeam(LEADERSHIP, LEADERSHIP)).toBe(true);
+    });
+
+    // Regression: David 2026-06-04. The AI Army KPI "OTP -- Real signups"
+    // leaked onto the Leadership L10 because the org-wide snapshot was rendered
+    // unfiltered. A KPI/rock from another team must NOT appear.
+    it('rejects another team’s entity', () => {
+      expect(belongsToMeetingTeam(AI_ARMY, LEADERSHIP)).toBe(false);
+    });
+
+    it('an org-level meeting (no team) owns only unteamed entities', () => {
+      expect(belongsToMeetingTeam(null, null)).toBe(true);
+      expect(belongsToMeetingTeam(undefined, null)).toBe(true);
+      expect(belongsToMeetingTeam(LEADERSHIP, null)).toBe(false);
+    });
+
+    it('a team meeting does not pick up unteamed entities', () => {
+      expect(belongsToMeetingTeam(null, LEADERSHIP)).toBe(false);
     });
   });
 });

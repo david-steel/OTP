@@ -27,7 +27,7 @@ import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
 import { isAttendee } from '../../services/meeting-access.js';
-import { useScorecardSnapshot, useRockSnapshot } from '../../services/meeting-snapshot.js';
+import { useScorecardSnapshot, useRockSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -3411,9 +3411,18 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // edits should flow through live -- David flagged 2026-05-25 that
     // updating a rock or KPI before the meeting didn't refresh.
     const _useSnapshot = useScorecardSnapshot(meeting.status);
-    const scorecard = _useSnapshot && meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis
-      ? meeting.scorecardSnapshot
-      : { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
+    let scorecard: any;
+    if (_useSnapshot && meeting.scorecardSnapshot && (meeting.scorecardSnapshot as any).kpis) {
+      // Snapshots were historically captured org-wide, so an older one can
+      // carry other teams' KPIs. The scorecard is team-scoped, so filter the
+      // snapshot to this meeting's team -- fixes the 2026-06-04 leak where the
+      // AI Army KPI "OTP -- Real signups" surfaced on the Leadership L10.
+      const _snap = meeting.scorecardSnapshot as any;
+      const _kpisScoped = (_snap.kpis || []).filter((k: any) => belongsToMeetingTeam(k.teamId, meeting.teamId));
+      scorecard = { ..._snap, kpis: _kpisScoped, kpiCount: _kpisScoped.length };
+    } else {
+      scorecard = { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
+    }
 
     // Rock Review hides completed + archived rocks by default; ?rocks=all
     // reveals them (rendered at the bottom with a Reopen button).
@@ -3451,9 +3460,16 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // snapshot). Only a completed (frozen, read-only) meeting uses the
     // snapshot, for the historical record.
     const _useRockSnapshot = useRockSnapshot(meeting.status);
-    const rocksData = _useRockSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks
-      ? meeting.rocksSnapshot
-      : { rocks: orgRocks, count: orgRocks.length };
+    let rocksData: any;
+    if (_useRockSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks) {
+      // Same org-wide-snapshot scoping fix as the scorecard above: a completed
+      // meeting's rock snapshot can carry other teams' rocks; filter to team.
+      const _rsnap = meeting.rocksSnapshot as any;
+      const _rScoped = (_rsnap.rocks || []).filter((r: any) => belongsToMeetingTeam(r.teamId, meeting.teamId));
+      rocksData = { ..._rsnap, rocks: _rScoped, count: _rScoped.length };
+    } else {
+      rocksData = { rocks: orgRocks, count: orgRocks.length };
+    }
 
     // Team-scoped issues. Strict match on meeting.team_id so a Leadership
     // L10 never sees issues that another team (e.g. "David x Dan") owns.

@@ -168,8 +168,16 @@ async function checkMeetingEdit(
   return true;
 }
 
-async function buildScorecardSnapshot(orgId: string) {
-  const orgKpis = await db.select().from(kpis).where(and(eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)));
+async function buildScorecardSnapshot(orgId: string, teamId: string | null) {
+  // Team-scoped: a meeting's scorecard only carries its own team's KPIs.
+  // teamId null = org-level meeting, which owns only unteamed KPIs. Before
+  // 2026-06-04 this was org-wide, leaking e.g. the AI Army "OTP -- Real
+  // signups" KPI onto the Leadership L10 snapshot.
+  const orgKpis = await db.select().from(kpis).where(and(
+    eq(kpis.organizationId, orgId),
+    teamId ? eq(kpis.teamId, teamId) : isNull(kpis.teamId),
+    isNull(kpis.deletedAt),
+  ));
   const kpiIds = orgKpis.map(k => k.id);
   const latestValues: Record<string, any> = {};
   const previousValues: Record<string, any> = {};
@@ -186,10 +194,12 @@ async function buildScorecardSnapshot(orgId: string) {
   return { kpis: orgKpis, latestValues, previousValues, capturedAt: new Date().toISOString(), kpiCount: kpiIds.length };
 }
 
-async function buildRocksSnapshot(orgId: string) {
+async function buildRocksSnapshot(orgId: string, teamId: string | null) {
+  // Team-scoped, mirroring buildScorecardSnapshot (see note there).
   const orgRocks = await db.select().from(rocks)
     .where(and(
       eq(rocks.organizationId, orgId),
+      teamId ? eq(rocks.teamId, teamId) : isNull(rocks.teamId),
       isNull(rocks.deletedAt),
       isNull(rocks.completedAt),
       isNull(rocks.archivedAt),
@@ -323,9 +333,13 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!org) return;
     if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
+    // Snapshots are team-scoped to this meeting's team.
+    const [_startMeeting] = await db.select({ teamId: meetings.teamId }).from(meetings)
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id))).limit(1);
+    if (!_startMeeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
     const [scorecardSnapshot, rocksSnapshot] = await Promise.all([
-      buildScorecardSnapshot(org.id),
-      buildRocksSnapshot(org.id),
+      buildScorecardSnapshot(org.id, _startMeeting.teamId),
+      buildRocksSnapshot(org.id, _startMeeting.teamId),
     ]);
 
     const [updated] = await db.update(meetings)
@@ -367,8 +381,8 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!meeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
 
     const [scorecardSnapshot, rocksSnapshot] = await Promise.all([
-      buildScorecardSnapshot(org.id),
-      buildRocksSnapshot(org.id),
+      buildScorecardSnapshot(org.id, meeting.teamId),
+      buildRocksSnapshot(org.id, meeting.teamId),
     ]);
 
     const [updated] = await db.update(meetings)
@@ -626,8 +640,8 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!meeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
 
     const [scorecard, rocksList, openTickets, openTodos] = await Promise.all([
-      meeting.scorecardSnapshot ? Promise.resolve(meeting.scorecardSnapshot) : buildScorecardSnapshot(org.id),
-      meeting.rocksSnapshot ? Promise.resolve(meeting.rocksSnapshot) : buildRocksSnapshot(org.id),
+      meeting.scorecardSnapshot ? Promise.resolve(meeting.scorecardSnapshot) : buildScorecardSnapshot(org.id, meeting.teamId),
+      meeting.rocksSnapshot ? Promise.resolve(meeting.rocksSnapshot) : buildRocksSnapshot(org.id, meeting.teamId),
       db.select().from(tickets)
         .where(and(eq(tickets.orgId, org.id), isNull(tickets.deletedAt)))
         .orderBy(desc(tickets.priorityRank), desc(tickets.createdAt)),
