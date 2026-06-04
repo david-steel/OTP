@@ -3182,6 +3182,12 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       return reply.view('pages/meeting-preview', {
         title: previewMeeting.title + ' -- OTP',
         description,
+        // Meeting-specific share card (Orgy meeting mascot, warm brand).
+        // Without this, layouts/main falls back to the OLD dark
+        // og-image.png ("Where Agents Learn to Work as a Team"), which is
+        // what unfurled when David shared a meeting link in Slack 2026-06-04.
+        // ?v= busts the immutable /public/* cache when the art is updated.
+        ogImage: BASE_URL + '/public/images/og-meeting.png?v=1',
         canonical: BASE_URL + request.url,
         noindex: true,
         notFound: false,
