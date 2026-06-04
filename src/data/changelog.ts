@@ -11,6 +11,24 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 4, 2026 ----
+
+  {
+    date: '2026-06-04',
+    tags: ['Meetings', 'Fixes'],
+    title: 'The weekly meeting now does exactly what you tell it: live Rocks, team-clean scorecards, and a real delete prompt',
+    summary: 'A batch of fixes to the weekly meeting. Marking a Quarterly Priority On Track, Off Track, or Complete during a live meeting now shows instantly instead of looking like it did not save, and a small "Changed this meeting" note records what moved so a status change never reads as a silent overwrite. The scorecard only shows the KPIs that belong to that meeting\'s team (no more another team\'s metric appearing on your leadership meeting), and it now captures the final reviewed numbers when you end the meeting. Deleting a recurring meeting finally asks what you mean: only this one, this and everything after it, or the whole series. Meeting links shared in Slack also get a new on-brand preview card.',
+    details: `<p>Five changes, all aimed at making the weekly leadership meeting behave the way you expect when you are running it live.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Rocks update live during the meeting.</strong> The Rock Review is where you set On Track / Off Track and mark Rocks complete, so those edits now render immediately. Previously the page showed a snapshot frozen at meeting start, so a change you just made looked like it had not saved (it had). Rocks are now always live; only the scorecard freezes.</li>
+<li><strong>"Changed this meeting" note.</strong> When a Rock's status moves during the meeting, it shows what changed ("Off Track &rarr; On Track", "Completed this meeting") instead of just flipping with no record. A Rock you complete mid-meeting stays visible with the note rather than vanishing.</li>
+<li><strong>Scorecards are team-clean.</strong> A meeting only shows the KPIs that belong to its team. A metric owned by another team can no longer surface on the wrong meeting's scorecard.</li>
+<li><strong>Final numbers captured at end.</strong> Ending a meeting now re-captures the scorecard, so the completed record reflects the numbers as reviewed, not the ones from when the meeting started.</li>
+<li><strong>Recurring delete asks first.</strong> Deleting a repeating meeting now offers "only this meeting", "this and all following", or "the entire series" — and the series-ending choices actually end it, instead of the calendar quietly regenerating the next occurrence.</li>
+</ul>
+<p>Shared meeting links also unfurl with a new branded preview card in Slack and other apps.</p>`,
+  },
+
   // ---- June 1, 2026 ----
 
   {
