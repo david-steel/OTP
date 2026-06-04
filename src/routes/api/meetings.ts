@@ -408,8 +408,17 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!org) return;
     if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
+    // Re-snapshot the scorecard at /end so the completed record preserves the
+    // FINAL reviewed KPI values, not the pre-meeting numbers captured at
+    // /start. Rocks are deliberately NOT snapshotted -- they always render
+    // live (see services/meeting-snapshot.ts).
+    const [_endMeeting] = await db.select({ teamId: meetings.teamId }).from(meetings)
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id))).limit(1);
+    if (!_endMeeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+    const scorecardSnapshot = await buildScorecardSnapshot(org.id, _endMeeting.teamId);
+
     const [updated] = await db.update(meetings)
-      .set({ status: 'completed', endedAt: new Date(), updatedAt: new Date() })
+      .set({ status: 'completed', endedAt: new Date(), scorecardSnapshot, updatedAt: new Date() })
       .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
       .returning();
     if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });

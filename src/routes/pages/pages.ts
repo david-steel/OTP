@@ -27,7 +27,7 @@ import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
 import { isAttendee } from '../../services/meeting-access.js';
-import { useScorecardSnapshot, useRockSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
+import { useScorecardSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
 
 function toParsedClaim(c: any): ParsedClaim {
   return { claimId: c.claimId, section: c.section, displayOrder: c.displayOrder, rule: c.rule, why: c.why, failureMode: c.failureMode, confidence: c.confidence, evidence: c.evidence, scope: c.scope };
@@ -3450,26 +3450,14 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const hiddenRocksCount = _hiddenRows.filter(
       (r) => r.oet !== 'agent' && !(typeof r.oeid === 'string' && r.oeid.startsWith('AGT_')),
     ).length;
-    // Rocks render LIVE during scheduled + in_progress. Unlike the scorecard
-    // (where EOS reviews KPI values as-of meeting start), the Rock Review IS
-    // the segment where owners set on-track/off-track and mark rocks complete.
-    // Freezing rocks to the /start snapshot made those live edits invisible
-    // until a manual scorecard refresh -- David flagged 2026-06-04 that
-    // marking a rock On Track / Completed mid-meeting "did not save" (it saved
-    // to the rocks table fine; the page just kept rendering the stale
-    // snapshot). Only a completed (frozen, read-only) meeting uses the
-    // snapshot, for the historical record.
-    const _useRockSnapshot = useRockSnapshot(meeting.status);
-    let rocksData: any;
-    if (_useRockSnapshot && meeting.rocksSnapshot && (meeting.rocksSnapshot as any).rocks) {
-      // Same org-wide-snapshot scoping fix as the scorecard above: a completed
-      // meeting's rock snapshot can carry other teams' rocks; filter to team.
-      const _rsnap = meeting.rocksSnapshot as any;
-      const _rScoped = (_rsnap.rocks || []).filter((r: any) => belongsToMeetingTeam(r.teamId, meeting.teamId));
-      rocksData = { ..._rsnap, rocks: _rScoped, count: _rScoped.length };
-    } else {
-      rocksData = { rocks: orgRocks, count: orgRocks.length };
-    }
+    // Rocks ALWAYS render live (current state), for scheduled / in_progress /
+    // completed alike. Unlike the scorecard (which freezes a weekly KPI reading
+    // as-of meeting start), rocks are current-state objects edited DURING the
+    // meeting (the Rock Review). Snapshotting them caused the 2026-06-04 bugs:
+    // live edits looked unsaved, and the org-wide snapshot leaked other teams'
+    // rocks. The /start rocksSnapshot is retained ONLY as the baseline for the
+    // "changed this meeting" diff below, never as a render source.
+    let rocksData: any = { rocks: orgRocks, count: orgRocks.length };
 
     // "Changed this meeting" provenance. During a LIVE meeting, diff each rock
     // against the /start baseline snapshot so a status change reads as

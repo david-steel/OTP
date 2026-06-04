@@ -7,14 +7,12 @@
 //   Scorecard (KPIs): freeze once the meeting is live so the team reviews the
 //   numbers as-of meeting start. Live only while still scheduled.
 //
-//   Rocks: do NOT freeze during a live meeting. The Rock Review segment is
-//   exactly where owners set on-track/off-track and mark rocks complete, so
-//   those edits must render live. Freezing them made live edits invisible
-//   until a manual scorecard refresh -- David flagged 2026-06-04 that marking
-//   a rock On Track / Completed mid-meeting "did not save" (it saved to the
-//   rocks table fine; the page just kept rendering the /start snapshot). Only
-//   a completed (frozen, read-only) meeting renders the rock snapshot, for the
-//   historical record.
+//   Rocks: NEVER render from a snapshot. They are current-state objects edited
+//   during the meeting (the Rock Review), so the L8 page always renders them
+//   live. The /start rocksSnapshot is kept only as the baseline for the
+//   "changed this meeting" diff. Snapshotting rocks for display caused the
+//   2026-06-04 bugs (live edits looked unsaved; org-wide snapshot leaked other
+//   teams' rocks), so there is intentionally no useRockSnapshot().
 //
 // Pure functions, no DB import -- unit-testable in isolation.
 
@@ -27,10 +25,6 @@ export type MeetingStatus =
 
 export function useScorecardSnapshot(status: MeetingStatus): boolean {
   return status === 'in_progress' || status === 'completed';
-}
-
-export function useRockSnapshot(status: MeetingStatus): boolean {
-  return status === 'completed';
 }
 
 // Whether a team-scoped entity (KPI or rock) belongs on a given meeting.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { useScorecardSnapshot, useRockSnapshot, belongsToMeetingTeam } from './meeting-snapshot.js';
+import { useScorecardSnapshot, belongsToMeetingTeam } from './meeting-snapshot.js';
 
 describe('meeting snapshot selection', () => {
   describe('scorecard', () => {
@@ -12,23 +12,10 @@ describe('meeting snapshot selection', () => {
     });
   });
 
-  describe('rocks', () => {
-    it('renders live while scheduled', () => {
-      expect(useRockSnapshot('scheduled')).toBe(false);
-    });
-
-    // Regression: David 2026-06-04. Marking a rock On Track / Completed during
-    // a LIVE meeting persisted to the DB but did not appear, because the page
-    // rendered the frozen /start snapshot. Rocks MUST be live in_progress --
-    // the Rock Review is where status is set.
-    it('renders live during in_progress (Rock Review edits must show)', () => {
-      expect(useRockSnapshot('in_progress')).toBe(false);
-    });
-
-    it('uses the snapshot only for a completed (frozen) meeting', () => {
-      expect(useRockSnapshot('completed')).toBe(true);
-    });
-  });
+  // Rocks intentionally have no snapshot selector: they always render live
+  // (current state) regardless of meeting status. The /start rocksSnapshot is
+  // a baseline for "changed this meeting", not a render source. See
+  // meeting-snapshot.ts for why (2026-06-04 bug class).
 
   describe('belongsToMeetingTeam (cross-team leak guard)', () => {
     const LEADERSHIP = 'team-leadership';
