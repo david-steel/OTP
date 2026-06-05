@@ -81,7 +81,7 @@
   #daily-dashboard .dk-own-btn.active { background:#2563eb; color:#fff; }
   #daily-dashboard .dk-own-btn:not(.active):hover { background:#f3f4f6; }
 </style>
-<div class="max-w-6xl mx-auto px-4 py-8" id="daily-dashboard"
+<div class="max-w-screen-2xl mx-auto px-4 py-8" id="daily-dashboard"
      data-org-id="<%= locals.org && locals.org.id %>"
      data-meeting-id="<%= selectedMeetingId %>"
      data-is-integrator="<%= isIntegrator ? '1' : '0' %>"
@@ -137,6 +137,68 @@
     </a>
   <% } %>
 
+
+  <%
+    // ================================================================
+    // GTD-style "Today's Next Actions" hero (Phase 1, 2026-05-25).
+    // Pulls one concrete physical step per priority: rocks with a
+    // next_action set, issues with a next_action set, and any overdue
+    // personal todo (the todo's title IS its next action by definition).
+    // Items without a next_action don't show up here -- they instead get
+    // a red friction nudge in their own panel below, prompting the user
+    // to set one. That's the self-correcting loop David's after.
+    // ================================================================
+    var _now = Date.now();
+    function _rockOverdue(r) { return r.dueDate && !r.completedAt && new Date(r.dueDate).getTime() < _now; }
+    var nextActionItems = [];
+    myRocks.forEach(function(r) {
+      if (!r.nextAction) return;
+      nextActionItems.push({
+        kind: 'rock', id: r.id, action: r.nextAction,
+        sourceLabel: r.title, sourceTag: 'Rock',
+        urgent: _rockOverdue(r),
+        dueAt: r.dueDate ? new Date(r.dueDate) : null,
+      });
+    });
+    myIssues.forEach(function(t) {
+      if (!t.nextAction) return;
+      nextActionItems.push({
+        kind: 'issue', id: t.id, action: t.nextAction,
+        sourceLabel: t.title, sourceTag: 'Issue',
+        urgent: false, dueAt: null,
+      });
+    });
+    (myTodos || []).forEach(function(t) {
+      if (t.doneAt) return;
+      var due = t.dueAt ? new Date(t.dueAt) : null;
+      var overdue = due && due.getTime() < _now;
+      if (!overdue) return;  // only overdue todos make the hero; the rest live in the to-do panel
+      nextActionItems.push({
+        kind: 'todo', id: t.id, action: t.title,
+        sourceLabel: '', sourceTag: 'To-do',
+        urgent: true, dueAt: due,
+      });
+    });
+    // Urgent first, then by due date ascending (no-date last).
+    nextActionItems.sort(function(a, b) {
+      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+      if (!a.dueAt && !b.dueAt) return 0;
+      if (!a.dueAt) return 1;
+      if (!b.dueAt) return -1;
+      return a.dueAt.getTime() - b.dueAt.getTime();
+    });
+    // Show top 5 by default; the rest hide behind a "+ Show N more"
+    // toggle so the card doesn't eat the whole above-the-fold view
+    // when a busy day produces 10+ next actions.
+    var DEFAULT_VISIBLE = 5;
+    var nextActionItemsTop = nextActionItems.slice(0, DEFAULT_VISIBLE);
+    var nextActionItemsRest = nextActionItems.slice(DEFAULT_VISIBLE);
+    var rocksMissingNext = myRocks.filter(function(r){ return !r.nextAction && !r.completedAt; }).length;
+    var issuesMissingNext = myIssues.filter(function(t){ return !t.nextAction; }).length;
+  %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-4 space-y-5"><!-- LEFT 1/3 -->
   <!-- Meeting selector -->
   <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
@@ -234,136 +296,6 @@
     <% } %>
   </section>
 
-  <%
-    // ================================================================
-    // GTD-style "Today's Next Actions" hero (Phase 1, 2026-05-25).
-    // Pulls one concrete physical step per priority: rocks with a
-    // next_action set, issues with a next_action set, and any overdue
-    // personal todo (the todo's title IS its next action by definition).
-    // Items without a next_action don't show up here -- they instead get
-    // a red friction nudge in their own panel below, prompting the user
-    // to set one. That's the self-correcting loop David's after.
-    // ================================================================
-    var _now = Date.now();
-    function _rockOverdue(r) { return r.dueDate && !r.completedAt && new Date(r.dueDate).getTime() < _now; }
-    var nextActionItems = [];
-    myRocks.forEach(function(r) {
-      if (!r.nextAction) return;
-      nextActionItems.push({
-        kind: 'rock', id: r.id, action: r.nextAction,
-        sourceLabel: r.title, sourceTag: 'Rock',
-        urgent: _rockOverdue(r),
-        dueAt: r.dueDate ? new Date(r.dueDate) : null,
-      });
-    });
-    myIssues.forEach(function(t) {
-      if (!t.nextAction) return;
-      nextActionItems.push({
-        kind: 'issue', id: t.id, action: t.nextAction,
-        sourceLabel: t.title, sourceTag: 'Issue',
-        urgent: false, dueAt: null,
-      });
-    });
-    (myTodos || []).forEach(function(t) {
-      if (t.doneAt) return;
-      var due = t.dueAt ? new Date(t.dueAt) : null;
-      var overdue = due && due.getTime() < _now;
-      if (!overdue) return;  // only overdue todos make the hero; the rest live in the to-do panel
-      nextActionItems.push({
-        kind: 'todo', id: t.id, action: t.title,
-        sourceLabel: '', sourceTag: 'To-do',
-        urgent: true, dueAt: due,
-      });
-    });
-    // Urgent first, then by due date ascending (no-date last).
-    nextActionItems.sort(function(a, b) {
-      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
-      if (!a.dueAt && !b.dueAt) return 0;
-      if (!a.dueAt) return 1;
-      if (!b.dueAt) return -1;
-      return a.dueAt.getTime() - b.dueAt.getTime();
-    });
-    // Show top 5 by default; the rest hide behind a "+ Show N more"
-    // toggle so the card doesn't eat the whole above-the-fold view
-    // when a busy day produces 10+ next actions.
-    var DEFAULT_VISIBLE = 5;
-    var nextActionItemsTop = nextActionItems.slice(0, DEFAULT_VISIBLE);
-    var nextActionItemsRest = nextActionItems.slice(DEFAULT_VISIBLE);
-    var rocksMissingNext = myRocks.filter(function(r){ return !r.nextAction && !r.completedAt; }).length;
-    var issuesMissingNext = myIssues.filter(function(t){ return !t.nextAction; }).length;
-  %>
-  <!-- Today's Next Actions: peer card to Headlines/Rocks/KPIs/Issues
-       below. Same border/padding/header treatment so it reads as the
-       first item in the workspace, not a marketing banner above it. -->
-  <section class="rounded-lg border border-gray-200 bg-white p-5 mb-6">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
-        <img class="otp-dic-img" src="/public/images/orgy/next-action.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">
-        Next Actions
-        <% if (nextActionItems.length > 0) { %>
-          <span class="ml-2 inline-block px-2 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light text-[10px] font-bold"><%= nextActionItems.length %></span>
-        <% } %>
-        <% if (rocksMissingNext + issuesMissingNext > 0) { %>
-          <span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= rocksMissingNext + issuesMissingNext %> need one</span>
-        <% } %>
-      </h2>
-    </div>
-    <% if (nextActionItemsTop.length === 0) { %>
-      <p class="text-xs text-gray-500">
-        <% if (rocksMissingNext || issuesMissingNext) { %>
-          Nothing queued yet. Set a Next Action on each rock or issue below to populate this list.
-        <% } else { %>
-          All clear -- no rocks, issues, or overdue to-dos waiting on you.
-        <% } %>
-      </p>
-    <% } else { %>
-      <ul class="space-y-1.5" id="next-action-list">
-        <%
-          // Render helper for one row -- used twice (visible + hidden behind toggle)
-          function _renderNa(n, hidden) {
-        %>
-          <li class="<%= hidden ? 'na-row-extra hidden ' : '' %>flex items-center gap-2.5 text-sm rounded border border-gray-100 bg-gray-50/60 px-3 py-2 group" data-na-row-kind="<%= n.kind %>" data-na-row-id="<%= n.id %>">
-            <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0 <%= n.urgent ? 'bg-rose-500' : 'bg-orgy-deep' %>"></span>
-            <div class="flex-1 min-w-0">
-              <div class="text-gray-900 break-words leading-snug"><%= n.action %></div>
-              <div class="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 items-baseline">
-                <span class="font-mono uppercase text-[10px] tracking-wide text-gray-400"><%= n.sourceTag %></span>
-                <% if (n.sourceLabel) { %><span class="text-gray-500 truncate"><%= n.sourceLabel %></span><% } %>
-                <% if (n.dueAt) { %><span class="<%= n.urgent ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= n.urgent ? 'OVERDUE ' : 'due ' %><%= n.dueAt.toLocaleDateString() %></span><% } %>
-              </div>
-            </div>
-            <!-- Action buttons. Always available, no hover-only -- this
-                 is a workspace, not a marketing site. ✓ applies to all
-                 (To-dos: complete the todo; Rocks/Issues: clear the
-                 next_action so the chain prompts for a new one).
-                 Snooze + Drop only render for To-dos since they're the
-                 only kind with a due date you can push, or that you can
-                 delete from this view. -->
-            <div class="shrink-0 flex items-center gap-1">
-              <button type="button" class="na-act na-done px-2 py-1 rounded text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50" title="Mark done">✓ Done</button>
-              <% if (n.kind === 'todo') { %>
-                <button type="button" class="na-act na-snooze px-2 py-1 rounded text-[11px] font-semibold text-gray-600 hover:bg-gray-100" title="Push due date by 1 week">Snooze 1w</button>
-                <button type="button" class="na-act na-drop px-2 py-1 rounded text-[11px] font-semibold text-rose-600 hover:bg-rose-50" title="Delete this to-do">Drop</button>
-              <% } %>
-            </div>
-          </li>
-        <% } %>
-        <% nextActionItemsTop.forEach(function(n){ _renderNa(n, false); }); %>
-        <% nextActionItemsRest.forEach(function(n){ _renderNa(n, true); }); %>
-        <% if (nextActionItemsRest.length > 0) { %>
-          <li class="px-1 pt-1">
-            <button type="button" id="na-toggle-more" class="text-[11px] text-orgy-blue font-semibold hover:underline">+ Show <%= nextActionItemsRest.length %> more</button>
-          </li>
-        <% } %>
-      </ul>
-    <% } %>
-  </section>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-    <!-- LEFT COLUMN -->
-    <div class="space-y-6">
-
       <!-- Headlines: collapsed by default (reference, captured in the meeting).
            Auto-opens when there are unread headlines so nothing is buried. -->
       <details class="rounded-lg border border-gray-200 bg-white" <%= headlines.filter(function(h){return !h.readAt;}).length > 0 ? 'open' : '' %>>
@@ -440,6 +372,7 @@
         <% } %>
         </div>
       </details>
+
 
       <!-- My Rocks: collapsed by default. Quarterly priorities are weekly
            reference; actionable rocks already surface in Next Actions above.
@@ -527,89 +460,67 @@
         </div>
       </details>
 
-      <!-- My KPIs -->
-      <section id="daily-my-kpis" class="rounded-lg border border-gray-200 bg-white p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/kpis.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My KPIs</h2>
-          <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
-        </div>
-        <% if (myKpis.length === 0) { %>
-          <p class="text-xs text-gray-500">No KPIs assigned to you yet.</p>
-        <% } else { %>
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Show</span>
-            <span class="dk-own-seg" role="group" aria-label="Filter KPIs by owner type">
-              <button type="button" class="dk-own-btn active" data-mode="all">All</button>
-              <button type="button" class="dk-own-btn" data-mode="human">Human</button>
-              <button type="button" class="dk-own-btn" data-mode="agent">Agent</button>
-            </span>
-          </div>
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 border-b border-gray-200">
-                <th class="py-1">KPI</th>
-                <th class="py-1">Goal</th>
-                <th class="py-1">Latest</th>
-                <th class="py-1">Enter</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% myKpis.forEach(function(k){
-                   var latest = kpiValues[k.id];
-                   var goalSym = { gte: '>=', lte: '<=', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
+
+      <!-- My Agents (compact, collapsible -- David flagged 2026-05-24 that
+           the full agent list took up too much space in the right column.
+           Same <details>/<summary> pattern as OTP Insights. Summary line
+           always shows the at-a-glance health (count + avg + red/yellow).
+           User's open/closed preference is persisted in localStorage via
+           the small script at the bottom of this page. -->
+      <%
+         var agentRedCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
+         var agentYellowCount = myAgents.filter(function(a){ return (a.score||0) >= 3 && (a.score||0) < 6; }).length;
+         var agentAvg = myAgents.length > 0 ? (myAgents.reduce(function(s,a){ return s + (a.score||0); }, 0) / myAgents.length) : 0;
+      %>
+      <details id="my-agents-details" class="rounded-lg border border-gray-200 bg-white">
+        <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
+          <span class="flex items-center gap-3 flex-wrap min-w-0">
+            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/agents.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My Agents</span>
+            <% if (myAgents.length > 0) { %>
+              <span class="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
+                <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
+                <span>avg <strong class="text-gray-700"><%= agentAvg.toFixed(1) %>/8</strong></span>
+                <% if (agentRedCount > 0) { %><span class="text-rose-600 font-semibold"><%= agentRedCount %> red</span><% } %>
+                <% if (agentYellowCount > 0) { %><span class="text-amber-600 font-semibold"><%= agentYellowCount %> yellow</span><% } %>
+              </span>
+            <% } else { %>
+              <span class="text-[11px] text-gray-500">No agents yet</span>
+            <% } %>
+          </span>
+          <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline shrink-0 ml-3" onclick="event.stopPropagation()">View chart &rarr;</a>
+        </summary>
+        <div class="px-5 pb-5 pt-1 border-t border-gray-100">
+          <% if (myAgents.length === 0) { %>
+            <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600 mt-3">
+              No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-orgy-blue font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
+            </div>
+          <% } else { %>
+            <ul class="divide-y divide-gray-100 -mx-2 mt-2">
+              <% myAgents.forEach(function(a){
+                   var score = a.score || 0;
+                   var pct = Math.round((score / 8) * 100);
+                   var color = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : score > 0 ? 'bg-rose-400' : 'bg-gray-300';
+                   var kpiN = (typeof a.kpiCount === 'number') ? a.kpiCount : 0;
               %>
-                <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>">
-                  <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
-                  <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
-                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
-                  <td class="py-2">
-                    <div class="flex items-center gap-1.5">
-                      <input type="number" step="any" class="kpi-value-input rounded border border-gray-300 px-2 py-1 text-xs w-20" placeholder="value" value="<%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '' %>">
-                      <button type="button" class="kpi-save-btn rounded bg-orgy-blue px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-orgy-blue-deep disabled:opacity-50">Save</button>
-                    </div>
-                  </td>
-                </tr>
+                <li>
+                  <a href="/dashboard/team" class="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-gray-50 rounded" data-agent-id="<%= a.id %>">
+                    <span class="inline-block w-2 h-2 rounded-full <%= color %> shrink-0"></span>
+                    <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
+                    <span class="hidden sm:inline-block w-24 h-1 bg-gray-200 rounded overflow-hidden shrink-0">
+                      <span class="block h-full <%= color %>" style="width: <%= pct %>%"></span>
+                    </span>
+                    <span class="text-[11px] font-semibold text-gray-700 tabular-nums w-10 text-right shrink-0"><%= score.toFixed ? score.toFixed(1) : score %></span>
+                    <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= kpiN %> KPI<%= kpiN === 1 ? '' : 's' %></span>
+                  </a>
+                </li>
               <% }); %>
-            </tbody>
-          </table>
-          <p class="dk-own-empty text-xs text-gray-500 mt-2" style="display:none">No KPIs for this owner type.</p>
-        <% } %>
-      </section>
-      <script>
-        // My KPIs owner-type filter (All / Human / Agent). Shares the
-        // 'otp-kpi-owner-filter' localStorage key with the full Scoreboard so the
-        // choice carries across both surfaces. Client-side row show/hide only.
-        (function(){
-          var sec = document.getElementById('daily-my-kpis');
-          if (!sec) return;
-          function apply(mode){
-            var vis = 0;
-            sec.querySelectorAll('tr[data-owner-type]').forEach(function(tr){
-              var show = (mode === 'all' || tr.getAttribute('data-owner-type') === mode);
-              tr.style.display = show ? '' : 'none';
-              if (show) vis++;
-            });
-            var empty = sec.querySelector('.dk-own-empty');
-            if (empty) empty.style.display = vis ? 'none' : '';
-            sec.querySelectorAll('.dk-own-btn').forEach(function(b){
-              b.classList.toggle('active', b.getAttribute('data-mode') === mode);
-            });
-            try { localStorage.setItem('otp-kpi-owner-filter', mode); } catch(e){}
-          }
-          sec.querySelectorAll('.dk-own-btn').forEach(function(b){
-            b.addEventListener('click', function(){ apply(b.getAttribute('data-mode')); });
-          });
-          var saved = 'all';
-          try { saved = localStorage.getItem('otp-kpi-owner-filter') || 'all'; } catch(e){}
-          if (saved !== 'all') apply(saved);
-        })();
-      </script>
+            </ul>
+          <% } %>
+        </div>
+      </details>
 
     </div><!-- /left -->
-
-    <!-- RIGHT COLUMN -->
-    <div class="space-y-6">
-
+    <div class="lg:col-span-8 space-y-5"><!-- RIGHT 2/3 -->
       <!-- My To-Dos -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
@@ -855,6 +766,86 @@
         <% } %>
       </section>
 
+
+      <!-- My KPIs -->
+      <section id="daily-my-kpis" class="rounded-lg border border-gray-200 bg-white p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/kpis.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My KPIs</h2>
+          <a href="/dashboard/kpis" class="text-xs text-orgy-blue font-semibold">Scoreboard &rarr;</a>
+        </div>
+        <% if (myKpis.length === 0) { %>
+          <p class="text-xs text-gray-500">No KPIs assigned to you yet.</p>
+        <% } else { %>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Show</span>
+            <span class="dk-own-seg" role="group" aria-label="Filter KPIs by owner type">
+              <button type="button" class="dk-own-btn active" data-mode="all">All</button>
+              <button type="button" class="dk-own-btn" data-mode="human">Human</button>
+              <button type="button" class="dk-own-btn" data-mode="agent">Agent</button>
+            </span>
+          </div>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                <th class="py-1">KPI</th>
+                <th class="py-1">Goal</th>
+                <th class="py-1">Latest</th>
+                <th class="py-1">Enter</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% myKpis.forEach(function(k){
+                   var latest = kpiValues[k.id];
+                   var goalSym = { gte: '>=', lte: '<=', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
+              %>
+                <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>">
+                  <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
+                  <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
+                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
+                  <td class="py-2">
+                    <div class="flex items-center gap-1.5">
+                      <input type="number" step="any" class="kpi-value-input rounded border border-gray-300 px-2 py-1 text-xs w-20" placeholder="value" value="<%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '' %>">
+                      <button type="button" class="kpi-save-btn rounded bg-orgy-blue px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-orgy-blue-deep disabled:opacity-50">Save</button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <p class="dk-own-empty text-xs text-gray-500 mt-2" style="display:none">No KPIs for this owner type.</p>
+        <% } %>
+      </section>
+      <script>
+        // My KPIs owner-type filter (All / Human / Agent). Shares the
+        // 'otp-kpi-owner-filter' localStorage key with the full Scoreboard so the
+        // choice carries across both surfaces. Client-side row show/hide only.
+        (function(){
+          var sec = document.getElementById('daily-my-kpis');
+          if (!sec) return;
+          function apply(mode){
+            var vis = 0;
+            sec.querySelectorAll('tr[data-owner-type]').forEach(function(tr){
+              var show = (mode === 'all' || tr.getAttribute('data-owner-type') === mode);
+              tr.style.display = show ? '' : 'none';
+              if (show) vis++;
+            });
+            var empty = sec.querySelector('.dk-own-empty');
+            if (empty) empty.style.display = vis ? 'none' : '';
+            sec.querySelectorAll('.dk-own-btn').forEach(function(b){
+              b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+            });
+            try { localStorage.setItem('otp-kpi-owner-filter', mode); } catch(e){}
+          }
+          sec.querySelectorAll('.dk-own-btn').forEach(function(b){
+            b.addEventListener('click', function(){ apply(b.getAttribute('data-mode')); });
+          });
+          var saved = 'all';
+          try { saved = localStorage.getItem('otp-kpi-owner-filter') || 'all'; } catch(e){}
+          if (saved !== 'all') apply(saved);
+        })();
+      </script>
+
+
       <!-- IDS Issues -->
       <section class="rounded-lg border border-gray-200 bg-white p-5">
         <div class="flex items-center justify-between mb-3">
@@ -948,81 +939,6 @@
         <% } %>
       </section>
 
-      <!-- My Agents (compact, collapsible -- David flagged 2026-05-24 that
-           the full agent list took up too much space in the right column.
-           Same <details>/<summary> pattern as OTP Insights. Summary line
-           always shows the at-a-glance health (count + avg + red/yellow).
-           User's open/closed preference is persisted in localStorage via
-           the small script at the bottom of this page. -->
-      <%
-         var agentRedCount = myAgents.filter(function(a){ return (a.score||0) < 3; }).length;
-         var agentYellowCount = myAgents.filter(function(a){ return (a.score||0) >= 3 && (a.score||0) < 6; }).length;
-         var agentAvg = myAgents.length > 0 ? (myAgents.reduce(function(s,a){ return s + (a.score||0); }, 0) / myAgents.length) : 0;
-      %>
-      <details id="my-agents-details" class="rounded-lg border border-gray-200 bg-white">
-        <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
-          <span class="flex items-center gap-3 flex-wrap min-w-0">
-            <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/agents.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">My Agents</span>
-            <% if (myAgents.length > 0) { %>
-              <span class="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
-                <span><strong class="text-gray-700"><%= myAgents.length %></strong> seats</span>
-                <span>avg <strong class="text-gray-700"><%= agentAvg.toFixed(1) %>/8</strong></span>
-                <% if (agentRedCount > 0) { %><span class="text-rose-600 font-semibold"><%= agentRedCount %> red</span><% } %>
-                <% if (agentYellowCount > 0) { %><span class="text-amber-600 font-semibold"><%= agentYellowCount %> yellow</span><% } %>
-              </span>
-            <% } else { %>
-              <span class="text-[11px] text-gray-500">No agents yet</span>
-            <% } %>
-          </span>
-          <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline shrink-0 ml-3" onclick="event.stopPropagation()">View chart &rarr;</a>
-        </summary>
-        <div class="px-5 pb-5 pt-1 border-t border-gray-100">
-          <% if (myAgents.length === 0) { %>
-            <div class="rounded border border-dashed border-gray-300 bg-gray-50/40 p-4 text-xs text-gray-600 mt-3">
-              No agents on your team chart yet. Build one at <a href="/dashboard/team" class="text-orgy-blue font-semibold hover:underline">/dashboard/team</a> &mdash; agents you add there appear here automatically.
-            </div>
-          <% } else { %>
-            <ul class="divide-y divide-gray-100 -mx-2 mt-2">
-              <% myAgents.forEach(function(a){
-                   var score = a.score || 0;
-                   var pct = Math.round((score / 8) * 100);
-                   var color = score >= 6 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-400' : score > 0 ? 'bg-rose-400' : 'bg-gray-300';
-                   var kpiN = (typeof a.kpiCount === 'number') ? a.kpiCount : 0;
-              %>
-                <li>
-                  <a href="/dashboard/team" class="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-gray-50 rounded" data-agent-id="<%= a.id %>">
-                    <span class="inline-block w-2 h-2 rounded-full <%= color %> shrink-0"></span>
-                    <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
-                    <span class="hidden sm:inline-block w-24 h-1 bg-gray-200 rounded overflow-hidden shrink-0">
-                      <span class="block h-full <%= color %>" style="width: <%= pct %>%"></span>
-                    </span>
-                    <span class="text-[11px] font-semibold text-gray-700 tabular-nums w-10 text-right shrink-0"><%= score.toFixed ? score.toFixed(1) : score %></span>
-                    <span class="hidden sm:inline text-[10px] text-gray-500 tabular-nums w-14 text-right shrink-0"><%= kpiN %> KPI<%= kpiN === 1 ? '' : 's' %></span>
-                  </a>
-                </li>
-              <% }); %>
-            </ul>
-          <% } %>
-        </div>
-      </details>
-
-    </div><!-- /right -->
-  </div>
-
-  <!-- People Review banner: surfaces GWC + Values rating so it's discoverable
-       from the daily dashboard. Always visible (not collapsed) because
-       discovery was the problem -- David flagged 2026-05-24 that the People
-       Analyzer was built but unreachable from the main surfaces. -->
-  <a href="/team/review" class="mt-8 block rounded-lg border border-orgy-soft bg-white hover:bg-orgy-tint px-5 py-3 flex items-center justify-between transition group">
-    <span class="flex items-center gap-3 min-w-0">
-      <img src="/public/images/orgy-idle.webp" alt="" class="w-8 shrink-0" loading="lazy" decoding="async">
-      <span class="min-w-0">
-        <span class="block text-sm font-bold uppercase tracking-wide text-gray-700">People Review</span>
-        <span class="block text-[11px] text-gray-500">Rate each seat against Gets it, Wants it, Capacity, and your values</span>
-      </span>
-    </span>
-    <span class="text-xs font-semibold text-orgy-blue group-hover:underline shrink-0 ml-3">Open &rarr;</span>
-  </a>
 
   <!-- OTP Insights: diagnostic surfaces moved out of the main grid 2026-05-24
        so the dashboard reads balanced like Ninety. The four cards here are
@@ -1268,6 +1184,24 @@
 
     </div>
   </details>
+    </div><!-- /right -->
+  </div><!-- /grid -->
+
+  <!-- People Review banner: surfaces GWC + Values rating so it's discoverable
+       from the daily dashboard. Always visible (not collapsed) because
+       discovery was the problem -- David flagged 2026-05-24 that the People
+       Analyzer was built but unreachable from the main surfaces. -->
+  <a href="/team/review" class="mt-8 block rounded-lg border border-orgy-soft bg-white hover:bg-orgy-tint px-5 py-3 flex items-center justify-between transition group">
+    <span class="flex items-center gap-3 min-w-0">
+      <img src="/public/images/orgy-idle.webp" alt="" class="w-8 shrink-0" loading="lazy" decoding="async">
+      <span class="min-w-0">
+        <span class="block text-sm font-bold uppercase tracking-wide text-gray-700">People Review</span>
+        <span class="block text-[11px] text-gray-500">Rate each seat against Gets it, Wants it, Capacity, and your values</span>
+      </span>
+    </span>
+    <span class="text-xs font-semibold text-orgy-blue group-hover:underline shrink-0 ml-3">Open &rarr;</span>
+  </a>
+
 
   <!-- Cascading Message (read-only, integrator-set) -->
   <% if (selectedMeeting && selectedMeeting.cascadingMessage) { %>
