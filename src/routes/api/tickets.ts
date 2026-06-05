@@ -158,11 +158,17 @@ export default async function ticketRoutes(app: FastifyInstance) {
     const id = requireUuidParam(request, reply);
     if (!id) return;
     const org = await getAuthOrg(request);
-    const isAuthed = !!org;
+    const isSuperAdmin = !!(request as any).isSuperAdmin;
 
     const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
     if (!ticket) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
-    return { ticket: isAuthed ? ticket : stripSensitiveFields(ticket as unknown as Record<string, unknown>) };
+    // The issue tracker is intentionally public, but agentNotes/reporterEmail
+    // are org-private. Only the owning org (or a super admin) sees the full
+    // record; everyone else -- unauthenticated OR an authenticated member of a
+    // different org -- gets the stripped public view. Without the org check,
+    // any logged-in user could read another tenant's private ticket fields.
+    const canSeeFull = isSuperAdmin || (!!org && ticket.orgId === org.id);
+    return { ticket: canSeeFull ? ticket : stripSensitiveFields(ticket as unknown as Record<string, unknown>) };
   });
 
   // PUT /api/v1/tickets/:id -- Update ticket (admin/agent)
@@ -205,9 +211,17 @@ export default async function ticketRoutes(app: FastifyInstance) {
       updates.nextActionSetAt = body.data.nextAction ? new Date() : null;
     }
 
+    // Scope the write to the caller's org (mirrors DELETE and POST /:id/solve).
+    // Without this, any authenticated org could PUT another tenant's ticket by
+    // UUID -- a cross-tenant write IDOR. Super admins may edit any org's ticket.
+    const isSuperAdmin = !!(request as any).isSuperAdmin;
+    const updateWhere = isSuperAdmin
+      ? eq(tickets.id, id)
+      : and(eq(tickets.id, id), eq(tickets.orgId, org.id));
+
     const [updated] = await db.update(tickets)
       .set(updates)
-      .where(eq(tickets.id, id))
+      .where(updateWhere)
       .returning();
 
     if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
