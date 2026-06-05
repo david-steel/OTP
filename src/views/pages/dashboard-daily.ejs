@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%
   // Daily Manager Dashboard. The home base for anyone who runs a meeting --
   // EOS-style L10 with Headlines / Rocks / KPIs / To-Dos / Issues, plus an
@@ -1297,7 +1298,7 @@
   function reload() { window.location.reload(); }
 
   // --- Headlines ---
-  var headlineTeamId = <%- JSON.stringify(selectedTeamId || '') %>;
+  var headlineTeamId = <%- jsonForScript(selectedTeamId || '') %>;
   var hlForm = document.getElementById('headline-form');
   if (hlForm) {
     hlForm.addEventListener('submit', function(e){
@@ -1474,9 +1475,9 @@
         body.ownerEntityType = parts[0];
         body.ownerExternalId = parts[1];
         body.ownerName = parts.slice(2).join(':');
-        body.delegatorEntityType = <%- JSON.stringify(locals.meEntityType || '') %>;
-        body.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
-        body.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
+        body.delegatorEntityType = <%- jsonForScript(locals.meEntityType || '') %>;
+        body.delegatorExternalId = <%- jsonForScript(locals.meExternalId || '') %>;
+        body.delegatorName = <%- jsonForScript(locals.meName || '') %>;
       }
       // Team scoping: if a team is picked, this becomes an L10 (team) to-do.
       var teamSel = document.getElementById('todo-team-select');
@@ -1543,9 +1544,9 @@
         editBody.ownerEntityType = rParts[0];
         editBody.ownerExternalId = rParts[1];
         editBody.ownerName = rParts.slice(2).join(':');
-        editBody.delegatorEntityType = <%- JSON.stringify(locals.meEntityType || '') %>;
-        editBody.delegatorExternalId = <%- JSON.stringify(locals.meExternalId || '') %>;
-        editBody.delegatorName = <%- JSON.stringify(locals.meName || '') %>;
+        editBody.delegatorEntityType = <%- jsonForScript(locals.meEntityType || '') %>;
+        editBody.delegatorExternalId = <%- jsonForScript(locals.meExternalId || '') %>;
+        editBody.delegatorName = <%- jsonForScript(locals.meName || '') %>;
       }
       editBody.teamId = (fd.get('todoTeam') || '').toString() || null;
       api('PUT', '/todos/' + tid, editBody)
@@ -1602,8 +1603,8 @@
     issForm.addEventListener('submit', function(e){
       e.preventDefault();
       var fd = new FormData(issForm);
-      var _meExt = <%- JSON.stringify(locals.meExternalId || '') %>;
-      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium', teamId: fd.get('teamId') || null, ownerExternalId: _meExt || null, ownerEntityType: _meExt ? 'human' : null, ownerName: <%- JSON.stringify(firstName || '') %> || null })
+      var _meExt = <%- jsonForScript(locals.meExternalId || '') %>;
+      api('POST', '/tickets', { title: fd.get('title'), description: fd.get('description') || '', category: 'other', priority: 'medium', teamId: fd.get('teamId') || null, ownerExternalId: _meExt || null, ownerEntityType: _meExt ? 'human' : null, ownerName: <%- jsonForScript(firstName || '') %> || null })
         .then(reload)
         .catch(function(err){ alert('Add issue failed: ' + fmtApiError(err)); });
     });
@@ -1712,8 +1713,8 @@
   (function(){
     var gapEl = document.getElementById('acc-gaps');
     if (!gapEl) return;
-    var gapQuarter = <%- JSON.stringify(currentQuarter || '') %>;
-    var meSeat = <%- JSON.stringify(locals.meExternalId || '') %>;
+    var gapQuarter = <%- jsonForScript(currentQuarter || '') %>;
+    var meSeat = <%- jsonForScript(locals.meExternalId || '') %>;
 
     var filterBar = document.getElementById('gap-filter');
     if (filterBar) {

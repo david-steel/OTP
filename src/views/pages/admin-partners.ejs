@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <!-- ============================================================
      /admin/partners — Partner Application Review Queue
      Admin-only. Status filter tabs, expandable rows, inline
@@ -356,7 +357,7 @@
 
 <script>
   // Carry the ?key= param across PATCH calls so non-Clerk admin sessions still work
-  var ADMIN_KEY = <%- JSON.stringify(keyParam || '') %>;
+  var ADMIN_KEY = <%- jsonForScript(keyParam || '') %>;
 
   function togglePartnerRow(id) {
     var details = document.getElementById('details-' + id);

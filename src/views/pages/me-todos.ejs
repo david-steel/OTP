@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <style>
   body { background: #fafaf9; }
   .me-wrap { max-width: 680px; margin: 0 auto; padding: 16px 12px 80px; }
@@ -533,9 +534,9 @@ async function saveEdit(btn, id) {
     body.ownerEntityType = parts[0];
     body.ownerExternalId = parts[1];
     body.ownerName = parts.slice(2).join(':');
-    body.delegatorEntityType = <%- JSON.stringify(meEntityType || 'human') %>;
-    body.delegatorExternalId = <%- JSON.stringify(meExternalId || '') %>;
-    body.delegatorName = <%- JSON.stringify(meName || '') %>;
+    body.delegatorEntityType = <%- jsonForScript(meEntityType || 'human') %>;
+    body.delegatorExternalId = <%- jsonForScript(meExternalId || '') %>;
+    body.delegatorName = <%- jsonForScript(meName || '') %>;
   }
   btn.disabled = true;
   btn.textContent = 'Saving...';
@@ -668,9 +669,9 @@ async function createTodo(btn) {
       return { ownerEntityType: parts[0], ownerExternalId: parts[1], ownerName: parts.slice(2).join(':') };
     });
     // Stamp the creator as delegator on every copy.
-    body.delegatorEntityType = <%- JSON.stringify(meEntityType || 'human') %>;
-    body.delegatorExternalId = <%- JSON.stringify(meExternalId || '') %>;
-    body.delegatorName = <%- JSON.stringify(meName || '') %>;
+    body.delegatorEntityType = <%- jsonForScript(meEntityType || 'human') %>;
+    body.delegatorExternalId = <%- jsonForScript(meExternalId || '') %>;
+    body.delegatorName = <%- jsonForScript(meName || '') %>;
   }
 
   btn.disabled = true;

@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <div class="max-w-6xl mx-auto px-4 py-8">
   <!-- Header -->
   <div class="bg-white p-6 rounded-lg border mb-6">
@@ -253,12 +254,12 @@
 
 <script>
 // Claims data for system prompt export
-var oosClaimsData = <%- JSON.stringify(claims.map(function(c) { return { id: c.claimId, section: c.section, rule: c.rule }; })) %>;
-var oosOrgName = <%- JSON.stringify(org.name) %>;
-var oosVersion = <%- JSON.stringify(oosFile.version) %>;
+var oosClaimsData = <%- jsonForScript(claims.map(function(c) { return { id: c.claimId, section: c.section, rule: c.rule }; })) %>;
+var oosOrgName = <%- jsonForScript(org.name) %>;
+var oosVersion = <%- jsonForScript(oosFile.version) %>;
 var oosClaimCount = <%= oosFile.claimCount %>;
-var oosId = <%- JSON.stringify(oosFile.id) %>;
-var oosTEI = <%- JSON.stringify(tokenEfficiencyIndex.toFixed(1)) %>;
+var oosId = <%- jsonForScript(oosFile.id) %>;
+var oosTEI = <%- jsonForScript(tokenEfficiencyIndex.toFixed(1)) %>;
 
 function copyAsSystemPrompt() {
   // Group claims by section

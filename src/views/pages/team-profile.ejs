@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%- include('../partials/api-save-handler'); %>
 <div class="max-w-6xl mx-auto px-4 py-8">
 
@@ -296,7 +297,7 @@
 
 <script>
   (function () {
-    var seatId = <%- JSON.stringify(profile.externalId) %>;
+    var seatId = <%- jsonForScript(profile.externalId) %>;
     var editBtn = document.getElementById('resp-edit-btn');
     var saveBtn = document.getElementById('resp-save-btn');
     var cancelBtn = document.getElementById('resp-cancel-btn');

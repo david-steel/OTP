@@ -52,7 +52,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/public/v7.css?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>">
 <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
-<script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<script type="application/ld+json"><%- jsonForScript(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
 <% } %>
 <% if (typeof headExtra !== 'undefined' && headExtra) { %><%- headExtra %><% } %>
 </head>

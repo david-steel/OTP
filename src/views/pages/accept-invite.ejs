@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%# /accept-invite -- v7-styled team invitation acceptance page.
    Single column, centered, one job per state. Five state branches:
      pending           -- main happy path; "claim your seat" CTA opens
@@ -119,7 +120,7 @@
       <script>
         (function() {
           var redirectUrl = window.location.href; // /accept-invite?token=... preserved
-          var invitedEmail = <%- JSON.stringify(typeof invitedEmail !== 'undefined' ? invitedEmail : '') %>;
+          var invitedEmail = <%- jsonForScript(typeof invitedEmail !== 'undefined' ? invitedEmail : '') %>;
           var btn = document.getElementById('invite-accept-btn');
           if (!btn) return;
           btn.addEventListener('click', function() {

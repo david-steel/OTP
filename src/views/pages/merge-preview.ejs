@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <div class="max-w-6xl mx-auto px-4 py-8">
   <h1 class="text-2xl font-bold mb-1">Merge Preview</h1>
   <p class="text-sm text-gray-500 mb-6">Review what would change if you imported patterns from <strong><%= preview.sourceOrg.name %></strong> into your OOS. This is a preview only -- no changes are applied.</p>
@@ -284,7 +285,7 @@ function setDecision(btn) {
 }
 
 // Store full candidate data for export
-const candidateData = <%- JSON.stringify(preview.candidates.reduce(function(acc, mc) {
+const candidateData = <%- jsonForScript(preview.candidates.reduce(function(acc, mc) {
   acc[mc.id] = {
     label: mc.source.label,
     section: mc.source.type,

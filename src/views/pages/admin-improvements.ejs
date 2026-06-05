@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <!-- ============================================================
      /admin/improvements — Roadmap / Idea Tracker
      Admin-only. Add / edit / complete / delete. Status filter
@@ -265,7 +266,7 @@
 </section>
 
 <script>
-  var ADMIN_KEY = <%- JSON.stringify(keyParam || '') %>;
+  var ADMIN_KEY = <%- jsonForScript(keyParam || '') %>;
 
   function withKey(url) {
     if (!ADMIN_KEY) return url;

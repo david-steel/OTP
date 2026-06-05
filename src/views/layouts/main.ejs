@@ -176,10 +176,11 @@
   </style>
 
   <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
-  <script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+  <script type="application/ld+json"><%- jsonForScript(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
   <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 0) { %>
-  <script type="application/ld+json"><%- JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
+  <script type="application/ld+json"><%- jsonForScript({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
 </head>
 <body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %>">
