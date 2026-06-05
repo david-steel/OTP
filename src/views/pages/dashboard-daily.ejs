@@ -298,7 +298,7 @@
 
       <!-- Headlines: collapsed by default (reference, captured in the meeting).
            Auto-opens when there are unread headlines so nothing is buried. -->
-      <details class="rounded-lg border border-gray-200 bg-white" <%= headlines.filter(function(h){return !h.readAt;}).length > 0 ? 'open' : '' %>>
+      <details class="rounded-lg border border-gray-200 bg-white" open>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2">
             <img class="otp-dic-img" src="/public/images/orgy/headlines.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">
@@ -380,7 +380,7 @@
       <%
         var _rocksOpen = myRocks.filter(function(r){ return !r.onTrack && !r.completedAt; }).length;
       %>
-      <details class="rounded-lg border border-gray-200 bg-white" <%= _rocksOpen > 0 ? 'open' : '' %>>
+      <details class="rounded-lg border border-gray-200 bg-white" open>
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/quarterly-priorities.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Quarterly Priorities
             <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %>
@@ -883,6 +883,11 @@
 
 
     </div><!-- /right -->
+  </div><!-- /grid -->
+
+  <!-- Agents + OTP Insights: own grid so the two collapsed bars align on one
+       row regardless of the rails' unequal heights above. -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5">
     <div class="lg:col-span-4"><!-- Agents (aligned row) -->
       <!-- My Agents (compact, collapsible -- David flagged 2026-05-24 that
            the full agent list took up too much space in the right column.
