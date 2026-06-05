@@ -487,6 +487,18 @@
               <label for="todo-date-input" id="todo-date-label" class="text-[10px] uppercase tracking-wide text-gray-500">Due date</label>
               <input type="date" id="todo-date-input" name="dueAt" class="rounded border border-gray-300 px-2 py-1 text-xs">
             </div>
+            <div class="flex flex-col gap-0.5">
+              <label for="todo-recur-input" class="text-[10px] uppercase tracking-wide text-gray-500">Repeats</label>
+              <select id="todo-recur-input" name="recurrence" class="rounded border border-gray-300 px-2 py-1 text-xs">
+                <option value="none" selected>Does not repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekdays">Weekdays (Mon–Fri)</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
             <% if ((orgTeams || []).length > 0) { %>
               <div class="flex flex-col gap-0.5">
                 <label for="todo-team-select" class="text-[10px] uppercase tracking-wide text-gray-500">Team</label>
@@ -1438,6 +1450,17 @@
       if (descVal) body.description = descVal;
       var due = fd.get('dueAt');
       if (due) body.dueAt = new Date(due + 'T17:00:00').toISOString();
+      // Recurrence: map the preset key to an RRULE. 'none' leaves it off.
+      var addRecKey = (fd.get('recurrence') || '').toString();
+      var addRecMap = {
+        daily:    'FREQ=DAILY',
+        weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+        weekly:   'FREQ=WEEKLY',
+        biweekly: 'FREQ=WEEKLY;INTERVAL=2',
+        monthly:  'FREQ=MONTHLY',
+        yearly:   'FREQ=YEARLY',
+      };
+      if (addRecMap[addRecKey]) body.recurrenceRule = addRecMap[addRecKey];
       // NOTE: do NOT auto-stamp meetingId from the page. To-dos route to a
       // meeting by teamId (the visible Team selector below), so pinning the
       // on-screen meeting only mislabels it (e.g. "From Janine 1:1" for a

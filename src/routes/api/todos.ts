@@ -327,11 +327,26 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (d.delegatorName !== undefined) updates.delegatorName = d.delegatorName || null;
     if (d.parentTodoId !== undefined) updates.parentTodoId = d.parentTodoId;
     if (d.position !== undefined) updates.position = d.position;
+    // Recurrence edit. Three cases:
+    //  - clear (rule is '' / null): drop the rule on this row.
+    //  - in-series change (this row already carries a rule, or is an instance
+    //    of a series): update the rule in place.
+    //  - convert a plain one-off INTO a series: mirror the POST /todos path.
+    //    Setting the rule directly on the row would leave it carrying BOTH a
+    //    rule and a due_at, which the Daily dashboard query (recurrence_rule
+    //    IS NULL) hides -- the to-do silently vanishes. Instead we spin off a
+    //    hidden template below and keep THIS row as the visible dated instance.
+    let convertToRecurring = false;
     if (d.recurrenceRule !== undefined) {
       if (d.recurrenceRule && !isValidRule(d.recurrenceRule)) {
         return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } });
       }
-      updates.recurrenceRule = d.recurrenceRule;
+      const isPlainOneOff = !existing.recurrenceParentId && !existing.recurrenceRule;
+      if (d.recurrenceRule && isPlainOneOff) {
+        convertToRecurring = true; // handled after the row update, see below
+      } else {
+        updates.recurrenceRule = d.recurrenceRule;
+      }
     }
 
     const [updated] = await db.update(todos)
@@ -396,6 +411,42 @@ export default async function todoRoutes(app: FastifyInstance) {
       }
     }
 
+    // Convert-to-recurring: now that `updated` carries the latest field values,
+    // fan out a hidden template (rule set, no due_at) and re-link this row as
+    // its first instance (rule cleared, recurrence_parent_id -> template). The
+    // row keeps its due_at and id, so it stays visible everywhere and the
+    // existing complete -> spawn-next logic takes over from here. Mirrors the
+    // recurring branch of POST /todos.
+    let responseTodo = updated;
+    if (convertToRecurring) {
+      const [template] = await db.insert(todos).values({
+        organizationId: org.id,
+        kind: updated.kind,
+        priority: updated.priority,
+        teamId: updated.teamId,
+        meetingId: updated.meetingId,
+        ownerEntityType: updated.ownerEntityType,
+        ownerExternalId: updated.ownerExternalId,
+        ownerName: updated.ownerName,
+        delegatorEntityType: updated.delegatorEntityType,
+        delegatorExternalId: updated.delegatorExternalId,
+        delegatorName: updated.delegatorName,
+        title: updated.title,
+        description: updated.description,
+        dueAt: null,
+        recurrenceRule: d.recurrenceRule,
+        recurrenceParentId: null,
+        parentTodoId: updated.parentTodoId,
+        position: updated.position,
+        createdBy: updated.createdBy,
+      }).returning();
+      const [relinked] = await db.update(todos)
+        .set({ recurrenceParentId: template.id, updatedAt: new Date() })
+        .where(and(eq(todos.id, updated.id), eq(todos.organizationId, org.id)))
+        .returning();
+      if (relinked) responseTodo = relinked;
+    }
+
     await db.insert(auditLogs).values(createAuditEntry('todo.updated', 'todo', {
       orgId: org.id, entityId: id, details: updates,
     }));
@@ -405,7 +456,7 @@ export default async function todoRoutes(app: FastifyInstance) {
       publishToTeamMeetings(updated.teamId, { kind: 'todo', action: 'updated', entityId: id });
     }
 
-    return { todo: updated };
+    return { todo: responseTodo };
   });
 
   // DELETE /api/v1/todos/:id (soft)

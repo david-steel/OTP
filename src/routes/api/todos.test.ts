@@ -80,3 +80,50 @@ describe('isValidRule', () => {
     expect(isValidRule('not a rule')).toBe(false);
   });
 });
+
+// Regression: converting a one-off to recurring used to leave the row carrying
+// BOTH a recurrence_rule and a due_at. The Daily dashboard query hides any row
+// with a rule (recurrence_rule IS NULL), so the to-do silently vanished from
+// the Daily view even though it still showed on /me/todos. (David, 2026-06-05.)
+//
+// These predicates mirror the two live filters:
+//   - API list   (todos.ts):      recurrence_rule IS NULL OR due_at IS NOT NULL
+//   - Daily query (dashboard.ts):  recurrence_rule IS NULL
+// The invariant the fix restores: a row meant to be VISIBLE must satisfy BOTH.
+// The only Daily-visible recurring shape is an instance (rule cleared, due set,
+// parent -> hidden template), never a rule-bearing row.
+describe('todo visibility invariant — Daily vs API filters', () => {
+  type Row = { recurrenceRule: string | null; dueAt: Date | null; recurrenceParentId: string | null };
+  const visibleInApiList = (r: Row) => r.recurrenceRule === null || r.dueAt !== null;
+  const visibleOnDaily = (r: Row) => r.recurrenceRule === null;
+
+  const plainOneOff: Row = { recurrenceRule: null, dueAt: new Date('2026-07-05T17:00:00Z'), recurrenceParentId: null };
+  const hiddenTemplate: Row = { recurrenceRule: 'FREQ=MONTHLY', dueAt: null, recurrenceParentId: null };
+  // What both the POST-recurring path and the fixed convert-to-recurring path
+  // now produce as the user-facing row:
+  const recurringInstance: Row = { recurrenceRule: null, dueAt: new Date('2026-07-05T17:00:00Z'), recurrenceParentId: 'template-id' };
+  // The malformed row the OLD edit handler produced (the bug):
+  const malformedHybrid: Row = { recurrenceRule: 'FREQ=MONTHLY', dueAt: new Date('2026-07-05T17:00:00Z'), recurrenceParentId: null };
+
+  it('a plain one-off shows on both Daily and the API list', () => {
+    expect(visibleOnDaily(plainOneOff)).toBe(true);
+    expect(visibleInApiList(plainOneOff)).toBe(true);
+  });
+
+  it('the hidden template is hidden on both surfaces', () => {
+    expect(visibleOnDaily(hiddenTemplate)).toBe(false);
+    expect(visibleInApiList(hiddenTemplate)).toBe(false);
+  });
+
+  it('the fixed convert-to-recurring shape (instance) stays visible on Daily', () => {
+    expect(visibleOnDaily(recurringInstance)).toBe(true);
+    expect(visibleInApiList(recurringInstance)).toBe(true);
+  });
+
+  it('the old malformed hybrid is exactly what vanished from Daily (the bug)', () => {
+    // Still in the API list (due_at set) ...
+    expect(visibleInApiList(malformedHybrid)).toBe(true);
+    // ... but gone from Daily. The fix must never produce this shape.
+    expect(visibleOnDaily(malformedHybrid)).toBe(false);
+  });
+});
