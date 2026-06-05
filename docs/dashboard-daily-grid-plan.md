@@ -39,29 +39,43 @@ OTP's palette, the orgy section icons, and card styling — just lay them out wi
 
 ---
 
-## Proposed layout (desktop ≥ lg)
+## Layout — APPROVED (David, 2026-06-05)
 
-Container becomes `max-w-screen-2xl` (near full-bleed, with gutters), grid
-`grid grid-cols-12 gap-5`.
+**Decision:** span follows content volume. **Text-heavy tiles (To-Dos, IDS, plus
+Scorecard and Rocks) span two-thirds; low-text tiles (Upcoming Meeting,
+Headlines) span one-third.**
+
+That yields four heavy tiles and two light ones — which don't pair evenly into
+12-col rows. To honor the rule with no awkward empty gaps, use a **2/3 main rail
++ 1/3 sidebar**: heavy cards stack down the wide rail, light cards in the narrow
+sidebar. Same thirds feel, full width, no holes.
+
+Container becomes `max-w-screen-2xl`, grid `grid grid-cols-12 gap-5`.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
 │ Greeting + date + (API nudge banner)                full width │
-├───────────────────────────┬───────────────────────────────────┤
-│ TODAY                      │ SCORECARD (KPIs)                   │
-│  • today's meeting + Start │  weekly grid needs the width       │
-│  • Upcoming (N) ▾          │  span 8                            │
-│  span 4                    │                                    │
-├───────────────────────────┼───────────────────────────────────┤
-│ TO-DOS (color-coded)       │ QUARTERLY PRIORITIES (Rocks)       │
-│  overdue=red, soon=amber   │  each rock shows "Next: ___" inline│
-│  span 4                    │  span 8                            │
-├───────────────────────────┴───────────────┬───────────────────┤
-│ ISSUES (IDS)                  span 8       │ HEADLINES  span 4  │
-└────────────────────────────────────────────┴───────────────────┘
+├───────────────────────────────────────────┬───────────────────┤
+│ SCORECARD (KPIs)              2/3 (span 8)  │ TODAY      1/3 (4) │
+│  weekly grid needs the width                │  today's meeting  │
+├─────────────────────────────────────────────┤  + Start          │
+│ QUARTERLY PRIORITIES (Rocks)  2/3 (span 8)  │  Upcoming (N) ▾   │
+│  each rock shows "Next: ___" inline          ├───────────────────┤
+├─────────────────────────────────────────────┤ HEADLINES  1/3 (4)│
+│ TO-DOS (color-coded)          2/3 (span 8)  │                   │
+│  overdue=red, soon=amber                     │                   │
+├─────────────────────────────────────────────┤                   │
+│ ISSUES / IDS                  2/3 (span 8)  │                   │
+└─────────────────────────────────────────────┴───────────────────┘
 ```
 
-Spans are a starting point, not gospel — see Open Questions.
+Mechanically: a `col-span-8` main `<div>` holding Scorecard → Rocks → To-Dos →
+IDS, beside a `col-span-4` sidebar holding Today → Headlines. The sidebar can be
+`sticky top-...` so Today/meeting stays in view while you scroll the heavy rail.
+
+If during build the sidebar looks too empty next to four tall cards, the fallback
+is to let To-Dos and IDS go full-width (span 12) at the bottom — but we try the
+rail+sidebar first.
 
 ### How #1 folds in (Meeting tile = "Today")
 - Show **today's** meeting(s) prominently with a Start/Open button.
@@ -136,15 +150,14 @@ Roughly a focused session, shippable in pieces.
 
 ---
 
-## Open questions for David (taste calls)
+## Decisions / open questions
 
-1. **Tile priority / spans** — is "Today + Scorecard" the right top row, or do you
-   want Rocks up top? What's the first thing you want your eye to hit?
-2. **Scorecard width** — the weekly KPI grid is wide. Span 8 (two-thirds) or full
-   width on its own row?
-3. **Next Actions** — confirm: remove the hero entirely and inline "Next:" on each
-   rock? Or keep a slim "Today's focus" strip at the very top?
-4. **Density** — comfortable cards (current padding) or tighter to fit more above
-   the fold?
-5. **Scope of the regrid** — Daily only for now, or also bring the same tile
-   treatment to the live meeting-runner page (`l8-leadership.ejs`) as a follow-up?
+1. **Layout & spans** — DECIDED 2026-06-05: heavy = 2/3, light = 1/3, via a 2/3
+   main rail + 1/3 sidebar (see Layout above).
+2. **Scorecard width** — DECIDED: 2/3 (heavy). Lives top of the main rail.
+3. **Next Actions** — DECIDED earlier: remove the standalone hero, inline "Next:"
+   on each rock; color-code To-Dos by state. (Confirm still good.)
+4. **Density** — open: comfortable cards (current padding) or tighter to fit more
+   above the fold? Default: keep current padding.
+5. **Scope** — open: Daily only for now, or also bring tiles to the live
+   meeting-runner page (`l8-leadership.ejs`) later? Default: Daily only first.
