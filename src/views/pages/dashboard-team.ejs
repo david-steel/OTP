@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
   /* Org chart container */
@@ -804,19 +805,19 @@
 <% if (teamNodes.length > 1) { %>
 <script>
   (function() {
-    var nodes = <%- JSON.stringify(teamNodes) %>;
-    var edges = <%- JSON.stringify(teamEdges) %>;
-    var claimedTileMap = <%- JSON.stringify(typeof claimedTileMap !== 'undefined' ? claimedTileMap : {}) %>;
-    var tileTeamsMap = <%- JSON.stringify(typeof tileTeamsMap !== 'undefined' ? tileTeamsMap : {}) %>;
-    var pendingInviteByTile = <%- JSON.stringify(typeof pendingInviteByTile !== 'undefined' ? pendingInviteByTile : {}) %>;
-    var viewerRole = <%- JSON.stringify(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
-    var viewerClaimedEntityId = <%- JSON.stringify(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
-    var viewerClaimedEntityIds = <%- JSON.stringify(typeof viewerClaimedEntityIds !== 'undefined' ? viewerClaimedEntityIds : []) %>;
+    var nodes = <%- jsonForScript(teamNodes) %>;
+    var edges = <%- jsonForScript(teamEdges) %>;
+    var claimedTileMap = <%- jsonForScript(typeof claimedTileMap !== 'undefined' ? claimedTileMap : {}) %>;
+    var tileTeamsMap = <%- jsonForScript(typeof tileTeamsMap !== 'undefined' ? tileTeamsMap : {}) %>;
+    var pendingInviteByTile = <%- jsonForScript(typeof pendingInviteByTile !== 'undefined' ? pendingInviteByTile : {}) %>;
+    var viewerRole = <%- jsonForScript(typeof viewerRole !== 'undefined' ? viewerRole : null) %>;
+    var viewerClaimedEntityId = <%- jsonForScript(typeof viewerClaimedEntityId !== 'undefined' ? viewerClaimedEntityId : null) %>;
+    var viewerClaimedEntityIds = <%- jsonForScript(typeof viewerClaimedEntityIds !== 'undefined' ? viewerClaimedEntityIds : []) %>;
     // Phase 3: gated edit. The server precomputes which chart tiles this
     // viewer is allowed to edit (whole tree visible, edit gated by role +
     // chain of command + claimed seats). The Set lookup keeps client gates
     // O(1). Server-side enforcement still runs on every mutation API call.
-    var EDITABLE_TILES = new Set(<%- JSON.stringify(typeof editableTiles !== 'undefined' ? editableTiles : []) %>);
+    var EDITABLE_TILES = new Set(<%- jsonForScript(typeof editableTiles !== 'undefined' ? editableTiles : []) %>);
     function canEditTile(externalId) {
       // Owners pre-Phase-1-backfill have viewerRole='owner' but no member
       // row, so editableTiles may be empty. Fall back to viewerRole.
@@ -827,8 +828,8 @@
     // Skill / command highlight: arriving from /admin/skills with
     // ?highlightSkill= or ?highlightCommand= dims every tile that doesn't
     // declare the relevant skill or slash command.
-    var HIGHLIGHT_SKILL = <%- JSON.stringify(typeof highlightSkill !== 'undefined' ? (highlightSkill || '') : '') %>;
-    var HIGHLIGHT_COMMAND = <%- JSON.stringify(typeof highlightCommand !== 'undefined' ? (highlightCommand || '') : '') %>;
+    var HIGHLIGHT_SKILL = <%- jsonForScript(typeof highlightSkill !== 'undefined' ? (highlightSkill || '') : '') %>;
+    var HIGHLIGHT_COMMAND = <%- jsonForScript(typeof highlightCommand !== 'undefined' ? (highlightCommand || '') : '') %>;
 
     function readListLoose(raw) {
       if (Array.isArray(raw)) return raw.map(function(s) { return String(s || '').trim(); }).filter(Boolean);
@@ -870,8 +871,8 @@
         document.body.insertBefore(banner, document.body.firstChild);
       });
     }
-    var comparisonPairs = <%- JSON.stringify(typeof comparisonPairs !== 'undefined' ? comparisonPairs : []) %>;
-    var SKILLS_CATALOG = <%- JSON.stringify(typeof skillsCatalog !== 'undefined' ? skillsCatalog : []) %>;
+    var comparisonPairs = <%- jsonForScript(typeof comparisonPairs !== 'undefined' ? comparisonPairs : []) %>;
+    var SKILLS_CATALOG = <%- jsonForScript(typeof skillsCatalog !== 'undefined' ? skillsCatalog : []) %>;
     var ALL_CATALOG_SKILLS = SKILLS_CATALOG.reduce(function(acc, c) { return acc.concat(c.skills); }, []);
     var ALL_CATALOG_SKILLS_LOWER = new Set(ALL_CATALOG_SKILLS.map(function(s) { return s.toLowerCase(); }));
     var currentSkills = []; // working array, edited in the panel
@@ -1535,7 +1536,7 @@
       renderSopList();
     };
 
-    var SOP_TEMPLATE_GROUPS = <%- JSON.stringify(typeof sopTemplateGroups !== 'undefined' ? sopTemplateGroups : []) %>;
+    var SOP_TEMPLATE_GROUPS = <%- jsonForScript(typeof sopTemplateGroups !== 'undefined' ? sopTemplateGroups : []) %>;
     window.insertTemplate = function(value) {
       if (!value) return;
       var parts = value.split(':');

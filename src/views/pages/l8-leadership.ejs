@@ -1,3 +1,4 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%- include('../partials/orgy-palette') %>
 <style>
   /* L8 meeting: EOS-clean card treatment. Scoped to this page via the
@@ -1037,7 +1038,7 @@
 (function(){
   const meetingId = document.querySelector('#l8-meeting').dataset.meetingId;
   const teamId = document.querySelector('[data-team-id]').dataset.teamId || null;
-  const DEV_ORG = <%- JSON.stringify(devOrgIdParam || '') %>;
+  const DEV_ORG = <%- jsonForScript(devOrgIdParam || '') %>;
   function withOrg(path) {
     if (!DEV_ORG) return path;
     return path + (path.includes('?') ? '&' : '?') + 'orgId=' + encodeURIComponent(DEV_ORG);
@@ -1107,7 +1108,7 @@
     const recurrenceLabelEl = document.getElementById('meeting-recurrence-label');
     if (!toggle || !panel || !block) return;
 
-    const meetingTitle = <%- JSON.stringify(meeting.title || 'Meeting') %>;
+    const meetingTitle = <%- jsonForScript(meeting.title || 'Meeting') %>;
     const meetingUrl = location.origin + '/l8/meeting/' + meetingId;
 
     function buildBlock() {
@@ -1332,7 +1333,7 @@
   } catch (e) { /* corrupt timer state -- start fresh */ }
   // A finished meeting never has a running clock, no matter what localStorage
   // says (covers ending from another tab/device).
-  if (<%- JSON.stringify(meeting.status) %> === 'completed' || <%- JSON.stringify(meeting.status) %> === 'cancelled') {
+  if (<%- jsonForScript(meeting.status) %> === 'completed' || <%- jsonForScript(meeting.status) %> === 'cancelled') {
     timerState.running = false;
   }
 
@@ -1669,7 +1670,7 @@
   const attendeesEditBtn = document.getElementById('edit-attendees-btn');
   const attendeesEditor = document.getElementById('attendees-editor');
   const attendeesDisplay = document.getElementById('attendees-display');
-  let attendees = <%- JSON.stringify(normalizedAttendees) %>;
+  let attendees = <%- jsonForScript(normalizedAttendees) %>;
 
   if (attendeesEditBtn) attendeesEditBtn.addEventListener('click', () => {
     attendeesEditor.classList.toggle('hidden');
@@ -2245,13 +2246,13 @@
   const flagTitle = document.getElementById('flag-title');
   const flagTeam = document.getElementById('flag-team');
   const flagOwner = document.getElementById('flag-owner');
-  const MEETING_TITLE = <%- JSON.stringify(meeting.title || '') %>;
+  const MEETING_TITLE = <%- jsonForScript(meeting.title || '') %>;
   let flagSource = null; // 'Headlines' | 'Scorecard'
 
   function openFlagForm(btn, source) {
     flagSource = source;
     flagTitle.value = btn.getAttribute('data-flag-title') || '';
-    flagTeam.value = <%- JSON.stringify(meeting.teamId || '') %>;
+    flagTeam.value = <%- jsonForScript(meeting.teamId || '') %>;
     const ownerKey = btn.getAttribute('data-owner') || '';
     // Owner option values are entityType:externalId:name -- match on the
     // entityType:externalId prefix that the KPI button carries.
