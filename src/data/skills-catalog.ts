@@ -159,6 +159,3 @@ export const SKILLS_CATALOG: SkillsCategory[] = [
     ],
   },
 ];
-
-// Flatten for quick autocomplete
-export const ALL_SKILLS: string[] = SKILLS_CATALOG.flatMap(c => c.skills);

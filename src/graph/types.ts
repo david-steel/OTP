@@ -59,16 +59,6 @@ export interface GraphEdge {
 
 // ---- Query Types ----
 
-export interface GraphQuery {
-  startNodeId?: string;
-  startNodeType?: NodeType;
-  edgeType?: EdgeType;
-  targetNodeType?: NodeType;
-  maxDepth?: number;
-  orgId?: string;
-  crossOrg?: boolean;
-}
-
 export interface GraphPath {
   nodes: GraphNode[];
   edges: GraphEdge[];

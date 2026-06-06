@@ -464,8 +464,3 @@ export const SOP_TEMPLATE_GROUPS: SOPTemplateGroup[] = [
     ],
   },
 ];
-
-export function getTemplatesByRoleId(roleId: string): SOPTemplate[] {
-  const group = SOP_TEMPLATE_GROUPS.find(g => g.roleId === roleId);
-  return group ? group.templates : [];
-}

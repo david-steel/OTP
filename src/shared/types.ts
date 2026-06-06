@@ -173,20 +173,3 @@ export interface GraphData {
 
 // ---- API Response Types ----
 
-export interface APIError {
-  error: {
-    code: string;
-    message: string;
-    details?: Array<{ field: string; issue: string; value?: unknown; expected?: unknown }>;
-  };
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}

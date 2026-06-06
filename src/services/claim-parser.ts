@@ -126,7 +126,3 @@ export function parseOOS(markdown: string, template: TemplateType): ParseResult 
 
   return { frontmatter, claims, wordCount, errors };
 }
-
-export function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
-}

@@ -168,11 +168,3 @@ export function publishMeetingUpdate(meetingId: string, update: MeetingUpdate): 
     try { s.send('meeting-updated', payload); } catch { /* ignore */ }
   }
 }
-
-// For debugging / admin: snapshot of who's in each meeting.
-export function meetingBusSnapshot(): Array<{ meetingId: string; subscribers: PresenceInfo[] }> {
-  return [...byMeeting.entries()].map(([meetingId, subs]) => ({
-    meetingId,
-    subscribers: [...subs].map((s) => ({ ...s.presence })),
-  }));
-}

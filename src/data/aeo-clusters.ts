@@ -339,7 +339,3 @@ export const aeoClusters: AeoCluster[] = [
     ],
   },
 ];
-
-export function getAeoCluster(slug: string): AeoCluster | undefined {
-  return aeoClusters.find((c) => c.slug === slug);
-}

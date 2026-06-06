@@ -19,9 +19,6 @@ export type TemplateType = (typeof TEMPLATE_TYPES)[number];
 export const ORG_SIZES = ['solo', 'small', 'medium', 'large', 'enterprise'] as const;
 export type OrgSize = (typeof ORG_SIZES)[number];
 
-export const OOS_STATUSES = ['draft', 'published', 'archived'] as const;
-export type OOSStatus = (typeof OOS_STATUSES)[number];
-
 export const VISIBILITY_LEVELS = ['free', 'paid', 'premium'] as const;
 export type Visibility = (typeof VISIBILITY_LEVELS)[number];
 
@@ -46,16 +43,6 @@ export const EVIDENCE_STRENGTH: Record<EvidenceType, number> = {
   INFERENCE: 2,
   SPECULATION: 1,
 };
-
-// Ticket enums
-export const TICKET_STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
-export type TicketStatus = (typeof TICKET_STATUSES)[number];
-
-export const TICKET_PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
-export type TicketPriority = (typeof TICKET_PRIORITIES)[number];
-
-export const TICKET_CATEGORIES = ['bug', 'feature', 'question', 'other'] as const;
-export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
 
 // Agentic Level labels (Bassim Eledath's 8 Levels of Agentic Engineering)
 export const AGENTIC_LEVEL_LABELS: Record<number, string> = {

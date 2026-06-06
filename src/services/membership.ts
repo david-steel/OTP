@@ -641,14 +641,3 @@ export async function removeMember(
     .where(eq(orgMembers.id, memberId));
   return { ok: true, id: memberId };
 }
-
-// ---- Maintenance: expire old pending invites (call from cron) ----
-
-export async function expireOldInvites(): Promise<number> {
-  const result = await db
-    .update(orgInvitations)
-    .set({ status: 'expired' })
-    .where(and(eq(orgInvitations.status, 'pending'), lte(orgInvitations.expiresAt, sql`NOW()`)))
-    .returning();
-  return result.length;
-}

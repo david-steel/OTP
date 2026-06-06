@@ -22,11 +22,6 @@ export interface OosRow {
   [key: string]: any;
 }
 
-export interface AnnotatedOos extends OosRow {
-  isStale: boolean;
-  staleReason?: string;
-}
-
 const EMPTY_WORD_THRESHOLD = 200;
 
 export function annotateOosStaleness<T extends OosRow>(files: T[]): (T & { isStale: boolean; staleReason?: string })[] {

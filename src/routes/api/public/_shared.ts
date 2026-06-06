@@ -40,15 +40,6 @@ export function clampLimit(raw: unknown, def: number, max: number): number {
 }
 
 /**
- * Coerce a YYYY-MM-DD or ISO date string to a Date, or return null on failure.
- */
-export function parseDate(raw: unknown): Date | null {
-  if (typeof raw !== 'string') return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-/**
  * Trim and lowercase a slug-like string. Returns null if blank or invalid.
  */
 export function normalizeSlug(raw: unknown): string | null {

@@ -56,12 +56,3 @@ export async function ensureCoachDirectory(): Promise<void> {
     ON CONFLICT (clerk_org_id) DO NOTHING
   `);
 }
-
-export async function getDirectoryOrgId(): Promise<string> {
-  const res = await db.execute(sql`
-    SELECT id FROM organizations WHERE clerk_org_id = ${DIRECTORY_CLERK_ID} LIMIT 1
-  `) as any;
-  const row = (res.rows || [])[0];
-  if (!row) throw new Error('Directory org not seeded -- run ensureCoachDirectory() first');
-  return row.id as string;
-}

@@ -11,7 +11,6 @@ import type {
   OrgComparison,
   GraphNode,
   GraphEdge,
-  GraphPath,
   NodeType,
   EdgeType,
 } from './types.js';
@@ -335,51 +334,6 @@ export async function getOrgSubgraph(
   const edges = (edgeRows.rows || []).map(rowToEdge);
 
   return { nodes, edges };
-}
-
-// ---- Query 6: Find All Paths Between Two Nodes ----
-// BFS traversal up to maxDepth
-
-export async function findPaths(
-  db: DB,
-  sourceId: string,
-  targetId: string,
-  maxDepth: number = 5
-): Promise<GraphPath[]> {
-  const rows = await db.execute(sql`
-    WITH RECURSIVE paths AS (
-      SELECT
-        ge.target_id AS current_node,
-        ARRAY[ge.source_id, ge.target_id] AS node_path,
-        ARRAY[ge.id] AS edge_path,
-        1 AS depth
-      FROM graph_edges ge
-      WHERE ge.source_id = ${sourceId}
-
-      UNION ALL
-
-      SELECT
-        ge.target_id,
-        p.node_path || ge.target_id,
-        p.edge_path || ge.id,
-        p.depth + 1
-      FROM paths p
-      JOIN graph_edges ge ON ge.source_id = p.current_node
-      WHERE p.depth < ${maxDepth}
-        AND NOT ge.target_id = ANY(p.node_path)
-    )
-    SELECT node_path, edge_path, depth
-    FROM paths
-    WHERE current_node = ${targetId}
-    ORDER BY depth ASC
-    LIMIT 10
-  `);
-
-  return (rows.rows || []).map((row: any) => ({
-    nodes: [], // Would need to fetch full node data
-    edges: [], // Would need to fetch full edge data
-    depth: row.depth,
-  }));
 }
 
 // ---- Query 7: Agent Authority Map ----

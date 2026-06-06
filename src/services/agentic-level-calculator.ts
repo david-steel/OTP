@@ -174,7 +174,3 @@ export function calculateAgenticLevel(
 function countHits(text: string, patterns: string[]): number {
   return patterns.filter((p) => text.includes(p)).length;
 }
-
-export function getLevelLabel(level: number): string {
-  return LEVEL_LABELS[level] || 'Unknown';
-}
