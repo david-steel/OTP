@@ -174,6 +174,25 @@ export const apiKeys = pgTable('api_keys', {
   orgIdx: index('idx_api_keys_org').on(table.orgId),
 }));
 
+// Scaffolding for per-agent Stripe billing (humans free; $12/agent/mo, $16 if
+// the org has API keys). Populated by a future Stripe webhook; unused until
+// BILLING_ENABLED. See ensure-subscriptions.ts.
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+  status: varchar('status', { length: 40 }).notNull().default('none'),
+  planRate: integer('plan_rate'),
+  agentQuantity: integer('agent_quantity'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: uniqueIndex('subscriptions_org_idx').on(table.orgId),
+  stripeSubIdx: index('subscriptions_stripe_sub_idx').on(table.stripeSubscriptionId),
+}));
+
 export const tickets = pgTable('tickets', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id),

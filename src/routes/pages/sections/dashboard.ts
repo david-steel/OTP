@@ -2223,11 +2223,14 @@ Founder, OTP</p>
   const BILLING_PRICE_BASIC = 12;
   const BILLING_PRICE_API_MCP = 16;
   app.get('/settings/billing', async (request, reply) => {
+    const billingEnabled = process.env.BILLING_ENABLED === 'true';
+
     const auth = getAuth(request);
     if (!auth.userId) {
       return reply.view('pages/settings-billing', {
         title: 'Billing - OTP', noindex: true, authState: 'unauthenticated',
-        agents: { total: 0, basic: 0, apiMcp: 0 }, activeApiKeys: 0,
+        agents: { total: 0 }, hasApiMcp: false, rate: BILLING_PRICE_BASIC,
+        monthlyTotal: 0, activeApiKeys: 0, billingEnabled,
         prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
       });
     }
@@ -2236,7 +2239,8 @@ Founder, OTP</p>
     if (!org) {
       return reply.view('pages/settings-billing', {
         title: 'Billing - OTP', noindex: true, authState: 'no_org',
-        agents: { total: 0, basic: 0, apiMcp: 0 }, activeApiKeys: 0,
+        agents: { total: 0 }, hasApiMcp: false, rate: BILLING_PRICE_BASIC,
+        monthlyTotal: 0, activeApiKeys: 0, billingEnabled,
         prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
       });
     }
@@ -2251,7 +2255,7 @@ Founder, OTP</p>
       totalAgents = 0;
     }
 
-    // FYI only -- count of active org API keys (not the $16 tier signal).
+    // Active org API keys. >=1 active key moves ALL agents to the $16 API+MCP rate.
     let activeApiKeys = 0;
     try {
       const [row] = await db
@@ -2267,12 +2271,22 @@ Founder, OTP</p>
       activeApiKeys = 0;
     }
 
+    // Pricing rule: humans free; every agent on the chart is billable.
+    // >=1 active API key => all agents at $16/mo (API+MCP); else $12/mo (Basic).
+    const hasApiMcp = activeApiKeys >= 1;
+    const rate = hasApiMcp ? BILLING_PRICE_API_MCP : BILLING_PRICE_BASIC;
+    const monthlyTotal = totalAgents * rate;
+
     return reply.view('pages/settings-billing', {
       title: 'Billing - OTP',
       noindex: true,
       authState: 'authenticated',
-      agents: { total: totalAgents, basic: totalAgents, apiMcp: 0 },
+      agents: { total: totalAgents },
+      hasApiMcp,
+      rate,
+      monthlyTotal,
       activeApiKeys,
+      billingEnabled,
       prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
       orgName: org.name,
       stripeCustomerId: org.stripeCustomerId || null,

@@ -2,23 +2,24 @@
 <%
   // ---- Settings: Billing (Company Settings) ----
   // Live preview of agent-team cost. Humans are free; every AI agent on the
-  // org chart is billable. $12/agent/mo Basic; $16/agent/mo if that agent uses
-  // API + MCP. No per-agent API/MCP signal exists yet, so apiMcp is 0 and every
-  // agent bills at Basic. Stripe/payment collection is a later increment --
-  // nothing is charged here.
-  // Locals: agents {total,basic,apiMcp}, activeApiKeys, prices {basic,apiMcp},
-  //         orgName, stripeCustomerId. Auto-injected: assetVersion, authState.
+  // org chart is billable. Pricing rule: if the org has >=1 ACTIVE API key,
+  // ALL agents bill at $16/agent/mo (API + MCP); otherwise all agents bill at
+  // $12/agent/mo (Basic). Self-serve billing is gated behind BILLING_ENABLED.
+  // Locals: agents {total}, hasApiMcp, rate, monthlyTotal, activeApiKeys,
+  //         billingEnabled, prices {basic,apiMcp}, orgName, stripeCustomerId.
+  //         Auto-injected: assetVersion, authState.
   // Everything below is typeof-guarded so the page never throws on a missing local.
-  var _auth    = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
-  var _agents  = (typeof agents !== 'undefined' && agents && typeof agents === 'object') ? agents : {};
-  var _total   = (typeof _agents.total === 'number') ? _agents.total : 0;
-  var _basic   = (typeof _agents.basic === 'number') ? _agents.basic : _total;
-  var _apiMcp  = (typeof _agents.apiMcp === 'number') ? _agents.apiMcp : 0;
-  var _prices  = (typeof prices !== 'undefined' && prices && typeof prices === 'object') ? prices : {};
-  var _pBasic  = (typeof _prices.basic === 'number') ? _prices.basic : 12;
-  var _pApiMcp = (typeof _prices.apiMcp === 'number') ? _prices.apiMcp : 16;
-  var _keys    = (typeof activeApiKeys === 'number') ? activeApiKeys : 0;
-  var _monthly = (_basic * _pBasic) + (_apiMcp * _pApiMcp);
+  var _auth     = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _agents   = (typeof agents !== 'undefined' && agents && typeof agents === 'object') ? agents : {};
+  var _total    = (typeof _agents.total === 'number') ? _agents.total : 0;
+  var _prices   = (typeof prices !== 'undefined' && prices && typeof prices === 'object') ? prices : {};
+  var _pBasic   = (typeof _prices.basic === 'number') ? _prices.basic : 12;
+  var _pApiMcp  = (typeof _prices.apiMcp === 'number') ? _prices.apiMcp : 16;
+  var _keys     = (typeof activeApiKeys === 'number') ? activeApiKeys : 0;
+  var _hasApiMcp = (typeof hasApiMcp !== 'undefined') ? !!hasApiMcp : (_keys >= 1);
+  var _rate     = (typeof rate === 'number') ? rate : (_hasApiMcp ? _pApiMcp : _pBasic);
+  var _monthly  = (typeof monthlyTotal === 'number') ? monthlyTotal : (_total * _rate);
+  var _billingOn = (typeof billingEnabled !== 'undefined') ? !!billingEnabled : false;
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -47,18 +48,14 @@
         <!-- right: content -->
         <div class="flex-1 min-w-0 w-full space-y-6">
 
-          <!-- Preview banner -->
-          <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <p class="text-sm text-amber-800">
-              <span class="font-semibold">Preview.</span>
-              Billing isn't active yet &mdash; this is a preview of your agent-team cost. You aren't being charged.
-            </p>
-          </div>
-
           <!-- Card 1: Your plan -->
           <div class="bg-white border rounded-xl p-6">
             <h2 class="font-bold text-gray-900 text-lg mb-1">Your plan</h2>
-            <p class="text-sm text-gray-500 mb-5">Humans are free. Every AI agent on your chart is billable &mdash; $<%= _pBasic %>/agent/mo Basic, $<%= _pApiMcp %>/agent/mo if the agent uses API + MCP.</p>
+            <% if (_hasApiMcp) { %>
+              <p class="text-sm text-gray-500 mb-5">Your agents are billed at $<%= _pApiMcp %>/mo each (API + MCP active &mdash; you have <%= _keys %> API key<%= _keys === 1 ? '' : 's' %>).</p>
+            <% } else { %>
+              <p class="text-sm text-gray-500 mb-5">Your agents are billed at $<%= _pBasic %>/mo each (Basic). Creating an API key moves your agents to the $<%= _pApiMcp %> API + MCP rate.</p>
+            <% } %>
 
             <div class="flex flex-wrap items-end gap-x-8 gap-y-4 mb-5">
               <div>
@@ -66,19 +63,23 @@
                 <div class="text-xs uppercase tracking-wider text-gray-500 mt-1.5">Billable agents</div>
               </div>
               <div>
-                <div class="text-4xl font-extrabold text-otp-600 leading-none">$<%= _monthly %><span class="text-lg font-bold text-gray-400">/mo</span></div>
+                <div class="text-4xl font-extrabold text-otp-600 leading-none">$<%= _rate %><span class="text-lg font-bold text-gray-400">/mo</span></div>
+                <div class="text-xs uppercase tracking-wider text-gray-500 mt-1.5">Applied rate &middot; per agent</div>
+              </div>
+              <div>
+                <div class="text-4xl font-extrabold text-gray-900 leading-none">$<%= _monthly %><span class="text-lg font-bold text-gray-400">/mo</span></div>
                 <div class="text-xs uppercase tracking-wider text-gray-500 mt-1.5">Estimated monthly</div>
               </div>
             </div>
 
             <div class="border-t pt-4 space-y-2.5">
               <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-700"><%= _basic %> agent<%= _basic === 1 ? '' : 's' %> &times; $<%= _pBasic %> <span class="text-gray-400">(Basic)</span></span>
-                <span class="font-semibold text-gray-900 font-mono">$<%= _basic * _pBasic %></span>
+                <span class="text-gray-700"><%= _total %> agent<%= _total === 1 ? '' : 's' %> &times; $<%= _rate %> <span class="text-gray-400">(<%= _hasApiMcp ? 'API + MCP' : 'Basic' %>)</span></span>
+                <span class="font-semibold text-gray-900 font-mono">$<%= _monthly %></span>
               </div>
               <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-700"><%= _apiMcp %> agent<%= _apiMcp === 1 ? '' : 's' %> &times; $<%= _pApiMcp %> <span class="text-gray-400">(API + MCP)</span></span>
-                <span class="font-semibold text-gray-900 font-mono">$<%= _apiMcp * _pApiMcp %></span>
+                <span class="text-gray-700">Humans on your chart</span>
+                <span class="font-semibold text-emerald-600">Free</span>
               </div>
               <div class="flex items-center justify-between text-sm border-t pt-2.5">
                 <span class="font-semibold text-gray-900">Estimated monthly</span>
@@ -87,15 +88,18 @@
             </div>
           </div>
 
-          <!-- Card 2: Honest note about the API + MCP tier -->
+          <!-- Card 2: API access FYI -->
           <div class="bg-gray-50 border rounded-xl p-6">
-            <h3 class="font-bold text-gray-900 mb-1">About the API + MCP tier</h3>
+            <h3 class="font-bold text-gray-900 mb-1">API access</h3>
             <p class="text-sm text-gray-600 mb-3">
-              Agents connected via API + MCP bill at $<%= _pApiMcp %>/mo. Per-agent connection tracking is coming &mdash;
-              until then every agent is billed at Basic $<%= _pBasic %>.
+              <% if (_hasApiMcp) { %>
+                At least one active API key is in use, so all agents bill at the $<%= _pApiMcp %> API + MCP rate.
+              <% } else { %>
+                No active API keys, so all agents bill at the $<%= _pBasic %> Basic rate. Create a key to move to the $<%= _pApiMcp %> API + MCP rate.
+              <% } %>
             </p>
             <p class="text-sm text-gray-500">
-              API access: <span class="font-semibold text-gray-700"><%= _keys %></span> key<%= _keys === 1 ? '' : 's' %> active
+              <span class="font-semibold text-gray-700"><%= _keys %></span> key<%= _keys === 1 ? '' : 's' %> active
               &middot; <a href="/settings/api" class="text-otp-600 font-medium hover:text-otp-700 hover:underline">Manage API keys</a>
             </p>
           </div>
@@ -110,6 +114,61 @@
               Open team chart
             </a>
           </div>
+
+          <!-- Card 4: Upgrade / subscription (gated by BILLING_ENABLED) -->
+          <% if (!_billingOn) { %>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-6">
+              <h3 class="font-bold text-amber-900 mb-1">Start subscription</h3>
+              <p class="text-sm text-amber-800 mb-4">
+                Self-serve billing isn't switched on yet &mdash; this is a preview of your agent-team cost. You aren't being charged.
+              </p>
+              <button type="button" disabled
+                class="inline-block px-5 py-2.5 bg-gray-200 text-gray-500 font-semibold rounded-lg text-sm cursor-not-allowed">
+                Upgrade / Start subscription
+              </button>
+            </div>
+          <% } else { %>
+            <div class="bg-white border rounded-xl p-6">
+              <h3 class="font-bold text-gray-900 mb-1">Start subscription</h3>
+              <p class="text-sm text-gray-600 mb-4">
+                This starts a $<%= _rate %>/agent/mo subscription
+                (<%= _total %> agent<%= _total === 1 ? '' : 's' %> &times; $<%= _rate %> = $<%= _monthly %>/mo).
+              </p>
+              <button type="button" id="billing-checkout-btn"
+                class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm">
+                Upgrade / Start subscription
+              </button>
+            </div>
+            <script>
+              (function () {
+                var btn = document.getElementById('billing-checkout-btn');
+                if (!btn) return;
+                btn.addEventListener('click', function () {
+                  btn.disabled = true;
+                  fetch('/settings/billing/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}'
+                  }).then(function (res) {
+                    return res.json().then(function (data) {
+                      if (res.ok && data && data.url) {
+                        window.location.href = data.url;
+                      } else {
+                        alert((data && (data.message || data.error)) || ('Checkout unavailable (HTTP ' + res.status + ').'));
+                        btn.disabled = false;
+                      }
+                    }).catch(function () {
+                      alert('Checkout unavailable (HTTP ' + res.status + ').');
+                      btn.disabled = false;
+                    });
+                  }).catch(function () {
+                    alert('Could not reach the billing service. Please try again.');
+                    btn.disabled = false;
+                  });
+                });
+              })();
+            </script>
+          <% } %>
 
         </div>
       </div>

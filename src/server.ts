@@ -840,6 +840,8 @@ try {
   await ensureOrgMembersTable();
   const { ensureOrgMemberPreferencesTable } = await import('./db/ensure-org-member-preferences.js');
   await ensureOrgMemberPreferencesTable();
+  const { ensureSubscriptionsTable } = await import('./db/ensure-subscriptions.js');
+  await ensureSubscriptionsTable();
   app.log.info('org_members table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureOrgMembersTable failed -- employee/role features will not work until resolved');
