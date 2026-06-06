@@ -2128,6 +2128,115 @@ Founder, OTP</p>
     return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'authenticated', keys });
   });
 
+  app.get('/settings/preferences', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-preferences', { title: 'Preferences - OTP', noindex: true, authState: 'unauthenticated', preferences: {}, teams: [] });
+    }
+
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-preferences', { title: 'Preferences - OTP', noindex: true, authState: 'no_org', preferences: {}, teams: [] });
+    }
+
+    const member = (request as any).orgMember;
+    const prefs = (member && member.preferences) || {};
+
+    const orgTeams = await db
+      .select({ id: teams.id, name: teams.name })
+      .from(teams)
+      .where(eq(teams.orgId, org.id))
+      .orderBy(teams.name);
+
+    return reply.view('pages/settings-preferences', { title: 'Preferences - OTP', noindex: true, authState: 'authenticated', preferences: prefs, teams: orgTeams });
+  });
+
+  app.put<{ Body: { theme?: unknown; dateFormat?: unknown; defaultTeamId?: unknown; timezone?: unknown } }>('/settings/preferences', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.status(401).send({ error: 'unauthenticated' });
+    }
+
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.status(401).send({ error: 'no_org' });
+    }
+
+    const userId = auth.userId;
+    const body = (request.body || {}) as { theme?: unknown; dateFormat?: unknown; defaultTeamId?: unknown; timezone?: unknown };
+
+    // Whitelist validation.
+    const VALID_THEMES = ['light', 'dual'];
+    const VALID_DATE_FORMATS = ['MDY', 'DMY', 'YMD'];
+
+    if (typeof body.theme !== 'string' || !VALID_THEMES.includes(body.theme)) {
+      return reply.status(400).send({ error: 'invalid theme' });
+    }
+    if (typeof body.dateFormat !== 'string' || !VALID_DATE_FORMATS.includes(body.dateFormat)) {
+      return reply.status(400).send({ error: 'invalid dateFormat' });
+    }
+    if (typeof body.timezone !== 'string' || body.timezone.length === 0 || body.timezone.length > 64) {
+      return reply.status(400).send({ error: 'invalid timezone' });
+    }
+
+    let defaultTeamId: string | null = null;
+    if (body.defaultTeamId !== null && body.defaultTeamId !== undefined && body.defaultTeamId !== '') {
+      if (typeof body.defaultTeamId !== 'string') {
+        return reply.status(400).send({ error: 'invalid defaultTeamId' });
+      }
+      const [teamRow] = await db
+        .select({ id: teams.id })
+        .from(teams)
+        .where(and(eq(teams.id, body.defaultTeamId), eq(teams.orgId, org.id)))
+        .limit(1);
+      if (!teamRow) {
+        return reply.status(400).send({ error: 'invalid defaultTeamId' });
+      }
+      defaultTeamId = teamRow.id;
+    }
+
+    const member = (request as any).orgMember;
+    const current = (member && member.preferences) || {};
+    const merged = {
+      ...current,
+      theme: body.theme,
+      dateFormat: body.dateFormat,
+      defaultTeamId,
+      timezone: body.timezone,
+    };
+
+    await db
+      .update(orgMembers)
+      .set({ preferences: merged, updatedAt: new Date() })
+      .where(and(eq(orgMembers.clerkUserId, userId), eq(orgMembers.orgId, org.id)));
+
+    return reply.send({ ok: true, preferences: merged });
+  });
+
+  // Settings stub pages — scaffold routes that render a placeholder page.
+  const settingsStub = (path: string, pageTitle: string, pageGroup: string) => {
+    app.get(path, async (request, reply) => {
+      const auth = getAuth(request);
+      if (!auth.userId) {
+        return reply.view('pages/settings-stub', { title: pageTitle + ' - OTP', noindex: true, authState: 'unauthenticated', pageTitle, pageGroup });
+      }
+      const org = await resolveRequestOrg(request);
+      if (!org) {
+        return reply.view('pages/settings-stub', { title: pageTitle + ' - OTP', noindex: true, authState: 'no_org', pageTitle, pageGroup });
+      }
+      return reply.view('pages/settings-stub', { title: pageTitle + ' - OTP', noindex: true, authState: 'authenticated', pageTitle, pageGroup });
+    });
+  };
+
+  settingsStub('/settings/profile', 'Profile', 'User Settings');
+  settingsStub('/settings/account', 'Account', 'User Settings');
+  settingsStub('/settings/notifications', 'Notifications', 'User Settings');
+  settingsStub('/settings/integrations', 'Integrations', 'User Settings');
+  settingsStub('/settings/configuration', 'Configuration', 'Company Settings');
+  settingsStub('/settings/teams', 'Teams', 'Company Settings');
+  settingsStub('/settings/language', 'Language', 'Company Settings');
+  settingsStub('/settings/billing', 'Billing', 'Company Settings');
+
 
   app.get('/dashboard', async (request, reply) => {
     const auth = getAuth(request);

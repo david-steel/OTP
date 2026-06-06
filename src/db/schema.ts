@@ -571,6 +571,7 @@ export const orgMembers = pgTable('org_members', {
   featureAccess: jsonb('feature_access').notNull().default({}),
   dataAccess: jsonb('data_access').notNull().default({}),
   agentAccess: jsonb('agent_access').notNull().default({}),
+  preferences: jsonb('preferences').notNull().default({}),
   invitedByUserId: varchar('invited_by_user_id', { length: 255 }),
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

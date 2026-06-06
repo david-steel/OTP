@@ -62,6 +62,7 @@ export async function resolveServiceAuth(
     featureAccess: orgMembers.featureAccess,
     dataAccess: orgMembers.dataAccess,
     agentAccess: orgMembers.agentAccess,
+    preferences: orgMembers.preferences,
   })
     .from(orgMembers)
     .where(and(
@@ -85,6 +86,7 @@ export async function resolveServiceAuth(
       featureAccess: (row.featureAccess as Record<string, boolean>) || {},
       dataAccess: (row.dataAccess as Record<string, boolean>) || {},
       agentAccess: (row.agentAccess as Record<string, boolean>) || {},
+      preferences: (row.preferences as Record<string, unknown>) || {},
     },
   };
 }

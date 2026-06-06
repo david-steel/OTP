@@ -1,0 +1,47 @@
+<!-- Settings: generic "coming soon" stub. Rendered for settings pages not built yet. -->
+<%- include('../partials/orgy-palette') %>
+<%
+  var _st_title = (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : 'Settings';
+  var _st_group = (typeof pageGroup !== 'undefined' && pageGroup) ? pageGroup : '';
+  var _st_blurb = (typeof pageBlurb !== 'undefined' && pageBlurb) ? pageBlurb : '';
+  var _st_auth  = (typeof authState !== 'undefined' && authState) ? authState : '';
+%>
+<section class="bg-otp-950 border-b border-white/5">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 pb-6">
+    <% if (_st_group) { %>
+      <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1"><%= _st_group %></p>
+    <% } %>
+    <div class="flex items-center gap-3 sm:gap-4"><h1 class="text-2xl font-extrabold text-white"><%= _st_title %></h1></div>
+  </div>
+</section>
+
+<section class="bg-white py-10">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+
+    <% if (_st_auth === 'unauthenticated') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Sign in to manage your settings.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Sign In</a>
+      </div>
+    <% } else if (_st_auth === 'no_org') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Complete your organization profile first.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Set Up Profile</a>
+      </div>
+    <% } else { %>
+
+      <div class="flex flex-col md:flex-row gap-6">
+        <%- include('../partials/settings-nav') %>
+        <div class="flex-1">
+          <div class="bg-gray-50 border rounded-xl p-10 text-center">
+            <p class="text-lg font-bold text-gray-900 mb-2">This page is coming soon.</p>
+            <% if (_st_blurb) { %>
+              <p class="text-sm text-gray-500 max-w-md mx-auto"><%= _st_blurb %></p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+    <% } %>
+  </div>
+</section>

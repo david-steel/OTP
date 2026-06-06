@@ -39,6 +39,7 @@ export interface CurrentMember {
   featureAccess: Record<string, boolean>;
   dataAccess: Record<string, boolean>;
   agentAccess: Record<string, boolean>;
+  preferences: Record<string, unknown>;
 }
 
 declare module 'fastify' {
@@ -150,6 +151,7 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         featureAccess: orgMembers.featureAccess,
         dataAccess: orgMembers.dataAccess,
         agentAccess: orgMembers.agentAccess,
+        preferences: orgMembers.preferences,
         // Chart-claim fields required by chart-permissions.ts helpers
         // (computeViewableTiles, computeEditableTiles, canViewTile).
         // Added 2026-05-27 -- without these the chart was rendering
@@ -178,6 +180,7 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         featureAccess: (row.featureAccess as Record<string, boolean>) || {},
         dataAccess: (row.dataAccess as Record<string, boolean>) || {},
         agentAccess: (row.agentAccess as Record<string, boolean>) || {},
+        preferences: (row.preferences as Record<string, unknown>) || {},
         claimedEntityId: row.claimedEntityId || null,
         claimedEntityIds: (row.claimedEntityIds as string[] | null) || null,
       };
