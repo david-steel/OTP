@@ -1,13 +1,9 @@
+<%- include('../partials/orgy-palette'); %>
 <!-- Settings: API Keys -->
-<section class="bg-otp-950 border-b border-white/5">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-10 pb-6">
-    <div class="flex items-center gap-3 sm:gap-4"><img src="/public/images/orgy/mcp-api.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="" class="w-12 sm:w-14 shrink-0" loading="eager" decoding="async"><h1 class="text-2xl font-extrabold text-white">API Keys</h1></div>
-    <p class="text-gray-400 text-sm mt-2">Connect your AI agents to OTP via MCP or direct API access.</p>
-  </div>
-</section>
 
-<section class="bg-white py-10">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <%- include('../partials/ui-page-header', { title: 'API Keys', eyebrow: 'Company Settings', subtitle: 'Connect your AI agents to OTP via MCP or direct API access.', mascot: 'mcp-api' }) %>
 
     <% if (authState === 'unauthenticated') { %>
       <div class="bg-gray-50 border rounded-xl p-8 text-center">
@@ -21,67 +17,76 @@
       </div>
     <% } else { %>
 
-      <!-- Generate Key -->
-      <div class="bg-gray-50 border rounded-xl p-6 mb-8">
-        <h2 class="font-bold text-gray-900 mb-3">Generate New Key</h2>
-        <form id="create-key-form" class="flex flex-col sm:flex-row gap-3">
-          <input type="text" id="key-name" placeholder="Key name (e.g. 'Production', 'Dev')"
-                 class="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" maxlength="255">
-          <button type="submit" class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
-            Generate API Key
-          </button>
-        </form>
+      <!-- two-column: nav stacks above content on mobile, sidebar on >=md -->
+      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
 
-        <!-- New key display (hidden by default) -->
-        <div id="new-key-display" class="hidden mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p class="text-sm font-semibold text-red-800 mb-2">Save this key now. It will not be shown again.</p>
-          <div class="flex items-center gap-2">
-            <code id="new-key-value" class="flex-1 bg-white px-3 py-2 rounded border text-sm font-mono break-all select-all"></code>
-            <button onclick="navigator.clipboard.writeText(document.getElementById('new-key-value').textContent)"
-                    class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm whitespace-nowrap">Copy</button>
-          </div>
-        </div>
-      </div>
+        <!-- left: settings nav -->
+        <%- include('../partials/settings-nav') %>
 
-      <!-- Active Keys -->
-      <h2 class="font-bold text-gray-900 mb-4">Active Keys</h2>
+        <!-- right: content -->
+        <div class="flex-1 min-w-0 w-full">
 
-      <% if (keys.length === 0) { %>
-        <div class="bg-gray-50 border rounded-xl p-6 text-center text-gray-500 text-sm">
-          No API keys yet. Generate one above to connect your AI agents.
-        </div>
-      <% } else { %>
-        <div class="space-y-3">
-          <% keys.forEach(function(key) { %>
-            <div class="border rounded-xl p-4 flex items-center justify-between" data-key-id="<%= key.id %>">
-              <div>
-                <div class="flex items-center gap-3">
-                  <span class="font-semibold text-gray-900 text-sm"><%= key.name %></span>
-                  <code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono text-gray-500"><%= key.keyPrefix %>...****</code>
-                </div>
-                <div class="text-xs text-gray-400 mt-1">
-                  Created <%= new Date(key.createdAt).toLocaleDateString() %>
-                  <% if (key.lastUsedAt) { %>
-                    &middot; Last used <%= new Date(key.lastUsedAt).toLocaleDateString() %>
-                  <% } else { %>
-                    &middot; Never used
-                  <% } %>
-                </div>
-              </div>
-              <button onclick="revokeKey('<%= key.id %>', this)"
-                      class="px-3 py-1.5 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 text-xs font-medium transition-colors">
-                Revoke
+          <!-- Generate Key -->
+          <div class="bg-gray-50 border rounded-xl p-6 mb-8">
+            <h2 class="font-bold text-gray-900 mb-3">Generate New Key</h2>
+            <form id="create-key-form" class="flex flex-col sm:flex-row gap-3">
+              <input type="text" id="key-name" placeholder="Key name (e.g. 'Production', 'Dev')"
+                     class="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500" maxlength="255">
+              <button type="submit" class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                Generate API Key
               </button>
-            </div>
-          <% }); %>
-        </div>
-      <% } %>
+            </form>
 
-      <!-- MCP Setup Instructions -->
-      <div class="mt-10 border-t pt-8">
-        <h2 class="font-bold text-gray-900 mb-4">MCP Setup</h2>
-        <p class="text-sm text-gray-600 mb-4">Add this to your Claude Code MCP config to connect your agents to OTP:</p>
-        <pre class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto"><code>{
+            <!-- New key display (hidden by default) -->
+            <div id="new-key-display" class="hidden mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+              <p class="text-sm font-semibold text-red-800 mb-2">Save this key now. It will not be shown again.</p>
+              <div class="flex items-center gap-2">
+                <code id="new-key-value" class="flex-1 bg-white px-3 py-2 rounded border text-sm font-mono break-all select-all"></code>
+                <button onclick="navigator.clipboard.writeText(document.getElementById('new-key-value').textContent)"
+                        class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm whitespace-nowrap">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Keys -->
+          <h2 class="font-bold text-gray-900 mb-4">Active Keys</h2>
+
+          <% if (keys.length === 0) { %>
+            <div class="bg-gray-50 border rounded-xl p-6 text-center text-gray-500 text-sm">
+              No API keys yet. Generate one above to connect your AI agents.
+            </div>
+          <% } else { %>
+            <div class="space-y-3">
+              <% keys.forEach(function(key) { %>
+                <div class="border rounded-xl p-4 flex items-center justify-between" data-key-id="<%= key.id %>">
+                  <div>
+                    <div class="flex items-center gap-3">
+                      <span class="font-semibold text-gray-900 text-sm"><%= key.name %></span>
+                      <code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono text-gray-500"><%= key.keyPrefix %>...****</code>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">
+                      Created <%= new Date(key.createdAt).toLocaleDateString() %>
+                      <% if (key.lastUsedAt) { %>
+                        &middot; Last used <%= new Date(key.lastUsedAt).toLocaleDateString() %>
+                      <% } else { %>
+                        &middot; Never used
+                      <% } %>
+                    </div>
+                  </div>
+                  <button onclick="revokeKey('<%= key.id %>', this)"
+                          class="px-3 py-1.5 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 text-xs font-medium transition-colors">
+                    Revoke
+                  </button>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <!-- MCP Setup Instructions -->
+          <div class="mt-10 border-t pt-8">
+            <h2 class="font-bold text-gray-900 mb-4">MCP Setup</h2>
+            <p class="text-sm text-gray-600 mb-4">Add this to your Claude Code MCP config to connect your agents to OTP:</p>
+            <pre class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto"><code>{
   "mcpServers": {
     "otp": {
       "command": "npx",
@@ -92,12 +97,14 @@
     }
   }
 }</code></pre>
-        <p class="text-xs text-gray-400 mt-3">Read-only tools (browse, search, compare) work without an API key. Publishing requires one.</p>
+            <p class="text-xs text-gray-400 mt-3">Read-only tools (browse, search, compare) work without an API key. Publishing requires one.</p>
+          </div>
+
+        </div>
       </div>
 
     <% } %>
-  </div>
-</section>
+</div>
 
 <script>
   document.getElementById('create-key-form')?.addEventListener('submit', async (e) => {
