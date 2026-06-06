@@ -2443,10 +2443,62 @@ Founder, OTP</p>
     const str = (v: unknown, max: number): string =>
       (typeof v === 'string' ? v : '').slice(0, max);
 
+    // dateOfBirth: keep only a basic 'YYYY-MM-DD' shape (<=10 chars), else ''.
+    const dobRaw = str(incoming.dateOfBirth, 10);
+    const dateOfBirth = /^\d{4}-\d{2}-\d{2}$/.test(dobRaw) ? dobRaw : '';
+
+    // kolbe: object of 4 string scores, each <=20.
+    const kolbeIn = (incoming.kolbe && typeof incoming.kolbe === 'object' && !Array.isArray(incoming.kolbe))
+      ? (incoming.kolbe as Record<string, unknown>)
+      : {};
+    const kolbe = {
+      factFinder: str(kolbeIn.factFinder, 20),
+      followThru: str(kolbeIn.followThru, 20),
+      quickStart: str(kolbeIn.quickStart, 20),
+      implementer: str(kolbeIn.implementer, 20),
+    };
+
+    // clifton lists: arrays of strings (<=60 each), cap 5, drop blanks.
+    const cliftonList = (v: unknown): string[] => {
+      if (!Array.isArray(v)) return [];
+      return v
+        .map((x) => str(x, 60).trim())
+        .filter((x) => x.length > 0)
+        .slice(0, 5);
+    };
+    const cliftonTop = cliftonList(incoming.cliftonTop);
+    const cliftonBottom = cliftonList(incoming.cliftonBottom);
+
+    // emails: array (cap 10) of { address<=255, type<=20 }, drop blank addresses.
+    const emails = Array.isArray(incoming.emails)
+      ? incoming.emails
+          .filter((e): e is Record<string, unknown> => !!e && typeof e === 'object' && !Array.isArray(e))
+          .map((e) => ({ address: str(e.address, 255).trim(), type: str(e.type, 20) }))
+          .filter((e) => e.address.length > 0)
+          .slice(0, 10)
+      : [];
+
+    // phones: array (cap 10) of { number<=40, type<=20 }, drop blank numbers.
+    const phones = Array.isArray(incoming.phones)
+      ? incoming.phones
+          .filter((p): p is Record<string, unknown> => !!p && typeof p === 'object' && !Array.isArray(p))
+          .map((p) => ({ number: str(p.number, 40).trim(), type: str(p.type, 20) }))
+          .filter((p) => p.number.length > 0)
+          .slice(0, 10)
+      : [];
+
     const profile = {
-      title: str(incoming.title, 120),
       pronouns: str(incoming.pronouns, 120),
-      bio: str(incoming.bio, 2000),
+      dateOfBirth,
+      title: str(incoming.title, 120),
+      bio: str(incoming.bio, 4000),
+      mbti: str(incoming.mbti, 120),
+      kolbe,
+      cliftonTop,
+      cliftonBottom,
+      emails,
+      phones,
+      linkedin: str(incoming.linkedin, 255),
     };
 
     const member = (request as any).orgMember;

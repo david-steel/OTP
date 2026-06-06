@@ -1,21 +1,18 @@
-<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context. This page server-renders all values into the form, so the helper is unused, but kept to match the checkup.ejs convention. */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context. This page builds dynamic rows (emails/phones/clifton) client-side from the prefilled profile object, so the helper is used for that embed. */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%- include('../partials/orgy-palette'); %>
 <%
   // ---- Settings: Profile (User Settings) ----
-  // Locals: profile {title,pronouns,bio}.
+  // Locals: profile {pronouns,dateOfBirth,title,bio,mbti,kolbe{},cliftonTop[],cliftonBottom[],emails[],phones[],linkedin}.
   // Auto-injected: memberRole, currentPath, assetVersion, authState.
   // Everything below is typeof-guarded so the page never throws on a missing local.
-  var _av       = (typeof assetVersion !== 'undefined') ? assetVersion : 'dev';
-  var _auth     = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
-  var _profile  = (typeof profile !== 'undefined' && profile && typeof profile === 'object') ? profile : {};
-  var _title    = (_profile.title !== undefined && _profile.title !== null) ? String(_profile.title) : '';
-  var _pronouns = (_profile.pronouns !== undefined && _profile.pronouns !== null) ? String(_profile.pronouns) : '';
-  var _bio      = (_profile.bio !== undefined && _profile.bio !== null) ? String(_profile.bio) : '';
+  var _av      = (typeof assetVersion !== 'undefined') ? assetVersion : 'dev';
+  var _auth    = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _profile = (typeof profile !== 'undefined' && profile && typeof profile === 'object' && !Array.isArray(profile)) ? profile : {};
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
 
-  <%- include('../partials/ui-page-header', { title: 'Profile', eyebrow: 'User Settings', subtitle: 'Your title and bio for this organization.', mascot: 'mcp-api' }) %>
+  <%- include('../partials/ui-page-header', { title: 'Profile', eyebrow: 'User Settings', subtitle: 'Your personal info, metrics, contact details, and social links for this organization.', mascot: 'mcp-api' }) %>
 
 
     <% if (_auth === 'unauthenticated') { %>
@@ -41,10 +38,13 @@
 
           <div class="flex items-center justify-between gap-4">
             <h2 class="font-bold text-gray-900 text-lg">Your Profile</h2>
-            <button type="submit"
-                    class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
-              Save Changes
-            </button>
+            <div class="flex items-center gap-3">
+              <span id="profile-saved" class="hidden text-sm font-semibold text-green-600">Saved</span>
+              <button type="submit"
+                      class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                Save Changes
+              </button>
+            </div>
           </div>
 
           <!-- Info card: name/email/avatar live in Account (Clerk) -->
@@ -56,39 +56,188 @@
             </p>
           </div>
 
-          <!-- Profile card: OTP-specific fields -->
-          <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
-            <div>
-              <h3 class="font-bold text-gray-900 mb-1">Profile</h3>
-              <p class="text-sm text-gray-500">How you show up to the rest of your organization.</p>
+          <!-- Tab bar -->
+          <div class="border-b border-gray-200">
+            <nav class="-mb-px flex gap-6" id="profile-tabs" aria-label="Profile tabs">
+              <button type="button" data-tab="personal"
+                      class="profile-tab whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold border-otp-500 text-otp-600">
+                Personal
+              </button>
+              <button type="button" data-tab="metrics"
+                      class="profile-tab whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Metrics
+              </button>
+              <button type="button" data-tab="contact"
+                      class="profile-tab whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Contact
+              </button>
+              <button type="button" data-tab="social"
+                      class="profile-tab whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Social
+              </button>
+            </nav>
+          </div>
+
+          <!-- ============ PERSONAL ============ -->
+          <div class="profile-panel space-y-6" data-panel="personal">
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">Personal</h3>
+                <p class="text-sm text-gray-500">How you show up to the rest of your organization.</p>
+              </div>
+
+              <!-- Pronouns -->
+              <div>
+                <label for="profile-pronouns" class="block text-sm font-medium text-gray-800 mb-1.5">
+                  Pronouns <span class="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input type="text" id="profile-pronouns"
+                       placeholder="e.g. she/her"
+                       class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+              </div>
+
+              <!-- Date of Birth -->
+              <div>
+                <label for="profile-dob" class="block text-sm font-medium text-gray-800 mb-1.5">
+                  Date of Birth <span class="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input type="date" id="profile-dob"
+                       class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+              </div>
+
+              <!-- Title -->
+              <div>
+                <label for="profile-title" class="block text-sm font-medium text-gray-800 mb-1.5">Title</label>
+                <input type="text" id="profile-title"
+                       placeholder="e.g. Head of Operations"
+                       class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+              </div>
+
+              <!-- Biography -->
+              <div>
+                <label for="profile-bio" class="block text-sm font-medium text-gray-800 mb-1.5">Biography</label>
+                <textarea id="profile-bio" rows="5"
+                          placeholder="A short bio your teammates will see."
+                          class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ METRICS ============ -->
+          <div class="profile-panel hidden space-y-6" data-panel="metrics">
+            <!-- MBTI -->
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-4">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">MBTI</h3>
+                <p class="text-sm text-gray-500">Your Myers-Briggs type.</p>
+              </div>
+              <div>
+                <label for="profile-mbti" class="block text-sm font-medium text-gray-800 mb-1.5">Type</label>
+                <input type="text" id="profile-mbti" maxlength="8"
+                       placeholder="e.g. INTJ"
+                       class="w-full sm:max-w-[8rem] px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500 uppercase">
+              </div>
             </div>
 
-            <!-- Title -->
-            <div>
-              <label for="profile-title" class="block text-sm font-medium text-gray-800 mb-1.5">Title</label>
-              <input type="text" name="title" id="profile-title"
-                     value="<%= _title %>"
-                     placeholder="e.g. Head of Operations"
-                     class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+            <!-- Kolbe -->
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-4">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">Kolbe System</h3>
+                <p class="text-sm text-gray-500">Your Kolbe A Index scores.</p>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label for="kolbe-ff" class="block text-sm font-medium text-gray-800 mb-1.5">Fact Finder</label>
+                  <input type="text" id="kolbe-ff" inputmode="numeric"
+                         class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+                </div>
+                <div>
+                  <label for="kolbe-ft" class="block text-sm font-medium text-gray-800 mb-1.5">Follow Thru</label>
+                  <input type="text" id="kolbe-ft" inputmode="numeric"
+                         class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+                </div>
+                <div>
+                  <label for="kolbe-qs" class="block text-sm font-medium text-gray-800 mb-1.5">Quick Start</label>
+                  <input type="text" id="kolbe-qs" inputmode="numeric"
+                         class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+                </div>
+                <div>
+                  <label for="kolbe-im" class="block text-sm font-medium text-gray-800 mb-1.5">Implementer</label>
+                  <input type="text" id="kolbe-im" inputmode="numeric"
+                         class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+                </div>
+              </div>
             </div>
 
-            <!-- Pronouns (optional) -->
-            <div>
-              <label for="profile-pronouns" class="block text-sm font-medium text-gray-800 mb-1.5">
-                Pronouns <span class="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <input type="text" name="pronouns" id="profile-pronouns"
-                     value="<%= _pronouns %>"
-                     placeholder="e.g. she/her"
-                     class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+            <!-- CliftonStrengths -->
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">CliftonStrengths</h3>
+                <p class="text-sm text-gray-500">Your top five and bottom five strengths.</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-800 mb-1.5">Top Five</label>
+                <div id="clifton-top-rows" class="space-y-2"></div>
+                <button type="button" data-add="clifton-top"
+                        class="mt-2 text-sm font-semibold text-otp-600 hover:text-otp-700">+ Add strength</button>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-800 mb-1.5">Bottom Five</label>
+                <div id="clifton-bottom-rows" class="space-y-2"></div>
+                <button type="button" data-add="clifton-bottom"
+                        class="mt-2 text-sm font-semibold text-otp-600 hover:text-otp-700">+ Add strength</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ CONTACT ============ -->
+          <div class="profile-panel hidden space-y-6" data-panel="contact">
+            <div class="bg-gray-50 border rounded-xl p-6">
+              <p class="text-sm text-gray-600">
+                Your primary email and phone are managed in
+                <a href="/settings/account" class="font-semibold text-otp-600 hover:text-otp-700 underline">Account</a>.
+                Add any additional contact details below.
+              </p>
             </div>
 
-            <!-- Bio -->
-            <div>
-              <label for="profile-bio" class="block text-sm font-medium text-gray-800 mb-1.5">Bio</label>
-              <textarea name="bio" id="profile-bio" rows="4"
-                        placeholder="A short bio your teammates will see."
-                        class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500"><%= _bio %></textarea>
+            <!-- Additional Emails -->
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-3">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">Additional Emails</h3>
+                <p class="text-sm text-gray-500">Extra email addresses teammates can reach you at.</p>
+              </div>
+              <div id="email-rows" class="space-y-2"></div>
+              <button type="button" data-add="email"
+                      class="text-sm font-semibold text-otp-600 hover:text-otp-700">+ Add email</button>
+            </div>
+
+            <!-- Additional Phones -->
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-3">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">Additional Phones</h3>
+                <p class="text-sm text-gray-500">Extra phone numbers teammates can reach you at.</p>
+              </div>
+              <div id="phone-rows" class="space-y-2"></div>
+              <button type="button" data-add="phone"
+                      class="text-sm font-semibold text-otp-600 hover:text-otp-700">+ Add phone</button>
+            </div>
+          </div>
+
+          <!-- ============ SOCIAL ============ -->
+          <div class="profile-panel hidden space-y-6" data-panel="social">
+            <div class="bg-gray-50 border rounded-xl p-6 space-y-4">
+              <div>
+                <h3 class="font-bold text-gray-900 mb-1">Social</h3>
+                <p class="text-sm text-gray-500">Your professional links.</p>
+              </div>
+              <div>
+                <label for="profile-linkedin" class="block text-sm font-medium text-gray-800 mb-1.5">LinkedIn</label>
+                <input type="text" id="profile-linkedin"
+                       placeholder="https://www.linkedin.com/in/you"
+                       class="w-full sm:max-w-md px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+              </div>
             </div>
           </div>
 
@@ -97,7 +246,7 @@
                     class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
               Save Changes
             </button>
-            <span id="profile-saved" class="hidden text-sm font-semibold text-green-600">Saved</span>
+            <span id="profile-saved-2" class="hidden text-sm font-semibold text-green-600">Saved</span>
           </div>
 
         </form>
@@ -107,43 +256,242 @@
 </div>
 
 <script>
+  window.__OTP_PROFILE__ = <%- jsonForScript(_profile) %>;
+</script>
+<script>
   (function () {
     var form = document.getElementById('profile-form');
     if (!form) return;
-    var saved = document.getElementById('profile-saved');
+
+    var profile = window.__OTP_PROFILE__ || {};
+    if (typeof profile !== 'object' || Array.isArray(profile)) profile = {};
+
+    var EMAIL_TYPES = ['Main', 'Work', 'Personal', 'Other'];
+    var PHONE_TYPES = ['Main', 'Work', 'Personal', 'Other'];
+
+    function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function set(id, v) { var el = document.getElementById(id); if (el) el.value = (v == null ? '' : String(v)); }
+
+    // ---- Tabs ----
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.profile-tab'));
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.profile-panel'));
+    function selectTab(name) {
+      tabs.forEach(function (t) {
+        var active = t.getAttribute('data-tab') === name;
+        t.classList.toggle('border-otp-500', active);
+        t.classList.toggle('text-otp-600', active);
+        t.classList.toggle('border-transparent', !active);
+        t.classList.toggle('text-gray-500', !active);
+      });
+      panels.forEach(function (p) {
+        p.classList.toggle('hidden', p.getAttribute('data-panel') !== name);
+      });
+    }
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () { selectTab(t.getAttribute('data-tab')); });
+    });
+
+    // ---- Dynamic row builders ----
+    function removeBtn(onClick) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'shrink-0 px-2 py-2 text-gray-400 hover:text-red-600 text-sm';
+      b.setAttribute('aria-label', 'Remove');
+      b.textContent = '✕';
+      b.addEventListener('click', onClick);
+      return b;
+    }
+
+    // Clifton (capped at 5 each)
+    function cliftonContainer(which) {
+      return document.getElementById(which === 'top' ? 'clifton-top-rows' : 'clifton-bottom-rows');
+    }
+    function addClifton(which, value) {
+      var container = cliftonContainer(which);
+      if (!container) return;
+      if (container.children.length >= 5) return;
+      var row = document.createElement('div');
+      row.className = 'flex items-center gap-2';
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'clifton-input flex-1 px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500';
+      input.placeholder = 'e.g. Strategic';
+      input.value = value == null ? '' : String(value);
+      row.appendChild(input);
+      row.appendChild(removeBtn(function () { row.remove(); }));
+      container.appendChild(row);
+    }
+
+    // Emails
+    function addEmail(address, type) {
+      var container = document.getElementById('email-rows');
+      if (!container) return;
+      if (container.children.length >= 10) return;
+      var row = document.createElement('div');
+      row.className = 'email-row flex items-center gap-2';
+      var addr = document.createElement('input');
+      addr.type = 'text';
+      addr.className = 'email-address flex-1 px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500';
+      addr.placeholder = 'name@example.com';
+      addr.value = address == null ? '' : String(address);
+      var sel = document.createElement('select');
+      sel.className = 'email-type shrink-0 px-2 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500';
+      EMAIL_TYPES.forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t; o.textContent = t;
+        if (type && String(type) === t) o.selected = true;
+        sel.appendChild(o);
+      });
+      row.appendChild(addr);
+      row.appendChild(sel);
+      row.appendChild(removeBtn(function () { row.remove(); }));
+      container.appendChild(row);
+    }
+
+    // Phones
+    function addPhone(number, type) {
+      var container = document.getElementById('phone-rows');
+      if (!container) return;
+      if (container.children.length >= 10) return;
+      var row = document.createElement('div');
+      row.className = 'phone-row flex items-center gap-2';
+      var num = document.createElement('input');
+      num.type = 'text';
+      num.className = 'phone-number flex-1 px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500';
+      num.placeholder = '+1 555 123 4567';
+      num.value = number == null ? '' : String(number);
+      var sel = document.createElement('select');
+      sel.className = 'phone-type shrink-0 px-2 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500';
+      PHONE_TYPES.forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t; o.textContent = t;
+        if (type && String(type) === t) o.selected = true;
+        sel.appendChild(o);
+      });
+      row.appendChild(num);
+      row.appendChild(sel);
+      row.appendChild(removeBtn(function () { row.remove(); }));
+      container.appendChild(row);
+    }
+
+    // Wire "Add" buttons
+    document.querySelectorAll('[data-add]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var kind = btn.getAttribute('data-add');
+        if (kind === 'clifton-top') addClifton('top', '');
+        else if (kind === 'clifton-bottom') addClifton('bottom', '');
+        else if (kind === 'email') addEmail('', 'Main');
+        else if (kind === 'phone') addPhone('', 'Main');
+      });
+    });
+
+    // ---- Prefill ----
+    set('profile-pronouns', profile.pronouns);
+    set('profile-dob', profile.dateOfBirth);
+    set('profile-title', profile.title);
+    set('profile-bio', profile.bio);
+    set('profile-mbti', profile.mbti);
+    set('profile-linkedin', profile.linkedin);
+
+    var kolbe = (profile.kolbe && typeof profile.kolbe === 'object') ? profile.kolbe : {};
+    set('kolbe-ff', kolbe.factFinder);
+    set('kolbe-ft', kolbe.followThru);
+    set('kolbe-qs', kolbe.quickStart);
+    set('kolbe-im', kolbe.implementer);
+
+    var top = Array.isArray(profile.cliftonTop) ? profile.cliftonTop : [];
+    top.slice(0, 5).forEach(function (s) { addClifton('top', s); });
+    var bottom = Array.isArray(profile.cliftonBottom) ? profile.cliftonBottom : [];
+    bottom.slice(0, 5).forEach(function (s) { addClifton('bottom', s); });
+
+    var emails = Array.isArray(profile.emails) ? profile.emails : [];
+    emails.slice(0, 10).forEach(function (e) {
+      if (e && typeof e === 'object') addEmail(e.address, e.type);
+    });
+    var phones = Array.isArray(profile.phones) ? profile.phones : [];
+    phones.slice(0, 10).forEach(function (p) {
+      if (p && typeof p === 'object') addPhone(p.number, p.type);
+    });
+
+    // ---- Gather + Save ----
+    function gather() {
+      var cliftonTop = [];
+      document.querySelectorAll('#clifton-top-rows .clifton-input').forEach(function (i) {
+        var v = (i.value || '').trim(); if (v) cliftonTop.push(v);
+      });
+      var cliftonBottom = [];
+      document.querySelectorAll('#clifton-bottom-rows .clifton-input').forEach(function (i) {
+        var v = (i.value || '').trim(); if (v) cliftonBottom.push(v);
+      });
+
+      var emailsOut = [];
+      document.querySelectorAll('#email-rows .email-row').forEach(function (row) {
+        var a = row.querySelector('.email-address');
+        var t = row.querySelector('.email-type');
+        var addr = a ? (a.value || '').trim() : '';
+        if (addr) emailsOut.push({ address: addr, type: t ? t.value : 'Main' });
+      });
+
+      var phonesOut = [];
+      document.querySelectorAll('#phone-rows .phone-row').forEach(function (row) {
+        var n = row.querySelector('.phone-number');
+        var t = row.querySelector('.phone-type');
+        var num = n ? (n.value || '').trim() : '';
+        if (num) phonesOut.push({ number: num, type: t ? t.value : 'Main' });
+      });
+
+      return {
+        pronouns: (val('profile-pronouns') || '').trim(),
+        dateOfBirth: (val('profile-dob') || '').trim(),
+        title: (val('profile-title') || '').trim(),
+        bio: val('profile-bio') || '',
+        mbti: (val('profile-mbti') || '').trim(),
+        kolbe: {
+          factFinder: (val('kolbe-ff') || '').trim(),
+          followThru: (val('kolbe-ft') || '').trim(),
+          quickStart: (val('kolbe-qs') || '').trim(),
+          implementer: (val('kolbe-im') || '').trim()
+        },
+        cliftonTop: cliftonTop.slice(0, 5),
+        cliftonBottom: cliftonBottom.slice(0, 5),
+        emails: emailsOut.slice(0, 10),
+        phones: phonesOut.slice(0, 10),
+        linkedin: (val('profile-linkedin') || '').trim()
+      };
+    }
+
+    var saved1 = document.getElementById('profile-saved');
+    var saved2 = document.getElementById('profile-saved-2');
+    function showSaved() {
+      [saved1, saved2].forEach(function (s) {
+        if (!s) return;
+        s.classList.remove('hidden');
+        setTimeout(function () { s.classList.add('hidden'); }, 2500);
+      });
+    }
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-      var fd = new FormData(form);
-      var payload = {
-        profile: {
-          title: fd.get('title') || '',
-          pronouns: fd.get('pronouns') || '',
-          bio: fd.get('bio') || ''
-        }
-      };
-
+      var payload = { profile: gather() };
       try {
         var res = await fetch('/settings/profile', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
         if (!res.ok) {
           var data = {};
           try { data = await res.json(); } catch (_) {}
           alert((data && data.error && data.error.message) || (data && data.error) || 'Failed to save profile');
           return;
         }
-
-        if (saved) {
-          saved.classList.remove('hidden');
-          setTimeout(function () { saved.classList.add('hidden'); }, 2500);
-        }
+        showSaved();
       } catch (err) {
         alert('Failed to save profile');
       }
     });
+
+    // default tab
+    selectTab('personal');
   })();
 </script>
