@@ -18,6 +18,12 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      # Dead-code report (knip). Non-blocking for now: ~100 unused exports/types
+      # need a deliberate triage pass before this can gate. It still annotates so
+      # the debt stays visible. TODO: triage, then drop continue-on-error.
+      - name: Dead code (knip, non-blocking)
+        run: npm run knip
+        continue-on-error: true
 
   test:
     runs-on: ubuntu-latest

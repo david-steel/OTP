@@ -151,5 +151,3 @@ export const orgerRoutes: FastifyPluginAsync = async (fastify) => {
     }, 404);
   });
 };
-
-export default orgerRoutes;
