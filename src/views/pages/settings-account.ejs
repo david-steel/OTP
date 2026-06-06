@@ -1,0 +1,74 @@
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Settings: Account (User Settings) ----
+  // OTP uses Clerk for identity. This page embeds Clerk's UserProfile component,
+  // which handles email, password, two-factor, and connected accounts itself.
+  // Auto-injected: memberRole, currentPath, assetVersion, authState.
+  // Everything below is typeof-guarded so the page never throws on a missing local.
+  var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <%- include('../partials/ui-page-header', { title: 'Account', eyebrow: 'User Settings', subtitle: 'Email, password, two-factor, and connected accounts.', mascot: 'mcp-api' }) %>
+
+
+    <% if (_auth === 'unauthenticated') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Sign in to manage your account.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Sign In</a>
+      </div>
+    <% } else if (_auth === 'no_org') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Complete your organization profile first.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Set Up Profile</a>
+      </div>
+    <% } else { %>
+
+      <!-- two-column: nav stacks above content on mobile, sidebar on >=md -->
+      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+
+        <!-- left: settings nav -->
+        <%- include('../partials/settings-nav') %>
+
+        <!-- right: content -->
+        <div class="flex-1 min-w-0 w-full space-y-6">
+
+          <h2 class="font-bold text-gray-900 text-lg">Your Account</h2>
+
+          <!-- Card: Clerk UserProfile mount slot -->
+          <div class="bg-gray-50 border rounded-xl p-6">
+            <h3 class="font-bold text-gray-900 mb-1">Account &amp; Security</h3>
+            <p class="text-sm text-gray-500 mb-4">Manage your email, password, two-factor authentication, and connected accounts.</p>
+            <div id="clerk-user-profile"></div>
+          </div>
+
+        </div>
+      </div>
+
+    <% } %>
+</div>
+
+<script>
+  (function () {
+    var slot = document.getElementById('clerk-user-profile');
+    if (!slot) return;
+
+    var mounted = false;
+    function mountProfile() {
+      if (mounted) return;
+      if (!(window.Clerk && window.Clerk.user)) return;
+      mounted = true;
+      window.Clerk.mountUserProfile(slot);
+    }
+
+    // The layout's Clerk bootstrap dispatches a 'clerk-loaded' CustomEvent after
+    // clerk.load() resolves. If Clerk is already loaded by the time this runs,
+    // mount immediately; otherwise wait for the event.
+    if (window.Clerk && window.Clerk.user) {
+      mountProfile();
+    } else {
+      window.addEventListener('clerk-loaded', mountProfile);
+    }
+  })();
+</script>

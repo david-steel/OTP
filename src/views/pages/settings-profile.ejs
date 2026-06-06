@@ -1,0 +1,149 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context. This page server-renders all values into the form, so the helper is unused, but kept to match the checkup.ejs convention. */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Settings: Profile (User Settings) ----
+  // Locals: profile {title,pronouns,bio}.
+  // Auto-injected: memberRole, currentPath, assetVersion, authState.
+  // Everything below is typeof-guarded so the page never throws on a missing local.
+  var _av       = (typeof assetVersion !== 'undefined') ? assetVersion : 'dev';
+  var _auth     = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _profile  = (typeof profile !== 'undefined' && profile && typeof profile === 'object') ? profile : {};
+  var _title    = (_profile.title !== undefined && _profile.title !== null) ? String(_profile.title) : '';
+  var _pronouns = (_profile.pronouns !== undefined && _profile.pronouns !== null) ? String(_profile.pronouns) : '';
+  var _bio      = (_profile.bio !== undefined && _profile.bio !== null) ? String(_profile.bio) : '';
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <%- include('../partials/ui-page-header', { title: 'Profile', eyebrow: 'User Settings', subtitle: 'Your title and bio for this organization.', mascot: 'mcp-api' }) %>
+
+
+    <% if (_auth === 'unauthenticated') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Sign in to manage your profile.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Sign In</a>
+      </div>
+    <% } else if (_auth === 'no_org') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Complete your organization profile first.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Set Up Profile</a>
+      </div>
+    <% } else { %>
+
+      <!-- two-column: nav stacks above content on mobile, sidebar on >=md -->
+      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+
+        <!-- left: settings nav -->
+        <%- include('../partials/settings-nav') %>
+
+        <!-- right: content -->
+        <form id="profile-form" class="flex-1 min-w-0 w-full space-y-6">
+
+          <div class="flex items-center justify-between gap-4">
+            <h2 class="font-bold text-gray-900 text-lg">Your Profile</h2>
+            <button type="submit"
+                    class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+              Save Changes
+            </button>
+          </div>
+
+          <!-- Info card: name/email/avatar live in Account (Clerk) -->
+          <div class="bg-gray-50 border rounded-xl p-6">
+            <p class="text-sm text-gray-600">
+              Your name, email, and avatar are managed in
+              <a href="/settings/account" class="font-semibold text-otp-600 hover:text-otp-700 underline">Account</a>.
+              These fields are OTP-specific and apply only to this organization.
+            </p>
+          </div>
+
+          <!-- Profile card: OTP-specific fields -->
+          <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
+            <div>
+              <h3 class="font-bold text-gray-900 mb-1">Profile</h3>
+              <p class="text-sm text-gray-500">How you show up to the rest of your organization.</p>
+            </div>
+
+            <!-- Title -->
+            <div>
+              <label for="profile-title" class="block text-sm font-medium text-gray-800 mb-1.5">Title</label>
+              <input type="text" name="title" id="profile-title"
+                     value="<%= _title %>"
+                     placeholder="e.g. Head of Operations"
+                     class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+            </div>
+
+            <!-- Pronouns (optional) -->
+            <div>
+              <label for="profile-pronouns" class="block text-sm font-medium text-gray-800 mb-1.5">
+                Pronouns <span class="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input type="text" name="pronouns" id="profile-pronouns"
+                     value="<%= _pronouns %>"
+                     placeholder="e.g. she/her"
+                     class="w-full sm:max-w-sm px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+            </div>
+
+            <!-- Bio -->
+            <div>
+              <label for="profile-bio" class="block text-sm font-medium text-gray-800 mb-1.5">Bio</label>
+              <textarea name="bio" id="profile-bio" rows="4"
+                        placeholder="A short bio your teammates will see."
+                        class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500"><%= _bio %></textarea>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <button type="submit"
+                    class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+              Save Changes
+            </button>
+            <span id="profile-saved" class="hidden text-sm font-semibold text-green-600">Saved</span>
+          </div>
+
+        </form>
+      </div>
+
+    <% } %>
+</div>
+
+<script>
+  (function () {
+    var form = document.getElementById('profile-form');
+    if (!form) return;
+    var saved = document.getElementById('profile-saved');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var fd = new FormData(form);
+      var payload = {
+        profile: {
+          title: fd.get('title') || '',
+          pronouns: fd.get('pronouns') || '',
+          bio: fd.get('bio') || ''
+        }
+      };
+
+      try {
+        var res = await fetch('/settings/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          var data = {};
+          try { data = await res.json(); } catch (_) {}
+          alert((data && data.error && data.error.message) || (data && data.error) || 'Failed to save profile');
+          return;
+        }
+
+        if (saved) {
+          saved.classList.remove('hidden');
+          setTimeout(function () { saved.classList.add('hidden'); }, 2500);
+        }
+      } catch (err) {
+        alert('Failed to save profile');
+      }
+    });
+  })();
+</script>

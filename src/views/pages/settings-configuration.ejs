@@ -1,0 +1,168 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context. This page server-renders all values into the form, so the helper is unused, but kept to match the checkup.ejs convention. */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Settings: Configuration (Company Settings) ----
+  // Locals: org {name,website,description,public}, canEdit (bool).
+  // Auto-injected: memberRole, currentPath, assetVersion, authState.
+  // Everything below is typeof-guarded so the page never throws on a missing local.
+  var _av     = (typeof assetVersion !== 'undefined') ? assetVersion : 'dev';
+  var _auth   = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _org    = (typeof org !== 'undefined' && org && typeof org === 'object') ? org : {};
+  // canEdit defaults to false when undefined (fail safe -- read-only unless explicitly allowed).
+  var _canEdit = (typeof canEdit !== 'undefined') ? !!canEdit : false;
+
+  var _name   = (_org.name !== undefined && _org.name !== null) ? String(_org.name) : '';
+  var _website = (_org.website !== undefined && _org.website !== null) ? String(_org.website) : '';
+  var _desc   = (_org.description !== undefined && _org.description !== null) ? String(_org.description) : '';
+  var _public = !!_org.public;
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <%- include('../partials/ui-page-header', { title: 'Configuration', eyebrow: 'Company Settings', subtitle: 'Your company name, website, and description.', mascot: 'mcp-api' }) %>
+
+
+    <% if (_auth === 'unauthenticated') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Sign in to manage company settings.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Sign In</a>
+      </div>
+    <% } else if (_auth === 'no_org') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Complete your organization profile first.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Set Up Profile</a>
+      </div>
+    <% } else { %>
+
+      <!-- two-column: nav stacks above content on mobile, sidebar on >=md -->
+      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+
+        <!-- left: settings nav -->
+        <%- include('../partials/settings-nav') %>
+
+        <!-- right: content -->
+        <form id="configuration-form" class="flex-1 min-w-0 w-full space-y-6">
+
+          <div class="flex items-center justify-between gap-4">
+            <h2 class="font-bold text-gray-900 text-lg">Company Information</h2>
+            <% if (_canEdit) { %>
+              <button type="submit"
+                      class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                Save Changes
+              </button>
+            <% } %>
+          </div>
+
+          <% if (!_canEdit) { %>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p class="text-sm text-amber-800 font-medium">Only owners and admins can edit company settings.</p>
+            </div>
+          <% } %>
+
+          <!-- Card: Company Information -->
+          <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
+
+            <!-- Company name (required) -->
+            <div>
+              <label for="cfg-name" class="block font-bold text-gray-900 mb-1">Company name <span class="text-red-500">*</span></label>
+              <p class="text-sm text-gray-500 mb-2">The name shown across OTP.</p>
+              <input type="text" name="name" id="cfg-name" required
+                     value="<%= _name %>"
+                     <%= _canEdit ? '' : 'disabled' %>
+                     class="w-full sm:max-w-md px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+            </div>
+
+            <!-- Company website (optional) -->
+            <div>
+              <label for="cfg-website" class="block font-bold text-gray-900 mb-1">Company website</label>
+              <p class="text-sm text-gray-500 mb-2">Optional. Your public site or landing page.</p>
+              <input type="url" name="website" id="cfg-website"
+                     value="<%= _website %>"
+                     placeholder="https://example.com"
+                     <%= _canEdit ? '' : 'disabled' %>
+                     class="w-full sm:max-w-md px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+            </div>
+
+            <!-- Description (optional) -->
+            <div>
+              <label for="cfg-description" class="block font-bold text-gray-900 mb-1">Description</label>
+              <p class="text-sm text-gray-500 mb-2">Optional. A short description of your organization.</p>
+              <textarea name="description" id="cfg-description" rows="4"
+                        <%= _canEdit ? '' : 'disabled' %>
+                        class="w-full sm:max-w-md px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"><%= _desc %></textarea>
+            </div>
+
+            <!-- Public toggle -->
+            <div>
+              <label class="flex items-start gap-3 <%= _canEdit ? 'cursor-pointer' : 'cursor-not-allowed' %>">
+                <input type="checkbox" name="public" id="cfg-public" value="1"
+                       class="mt-0.5 text-otp-500 focus:ring-otp-500 rounded"
+                       <%= _public ? 'checked' : '' %>
+                       <%= _canEdit ? '' : 'disabled' %>>
+                <span>
+                  <span class="block text-sm text-gray-800 font-medium">List this organization publicly</span>
+                  <span class="block text-sm text-gray-500">When on, your organization can appear in public listings.</span>
+                </span>
+              </label>
+            </div>
+
+          </div>
+
+          <% if (_canEdit) { %>
+            <div class="flex items-center gap-4">
+              <button type="submit"
+                      class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                Save Changes
+              </button>
+              <span id="cfg-saved" class="hidden text-sm font-semibold text-green-600">Saved</span>
+            </div>
+          <% } %>
+
+        </form>
+      </div>
+
+    <% } %>
+</div>
+
+<% if (_canEdit) { %>
+<script>
+  (function () {
+    var form = document.getElementById('configuration-form');
+    if (!form) return;
+    var saved = document.getElementById('cfg-saved');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var fd = new FormData(form);
+      var payload = {
+        name: (fd.get('name') || '').trim(),
+        website: (fd.get('website') || '').trim(),
+        description: (fd.get('description') || '').trim(),
+        public: fd.get('public') === '1'
+      };
+
+      try {
+        var res = await fetch('/settings/configuration', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          var data = {};
+          try { data = await res.json(); } catch (_) {}
+          alert((data && data.error && data.error.message) || (data && data.error) || 'Failed to save company settings');
+          return;
+        }
+
+        if (saved) {
+          saved.classList.remove('hidden');
+          setTimeout(function () { saved.classList.add('hidden'); }, 2500);
+        }
+      } catch (err) {
+        alert('Failed to save company settings');
+      }
+    });
+  })();
+</script>
+<% } %>

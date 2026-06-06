@@ -2294,13 +2294,200 @@ Founder, OTP</p>
     });
   };
 
-  settingsStub('/settings/profile', 'Profile', 'User Settings');
-  settingsStub('/settings/account', 'Account', 'User Settings');
-  settingsStub('/settings/notifications', 'Notifications', 'User Settings');
-  settingsStub('/settings/integrations', 'Integrations', 'User Settings');
-  settingsStub('/settings/configuration', 'Configuration', 'Company Settings');
-  settingsStub('/settings/teams', 'Teams', 'Company Settings');
   settingsStub('/settings/language', 'Language', 'Company Settings');
+
+  // GET /settings/account -- Clerk mounts the account UI client-side; no server data.
+  app.get('/settings/account', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-account', { title: 'Account - OTP', noindex: true, authState: 'unauthenticated' });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-account', { title: 'Account - OTP', noindex: true, authState: 'no_org' });
+    }
+    return reply.view('pages/settings-account', { title: 'Account - OTP', noindex: true, authState: 'authenticated' });
+  });
+
+  // GET /settings/integrations
+  app.get('/settings/integrations', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-integrations', { title: 'Integrations - OTP', noindex: true, authState: 'unauthenticated' });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-integrations', { title: 'Integrations - OTP', noindex: true, authState: 'no_org' });
+    }
+    return reply.view('pages/settings-integrations', { title: 'Integrations - OTP', noindex: true, authState: 'authenticated' });
+  });
+
+  // GET /settings/notifications
+  app.get('/settings/notifications', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-notifications', { title: 'Notifications - OTP', noindex: true, authState: 'unauthenticated', notifications: {} });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-notifications', { title: 'Notifications - OTP', noindex: true, authState: 'no_org', notifications: {} });
+    }
+    const member = (request as any).orgMember;
+    return reply.view('pages/settings-notifications', { title: 'Notifications - OTP', noindex: true, authState: 'authenticated', notifications: (member && member.preferences && member.preferences.notifications) || {} });
+  });
+
+  // GET /settings/profile
+  app.get('/settings/profile', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-profile', { title: 'Profile - OTP', noindex: true, authState: 'unauthenticated', profile: {} });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-profile', { title: 'Profile - OTP', noindex: true, authState: 'no_org', profile: {} });
+    }
+    const member = (request as any).orgMember;
+    return reply.view('pages/settings-profile', { title: 'Profile - OTP', noindex: true, authState: 'authenticated', profile: (member && member.preferences && member.preferences.profile) || {} });
+  });
+
+  // GET /settings/configuration -- company-level settings. Edit gated by role.
+  const CONFIG_EDIT_ROLES = ['owner', 'admin', 'implementer', 'visionary', 'integrator'];
+  app.get('/settings/configuration', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'unauthenticated', org: { name: '', website: '', description: '', public: false }, canEdit: false });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'no_org', org: { name: '', website: '', description: '', public: false }, canEdit: false });
+    }
+    const member = (request as any).orgMember;
+    const canEdit = CONFIG_EDIT_ROLES.includes(member?.role);
+    return reply.view('pages/settings-configuration', {
+      title: 'Configuration - OTP', noindex: true, authState: 'authenticated',
+      org: { name: org.name, website: org.website || '', description: org.description || '', public: !!org.public },
+      canEdit,
+    });
+  });
+
+  // GET /settings/teams -- redirect to the dashboard teams view.
+  app.get('/settings/teams', async (request, reply) => {
+    return reply.redirect('/dashboard/teams');
+  });
+
+  // PUT /settings/notifications -- merge notification prefs into orgMember.preferences.
+  app.put<{ Body: { notifications?: unknown } }>('/settings/notifications', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.status(401).send({ error: 'unauthenticated' });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.status(401).send({ error: 'no_org' });
+    }
+    const userId = auth.userId;
+    const body = (request.body || {}) as { notifications?: unknown };
+
+    const member = (request as any).orgMember;
+    const current = (member && member.preferences) || {};
+
+    let notifications = (current.notifications as Record<string, boolean>) || {};
+    if (body.notifications && typeof body.notifications === 'object' && !Array.isArray(body.notifications)) {
+      const coerced: Record<string, boolean> = {};
+      for (const [k, v] of Object.entries(body.notifications as Record<string, unknown>)) {
+        coerced[k] = !!v;
+      }
+      notifications = coerced;
+    }
+
+    const merged = { ...current, notifications };
+    await db
+      .update(orgMembers)
+      .set({ preferences: merged, updatedAt: new Date() })
+      .where(and(eq(orgMembers.clerkUserId, userId), eq(orgMembers.orgId, org.id)));
+
+    return reply.send({ ok: true });
+  });
+
+  // PUT /settings/profile -- merge profile fields into orgMember.preferences.
+  app.put<{ Body: { profile?: unknown } }>('/settings/profile', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.status(401).send({ error: 'unauthenticated' });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.status(401).send({ error: 'no_org' });
+    }
+    const userId = auth.userId;
+    const body = (request.body || {}) as { profile?: unknown };
+
+    const incoming = (body.profile && typeof body.profile === 'object' && !Array.isArray(body.profile))
+      ? (body.profile as Record<string, unknown>)
+      : {};
+
+    const str = (v: unknown, max: number): string =>
+      (typeof v === 'string' ? v : '').slice(0, max);
+
+    const profile = {
+      title: str(incoming.title, 120),
+      pronouns: str(incoming.pronouns, 120),
+      bio: str(incoming.bio, 2000),
+    };
+
+    const member = (request as any).orgMember;
+    const current = (member && member.preferences) || {};
+    const merged = { ...current, profile };
+
+    await db
+      .update(orgMembers)
+      .set({ preferences: merged, updatedAt: new Date() })
+      .where(and(eq(orgMembers.clerkUserId, userId), eq(orgMembers.orgId, org.id)));
+
+    return reply.send({ ok: true });
+  });
+
+  // PUT /settings/configuration -- update org-level settings. Role-gated.
+  app.put<{ Body: { name?: unknown; website?: unknown; description?: unknown; public?: unknown } }>('/settings/configuration', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.status(401).send({ error: 'unauthenticated' });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.status(401).send({ error: 'no_org' });
+    }
+
+    const member = (request as any).orgMember;
+    if (!CONFIG_EDIT_ROLES.includes(member?.role)) {
+      return reply.status(403).send({ error: 'forbidden' });
+    }
+
+    const body = (request.body || {}) as { name?: unknown; website?: unknown; description?: unknown; public?: unknown };
+
+    if (typeof body.name !== 'string' || body.name.trim().length === 0 || body.name.length > 255) {
+      return reply.status(400).send({ error: 'invalid name' });
+    }
+    if (body.website !== undefined && body.website !== null && (typeof body.website !== 'string' || body.website.length > 500)) {
+      return reply.status(400).send({ error: 'invalid website' });
+    }
+    if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 2000)) {
+      return reply.status(400).send({ error: 'invalid description' });
+    }
+    if (typeof body.public !== 'boolean') {
+      return reply.status(400).send({ error: 'invalid public' });
+    }
+
+    const website = (typeof body.website === 'string' && body.website.length > 0) ? body.website : null;
+    const description = (typeof body.description === 'string' && body.description.length > 0) ? body.description : null;
+
+    await db
+      .update(organizations)
+      .set({ name: body.name, website, description, public: !!body.public, updatedAt: new Date() })
+      .where(eq(organizations.id, org.id));
+
+    return reply.send({ ok: true });
+  });
 
 
   app.get('/dashboard', async (request, reply) => {
