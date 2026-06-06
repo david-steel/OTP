@@ -856,7 +856,7 @@ export interface ImportResult {
   oosFileId: string;
 }
 
-const HUMAN_ID_PATTERN = /^[A-Z0-9_\-]{2,120}$/i;
+const HUMAN_ID_PATTERN = /^[A-Z0-9_-]{2,120}$/i;
 
 function lc(v: any): string { return String(v || '').trim().toLowerCase(); }
 

@@ -50,7 +50,7 @@ const byMeeting = new Map<string, Set<Subscriber>>();
 // data (todos, rocks, issues, headlines) can fan out to live meetings
 // of that team without a DB lookup.
 const meetingTeamId = new Map<string, string | null>();
-let cleanupTimer: NodeJS.Timeout | null = null;
+let cleanupTimer: ReturnType<typeof setTimeout> | null = null;
 
 function ensureCleanupTimer() {
   if (cleanupTimer) return;

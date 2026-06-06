@@ -924,7 +924,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   // Accept-invite landing page
   app.get<{ Querystring: { token?: string } }>('/accept-invite', async (request, reply) => {
     const token = String(request.query.token || '').trim();
-    if (!token || !/^[A-Za-z0-9_\-]{16,128}$/.test(token)) {
+    if (!token || !/^[A-Za-z0-9_-]{16,128}$/.test(token)) {
       return renderV7(reply, 'accept-invite', {
         loadClerk: true,
         navVariant: 'minimal',
@@ -1628,6 +1628,7 @@ Founder, OTP</p>
           }
         }
       }
+      // eslint-disable-next-line no-inner-declarations -- hoisted helper, scoped to this block
       function meets(value: number | null, op: string | null, target: number | null): boolean | null {
         if (value === null || op === null || target === null) return null;
         if (op === 'gte') return value >= target;
@@ -2936,7 +2937,7 @@ Founder, OTP</p>
         ORDER BY c.created_at DESC LIMIT 5
       `);
       networkLearnings = (nlResult.rows as any[]) || [];
-    } catch {}
+    } catch { /* ignore */ }
 
     return reply.view('pages/dashboard-admin', {
       title: 'Publisher Dashboard - OTP',

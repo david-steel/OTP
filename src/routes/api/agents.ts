@@ -27,7 +27,7 @@ async function getOrg(request: FastifyRequest) {
 }
 
 function validExternalId(id: string): boolean {
-  return /^[A-Z0-9_\-]{1,120}$/i.test(id);
+  return /^[A-Z0-9_-]{1,120}$/i.test(id);
 }
 
 export default async function agentRoutes(app: FastifyInstance) {

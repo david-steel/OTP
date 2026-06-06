@@ -99,7 +99,7 @@ export function parseDateLoose(s: unknown): string | null {
   if (!raw) return null;
   let d = new Date(raw);
   if (isNaN(d.getTime())) {
-    const m = raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/); // dig a date out of "Week of 6/1/2026"
+    const m = raw.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/); // dig a date out of "Week of 6/1/2026"
     if (m) d = new Date(`${m[3].length === 2 ? '20' + m[3] : m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`);
   }
   if (isNaN(d.getTime())) return null;
@@ -179,7 +179,7 @@ function extractExtra(module: NinetyModule, row: Record<string, unknown>): Recor
 }
 
 // A header that looks like a scorecard period column (a date or week label).
-const DATE_HEADER_RE = /(\d{1,2}[\/\-]\d{1,2})|(\d{4})|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(week|wk|w\/e|w\/c)/i;
+const DATE_HEADER_RE = /(\d{1,2}[/-]\d{1,2})|(\d{4})|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(week|wk|w\/e|w\/c)/i;
 
 function looksLikeScorecard(headers: string[]): boolean {
   const dateCols = headers.filter(h => DATE_HEADER_RE.test(h)).length;

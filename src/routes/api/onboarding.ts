@@ -375,7 +375,7 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
 
     // Parse "20" / "25%" / "$2,000" into a numeric goal + unit.
     const rawTarget = parsed.data.target || '';
-    const numeric = parseFloat(rawTarget.replace(/[^0-9.\-]/g, ''));
+    const numeric = parseFloat(rawTarget.replace(/[^0-9.-]/g, ''));
     const goalValue = Number.isFinite(numeric) ? numeric : null;
     const unit = /%/.test(rawTarget) ? '%' : (/^\s*\$/.test(rawTarget) ? '$' : null);
 

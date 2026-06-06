@@ -17,13 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      # Lint is non-blocking for now: the repo carries ~20 pre-existing lint
-      # errors (no-useless-escape, no-constant-condition, etc.) unrelated to the
-      # test suite. It still runs and annotates the PR so the debt is visible.
-      # TODO: clean up the pre-existing lint errors, then drop continue-on-error.
-      - name: Lint (non-blocking)
-        run: npm run lint
-        continue-on-error: true
+      - run: npm run lint
 
   test:
     runs-on: ubuntu-latest

@@ -1130,7 +1130,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const clerkUsers: any[] = [];
     let offset = 0;
     const PAGE = 500;
-    while (true) {
+    for (;;) {
       const { data } = await clerk.users.getUserList({ limit: PAGE, offset, orderBy: '-created_at' });
       clerkUsers.push(...data);
       if (data.length < PAGE) break;

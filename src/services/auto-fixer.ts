@@ -200,7 +200,7 @@ export function autoFixOOS(raw: string, selectedTemplate?: TemplateType): FixRes
     }
 
     // Fix inconsistent quoting
-    fixedYaml = fixedYaml.replace(/: ([^"'\n]*[:{}\[\]]\S*)/gm, ': "$1"');
+    fixedYaml = fixedYaml.replace(/: ([^"'\n]*[:{}[\]]\S*)/gm, ': "$1"');
 
     try {
       fm = parseYAML(fixedYaml) || {};

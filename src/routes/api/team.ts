@@ -354,7 +354,7 @@ export default async function teamRoutes(app: FastifyInstance) {
       if (type !== 'agent' && type !== 'human') {
         return reply.status(400).send({ error: { code: 'INVALID_TYPE', message: 'type must be agent or human' } });
       }
-      if (!externalId || !/^[A-Z0-9_\-]{1,120}$/i.test(externalId)) {
+      if (!externalId || !/^[A-Z0-9_-]{1,120}$/i.test(externalId)) {
         return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
       }
       if (chartId && !/^[0-9a-f-]{36}$/i.test(chartId)) {
@@ -391,7 +391,7 @@ export default async function teamRoutes(app: FastifyInstance) {
       if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
 
       const { externalId } = request.params;
-      if (!/^[A-Z0-9_\-]{1,120}$/i.test(externalId)) {
+      if (!/^[A-Z0-9_-]{1,120}$/i.test(externalId)) {
         return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid externalId' } });
       }
 

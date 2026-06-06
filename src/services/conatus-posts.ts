@@ -23,7 +23,7 @@ export interface ConatusPost extends ConatusPostMeta {
 }
 
 function splitFrontmatter(raw: string): { data: Record<string, unknown>; body: string } {
-  const normalized = raw.replace(/^﻿/, '');
+  const normalized = raw.replace(/^\uFEFF/, '');
   if (!/^---\r?\n/.test(normalized)) return { data: {}, body: normalized };
   const afterOpen = normalized.replace(/^---\r?\n/, '');
   const closeIdx = afterOpen.search(/\r?\n---\r?\n/);

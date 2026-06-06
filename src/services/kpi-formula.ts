@@ -84,7 +84,7 @@ class Parser {
   consume(): Token { return this.toks[this.pos++]; }
   parseExpr(): Ast {
     let left = this.parseTerm();
-    while (true) {
+    for (;;) {
       const t = this.peek();
       if (t.type === 'op' && (t.op === '+' || t.op === '-')) {
         this.consume();
@@ -96,7 +96,7 @@ class Parser {
   }
   parseTerm(): Ast {
     let left = this.parseFactor();
-    while (true) {
+    for (;;) {
       const t = this.peek();
       if (t.type === 'op' && (t.op === '*' || t.op === '/')) {
         this.consume();
