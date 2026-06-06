@@ -13,7 +13,7 @@
 // /dashboard route remains in pages.ts after this commit.
 import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
-import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull, gt } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews } from '../../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
@@ -2213,6 +2213,72 @@ Founder, OTP</p>
     return reply.send({ ok: true, preferences: merged });
   });
 
+  // Billing (Company Settings) -- live preview of agent-team cost + plan state.
+  // Pricing model: humans free; every AI agent on the chart is billable.
+  // $12/agent/mo Basic; $16/agent/mo if that agent uses API + MCP. There is no
+  // per-agent API/MCP signal in the data today (api_keys are org-level only and
+  // not linked to chart agents), so apiMcpAgents is held at 0 and every agent
+  // bills at Basic until per-agent connection tracking ships. Stripe/payment
+  // collection is a later increment -- this page charges nothing.
+  const BILLING_PRICE_BASIC = 12;
+  const BILLING_PRICE_API_MCP = 16;
+  app.get('/settings/billing', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-billing', {
+        title: 'Billing - OTP', noindex: true, authState: 'unauthenticated',
+        agents: { total: 0, basic: 0, apiMcp: 0 }, activeApiKeys: 0,
+        prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
+      });
+    }
+
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-billing', {
+        title: 'Billing - OTP', noindex: true, authState: 'no_org',
+        agents: { total: 0, basic: 0, apiMcp: 0 }, activeApiKeys: 0,
+        prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
+      });
+    }
+
+    // Total agents = agent nodes on the org's primary chart. Never 500 the
+    // page if the chart can't be resolved -- default to 0 and continue.
+    let totalAgents = 0;
+    try {
+      const team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+      totalAgents = team.nodes.filter(n => n.type === 'agent').length;
+    } catch {
+      totalAgents = 0;
+    }
+
+    // FYI only -- count of active org API keys (not the $16 tier signal).
+    let activeApiKeys = 0;
+    try {
+      const [row] = await db
+        .select({ c: sql<number>`count(*)::int` })
+        .from(apiKeys)
+        .where(and(
+          eq(apiKeys.orgId, org.id),
+          isNull(apiKeys.revokedAt),
+          or(isNull(apiKeys.expiresAt), gt(apiKeys.expiresAt, new Date())),
+        ));
+      activeApiKeys = Number(row?.c || 0);
+    } catch {
+      activeApiKeys = 0;
+    }
+
+    return reply.view('pages/settings-billing', {
+      title: 'Billing - OTP',
+      noindex: true,
+      authState: 'authenticated',
+      agents: { total: totalAgents, basic: totalAgents, apiMcp: 0 },
+      activeApiKeys,
+      prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
+      orgName: org.name,
+      stripeCustomerId: org.stripeCustomerId || null,
+    });
+  });
+
   // Settings stub pages — scaffold routes that render a placeholder page.
   const settingsStub = (path: string, pageTitle: string, pageGroup: string) => {
     app.get(path, async (request, reply) => {
@@ -2235,7 +2301,6 @@ Founder, OTP</p>
   settingsStub('/settings/configuration', 'Configuration', 'Company Settings');
   settingsStub('/settings/teams', 'Teams', 'Company Settings');
   settingsStub('/settings/language', 'Language', 'Company Settings');
-  settingsStub('/settings/billing', 'Billing', 'Company Settings');
 
 
   app.get('/dashboard', async (request, reply) => {
