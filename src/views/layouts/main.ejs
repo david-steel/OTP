@@ -514,9 +514,13 @@
         // Wire Log Out to Clerk sign-out.
         var logoutEl = document.getElementById('otp-avatar-logout');
         if (logoutEl) {
-          logoutEl.addEventListener('click', function (e) {
+          logoutEl.addEventListener('click', async function (e) {
             e.preventDefault();
-            window.Clerk.signOut({ redirectUrl: '/' });
+            // Await sign-out, then force a full reload to '/'. signOut({redirectUrl})
+            // alone clears the session but wasn't navigating, so the stale
+            // logged-in UI lingered until a manual refresh.
+            try { await window.Clerk.signOut(); } catch (err) {}
+            window.location.href = '/';
           });
         }
       } else if (clerk.user && desktopNav && !avatarMenu) {
