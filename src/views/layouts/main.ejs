@@ -516,11 +516,11 @@
         if (logoutEl) {
           logoutEl.addEventListener('click', async function (e) {
             e.preventDefault();
-            // Await sign-out, then force a full reload to '/'. signOut({redirectUrl})
-            // alone clears the session but wasn't navigating, so the stale
-            // logged-in UI lingered until a manual refresh.
+            // Await sign-out, then force a full reload to the sign-in page.
+            // signOut({redirectUrl}) alone cleared the session but wasn't
+            // navigating, so the stale logged-in UI lingered until a refresh.
             try { await window.Clerk.signOut(); } catch (err) {}
-            window.location.href = '/';
+            window.location.href = '/sign-in';
           });
         }
       } else if (clerk.user && desktopNav && !avatarMenu) {
@@ -550,7 +550,7 @@
           '<div id="auth-user-button-desktop"></div>';
         desktopNav.innerHTML = fallbackHtml;
         var slot = document.getElementById('auth-user-button-desktop');
-        if (slot) clerk.mountUserButton(slot, { afterSignOutUrl: '/' });
+        if (slot) clerk.mountUserButton(slot, { afterSignOutUrl: '/sign-in' });
       } else if (!clerk.user && desktopNav) {
         // Signed-out: server already rendered Sign In + Publish. Nothing to do.
       }
@@ -561,7 +561,7 @@
       if (headerNav) {
         headerNav.innerHTML = '';
         if (clerk.user) {
-          var h1 = document.createElement('div'); headerNav.appendChild(h1); clerk.mountUserButton(h1, { afterSignOutUrl: '/' });
+          var h1 = document.createElement('div'); headerNav.appendChild(h1); clerk.mountUserButton(h1, { afterSignOutUrl: '/sign-in' });
         } else {
           headerNav.appendChild(makeSignInBtn());
           headerNav.appendChild(makeSignUpBtn());
@@ -574,7 +574,7 @@
       var mobileNav = document.getElementById('auth-nav-mobile');
       if (clerk.user && mobileSlot) {
         mobileSlot.innerHTML = '';
-        clerk.mountUserButton(mobileSlot, { afterSignOutUrl: '/' });
+        clerk.mountUserButton(mobileSlot, { afterSignOutUrl: '/sign-in' });
       } else if (clerk.user && mobileNav && !mobileSlot) {
         mobileNav.innerHTML = '';
         var mDashWrap = document.createElement('div');
