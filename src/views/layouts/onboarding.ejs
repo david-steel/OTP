@@ -29,5 +29,37 @@
 </head>
 <body>
 <%- body %>
+<script>
+  // Fresh-auth helper for onboarding write fetches. Defined UNCONDITIONALLY so
+  // the forms never break even if Clerk fails to load: it falls back to a
+  // plain cookie request (the prior behavior). When Clerk is present it mints a
+  // fresh session token, so writes never hit a stale __session cookie.
+  window.otpFreshAuth = async function(){
+    var h = { 'Content-Type': 'application/json' };
+    try {
+      if (window.Clerk && window.Clerk.session) {
+        var t = await window.Clerk.session.getToken();
+        if (t) h['Authorization'] = 'Bearer ' + t;
+      }
+    } catch (e) {}
+    return h;
+  };
+</script>
+<% if (typeof clerkPubKey !== 'undefined' && clerkPubKey && typeof clerkInstance !== 'undefined' && clerkInstance) { %>
+<script
+  async
+  crossorigin="anonymous"
+  data-clerk-publishable-key="<%= clerkPubKey %>"
+  src="https://<%= clerkInstance %>/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+></script>
+<script>
+  // Core fix: the onboarding layout previously never loaded Clerk, so the
+  // session cookie went stale during the wizard and writes 401'd. Loading
+  // Clerk keeps the token auto-refreshed across all 7 steps.
+  window.addEventListener('load', function(){
+    if (window.Clerk && window.Clerk.load) { window.Clerk.load().catch(function(){}); }
+  });
+</script>
+<% } %>
 </body>
 </html>

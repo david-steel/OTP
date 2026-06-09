@@ -33,9 +33,20 @@ import { ONBOARDING_ROLES } from '../../data/onboarding-roles.js';
 // signup since the regression was bouncing here, root cause of the
 // 0/50 founding-spots gap.
 const O_VIEWS = fileURLToPath(new URL('../../views', import.meta.url));
+
+// Clerk client config for the onboarding layout. Without these the layout
+// never loads clerk.browser.js, so the __session cookie is never refreshed and
+// every write (goal/kpi/agent) 401s once the ~60s session token lapses -- the
+// "Sign in required" mid-onboarding bug. Derivation mirrors pages.ts / server.ts.
+const ONB_CLERK_PUB_KEY = process.env.CLERK_PUBLISHABLE_KEY || '';
+const ONB_CLERK_INSTANCE = ONB_CLERK_PUB_KEY.startsWith('pk_')
+  ? Buffer.from(ONB_CLERK_PUB_KEY.split('_').slice(2).join('_'), 'base64').toString().replace(/\$$/, '')
+  : '';
 async function renderOnboarding(reply: FastifyReply, page: string, data: Record<string, any> = {}) {
   const body = await ejs.renderFile(`${O_VIEWS}/pages/${page}.ejs`, data);
-  const html = await ejs.renderFile(`${O_VIEWS}/layouts/onboarding.ejs`, { ...data, body });
+  const html = await ejs.renderFile(`${O_VIEWS}/layouts/onboarding.ejs`, {
+    clerkPubKey: ONB_CLERK_PUB_KEY, clerkInstance: ONB_CLERK_INSTANCE, ...data, body,
+  });
   return reply.type('text/html').send(html);
 }
 

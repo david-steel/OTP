@@ -237,7 +237,7 @@ function ob_target(k){
     addBtn.disabled=true; addBtn.querySelector('span:last-child').textContent='Adding...';
     try{
       var res=await fetch('/api/v1/onboarding/kpi',{
-        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        method:'POST',headers:(window.otpFreshAuth?await window.otpFreshAuth():{'Content-Type':'application/json'}),credentials:'same-origin',
         body:JSON.stringify({title:title,target:target,cadence:cadence,ownerMemberId:ownerMemberId}),
       });
       var data=await res.json().catch(function(){return {};});
