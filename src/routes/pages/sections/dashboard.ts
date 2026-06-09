@@ -1753,13 +1753,25 @@ Founder, OTP</p>
       }
     }
     const nodeLabel = new Map(team.nodes.map((n) => [n.externalId, n.label] as [string, string]));
+    // Owners that aren't chart nodes (e.g. an invited member who hasn't claimed
+    // a seat yet) are missing from nodeLabel. Fall back to their member name so
+    // the scoreboard never prints a raw owner UUID.
+    const ownerMemberRows = await db
+      .select({ id: orgMembers.id, displayName: orgMembers.displayName, email: orgMembers.email })
+      .from(orgMembers)
+      .where(eq(orgMembers.orgId, org.id));
+    const memberLabel = new Map<string, string>();
+    for (const m of ownerMemberRows) {
+      const label = (m.displayName && m.displayName.trim()) || (m.email && m.email.trim()) || '';
+      if (label) memberLabel.set(m.id, label);
+    }
     const kpis = allKpis.map((k: any) => {
       const latest = latestByKpi.has(k.id) ? (latestByKpi.get(k.id) ?? null) : null;
       return {
         id: k.id as string,
         title: k.title as string,
         groupName: (k.groupName ?? null) as string | null,
-        ownerName: (nodeLabel.get(k.ownerExternalId) ?? k.ownerExternalId ?? '') as string,
+        ownerName: (nodeLabel.get(k.ownerExternalId) ?? memberLabel.get(k.ownerExternalId) ?? 'Unassigned') as string,
         ownerType: (k.ownerEntityType ?? null) as string | null,
         unit: (k.unit ?? null) as string | null,
         goalOperator: (k.goalOperator ?? null) as string | null,
