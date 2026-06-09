@@ -1025,6 +1025,14 @@ try {
   app.log.error({ err }, 'ensureCoachClientTables failed -- /join/:token and coach dashboard will not work until resolved');
 }
 
+try {
+  const { ensureClaimProvenance } = await import('./db/ensure-claim-provenance.js');
+  await ensureClaimProvenance();
+  app.log.info('claim provenance columns ready (source_org_id, source_claim_id, source_oos_id, provenance)');
+} catch (err) {
+  app.log.error({ err }, 'ensureClaimProvenance failed -- merge execution will not work until resolved');
+}
+
 // Orger — sibling product, mounted at /orger prefix until orger.ai vhost is configured.
 // Wrapped in try/catch so a registration failure does not prevent OTP boot.
 try {

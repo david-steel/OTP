@@ -130,6 +130,12 @@ export const claims = pgTable('claims', {
   source: varchar('source', { length: 50 }).default('oos_publish'),
   sourceUrl: text('source_url'),
   agentName: varchar('agent_name', { length: 100 }),
+  // Merge provenance (set when source='merge'). No FK: must outlive the source claim.
+  // Kept in sync with src/db/ensure-claim-provenance.ts -- edit both or tests drift from prod.
+  sourceOrgId: uuid('source_org_id'),
+  sourceClaimId: uuid('source_claim_id'),
+  sourceOosId: uuid('source_oos_id'),
+  provenance: jsonb('provenance'),
   public: boolean('public').default(false).notNull(),
   roles: text('roles').array().default(sql`'{}'::text[]`).notNull(),
   // search_vector is managed by a database trigger, not Drizzle
