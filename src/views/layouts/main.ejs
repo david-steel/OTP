@@ -175,8 +175,8 @@
     .v7-mobile-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); padding: 0 12px; }
   </style>
 
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). Declared at template scope (NOT inside an if-block): a function declared inside a block is block-scoped and invisible to sibling blocks, so defining it inside the jsonLd block made it unavailable to the breadcrumbs block -> 500 "jsonForScript is not a function" on pages with breadcrumbs but no jsonLd (e.g. /claims, /graph). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
   <% if (typeof jsonLd !== 'undefined' && jsonLd) { %>
-<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
   <script type="application/ld+json"><%- jsonForScript(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
   <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 0) { %>
