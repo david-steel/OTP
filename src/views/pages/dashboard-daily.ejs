@@ -1000,6 +1000,7 @@
                     <%= promised ? ' · promised ' + promised.toLocaleDateString() : '' %>
                   </div>
                 </div>
+                <button type="button" class="waiting-closeout shrink-0 text-[11px] font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 rounded px-2 py-1 bg-white" data-todo-id="<%= t.id %>" title="They never closed it? Disposition it yourself: marks the to-do done and verified, and notifies them.">Close it out</button>
               </li>
             <% }); %>
           </ul>
@@ -2073,5 +2074,29 @@
       }
     });
   })();
+})();
+</script>
+
+<script>
+// Disposition for delegated to-dos the owner never closed: the delegator
+// closes it out (done + verified in one step). The owner gets an alert-bell
+// notification via the todos PATCH transition hooks.
+(function () {
+  document.querySelectorAll('.waiting-closeout').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!confirm('Close this out yourself? It will be marked done and verified, and the owner will be notified.')) return;
+      var id = btn.getAttribute('data-todo-id');
+      OTP.apiSave({
+        method: 'PATCH', url: '/api/v1/todos/' + encodeURIComponent(id),
+        body: { done: true, verified: true },
+        btnEl: btn,
+        errorContext: 'Close out to-do',
+        onSuccess: function () {
+          var li = btn.closest('li');
+          if (li) { li.style.transition = 'opacity 0.25s'; li.style.opacity = '0'; setTimeout(function () { li.remove(); }, 250); }
+        },
+      });
+    });
+  });
 })();
 </script>

@@ -320,6 +320,18 @@
                 </div>
               </div>
             </div>
+            <!-- Alert bell (signed-in): unread count + dropdown. Fed by
+                 GET /api/v1/notifications; see script near end of body. -->
+            <div class="relative z-50" id="otp-bell" style="position:relative; display:flex; align-items:center;">
+              <button id="otp-bell-btn" class="v7-nav-link" aria-label="Notifications" style="position:relative; display:inline-flex; align-items:center; padding:4px 2px; background:none; border:none; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span id="otp-bell-count" style="display:none; position:absolute; top:-3px; right:-6px; min-width:16px; height:16px; padding:0 4px; border-radius:9999px; background:#dc2626; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;"></span>
+              </button>
+              <div id="otp-bell-panel" style="display:none; position:absolute; top:100%; right:0; margin-top:10px; width:340px; max-height:420px; overflow:auto; background:#fff; border:1px solid rgba(20,22,28,0.12); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,0.12);">
+                <div style="padding:10px 14px; font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid rgba(20,22,28,0.06);">Alerts</div>
+                <div id="otp-bell-items"></div>
+              </div>
+            </div>
             <a href="/publish" class="v7-cta-publish">Publish</a>
             <%
                // Custom avatar dropdown (replaces Clerk's default UserButton on
@@ -592,6 +604,96 @@
     })();
   </script>
   <% } %>
-  <%- include('../partials/help') %>
+  <% if (typeof authUserId !== 'undefined' && authUserId) { %>
+<script>
+(function () {
+  var bell = document.getElementById('otp-bell');
+  if (!bell || window.__otpBellInit) return;
+  window.__otpBellInit = true;
+  var btn = document.getElementById('otp-bell-btn');
+  var badge = document.getElementById('otp-bell-count');
+  var panel = document.getElementById('otp-bell-panel');
+  var itemsEl = document.getElementById('otp-bell-items');
+  var items = [];
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function ago(iso) {
+    var ms = Date.now() - new Date(iso).getTime();
+    var m = Math.floor(ms / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+  function setCount(n) {
+    if (n > 0) { badge.textContent = n > 99 ? '99+' : String(n); badge.style.display = 'block'; }
+    else { badge.style.display = 'none'; }
+  }
+  // Browser notifications (tab must be open; permission requested on first
+  // bell click). Fire only for unread items newer than the last batch seen,
+  // capped so a backlog can't spam the desktop.
+  function browserNotify(list) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    var lastSeen = localStorage.getItem('otpBellSeen') || '';
+    var newest = lastSeen, fired = 0;
+    list.forEach(function (n) {
+      if (!n.readAt && n.createdAt > lastSeen && fired < 3) {
+        try { new Notification('OTP', { body: n.title }); fired++; } catch (e) {}
+      }
+      if (n.createdAt > newest) newest = n.createdAt;
+    });
+    if (newest) localStorage.setItem('otpBellSeen', newest);
+  }
+  function renderItems() {
+    if (items.length === 0) {
+      itemsEl.innerHTML = '<div style="padding:18px 14px; font-size:13px; color:#6b7280;">Nothing yet. You\'ll see new to-dos assigned to you, finished delegations, and close-outs here.</div>';
+      return;
+    }
+    itemsEl.innerHTML = items.map(function (n) {
+      var inner =
+        '<div style="font-size:13px; color:#111827; line-height:1.45;' + (n.readAt ? '' : ' font-weight:600;') + '">' + esc(n.title) + '</div>' +
+        '<div style="font-size:11px; color:#9ca3af; margin-top:2px;">' + esc(ago(n.createdAt)) + '</div>';
+      var style = 'display:block; padding:10px 14px; border-bottom:1px solid rgba(20,22,28,0.05); text-decoration:none;' + (n.readAt ? '' : ' background:#f0f7ff;');
+      return n.href
+        ? '<a href="' + esc(n.href) + '" style="' + style + '">' + inner + '</a>'
+        : '<div style="' + style + '">' + inner + '</div>';
+    }).join('');
+  }
+  function refresh() {
+    fetch('/api/v1/notifications', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        items = data.items || [];
+        setCount(data.unread || 0);
+        browserNotify(items);
+      })
+      .catch(function () {});
+  }
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = panel.style.display !== 'none';
+    if (open) { panel.style.display = 'none'; return; }
+    renderItems();
+    panel.style.display = 'block';
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch (err) {}
+    }
+    if (badge.style.display !== 'none') {
+      fetch('/api/v1/notifications/read-all', { method: 'POST', credentials: 'same-origin' })
+        .then(function () { setCount(0); })
+        .catch(function () {});
+    }
+  });
+  document.addEventListener('click', function (e) {
+    if (panel.style.display !== 'none' && !bell.contains(e.target)) panel.style.display = 'none';
+  });
+  refresh();
+  setInterval(refresh, 120000); // light poll: every 2 minutes while the tab is open
+})();
+</script>
+<% } %>
+<%- include('../partials/help') %>
 </body>
 </html>

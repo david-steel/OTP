@@ -797,6 +797,25 @@ export const kpiDependencies = pgTable('kpi_dependencies', {
   dependsOnIdx: index('kpi_deps_depends_on_idx').on(table.dependsOnKpiId),
 }));
 
+// ---- In-app notifications (nav alert bell) ----
+// Created by ensure-notifications.ts at boot. Recipients are chart seats;
+// org_members.claimed_entity_ids maps seats to signed-in users at read time.
+
+export const notifications = pgTable('notifications', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  recipientExternalId: varchar('recipient_external_id', { length: 120 }).notNull(),
+  type: varchar('type', { length: 60 }).notNull(),
+  title: varchar('title', { length: 500 }).notNull(),
+  href: varchar('href', { length: 500 }),
+  actorName: varchar('actor_name', { length: 255 }),
+  readAt: timestamp('read_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  recipientIdx: index('notif_recipient_idx').on(table.organizationId, table.recipientExternalId, table.readAt),
+  createdIdx: index('notif_created_idx').on(table.organizationId, table.createdAt),
+}));
+
 // ---- User engagement log (re-engagement nudges, max 4 per 30 days) ----
 
 export const userEngagementLog = pgTable('user_engagement_log', {

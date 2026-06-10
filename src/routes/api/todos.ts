@@ -8,6 +8,7 @@ import { getAuth } from '@clerk/fastify';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { notify, resolveMemberIdentity } from '../../services/notifications.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 
@@ -207,6 +208,25 @@ export default async function todoRoutes(app: FastifyInstance) {
       created.push(todo);
     }
 
+    // Alert bell: tell each assignee about their new to-do -- unless they
+    // assigned it to themselves. Best-effort: a bell failure never fails
+    // the create.
+    try {
+      const actor = await resolveMemberIdentity(org.id, getAuth(request).userId);
+      const actorLabel = d.delegatorName || actor.displayName || null;
+      for (const t of created) {
+        if (!t.ownerExternalId || actor.seats.includes(t.ownerExternalId)) continue;
+        await notify(org.id, t.ownerExternalId, {
+          type: 'todo.assigned',
+          title: (actorLabel ? actorLabel + ' assigned you a to-do: ' : 'New to-do: ') + t.title,
+          href: '/me/todos',
+          actorName: actorLabel,
+        });
+      }
+    } catch (err) {
+      request.log.warn({ err }, 'todo.assigned notification failed');
+    }
+
     // Back-compat: `todo` is the first (or only) record; `todos` is the full set.
     return reply.status(201).send({ todo: created[0], todos: created });
   });
@@ -355,6 +375,39 @@ export default async function todoRoutes(app: FastifyInstance) {
       .where(and(eq(todos.id, id), eq(todos.organizationId, org.id)))
       .returning();
     if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Todo not found' } });
+
+    // Alert bell on state transitions. Three signals, each skipped when the
+    // actor is the would-be recipient (no self-notifications):
+    //  - owner finished a delegated to-do  -> tell the delegator
+    //  - someone closed out / verified the owner's to-do -> tell the owner
+    // Best-effort: a bell failure never fails the update.
+    try {
+      const actor = await resolveMemberIdentity(org.id, getAuth(request).userId);
+      const actorLabel = actor.displayName || null;
+      const justDone = d.done === true && !existing.doneAt;
+      const justVerified = d.verified === true && !existing.verifiedAt;
+      if (justDone && existing.delegatorExternalId && !actor.seats.includes(existing.delegatorExternalId)) {
+        await notify(org.id, existing.delegatorExternalId, {
+          type: 'todo.completed',
+          title: (updated.ownerName || actorLabel || 'Someone') + ' finished: ' + updated.title,
+          href: '/me/todos',
+          actorName: actorLabel,
+        });
+      }
+      if ((justDone || justVerified) && updated.ownerExternalId && !actor.seats.includes(updated.ownerExternalId)) {
+        const closedOut = justDone && d.verified === true;
+        await notify(org.id, updated.ownerExternalId, {
+          type: closedOut ? 'todo.closed_out' : (justVerified ? 'todo.verified' : 'todo.completed'),
+          title: (actorLabel || 'A teammate')
+            + (closedOut ? ' closed out your to-do: ' : (justVerified ? ' verified your to-do: ' : ' marked your to-do done: '))
+            + updated.title,
+          href: '/me/todos',
+          actorName: actorLabel,
+        });
+      }
+    } catch (err) {
+      request.log.warn({ err }, 'todo transition notification failed');
+    }
 
     // Recurrence spawn: completing a recurring instance generates the next one.
     // The RRULE lives on a hidden template; each visible instance links to it

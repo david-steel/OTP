@@ -424,6 +424,9 @@
           <span>waiting on <%= t.ownerName || 'someone' %></span>
           <% if (t.dueAt) { %><span>promised <%= new Date(t.dueAt).toLocaleDateString() %></span><% } %>
         </div>
+        <div style="margin-top:8px;">
+          <button type="button" class="waiting-closeout" data-todo-id="<%= t.id %>" style="font-size:12px; font-weight:600; color:#6b7280; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:4px 10px; cursor:pointer;" title="They never closed it? Disposition it yourself: marks the to-do done and verified, and notifies them.">Close it out</button>
+        </div>
       </div>
     <% }); %>
   <% } %>
@@ -1021,3 +1024,25 @@ function humanAgo(d) {
   return d.toLocaleDateString();
 }
 %>
+
+<script>
+// Disposition: delegator closes out a to-do its owner never finished.
+(function () {
+  document.querySelectorAll('.waiting-closeout').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!confirm('Close this out yourself? It will be marked done and verified, and the owner will be notified.')) return;
+      var id = btn.getAttribute('data-todo-id');
+      btn.disabled = true;
+      fetch('/api/v1/todos/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done: true, verified: true }),
+      }).then(function (r) {
+        if (r.ok) { location.reload(); }
+        else { btn.disabled = false; alert('Could not close this out (' + r.status + ').'); }
+      }).catch(function () { btn.disabled = false; alert('Could not close this out.'); });
+    });
+  });
+})();
+</script>

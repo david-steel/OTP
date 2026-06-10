@@ -747,6 +747,7 @@ await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/values.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/notifications.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meetings.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/headlines.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/manager-agents.js'), { prefix: '/api/v1' });
@@ -999,6 +1000,14 @@ try {
   app.log.info('kpis.team_id + rocks.team_id are ready (team-scoped L10 scorecard + rocks)');
 } catch (err) {
   app.log.error({ err }, 'ensureKpisRocksTeam failed -- /l8 KPI/Rocks filtering by team will not work until resolved');
+}
+
+try {
+  const { ensureNotifications } = await import('./db/ensure-notifications.js');
+  await ensureNotifications();
+  app.log.info('notifications table is ready (nav alert bell)');
+} catch (err) {
+  app.log.error({ err }, 'ensureNotifications failed -- the alert bell will not work until resolved');
 }
 
 try {
