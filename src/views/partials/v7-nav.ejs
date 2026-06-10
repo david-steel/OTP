@@ -1,4 +1,7 @@
 <%# v7 site nav -- shared by layouts/v7.ejs %>
+<%# NOTE: v7.css is a pre-built stylesheet -- new Tailwind utilities silently
+    no-op here. The mobile menu below therefore reuses only classes already
+    present in this file and inline styles for everything else. %>
 <nav class="fixed top-0 inset-x-0 z-50 bg-[var(--white)]/90 backdrop-blur-md border-b border-[var(--line-soft)]">
   <div class="max-w-[1180px] mx-auto px-6 h-[64px] flex items-center justify-between">
     <a href="/" class="flex items-baseline gap-2.5">
@@ -13,6 +16,34 @@
       <a href="/sign-in" class="hover:text-[var(--ink)] transition-colors">Sign in</a>
       <a href="/sign-up" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
     </div>
-    <a href="/sign-up" class="btn-primary md:hidden px-4 py-2 text-[13px]">Get started</a>
+    <div class="md:hidden flex items-center gap-2.5">
+      <a href="/sign-up" class="btn-primary px-4 py-2 text-[13px]">Get started</a>
+      <button id="v7-nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="v7-nav-menu"
+        style="background:none;border:0;padding:8px 4px;cursor:pointer;display:inline-flex;flex-direction:column;gap:4px;">
+        <span style="display:block;width:20px;height:2px;background:var(--ink,#14161c);border-radius:1px;"></span>
+        <span style="display:block;width:20px;height:2px;background:var(--ink,#14161c);border-radius:1px;"></span>
+        <span style="display:block;width:20px;height:2px;background:var(--ink,#14161c);border-radius:1px;"></span>
+      </button>
+    </div>
   </div>
+  <div id="v7-nav-menu" class="md:hidden" style="display:none;border-top:1px solid var(--line-soft,#e8e4dd);background:var(--white,#fff);padding:6px 24px 14px;">
+    <a href="/protocol" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">Protocol</a>
+    <a href="/pricing" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">Pricing</a>
+    <a href="/browse" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">Browse</a>
+    <a href="/whats-new" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">What's New</a>
+    <a href="/sign-in" style="display:block;padding:11px 0;font-size:15px;font-weight:600;color:var(--ink,#14161c);text-decoration:none;">Sign in</a>
+  </div>
+  <script>
+    (function () {
+      var burger = document.getElementById('v7-nav-burger');
+      var menu = document.getElementById('v7-nav-menu');
+      if (!burger || !menu) return;
+      burger.addEventListener('click', function () {
+        var open = menu.style.display !== 'none';
+        menu.style.display = open ? 'none' : 'block';
+        burger.setAttribute('aria-expanded', String(!open));
+        burger.setAttribute('aria-label', open ? 'Open menu' : 'Close menu');
+      });
+    })();
+  </script>
 </nav>

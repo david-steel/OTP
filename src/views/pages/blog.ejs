@@ -137,6 +137,11 @@
         </a>
       <% }); %>
     </div>
+    <% if (typeof founderTotal !== 'undefined' && founderTotal > founderPosts.length) { %>
+      <div class="mt-8 text-center">
+        <a href="/blog?all=1" class="text-[14px] text-[var(--ink)] link-u">Browse all <%= founderTotal %> founder posts &rarr;</a>
+      </div>
+    <% } %>
   </div>
 </section>
 <% } %>
@@ -180,6 +185,11 @@
         </a>
       <% }); %>
     </div>
+    <% if (typeof conatusTotal !== 'undefined' && conatusTotal > conatusPosts.length) { %>
+      <div class="mt-8 text-center">
+        <a href="/blog?all=1" class="text-[14px] text-[var(--ink)] link-u">Browse all <%= conatusTotal %> Conatus posts &rarr;</a>
+      </div>
+    <% } %>
   </div>
 </section>
 <% } %>

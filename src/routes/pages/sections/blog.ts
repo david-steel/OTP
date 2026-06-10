@@ -458,10 +458,16 @@ export default async function blogRoutes(app: FastifyInstance) {
   // /blog index. Lists Conatus-authored markdown posts + founder-authored
   // markdown posts. Hardcoded BLOG_POSTS are intentionally NOT enumerated
   // here -- the existing index page does not list them and never did.
-  app.get('/blog', async (_request, reply) => {
+  app.get<{ Querystring: { all?: string } }>('/blog', async (request, reply) => {
     const allDynamicPosts = listConatusPosts();
-    const conatusPosts = allDynamicPosts.filter(p => p.author.toLowerCase() === 'conatus');
-    const founderPosts = allDynamicPosts.filter(p => p.author.toLowerCase() !== 'conatus');
+    const allConatus = allDynamicPosts.filter(p => p.author.toLowerCase() === 'conatus');
+    const allFounder = allDynamicPosts.filter(p => p.author.toLowerCase() !== 'conatus');
+    // The index grows by ~3 posts/weekday; cap the default render and let
+    // ?all=1 show the full archive (sitemap handles crawler discovery).
+    const showAll = request.query.all === '1';
+    const PER_SECTION = 24;
+    const conatusPosts = showAll ? allConatus : allConatus.slice(0, PER_SECTION);
+    const founderPosts = showAll ? allFounder : allFounder.slice(0, PER_SECTION);
     return renderV7(reply, 'blog', {
       title: 'Blog - OTP',
       description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.',
@@ -476,6 +482,9 @@ export default async function blogRoutes(app: FastifyInstance) {
       },
       conatusPosts,
       founderPosts,
+      conatusTotal: allConatus.length,
+      founderTotal: allFounder.length,
+      showAll,
     });
   });
 

@@ -195,6 +195,16 @@ await app.register(fastifyStatic, {
   decorateReply: false,
 });
 
+// Conventional favicon path. Pages declare /public/favicon-orgy.png, but old
+// crawlers, RSS readers, and link unfurlers request /favicon.ico directly and
+// were getting the 404 page.
+app.get('/favicon.ico', async (_request, reply) => {
+  return reply
+    .header('cache-control', 'public, max-age=86400')
+    .type('image/png')
+    .sendFile('favicon-orgy.png');
+});
+
 // Derive Clerk frontend API domain from publishable key
 const clerkPubKey = process.env.CLERK_PUBLISHABLE_KEY || '';
 const clerkInstance = clerkPubKey.startsWith('pk_')
@@ -1064,3 +1074,15 @@ try {
   app.log.error(err);
   process.exit(1);
 }
+
+// Last-resort guards: log instead of dying on stray async errors (e.g. a
+// rejected promise inside a scheduler tick, or socket errors surfaced outside
+// any request). Fastify's setErrorHandler only covers in-request errors.
+process.on('unhandledRejection', (reason) => {
+  app.log.error({ reason }, 'unhandledRejection (recovering)');
+});
+process.on('uncaughtException', (err) => {
+  // Truly unknown state -- log loudly. Railway restarts us on exit.
+  app.log.fatal({ err }, 'uncaughtException -- exiting for clean restart');
+  process.exit(1);
+});

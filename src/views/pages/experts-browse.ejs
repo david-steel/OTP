@@ -140,6 +140,13 @@
       <% } %>
     </div>
 
+    <div id="experts-more-wrap" class="mt-8 text-center" style="display:none;">
+      <button id="experts-more" type="button" class="card lift p-5" style="cursor:pointer;font-weight:600;border:1px solid var(--line);background:var(--white);">
+        Show more coaches
+      </button>
+      <div id="experts-count" class="font-mono text-[11px] text-[var(--ink-mute)] mt-3"></div>
+    </div>
+
     <!-- Trademark + sourcing footer -->
     <div class="ex-prose mt-14 pt-7 border-t border-[var(--line)] text-[12.5px] text-[var(--ink-mute)] leading-[1.65] max-w-[44rem]">
       <p class="mb-3">
@@ -156,17 +163,22 @@
 
 <script>
 (function() {
-  var cards = document.querySelectorAll('#experts-grid [data-source]');
+  // Full directory as compact JSON; the server renders only the first batch
+  // of cards as HTML (page weight). Filters search ALL profiles and the grid
+  // is re-materialized client-side in batches.
+  var ALL = <%- expertsLiteJson %>;
+  var BATCH = 60;
+  var grid = document.getElementById('experts-grid');
   var search = document.getElementById('filter-search');
   var sourceSel = document.getElementById('filter-source');
   var countrySel = document.getElementById('filter-country');
+  var moreWrap = document.getElementById('experts-more-wrap');
+  var moreBtn = document.getElementById('experts-more');
+  var countEl = document.getElementById('experts-count');
 
-  // Populate country filter from data
+  // Populate country filter from the FULL dataset.
   var countrySet = {};
-  cards.forEach(function(c) {
-    var co = c.getAttribute('data-country');
-    if (co) countrySet[co] = (countrySet[co] || 0) + 1;
-  });
+  ALL.forEach(function(e) { if (e.co) countrySet[e.co] = (countrySet[e.co] || 0) + 1; });
   Object.keys(countrySet).sort().forEach(function(co) {
     var opt = document.createElement('option');
     opt.value = co;
@@ -174,29 +186,110 @@
     countrySel.appendChild(opt);
   });
 
+  function el(tag, cls, style, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (style) n.setAttribute('style', style);
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function badge(text, style) {
+    return el('span', 'ex-badge', style, text);
+  }
+
+  function renderCard(e) {
+    var srcTag = e.ds === 'eosworldwide' ? 'eosworldwide' : (e.ds || 'otp');
+    var a = el('a', 'card lift p-5 block');
+    a.href = '/expert/' + encodeURIComponent(e.s);
+
+    var row = el('div', 'flex items-start gap-3.5');
+    if (e.p) {
+      var img = el('img', 'w-14 h-14 rounded-full object-cover shrink-0');
+      img.src = e.p; img.alt = e.n; img.loading = 'lazy';
+      row.appendChild(img);
+    } else {
+      row.appendChild(el('div',
+        'w-14 h-14 rounded-full text-white flex items-center justify-center text-lg font-bold shrink-0 font-display',
+        'background:linear-gradient(135deg,var(--blue),var(--blue-deep));',
+        (e.n || '?').charAt(0).toUpperCase()));
+    }
+    var body = el('div', 'flex-1 min-w-0');
+    body.appendChild(el('div', 'font-display font-bold text-[15px] text-[var(--ink)] truncate', null, e.n));
+    var loc = [e.c, e.st, e.co].filter(Boolean).join(', ');
+    if (loc) body.appendChild(el('div', 'font-mono text-[11px] text-[var(--ink-mute)] mt-0.5 truncate', null, loc));
+    if (e.h) body.appendChild(el('p', 'text-[12.5px] text-[var(--ink-soft)] leading-[1.5] mt-1.5 line-clamp-2', null, e.h));
+    row.appendChild(body);
+    a.appendChild(row);
+
+    var badges = el('div', 'flex flex-wrap gap-1.5 mt-3.5');
+    if (srcTag === 'eosworldwide') {
+      badges.appendChild(badge('EOS Implementer', 'background:rgba(13,125,242,0.08);color:var(--blue-deep);border-color:rgba(13,125,242,0.2);'));
+    } else if (srcTag === 'otp') {
+      badges.appendChild(badge('OTP Publisher', 'background:rgba(168,230,58,0.18);color:var(--orgy-deep);border-color:rgba(139,196,42,0.4);'));
+    }
+    if (e.cl) {
+      badges.appendChild(badge('Claimed', 'background:rgba(10,157,99,0.1);color:var(--green-deep);border-color:rgba(10,157,99,0.28);'));
+    } else if (e.ds) {
+      badges.appendChild(badge('Directory listing', 'background:var(--grey);color:var(--ink-mute);border-color:var(--line);'));
+    }
+    a.appendChild(badges);
+    return a;
+  }
+
+  function matches(e, q, src, co) {
+    var srcTag = e.ds === 'eosworldwide' ? 'eosworldwide' : (e.ds || 'otp');
+    var matchSearch = !q
+      || (e.n || '').toLowerCase().indexOf(q) !== -1
+      || (e.c || '').toLowerCase().indexOf(q) !== -1;
+    var matchSource = !src
+      || (src === 'claimed' && e.cl === 1)
+      || (src === srcTag);
+    var matchCountry = !co || e.co === co;
+    return matchSearch && matchSource && matchCountry;
+  }
+
+  var filtered = ALL;
+  var shown = grid.querySelectorAll('a.card').length; // server-rendered batch
+
+  function updateMore() {
+    var remaining = filtered.length - shown;
+    moreWrap.style.display = remaining > 0 ? '' : 'none';
+    if (remaining > 0) moreBtn.textContent = 'Show more coaches (' + remaining + ' more)';
+    countEl.textContent = 'Showing ' + Math.min(shown, filtered.length) + ' of ' + filtered.length;
+    countEl.style.display = '';
+  }
+
+  function appendBatch() {
+    var frag = document.createDocumentFragment();
+    var next = filtered.slice(shown, shown + BATCH);
+    next.forEach(function(e) { frag.appendChild(renderCard(e)); });
+    grid.appendChild(frag);
+    shown += next.length;
+    updateMore();
+  }
+
   function applyFilter() {
     var q = (search.value || '').toLowerCase().trim();
     var src = sourceSel.value;
     var co = countrySel.value;
-    cards.forEach(function(card) {
-      var name = card.getAttribute('data-name') || '';
-      var city = card.getAttribute('data-city') || '';
-      var country = card.getAttribute('data-country') || '';
-      var cardSource = card.getAttribute('data-source') || '';
-      var cardClaim = card.getAttribute('data-claim') || '';
-      var matchSearch = !q || name.indexOf(q) !== -1 || city.indexOf(q) !== -1;
-      var matchSource =
-        !src ||
-        (src === 'claimed' && cardClaim === 'claimed') ||
-        (src === 'otp' && cardSource === 'otp') ||
-        (src === cardSource);
-      var matchCountry = !co || country === co;
-      card.style.display = (matchSearch && matchSource && matchCountry) ? '' : 'none';
-    });
+    filtered = ALL.filter(function(e) { return matches(e, q, src, co); });
+    grid.innerHTML = '';
+    shown = 0;
+    if (filtered.length === 0) {
+      var empty = el('div', 'col-span-full card p-12 text-center', null, 'No coaches match that filter.');
+      grid.appendChild(empty);
+      moreWrap.style.display = 'none';
+      countEl.textContent = '';
+      return;
+    }
+    appendBatch();
   }
 
+  moreBtn.addEventListener('click', appendBatch);
   search.addEventListener('input', applyFilter);
   sourceSel.addEventListener('change', applyFilter);
   countrySel.addEventListener('change', applyFilter);
+  updateMore();
 })();
 </script>
