@@ -11,6 +11,68 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 9, 2026 ----
+
+  {
+    date: '2026-06-09',
+    tags: ['Onboarding', 'Fixes'],
+    title: 'Invite people and they appear on the chart right away -- onboarding can seat their goals and KPIs, plus a run of fixes',
+    summary: 'Invitations now feel like real seats from the moment you send them. People you invite show up on the org chart as pending tiles before they accept, and the setup wizard now lets you assign Quarterly Priorities and KPIs to those invitees, not just to yourself, so a goal can already have its owner waiting on the chart. Alongside that: the scoreboard shows a member name instead of a raw ID for seats nobody has claimed yet, signing up no longer hits a permissions error on the final step, logging out lands you on the sign-in page, and the public Browse and Intelligence Graph pages no longer error for signed-out visitors.',
+    details: `<p>A batch focused on making invitations feel real immediately, plus a cluster of fixes.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Invited people appear as pending tiles.</strong> The moment you invite someone, they take a seat on the org chart marked pending, so the chart reflects your real team before anyone clicks accept.</li>
+<li><strong>Onboarding can seat their work, not just yours.</strong> During setup you can now assign Quarterly Priorities and KPIs to the people you invited, so a Rock or a number can already point at its owner while the invite is still outstanding.</li>
+<li><strong>Scoreboard shows the name, not the ID.</strong> For a seat nobody has claimed yet, the scorecard now reads the member name instead of a raw identifier.</li>
+<li><strong>Signup is solid through the last step.</strong> The onboarding flow now loads the sign-in provider correctly, so the writes on the final wizard step no longer fail with a permissions error.</li>
+<li><strong>Cleaner sign-out and invite form.</strong> Logging out now reloads and lands you on the sign-in page, and the invite form uses neutral placeholder text.</li>
+<li><strong>Public pages no longer error when signed out.</strong> The Browse (Claims) and Intelligence Graph pages had a server error for logged-out visitors; both now load.</li>
+</ul>`,
+  },
+
+  // ---- June 6, 2026 ----
+
+  {
+    date: '2026-06-06',
+    tags: ['Major', 'Settings'],
+    title: 'Settings, rebuilt: one hub for your profile, billing, notifications, and API keys',
+    summary: 'Settings is now a single, light, on-brand hub instead of a scattered set of older pages. A picture menu in the corner opens Profile (with Personal, Metrics, Contact, and Social tabs), Preferences (theme, date format, default team, timezone), Notifications, Account, Integrations, Configuration, and API Keys. The Billing page now shows your live agent count and what your AI team costs under the real per-agent model, where humans are free and each active agent is billable, with the upgrade flow in place.',
+    details: `<p>Everything you configure now lives in one place, reskinned to the light in-app look.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>One hub, one menu.</strong> A picture menu opens the whole set: Profile, Preferences, Notifications, Account, Integrations, Configuration, and API Keys.</li>
+<li><strong>Profile got real structure.</strong> Personal, Metrics (work-style: MBTI, Kolbe, CliftonStrengths), Contact, and Social tabs.</li>
+<li><strong>Billing reflects your actual AI team.</strong> A live agent count and a real per-agent cost model -- humans free, each active agent billable -- with the subscription and upgrade UI in place.</li>
+<li><strong>API Keys folded in.</strong> The key list and MCP setup snippet now match the rest of the hub instead of the old dark header.</li>
+</ul>`,
+  },
+
+  // ---- June 5, 2026 ----
+
+  {
+    date: '2026-06-05',
+    tags: ['Dashboard', 'Meetings'],
+    title: 'A full-width Daily dashboard, and the meetings list shows your full cadence',
+    summary: 'The Daily dashboard was regridded into a full-width layout: the heavy panels (Headlines and Quarterly Priorities, now open by default) sit in a wide two-thirds main rail, with lighter tiles and your Agents / OTP Insights in a one-third sidebar, so the page reads top to bottom the way you work through your day. The meetings list now shows the full meeting cadence (Weekly Leadership, Departmental, Quarterly, Annual, One-on-One) behind a (?) explainer, and a to-do you switch to recurring no longer disappears from Daily -- you can also set recurrence right from the Daily quick-add.',
+    details: `<p>Layout and meeting-list polish aimed at the screen you open every morning.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Full-width tile layout.</strong> Heavy tiles take a two-thirds main rail; light tiles and your Agents / OTP Insights sit in a one-third sidebar. Headlines and Quarterly Priorities now open by default.</li>
+<li><strong>The full meeting cadence.</strong> The list now offers Weekly Leadership, Departmental, Quarterly, Annual, and One-on-One, with a (?) explainer for what each one is for.</li>
+<li><strong>Recurring to-dos behave.</strong> A to-do you switch to recurring no longer vanishes from Daily, and you can set recurrence straight from the Daily quick-add.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-05',
+    tags: ['Security', 'Quality'],
+    title: 'Tenant isolation, script-context hardening, and a blocking test gate on every release',
+    summary: 'A trust-and-safety pass on the platform. Support tickets are now strictly scoped to your own organization. Every value embedded into an inline script is escaped so content containing markup can never break out of its context, with a lint rule that keeps it that way. And the full test suite plus linting now run as a blocking gate on every change to the platform, so a regression has to clear automated checks before it can ship.',
+    details: `<p>Less visible than a new screen, but the foundation a coordination platform has to get right.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Tickets stay inside your org.</strong> Reading and writing support tickets is strictly scoped to the caller organization.</li>
+<li><strong>Script-context output is escaped.</strong> Any value rendered into an inline script is escaped, so content that happens to contain markup can never break out of the script. A lint rule now enforces it on every page.</li>
+<li><strong>A real safety net on releases.</strong> The test suite and linting are now a blocking gate on every push, including an integration harness that specifically checks for cross-tenant access regressions.</li>
+</ul>`,
+  },
+
   // ---- June 4, 2026 ----
 
   {
