@@ -111,7 +111,7 @@
   <div id="cal-panel" class="hidden mb-6 border border-orgy bg-orgy-soft rounded-lg px-4 py-4">
     <div class="flex items-start justify-between gap-3">
       <div>
-        <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1">Add to calendar</div>
+        <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1">Add to calendar <button type="button" class="help-q" data-help="l8meeting.calendar" aria-label="About Add to calendar">?</button></div>
         <p class="text-xs text-gray-600 max-w-xl">Create your recurring invite in Google Calendar or Outlook, set the recurrence and attendees there, then paste the block below into the invite. Works whether your team is on Google or Microsoft 365.</p>
       </div>
       <button id="cal-close" class="text-xs text-gray-400 hover:text-gray-700" title="Close">Close</button>
@@ -151,7 +151,7 @@
   <!-- Direction strip: the plan's destination, framing the meeting. -->
   <% if (typeof planDirection !== 'undefined' && planDirection && (planDirection.threeYear || planDirection.annualObjective || planDirection.tenYear)) { %>
     <div class="mb-6 border border-orgy bg-orgy-soft rounded-lg px-4 py-2.5 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs">
-      <span class="uppercase tracking-wider text-orgy-blue font-semibold">Driving toward</span>
+      <span class="uppercase tracking-wider text-orgy-blue font-semibold">Driving toward</span> <button type="button" class="help-q" data-help="l8meeting.driving" aria-label="About Driving toward">?</button>
       <% if (planDirection.threeYear) { %>
         <span><span class="text-gray-500">3-5yr<%= planDirection.threeYearYear ? ' (' + planDirection.threeYearYear + ')' : '' %>:</span> <span class="text-gray-800 font-medium"><%= planDirection.threeYear %></span></span>
       <% } %>
@@ -193,6 +193,7 @@
     <div class="flex items-center justify-between mb-2">
       <div class="text-xs uppercase tracking-wider text-gray-700 font-medium flex items-center gap-2">
         Attendees &amp; Access
+        <button type="button" class="help-q" data-help="l8meeting.attendees" aria-label="About Attendees and Access">?</button>
         <span id="meeting-live-indicator" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light font-medium" title="Connected to live updates">
           <span class="inline-block w-1.5 h-1.5 rounded-full bg-orgy align-middle animate-pulse"></span>
           Live <span id="meeting-watcher-count">1</span>
@@ -253,6 +254,7 @@
     <details class="mb-6 border rounded-lg bg-white" open>
       <summary class="cursor-pointer px-3 py-2 text-xs uppercase tracking-wider text-gray-700 font-medium hover:bg-gray-50">
         Agent Reports &mdash; what your <%= agentAttendees.length %> AI seat<%= agentAttendees.length === 1 ? '' : 's' %> carry into this meeting
+        <button type="button" class="help-q" data-help="l8meeting.agentReports" aria-label="About Agent Reports">?</button>
       </summary>
       <div class="px-3 pb-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <% agentAttendees.forEach(function(a){
@@ -330,7 +332,7 @@
 
   <!-- 1. Segue / Check-in -- one card per attendee, saves with name + time -->
   <section id="segue" class="mb-12">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span> <button type="button" class="help-q" data-help="l8meeting.checkin" aria-label="About Check-in">?</button></h2>
     <% var _checkinsDone = normalizedAttendees.filter(function(a){ return a.checkinText && String(a.checkinText).trim(); }).length; %>
     <% // Edit only while the meeting is live; entry allowed before (prep) and live; never on a completed (frozen) meeting.
        var _canCheckinEdit = meeting.status === 'in_progress';
@@ -390,7 +392,7 @@
 
   <!-- 2. Scorecard -->
   <section id="scorecard" class="mb-12">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span> <button type="button" class="help-q" data-help="l8meeting.scorecard" aria-label="About the Scorecard">?</button>
       <% if (meeting.status === 'in_progress') { %>
         <button id="refresh-scorecard" class="ml-2 text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100 font-normal align-middle">↻ Refresh</button>
       <% } %>
@@ -520,7 +522,7 @@
        var _rocksFilter = (typeof rocksFilter !== 'undefined') ? rocksFilter : 'active';
        var _hiddenCount = (typeof hiddenRocksCount !== 'undefined') ? hiddenRocksCount : 0; %>
     <div class="flex items-start justify-between gap-3 mb-3">
-      <h2 class="text-2xl font-extrabold tracking-tight text-gray-900">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span></h2>
+      <h2 class="text-2xl font-extrabold tracking-tight text-gray-900">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span> <button type="button" class="help-q" data-help="l8meeting.rocks" aria-label="About Quarterly Priorities">?</button></h2>
       <% if (_rocksFilter === 'all') { %>
         <a href="?rocks=active<%= _devQ %>#rocks" class="text-xs px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50 whitespace-nowrap">Hide completed &amp; archived</a>
       <% } else if (_hiddenCount > 0) { %>
@@ -663,7 +665,7 @@
 
   <!-- 4. Headlines -->
   <section id="headlines" class="mb-12">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">4. Customer &amp; Employee Headlines <span class="text-sm text-gray-400 font-normal">5 min</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">4. Customer &amp; Employee Headlines <span class="text-sm text-gray-400 font-normal">5 min</span> <button type="button" class="help-q" data-help="l8meeting.headlines" aria-label="About Headlines">?</button></h2>
 
     <!-- Structured headline items -->
     <div class="space-y-2 mb-3">
@@ -716,7 +718,7 @@
 
   <!-- 5. To-Dos -->
   <section id="todos" class="mb-12">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">5. To-Dos <span class="text-sm text-gray-400 font-normal">5 min &middot; 7-day commitments from prior meeting</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">5. To-Dos <span class="text-sm text-gray-400 font-normal">5 min &middot; 7-day commitments from prior meeting</span> <button type="button" class="help-q" data-help="l8meeting.todos" aria-label="About To-Dos">?</button></h2>
     <% if (!todos || todos.length === 0) { %>
       <div class="bg-gray-50 border rounded p-4 text-sm text-gray-600">No open to-dos.</div>
     <% } else { %>
@@ -773,7 +775,7 @@
 
   <!-- 6. IDS -->
   <section id="ids" class="mb-12 bg-orgy-blue-soft -mx-4 px-4 py-6 rounded-lg">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span> <button type="button" class="help-q" data-help="l8meeting.ids" aria-label="About Issues and IDS">?</button></h2>
     <% // Open: anything not yet solved AND owned by a human (or unowned).
        // EOS leadership L10 is humans-only by convention -- agent-owned
        // issues belong in an agent review, not the main IDS list.
@@ -973,7 +975,7 @@
 
   <!-- 7. Conclude -->
   <section id="conclude" class="mb-8">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span> <button type="button" class="help-q" data-help="l8meeting.conclude" aria-label="About Conclude">?</button></h2>
 
     <!-- To-dos created in this meeting -->
     <% var meetingTodos = (todos || []).filter(function(t){ return t.meetingId === meeting.id; }); %>
