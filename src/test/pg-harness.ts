@@ -24,12 +24,27 @@ export interface TestDb {
 }
 
 export async function startTestDb(): Promise<TestDb> {
-  // Per-worker port: vitest runs each test file in its own process, so the pid
-  // keeps parallel DB-backed files from colliding on a port.
-  const port = 5500 + (process.pid % 400);
+  // Per-worker port. NOTE: vitest's default pool is THREADS, so process.pid is
+  // the SAME across concurrently-running test files -- pid alone collided as
+  // soon as a second DB-backed suite ran in parallel (caught 2026-06-10 when
+  // merge.authz.test.ts hung for 120s next to tickets.authz.test.ts). Mix in
+  // the vitest worker id and retry on bind failure for safety.
+  const workerId = Number(process.env.VITEST_POOL_ID || process.env.VITEST_WORKER_ID || 0);
   const pglite = await PGlite.create();
-  const server = new PGLiteSocketServer({ db: pglite, port, host: '127.0.0.1' });
-  await server.start();
+  let server: InstanceType<typeof PGLiteSocketServer> | undefined;
+  let port = 0;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    port = 5500 + ((process.pid + workerId * 41 + attempt * 7) % 400);
+    server = new PGLiteSocketServer({ db: pglite, port, host: '127.0.0.1' });
+    try {
+      await server.start();
+      break;
+    } catch (err) {
+      server = undefined;
+      if (attempt === 19) throw err;
+    }
+  }
+  if (!server) throw new Error('pg-harness: could not bind a port');
   const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;
 
   // Materialise the full schema from schema.ts. push talks to the in-process
@@ -57,10 +72,11 @@ export async function startTestDb(): Promise<TestDb> {
     child.on('error', (err) => { clearTimeout(timer); reject(err); });
   });
 
+  const boundServer = server;
   return {
     url,
     stop: async () => {
-      await server.stop();
+      await boundServer.stop();
       await pglite.close();
     },
   };
