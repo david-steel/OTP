@@ -255,7 +255,7 @@
 
 <div class="me-wrap">
   <div class="me-h">
-    <h1>Your queue</h1>
+    <h1>Your queue <button type="button" class="help-q" data-help="page.todos" aria-label="About your to-do queue">?</button></h1>
     <div class="sub"><%= todos.length %> open · drafted by you and your AI agents · triage from your phone</div>
   </div>
 
@@ -314,7 +314,7 @@
 
   <% if ((delegatedVerify || []).length > 0) { %>
     <div class="me-card" style="border-left:4px solid #f59e0b; background:#fffbeb;">
-      <h2 class="me-title">⚠ Verify these happened (<%= (delegatedVerify || []).length %>)</h2>
+      <h2 class="me-title">⚠ Verify these happened (<%= (delegatedVerify || []).length %>) <button type="button" class="help-q" data-help="page.todosVerify" aria-label="About verification">?</button></h2>
       <% (delegatedVerify || []).forEach(function(t) { %>
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #fde68a;">
           <div style="font-weight: 600; color: #111;"><%= t.title %></div>

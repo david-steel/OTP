@@ -184,6 +184,120 @@
     'l8meeting.conclude': {
       title: '7. Conclude',
       html: '<p style="margin:0 0 16px;">Wrap in five minutes: recap the to-dos created today, confirm the cascading message for the wider team, and have each attendee rate the meeting 1–10. Aim for an 8+ average — a consistently low score is itself an issue for next week\'s list.</p>'
+    },
+
+    'page.todos': {
+      title: 'Your to-do queue',
+      html: '<p style="margin:0 0 12px;">Every open to-do you own, in one mobile-friendly queue — a <strong style="color:#16241b;">to-do</strong> is a small action item due within about 7 days, owned by one person.</p>' +
+        '<p style="margin:0 0 16px;">Create at the top (priority, due date, delegate, repeat, attach to a meeting), mark Done, or send one to the weekly meeting with <strong style="color:#16241b;">→ L10</strong>. Items you delegated sit under Waiting on others until they\'re finished.</p>'
+    },
+
+    'page.todosVerify': {
+      title: 'Verify these happened',
+      html: '<p style="margin:0 0 16px;">To-dos you delegated that the owner marked done. Nothing you hand off closes silently — you confirm each one with <strong style="color:#16241b;">Verify</strong>, or <strong style="color:#16241b;">Reopen</strong> it if it isn\'t actually finished.</p>'
+    },
+
+    'page.kpis': {
+      title: 'The Scoreboard',
+      html: '<p style="margin:0 0 12px;">Every measurable number in the company, organized by the seat that owns it. A <strong style="color:#16241b;">KPI</strong> is a number a seat watches — reviewed weekly so problems show up in the data before they show up in the bank account.</p>' +
+        '<p style="margin:0 0 16px;">Switch views with the tabs (Trends shows sparklines; Weekly through Annual show period grids). Type actual values straight into the period cells — green means the goal was met, red means it was missed.</p>'
+    },
+
+    'page.ids': {
+      title: 'Issues — admin view',
+      html: '<p style="margin:0 0 12px;">The bird\'s-eye list of every open issue across all teams — for leaders managing more than one team. An <strong style="color:#16241b;">issue</strong> is anything the team needs to work through: Identify, Discuss, Solve.</p>' +
+        '<p style="margin:0 0 16px;">Filter by team or IDS status, and use the per-row mover to hand an issue to a different team. The actual solving happens inside each team\'s weekly meeting.</p>'
+    },
+
+    'page.orgChart': {
+      title: 'The org chart',
+      html: '<p style="margin:0 0 12px;">Your whole organization — humans and AI agents — and who reports to whom. Every <strong style="color:#16241b;">seat</strong> has an owner, responsibilities, and accountability, whether the seat is filled by a person or an agent.</p>' +
+        '<p style="margin:0 0 16px;">Click a tile to edit a seat, add humans or agents, or invite by email. Edits save to a <strong style="color:#16241b;">draft</strong> until you click Publish — publishing turns the chart into your OOS, the coordination file your agents read.</p>'
+    },
+
+    'page.peopleReview': {
+      title: 'People Review',
+      html: '<p style="margin:0 0 12px;">Rate each direct report on <strong style="color:#16241b;">seat fit</strong> — Gets it, Wants it, Capacity to do it — plus each of your core values. Click a cell to cycle its rating.</p>' +
+        '<p style="margin:0 0 16px;">The computed verdict (Solid / Needs conversation / Wrong seat) tells you whether you have the right person in the right seat — the conversation starter, not the conclusion.</p>'
+    },
+
+    'page.members': {
+      title: 'Members &amp; access',
+      html: '<p style="margin:0 0 16px;">Who can sign in to this organization and what each person can see and do. Invite by email with a role (Owner and Admin down to Observer and Free), assign teams, and fine-tune Feature / Data / Agent access. You can edit, resend, or revoke any invite.</p>'
+    },
+
+    'page.teams': {
+      title: 'Teams',
+      html: '<p style="margin:0 0 16px;">Sub-teams let you scope meetings, issues, and KPIs to a group instead of the whole company — each team gets its own weekly meeting and its own scoreboard. Create one, then add the members who belong on it.</p>'
+    },
+
+    'page.sourceDocs': {
+      title: 'Source Documents',
+      html: '<p style="margin:0 0 16px;">Upload your raw operating docs — a playbook, SOPs, a CLAUDE.md — and OTP extracts the coordination intelligence into OOS files your agents can read. Upload or paste, click Process, then open the generated OOS.</p>'
+    },
+
+    'page.operatingPlan': {
+      title: 'The Operating Plan',
+      html: '<p style="margin:0 0 12px;">A guided business-planning workspace: vision, market, annual game plan, and a 90-day execution engine. It turns strategy into an owned, dated execution list — and into OOS claims your agents read.</p>' +
+        '<p style="margin:0 0 16px;">Fill in the sections, generate the 90-day plan, and (as an admin) push it to your OOS. The glossary at the top defines every term on this page.</p>'
+    },
+
+    'page.ceo': {
+      title: 'The CEO view',
+      html: '<p style="margin:0 0 16px;">The whole company on one screen: long-term direction, scoreboard health, this quarter\'s execution, and the team — driven entirely by your Operating Plan. The attention badge counts what\'s off track right now.</p>',
+      link: { href: '/dashboard/oos-operating-plan', label: 'Open the Operating Plan →' }
+    },
+
+    'page.claims': {
+      title: 'Coordination knowledge',
+      html: '<p style="margin:0 0 12px;">A public, browse-by-topic index of coordination knowledge published by organizations on OTP. A <strong style="color:#16241b;">claim</strong> is one coordination rule — the rule, why it matters, and its failure mode — tagged with confidence and evidence.</p>' +
+        '<p style="margin:0 0 16px;">Click a section to read its claims. Publishing your own OOS adds your organization\'s learnings to the network.</p>'
+    },
+
+    'page.graph': {
+      title: 'The Intelligence Graph',
+      html: '<p style="margin:0 0 16px;">An interactive map of how organizations connect through shared patterns and best practices. Switch modes to explore Intelligence, Infrastructure, or Best Practices — in Best Practices mode you can ingest a practice into your own org as a claim. Click any node for detail.</p>'
+    },
+
+    'settings.profile': {
+      title: 'Profile',
+      html: '<p style="margin:0 0 16px;">Your personal info for this organization: pronouns, title, bio, work-style metrics (MBTI, Kolbe, CliftonStrengths), extra emails and phones, and LinkedIn. Teammates see this on your seat profile.</p>'
+    },
+
+    'settings.account': {
+      title: 'Account',
+      html: '<p style="margin:0 0 16px;">Your login identity — email, password, two-factor, and connected accounts. This is handled by Clerk, the sign-in provider, and follows you across every organization you belong to.</p>'
+    },
+
+    'settings.billing': {
+      title: 'Billing',
+      html: '<p style="margin:0 0 16px;">What your AI-agent team costs. Humans are always free; each active agent seat on your chart is billable. The page shows a monthly estimate based on your current chart.</p>'
+    },
+
+    'settings.integrations': {
+      title: 'Integrations',
+      html: '<p style="margin:0 0 16px;">Connect outside tools. API &amp; MCP access is live today — that\'s how your AI agents read and write OTP data. Slack, Google Workspace, and Microsoft 365 are on the way.</p>'
+    },
+
+    'settings.notifications': {
+      title: 'Notifications',
+      html: '<p style="margin:0 0 16px;">Which events reach you — assignments, comments, mentions, headlines — and on which channel. Each row is an event type; each column is a channel. Toggle the combinations you want.</p>'
+    },
+
+    'settings.preferences': {
+      title: 'Preferences',
+      html: '<p style="margin:0 0 16px;">Your personal defaults: theme, date format, default team, and timezone. These only affect how OTP looks and behaves for you, not for your organization.</p>'
+    },
+
+    'settings.api': {
+      title: 'API Keys',
+      html: '<p style="margin:0 0 12px;">Keys that let your AI agents connect to OTP. Click <strong style="color:#16241b;">Generate New Key</strong>, name it, and copy it immediately — it\'s shown only once. Revoke any key anytime.</p>' +
+        '<p style="margin:0 0 16px;"><strong style="color:#16241b;">MCP</strong> (Model Context Protocol) is the standard that lets an agent talk to OTP safely — the page includes a copy-paste setup snippet for Claude Code. Read-only tools work without a key; publishing to your OOS requires one.</p>'
+    },
+
+    'settings.configuration': {
+      title: 'Configuration',
+      html: '<p style="margin:0 0 16px;">Company-level info: name, website, description, and whether to list your organization publicly. Only admins can edit this page.</p>'
     }
   };
 

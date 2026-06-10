@@ -25,6 +25,9 @@
   var _ph_eyebrow  = (typeof eyebrow !== 'undefined' && eyebrow) ? eyebrow : '';
   var _ph_cta      = (typeof cta !== 'undefined' && cta && cta.label && cta.href) ? cta : null;
   var _ph_ver      = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
+  /* helpKey - OPTIONAL key into the OTP_HELP registry (partials/help.ejs).
+     Renders a (?) trigger after the title that opens the help popup. */
+  var _ph_help     = (typeof helpKey !== 'undefined' && helpKey) ? String(helpKey) : '';
 %>
 <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div class="flex items-center gap-3 min-w-0">
@@ -36,7 +39,7 @@
       <% if (_ph_eyebrow) { %>
         <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= _ph_eyebrow %></div>
       <% } %>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%- _ph_title %></h1>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%- _ph_title %><% if (_ph_help) { %> <button type="button" class="help-q" data-help="<%= _ph_help %>" aria-label="About this page">?</button><% } %></h1>
       <% if (_ph_subtitle) { %>
         <p class="text-sm text-gray-600 mt-1"><%- _ph_subtitle %></p>
       <% } %>

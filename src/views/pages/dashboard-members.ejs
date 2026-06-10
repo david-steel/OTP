@@ -24,7 +24,7 @@
   <div class="mb-8 flex items-end justify-between gap-4 flex-wrap">
     <div>
       <div class="text-xs uppercase tracking-wider text-gray-500 mb-1"><%= orgName %></div>
-      <%- include('../partials/ui-page-header', { mascot: 'members', title: 'Members', subtitle: members.length + ' active &middot; ' + invitations.length + ' pending invite' + (invitations.length === 1 ? '' : 's') }) %>
+      <%- include('../partials/ui-page-header', { helpKey: 'page.members', mascot: 'members', title: 'Members', subtitle: members.length + ' active &middot; ' + invitations.length + ' pending invite' + (invitations.length === 1 ? '' : 's') }) %>
     </div>
     <div class="flex items-center gap-2">
       <button type="button" onclick="document.getElementById('invite-form').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){document.querySelector('#invite-form input[name=email]').focus();}, 400);"
