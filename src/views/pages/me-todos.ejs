@@ -1034,7 +1034,7 @@ function humanAgo(d) {
       var id = btn.getAttribute('data-todo-id');
       btn.disabled = true;
       fetch('/api/v1/todos/' + encodeURIComponent(id), {
-        method: 'PATCH',
+        method: 'PUT',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ done: true, verified: true }),
