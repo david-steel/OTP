@@ -3270,6 +3270,26 @@ Founder, OTP</p>
       founderDependency = { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] };
     }
 
+    // ---- Per-user dashboard personalization prefs ----
+    // Read from orgMembers.preferences.dashboard (jsonb). request.orgMember is
+    // attached by guards.ts and is impersonation-aware -- never derive the
+    // member from auth.userId. Defensive: default to {} if absent/malformed.
+    // Shape: { hiddenTiles?: string[], tileOrder?: { left?: string[], right?: string[] }, fontSize?: 'sm'|'base'|'lg' }
+    let dashboardPrefs: {
+      hiddenTiles?: string[];
+      tileOrder?: { left?: string[]; right?: string[] };
+      fontSize?: 'sm' | 'base' | 'lg';
+    } = {};
+    try {
+      const rawPrefs = (request as any).orgMember?.preferences as Record<string, unknown> | null | undefined;
+      const rawDash = rawPrefs && typeof rawPrefs === 'object' ? (rawPrefs as any).dashboard : undefined;
+      if (rawDash && typeof rawDash === 'object' && !Array.isArray(rawDash)) {
+        dashboardPrefs = rawDash;
+      }
+    } catch {
+      dashboardPrefs = {};
+    }
+
     return reply.view('pages/dashboard-daily', {
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
@@ -3307,6 +3327,7 @@ Founder, OTP</p>
       orgTeams,
       selectedTeamId,
       scopeMine,
+      dashboardPrefs,
       previewRole: previewActive ? previewParam : '',
     });
   });
