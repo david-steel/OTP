@@ -9,6 +9,7 @@ import { newsletterSubscribers, practiceVotes, bestPractices } from '../../db/sc
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { sendEmail } from '../../config/email.js';
 import { addContactToAudience, markContactUnsubscribed } from '../../services/resend-audience.js';
+import { unsubscribeUrl, verifyUnsubscribeToken } from '../../services/unsubscribe-token.js';
 import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +18,7 @@ const __dirname = path.dirname(__filename);
 async function sendWelcomeEmail(email: string): Promise<void> {
   try {
     const templatePath = path.resolve(__dirname, '../../templates/emails/newsletter-welcome.ejs');
-    const html = await ejs.renderFile(templatePath, { email });
+    const html = await ejs.renderFile(templatePath, { email, unsubUrl: unsubscribeUrl(email) });
     await sendEmail({
       to: email,
       subject: "You're in -- welcome to OTP",
@@ -43,6 +44,8 @@ const voteSchema = z.object({
 });
 
 export default async function newsletterRoutes(app: FastifyInstance) {
+  // NOTE: the unsubscribe confirm page posts as a plain HTML form; the global
+  // application/x-www-form-urlencoded parser in server.ts:47 handles it.
 
   // ============================================================
   // POST /api/v1/newsletter/subscribe
@@ -158,19 +161,60 @@ export default async function newsletterRoutes(app: FastifyInstance) {
   });
 
   // ============================================================
-  // GET /api/v1/newsletter/unsubscribe/:email
-  // One-click unsubscribe (CAN-SPAM compliant)
+  // GET /api/v1/newsletter/unsubscribe/:email?t=<hmac>
+  // One-click unsubscribe (CAN-SPAM compliant).
+  //
+  // With a valid signed token (all emails sent after 2026-06-10): one click,
+  // done. Without one (legacy links in already-delivered emails, or someone
+  // typing an arbitrary email into the URL): show a confirm page instead of
+  // mutating on GET -- this is what stops link-prefetching bots and drive-by
+  // unsubscribes of other people's addresses.
   // ============================================================
-  app.get<{ Params: { email: string } }>('/newsletter/unsubscribe/:email', async (request, reply) => {
-    const email = decodeURIComponent(request.params.email).toLowerCase();
-
+  async function performUnsubscribe(email: string) {
     await db.update(newsletterSubscribers)
       .set({ unsubscribedAt: new Date() })
       .where(eq(newsletterSubscribers.email, email));
-
     // Mirror to Resend Audience so broadcasts skip them. Best-effort.
     await markContactUnsubscribed(email);
+  }
 
+  app.get<{ Params: { email: string }; Querystring: { t?: string } }>(
+    '/newsletter/unsubscribe/:email',
+    async (request, reply) => {
+      const email = decodeURIComponent(request.params.email).toLowerCase();
+
+      if (verifyUnsubscribeToken(email, request.query.t)) {
+        await performUnsubscribe(email);
+        return reply.redirect('/?unsubscribed=1');
+      }
+
+      // Legacy / untokened link: confirm before mutating.
+      return reply.type('text/html').send(`<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Unsubscribe - OTP</title></head>
+<body style="font-family:-apple-system,Segoe UI,sans-serif;background:#faf8f5;margin:0;padding:48px 20px;">
+<div style="max-width:420px;margin:0 auto;background:#fff;border:1px solid #e8e4dd;border-radius:12px;padding:32px;text-align:center;">
+<h1 style="font-size:20px;margin:0 0 12px 0;color:#14161c;">Unsubscribe from OTP emails?</h1>
+<p style="font-size:14px;color:#666;margin:0 0 24px 0;">${email.replace(/</g, '&lt;')} will stop receiving updates from orgtp.com.</p>
+<form method="POST" action="/api/v1/newsletter/unsubscribe">
+<input type="hidden" name="email" value="${email.replace(/"/g, '&quot;')}">
+<button type="submit" style="background:#14161c;color:#fff;border:0;border-radius:8px;padding:12px 28px;font-size:15px;font-weight:600;cursor:pointer;">Unsubscribe</button>
+</form>
+<p style="font-size:12px;color:#aaa;margin:20px 0 0 0;"><a href="https://orgtp.com" style="color:#aaa;">Keep my subscription</a></p>
+</div></body></html>`);
+    },
+  );
+
+  // POST confirm path for legacy links (the form above). Rate limited.
+  app.post<{ Body: { email?: string } }>('/newsletter/unsubscribe', async (request, reply) => {
+    if (!subscribeRateLimit(request.ip)) {
+      return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Try again in a minute.' } });
+    }
+    const email = String((request.body as any)?.email || '').trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return reply.status(400).send({ error: { code: 'INVALID_INPUT', message: 'Valid email required.' } });
+    }
+    await performUnsubscribe(email);
     return reply.redirect('/?unsubscribed=1');
   });
 

@@ -7,6 +7,7 @@
 // PNG (not webp) for Outlook-desktop support.
 
 import type { LifecycleEmail, LifecycleCard } from '../data/email-series.js';
+import { unsubscribeUrl } from './unsubscribe-token.js';
 
 const IMG = 'https://orgtp.com/public/images';
 const GREEN = '#A8E63A';
@@ -28,7 +29,7 @@ function header(): string {
 }
 
 function footer(email: string): string {
-  const unsub = `https://orgtp.com/api/v1/newsletter/unsubscribe/${encodeURIComponent(email)}`;
+  const unsub = unsubscribeUrl(email);
   return `<tr><td style="padding:0 32px 28px 32px;"><div style="border-top:1px solid #ECEFF3;margin-bottom:16px;"></div>`
     + `<p style="font-size:13px;color:#999;margin:0 0 6px 0;">You're receiving this because you signed up at `
     + `<a href="https://orgtp.com" style="color:#999;font-weight:600;">orgtp.com</a>.</p>`

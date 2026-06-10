@@ -6,6 +6,41 @@ import { organizations } from '../db/schema.js';
 import { resolveApiKey } from './api-key-auth.js';
 import { resolveServiceAuth } from './service-auth.js';
 
+// Roles that may never mutate org data (same set meetings.ts enforces).
+const READ_ONLY_ROLES = new Set(['observer', 'inactive', 'free']);
+
+/**
+ * Block read-only roles from write endpoints. Mirrors checkMeetingEdit's
+ * role rules so rocks/KPIs/todos/values/seats agree with meetings:
+ *  - API-key / service requests: pass (scope gates handle them upstream).
+ *  - Legacy founder acting in their own org: always allowed, checked BEFORE
+ *    the member-role check (the 6/1 "Start button does nothing" lesson: a
+ *    founder may also carry a non-privileged org_members row).
+ *  - observer / inactive / free members: 403.
+ * Returns true if the write may proceed, false after sending the reply.
+ */
+export async function gateReadOnlyRole(request: FastifyRequest, reply: any): Promise<boolean> {
+  const auth = getAuth(request);
+  if (!auth.userId) return true; // API-key / service path
+
+  const member = (request as any).orgMember as { orgId?: string; role?: string } | null;
+
+  const [ownerOrg] = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.clerkOrgId, auth.userId))
+    .limit(1);
+  if (ownerOrg && (!member?.orgId || member.orgId === ownerOrg.id)) return true;
+
+  if (member?.role && READ_ONLY_ROLES.has(member.role)) {
+    reply.status(403).send({
+      error: { code: 'READ_ONLY_ROLE', message: 'Your role is read-only' },
+    });
+    return false;
+  }
+  return true;
+}
+
 /**
  * Get the organization for the authenticated user.
  * Tries Clerk session first, then falls back to API key auth.

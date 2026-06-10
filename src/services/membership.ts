@@ -78,6 +78,10 @@ export async function resolveOrgForUser(clerkUserId: string): Promise<{
   if (!clerkUserId) return null;
 
   // Membership lookup wins (covers any user invited or seeded).
+  // Ordered by membership creation so a user in multiple orgs resolves to a
+  // STABLE org (their oldest membership) instead of whatever the planner
+  // returns first. Multi-org users need a real org switcher eventually; until
+  // then, deterministic beats arbitrary.
   const [memberRow] = await db
     .select({
       org: organizations,
@@ -88,6 +92,7 @@ export async function resolveOrgForUser(clerkUserId: string): Promise<{
     .from(orgMembers)
     .innerJoin(organizations, eq(organizations.id, orgMembers.orgId))
     .where(and(eq(orgMembers.clerkUserId, clerkUserId), eq(orgMembers.status, 'active')))
+    .orderBy(orgMembers.createdAt, orgMembers.id)
     .limit(1);
 
   if (memberRow) {
@@ -103,6 +108,39 @@ export async function resolveOrgForUser(clerkUserId: string): Promise<{
   if (legacy) return { org: legacy, role: 'owner', claimedEntityId: null };
 
   return null;
+}
+
+/**
+ * The org founder's canonical chart tile IDs, used for defense-in-depth
+ * scrubbing. The chart-claim-reconcile email-match path has a known drift
+ * pattern that can copy the founder's tile into another member's
+ * claimedEntityIds -- which makes every downstream "my X" query return the
+ * founder's data (the original HUM_DAVIDSTEEL /me/todos leak, 2026-05-26).
+ * Callers strip these IDs from any NON-founder member's claims.
+ *
+ * Always includes the historical literal 'HUM_DAVIDSTEEL' (the v1
+ * placeholder) so the original leak can never regress, plus whatever tiles
+ * the founder's own member row claims in THIS org -- so the same defense
+ * holds for every customer org, not just David's.
+ */
+export async function getFounderTileIds(orgId: string | null | undefined, clerkOrgId: string | null | undefined): Promise<Set<string>> {
+  const ids = new Set<string>(['HUM_DAVIDSTEEL']);
+  if (orgId && clerkOrgId) {
+    const [founder] = await db
+      .select({
+        claimedEntityId: orgMembers.claimedEntityId,
+        claimedEntityIds: orgMembers.claimedEntityIds,
+      })
+      .from(orgMembers)
+      .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.clerkUserId, clerkOrgId)))
+      .limit(1);
+    if (founder?.claimedEntityId) ids.add(founder.claimedEntityId);
+    const list = (founder?.claimedEntityIds as unknown) as string[] | null;
+    if (Array.isArray(list)) {
+      for (const id of list) if (typeof id === 'string' && id) ids.add(id);
+    }
+  }
+  return ids;
 }
 
 export async function getOrgsForUser(clerkUserId: string): Promise<{ orgId: string; role: Role; claimedEntityId: string | null }[]> {

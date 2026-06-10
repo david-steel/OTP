@@ -31,7 +31,8 @@ const EMAIL_3: EmailTemplate = {
 async function renderAndSend(email: string, tpl: EmailTemplate): Promise<boolean> {
   try {
     const templatePath = path.resolve(__dirname, '../templates/emails', tpl.templateFile);
-    const html = await ejs.renderFile(templatePath, { email });
+    const { unsubscribeUrl } = await import('./unsubscribe-token.js');
+    const html = await ejs.renderFile(templatePath, { email, unsubUrl: unsubscribeUrl(email) });
     return !!(await sendEmail({
       to: email,
       subject: tpl.subject,

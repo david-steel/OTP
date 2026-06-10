@@ -33,7 +33,7 @@
       You're receiving this because you signed up at orgtp.com.
     </p>
     <p style="font-size:13px;color:#777;margin:0;">
-      <a href="https://orgtp.com/api/v1/newsletter/unsubscribe/<%- encodeURIComponent(email) %>" style="color:#777;">Unsubscribe</a>
+      <a href="<%- locals.unsubUrl || ('https://orgtp.com/api/v1/newsletter/unsubscribe/' + encodeURIComponent(email)) %>" style="color:#777;">Unsubscribe</a>
     </p>
 
   </div>

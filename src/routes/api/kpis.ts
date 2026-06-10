@@ -16,7 +16,7 @@ import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
-import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveOrgForUser } from '../../services/membership.js';
 import {
   createKpi,
@@ -42,7 +42,11 @@ import { isSuperAdmin } from '../../middleware/super-admin.js';
 
 async function checkScope(request: FastifyRequest, reply: any, requiredScope: string): Promise<boolean> {
   const auth = getAuth(request);
-  if (auth.userId) return true;
+  if (auth.userId) {
+    // Read-only roles (observer/inactive/free) may not mutate KPIs.
+    if (requiredScope === 'write') return gateReadOnlyRole(request, reply);
+    return true;
+  }
   const apiKeyCtx = await resolveApiKey(request);
   if (apiKeyCtx && !requireScope(apiKeyCtx, requiredScope)) {
     reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: `API key requires '${requiredScope}' scope` } });

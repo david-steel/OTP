@@ -37,7 +37,7 @@
       You are receiving this because you have an active account at orgtp.com.
     </p>
     <p style="font-size:13px;color:#777;margin:0;">
-      <a href="https://orgtp.com/api/v1/newsletter/unsubscribe/<%- encodeURIComponent(email) %>" style="color:#777;">Unsubscribe from re-engagement nudges</a>
+      <a href="<%- locals.unsubUrl || ('https://orgtp.com/api/v1/newsletter/unsubscribe/' + encodeURIComponent(email)) %>" style="color:#777;">Unsubscribe from re-engagement nudges</a>
     </p>
 
   </div>

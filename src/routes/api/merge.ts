@@ -5,6 +5,7 @@ import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, auditLogs } from '../../db/schema.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
+import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import type { ParsedClaim } from '../../shared/types.js';
 
 // Helper to convert DB claim rows to ParsedClaim
@@ -42,6 +43,15 @@ export default async function mergeRoutes(app: FastifyInstance) {
   app.post<{
     Body: { sourceOosId: string; targetOosId: string };
   }>('/merge/preview', async (request, reply) => {
+    // Source can be any published OOS (published claims are public via /claims),
+    // but the target must belong to the caller's org -- same rule as execute.
+    const org = await getAuthOrg(request);
+    if (!org) {
+      return reply.status(401).send({
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+      });
+    }
+
     const parsed = mergePreviewSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -69,6 +79,12 @@ export default async function mergeRoutes(app: FastifyInstance) {
     if (sourceOos.status !== 'published' || targetOos.status !== 'published') {
       return reply.status(400).send({
         error: { code: 'NOT_PUBLISHED', message: 'Both OOS files must be published' },
+      });
+    }
+
+    if (targetOos.orgId !== org.id) {
+      return reply.status(403).send({
+        error: { code: 'NOT_OWNER', message: 'Target OOS must belong to your organization' },
       });
     }
 
@@ -127,6 +143,13 @@ export default async function mergeRoutes(app: FastifyInstance) {
       decisions: Array<{ candidateId: string; decision: 'accept' | 'reject' | 'adapt' }>;
     };
   }>('/merge/decisions', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) {
+      return reply.status(401).send({
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+      });
+    }
+
     // Phase 1: This endpoint records decisions but does NOT execute the merge.
     // It returns a summary of what would happen if the merge were applied.
     // Actual merge execution ships in Phase 2.

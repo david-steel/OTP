@@ -18,7 +18,7 @@ import { db } from '../../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews } from '../../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
 import type { Role } from '../../../services/membership.js';
-import { getOrgsForUser, resolveOrgForUser, acceptInvite, MembershipError } from '../../../services/membership.js';
+import { getOrgsForUser, resolveOrgForUser, acceptInvite, MembershipError, getFounderTileIds } from '../../../services/membership.js';
 import { computeDiff } from '../../../services/diff-engine.js';
 import { generateMergePreview } from '../../../services/merge-preview.js';
 import type { ParsedClaim } from '../../../shared/types.js';
@@ -80,14 +80,15 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const member = orgMember as any;
     const isLegacyFounder = !!(effectiveClerkId && org && (org as any).clerkOrgId === effectiveClerkId);
     const rawClaimedIds = (member?.claimedEntityIds as string[] | undefined) || [];
+    const founderTilesDbg = await getFounderTileIds(org?.id, (org as any)?.clerkOrgId);
     const claimedIds = isLegacyFounder
       ? rawClaimedIds
-      : rawClaimedIds.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
+      : rawClaimedIds.filter((id: string) => !founderTilesDbg.has(id));
     const myExternalId = claimedIds[0] || (member?.email || '');
     const ownerCandidates = Array.from(new Set([
       ...claimedIds,
       ...(member?.email ? [member.email] : []),
-      ...(isLegacyFounder ? ['HUM_DAVIDSTEEL'] : []),
+      ...(isLegacyFounder ? [...founderTilesDbg] : []),
     ].filter(Boolean) as string[]));
 
     // Run the actual myTodos query and return the first 5 with their owners
@@ -232,11 +233,12 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       if (_viewerMembers?.claimedEntityId && !_myTilesM.includes(_viewerMembers.claimedEntityId)) {
         _myTilesM.push(_viewerMembers.claimedEntityId);
       }
-      // Defense-in-depth: strip HUM_DAVIDSTEEL for non-founders.
+      // Defense-in-depth: strip the org founder's tiles for non-founders.
       const _impM = (request as any).impersonation as { as?: string } | null;
       const _effIdM = _impM?.as || auth.userId;
       const _isLegacyM = !!(_effIdM && (org as any).clerkOrgId === _effIdM);
-      const _myTilesScrubbedM = _isLegacyM ? _myTilesM : _myTilesM.filter(t => t !== 'HUM_DAVIDSTEEL');
+      const _founderTilesM = await getFounderTileIds(org.id, (org as any).clerkOrgId);
+      const _myTilesScrubbedM = _isLegacyM ? _myTilesM : _myTilesM.filter(t => !_founderTilesM.has(t));
       const _subtreeM = _myTilesScrubbedM.length > 0
         ? reportsSubtree(_graphM, _myTilesScrubbedM)
         : new Set<string>();
@@ -783,10 +785,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       if (viewerMemberKpis?.claimedEntityId && !rawClaimsKpis.includes(viewerMemberKpis.claimedEntityId)) {
         rawClaimsKpis.push(viewerMemberKpis.claimedEntityId);
       }
+      const _founderTilesKpis = await getFounderTileIds(org.id, (org as any).clerkOrgId);
       const claimedSetKpis = new Set(
         isLegacyFounderKpis
           ? rawClaimsKpis
-          : rawClaimsKpis.filter(id => id !== 'HUM_DAVIDSTEEL'),
+          : rawClaimsKpis.filter(id => !_founderTilesKpis.has(id)),
       );
 
       const myTeamRowsKpis = viewerMemberKpis?.id
@@ -2787,9 +2790,10 @@ Founder, OTP</p>
     const _effectiveClerkId = _imp?.as || _authForClaim.userId;
     const _isLegacyFounder = !!(_effectiveClerkId && (org as any).clerkOrgId === _effectiveClerkId);
     const _rawClaimedIds = ((member as any)?.claimedEntityIds as string[] | undefined) || [];
+    const _founderTiles = await getFounderTileIds(org.id, (org as any).clerkOrgId);
     const claimedIds = _isLegacyFounder
       ? _rawClaimedIds
-      : _rawClaimedIds.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
+      : _rawClaimedIds.filter((id: string) => !_founderTiles.has(id));
     const myExternalId = claimedIds[0] || (member?.email || '');
 
     // ---- My Rocks ----
@@ -2845,7 +2849,7 @@ Founder, OTP</p>
     const ownerCandidates = Array.from(new Set([
       ...claimedIds,
       ...(member?.email ? [member.email] : []),
-      ...(_isLegacyFounder ? ['HUM_DAVIDSTEEL'] : []),
+      ...(_isLegacyFounder ? [..._founderTiles] : []),
     ].filter(Boolean) as string[]));
     // Enriched todos: include the meeting title + team name so the view
     // can show a source label per todo (Personal / From <meeting>).

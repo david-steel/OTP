@@ -7,7 +7,7 @@ import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, onboardingSequence } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
-import { getOrgsForUser } from '../../services/membership.js';
+import { getOrgsForUser, getFounderTileIds } from '../../services/membership.js';
 import { isNull, isNotNull } from 'drizzle-orm';
 import { computeDiff } from '../../services/diff-engine.js';
 import { generateMergePreview } from '../../services/merge-preview.js';
@@ -2128,12 +2128,29 @@ export default async function pageRoutes(app: FastifyInstance) {
       claimed: allExperts.filter((e: any) => e.claimed === true).length,
       eos: allExperts.filter((e: any) => e.directory_source === 'eosworldwide').length,
     };
+    // The full directory rendered as HTML cards was a 1.1MB page. Server-render
+    // only the first batch; ship the rest as compact JSON that the page's
+    // filter/show-more script materializes on demand (search still covers ALL
+    // profiles). Individual /expert/:slug pages stay in the sitemap for SEO.
+    const EXPERTS_INITIAL = 60;
+    const expertsLite = allExperts.map((e: any) => ({
+      s: e.slug,
+      n: e.display_name || '',
+      c: e.geo_city || '',
+      st: e.geo_state || '',
+      co: e.geo_country || '',
+      ds: e.directory_source || '',
+      cl: e.claimed === true ? 1 : 0,
+      h: (e.headline || '').slice(0, 180),
+      p: e.photo_url || '',
+    }));
     return renderV7(reply, 'experts-browse', {
       title: 'Operating-System Coach Directory | OTP',
       description: `Public directory of ${counts.total}+ operating-system coaches and consultants -- EOS Implementers, Scaling Up coaches, and OTP-native publishers. Filter by framework, location, or expertise.`,
       canonical: BASE_URL + '/experts',
       breadcrumbs: bc({ name: 'Coach Directory', url: BASE_URL + '/experts' }),
-      experts: allExperts,
+      experts: allExperts.slice(0, EXPERTS_INITIAL),
+      expertsLiteJson: JSON.stringify(expertsLite).replace(/</g, '\\u003c'),
       counts,
     });
   });
@@ -3772,9 +3789,10 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // Caught 2026-05-27 when David's /team/review rendered the
     // "no one reports to you" empty state despite 16 humans on the chart.
     const _isLegacyReview = !!(_effClerkReview && (org as any).clerkOrgId === _effClerkReview);
+    const _founderTilesReview = await getFounderTileIds(org.id, (org as any).clerkOrgId);
     const _myTilesScrubbedReview = _isLegacyReview
       ? [...myTiles]
-      : myTiles.filter(t => t !== 'HUM_DAVIDSTEEL');
+      : myTiles.filter(t => !_founderTilesReview.has(t));
     myTiles.length = 0;
     for (const t of _myTilesScrubbedReview) myTiles.push(t);
 
@@ -4152,15 +4170,16 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const _impMeTodos = (request as any).impersonation as { as?: string } | null;
     const _effectiveClerkIdMeTodos = _impMeTodos?.as || auth.userId;
     const _isLegacyFounderMeTodos = !!(_effectiveClerkIdMeTodos && (org as any).clerkOrgId === _effectiveClerkIdMeTodos);
+    const _founderTilesMeTodos = await getFounderTileIds(org.id, (org as any).clerkOrgId);
     let ownerExternalIds: string[] = [];
     if (me?.claimedEntityIds && Array.isArray(me.claimedEntityIds)) {
       const _raw = (me.claimedEntityIds as string[]).filter(x => typeof x === 'string' && x.length > 0);
       ownerExternalIds = _isLegacyFounderMeTodos
         ? _raw
-        : _raw.filter((id: string) => id !== 'HUM_DAVIDSTEEL');
+        : _raw.filter((id: string) => !_founderTilesMeTodos.has(id));
     }
     if (ownerExternalIds.length === 0 && _isLegacyFounderMeTodos) {
-      ownerExternalIds = ['HUM_DAVIDSTEEL'];
+      ownerExternalIds = [..._founderTilesMeTodos];
     }
 
     // Personal todos only here. L10 todos owned by the user are shown as a

@@ -5,7 +5,7 @@ import { nextOccurrence, isValidRule } from './recurrence.js';
 import { db } from '../../config/database.js';
 import { todos, auditLogs, teams } from '../../db/schema.js';
 import { getAuth } from '@clerk/fastify';
-import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
@@ -92,7 +92,8 @@ async function gateWriteScope(request: any, reply: any): Promise<boolean> {
     reply.status(403).send({ error: { code: 'INSUFFICIENT_SCOPE', message: "API key requires 'write' scope" } });
     return false;
   }
-  return true;
+  // Read-only roles (observer/inactive/free) may not mutate todos.
+  return gateReadOnlyRole(request, reply);
 }
 
 export default async function todoRoutes(app: FastifyInstance) {

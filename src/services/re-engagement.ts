@@ -59,6 +59,10 @@ const SUPPRESSED_DOMAINS = new Set<string>([
 ]);
 const SUPPRESSED_EMAILS = new Set<string>([
   'krisg@jointher3volution.com', // EO relationship -- David reaches out personally
+  // First paying customer -- David handles him personally. His rungs 2-30 are
+  // also marked skipped in lifecycle_sends, but that data guard doesn't cover
+  // future rungs or behavioral re-engagement nudges; this one does.
+  'victorliu@clearskiestitle.com',
 ]);
 
 export function isSuppressedRecipient(email: string): boolean {
@@ -227,11 +231,13 @@ function passesCap(history: NudgeHistory): boolean {
 async function renderTemplate(segment: Segment, candidate: Candidate): Promise<string> {
   const file = TEMPLATE_BY_SEGMENT[segment] + '.ejs';
   const templatePath = path.resolve(__dirname, '..', 'templates', 'emails', file);
+  const { unsubscribeUrl } = await import('./unsubscribe-token.js');
   return await ejs.renderFile(templatePath, {
     email: candidate.email,
     firstName: candidate.firstName || 'there',
     staleDays: candidate.staleDays,
     publishedOosName: candidate.publishedOosName,
+    unsubUrl: unsubscribeUrl(candidate.email),
   });
 }
 

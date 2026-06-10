@@ -20,6 +20,7 @@ import { isNull } from 'drizzle-orm';
 import { db } from '../src/config/database.js';
 import { newsletterSubscribers } from '../src/db/schema.js';
 import { sendEmail } from '../src/config/email.js';
+import { unsubscribeUrl } from '../src/services/unsubscribe-token.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -111,7 +112,7 @@ function dedupe(lists: Recipient[][]): Recipient[] {
 
 async function renderTemplate(email: string): Promise<string> {
   const templatePath = path.resolve(__dirname, '..', 'src', 'templates', 'emails', 'launch-oos-operating-plan.ejs');
-  return await ejs.renderFile(templatePath, { email });
+  return await ejs.renderFile(templatePath, { email, unsubUrl: unsubscribeUrl(email) });
 }
 
 async function run() {
