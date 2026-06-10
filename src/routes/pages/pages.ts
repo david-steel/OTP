@@ -3408,6 +3408,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         eq(kpis.organizationId, org.id),
         meeting.teamId ? eq(kpis.teamId, meeting.teamId) : isNull(kpis.teamId),
         isNull(kpis.deletedAt),
+        isNull(kpis.archivedAt),
       ));
     const latestValues: Record<string, any> = {};
     const previousValues: Record<string, any> = {};

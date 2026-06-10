@@ -73,6 +73,13 @@ const DDL = [
      ALTER TABLE "rocks"
        ADD COLUMN "archived_at" timestamp;
    EXCEPTION WHEN duplicate_column THEN null; END $$;`,
+
+  // Archived KPIs (e.g. a scorecard group the org no longer tracks).
+  // Hidden from default lists, never deleted, recoverable via Unarchive.
+  `DO $$ BEGIN
+     ALTER TABLE "kpis"
+       ADD COLUMN "archived_at" timestamp;
+   EXCEPTION WHEN duplicate_column THEN null; END $$;`,
 ];
 
 export async function ensureKpisRocksTeam(): Promise<void> {

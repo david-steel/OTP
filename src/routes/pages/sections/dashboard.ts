@@ -743,7 +743,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   });
 
   // Dashboard: KPI Scoreboard (Phase 3 + Phase 5)
-  app.get<{ Querystring: { grain?: string; view?: string } }>('/dashboard/kpis', async (request, reply) => {
+  app.get<{ Querystring: { grain?: string; view?: string; archived?: string } }>('/dashboard/kpis', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
     const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
@@ -761,7 +761,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const { listKpis, getScoreboard } = await import('../../../services/kpi.js');
     const { formatPeriodLabel } = await import('../../../services/kpi-periods.js');
 
-    let allKpis = await listKpis(org.id, {});
+    // ?archived=1 -> include archived KPIs (badged in the view). Default
+    // hides them everywhere; archiving is the soft, reversible retirement
+    // path for KPIs that stopped being relevant. Never a delete.
+    const showArchived = ['1', 'true'].includes(String(request.query.archived || '').toLowerCase());
+    let allKpis = await listKpis(org.id, { archived: showArchived ? 'include' : 'exclude' });
 
     // Scope KPIs to the viewer (added 2026-05-27).
     //   owner / admin / implementer  -> full org KPI list
@@ -821,7 +825,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     else if (grain === 'quarterly') from = new Date(now.getUTCFullYear() - 2, now.getUTCMonth(), 1);
     else from = new Date(now.getUTCFullYear() - 4, 0, 1);
 
-    const scoreboard = await getScoreboard(org.id, { timeGrain: grain, from, to: now });
+    const scoreboard = await getScoreboard(org.id, { timeGrain: grain, from, to: now, archived: showArchived ? 'include' : 'exclude' });
 
     // Mirror the allKpis scoping onto the scoreboard rows. allKpis above is
     // the source of truth for "what this viewer can see"; the scoreboard
@@ -920,6 +924,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       view,
       orgTeams: orgTeamsKpi,
       sharedRollups,
+      showArchived,
       isSuperAdmin: (request as any).isSuperAdmin,
     });
   });
@@ -2822,6 +2827,7 @@ Founder, OTP</p>
         .where(and(
           eq(kpis.organizationId, org.id),
           isNull(kpis.deletedAt),
+          isNull(kpis.archivedAt),
           ccScope(kpis.teamId, kpis.ownerExternalId),
         ))
         .orderBy(kpis.title);
@@ -3109,7 +3115,7 @@ Founder, OTP</p>
       const [kpiRows, rockRows, ticketRows] = await Promise.all([
         db.select({ id: kpis.id, title: kpis.title, owner: kpis.ownerExternalId })
           .from(kpis)
-          .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt))),
+          .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt), isNull(kpis.archivedAt))),
         db.select({ id: rocks.id, title: rocks.title, owner: rocks.ownerExternalId })
           .from(rocks)
           .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
@@ -3234,7 +3240,7 @@ Founder, OTP</p>
           db.select({ owner: rocks.ownerExternalId }).from(rocks)
             .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
           db.select({ owner: kpis.ownerExternalId }).from(kpis)
-            .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt))),
+            .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt), isNull(kpis.archivedAt))),
           db.select({ owner: tickets.ownerExternalId }).from(tickets)
             .where(and(
               eq(tickets.orgId, org.id),

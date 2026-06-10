@@ -178,6 +178,7 @@ async function buildScorecardSnapshot(orgId: string, teamId: string | null) {
     eq(kpis.organizationId, orgId),
     teamId ? eq(kpis.teamId, teamId) : isNull(kpis.teamId),
     isNull(kpis.deletedAt),
+    isNull(kpis.archivedAt),
   ));
   const kpiIds = orgKpis.map(k => k.id);
   const latestValues: Record<string, any> = {};

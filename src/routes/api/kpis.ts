@@ -114,6 +114,9 @@ const updateSchema = z.object({
   teamId: z.string().uuid().nullable().optional(),
   ownerEntityType: ownerTypeSchema.optional(),
   ownerExternalId: z.string().min(1).max(120).optional(),
+  // Soft archive: true hides the KPI from default lists/scoreboards,
+  // false restores it. Never a delete -- history is preserved.
+  archived: z.boolean().optional(),
 }).refine((p) => Object.keys(p).length > 0, { message: 'patch must contain at least one field' });
 
 const listQuerySchema = z.object({

@@ -7,7 +7,7 @@
 
 import { db } from '../config/database.js';
 import { kpis, kpiValues, kpiDependencies } from '../db/schema.js';
-import { and, eq, isNull, desc, sql, gte, lte, inArray } from 'drizzle-orm';
+import { and, eq, isNull, isNotNull, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import { periodFor, bucketPeriods, type KpiTimeGrain as PeriodGrain } from './kpi-periods.js';
 import { parseFormula, extractRefs, evaluate, detectCycle, FormulaError, type Ast } from './kpi-formula.js';
 import { randomUUID } from 'node:crypto';
@@ -56,6 +56,9 @@ export interface UpdateKpiInput {
   teamId?: string | null;
   ownerEntityType?: KpiOwnerEntityType;
   ownerExternalId?: string;
+  // true sets archivedAt (hide from default lists), false (Unarchive)
+  // clears it. KPIs are NEVER hard-deleted by archiving; values stay.
+  archived?: boolean;
 }
 
 export interface KpiListFilters {
@@ -64,6 +67,9 @@ export interface KpiListFilters {
   groupName?: string;
   timeGrain?: KpiTimeGrain;
   teamId?: string;
+  // Archived KPIs are excluded unless explicitly requested. 'include'
+  // returns active + archived; 'only' returns just the archived ones.
+  archived?: 'exclude' | 'include' | 'only';
 }
 
 function validateGoalPair(operator: KpiGoalOperator | null | undefined, value: number | null | undefined): void {
@@ -134,6 +140,8 @@ export async function updateKpi(orgId: string, kpiId: string, patch: UpdateKpiIn
   if (patch.teamId !== undefined) update.teamId = patch.teamId;
   if (patch.ownerEntityType !== undefined) update.ownerEntityType = patch.ownerEntityType;
   if (patch.ownerExternalId !== undefined) update.ownerExternalId = patch.ownerExternalId;
+  if (patch.archived === true) update.archivedAt = new Date();
+  if (patch.archived === false) update.archivedAt = null;
 
   const [row] = await db
     .update(kpis)
@@ -264,6 +272,9 @@ export async function getKpi(orgId: string, kpiId: string) {
 
 export async function listKpis(orgId: string, filters: KpiListFilters = {}) {
   const conditions = [eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)];
+  const archivedMode = filters.archived ?? 'exclude';
+  if (archivedMode === 'exclude') conditions.push(isNull(kpis.archivedAt));
+  else if (archivedMode === 'only') conditions.push(isNotNull(kpis.archivedAt));
   if (filters.ownerEntityType) conditions.push(eq(kpis.ownerEntityType, filters.ownerEntityType));
   if (filters.ownerExternalId) conditions.push(eq(kpis.ownerExternalId, filters.ownerExternalId));
   if (filters.groupName) conditions.push(eq(kpis.groupName, filters.groupName));
@@ -352,6 +363,8 @@ export interface ScoreboardOptions {
   ownerEntityType?: 'agent' | 'human';
   ownerExternalId?: string;
   groupName?: string;
+  // Archived KPIs are excluded unless explicitly requested (see KpiListFilters).
+  archived?: 'exclude' | 'include' | 'only';
 }
 
 export interface ScoreboardPeriodCell {
@@ -383,6 +396,9 @@ export async function getScoreboard(orgId: string, opts: ScoreboardOptions): Pro
     isNull(kpis.deletedAt),
     eq(kpis.timeGrain, opts.timeGrain),
   ];
+  const sbArchivedMode = opts.archived ?? 'exclude';
+  if (sbArchivedMode === 'exclude') kpiConds.push(isNull(kpis.archivedAt));
+  else if (sbArchivedMode === 'only') kpiConds.push(isNotNull(kpis.archivedAt));
   if (opts.ownerEntityType) kpiConds.push(eq(kpis.ownerEntityType, opts.ownerEntityType));
   if (opts.ownerExternalId) kpiConds.push(eq(kpis.ownerExternalId, opts.ownerExternalId));
   if (opts.groupName) kpiConds.push(eq(kpis.groupName, opts.groupName));

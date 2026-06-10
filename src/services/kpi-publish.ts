@@ -182,7 +182,7 @@ export async function publishAllKpisForOrg(orgId: string): Promise<{ published: 
   const all = await db
     .select({ id: kpis.id })
     .from(kpis)
-    .where(and(eq(kpis.organizationId, orgId), isNull(kpis.deletedAt)));
+    .where(and(eq(kpis.organizationId, orgId), isNull(kpis.deletedAt), isNull(kpis.archivedAt)));
   let published = 0;
   const failed: Array<{ kpiId: string; error: string }> = [];
   for (const { id } of all) {

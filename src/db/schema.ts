@@ -754,6 +754,12 @@ export const kpis = pgTable('kpis', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
+  // Archived KPIs (no longer relevant -- e.g. a scorecard group the org
+  // stopped tracking). NEVER deleted: history stays queryable. Hidden from
+  // every default list/scoreboard; /dashboard/kpis has a Show-archived
+  // filter and an Unarchive action. Mirrors rocks.archivedAt. Column added
+  // via ensure-kpis-rocks-team.ts boot DDL (Drizzle migrate is broken).
+  archivedAt: timestamp('archived_at'),
 }, (table) => ({
   orgIdx: index('kpis_org_idx').on(table.organizationId),
   ownerIdx: index('kpis_owner_idx').on(table.organizationId, table.ownerEntityType, table.ownerExternalId),

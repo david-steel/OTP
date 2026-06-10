@@ -87,12 +87,18 @@
       };
     %>
 
+    <% var archSuffix = (typeof showArchived !== 'undefined' && showArchived) ? '&archived=1' : ''; %>
     <div class="sb-tab-strip">
-      <a class="sb-tab <%= view === 'trends' ? 'active' : '' %>" href="?grain=<%= grain %>&view=trends">Trends</a>
-      <a class="sb-tab <%= view !== 'trends' && grain === 'weekly' ? 'active' : '' %>" href="?grain=weekly">Weekly</a>
-      <a class="sb-tab <%= view !== 'trends' && grain === 'monthly' ? 'active' : '' %>" href="?grain=monthly">Monthly</a>
-      <a class="sb-tab <%= view !== 'trends' && grain === 'quarterly' ? 'active' : '' %>" href="?grain=quarterly">Quarterly</a>
-      <a class="sb-tab <%= view !== 'trends' && grain === 'annual' ? 'active' : '' %>" href="?grain=annual">Annual</a>
+      <a class="sb-tab <%= view === 'trends' ? 'active' : '' %>" href="?grain=<%= grain %>&view=trends<%= archSuffix %>">Trends</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'weekly' ? 'active' : '' %>" href="?grain=weekly<%= archSuffix %>">Weekly</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'monthly' ? 'active' : '' %>" href="?grain=monthly<%= archSuffix %>">Monthly</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'quarterly' ? 'active' : '' %>" href="?grain=quarterly<%= archSuffix %>">Quarterly</a>
+      <a class="sb-tab <%= view !== 'trends' && grain === 'annual' ? 'active' : '' %>" href="?grain=annual<%= archSuffix %>">Annual</a>
+      <a class="sb-tab" style="<%= (typeof showArchived !== 'undefined' && showArchived) ? 'background:#6b7280;color:#fff;' : '' %>"
+         href="?grain=<%= grain %><%= view === 'trends' ? '&view=trends' : '' %><%= (typeof showArchived !== 'undefined' && showArchived) ? '' : '&archived=1' %>"
+         title="Archived KPIs are hidden everywhere by default. They are never deleted -- their history stays.">
+        <%= (typeof showArchived !== 'undefined' && showArchived) ? 'Hide archived' : 'Show archived' %>
+      </a>
     </div>
 
     <div class="sb-filter-row">
@@ -237,9 +243,9 @@
                     const kpiTeam = (orgTeams || []).find(function(t) { return t.id === k.teamId; });
                     const isKpiAdmin = ['owner','admin','manager','visionary','integrator'].indexOf(viewerRole || '') >= 0;
                   %>
-                  <tr data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>">
+                  <tr data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>" data-goal-op="<%= k.goalOperator || '' %>" data-goal-value="<%= k.goalValue == null ? '' : k.goalValue %>"<% if (k.archivedAt) { %> style="opacity:0.55;"<% } %>>
                     <td>
-                      <div class="sb-title"><%= k.title %><% if (k.formula) { %><span class="sb-fx-pill">fx</span><% } %></div>
+                      <div class="sb-title"><%= k.title %><% if (k.formula) { %><span class="sb-fx-pill">fx</span><% } %><% if (k.archivedAt) { %><span style="margin-left:6px; display:inline-flex; align-items:center; padding:1px 8px; background:#f3f4f6; color:#6b7280; border:1px solid #d1d5db; border-radius:9999px; font-size:10px; font-weight:600;" title="Archived <%= new Date(k.archivedAt).toLocaleDateString() %> -- hidden from default views, history preserved">Archived</span><% } %></div>
                       <% if (k.description) { %><div class="sb-meta"><%= k.description.length > 70 ? k.description.slice(0, 70) + '...' : k.description %></div><% } %>
                       <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
                         <% if (kpiTeam) { %>
@@ -258,6 +264,13 @@
                           </select>
                         <% } %>
                         <button type="button" class="kpi-add-person" data-kpi-id="<%= k.id %>" data-kpi-title="<%= k.title %>" style="font-size:10px; font-weight:600; color:#2563eb; background:none; border:none; cursor:pointer; padding:1px 4px;" title="Assign this KPI to another person too">+ person</button>
+                        <% if (isKpiAdmin) { %>
+                          <% if (k.archivedAt) { %>
+                            <button type="button" class="kpi-archive-btn" data-kpi-id="<%= k.id %>" data-archived="1" style="font-size:10px; font-weight:600; color:#047857; background:none; border:none; cursor:pointer; padding:1px 4px;" title="Restore this KPI to the active scoreboard">unarchive</button>
+                          <% } else { %>
+                            <button type="button" class="kpi-archive-btn" data-kpi-id="<%= k.id %>" data-archived="" style="font-size:10px; font-weight:600; color:#6b7280; background:none; border:none; cursor:pointer; padding:1px 4px;" title="Archive this KPI: hide it from every default view. Never deletes -- all history is kept and you can unarchive anytime.">archive</button>
+                          <% } %>
+                        <% } %>
                       </div>
                     </td>
                     <td>
@@ -480,6 +493,24 @@
             setTimeout(function(){ tr.remove(); }, 250);
           },
           onError: function() { e.currentTarget.value = ''; },
+        });
+      });
+    });
+
+    // KPI archive / unarchive -- soft retirement, never a delete. The KPI
+    // and its full value history stay in the database; archived KPIs are
+    // hidden from every default list and reachable via the Show-archived tab.
+    document.querySelectorAll('.kpi-archive-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var kpiId = btn.getAttribute('data-kpi-id');
+        var isArchived = btn.getAttribute('data-archived') === '1';
+        if (!isArchived && !confirm('Archive this KPI? It disappears from the scoreboard, the dashboard, and meeting snapshots, but nothing is deleted -- the full history is kept and you can unarchive it anytime from the Show archived view.')) return;
+        OTP.apiSave({
+          method: 'PATCH', url: '/api/v1/kpis/' + encodeURIComponent(kpiId),
+          body: { archived: !isArchived },
+          btnEl: btn,
+          errorContext: isArchived ? 'Unarchive KPI' : 'Archive KPI',
+          onSuccess: function() { location.reload(); },
         });
       });
     });
