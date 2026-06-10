@@ -29,8 +29,7 @@
   <form action="/l8/create<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" method="POST" class="border rounded-lg p-4 mb-8 bg-gray-50">
     <div class="flex items-center gap-2 mb-3">
       <h2 class="font-semibold text-sm uppercase tracking-wide text-gray-700">New Meeting</h2>
-      <button type="button" id="meeting-help" aria-label="About the meeting cadence" title="What are these meeting types?"
-              class="w-[18px] h-[18px] inline-flex items-center justify-center rounded-full border border-gray-400 text-gray-500 text-[11px] font-bold leading-none hover:bg-gray-200 hover:text-gray-700">?</button>
+      <button type="button" class="help-q" data-help="l8.cadence" aria-label="About the meeting cadence" title="What are these meeting types?">?</button>
     </div>
     <div class="grid grid-cols-3 gap-3">
       <input name="title" type="text" required placeholder="e.g. Leadership Meeting -- 2026-05-05"
@@ -110,38 +109,3 @@
   <% } %>
 </div>
 
-<script>
-  // (?) next to New Meeting -- explains the meeting cadence in OTP's own words.
-  // Genericized + EOS attribution per trademark guidance; links inward to the
-  // OTP explainer rather than out to a competitor.
-  (function () {
-    var btn = document.getElementById('meeting-help');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      var ov = document.createElement('div');
-      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,27,20,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
-      ov.innerHTML =
-        '<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:26px;font-family:Inter,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
-          '<div style="font-weight:800;font-size:19px;color:#16241b;margin-bottom:4px;">The meeting cadence</div>' +
-          '<div style="font-size:11.5px;color:#8a8472;margin-bottom:16px;">Modeled on EOS&reg;. EOS&reg; and Level 10 Meeting&reg; are trademarks of EOS Worldwide, LLC.</div>' +
-          '<div style="font-size:14px;color:#3a3a32;line-height:1.6;">' +
-            '<p style="margin:0 0 12px;">Pick the type that matches the rhythm you are running:</p>' +
-            '<ul style="list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:10px;">' +
-              '<li><strong style="color:#16241b;">Weekly &mdash; Leadership &amp; Departmental.</strong> The 90-minute weekly meeting, same agenda every time: check-in, scorecard, quarterly priorities, headlines, to-dos, then solve issues.</li>' +
-              '<li><strong style="color:#16241b;">Quarterly Session.</strong> Step back every 90 days: review the quarter, reset your Rocks, solve the bigger issues.</li>' +
-              '<li><strong style="color:#16241b;">Annual Planning.</strong> Two days a year on vision and the year ahead.</li>' +
-              '<li><strong style="color:#16241b;">Same Page / One-on-One.</strong> Keep leaders aligned between the bigger sessions.</li>' +
-            '</ul>' +
-            '<p style="margin:0 0 16px;color:#5d6b60;">New to the rhythm? A typical rollout runs an intro meeting &rarr; a focus day &rarr; two vision-building days, then settles into the weekly / quarterly / annual pulse above.</p>' +
-          '</div>' +
-          '<div style="display:flex;gap:10px;align-items:center;">' +
-            '<a href="/level-10-meetings" style="font-size:13px;font-weight:600;color:#0d7df2;text-decoration:none;">See the full agenda &amp; cadence &rarr;</a>' +
-            '<button data-close style="margin-left:auto;padding:8px 14px;border:1px solid #d9e2da;background:#f7faf6;border-radius:8px;font-size:13px;font-weight:600;color:#16241b;cursor:pointer;">Got it</button>' +
-          '</div>' +
-        '</div>';
-      var close = function () { ov.remove(); };
-      ov.addEventListener('click', function (e) { if (e.target === ov || e.target.closest('[data-close]')) close(); });
-      document.body.appendChild(ov);
-    });
-  })();
-</script>

@@ -1,0 +1,193 @@
+<!-- OTP site-wide help popup system.
+     Usage: <button type="button" class="help-q" data-help="KEY" aria-label="...">?</button>
+     Add new topics by extending OTP_HELP below. -->
+
+<style>
+.help-q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #9ca3af;
+  background: transparent;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  vertical-align: middle;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.help-q:hover {
+  background: #e5e7eb;
+  color: #374151;
+  border-color: #6b7280;
+}
+</style>
+
+<script>
+(function () {
+  if (window.OTP_HELP) return; // guard against double-initialization
+
+  window.OTP_HELP = {
+    'l8.cadence': {
+      title: 'The meeting cadence',
+      attribution: 'Modeled on EOS®. EOS® and Level 10 Meeting® are trademarks of EOS Worldwide, LLC.',
+      html: '<p style="margin:0 0 12px;">Pick the type that matches the rhythm you are running:</p>' +
+        '<ul style="list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:10px;">' +
+          '<li><strong style="color:#16241b;">Weekly — Leadership &amp; Departmental.</strong> The 90-minute weekly meeting, same agenda every time: check-in, scorecard, quarterly priorities, headlines, to-dos, then solve issues.</li>' +
+          '<li><strong style="color:#16241b;">Quarterly Session.</strong> Step back every 90 days: review the quarter, reset your Rocks, solve the bigger issues.</li>' +
+          '<li><strong style="color:#16241b;">Annual Planning.</strong> Two days a year on vision and the year ahead.</li>' +
+          '<li><strong style="color:#16241b;">Same Page / One-on-One.</strong> Keep leaders aligned between the bigger sessions.</li>' +
+        '</ul>' +
+        '<p style="margin:0 0 16px;color:#5d6b60;">New to the rhythm? A typical rollout runs an intro meeting → a focus day → two vision-building days, then settles into the weekly / quarterly / annual pulse above.</p>',
+      link: { href: '/level-10-meetings', label: 'See the full agenda &amp; cadence →' }
+    },
+
+    'dashboard.meeting': {
+      title: 'Meetings',
+      html: '<p style="margin:0 0 12px;">Your next (or most recent) weekly meeting, with a badge showing whether it is upcoming, live, or completed — completed meetings also show the team\'s 1–10 rating.</p>' +
+        '<p style="margin:0 0 16px;">The weekly meeting is where the whole system pays off: scorecard, priorities, headlines, to-dos, and issue-solving on one timed page. Click any meeting to open it.</p>',
+      link: { href: '/l8', label: 'Open the meetings page →' }
+    },
+
+    'dashboard.headlines': {
+      title: 'Headlines',
+      html: '<p style="margin:0 0 12px;">A <strong style="color:#16241b;">headline</strong> is a short piece of customer or employee news — good or bad — worth sharing with the team.</p>' +
+        '<p style="margin:0 0 16px;">Headlines collect here during the week, then get read out in the weekly meeting, where each one is marked addressed or converted into an issue. The badge shows how many you haven\'t read yet.</p>'
+    },
+
+    'dashboard.rocks': {
+      title: 'Quarterly Priorities (Rocks)',
+      html: '<p style="margin:0 0 12px;">A <strong style="color:#16241b;">Rock</strong> is a big goal you commit to finishing in the next ~90 days. A company only carries a few at a time.</p>' +
+        '<p style="margin:0 0 16px;">This panel shows your Rocks for the current quarter and whether each is on track or off track. You review and update them in section 3 of the weekly meeting — anything off track becomes discussion material.</p>'
+    },
+
+    'dashboard.todos': {
+      title: 'My To-Dos',
+      html: '<p style="margin:0 0 12px;">A <strong style="color:#16241b;">to-do</strong> is a small action item due within about 7 days, owned by one person.</p>' +
+        '<p style="margin:0 0 16px;">Add one in the quick-add box — you can delegate it to a teammate, set a due date, make it repeat, and tie it to a team. Check it off when done; delegated items come back to you for verification.</p>',
+      link: { href: '/me/todos', label: 'Open your full to-do queue →' }
+    },
+
+    'dashboard.kpis': {
+      title: 'My KPIs',
+      html: '<p style="margin:0 0 12px;">A <strong style="color:#16241b;">KPI</strong> is a number a seat watches — the handful of measurables that tell you the business is healthy, reviewed weekly on the scorecard.</p>' +
+        '<p style="margin:0 0 16px;">This panel shows the KPIs you own, with the latest value against its goal: green means met, red means missed.</p>',
+      link: { href: '/dashboard/kpis', label: 'Open the full scoreboard →' }
+    },
+
+    'dashboard.issues': {
+      title: 'Issues (IDS)',
+      html: '<p style="margin:0 0 12px;">An <strong style="color:#16241b;">issue</strong> is anything that needs to be worked through as a team. OTP works each one in three steps: <strong style="color:#16241b;">I</strong>dentify, <strong style="color:#16241b;">D</strong>iscuss, <strong style="color:#16241b;">S</strong>olve.</p>' +
+        '<p style="margin:0 0 16px;">This panel shows open issues you own or that need attention. Most issue-solving happens live in the weekly meeting — raising an issue here is how you get it on that agenda.</p>',
+      link: { href: '/dashboard/ids', label: 'See all issues across teams →' }
+    },
+
+    'dashboard.agents': {
+      title: 'My Agents',
+      html: '<p style="margin:0 0 12px;">An <strong style="color:#16241b;">agent</strong> is an AI tool with a real seat on your org chart — it has an owner, a job, and accountability like anyone else.</p>' +
+        '<p style="margin:0 0 16px;">This panel shows the agent seats you own, their average maturity score out of 8, and red/yellow flags for the ones that need attention.</p>',
+      link: { href: '/dashboard/team', label: 'See them on the org chart →' }
+    },
+
+    'dashboard.insights': {
+      title: 'OTP Insights',
+      html: '<p style="margin:0 0 16px;">Diagnostics OTP computes from your operating data: what you\'re waiting on others for, how much of the company still routes through the founder, where accountability is missing, and what could be handed off. Worth expanding once a week — these are the early warnings.</p>'
+    },
+
+    'dashboard.waiting': {
+      title: 'Waiting on others',
+      html: '<p style="margin:0 0 16px;">To-dos you delegated that are still open — who owns each one and the date they promised. When an item is finished it moves to your verification queue so nothing closes without your sign-off.</p>'
+    },
+
+    'dashboard.founderDependency': {
+      title: 'Founder Dependency',
+      html: '<p style="margin:0 0 12px;">The percentage of all open work — Rocks, KPIs, issues, to-dos — sitting on the top seat of the chart.</p>' +
+        '<p style="margin:0 0 16px;">Under 50% shows green (healthy). At 50% or above it turns amber: too much of the company runs through one person, and it\'s time to absorb more onto the team.</p>'
+    },
+
+    'dashboard.accountabilityGaps': {
+      title: 'Accountability Gaps',
+      html: '<p style="margin:0 0 12px;">A reconciliation between your org chart and your actual work. It flags three gaps: seats with no measurable, work items with no seat, and agents with no human owner.</p>' +
+        '<p style="margin:0 0 16px;">The goal is a clean check: every seat has a measurable, every item has a seat.</p>'
+    },
+
+    'dashboard.handoff': {
+      title: 'Hand-off candidates',
+      html: '<p style="margin:0 0 16px;">People carrying a heavy recurring load. For each, you\'ll see how many recurring items they hold and the oldest one with how long they\'ve carried it — a signal to move it to a lower seat or hand it to an agent.</p>'
+    },
+
+    'dashboard.cascade': {
+      title: 'Cascading message',
+      html: '<p style="margin:0 0 16px;">A short summary written in the Conclude step of the weekly meeting, set by the meeting leader, meant to be passed down to the wider team so everyone hears the same message.</p>'
+    }
+  };
+
+  var _activeTrigger = null;
+
+  function openHelp(key, triggerEl) {
+    var entry = window.OTP_HELP[key];
+    if (!entry) return;
+
+    _activeTrigger = triggerEl || null;
+
+    var ov = document.createElement('div');
+    ov.id = 'otp-help-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,27,20,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+
+    var footerHtml = '<div style="display:flex;gap:10px;align-items:center;">';
+    if (entry.link) {
+      footerHtml += '<a href="' + entry.link.href + '" style="font-size:13px;font-weight:600;color:#0d7df2;text-decoration:none;">' + entry.link.label + '</a>';
+    }
+    footerHtml += '<button data-close style="margin-left:auto;padding:8px 14px;border:1px solid #d9e2da;background:#f7faf6;border-radius:8px;font-size:13px;font-weight:600;color:#16241b;cursor:pointer;">Got it</button>';
+    footerHtml += '</div>';
+
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:26px;font-family:Inter,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
+        '<div style="font-weight:800;font-size:19px;color:#16241b;margin-bottom:4px;">' + entry.title + '</div>' +
+        (entry.attribution ? '<div style="font-size:11.5px;color:#8a8472;margin-bottom:16px;">' + entry.attribution + '</div>' : '') +
+        '<div style="font-size:14px;color:#3a3a32;line-height:1.6;">' + entry.html + '</div>' +
+        footerHtml +
+      '</div>';
+
+    document.body.appendChild(ov);
+
+    ov.addEventListener('click', function (e) {
+      if (e.target === ov || (e.target.closest && e.target.closest('[data-close]'))) {
+        closeHelp();
+      }
+    });
+  }
+
+  function closeHelp() {
+    var ov = document.getElementById('otp-help-overlay');
+    if (ov) ov.remove();
+    if (_activeTrigger) {
+      _activeTrigger.focus();
+      _activeTrigger = null;
+    }
+  }
+
+  // Delegated listener for all [data-help] buttons on any page.
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('[data-help]');
+    if (!btn) return;
+    // Some triggers sit inside <summary> or <a> -- don't toggle/navigate.
+    e.preventDefault();
+    e.stopPropagation();
+    var key = btn.getAttribute('data-help');
+    if (key) openHelp(key, btn);
+  });
+
+  // Close on Escape.
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Escape' || e.keyCode === 27) && document.getElementById('otp-help-overlay')) {
+      closeHelp();
+    }
+  });
+})();
+</script>
