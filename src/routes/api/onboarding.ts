@@ -20,7 +20,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import {
-  organizations, orgMembers, onboardingSequence,
+  organizations, orgMembers, orgInvitations, onboardingSequence,
   teams, teamMemberships, rocks, kpis, managerAgents,
 } from '../../db/schema.js';
 import { ORG_SIZES } from '../../shared/enums.js';
@@ -318,6 +318,21 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
     ownerMemberId: z.string().uuid(),
   });
 
+  // Resolve a goal/KPI owner id to {ownerExternalId, ownerName}. Active members
+  // own by member id; pending invitees own by invitation id, stored against
+  // their chart-tile externalId so the chart/scoreboard resolve the name (and
+  // reconcileChartClaimByEmail transfers it to the member on accept). Null if
+  // the id matches neither.
+  async function resolveOnboardingOwner(orgId: string, ownerId: string) {
+    const [m] = await db.select().from(orgMembers)
+      .where(and(eq(orgMembers.id, ownerId), eq(orgMembers.orgId, orgId))).limit(1);
+    if (m) return { ownerExternalId: m.id, ownerName: m.displayName || null };
+    const [inv] = await db.select().from(orgInvitations)
+      .where(and(eq(orgInvitations.id, ownerId), eq(orgInvitations.orgId, orgId), eq(orgInvitations.status, 'pending'))).limit(1);
+    if (inv) return { ownerExternalId: inv.claimedEntityId || inv.id, ownerName: inv.displayName || inv.email };
+    return null;
+  }
+
   app.post('/onboarding/goal', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
@@ -329,8 +344,7 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
     const org = await resolveOrg(request, auth.userId);
     if (!org) return reply.status(404).send({ error: { code: 'NO_ORG', message: 'Finish step 1 first' } });
 
-    const [owner] = await db.select().from(orgMembers)
-      .where(and(eq(orgMembers.id, parsed.data.ownerMemberId), eq(orgMembers.orgId, org.id))).limit(1);
+    const owner = await resolveOnboardingOwner(org.id, parsed.data.ownerMemberId);
     if (!owner) return reply.status(400).send({ error: { code: 'BAD_OWNER', message: 'Pick a valid owner' } });
 
     const quarter = quarterFor(parsed.data.timeframe);
@@ -338,8 +352,8 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
       organizationId: org.id,
       teamId: await defaultTeamId(org.id),
       ownerEntityType: 'human',
-      ownerExternalId: owner.id,
-      ownerName: owner.displayName || null,
+      ownerExternalId: owner.ownerExternalId,
+      ownerName: owner.ownerName,
       title: parsed.data.title,
       quarter,
       dueDate: quarterEnd(quarter),
@@ -369,8 +383,7 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
     const org = await resolveOrg(request, auth.userId);
     if (!org) return reply.status(404).send({ error: { code: 'NO_ORG', message: 'Finish step 1 first' } });
 
-    const [owner] = await db.select().from(orgMembers)
-      .where(and(eq(orgMembers.id, parsed.data.ownerMemberId), eq(orgMembers.orgId, org.id))).limit(1);
+    const owner = await resolveOnboardingOwner(org.id, parsed.data.ownerMemberId);
     if (!owner) return reply.status(400).send({ error: { code: 'BAD_OWNER', message: 'Pick a valid owner' } });
 
     // Parse "20" / "25%" / "$2,000" into a numeric goal + unit.
@@ -383,7 +396,7 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
       organizationId: org.id,
       teamId: await defaultTeamId(org.id),
       ownerEntityType: 'human',
-      ownerExternalId: owner.id,
+      ownerExternalId: owner.ownerExternalId,
       title: parsed.data.title,
       goalOperator: 'gte',
       goalValue,

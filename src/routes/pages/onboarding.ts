@@ -182,6 +182,24 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
       .orderBy(orgMembers.createdAt);
   }
 
+  // Owner dropdown options for goals/KPIs: active members PLUS pending invitees,
+  // so you can assign to a teammate you just invited. Invitees are keyed by
+  // their invitation id; the goal/KPI API resolves that to their chart tile and
+  // it transfers to their member record on accept.
+  async function ownerOptions(orgId: string) {
+    const members = await activeMembers(orgId);
+    const invites = await db.select().from(orgInvitations)
+      .where(and(eq(orgInvitations.orgId, orgId), eq(orgInvitations.status, 'pending')))
+      .orderBy(desc(orgInvitations.createdAt));
+    const inviteOpts = invites.map((i) => ({
+      id: i.id,
+      displayName: ((i.displayName || i.email) + ' (invited)'),
+      role: i.role,
+      clerkUserId: null as string | null,
+    }));
+    return [...members, ...inviteOpts];
+  }
+
   // ---- Step 2: team --------------------------------------------------
   app.get('/onboarding/team', async (request, reply) => {
     const c = await requireOrg(request, reply, 'team'); if (!c) return;
@@ -198,7 +216,7 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
   // ---- Step 3: goals -------------------------------------------------
   app.get('/onboarding/goals', async (request, reply) => {
     const c = await requireOrg(request, reply, 'goals'); if (!c) return;
-    const members = await activeMembers(c.org.id);
+    const members = await ownerOptions(c.org.id);
     const goals = await db.select().from(rocks)
       .where(and(eq(rocks.organizationId, c.org.id), isNull(rocks.deletedAt)))
       .orderBy(desc(rocks.createdAt));
@@ -211,7 +229,7 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
   // ---- Step 4: kpis --------------------------------------------------
   app.get('/onboarding/kpis', async (request, reply) => {
     const c = await requireOrg(request, reply, 'kpis'); if (!c) return;
-    const members = await activeMembers(c.org.id);
+    const members = await ownerOptions(c.org.id);
     const rows = await db.select().from(kpis)
       .where(and(eq(kpis.organizationId, c.org.id), isNull(kpis.deletedAt)))
       .orderBy(desc(kpis.createdAt));
