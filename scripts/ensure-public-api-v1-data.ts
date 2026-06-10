@@ -7,7 +7,6 @@
 
 import { Client } from 'pg';
 import { readFileSync } from 'fs';
-import { randomUUID } from 'crypto';
 
 function readDatabaseUrl(): string {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
@@ -120,42 +119,14 @@ async function main(): Promise<void> {
       'Organization Transport Protocol — coordination intelligence layer for AI-augmented organizations.',
     ]);
 
-    console.log('Clear Skies upsert');
-    const existing = await client.query(`SELECT id FROM organizations WHERE slug = 'clear-skies' OR name = 'Clear Skies Title Agency'`);
-    if ((existing.rowCount ?? 0) === 0) {
-      await client.query(`
-        INSERT INTO organizations (name, industry, size, clerk_org_id, slug, "public", description, website, chart)
-        VALUES (
-          'Clear Skies Title Agency',
-          'Real Estate Services',
-          'small',
-          $1,
-          'clear-skies',
-          true,
-          'Title agency exploring AI-augmented operations. First external OTP publisher.',
-          'https://clearskiestitle.com',
-          $2::jsonb
-        )
-      `, [
-        `org_demo_clearskies_${randomUUID().slice(0, 8)}`,
-        JSON.stringify({
-          leader: { name: 'Kris Goodrich', role: 'Founder', type: 'human' },
-          seats: [],
-          note: 'Public roster being assembled.',
-        }),
-      ]);
-      console.log('  + inserted');
-    } else {
-      await client.query(`
-        UPDATE organizations
-           SET "public" = true,
-               slug = COALESCE(slug, 'clear-skies'),
-               description = COALESCE(description, 'Title agency exploring AI-augmented operations. First external OTP publisher.'),
-               website = COALESCE(website, 'https://clearskiestitle.com')
-         WHERE slug = 'clear-skies' OR name = 'Clear Skies Title Agency'
-      `);
-      console.log('  ✓ already present');
-    }
+    // Clear Skies upsert — RETIRED 2026-06-10. Originally seeded a demo
+    // "Clear Skies Title Agency" for the public API v1 launch. Clear Skies has
+    // since signed up for real (Victor Liu, real Clerk-owned org created 6/2).
+    // Re-running the old block would name-match that real org and MUTATE it
+    // (force public, overwrite slug/description) — exposing a paying customer's
+    // org without consent. Removed so this script can never touch the real org.
+    // The 5/9 demo org (org_demo_clearskies_*) was deleted 2026-06-10.
+    console.log('Clear Skies upsert — retired (real org exists; intentionally skipped)');
 
     await client.query('COMMIT');
 
