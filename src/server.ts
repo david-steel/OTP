@@ -530,7 +530,7 @@ OTP was created by David Steel, CEO of Sneeze It, a digital agency that runs 14 
 
 ## Contact
 - Website: https://orgtp.com
-- Creator: David Steel, dsteel@sneeze.it
+- Creator: David Steel, david@orgtp.com
 `;
 
   reply.header('Content-Type', 'text/plain; charset=utf-8');
