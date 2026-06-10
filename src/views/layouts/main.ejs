@@ -634,6 +634,7 @@
   // bell click). Fire only for unread items newer than the last batch seen,
   // capped so a backlog can't spam the desktop.
   function browserNotify(list) {
+    if (localStorage.getItem('otpPushOn') === '1') return; // service-worker push handles it
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     var lastSeen = localStorage.getItem('otpBellSeen') || '';
     var newest = lastSeen, fired = 0;
@@ -644,6 +645,46 @@
       if (n.createdAt > newest) newest = n.createdAt;
     });
     if (newest) localStorage.setItem('otpBellSeen', newest);
+  }
+  // Web push: register the service worker and subscribe this browser so
+  // alerts arrive even with no OTP tab open. Runs only once permission is
+  // granted; degrades silently when the server has no VAPID keys or the
+  // browser lacks support.
+  function urlB64ToUint8Array(base64) {
+    var padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    var raw = atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'));
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  function ensurePushSubscription() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    fetch('/api/v1/push/public-key', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (cfg) {
+        if (!cfg || !cfg.enabled || !cfg.publicKey) return;
+        return navigator.serviceWorker.register('/sw.js')
+          .then(function (reg) { return navigator.serviceWorker.ready.then(function () { return reg; }); })
+          .then(function (reg) {
+            return reg.pushManager.getSubscription().then(function (sub) {
+              return sub || reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlB64ToUint8Array(cfg.publicKey),
+              });
+            });
+          })
+          .then(function (sub) {
+            return fetch('/api/v1/push/subscriptions', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(sub.toJSON()),
+            });
+          })
+          .then(function (r) { if (r && r.ok) localStorage.setItem('otpPushOn', '1'); });
+      })
+      .catch(function () {});
   }
   function renderItems() {
     if (items.length === 0) {
@@ -678,7 +719,11 @@
     renderItems();
     panel.style.display = 'block';
     if ('Notification' in window && Notification.permission === 'default') {
-      try { Notification.requestPermission(); } catch (err) {}
+      try {
+        Notification.requestPermission().then(function (p) {
+          if (p === 'granted') ensurePushSubscription();
+        });
+      } catch (err) {}
     }
     if (badge.style.display !== 'none') {
       fetch('/api/v1/notifications/read-all', { method: 'POST', credentials: 'same-origin' })
@@ -690,6 +735,7 @@
     if (panel.style.display !== 'none' && !bell.contains(e.target)) panel.style.display = 'none';
   });
   refresh();
+  ensurePushSubscription();
   setInterval(refresh, 120000); // light poll: every 2 minutes while the tab is open
 })();
 </script>

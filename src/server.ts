@@ -748,6 +748,20 @@ await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/values.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/notifications.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/push.js'), { prefix: '/api/v1' });
+
+// Service worker at the ORIGIN ROOT (scope '/'), with no-cache so updates
+// propagate. Do NOT move this under /public/* -- that path is
+// immutable-cached for a year, which would strand old workers.
+app.get('/sw.js', async (_request, reply) => {
+  const { readFile } = await import('node:fs/promises');
+  const path = await import('node:path');
+  const swPath = path.join(process.cwd(), 'public', 'sw.js');
+  const body = await readFile(swPath, 'utf8');
+  reply.header('Cache-Control', 'no-cache');
+  reply.type('application/javascript; charset=utf-8');
+  return reply.send(body);
+});
 await app.register(import('./routes/api/meetings.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/headlines.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/manager-agents.js'), { prefix: '/api/v1' });
@@ -931,6 +945,14 @@ try {
 }
 
 try {
+  const { ensureStrategyResetColumns } = await import('./db/ensure-strategy-reset.js');
+  await ensureStrategyResetColumns();
+  app.log.info('meetings.segment_notes column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureStrategyResetColumns failed -- Strategy Reset segment notes will not persist until resolved');
+}
+
+try {
   const { ensureSeatResponsibilitiesTable } = await import('./db/ensure-seat-responsibilities.js');
   await ensureSeatResponsibilitiesTable();
   app.log.info('seat_responsibilities table is ready');
@@ -1008,6 +1030,14 @@ try {
   app.log.info('notifications table is ready (nav alert bell)');
 } catch (err) {
   app.log.error({ err }, 'ensureNotifications failed -- the alert bell will not work until resolved');
+}
+
+try {
+  const { ensurePushSubscriptions } = await import('./db/ensure-push-subscriptions.js');
+  await ensurePushSubscriptions();
+  app.log.info('push_subscriptions table is ready (web push)');
+} catch (err) {
+  app.log.error({ err }, 'ensurePushSubscriptions failed -- web push will not work until resolved');
 }
 
 try {

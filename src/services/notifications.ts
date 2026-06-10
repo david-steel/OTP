@@ -29,6 +29,20 @@ export async function notify(orgId: string, recipientExternalId: string, input: 
     href: input.href || null,
     actorName: input.actorName || null,
   });
+
+  // Web push (best-effort, fire-and-forget): native browser notification
+  // even when no OTP tab is open. Lazy import so environments without
+  // VAPID keys never touch web-push at module load.
+  try {
+    const { pushEnabled, sendPushToSeat } = await import('./push.js');
+    if (pushEnabled) {
+      void sendPushToSeat(orgId, recipientExternalId, {
+        title: 'OTP',
+        body: input.title,
+        href: input.href || '/dashboard',
+      }).catch(() => {});
+    }
+  } catch { /* push module unavailable -- in-app bell still works */ }
 }
 
 // The signed-in user's identity inside one org: their claimed seats plus a

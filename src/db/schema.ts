@@ -816,6 +816,24 @@ export const notifications = pgTable('notifications', {
   createdIdx: index('notif_created_idx').on(table.organizationId, table.createdAt),
 }));
 
+// ---- Web push subscriptions (browser endpoints for the alert bell) ----
+// Created by ensure-push-subscriptions.ts at boot.
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull(),
+  endpoint: text('endpoint').notNull(),
+  p256dh: varchar('p256dh', { length: 255 }).notNull(),
+  auth: varchar('auth', { length: 255 }).notNull(),
+  userAgent: varchar('user_agent', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastUsedAt: timestamp('last_used_at'),
+}, (table) => ({
+  endpointUk: uniqueIndex('push_subs_endpoint_uk').on(table.endpoint),
+  orgUserIdx: index('push_subs_org_user_idx').on(table.organizationId, table.clerkUserId),
+}));
+
 // ---- User engagement log (re-engagement nudges, max 4 per 30 days) ----
 
 export const userEngagementLog = pgTable('user_engagement_log', {
@@ -932,6 +950,10 @@ export const meetings = pgTable('meetings', {
   ratings: jsonb('ratings').notNull().default({}),
   scorecardSnapshot: jsonb('scorecard_snapshot'),
   rocksSnapshot: jsonb('rocks_snapshot'),
+  // Per-segment notes for the Strategy Reset meeting type. Keyed by segment
+  // identifier; defaults to {} so callers can safely merge. Column added by
+  // ensure-strategy-reset.ts on boot.
+  segmentNotes: jsonb('segment_notes').notNull().default({}),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
