@@ -230,6 +230,26 @@ export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Pr
     status: 'pending',
   }).returning();
 
+  // If the inviter didn't pin the invitee to an existing chart seat, place a
+  // pending human tile on the chart, tagged with their email. This makes the
+  // invitee visible on the org chart immediately, and reconcileChartClaimByEmail
+  // links the tile to their account on accept (matched by contact_email).
+  // Best-effort: a chart-write failure must never block the invite itself.
+  if (!primarySeat) {
+    try {
+      const { createTeamEntity } = await import('./team-graph.js');
+      const ent = await createTeamEntity(opts.orgId, {
+        type: 'human',
+        name: opts.displayName || email,
+        role: String(role),
+        contactEmail: email,
+      });
+      await db.update(orgInvitations)
+        .set({ claimedEntityId: ent.externalId, claimedEntityIds: [ent.externalId] })
+        .where(eq(orgInvitations.id, created.id));
+    } catch { /* best-effort: invitee still gets the invite even if the tile fails */ }
+  }
+
   const acceptUrl = `${baseUrl.replace(/\/$/, '')}/accept-invite?token=${token}`;
 
   return {
