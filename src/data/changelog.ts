@@ -11,6 +11,48 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 10, 2026 ----
+
+  {
+    date: '2026-06-10',
+    tags: ['Major', 'Notifications'],
+    title: 'The alert bell: in-app notifications, plus close out a delegated to-do yourself',
+    summary: 'OTP now tells you when work moves. A bell in the top nav shows a red count of unread alerts: a to-do assigned to you, a to-do you delegated getting finished, or one of yours being closed out or verified by someone else. Click it for the full list, and grant browser permission once to get native desktop notifications while a tab is open. Alongside it, both Waiting-on-others lists gained a Close it out button, so when someone never closes a to-do you handed them, you can disposition it yourself in one click -- it is marked done and verified, and they get notified.',
+    details: `<p>Two halves of the same loop: see what moved, and unstick what didn't.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>The bell.</strong> Between Dashboard and Publish in the nav, with a red unread count. Opening it shows your latest alerts and marks them read.</li>
+<li><strong>What lands there.</strong> A to-do assigned to you, a to-do you delegated being finished by its owner, and your to-do being closed out or verified by someone else.</li>
+<li><strong>Browser notifications.</strong> Grant permission once (the bell asks on first click) and new alerts also fire native desktop notifications while an OTP tab is open.</li>
+<li><strong>Close it out.</strong> On the Daily dashboard and /me/todos, every item you are waiting on others for now has a one-click disposition: done + verified in a single step, with the owner notified.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Scoreboard'],
+    title: 'Archive a KPI -- retire numbers you no longer track, without deleting anything',
+    summary: 'Organizations change what they measure. You can now archive a KPI: it disappears from the scoreboard, the Daily dashboard, meeting snapshots, and every diagnostic -- but nothing is ever deleted. The full value history stays, a Show archived view on the scoreboard lists everything you have retired, and one click unarchives a KPI if it becomes relevant again.',
+    details: `<p>For when a whole scorecard group stops being part of your organization.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Archive from the scoreboard.</strong> An admin-only action on every KPI row. Archived KPIs leave every default view: scoreboard, Daily, meeting scorecard snapshots, founder-dependency and accountability diagnostics, and publish-all.</li>
+<li><strong>Never a delete.</strong> Every value ever recorded stays in the database. Archiving is a flag, not a removal.</li>
+<li><strong>Show archived.</strong> A toggle next to the scoreboard view tabs reveals retired KPIs, badged and dimmed, with an unarchive action to bring one back.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Help', 'Onboarding'],
+    title: 'A (?) on everything: contextual help across the whole app',
+    summary: 'The little (?) explainer that started next to New Meeting now covers the entire platform -- about 46 topics across every surface. Every Daily dashboard panel, all seven sections of the live meeting runner, the to-do queue, the scoreboard, issues, the org chart, People Review, Members, Teams, the Operating Plan, the CEO view, the intelligence pages, and all the settings pages each have a (?) that opens a plain-language explanation of what the thing is, what it shows, and what you can do there. No jargon assumed -- every EOS-style term is defined the first time you meet it.',
+    details: `<p>Built so a first-time user can learn the system from inside the system.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Everywhere you work.</strong> Daily dashboard panels, every agenda section of the meeting runner, to-dos, the scoreboard, issues, the org chart and People Review, Members and Teams, the Operating Plan and CEO view, Browse and the Intelligence Graph, and Settings.</li>
+<li><strong>Plain language first.</strong> Each popup defines the term (Rock, KPI, IDS, OOS, seat) in one line, then what the panel shows, then what you can do there.</li>
+<li><strong>Small touches.</strong> Escape closes the popup and focus returns to where you were.</li>
+</ul>`,
+  },
+
   // ---- June 9, 2026 ----
 
   {
