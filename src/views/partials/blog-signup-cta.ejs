@@ -1,6 +1,14 @@
 <!-- Blog signup CTA -- slim inline email capture, top of every post. v7 light. -->
+<%# pt-[84px] clears the v7 fixed nav (64px) + 20px gap on the signed-out
+    compose. Inside the authed app shell (renderInShell -> layouts/main.ejs)
+    the <main> already pads 65px below the app nav, so keeping 84px would
+    double-gap every blog post. Same harmony fix as guide/whats-new/blog:
+    inline style wins over the Tailwind class; authUserId only exists on the
+    authed reply.view path (server.ts injects it), never on the v7 compose,
+    so signed-out rendering is untouched by construction. 20px preserves the
+    same visual gap (65 + 20 = 85 ~ 84). %>
 <section class="bg-[var(--grey)] border-b border-[var(--line)]">
-  <div class="max-w-3xl mx-auto px-6 pt-[84px] pb-4 sm:pb-5">
+  <div class="max-w-3xl mx-auto px-6 pt-[84px] pb-4 sm:pb-5"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:20px;"' : '' %>>
     <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
       <div class="flex-shrink-0 text-[14px] text-[var(--ink-soft)]">
         <span class="font-display font-bold text-[var(--ink)]">Join OTP</span>

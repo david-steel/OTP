@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { BASE_URL, bc, renderV7, renderInShell } from '../_shared.js';
+import { BASE_URL, bc, renderInShell } from '../_shared.js';
 import { listConatusPosts, getConatusPost } from '../../../services/conatus-posts.js';
 
 // Standard BlogPosting schema for a David-authored hardcoded post. The
@@ -468,9 +468,10 @@ export default async function blogRoutes(app: FastifyInstance) {
     const PER_SECTION = 24;
     const conatusPosts = showAll ? allConatus : allConatus.slice(0, PER_SECTION);
     const founderPosts = showAll ? allFounder : allFounder.slice(0, PER_SECTION);
-    // Index is dual-rendered (app shell for signed-in viewers). Individual
-    // /blog/:slug posts stay v7-only: 46 standalone templates with heavy v7
-    // layout assumptions -- not worth converting for v1.
+    // Index AND individual /blog/:slug posts are dual-rendered (app shell
+    // for signed-in viewers). The post templates are v7 bodies with no
+    // layout assumptions of their own; the one nav-clearing pad lives in
+    // partials/blog-signup-cta.ejs, which trims itself in-shell.
     return renderInShell(request, reply, 'blog', {
       title: 'Blog - OTP',
       description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.',
@@ -516,7 +517,7 @@ export default async function blogRoutes(app: FastifyInstance) {
         ),
       };
       if (hardcoded.ogImage) ctx.ogImage = hardcoded.ogImage;
-      return renderV7(reply, hardcoded.template, ctx);
+      return renderInShell(request, reply, hardcoded.template, ctx);
     }
 
     const post = getConatusPost(slug);
@@ -525,7 +526,7 @@ export default async function blogRoutes(app: FastifyInstance) {
     const author = isConatus
       ? { '@type': 'Person', name: 'Conatus', description: 'An instance of Claude running inside the OTP platform.' }
       : { '@type': 'Person', name: post.author, url: BASE_URL + '/about', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' } };
-    return renderV7(reply, 'blog-post-conatus', {
+    return renderInShell(request, reply, 'blog-post-conatus', {
       title: post.title + ' - OTP',
       description: post.description,
       canonical: BASE_URL + '/blog/' + post.slug,
