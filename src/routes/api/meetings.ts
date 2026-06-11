@@ -35,6 +35,16 @@ const createMeetingSchema = z.object({
   teamId: z.string().uuid().optional(),
 });
 
+const segmentNotesSchema = z.object({
+  define_issue: z.object({ issue: z.string().max(20000) }).partial().strict().optional(),
+  reality_check: z.object({ internal: z.string().max(20000), external: z.string().max(20000) }).partial().strict().optional(),
+  future_consequences: z.object({ in_12_months: z.string().max(20000), in_36_months: z.string().max(20000) }).partial().strict().optional(),
+  strategic_options: z.object({ options: z.string().max(20000) }).partial().strict().optional(),
+  debate_decide: z.object({ believe_true: z.string().max(20000), stop_doing: z.string().max(20000), start_doing: z.string().max(20000), single_focus: z.string().max(20000) }).partial().strict().optional(),
+  strategic_commitment: z.object({ biggest_challenge: z.string().max(20000), strategic_focus: z.string().max(20000), top_priority_90d: z.string().max(20000), to_win_we_must: z.string().max(20000), we_will_stop: z.string().max(20000) }).partial().strict().optional(),
+  define_success: z.object({ criteria: z.string().max(20000) }).partial().strict().optional(),
+}).strict();
+
 const updateMeetingSchema = z.object({
   // Match createMeetingSchema.title -- the in-place title editor on the
   // L8 page must accept the same values the create form does.
@@ -60,6 +70,7 @@ const updateMeetingSchema = z.object({
   // empty string clears it back to one-time. The UI only sends the four
   // RECURRENCE_OPTIONS values; we accept any short string defensively.
   recurrenceRule: z.string().max(255).optional(),
+  segmentNotes: segmentNotesSchema.optional(),
 });
 
 async function authedOrFail(request: any, reply: any) {
@@ -547,6 +558,21 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (d.videoLink !== undefined) updates.videoLink = d.videoLink.trim() || null;
     // Empty string clears recurrence back to one-time.
     if (d.recurrenceRule !== undefined) updates.recurrenceRule = d.recurrenceRule.trim() || null;
+    if (d.segmentNotes !== undefined) {
+      const [current] = await db.select({ segmentNotes: meetings.segmentNotes })
+        .from(meetings)
+        .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+        .limit(1);
+      if (!current) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+      const existing = (current.segmentNotes as Record<string, Record<string, string>>) ?? {};
+      const merged: Record<string, Record<string, string>> = { ...existing };
+      for (const [key, fields] of Object.entries(d.segmentNotes)) {
+        if (fields !== undefined) {
+          merged[key] = { ...(existing[key] ?? {}), ...fields };
+        }
+      }
+      updates.segmentNotes = merged;
+    }
 
     const [updated] = await db.update(meetings)
       .set(updates)

@@ -1,0 +1,1230 @@
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<%- include('../partials/orgy-palette') %>
+<style>
+  /* Strategy Reset meeting: EOS-clean card treatment. Scoped to
+     #sr-meeting so it touches nothing else. */
+  #sr-meeting #define_issue, #sr-meeting #reality_check, #sr-meeting #future_consequences,
+  #sr-meeting #strategic_options, #sr-meeting #debate_decide, #sr-meeting #strategic_commitment,
+  #sr-meeting #define_success, #sr-meeting #assign_ownership, #sr-meeting #deliverable {
+    background: #fff; border: 1px solid var(--line, #e6e8ec); border-radius: 18px;
+    padding: 20px 26px 24px; margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
+  }
+  /* section header -> compact uppercase card-head */
+  #sr-meeting section > h2 {
+    font-size: 14px !important; font-weight: 800 !important; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--ink, #14161c) !important;
+    margin: 0 0 16px !important; padding-bottom: 13px; border-bottom: 1px solid #f1f3f6;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  #sr-meeting section > h2 > span {
+    text-transform: none !important; letter-spacing: 0 !important; font-weight: 500 !important;
+    color: var(--ink-mute, #888c96) !important; font-size: 12.5px !important;
+  }
+  /* agenda strip -> clean stepper chips */
+  #sr-meeting .agenda-chip {
+    background: #fff !important; border: 1px solid var(--line, #e6e8ec);
+    border-radius: 10px; color: var(--ink-soft, #494d57) !important; font-weight: 600;
+  }
+  #sr-meeting .agenda-chip:hover { background: #f4f6f8 !important; border-color: #d6dbe2; }
+  #sr-meeting .agenda-chip.bg-orgy-blue-soft {
+    background: var(--orgy-tint, #f1fadd) !important; border-color: var(--orgy-soft, #D6F59C);
+    color: var(--orgy-onlight, #5a7d1f) !important;
+  }
+  /* outcome line */
+  .sr-outcome {
+    font-size: 11.5px; color: var(--ink-mute, #888c96); margin-top: 14px;
+    padding-top: 10px; border-top: 1px solid #f1f3f6;
+  }
+  .sr-outcome strong { color: var(--ink-soft, #494d57); }
+  /* saved indicator */
+  .sr-saved-msg {
+    font-size: 11px; color: #888c96; margin-left: 8px; transition: opacity 0.3s;
+  }
+  /* segment label */
+  .sr-label {
+    display: block; font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--ink-soft, #494d57); margin-bottom: 6px; margin-top: 14px;
+  }
+  .sr-label:first-child { margin-top: 0; }
+  .sr-hint {
+    font-size: 12px; color: #888c96; margin-bottom: 6px;
+  }
+  .sr-example-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .sr-example-chip {
+    font-size: 11px; color: var(--orgy-onlight, #5a7d1f);
+    background: var(--orgy-tint, #f1fadd); border: 1px solid var(--orgy-soft, #D6F59C);
+    border-radius: 6px; padding: 2px 8px;
+  }
+  /* deliverable compiled card */
+  .sr-deliverable-block {
+    border: 1px solid var(--line, #e6e8ec); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px; background: #fafbfc;
+  }
+  .sr-deliverable-label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--orgy-onlight, #5a7d1f); margin-bottom: 4px;
+  }
+  .sr-deliverable-value {
+    font-size: 14px; color: var(--ink, #14161c); line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .sr-deliverable-footer {
+    font-size: 12px; color: #888c96; font-style: italic;
+    border-top: 1px solid #f1f3f6; padding-top: 10px; margin-top: 16px;
+  }
+</style>
+
+<div class="max-w-6xl mx-auto px-4 py-8" id="sr-meeting" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
+    <div>
+      <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %> &middot; Strategy Reset</div>
+      <div class="flex items-start gap-2">
+        <h1 id="meeting-title" class="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-[1.05] tracking-tight"><%= meeting.title %></h1>
+        <button id="title-edit-btn" type="button" class="mt-1 text-xs text-orgy-blue hover:underline shrink-0" title="Edit the meeting title">Edit</button>
+      </div>
+      <div id="title-editor" class="hidden mt-2 flex flex-wrap items-center gap-2">
+        <input id="title-input" type="text" maxlength="255" value="<%= meeting.title %>" class="border border-gray-300 rounded px-2 py-1.5 text-sm w-full max-w-md">
+        <button id="title-save" type="button" class="px-3 py-1 bg-orgy-blue text-white rounded text-xs font-semibold hover:bg-orgy-blue-deep">Save</button>
+        <button id="title-cancel" type="button" class="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+        <span id="title-status" class="text-xs text-gray-500"></span>
+      </div>
+      <p class="text-sm text-gray-600 mt-1.5">
+        Scheduled <span id="sched-display"><%= new Date(meeting.scheduledAt).toLocaleString() %></span>
+        <button id="sched-edit-btn" type="button" class="text-xs text-orgy-blue hover:underline ml-1">Edit time</button>
+        <span class="mx-1.5 text-gray-300">&middot;</span>
+        Status <span class="font-semibold text-gray-800" id="meeting-status"><%= meeting.status %></span>
+        <span class="mx-1.5 text-gray-300">&middot;</span>
+        <span id="meeting-recurrence-label" class="<%= meeting.recurrenceRule ? 'font-semibold text-gray-800' : 'text-gray-400' %>"><%= meeting.recurrenceRule ? (typeof recurrenceLabel !== 'undefined' && recurrenceLabel ? recurrenceLabel : 'Repeats') : 'One-time' %></span>
+      </p>
+      <div id="sched-editor" class="hidden mt-2 flex flex-wrap items-center gap-2">
+        <input id="sched-input" type="datetime-local" value="<%= new Date(meeting.scheduledAt).toISOString().slice(0,16) %>" class="border border-gray-300 rounded px-2 py-1 text-sm">
+        <button id="sched-save" type="button" class="px-3 py-1 bg-orgy-blue text-white rounded text-xs font-semibold hover:bg-orgy-blue-deep">Save</button>
+        <button id="sched-cancel" type="button" class="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+        <span id="sched-status" class="text-xs text-gray-500"></span>
+      </div>
+    </div>
+    <div class="flex gap-2 items-center">
+      <%
+        var _ratingVals = (meeting.ratings && typeof meeting.ratings === 'object') ? Object.values(meeting.ratings).filter(function(v){ return typeof v === 'number'; }) : [];
+        var _ratingAvg = _ratingVals.length ? (_ratingVals.reduce(function(a,b){ return a + b; }, 0) / _ratingVals.length) : null;
+      %>
+      <% if (meeting.status === 'scheduled') { %>
+        <button id="start-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Start the strategy reset meeting">
+          &#9654; Start meeting
+        </button>
+        <button id="end-meeting" class="px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Mark this meeting complete">
+          &#10003; End meeting
+        </button>
+      <% } else if (meeting.status === 'in_progress') { %>
+        <button id="end-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">
+          &#10003; End meeting
+        </button>
+      <% } else if (meeting.status === 'completed') { %>
+        <span class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium" title="Meeting ended; data is frozen as the historical record">Ended<% if (_ratingAvg != null) { %> &middot; <%= _ratingAvg.toFixed(1) %>/10<% } %></span>
+      <% } %>
+      <button id="delete-meeting" class="text-xs text-gray-400 hover:text-red-600 hover:underline" title="Delete this meeting permanently (soft delete)">Delete</button>
+    </div>
+  </div>
+
+  <!-- Attendees panel -->
+  <%
+    const normalizedAttendees = (meeting.attendees || []).map(function(a) {
+      const entityType = a.entityType || a.type;
+      const externalId = a.externalId || (Array.isArray(a.externalIds) && a.externalIds[0]) || a.memberId || '';
+      const name = a.name || a.externalId || '';
+      return {
+        entityType: entityType,
+        externalId: externalId,
+        name: name,
+        memberId: a.memberId || '',
+        checkinText: a.checkinText || '',
+        checkinAt: a.checkinAt || null,
+      };
+    }).filter(function(a) { return !!a.externalId; });
+    const attendeeKeys = {};
+    normalizedAttendees.forEach(function(a) { attendeeKeys[a.entityType + ':' + a.externalId] = true; });
+    const ownersNotAttending = (availableOwners || []).filter(function(o) {
+      return !attendeeKeys[o.entityType + ':' + o.externalId];
+    });
+  %>
+  <div class="mb-6 border rounded-lg p-3 bg-gray-50">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs uppercase tracking-wider text-gray-700 font-medium flex items-center gap-2">
+        Attendees &amp; Access
+        <span id="meeting-live-indicator" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-orgy-soft text-orgy-on-light font-medium" title="Connected to live updates">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-orgy align-middle animate-pulse"></span>
+          Live <span id="meeting-watcher-count">1</span>
+        </span>
+      </div>
+      <button id="edit-attendees-btn" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100">Edit</button>
+    </div>
+    <div id="attendees-display" class="flex flex-wrap gap-2">
+      <% normalizedAttendees.forEach(function(a) { %>
+        <span class="text-xs px-2 py-1 rounded-full <%= a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>" data-attendee="<%= a.entityType + ':' + a.externalId %>">
+          <%= a.name || a.externalId %>
+          <span class="text-gray-500">(<%= a.entityType %>)</span>
+        </span>
+      <% }); %>
+      <% if (normalizedAttendees.length === 0) { %>
+        <span class="text-xs text-gray-500 italic">No attendees yet -- click Edit to add</span>
+      <% } %>
+    </div>
+    <% if ((teamMembers || []).length > 0) { %>
+      <div class="text-xs text-gray-500 mt-2">
+        Team (has meeting access): <%= (teamMembers || []).map(function(m) { return (m.name || m.memberId) + (m.role ? ' (' + m.role + ')' : ''); }).join(', ') %>
+      </div>
+    <% } %>
+    <div id="attendees-editor" class="hidden mt-3">
+      <div id="attendees-chips" class="flex flex-wrap gap-2 mb-2"></div>
+      <div class="flex gap-2">
+        <select id="attendee-add-select" class="flex-1 border rounded p-2 text-sm">
+          <option value="">-- add attendee --</option>
+          <% ownersNotAttending.forEach(function(o) { %>
+            <option value="<%= o.entityType %>:<%= o.externalId %>:<%= o.name || o.externalId %>"><%= o.name || o.externalId %> (<%= o.entityType %>)</option>
+          <% }); %>
+        </select>
+        <button id="attendee-add-btn" class="px-3 py-1 bg-orgy-blue text-white text-xs rounded hover:bg-orgy-blue-deep">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-in section -->
+  <section id="checkin" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">Check-in <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span></h2>
+    <% var _checkinsDone = normalizedAttendees.filter(function(a){ return a.checkinText && String(a.checkinText).trim(); }).length; %>
+    <% var _canCheckinEdit = meeting.status === 'in_progress';
+       var _canCheckinEnter = meeting.status === 'in_progress' || meeting.status === 'scheduled'; %>
+    <div class="text-xs text-gray-500 mb-2"><%= _checkinsDone %> of <%= normalizedAttendees.length %> checked in</div>
+    <% if (meeting.status === 'scheduled') { %>
+      <div class="text-xs text-orgy-on-light bg-orgy-tint border border-orgy-soft rounded-lg px-3 py-2 mb-3">Pre-meeting check-ins. They lock in when you press <strong>Start meeting</strong>.</div>
+    <% } else if (meeting.status === 'completed') { %>
+      <div class="text-xs text-gray-500 mb-3">Check-ins from this meeting &middot; read-only record.</div>
+    <% } %>
+    <div class="space-y-2">
+      <% if (normalizedAttendees.length === 0) { %>
+        <div class="text-sm text-gray-500 italic">No attendees yet -- add some in the panel above so each can check in.</div>
+      <% } %>
+      <% normalizedAttendees.forEach(function(a){
+           var ckey = a.externalId || a.memberId || '';
+           var hasCheckin = a.checkinText && String(a.checkinText).trim() !== '';
+           var badgeClass = a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+      %>
+        <div class="border rounded-lg p-3" data-checkin-attendee="<%= ckey %>">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs px-2 py-0.5 rounded-full <%= badgeClass %>"><%= a.name || a.externalId %></span>
+            <% if (hasCheckin) { %>
+              <span class="text-xs text-emerald-700 font-medium">&#10003; checked in<% if (a.checkinAt) { %> &middot; <%= new Date(a.checkinAt).toLocaleString() %><% } %></span>
+            <% } else { %>
+              <span class="text-xs text-gray-400">not yet checked in</span>
+            <% } %>
+          </div>
+          <% if (hasCheckin) { %>
+            <div data-checkin-display>
+              <div class="text-sm text-gray-800 whitespace-pre-wrap<%= _canCheckinEdit ? ' mb-2' : '' %>"><%= a.checkinText %></div>
+              <% if (_canCheckinEdit) { %><button type="button" class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" data-checkin-edit>Edit</button><% } %>
+            </div>
+            <div data-checkin-editor class="hidden">
+              <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."><%= a.checkinText || '' %></textarea>
+              <div class="flex gap-2 mt-2 items-center">
+                <button type="button" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" data-checkin-save>Save</button>
+                <button type="button" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" data-checkin-cancel>Cancel</button>
+                <span class="text-xs text-gray-500" data-checkin-msg></span>
+              </div>
+            </div>
+          <% } else if (_canCheckinEnter) { %>
+            <div data-checkin-editor>
+              <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."></textarea>
+              <div class="flex gap-2 mt-2 items-center">
+                <button type="button" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" data-checkin-save>Save</button>
+                <span class="text-xs text-gray-500" data-checkin-msg></span>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="text-sm text-gray-400 italic">No check-in recorded.</div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <!-- Agenda nav -->
+  <nav id="agenda-nav" class="flex items-center gap-1 mb-6 text-xs whitespace-nowrap overflow-x-auto" data-active="">
+    <a href="#define_issue"          data-section="define_issue"          data-budget="15" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">1. Define Issue <span class="text-gray-500">15m</span></a>
+    <a href="#reality_check"         data-section="reality_check"         data-budget="30" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">2. Reality Check <span class="text-gray-500">30m</span></a>
+    <a href="#future_consequences"   data-section="future_consequences"   data-budget="20" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">3. Consequences <span class="text-gray-500">20m</span></a>
+    <a href="#strategic_options"     data-section="strategic_options"     data-budget="45" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">4. Options <span class="text-gray-500">45m</span></a>
+    <a href="#debate_decide"         data-section="debate_decide"         data-budget="60" class="agenda-chip flex-[2] px-2 py-1.5 bg-orgy-blue-soft rounded text-center font-medium min-w-0">5. Debate &amp; Decide <span class="text-gray-600">60m</span></a>
+    <a href="#strategic_commitment"  data-section="strategic_commitment"  data-budget="20" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">6. Commit <span class="text-gray-500">20m</span></a>
+    <a href="#define_success"        data-section="define_success"        data-budget="10" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">7. Success <span class="text-gray-500">10m</span></a>
+    <a href="#assign_ownership"      data-section="assign_ownership"      data-budget="10" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">8. Ownership <span class="text-gray-500">10m</span></a>
+    <a href="#deliverable"           data-section="deliverable"           data-budget="0"  class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0">Deliverable</a>
+    <span id="meeting-clock" class="ml-3 px-2 py-1 rounded bg-gray-900 text-white font-mono text-xs whitespace-nowrap">--:--</span>
+    <button id="timer-toggle" class="ml-1 px-2 py-1 bg-orgy-blue text-white rounded text-xs hover:bg-orgy-blue-deep">Start</button>
+    <button id="timer-prev"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Previous section  (  [  )">&#8592; Prev</button>
+    <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Next section  (  ]  )  &#183;  space toggles the timer">Next &#8594;</button>
+    <button id="focus-toggle" class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Focus mode: show only the active section  (  F  )">Focus</button>
+  </nav>
+
+  <%
+    // Safely read segmentNotes -- default each field to empty string if missing.
+    var _sn = (meeting.segmentNotes && typeof meeting.segmentNotes === 'object') ? meeting.segmentNotes : {};
+    var _di   = (_sn.define_issue && typeof _sn.define_issue === 'object') ? _sn.define_issue : {};
+    var _rc   = (_sn.reality_check && typeof _sn.reality_check === 'object') ? _sn.reality_check : {};
+    var _fc   = (_sn.future_consequences && typeof _sn.future_consequences === 'object') ? _sn.future_consequences : {};
+    var _so   = (_sn.strategic_options && typeof _sn.strategic_options === 'object') ? _sn.strategic_options : {};
+    var _dd   = (_sn.debate_decide && typeof _sn.debate_decide === 'object') ? _sn.debate_decide : {};
+    var _sc   = (_sn.strategic_commitment && typeof _sn.strategic_commitment === 'object') ? _sn.strategic_commitment : {};
+    var _ds   = (_sn.define_success && typeof _sn.define_success === 'object') ? _sn.define_success : {};
+  %>
+
+  <!-- 1. Define the Issue -->
+  <section id="define_issue" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">1. Define the Issue <span class="text-sm text-gray-400 font-normal">15 min</span></h2>
+    <label class="sr-label" for="sr-define-issue-issue">Why are we here? State the issue in a single sentence.</label>
+    <textarea id="sr-define-issue-issue" rows="3" class="w-full border rounded p-3 text-sm" placeholder="State the core issue in one sentence..." data-sr-field="define_issue" data-sr-key="issue"><%= _di.issue || '' %></textarea>
+    <span id="sr-saved-define_issue-issue" class="sr-saved-msg"></span>
+    <div class="sr-example-chips mt-2">
+      <span class="sr-example-chip">core product no longer profitable</span>
+      <span class="sr-example-chip">growth stalled for 2+ quarters</span>
+      <span class="sr-example-chip">AI disruption threatening our model</span>
+      <span class="sr-example-chip">retention declining</span>
+      <span class="sr-example-chip">outgrown our structure</span>
+    </div>
+    <div class="sr-outcome"><strong>Outcome:</strong> Agreement on the problem being solved.</div>
+  </section>
+
+  <!-- 2. Reality Check -->
+  <section id="reality_check" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">2. Reality Check <span class="text-sm text-gray-400 font-normal">30 min</span></h2>
+    <div class="mb-4 text-sm text-gray-600 space-y-1">
+      <div><strong class="text-gray-700">Discussion prompts:</strong></div>
+      <div class="text-xs text-gray-500">What has changed? &middot; What assumptions are no longer true? &middot; What can we not ignore?</div>
+    </div>
+    <label class="sr-label" for="sr-reality-internal">Internal Facts</label>
+    <div class="sr-hint">Revenue trends, profitability, retention, team capacity, product performance</div>
+    <textarea id="sr-reality-internal" rows="5" class="w-full border rounded p-3 text-sm" placeholder="What do the internal numbers tell us?" data-sr-field="reality_check" data-sr-key="internal"><%= _rc.internal || '' %></textarea>
+    <span id="sr-saved-reality_check-internal" class="sr-saved-msg"></span>
+    <label class="sr-label" for="sr-reality-external">External Facts</label>
+    <div class="sr-hint">Market changes, competitive threats, technology shifts, customer behavior</div>
+    <textarea id="sr-reality-external" rows="5" class="w-full border rounded p-3 text-sm" placeholder="What is the market and world telling us?" data-sr-field="reality_check" data-sr-key="external"><%= _rc.external || '' %></textarea>
+    <span id="sr-saved-reality_check-external" class="sr-saved-msg"></span>
+    <div class="sr-outcome"><strong>Outcome:</strong> Shared understanding of current reality.</div>
+  </section>
+
+  <!-- 3. Future Consequences -->
+  <section id="future_consequences" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">3. Future Consequences <span class="text-sm text-gray-400 font-normal">20 min</span></h2>
+    <div class="mb-3 text-sm font-medium text-gray-700">What happens if we do nothing?</div>
+    <label class="sr-label" for="sr-fc-12">In 12 Months</label>
+    <div class="sr-hint">Revenue, profit, team, customers</div>
+    <textarea id="sr-fc-12" rows="4" class="w-full border rounded p-3 text-sm" placeholder="If nothing changes, one year from now..." data-sr-field="future_consequences" data-sr-key="in_12_months"><%= _fc.in_12_months || '' %></textarea>
+    <span id="sr-saved-future_consequences-in_12_months" class="sr-saved-msg"></span>
+    <label class="sr-label" for="sr-fc-36">In 36 Months</label>
+    <div class="sr-hint">Revenue, profit, market position</div>
+    <textarea id="sr-fc-36" rows="4" class="w-full border rounded p-3 text-sm" placeholder="If nothing changes, three years from now..." data-sr-field="future_consequences" data-sr-key="in_36_months"><%= _fc.in_36_months || '' %></textarea>
+    <span id="sr-saved-future_consequences-in_36_months" class="sr-saved-msg"></span>
+    <div class="sr-outcome"><strong>Outcome:</strong> Understanding of the cost of inaction.</div>
+  </section>
+
+  <!-- 4. Strategic Options -->
+  <section id="strategic_options" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">4. Strategic Options <span class="text-sm text-gray-400 font-normal">45 min</span></h2>
+    <div class="mb-3 text-xs text-gray-500 font-medium uppercase tracking-wide">Rules: No debating. No judging. Capture all options.</div>
+    <label class="sr-label" for="sr-so-options">List every viable path forward (one per line)</label>
+    <textarea id="sr-so-options" rows="10" class="w-full border rounded p-3 text-sm font-mono" placeholder="raise prices&#10;narrow offerings&#10;niche focus&#10;..." data-sr-field="strategic_options" data-sr-key="options"><%= _so.options || '' %></textarea>
+    <span id="sr-saved-strategic_options-options" class="sr-saved-msg"></span>
+    <div class="sr-example-chips mt-2">
+      <span class="sr-example-chip">raise prices</span>
+      <span class="sr-example-chip">narrow offerings</span>
+      <span class="sr-example-chip">niche focus</span>
+      <span class="sr-example-chip">invest in tech</span>
+      <span class="sr-example-chip">productize</span>
+      <span class="sr-example-chip">new markets</span>
+      <span class="sr-example-chip">eliminate unprofitable offerings</span>
+      <span class="sr-example-chip">acquire</span>
+    </div>
+    <div class="sr-outcome"><strong>Outcome:</strong> Complete list of strategic alternatives.</div>
+  </section>
+
+  <!-- 5. Debate and Decide -->
+  <section id="debate_decide" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">5. Debate and Decide <span class="text-sm text-gray-400 font-normal">60 min</span></h2>
+    <div class="mb-4 text-xs text-gray-500">
+      Evaluate each option against: vision alignment &middot; executability &middot; risks &middot; revenue impact
+    </div>
+    <label class="sr-label" for="sr-dd-believe">What do we believe to be true?</label>
+    <textarea id="sr-dd-believe" rows="4" class="w-full border rounded p-3 text-sm" placeholder="Shared beliefs that anchor this decision..." data-sr-field="debate_decide" data-sr-key="believe_true"><%= _dd.believe_true || '' %></textarea>
+    <span id="sr-saved-debate_decide-believe_true" class="sr-saved-msg"></span>
+    <label class="sr-label" for="sr-dd-stop">What should we stop doing?</label>
+    <textarea id="sr-dd-stop" rows="4" class="w-full border rounded p-3 text-sm" placeholder="Things to eliminate or deprioritize..." data-sr-field="debate_decide" data-sr-key="stop_doing"><%= _dd.stop_doing || '' %></textarea>
+    <span id="sr-saved-debate_decide-stop_doing" class="sr-saved-msg"></span>
+    <label class="sr-label" for="sr-dd-start">What should we start doing?</label>
+    <textarea id="sr-dd-start" rows="4" class="w-full border rounded p-3 text-sm" placeholder="New directions or investments..." data-sr-field="debate_decide" data-sr-key="start_doing"><%= _dd.start_doing || '' %></textarea>
+    <span id="sr-saved-debate_decide-start_doing" class="sr-saved-msg"></span>
+    <label class="sr-label" for="sr-dd-focus">What is the single most important focus?</label>
+    <textarea id="sr-dd-focus" rows="3" class="w-full border rounded p-3 text-sm font-medium" placeholder="One sentence. If you can't say it in one sentence, you haven't decided yet." data-sr-field="debate_decide" data-sr-key="single_focus"><%= _dd.single_focus || '' %></textarea>
+    <span id="sr-saved-debate_decide-single_focus" class="sr-saved-msg"></span>
+    <div class="sr-outcome"><strong>Outcome:</strong> Leadership alignment around one strategic direction.</div>
+  </section>
+
+  <!-- 6. Strategic Commitment -->
+  <section id="strategic_commitment" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Strategic Commitment <span class="text-sm text-gray-400 font-normal">20 min</span></h2>
+    <div class="space-y-4">
+      <div>
+        <label class="sr-label" for="sr-sc-challenge">Our Biggest Challenge Is:</label>
+        <input id="sr-sc-challenge" type="text" class="w-full border rounded px-3 py-2 text-sm" placeholder="..." value="<%= _sc.biggest_challenge || '' %>" data-sr-field="strategic_commitment" data-sr-key="biggest_challenge">
+        <span id="sr-saved-strategic_commitment-biggest_challenge" class="sr-saved-msg"></span>
+      </div>
+      <div>
+        <label class="sr-label" for="sr-sc-focus">Our Strategic Focus Is:</label>
+        <input id="sr-sc-focus" type="text" class="w-full border rounded px-3 py-2 text-sm" placeholder="..." value="<%= _sc.strategic_focus || '' %>" data-sr-field="strategic_commitment" data-sr-key="strategic_focus">
+        <span id="sr-saved-strategic_commitment-strategic_focus" class="sr-saved-msg"></span>
+      </div>
+      <div>
+        <label class="sr-label" for="sr-sc-priority">Our Top Priority For The Next 90 Days Is:</label>
+        <input id="sr-sc-priority" type="text" class="w-full border rounded px-3 py-2 text-sm" placeholder="..." value="<%= _sc.top_priority_90d || '' %>" data-sr-field="strategic_commitment" data-sr-key="top_priority_90d">
+        <span id="sr-saved-strategic_commitment-top_priority_90d" class="sr-saved-msg"></span>
+      </div>
+      <div>
+        <label class="sr-label" for="sr-sc-towin">To Win, We Must:</label>
+        <input id="sr-sc-towin" type="text" class="w-full border rounded px-3 py-2 text-sm" placeholder="..." value="<%= _sc.to_win_we_must || '' %>" data-sr-field="strategic_commitment" data-sr-key="to_win_we_must">
+        <span id="sr-saved-strategic_commitment-to_win_we_must" class="sr-saved-msg"></span>
+      </div>
+      <div>
+        <label class="sr-label" for="sr-sc-stop">We Will Stop:</label>
+        <input id="sr-sc-stop" type="text" class="w-full border rounded px-3 py-2 text-sm" placeholder="..." value="<%= _sc.we_will_stop || '' %>" data-sr-field="strategic_commitment" data-sr-key="we_will_stop">
+        <span id="sr-saved-strategic_commitment-we_will_stop" class="sr-saved-msg"></span>
+      </div>
+    </div>
+    <div class="sr-outcome"><strong>Outcome:</strong> Written strategic commitment.</div>
+  </section>
+
+  <!-- 7. Define Success -->
+  <section id="define_success" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">7. Define Success <span class="text-sm text-gray-400 font-normal">10 min</span></h2>
+    <label class="sr-label" for="sr-ds-criteria">90 Days From Now We Will Know This Worked If:</label>
+    <div class="sr-hint">One criterion per line. Make each one measurable.</div>
+    <textarea id="sr-ds-criteria" rows="6" class="w-full border rounded p-3 text-sm" placeholder="Revenue from new segment exceeds $X&#10;Team headcount reduction complete&#10;..." data-sr-field="define_success" data-sr-key="criteria"><%= _ds.criteria || '' %></textarea>
+    <span id="sr-saved-define_success-criteria" class="sr-saved-msg"></span>
+    <div class="sr-outcome"><strong>Outcome:</strong> Clear success criteria.</div>
+  </section>
+
+  <!-- 8. Assign Ownership -->
+  <section id="assign_ownership" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">8. Assign Ownership <span class="text-sm text-gray-400 font-normal">10 min</span></h2>
+
+    <!-- Existing todos for this meeting -->
+    <% var meetingTodos = (todos || []).filter(function(t){ return t.meetingId === meeting.id; }); %>
+    <div class="mb-4 border rounded-lg p-3 bg-gray-50">
+      <div class="text-xs uppercase tracking-wider text-gray-600 font-medium mb-2">Commitments from this meeting (<%= meetingTodos.length %>)</div>
+      <% if (meetingTodos.length === 0) { %>
+        <div class="text-xs text-gray-500 italic">No commitments yet. Capture them below.</div>
+      <% } else { %>
+        <ul class="space-y-1">
+          <% meetingTodos.forEach(function(t){ %>
+            <li class="text-sm flex items-center gap-2" data-todo-id="<%= t.id %>">
+              <input type="checkbox" data-todo-toggle <%= t.doneAt ? 'checked' : '' %> class="w-4 h-4">
+              <span class="<%= t.doneAt ? 'line-through text-gray-400' : '' %>"><%= t.title %></span>
+              <span class="text-xs text-gray-500"><%= t.ownerName || t.ownerExternalId %><% if (t.dueAt) { %> &middot; due <%= new Date(t.dueAt).toLocaleDateString() %><% } %></span>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+
+    <!-- All other open todos -->
+    <% var otherTodos = (todos || []).filter(function(t){ return t.meetingId !== meeting.id && !t.doneAt; }); %>
+    <% if (otherTodos.length > 0) { %>
+      <div class="mb-4">
+        <div class="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">Other open to-dos</div>
+        <ul class="space-y-1">
+          <% otherTodos.forEach(function(t) { %>
+            <li class="flex items-center gap-3 border rounded p-2" data-todo-id="<%= t.id %>">
+              <input type="checkbox" data-todo-toggle <%= t.doneAt ? 'checked' : '' %> class="w-4 h-4">
+              <div class="flex-1">
+                <div class="text-sm <%= t.doneAt ? 'line-through text-gray-400' : '' %>"><%= t.title %></div>
+                <% if (t.description) { %>
+                  <div class="text-xs text-gray-600 mt-0.5 break-words"><%- renderDescription(t.description) %></div>
+                <% } %>
+                <div class="text-xs text-gray-500">
+                  <%= t.ownerName || t.ownerExternalId %>
+                  <% if (t.dueAt) { %> &middot; due <%= new Date(t.dueAt).toLocaleDateString() %><% } %>
+                </div>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <!-- New commitment quick-add -->
+    <div class="mt-3 space-y-2">
+      <div class="grid grid-cols-12 gap-2">
+        <input id="new-todo-title" type="text" placeholder="New commitment (what gets done, by whom, by when)..." class="col-span-5 border rounded p-2 text-sm">
+        <select id="new-todo-owner" class="col-span-3 border rounded p-2 text-sm" multiple size="3" title="Assign to one or more. Each person gets their own copy.">
+          <% (availableOwners || []).forEach(function(a) { %>
+            <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+          <% }); %>
+        </select>
+        <input id="new-todo-due" type="date" class="col-span-2 border rounded p-2 text-sm" title="due date (default: 7 days from today)">
+        <select id="new-todo-priority" class="col-span-1 border rounded p-2 text-sm" title="priority">
+          <option value="p1">P1</option>
+          <option value="p2">P2</option>
+          <option value="p3" selected>P3</option>
+          <option value="p4">P4</option>
+        </select>
+        <select id="new-todo-recur" class="col-span-1 border rounded p-2 text-sm" title="recurrence">
+          <option value="">no repeat</option>
+          <option value="FREQ=DAILY">daily</option>
+          <option value="FREQ=WEEKLY">weekly</option>
+          <option value="FREQ=WEEKLY;BYDAY=MO,WE,FR">M/W/F</option>
+          <option value="FREQ=MONTHLY">monthly</option>
+        </select>
+        <button id="add-todo" class="col-span-12 px-3 py-2 bg-orgy-blue text-white text-sm rounded hover:bg-orgy-blue-deep">Add Commitment</button>
+      </div>
+      <div>
+        <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
+        <textarea id="new-todo-desc" rows="2" placeholder="Description (optional). Markdown: **bold**, *italic*, [link](https://...)" class="w-full border rounded p-2 text-sm"></textarea>
+      </div>
+    </div>
+    <div class="sr-outcome"><strong>Outcome:</strong> Clear accountability.</div>
+  </section>
+
+  <!-- Meeting Rating -->
+  <section id="conclude" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">Meeting Rating <span class="text-sm text-gray-400 font-normal">1 to 10 &middot; aim for 8+</span></h2>
+    <%
+      var humanAttendees = normalizedAttendees.filter(function(a){ return a.entityType === 'human'; });
+      var savedRatings = (meeting.ratings && typeof meeting.ratings === 'object') ? meeting.ratings : {};
+    %>
+    <div class="border rounded-lg p-3">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase tracking-wider text-gray-600 font-medium">Rate this meeting</div>
+        <span id="rating-avg" class="text-sm font-bold text-gray-700"></span>
+      </div>
+      <% if (humanAttendees.length === 0) { %>
+        <div class="text-xs text-gray-500 italic">No human attendees to rate the meeting. Add attendees above.</div>
+      <% } else { %>
+        <div class="flex flex-wrap gap-3 mb-2">
+          <% humanAttendees.forEach(function(a){ %>
+            <label class="flex items-center gap-1.5 text-sm">
+              <span><%= a.name || a.externalId %></span>
+              <input type="number" min="1" max="10" data-rating-input data-attendee-key="<%= a.externalId %>"
+                     value="<%= savedRatings[a.externalId] != null ? savedRatings[a.externalId] : '' %>"
+                     class="w-14 border rounded p-1 text-sm text-center">
+            </label>
+          <% }); %>
+        </div>
+        <button id="save-ratings" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save ratings</button>
+        <span id="ratings-status" class="text-xs text-gray-500 ml-2"></span>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- Deliverable (compiled summary) -->
+  <section id="deliverable" class="mb-8">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">Meeting Deliverable <span class="text-sm text-gray-400 font-normal">Compiled from this session</span></h2>
+
+    <div class="sr-deliverable-block">
+      <div class="sr-deliverable-label">The Problem</div>
+      <div class="sr-deliverable-value"><%= (_di.issue || '').trim() || '(not yet captured -- complete section 1)' %></div>
+    </div>
+
+    <div class="sr-deliverable-block">
+      <div class="sr-deliverable-label">The Decision</div>
+      <% var _theDecision = ((_dd.single_focus || '').trim()) || ((_sc.strategic_focus || '').trim()); %>
+      <div class="sr-deliverable-value"><%= _theDecision || '(not yet captured -- complete sections 5 or 6)' %></div>
+    </div>
+
+    <div class="sr-deliverable-block">
+      <div class="sr-deliverable-label">The Priority</div>
+      <div class="sr-deliverable-value"><%= (_sc.top_priority_90d || '').trim() || '(not yet captured -- complete section 6)' %></div>
+    </div>
+
+    <div class="sr-deliverable-block">
+      <div class="sr-deliverable-label">The Actions</div>
+      <% if (meetingTodos.length === 0) { %>
+        <div class="sr-deliverable-value text-gray-400 italic">(no commitments yet -- add them in section 8)</div>
+      <% } else { %>
+        <ul class="space-y-1">
+          <% meetingTodos.forEach(function(t){ %>
+            <li class="text-sm flex items-start gap-2">
+              <span class="<%= t.doneAt ? 'text-emerald-600' : 'text-gray-400' %> mt-0.5"><%= t.doneAt ? '&#10003;' : '&#9675;' %></span>
+              <span class="<%= t.doneAt ? 'line-through text-gray-400' : 'text-gray-800' %>"><%= t.title %> <span class="text-gray-500 text-xs">-- <%= t.ownerName || t.ownerExternalId %></span></span>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+
+    <div class="sr-deliverable-footer">
+      If the leadership team cannot answer these four questions with one voice, the meeting is not complete.
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  const meetingId = document.querySelector('#sr-meeting').dataset.meetingId;
+  const teamId = document.querySelector('[data-team-id]').dataset.teamId || null;
+  const DEV_ORG = <%- jsonForScript(devOrgIdParam || '') %>;
+  function withOrg(path) {
+    if (!DEV_ORG) return path;
+    return path + (path.includes('?') ? '&' : '?') + 'orgId=' + encodeURIComponent(DEV_ORG);
+  }
+  const api = (path, opts) => {
+    const hasBody = !!(opts && opts.body);
+    const headers = { ...((opts && opts.headers) || {}) };
+    if (hasBody) headers['Content-Type'] = 'application/json';
+    const ctl = new AbortController();
+    const timer = setTimeout(function () { ctl.abort(); }, 30000);
+    return fetch('/api/v1' + withOrg(path), {
+      method: 'GET',
+      credentials: 'include',
+      ...opts,
+      headers,
+      signal: ctl.signal,
+    }).then(async function (r) {
+      let parsed = null;
+      try { parsed = await r.json(); } catch (e) { parsed = null; }
+      if (!r.ok) {
+        if (parsed && parsed.error) return parsed;
+        return { error: { code: 'HTTP_' + r.status, message: (parsed && parsed.message) || r.statusText || ('HTTP ' + r.status) } };
+      }
+      return parsed === null ? { ok: true } : parsed;
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return { error: { code: 'TIMEOUT', message: 'Request timed out after 30s.' } };
+      return { error: { code: 'NETWORK', message: (err && err.message) || 'network error' } };
+    }).finally(function () { clearTimeout(timer); });
+  };
+  function errMsg(res) {
+    if (!res) return 'unknown error';
+    if (res.error && typeof res.error === 'object') return res.error.message || res.error.code || 'unknown error';
+    if (res.message) return res.message;
+    if (typeof res.error === 'string') return res.error;
+    return 'unknown error';
+  }
+
+  function parseOwner(val) {
+    if (!val) return null;
+    const [entityType, externalId, ...rest] = val.split(':');
+    return { entityType, externalId, name: rest.join(':') || externalId };
+  }
+
+  // ===== Reload helpers =====
+  const SCROLL_KEY = 'otp-sr-scroll-' + meetingId;
+  const FOCUS_KEY  = 'otp-sr-focus-'  + meetingId;
+  const DRAFT_KEY  = 'otp-sr-drafts-' + meetingId;
+
+  function snapshotDrafts() {
+    try {
+      const drafts = {};
+      const sel = 'textarea, input[type="text"], input[type="date"], input[type="number"], [contenteditable="true"]';
+      document.querySelectorAll(sel).forEach(function(el) {
+        if (!el.id) return;
+        const v = el.isContentEditable ? el.innerHTML : el.value;
+        if (typeof v === 'string' && v.length > 0) drafts[el.id] = v;
+      });
+      if (Object.keys(drafts).length > 0) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
+    } catch (e) {}
+  }
+  function restoreDrafts() {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(DRAFT_KEY);
+      const drafts = JSON.parse(raw) || {};
+      Object.keys(drafts).forEach(function(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.isContentEditable) { el.innerHTML = drafts[id]; } else { el.value = drafts[id]; }
+      });
+    } catch (e) {}
+  }
+  function reloadKeep() {
+    try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch (e) {}
+    try { const ae = document.activeElement; if (ae && ae.id) sessionStorage.setItem(FOCUS_KEY, ae.id); } catch (e) {}
+    snapshotDrafts();
+    window.location.assign(window.location.href);
+  }
+  (function restoreScrollAndFocus() {
+    try {
+      const y = sessionStorage.getItem(SCROLL_KEY);
+      if (y !== null) { sessionStorage.removeItem(SCROLL_KEY); window.requestAnimationFrame(function () { window.scrollTo(0, parseInt(y, 10) || 0); }); }
+      const fid = sessionStorage.getItem(FOCUS_KEY);
+      if (fid) { sessionStorage.removeItem(FOCUS_KEY); window.requestAnimationFrame(function () { const el = document.getElementById(fid); if (el && typeof el.focus === 'function') el.focus(); }); }
+      window.requestAnimationFrame(restoreDrafts);
+    } catch (e) {}
+  })();
+
+  // ===== Per-section timer =====
+  const chips = Array.from(document.querySelectorAll('.agenda-chip'));
+  const clock = document.getElementById('meeting-clock');
+  const toggleBtn = document.getElementById('timer-toggle');
+  const skipBtn = document.getElementById('timer-skip');
+  let timerState = { running: false, sectionIdx: 0, elapsed: 0, intervalId: null };
+  const TIMER_KEY = 'otp-sr-timer-' + meetingId;
+
+  try {
+    const _savedTimer = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null');
+    if (_savedTimer && typeof _savedTimer.elapsed === 'number') {
+      timerState.sectionIdx = Math.min(Math.max(0, _savedTimer.sectionIdx || 0), Math.max(0, chips.length - 1));
+      timerState.elapsed = _savedTimer.elapsed;
+      timerState.running = !!_savedTimer.running;
+      if (timerState.running && _savedTimer.savedAt) {
+        timerState.elapsed += Math.max(0, Math.floor((Date.now() - _savedTimer.savedAt) / 1000));
+      }
+    }
+  } catch (e) {}
+  if (<%- jsonForScript(meeting.status) %> === 'completed' || <%- jsonForScript(meeting.status) %> === 'cancelled') {
+    timerState.running = false;
+  }
+
+  function saveTimer() {
+    try {
+      localStorage.setItem(TIMER_KEY, JSON.stringify({
+        sectionIdx: timerState.sectionIdx, elapsed: timerState.elapsed,
+        running: timerState.running, savedAt: Date.now(),
+      }));
+    } catch (e) {}
+  }
+  function activeChip() { return chips[timerState.sectionIdx]; }
+  function activeBudgetSec() { return parseInt(activeChip()?.dataset.budget || '5', 10) * 60; }
+  function fmt(s) {
+    const sign = s < 0 ? '-' : '';
+    const a = Math.abs(s);
+    const m = Math.floor(a / 60);
+    const r = a % 60;
+    return sign + String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+  }
+  function paintChip() {
+    chips.forEach((c, i) => {
+      c.classList.remove('ring-2', 'ring-orgy');
+      if (i === timerState.sectionIdx) c.classList.add('ring-2', 'ring-orgy');
+    });
+  }
+  function tick() { if (!timerState.running) return; timerState.elapsed++; render(); }
+  function render() {
+    const remaining = activeBudgetSec() - timerState.elapsed;
+    clock.textContent = fmt(remaining);
+    if (remaining < 0) {
+      clock.classList.remove('bg-gray-900'); clock.classList.add('bg-red-600', 'animate-pulse');
+    } else if (remaining < 60) {
+      clock.classList.remove('bg-gray-900', 'bg-red-600', 'animate-pulse'); clock.classList.add('bg-amber-500');
+    } else {
+      clock.classList.remove('bg-red-600', 'bg-amber-500', 'animate-pulse'); clock.classList.add('bg-gray-900');
+    }
+    paintChip(); saveTimer();
+  }
+  function startTimer() {
+    timerState.running = true;
+    if (!timerState.intervalId) timerState.intervalId = setInterval(tick, 1000);
+    toggleBtn.textContent = 'Pause'; render();
+  }
+  function pauseTimer() {
+    timerState.running = false;
+    if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
+    toggleBtn.textContent = 'Resume'; render();
+  }
+  function jumpTo(idx) {
+    timerState.sectionIdx = Math.max(0, Math.min(chips.length - 1, idx));
+    timerState.elapsed = 0;
+    applyFocus();
+    if (focusMode) {
+      document.getElementById('agenda-nav')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      chips[timerState.sectionIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    render();
+  }
+  toggleBtn?.addEventListener('click', () => { timerState.running ? pauseTimer() : startTimer(); });
+  skipBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx + 1); });
+  document.getElementById('timer-prev')?.addEventListener('click', () => { jumpTo(timerState.sectionIdx - 1); });
+  chips.forEach((c, i) => c.addEventListener('click', () => { jumpTo(i); if (!timerState.running) startTimer(); }));
+
+  // Focus mode
+  const FOCUS_MODE_KEY = 'otp-sr-focus-mode';
+  const sections = chips.map(c => document.getElementById(c.dataset.section));
+  let focusMode = false;
+  try { focusMode = localStorage.getItem(FOCUS_MODE_KEY) === '1'; } catch (e) {}
+  const focusBtn = document.getElementById('focus-toggle');
+  function applyFocus() {
+    sections.forEach((s, i) => { if (s) s.style.display = (focusMode && i !== timerState.sectionIdx) ? 'none' : ''; });
+    if (focusBtn) {
+      focusBtn.textContent = focusMode ? 'Focus: on' : 'Focus';
+      focusBtn.classList.toggle('bg-orgy-blue', focusMode);
+      focusBtn.classList.toggle('text-white', focusMode);
+      focusBtn.classList.toggle('bg-gray-200', !focusMode);
+    }
+  }
+  function setFocus(on) {
+    focusMode = on;
+    try { localStorage.setItem(FOCUS_MODE_KEY, on ? '1' : '0'); } catch (e) {}
+    applyFocus();
+  }
+  focusBtn?.addEventListener('click', () => setFocus(!focusMode));
+  applyFocus();
+
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); timerState.running ? pauseTimer() : startTimer(); }
+    else if (e.key === ']') { jumpTo(timerState.sectionIdx + 1); }
+    else if (e.key === '[') { jumpTo(timerState.sectionIdx - 1); }
+    else if (e.key === 'f' || e.key === 'F') { setFocus(!focusMode); }
+  });
+  if (timerState.running && !timerState.intervalId) {
+    timerState.intervalId = setInterval(tick, 1000);
+    toggleBtn.textContent = 'Pause';
+  } else if (!localStorage.getItem(TIMER_KEY)) {
+    const _statusEl = document.getElementById('meeting-status');
+    if (_statusEl && _statusEl.textContent.trim() === 'in_progress') startTimer();
+  }
+  render();
+
+  // ===== Edit scheduled time =====
+  (function initScheduleEditor(){
+    const btn = document.getElementById('sched-edit-btn');
+    const editor = document.getElementById('sched-editor');
+    const input = document.getElementById('sched-input');
+    const save = document.getElementById('sched-save');
+    const cancel = document.getElementById('sched-cancel');
+    const status = document.getElementById('sched-status');
+    if (!btn || !editor || !input || !save) return;
+    btn.addEventListener('click', function(){ editor.classList.toggle('hidden'); });
+    if (cancel) cancel.addEventListener('click', function(){ editor.classList.add('hidden'); });
+    save.addEventListener('click', async function(){
+      if (!input.value) { if (status) status.textContent = 'Pick a date and time'; return; }
+      if (save.disabled) return;
+      let v = input.value;
+      if (v.length === 16) v += ':00';
+      const iso = v + 'Z';
+      save.disabled = true; const label = save.textContent; save.textContent = 'Saving...';
+      const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ scheduledAt: iso }) });
+      save.disabled = false; save.textContent = label;
+      if (res && res.error) { if (status) status.textContent = errMsg(res); return; }
+      reloadKeep();
+    });
+  })();
+
+  // ===== Edit meeting title =====
+  (function initTitleEditor(){
+    const btn = document.getElementById('title-edit-btn');
+    const editor = document.getElementById('title-editor');
+    const input = document.getElementById('title-input');
+    const save = document.getElementById('title-save');
+    const cancel = document.getElementById('title-cancel');
+    const status = document.getElementById('title-status');
+    if (!btn || !editor || !input || !save) return;
+    btn.addEventListener('click', function(){
+      editor.classList.toggle('hidden');
+      if (!editor.classList.contains('hidden')) { input.focus(); input.select(); }
+    });
+    if (cancel) cancel.addEventListener('click', function(){ editor.classList.add('hidden'); });
+    input.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
+    save.addEventListener('click', async function(){
+      const v = (input.value || '').trim();
+      if (!v) { if (status) status.textContent = 'Title required'; return; }
+      if (save.disabled) return;
+      save.disabled = true; const label = save.textContent; save.textContent = 'Saving...';
+      const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ title: v }) });
+      save.disabled = false; save.textContent = label;
+      if (res && res.error) { if (status) status.textContent = errMsg(res); return; }
+      reloadKeep();
+    });
+  })();
+
+  // ===== Start / End meeting =====
+  const startBtn = document.getElementById('start-meeting');
+  if (startBtn) startBtn.addEventListener('click', async () => {
+    const orig = startBtn.textContent;
+    startBtn.disabled = true; startBtn.textContent = 'Starting...';
+    const res = await api('/meetings/' + meetingId + '/start', { method: 'POST' });
+    if (!res || res.error) { alert('Could not start the meeting: ' + errMsg(res)); startBtn.disabled = false; startBtn.textContent = orig; return; }
+    reloadKeep();
+  });
+  const endBtn = document.getElementById('end-meeting');
+  if (endBtn) endBtn.addEventListener('click', async () => {
+    if (!confirm('End the meeting?')) return;
+    const orig = endBtn.textContent;
+    endBtn.disabled = true; endBtn.textContent = 'Ending...';
+    try { pauseTimer(); } catch (e) {}
+    try { localStorage.removeItem(TIMER_KEY); } catch (e) {}
+    const res = await api('/meetings/' + meetingId + '/end', { method: 'POST' });
+    if (!res || res.error) { alert('Could not end the meeting: ' + errMsg(res)); endBtn.disabled = false; endBtn.textContent = orig; return; }
+    reloadKeep();
+  });
+
+  // ===== Delete meeting =====
+  const IS_RECURRING = <%- (meeting.recurrenceRule || meeting.recurrenceParentId) ? 'true' : 'false' %>;
+  function chooseDeleteScope() {
+    return new Promise((resolve) => {
+      const btn = 'display:block;width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:1px solid #d9e2da;background:#f7faf6;font-size:14px;font-weight:600;color:#16241b;cursor:pointer;';
+      const danger = 'display:block;width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:1px solid #f0c9c9;background:#fdf3f3;font-size:14px;font-weight:600;color:#a3271f;cursor:pointer;';
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,27,20,.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      ov.innerHTML =
+        '<div style="background:#fff;border-radius:12px;max-width:430px;width:90%;padding:24px;font-family:Inter,system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
+          '<div style="font-weight:800;font-size:18px;color:#16241b;margin-bottom:6px;">Delete recurring meeting</div>' +
+          '<div style="font-size:13.5px;color:#5d6b60;line-height:1.5;margin-bottom:18px;">This meeting repeats. Choose what to delete.</div>' +
+          '<div style="display:flex;flex-direction:column;gap:9px;">' +
+            '<button data-scope="occurrence" style="' + btn + '">Only this meeting<div style="font-weight:400;color:#5d6b60;font-size:12px;margin-top:2px;">Future occurrences stay on the calendar.</div></button>' +
+            '<button data-scope="following" style="' + btn + '">This and all following<div style="font-weight:400;color:#5d6b60;font-size:12px;margin-top:2px;">Ends the series from here forward.</div></button>' +
+            '<button data-scope="series" style="' + danger + '">The entire series<div style="font-weight:400;color:#a3271f;opacity:.8;font-size:12px;margin-top:2px;">Removes every meeting in this series.</div></button>' +
+          '</div>' +
+          '<button data-scope="" style="display:block;width:100%;text-align:center;margin-top:14px;padding:9px;background:none;border:none;color:#5d6b60;font-size:13px;cursor:pointer;">Cancel</button>' +
+        '</div>';
+      const cleanup = () => ov.remove();
+      ov.addEventListener('click', (e) => {
+        if (e.target === ov) { cleanup(); resolve(null); return; }
+        const b = e.target.closest('[data-scope]');
+        if (!b) return;
+        const s = b.getAttribute('data-scope');
+        cleanup(); resolve(s || null);
+      });
+      document.body.appendChild(ov);
+    });
+  }
+  const deleteMeetingBtn = document.getElementById('delete-meeting');
+  if (deleteMeetingBtn) deleteMeetingBtn.addEventListener('click', async () => {
+    let scope = 'occurrence';
+    if (IS_RECURRING) {
+      scope = await chooseDeleteScope();
+      if (!scope) return;
+    } else if (!confirm('Delete this meeting? It will be removed permanently.')) {
+      return;
+    }
+    deleteMeetingBtn.disabled = true; deleteMeetingBtn.textContent = 'Deleting...';
+    const res = await api('/meetings/' + meetingId, { method: 'DELETE', body: JSON.stringify({ scope }) });
+    if (res?.deleted) {
+      window.location.href = withOrg('/l8');
+    } else {
+      alert('Delete failed: ' + errMsg(res));
+      deleteMeetingBtn.disabled = false; deleteMeetingBtn.textContent = 'Delete';
+    }
+  });
+
+  // ===== Attendees =====
+  const attendeesEditBtn = document.getElementById('edit-attendees-btn');
+  const attendeesEditor = document.getElementById('attendees-editor');
+  const attendeesDisplay = document.getElementById('attendees-display');
+  let attendees = <%- jsonForScript(normalizedAttendees) %>;
+
+  if (attendeesEditBtn) attendeesEditBtn.addEventListener('click', () => {
+    attendeesEditor.classList.toggle('hidden');
+    attendeesDisplay.classList.toggle('hidden');
+  });
+  function renderAttendeeChips() {
+    const wrap = document.getElementById('attendees-chips');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (attendees.length === 0) {
+      const empty = document.createElement('span');
+      empty.className = 'text-xs text-gray-500 italic';
+      empty.textContent = 'No attendees -- add one below';
+      wrap.appendChild(empty);
+      return;
+    }
+    attendees.forEach(a => {
+      const chip = document.createElement('span');
+      chip.className = 'text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 ' +
+        (a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800');
+      const label = document.createElement('span');
+      label.textContent = (a.name || a.externalId) + ' (' + a.entityType + ')';
+      chip.appendChild(label);
+      const x = document.createElement('button');
+      x.textContent = '✕';
+      x.className = 'text-gray-500 hover:text-red-600 font-bold';
+      x.setAttribute('data-remove-attendee', a.entityType + ':' + a.externalId);
+      chip.appendChild(x);
+      wrap.appendChild(chip);
+    });
+  }
+  async function saveAttendees() {
+    const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees }) });
+    if (res?.error) { alert(errMsg(res)); return; }
+    reloadKeep();
+  }
+  document.getElementById('attendees-chips')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-attendee]');
+    if (!btn) return;
+    const key = btn.getAttribute('data-remove-attendee');
+    const idx = attendees.findIndex(a => (a.entityType + ':' + a.externalId) === key);
+    if (idx === -1) return;
+    attendees.splice(idx, 1);
+    saveAttendees();
+  });
+  document.getElementById('attendee-add-btn')?.addEventListener('click', () => {
+    const sel = document.getElementById('attendee-add-select');
+    const val = sel && sel.value;
+    if (!val) return;
+    const [entityType, externalId, ...rest] = val.split(':');
+    if (!entityType || !externalId) return;
+    if (attendees.some(a => a.entityType === entityType && a.externalId === externalId)) return;
+    attendees.push({ entityType, externalId, name: rest.join(':') || externalId });
+    saveAttendees();
+  });
+  renderAttendeeChips();
+
+  // ===== Per-attendee check-in =====
+  document.querySelectorAll('[data-checkin-attendee]').forEach(function(card) {
+    const key = card.getAttribute('data-checkin-attendee');
+    const editor = card.querySelector('[data-checkin-editor]');
+    const display = card.querySelector('[data-checkin-display]');
+    const input = card.querySelector('[data-checkin-input]');
+    const saveBtn = card.querySelector('[data-checkin-save]');
+    const editBtn = card.querySelector('[data-checkin-edit]');
+    const cancelBtn = card.querySelector('[data-checkin-cancel]');
+    const msgEl = card.querySelector('[data-checkin-msg]');
+
+    if (editBtn) editBtn.addEventListener('click', function() {
+      if (display) display.classList.add('hidden');
+      if (editor) editor.classList.remove('hidden');
+      if (input) input.focus();
+    });
+    if (cancelBtn) cancelBtn.addEventListener('click', function() {
+      if (editor) editor.classList.add('hidden');
+      if (display) display.classList.remove('hidden');
+      if (msgEl) msgEl.textContent = '';
+    });
+    if (saveBtn) saveBtn.addEventListener('click', async function() {
+      const text = ((input && input.value) || '').trim();
+      if (msgEl) { msgEl.textContent = 'Saving...'; msgEl.className = 'text-xs text-gray-500'; }
+      saveBtn.disabled = true;
+      const nowIso = new Date().toISOString();
+      const newAttendees = (attendees || []).map(function(a) {
+        if (!a) return a;
+        const aKey = a.externalId || a.memberId || '';
+        const inExternalIds = Array.isArray(a.externalIds) && a.externalIds.indexOf(key) !== -1;
+        if (aKey === key || inExternalIds || a.memberId === key) {
+          return Object.assign({}, a, { checkinText: text, checkinAt: nowIso });
+        }
+        return a;
+      });
+      const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ attendees: newAttendees }) });
+      saveBtn.disabled = false;
+      if (res && res.error) {
+        if (msgEl) { msgEl.textContent = 'Error: ' + errMsg(res); msgEl.className = 'text-xs text-red-600'; }
+        return;
+      }
+      attendees = newAttendees;
+      reloadKeep();
+    });
+  });
+
+  // ===== Segment notes autosave =====
+  // Each textarea / input with data-sr-field + data-sr-key autosaves on blur.
+  // Body sent: { segmentNotes: { <field>: { <key>: <value> } } }
+  // Server merges per field key (i.e., only the specified sub-object is updated).
+  function showSaved(field, key) {
+    const el = document.getElementById('sr-saved-' + field + '-' + key);
+    if (!el) return;
+    el.textContent = 'Saved';
+    setTimeout(function() { el.textContent = ''; }, 2000);
+  }
+  function showSaving(field, key) {
+    const el = document.getElementById('sr-saved-' + field + '-' + key);
+    if (el) el.textContent = 'Saving...';
+  }
+
+  // Collect all autosave-able elements and wire blur + debounced input.
+  const _srTimers = {};
+  document.querySelectorAll('[data-sr-field]').forEach(function(el) {
+    const field = el.getAttribute('data-sr-field');
+    const key = el.getAttribute('data-sr-key');
+    if (!field || !key) return;
+
+    let _lastSaved = el.value;
+
+    async function doSave() {
+      if (el.value === _lastSaved) return;
+      _lastSaved = el.value;
+      showSaving(field, key);
+      const res = await api('/meetings/' + meetingId, {
+        method: 'PUT',
+        body: JSON.stringify({ segmentNotes: { [field]: { [key]: el.value } } }),
+      });
+      if (res && res.error) {
+        const indicator = document.getElementById('sr-saved-' + field + '-' + key);
+        if (indicator) { indicator.textContent = 'Error saving'; }
+        return;
+      }
+      showSaved(field, key);
+    }
+
+    el.addEventListener('blur', doSave);
+    el.addEventListener('input', function() {
+      const timerKey = field + ':' + key;
+      clearTimeout(_srTimers[timerKey]);
+      _srTimers[timerKey] = setTimeout(doSave, 1500);
+    });
+  });
+
+  // ===== To-do toggle =====
+  document.querySelectorAll('[data-todo-toggle]').forEach(box => {
+    box.addEventListener('change', async () => {
+      const todoId = box.closest('[data-todo-id]').dataset.todoId;
+      await api('/todos/' + todoId, { method: 'PUT', body: JSON.stringify({ done: box.checked }) });
+    });
+  });
+
+  // ===== Add to-do (Assign Ownership section) =====
+  const addTodo = document.getElementById('add-todo');
+  if (addTodo) addTodo.addEventListener('click', async () => {
+    const title = document.getElementById('new-todo-title').value.trim();
+    const ownerSel = document.getElementById('new-todo-owner');
+    const owners = Array.prototype.slice.call(ownerSel ? ownerSel.selectedOptions : [])
+      .map(function (o) { return parseOwner(o.value); })
+      .filter(Boolean)
+      .map(function (o) { return { ownerEntityType: o.entityType, ownerExternalId: o.externalId, ownerName: o.name }; });
+    if (!title || owners.length === 0) return alert('Title and at least one owner required');
+    const priority = (document.getElementById('new-todo-priority') || {}).value || 'p3';
+    const recurrenceRule = (document.getElementById('new-todo-recur') || {}).value || null;
+    const description = (document.getElementById('new-todo-desc') || {}).value || '';
+    const dueOverride = (document.getElementById('new-todo-due') || {}).value || '';
+    let dueAt;
+    if (dueOverride) {
+      const [y, m, d] = dueOverride.split('-').map(Number);
+      dueAt = new Date(y, (m || 1) - 1, d || 1, 23, 59, 0);
+    } else {
+      dueAt = new Date(); dueAt.setDate(dueAt.getDate() + 7);
+    }
+    const body = {
+      kind: 'l10', teamId, priority,
+      title, owners,
+      meetingId, dueAt: dueAt.toISOString(),
+    };
+    if (description.trim()) body.description = description.trim();
+    if (recurrenceRule) body.recurrenceRule = recurrenceRule;
+    await api('/todos', { method: 'POST', body: JSON.stringify(body) });
+    reloadKeep();
+  });
+
+  // ===== Meeting rating =====
+  function renderRatingAvg() {
+    const inputs = Array.from(document.querySelectorAll('[data-rating-input]'));
+    const vals = inputs.map(i => parseFloat(i.value)).filter(v => !isNaN(v) && v >= 1 && v <= 10);
+    const avgEl = document.getElementById('rating-avg');
+    if (avgEl) avgEl.textContent = vals.length ? ('avg ' + (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : '';
+  }
+  document.querySelectorAll('[data-rating-input]').forEach(i => i.addEventListener('input', renderRatingAvg));
+  renderRatingAvg();
+  const saveRatingsBtn = document.getElementById('save-ratings');
+  if (saveRatingsBtn) saveRatingsBtn.addEventListener('click', async () => {
+    const ratings = {};
+    document.querySelectorAll('[data-rating-input]').forEach(i => {
+      const v = parseFloat(i.value);
+      if (!isNaN(v) && v >= 1 && v <= 10) ratings[i.dataset.attendeeKey] = v;
+    });
+    const status = document.getElementById('ratings-status');
+    saveRatingsBtn.disabled = true; saveRatingsBtn.textContent = 'Saving...';
+    const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ ratings }) });
+    saveRatingsBtn.disabled = false; saveRatingsBtn.textContent = 'Save ratings';
+    if (res && res.error) { if (status) status.textContent = 'Error: ' + errMsg(res); return; }
+    if (status) { status.textContent = 'Saved'; setTimeout(() => { status.textContent = ''; }, 2000); }
+  });
+
+  // ----- Live updates (SSE) + presence dots -----
+  (function liveUpdates() {
+    if (typeof EventSource === 'undefined') return;
+    const liveBadge = document.getElementById('meeting-live-indicator');
+    const countEl = document.getElementById('meeting-watcher-count');
+    let es = null;
+    let reloadTimer = null;
+    let reconnectMs = 1000;
+
+    function scheduleReload(reason) {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.isContentEditable)) {
+        document.body.dataset.pendingReload = '1';
+        return;
+      }
+      if (reloadTimer) return;
+      reloadTimer = setTimeout(() => { snapshotDrafts(); window.location.reload(); }, 600);
+    }
+
+    function applyPresence(presence) {
+      if (!Array.isArray(presence)) return;
+      if (countEl) countEl.textContent = String(presence.length);
+      if (liveBadge) liveBadge.classList.remove('hidden');
+      const watchingIds = new Set(presence.map(p => p && p.externalId).filter(Boolean));
+      document.querySelectorAll('[data-attendee]').forEach(el => {
+        const key = el.dataset.attendee || '';
+        const parts = key.split(':');
+        const extId = parts[1] || '';
+        const isHere = extId && watchingIds.has(extId);
+        let dot = el.querySelector('[data-presence-dot]');
+        if (isHere) {
+          if (!dot) {
+            dot = document.createElement('span');
+            dot.setAttribute('data-presence-dot', '1');
+            dot.title = 'Watching now';
+            dot.style.cssText = 'display:inline-block;width:0.5rem;height:0.5rem;border-radius:9999px;background:#10b981;margin-right:4px;vertical-align:middle;animation:pulse 2s ease-in-out infinite;';
+            el.insertBefore(dot, el.firstChild);
+          }
+        } else if (dot) {
+          dot.remove();
+        }
+      });
+      document.querySelectorAll('[data-checkin-attendee]').forEach(el => {
+        const key = el.dataset.checkinAttendee || '';
+        const isHere = key && watchingIds.has(key);
+        let dot = el.querySelector('[data-presence-dot-segue]');
+        if (isHere) {
+          if (!dot) {
+            const badge = el.querySelector('.flex.items-center.gap-2.mb-2');
+            if (badge) {
+              dot = document.createElement('span');
+              dot.setAttribute('data-presence-dot-segue', '1');
+              dot.title = 'Viewing now';
+              dot.style.cssText = 'display:inline-block;width:0.5rem;height:0.5rem;border-radius:9999px;background:#10b981;animation:pulse 2s ease-in-out infinite;';
+              badge.appendChild(dot);
+            }
+          }
+        } else if (dot) {
+          dot.remove();
+        }
+      });
+    }
+
+    function connect() {
+      try { es && es.close(); } catch (e) {}
+      es = new EventSource('/api/v1/meetings/' + meetingId + '/events');
+      es.addEventListener('open', () => { reconnectMs = 1000; });
+      es.addEventListener('presence', (e) => {
+        try { const payload = JSON.parse(e.data); applyPresence(payload.presence || []); } catch (err) {}
+      });
+      es.addEventListener('meeting-updated', (e) => {
+        try { const payload = JSON.parse(e.data); scheduleReload(payload.kind || 'updated'); } catch (err) { scheduleReload('unknown'); }
+      });
+      es.addEventListener('error', () => {
+        if (liveBadge) liveBadge.classList.add('hidden');
+        try { es && es.close(); } catch (e) {}
+        setTimeout(connect, reconnectMs);
+        reconnectMs = Math.min(reconnectMs * 2, 30000);
+      });
+    }
+
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (document.body.dataset.pendingReload === '1') {
+          delete document.body.dataset.pendingReload;
+          snapshotDrafts();
+          window.location.reload();
+        }
+      }, 200);
+    });
+
+    window.addEventListener('beforeunload', () => { try { es && es.close(); } catch (e) {} });
+    connect();
+  })();
+})();
+</script>
+<style>
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>

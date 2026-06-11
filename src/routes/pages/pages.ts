@@ -3718,7 +3718,11 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       executionItems = [];
     }
 
-    return reply.view('pages/l8-leadership', {
+    const _meetingView = meeting.meetingType === 'strategy_reset'
+      ? 'pages/strategy-reset-meeting'
+      : 'pages/l8-leadership';
+
+    return reply.view(_meetingView, {
       title: meeting.title + ' -- OTP',
       description: 'Weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
       canonical: BASE_URL + '/l8/meeting/' + meeting.id,

@@ -4,6 +4,17 @@
   var defaultTeamId = locals.defaultTeamId || '';
   var teamLookup = {};
   teamsList.forEach(function(t) { teamLookup[t.id] = t; });
+  var meetingTypeLabels = {
+    leadership: 'Leadership Meeting',
+    departmental: 'Departmental Meeting',
+    quarterly: 'Quarterly Session',
+    annual: 'Annual Planning',
+    same_page: 'Same Page Meeting',
+    '1on1': 'One-on-One',
+    strategy_reset: 'Strategy Reset',
+    other: 'Other',
+  };
+  function meetingTypeLabel(t) { return meetingTypeLabels[t] || t; }
 %>
 
 <div class="max-w-4xl mx-auto px-4 py-8">
@@ -53,6 +64,7 @@
           <option value="same_page">Same Page Meeting</option>
           <option value="1on1">One-on-One</option>
         </optgroup>
+        <option value="strategy_reset">Strategy Reset</option>
         <option value="other">Other</option>
       </select>
       <select name="recurrenceRule" class="border rounded p-2 text-sm" title="Repeat this meeting? OTP rolls the next one forward automatically.">
@@ -90,7 +102,7 @@
               <div class="text-xs text-gray-500 mt-1">
                 <% var teamName = m.teamId && teamLookup[m.teamId] ? teamLookup[m.teamId].name : ''; %>
                 <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
-                <%= m.meetingType %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
+                <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
               </div>
             </div>
             <div class="text-xs">
