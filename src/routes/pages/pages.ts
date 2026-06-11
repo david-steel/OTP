@@ -484,6 +484,26 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /premium-support -- Premium Support offer page. Light editorial styling,
+  // conversion page: only in-page links are the two Calendly CTAs. No
+  // testimonials/stats (no premium support customers yet), no email addresses.
+  app.get('/premium-support', async (_request, reply) => {
+    return renderV7(reply, 'premium-support', {
+      title: 'Premium Support - OTP',
+      description: 'The speed, clarity, and strategic help of a full team, without the headcount. Expert guidance and fast answers in a dedicated Slack channel, direct from the people and agents who built OTP. $199/month.',
+      canonical: BASE_URL + '/premium-support',
+      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      breadcrumbs: bc({ name: 'Premium Support', url: BASE_URL + '/premium-support' }),
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'OTP Premium Support',
+        description: 'Dedicated Slack channel, under-15-minute responses, founder-led kick-off, and quarterly business reviews run inside OTP. $199/month or $1,990/year.',
+        url: BASE_URL + '/premium-support',
+      },
+    });
+  });
+
   // /free-agents -- Step 2 of the funnel: the free starter agents (.md files).
   app.get('/free-agents', async (_request, reply) => {
     return renderV7(reply, 'free-agents', {
