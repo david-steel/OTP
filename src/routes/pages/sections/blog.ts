@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { BASE_URL, bc, renderV7 } from '../_shared.js';
+import { BASE_URL, bc, renderV7, renderInShell } from '../_shared.js';
 import { listConatusPosts, getConatusPost } from '../../../services/conatus-posts.js';
 
 // Standard BlogPosting schema for a David-authored hardcoded post. The
@@ -468,7 +468,10 @@ export default async function blogRoutes(app: FastifyInstance) {
     const PER_SECTION = 24;
     const conatusPosts = showAll ? allConatus : allConatus.slice(0, PER_SECTION);
     const founderPosts = showAll ? allFounder : allFounder.slice(0, PER_SECTION);
-    return renderV7(reply, 'blog', {
+    // Index is dual-rendered (app shell for signed-in viewers). Individual
+    // /blog/:slug posts stay v7-only: 46 standalone templates with heavy v7
+    // layout assumptions -- not worth converting for v1.
+    return renderInShell(request, reply, 'blog', {
       title: 'Blog - OTP',
       description: 'Building in public. Lessons from running 14 AI agents in production at a digital agency.',
       canonical: BASE_URL + '/blog',

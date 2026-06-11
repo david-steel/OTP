@@ -40,6 +40,25 @@ export async function renderV7(reply: any, page: string, data: Record<string, an
   return reply.type('text/html').send(html);
 }
 
+// Dual-rendering helper (GHL-style in-app rendering). Same URL, two shells:
+// a signed-in viewer gets the page body inside the authed main layout (app
+// nav, bell, What's New megaphone, Help panel preserved), a signed-out
+// visitor gets the v7 marketing compose unchanged. The signal is
+// request.authUserId, set best-effort by server.ts's preHandler.
+//
+// Locals contract: server.ts wraps reply.view to auto-inject authUserId /
+// impersonation / currentPath / memberRole / isCoach / coachSlug, and the
+// fastifyView defaultContext supplies clerkPubKey / clerkInstance /
+// assetVersion -- so the main-layout path needs no extra locals beyond what
+// the route already passes. Views detect "in shell" via
+// `typeof authUserId !== 'undefined' && authUserId`: the v7 path never
+// receives authUserId, so the check is false there by construction.
+export async function renderInShell(request: any, reply: any, page: string, data: Record<string, any> = {}) {
+  const userId = request && request.authUserId ? request.authUserId : null;
+  if (userId) return reply.view('pages/' + page, data);
+  return renderV7(reply, page, data);
+}
+
 export function escapeHtml(s: string): string {
   return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 }

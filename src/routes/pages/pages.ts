@@ -26,6 +26,7 @@ import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECK
 import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
+import { renderInShell } from './_shared.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { useScorecardSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
 
@@ -294,9 +295,10 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the OTP intelligence network. Visualize how AI organizations connect through shared coordination patterns, operational claims, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: BASE_URL + '/public/og-image.png', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
   });
 
-  // Guide page
+  // Guide page. Dual-rendered: signed-in viewers keep the app shell
+  // (renderInShell), signed-out visitors get the v7 marketing layout.
   app.get('/guide', async (request, reply) => {
-    return renderV7(reply, 'guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
+    return renderInShell(request, reply, 'guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
   });
 
   // Why OTP -- the persuasion page (frustrations + outcomes + objections)
@@ -487,8 +489,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   // /premium-support -- Premium Support offer page. Light editorial styling,
   // conversion page: only in-page links are the two Calendly CTAs. No
   // testimonials/stats (no premium support customers yet), no email addresses.
-  app.get('/premium-support', async (_request, reply) => {
-    return renderV7(reply, 'premium-support', {
+  // Dual-rendered: signed-in viewers keep the app shell (renderInShell).
+  app.get('/premium-support', async (request, reply) => {
+    return renderInShell(request, reply, 'premium-support', {
       title: 'Premium Support - OTP',
       description: 'The speed, clarity, and strategic help of a full team, without the headcount. Expert guidance and fast answers in a dedicated Slack channel, direct from the people and agents who built OTP. $199/month.',
       canonical: BASE_URL + '/premium-support',
@@ -2614,10 +2617,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.redirect('/onboarding');
   });
 
-  // What's New
+  // What's New. Dual-rendered: signed-in viewers (arriving from the nav
+  // megaphone) keep the app shell; signed-out visitors get the v7 layout.
   app.get('/whats-new', async (request, reply) => {
     const { changelog } = await import('../../data/changelog.js');
-    return renderV7(reply, 'whats-new', {
+    return renderInShell(request, reply, 'whats-new', {
       title: "What's New on OTP - Latest Platform Updates",
       description: 'Latest platform updates, features, and improvements to OTP. See what is new in the coordination intelligence layer for AI-native organizations.',
       canonical: BASE_URL + '/whats-new',

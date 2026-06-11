@@ -24,9 +24,14 @@
   @media (prefers-reduced-motion:reduce){ .gd-orgy{ animation:none; } }
 </style>
 
+<%# In-shell trim: inside the authed main layout (renderInShell), the app
+    shell's fixed nav is already cleared by the layout's pt, so the v7
+    nav-clearing pt-[124px]/pt-[148px] would double the gap. Inline style
+    wins over both Tailwind classes. authUserId only exists on the authed
+    path -- the v7 marketing render is unchanged. %>
 <!-- ================= WHY OTP EXISTS ================= -->
 <section class="bg-[var(--white)]">
-  <div class="max-w-[760px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20">
+  <div class="max-w-[760px] mx-auto px-6 pt-[124px] pb-16 sm:pt-[148px] sm:pb-20"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
     <div class="flex items-start gap-5">
       <div class="flex-1">
         <div class="eyebrow mb-4 flex items-center gap-2.5">

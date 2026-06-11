@@ -23,9 +23,14 @@
   @media (prefers-reduced-motion:reduce){ .wn-wave{ animation:none; } }
 </style>
 
+<%# In-shell trim: inside the authed main layout (renderInShell), the app
+    shell's fixed nav is already cleared by the layout's pt, so the v7
+    nav-clearing pt-[124px]/pt-[148px] would double the gap. Inline style
+    wins over both Tailwind classes. authUserId only exists on the authed
+    path -- the v7 marketing render is unchanged. %>
 <!-- ================= HEADER ================= -->
 <section class="bg-[var(--white)]">
-  <div class="max-w-[760px] mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px] sm:pb-16 text-center">
+  <div class="max-w-[760px] mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px] sm:pb-16 text-center"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
     <img src="/public/images/orgy-celebrate.webp" alt="" width="80" height="80" loading="eager"
          class="mx-auto mb-5 w-[72px] h-auto sm:w-[80px]" decoding="async">
     <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center">

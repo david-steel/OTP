@@ -48,9 +48,14 @@
   .cap-grey   { background:linear-gradient(135deg, var(--grey), #e8e9ec); }
 </style>
 
+<%# In-shell trim: inside the authed main layout (renderInShell), the app
+    shell's fixed nav is already cleared by the layout's pt, so the v7
+    nav-clearing pt-[124px]/pt-[148px] would double the gap. Inline style
+    wins over both Tailwind classes. authUserId only exists on the authed
+    path -- the v7 marketing render is unchanged. %>
 <!-- ================= HERO ================= -->
 <section class="bg-[var(--white)]">
-  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
     <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
       <div class="flex-1 text-center md:text-left">
         <div class="eyebrow mb-4 flex items-center gap-2.5 justify-center md:justify-start">

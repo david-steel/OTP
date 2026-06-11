@@ -99,6 +99,15 @@
   .ps-fineprint { font-size:13px; color:var(--ink-mute,#888c96); margin-top:14px; line-height:1.6; }
 </style>
 
+<%# In-shell trim: when rendered inside the authed main layout (renderInShell
+    passes through server.ts's wrapped reply.view, which injects authUserId),
+    the layout's own fixed nav + pt already clear 65px, so the v7 hero's
+    132px nav-clearing padding would double the gap. The v7 path never gets
+    authUserId, so this block is a no-op for marketing visitors. %>
+<% if (typeof authUserId !== 'undefined' && authUserId) { %>
+<style>.ps-hero { padding-top: 56px; }</style>
+<% } %>
+
 <!-- ================= HERO ================= -->
 <section class="ps-paper">
   <div class="ps-wrap ps-hero">
