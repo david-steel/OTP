@@ -15,6 +15,20 @@ export const changelog: ChangelogEntry[] = [
 
   {
     date: '2026-06-10',
+    tags: ['Offer', 'Privacy'],
+    title: 'The Private plan: run OTP behind closed doors for $99/month',
+    summary: 'Some organizations want the full meeting product without participating in the public network. The new Private plan keeps everything about your organization yours: your org chart, OOS, and scorecard are never published to browse, search, compare, or the intelligence graph, and your data is never used in cross-org learnings or recommendations. Share by invitation only. $99/month, founding-member pricing -- find it under Upgrade in the sidebar.',
+    details: `<p>Everything in Free, plus a closed door.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Nothing published.</strong> Your humans, agents, seats, OOS, KPIs, and meeting data stay out of every public surface: browse, search, compare, and the intelligence graph.</li>
+<li><strong>Nothing borrowed.</strong> Private org data is excluded from network intelligence -- no cross-org learnings, patterns, or recommendations draw on it.</li>
+<li><strong>Invitation only.</strong> You decide exactly who sees inside your organization.</li>
+<li><strong>Founding-member pricing.</strong> $99/month. <a href="/pricing">See the pricing page</a> or speak with our team to get set up.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
     tags: ['Major', 'Navigation'],
     title: 'A real app shell: left sidebar navigation and a cleaner top bar',
     summary: 'OTP now has a proper sidebar. Every page you use -- Daily, Meetings, Team chart, KPIs, To-Dos, Issues, and the admin surfaces your role unlocks -- lives in a fixed left rail with your org name at the top and the current page highlighted. Collapse it to icons with one click and OTP remembers your choice. The top bar slimmed down to match: signed-in users see only the app controls, with the marketing links saved for visitors.',
