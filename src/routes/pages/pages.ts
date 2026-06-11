@@ -20,7 +20,7 @@ import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
 import { reportsSubtree } from '../../services/chart-permissions.js';
-import { ruleToLabel, RECURRENCE_OPTIONS } from '../../services/meeting-recurrence.js';
+import { ruleToLabel, RECURRENCE_OPTIONS, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
 import { sendEmail } from '../../config/email.js';
@@ -3101,25 +3101,39 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     if (!org) return;
     const auth = getAuth(request);
     const { title, scheduledAt, meetingType, teamId, recurrenceRule } = request.body || {};
-    if (!title || !scheduledAt) {
-      return reply.status(400).send('title and scheduledAt required');
+    if (!scheduledAt) {
+      return reply.status(400).send('scheduledAt required');
     }
 
     // Resolve team: explicit teamId from form, else this org's default
-    // Leadership Team (created by ensure-teams.ts).
+    // Leadership Team (created by ensure-teams.ts). Fetch the name too --
+    // a blank title is generated as "{Type label} — {Team name}".
     let resolvedTeamId: string | null = teamId || null;
+    let resolvedTeamName: string | null = null;
     if (!resolvedTeamId) {
-      const [defaultTeam] = await db.select({ id: teams.id })
+      const [defaultTeam] = await db.select({ id: teams.id, name: teams.name })
         .from(teams)
         .where(and(eq(teams.orgId, org.id), eq(teams.slug, 'leadership')))
         .limit(1);
       resolvedTeamId = defaultTeam?.id || null;
+      resolvedTeamName = defaultTeam?.name || null;
+    } else {
+      const [t] = await db.select({ name: teams.name })
+        .from(teams)
+        .where(and(eq(teams.id, resolvedTeamId), eq(teams.orgId, org.id)))
+        .limit(1);
+      resolvedTeamName = t?.name || null;
     }
+
+    // Title is optional: blank generates "{Type label} — {Team name}".
+    // Date-free by design -- the recurrence roller copies titles forward
+    // and the date renders as data everywhere.
+    const resolvedTitle = (title || '').trim() || defaultMeetingTitle(meetingType, resolvedTeamName);
 
     const [m] = await db.insert(meetings).values({
       organizationId: org.id,
       teamId: resolvedTeamId,
-      title,
+      title: resolvedTitle,
       meetingType: meetingType || 'leadership',
       scheduledAt: new Date(scheduledAt),
       attendees: [],

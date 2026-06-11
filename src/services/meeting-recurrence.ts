@@ -31,6 +31,35 @@ export const RECURRENCE_OPTIONS: RecurrenceOption[] = [
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Display labels for meeting types -- mirrors meetingTypeLabels in
+// l8-list.ejs, except `other` reads as plain "Meeting" so a generated
+// title is never "Other — Team".
+const MEETING_TYPE_TITLE_LABELS: Record<string, string> = {
+  leadership: 'Leadership Meeting',
+  departmental: 'Departmental Meeting',
+  quarterly: 'Quarterly Session',
+  annual: 'Annual Planning',
+  same_page: 'Same Page Meeting',
+  '1on1': 'One-on-One',
+  strategy_reset: 'Strategy Reset',
+  other: 'Meeting',
+};
+
+/**
+ * Default title for a meeting created with a blank title:
+ * "{Type label} — {Team name}", or just the type label when no team resolves.
+ *
+ * Deliberately date-free: the date already renders as data everywhere, and
+ * the recurrence roller carries titles forward across occurrences. Separator
+ * is the em dash the product UI already uses (e.g. the l8-list page header),
+ * NOT " -- " -- rebaseTitle() below treats " -- <rest>" as a date suffix and
+ * would strip the team name when rolling the next occurrence.
+ */
+export function defaultMeetingTitle(meetingType: string | null | undefined, teamName?: string | null): string {
+  const label = MEETING_TYPE_TITLE_LABELS[meetingType || ''] || MEETING_TYPE_TITLE_LABELS.other;
+  return teamName ? `${label} — ${teamName}` : label;
+}
+
 function parseRule(rule: string): { freq: 'WEEKLY' | 'MONTHLY' | null; interval: number } {
   if (!rule) return { freq: null, interval: 1 };
   const parts: Record<string, string> = {};

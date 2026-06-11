@@ -43,9 +43,8 @@
       <button type="button" class="help-q" data-help="l8.cadence" aria-label="About the meeting cadence" title="What are these meeting types?">?</button>
     </div>
     <div class="grid grid-cols-3 gap-3">
-      <input name="title" type="text" required placeholder="e.g. Leadership Meeting -- 2026-05-05"
-             class="col-span-2 border rounded p-2 text-sm"
-             value="Leadership Meeting -- <%= new Date().toISOString().slice(0,10) %>">
+      <input name="title" type="text" placeholder="Title (optional) — defaults to type + team"
+             class="col-span-2 border rounded p-2 text-sm">
       <input name="scheduledAt" type="datetime-local" required
              class="border rounded p-2 text-sm"
              value="<%= new Date(Date.now() + 86400000).toISOString().slice(0,16) %>">

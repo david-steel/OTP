@@ -12,7 +12,7 @@ import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { deliverToAgentInbox } from '../../services/agent-inbox.js';
 import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
-import { ensureNextOccurrence } from '../../services/meeting-recurrence.js';
+import { ensureNextOccurrence, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { planSeriesDeletion, isDeleteScope } from '../../services/meeting-series.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
@@ -25,11 +25,10 @@ const attendeeSchema = z.object({
 
 const createMeetingSchema = z.object({
   meetingType: z.string().max(60).optional().default('leadership'),
-  // Meeting create form at l8-list.ejs uses `required` only -- a user can
-  // type "L8" or "1:1" and submit. Relaxed from min(3) to min(1) on
-  // 2026-05-27 to match the UI promise. The form's prefilled default
-  // ("Leadership Meeting -- {date}") is the common case anyway.
-  title: z.string().min(1).max(255),
+  // Title is optional as of 2026-06-10: a blank/omitted title is generated
+  // server-side as "{Type label} — {Team name}" (see defaultMeetingTitle).
+  // When provided, anything non-empty goes -- a user can type "L8" or "1:1".
+  title: z.string().max(255).optional(),
   scheduledAt: z.string().datetime(),
   attendees: z.array(attendeeSchema).optional().default([]),
   teamId: z.string().uuid().optional(),
@@ -238,15 +237,28 @@ export default async function meetingRoutes(app: FastifyInstance) {
 
     // Phase 4: a meeting is scoped to a team. If the caller didn't pick one,
     // fall back to the org's default Leadership Team (created by ensure-teams.ts).
+    // Resolve the team NAME too when the title is blank -- it's generated as
+    // "{Type label} — {Team name}" (date-free by design; the recurrence roller
+    // copies titles forward and the date renders as data everywhere).
+    const trimmedTitle = (body.data.title || '').trim();
     let resolvedTeamId: string | null = body.data.teamId || null;
+    let resolvedTeamName: string | null = null;
+    const { teams } = await import('../../db/schema.js');
     if (!resolvedTeamId) {
-      const { teams } = await import('../../db/schema.js');
-      const [defaultTeam] = await db.select({ id: teams.id })
+      const [defaultTeam] = await db.select({ id: teams.id, name: teams.name })
         .from(teams)
         .where(and(eq(teams.orgId, org.id), eq(teams.slug, 'leadership')))
         .limit(1);
       resolvedTeamId = defaultTeam?.id || null;
+      resolvedTeamName = defaultTeam?.name || null;
+    } else if (!trimmedTitle) {
+      const [t] = await db.select({ name: teams.name })
+        .from(teams)
+        .where(and(eq(teams.id, resolvedTeamId), eq(teams.orgId, org.id)))
+        .limit(1);
+      resolvedTeamName = t?.name || null;
     }
+    const resolvedTitle = trimmedTitle || defaultMeetingTitle(body.data.meetingType, resolvedTeamName);
 
     // Phase 4: auto-populate attendees from team_memberships if the caller
     // didn't provide an explicit attendee list. Humans on the team come
@@ -298,7 +310,7 @@ export default async function meetingRoutes(app: FastifyInstance) {
       organizationId: org.id,
       teamId: resolvedTeamId,
       meetingType: body.data.meetingType,
-      title: body.data.title,
+      title: resolvedTitle,
       scheduledAt: new Date(body.data.scheduledAt),
       attendees: resolvedAttendees,
       createdBy,
