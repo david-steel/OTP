@@ -67,8 +67,13 @@ export default async function whatsNewRoutes(app: FastifyInstance) {
       // Everything newer than the exact entry that topped the list last look.
       unread = headIndex;
     } else if (seenAt) {
+      // Legacy seen-state without a head marker (pre-marker members). Count
+      // the seen day inclusively: date-only granularity can't tell same-day
+      // publishes from already-seen entries, and undercounting hides real
+      // news while overcounting self-heals — the next panel open stores the
+      // head marker and the exact path takes over for good.
       const seenDate = seenAt.slice(0, 10);
-      unread = entries.filter((e) => e.date > seenDate).length;
+      unread = entries.filter((e) => e.date >= seenDate).length;
     } else {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - FIRST_VISIT_WINDOW_DAYS);
