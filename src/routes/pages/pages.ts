@@ -2308,9 +2308,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Pricing page
+  // Pricing page. Dual-rendered: signed-in viewers (arriving from the
+  // sidebar's Upgrade item) keep the app shell (renderInShell), signed-out
+  // visitors get the v7 marketing layout.
   app.get('/pricing', async (request, reply) => {
-    return renderV7(reply, 'pricing', {
+    return renderInShell(request, reply, 'pricing', {
       title: 'Pricing - OTP',
       description: 'OTP is free for the open network. Publish, browse, search, compare, and learn from organizational AI intelligence at no cost. Enterprise adds a private intelligence layer.',
       canonical: BASE_URL + '/pricing',

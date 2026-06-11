@@ -1,7 +1,9 @@
 <%# /pricing -- v7 layout (light, editorial). Free = the meeting product
-    (chart + humans + agents + Radar). Paid = everything else (network,
-    intelligence, private layer). Custom pricing, contact form.
-    Rendered via reply.view('pages/pricing', data, { layout: 'layouts/v7' }). %>
+    (chart + humans + agents + Radar). Private = $99/mo privacy tier (the
+    meeting product with the org's OOS kept off the public network; Calendly
+    CTA, no checkout). Paid = everything else (network, intelligence,
+    private layer). Custom pricing, contact form.
+    Dual-rendered via renderInShell: signed-in viewers get the app shell. %>
 <style>
   .pr-check { width:20px; height:20px; flex:none; margin-top:1px; }
   .pr-faq { border:1px solid var(--line); border-radius:14px; background:var(--card); overflow:hidden; }
@@ -26,9 +28,14 @@
   @media (prefers-reduced-motion:reduce){ .pr-tilt{ animation:none; } }
 </style>
 
+<%# In-shell trim: inside the authed main layout (renderInShell), the app
+    shell's fixed nav is already cleared by the layout's pt, so the v7
+    nav-clearing pt-[124px]/pt-[148px] would double the gap. Inline style
+    wins over both Tailwind classes. authUserId only exists on the authed
+    path -- the v7 marketing render is unchanged. %>
 <!-- ================= HERO ================= -->
 <section class="bg-[var(--white)]">
-  <div class="max-w-[820px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16 text-center">
+  <div class="max-w-[820px] mx-auto px-6 pt-[124px] pb-14 sm:pt-[148px] sm:pb-16 text-center"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
     <div class="eyebrow mb-5 flex items-center gap-2.5 justify-center">
       <span class="tick" style="background:var(--orgy);"></span>Pricing
     </div>
@@ -45,7 +52,7 @@
 <!-- ================= PRICING CARDS ================= -->
 <section class="bg-[var(--grey)]">
   <div class="max-w-[1080px] mx-auto px-6 py-20 sm:py-24">
-    <div class="grid md:grid-cols-2 gap-6">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
       <!-- FREE -- the meeting product -->
       <div class="card p-8 sm:p-9 flex flex-col">
@@ -79,6 +86,42 @@
         <div class="mt-8">
           <a href="/sign-up" class="btn-ink block w-full text-center px-6 py-3.5 text-[15px]">Get Started</a>
           <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">Build your chart in minutes. No card.</p>
+        </div>
+      </div>
+
+      <!-- PRIVATE -- the privacy tier. Amber accent mirrors the Help panel's
+           Premium Support row and the sidebar Upgrade item. Calendly CTA, no
+           checkout. -->
+      <div class="card p-8 sm:p-9 flex flex-col relative border-t-[3px]"
+           style="border-top-color:#b45309;">
+        <div class="eyebrow mb-3" style="color:#92400e;">Stay private</div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <span class="font-display text-[var(--ink)] text-[3rem] font-bold leading-none">$99</span>
+          <span class="font-mono text-[13px] text-[var(--ink-mute)]">/ month</span>
+        </div>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
+          The whole meeting product, behind closed doors. Your operating system stays yours: nothing about your organization is published to the public network.
+        </p>
+        <div class="border-t border-[var(--line)] pt-6 flex-1">
+          <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] mb-4" style="color:#92400e;">Everything in Free, plus:</p>
+          <ul class="space-y-3">
+            <% var privateFeatures = [
+              ['Private org chart', ' -- your humans, agents, and seats are never published to the network'],
+              ['Private operating system', ' -- your OOS does not appear in browse, search, or compare'],
+              ['Private scorecard', ' -- KPIs and meeting data stay inside your organization'],
+              ['Share by invitation only', ' -- you decide exactly who sees inside, nobody else does']
+            ]; %>
+            <% privateFeatures.forEach(function(f){ %>
+            <li class="flex items-start gap-3">
+              <svg class="pr-check" fill="none" stroke="#b45309" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span class="text-[14px] text-[var(--ink-soft)] leading-[1.55]"><strong class="text-[var(--ink)] font-semibold"><%= f[0] %></strong><%= f[1] %></span>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="mt-8">
+          <a href="https://calendly.com/davidsteel/performance-call" target="_blank" rel="noopener" class="btn-primary block w-full text-center px-6 py-3.5 text-[15px]">Speak with our team</a>
+          <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">Founding-member pricing.</p>
         </div>
       </div>
 
