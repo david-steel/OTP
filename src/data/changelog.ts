@@ -11,6 +11,82 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 10, 2026 (evening wave) ----
+
+  {
+    date: '2026-06-10',
+    tags: ['Major', 'Navigation'],
+    title: 'A real app shell: left sidebar navigation and a cleaner top bar',
+    summary: 'OTP now has a proper sidebar. Every page you use -- Daily, Meetings, Team chart, KPIs, To-Dos, Issues, and the admin surfaces your role unlocks -- lives in a fixed left rail with your org name at the top and the current page highlighted. Collapse it to icons with one click and OTP remembers your choice. The top bar slimmed down to match: signed-in users see only the app controls, with the marketing links saved for visitors.',
+    details: `<p>Navigation that stays put while you work.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Everything in one rail.</strong> Daily, Meetings, Team chart, KPIs, To-Dos, and Issues up top; Operating Plan, CEO view, Members, Teams, Docs, Workspaces, Inquiries, Publisher, and API keys appear based on your role; Tickets and the Guide anchor the bottom.</li>
+<li><strong>Collapse it.</strong> The chevron at the bottom shrinks the rail to icons. Your preference is saved to your profile and follows you between sessions.</li>
+<li><strong>A focused top bar.</strong> Signed in, you see Ask AI, What's New, Help, alerts, Publish, and your account -- nothing else competing for the space.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Major', 'AI'],
+    title: 'Ask AI: instant answers about using OTP, right in the nav',
+    summary: 'The purple Ask AI button opens a chat that answers questions about using OTP -- how to run a meeting, where a setting lives, what a Rock is -- with answers streaming in live, grounded in the user guide and the latest product updates. It knows what it does not know: out-of-scope questions get pointed to a support ticket instead of a guess. Rolling out now.',
+    details: `<p>Learn the system by asking it.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Ask anything about OTP.</strong> "How do I create a Strategy Reset meeting?" "Where do I see my team's KPIs?" Answers arrive in seconds and point you to the right page.</li>
+<li><strong>Grounded, not improvised.</strong> Answers come from the user guide, the route map, and recent product updates. When something is outside its knowledge, it says so and offers the ticket desk.</li>
+<li><strong>Built to grow.</strong> This is step one -- answers about your own org's data are on the roadmap.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Major', 'Dashboard'],
+    title: 'Make the Daily dashboard yours: rearrange, hide, and resize',
+    summary: 'Hit Customize on the Daily dashboard and take control: drag tiles into the order that matches how you work, hide the ones you never use, and pick a font size that suits your screen. Everything saves to your profile automatically as you change it, so your layout is waiting for you at every sign-in -- and your teammates each get their own.',
+    details: `<p>One dashboard, arranged per person.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Drag to reorder.</strong> In Customize mode, grab any tile in the left or right column and put it where you want it.</li>
+<li><strong>Hide what you don't use.</strong> Every tile except the cascading message can be hidden -- and brought back any time from the same mode.</li>
+<li><strong>Three font sizes.</strong> S, M, or L, applied to the whole dashboard.</li>
+<li><strong>Saves itself.</strong> Changes persist to your member profile as you make them. No save button, no setup.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Meetings'],
+    title: 'The Strategy Reset meeting: realign the company when something big changes',
+    summary: 'A new meeting type for the moments that do not fit a weekly cadence: revenue stalls, a market shifts, AI disrupts your model. The Strategy Reset walks leadership through nine facilitated sections -- Define the Issue, Reality Check, Future Consequences, Strategic Options, Debate and Decide, Strategic Commitment, Define Success, Assign Ownership -- and ends with a deliverable your whole team can repeat with one voice. Notes save as you type, and ownership assignments become real to-dos.',
+    details: `<p>Create one from the Meetings page: New Meeting, type "Strategy Reset."</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Nine guided sections</strong> with timeboxes, from problem definition (15 min) through strategic options (45 min) and the debate (60 min) to written commitment and success criteria.</li>
+<li><strong>The deliverable test.</strong> The meeting is not done until leadership can answer four questions with one voice: the problem, the decision, the 90-day priority, and the actions.</li>
+<li><strong>Notes autosave</strong> into the meeting record; Assign Ownership creates tracked to-dos with owners and due dates.</li>
+<li><strong>Bonus for every meeting type:</strong> the title field is now optional -- leave it blank and OTP names the meeting from its type and team, like "Leadership Meeting -- Leadership Team."</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Navigation', 'Help'],
+    title: "Help, updates, and articles without leaving the app",
+    summary: "Three things that used to bounce you out of OTP now stay inside it. A megaphone in the nav lights up when there is something new and shows the latest updates in a click. A Help and Support panel puts the ticket desk, the user guide, and the update feed one click away. And the content pages themselves -- the guide, What's New, the blog, every article -- now render inside the app shell when you are signed in, so your navigation never disappears.",
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>The megaphone.</strong> A red badge appears when updates have shipped since your last look. Open it for the latest entries; the full history lives on the What's New page.</li>
+<li><strong>Help and Support.</strong> The (?) in the nav opens a panel with Raise a Ticket, the User Guide, What's New, the EOS + AI article library, and what's coming next.</li>
+<li><strong>No more exits.</strong> Guide, What's New, blog, and Premium Support pages keep the sidebar and top bar when you are signed in. Visitors still get the full marketing pages at the same links.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-10',
+    tags: ['Offer'],
+    title: 'Premium Support: founding member pricing at $199/month',
+    summary: 'For teams that want answers in minutes instead of days: Premium Support gets you a dedicated Slack channel with responses under 15 minutes, a founder-led kick-off call, quarterly business reviews run inside OTP, and end-to-end ticket resolution. Founding member pricing is $199/month or $1,990/year (save 17%), with limited seats while we keep response times fast.',
+    details: `<p>Details and the full Standard-vs-Premium comparison at <a href="/premium-support">/premium-support</a>, or find it in the Help panel.</p>`,
+  },
+
   // ---- June 10, 2026 ----
 
   {
