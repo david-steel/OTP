@@ -750,6 +750,7 @@ await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/notifications.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/dashboard-preferences.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/whats-new.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/ask-ai.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/push.js'), { prefix: '/api/v1' });
 
 // Service worker at the ORIGIN ROOT (scope '/'), with no-cache so updates

@@ -320,6 +320,28 @@
                 </div>
               </div>
             </div>
+            <!-- Ask AI (signed-in): purple pill, GHL-style chat drawer. Streams
+                 product-help answers from POST /api/v1/ask-ai (SSE); see script
+                 near end of body for send loop + mutual exclusion. -->
+            <div class="relative z-50" id="otp-askai" style="position:relative; display:flex; align-items:center;">
+              <button id="otp-askai-btn" aria-label="Ask AI" style="display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:9999px; background:#6d28d9; color:#fff; font-size:12.5px; font-weight:600; line-height:1.4; border:none; cursor:pointer; white-space:nowrap;">
+                <span aria-hidden="true" style="font-size:13px; line-height:1;">&#10038;</span>Ask AI
+              </button>
+              <div id="otp-askai-panel" style="display:none; position:absolute; top:100%; right:0; margin-top:10px; width:400px; max-height:560px; flex-direction:column; background:#fff; border:1px solid rgba(20,22,28,0.12); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,0.12); overflow:hidden;">
+                <div style="padding:12px 14px; border-bottom:1px solid rgba(20,22,28,0.06); flex:0 0 auto;">
+                  <div style="font-size:11px; font-weight:700; color:#6d28d9; text-transform:uppercase; letter-spacing:0.06em;">Ask AI</div>
+                  <div style="font-size:12px; color:#6b7280; line-height:1.45; margin-top:2px;">Answers about using OTP</div>
+                </div>
+                <div id="otp-askai-msgs" style="flex:1 1 auto; min-height:120px; overflow:auto; padding:12px 14px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="font-size:13px; color:#6b7280; line-height:1.5;">Hi! Ask me anything about using OTP &mdash; meetings, to-dos, KPIs, publishing, the works.</div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:flex-end; padding:10px 14px; border-top:1px solid rgba(20,22,28,0.06); flex:0 0 auto;">
+                  <textarea id="otp-askai-input" rows="1" placeholder="Ask a question&hellip;" style="flex:1; resize:none; max-height:64px; padding:8px 10px; font-size:13px; line-height:1.45; color:#111827; background:#f9fafb; border:1px solid rgba(20,22,28,0.12); border-radius:8px; outline:none; font-family:inherit;"></textarea>
+                  <button id="otp-askai-send" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; background:#6d28d9; color:#fff; font-size:12.5px; font-weight:600; border:none; cursor:pointer;">Send</button>
+                </div>
+                <div style="padding:6px 14px 10px; font-size:11px; color:#9ca3af; text-align:center; flex:0 0 auto;">Ask AI can make mistakes. Verify important details.</div>
+              </div>
+            </div>
             <!-- What's New megaphone (signed-in): unread changelog count + dropdown.
                  Fed by GET /api/v1/whats-new/unread; see script near end of body. -->
             <div class="relative z-50" id="otp-mega" style="position:relative; display:flex; align-items:center;">
@@ -895,6 +917,156 @@
   if (megaBtn) megaBtn.addEventListener('click', function () { panel.style.display = 'none'; });
   document.addEventListener('click', function (e) {
     if (panel.style.display !== 'none' && !help.contains(e.target)) panel.style.display = 'none';
+  });
+})();
+</script>
+<script>
+(function () {
+  var root = document.getElementById('otp-askai');
+  if (!root || window.__otpAskAiInit) return;
+  window.__otpAskAiInit = true;
+  var btn = document.getElementById('otp-askai-btn');
+  var panel = document.getElementById('otp-askai-panel');
+  var msgsEl = document.getElementById('otp-askai-msgs');
+  var input = document.getElementById('otp-askai-input');
+  var sendBtn = document.getElementById('otp-askai-send');
+  var messages = []; // page-lifetime chat history: {role, content}
+  var streaming = false;
+
+  function isOpen() { return panel.style.display !== 'none'; }
+  function closePanel() { panel.style.display = 'none'; }
+  function openPanel() {
+    // Mutual exclusion: opening Ask AI closes bell + What's New + help.
+    ['otp-bell-panel', 'otp-mega-panel', 'otp-help-panel'].forEach(function (id) {
+      var p = document.getElementById(id);
+      if (p) p.style.display = 'none';
+    });
+    panel.style.display = 'flex';
+    input.focus();
+  }
+  // ...and opening any of the other three closes Ask AI.
+  ['otp-bell-btn', 'otp-mega-btn', 'otp-help-btn'].forEach(function (id) {
+    var b = document.getElementById(id);
+    if (b) b.addEventListener('click', closePanel);
+  });
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (isOpen()) { closePanel(); return; }
+    openPanel();
+  });
+  document.addEventListener('click', function (e) {
+    if (isOpen() && !root.contains(e.target)) closePanel();
+  });
+
+  // Render plain text into a bubble via textContent only (never innerHTML
+  // for user/assistant text), with simple paragraph splits.
+  function setBubbleText(bubble, text) {
+    bubble.textContent = '';
+    var paras = String(text).split(/\n{2,}/);
+    for (var i = 0; i < paras.length; i++) {
+      var p = document.createElement('div');
+      p.textContent = paras[i];
+      if (i > 0) p.style.marginTop = '8px';
+      bubble.appendChild(p);
+    }
+  }
+  function addBubble(role, text) {
+    var b = document.createElement('div');
+    if (role === 'user') {
+      b.style.cssText = 'align-self:flex-end; max-width:85%; padding:8px 11px; border-radius:12px 12px 3px 12px; background:rgba(109,40,217,0.10); color:#3b2174; font-size:13px; line-height:1.5; white-space:pre-wrap; word-break:break-word;';
+    } else {
+      b.style.cssText = 'align-self:flex-start; max-width:85%; padding:8px 11px; border-radius:12px 12px 12px 3px; background:#f3f4f6; color:#111827; font-size:13px; line-height:1.5; word-break:break-word;';
+    }
+    setBubbleText(b, text);
+    msgsEl.appendChild(b);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return b;
+  }
+  function setBusy(on) {
+    streaming = on;
+    sendBtn.disabled = on;
+    sendBtn.style.opacity = on ? '0.55' : '1';
+    sendBtn.style.cursor = on ? 'default' : 'pointer';
+  }
+
+  function send() {
+    if (streaming) return;
+    var q = input.value.replace(/\s+$/, '');
+    if (!q) return;
+    if (q.length > 4000) q = q.slice(0, 4000);
+    input.value = '';
+    messages.push({ role: 'user', content: q });
+    addBubble('user', q);
+    var bubble = addBubble('assistant', '…');
+    setBusy(true);
+
+    var acc = '';
+    fetch('/api/v1/ask-ai', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: messages.slice(-20) }),
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.json().catch(function () { return null; }).then(function (body) {
+          var code = body && body.error && body.error.code;
+          if (code === 'NOT_CONFIGURED') {
+            setBubbleText(bubble, "Ask AI isn't set up yet — check back soon.");
+          } else if (res.status === 429) {
+            setBubbleText(bubble, 'Slow down a little — try again in a minute.');
+          } else {
+            setBubbleText(bubble, 'Something went wrong. Please try again.');
+          }
+          setBusy(false);
+        });
+      }
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder();
+      var buf = '';
+      function handleLine(line) {
+        if (line.slice(0, 6) !== 'data: ') return;
+        var payload;
+        try { payload = JSON.parse(line.slice(6)); } catch (e) { return; }
+        if (typeof payload.t === 'string') {
+          acc += payload.t;
+          setBubbleText(bubble, acc);
+          msgsEl.scrollTop = msgsEl.scrollHeight;
+        } else if (payload.error) {
+          setBubbleText(bubble, payload.error);
+          acc = '';
+        } else if (payload.done) {
+          if (acc) messages.push({ role: 'assistant', content: acc });
+        }
+      }
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) {
+            if (acc && (messages.length === 0 || messages[messages.length - 1].content !== acc)) {
+              // Stream ended without a {done} frame; keep what we got.
+              messages.push({ role: 'assistant', content: acc });
+            }
+            setBusy(false);
+            return;
+          }
+          buf += decoder.decode(r.value, { stream: true });
+          var parts = buf.split('\n\n');
+          buf = parts.pop();
+          parts.forEach(function (chunk) {
+            chunk.split('\n').forEach(handleLine);
+          });
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function () {
+      setBubbleText(bubble, 'Connection lost. Please try again.');
+      setBusy(false);
+    });
+  }
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   });
 })();
 </script>
