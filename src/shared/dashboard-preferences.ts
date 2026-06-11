@@ -17,6 +17,8 @@ export const dashboardPreferencesSchema = z.object({
     right: z.array(tileId).max(30).optional(),
   }).strict().optional(),
   fontSize: z.enum(['sm', 'base', 'lg']).optional(),
+  // App-shell left sidebar collapsed state (true = 56px icon rail).
+  sidebarCollapsed: z.boolean().optional(),
 }).strict();
 
 export type DashboardPreferences = z.infer<typeof dashboardPreferencesSchema>;

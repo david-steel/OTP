@@ -252,6 +252,11 @@ app.addHook('preHandler', async (request, reply) => {
     const memberRole: string | null = om ? om.role : null;
     const isCoach = !!(request as any).isCoach;
     const coachSlug = (request as any).coachSlug || null;
+    // Server-rendered initial state for the app sidebar so the collapsed rail
+    // doesn't flash open on load. Defensive chaining: preferences is a jsonb
+    // column and may be null/corrupt; a missing member (legacy founder with no
+    // org_members row) simply defaults to expanded.
+    const sidebarCollapsed = !!(om?.preferences as any)?.dashboard?.sidebarCollapsed;
     return origView(template, {
       ...(data || {}),
       authUserId: userId,
@@ -260,6 +265,7 @@ app.addHook('preHandler', async (request, reply) => {
       memberRole,
       isCoach,
       coachSlug,
+      sidebarCollapsed,
     }, opts);
   };
 });

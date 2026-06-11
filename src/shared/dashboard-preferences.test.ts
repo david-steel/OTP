@@ -17,6 +17,7 @@ describe('dashboardPreferencesSchema', () => {
         right: ['scorecard', 'meeting-prep'],
       },
       fontSize: 'lg',
+      sidebarCollapsed: true,
     };
     const result = dashboardPreferencesSchema.safeParse(full);
     expect(result.success).toBe(true);
@@ -78,6 +79,23 @@ describe('dashboardPreferencesSchema', () => {
     expect(dashboardPreferencesSchema.safeParse({ fontSize: '' }).success).toBe(false);
   });
 
+  it('accepts sidebarCollapsed true and false', () => {
+    expect(dashboardPreferencesSchema.safeParse({ sidebarCollapsed: true }).success).toBe(true);
+    expect(dashboardPreferencesSchema.safeParse({ sidebarCollapsed: false }).success).toBe(true);
+  });
+
+  it('rejects non-boolean sidebarCollapsed', () => {
+    expect(dashboardPreferencesSchema.safeParse({ sidebarCollapsed: 'true' }).success).toBe(false);
+    expect(dashboardPreferencesSchema.safeParse({ sidebarCollapsed: 1 }).success).toBe(false);
+    expect(dashboardPreferencesSchema.safeParse({ sidebarCollapsed: null }).success).toBe(false);
+  });
+
+  it('still rejects unknown keys alongside sidebarCollapsed (.strict())', () => {
+    expect(
+      dashboardPreferencesSchema.safeParse({ sidebarCollapsed: true, sidebarWidth: 230 }).success,
+    ).toBe(false);
+  });
+
   it('accepts tileOrder with only left', () => {
     expect(
       dashboardPreferencesSchema.safeParse({ tileOrder: { left: ['rocks'] } }).success,
@@ -117,6 +135,19 @@ describe('mergeDashboardPreferences', () => {
       hiddenTiles: ['kpi-summary'],
     });
     expect(merged).toEqual({ fontSize: 'lg', hiddenTiles: ['kpi-summary'] });
+  });
+
+  it('merges sidebarCollapsed without disturbing other keys', () => {
+    const existing = { fontSize: 'lg', hiddenTiles: ['todos'] };
+    expect(mergeDashboardPreferences(existing, { sidebarCollapsed: true })).toEqual({
+      fontSize: 'lg',
+      hiddenTiles: ['todos'],
+      sidebarCollapsed: true,
+    });
+    // ...and false overwrites true (falsy values are still applied).
+    expect(mergeDashboardPreferences({ sidebarCollapsed: true }, { sidebarCollapsed: false })).toEqual({
+      sidebarCollapsed: false,
+    });
   });
 
   it('does not mutate the existing object', () => {

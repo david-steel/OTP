@@ -183,7 +183,7 @@
   <script type="application/ld+json"><%- jsonForScript({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
 </head>
-<body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %>">
+<body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %><%= ((typeof authUserId !== 'undefined' && authUserId) && !(typeof isEmbed !== 'undefined' && isEmbed)) ? (' otp-has-rail' + ((typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? ' otp-rail-collapsed' : '')) : '' %>">
 <%
   // _inApp: authed user on a dashboard/l8/settings page. Used to streamline the
   // top nav (hide marketing links) and suppress the marketing footer so the app
@@ -195,6 +195,16 @@
   // stack the marketing nav (Protocol, Pricing, What's New) on top of the
   // app cluster there. Marketing chrome is for signed-out visitors only.
   var _inApp = (typeof authUserId !== 'undefined' && authUserId);
+  // _railOn: the fixed left sidebar + content offset render only for signed-in
+  // users outside embed mode. Mirrors the body's otp-has-rail class above.
+  var _railOn = _inApp && !(typeof isEmbed !== 'undefined' && isEmbed);
+  // _inDashArea: dashboard/meeting/settings-api pages keep the grey app canvas
+  // the old dashboard-tabs left rail used to paint on <main>.
+  var _appPath = (typeof currentPath !== 'undefined' && currentPath) ? currentPath.toString() : '';
+  var _inDashArea = _appPath === '/dashboard' || _appPath.indexOf('/dashboard/') === 0
+                 || _appPath === '/l8' || _appPath.indexOf('/l8/') === 0
+                 || _appPath === '/settings/api'
+                 || _appPath === '/settings/coaches';
 %>
 
   <% if (typeof impersonation !== 'undefined' && impersonation && impersonation.active) { %>
@@ -286,40 +296,11 @@
         <% } %>
         <div id="auth-nav" class="flex items-center gap-3">
           <% if (typeof authUserId !== 'undefined' && authUserId) {
-               // Role-gated dashboard links. Mirrors dashboard-tabs.ejs buckets.
+               // The old role-gated Dashboard dropdown lived here; the fixed
+               // left sidebar (see otp-sidebar below) replaced it on desktop.
+               // _role is still needed for the avatar menu's role line.
                var _role = (locals.memberRole || '').toString();
-               var _ORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
-               var _INVITER  = ['owner','admin','manager','visionary','integrator'];
-               var _ALL = true; // every authed org member
-               function _has(allowed){
-                 if (allowed === true) return true;
-                 if (!_role) return false;
-                 for (var i=0;i<allowed.length;i++){ if (allowed[i]===_role) return true; }
-                 return false;
-               }
           %>
-            <!-- Dashboard dropdown (signed-in users) -->
-            <div class="relative group z-50">
-              <button class="v7-nav-link flex items-center gap-1 cursor-pointer">
-                Dashboard
-                <svg class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <!-- Invisible bridge keeps :hover continuous from trigger to panel -->
-              <div class="absolute top-full right-0 hidden group-hover:block group-focus-within:block z-50" style="min-width: 240px;">
-                <div class="h-2"></div>
-                <div class="v7-dropdown">
-                  <% if (_has(_ALL)) { %><a href="/dashboard">Daily <span style="color:var(--ink-mute); font-size:11px;">— run my day</span></a><% } %>
-                  <% if (_has(_ALL)) { %><a href="/l8">Meetings <span style="color:var(--ink-mute); font-size:11px;">— L8 / L10</span></a><% } %>
-                  <% if (_has(_ALL)) { %><a href="/dashboard/team">Team chart</a><% } %>
-                  <% if (_has(_ALL)) { %><a href="/dashboard/kpis">KPIs / Scoreboard</a><% } %>
-                  <% if (_has(_ORG_WIDE) || _has(_INVITER)) { %><div class="v7-dd-divider"></div><% } %>
-                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/oos-operating-plan">Operating plan</a><% } %>
-                  <% if (_has(_INVITER)) { %><a href="/dashboard/members">Members</a><% } %>
-                  <% if (_has(_ORG_WIDE)) { %><a href="/dashboard/publisher">Publisher</a><% } %>
-                  <% if (_has(_ORG_WIDE)) { %><a href="/settings/api">MCP / API keys</a><% } %>
-                </div>
-              </div>
-            </div>
             <!-- Ask AI (signed-in): purple pill, GHL-style chat drawer. Streams
                  product-help answers from POST /api/v1/ask-ai (SSE); see script
                  near end of body for send loop + mutual exclusion. -->
@@ -503,10 +484,13 @@
             <a href="/l8" class="py-2 px-6 rounded-lg transition-colors">Meetings</a>
             <a href="/dashboard/team" class="py-2 px-6 rounded-lg transition-colors">Team chart</a>
             <a href="/dashboard/kpis" class="py-2 px-6 rounded-lg transition-colors">KPIs</a>
+            <a href="/me/todos" class="py-2 px-6 rounded-lg transition-colors">To-Dos</a>
             <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="py-2 px-6 rounded-lg transition-colors">Operating plan</a><% } %>
             <% if (_mHas(_mINVITER))  { %><a href="/dashboard/members" class="py-2 px-6 rounded-lg transition-colors">Members</a><% } %>
             <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/publisher" class="py-2 px-6 rounded-lg transition-colors">Publisher</a><% } %>
             <% if (_mHas(_mORG_WIDE)) { %><a href="/settings/api" class="py-2 px-6 rounded-lg transition-colors">MCP / API</a><% } %>
+            <a href="/tickets" class="py-2 px-6 rounded-lg transition-colors">Tickets</a>
+            <a href="/guide" class="py-2 px-6 rounded-lg transition-colors">Guide</a>
             <a href="/publish" class="v7-cta-publish text-center mt-2">Publish</a>
             <div id="auth-user-button-mobile" class="pt-2"></div>
           <% } else { %>
@@ -520,8 +504,176 @@
   </nav>
   <% } %>
 
-  <!-- Dashboard sub-nav (renders only on /dashboard/* and /l8/*; no-op otherwise) -->
-  <%- include('../partials/dashboard-tabs') %>
+  <% if (_railOn) {
+       // GHL-style app sidebar (signed-in, desktop only). Replaces both the old
+       // Dashboard dropdown in the top bar and the dashboard-tabs left rail
+       // (partials/dashboard-tabs.ejs is no longer included). Role buckets
+       // mirror the old dropdown exactly. Keep EJS delimiters out of the JS
+       // strings below -- a stray close-delimiter ends the scriptlet early.
+       var _sbRole = (locals.memberRole || '').toString();
+       var _sbORG_WIDE = ['owner','admin','implementer','visionary','integrator'];
+       var _sbINVITER  = ['owner','admin','manager','visionary','integrator'];
+       var _sbCEO      = ['owner','visionary'];
+       var _sbIsCoach  = !!locals.isCoach;
+       function _sbHas(allowed){
+         if (allowed === true) return true;
+         if (!_sbRole) return false;
+         for (var i=0;i<allowed.length;i++){ if (allowed[i]===_sbRole) return true; }
+         return false;
+       }
+       function _sbActive(href){
+         if (_appPath === href) return true;
+         if (href === '/dashboard') return false; // Daily: exact only -- subpages light their own items
+         return _appPath.indexOf(href + '/') === 0;
+       }
+       // 18px lucide-style stroke icons: inner SVG markup; stroke/size set on the wrapper <svg>.
+       var _sbI = {
+         sun:    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+         cal:    '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+         org:    '<rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v4M5 17v-3h14v3M12 11v3"/>',
+         chart:  '<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="0.5"/><rect x="13" y="7" width="3" height="10" rx="0.5"/>',
+         check:  '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+         map:    '<path d="M9 4l6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/>',
+         people: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+         send:   '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+         key:    '<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3"/>',
+         buoy:   '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M4.93 19.07l4.24-4.24"/>',
+         book:   '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+         alert:  '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+         star:   '<path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.5 5.7 21l2.3-7.1-6-4.5h7.6z"/>',
+         case2:  '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 13h20"/>',
+         teams:  '<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>',
+         doc:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/>',
+         grid4:  '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
+         inbox:  '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>'
+       };
+       // Gates + hrefs mirror the retired dashboard-tabs.ejs rail 1:1:
+       // Issues=INVITER, My Practice=ORG_WIDE+coachOnly, CEO=owner/visionary,
+       // Teams=INVITER, Docs/Workspaces/Inquiries=ORG_WIDE. Middle-group order
+       // follows the old rail (Plan, Practice, CEO, then Workspace group).
+       var _sbItems = [
+         { href:'/dashboard',                    label:'Daily',          icon:_sbI.sun,    allow:true },
+         { href:'/l8',                           label:'Meetings',       icon:_sbI.cal,    allow:true },
+         { href:'/dashboard/team',               label:'Team chart',     icon:_sbI.org,    allow:true },
+         { href:'/dashboard/kpis',               label:'KPIs',           icon:_sbI.chart,  allow:true },
+         { href:'/me/todos',                     label:'To-Dos',         icon:_sbI.check,  allow:true },
+         { href:'/dashboard/ids',                label:'Issues',         icon:_sbI.alert,  allow:_sbINVITER },
+         { divider:true },
+         { href:'/dashboard/oos-operating-plan', label:'Operating plan', icon:_sbI.map,    allow:_sbORG_WIDE },
+         { href:'/dashboard/practice',           label:'My Practice',    icon:_sbI.case2,  allow:_sbORG_WIDE, coach:true },
+         { href:'/dashboard/ceo',                label:'CEO',            icon:_sbI.star,   allow:_sbCEO },
+         { href:'/dashboard/members',            label:'Members',        icon:_sbI.people, allow:_sbINVITER },
+         { href:'/dashboard/teams',              label:'Teams',          icon:_sbI.teams,  allow:_sbINVITER },
+         { href:'/dashboard/source-documents',   label:'Docs',           icon:_sbI.doc,    allow:_sbORG_WIDE },
+         { href:'/dashboard/workspaces',         label:'Workspaces',     icon:_sbI.grid4,  allow:_sbORG_WIDE },
+         { href:'/dashboard/inquiries',          label:'Inquiries',      icon:_sbI.inbox,  allow:_sbORG_WIDE },
+         { href:'/dashboard/publisher',          label:'Publisher',      icon:_sbI.send,   allow:_sbORG_WIDE },
+         { href:'/settings/api',                 label:'MCP / API keys', icon:_sbI.key,    allow:_sbORG_WIDE },
+         { divider:true },
+         { href:'/tickets',                      label:'Tickets',        icon:_sbI.buoy,   allow:true },
+         { href:'/guide',                        label:'Guide',          icon:_sbI.book,   allow:true }
+       ];
+       // Render sequentially; a divider only prints when items rendered on both
+       // sides of it (so a fully role-gated-out group can't leave a double rule).
+       var _sbHtml = '';
+       var _sbPendingDivider = false;
+       var _sbRenderedAny = false;
+       for (var _sbIdx = 0; _sbIdx < _sbItems.length; _sbIdx++) {
+         var _sbIt = _sbItems[_sbIdx];
+         if (_sbIt.divider) { if (_sbRenderedAny) _sbPendingDivider = true; continue; }
+         if (!_sbHas(_sbIt.allow)) continue;
+         if (_sbIt.coach && !_sbIsCoach) continue;
+         if (_sbPendingDivider) { _sbHtml += '<div class="otp-sb-divider"></div>'; _sbPendingDivider = false; }
+         _sbHtml += '<a href="' + _sbIt.href + '" class="otp-sb-link' + (_sbActive(_sbIt.href) ? ' active' : '') + '" title="' + _sbIt.label + '">'
+           + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + _sbIt.icon + '</svg>'
+           + '<span class="otp-sb-label">' + _sbIt.label + '</span></a>';
+         _sbRenderedAny = true;
+       }
+  %>
+  <style>
+    /* App sidebar (signed-in, desktop only). Color tokens mirror the existing
+       chrome: .v7-nav slab (#fcfcfd / rgba(20,22,28,0.08) border) and
+       .v7-dropdown hover (rgba(13,125,242,0.06) / var(--blue-deep)). */
+    .otp-sb {
+      position: fixed; top: 65px; left: 0; bottom: 0; width: 230px;
+      background: #fcfcfd; border-right: 1px solid rgba(20,22,28,0.08);
+      display: none; flex-direction: column; z-index: 40;
+      overflow-y: auto; overflow-x: hidden;
+      transition: width .2s ease;
+    }
+    body.otp-rail-collapsed .otp-sb { width: 56px; }
+    .otp-sb-org {
+      flex: none; padding: 14px 16px 10px; font-size: 13px; font-weight: 700;
+      color: var(--ink, #14161c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      border-bottom: 1px solid rgba(20,22,28,0.06);
+    }
+    body.otp-rail-collapsed .otp-sb-org { display: none; }
+    .otp-sb-nav { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; }
+    .otp-sb-link {
+      display: flex; align-items: center; gap: 10px; padding: 8px 11px;
+      border-radius: 8px; color: var(--ink, #14161c); font-size: 14px; font-weight: 500;
+      text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease;
+    }
+    .otp-sb-link svg { flex: none; }
+    .otp-sb-link:hover { background: rgba(13,125,242,0.06); color: var(--blue-deep, #0b62c4); }
+    .otp-sb-link.active { background: rgba(13,125,242,0.08); color: var(--blue-deep, #0b62c4); font-weight: 600; }
+    .otp-sb-divider { flex: none; height: 1px; background: rgba(20,22,28,0.06); margin: 8px 6px; }
+    body.otp-rail-collapsed .otp-sb .otp-sb-label { display: none; }
+    .otp-sb-toggle {
+      flex: none; display: flex; align-items: center; gap: 10px; margin: 8px;
+      padding: 8px 11px; border-radius: 8px; border: none; background: none;
+      color: var(--ink-mute, #888c96); font-size: 13px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; text-align: left; font-family: inherit;
+      transition: background .12s ease, color .12s ease;
+    }
+    .otp-sb-toggle:hover { background: rgba(13,125,242,0.06); color: var(--blue-deep, #0b62c4); }
+    .otp-sb-toggle svg { flex: none; }
+    .otp-sb-toggle .otp-sb-chev-r { display: none; }
+    body.otp-rail-collapsed .otp-sb-toggle .otp-sb-chev-l { display: none; }
+    body.otp-rail-collapsed .otp-sb-toggle .otp-sb-chev-r { display: inline; }
+    /* Desktop (md+) only: show the rail and shift the content area right.
+       Below md the rail stays hidden and the hamburger menu carries the links. */
+    @media (min-width: 768px) {
+      .otp-sb { display: flex; }
+      body.otp-has-rail main { margin-left: 230px; transition: margin-left .2s ease; }
+      body.otp-has-rail.otp-rail-collapsed main { margin-left: 56px; }
+    }
+    /* Grey app canvas on dashboard/meeting pages -- preserved from the old
+       dashboard-tabs rail so tiles keep their card-on-grey treatment. */
+    main.otp-app-canvas { background: var(--grey, #f0f1f3); min-height: 100vh; }
+  </style>
+  <aside id="otp-sidebar" class="otp-sb" aria-label="App navigation">
+    <div class="otp-sb-org"><span class="otp-sb-label"><%= (locals.orgName || 'Workspace') %></span></div>
+    <nav class="otp-sb-nav"><%- _sbHtml %></nav>
+    <button type="button" id="otp-sb-toggle" class="otp-sb-toggle" title="<%= (typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? 'Expand sidebar' : 'Collapse sidebar' %>" aria-label="Toggle sidebar">
+      <svg class="otp-sb-chev-l" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      <svg class="otp-sb-chev-r" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="otp-sb-label">Collapse</span>
+    </button>
+  </aside>
+  <script>
+    (function () {
+      var sbToggle = document.getElementById('otp-sb-toggle');
+      if (!sbToggle || window.__otpSbInit) return;
+      window.__otpSbInit = true;
+      sbToggle.addEventListener('click', function () {
+        var collapsed = document.body.classList.toggle('otp-rail-collapsed');
+        sbToggle.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        // Fire-and-forget persistence per member. A legacy founder with no
+        // org_members row gets a 403 here -- the collapse still works for the
+        // session, so swallow everything beyond a console note.
+        fetch('/api/v1/dashboard-preferences', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sidebarCollapsed: collapsed }),
+        }).then(function (r) {
+          if (!r.ok) console.warn('sidebar preference not saved (' + r.status + ')');
+        }).catch(function (err) { console.warn('sidebar preference not saved', err); });
+      });
+    })();
+  </script>
+  <% } %>
 
   <script>
     var mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -533,7 +685,7 @@
     }
   </script>
 
-  <main class="pt-[65px]">
+  <main class="pt-[65px]<%= (_railOn && _inDashArea) ? ' otp-app-canvas' : '' %>">
     <%- body %>
   </main>
 
