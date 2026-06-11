@@ -189,12 +189,12 @@
   // top nav (hide marketing links) and suppress the marketing footer so the app
   // shell (left sidebar) reads as a product, not a marketing site. Mirrors the
   // inDashArea logic in partials/dashboard-tabs.ejs.
-  var _inApp = (typeof authUserId !== 'undefined' && authUserId) && (function(){
-    var p = (locals.currentPath || '');
-    return p === '/dashboard' || p.indexOf('/dashboard/') === 0
-        || p === '/l8' || p.indexOf('/l8/') === 0
-        || p === '/settings/api' || p === '/settings/coaches';
-  })();
+  // Signed in = in the app, on every main-layout page. Content pages
+  // (/guide, /whats-new, /blog, /premium-support) render in-shell for authed
+  // viewers (renderInShell), so the old dashboard/l8 path whitelist would
+  // stack the marketing nav (Protocol, Pricing, What's New) on top of the
+  // app cluster there. Marketing chrome is for signed-out visitors only.
+  var _inApp = (typeof authUserId !== 'undefined' && authUserId);
 %>
 
   <% if (typeof impersonation !== 'undefined' && impersonation && impersonation.active) { %>
