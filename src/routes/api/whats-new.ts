@@ -33,6 +33,18 @@ function seenAtFrom(preferences: unknown): string | null {
   return typeof seenAt === 'string' && seenAt ? seenAt : null;
 }
 
+// Head marker: "<date>\n<title>" of the newest entry at seen time. Entries
+// carry only a date, so a date-granularity compare can never flag same-day
+// publishes after the member already opened the panel; matching the exact
+// head entry can.
+function seenHeadFrom(preferences: unknown): { date: string; title: string } | null {
+  if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return null;
+  const head = (preferences as Record<string, unknown>).whatsNewSeenHead;
+  if (typeof head !== 'string' || !head.includes('\n')) return null;
+  const idx = head.indexOf('\n');
+  return { date: head.slice(0, idx), title: head.slice(idx + 1) };
+}
+
 export default async function whatsNewRoutes(app: FastifyInstance) {
   app.get('/whats-new/unread', async (request, reply) => {
     if (!checkRateLimit(request.ip)) {
@@ -46,8 +58,15 @@ export default async function whatsNewRoutes(app: FastifyInstance) {
     if (!member) return { ok: true, unread: 0, entries };
 
     const seenAt = seenAtFrom(member.preferences);
+    const seenHead = seenHeadFrom(member.preferences);
+    const headIndex = seenHead
+      ? entries.findIndex((e) => e.date === seenHead.date && e.title === seenHead.title)
+      : -1;
     let unread: number;
-    if (seenAt) {
+    if (headIndex >= 0) {
+      // Everything newer than the exact entry that topped the list last look.
+      unread = headIndex;
+    } else if (seenAt) {
       const seenDate = seenAt.slice(0, 10);
       unread = entries.filter((e) => e.date > seenDate).length;
     } else {
@@ -81,8 +100,16 @@ export default async function whatsNewRoutes(app: FastifyInstance) {
       ? (row.preferences as Record<string, unknown>)
       : {};
 
+    const head = latestEntries()[0];
     await db.update(orgMembers)
-      .set({ preferences: { ...currentPreferences, whatsNewSeenAt: new Date().toISOString() }, updatedAt: new Date() })
+      .set({
+        preferences: {
+          ...currentPreferences,
+          whatsNewSeenAt: new Date().toISOString(),
+          ...(head ? { whatsNewSeenHead: head.date + '\n' + head.title } : {}),
+        },
+        updatedAt: new Date(),
+      })
       .where(eq(orgMembers.id, member.id));
 
     return { ok: true };
