@@ -11,6 +11,35 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 11, 2026 ----
+
+  {
+    date: '2026-06-11',
+    tags: ['Major', 'Rocks'],
+    title: 'Milestones on Quarterly Priorities: break a Rock into checkable steps',
+    summary: 'Every Rock can now carry milestones: the concrete steps between here and done, each with its own due date and a checkbox. Check them off as you go and the Rock shows live progress (3 of 5). Each milestone can also have to-dos assigned to people, so the step has owners, not just a name. Add and manage milestones on the Daily dashboard; check them off live during your weekly meeting in the Rock Review.',
+    details: `<p>Rocks tell you the destination. Milestones tell you whether you are on the road.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Add milestones on the Daily dashboard.</strong> Open a Rock card: title + due date, done. A progress chip (2/5) sits on the Rock and turns green at 100%.</li>
+<li><strong>Due dates that mean it.</strong> A past-due, unchecked milestone shows its date in red.</li>
+<li><strong>Assign to-dos to a milestone.</strong> Each milestone takes its own to-dos with owners, picked from the same people list as delegation. They show up in the owner's queue like any other to-do.</li>
+<li><strong>Check off in the meeting.</strong> The Rock Review section of your weekly meeting lists each Rock's milestones with live checkboxes.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-11',
+    tags: ['To-Dos', 'Collaboration'],
+    title: 'Attach files to to-dos, and carry them to an Issue or a Rock',
+    summary: 'To-dos can now carry files. Click the paperclip on any to-do to attach a document (up to 5 MB), download it later, or remove it. When the work travels, the file travels: an attachment on a to-do can be linked onto an Issue or a Quarterly Priority in two clicks, no re-uploading. Attachments also work directly on Issues and Rocks.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Paperclip on every to-do</strong> on the Daily dashboard and your to-do queue: attach, list, download, remove.</li>
+<li><strong>Carry, don't re-upload.</strong> From a to-do's attachment, send the same file to an Issue or a Rock with the arrow buttons. One file, linked wherever the work lives.</li>
+<li><strong>Issues and Rocks too.</strong> Attach files directly to either, from their cards on the Daily dashboard.</li>
+<li><strong>Sensible limits.</strong> Up to 5 MB per file; removing the last link removes the file.</li>
+</ul>`,
+  },
+
   // ---- June 10, 2026 (evening wave) ----
 
   {

@@ -419,13 +419,19 @@
               <% var rkAccent = r.completedAt ? 'border-gray-100 bg-gray-50/60'
                    : (r.onTrack ? 'border-emerald-200 border-l-4 border-l-emerald-400 bg-emerald-50/30'
                                 : 'border-rose-200 border-l-4 border-l-rose-500 bg-rose-50/30'); %>
+              <% // Milestones for this rock (server-fetched; rockMilestones is a
+                 // map keyed by rock id). _msToday is a local YYYY-MM-DD string so
+                 // the overdue compare is plain string < string, no TZ math.
+                 var _msList = (locals.rockMilestones && locals.rockMilestones[r.id]) || [];
+                 var _msDone = _msList.filter(function(m){ return m.completedAt; }).length;
+                 var _msToday = (function(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })(); %>
               <li class="rounded border <%= rkAccent %> px-3 py-2 text-sm" data-rock-id="<%= r.id %>" data-entity-kind="rock">
                 <div class="flex items-start gap-3">
                   <button class="rock-track-toggle text-[11px] font-semibold uppercase rounded px-2 py-0.5 <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>" data-on-track="<%= r.onTrack ? '1' : '0' %>">
                     <%= r.onTrack ? 'On track' : 'Off track' %>
                   </button>
                   <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-gray-900"><%= r.title %></div>
+                    <div class="font-semibold text-gray-900"><%= r.title %><% if (_msList.length > 0) { %> <span class="ms-chip ml-1 align-middle inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold border <%= _msDone === _msList.length ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200' %>" title="Milestones complete"><%= _msDone %>/<%= _msList.length %></span><% } %></div>
                     <div class="text-[11px] text-gray-500 mt-0.5">
                       <%= due ? 'Due ' + due.toLocaleDateString() : 'No due date' %>
                       <%= overdue ? ' -- OVERDUE' : '' %>
@@ -465,6 +471,54 @@
                         <button type="button" class="na-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
                       </form>
                     </div>
+                    <!-- Milestones: expandable per-rock list. Checkbox toggles
+                         complete (optimistic, via /api/v1/milestones/:id/complete);
+                         each milestone can carry assigned to-dos (+ to-do). -->
+                    <details class="ms-block mt-2" data-ms-rock="<%= r.id %>"<%= _msList.length > 0 && _msDone < _msList.length ? ' open' : '' %>>
+                      <summary class="cursor-pointer select-none text-[11px] font-semibold text-gray-500 hover:text-gray-700">
+                        Milestones<% if (_msList.length > 0) { %> <span class="ms-chip text-gray-400 font-normal"><%= _msDone %>/<%= _msList.length %></span><% } %>
+                      </summary>
+                      <% if (_msList.length > 0) { %>
+                      <ul class="ms-list mt-1.5 space-y-1">
+                        <% _msList.forEach(function(m){
+                             var _msDue = m.dueDate ? String(m.dueDate).slice(0, 10) : '';
+                             var _msOver = _msDue && !m.completedAt && _msDue < _msToday; %>
+                          <li class="text-xs" data-ms-id="<%= m.id %>">
+                            <div class="flex items-start gap-1.5">
+                              <input type="checkbox" class="ms-check mt-0.5 accent-emerald-600" <%= m.completedAt ? 'checked' : '' %> title="Mark milestone complete">
+                              <span class="ms-title flex-1 break-words <%= m.completedAt ? 'line-through text-gray-400' : 'text-gray-800' %>"><%= m.title %></span>
+                              <% if (_msDue) { %><span class="ms-due shrink-0 text-[10px] <%= _msOver ? 'text-rose-600 font-semibold' : 'text-gray-400' %>"><%= _msDue %></span><% } %>
+                              <button type="button" class="ms-todo-toggle text-[10px] text-orgy-blue font-semibold hover:underline shrink-0">+ to-do</button>
+                              <button type="button" class="ms-del text-[10px] text-gray-300 hover:text-rose-600 font-bold shrink-0" title="Delete milestone (its to-dos survive)">&times;</button>
+                            </div>
+                            <% (m.todos || []).forEach(function(mt){ %>
+                              <div class="ml-5 mt-0.5 text-[11px] text-gray-500 flex items-baseline gap-1">
+                                <span class="shrink-0"><%= mt.doneAt ? '☑' : '☐' %></span>
+                                <span class="break-words <%= mt.doneAt ? 'line-through text-gray-400' : '' %>"><%= mt.title %></span>
+                                <% if (mt.ownerName || mt.ownerExternalId) { %><span class="text-gray-400 shrink-0">&mdash; <%= mt.ownerName || mt.ownerExternalId %></span><% } %>
+                              </div>
+                            <% }); %>
+                            <form class="ms-todo-form hidden ml-5 mt-1 flex flex-wrap gap-1.5 items-center">
+                              <input type="text" name="title" required maxlength="500" placeholder="To-do for this milestone" class="flex-1 min-w-[140px] rounded border border-gray-300 px-2 py-1 text-xs">
+                              <select name="owner" class="rounded border border-gray-300 px-1.5 py-1 text-xs" title="Assign to">
+                                <option value="">Me</option>
+                                <% (locals.assignablePeople || []).forEach(function(p){ %>
+                                  <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>"><%= p.name %></option>
+                                <% }); %>
+                              </select>
+                              <button type="submit" class="text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Add</button>
+                              <button type="button" class="ms-todo-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
+                            </form>
+                          </li>
+                        <% }); %>
+                      </ul>
+                      <% } %>
+                      <form class="ms-add-form mt-1.5 flex flex-wrap gap-1.5 items-center">
+                        <input type="text" name="title" required maxlength="255" placeholder="+ milestone" class="flex-1 min-w-[120px] rounded border border-gray-300 px-2 py-1 text-xs">
+                        <input type="date" name="dueDate" class="rounded border border-gray-300 px-1.5 py-1 text-xs" title="Milestone due date (optional)">
+                        <button type="submit" class="text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Add</button>
+                      </form>
+                    </details>
                     <div data-att-host data-att-type="rock" data-att-id="<%= r.id %>"></div>
                   </div>
                 </div>
@@ -1522,6 +1576,104 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
       api('PUT', '/rocks/' + rid, { onTrack: next })
         .then(reload)
         .catch(function(err){ alert('Could not update rock: ' + fmtApiError(err)); });
+    });
+  });
+
+  // --- Rock milestones ---
+  // Checkbox: optimistic toggle (strike the title, repaint both chips
+  // locally), revert on API failure. No reload -- checking off milestones
+  // mid-review should feel instant.
+  function msRepaintChips(block) {
+    var total = block.querySelectorAll('.ms-check').length;
+    var done = block.querySelectorAll('.ms-check:checked').length;
+    // Both chips (card header + summary line) live inside the rock card.
+    var scope = block.closest('[data-rock-id]') || block;
+    scope.querySelectorAll('.ms-chip').forEach(function(chip){ chip.textContent = done + '/' + total; });
+  }
+  document.querySelectorAll('.ms-check').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var li = cb.closest('[data-ms-id]');
+      var block = cb.closest('.ms-block');
+      var checked = cb.checked;
+      var titleEl = li.querySelector('.ms-title');
+      // Optimistic paint.
+      if (titleEl) titleEl.className = 'ms-title flex-1 break-words ' + (checked ? 'line-through text-gray-400' : 'text-gray-800');
+      if (block) msRepaintChips(block);
+      api('POST', '/milestones/' + li.dataset.msId + '/complete', { completed: checked })
+        .catch(function(err){
+          cb.checked = !checked;
+          if (titleEl) titleEl.className = 'ms-title flex-1 break-words ' + (!checked ? 'line-through text-gray-400' : 'text-gray-800');
+          if (block) msRepaintChips(block);
+          alert('Milestone update failed: ' + fmtApiError(err));
+        });
+    });
+  });
+  // + milestone inline form (title + optional date; dueDate is a plain
+  // YYYY-MM-DD string -- the API stores a calendar date, no TZ math).
+  document.querySelectorAll('.ms-add-form').forEach(function(fm){
+    fm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var block = fm.closest('.ms-block');
+      var rid = block ? block.dataset.msRock : '';
+      var fd = new FormData(fm);
+      var msBody = { title: (fd.get('title') || '').toString().trim() };
+      if (!msBody.title) return;
+      var msDue = (fd.get('dueDate') || '').toString();
+      if (msDue) msBody.dueDate = msDue;
+      api('POST', '/rocks/' + rid + '/milestones', msBody)
+        .then(reload)
+        .catch(function(err){ alert('Add milestone failed: ' + fmtApiError(err)); });
+    });
+  });
+  // Per-milestone "+ to-do": owner select mirrors the My To-Dos quick-add
+  // (same assignablePeople source; picking a person stamps me as delegator).
+  document.querySelectorAll('.ms-todo-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var li = btn.closest('[data-ms-id]');
+      var form = li.querySelector('.ms-todo-form');
+      if (form) { form.classList.remove('hidden'); var inp = form.querySelector('input[name="title"]'); if (inp) inp.focus(); }
+    });
+  });
+  document.querySelectorAll('.ms-todo-cancel').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var form = btn.closest('.ms-todo-form');
+      if (form) form.classList.add('hidden');
+    });
+  });
+  document.querySelectorAll('.ms-todo-form').forEach(function(fm){
+    fm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var li = fm.closest('[data-ms-id]');
+      var fd = new FormData(fm);
+      var tBody = {
+        title: (fd.get('title') || '').toString().trim(),
+        milestoneId: li.dataset.msId,
+        ownerEntityType: 'human',
+        ownerExternalId: '<%= (locals.memberClaimedEntityIds && locals.memberClaimedEntityIds[0]) || (locals.member && locals.member.email) || "self" %>',
+      };
+      if (!tBody.title) return;
+      var ownerVal = (fd.get('owner') || '').toString();
+      if (ownerVal) {
+        var op = ownerVal.split(':');
+        tBody.ownerEntityType = op[0];
+        tBody.ownerExternalId = op[1];
+        tBody.ownerName = op.slice(2).join(':');
+        tBody.delegatorEntityType = <%- jsonForScript(locals.meEntityType || '') %>;
+        tBody.delegatorExternalId = <%- jsonForScript(locals.meExternalId || '') %>;
+        tBody.delegatorName = <%- jsonForScript(locals.meName || '') %>;
+      }
+      api('POST', '/todos', tBody)
+        .then(reload)
+        .catch(function(err){ alert('Add to-do failed: ' + fmtApiError(err)); });
+    });
+  });
+  document.querySelectorAll('.ms-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if (!confirm('Delete this milestone? Its to-dos survive, unlinked.')) return;
+      var li = btn.closest('[data-ms-id]');
+      api('DELETE', '/milestones/' + li.dataset.msId)
+        .then(reload)
+        .catch(function(err){ alert('Delete failed: ' + fmtApiError(err)); });
     });
   });
 

@@ -750,6 +750,7 @@ await app.register(import('./routes/api/api-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/recommendations.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/milestones.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/values.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
@@ -1024,6 +1025,14 @@ try {
   app.log.info('attachments + attachment_links tables are ready');
 } catch (err) {
   app.log.error({ err }, 'ensureAttachmentTables failed -- to-do/issue/rock file attachments will not persist until resolved');
+}
+
+try {
+  const { ensureRockMilestones } = await import('./db/ensure-rock-milestones.js');
+  await ensureRockMilestones();
+  app.log.info('rock_milestones table + todos.milestone_id are ready (quarterly priority milestones)');
+} catch (err) {
+  app.log.error({ err }, 'ensureRockMilestones failed -- rock milestones will not persist until resolved');
 }
 
 try {

@@ -543,6 +543,11 @@
        // is visible instead of the rock silently vanishing.
        var _rockChanges = (typeof rockChanges !== 'undefined' && rockChanges) ? rockChanges : {};
        var _rockBaseline = (typeof rockBaseline !== 'undefined' && rockBaseline) ? rockBaseline : {};
+       // Milestones keyed by rock id (server-fetched). Read-only here except
+       // the checkbox -- checking off a milestone during Rock Review is the
+       // natural EOS motion. Add/edit forms live on the daily dashboard.
+       var _rockMs = (typeof rockMilestones !== 'undefined' && rockMilestones) ? rockMilestones : {};
+       var _msToday = (function(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
        var _activeRocks = _humanRocks.filter(function(r){ return !(r.completedAt || r.archivedAt) || _rockChanges[r.id]; });
        var _hiddenRocks = _humanRocks.filter(function(r){ return (r.completedAt || r.archivedAt) && !_rockChanges[r.id]; });
        var _orderedRocks = _activeRocks.concat(_hiddenRocks); %>
@@ -599,6 +604,28 @@
               <% } %>
               <% if (r.statusNote) { %>
                 <div class="text-xs text-gray-500 mt-1 italic">"<%= r.statusNote %>"</div>
+              <% } %>
+              <% var _msL = _rockMs[r.id] || []; %>
+              <% if (_msL.length > 0) {
+                   var _msD = _msL.filter(function(m){ return m.completedAt; }).length; %>
+                <div class="mt-2" data-ms-rock="<%= r.id %>">
+                  <div class="text-[11px] font-semibold text-gray-500">Milestones <span class="ms-chip text-gray-400 font-normal"><%= _msD %>/<%= _msL.length %></span></div>
+                  <ul class="mt-1 space-y-0.5">
+                    <% _msL.forEach(function(m){
+                         var _msDue = m.dueDate ? String(m.dueDate).slice(0, 10) : '';
+                         var _msOver = _msDue && !m.completedAt && _msDue < _msToday; %>
+                      <li class="text-xs flex items-start gap-1.5" data-ms-id="<%= m.id %>">
+                        <input type="checkbox" class="ms-check mt-0.5 accent-emerald-600" <%= m.completedAt ? 'checked' : '' %> title="Mark milestone complete">
+                        <span class="ms-title flex-1 break-words <%= m.completedAt ? 'line-through text-gray-400' : 'text-gray-700' %>"><%= m.title %></span>
+                        <% if (_msDue) { %><span class="shrink-0 text-[10px] <%= _msOver ? 'text-rose-600 font-semibold' : 'text-gray-400' %>"><%= _msDue %></span><% } %>
+                        <% var _msT = m.todos || []; if (_msT.length > 0) {
+                             var _msTD = _msT.filter(function(t){ return t.doneAt; }).length; %>
+                          <span class="shrink-0 text-[10px] text-gray-400" title="<%= _msT.map(function(t){ return (t.doneAt ? '[done] ' : '[open] ') + t.title + (t.ownerName ? ' -- ' + t.ownerName : ''); }).join('\n') %>"><%= _msTD %>/<%= _msT.length %> to-dos</span>
+                        <% } %>
+                      </li>
+                    <% }); %>
+                  </ul>
+                </div>
               <% } %>
             </div>
             <div class="flex gap-1 ml-4 items-center">
@@ -1781,6 +1808,34 @@
           note.classList.remove('hidden');
           note.textContent = '↳ Changed this meeting: ' + (baseOn ? 'On Track' : 'Off Track') + ' → ' + (onTrack ? 'On Track' : 'Off Track');
         }
+      }
+    });
+  });
+
+  // Rock milestone check-off during Rock Review. Optimistic: strike the
+  // title and repaint the count chip in place; revert on API failure.
+  // (Add/edit/delete forms live on the daily dashboard, not here.)
+  document.querySelectorAll('[data-ms-rock] .ms-check').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const li = cb.closest('[data-ms-id]');
+      const block = cb.closest('[data-ms-rock]');
+      const checked = cb.checked;
+      const titleEl = li.querySelector('.ms-title');
+      const repaint = () => {
+        if (titleEl) titleEl.className = 'ms-title flex-1 break-words ' + (cb.checked ? 'line-through text-gray-400' : 'text-gray-700');
+        if (block) {
+          const total = block.querySelectorAll('.ms-check').length;
+          const done = block.querySelectorAll('.ms-check:checked').length;
+          const chip = block.querySelector('.ms-chip');
+          if (chip) chip.textContent = done + '/' + total;
+        }
+      };
+      repaint();
+      const res = await api('/milestones/' + li.dataset.msId + '/complete', { method: 'POST', body: JSON.stringify({ completed: checked }) });
+      if (res && res.error) {
+        cb.checked = !checked;
+        repaint();
+        alert('Milestone update failed: ' + errMsg(res));
       }
     });
   });

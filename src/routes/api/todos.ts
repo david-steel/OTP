@@ -3,7 +3,7 @@ import { eq, and, or, desc, asc, isNull, isNotNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextOccurrence, isValidRule } from './recurrence.js';
 import { db } from '../../config/database.js';
-import { todos, auditLogs, teams } from '../../db/schema.js';
+import { todos, auditLogs, teams, rockMilestones } from '../../db/schema.js';
 import { getAuth } from '@clerk/fastify';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
@@ -49,6 +49,10 @@ const createTodoSchema = z.object({
   // Subtasks: parent_todo_id links a child to its parent.
   parentTodoId: z.string().uuid().optional(),
   position: z.number().int().min(0).max(10_000).optional(),
+  // Rock milestone this to-do serves (org-verified below; cross-org 404s).
+  // Applies to the visible instance / plain todo -- recurrence templates
+  // never carry it (the template is invisible plumbing).
+  milestoneId: z.string().uuid().optional(),
 }).refine(
   d => (d.owners && d.owners.length > 0) || (!!d.ownerEntityType && !!d.ownerExternalId),
   { message: 'Provide owners[] or ownerEntityType + ownerExternalId' },
@@ -124,6 +128,17 @@ export default async function todoRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: { code: 'INVALID_RRULE', message: 'recurrenceRule is not a parseable iCalendar RRULE' } });
     }
 
+    // Milestone link: must exist IN THIS ORG. Cross-org uuids 404 (never
+    // leak whether another tenant's milestone exists).
+    if (d.milestoneId) {
+      const [ms] = await db.select({ id: rockMilestones.id }).from(rockMilestones)
+        .where(and(eq(rockMilestones.id, d.milestoneId), eq(rockMilestones.organizationId, org.id)))
+        .limit(1);
+      if (!ms) {
+        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Milestone not found' } });
+      }
+    }
+
     // Multi-assignee fan-out: `owners[]` creates one independent record per
     // person (each separately owned and checked off). Falls back to the single
     // ownerEntityType/ownerExternalId for back-compat. The refine guarantees at
@@ -180,6 +195,8 @@ export default async function todoRoutes(app: FastifyInstance) {
             dueAt: firstDue,
             recurrenceRule: null,
             recurrenceParentId: template.id,
+            // Milestone link rides on the visible instance, never the template.
+            milestoneId: d.milestoneId || null,
           }).returning();
           todo = instance;
         } else {
@@ -192,6 +209,7 @@ export default async function todoRoutes(app: FastifyInstance) {
           ...shared,
           dueAt: d.dueAt ? new Date(d.dueAt) : null,
           recurrenceRule: null,
+          milestoneId: d.milestoneId || null,
         }).returning();
         todo = plain;
       }

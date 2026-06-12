@@ -15,7 +15,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull, gt } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews } from '../../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, rockMilestones } from '../../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
 import type { Role } from '../../../services/membership.js';
 import { getOrgsForUser, resolveOrgForUser, acceptInvite, MembershipError, getFounderTileIds } from '../../../services/membership.js';
@@ -2819,6 +2819,42 @@ Founder, OTP</p>
         .orderBy(desc(rocks.dueDate));
     }
 
+    // ---- Milestones for those rocks (+ linked to-do summaries) ----
+    // Server-side so the rocks tile paints with milestones on first render;
+    // client JS only handles toggles/adds via /api/v1.
+    const rockMilestonesMap: Record<string, any[]> = {};
+    if (myRocks.length > 0) {
+      const _rockIds = myRocks.map((r: any) => r.id);
+      const _msRows = await db.select().from(rockMilestones)
+        .where(and(eq(rockMilestones.organizationId, org.id), inArray(rockMilestones.rockId, _rockIds)))
+        .orderBy(asc(rockMilestones.sortOrder), asc(rockMilestones.createdAt));
+      const _msIds = _msRows.map((m) => m.id);
+      const _msTodosBy: Record<string, any[]> = {};
+      if (_msIds.length > 0) {
+        const _msTodos = await db.select({
+          id: todos.id,
+          title: todos.title,
+          ownerName: todos.ownerName,
+          ownerExternalId: todos.ownerExternalId,
+          doneAt: todos.doneAt,
+          milestoneId: todos.milestoneId,
+        }).from(todos)
+          .where(and(
+            eq(todos.organizationId, org.id),
+            inArray(todos.milestoneId, _msIds),
+            isNull(todos.deletedAt),
+          ))
+          .orderBy(asc(todos.createdAt));
+        for (const t of _msTodos) {
+          if (!t.milestoneId) continue;
+          (_msTodosBy[t.milestoneId] ||= []).push(t);
+        }
+      }
+      for (const m of _msRows) {
+        (rockMilestonesMap[m.rockId] ||= []).push({ ...m, todos: _msTodosBy[m.id] || [] });
+      }
+    }
+
     // ---- My KPIs ----
     let myKpis: any[] = [];
     let kpiValuesMap: Record<string, { value: number | null; periodStart: Date; periodEnd: Date }> = {};
@@ -3309,6 +3345,7 @@ Founder, OTP</p>
       headlines: headlinesList,
       currentQuarter,
       myRocks,
+      rockMilestones: rockMilestonesMap,
       myKpis,
       kpiValues: kpiValuesMap,
       myTodos,

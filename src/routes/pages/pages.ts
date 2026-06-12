@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, onboardingSequence } from '../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, onboardingSequence, rockMilestones } from '../../db/schema.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser, getFounderTileIds } from '../../services/membership.js';
@@ -3758,6 +3758,47 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       executionItems = [];
     }
 
+    // ---- Milestones for the rocks on this meeting (+ linked to-do
+    // summaries), keyed by rock id. Server-side so the Rock Review paints
+    // with milestones on first render; the in-meeting checkbox toggles via
+    // /api/v1/milestones/:id/complete.
+    const rockMilestonesMap: Record<string, any[]> = {};
+    try {
+      const _msRockIds = ((rocksData.rocks as any[]) || []).map((r: any) => r.id);
+      if (_msRockIds.length > 0) {
+        const _msRows = await db.select().from(rockMilestones)
+          .where(and(eq(rockMilestones.organizationId, org.id), inArray(rockMilestones.rockId, _msRockIds)))
+          .orderBy(asc(rockMilestones.sortOrder), asc(rockMilestones.createdAt));
+        const _msIds = _msRows.map((m) => m.id);
+        const _msTodosBy: Record<string, any[]> = {};
+        if (_msIds.length > 0) {
+          const _msTodos = await db.select({
+            id: todos.id,
+            title: todos.title,
+            ownerName: todos.ownerName,
+            ownerExternalId: todos.ownerExternalId,
+            doneAt: todos.doneAt,
+            milestoneId: todos.milestoneId,
+          }).from(todos)
+            .where(and(
+              eq(todos.organizationId, org.id),
+              inArray(todos.milestoneId, _msIds),
+              isNull(todos.deletedAt),
+            ))
+            .orderBy(asc(todos.createdAt));
+          for (const t of _msTodos) {
+            if (!t.milestoneId) continue;
+            (_msTodosBy[t.milestoneId] ||= []).push(t);
+          }
+        }
+        for (const m of _msRows) {
+          (rockMilestonesMap[m.rockId] ||= []).push({ ...m, todos: _msTodosBy[m.id] || [] });
+        }
+      }
+    } catch (err) {
+      request.log.warn({ err }, 'rock milestones load failed -- rendering Rock Review without them');
+    }
+
     const _meetingView = meeting.meetingType === 'strategy_reset'
       ? 'pages/strategy-reset-meeting'
       : 'pages/l8-leadership';
@@ -3771,6 +3812,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       meeting,
       scorecard,
       rocks: rocksData,
+      rockMilestones: rockMilestonesMap,
       rockChanges,
       rockBaseline,
       rocksFilter: _showHiddenRocks ? 'all' : 'active',

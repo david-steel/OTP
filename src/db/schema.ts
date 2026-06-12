@@ -7,6 +7,7 @@ import {
   real,
   boolean,
   timestamp,
+  date,
   jsonb,
   pgEnum,
   uniqueIndex,
@@ -998,6 +999,11 @@ export const todos = pgTable('todos', {
   // Subtask tree.
   parentTodoId: uuid('parent_todo_id'),
   position: integer('position').notNull().default(0),
+  // Rock milestone this to-do serves. FK (ON DELETE SET NULL) added by
+  // ensure-rock-milestones.ts at boot; declared as plain uuid here because
+  // rock_milestones is defined later in this file (same pattern as
+  // meetings.team_id). Deleting a milestone keeps the to-do, unlinked.
+  milestoneId: uuid('milestone_id'),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -1012,6 +1018,27 @@ export const todos = pgTable('todos', {
   parentIdx: index('todos_parent_idx').on(table.parentTodoId, table.position),
   recurrenceParentIdx: index('todos_recurrence_parent_idx').on(table.recurrenceParentId),
   delegatorIdx: index('todos_delegator_idx').on(table.organizationId, table.delegatorExternalId),
+  milestoneIdx: index('todos_milestone_idx').on(table.milestoneId),
+}));
+
+// ---- Rock milestones (Quarterly Priority milestones) ----
+// Created by ensure-rock-milestones.ts at boot (Drizzle migrate is broken;
+// schema self-heals). Declared here for typed queries. Milestones hard-delete
+// (no soft-delete column): the DELETE endpoint is org-scoped and the
+// todos.milestone_id FK (ON DELETE SET NULL) keeps linked to-dos alive.
+export const rockMilestones = pgTable('rock_milestones', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  rockId: uuid('rock_id').references(() => rocks.id, { onDelete: 'cascade' }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  // Plain calendar date (YYYY-MM-DD string) -- no timezone math.
+  dueDate: date('due_date'),
+  completedAt: timestamp('completed_at'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('rock_milestones_org_idx').on(table.organizationId),
+  rockIdx: index('rock_milestones_rock_idx').on(table.rockId),
 }));
 
 // IDS extension columns on tickets are added via raw SQL in the migration:
