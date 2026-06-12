@@ -1918,6 +1918,17 @@
         saveBtn.disabled = false; saveBtn.textContent = 'Save';
         return;
       }
+      // An in-progress meeting renders the FROZEN /start scorecard snapshot,
+      // so without a re-snapshot the value we just wrote never appears after
+      // reload -- the save looks silently ignored (David, 2026-06-10 live
+      // L10: "I had 0 sales and 0 close rate and it would not update"; any
+      // value was swallowed, not just 0). Re-snapshot the same way the
+      // ↻ Refresh button does, then reload. If the refresh fails the value
+      // is still persisted, so fall through to the reload either way.
+      const statusEl = document.getElementById('meeting-status');
+      if (statusEl && statusEl.textContent.trim() === 'in_progress') {
+        await api('/meetings/' + meetingId + '/refresh-scorecard', { method: 'POST' });
+      }
       reloadKeep();
     });
   });

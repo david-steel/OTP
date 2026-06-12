@@ -39,6 +39,7 @@ import {
   KpiPublishError,
 } from '../../services/kpi-publish.js';
 import { isSuperAdmin } from '../../middleware/super-admin.js';
+import { valueWriteSchema } from './kpi-value-schema.js';
 
 async function checkScope(request: FastifyRequest, reply: any, requiredScope: string): Promise<boolean> {
   const auth = getAuth(request);
@@ -244,11 +245,8 @@ export default async function kpiRoutes(app: FastifyInstance) {
   });
 
   // ---- Value entry ------------------------------------------------------
-  const valueWriteSchema = z.object({
-    periodStart: z.string().min(8).max(40),
-    value: z.number().finite().nullable(),
-    notes: z.string().max(1000).nullable().optional(),
-  });
+  // Schema lives in kpi-value-schema.ts (DB-free) so the falsy-zero
+  // regression test can import it without a DATABASE_URL.
 
   app.post<{ Params: { id: string } }>('/kpis/:id/values', async (request, reply) => {
     if (!(await checkScope(request, reply, 'write'))) return;
