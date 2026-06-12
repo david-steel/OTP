@@ -136,6 +136,7 @@ export async function discoverRecommendations(
     JOIN organizations o ON f.org_id = o.id
     WHERE f.status = 'published'
       AND f.org_id != ${orgId}
+      AND o.is_private IS NOT TRUE
     ORDER BY c.evidence DESC, c.confidence ASC
   `);
 

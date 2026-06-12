@@ -1036,6 +1036,14 @@ try {
 }
 
 try {
+  const { ensureOrgPrivacy } = await import('./db/ensure-org-privacy.js');
+  await ensureOrgPrivacy();
+  app.log.info('organizations.is_private is ready (private-plan cross-org enforcement)');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgPrivacy failed -- private-plan enforcement will not work until resolved');
+}
+
+try {
   const { ensureTicketsTeam } = await import('./db/ensure-tickets-team.js');
   await ensureTicketsTeam();
   app.log.info('tickets.team_id is ready (team-scoped L10 issues)');

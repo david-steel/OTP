@@ -28,6 +28,7 @@ export default async function graphRoutes(app: FastifyInstance) {
       FROM oos_files f
       INNER JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
       ORDER BY f.org_id, f.version DESC, f.published_at DESC
     `);
     const publishedFiles = (latestRows.rows || []).map((r: any) => ({

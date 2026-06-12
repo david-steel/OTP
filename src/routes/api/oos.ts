@@ -17,6 +17,7 @@ import { autoFixOOS } from '../../services/auto-fixer.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { getStaleDraftIds } from '../../services/oos-staleness.js';
+import { isCrossOrgVisible } from '../../shared/org-visibility.js';
 import type { TemplateType } from '../../shared/enums.js';
 import { TEMPLATE_TYPES } from '../../shared/enums.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
@@ -1492,6 +1493,13 @@ ${claimSections.join('\n')}`.trim();
 
       const [orgA] = await db.select().from(organizations).where(eq(organizations.id, oosA.orgId)).limit(1);
       const [orgB] = await db.select().from(organizations).where(eq(organizations.id, oosB.orgId)).limit(1);
+
+      // Private-plan enforcement: an OOS belonging to a private org is not
+      // comparable cross-org. Return the SAME 404 as a missing OOS -- never a
+      // "this org is private" signal (that itself leaks existence).
+      if (!isCrossOrgVisible(orgA) || !isCrossOrgVisible(orgB)) {
+        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'One or both OOS files not found' } });
+      }
 
       const claimsA = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
       const claimsB = await db.select().from(claims).where(eq(claims.oosFileId, otherId)).orderBy(claims.displayOrder);

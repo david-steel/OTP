@@ -4,6 +4,7 @@ import { db } from '../../../config/database.js';
 import { organizations } from '../../../db/schema.js';
 import { and, eq } from 'drizzle-orm';
 import { errorEnvelope, listEnvelope, clampLimit, normalizeSlug } from './_shared.js';
+import { excludePrivateOrgs } from '../../../shared/org-visibility.js';
 
 type ChartData = {
   leader?: { type?: string } | null;
@@ -24,7 +25,7 @@ export default async function orgsPublicRoutes(fastify: FastifyInstance) {
         public: organizations.public,
       })
       .from(organizations)
-      .where(eq(organizations.public, true))
+      .where(and(eq(organizations.public, true), excludePrivateOrgs()))
       .orderBy(organizations.name)
       .limit(limit);
 
@@ -52,7 +53,7 @@ export default async function orgsPublicRoutes(fastify: FastifyInstance) {
     const [row] = await db
       .select()
       .from(organizations)
-      .where(and(eq(organizations.slug, slug), eq(organizations.public, true)))
+      .where(and(eq(organizations.slug, slug), eq(organizations.public, true), excludePrivateOrgs()))
       .limit(1);
 
     if (!row) return errorEnvelope(reply, 404, 'not_found', `No publisher with slug '${slug}'`);
@@ -80,7 +81,7 @@ export default async function orgsPublicRoutes(fastify: FastifyInstance) {
     const [row] = await db
       .select({ slug: organizations.slug, chart: organizations.chart })
       .from(organizations)
-      .where(and(eq(organizations.slug, slug), eq(organizations.public, true)))
+      .where(and(eq(organizations.slug, slug), eq(organizations.public, true), excludePrivateOrgs()))
       .limit(1);
 
     if (!row) return errorEnvelope(reply, 404, 'not_found', `No publisher with slug '${slug}'`);

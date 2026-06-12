@@ -6,6 +6,7 @@ import { eq, and, or, ilike, desc, ne, sql } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
 import { claims, oosFiles, organizations } from '../../../db/schema.js';
 import { errorEnvelope, listEnvelope, clampLimit, normalizeSlug } from './_shared.js';
+import { excludePrivateOrgs } from '../../../shared/org-visibility.js';
 
 // ---- shared JOIN helper ----
 // Returns a base select with org slug attached, filtered to public claims+orgs.
@@ -31,6 +32,9 @@ function baseSelect(extraConditions: Parameters<typeof and>[0][]) {
       and(
         eq(claims.public, true),
         eq(organizations.public, true),
+        // Private-plan enforcement (defense in depth): a private org should
+        // never be public, but enforce the hard exclusion regardless.
+        excludePrivateOrgs(),
         ...extraConditions,
       ),
     );

@@ -47,6 +47,7 @@ export async function findAgentConflicts(
     JOIN organizations o ON f.org_id = o.id
     WHERE ge.type = 'conflicts_with'
       AND f.status = 'published'
+      AND o.is_private IS NOT TRUE
       ${orgFilter}
     ORDER BY ge.weight DESC
   `);
@@ -155,15 +156,23 @@ export async function compareOrganizations(
   orgBId: string
 ): Promise<OrgComparison> {
   // Get node counts and types for both orgs
+  // Private-plan enforcement: a private org's graph nodes never appear in a
+  // cross-org comparison. The EXISTS guard yields zero rows for a private org,
+  // so the comparison degrades to the same empty/structureless shape it returns
+  // for an org with no graph -- never a "this org is private" signal.
   const [nodesA, nodesB, edgesA, edgesB, crossEdges] = await Promise.all([
     db.execute(sql`
       SELECT type, label, properties, id
-      FROM graph_nodes WHERE org_id = ${orgAId}
+      FROM graph_nodes gn
+      WHERE gn.org_id = ${orgAId}
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = gn.org_id AND o.is_private IS NOT TRUE)
       ORDER BY type, label
     `),
     db.execute(sql`
       SELECT type, label, properties, id
-      FROM graph_nodes WHERE org_id = ${orgBId}
+      FROM graph_nodes gn
+      WHERE gn.org_id = ${orgBId}
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = gn.org_id AND o.is_private IS NOT TRUE)
       ORDER BY type, label
     `),
     db.execute(sql`
@@ -171,6 +180,7 @@ export async function compareOrganizations(
       FROM graph_edges ge
       JOIN graph_nodes gn ON ge.source_id = gn.id
       WHERE gn.org_id = ${orgAId}
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = gn.org_id AND o.is_private IS NOT TRUE)
       GROUP BY ge.type
     `),
     db.execute(sql`
@@ -178,9 +188,10 @@ export async function compareOrganizations(
       FROM graph_edges ge
       JOIN graph_nodes gn ON ge.source_id = gn.id
       WHERE gn.org_id = ${orgBId}
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = gn.org_id AND o.is_private IS NOT TRUE)
       GROUP BY ge.type
     `),
-    // Cross-org similarity edges
+    // Cross-org similarity edges -- excluded if EITHER endpoint org is private.
     db.execute(sql`
       SELECT
         coe.similarity_score,
@@ -190,8 +201,9 @@ export async function compareOrganizations(
       FROM cross_org_edges coe
       JOIN graph_nodes sn ON coe.source_node_id = sn.id
       JOIN graph_nodes tn ON coe.target_node_id = tn.id
-      WHERE (coe.source_org_id = ${orgAId} AND coe.target_org_id = ${orgBId})
-         OR (coe.source_org_id = ${orgBId} AND coe.target_org_id = ${orgAId})
+      WHERE ((coe.source_org_id = ${orgAId} AND coe.target_org_id = ${orgBId})
+         OR (coe.source_org_id = ${orgBId} AND coe.target_org_id = ${orgAId}))
+        AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id IN (coe.source_org_id, coe.target_org_id) AND o.is_private IS TRUE)
       ORDER BY coe.similarity_score DESC
       LIMIT 20
     `),
@@ -315,10 +327,15 @@ export async function getOrgSubgraph(
   db: DB,
   orgId: string
 ): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
+  // Private-plan enforcement: /graph/org/:id is unauthenticated, so a private
+  // org's subgraph must not be reachable by UUID. The EXISTS guard returns an
+  // empty subgraph (same shape as a non-existent org) for a private org.
   const [nodeRows, edgeRows] = await Promise.all([
     db.execute(sql`
       SELECT id, external_id, type, label, properties, oos_file_id, org_id
-      FROM graph_nodes WHERE org_id = ${orgId}
+      FROM graph_nodes gn
+      WHERE gn.org_id = ${orgId}
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = gn.org_id AND o.is_private IS NOT TRUE)
       ORDER BY type, label
     `),
     db.execute(sql`
@@ -326,6 +343,7 @@ export async function getOrgSubgraph(
       FROM graph_edges ge
       JOIN graph_nodes gn ON ge.source_id = gn.id
       WHERE gn.org_id = ${orgId}
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = gn.org_id AND o.is_private IS NOT TRUE)
       ORDER BY ge.type
     `),
   ]);
@@ -358,6 +376,7 @@ export async function getAuthorityMap(
     JOIN graph_nodes tn ON ge.target_id = tn.id
     WHERE sn.org_id = ${orgId}
       AND ge.type IN ('delegates_to', 'overrides', 'escalates_to', 'approves')
+      AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = sn.org_id AND o.is_private IS NOT TRUE)
     ORDER BY ge.type, ge.weight DESC
   `);
 

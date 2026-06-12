@@ -2389,17 +2389,17 @@ Founder, OTP</p>
   app.get('/settings/configuration', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) {
-      return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'unauthenticated', org: { name: '', website: '', description: '', public: false }, canEdit: false });
+      return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'unauthenticated', org: { name: '', website: '', description: '', public: false, isPrivate: false }, canEdit: false });
     }
     const org = await resolveRequestOrg(request);
     if (!org) {
-      return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'no_org', org: { name: '', website: '', description: '', public: false }, canEdit: false });
+      return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'no_org', org: { name: '', website: '', description: '', public: false, isPrivate: false }, canEdit: false });
     }
     const member = (request as any).orgMember;
     const canEdit = CONFIG_EDIT_ROLES.includes(member?.role);
     return reply.view('pages/settings-configuration', {
       title: 'Configuration - OTP', noindex: true, authState: 'authenticated',
-      org: { name: org.name, website: org.website || '', description: org.description || '', public: !!org.public },
+      org: { name: org.name, website: org.website || '', description: org.description || '', public: !!org.public, isPrivate: !!org.isPrivate },
       canEdit,
     });
   });
@@ -2534,7 +2534,7 @@ Founder, OTP</p>
   });
 
   // PUT /settings/configuration -- update org-level settings. Role-gated.
-  app.put<{ Body: { name?: unknown; website?: unknown; description?: unknown; public?: unknown } }>('/settings/configuration', async (request, reply) => {
+  app.put<{ Body: { name?: unknown; website?: unknown; description?: unknown; public?: unknown; isPrivate?: unknown } }>('/settings/configuration', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) {
       return reply.status(401).send({ error: 'unauthenticated' });
@@ -2549,7 +2549,7 @@ Founder, OTP</p>
       return reply.status(403).send({ error: 'forbidden' });
     }
 
-    const body = (request.body || {}) as { name?: unknown; website?: unknown; description?: unknown; public?: unknown };
+    const body = (request.body || {}) as { name?: unknown; website?: unknown; description?: unknown; public?: unknown; isPrivate?: unknown };
 
     if (typeof body.name !== 'string' || body.name.trim().length === 0 || body.name.length > 255) {
       return reply.status(400).send({ error: 'invalid name' });
@@ -2563,13 +2563,19 @@ Founder, OTP</p>
     if (typeof body.public !== 'boolean') {
       return reply.status(400).send({ error: 'invalid public' });
     }
+    // Private mode (optional in body for backward compat -- defaults to current
+    // value when omitted so older clients that don't send it don't flip it off).
+    if (body.isPrivate !== undefined && typeof body.isPrivate !== 'boolean') {
+      return reply.status(400).send({ error: 'invalid isPrivate' });
+    }
 
     const website = (typeof body.website === 'string' && body.website.length > 0) ? body.website : null;
     const description = (typeof body.description === 'string' && body.description.length > 0) ? body.description : null;
+    const isPrivate = (body.isPrivate === undefined) ? !!org.isPrivate : !!body.isPrivate;
 
     await db
       .update(organizations)
-      .set({ name: body.name, website, description, public: !!body.public, updatedAt: new Date() })
+      .set({ name: body.name, website, description, public: !!body.public, isPrivate, updatedAt: new Date() })
       .where(eq(organizations.id, org.id));
 
     return reply.send({ ok: true });

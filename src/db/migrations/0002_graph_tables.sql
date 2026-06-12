@@ -103,6 +103,11 @@ JOIN graph_nodes tn ON ge.target_id = tn.id
 JOIN oos_files f ON ge.oos_file_id = f.id
 JOIN organizations o ON f.org_id = o.id
 WHERE f.status = 'published'
+  -- Private-plan enforcement: private orgs never contribute to cross-org
+  -- coordination patterns. The view is refreshed on every publish (oos.ts),
+  -- and the boot DDL (ensure-org-privacy.ts) rebuilds it with this filter on
+  -- existing databases where this column post-dates the view.
+  AND o.is_private IS NOT TRUE
 GROUP BY ge.type, sn.type, tn.type, sn.properties->>'authority_level'
 HAVING COUNT(DISTINCT ge.oos_file_id) >= 2;
 

@@ -61,6 +61,15 @@ export const organizations = pgTable('organizations', {
   agenticLevel: integer('agentic_level'),
   slug: text('slug').unique(),
   public: boolean('public').default(false).notNull(),
+  // Private-plan enforcement (2026-06-11): hard, additive cross-org exclusion.
+  // When true, this org's data NEVER appears in any cross-org read surface
+  // (browse, search, /org/:id, graph, intelligence, recommendations, public
+  // best-practices, MCP). Distinct from `public`: `public` is opt-IN to public
+  // listing; `is_private` is opt-OUT of the entire network. Authed members of
+  // the org still see their own data. Enforcement chokepoint + the full call-
+  // site registry live in src/shared/org-visibility.ts -- AND excludePrivateOrgs()
+  // into every cross-org query. Default false => no change for existing orgs.
+  isPrivate: boolean('is_private').default(false).notNull(),
   description: text('description'),
   website: text('website'),
   chart: jsonb('chart'),
@@ -68,6 +77,8 @@ export const organizations = pgTable('organizations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   clerkIdx: uniqueIndex('org_clerk_idx').on(table.clerkOrgId),
+  // Hot path: every cross-org query ANDs `is_private = false`. Index it.
+  isPrivateIdx: index('org_is_private_idx').on(table.isPrivate),
 }));
 
 // Phase C: multi-chart support. One org can hold N charts; each chart is

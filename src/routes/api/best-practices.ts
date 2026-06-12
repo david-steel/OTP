@@ -10,6 +10,7 @@ import {
   organizations,
 } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { excludePrivateOrgs } from '../../shared/org-visibility.js';
 import { jaccardSimilarity } from '../../services/similarity.js';
 import { isCoordinationIntelligence } from '../../services/coordination-filter.js';
 import { generateClaudeMd, SUPPORTED_INDUSTRIES } from '../../services/claudemd-generator.js';
@@ -543,7 +544,10 @@ export default async function bestPracticesRoutes(app: FastifyInstance) {
         .where(
           and(
             eq(oosBestPracticeMatches.bestPracticeId, practice.id),
-            eq(oosFiles.status, 'published')
+            eq(oosFiles.status, 'published'),
+            // Private-plan enforcement: private orgs are not listed as
+            // implementers of a best practice (cross-org exposure of identity).
+            excludePrivateOrgs()
           )
         )
         .orderBy(desc(oosBestPracticeMatches.relevanceScore));

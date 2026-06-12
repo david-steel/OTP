@@ -4,6 +4,7 @@ import { eq, and, ilike, desc, sql } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
 import { kpis, kpiValues, organizations } from '../../../db/schema.js';
 import { listEnvelope, clampLimit } from './_shared.js';
+import { excludePrivateOrgs } from '../../../shared/org-visibility.js';
 
 export default async function publicKpisRoutes(app: FastifyInstance) {
   app.get<{
@@ -15,6 +16,8 @@ export default async function publicKpisRoutes(app: FastifyInstance) {
     const conditions = [
       eq(kpis.public, true),
       eq(organizations.public, true),
+      // Private-plan enforcement (defense in depth).
+      excludePrivateOrgs(),
     ];
 
     if (category && typeof category === 'string' && category.trim().length > 0) {

@@ -47,6 +47,7 @@ export default async function browseRoutes(app: FastifyInstance) {
       JOIN oos_files f ON c.oos_file_id = f.id
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
         ${section ? sql`AND c.section = ${section}` : sql``}
@@ -75,10 +76,11 @@ export default async function browseRoutes(app: FastifyInstance) {
         COUNT(*) AS count
       FROM claims c
       JOIN oos_files f ON c.oos_file_id = f.id
+      JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
       GROUP BY c.section
-      ORDER BY count DESC
 
       UNION ALL
 
@@ -90,19 +92,21 @@ export default async function browseRoutes(app: FastifyInstance) {
       JOIN oos_files f ON c.oos_file_id = f.id
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
       GROUP BY o.industry
-      ORDER BY count DESC
 
       UNION ALL
 
       SELECT
         'confidence',
-        c.confidence,
+        c.confidence::text,
         COUNT(*)
       FROM claims c
       JOIN oos_files f ON c.oos_file_id = f.id
+      JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
       GROUP BY c.confidence
 
@@ -110,11 +114,13 @@ export default async function browseRoutes(app: FastifyInstance) {
 
       SELECT
         'evidence',
-        c.evidence,
+        c.evidence::text,
         COUNT(*)
       FROM claims c
       JOIN oos_files f ON c.oos_file_id = f.id
+      JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
       GROUP BY c.evidence
     `);
@@ -133,6 +139,7 @@ export default async function browseRoutes(app: FastifyInstance) {
       JOIN oos_files f ON c.oos_file_id = f.id
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${q ? sql`AND c.search_vector @@ plainto_tsquery('english', ${q})` : sql``}
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
         ${section ? sql`AND c.section = ${section}` : sql``}
@@ -194,7 +201,9 @@ export default async function browseRoutes(app: FastifyInstance) {
       SELECT c.section, COUNT(*) AS claim_count, COUNT(DISTINCT f.org_id) AS org_count
       FROM claims c
       JOIN oos_files f ON c.oos_file_id = f.id
+      JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
       GROUP BY c.section
       ORDER BY claim_count DESC
     `);
@@ -224,7 +233,7 @@ export default async function browseRoutes(app: FastifyInstance) {
         MAX(f.published_at) AS last_published
       FROM organizations o
       JOIN oos_files f ON f.org_id = o.id AND f.status = 'published'
-      WHERE TRUE
+      WHERE o.is_private IS NOT TRUE
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
         ${template ? sql`AND f.template = ${template}` : sql``}
         ${minQuality ? sql`AND (
@@ -248,7 +257,7 @@ export default async function browseRoutes(app: FastifyInstance) {
       SELECT COUNT(DISTINCT o.id) AS total
       FROM organizations o
       JOIN oos_files f ON f.org_id = o.id AND f.status = 'published'
-      WHERE TRUE
+      WHERE o.is_private IS NOT TRUE
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
         ${template ? sql`AND f.template = ${template}` : sql``}
         ${minQuality ? sql`AND (

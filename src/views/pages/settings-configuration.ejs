@@ -15,6 +15,7 @@
   var _website = (_org.website !== undefined && _org.website !== null) ? String(_org.website) : '';
   var _desc   = (_org.description !== undefined && _org.description !== null) ? String(_org.description) : '';
   var _public = !!_org.public;
+  var _isPrivate = !!_org.isPrivate;
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -108,6 +109,29 @@
 
           </div>
 
+          <!-- Card: Privacy (Private mode) -->
+          <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
+            <div>
+              <h3 class="font-bold text-gray-900">Privacy</h3>
+              <p class="text-sm text-gray-500 mt-1">Control whether your organization's data ever reaches the network.</p>
+            </div>
+
+            <!-- Private mode toggle -->
+            <div>
+              <label class="flex items-start gap-3 <%= _canEdit ? 'cursor-pointer' : 'cursor-not-allowed' %>">
+                <input type="checkbox" name="isPrivate" id="cfg-private" value="1"
+                       class="mt-0.5 text-otp-500 focus:ring-otp-500 rounded"
+                       <%= _isPrivate ? 'checked' : '' %>
+                       <%= _canEdit ? '' : 'disabled' %>>
+                <span>
+                  <span class="block text-sm text-gray-800 font-medium">Private mode</span>
+                  <span class="block text-sm text-gray-500">When on, your organization's data is never published to the network, browse, search, the intelligence graph, or used in cross-org recommendations. Share by invitation only. Your own team still sees everything.</span>
+                  <span class="block text-sm text-gray-400 mt-1">Private mode is a Premium feature. <a href="/pricing" class="text-otp-600 underline">See plans</a>.</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
           <% if (_canEdit) { %>
             <div class="flex items-center gap-4">
               <button type="submit"
@@ -138,7 +162,8 @@
         name: (fd.get('name') || '').trim(),
         website: (fd.get('website') || '').trim(),
         description: (fd.get('description') || '').trim(),
-        public: fd.get('public') === '1'
+        public: fd.get('public') === '1',
+        isPrivate: fd.get('isPrivate') === '1'
       };
 
       try {

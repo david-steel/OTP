@@ -169,7 +169,14 @@ export default async function consultantRoutes(app: FastifyInstance) {
       const { tag, q } = request.query;
 
       // Build conditions
-      const conditions = [eq(consultantProfiles.published, true)];
+      const conditions = [
+        eq(consultantProfiles.published, true),
+        // Private-plan enforcement: a consultant profile is a separate explicit
+        // publish, but it is org-linked and shown in a PUBLIC directory, so a
+        // private org's profile must not surface cross-org. Exclude via the
+        // profile's org. (Decision: apply the exclusion -- see report.)
+        sql`EXISTS (SELECT 1 FROM ${organizations} o WHERE o.id = ${consultantProfiles.orgId} AND o.is_private IS NOT TRUE)`,
+      ];
 
       // Filter by expertise tag (check if tag is contained in the jsonb array)
       if (tag) {
@@ -227,7 +234,13 @@ export default async function consultantRoutes(app: FastifyInstance) {
 
     const [profile] = await db.select()
       .from(consultantProfiles)
-      .where(and(eq(consultantProfiles.slug, slug), eq(consultantProfiles.published, true)))
+      .where(and(
+        eq(consultantProfiles.slug, slug),
+        eq(consultantProfiles.published, true),
+        // Private-plan enforcement: a private org's consultant profile 404s
+        // cross-org, same not-found shape as a missing/unpublished profile.
+        sql`EXISTS (SELECT 1 FROM ${organizations} o WHERE o.id = ${consultantProfiles.orgId} AND o.is_private IS NOT TRUE)`,
+      ))
       .limit(1);
 
     if (!profile) {

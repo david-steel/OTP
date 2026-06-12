@@ -4,6 +4,7 @@ import { db } from '../../config/database.js';
 import { claims, oosFiles, organizations, auditLogs } from '../../db/schema.js';
 import { searchQuerySchema, browseQuerySchema } from '../../shared/validation.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
+import { excludePrivateOrgs } from '../../shared/org-visibility.js';
 
 export default async function searchRoutes(app: FastifyInstance) {
 
@@ -42,6 +43,7 @@ export default async function searchRoutes(app: FastifyInstance) {
       JOIN oos_files f ON c.oos_file_id = f.id
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         AND c.search_vector @@ plainto_tsquery('english', ${q})
         ${template ? sql`AND f.template = ${template}` : sql``}
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
@@ -59,6 +61,7 @@ export default async function searchRoutes(app: FastifyInstance) {
       JOIN oos_files f ON c.oos_file_id = f.id
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         AND c.search_vector @@ plainto_tsquery('english', ${q})
         ${template ? sql`AND f.template = ${template}` : sql``}
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
@@ -106,6 +109,7 @@ export default async function searchRoutes(app: FastifyInstance) {
       FROM oos_files f
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${template ? sql`AND f.template = ${template}` : sql``}
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
         ${size ? sql`AND o.size = ${size}` : sql``}
@@ -118,6 +122,7 @@ export default async function searchRoutes(app: FastifyInstance) {
       FROM oos_files f
       JOIN organizations o ON f.org_id = o.id
       WHERE f.status = 'published'
+        AND o.is_private IS NOT TRUE
         ${template ? sql`AND f.template = ${template}` : sql``}
         ${industry ? sql`AND o.industry ILIKE ${'%' + industry + '%'}` : sql``}
         ${size ? sql`AND o.size = ${size}` : sql``}
@@ -135,7 +140,12 @@ export default async function searchRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/org/:id', async (request, reply) => {
     const { id } = request.params;
 
-    const [org] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
+    // Private-plan enforcement: a private org requested directly by id returns
+    // the SAME 404 as a missing org -- never a "this org is private" message
+    // (that would itself leak existence). excludePrivateOrgs() is the chokepoint.
+    const [org] = await db.select().from(organizations)
+      .where(and(eq(organizations.id, id), excludePrivateOrgs()))
+      .limit(1);
     if (!org) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Organization not found' } });
 
     const publishedFiles = await db.select({

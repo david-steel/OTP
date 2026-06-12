@@ -16,6 +16,7 @@ import { renderDescription } from '../../shared/markdown-lite.js';
 import { AGENTIC_LEVEL_LABELS } from '../../shared/enums.js';
 import { validateUuidParam } from '../../shared/param-validation.js';
 import { currentPeriod } from '../../shared/period.js';
+import { isCrossOrgVisible } from '../../shared/org-visibility.js';
 import { annotateOosStaleness } from '../../services/oos-staleness.js';
 import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
@@ -157,6 +158,7 @@ export default async function pageRoutes(app: FastifyInstance) {
                o.id AS org_id, o.name AS org_name, o.industry, o.size, o.badge, o.quality_tier, o.agentic_level
         FROM oos_files f JOIN organizations o ON f.org_id = o.id
         WHERE f.status = 'published'
+          AND o.is_private IS NOT TRUE
         ORDER BY o.id, f.published_at DESC NULLS LAST
       ) latest
       ORDER BY published_at DESC NULLS LAST
@@ -179,7 +181,7 @@ export default async function pageRoutes(app: FastifyInstance) {
                  o.name AS org_name, o.industry, o.badge,
                  ts_rank(c.search_vector, plainto_tsquery('english', ${q})) AS rank
           FROM claims c JOIN oos_files f ON c.oos_file_id = f.id JOIN organizations o ON f.org_id = o.id
-          WHERE f.status = 'published' AND c.search_vector @@ plainto_tsquery('english', ${q})
+          WHERE f.status = 'published' AND o.is_private IS NOT TRUE AND c.search_vector @@ plainto_tsquery('english', ${q})
           ${confidence ? sql`AND c.confidence = ${confidence}` : sql``}
           ${evidence ? sql`AND c.evidence = ${evidence}` : sql``}
           ${template ? sql`AND f.template = ${template}` : sql``}
@@ -202,6 +204,15 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!oosFile) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const [org] = await db.select().from(organizations).where(eq(organizations.id, oosFile.orgId)).limit(1);
+    // Private-plan enforcement: this is the PUBLIC marketing/SEO render of an
+    // OOS (no auth). A private org's OOS must 404 cross-org, same shape as a
+    // missing OOS -- never a "this org is private" message. The org's OWN
+    // members view their OOS through the authed dashboard (/dashboard,
+    // /api/v1/oos/:id/dashboard), which does not route through this page.
+    if (!isCrossOrgVisible(org)) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+
     const claimRows = await db.select().from(claims).where(eq(claims.oosFileId, id)).orderBy(claims.displayOrder);
 
     const orgData = org ? { ...org, agenticLabel: org.agenticLevel ? AGENTIC_LEVEL_LABELS[org.agenticLevel] || '' : '' } : {};
@@ -276,7 +287,9 @@ export default async function pageRoutes(app: FastifyInstance) {
     const id = validateUuidParam(request.params.id);
     if (!id) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
     const [org] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
-    if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    // Private-plan enforcement: public org-profile page must 404 a private org,
+    // same not-found shape as a missing org (no "this org is private" leak).
+    if (!org || !isCrossOrgVisible(org)) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const pubFiles = await db.select().from(oosFiles).where(and(eq(oosFiles.orgId, id), eq(oosFiles.status, 'published'))).orderBy(desc(oosFiles.publishedAt));
     const totalClaims = pubFiles.reduce((s, f) => s + f.claimCount, 0);
@@ -2131,6 +2144,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       WHERE cp.claimed = true
         AND cp.published = true
         AND cp.directory_source IS NOT NULL
+        AND EXISTS (SELECT 1 FROM organizations o WHERE o.id = cp.org_id AND o.is_private IS NOT TRUE)
       ORDER BY cp.updated_at DESC
     `) as any;
     const coaches = rows.rows || [];
@@ -2154,6 +2168,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       FROM consultant_profiles cp
       JOIN organizations o ON o.id = cp.org_id
       WHERE cp.published = true
+        AND o.is_private IS NOT TRUE
       ORDER BY cp.created_at DESC
     `) as any;
     const allExperts = profileRows.rows || [];
@@ -2197,6 +2212,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       FROM consultant_profiles cp
       JOIN organizations o ON o.id = cp.org_id
       WHERE cp.slug = ${slug} AND cp.published = true
+        AND o.is_private IS NOT TRUE
     `) as any;
     const profile = (profileRows.rows || [])[0];
     if (!profile) return renderV7(reply.status(404), '404', { title: 'Expert Not Found - OTP' });
@@ -2205,6 +2221,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       SELECT f.*, o.name as org_name FROM oos_files f
       JOIN organizations o ON o.id = f.org_id
       WHERE f.org_id = ${profile.org_id} AND f.status = 'published' AND f.workspace_id IS NULL
+        AND o.is_private IS NOT TRUE
       ORDER BY f.created_at DESC
     `) as any;
 
