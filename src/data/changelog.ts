@@ -16,13 +16,14 @@ export const changelog: ChangelogEntry[] = [
   {
     date: '2026-06-12',
     tags: ['Major', 'Templates'],
-    title: 'A free library of 80+ meeting templates and agendas',
-    summary: 'OrgTP now has a free meeting template library at /templates: ready-to-run agendas for every kind of meeting. EOS Level 10 and quarterly sessions, Scaling Up huddles, Agile and Scrum ceremonies, one-on-ones, retrospectives, focus groups, QBRs, board meetings, planning offsites, and dozens more. Search by name or methodology, download any template as markdown, print it, or adapt it and run it live in OrgTP. No sign-in required.',
-    details: `<p>Every meeting worth running has a shape. We wrote down 80 of them.</p>
+    title: 'A free library of 180+ meeting templates and agendas',
+    summary: 'OrgTP now has a free meeting template library at /templates: ready-to-run agendas for every kind of meeting and every major operating system. EOS, Scaling Up, Pinnacle, the Accelerate Operating System, Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, Balanced Scorecard, plus Agile and Scrum ceremonies, one-on-ones, retrospectives, focus groups, QBRs, board meetings, and more. Search by name or methodology, download any template as markdown, print it, or adapt it and run it live in OrgTP. No sign-in required.',
+    details: `<p>Every meeting worth running has a shape. We wrote down more than 180 of them.</p>
 <ul class="list-disc pl-6 space-y-1">
-<li><strong>80+ templates across nine categories.</strong> EOS, Scaling Up, Agile / Scrum, planning and strategy, 1:1s and people, team operations, retrospectives, customer and external, and innovation and facilitation.</li>
+<li><strong>Every major operating system.</strong> EOS, Scaling Up, Pinnacle, Accelerate (AOS), Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, and Balanced Scorecard, each with its full meeting cadence from daily huddle to annual planning, plus signature sessions like the 4DX WIG Session and the Holacracy Tactical and Governance meetings.</li>
+<li><strong>And every everyday meeting.</strong> Agile and Scrum ceremonies, 1:1s and people meetings, team operations, retrospectives, customer and external, and innovation and facilitation.</li>
 <li><strong>Real agendas, not stubs.</strong> Each template has a timeboxed agenda, who should attend, duration and cadence, facilitator tips, and common mistakes to avoid.</li>
-<li><strong>Search and filter.</strong> Find a template by name, methodology, or what you are trying to do. Filter by category.</li>
+<li><strong>Search and filter.</strong> Find a template by name, methodology, or what you are trying to do. Filter by operating system or meeting type.</li>
 <li><strong>Free to take or run.</strong> Download any template as markdown, print it, or open it and run the meeting live in OrgTP. Every template is public, no sign-in needed.</li>
 <li><strong>Browse the library at <a href="/templates">/templates</a>.</strong></li>
 </ul>`,
