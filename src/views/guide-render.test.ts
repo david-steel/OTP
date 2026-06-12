@@ -80,7 +80,7 @@ describe('blog.ejs (index search)', () => {
     const body = await ejs.renderFile(BLOG, blogLocals);
     expect(body).toContain('id="bs-search"');
     expect(body).toContain('id="bs-count"');
-    expect(body).toContain('posts match');
+    expect(body).toContain('results match');
     expect(body).toContain("get('q')");
   });
 
