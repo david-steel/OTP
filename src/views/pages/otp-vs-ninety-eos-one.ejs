@@ -56,8 +56,10 @@
   /* comparison tables */
   .cmp-card { border-radius:14px; background:var(--white,#fcfcfd); box-shadow:0 1px 0 rgba(20,22,28,.04), 0 18px 40px rgba(20,22,28,.06); overflow:hidden; }
   .cmp-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .cmp { width:100%; border-collapse:separate; border-spacing:0; min-width:600px; font-size:15px; }
-  .cmp th, .cmp td { padding:14px 16px; text-align:center; border-bottom:1px solid var(--line,#e6e8ec); vertical-align:middle; }
+  .cmp { width:100%; border-collapse:separate; border-spacing:0; min-width:680px; font-size:15px; }
+  .cmp th, .cmp td { padding:14px 14px; text-align:center; border-bottom:1px solid var(--line,#e6e8ec); vertical-align:middle; }
+  /* first column carries the row label; give it room, keep the four data columns even */
+  .cmp td:first-child, .cmp th:first-child { width:34%; }
   .cmp th { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:14px; color:var(--ink,#14161c); }
   .cmp td:first-child, .cmp th:first-child { text-align:left; color:var(--ink-soft,#494d57); font-weight:600; }
   .cmp .col-otp { background:rgba(13,125,242,0.08); }
@@ -70,12 +72,14 @@
   .cmp tr:last-child td { border-bottom:none; }
   .cmp-note { font-size:13px; color:var(--ink-mute,#888c96); margin-top:14px; line-height:1.6; }
   @media (max-width:640px){
-    .cmp { min-width:0; font-size:12.5px; }
-    .cmp th { font-size:11.5px; }
+    /* four data columns + a label column won't fit a phone; keep min-width so the
+       card scrolls horizontally (cmp-wrap handles it) instead of crushing cells */
+    .cmp { min-width:560px; font-size:12px; }
+    .cmp th { font-size:11px; }
     .cmp th, .cmp td { padding:9px 6px; }
-    .cmp td:first-child, .cmp th:first-child { font-size:11.5px; }
-    .cmp .muted { font-size:10px; }
-    .cmp .price { font-size:12.5px; }
+    .cmp td:first-child, .cmp th:first-child { font-size:11px; width:30%; }
+    .cmp .muted { font-size:9.5px; }
+    .cmp .price { font-size:12px; }
   }
 
   /* stages */
@@ -105,7 +109,7 @@
   <div class="vs-wrap vs-hero">
     <div class="vs-hgrid">
       <div class="vs-hcopy">
-        <div class="vs-eyebrow vs-mb4"><span class="vs-tick"></span>OTP vs Ninety vs EOS One</div>
+        <div class="vs-eyebrow vs-mb4"><span class="vs-tick"></span>OTP vs Ninety vs EOS One vs Bloom</div>
         <h1 class="vs-h1">Ninety and EOS One run your EOS<sup class="reg">&reg;</sup>. <span class="accent">OTP lets you hire agents into it.</span></h1>
         <p class="vs-lead vs-mt5">
           They're good EOS<sup class="reg">&reg;</sup> software &mdash; they digitize the system you already run. OTP runs the same system, and lets AI agents take real seats next to your people, with real numbers to hit and real work to do. Your whole team is free. You only pay for the agents.
@@ -137,11 +141,11 @@
     </div>
     <div class="cmp-card cmp-wrap reveal" style="max-width:860px;">
       <table class="cmp">
-        <thead><tr><th></th><th>Ninety</th><th>EOS One</th><th class="col-otp">OTP</th></tr></thead>
+        <thead><tr><th></th><th>Ninety</th><th>EOS One</th><th>Bloom</th><th class="col-otp">OTP</th></tr></thead>
         <tbody>
-          <tr><td>First user</td><td>Free</td><td>Free</td><td class="col-otp free">Free</td></tr>
-          <tr><td>Every other user</td><td class="price">$11<span class="muted"> /mo each</span></td><td class="price">$10<span class="muted"> /mo each</span></td><td class="col-otp free">Free</td></tr>
-          <tr><td>AI agents that do the work</td><td class="muted">Not available</td><td class="muted">Not available</td><td class="col-otp price">$11<span class="muted"> /mo per agent*</span></td></tr>
+          <tr><td>First user</td><td>Free</td><td>Free</td><td class="price">$499<span class="muted"> /mo</span><br><span class="muted">(up to 25 users)</span></td><td class="col-otp free">Free</td></tr>
+          <tr><td>Every other user</td><td class="price">$11<span class="muted"> /mo each</span></td><td class="price">$10<span class="muted"> /mo each</span></td><td class="price">$5<span class="muted"> /mo each</span><br><span class="muted">(beyond 25)</span></td><td class="col-otp free">Free</td></tr>
+          <tr><td>AI agents that do the work</td><td class="muted">Not available</td><td class="muted">Not available</td><td class="muted">Not available</td><td class="col-otp price">$11<span class="muted"> /mo per agent*</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -159,18 +163,18 @@
     </div>
     <div class="cmp-card cmp-wrap reveal">
       <table class="cmp">
-        <thead><tr><th></th><th>Ninety</th><th>EOS One</th><th class="col-otp">OTP</th></tr></thead>
+        <thead><tr><th></th><th>Ninety</th><th>EOS One</th><th>Bloom</th><th class="col-otp">OTP</th></tr></thead>
         <tbody>
-          <tr><td>Full EOS<sup class="reg">&reg;</sup> toolset (chart, scorecard, priorities, weekly meeting)</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="col-otp yes">&#10003;</td></tr>
-          <tr><td>The <em>official</em> EOS product</td><td class="no">&mdash;</td><td class="yes">&#10003;</td><td class="col-otp no">&mdash;</td></tr>
-          <tr><td>AI in the product</td><td class="muted">Assistant</td><td class="muted">Assistant (Atlas)</td><td class="col-otp" style="color:var(--blue,#0d7df2);font-weight:800;">Employees</td></tr>
-          <tr><td>An AI agent can hold a seat on your chart</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
-          <tr><td>Agents carry their own KPIs on the scorecard</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
-          <tr><td>Agents do work <em>between</em> meetings</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
-          <tr><td>An agent that runs your weekly meeting</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003; <span class="muted">Radar</span></td></tr>
-          <tr><td>Your whole team, free</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
-          <tr><td>Your company learns from every other company on it</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
-          <tr><td>Working agents included, day one</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003; <span class="muted">Five</span></td></tr>
+          <tr><td>Full EOS<sup class="reg">&reg;</sup> toolset (chart, scorecard, priorities, weekly meeting)</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>The <em>official</em> EOS product</td><td class="no">&mdash;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="col-otp no">&mdash;</td></tr>
+          <tr><td>AI in the product</td><td class="muted">Assistant</td><td class="muted">Assistant (Atlas)</td><td class="muted">Assistant</td><td class="col-otp" style="color:var(--blue,#0d7df2);font-weight:800;">Employees</td></tr>
+          <tr><td>An AI agent can hold a seat on your chart</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Agents carry their own KPIs on the scorecard</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Agents do work <em>between</em> meetings</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>An agent that runs your weekly meeting</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003; <span class="muted">Radar</span></td></tr>
+          <tr><td>Your whole team, free</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Your company learns from every other company on it</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003;</td></tr>
+          <tr><td>Working agents included, day one</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td><td class="col-otp yes">&#10003; <span class="muted">Five</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -235,14 +239,17 @@
   </div>
 </section>
 
-<!-- ================= SWITCH FROM NINETY (importer) ================= -->
+<!-- ================= SWITCH FROM NINETY OR BLOOM (importer) ================= -->
 <section class="vs-paper">
   <div class="vs-wrap vs-sec vs-center" style="max-width:760px;">
     <img src="/public/images/import-orgy.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="OTP mascot carrying a box of files into OTP" style="display:block;width:min(300px,68%);height:auto;margin:0 auto 10px;border-radius:14px;filter:drop-shadow(0 18px 40px rgba(20,22,28,.14));">
-    <div class="vs-eyebrow vs-mb4" style="justify-content:center;">Already on Ninety?</div>
+    <div class="vs-eyebrow vs-mb4" style="justify-content:center;">Already on Ninety or Bloom?</div>
     <h2 class="vs-h2">Bring your data over in one click.</h2>
-    <p class="vs-lead vs-mt5 vs-max40" style="margin-left:auto;margin-right:auto;">Export your Rocks, To-Dos, Issues, and Scorecard from Ninety and drop them in. OTP rebuilds your accountability chart from who owns what, then seats your agents next to your people. Free preview, no account needed, and nothing is stored until you say so.</p>
-    <div class="vs-mt8" style="display:flex;justify-content:center;"><a href="/import/ninety" class="btn-primary px-8 py-4 text-[16px]">Import from Ninety &rarr;</a></div>
+    <p class="vs-lead vs-mt5 vs-max40" style="margin-left:auto;margin-right:auto;">Export your Rocks, To-Dos, Issues, and Scorecard from Ninety or Bloom Growth and drop them in. OTP rebuilds your accountability chart from who owns what, then seats your agents next to your people. Free preview, no account needed, and nothing is stored until you say so.</p>
+    <div class="vs-cta-row vs-mt8" style="justify-content:center;">
+      <a href="/import/ninety" class="btn-primary px-8 py-4 text-[16px]">Import from Ninety &rarr;</a>
+      <a href="/import/bloom" class="btn-primary px-8 py-4 text-[16px]">Import from Bloom &rarr;</a>
+    </div>
   </div>
 </section>
 
@@ -252,7 +259,7 @@
     <h2 class="vs-h2">Keep your EOS<sup class="reg">&reg;</sup>. Add a workforce.</h2>
     <p class="vs-lead vs-mt5" style="max-width:34rem;margin-left:auto;margin-right:auto;">Your whole team is free. Your first agent is free. You only pay when an agent earns its seat.</p>
     <div class="vs-mt8" style="display:flex;justify-content:center;"><a href="/sign-up" class="btn-primary px-8 py-4 text-[16px]">Start free &mdash; no card &rarr;</a></div>
-    <p class="cmp-note vs-mt8">EOS<sup class="reg">&reg;</sup> and Level 10 Meeting<sup class="reg">&reg;</sup> are trademarks of EOS Worldwide. Ninety and EOS One are trademarks of their respective owners. OTP is independent and not affiliated with, or endorsed by, any of them.</p>
+    <p class="cmp-note vs-mt8">EOS<sup class="reg">&reg;</sup> and Level 10 Meeting<sup class="reg">&reg;</sup> are trademarks of EOS Worldwide. Ninety and EOS One are trademarks of their respective owners. Bloom Growth is a trademark of its respective owner. OTP is independent and not affiliated with, or endorsed by, any of them.</p>
   </div>
 </section>
 
