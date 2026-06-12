@@ -98,6 +98,18 @@ async function main() {
     recipients = recipients.filter(r => onlySet.has(r.email));
     console.log(`[broadcast] --only filter active: ${recipients.length} recipient(s)`);
   }
+  // --exclude=a@x.com,b@y.com drops specific addresses from the gathered
+  // audience (e.g. test/sandbox/smoke mailboxes that would hard-bounce and
+  // hurt sender reputation). Safer than re-typing the whole include list.
+  const excludeArg = process.argv.find(a => a.startsWith('--exclude='));
+  if (excludeArg) {
+    const excludeSet = new Set(
+      excludeArg.slice('--exclude='.length).split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    );
+    const before = recipients.length;
+    recipients = recipients.filter(r => !excludeSet.has(r.email));
+    console.log(`[broadcast] --exclude active: dropped ${before - recipients.length}, ${recipients.length} remain`);
+  }
   // --to=a@x.com,b@y.com sends to an explicit list, bypassing the DB/Clerk
   // gather entirely (used when the audience is sourced out-of-band, e.g. from
   // the prod admin endpoints because the local .env DB is not prod).
