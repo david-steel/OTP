@@ -13,19 +13,31 @@ import { getAuth } from '@clerk/fastify';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { resolveOrgForUser } from '../../services/membership.js';
 import { runAgent, listAgentRuns, type RunAgentSop } from '../../services/agent-runtime.js';
 import { getOrgTeamGraph } from '../../services/team-graph.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
+import { resolveDemoPageContext } from '../../middleware/demo-access.js';
 
 // Agent runs spend money (tokens, and the wallet when metering is on), so the
 // run endpoint is rate-limited per IP on top of the signed-in-member auth.
 const checkRunRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 10 });
 
+// Cost guard for the secret-gated demo session: a no-Clerk demo visitor may run
+// agents on the Acme demo org, but only this many runs per rolling 24h (on top
+// of the per-IP rate limit) so a shared demo link can't run up real AI spend.
+const DEMO_RUN_DAILY_CAP = 20;
+
 async function getOrg(request: FastifyRequest) {
   const auth = getAuth(request);
-  if (!auth.userId) return null;
+  if (!auth.userId) {
+    // No Clerk session: honor the secret-gated demo session ONLY. Resolves to
+    // the Acme demo org (forge-proof by the demo_acme constant + assert inside
+    // resolveDemoPageContext); returns null for any non-demo no-auth request.
+    const demo = await resolveDemoPageContext(request);
+    return demo?.org || null;
+  }
   const resolved = await resolveOrgForUser(auth.userId);
   if (resolved) return resolved.org;
   const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
@@ -73,7 +85,6 @@ export default async function agentRoutes(app: FastifyInstance) {
   // found. Rate-limited per IP since runs spend money.
   app.post<{ Params: { externalId: string }; Body: { prompt?: string; sopId?: string; sopTitle?: string } }>('/agents/:externalId/run', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in to run agents' } });
 
     if (!checkRunRateLimit(request.ip)) {
       return reply.status(429).send({ error: { code: 'RATE_LIMITED', message: 'Too many runs. Try again in a minute.' } });
@@ -82,8 +93,22 @@ export default async function agentRoutes(app: FastifyInstance) {
     const externalId = request.params.externalId;
     if (!validExternalId(externalId)) return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid agent externalId' } });
 
+    // Org resolves via Clerk OR the secret-gated demo session (Acme only).
     const org = await getOrg(request);
-    if (!org) return reply.status(404).send({ error: { code: 'NO_ORG', message: 'No org for current user' } });
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in to run agents' } });
+
+    // Demo session (no Clerk user): enforce the per-day run cap on top of the
+    // IP rate limit, so a shared demo link can't run up real AI spend.
+    const isDemo = !auth.userId;
+    if (isDemo) {
+      const capRows = (await db.execute(sql`
+        SELECT count(*)::int AS c FROM agent_runs
+        WHERE org_id = ${org.id} AND created_at > now() - interval '24 hours'
+      `)).rows as { c: number }[];
+      if ((capRows[0]?.c ?? 0) >= DEMO_RUN_DAILY_CAP) {
+        return reply.status(429).send({ error: { code: 'DEMO_RUN_LIMIT', message: 'Demo run limit reached for today. Sign up to run more.' } });
+      }
+    }
 
     const bodySchema = z.object({
       prompt: z.string().max(4000).optional(),
@@ -109,7 +134,7 @@ export default async function agentRoutes(app: FastifyInstance) {
       externalId,
       promptOverride: sop ? null : (body.data.prompt || null),
       sop,
-      triggeredByUserId: auth.userId,
+      triggeredByUserId: auth.userId || null,
       trigger: 'manual',
     });
 
@@ -118,14 +143,12 @@ export default async function agentRoutes(app: FastifyInstance) {
 
   // GET /api/v1/agents/:externalId/runs?limit=25
   app.get<{ Params: { externalId: string }; Querystring: { limit?: string } }>('/agents/:externalId/runs', async (request, reply) => {
-    const auth = getAuth(request);
-    if (!auth.userId) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
-
     const externalId = request.params.externalId;
     if (!validExternalId(externalId)) return reply.status(400).send({ error: { code: 'INVALID_ID', message: 'Invalid agent externalId' } });
 
+    // Org resolves via Clerk OR the secret-gated demo session (Acme only).
     const org = await getOrg(request);
-    if (!org) return reply.status(404).send({ error: { code: 'NO_ORG', message: 'No org for current user' } });
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
 
     const limit = Math.min(100, Math.max(1, parseInt(request.query.limit || '25', 10) || 25));
     const runs = await listAgentRuns(org.id, externalId, limit);
