@@ -49,6 +49,12 @@ export const AUDIT_ACTIONS = {
   MERGE_PREVIEWED: 'merge.previewed',
   MERGE_APPLIED: 'merge.applied',
   MERGE_ROLLED_BACK: 'merge.rolled_back',
+
+  // Wallet / monetization (Phase 2). MONEY-SENSITIVE -- every wallet mutation
+  // writes one of these alongside the wallet_ledger row.
+  WALLET_CREDIT: 'wallet.credit',
+  WALLET_DEBIT: 'wallet.debit',
+  WALLET_TOPUP: 'wallet.topup',
 } as const;
 
 export function createAuditEntry(

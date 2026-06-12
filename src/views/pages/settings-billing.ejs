@@ -20,6 +20,35 @@
   var _rate     = (typeof rate === 'number') ? rate : (_hasApiMcp ? _pApiMcp : _pBasic);
   var _monthly  = (typeof monthlyTotal === 'number') ? monthlyTotal : (_total * _rate);
   var _billingOn = (typeof billingEnabled !== 'undefined') ? !!billingEnabled : false;
+
+  // ---- Wallet (monetization Phase 2). All amounts are integer CENTS. ----
+  var _stripeOn   = (typeof stripeConfigured !== 'undefined') ? !!stripeConfigured : false;
+  var _balCents   = (typeof walletBalanceCents === 'number') ? walletBalanceCents : 0;
+  var _ar         = (typeof autoRecharge !== 'undefined' && autoRecharge && typeof autoRecharge === 'object') ? autoRecharge : {};
+  var _arEnabled  = !!_ar.enabled;
+  var _arThresh   = (typeof _ar.thresholdCents === 'number') ? _ar.thresholdCents : null;
+  var _arAmount   = (typeof _ar.amountCents === 'number') ? _ar.amountCents : null;
+  var _ledger     = (typeof ledgerRows !== 'undefined' && Array.isArray(ledgerRows)) ? ledgerRows : [];
+  var _usage      = (typeof usageByReason !== 'undefined' && Array.isArray(usageByReason)) ? usageByReason : [];
+  // cents -> "$X.XX" (no float math on money: integer cents, format only).
+  function _money(cents) {
+    var c = (typeof cents === 'number' && isFinite(cents)) ? Math.round(cents) : 0;
+    var sign = c < 0 ? '-' : '';
+    c = Math.abs(c);
+    var d = Math.floor(c / 100), r = c % 100;
+    return sign + '$' + d + '.' + (r < 10 ? '0' + r : '' + r);
+  }
+  function _reasonLabel(reason) {
+    switch (String(reason)) {
+      case 'topup': return 'Top-up';
+      case 'ai_usage': return 'AI usage';
+      case 'addon_charge': return 'Add-on';
+      case 'refund': return 'Refund';
+      case 'promo': return 'Promo';
+      case 'adjustment': return 'Adjustment';
+      default: return String(reason || '');
+    }
+  }
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -87,6 +116,172 @@
               </div>
             </div>
           </div>
+
+          <!-- Card 1b: Wallet (prepaid balance, add credits, auto-recharge, activity) -->
+          <div class="bg-white border rounded-xl p-6" id="wallet-section">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 class="font-bold text-gray-900 text-lg mb-1">Wallet</h2>
+                <p class="text-sm text-gray-500">Prepaid balance. AI features draw down credits as you use them.</p>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-3xl font-extrabold text-gray-900 leading-none font-mono"><%= _money(_balCents) %></div>
+                <div class="text-xs uppercase tracking-wider text-gray-500 mt-1.5">Current balance</div>
+              </div>
+            </div>
+
+            <% if (!_stripeOn) { %>
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-2">
+                <p class="text-sm text-amber-800">Billing isn't set up yet. Adding credits will be available once payments are configured.</p>
+              </div>
+            <% } %>
+
+            <!-- Add balance -->
+            <div class="border-t pt-4 mb-4">
+              <div class="text-sm font-semibold text-gray-900 mb-2">Add balance</div>
+              <div class="flex flex-wrap items-center gap-2" id="wallet-topup-controls">
+                <% var _picks = [1000, 2500, 5000, 10000]; %>
+                <% _picks.forEach(function(cents){ %>
+                  <button type="button" class="wallet-topup-amt px-4 py-2 rounded-lg border text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors" data-cents="<%= cents %>"><%= _money(cents) %></button>
+                <% }); %>
+                <span id="wallet-topup-status" class="text-sm text-gray-500"></span>
+              </div>
+            </div>
+
+            <!-- Auto-recharge -->
+            <div class="border-t pt-4 mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm font-semibold text-gray-900">Auto-recharge</div>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="wallet-ar-enabled" <%= _arEnabled ? 'checked' : '' %> class="h-4 w-4">
+                  <span class="text-sm text-gray-600">Enabled</span>
+                </label>
+              </div>
+              <p class="text-xs text-gray-500 mb-3">When your balance drops below the threshold, automatically add the recharge amount.</p>
+              <div class="flex flex-wrap items-end gap-4">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1" for="wallet-ar-threshold">Threshold ($)</label>
+                  <input type="number" min="0" step="1" id="wallet-ar-threshold" value="<%= _arThresh !== null ? (_arThresh/100) : '' %>" class="w-28 px-3 py-2 border rounded-lg text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1" for="wallet-ar-amount">Recharge ($)</label>
+                  <input type="number" min="5" step="1" id="wallet-ar-amount" value="<%= _arAmount !== null ? (_arAmount/100) : '' %>" class="w-28 px-3 py-2 border rounded-lg text-sm">
+                </div>
+                <button type="button" id="wallet-ar-save" class="px-4 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm">Save</button>
+                <span id="wallet-ar-status" class="text-sm text-gray-500"></span>
+              </div>
+            </div>
+
+            <!-- Usage this month -->
+            <div class="border-t pt-4 mb-4">
+              <div class="text-sm font-semibold text-gray-900 mb-2">Usage this month</div>
+              <% if (_usage.length === 0) { %>
+                <p class="text-sm text-gray-400">No wallet activity yet this month.</p>
+              <% } else { %>
+                <div class="space-y-1.5">
+                  <% _usage.forEach(function(u){ %>
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-gray-700"><%= _reasonLabel(u.reason) %> <span class="text-gray-400">(<%= u.direction === 'credit' ? 'credit' : 'debit' %>)</span></span>
+                      <span class="font-mono <%= u.direction === 'credit' ? 'text-emerald-600' : 'text-gray-900' %>"><%= (u.direction === 'credit' ? '+' : '-') + _money(u.totalCents).replace('$','$') %></span>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="border-t pt-4">
+              <div class="text-sm font-semibold text-gray-900 mb-2">Recent activity</div>
+              <% if (_ledger.length === 0) { %>
+                <p class="text-sm text-gray-400">No transactions yet.</p>
+              <% } else { %>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="text-left text-xs uppercase tracking-wider text-gray-400 border-b">
+                        <th class="py-1.5 pr-3 font-medium">Date</th>
+                        <th class="py-1.5 pr-3 font-medium">Type</th>
+                        <th class="py-1.5 pr-3 font-medium text-right">Amount</th>
+                        <th class="py-1.5 font-medium text-right">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% _ledger.forEach(function(row){ %>
+                        <tr class="border-b last:border-0">
+                          <td class="py-1.5 pr-3 text-gray-500 whitespace-nowrap"><%= row.createdAt ? String(row.createdAt).slice(0,10) : '' %></td>
+                          <td class="py-1.5 pr-3 text-gray-700"><%= _reasonLabel(row.reason) %></td>
+                          <td class="py-1.5 pr-3 text-right font-mono <%= row.direction === 'credit' ? 'text-emerald-600' : 'text-gray-900' %>"><%= (row.direction === 'credit' ? '+' : '-') + _money(row.amountCents) %></td>
+                          <td class="py-1.5 text-right font-mono text-gray-500"><%= _money(row.balanceAfterCents) %></td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <script>
+            (function () {
+              // --- Add balance: POST /api/v1/wallet/topup, open Stripe URL. ---
+              var status = document.getElementById('wallet-topup-status');
+              document.querySelectorAll('.wallet-topup-amt').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                  var cents = parseInt(btn.getAttribute('data-cents'), 10);
+                  if (status) status.textContent = 'Starting checkout…';
+                  fetch('/api/v1/wallet/topup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amountCents: cents })
+                  }).then(function (res) {
+                    return res.json().then(function (data) {
+                      if (res.ok && data && data.url) {
+                        window.location.href = data.url;
+                      } else if (res.status === 503) {
+                        if (status) status.textContent = "Billing isn't set up yet.";
+                      } else {
+                        if (status) status.textContent = (data && data.error && data.error.message) || ('Could not start checkout (HTTP ' + res.status + ').');
+                      }
+                    });
+                  }).catch(function () {
+                    if (status) status.textContent = 'Could not reach the billing service.';
+                  });
+                });
+              });
+
+              // --- Auto-recharge: PUT /api/v1/wallet/auto-recharge ---
+              var saveBtn = document.getElementById('wallet-ar-save');
+              var arStatus = document.getElementById('wallet-ar-status');
+              if (saveBtn) {
+                saveBtn.addEventListener('click', function () {
+                  var enabled = !!document.getElementById('wallet-ar-enabled').checked;
+                  var threshDollars = parseFloat(document.getElementById('wallet-ar-threshold').value);
+                  var amtDollars = parseFloat(document.getElementById('wallet-ar-amount').value);
+                  var body = { enabled: enabled };
+                  if (enabled) {
+                    body.thresholdCents = Math.round((isFinite(threshDollars) ? threshDollars : 0) * 100);
+                    body.amountCents = Math.round((isFinite(amtDollars) ? amtDollars : 0) * 100);
+                  }
+                  if (arStatus) arStatus.textContent = 'Saving…';
+                  fetch('/api/v1/wallet/auto-recharge', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                  }).then(function (res) {
+                    return res.json().then(function (data) {
+                      if (res.ok && data && data.ok) {
+                        if (arStatus) arStatus.textContent = 'Saved.';
+                      } else {
+                        if (arStatus) arStatus.textContent = (data && data.error && data.error.message) || ('Could not save (HTTP ' + res.status + ').');
+                      }
+                    });
+                  }).catch(function () {
+                    if (arStatus) arStatus.textContent = 'Could not reach the billing service.';
+                  });
+                });
+              }
+            })();
+          </script>
 
           <!-- Card 2: API access FYI -->
           <div class="bg-gray-50 border rounded-xl p-6">

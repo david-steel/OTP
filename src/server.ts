@@ -775,6 +775,14 @@ await app.register(import('./routes/api/notifications.js'), { prefix: '/api/v1' 
 await app.register(import('./routes/api/dashboard-preferences.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/whats-new.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/ask-ai.js'), { prefix: '/api/v1' });
+// Wallet top-up + auto-recharge config (monetization Phase 2). The Stripe
+// webhook is registered SEPARATELY at root scope below so no auth gate blocks
+// Stripe and the raw body survives for signature verification.
+await app.register(import('./routes/api/billing.js'), { prefix: '/api/v1' });
+{
+  const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
+  await app.register(stripeWebhookRoutes);
+}
 await app.register(import('./routes/api/push.js'), { prefix: '/api/v1' });
 
 // Service worker at the ORIGIN ROOT (scope '/'), with no-cache so updates
@@ -1066,6 +1074,14 @@ try {
   app.log.info('organizations.is_private is ready (private-plan cross-org enforcement)');
 } catch (err) {
   app.log.error({ err }, 'ensureOrgPrivacy failed -- private-plan enforcement will not work until resolved');
+}
+
+try {
+  const { ensureWalletsTables } = await import('./db/ensure-wallets.js');
+  await ensureWalletsTables();
+  app.log.info('org_wallets + wallet_ledger + org_entitlements tables are ready (monetization Phase 2)');
+} catch (err) {
+  app.log.error({ err }, 'ensureWalletsTables failed -- wallet/entitlements/billing will not work until resolved');
 }
 
 try {

@@ -1354,3 +1354,64 @@ export const attachmentLinks = pgTable('attachment_links', {
   orgIdx: index('attachment_links_org_idx').on(table.organizationId),
   entityIdx: index('attachment_links_entity_idx').on(table.entityType, table.entityId),
 }));
+
+// ---------------------------------------------------------------------------
+// Monetization Phase 2: wallet + entitlements + usage ledger.
+//
+// MONEY-SENSITIVE. All amounts are integer CENTS (never floats). The DDL is
+// self-healed on boot by ensure-wallets.ts (drizzle migrate is broken on this
+// project -- see ensure-org-privacy.ts). These pgTable defs exist so the
+// wallet service can run type-safe Drizzle queries; they MUST stay in sync
+// with the raw DDL in ensure-wallets.ts.
+// ---------------------------------------------------------------------------
+
+// Prepaid balance, one row per org. balance_cents is the cached running total;
+// the wallet_ledger is the append-only source of truth it's derived from.
+export const orgWallets = pgTable('org_wallets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull().unique(),
+  balanceCents: integer('balance_cents').notNull().default(0),
+  currency: varchar('currency', { length: 3 }).notNull().default('usd'),
+  autoRechargeEnabled: boolean('auto_recharge_enabled').notNull().default(false),
+  autoRechargeAmountCents: integer('auto_recharge_amount_cents'),
+  autoRechargeThresholdCents: integer('auto_recharge_threshold_cents'),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('org_wallets_org_idx').on(table.orgId),
+}));
+
+// Append-only transaction log. NEVER mutate a row. amount_cents is always
+// POSITIVE; `direction` ('credit' | 'debit') conveys the sign. balance_after_cents
+// records the wallet balance immediately after this row was applied (audit trail).
+// idempotency_key is UNIQUE (nullable): a repeated key returns the prior result
+// rather than double-applying (Stripe webhook retries, per-request AI debits).
+export const walletLedger = pgTable('wallet_ledger', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  direction: varchar('direction', { length: 8 }).notNull(), // 'credit' | 'debit'
+  amountCents: integer('amount_cents').notNull(),           // always positive
+  balanceAfterCents: integer('balance_after_cents').notNull(),
+  reason: varchar('reason', { length: 32 }).notNull(),      // topup|ai_usage|addon_charge|refund|promo|adjustment
+  idempotencyKey: varchar('idempotency_key', { length: 120 }).unique(),
+  metadata: jsonb('metadata'),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgTimeIdx: index('wallet_ledger_org_time_idx').on(table.orgId, table.createdAt),
+}));
+
+// What an org is allowed to do. plan_tier + addons + feature_flags drive the
+// hasEntitlement() chokepoint (src/shared/entitlements.ts). One row per org.
+export const orgEntitlements = pgTable('org_entitlements', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull().unique(),
+  planTier: varchar('plan_tier', { length: 32 }).notNull().default('free'),
+  addons: jsonb('addons').notNull().default(sql`'[]'::jsonb`),
+  featureFlags: jsonb('feature_flags').notNull().default(sql`'{}'::jsonb`),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('org_entitlements_org_idx').on(table.orgId),
+}));

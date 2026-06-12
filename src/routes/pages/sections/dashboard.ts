@@ -15,7 +15,9 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull, gt } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, rockMilestones } from '../../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, rockMilestones, orgWallets, walletLedger } from '../../../db/schema.js';
+import { getStripe } from '../../../services/stripe.js';
+import { getOrCreateWallet } from '../../../services/wallet.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
 import type { Role } from '../../../services/membership.js';
 import { getOrgsForUser, resolveOrgForUser, acceptInvite, MembershipError, getFounderTileIds } from '../../../services/membership.js';
@@ -2297,6 +2299,50 @@ Founder, OTP</p>
     const rate = hasApiMcp ? BILLING_PRICE_API_MCP : BILLING_PRICE_BASIC;
     const monthlyTotal = totalAgents * rate;
 
+    // --- Wallet (monetization Phase 2). Real data from org_wallets +
+    // wallet_ledger. Never 500 the page if the wallet layer hiccups.
+    let walletBalanceCents = 0;
+    let autoRecharge = { enabled: false, thresholdCents: null as number | null, amountCents: null as number | null };
+    let ledgerRows: Array<{ direction: string; amountCents: number; balanceAfterCents: number; reason: string; createdAt: Date | null }> = [];
+    let usageByReason: Array<{ reason: string; direction: string; totalCents: number }> = [];
+    try {
+      const wallet = await getOrCreateWallet(org.id);
+      walletBalanceCents = wallet?.balanceCents ?? 0;
+      autoRecharge = {
+        enabled: wallet?.autoRechargeEnabled ?? false,
+        thresholdCents: wallet?.autoRechargeThresholdCents ?? null,
+        amountCents: wallet?.autoRechargeAmountCents ?? null,
+      };
+      ledgerRows = await db
+        .select({
+          direction: walletLedger.direction,
+          amountCents: walletLedger.amountCents,
+          balanceAfterCents: walletLedger.balanceAfterCents,
+          reason: walletLedger.reason,
+          createdAt: walletLedger.createdAt,
+        })
+        .from(walletLedger)
+        .where(eq(walletLedger.orgId, org.id))
+        .orderBy(desc(walletLedger.createdAt))
+        .limit(10);
+
+      // Usage this month, summed by reason (+direction so credits/debits split).
+      const monthStart = new Date();
+      monthStart.setUTCDate(1);
+      monthStart.setUTCHours(0, 0, 0, 0);
+      usageByReason = await db
+        .select({
+          reason: walletLedger.reason,
+          direction: walletLedger.direction,
+          totalCents: sql<number>`sum(${walletLedger.amountCents})::int`,
+        })
+        .from(walletLedger)
+        .where(and(eq(walletLedger.orgId, org.id), gt(walletLedger.createdAt, monthStart)))
+        .groupBy(walletLedger.reason, walletLedger.direction);
+    } catch {
+      walletBalanceCents = 0;
+    }
+
     return reply.view('pages/settings-billing', {
       title: 'Billing - OTP',
       noindex: true,
@@ -2310,6 +2356,18 @@ Founder, OTP</p>
       prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
       orgName: org.name,
       stripeCustomerId: org.stripeCustomerId || null,
+      // Wallet section locals.
+      stripeConfigured: !!getStripe(),
+      walletBalanceCents,
+      autoRecharge,
+      ledgerRows: ledgerRows.map(r => ({
+        direction: r.direction,
+        amountCents: r.amountCents,
+        balanceAfterCents: r.balanceAfterCents,
+        reason: r.reason,
+        createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,
+      })),
+      usageByReason,
     });
   });
 
