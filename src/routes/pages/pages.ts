@@ -305,6 +305,13 @@ export default async function pageRoutes(app: FastifyInstance) {
     return renderInShell(request, reply, 'guide', { title: 'OrgTP User Guide - OTP', description: 'The complete end-user guide to every part of OrgTP: dashboard, weekly meetings, to-dos, KPIs, Rocks, issues, org chart, the intelligence layer, imports, and settings. Searchable.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'User Guide', url: BASE_URL + '/guide' }), guideSections: GUIDE_SECTIONS });
   });
 
+  // The original /guide content (OOS three-paths onboarding: copy-paste AI
+  // prompt + Claude Code install one-liner), resurrected at its own address
+  // when the User Guide help center replaced it. Linked from guide §14.
+  app.get('/guide/connect-your-agent', async (request, reply) => {
+    return renderInShell(request, reply, 'guide-connect-agent', { title: 'Connect Your Agent - OTP', description: 'Three ways to get your organization onto OTP: a copy-paste AI prompt that generates your first OOS, a one-line Claude Code install for the MCP server and slash commands, or the in-app org chart.', canonical: BASE_URL + '/guide/connect-your-agent', breadcrumbs: bc({ name: 'User Guide', url: BASE_URL + '/guide' }, { name: 'Connect Your Agent', url: BASE_URL + '/guide/connect-your-agent' }) });
+  });
+
   // Why OTP -- the persuasion page (frustrations + outcomes + objections)
   // Start Here -- the 30-min founder intro page (Calendly embed)
   app.get('/start-here', async (request, reply) => {

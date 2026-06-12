@@ -70,6 +70,10 @@ operating system. An organization runs its whole operating cadence inside it:
 - /guide -- the searchable user guide / help center: the full OrgTP End-User
   Guide (every page explained), with instant search. /guide?q=term deep-links
   a search.
+- /guide/connect-your-agent -- the fast onboarding path: a copy-paste AI
+  prompt that generates a first OOS in about 60 seconds, and a one-line
+  install (curl orgtp.com/install.sh) that gives Claude Code the OTP MCP
+  server and slash commands (/otp-publish and friends).
 - /whats-new -- the product changelog page (every shipped update).
 - /blog -- the EOS + AI article library.
 - /premium-support -- Premium Support: priority help in a dedicated Slack
