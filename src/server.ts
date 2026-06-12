@@ -1053,6 +1053,14 @@ try {
 }
 
 try {
+  const { ensureSmartRocksColumn } = await import('./db/ensure-smart-rocks.js');
+  await ensureSmartRocksColumn();
+  app.log.info('rocks.smart_data is ready (SMART Rock enrichment, free Phase 1)');
+} catch (err) {
+  app.log.error({ err }, 'ensureSmartRocksColumn failed -- SMART Rock enrichment will not persist until resolved');
+}
+
+try {
   const { ensureOrgPrivacy } = await import('./db/ensure-org-privacy.js');
   await ensureOrgPrivacy();
   app.log.info('organizations.is_private is ready (private-plan cross-org enforcement)');

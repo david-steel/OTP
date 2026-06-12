@@ -1,0 +1,455 @@
+<% /*
+  /rocks/:id/smart -- the free SMART Rock Planner. v7 layout, dual-rendered
+  (renderInShell): a signed-in viewer gets the app shell, a signed-out visitor
+  would get the v7 compose (the route 404s the signed-out/no-org case before we
+  get here, so in practice this is always authed). Laid out like David's SMART
+  ROCK Planner PDF: WHO / ROCK / DUE DATE header, Describe the Rock, the five
+  SMART text prompts, Milestones (reused from the existing milestones API),
+  Describe your finish line, Resources Needed, Foreseen Obstacles. Save persists
+  description + smartData to the rock via the PUT rocks endpoint.
+
+  Locals: rock, milestones (array), assignablePeople, canEdit.
+
+  Security notes (the repo's recurring EJS gotchas):
+    - jsonForScript() serializes the bootstrap blob so a value containing a
+      closing script tag cannot break out of the inline script context.
+    - All user-supplied strings rendered server-side are HTML-escaped via the
+      escaping interpolation tag. Client-built DOM sets user text via
+      textContent, never innerHTML, so a hostile obstacle string is inert.
+    - This header is a JS block comment, NOT an EJS hash comment, because an EJS
+      hash comment closes on the first percent-gt it sees -- a tag example
+      inside one would crash the parser (the May 2026 /dashboard 500 class).
+  XSS guard: embed a value in an inline script tag via jsonForScript() --
+  escapes < and > so a value containing a closing script tag can't break out.
+*/ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<%
+  var _smart = (rock && rock.smartData && typeof rock.smartData === 'object') ? rock.smartData : {};
+  var _due = '';
+  if (rock && rock.dueDate) { try { _due = new Date(rock.dueDate).toISOString().slice(0,10); } catch (e) { _due = ''; } }
+  var _ownerLabel = (rock && (rock.ownerName || rock.ownerExternalId)) || '';
+  var _resources = Array.isArray(_smart.resources) ? _smart.resources : [];
+  var _obstacles = Array.isArray(_smart.obstacles) ? _smart.obstacles : [];
+%>
+<style>
+  /* SMART planner -- light, editorial, print-clean. */
+  .sr-wrap { max-width: 920px; }
+  .sr-card { background: var(--card, #fff); border: 1.5px solid var(--line, #e5e7eb); border-radius: 14px; }
+  .sr-label { font-family: 'Schibsted Grotesk','Inter',sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--ink, #1f2937); }
+  .sr-hint { font-size: 12.5px; color: var(--ink-mute, #6b7280); }
+  .sr-input, .sr-textarea {
+    width: 100%; font-size: 14.5px; color: var(--ink, #1f2937);
+    background: var(--card, #fff); border: 1.5px solid var(--line, #e5e7eb);
+    border-radius: 10px; padding: 9px 12px; outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .sr-input:focus, .sr-textarea:focus { border-color: var(--blue, #0d7df2); box-shadow: 0 0 0 4px rgba(13,125,242,.12); }
+  .sr-textarea { resize: vertical; min-height: 64px; line-height: 1.6; }
+  .sr-input:disabled, .sr-textarea:disabled { background: var(--grey, #f3f4f6); color: var(--ink-mute, #6b7280); cursor: not-allowed; }
+  .sr-smart-letter {
+    width: 28px; height: 28px; border-radius: 8px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Schibsted Grotesk',sans-serif; font-weight: 800; font-size: 14px;
+    background: var(--orgy, #ffe28a); color: var(--ink, #1f2937);
+  }
+  .sr-btn {
+    font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 10px;
+    border: 1.5px solid transparent; cursor: pointer;
+  }
+  .sr-btn-primary { background: var(--blue, #0d7df2); color: #fff; }
+  .sr-btn-primary:hover { background: var(--blue-deep, #0a63c2); }
+  .sr-btn-primary:disabled { opacity: .5; cursor: default; }
+  .sr-btn-ghost { background: var(--card, #fff); color: var(--ink-soft, #374151); border-color: var(--line, #e5e7eb); }
+  .sr-btn-ghost:hover { border-color: var(--blue, #0d7df2); color: var(--ink, #1f2937); }
+  .sr-list-row { display: flex; align-items: center; gap: 8px; }
+  .sr-chip-del { color: #c1c8d1; font-weight: 800; cursor: pointer; border: none; background: none; font-size: 16px; line-height: 1; }
+  .sr-chip-del:hover { color: #e11d48; }
+  .sr-saved { font-size: 12.5px; color: #059669; font-weight: 600; }
+  .sr-ms-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line, #eef0f2); }
+  .sr-ms-row:last-child { border-bottom: none; }
+
+  /* Print: hide chrome, black on white, prints like the PDF planner. */
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff !important; }
+    .sr-card { border-color: #000 !important; box-shadow: none !important; break-inside: avoid; }
+    .sr-input, .sr-textarea { border-color: #999 !important; color: #000 !important; background: #fff !important; }
+    .sr-smart-letter { background: #fff !important; border: 1.5px solid #000; color: #000 !important; }
+    .sr-label, .sr-hint, .sr-input, .sr-textarea { color: #000 !important; }
+    a[href]:after { content: ""; }
+  }
+</style>
+
+<section class="bg-[var(--white)]">
+  <div class="sr-wrap mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px]"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %> data-rock-id="<%= rock.id %>">
+
+    <!-- Top bar: back + print/save (no-print). -->
+    <div class="no-print flex items-center justify-between gap-3 mb-6">
+      <a href="/dashboard#rocks" class="text-[13px] font-semibold text-[var(--ink-soft)] hover:text-[var(--ink)]">&larr; Back to dashboard</a>
+      <div class="flex items-center gap-2">
+        <span id="sr-saved" class="sr-saved" style="display:none;">Saved</span>
+        <button type="button" id="sr-print" class="sr-btn sr-btn-ghost">Print</button>
+        <% if (canEdit) { %><button type="button" id="sr-save" class="sr-btn sr-btn-primary">Save</button><% } %>
+      </div>
+    </div>
+
+    <% if (!canEdit) { %>
+      <div class="no-print sr-card px-4 py-3 mb-6 text-[13px] text-[var(--ink-soft)]" style="background:var(--grey,#f3f4f6);">
+        You have view-only access. This planner is read-only for your role.
+      </div>
+    <% } %>
+
+    <h1 class="font-bold text-[1.9rem] tracking-[-0.02em] text-[var(--ink)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">SMART Rock Planner</h1>
+    <p class="sr-hint mt-1">Sharpen one quarterly priority into a SMART commitment. Print it, pin it, work it.</p>
+
+    <!-- Header: WHO / ROCK / DUE DATE -->
+    <div class="sr-card p-5 sm:p-6 mt-6">
+      <div class="grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div>
+          <label class="sr-label" for="sr-title">Rock</label>
+          <input id="sr-title" class="sr-input mt-1.5" type="text" value="<%= rock.title %>" maxlength="500" <%= canEdit ? '' : 'disabled' %> placeholder="What is the priority?">
+        </div>
+        <div>
+          <label class="sr-label" for="sr-due">Due date</label>
+          <input id="sr-due" class="sr-input mt-1.5" type="date" value="<%= _due %>" <%= canEdit ? '' : 'disabled' %>>
+        </div>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-[1fr_auto] mt-4">
+        <div>
+          <label class="sr-label" for="sr-owner">Who (owner)</label>
+          <% if (canEdit && (assignablePeople || []).length > 0) { %>
+            <select id="sr-owner" class="sr-input mt-1.5">
+              <option value="">&mdash; owner &mdash;</option>
+              <% (assignablePeople || []).forEach(function(p){ %>
+                <option value="<%= p.entityType %>:<%= p.externalId %>:<%= p.name %>" <%= p.externalId === rock.ownerExternalId ? 'selected' : '' %>><%= p.name %></option>
+              <% }); %>
+            </select>
+          <% } else { %>
+            <input class="sr-input mt-1.5" type="text" value="<%= _ownerLabel %>" disabled>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Describe the Rock -> rocks.description -->
+    <div class="sr-card p-5 sm:p-6 mt-5">
+      <label class="sr-label" for="sr-description">Describe the Rock</label>
+      <p class="sr-hint mt-0.5">In a sentence or two, what does done look like?</p>
+      <textarea id="sr-description" class="sr-textarea mt-2" maxlength="5000" <%= canEdit ? '' : 'disabled' %> placeholder="Describe the priority and why it matters this quarter..."><%= rock.description || '' %></textarea>
+    </div>
+
+    <!-- Is my Rock SMART? Five free-text prompts -> smart_data -->
+    <div class="sr-card p-5 sm:p-6 mt-5">
+      <h2 class="sr-label" style="font-size:1.05rem;">Is my Rock SMART?</h2>
+      <p class="sr-hint mt-0.5 mb-3">Answer each prompt. These are the heart of the planner.</p>
+
+      <div class="space-y-4">
+        <div class="flex gap-3">
+          <div class="sr-smart-letter">S</div>
+          <div class="flex-1">
+            <label class="sr-label" for="sr-specific">Specific</label>
+            <p class="sr-hint">What specifically will I achieve?</p>
+            <textarea id="sr-specific" class="sr-textarea mt-1.5" maxlength="4000" <%= canEdit ? '' : 'disabled' %>><%= _smart.specific || '' %></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="sr-smart-letter">M</div>
+          <div class="flex-1">
+            <label class="sr-label" for="sr-measurable">Measurable</label>
+            <p class="sr-hint">How will I measure completion?</p>
+            <textarea id="sr-measurable" class="sr-textarea mt-1.5" maxlength="4000" <%= canEdit ? '' : 'disabled' %>><%= _smart.measurable || '' %></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="sr-smart-letter">A</div>
+          <div class="flex-1">
+            <label class="sr-label" for="sr-attainable">Attainable</label>
+            <p class="sr-hint">Can I get it done with the time and resources I have?</p>
+            <textarea id="sr-attainable" class="sr-textarea mt-1.5" maxlength="4000" <%= canEdit ? '' : 'disabled' %>><%= _smart.attainable || '' %></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="sr-smart-letter">R</div>
+          <div class="flex-1">
+            <label class="sr-label" for="sr-relevant">Relevant</label>
+            <p class="sr-hint">Is it tied to our 1-year plan?</p>
+            <textarea id="sr-relevant" class="sr-textarea mt-1.5" maxlength="4000" <%= canEdit ? '' : 'disabled' %>><%= _smart.relevant || '' %></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="sr-smart-letter">T</div>
+          <div class="flex-1">
+            <label class="sr-label" for="sr-timeFramed">Time-framed</label>
+            <p class="sr-hint">Key dates along the way and the final date.</p>
+            <textarea id="sr-timeFramed" class="sr-textarea mt-1.5" maxlength="4000" <%= canEdit ? '' : 'disabled' %>><%= _smart.timeFramed || '' %></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Milestones: reuse the existing rock_milestones API. -->
+    <div class="sr-card p-5 sm:p-6 mt-5" id="sr-ms-card">
+      <h2 class="sr-label" style="font-size:1.05rem;">Milestones</h2>
+      <p class="sr-hint mt-0.5 mb-3">First step, mid steps, and the finish line. Check off as you go.</p>
+      <div id="sr-ms-list"></div>
+      <% if (canEdit) { %>
+      <form id="sr-ms-add" class="no-print flex flex-wrap items-center gap-2 mt-3">
+        <input type="text" name="title" required maxlength="255" placeholder="+ milestone (e.g. First step)" class="sr-input" style="flex:1 1 200px;">
+        <input type="date" name="dueDate" class="sr-input" style="flex:0 0 auto; width:auto;" title="By date (optional)">
+        <button type="submit" class="sr-btn sr-btn-primary">Add</button>
+      </form>
+      <% } %>
+    </div>
+
+    <!-- Describe your finish line -> smart_data.finishLine -->
+    <div class="sr-card p-5 sm:p-6 mt-5">
+      <label class="sr-label" for="sr-finishLine">Describe your finish line</label>
+      <p class="sr-hint mt-0.5">When this is unmistakably done, what is true?</p>
+      <textarea id="sr-finishLine" class="sr-textarea mt-2" maxlength="2000" <%= canEdit ? '' : 'disabled' %> placeholder="The moment I know this Rock is complete..."><%= _smart.finishLine || '' %></textarea>
+    </div>
+
+    <!-- Resources Needed -> smart_data.resources[] -->
+    <div class="sr-card p-5 sm:p-6 mt-5">
+      <h2 class="sr-label" style="font-size:1.05rem;">Resources Needed</h2>
+      <p class="sr-hint mt-0.5 mb-3">People, tools, budget, or information this Rock depends on.</p>
+      <div id="sr-resources"></div>
+      <% if (canEdit) { %>
+      <form id="sr-resources-add" class="no-print flex items-center gap-2 mt-3">
+        <input type="text" name="item" maxlength="500" placeholder="+ resource" class="sr-input" style="flex:1;">
+        <button type="submit" class="sr-btn sr-btn-ghost">Add</button>
+      </form>
+      <% } %>
+    </div>
+
+    <!-- Foreseen Obstacles -> smart_data.obstacles[] -->
+    <div class="sr-card p-5 sm:p-6 mt-5">
+      <h2 class="sr-label" style="font-size:1.05rem;">Foreseen Obstacles</h2>
+      <p class="sr-hint mt-0.5 mb-3">What could get in the way, so you can plan around it now.</p>
+      <div id="sr-obstacles"></div>
+      <% if (canEdit) { %>
+      <form id="sr-obstacles-add" class="no-print flex items-center gap-2 mt-3">
+        <input type="text" name="item" maxlength="500" placeholder="+ obstacle" class="sr-input" style="flex:1;">
+        <button type="submit" class="sr-btn sr-btn-ghost">Add</button>
+      </form>
+      <% } %>
+    </div>
+
+    <% if (canEdit) { %>
+    <div class="no-print flex items-center justify-end gap-2 mt-6">
+      <span id="sr-saved-2" class="sr-saved" style="display:none;">Saved</span>
+      <button type="button" id="sr-save-2" class="sr-btn sr-btn-primary">Save SMART Rock</button>
+    </div>
+    <% } %>
+  </div>
+</section>
+
+<script>
+(function(){
+  var ROCK_ID = <%- jsonForScript(rock.id) %>;
+  var CAN_EDIT = <%- jsonForScript(!!canEdit) %>;
+  var MILESTONES = <%- jsonForScript(milestones || []) %>;
+  var RESOURCES = <%- jsonForScript(_resources) %>;
+  var OBSTACLES = <%- jsonForScript(_obstacles) %>;
+
+  // ---- API helper (cookie auth, same pattern as the dashboard) ----
+  function api(method, path, body){
+    var opts = { method: method, headers: {}, credentials: 'same-origin' };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch('/api/v1' + path, opts).then(function(r){
+      if (!r.ok) {
+        return r.text().then(function(text){
+          var j = {}; try { j = text ? JSON.parse(text) : {}; } catch(e){}
+          var inner = j.error || {};
+          throw { status: r.status, code: inner.code || 'API_ERROR', message: inner.message || ('HTTP ' + r.status) };
+        });
+      }
+      return r.status === 204 ? {} : r.json();
+    });
+  }
+  function fmtErr(e){ return e ? ((e.code ? e.code + ': ' : '') + (e.message || 'error')) : 'Unknown error'; }
+  function $(id){ return document.getElementById(id); }
+
+  // ---- Save state flash ----
+  function flashSaved(){
+    [$('sr-saved'), $('sr-saved-2')].forEach(function(el){
+      if (!el) return; el.style.display = 'inline'; el.textContent = 'Saved';
+      setTimeout(function(){ el.style.display = 'none'; }, 2000);
+    });
+  }
+
+  // ---- Resources / Obstacles add-lists (client-managed, persisted on Save) ----
+  // Rendered via textContent so user strings can never inject markup.
+  function renderList(hostId, arr){
+    var host = $(hostId); if (!host) return;
+    host.innerHTML = '';
+    if (!arr.length) {
+      var empty = document.createElement('p');
+      empty.className = 'sr-hint'; empty.textContent = 'None added yet.';
+      host.appendChild(empty); return;
+    }
+    arr.forEach(function(val, i){
+      var row = document.createElement('div'); row.className = 'sr-list-row';
+      var dot = document.createElement('span'); dot.textContent = '•';
+      dot.style.color = 'var(--ink-mute,#6b7280)'; row.appendChild(dot);
+      var span = document.createElement('span');
+      span.style.flex = '1'; span.style.fontSize = '14px'; span.textContent = val;
+      row.appendChild(span);
+      if (CAN_EDIT) {
+        var del = document.createElement('button');
+        del.type = 'button'; del.className = 'sr-chip-del no-print';
+        del.setAttribute('aria-label', 'Remove'); del.textContent = '×';
+        del.addEventListener('click', function(){ arr.splice(i, 1); renderList(hostId, arr); });
+        row.appendChild(del);
+      }
+      host.appendChild(row);
+    });
+  }
+  function wireAddList(formId, arr, hostId){
+    var form = $(formId); if (!form) return;
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var input = form.querySelector('input[name="item"]');
+      var v = (input.value || '').trim();
+      if (!v) return;
+      if (arr.length >= 30) { alert('Up to 30 items.'); return; }
+      arr.push(v); input.value = ''; renderList(hostId, arr);
+    });
+  }
+  renderList('sr-resources', RESOURCES);
+  renderList('sr-obstacles', OBSTACLES);
+  wireAddList('sr-resources-add', RESOURCES, 'sr-resources');
+  wireAddList('sr-obstacles-add', OBSTACLES, 'sr-obstacles');
+
+  // ---- Milestones (reuse the existing milestones API) ----
+  function fmtDate(d){ return d ? String(d).slice(0,10) : ''; }
+  function todayStr(){
+    var n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
+  }
+  function renderMilestones(){
+    var host = $('sr-ms-list'); if (!host) return;
+    host.innerHTML = '';
+    if (!MILESTONES.length) {
+      var empty = document.createElement('p');
+      empty.className = 'sr-hint'; empty.textContent = 'No milestones yet. Add the first step below.';
+      host.appendChild(empty); return;
+    }
+    var today = todayStr();
+    MILESTONES.forEach(function(m){
+      var row = document.createElement('div'); row.className = 'sr-ms-row'; row.setAttribute('data-ms-id', m.id);
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'no-print'; cb.style.accentColor = '#059669';
+      cb.checked = !!m.completedAt; cb.disabled = !CAN_EDIT;
+      cb.addEventListener('change', function(){
+        var checked = cb.checked;
+        api('POST', '/milestones/' + m.id + '/complete', { completed: checked })
+          .then(function(res){ m.completedAt = (res.milestone && res.milestone.completedAt) || (checked ? new Date().toISOString() : null); renderMilestones(); })
+          .catch(function(e){ cb.checked = !checked; alert('Milestone update failed: ' + fmtErr(e)); });
+      });
+      row.appendChild(cb);
+
+      var title = document.createElement('span');
+      title.style.flex = '1'; title.style.fontSize = '14px';
+      title.textContent = m.title;
+      if (m.completedAt) { title.style.textDecoration = 'line-through'; title.style.color = 'var(--ink-mute,#9ca3af)'; }
+      row.appendChild(title);
+
+      var due = fmtDate(m.dueDate);
+      var dueEl = document.createElement('span');
+      dueEl.style.fontSize = '12px'; dueEl.style.flex = 'none';
+      if (due) {
+        dueEl.textContent = 'by ' + due;
+        var overdue = !m.completedAt && due < today;
+        dueEl.style.color = overdue ? '#e11d48' : 'var(--ink-mute,#9ca3af)';
+        if (overdue) dueEl.style.fontWeight = '600';
+      } else {
+        dueEl.textContent = m.completedAt ? ('done ' + fmtDate(m.completedAt)) : '';
+        dueEl.style.color = 'var(--ink-mute,#9ca3af)';
+      }
+      row.appendChild(dueEl);
+
+      if (CAN_EDIT) {
+        var del = document.createElement('button');
+        del.type = 'button'; del.className = 'sr-chip-del no-print';
+        del.setAttribute('aria-label', 'Delete milestone'); del.textContent = '×';
+        del.title = 'Delete milestone (its to-dos survive)';
+        del.addEventListener('click', function(){
+          if (!confirm('Delete this milestone? Its to-dos survive, unlinked.')) return;
+          api('DELETE', '/milestones/' + m.id)
+            .then(function(){ MILESTONES = MILESTONES.filter(function(x){ return x.id !== m.id; }); renderMilestones(); })
+            .catch(function(e){ alert('Delete failed: ' + fmtErr(e)); });
+        });
+        row.appendChild(del);
+      }
+      host.appendChild(row);
+    });
+  }
+  renderMilestones();
+
+  var msAdd = $('sr-ms-add');
+  if (msAdd) {
+    msAdd.addEventListener('submit', function(e){
+      e.preventDefault();
+      var titleEl = msAdd.querySelector('input[name="title"]');
+      var dueEl = msAdd.querySelector('input[name="dueDate"]');
+      var title = (titleEl.value || '').trim();
+      if (!title) return;
+      var body = { title: title };
+      if (dueEl.value) body.dueDate = dueEl.value;
+      api('POST', '/rocks/' + ROCK_ID + '/milestones', body)
+        .then(function(res){ if (res.milestone) MILESTONES.push(res.milestone); titleEl.value = ''; dueEl.value = ''; renderMilestones(); })
+        .catch(function(e){ alert('Add milestone failed: ' + fmtErr(e)); });
+    });
+  }
+
+  // ---- Save: description + title + dueDate + owner + smartData ----
+  function collectSmart(){
+    function val(id){ var el = $(id); return el && el.value.trim() ? el.value : undefined; }
+    var out = {
+      specific: val('sr-specific'),
+      measurable: val('sr-measurable'),
+      attainable: val('sr-attainable'),
+      relevant: val('sr-relevant'),
+      timeFramed: val('sr-timeFramed'),
+      finishLine: val('sr-finishLine'),
+    };
+    if (RESOURCES.length) out.resources = RESOURCES.slice();
+    if (OBSTACLES.length) out.obstacles = OBSTACLES.slice();
+    return out;
+  }
+  function doSave(btn){
+    if (!CAN_EDIT) return;
+    var titleEl = $('sr-title');
+    var title = (titleEl.value || '').trim();
+    if (title.length < 3) { alert('Rock title must be at least 3 characters.'); return; }
+    var body = {
+      title: title,
+      description: $('sr-description').value,
+      smartData: collectSmart(),
+    };
+    var dueEl = $('sr-due');
+    if (dueEl.value) {
+      // The rocks API wants an ISO datetime; anchor the date at midnight UTC.
+      body.dueDate = new Date(dueEl.value + 'T00:00:00.000Z').toISOString();
+    }
+    var ownerEl = $('sr-owner');
+    if (ownerEl && ownerEl.value) {
+      var p = ownerEl.value.split(':');
+      body.ownerEntityType = p[0] || undefined;
+      body.ownerExternalId = p[1] || undefined;
+      body.ownerName = p.slice(2).join(':') || undefined;
+    }
+    var buttons = [$('sr-save'), $('sr-save-2')].filter(Boolean);
+    buttons.forEach(function(b){ b.disabled = true; });
+    api('PUT', '/rocks/' + ROCK_ID, body)
+      .then(function(){ flashSaved(); })
+      .catch(function(e){ alert('Save failed: ' + fmtErr(e)); })
+      .then(function(){ buttons.forEach(function(b){ b.disabled = false; }); });
+  }
+  [$('sr-save'), $('sr-save-2')].forEach(function(b){ if (b) b.addEventListener('click', function(){ doSave(b); }); });
+
+  // ---- Print ----
+  var printBtn = $('sr-print');
+  if (printBtn) printBtn.addEventListener('click', function(){ window.print(); });
+})();
+</script>

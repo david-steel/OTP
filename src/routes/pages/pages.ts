@@ -325,6 +325,60 @@ export default async function pageRoutes(app: FastifyInstance) {
     return renderInShell(request, reply, 'guide-connect-agent', { title: 'Connect Your Agent - OTP', description: 'Three ways to get your organization onto OTP: a copy-paste AI prompt that generates your first OOS, a one-line Claude Code install for the MCP server and slash commands, or the in-app org chart.', canonical: BASE_URL + '/guide/connect-your-agent', breadcrumbs: bc({ name: 'User Guide', url: BASE_URL + '/guide' }, { name: 'Connect Your Agent', url: BASE_URL + '/guide/connect-your-agent' }) });
   });
 
+  // SMART Rock builder (free, Phase 1). A dedicated, printable planner for one
+  // Rock: the "Describe the Rock" long description, the five free-text SMART
+  // answers, milestones (reused from the existing milestones API), a finish
+  // line, and resources / obstacles lists. Org-scoped; 404s a rock not in the
+  // viewer's org (never leaks another tenant's uuid). Authed only -- a
+  // signed-out visitor hitting this gets the 401/redirect the auth preHandler
+  // applies; if they slip through, no org -> 404. Read-only roles
+  // (observer/inactive/free) see the planner with inputs disabled and no Save.
+  app.get<{ Params: { id: string } }>('/rocks/:id/smart', async (request, reply) => {
+    const id = validateUuidParam(request.params.id);
+    if (!id) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+
+    const org = await resolveRequestOrg(request);
+    // No org for this viewer (signed out, or not a member) -> 404, same shape
+    // as the public not-found pages above. Never reveals the rock exists.
+    if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+
+    const [rock] = await db.select().from(rocks)
+      .where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id), isNull(rocks.deletedAt)))
+      .limit(1);
+    if (!rock) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+
+    const milestones = await db.select().from(rockMilestones)
+      .where(and(eq(rockMilestones.rockId, id), eq(rockMilestones.organizationId, org.id)))
+      .orderBy(asc(rockMilestones.sortOrder), asc(rockMilestones.createdAt));
+
+    // Owner reassign select reuses the dashboard's assignable-people source
+    // (humans + agents from the org chart, humans first then alphabetical).
+    const graph = await getOrgTeamGraph(org.id, org.name || 'Organization');
+    const assignablePeople = graph.nodes
+      .filter((n: any) => n.type === 'human' || n.type === 'agent')
+      .map((n: any) => ({ entityType: n.type, externalId: n.externalId, name: n.label }))
+      .sort((a: any, b: any) => a.entityType !== b.entityType
+        ? (a.entityType === 'human' ? -1 : 1)
+        : a.name.localeCompare(b.name));
+
+    // Read-only roles cannot edit (mirrors gateReadOnlyRole on the API).
+    const member = (request as any).orgMember as { role?: string } | null;
+    const READ_ONLY_ROLES = new Set(['observer', 'inactive', 'free']);
+    const canEdit = !(member?.role && READ_ONLY_ROLES.has(member.role));
+
+    return renderInShell(request, reply, 'rock-smart', {
+      title: 'SMART Rock Planner - OTP',
+      description: 'Build a SMART quarterly priority: a clear description, the five SMART criteria, milestones, finish line, resources, and obstacles. Printable.',
+      noindex: true,
+      canonical: BASE_URL + '/rocks/' + id + '/smart',
+      breadcrumbs: bc({ name: 'Dashboard', url: BASE_URL + '/dashboard' }, { name: 'SMART Rock', url: BASE_URL + '/rocks/' + id + '/smart' }),
+      rock,
+      milestones,
+      assignablePeople,
+      canEdit,
+    });
+  });
+
   // Why OTP -- the persuasion page (frustrations + outcomes + objections)
   // Start Here -- the 30-min founder intro page (Calendly embed)
   app.get('/start-here', async (request, reply) => {

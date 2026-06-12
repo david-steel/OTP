@@ -9,6 +9,7 @@ import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
+import { smartDataSchema } from '../../shared/smart-rock.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -29,7 +30,11 @@ const createRockSchema = z.object({
 
 const updateRockSchema = z.object({
   title: z.string().min(3).max(500).optional(),
-  description: z.string().optional(),
+  // The "Describe the Rock" long description (also driven by the SMART planner).
+  description: z.string().max(5000).optional().nullable(),
+  // SMART Rock enrichment (free, Phase 1). Pure schema lives in
+  // shared/smart-rock.ts so it stays unit-testable without a DB. null clears.
+  smartData: smartDataSchema.optional().nullable(),
   ownerEntityType: z.enum(['agent', 'human']).optional(),
   ownerExternalId: z.string().max(120).optional(),
   ownerName: z.string().max(255).optional(),
@@ -164,6 +169,8 @@ export default async function rockRoutes(app: FastifyInstance) {
     const d = body.data;
     if (d.title !== undefined) updates.title = d.title;
     if (d.description !== undefined) updates.description = d.description;
+    // SMART enrichment: persist the whole jsonb slice (null clears it).
+    if (d.smartData !== undefined) updates.smartData = d.smartData;
     if (d.ownerEntityType !== undefined) updates.ownerEntityType = d.ownerEntityType;
     if (d.ownerExternalId !== undefined) updates.ownerExternalId = d.ownerExternalId;
     if (d.ownerName !== undefined) updates.ownerName = d.ownerName;

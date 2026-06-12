@@ -918,6 +918,12 @@ export const rocks = pgTable('rocks', {
   // not the next move. Added via ensure-next-actions.ts boot DDL.
   nextAction: text('next_action'),
   nextActionSetAt: timestamp('next_action_set_at'),
+  // SMART Rock enrichment (free, Phase 1). The five SMART criteria are
+  // free-text answers, plus a finish-line description and resources/obstacles
+  // string lists. Shape lives in shared/smart-rock.ts. Nullable; null = "not
+  // built". Queried by rock id, not into the jsonb, so no GIN index. Added via
+  // ensure-smart-rocks.ts boot DDL.
+  smartData: jsonb('smart_data'),
   // Manual display order for the Rock Review. Lower sorts first; NULL
   // (unnumbered) sorts after all numbered rocks by soonest due date.
   // Added via ensure-kpis-rocks-team.ts boot DDL.

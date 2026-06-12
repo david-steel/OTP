@@ -431,7 +431,8 @@
                     <%= r.onTrack ? 'On track' : 'Off track' %>
                   </button>
                   <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-gray-900"><%= r.title %><% if (_msList.length > 0) { %> <span class="ms-chip ml-1 align-middle inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold border <%= _msDone === _msList.length ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200' %>" title="Milestones complete"><%= _msDone %>/<%= _msList.length %></span><% } %></div>
+                    <% var _hasSmart = (function(){ var s = r.smartData; if (!s || typeof s !== 'object') return false; if (s.specific||s.measurable||s.attainable||s.relevant||s.timeFramed||s.finishLine) return true; if (Array.isArray(s.resources) && s.resources.some(function(x){return x&&x.trim();})) return true; if (Array.isArray(s.obstacles) && s.obstacles.some(function(x){return x&&x.trim();})) return true; return false; })(); %>
+                    <div class="font-semibold text-gray-900"><%= r.title %><% if (_msList.length > 0) { %> <span class="ms-chip ml-1 align-middle inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold border <%= _msDone === _msList.length ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200' %>" title="Milestones complete"><%= _msDone %>/<%= _msList.length %></span><% } %><% if (_hasSmart) { %> <a href="/rocks/<%= r.id %>/smart" class="ml-1 align-middle inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-orgy-soft text-orgy-on-light border-orgy-line hover:underline" title="This Rock has a SMART plan">SMART</a><% } %></div>
                     <div class="text-[11px] text-gray-500 mt-0.5">
                       <%= due ? 'Due ' + due.toLocaleDateString() : 'No due date' %>
                       <%= overdue ? ' -- OVERDUE' : '' %>
@@ -470,6 +471,10 @@
                         <button type="submit" class="na-save text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button>
                         <button type="button" class="na-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
                       </form>
+                    </div>
+                    <!-- SMART planner: dedicated printable page enriching this rock. -->
+                    <div class="mt-1.5">
+                      <a href="/rocks/<%= r.id %>/smart" class="text-[11px] text-orgy-blue font-semibold hover:underline"><%= _hasSmart ? 'SMART planner' : '+ Build SMART' %></a>
                     </div>
                     <!-- Milestones: expandable per-rock list. Checkbox toggles
                          complete (optimistic, via /api/v1/milestones/:id/complete);
