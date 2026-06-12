@@ -325,6 +325,103 @@ export default async function pageRoutes(app: FastifyInstance) {
     return renderInShell(request, reply, 'guide-connect-agent', { title: 'Connect Your Agent - OTP', description: 'Three ways to get your organization onto OTP: a copy-paste AI prompt that generates your first OOS, a one-line Claude Code install for the MCP server and slash commands, or the in-app org chart.', canonical: BASE_URL + '/guide/connect-your-agent', breadcrumbs: bc({ name: 'User Guide', url: BASE_URL + '/guide' }, { name: 'Connect Your Agent', url: BASE_URL + '/guide/connect-your-agent' }) });
   });
 
+  // Quarterly Priorities hub (/rocks). Landing page for the viewer's SMART
+  // Rocks this quarter: a card grid with status, due date, SMART badge, and a
+  // milestone chip, each card linking to its /rocks/:id/smart planner. The
+  // "+ New SMART Rock" button creates a placeholder rock and routes into the
+  // planner (same flow as the dashboard tile "+"). Owner resolution mirrors
+  // /me/todos exactly (claimedEntityIds, founder-tile stripping for
+  // non-founders, impersonation-aware) so a member only ever sees their own
+  // Rocks -- never another seat's. Read-only roles see the list but no create
+  // button (same canEdit gate as the /rocks/:id/smart planner).
+  app.get('/rocks', async (request, reply) => {
+    const auth = getAuth(request);
+    // Signed-out -> v7 marketing 404 shape (same as the SMART planner does for
+    // the no-org case). The auth preHandler also redirects unauth users.
+    if (!auth?.userId) return renderV7(reply.status(401), '404', { title: 'Page Not Found - OTP', noindex: true });
+
+    const org = await resolveRequestOrg(request);
+    if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+
+    // ---- Resolve the viewer's owned seat(s) (mirrors /me/todos) ----
+    const [me] = await db.select({ claimedEntityIds: orgMembers.claimedEntityIds })
+      .from(orgMembers)
+      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+      .limit(1);
+    const _impRocks = (request as any).impersonation as { as?: string } | null;
+    const _effectiveClerkIdRocks = _impRocks?.as || auth.userId;
+    const _isLegacyFounderRocks = !!(_effectiveClerkIdRocks && (org as any).clerkOrgId === _effectiveClerkIdRocks);
+    const _founderTilesRocks = await getFounderTileIds(org.id, (org as any).clerkOrgId);
+    let ownerExternalIds: string[] = [];
+    if (me?.claimedEntityIds && Array.isArray(me.claimedEntityIds)) {
+      const _raw = (me.claimedEntityIds as string[]).filter(x => typeof x === 'string' && x.length > 0);
+      ownerExternalIds = _isLegacyFounderRocks ? _raw : _raw.filter((id: string) => !_founderTilesRocks.has(id));
+    }
+    if (ownerExternalIds.length === 0 && _isLegacyFounderRocks) {
+      ownerExternalIds = [..._founderTilesRocks];
+    }
+
+    // Current quarter in the rocks schema's YYYY-QN format (NOT quarterLabel,
+    // which renders Qn-YYYY for display). The dashboard tile uses the same
+    // computation; keep them in lockstep.
+    const _now = new Date();
+    const _qn = Math.floor(_now.getMonth() / 3) + 1;
+    const currentQuarter = `${_now.getFullYear()}-Q${_qn}`;
+
+    // Owned rocks for the current quarter. Same filters as the dashboard's
+    // myRocks (not deleted, not completed, not archived), ordered by position
+    // then due date so the hub matches the tile / Rock Review ordering.
+    let myRocks: any[] = [];
+    if (ownerExternalIds.length > 0) {
+      myRocks = await db.select().from(rocks)
+        .where(and(
+          eq(rocks.organizationId, org.id),
+          isNull(rocks.deletedAt),
+          isNull(rocks.completedAt),
+          isNull(rocks.archivedAt),
+          eq(rocks.quarter, currentQuarter),
+          inArray(rocks.ownerExternalId, ownerExternalIds),
+        ))
+        .orderBy(sql`${rocks.position} asc nulls last`, asc(rocks.dueDate));
+    }
+
+    // Milestone counts per rock (n done / m total) for the card chip. Cheap:
+    // one grouped query over the viewer's rocks.
+    const milestoneCounts: Record<string, { done: number; total: number }> = {};
+    if (myRocks.length > 0) {
+      const _rockIds = myRocks.map((r: any) => r.id);
+      const _msRows = await db.select({ rockId: rockMilestones.rockId, completedAt: rockMilestones.completedAt })
+        .from(rockMilestones)
+        .where(and(eq(rockMilestones.organizationId, org.id), inArray(rockMilestones.rockId, _rockIds)));
+      for (const m of _msRows) {
+        const c = (milestoneCounts[m.rockId] ||= { done: 0, total: 0 });
+        c.total += 1;
+        if (m.completedAt) c.done += 1;
+      }
+    }
+
+    // Read-only roles cannot create (mirrors gateReadOnlyRole on the API and
+    // the canEdit gate on the /rocks/:id/smart planner).
+    const member = (request as any).orgMember as { role?: string; email?: string } | null;
+    const READ_ONLY_ROLES = new Set(['observer', 'inactive', 'free']);
+    const canEdit = !(member?.role && READ_ONLY_ROLES.has(member.role));
+
+    return renderInShell(request, reply, 'rocks-hub', {
+      title: 'Quarterly Priorities - OTP',
+      description: 'Your SMART Rocks for this quarter: build, track, and run your quarterly priorities. Each card opens the printable SMART planner.',
+      noindex: true,
+      canonical: BASE_URL + '/rocks',
+      breadcrumbs: bc({ name: 'Dashboard', url: BASE_URL + '/dashboard' }, { name: 'Quarterly Priorities', url: BASE_URL + '/rocks' }),
+      rocks: myRocks,
+      milestoneCounts,
+      quarter: currentQuarter,
+      canEdit,
+      // The owner id the create-rock "+" stamps. First owned seat, else the
+      // member email, else 'self' (same fallback chain the dashboard uses).
+      meOwnerId: ownerExternalIds[0] || member?.email || 'self',
+    });
+  });
+
   // SMART Rock builder (free, Phase 1). A dedicated, printable planner for one
   // Rock: the "Describe the Rock" long description, the five free-text SMART
   // answers, milestones (reused from the existing milestones API), a finish

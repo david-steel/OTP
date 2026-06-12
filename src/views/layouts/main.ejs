@@ -502,6 +502,7 @@
             <a href="/dashboard/team" class="py-2 px-6 rounded-lg transition-colors">Team chart</a>
             <a href="/dashboard/kpis" class="py-2 px-6 rounded-lg transition-colors">KPIs</a>
             <a href="/me/todos" class="py-2 px-6 rounded-lg transition-colors">To-Dos</a>
+            <a href="/rocks" class="py-2 px-6 rounded-lg transition-colors">Quarterly Priorities</a>
             <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/oos-operating-plan" class="py-2 px-6 rounded-lg transition-colors">Operating plan</a><% } %>
             <% if (_mHas(_mINVITER))  { %><a href="/dashboard/members" class="py-2 px-6 rounded-lg transition-colors">Members</a><% } %>
             <% if (_mHas(_mORG_WIDE)) { %><a href="/dashboard/publisher" class="py-2 px-6 rounded-lg transition-colors">Publisher</a><% } %>
@@ -563,7 +564,8 @@
          doc:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/>',
          grid4:  '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
          inbox:  '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
-         zap:    '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'
+         zap:    '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+         target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
        };
        // Gates + hrefs mirror the retired dashboard-tabs.ejs rail 1:1:
        // Issues=INVITER, My Practice=ORG_WIDE+coachOnly, CEO=owner/visionary,
@@ -578,6 +580,7 @@
          { href:'/dashboard/ids',                label:'Issues',         icon:_sbI.alert,  allow:_sbINVITER },
          { divider:true },
          { href:'/dashboard/oos-operating-plan', label:'Operating plan', icon:_sbI.map,    allow:_sbORG_WIDE },
+         { href:'/rocks',                        label:'Quarterly Priorities', icon:_sbI.target, allow:true },
          { href:'/dashboard/practice',           label:'My Practice',    icon:_sbI.case2,  allow:_sbORG_WIDE, coach:true },
          { href:'/dashboard/ceo',                label:'CEO',            icon:_sbI.star,   allow:_sbCEO },
          { href:'/dashboard/members',            label:'Members',        icon:_sbI.people, allow:_sbINVITER },

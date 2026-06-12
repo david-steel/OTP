@@ -1,0 +1,177 @@
+<% /*
+  /rocks -- the Quarterly Priorities hub. v7 layout, dual-rendered
+  (renderInShell): a signed-in viewer gets the app shell; a signed-out visitor
+  would get the v7 compose (the route 401/404s the signed-out/no-org case
+  before we get here, so in practice this is always authed). Light editorial
+  style matching the guide / SMART planner pages.
+
+  Locals: rocks (array), milestoneCounts (map rockId -> {done,total}),
+  quarter (string, YYYY-QN), canEdit (bool).
+
+  Security notes (the repo's recurring EJS gotchas):
+    - All user-supplied strings (rock titles, owner names, status notes) are
+      HTML-escaped via the escaping interpolation tag.
+    - jsonForScript() serializes the inline script payload so a value
+      containing a closing script tag cannot break out of the script context.
+    - This header is a JS block comment, NOT an EJS hash comment: an EJS hash
+      comment closes on the first percent-gt it sees, so a tag example inside
+      one would crash the parser (the May 2026 /dashboard 500 class).
+*/ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<%
+  var _rocks = Array.isArray(rocks) ? rocks : [];
+  var _counts = (typeof milestoneCounts === 'object' && milestoneCounts) ? milestoneCounts : {};
+  var _today = new Date();
+  function _hasSmart(r){
+    var s = r && r.smartData;
+    if (!s || typeof s !== 'object') return false;
+    if (s.specific || s.measurable || s.attainable || s.relevant || s.timeFramed || s.finishLine) return true;
+    if (Array.isArray(s.resources) && s.resources.some(function(x){ return x && String(x).trim(); })) return true;
+    if (Array.isArray(s.obstacles) && s.obstacles.some(function(x){ return x && String(x).trim(); })) return true;
+    return false;
+  }
+%>
+<style>
+  .qp-wrap { max-width: 1080px; }
+  .qp-card { background: var(--card, #fff); border: 1.5px solid var(--line, #e5e7eb); border-radius: 14px; transition: border-color .15s ease, box-shadow .15s ease; }
+  .qp-card:hover { border-color: var(--blue, #0d7df2); box-shadow: 0 2px 14px rgba(13,125,242,.08); }
+  .qp-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 640px) { .qp-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .qp-grid { grid-template-columns: repeat(3, 1fr); } }
+  .qp-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; line-height: 1.4; }
+  .qp-badge-on { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+  .qp-badge-off { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+  .qp-badge-done { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+  .qp-badge-smart { background: var(--orgy-soft, #fff6da); color: var(--orgy-on-light, #8a6d1a); border-color: var(--orgy-line, #f0dca0); }
+  .qp-badge-ms { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+  .qp-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; padding: 10px 18px; border-radius: 10px; border: 1.5px solid transparent; cursor: pointer; text-decoration: none; }
+  .qp-btn-primary { background: var(--blue, #0d7df2); color: #fff; }
+  .qp-btn-primary:hover { background: var(--blue-deep, #0a63c2); }
+  .qp-btn-primary:disabled { opacity: .5; cursor: default; }
+  .qp-due-over { color: #e11d48; font-weight: 600; }
+</style>
+
+<section class="bg-[var(--white)]">
+  <div class="qp-wrap mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px]"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
+
+    <nav class="text-[12.5px] text-[var(--ink-mute,#6b7280)] mb-4">
+      <a href="/dashboard" class="hover:text-[var(--ink,#1f2937)] font-semibold">Dashboard</a>
+      <span class="mx-1.5">/</span>
+      <span>Quarterly Priorities</span>
+    </nav>
+
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="font-bold text-[2rem] tracking-[-0.02em] text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">Quarterly Priorities<% if (quarter) { %> <span class="text-[var(--ink-mute,#9ca3af)] font-semibold text-[1.1rem] align-middle"><%= quarter %></span><% } %></h1>
+        <p class="text-[15px] text-[var(--ink-soft,#374151)] mt-1.5 max-w-[40rem]">Your SMART Rocks for this quarter. Build, track, and run them.</p>
+      </div>
+      <% if (canEdit) { %>
+      <button type="button" id="qp-new" class="qp-btn qp-btn-primary" title="Build a SMART quarterly priority">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        New SMART Rock
+      </button>
+      <% } %>
+    </div>
+
+    <% if (_rocks.length === 0) { %>
+      <div class="qp-card mt-8 px-6 py-12 text-center" style="border-style:dashed;">
+        <div class="mx-auto mb-4 flex items-center justify-center" style="width:48px;height:48px;border-radius:12px;background:var(--orgy-soft,#fff6da);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orgy-on-light,#8a6d1a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        </div>
+        <h2 class="text-[1.05rem] font-bold text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">No quarterly priorities yet</h2>
+        <p class="text-[14px] text-[var(--ink-soft,#374151)] mt-1.5">Create your first SMART Rock to focus the quarter on what matters.</p>
+        <% if (canEdit) { %>
+        <div class="mt-5">
+          <button type="button" id="qp-new-empty" class="qp-btn qp-btn-primary" title="Build a SMART quarterly priority">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            New SMART Rock
+          </button>
+        </div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="qp-grid mt-8">
+        <% _rocks.forEach(function(r){
+             var due = r.dueDate ? new Date(r.dueDate) : null;
+             var overdue = due && !r.completedAt && due < _today;
+             var owner = r.ownerName || r.ownerExternalId || '';
+             var c = _counts[r.id] || null;
+             var smart = _hasSmart(r);
+        %>
+        <a href="/rocks/<%= r.id %>/smart" class="qp-card p-5 flex flex-col gap-3 group" style="text-decoration:none;color:inherit;">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <% if (r.completedAt) { %>
+              <span class="qp-badge qp-badge-done">Completed</span>
+            <% } else if (r.onTrack) { %>
+              <span class="qp-badge qp-badge-on">On track</span>
+            <% } else { %>
+              <span class="qp-badge qp-badge-off">Off track</span>
+            <% } %>
+            <% if (smart) { %><span class="qp-badge qp-badge-smart">SMART</span><% } %>
+            <% if (c && c.total > 0) { %><span class="qp-badge qp-badge-ms"><%= c.done %>/<%= c.total %> milestones</span><% } %>
+          </div>
+          <div class="font-bold text-[15.5px] leading-snug text-[var(--ink,#1f2937)] group-hover:text-[var(--blue-deep,#0a63c2)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;"><%= r.title %></div>
+          <div class="mt-auto pt-1 text-[12.5px] text-[var(--ink-mute,#6b7280)] flex flex-wrap items-center gap-x-3 gap-y-1">
+            <% if (owner) { %><span><%= owner %></span><% } %>
+            <% if (quarter) { %><span><%= quarter %></span><% } %>
+            <span class="<%= overdue ? 'qp-due-over' : '' %>"><%= due ? (due.toLocaleDateString()) : 'No due date' %><%= overdue ? ' (overdue)' : '' %></span>
+          </div>
+        </a>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<% if (canEdit) { %>
+<script>
+(function(){
+  var QUARTER = <%- jsonForScript(quarter || '') %>;
+
+  function api(method, path, body){
+    var opts = { method: method, headers: {}, credentials: 'same-origin' };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch('/api/v1' + path, opts).then(function(r){
+      if (!r.ok) {
+        return r.text().then(function(text){
+          var j = {}; try { j = text ? JSON.parse(text) : {}; } catch(e){}
+          var inner = j.error || {};
+          throw { status: r.status, code: inner.code || 'API_ERROR', message: inner.message || ('HTTP ' + r.status) };
+        });
+      }
+      return r.status === 204 ? {} : r.json();
+    });
+  }
+  function fmtErr(e){ return e ? ((e.code ? e.code + ': ' : '') + (e.message || 'error')) : 'Unknown error'; }
+
+  function quarterEndIso(q){
+    var m = /^(\d{4})-Q([1-4])$/.exec(q || '');
+    var now = new Date();
+    var year = m ? Number(m[1]) : now.getUTCFullYear();
+    var qn = m ? Number(m[2]) : (Math.floor(now.getUTCMonth() / 3) + 1);
+    var endMonth = qn * 3; // 3,6,9,12
+    // Day 0 of next month = last day of endMonth. Noon UTC to dodge TZ edges.
+    return new Date(Date.UTC(year, endMonth, 0, 12, 0, 0)).toISOString();
+  }
+
+  function createRock(btn){
+    if (btn) btn.disabled = true;
+    api('POST', '/rocks', {
+      ownerEntityType: 'human',
+      ownerExternalId: <%- jsonForScript(typeof meOwnerId !== 'undefined' && meOwnerId ? meOwnerId : 'self') %>,
+      title: 'New Quarterly Priority',
+      quarter: QUARTER,
+      dueDate: quarterEndIso(QUARTER),
+    }).then(function(res){
+      var id = res && res.rock && res.rock.id;
+      if (id) { window.location.href = '/rocks/' + id + '/smart'; }
+      else { if (btn) btn.disabled = false; alert('Could not create priority.'); }
+    }).catch(function(e){ if (btn) btn.disabled = false; alert('Create failed: ' + fmtErr(e)); });
+  }
+
+  ['qp-new', 'qp-new-empty'].forEach(function(idv){
+    var b = document.getElementById(idv);
+    if (b) b.addEventListener('click', function(){ createRock(b); });
+  });
+})();
+</script>
+<% } %>

@@ -401,6 +401,9 @@
             <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px]">(<%= myRocks.length %>)</span><% } %>
             <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
           </span>
+          <% if (isIntegrator) { %>
+          <button type="button" id="rocks-build-smart" class="ml-2 shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-gray-500 hover:text-orgy-blue hover:border-orgy-blue transition text-base font-bold leading-none" title="Build a SMART quarterly priority" aria-label="Build a SMART quarterly priority">+</button>
+          <% } %>
         </summary>
         <div class="px-5 pb-5">
         <% if (myRocks.length === 0) { %>
@@ -2049,6 +2052,41 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
   document.querySelectorAll('.rk-edit-cancel').forEach(function(b){ b.addEventListener('click',function(){ b.closest('[data-rock-id]').querySelector('.rk-edit-form').classList.add('hidden'); }); });
   document.querySelectorAll('.rk-edit-form').forEach(function(fm){ fm.addEventListener('submit',function(e){ e.preventDefault(); var c=fm.closest('[data-rock-id]'); api('PUT','/rocks/'+c.dataset.rockId,{title:c.querySelector('.rk-edit-input').value}).then(reload).catch(function(e){alert('Edit failed: '+fmtApiError(e));}); }); });
   document.querySelectorAll('.rk-delete').forEach(function(b){ b.addEventListener('click',function(){ if(!confirm('Delete this priority? This cannot be undone.'))return; api('DELETE','/rocks/'+b.closest('[data-rock-id]').dataset.rockId).then(reload).catch(function(e){alert('Delete failed: '+fmtApiError(e));}); }); });
+
+  // Build SMART: "+" in the Quarterly Priorities tile header. Creates a
+  // placeholder rock owned by the current member (same owner source as the
+  // dashboard's quick-add), for the current quarter with a quarter-end due
+  // date, then routes to /rocks/:id/smart so the user lands in the planner.
+  (function(){
+    var buildBtn = document.getElementById('rocks-build-smart');
+    if (!buildBtn) return;
+    var SMART_OWNER = '<%= (locals.memberClaimedEntityIds && locals.memberClaimedEntityIds[0]) || (locals.member && locals.member.email) || "self" %>';
+    function quarterEndIso(q){
+      // q is "YYYY-Qn". Quarter end = last day of the quarter's 3rd month.
+      var m = /^(\d{4})-Q([1-4])$/.exec(q || '');
+      var now = new Date();
+      var year = m ? Number(m[1]) : now.getUTCFullYear();
+      var qn = m ? Number(m[2]) : (Math.floor(now.getUTCMonth() / 3) + 1);
+      var endMonth = qn * 3; // 3,6,9,12
+      // Day 0 of next month = last day of endMonth. Noon UTC to dodge TZ edges.
+      return new Date(Date.UTC(year, endMonth, 0, 12, 0, 0)).toISOString();
+    }
+    buildBtn.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      buildBtn.disabled = true;
+      api('POST', '/rocks', {
+        ownerEntityType: 'human',
+        ownerExternalId: SMART_OWNER,
+        title: 'New Quarterly Priority',
+        quarter: quarter,
+        dueDate: quarterEndIso(quarter),
+      }).then(function(res){
+        var id = res && res.rock && res.rock.id;
+        if (id) { window.location.href = '/rocks/' + id + '/smart'; }
+        else { buildBtn.disabled = false; alert('Could not create priority.'); }
+      }).catch(function(err){ buildBtn.disabled = false; alert('Create failed: ' + fmtApiError(err)); });
+    });
+  })();
   // Headline team-change + delete
   document.querySelectorAll('.hl-team').forEach(function(sel){ sel.addEventListener('change',function(){ var id=sel.closest('[data-headline-id]').dataset.headlineId; api('PUT','/meetings/'+meetingId+'/headlines/'+id,{teamId:sel.value||null}).then(reload).catch(function(e){alert('Move failed: '+fmtApiError(e));}); }); });
   document.querySelectorAll('.hl-delete').forEach(function(b){ b.addEventListener('click',function(){ if(!confirm('Delete this headline?'))return; var id=b.closest('[data-headline-id]').dataset.headlineId; api('DELETE','/meetings/'+meetingId+'/headlines/'+id).then(reload).catch(function(e){alert('Delete failed: '+fmtApiError(e));}); }); });
