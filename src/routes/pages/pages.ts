@@ -23,6 +23,7 @@ import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/tea
 import { reportsSubtree } from '../../services/chart-permissions.js';
 import { ruleToLabel, RECURRENCE_OPTIONS, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
+import { resolveDemoPageContext } from '../../middleware/demo-access.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
 import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
@@ -339,15 +340,24 @@ export default async function pageRoutes(app: FastifyInstance) {
     const auth = getAuth(request);
     // Signed-out -> v7 marketing 404 shape (same as the SMART planner does for
     // the no-org case). The auth preHandler also redirects unauth users.
-    if (!auth?.userId) return renderV7(reply.status(401), '404', { title: 'Page Not Found - OTP', noindex: true });
+    // EXCEPTION: a secret-gated no-Clerk demo session (request.demoSession)
+    // may view Acme's rocks. demoSession.active is set ONLY in guards.ts after
+    // demoLoginEnabled() + a valid otp_demo cookie, so this stays fail-closed
+    // for real signed-out visitors.
+    if (!auth?.userId && !(request as any).demoSession?.active) return renderV7(reply.status(401), '404', { title: 'Page Not Found - OTP', noindex: true });
 
-    const org = await resolveRequestOrg(request);
+    // resolveRequestOrg is Clerk-only (returns null without auth.userId); under
+    // the demo session fall back to the forge-proof Acme resolver.
+    const org = await resolveRequestOrg(request) || (await resolveDemoPageContext(request))?.org;
     if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     // ---- Resolve the viewer's owned seat(s) (mirrors /me/todos) ----
+    // Under the demo session auth.userId is undefined; the owned-seat lookup
+    // no-ops (auth.userId || '') so the page renders Acme's rocks with no
+    // "your seat" highlighting -- which is the right behavior for a demo viewer.
     const [me] = await db.select({ claimedEntityIds: orgMembers.claimedEntityIds })
       .from(orgMembers)
-      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId || '')))
       .limit(1);
     const _impRocks = (request as any).impersonation as { as?: string } | null;
     const _effectiveClerkIdRocks = _impRocks?.as || auth.userId;
@@ -440,8 +450,9 @@ export default async function pageRoutes(app: FastifyInstance) {
   // viewer never sees or edits a SOP on a seat outside their scope.
   app.get('/processes', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const _demoCtx = await resolveDemoPageContext(request);
+    if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = _demoCtx || await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
 

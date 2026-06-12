@@ -160,3 +160,86 @@ export function demoKeyMatches(presented: string | undefined | null): boolean {
   if (typeof presented !== 'string' || presented.length === 0) return false;
   return safeEqual(presented, secret);
 }
+
+// ---------------------------------------------------------------------------
+// Shared page-route demo context resolver
+// ---------------------------------------------------------------------------
+//
+// resolveOrgForUser(clerkUserId) in services/membership.ts needs a Clerk user,
+// so it cannot serve the no-Clerk demo session. Page routes that gate on
+// `!auth.userId` therefore need a single, demo-aware resolution path that
+// returns the SAME shape resolveOrgForUser returns ({ org, role,
+// claimedEntityId }) so call sites can destructure identically.
+//
+// This is the ONLY new resolution path the demo extension adds, and it can
+// ONLY ever return the Acme org. NO request/cookie/URL value influences which
+// org is loaded -- the org is loaded purely by the DEMO_LOGIN_ORG_CLERK_ID
+// constant, with a belt-and-suspenders assert (safety invariant 1).
+
+/** Shape returned by resolveOrgForUser -- mirrored so call sites match. */
+export interface DemoPageContext {
+  org: any;
+  role: string;
+  claimedEntityId: string | null;
+}
+
+/**
+ * Load the Acme demo org SOLELY by the constant clerk_org_id, asserting the
+ * loaded row's clerkOrgId === the constant before returning it. Injectable so
+ * the pure guard logic in resolveDemoPageContext can be unit-tested without a
+ * DB (the demo-access module otherwise stays DB-free per
+ * feedback_otp_pure_logic_needs_db_free_module). Returns null on any mismatch.
+ */
+export type DemoOrgLoader = () => Promise<{ clerkOrgId: string | null } | null>;
+
+async function defaultDemoOrgLoader(): Promise<{ clerkOrgId: string | null } | null> {
+  // Imported lazily so importing this module for the pure helpers above does
+  // not pull in config/database.ts (which throws without DATABASE_URL).
+  const { db } = await import('../config/database.js');
+  const { organizations } = await import('../db/schema.js');
+  const { eq } = await import('drizzle-orm');
+  const [org] = await db.select()
+    .from(organizations)
+    .where(eq(organizations.clerkOrgId, DEMO_LOGIN_ORG_CLERK_ID))
+    .limit(1);
+  return org || null;
+}
+
+/**
+ * Resolve the page-route context for a no-Clerk demo session.
+ *
+ * Returns null UNLESS request.demoSession.active is true -- and that flag is
+ * set ONLY in guards.ts, ONLY after demoLoginEnabled() (secret present) AND a
+ * valid signed otp_demo cookie (invariants 2 + 3 enforced upstream). So this
+ * helper is fully inert when the feature is off.
+ *
+ * When active, it loads the Acme org by the DEMO_LOGIN_ORG_CLERK_ID constant
+ * and returns null unless the loaded org's clerkOrgId === that constant
+ * (invariant 1: forge-proof, belt-and-suspenders -- the org is NEVER read from
+ * the cookie or request). role/claimedEntityId come from request.orgMember
+ * (the Acme member guards.ts already resolved), defaulting role to 'owner' and
+ * claimedEntityId to null.
+ *
+ * This is the ONLY new resolution path. It can ONLY ever return Acme. No
+ * request/cookie value influences which org is selected.
+ */
+export async function resolveDemoPageContext(
+  request: any,
+  loadDemoOrg: DemoOrgLoader = defaultDemoOrgLoader,
+): Promise<DemoPageContext | null> {
+  // Inert unless guards.ts set an active demo session (which itself requires
+  // demoLoginEnabled() + a valid otp_demo cookie -- invariants 2 + 3).
+  if (!request?.demoSession?.active) return null;
+
+  const org = await loadDemoOrg();
+  // Invariant 1 belt-and-suspenders: never proceed unless the loaded org is
+  // EXACTLY the demo org. Defends against a misconfigured/renamed org row.
+  if (!org || org.clerkOrgId !== DEMO_LOGIN_ORG_CLERK_ID) return null;
+
+  const member = (request?.orgMember as { role?: string; claimedEntityId?: string | null } | null) || null;
+  return {
+    org,
+    role: member?.role || 'owner',
+    claimedEntityId: member?.claimedEntityId ?? null,
+  };
+}

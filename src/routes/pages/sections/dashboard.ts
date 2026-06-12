@@ -38,6 +38,7 @@ import { isAttendee } from '../../../services/meeting-access.js';
 import { ensureUpcomingForOrg, ruleToLabel } from '../../../services/meeting-recurrence.js';
 import { BASE_URL, bc, renderV7, escapeHtml } from '../_shared.js';
 import { resolveRequestOrg, quarterLabel } from '../pages.js';
+import { resolveDemoPageContext } from '../../../middleware/demo-access.js';
 
 // Re-derived inside this module since the original lived inside pageRoutes()
 // and is used by a handful of routes here. Same shape as the pages.ts one.
@@ -597,8 +598,9 @@ export default async function dashboardRoutes(app: FastifyInstance) {
 
   app.get<{ Querystring: { highlightSkill?: string; highlightCommand?: string } }>('/dashboard/team', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const _demoCtx = await resolveDemoPageContext(request);
+    if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = _demoCtx || await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
     const highlightSkill = (request.query.highlightSkill || '').toString().slice(0, 120);
@@ -747,8 +749,9 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   // Dashboard: KPI Scoreboard (Phase 3 + Phase 5)
   app.get<{ Querystring: { grain?: string; view?: string; archived?: string } }>('/dashboard/kpis', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const _demoCtx = await resolveDemoPageContext(request);
+    if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = _demoCtx || await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
     if (!resolved) return reply.redirect('/dashboard');
     // resolveOrgForUser uses auth.userId and is impersonation-BLIND -- under
     // super-admin "view as <user>" it returns the admin's role, not the
@@ -781,7 +784,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     if (!isAdminLikeKpis) {
       const viewerMemberKpis = (request as any).orgMember as { id?: string; claimedEntityId?: string | null; claimedEntityIds?: string[] | null } | null;
       const impKpis = (request as any).impersonation as { as?: string } | null;
-      const effectiveClerkIdKpis = impKpis?.as || auth.userId;
+      // auth.userId is undefined under the no-Clerk demo session; coalesce to ''
+      // so the legacy-founder check simply doesn't fire (empty owned set is fine
+      // for a demo viewer). In practice the Acme demo member is 'owner', so
+      // isAdminLikeKpis short-circuits this whole branch before we get here.
+      const effectiveClerkIdKpis = impKpis?.as || auth.userId || '';
       const isLegacyFounderKpis = !!(effectiveClerkIdKpis && (org as any).clerkOrgId === effectiveClerkIdKpis);
 
       const rawClaimsKpis: string[] = [];

@@ -14,6 +14,7 @@ import {
   encodeDemoCookie,
   verifyDemoCookie,
   demoKeyMatches,
+  resolveDemoPageContext,
   DEMO_LOGIN_ORG_CLERK_ID,
   DEMO_COOKIE_NAME,
 } from './demo-access.js';
@@ -155,6 +156,76 @@ describe('forge-proofing (invariant 1: no org ever flows from the cookie)', () =
       expect((result as unknown as Record<string, unknown>).orgId).toBeUndefined();
       expect((result as unknown as Record<string, unknown>).clerkOrgId).toBeUndefined();
     });
+  });
+});
+
+describe('resolveDemoPageContext (page-route resolver, invariants 1 + 2 + 5)', () => {
+  // The injectable org loader keeps this pure -- no DB. It returns whatever the
+  // test wants the "loaded by constant" org to look like, letting us prove the
+  // forge-proof assert independently of Postgres.
+  const acmeOrg = { id: 'acme-uuid', clerkOrgId: DEMO_LOGIN_ORG_CLERK_ID, name: 'Acme Corp' };
+
+  it('returns null when there is no demo session (inert by default)', async () => {
+    const ctx = await resolveDemoPageContext({}, async () => acmeOrg);
+    expect(ctx).toBeNull();
+  });
+
+  it('returns null when demoSession is present but not active', async () => {
+    const ctx = await resolveDemoPageContext({ demoSession: { active: false } }, async () => acmeOrg);
+    expect(ctx).toBeNull();
+  });
+
+  it('returns null when the org loader finds nothing (no Acme seeded)', async () => {
+    const ctx = await resolveDemoPageContext({ demoSession: { active: true } }, async () => null);
+    expect(ctx).toBeNull();
+  });
+
+  it('returns null when the loaded org is NOT the demo constant (forge-proof assert, invariant 1)', async () => {
+    // Even with an active demo session, a loaded org whose clerkOrgId does not
+    // equal the constant must yield NOTHING. This is the belt-and-suspenders
+    // guard that defends against a misconfigured/renamed org row.
+    const wrongOrg = { id: 'victim-uuid', clerkOrgId: 'victor_private_org', name: 'Victim' };
+    const ctx = await resolveDemoPageContext({ demoSession: { active: true } }, async () => wrongOrg);
+    expect(ctx).toBeNull();
+  });
+
+  it('returns the Acme context shape when demoSession active + Acme present', async () => {
+    const ctx = await resolveDemoPageContext(
+      { demoSession: { active: true }, orgMember: { role: 'owner', claimedEntityId: 'HUM_X' } },
+      async () => acmeOrg,
+    );
+    expect(ctx).not.toBeNull();
+    // Shape matches resolveOrgForUser: { org, role, claimedEntityId }.
+    expect(ctx!.org).toBe(acmeOrg);
+    expect(ctx!.org.clerkOrgId).toBe(DEMO_LOGIN_ORG_CLERK_ID);
+    expect(ctx!.role).toBe('owner');
+    expect(ctx!.claimedEntityId).toBe('HUM_X');
+  });
+
+  it('defaults role to owner and claimedEntityId to null when orgMember is absent', async () => {
+    const ctx = await resolveDemoPageContext({ demoSession: { active: true } }, async () => acmeOrg);
+    expect(ctx).not.toBeNull();
+    expect(ctx!.role).toBe('owner');
+    expect(ctx!.claimedEntityId).toBeNull();
+  });
+
+  it('never lets the request influence which org loads -- the loader is the only org source', async () => {
+    // A malicious request that tries to smuggle a target org via any field is
+    // ignored: the org comes ONLY from the loader (which, in prod, loads by the
+    // DEMO_LOGIN_ORG_CLERK_ID constant). Here the loader returns Acme regardless
+    // of the smuggled fields, and the result is Acme.
+    const ctx = await resolveDemoPageContext(
+      {
+        demoSession: { active: true },
+        orgMember: { role: 'owner' },
+        // Attacker-controlled noise -- must have zero effect.
+        org: { id: 'attacker', clerkOrgId: 'victor_private_org' },
+        orgId: 'attacker-uuid',
+        cookies: { otp_demo: 'whatever', orgId: 'victor_private_org' },
+      },
+      async () => acmeOrg,
+    );
+    expect(ctx!.org.clerkOrgId).toBe(DEMO_LOGIN_ORG_CLERK_ID);
   });
 });
 
