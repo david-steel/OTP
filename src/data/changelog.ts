@@ -11,6 +11,34 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 12, 2026 ----
+
+  {
+    date: '2026-06-12',
+    tags: ['Major', 'Privacy'],
+    title: 'Private mode is live: keep your organization off the network entirely',
+    summary: 'Organizations on the Private plan can now flip a single switch and disappear from every shared surface. A private organization never appears in browse, search, the intelligence graph, the experts and coaches directories, or org comparisons, and its data is never sourced into another organization\'s recommendations or cross-org learnings. Your members still see everything inside your own workspace. Turn it on under Settings, Configuration.',
+    details: `<p>The whole operating system, behind a closed door, enforced everywhere.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>One switch.</strong> Settings, Configuration has a Private mode toggle (admins only). Flip it on and your organization is excluded from every public and cross-organization surface at once.</li>
+<li><strong>Nothing leaks, nothing is borrowed.</strong> Your org chart, OOS, scorecard, and claims stay out of browse, search, the graph, compare, and the directories, and they are never used to generate recommendations for anyone else.</li>
+<li><strong>Your team is unaffected.</strong> Everyone inside your organization keeps full access to your own data through the dashboard. Private mode only closes the outside door.</li>
+<li><strong>Reversible.</strong> Turn it off any time and your organization rejoins the network.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-12',
+    tags: ['Help', 'Search'],
+    title: 'Search the user guide and the article library',
+    summary: 'The User Guide is now a searchable help center: every part of OrgTP explained, with a table of contents and an instant search box that highlights matches as you type. The article library at /blog is searchable too, and the search box in the Help panel jumps you straight into the guide with your results. There is also a dedicated Connect Your Agent page with the copy-paste prompt that builds your first OOS in about a minute.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Searchable guide.</strong> Open the User Guide (or the Help panel), type what you are looking for, and matching sections surface instantly with the terms highlighted. Shareable: /guide?q=scorecard deep-links a search.</li>
+<li><strong>Searchable articles.</strong> The /blog library filters live by title, summary, and tag.</li>
+<li><strong>Connect Your Agent.</strong> A focused onboarding page with a copy-paste AI prompt that generates your first OOS in about 60 seconds, plus the one-line Claude Code install. Linked from the guide.</li>
+</ul>`,
+  },
+
   // ---- June 11, 2026 ----
 
   {
