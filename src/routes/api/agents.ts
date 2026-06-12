@@ -19,6 +19,7 @@ import { runAgent, listAgentRuns, type RunAgentSop } from '../../services/agent-
 import { getOrgTeamGraph } from '../../services/team-graph.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { resolveDemoPageContext } from '../../middleware/demo-access.js';
+import { renderAgentMarkdown } from '../../shared/agent-markdown.js';
 
 // Agent runs spend money (tokens, and the wallet when metering is on), so the
 // run endpoint is rate-limited per IP on top of the signed-in-member auth.
@@ -138,7 +139,9 @@ export default async function agentRoutes(app: FastifyInstance) {
       trigger: 'manual',
     });
 
-    return reply.send(result);
+    // Render the agent's markdown output to server-SANITIZED HTML so the client
+    // can innerHTML it directly (renderAgentMarkdown is the XSS chokepoint).
+    return reply.send({ ...result, outputHtml: renderAgentMarkdown(result.output || '') });
   });
 
   // GET /api/v1/agents/:externalId/runs?limit=25
@@ -151,7 +154,11 @@ export default async function agentRoutes(app: FastifyInstance) {
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
 
     const limit = Math.min(100, Math.max(1, parseInt(request.query.limit || '25', 10) || 25));
-    const runs = await listAgentRuns(org.id, externalId, limit);
+    const rows = await listAgentRuns(org.id, externalId, limit);
+    // Attach server-SANITIZED HTML per row so the client renders each run's
+    // output as a document, never as raw markdown source (renderAgentMarkdown
+    // is the XSS chokepoint -- outputHtml is safe to innerHTML on the client).
+    const runs = rows.map((r: any) => ({ ...r, outputHtml: renderAgentMarkdown(typeof r?.output === 'string' ? r.output : '') }));
     return reply.send({ runs });
   });
 }

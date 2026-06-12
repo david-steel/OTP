@@ -64,16 +64,59 @@
   .ph-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft, #374151); margin-bottom: 4px; }
   .ph-list-row { display: flex; gap: 8px; margin-bottom: 6px; }
   .ph-step-num { flex: 0 0 auto; width: 22px; height: 38px; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 700; color: var(--ink-mute, #9ca3af); }
-  .ph-run-out { white-space: pre-wrap; word-break: break-word; font-size: 12.5px; line-height: 1.5; color: var(--ink, #1f2937); background: #f8fafc; border: 1px solid var(--line, #e5e7eb); border-radius: 8px; padding: 10px 12px; max-height: 340px; overflow-y: auto; }
   .ph-run-meta { font-size: 11.5px; color: var(--ink-mute, #6b7280); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
   .ph-run-err { font-size: 12.5px; color: #be123c; font-weight: 600; }
-  .ph-run-row { border: 1px solid var(--line, #e5e7eb); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
-  .ph-run-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; }
   .ph-spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.5); border-top-color: #fff; border-radius: 50%; animation: ph-spin .7s linear infinite; vertical-align: middle; }
   @keyframes ph-spin { to { transform: rotate(360deg); } }
   .ph-badge { display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; }
   .ph-badge-ok { background:#dcfce7; color:#15803d; }
   .ph-badge-fail { background:#fee2e2; color:#b91c1c; }
+
+  /* ---- "Agent at work" run surface ---- */
+  .ph-result { border: 1.5px solid var(--line, #e5e7eb); border-radius: 12px; background: var(--card, #fff); overflow: hidden; }
+  .ph-result-ok { border-color: #bbf7d0; }
+  .ph-result-fail { border-color: #fecaca; }
+  .ph-result-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line, #e5e7eb); background: #fafbfc; }
+  .ph-result-agent { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--orgy-soft, #fff6da); color: var(--orgy-on-light, #8a6d1a); border: 1px solid var(--orgy-line, #f0dca0); }
+  .ph-result-sop { font-size: 13.5px; font-weight: 700; color: var(--ink, #1f2937); font-family: 'Schibsted Grotesk','Inter',sans-serif; }
+  .ph-result-spacer { flex: 1 1 auto; }
+  /* Rendered agent markdown body. innerHTML here is SERVER-SANITIZED (outputHtml
+     from renderAgentMarkdown) -- safe by construction; do not feed raw output. */
+  .ph-md { font-size: 14px; line-height: 1.65; color: var(--ink, #1f2937); padding: 16px 18px; max-height: 520px; overflow-y: auto; word-break: break-word; }
+  .ph-md > :first-child { margin-top: 0; }
+  .ph-md > :last-child { margin-bottom: 0; }
+  .ph-md h1 { font-size: 1.3rem; font-weight: 800; margin: 18px 0 8px; font-family: 'Schibsted Grotesk','Inter',sans-serif; letter-spacing: -.01em; }
+  .ph-md h2 { font-size: 1.12rem; font-weight: 700; margin: 16px 0 7px; font-family: 'Schibsted Grotesk','Inter',sans-serif; }
+  .ph-md h3 { font-size: 1rem; font-weight: 700; margin: 14px 0 6px; }
+  .ph-md h4 { font-size: .92rem; font-weight: 700; margin: 12px 0 5px; color: var(--ink-soft, #374151); }
+  .ph-md p { margin: 8px 0; }
+  .ph-md ul, .ph-md ol { margin: 8px 0; padding-left: 22px; }
+  .ph-md li { margin: 3px 0; }
+  .ph-md blockquote { margin: 10px 0; padding: 4px 14px; border-left: 3px solid var(--blue, #0d7df2); color: var(--ink-soft, #374151); background: #f8fafc; border-radius: 0 6px 6px 0; }
+  .ph-md hr { border: 0; border-top: 1px solid var(--line, #e5e7eb); margin: 16px 0; }
+  .ph-md a { color: var(--blue-deep, #0a63c2); text-decoration: underline; }
+  .ph-md code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: #f1f5f9; color: #be185d; padding: 1px 5px; border-radius: 4px; }
+  .ph-md pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 10px 0; }
+  .ph-md pre code { background: none; color: inherit; padding: 0; font-size: 12.5px; }
+  .ph-md table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+  .ph-md th, .ph-md td { border: 1px solid var(--line, #e5e7eb); padding: 6px 10px; text-align: left; }
+  .ph-md th { background: #f8fafc; font-weight: 700; }
+  /* Footer pill chips */
+  .ph-result-foot { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-top: 1px solid var(--line, #e5e7eb); background: #fafbfc; }
+  .ph-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  /* Running state */
+  .ph-working { display: flex; align-items: center; gap: 12px; padding: 18px; border: 1.5px solid var(--blue, #0d7df2); border-radius: 12px; background: linear-gradient(90deg, rgba(13,125,242,.04), rgba(13,125,242,.01)); }
+  .ph-working-dot { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: var(--blue, #0d7df2); animation: ph-pulse 1.1s ease-in-out infinite; }
+  @keyframes ph-pulse { 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(13,125,242,.35); } 50% { opacity: .55; transform: scale(.82); box-shadow: 0 0 0 7px rgba(13,125,242,0); } }
+  .ph-working-text { font-size: 13.5px; font-weight: 600; color: var(--ink, #1f2937); }
+  .ph-working-text b { color: var(--blue-deep, #0a63c2); }
+  .ph-msg { font-size: 13px; line-height: 1.5; color: var(--ink-soft, #374151); padding: 14px 16px; border: 1.5px solid #fde68a; background: #fffbeb; border-radius: 10px; }
+  .ph-msg-fail { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+  /* Recent-run rows reuse the result card chrome, denser. */
+  .ph-run-row { border: 1px solid var(--line, #e5e7eb); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+  .ph-run-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; padding: 9px 12px; }
+  .ph-run-row-head:hover { background: #f8fafc; }
+  .ph-run-row .ph-md { max-height: 360px; border-top: 1px solid var(--line, #e5e7eb); }
 </style>
 
 <section class="bg-[var(--white)]">
@@ -536,33 +579,96 @@
     if (!isFinite(c)) return null;
     return '$' + (c / 100).toFixed(c % 100 === 0 ? 2 : 2);
   }
-  function runMeta(parent, run){
-    var meta = el('div', 'ph-run-meta');
+  // Friendly copy for the known terminal/error states. Returns null for an
+  // ordinary failure (we then show the raw error text).
+  function friendlyState(code){
+    if (!code) return null;
+    if (code === 'INSUFFICIENT_BALANCE') return 'Insufficient wallet balance. Add credits to run agents.';
+    if (code === 'RATE_LIMITED') return 'Too many runs. Give it a minute, then try again.';
+    if (code === 'DEMO_RUN_LIMIT') return 'Demo run limit reached for today. Sign up to run more.';
+    if (code === 'NOT_CONFIGURED' || /ANTHROPIC_API_KEY/.test(code)) return 'Agent runtime is not configured yet (no API key on the server).';
+    return null;
+  }
+
+  // Footer pill chips: model, tokens, cost, duration. Small + roomy, not a
+  // cramped one-liner.
+  function footChips(run){
+    var foot = el('div', 'ph-result-foot');
+    var any = false;
+    if (run.model) { foot.appendChild(el('span', 'ph-pill', run.model)); any = true; }
     var ti = (run.tokensInput != null) ? run.tokensInput : run.tokens_input;
     var to = (run.tokensOutput != null) ? run.tokensOutput : run.tokens_output;
-    if (ti != null || to != null) meta.appendChild(el('span', null, 'Tokens: ' + (ti || 0) + ' in / ' + (to || 0) + ' out'));
+    if (ti != null || to != null) { foot.appendChild(el('span', 'ph-pill', (ti || 0) + ' in / ' + (to || 0) + ' out tokens')); any = true; }
     var cost = fmtCost(run.costCents != null ? run.costCents : run.cost_cents);
-    if (cost) meta.appendChild(el('span', null, 'Cost: ' + cost));
-    if (run.model) meta.appendChild(el('span', null, run.model));
-    parent.appendChild(meta);
+    if (cost) { foot.appendChild(el('span', 'ph-pill', cost)); any = true; }
+    var dur = fmtDuration(run);
+    if (dur) { foot.appendChild(el('span', 'ph-pill', dur)); any = true; }
+    return any ? foot : null;
   }
-  function renderRunResult(panel, run){
-    panel.innerHTML = '';
+  function fmtDuration(run){
+    var start = run.startedAt || run.started_at;
+    var end = run.completedAt || run.completed_at;
+    if (!start || !end) return null;
+    var ms = new Date(end).getTime() - new Date(start).getTime();
+    if (!isFinite(ms) || ms < 0) return null;
+    if (ms < 1000) return ms + ' ms';
+    return (ms / 1000).toFixed(1) + 's';
+  }
+
+  // Render the markdown body. outputHtml is SERVER-SANITIZED (renderAgentMarkdown
+  // strict allowlist), so innerHTML here is safe by construction. We never feed
+  // the raw `output` string to innerHTML.
+  function mdBody(run){
+    var body = el('div', 'ph-md');
+    var html = (typeof run.outputHtml === 'string') ? run.outputHtml : '';
+    if (html) { body.innerHTML = html; }
+    else { body.appendChild(el('p', null, run.output ? run.output : '(no output)')); }
+    return body;
+  }
+
+  // A full "agent at work" result card: agent chip + SOP title + status badge,
+  // rendered markdown body, footer chips.
+  function resultCard(e, run){
     var status = run.status || (run.error ? 'failed' : 'succeeded');
-    var head = el('div', null);
-    head.style.marginBottom = '8px';
-    head.appendChild(el('span', 'ph-badge ' + (status === 'succeeded' ? 'ph-badge-ok' : 'ph-badge-fail'), status));
-    panel.appendChild(head);
-    if (status === 'succeeded') {
-      panel.appendChild(el('div', 'ph-run-out', run.output || '(no output)'));
-      runMeta(panel, run);
+    var ok = status === 'succeeded';
+    var card = el('div', 'ph-result ' + (ok ? 'ph-result-ok' : 'ph-result-fail'));
+
+    var head = el('div', 'ph-result-head');
+    head.appendChild(el('span', 'ph-result-agent', e.seatName || 'Agent'));
+    var sopTitle = run.sopTitle || run.sop_title || (e.sop && e.sop.title) || 'Process run';
+    head.appendChild(el('span', 'ph-result-sop', sopTitle));
+    head.appendChild(el('div', 'ph-result-spacer'));
+    head.appendChild(el('span', 'ph-badge ' + (ok ? 'ph-badge-ok' : 'ph-badge-fail'), ok ? 'Succeeded' : 'Failed'));
+    card.appendChild(head);
+
+    if (ok) {
+      card.appendChild(mdBody(run));
+      var foot = footChips(run);
+      if (foot) card.appendChild(foot);
     } else {
       var code = run.error || 'Run failed';
-      var msg = code;
-      if (code === 'INSUFFICIENT_BALANCE') msg = 'Insufficient wallet balance. Add credits to run agents.';
-      else if (code === 'NOT_CONFIGURED' || /ANTHROPIC_API_KEY/.test(code)) msg = 'Agent runtime is not configured yet (no API key).';
-      panel.appendChild(el('div', 'ph-run-err', msg));
+      var msg = friendlyState(code) || code;
+      card.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
     }
+    return card;
+  }
+
+  // The pulsing "● {Agent} is working through {SOP}…" running state.
+  function workingCard(e){
+    var sop = e.sop || {};
+    var wrap = el('div', 'ph-working');
+    wrap.appendChild(el('div', 'ph-working-dot'));
+    var text = el('div', 'ph-working-text');
+    var name = document.createElement('b');
+    name.textContent = e.seatName || 'Agent';
+    text.appendChild(name);
+    text.appendChild(document.createTextNode(' is working through '));
+    var sopName = document.createElement('b');
+    sopName.textContent = sop.title || 'this process';
+    text.appendChild(sopName);
+    text.appendChild(document.createTextNode('…'));
+    wrap.appendChild(text);
+    return wrap;
   }
 
   function runSop(card, e, btn){
@@ -570,21 +676,19 @@
     if (!panel) return;
     panel.style.display = '';
     panel.innerHTML = '';
-    panel.appendChild(el('div', 'ph-run-meta', 'Running...'));
+    panel.appendChild(workingCard(e));
     var label = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="ph-spin"></span> Running';
     var sop = e.sop || {};
     var body = sop.id ? { sopId: sop.id } : { sopTitle: sop.title };
     api('POST', '/agents/' + encodeURIComponent(e.seatExternalId) + '/run', body)
-      .then(function(run){ renderRunResult(panel, run); })
+      .then(function(run){ panel.innerHTML = ''; panel.appendChild(resultCard(e, run)); })
       .catch(function(err){
         panel.innerHTML = '';
         var code = err && err.code ? err.code : 'ERROR';
-        var msg = err && err.message ? err.message : 'Run failed';
-        if (code === 'INSUFFICIENT_BALANCE') msg = 'Insufficient wallet balance. Add credits to run agents.';
-        if (code === 'RATE_LIMITED') msg = 'Too many runs. Try again in a minute.';
-        panel.appendChild(el('div', 'ph-run-err', msg));
+        var msg = friendlyState(code) || (err && err.message ? err.message : 'Run failed');
+        panel.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
       })
       .then(function(){ btn.disabled = false; btn.innerHTML = label; });
   }
@@ -608,24 +712,31 @@
           if (matches) row.style.borderColor = 'var(--blue,#0d7df2)';
           var headRow = el('div', 'ph-run-row-head');
           var left = el('div', null);
+          left.style.display = 'flex';
+          left.style.alignItems = 'center';
+          left.style.gap = '8px';
           var st = run.status || 'succeeded';
-          left.appendChild(el('span', 'ph-badge ' + (st === 'succeeded' ? 'ph-badge-ok' : 'ph-badge-fail'), st));
-          var titleSpan = el('span', null, '  ' + (run.sop_title || run.trigger || 'run'));
+          left.appendChild(el('span', 'ph-badge ' + (st === 'succeeded' ? 'ph-badge-ok' : 'ph-badge-fail'), st === 'succeeded' ? 'Succeeded' : 'Failed'));
+          var titleSpan = el('span', null, run.sop_title || run.trigger || 'run');
           titleSpan.style.fontWeight = '600';
           titleSpan.style.fontSize = '12.5px';
-          titleSpan.style.marginLeft = '6px';
           left.appendChild(titleSpan);
           headRow.appendChild(left);
-          headRow.appendChild(el('span', null, fmtWhen(run.created_at || run.started_at)));
+          var when = el('span', null, fmtWhen(run.created_at || run.started_at));
+          when.style.fontSize = '11.5px';
+          when.style.color = 'var(--ink-mute,#6b7280)';
+          headRow.appendChild(when);
           row.appendChild(headRow);
+          // Collapsed by default; expanding renders the run's outputHtml.
           var detail = el('div', null);
           detail.style.display = 'none';
-          detail.style.marginTop = '8px';
           if (run.status === 'failed') {
-            detail.appendChild(el('div', 'ph-run-err', run.error || 'Run failed'));
+            var fmsg = friendlyState(run.error) || run.error || 'Run failed';
+            detail.appendChild(el('div', 'ph-msg ph-msg-fail', fmsg));
           } else {
-            detail.appendChild(el('div', 'ph-run-out', run.output || '(no output)'));
-            runMeta(detail, run);
+            detail.appendChild(mdBody(run));
+            var foot = footChips(run);
+            if (foot) detail.appendChild(foot);
           }
           row.appendChild(detail);
           headRow.addEventListener('click', function(){ detail.style.display = detail.style.display === 'none' ? '' : 'none'; });
