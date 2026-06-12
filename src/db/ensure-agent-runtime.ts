@@ -68,6 +68,14 @@ const DDL: string[] = [
    );`,
   `CREATE INDEX IF NOT EXISTS "agent_schedules_agent_idx" ON "agent_schedules" ("org_id", "agent_external_id");`,
   `CREATE INDEX IF NOT EXISTS "agent_schedules_due_idx" ON "agent_schedules" ("enabled", "next_run_at");`,
+
+  // Phase 2b (autonomous scheduling): link a schedule to a specific SOP, the
+  // same way agent_runs records sop_title. The runner resolves the SOP from the
+  // chart at fire time using these; the existing NOT NULL `prompt` column is set
+  // to the SOP title (or a derived description) on insert so the constraint
+  // holds. Additive + idempotent.
+  `ALTER TABLE agent_schedules ADD COLUMN IF NOT EXISTS sop_id text;`,
+  `ALTER TABLE agent_schedules ADD COLUMN IF NOT EXISTS sop_title text;`,
 ];
 
 export async function ensureAgentRuntimeTables(): Promise<void> {

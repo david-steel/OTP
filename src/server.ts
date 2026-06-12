@@ -772,6 +772,7 @@ await app.register(import('./routes/api/team.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/charts.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/teams.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/agents.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/schedules.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/kpis.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/scanner.js'), { prefix: '/api/v1' });
@@ -961,6 +962,15 @@ try {
   const { ensureAgentRuntimeTables } = await import('./db/ensure-agent-runtime.js');
   await ensureAgentRuntimeTables();
   app.log.info('agent_runs + agent_schedules tables are ready');
+
+  // Autonomous schedule poller (Processes Phase 2b). This spends an org's wallet
+  // on autopilot, so it is DORMANT behind the master kill switch
+  // AGENT_SCHEDULER_ENABLED (default OFF). startScheduleRunner is a NO-OP when
+  // the flag is falsy -- no interval, no query, no fire -- and logs that it did
+  // not start. Schedule CRUD + UI ship and work regardless; only this flag arms
+  // the actual firing. The runner re-checks the wallet/key gate at every fire.
+  const { startScheduleRunner } = await import('./services/schedule-runner.js');
+  startScheduleRunner(app);
 } catch (err) {
   app.log.error({ err }, 'ensureAgentRuntimeTables failed -- agent runtime will not work until resolved');
 }

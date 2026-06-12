@@ -537,6 +537,14 @@ export default async function pageRoutes(app: FastifyInstance) {
       pickableSeats: editableSeats,
       templateGroups: SOP_TEMPLATE_GROUPS,
       insertSop,
+      // Phase 2b: whether the autonomous scheduler poller is armed. When OFF,
+      // schedules can still be created (they stay dormant) -- the UI shows a
+      // "scheduling is in preview, runs activate soon" note so users aren't
+      // confused that nothing fires yet.
+      schedulerEnabled: (function () {
+        const v = process.env.AGENT_SCHEDULER_ENABLED;
+        return v === '1' || v === 'true' || v === 'yes' || v === 'on';
+      })(),
     });
   });
 

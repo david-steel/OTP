@@ -35,6 +35,7 @@
   var _groups = Array.isArray(templateGroups) ? templateGroups : [];
   var _total = typeof totalCount === 'number' ? totalCount : _entries.length;
   var _canEdit = !!canEdit;
+  var _schedulerEnabled = !!(typeof schedulerEnabled !== 'undefined' && schedulerEnabled);
 %>
 <style>
   .ph-wrap { max-width: 1080px; }
@@ -239,6 +240,7 @@
             <% if (e.seatType === 'agent') { %>
             <button type="button" class="ph-run ph-btn ph-btn-primary ph-btn-sm" title="Run this process now">▶ Run</button>
             <button type="button" class="ph-runs ph-btn ph-btn-ghost ph-btn-sm" title="Recent runs">Recent runs</button>
+            <button type="button" class="ph-schedule ph-btn ph-btn-ghost ph-btn-sm" title="Schedule this process to run automatically">Schedule</button>
             <% } %>
             <button type="button" class="ph-edit ph-btn ph-btn-ghost ph-btn-sm">Edit</button>
             <button type="button" class="ph-delete ph-btn ph-btn-ghost ph-btn-sm" style="color:#be123c;">Delete</button>
@@ -249,6 +251,8 @@
         <% if (e.canEdit && e.seatType === 'agent') { %>
         <!-- Inline run-result + recent-runs panel (populated client-side) -->
         <div class="ph-run-panel" style="display:none; border-top:1px solid var(--line,#e5e7eb); padding-top:12px; margin-top:4px;"></div>
+        <!-- Inline schedule form + existing-schedules list (populated client-side) -->
+        <div class="ph-sched-panel" style="display:none; border-top:1px solid var(--line,#e5e7eb); padding-top:12px; margin-top:4px;"></div>
         <% } %>
       </div>
       <% }); %>
@@ -343,6 +347,9 @@
   // valid library SOP slug was passed. jsonForScript-escaped like the rest.
   var INSERT_SOP = <%- jsonForScript(typeof insertSop !== 'undefined' ? insertSop : null) %>;
   var CAN_EDIT = <%- _canEdit ? 'true' : 'false' %>;
+  // When false, schedules can be created but stay DORMANT (the poller is off);
+  // the schedule UI shows a "preview" note so users aren't confused.
+  var SCHEDULER_ENABLED = <%- _schedulerEnabled ? 'true' : 'false' %>;
 
   // ---- Search + facet filtering (client mirror of process-hub.filterSops) ----
   var searchEl = document.getElementById('ph-search');
@@ -859,6 +866,227 @@
       .then(function(){ btn.disabled = false; });
   }
 
+  // ---- Schedule a SOP (autonomous cadence) ----
+  // Maps a gate-fail code to inline upsell copy + the relevant settings link.
+  function scheduleGateMsg(code){
+    if (code === 'NO_WALLET') return { msg: 'Scheduling needs a funded wallet.', href: '/settings/billing', cta: 'Add funds' };
+    if (code === 'NO_API_KEY') return { msg: 'Scheduling needs an API key.', href: '/settings/api', cta: 'Create an API key' };
+    return null;
+  }
+
+  // Cadence picker form. minute/hour/weekday inputs show/hide by cadence.
+  function buildScheduleForm(e, panel){
+    var sop = e.sop || {};
+    var wrap = el('div', null);
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+    wrap.style.gap = '8px';
+
+    if (!SCHEDULER_ENABLED){
+      var note = el('div', 'ph-run-meta', 'Scheduling is in preview - your schedule is saved now and runs activate soon.');
+      note.style.color = 'var(--orgy-on-light,#8a6d1a)';
+      note.style.fontWeight = '600';
+      wrap.appendChild(note);
+    }
+
+    var row = el('div', null);
+    row.style.display = 'flex';
+    row.style.flexWrap = 'wrap';
+    row.style.gap = '8px';
+    row.style.alignItems = 'center';
+
+    var cad = document.createElement('select');
+    cad.className = 'ph-input';
+    cad.style.width = 'auto';
+    ['hourly','daily','weekly'].forEach(function(c){
+      var o = document.createElement('option'); o.value = c;
+      o.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+      cad.appendChild(o);
+    });
+    cad.value = 'weekly';
+
+    var wkSel = document.createElement('select');
+    wkSel.className = 'ph-input'; wkSel.style.width = 'auto';
+    ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(function(d, i){
+      var o = document.createElement('option'); o.value = String(i); o.textContent = d; wkSel.appendChild(o);
+    });
+    wkSel.value = '1';
+
+    var hourSel = document.createElement('select');
+    hourSel.className = 'ph-input'; hourSel.style.width = 'auto';
+    for (var h = 0; h < 24; h++){
+      var oh = document.createElement('option'); oh.value = String(h);
+      oh.textContent = (h < 10 ? '0' : '') + h + ':00';
+      hourSel.appendChild(oh);
+    }
+    hourSel.value = '8';
+
+    var minSel = document.createElement('select');
+    minSel.className = 'ph-input'; minSel.style.width = 'auto';
+    [0,15,30,45].forEach(function(m){
+      var om = document.createElement('option'); om.value = String(m);
+      om.textContent = ':' + (m < 10 ? '0' : '') + m; minSel.appendChild(om);
+    });
+    minSel.value = '0';
+
+    function syncVis(){
+      var c = cad.value;
+      wkSel.style.display = (c === 'weekly') ? '' : 'none';
+      hourSel.style.display = (c === 'weekly' || c === 'daily') ? '' : 'none';
+    }
+    cad.addEventListener('change', syncVis);
+
+    row.appendChild(cad);
+    row.appendChild(wkSel);
+    row.appendChild(el('span', null, 'at'));
+    row.appendChild(hourSel);
+    row.appendChild(minSel);
+    wrap.appendChild(row);
+    syncVis();
+
+    var nameInput = document.createElement('input');
+    nameInput.className = 'ph-input';
+    nameInput.placeholder = 'Schedule name (optional)';
+    wrap.appendChild(nameInput);
+
+    var actions = el('div', null);
+    actions.style.display = 'flex'; actions.style.gap = '8px'; actions.style.alignItems = 'center';
+    var saveBtn = el('button', 'ph-btn ph-btn-primary ph-btn-sm', 'Save schedule');
+    saveBtn.type = 'button';
+    var msgEl = el('div', 'ph-run-err', '');
+    msgEl.style.display = 'none';
+    actions.appendChild(saveBtn);
+    actions.appendChild(msgEl);
+    wrap.appendChild(actions);
+
+    saveBtn.addEventListener('click', function(){
+      var body = {
+        cadence: cad.value,
+        minute: parseInt(minSel.value, 10),
+        hour: parseInt(hourSel.value, 10),
+        weekday: parseInt(wkSel.value, 10),
+        timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'America/New_York'
+      };
+      if (sop && sop.id) body.sopId = sop.id; else body.sopTitle = sop && sop.title;
+      var nm = (nameInput.value || '').trim(); if (nm) body.name = nm;
+      saveBtn.disabled = true; msgEl.style.display = 'none';
+      api('POST', '/agents/' + encodeURIComponent(e.seatExternalId) + '/schedules', body)
+        .then(function(){ renderSchedulePanel(panel, e); })
+        .catch(function(err){
+          saveBtn.disabled = false;
+          var up = scheduleGateMsg(err && err.code);
+          msgEl.innerHTML = '';
+          if (up){
+            msgEl.appendChild(document.createTextNode(up.msg + ' '));
+            var a = document.createElement('a');
+            a.href = up.href; a.textContent = up.cta;
+            a.style.textDecoration = 'underline'; a.style.color = 'var(--blue,#0d7df2)';
+            msgEl.appendChild(a);
+          } else {
+            msgEl.textContent = (err && err.message) ? err.message : 'Could not save schedule';
+          }
+          msgEl.style.display = '';
+        });
+    });
+
+    return wrap;
+  }
+
+  function cadenceLabel(s){
+    // Best-effort human label from the stored cron + timezone.
+    var cron = (s.cron || '').split(/\s+/);
+    if (cron.length !== 5) return s.cron || '';
+    var min = cron[0], hr = cron[1], dow = cron[4];
+    var pad = function(n){ n = String(n); return n.length < 2 ? '0' + n : n; };
+    if (hr === '*') return 'Hourly at :' + pad(min);
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var time = pad(hr) + ':' + pad(min);
+    if (dow === '*') return 'Daily at ' + time;
+    return (days[parseInt(dow,10)] || ('day ' + dow)) + ' at ' + time;
+  }
+
+  function renderSchedulePanel(panel, e){
+    panel.style.display = '';
+    panel.innerHTML = '';
+    panel.appendChild(el('div', 'ph-run-meta', 'Loading schedules...'));
+    api('GET', '/agents/' + encodeURIComponent(e.seatExternalId) + '/schedules', null)
+      .then(function(res){
+        panel.innerHTML = '';
+        var all = (res && Array.isArray(res.schedules)) ? res.schedules : [];
+        var sopTitle = (e.sop && e.sop.title ? String(e.sop.title) : '').trim().toLowerCase();
+        var sopId = e.sop && e.sop.id;
+        // Show schedules that target THIS SOP (by id when present, else title).
+        var mine = all.filter(function(s){
+          if (sopId && s.sop_id) return s.sop_id === sopId;
+          return String(s.sop_title || '').trim().toLowerCase() === sopTitle;
+        });
+
+        var head = el('div', 'ph-label', 'Schedule this process');
+        panel.appendChild(head);
+        panel.appendChild(buildScheduleForm(e, panel));
+
+        if (mine.length){
+          var listHead = el('div', 'ph-label', 'Existing schedules');
+          listHead.style.marginTop = '12px';
+          panel.appendChild(listHead);
+          mine.forEach(function(s){
+            var row = el('div', 'ph-run-row');
+            var rh = el('div', 'ph-run-row-head');
+            var left = el('div', null);
+            left.style.display = 'flex'; left.style.alignItems = 'center'; left.style.gap = '8px';
+            left.appendChild(el('span', 'ph-badge ' + (s.enabled ? 'ph-badge-ok' : 'ph-badge-fail'), s.enabled ? 'On' : 'Off'));
+            var lbl = el('span', null, cadenceLabel(s) + (s.timezone ? ' (' + s.timezone + ')' : ''));
+            lbl.style.fontWeight = '600'; lbl.style.fontSize = '12.5px';
+            left.appendChild(lbl);
+            rh.appendChild(left);
+            var ctrls = el('div', null);
+            ctrls.style.display = 'flex'; ctrls.style.gap = '6px';
+            var tgl = el('button', 'ph-btn ph-btn-ghost ph-btn-sm', s.enabled ? 'Disable' : 'Enable');
+            tgl.type = 'button';
+            tgl.addEventListener('click', function(){
+              tgl.disabled = true;
+              api('PATCH', '/schedules/' + encodeURIComponent(s.id), { enabled: !s.enabled })
+                .then(function(){ renderSchedulePanel(panel, e); })
+                .catch(function(err){
+                  tgl.disabled = false;
+                  var up = scheduleGateMsg(err && err.code);
+                  alert(up ? up.msg : ('Could not update: ' + fmtErr(err)));
+                });
+            });
+            var del = el('button', 'ph-btn ph-btn-ghost ph-btn-sm', 'Delete');
+            del.type = 'button'; del.style.color = '#be123c';
+            del.addEventListener('click', function(){
+              if (!window.confirm('Delete this schedule?')) return;
+              del.disabled = true;
+              api('DELETE', '/schedules/' + encodeURIComponent(s.id), null)
+                .then(function(){ renderSchedulePanel(panel, e); })
+                .catch(function(err){ del.disabled = false; alert('Delete failed: ' + fmtErr(err)); });
+            });
+            ctrls.appendChild(tgl); ctrls.appendChild(del);
+            rh.appendChild(ctrls);
+            row.appendChild(rh);
+            if (s.next_run_at){
+              var nr = el('div', 'ph-run-meta', 'Next run: ' + fmtWhen(s.next_run_at));
+              row.appendChild(nr);
+            }
+            panel.appendChild(row);
+          });
+        }
+      })
+      .catch(function(err){
+        panel.innerHTML = '';
+        panel.appendChild(el('div', 'ph-run-err', (err && err.message) ? err.message : 'Could not load schedules'));
+      });
+  }
+
+  function openSchedule(card, e, btn){
+    var panel = card.querySelector('.ph-sched-panel');
+    if (!panel) return;
+    // Toggle closed if already open.
+    if (panel.style.display !== 'none' && panel.innerHTML){ panel.style.display = 'none'; return; }
+    renderSchedulePanel(panel, e);
+  }
+
   // ---- Edit / Delete / Run / Recent runs from a card ----
   if (grid) grid.addEventListener('click', function(ev){
     var t = ev.target;
@@ -866,6 +1094,9 @@
     if (!card) return;
     var e = ENTRIES[Number(card.getAttribute('data-idx'))];
     if (!e) return;
+    if (t.classList.contains('ph-schedule')) {
+      openSchedule(card, e, t); return;
+    }
     if (t.classList.contains('ph-run')) {
       runSop(card, e, t); return;
     }
