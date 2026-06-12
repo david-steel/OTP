@@ -239,6 +239,31 @@
     reader.readAsDataURL(file);
   }
 
+  // Promise-based upload for other page scripts (e.g. the quick-add form
+  // stages files before the entity exists, then uploads against the new id).
+  function uploadTo(entityType, entityId, file) {
+    return new Promise(function (resolve, reject) {
+      if (file.size > MAX_BYTES) {
+        reject({ code: 'TOO_LARGE', message: '"' + file.name + '" is ' + fmtSize(file.size) + ', over the 5 MB limit.' });
+        return;
+      }
+      var reader = new FileReader();
+      reader.onerror = function () { reject({ code: 'READ_ERROR', message: 'Could not read ' + file.name + '.' }); };
+      reader.onload = function () {
+        var dataUrl = String(reader.result || '');
+        var base64 = dataUrl.indexOf(',') >= 0 ? dataUrl.slice(dataUrl.indexOf(',') + 1) : dataUrl;
+        attApi('POST', '/attachments', {
+          filename: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          dataBase64: base64,
+          link: { entityType: entityType, entityId: entityId },
+        }).then(resolve, reject);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  window.OTPAttachments = { uploadTo: uploadTo };
+
   function initHost(host) {
     if (host.__attReady) return;
     host.__attReady = true;

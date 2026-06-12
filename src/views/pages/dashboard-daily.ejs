@@ -542,6 +542,11 @@
           <input type="text" name="title" required maxlength="500" placeholder="What to do" class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
           <%- include('../partials/rich-description-editor', { targetId: 'todo-add-desc' }) %>
           <textarea id="todo-add-desc" name="description" rows="2" placeholder="Description (optional). Markdown: **bold**, *italic*, [link](https://...)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs"></textarea>
+          <div class="flex items-center gap-2 text-xs">
+            <button type="button" id="todo-add-attach" class="text-orgy-blue font-semibold">&#128206; Attach file</button>
+            <span id="todo-add-files-label" class="text-gray-500"></span>
+            <input type="file" id="todo-add-files" multiple class="hidden">
+          </div>
           <div class="flex gap-3 flex-wrap">
             <div class="flex flex-col gap-0.5">
               <label for="todo-delegate-to" class="text-[10px] uppercase tracking-wide text-gray-500">Delegate to</label>
@@ -1754,6 +1759,16 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
         dateLabelEl.textContent = delegateSelEl.value ? 'Promised by' : 'Due date';
       });
     }
+    var todoAttachBtn = document.getElementById('todo-add-attach');
+    var todoAttachInput = document.getElementById('todo-add-files');
+    var todoAttachLabel = document.getElementById('todo-add-files-label');
+    if (todoAttachBtn && todoAttachInput) {
+      todoAttachBtn.addEventListener('click', function(){ todoAttachInput.click(); });
+      todoAttachInput.addEventListener('change', function(){
+        var n = todoAttachInput.files.length;
+        todoAttachLabel.textContent = n ? (n === 1 ? todoAttachInput.files[0].name : n + ' files staged') : '';
+      });
+    }
     todoForm.addEventListener('submit', function(e){
       e.preventDefault();
       var fd = new FormData(todoForm);
@@ -1797,7 +1812,24 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
         body.teamId = teamVal;
         body.kind = 'l10';
       }
-      api('POST', '/todos', body).then(reload).catch(function(err){ alert('Add to-do failed: ' + fmtApiError(err)); });
+      api('POST', '/todos', body).then(function(j){
+        // Staged files upload against the new todo id, then the page reloads.
+        var files = todoAttachInput ? Array.prototype.slice.call(todoAttachInput.files) : [];
+        var newId = j && j.todo && j.todo.id;
+        if (!files.length || !newId || !window.OTPAttachments) return;
+        var failed = [];
+        var chain = Promise.resolve();
+        files.forEach(function(f){
+          chain = chain.then(function(){
+            return window.OTPAttachments.uploadTo('todo', newId, f).catch(function(err){
+              failed.push(f.name + ' (' + ((err && err.message) || 'failed') + ')');
+            });
+          });
+        });
+        return chain.then(function(){
+          if (failed.length) alert('To-do saved, but these files did not attach:\n' + failed.join('\n'));
+        });
+      }).then(reload).catch(function(err){ alert('Add to-do failed: ' + fmtApiError(err)); });
     });
   }
   document.querySelectorAll('.todo-done-cb').forEach(function(cb){
