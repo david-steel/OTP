@@ -15,6 +15,27 @@ export const changelog: ChangelogEntry[] = [
 
   {
     date: '2026-06-11',
+    tags: ['Major', 'Dashboard'],
+    title: 'Design your own dashboard: row layouts and fonts up to 3XL',
+    summary: 'Customize mode now goes much further than rearranging tiles. The Daily dashboard is a set of rows, and every row gets its own shape: one column, thirds, halves, one-third plus two-thirds, or the reverse -- mixed freely, up to eight rows. Drag tiles between any row and cell, add or remove rows, and nothing is ever lost. Font sizes also grew: S, M, L, XL, 2XL, and 3XL, with layouts that adapt instead of squishing. Everything saves to your profile as you go.',
+    details: `<p>Hit Customize on the Daily dashboard.</p>
+<ul class="list-disc pl-6 space-y-1">
+<li><strong>Per-row shapes.</strong> Each row picks its own pattern: full width, 1/3 + 2/3, 2/3 + 1/3, half + half, or thirds. Mix them however you work.</li>
+<li><strong>Drag anywhere.</strong> Tiles move between cells and rows, not just within a column. Removing a row hands its tiles to the row above -- nothing disappears.</li>
+<li><strong>Bigger type.</strong> Six sizes up to 3XL for wall screens and tired eyes, with tiles that wrap gracefully instead of clipping.</li>
+<li><strong>Yours alone.</strong> Layout and font save per member automatically; teammates each keep their own.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-11',
+    tags: ['Meetings', 'Fixes'],
+    title: 'Fixed: KPI values saved during a meeting now show up immediately',
+    summary: 'If you updated a KPI during a live meeting, the value saved correctly but the scorecard kept showing the snapshot taken when the meeting started -- so your edit seemed to vanish. Now, saving a KPI mid-meeting refreshes the scorecard on the spot. Values entered before this fix were never lost; they are in your scoreboard history.',
+  },
+
+  {
+    date: '2026-06-11',
     tags: ['Major', 'Rocks'],
     title: 'Milestones on Quarterly Priorities: break a Rock into checkable steps',
     summary: 'Every Rock can now carry milestones: the concrete steps between here and done, each with its own due date and a checkbox. Check them off as you go and the Rock shows live progress (3 of 5). Each milestone can also have to-dos assigned to people, so the step has owners, not just a name. Add and manage milestones on the Daily dashboard; check them off live during your weekly meeting in the Rock Review.',
