@@ -138,7 +138,8 @@
             <div class="field rise" style="animation-delay:.74s">
               <label for="ob-name">Your name</label>
               <input type="text" id="ob-name" placeholder="Jordan Lee"
-                     value="<%= member && member.displayName ? member.displayName : '' %>">
+                     value="<%= member && member.displayName ? member.displayName : (typeof prefillName !== 'undefined' && prefillName ? prefillName : '') %>">
+              <p class="hint">This is your name on the accountability chart &mdash; in OTP every person and AI agent gets a seat. We pulled it from your account; edit if you'd like.</p>
             </div>
             <div class="field rise" style="animation-delay:.78s">
               <label for="ob-role">Your role</label>

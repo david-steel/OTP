@@ -149,11 +149,27 @@ export default async function onboardingPageRoutes(app: FastifyInstance) {
       }
     }
 
+    // Prefill the name field from Clerk so a fresh signup doesn't re-type what
+    // we already have (the name they just set at sign-up). Non-blocking: any
+    // failure falls back to an empty field. Skipped if a member row already
+    // carries a displayName (returning user).
+    let prefillName = '';
+    if (!member?.displayName && process.env.CLERK_SECRET_KEY) {
+      try {
+        const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+        const u = await clerk.users.getUser(auth.userId);
+        prefillName = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+      } catch (err) {
+        request.log.warn({ err }, 'clerk name prefill failed (non-blocking)');
+      }
+    }
+
     return renderOnboarding(reply, 'onboarding-profile', {
       title: 'Set up your seat · OTP',
       org: org || null,
       member: member || null,
       roles: ONBOARDING_ROLES,
+      prefillName,
     });
   });
 
