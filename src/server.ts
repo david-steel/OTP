@@ -638,6 +638,9 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/answers/ai-agent-collaboration', priority: '0.85', changefreq: 'monthly' },
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },
     { loc: '/whats-new', priority: '0.7', changefreq: 'weekly' },
+    { loc: '/templates', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/premium-support', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/guide/connect-your-agent', priority: '0.7', changefreq: 'monthly' },
   ];
 
   const today = new Date().toISOString().split('T')[0];
@@ -724,6 +727,19 @@ app.get('/sitemap.xml', async (request, reply) => {
     // If posts dir missing, skip
   }
 
+  // Meeting templates (authored, byte-stable; one /templates/<slug> per item).
+  // lastmod is a fixed build date -- the content does not change per request,
+  // so we don't want Date.now churning the file on every crawl.
+  try {
+    const { MEETING_TEMPLATES } = await import('./data/meeting-templates.js');
+    const TEMPLATES_LASTMOD = '2026-06-12';
+    for (const t of MEETING_TEMPLATES) {
+      dynamicUrls += `  <url><loc>${BASE}/templates/${t.slug}</loc><lastmod>${TEMPLATES_LASTMOD}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+    }
+  } catch {
+    // If the templates barrel fails to load, skip
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticPages.map(p => `  <url><loc>${BASE}${p.loc}</loc><lastmod>${today}</lastmod><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`).join('\n')}
@@ -795,6 +811,7 @@ await app.register(import('./routes/api/ninety-import.js'), { prefix: '/api/v1' 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/sections/blog.js'));
+await app.register(import('./routes/pages/sections/templates.js'));
 await app.register(import('./routes/pages/sections/dashboard.js'));
 await app.register(import('./routes/pages/coach-claim.js'));
 await app.register(import('./routes/pages/coach-invite.js'));

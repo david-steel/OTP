@@ -1,0 +1,202 @@
+<%# /templates/:slug -- a single meeting-template detail page. v7 layout,
+    dual-rendered (renderInShell). Content comes from src/data/meeting-templates.ts
+    via the templates route (template + related locals). template.bodyHtml is
+    trusted authored HTML (our own content, no user data) rendered raw. The
+    agenda is rendered from template.steps. NOTE: an EJS comment closes on the
+    first percent-gt it sees, so no EJS tag examples in here. %>
+<style>
+  .td-body { font-size:15px; color:var(--ink-soft); line-height:1.72; }
+  .td-body p { margin:0 0 14px; }
+  .td-body p:last-child { margin-bottom:0; }
+  .td-body h2, .td-body h3 {
+    font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; color:var(--ink);
+    letter-spacing:-0.015em; margin:24px 0 10px;
+  }
+  .td-body h2 { font-size:1.25rem; }
+  .td-body h3 { font-size:1.05rem; }
+  .td-body ul, .td-body ol { margin:0 0 14px; padding-left:22px; }
+  .td-body ul { list-style:disc; }
+  .td-body ol { list-style:decimal; }
+  .td-body li { margin:5px 0; }
+  .td-body li::marker { color:var(--ink-mute); }
+  .td-body strong { color:var(--ink); font-weight:600; }
+  .td-body code {
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--blue-deep);
+    background:var(--grey); border:1px solid var(--line); border-radius:5px; padding:1px 5px;
+  }
+
+  .td-meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .td-badge {
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.04em;
+    text-transform:uppercase; color:var(--blue-deep); background:rgba(13,125,242,.08);
+    border:1px solid rgba(13,125,242,.16); border-radius:7px; padding:5px 10px;
+  }
+  .td-pill {
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft);
+    background:var(--card); border:1px solid var(--line); border-radius:7px; padding:5px 10px;
+  }
+
+  .td-agenda { counter-reset:td-step; list-style:none; margin:0; padding:0; }
+  .td-step {
+    display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--line); page-break-inside:avoid;
+  }
+  .td-step:last-child { border-bottom:none; }
+  .td-step-no {
+    counter-increment:td-step; flex:none; width:30px; height:30px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Schibsted Grotesk',sans-serif; font-weight:800; font-size:13px;
+    background:var(--orgy); color:var(--ink);
+  }
+  .td-step-no::before { content:counter(td-step); }
+  .td-step-body { min-width:0; }
+  .td-step-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .td-step-name {
+    font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1rem;
+    color:var(--ink); letter-spacing:-0.01em;
+  }
+  .td-step-time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-mute); }
+  .td-step-text { font-size:14px; color:var(--ink-soft); line-height:1.62; margin-top:4px; }
+
+  .td-btn {
+    display:inline-flex; align-items:center; gap:8px; padding:11px 18px; border-radius:11px;
+    font-size:14px; font-weight:600; text-decoration:none; cursor:pointer; border:1.5px solid transparent;
+    transition:all .14s ease;
+  }
+  .td-btn-primary { background:var(--blue); color:#fff; }
+  .td-btn-primary:hover { background:var(--blue-deep); }
+  .td-btn-ghost { background:var(--card); color:var(--ink); border-color:var(--line); }
+  .td-btn-ghost:hover { border-color:var(--blue); color:var(--blue-deep); }
+
+  .td-cta {
+    background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:24px;
+  }
+  .td-chip {
+    font-size:12px; color:var(--ink-soft); background:var(--grey); border:1px solid var(--line);
+    border-radius:9999px; padding:5px 11px; white-space:nowrap;
+  }
+  .td-related-card {
+    display:block; padding:16px; background:var(--card); border:1.5px solid var(--line);
+    border-radius:14px; text-decoration:none; transition:border-color .15s ease, transform .15s ease;
+  }
+  .td-related-card:hover { border-color:var(--blue); transform:translateY(-2px); }
+
+  @media print {
+    .no-print { display:none !important; }
+    body { background:#fff !important; color:#000 !important; }
+    .td-body, .td-step-text, .td-step-name, h1, h2, h3 { color:#000 !important; }
+    a { color:#000 !important; text-decoration:none; }
+    .td-step { border-color:#ccc !important; page-break-inside:avoid; }
+    h1, h2, h3, .td-step-name { page-break-after:avoid; }
+    section { background:#fff !important; }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[860px] mx-auto px-6 pt-[124px] pb-8 sm:pt-[148px] sm:pb-10"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
+    <a href="/templates" class="no-print eyebrow inline-flex items-center gap-2 mb-5 text-[var(--ink-soft)]" style="text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      All templates
+    </a>
+    <h1 class="font-display text-[var(--ink)]"
+        style="font-size:clamp(1.8rem,3.6vw,2.6rem); line-height:1.12; font-weight:700; letter-spacing:-0.025em;">
+      <%= template.title.replace(/ - OTP$/, '') %>
+    </h1>
+    <div class="td-meta mt-5">
+      <span class="td-badge"><%= template.methodology %></span>
+      <span class="td-pill"><%= template.minutes %> min</span>
+      <span class="td-pill"><%= template.cadence %></span>
+      <span class="td-pill"><%= template.participants %></span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= BODY + AGENDA ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[860px] mx-auto px-6 py-10 sm:py-14">
+
+    <div class="card p-6 sm:p-8">
+      <div class="td-body"><%- template.bodyHtml %></div>
+    </div>
+
+    <div class="card p-6 sm:p-8 mt-6">
+      <h2 class="font-display text-[var(--ink)] text-[1.35rem] font-bold tracking-[-0.015em] mb-1">Agenda</h2>
+      <p class="text-[13px] text-[var(--ink-mute)] mb-4 font-mono"><%= template.minutes %> minutes total &middot; <%= template.steps.length %> sections</p>
+      <ol class="td-agenda">
+        <% template.steps.forEach(function(s) { %>
+          <li class="td-step">
+            <div class="td-step-no"></div>
+            <div class="td-step-body">
+              <div class="td-step-head">
+                <span class="td-step-name"><%= s.name %></span>
+                <% if (s.minutes) { %><span class="td-step-time"><%= s.minutes %> min</span><% } %>
+              </div>
+              <div class="td-step-text"><%= s.text %></div>
+            </div>
+          </li>
+        <% }); %>
+      </ol>
+    </div>
+
+    <!-- Actions -->
+    <div class="no-print flex flex-wrap gap-3 mt-6">
+      <a class="td-btn td-btn-primary" href="/templates/<%= template.slug %>/download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download .md
+      </a>
+      <button class="td-btn td-btn-ghost" type="button" onclick="window.print()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+    </div>
+
+    <!-- Run live CTA -->
+    <div class="td-cta no-print mt-8">
+      <h3 class="font-display text-[var(--ink)] text-[1.15rem] font-bold tracking-[-0.015em] mb-1.5">Run this meeting live in OrgTP</h3>
+      <p class="text-[14px] text-[var(--ink-soft)] leading-[1.6] mb-4">
+        Stop copying agendas into a doc every week. OrgTP runs your meetings live &mdash; scorecard, rocks, issues, and to-dos all in one place, with your AI agents in the room.
+      </p>
+      <% if (typeof authUserId !== 'undefined' && authUserId) { %>
+        <a class="td-btn td-btn-primary" href="/l8">Open your meeting &rarr;</a>
+      <% } else { %>
+        <div class="flex flex-wrap gap-3">
+          <a class="td-btn td-btn-primary" href="/sign-up">Start free &rarr;</a>
+          <a class="td-btn td-btn-ghost" href="/l8">See how it works</a>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Keyword chips -->
+    <% if (template.keywords && template.keywords.length) { %>
+      <div class="no-print mt-8">
+        <div class="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-mute)] mb-2.5">Related searches</div>
+        <div class="flex flex-wrap gap-2">
+          <% template.keywords.forEach(function(k) { %>
+            <a class="td-chip" href="/templates?q=<%= encodeURIComponent(k) %>"><%= k %></a>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Related templates -->
+    <% if (related && related.length) { %>
+      <div class="mt-10">
+        <h2 class="font-display text-[var(--ink)] text-[1.2rem] font-bold tracking-[-0.015em] mb-4">Related templates</h2>
+        <div class="grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">
+          <% related.forEach(function(r) { %>
+            <a class="td-related-card" href="/templates/<%= r.slug %>">
+              <div class="td-meta mb-2"><span class="td-badge"><%= r.methodology %></span></div>
+              <div class="font-display text-[var(--ink)] text-[1rem] font-bold tracking-[-0.01em] leading-[1.25]"><%= r.shortName %></div>
+              <div class="font-mono text-[11px] text-[var(--ink-mute)] mt-1.5"><%= r.minutes %> min &middot; <%= r.cadence %></div>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="no-print mt-10">
+      <a href="/templates" class="text-[14px] font-semibold text-[var(--blue-deep)] link-u">&larr; Back to all templates</a>
+    </div>
+
+  </div>
+</section>

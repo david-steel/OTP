@@ -74,6 +74,12 @@ operating system. An organization runs its whole operating cadence inside it:
   prompt that generates a first OOS in about 60 seconds, and a one-line
   install (curl orgtp.com/install.sh) that gives Claude Code the OTP MCP
   server and slash commands (/otp-publish and friends).
+- /templates -- a free library of 80+ meeting templates and agendas (EOS
+  Level 10, Scaling Up, Agile/Scrum ceremonies, 1:1s, retrospectives,
+  focus groups, planning, QBRs, and more). Each is searchable, downloadable
+  as markdown, printable, and can be adapted and run live in OrgTP. Browse
+  at /templates or a specific one at /templates/<slug> (e.g.
+  /templates/level-10-meeting).
 - /whats-new -- the product changelog page (every shipped update).
 - /blog -- the EOS + AI article library.
 - /premium-support -- Premium Support: priority help in a dedicated Slack
