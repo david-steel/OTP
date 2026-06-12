@@ -46,6 +46,11 @@ const DDL: string[] = [
   `CREATE INDEX IF NOT EXISTS "agent_runs_schedule_idx" ON "agent_runs" ("schedule_id");`,
   `CREATE INDEX IF NOT EXISTS "agent_runs_status_idx" ON "agent_runs" ("status");`,
 
+  // Phase 2 (SOP execution + wallet metering): record which SOP a run executed
+  // and the wallet debit (cents) charged for it. Additive + idempotent.
+  `ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS sop_title text;`,
+  `ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS cost_cents integer;`,
+
   `CREATE TABLE IF NOT EXISTS "agent_schedules" (
      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
      "org_id" uuid NOT NULL REFERENCES "organizations"("id") ON DELETE CASCADE,

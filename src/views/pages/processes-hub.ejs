@@ -64,6 +64,16 @@
   .ph-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft, #374151); margin-bottom: 4px; }
   .ph-list-row { display: flex; gap: 8px; margin-bottom: 6px; }
   .ph-step-num { flex: 0 0 auto; width: 22px; height: 38px; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 700; color: var(--ink-mute, #9ca3af); }
+  .ph-run-out { white-space: pre-wrap; word-break: break-word; font-size: 12.5px; line-height: 1.5; color: var(--ink, #1f2937); background: #f8fafc; border: 1px solid var(--line, #e5e7eb); border-radius: 8px; padding: 10px 12px; max-height: 340px; overflow-y: auto; }
+  .ph-run-meta { font-size: 11.5px; color: var(--ink-mute, #6b7280); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .ph-run-err { font-size: 12.5px; color: #be123c; font-weight: 600; }
+  .ph-run-row { border: 1px solid var(--line, #e5e7eb); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+  .ph-run-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; }
+  .ph-spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.5); border-top-color: #fff; border-radius: 50%; animation: ph-spin .7s linear infinite; vertical-align: middle; }
+  @keyframes ph-spin { to { transform: rotate(360deg); } }
+  .ph-badge { display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; }
+  .ph-badge-ok { background:#dcfce7; color:#15803d; }
+  .ph-badge-fail { background:#fee2e2; color:#b91c1c; }
 </style>
 
 <section class="bg-[var(--white)]">
@@ -177,11 +187,20 @@
           <button type="button" class="ph-toggle text-[12.5px] font-semibold text-[var(--blue,#0d7df2)] hover:text-[var(--blue-deep,#0a63c2)]">Show details</button>
           <% if (e.canEdit) { %>
           <div class="flex items-center gap-2">
+            <% if (e.seatType === 'agent') { %>
+            <button type="button" class="ph-run ph-btn ph-btn-primary ph-btn-sm" title="Run this process now">▶ Run</button>
+            <button type="button" class="ph-runs ph-btn ph-btn-ghost ph-btn-sm" title="Recent runs">Recent runs</button>
+            <% } %>
             <button type="button" class="ph-edit ph-btn ph-btn-ghost ph-btn-sm">Edit</button>
             <button type="button" class="ph-delete ph-btn ph-btn-ghost ph-btn-sm" style="color:#be123c;">Delete</button>
           </div>
           <% } %>
         </div>
+
+        <% if (e.canEdit && e.seatType === 'agent') { %>
+        <!-- Inline run-result + recent-runs panel (populated client-side) -->
+        <div class="ph-run-panel" style="display:none; border-top:1px solid var(--line,#e5e7eb); padding-top:12px; margin-top:4px;"></div>
+        <% } %>
       </div>
       <% }); %>
     </div>
@@ -495,13 +514,140 @@
       .catch(function(e){ saveBtn.disabled = false; errEl.textContent = 'Save failed: ' + fmtErr(e); errEl.style.display = ''; });
   });
 
-  // ---- Edit / Delete from a card ----
+  // ---- Run a SOP / view recent runs (agent seats only) ----
+  function el(tag, cls, text){
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = String(text);
+    return n;
+  }
+  function fmtWhen(iso){
+    if (!iso) return '';
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? String(iso) : d.toLocaleString();
+  }
+  function fmtCost(cents){
+    if (cents == null) return null;
+    var c = Number(cents);
+    if (!isFinite(c)) return null;
+    return '$' + (c / 100).toFixed(c % 100 === 0 ? 2 : 2);
+  }
+  function runMeta(parent, run){
+    var meta = el('div', 'ph-run-meta');
+    var ti = (run.tokensInput != null) ? run.tokensInput : run.tokens_input;
+    var to = (run.tokensOutput != null) ? run.tokensOutput : run.tokens_output;
+    if (ti != null || to != null) meta.appendChild(el('span', null, 'Tokens: ' + (ti || 0) + ' in / ' + (to || 0) + ' out'));
+    var cost = fmtCost(run.costCents != null ? run.costCents : run.cost_cents);
+    if (cost) meta.appendChild(el('span', null, 'Cost: ' + cost));
+    if (run.model) meta.appendChild(el('span', null, run.model));
+    parent.appendChild(meta);
+  }
+  function renderRunResult(panel, run){
+    panel.innerHTML = '';
+    var status = run.status || (run.error ? 'failed' : 'succeeded');
+    var head = el('div', null);
+    head.style.marginBottom = '8px';
+    head.appendChild(el('span', 'ph-badge ' + (status === 'succeeded' ? 'ph-badge-ok' : 'ph-badge-fail'), status));
+    panel.appendChild(head);
+    if (status === 'succeeded') {
+      panel.appendChild(el('div', 'ph-run-out', run.output || '(no output)'));
+      runMeta(panel, run);
+    } else {
+      var code = run.error || 'Run failed';
+      var msg = code;
+      if (code === 'INSUFFICIENT_BALANCE') msg = 'Insufficient wallet balance. Add credits to run agents.';
+      else if (code === 'NOT_CONFIGURED' || /ANTHROPIC_API_KEY/.test(code)) msg = 'Agent runtime is not configured yet (no API key).';
+      panel.appendChild(el('div', 'ph-run-err', msg));
+    }
+  }
+
+  function runSop(card, e, btn){
+    var panel = card.querySelector('.ph-run-panel');
+    if (!panel) return;
+    panel.style.display = '';
+    panel.innerHTML = '';
+    panel.appendChild(el('div', 'ph-run-meta', 'Running...'));
+    var label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ph-spin"></span> Running';
+    var sop = e.sop || {};
+    var body = sop.id ? { sopId: sop.id } : { sopTitle: sop.title };
+    api('POST', '/agents/' + encodeURIComponent(e.seatExternalId) + '/run', body)
+      .then(function(run){ renderRunResult(panel, run); })
+      .catch(function(err){
+        panel.innerHTML = '';
+        var code = err && err.code ? err.code : 'ERROR';
+        var msg = err && err.message ? err.message : 'Run failed';
+        if (code === 'INSUFFICIENT_BALANCE') msg = 'Insufficient wallet balance. Add credits to run agents.';
+        if (code === 'RATE_LIMITED') msg = 'Too many runs. Try again in a minute.';
+        panel.appendChild(el('div', 'ph-run-err', msg));
+      })
+      .then(function(){ btn.disabled = false; btn.innerHTML = label; });
+  }
+
+  function showRecentRuns(card, e, btn){
+    var panel = card.querySelector('.ph-run-panel');
+    if (!panel) return;
+    panel.style.display = '';
+    panel.innerHTML = '';
+    panel.appendChild(el('div', 'ph-run-meta', 'Loading recent runs...'));
+    btn.disabled = true;
+    api('GET', '/agents/' + encodeURIComponent(e.seatExternalId) + '/runs?limit=25', null)
+      .then(function(res){
+        panel.innerHTML = '';
+        var runs = (res && Array.isArray(res.runs)) ? res.runs : [];
+        var thisTitle = (e.sop && e.sop.title ? String(e.sop.title) : '').trim().toLowerCase();
+        if (runs.length === 0) { panel.appendChild(el('div', 'ph-run-meta', 'No runs yet.')); return; }
+        runs.forEach(function(run){
+          var row = el('div', 'ph-run-row');
+          var matches = thisTitle && String(run.sop_title || '').trim().toLowerCase() === thisTitle;
+          if (matches) row.style.borderColor = 'var(--blue,#0d7df2)';
+          var headRow = el('div', 'ph-run-row-head');
+          var left = el('div', null);
+          var st = run.status || 'succeeded';
+          left.appendChild(el('span', 'ph-badge ' + (st === 'succeeded' ? 'ph-badge-ok' : 'ph-badge-fail'), st));
+          var titleSpan = el('span', null, '  ' + (run.sop_title || run.trigger || 'run'));
+          titleSpan.style.fontWeight = '600';
+          titleSpan.style.fontSize = '12.5px';
+          titleSpan.style.marginLeft = '6px';
+          left.appendChild(titleSpan);
+          headRow.appendChild(left);
+          headRow.appendChild(el('span', null, fmtWhen(run.created_at || run.started_at)));
+          row.appendChild(headRow);
+          var detail = el('div', null);
+          detail.style.display = 'none';
+          detail.style.marginTop = '8px';
+          if (run.status === 'failed') {
+            detail.appendChild(el('div', 'ph-run-err', run.error || 'Run failed'));
+          } else {
+            detail.appendChild(el('div', 'ph-run-out', run.output || '(no output)'));
+            runMeta(detail, run);
+          }
+          row.appendChild(detail);
+          headRow.addEventListener('click', function(){ detail.style.display = detail.style.display === 'none' ? '' : 'none'; });
+          panel.appendChild(row);
+        });
+      })
+      .catch(function(err){
+        panel.innerHTML = '';
+        panel.appendChild(el('div', 'ph-run-err', (err && err.message) ? err.message : 'Could not load runs'));
+      })
+      .then(function(){ btn.disabled = false; });
+  }
+
+  // ---- Edit / Delete / Run / Recent runs from a card ----
   if (grid) grid.addEventListener('click', function(ev){
     var t = ev.target;
     var card = t.closest && t.closest('[data-idx]');
     if (!card) return;
     var e = ENTRIES[Number(card.getAttribute('data-idx'))];
     if (!e) return;
+    if (t.classList.contains('ph-run')) {
+      runSop(card, e, t); return;
+    }
+    if (t.classList.contains('ph-runs')) {
+      showRecentRuns(card, e, t); return;
+    }
     if (t.classList.contains('ph-edit')) {
       openModal('edit', e.seatExternalId, e.sop, e.sopIndex);
     } else if (t.classList.contains('ph-delete')) {
