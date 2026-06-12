@@ -47,7 +47,7 @@ describe('GUIDE_SECTIONS', () => {
 
   it('routes are well-formed app paths and cover the key pages', () => {
     for (const s of GUIDE_SECTIONS) {
-      for (const r of s.routes) expect(r).toMatch(/^\/[A-Za-z0-9\[\]:/_-]*$/);
+      for (const r of s.routes) expect(r).toMatch(/^\/[A-Za-z0-9[\]:/_-]*$/);
     }
     const all = GUIDE_SECTIONS.flatMap(s => s.routes);
     for (const expected of ['/dashboard', '/l8', '/me/todos', '/dashboard/kpis', '/settings/api', '/import/ninety']) {

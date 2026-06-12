@@ -31,7 +31,9 @@ function getClient(): Anthropic {
   return anthropicClient;
 }
 
-function sseWrite(raw: NodeJS.WritableStream, payload: unknown) {
+// Structural type for reply.raw -- avoids the NodeJS global namespace (which
+// the lint env doesn't register under no-undef) while matching how we use it.
+function sseWrite(raw: { write: (chunk: string) => unknown }, payload: unknown) {
   raw.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
