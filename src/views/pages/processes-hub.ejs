@@ -204,8 +204,8 @@
       <div class="ph-card p-5 flex flex-col gap-3" data-idx="<%= i %>"
            data-seat="<%= e.seatExternalId %>" data-type="<%= e.seatType %>" data-sopindex="<%= e.sopIndex %>">
         <div class="flex flex-wrap items-center gap-1.5">
-          <span class="ph-chip <%= e.seatType === 'agent' ? 'ph-chip-agent' : 'ph-chip-human' %>"><%= e.seatType === 'agent' ? 'Agent' : 'Human' %></span>
-          <span class="ph-chip ph-chip-mute"><%= e.seatName %><% if (e.seatRole) { %> &middot; <%= e.seatRole %><% } %></span>
+          <span class="ph-chip <%= e.seatType === 'agent' ? 'ph-chip-agent' : 'ph-chip-human' %>"><%= e.seatType === 'agent' ? 'Agent' : 'Human' %><% if (e.seatName) { %> &middot; <%= e.seatName %><% } %></span>
+          <% if (e.seatRole) { %><span class="ph-chip ph-chip-mute"><%= e.seatRole %></span><% } %>
           <% if (steps.length) { %><span class="ph-chip ph-chip-mute"><%= steps.length %> step<%= steps.length === 1 ? '' : 's' %></span><% } %>
           <% if (e.schedule) { %><span class="ph-chip ph-chip-sched"<% if (e.schedule.nextRunAt) { %> title="Next run: <%= e.schedule.nextRunAt %>"<% } %>>&#9200; <%= e.schedule.label %></span><% } %>
         </div>
