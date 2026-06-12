@@ -110,6 +110,11 @@
   @keyframes ph-pulse { 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(13,125,242,.35); } 50% { opacity: .55; transform: scale(.82); box-shadow: 0 0 0 7px rgba(13,125,242,0); } }
   .ph-working-text { font-size: 13.5px; font-weight: 600; color: var(--ink, #1f2937); }
   .ph-working-text b { color: var(--blue-deep, #0a63c2); }
+  /* Live transcript: the agent's output as it streams in, before the final
+     formatted render swaps in. Plain text, monospace, auto-scrolls to bottom. */
+  .ph-stream { margin-top: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.55; color: var(--ink, #1f2937); white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow-y: auto; padding: 12px 14px; background: #f8fafc; border: 1px solid var(--line, #e5e7eb); border-radius: 10px; }
+  .ph-stream-caret { display: inline-block; width: 7px; height: 14px; margin-left: 1px; background: var(--blue, #0d7df2); vertical-align: text-bottom; animation: ph-blink 1s step-end infinite; }
+  @keyframes ph-blink { 50% { opacity: 0; } }
   .ph-msg { font-size: 13px; line-height: 1.5; color: var(--ink-soft, #374151); padding: 14px 16px; border: 1.5px solid #fde68a; background: #fffbeb; border-radius: 10px; }
   .ph-msg-fail { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
   /* Recent-run rows reuse the result card chrome, denser. */
@@ -671,6 +676,113 @@
     return wrap;
   }
 
+  // Stream a run over SSE. We POST with Accept: text/event-stream and read the
+  // response body with a reader + TextDecoder, parsing `data: {...}\n\n` frames.
+  // (EventSource can't POST, so we hand-roll the SSE consumer.) Each {t} delta
+  // is appended to a live transcript so the user watches the agent type; the
+  // final {done,...} event swaps in the nicely formatted outputHtml + chips.
+  // Falls back to the JSON path if the browser lacks fetch-stream support.
+  function streamRun(card, e, btn, label, panel){
+    var sop = e.sop || {};
+    var body = sop.id ? { sopId: sop.id } : { sopTitle: sop.title };
+
+    // Live transcript surface, appended under the "working" card.
+    var stream = el('pre', 'ph-stream');
+    var caret = el('span', 'ph-stream-caret');
+    stream.appendChild(caret);
+    panel.appendChild(stream);
+    function appendDelta(t){
+      caret.remove();
+      stream.appendChild(document.createTextNode(t));
+      stream.appendChild(caret);
+      stream.scrollTop = stream.scrollHeight;
+    }
+    function done(){ btn.disabled = false; btn.innerHTML = label; }
+    function showFail(code, message){
+      panel.innerHTML = '';
+      var msg = friendlyState(code) || message || 'Run failed';
+      panel.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
+    }
+    function showFinal(evt){
+      panel.innerHTML = '';
+      // Build a run object resultCard understands from the final event.
+      panel.appendChild(resultCard(e, {
+        status: evt.status, error: evt.error, outputHtml: evt.outputHtml,
+        sopTitle: evt.sopTitle, model: evt.model,
+        tokensInput: evt.tokensInput, tokensOutput: evt.tokensOutput,
+        costCents: evt.costCents, startedAt: evt.startedAt, completedAt: evt.completedAt,
+      }));
+    }
+
+    return fetch('/api/v1/agents/' + encodeURIComponent(e.seatExternalId) + '/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body)
+    }).then(function(r){
+      // Pre-hijack failures come back as JSON errors (clean, never mid-stream).
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!r.ok || ct.indexOf('text/event-stream') === -1) {
+        return r.text().then(function(text){
+          var j = {}; try { j = text ? JSON.parse(text) : {}; } catch(e2){}
+          var inner = j.error || {};
+          showFail(inner.code || 'API_ERROR', inner.message || ('HTTP ' + r.status));
+        });
+      }
+      if (!r.body || !r.body.getReader) {
+        // No stream-reading support: degrade to the JSON run path.
+        return runSopJson(e, panel, body);
+      }
+      var reader = r.body.getReader();
+      var decoder = new TextDecoder();
+      var buf = '';
+      function handleFrame(payload){
+        var data;
+        try { data = JSON.parse(payload); } catch(e2){ return; }
+        if (data.t != null) { appendDelta(data.t); return; }
+        if (data.error) { showFail(null, data.error); return; }
+        if (data.done) { showFinal(data); return; }
+      }
+      function pump(){
+        return reader.read().then(function(res){
+          if (res.done) {
+            // Flush any trailing frame.
+            buf += decoder.decode();
+            var rest = buf.split('\n\n');
+            rest.forEach(function(chunk){
+              var line = chunk.replace(/^data: ?/, '').trim();
+              if (line) handleFrame(line);
+            });
+            return;
+          }
+          buf += decoder.decode(res.value, { stream: true });
+          var parts = buf.split('\n\n');
+          buf = parts.pop(); // keep the incomplete tail
+          parts.forEach(function(chunk){
+            var line = chunk.replace(/^data: ?/, '').trim();
+            if (line) handleFrame(line);
+          });
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function(err){
+      showFail(err && err.code ? err.code : null, (err && err.message) ? err.message : 'Run failed');
+    }).then(done);
+  }
+
+  // JSON fallback (back-compat / no fetch-stream support). Mirrors the old flow.
+  function runSopJson(e, panel, body){
+    return api('POST', '/agents/' + encodeURIComponent(e.seatExternalId) + '/run', body)
+      .then(function(run){ panel.innerHTML = ''; panel.appendChild(resultCard(e, run)); })
+      .catch(function(err){
+        panel.innerHTML = '';
+        var code = err && err.code ? err.code : 'ERROR';
+        var msg = friendlyState(code) || (err && err.message ? err.message : 'Run failed');
+        panel.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
+      });
+  }
+
   function runSop(card, e, btn){
     var panel = card.querySelector('.ph-run-panel');
     if (!panel) return;
@@ -680,17 +792,14 @@
     var label = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="ph-spin"></span> Running';
-    var sop = e.sop || {};
-    var body = sop.id ? { sopId: sop.id } : { sopTitle: sop.title };
-    api('POST', '/agents/' + encodeURIComponent(e.seatExternalId) + '/run', body)
-      .then(function(run){ panel.innerHTML = ''; panel.appendChild(resultCard(e, run)); })
-      .catch(function(err){
-        panel.innerHTML = '';
-        var code = err && err.code ? err.code : 'ERROR';
-        var msg = friendlyState(code) || (err && err.message ? err.message : 'Run failed');
-        panel.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
-      })
-      .then(function(){ btn.disabled = false; btn.innerHTML = label; });
+    // Prefer the live SSE stream; fall back to JSON where fetch streaming is
+    // unavailable (handled inside streamRun).
+    if (window.fetch && window.ReadableStream && window.TextDecoder) {
+      streamRun(card, e, btn, label, panel);
+    } else {
+      runSopJson(e, panel, e.sop && e.sop.id ? { sopId: e.sop.id } : { sopTitle: e.sop && e.sop.title })
+        .then(function(){ btn.disabled = false; btn.innerHTML = label; });
+    }
   }
 
   function showRecentRuns(card, e, btn){

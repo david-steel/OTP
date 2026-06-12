@@ -179,24 +179,37 @@ function buildSystemPrompt(node: {
   return lines.join('\n');
 }
 
-export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
-  const startedAt = new Date();
+/**
+ * Build the user prompt for a run. A SOP run produces the SOP's real
+ * work-product; an explicit promptOverride takes priority; otherwise a generic
+ * dry-run. Pure -- shared by runAgent + runAgentStream so both paths build the
+ * IDENTICAL prompt.
+ */
+function buildUserPrompt(opts: RunAgentOptions): string {
+  if (opts.sop && opts.sop.title) return buildSopRunPrompt(opts.sop);
+  if (opts.promptOverride && opts.promptOverride.trim().length > 0) return opts.promptOverride.trim();
+  return `Run your standard work for now. Summarize what you would do, what data you would touch, and what output you would produce. Treat this as a dry-run unless explicitly told otherwise.`;
+}
+
+/**
+ * Shared run lifecycle setup: build prompts, insert the queued/running
+ * agent_runs row, run the metering pre-check, resolve the system prompt, and
+ * verify the ANTHROPIC key. Returns either a `ready` shape (caller proceeds to
+ * call Claude) or a `failed` shape (caller returns the failed RunAgentResult
+ * WITHOUT calling Claude). The agent_runs row is already written to its terminal
+ * 'failed' state in the failed case. Used by BOTH runAgent (non-streaming) and
+ * runAgentStream so the agent_runs lifecycle + metering are identical.
+ */
+async function prepareRun(opts: RunAgentOptions, startedAt: Date): Promise<
+  | { ready: true; runId: string; systemPrompt: string; userPrompt: string; sopTitle: string | null; metering: boolean }
+  | { ready: false; result: RunAgentResult }
+> {
   const trigger = opts.trigger || 'manual';
   const sopTitle = opts.sop?.title ? String(opts.sop.title).trim() : null;
   const metering = meteringEnabled();
+  const userPrompt = buildUserPrompt(opts);
 
-  // Build the user prompt. A SOP run produces the SOP's real work-product; an
-  // explicit promptOverride takes priority; otherwise a generic dry-run.
-  let userPrompt: string;
-  if (opts.sop && opts.sop.title) {
-    userPrompt = buildSopRunPrompt(opts.sop);
-  } else if (opts.promptOverride && opts.promptOverride.trim().length > 0) {
-    userPrompt = opts.promptOverride.trim();
-  } else {
-    userPrompt = `Run your standard work for now. Summarize what you would do, what data you would touch, and what output you would produce. Treat this as a dry-run unless explicitly told otherwise.`;
-  }
-
-  // Insert a queued row up front so even crashes leave a record.
+  // Insert a queued/running row up front so even crashes leave a record.
   const [queuedRow] = await db.execute(sql`
     INSERT INTO agent_runs (org_id, agent_external_id, schedule_id, trigger, prompt, sop_title, status, started_at, triggered_by_user_id)
     VALUES (
@@ -214,67 +227,83 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   `).then(r => r.rows as { id: string }[]);
   const runId = queuedRow.id;
 
+  const failWith = async (error: string): Promise<{ ready: false; result: RunAgentResult }> => {
+    const completedAt = new Date();
+    await db.execute(sql`
+      UPDATE agent_runs
+      SET status = 'failed', error = ${error}, completed_at = ${completedAt}
+      WHERE id = ${runId}
+    `);
+    return {
+      ready: false,
+      result: {
+        runId, status: 'failed', output: null, error,
+        tokensInput: null, tokensOutput: null, costCents: null, sopTitle,
+        model: DEFAULT_MODEL, startedAt, completedAt,
+      },
+    };
+  };
+
   // --- Wallet metering pre-check (GATED). When metering is OFF this block is a
   // no-op and runs stay free. When ON, fail closed BEFORE spending any tokens if
-  // the org's balance is below the floor -- never spend tokens you can't bill.
+  // the org's balance is below the floor -- never stream what you can't bill.
   if (metering) {
     const balanceCents = await getBalanceCents(opts.orgId);
     if (balanceCents < METERING_FLOOR_CENTS) {
-      const completedAt = new Date();
-      await db.execute(sql`
-        UPDATE agent_runs
-        SET status = 'failed',
-            error = 'INSUFFICIENT_BALANCE',
-            completed_at = ${completedAt}
-        WHERE id = ${runId}
-      `);
-      return {
-        runId,
-        status: 'failed',
-        output: null,
-        error: 'INSUFFICIENT_BALANCE',
-        tokensInput: null,
-        tokensOutput: null,
-        model: DEFAULT_MODEL,
-        startedAt,
-        completedAt,
-      };
+      return failWith('INSUFFICIENT_BALANCE');
     }
   }
 
   // Resolve the agent's chart node so we can build the system prompt.
   let systemPrompt = `You are agent ${opts.externalId}.`;
-  let agentLabel = opts.externalId;
   try {
     const graph = await getOrgTeamGraph(opts.orgId, '');
     const node = graph.nodes.find(n => n.externalId === opts.externalId && n.type === 'agent');
-    if (node) {
-      agentLabel = node.label;
-      systemPrompt = buildSystemPrompt(node);
-    }
+    if (node) systemPrompt = buildSystemPrompt(node);
   } catch { /* fall back to generic prompt */ }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    const completedAt = new Date();
-    await db.execute(sql`
-      UPDATE agent_runs
-      SET status = 'failed',
-          error = 'ANTHROPIC_API_KEY env var is not set on the server',
-          completed_at = ${completedAt}
-      WHERE id = ${runId}
-    `);
-    return {
-      runId,
-      status: 'failed',
-      output: null,
-      error: 'ANTHROPIC_API_KEY env var is not set on the server',
-      tokensInput: null,
-      tokensOutput: null,
-      model: DEFAULT_MODEL,
-      startedAt,
-      completedAt,
-    };
+    return failWith('ANTHROPIC_API_KEY env var is not set on the server');
   }
+
+  return { ready: true, runId, systemPrompt, userPrompt, sopTitle, metering };
+}
+
+/**
+ * Post-run wallet debit (GATED, success-only). Shared by both run paths. When
+ * metering is OFF this returns null (runs free, cost_cents stays null). When ON,
+ * debit actual cost x markup; a debit failure AFTER a served run logs loudly but
+ * does NOT throw (the user was served), idempotency-keyed per run so a retry
+ * can't double-charge. Returns the cost in cents (or null).
+ */
+async function debitRun(opts: RunAgentOptions, runId: string, runModel: string, tokensInput: number | null, tokensOutput: number | null, sopTitle: string | null): Promise<number | null> {
+  let costCents: number | null = null;
+  try {
+    costCents = computeDebitCents(
+      { model: runModel, inputTokens: tokensInput ?? 0, outputTokens: tokensOutput ?? 0 },
+      markupMultipleFromEnv(),
+    );
+    const result = await debitWallet(opts.orgId, costCents, 'ai_usage', {
+      idempotencyKey: `agent-run_${runId}`,
+      metadata: { feature: 'agent-run', agentExternalId: opts.externalId, sopTitle, tokensInput, tokensOutput, model: runModel },
+      createdBy: 'agent-run',
+    });
+    if (!result.ok) {
+      // eslint-disable-next-line no-console
+      console.error('[agent-runtime] post-run wallet debit failed (user already served)', { orgId: opts.orgId, runId, costCents, code: result.code });
+    }
+  } catch (debitErr) {
+    // eslint-disable-next-line no-console
+    console.error('[agent-runtime] post-run wallet debit threw (user already served)', { orgId: opts.orgId, runId, err: debitErr });
+  }
+  return costCents;
+}
+
+export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
+  const startedAt = new Date();
+  const prep = await prepareRun(opts, startedAt);
+  if (!prep.ready) return prep.result;
+  const { runId, systemPrompt, userPrompt, sopTitle, metering } = prep;
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -295,43 +324,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
     const tokensOutput = response.usage?.output_tokens ?? null;
     const runModel = response.model || DEFAULT_MODEL;
 
-    // --- Wallet metering debit (GATED, success-only). When metering is OFF this
-    // block is skipped entirely and cost_cents stays null -- runs are free. When
-    // ON, debit actual cost x markup. If the debit fails AFTER a successful run
-    // we log loudly but still return success (the user was served), idempotency-
-    // keyed per run so a retry can't double-charge. Same philosophy as ask-ai.
-    let costCents: number | null = null;
-    if (metering) {
-      try {
-        costCents = computeDebitCents(
-          {
-            model: runModel,
-            inputTokens: tokensInput ?? 0,
-            outputTokens: tokensOutput ?? 0,
-          },
-          markupMultipleFromEnv(),
-        );
-        const result = await debitWallet(opts.orgId, costCents, 'ai_usage', {
-          idempotencyKey: `agent-run_${runId}`,
-          metadata: {
-            feature: 'agent-run',
-            agentExternalId: opts.externalId,
-            sopTitle,
-            tokensInput,
-            tokensOutput,
-            model: runModel,
-          },
-          createdBy: 'agent-run',
-        });
-        if (!result.ok) {
-          // eslint-disable-next-line no-console
-          console.error('[agent-runtime] post-run wallet debit failed (user already served)', { orgId: opts.orgId, runId, costCents, code: result.code });
-        }
-      } catch (debitErr) {
-        // eslint-disable-next-line no-console
-        console.error('[agent-runtime] post-run wallet debit threw (user already served)', { orgId: opts.orgId, runId, err: debitErr });
-      }
-    }
+    const costCents = metering ? await debitRun(opts, runId, runModel, tokensInput, tokensOutput, sopTitle) : null;
 
     await db.execute(sql`
       UPDATE agent_runs
@@ -346,39 +339,108 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
     `);
 
     return {
-      runId,
-      status: 'succeeded',
-      output: textContent,
-      error: null,
-      tokensInput,
-      tokensOutput,
-      costCents,
-      sopTitle,
-      model: runModel,
-      startedAt,
-      completedAt,
+      runId, status: 'succeeded', output: textContent, error: null,
+      tokensInput, tokensOutput, costCents, sopTitle,
+      model: runModel, startedAt, completedAt,
     };
   } catch (e: any) {
     const completedAt = new Date();
     const errMsg = e?.message || String(e);
     await db.execute(sql`
       UPDATE agent_runs
-      SET status = 'failed',
-          error = ${errMsg},
-          model = ${DEFAULT_MODEL},
-          completed_at = ${completedAt}
+      SET status = 'failed', error = ${errMsg}, model = ${DEFAULT_MODEL}, completed_at = ${completedAt}
       WHERE id = ${runId}
     `);
     return {
-      runId,
-      status: 'failed',
-      output: null,
-      error: errMsg,
-      tokensInput: null,
-      tokensOutput: null,
+      runId, status: 'failed', output: null, error: errMsg,
+      tokensInput: null, tokensOutput: null, costCents: null, sopTitle,
+      model: DEFAULT_MODEL, startedAt, completedAt,
+    };
+  }
+}
+
+/**
+ * Streaming sibling of runAgent. Builds the SAME system+user prompt, writes the
+ * SAME agent_runs lifecycle (running -> succeeded/failed), and runs the SAME
+ * gated metering pre-check + post-run debit -- the ONLY difference is it streams
+ * Claude's text via `onDelta(text)` per delta so the caller can pipe each chunk
+ * out over SSE. Resolves with the final RunAgentResult (so the route can emit a
+ * final event). Never throws for an API/stream error: it marks the row failed
+ * and returns a failed result, mirroring runAgent's contract.
+ *
+ * The metering pre-check runs in prepareRun BEFORE Claude is called, so an
+ * insufficient-balance org gets a failed result without a single streamed token.
+ */
+export async function runAgentStream(
+  opts: RunAgentOptions,
+  onDelta: (text: string) => void,
+): Promise<RunAgentResult> {
+  const startedAt = new Date();
+  const prep = await prepareRun(opts, startedAt);
+  if (!prep.ready) return prep.result;
+  const { runId, systemPrompt, userPrompt, sopTitle, metering } = prep;
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  try {
+    const stream = client.messages.stream({
       model: DEFAULT_MODEL,
-      startedAt,
-      completedAt,
+      max_tokens: DEFAULT_MAX_TOKENS,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    let textContent = '';
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        const text = event.delta.text;
+        textContent += text;
+        try { onDelta(text); } catch { /* consumer (SSE socket) gone; keep accumulating for the DB row */ }
+      }
+    }
+
+    const final = await stream.finalMessage();
+    const completedAt = new Date();
+    // Prefer the final message's assembled text; fall back to our accumulation.
+    const finalText = Array.isArray(final?.content)
+      ? final.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('\n')
+      : textContent;
+    const output = finalText || textContent;
+    const tokensInput = final?.usage?.input_tokens ?? null;
+    const tokensOutput = final?.usage?.output_tokens ?? null;
+    const runModel = final?.model || DEFAULT_MODEL;
+
+    const costCents = metering ? await debitRun(opts, runId, runModel, tokensInput, tokensOutput, sopTitle) : null;
+
+    await db.execute(sql`
+      UPDATE agent_runs
+      SET status = 'succeeded',
+          output = ${output},
+          model = ${runModel},
+          tokens_input = ${tokensInput},
+          tokens_output = ${tokensOutput},
+          cost_cents = ${costCents},
+          completed_at = ${completedAt}
+      WHERE id = ${runId}
+    `);
+
+    return {
+      runId, status: 'succeeded', output, error: null,
+      tokensInput, tokensOutput, costCents, sopTitle,
+      model: runModel, startedAt, completedAt,
+    };
+  } catch (e: any) {
+    const completedAt = new Date();
+    const errMsg = e?.message || String(e);
+    await db.execute(sql`
+      UPDATE agent_runs
+      SET status = 'failed', error = ${errMsg}, model = ${DEFAULT_MODEL}, completed_at = ${completedAt}
+      WHERE id = ${runId}
+    `);
+    return {
+      runId, status: 'failed', output: null, error: errMsg,
+      tokensInput: null, tokensOutput: null, costCents: null, sopTitle,
+      model: DEFAULT_MODEL, startedAt, completedAt,
     };
   }
 }

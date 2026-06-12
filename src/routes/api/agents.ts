@@ -15,7 +15,7 @@ import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import { resolveOrgForUser } from '../../services/membership.js';
-import { runAgent, listAgentRuns, type RunAgentSop } from '../../services/agent-runtime.js';
+import { runAgent, runAgentStream, listAgentRuns, type RunAgentSop } from '../../services/agent-runtime.js';
 import { getOrgTeamGraph } from '../../services/team-graph.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { resolveDemoPageContext } from '../../middleware/demo-access.js';
@@ -47,6 +47,27 @@ async function getOrg(request: FastifyRequest) {
 
 function validExternalId(id: string): boolean {
   return /^[A-Z0-9_-]{1,120}$/i.test(id);
+}
+
+// True when the caller asked for an SSE stream via the Accept header. Used to
+// content-negotiate the run endpoint: stream the run live for the hub UI, or
+// keep the back-compat JSON response for API callers + existing tests. Exported
+// for unit testing (proves JSON callers never accidentally hit the stream path).
+export function wantsEventStream(accept: unknown): boolean {
+  return typeof accept === 'string' && accept.toLowerCase().includes('text/event-stream');
+}
+
+// Format one SSE frame: `data: <json>\n\n`. Pure + exported so the wire format
+// is unit-testable without a socket. Mirrors ask-ai.ts's frame shape exactly.
+export function sseFrame(payload: unknown): string {
+  return `data: ${JSON.stringify(payload)}\n\n`;
+}
+
+// Structural type for reply.raw -- avoids the NodeJS global namespace (which the
+// lint env doesn't register under no-undef) while matching how we use it. Mirror
+// of ask-ai.ts's sseWrite.
+function sseWrite(raw: { write: (chunk: string) => unknown }, payload: unknown) {
+  raw.write(sseFrame(payload));
 }
 
 /**
@@ -130,17 +151,75 @@ export default async function agentRoutes(app: FastifyInstance) {
       if (!sop) return reply.status(404).send({ error: { code: 'SOP_NOT_FOUND', message: 'No matching SOP on this agent' } });
     }
 
-    const result = await runAgent({
+    const runOpts = {
       orgId: org.id,
       externalId,
       promptOverride: sop ? null : (body.data.prompt || null),
       sop,
       triggeredByUserId: auth.userId || null,
-      trigger: 'manual',
-    });
+      trigger: 'manual' as const,
+    };
 
-    // Render the agent's markdown output to server-SANITIZED HTML so the client
-    // can innerHTML it directly (renderAgentMarkdown is the XSS chokepoint).
+    // --- Content negotiation. If the client asked for SSE, stream the run live
+    // (fixes the ~30s single-request gateway 502 + lets the UI watch the agent
+    // type). Otherwise keep the original JSON behavior (back-compat for API
+    // callers + existing tests). ALL pre-checks above (rate limit, org/demo,
+    // demo cap, body parse, SOP resolution) have already run, so any failure so
+    // far returned a normal JSON error -- nothing fails mid-stream.
+    if (wantsEventStream(request.headers.accept)) {
+      // One last pre-check BEFORE hijacking: if the key is missing, the run will
+      // fail instantly anyway -- surface it as a clean JSON 503, not mid-stream.
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: 'Agent runtime is not configured yet.' } });
+      }
+
+      // Take over the raw socket: from here Fastify must not touch the reply.
+      reply.hijack();
+      const raw = reply.raw;
+      raw.writeHead(200, {
+        'content-type': 'text/event-stream',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+      });
+
+      let clientGone = false;
+      request.raw.on('close', () => { clientGone = true; });
+
+      try {
+        const result = await runAgentStream(runOpts, (t) => {
+          if (!clientGone) sseWrite(raw, { t });
+        });
+        if (!clientGone) {
+          // Final event carries the terminal status + the nice rendered HTML so
+          // the client can swap the live transcript for the formatted document.
+          sseWrite(raw, {
+            done: true,
+            runId: result.runId,
+            status: result.status,
+            error: result.error,
+            tokensInput: result.tokensInput,
+            tokensOutput: result.tokensOutput,
+            costCents: result.costCents ?? null,
+            model: result.model,
+            startedAt: result.startedAt,
+            completedAt: result.completedAt,
+            sopTitle: result.sopTitle ?? null,
+            outputHtml: renderAgentMarkdown(result.output || ''),
+          });
+        }
+      } catch (err) {
+        request.log.error({ err }, 'agent run stream failed');
+        if (!clientGone) sseWrite(raw, { error: 'Something went wrong. Please try again.' });
+      } finally {
+        try { raw.end(); } catch { /* socket already closed */ }
+      }
+      return;
+    }
+
+    // Non-stream JSON path (unchanged): run, then render the agent's markdown
+    // output to server-SANITIZED HTML so the client can innerHTML it directly
+    // (renderAgentMarkdown is the XSS chokepoint).
+    const result = await runAgent(runOpts);
     return reply.send({ ...result, outputHtml: renderAgentMarkdown(result.output || '') });
   });
 
