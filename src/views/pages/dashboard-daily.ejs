@@ -64,7 +64,14 @@
   var dashPrefs = locals.dashboardPrefs || {};
   var dashHiddenTiles = Array.isArray(dashPrefs.hiddenTiles) ? dashPrefs.hiddenTiles : [];
   function dashHide(id){ return dashHiddenTiles.indexOf(id) !== -1 ? ' dash-tile-hidden' : ''; }
-  var dashZoom = dashPrefs.fontSize === 'sm' ? '0.9' : (dashPrefs.fontSize === 'lg' ? '1.12' : '1');
+  var dashZoomMap = { sm: '0.9', base: '1', lg: '1.12', xl: '1.3', xxl: '1.5', xxxl: '1.75' };
+  var dashZoom = dashZoomMap[dashPrefs.fontSize] || '1';
+  // Row-based layout engine: when a saved layout exists the static rows below
+  // are rendered visibility:hidden and a synchronous script (after the last
+  // tile) rebuilds the rows from prefs.layout and moves the tiles -- so the
+  // default markup never flashes in the wrong place.
+  var dashHasLayout = Array.isArray(dashPrefs.layout) && dashPrefs.layout.length > 0;
+  var dashRowHide = dashHasLayout ? ' style="visibility:hidden"' : '';
 %>
 
 <%- include('../partials/orgy-palette'); %>
@@ -100,6 +107,30 @@
   #daily-dashboard .dash-drag-handle { cursor:grab; color:#6b7280; user-select:none; -webkit-user-select:none; font-size:14px; line-height:1; }
   #daily-dashboard .dash-hide-toggle { font-weight:600; color:#2563eb; background:none; border:none; cursor:pointer; font-size:11px; padding:0; }
   #daily-dashboard .sortable-ghost { opacity:.35; }
+  /* Layout engine: per-row column spans. Scoped CSS (not Tailwind) so the
+     classes exist regardless of what the purged build contains -- the built
+     v7.css does not reliably include lg:col-span-6 etc. Mirrors Tailwind's
+     lg: breakpoint (min-width 1024px); below it every cell is full width. */
+  @media (min-width: 1024px) {
+    #daily-dashboard .dash-span-4 { grid-column: span 4 / span 4; }
+    #daily-dashboard .dash-span-6 { grid-column: span 6 / span 6; }
+    #daily-dashboard .dash-span-8 { grid-column: span 8 / span 8; }
+    #daily-dashboard .dash-span-12 { grid-column: span 12 / span 12; }
+  }
+  /* Anti-squish at large zooms (xl/xxl/xxxl): grid/flex children must be
+     allowed to shrink (min-width:0) so text wraps instead of overflowing,
+     and long unbroken strings break anywhere rather than blowing the cell
+     out sideways. Horizontal page scroll at zoom 1.75 on small viewports is
+     acceptable; overlapping/clipped content is not. */
+  #daily-dashboard [data-dash-cell] { min-width: 0; }
+  #daily-dashboard [data-tile-id] { min-width: 0; overflow-wrap: anywhere; }
+  /* Edit mode: cells become visible drop targets (an empty cell needs a hit
+     area to drag into); per-row toolbar spans the full row. */
+  #daily-dashboard.dash-edit-mode [data-dash-cell] { min-height: 64px; outline: 1px dashed #d1d5db; outline-offset: 3px; border-radius: 10px; }
+  #daily-dashboard .dash-row-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 11px; color: #475569; }
+  #daily-dashboard .dash-row-bar select { font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 1px 4px; background: #fff; color: #334155; }
+  #daily-dashboard .dash-row-btn { font-weight: 600; color: #2563eb; background: none; border: none; cursor: pointer; font-size: 11px; padding: 0; }
+  #daily-dashboard .dash-row-btn[disabled] { color: #94a3b8; cursor: not-allowed; }
 </style>
 <div class="w-full px-4 sm:px-6 lg:px-8 py-8" id="daily-dashboard"
      style="zoom: <%= dashZoom %>"
@@ -144,6 +175,9 @@
           <button type="button" class="dk-own-btn" data-font="sm">S</button>
           <button type="button" class="dk-own-btn" data-font="base">M</button>
           <button type="button" class="dk-own-btn" data-font="lg">L</button>
+          <button type="button" class="dk-own-btn" data-font="xl">XL</button>
+          <button type="button" class="dk-own-btn" data-font="xxl">2XL</button>
+          <button type="button" class="dk-own-btn" data-font="xxxl">3XL</button>
         </span>
         <button type="button" id="dash-reset-btn" class="text-xs text-orgy-blue font-semibold">Reset to default</button>
         <span id="dash-prefs-err" class="text-xs text-rose-600 font-semibold" style="display:none"></span>
@@ -175,8 +209,8 @@
   <% } %>
 
 
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-    <div class="lg:col-span-4 space-y-5"><!-- LEFT 1/3 -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5" data-dash-row data-dash-pattern="4-8"<%- dashRowHide %>>
+    <div class="lg:col-span-4 space-y-5" data-dash-cell><!-- LEFT 1/3 -->
   <!-- Meeting selector -->
   <section data-tile-id="meetings" data-tile-col="left" class="mb-8 rounded-lg border border-gray-200 bg-white p-5<%= dashHide('meetings') %>">
     <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
@@ -442,7 +476,7 @@
 
 
     </div><!-- /left -->
-    <div class="lg:col-span-8 space-y-5"><!-- RIGHT 2/3 -->
+    <div class="lg:col-span-8 space-y-5" data-dash-cell><!-- RIGHT 2/3 -->
       <!-- My To-Dos -->
       <section data-tile-id="todos" data-tile-col="right" class="rounded-lg border border-gray-200 bg-white p-5<%= dashHide('todos') %>">
         <div class="flex items-center justify-between mb-3">
@@ -885,6 +919,10 @@
   // Also stashes the template order so "Reset to default" can restore it.
   (function(){
     var prefs = <%- jsonForScript(locals.dashboardPrefs || {}) %> || {};
+    // Layout engine supersedes the legacy two-column order: when a saved
+    // layout exists, the row-builder script (after the last tile) owns all
+    // placement and this legacy reorder must not fight it.
+    if (Array.isArray(prefs.layout) && prefs.layout.length) return;
     var order = (prefs && prefs.tileOrder) || {};
     window.__dashTileTemplateOrder = {};
     ['left', 'right'].forEach(function(col){
@@ -909,8 +947,8 @@
 
   <!-- Agents + OTP Insights: own grid so the two collapsed bars align on one
        row regardless of the rails' unequal heights above. -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5">
-    <div class="lg:col-span-4"><!-- Agents (aligned row) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5" data-dash-row data-dash-pattern="4-8"<%- dashRowHide %>>
+    <div class="lg:col-span-4 space-y-5" data-dash-cell><!-- Agents (aligned row) -->
       <!-- My Agents (compact, collapsible -- David flagged 2026-05-24 that
            the full agent list took up too much space in the right column.
            Same <details>/<summary> pattern as OTP Insights. Summary line
@@ -970,7 +1008,7 @@
       </details>
 
     </div>
-    <div class="lg:col-span-8"><!-- OTP Insights (aligned row) -->
+    <div class="lg:col-span-8 space-y-5" data-dash-cell><!-- OTP Insights (aligned row) -->
   <!-- OTP Insights: diagnostic surfaces moved out of the main grid 2026-05-24
        so the dashboard reads balanced like Ninety. The four cards here are
        coaching/reflection, not daily action: Waiting on others, Founder
@@ -1236,13 +1274,117 @@
   </a>
 
 
-  <!-- Cascading Message (read-only, integrator-set) -->
+  <!-- Cascading Message (read-only, integrator-set). Lives in its own
+       full-width layout row so the layout engine can move it like any other
+       tile; it stays non-hideable. -->
   <% if (selectedMeeting && selectedMeeting.cascadingMessage) { %>
-    <section data-tile-id="cascading" data-tile-col="bottom" class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">Cascading message <button type="button" class="help-q" data-help="dashboard.cascade" aria-label="About the Cascading message">?</button></h2>
-      <pre class="whitespace-pre-wrap text-xs text-gray-800 font-mono"><%= selectedMeeting.cascadingMessage %></pre>
-    </section>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-6" data-dash-row data-dash-pattern="12"<%- dashRowHide %>>
+      <div class="dash-span-12 space-y-5" data-dash-cell>
+        <section data-tile-id="cascading" data-tile-col="bottom" class="rounded-lg border border-gray-200 bg-gray-50 p-5">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">Cascading message <button type="button" class="help-q" data-help="dashboard.cascade" aria-label="About the Cascading message">?</button></h2>
+          <pre class="whitespace-pre-wrap text-xs text-gray-800 font-mono"><%= selectedMeeting.cascadingMessage %></pre>
+        </section>
+      </div>
+    </div>
   <% } %>
+
+  <script>
+  // Layout engine row builder. Runs synchronously after the LAST tile in the
+  // template (the rows above are server-rendered visibility:hidden when a
+  // saved layout exists) so a custom layout is applied before paint.
+  //
+  // window.__dashApplyLayout(layout) rebuilds the row/cell containers from a
+  // layout config ([{ pattern, cells: [[tileId,...],...] }]) and moves the
+  // existing server-rendered tile DOM into the cells -- no tile markup is
+  // duplicated. Rules: unknown/missing tile ids are skipped; tiles the
+  // layout never mentions are appended to the last cell of the first row
+  // (never lose a tile) -- except the cascading tile, which gets its own
+  // full-width row at the end so the integrator directive stays prominent.
+  //
+  // Fast path: with no saved layout this defines the helpers and exits --
+  // the server-rendered default rows (tagged data-dash-row/data-dash-cell)
+  // already ARE the default layout, so the DOM is untouched.
+  (function(){
+    var prefs = <%- jsonForScript(locals.dashboardPrefs || {}) %> || {};
+    var DEFAULT_LAYOUT = [
+      { pattern: '4-8', cells: [['meetings', 'headlines', 'rocks'], ['todos', 'kpis', 'issues']] },
+      { pattern: '4-8', cells: [['agents'], ['insights']] },
+      { pattern: '12', cells: [['cascading']] }
+    ];
+    var SPAN_SETS = { '12': [12], '4-8': [4, 8], '8-4': [8, 4], '6-6': [6, 6], '4-4-4': [4, 4, 4] };
+    window.__dashDefaultLayout = DEFAULT_LAYOUT;
+    window.__dashSpanSets = SPAN_SETS;
+
+    function buildRow(pattern){
+      var row = document.createElement('div');
+      row.className = 'grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5';
+      row.setAttribute('data-dash-row', '');
+      row.setAttribute('data-dash-pattern', SPAN_SETS[pattern] ? pattern : '12');
+      (SPAN_SETS[pattern] || [12]).forEach(function(span){
+        var cell = document.createElement('div');
+        cell.className = 'dash-span-' + span + ' space-y-5';
+        cell.setAttribute('data-dash-cell', '');
+        row.appendChild(cell);
+      });
+      return row;
+    }
+    window.__dashBuildRow = buildRow;
+
+    window.__dashApplyLayout = function(layout){
+      var root = document.getElementById('daily-dashboard');
+      if (!root || !Array.isArray(layout)) return;
+      var tilesById = {}, tileIds = [];
+      Array.prototype.forEach.call(root.querySelectorAll('[data-tile-id]'), function(t){
+        var id = t.getAttribute('data-tile-id');
+        if (!tilesById[id]) { tilesById[id] = t; tileIds.push(id); }
+      });
+      var oldRows = Array.prototype.slice.call(root.querySelectorAll('[data-dash-row]'));
+      if (!oldRows.length) return;
+      var parent = oldRows[0].parentNode;
+      var marker = document.createComment('dash-rows');
+      parent.insertBefore(marker, oldRows[0]);
+      var placed = {}, newRows = [], firstRowLastCell = null;
+      layout.forEach(function(rowCfg){
+        if (!rowCfg || !SPAN_SETS[rowCfg.pattern]) return;
+        var row = buildRow(rowCfg.pattern);
+        var cells = row.querySelectorAll('[data-dash-cell]');
+        (Array.isArray(rowCfg.cells) ? rowCfg.cells : []).forEach(function(cellIds, i){
+          var cell = cells[Math.min(i, cells.length - 1)];
+          (Array.isArray(cellIds) ? cellIds : []).forEach(function(id){
+            if (tilesById[id] && !placed[id]) { cell.appendChild(tilesById[id]); placed[id] = true; }
+          });
+        });
+        if (!newRows.length) firstRowLastCell = cells[cells.length - 1];
+        newRows.push(row);
+      });
+      if (!newRows.length) {
+        var fallback = buildRow('12');
+        firstRowLastCell = fallback.querySelector('[data-dash-cell]');
+        newRows.push(fallback);
+      }
+      var strayCascading = null;
+      tileIds.forEach(function(id){
+        if (placed[id]) return;
+        if (id === 'cascading') { strayCascading = tilesById[id]; return; }
+        firstRowLastCell.appendChild(tilesById[id]);
+        placed[id] = true;
+      });
+      if (strayCascading) {
+        var cascRow = buildRow('12');
+        cascRow.querySelector('[data-dash-cell]').appendChild(strayCascading);
+        newRows.push(cascRow);
+      }
+      newRows[0].classList.remove('mt-5'); // first row sits flush like the template's
+      newRows.forEach(function(row){ parent.insertBefore(row, marker); });
+      oldRows.forEach(function(r){ if (r.parentNode) r.parentNode.removeChild(r); });
+      parent.removeChild(marker);
+    };
+
+    if (Array.isArray(prefs.layout) && prefs.layout.length) {
+      window.__dashApplyLayout(prefs.layout);
+    }
+  })();
+  </script>
 
   <!-- Footer -->
   <footer class="mt-10 text-xs text-gray-400">
@@ -2027,24 +2169,34 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
 </script>
 
 <script>
-// Customize mode: per-tile hide/show, drag-reorder of the left/right columns
-// (SortableJS, lazy-loaded on first toggle), and S/M/L font size (zoom on the
+// Customize mode: per-tile hide/show, drag-reorder between any layout cell
+// (SortableJS group, lazy-loaded on first toggle), per-row layout controls
+// (column pattern / add row / remove row), and S-3XL font size (zoom on the
 // container -- Tailwind text classes are rem-based so font-size would no-op).
-// Every change debounces 600ms then PUTs the FULL state to
-// /api/v1/dashboard-preferences. The cascading tile is integrator-directive:
-// never hideable, never gets controls.
+// Every change debounces 600ms then PUTs the FULL state
+// ({ hiddenTiles, layout, fontSize }) to /api/v1/dashboard-preferences.
+// tileOrder is no longer written (schema keeps it for old saved prefs).
+// The cascading tile is integrator-directive: movable, never hideable.
 (function(){
   var root = document.getElementById('daily-dashboard');
   var btn = document.getElementById('dash-customize-btn');
   if (!root || !btn) return;
   var ASSET = <%- jsonForScript(typeof assetVersion !== 'undefined' ? assetVersion : 'dev') %>;
   var prefs = window.__dashboardPrefs || {};
+  var ZOOM = { sm: '0.9', base: '1', lg: '1.12', xl: '1.3', xxl: '1.5', xxxl: '1.75' };
   var state = {
     hidden: Array.isArray(prefs.hiddenTiles) ? prefs.hiddenTiles.slice() : [],
-    fontSize: (prefs.fontSize === 'sm' || prefs.fontSize === 'lg') ? prefs.fontSize : 'base',
+    fontSize: ZOOM[prefs.fontSize] ? prefs.fontSize : 'base',
   };
-  var ZOOM = { sm: '0.9', base: '1', lg: '1.12' };
   var NOT_HIDEABLE = { cascading: true };
+  var MAX_ROWS = 8; // schema limit -- adding a 9th row would 400 on save
+  var PATTERN_LABELS = [
+    ['12', '1 column'],
+    ['4-8', '1/3 + 2/3'],
+    ['8-4', '2/3 + 1/3'],
+    ['6-6', '1/2 + 1/2'],
+    ['4-4-4', '1/3 + 1/3 + 1/3'],
+  ];
   var bar = document.getElementById('dash-customize-bar');
   var errEl = document.getElementById('dash-prefs-err');
   var editing = false;
@@ -2052,13 +2204,21 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
   var sortableLoading = null;
 
   function tiles(){ return Array.prototype.slice.call(root.querySelectorAll('[data-tile-id]')); }
+  function rows(){ return Array.prototype.slice.call(root.querySelectorAll('[data-dash-row]')); }
+  function rowCells(row){ return Array.prototype.slice.call(row.querySelectorAll('[data-dash-cell]')); }
   function isHidden(id){ return state.hidden.indexOf(id) !== -1; }
-  function colOrder(col){
-    var first = root.querySelector('[data-tile-id][data-tile-col="' + col + '"]');
-    if (!first) return [];
-    return Array.prototype.map.call(
-      first.parentNode.querySelectorAll('[data-tile-id][data-tile-col="' + col + '"]'),
-      function(t){ return t.getAttribute('data-tile-id'); });
+  // Serialize the current DOM into the layout prefs shape. Cell count always
+  // matches the row's data-dash-pattern because both are set together.
+  function layoutFromDom(){
+    return rows().map(function(row){
+      return {
+        pattern: row.getAttribute('data-dash-pattern') || '12',
+        cells: rowCells(row).map(function(cell){
+          return Array.prototype.map.call(cell.querySelectorAll('[data-tile-id]'),
+            function(t){ return t.getAttribute('data-tile-id'); });
+        }),
+      };
+    });
   }
   function applyZoom(){ root.style.zoom = ZOOM[state.fontSize] || '1'; }
   function syncFontSeg(){
@@ -2077,7 +2237,7 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     var body = bodyOverride || {
       hiddenTiles: state.hidden,
-      tileOrder: { left: colOrder('left'), right: colOrder('right') },
+      layout: layoutFromDom(),
       fontSize: state.fontSize,
     };
     fetch('/api/v1/dashboard-preferences', {
@@ -2109,33 +2269,52 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
     });
     return sortableLoading;
   }
+  // One Sortable per layout cell, shared group so tiles drag between any
+  // cell in any row. Rebuilt whenever the row/cell structure changes.
+  function destroySortables(){
+    sortables.forEach(function(s){ try { s.destroy(); } catch (e) { /* already gone */ } });
+    sortables = [];
+  }
+  function initSortables(){
+    destroySortables();
+    if (!editing || !window.Sortable) return;
+    rows().forEach(function(row){
+      rowCells(row).forEach(function(cell){
+        sortables.push(new Sortable(cell, {
+          group: 'dash-tiles',
+          handle: '.dash-drag-handle',
+          draggable: '[data-tile-id]',
+          animation: 150,
+          onEnd: function(){ scheduleSave(); },
+        }));
+      });
+    });
+  }
 
   function injectControls(tile){
     var id = tile.getAttribute('data-tile-id');
-    if (NOT_HIDEABLE[id]) return; // integrator directive: no controls at all
-    var col = tile.getAttribute('data-tile-col');
     var ctl = document.createElement('div');
     ctl.className = 'dash-edit-controls';
-    if (col === 'left' || col === 'right') {
-      var handle = document.createElement('span');
-      handle.className = 'dash-drag-handle';
-      handle.textContent = '⣿'; // braille "grip" glyph
-      handle.title = 'Drag to reorder';
-      ctl.appendChild(handle);
-    }
-    var toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'dash-hide-toggle';
-    toggle.textContent = isHidden(id) ? 'Show' : 'Hide';
-    toggle.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      var i = state.hidden.indexOf(id);
-      if (i === -1) state.hidden.push(id); else state.hidden.splice(i, 1);
-      tile.classList.toggle('dash-tile-hidden', isHidden(id));
+    var handle = document.createElement('span');
+    handle.className = 'dash-drag-handle';
+    handle.textContent = '⣿'; // braille "grip" glyph
+    handle.title = 'Drag to move';
+    ctl.appendChild(handle);
+    if (!NOT_HIDEABLE[id]) { // integrator directive (cascading): movable, never hideable
+      var toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'dash-hide-toggle';
       toggle.textContent = isHidden(id) ? 'Show' : 'Hide';
-      scheduleSave();
-    });
-    ctl.appendChild(toggle);
+      toggle.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var i = state.hidden.indexOf(id);
+        if (i === -1) state.hidden.push(id); else state.hidden.splice(i, 1);
+        tile.classList.toggle('dash-tile-hidden', isHidden(id));
+        toggle.textContent = isHidden(id) ? 'Show' : 'Hide';
+        scheduleSave();
+      });
+      ctl.appendChild(toggle);
+    }
     // Don't let clicks on the strip toggle a parent <details>.
     ctl.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
     // <details> hides non-summary children when closed, so the strip lives
@@ -2149,6 +2328,112 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
     tile.__dashCtl = ctl;
   }
 
+  // --- per-row layout controls (edit mode only) ---
+  // Rebuild a row's cells for a new pattern: cell i keeps its tiles, tiles
+  // from removed cells merge into the last remaining cell. Nothing is lost.
+  function applyPattern(row, pattern){
+    var spans = (window.__dashSpanSets || {})[pattern];
+    if (!spans) return;
+    var oldCells = rowCells(row);
+    var stacks = oldCells.map(function(c){
+      return Array.prototype.slice.call(c.querySelectorAll('[data-tile-id]'));
+    });
+    var newCells = spans.map(function(span){
+      var cell = document.createElement('div');
+      cell.className = 'dash-span-' + span + ' space-y-5';
+      cell.setAttribute('data-dash-cell', '');
+      row.appendChild(cell);
+      return cell;
+    });
+    stacks.forEach(function(stack, i){
+      var target = newCells[Math.min(i, newCells.length - 1)];
+      stack.forEach(function(t){ target.appendChild(t); });
+    });
+    oldCells.forEach(function(c){ if (c.parentNode) c.parentNode.removeChild(c); });
+    row.setAttribute('data-dash-pattern', pattern);
+  }
+  function syncRowBarButtons(){
+    rows().forEach(function(row, idx, all){
+      var rowBar = row.__dashRowBar;
+      if (!rowBar) return;
+      var hasTiles = !!row.querySelector('[data-tile-id]');
+      // remove: allowed when the row is empty, or when there is a row above
+      // to receive its tiles. Blocked for a non-empty first row.
+      rowBar.__removeBtn.disabled = (idx === 0 && hasTiles) || all.length <= 1;
+      rowBar.__addBtn.disabled = all.length >= MAX_ROWS;
+    });
+  }
+  function injectRowBar(row){
+    var rowBar = document.createElement('div');
+    rowBar.className = 'dash-row-bar';
+    var label = document.createElement('span');
+    label.textContent = 'Row';
+    rowBar.appendChild(label);
+    var sel = document.createElement('select');
+    PATTERN_LABELS.forEach(function(p){
+      var opt = document.createElement('option');
+      opt.value = p[0];
+      opt.textContent = p[1];
+      sel.appendChild(opt);
+    });
+    sel.value = row.getAttribute('data-dash-pattern') || '12';
+    sel.addEventListener('change', function(){
+      applyPattern(row, sel.value);
+      initSortables();
+      syncRowBarButtons();
+      scheduleSave();
+    });
+    rowBar.appendChild(sel);
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'dash-row-btn';
+    addBtn.textContent = '+ Add row below';
+    addBtn.addEventListener('click', function(){
+      if (rows().length >= MAX_ROWS || !window.__dashBuildRow) return;
+      var fresh = window.__dashBuildRow('12');
+      row.parentNode.insertBefore(fresh, row.nextSibling);
+      injectRowBar(fresh);
+      initSortables();
+      syncRowBarButtons();
+      scheduleSave();
+    });
+    rowBar.appendChild(addBtn);
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'dash-row-btn';
+    removeBtn.textContent = '× Remove row';
+    removeBtn.addEventListener('click', function(){
+      var all = rows();
+      var idx = all.indexOf(row);
+      var rowTiles = Array.prototype.slice.call(row.querySelectorAll('[data-tile-id]'));
+      if (rowTiles.length) {
+        if (idx <= 0) return; // non-empty first row: nowhere above to move tiles
+        var aboveCells = rowCells(all[idx - 1]);
+        var target = aboveCells[aboveCells.length - 1];
+        rowTiles.forEach(function(t){ target.appendChild(t); });
+      } else if (all.length <= 1) {
+        return; // never remove the last row
+      }
+      row.parentNode.removeChild(row);
+      initSortables();
+      syncRowBarButtons();
+      scheduleSave();
+    });
+    rowBar.appendChild(removeBtn);
+    rowBar.__removeBtn = removeBtn;
+    rowBar.__addBtn = addBtn;
+    row.insertBefore(rowBar, row.firstChild);
+    row.__dashRowBar = rowBar;
+  }
+  function removeRowBars(){
+    rows().forEach(function(row){
+      if (row.__dashRowBar) {
+        if (row.__dashRowBar.parentNode) row.__dashRowBar.parentNode.removeChild(row.__dashRowBar);
+        row.__dashRowBar = null;
+      }
+    });
+  }
+
   function enterEdit(){
     editing = true;
     root.classList.add('dash-edit-mode');
@@ -2156,19 +2441,11 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
     if (bar) bar.style.display = '';
     syncFontSeg();
     tiles().forEach(injectControls);
+    rows().forEach(injectRowBar);
+    syncRowBarButtons();
     ensureSortable().then(function(){
-      if (!editing || !window.Sortable) return;
-      ['left', 'right'].forEach(function(col){
-        var first = root.querySelector('[data-tile-id][data-tile-col="' + col + '"]');
-        if (!first) return;
-        sortables.push(new Sortable(first.parentNode, {
-          handle: '.dash-drag-handle',
-          draggable: '[data-tile-id]',
-          animation: 150,
-          onEnd: function(){ scheduleSave(); },
-        }));
-      });
-    }).catch(function(){ /* drag unavailable; hide/show + font size still work */ });
+      initSortables();
+    }).catch(function(){ /* drag unavailable; hide/show, rows + font size still work */ });
   }
 
   function exitEdit(){
@@ -2176,28 +2453,28 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
     root.classList.remove('dash-edit-mode');
     btn.textContent = 'Customize';
     if (bar) bar.style.display = 'none';
-    sortables.forEach(function(s){ try { s.destroy(); } catch (e) { /* already gone */ } });
-    sortables = [];
+    destroySortables();
     tiles().forEach(function(tile){
       if (tile.__dashCtl) { tile.__dashCtl.parentNode.removeChild(tile.__dashCtl); tile.__dashCtl = null; }
     });
+    removeRowBars();
     if (saveTimer) saveNow(); // flush a pending debounce on close
   }
 
   btn.addEventListener('click', function(){ if (editing) { exitEdit(); } else { enterEdit(); } });
 
-  // Font size segmented control (S / M / L)
+  // Font size segmented control (S / M / L / XL / 2XL / 3XL)
   Array.prototype.forEach.call(document.querySelectorAll('#dash-font-seg .dk-own-btn'), function(b){
     b.addEventListener('click', function(){
       var f = b.getAttribute('data-font');
-      state.fontSize = (f === 'sm' || f === 'lg') ? f : 'base';
+      state.fontSize = ZOOM[f] ? f : 'base';
       applyZoom(); syncFontSeg(); scheduleSave();
     });
   });
 
-  // Reset to default: everything visible, template order, base font. The
-  // schema is .strict() with no nulls, so reset sends empty arrays and
-  // fontSize 'base' (saved immediately, not debounced).
+  // Reset to default: everything visible, the default rows, base font. The
+  // schema is .strict() with no nulls, so reset sends the explicit default
+  // layout + empty hiddenTiles (saved immediately, not debounced).
   var resetBtn = document.getElementById('dash-reset-btn');
   if (resetBtn) resetBtn.addEventListener('click', function(){
     state.hidden = [];
@@ -2208,18 +2485,18 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
       var tg = tile.__dashCtl && tile.__dashCtl.querySelector('.dash-hide-toggle');
       if (tg) tg.textContent = 'Hide';
     });
-    var template = window.__dashTileTemplateOrder || {};
-    ['left', 'right'].forEach(function(col){
-      var ids = template[col] || [];
-      var first = root.querySelector('[data-tile-id][data-tile-col="' + col + '"]');
-      if (!first || !ids.length) return;
-      var parent = first.parentNode;
-      ids.forEach(function(id){
-        var el = parent.querySelector('[data-tile-id="' + id + '"]');
-        if (el) parent.appendChild(el);
-      });
-    });
-    saveNow({ hiddenTiles: [], tileOrder: { left: [], right: [] }, fontSize: 'base' });
+    var def = window.__dashDefaultLayout || [];
+    if (window.__dashApplyLayout && def.length) {
+      destroySortables();
+      removeRowBars();
+      window.__dashApplyLayout(def);
+      if (editing) {
+        rows().forEach(injectRowBar);
+        syncRowBarButtons();
+        initSortables();
+      }
+    }
+    saveNow({ hiddenTiles: [], layout: def, fontSize: 'base' });
   });
 })();
 </script>

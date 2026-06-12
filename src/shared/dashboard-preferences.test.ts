@@ -75,8 +75,14 @@ describe('dashboardPreferencesSchema', () => {
   });
 
   it('rejects a bad fontSize', () => {
-    expect(dashboardPreferencesSchema.safeParse({ fontSize: 'xl' }).success).toBe(false);
+    expect(dashboardPreferencesSchema.safeParse({ fontSize: 'huge' }).success).toBe(false);
     expect(dashboardPreferencesSchema.safeParse({ fontSize: '' }).success).toBe(false);
+  });
+
+  it('accepts the extended font sizes xl / xxl / xxxl', () => {
+    for (const fontSize of ['xl', 'xxl', 'xxxl']) {
+      expect(dashboardPreferencesSchema.safeParse({ fontSize }).success).toBe(true);
+    }
   });
 
   it('accepts sidebarCollapsed true and false', () => {
@@ -109,6 +115,99 @@ describe('dashboardPreferencesSchema', () => {
       }).success,
     ).toBe(false);
   });
+
+  describe('layout (row-based layout engine)', () => {
+    it('accepts every pattern with a matching cell count', () => {
+      const layout = [
+        { pattern: '12', cells: [['cascading']] },
+        { pattern: '4-8', cells: [['meetings', 'headlines'], ['todos']] },
+        { pattern: '8-4', cells: [['kpis'], ['rocks']] },
+        { pattern: '6-6', cells: [['issues'], ['agents']] },
+        { pattern: '4-4-4', cells: [['insights'], [], ['todos']] },
+      ];
+      const result = dashboardPreferencesSchema.safeParse({ layout });
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data.layout).toEqual(layout);
+    });
+
+    it('accepts the default layout shape (reproduces today\'s dashboard)', () => {
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [
+          { pattern: '4-8', cells: [['meetings', 'headlines', 'rocks'], ['todos', 'kpis', 'issues']] },
+          { pattern: '4-8', cells: [['agents'], ['insights']] },
+          { pattern: '12', cells: [['cascading']] },
+        ],
+      }).success).toBe(true);
+    });
+
+    it('rejects a cell count that does not match the pattern', () => {
+      // '4-8' is two columns; one cell is too few, three is too many.
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '4-8', cells: [['meetings']] }],
+      }).success).toBe(false);
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '4-8', cells: [['a'], ['b'], ['c']] }],
+      }).success).toBe(false);
+      // '12' is one column; two cells is too many.
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '12', cells: [['a'], ['b']] }],
+      }).success).toBe(false);
+      // '4-4-4' is three columns; two cells is too few.
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '4-4-4', cells: [['a'], ['b']] }],
+      }).success).toBe(false);
+    });
+
+    it('rejects more than 8 rows', () => {
+      const row = { pattern: '12', cells: [['todos']] };
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: Array.from({ length: 9 }, () => row),
+      }).success).toBe(false);
+      // boundary: exactly 8 is fine
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: Array.from({ length: 8 }, () => row),
+      }).success).toBe(true);
+    });
+
+    it('rejects a bad pattern', () => {
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '3-9', cells: [['a'], ['b']] }],
+      }).success).toBe(false);
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '', cells: [[]] }],
+      }).success).toBe(false);
+    });
+
+    it('rejects a bad tile id inside a cell', () => {
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '12', cells: [['Bad_Tile']] }],
+      }).success).toBe(false);
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '12', cells: [['a'.repeat(41)]] }],
+      }).success).toBe(false);
+    });
+
+    it('rejects more than 30 tile ids in one cell', () => {
+      const ids = Array.from({ length: 31 }, (_, i) => `tile-${i}`);
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '12', cells: [ids] }],
+      }).success).toBe(false);
+    });
+
+    it('rejects unknown keys inside a layout row (.strict())', () => {
+      expect(dashboardPreferencesSchema.safeParse({
+        layout: [{ pattern: '12', cells: [['todos']], gap: 4 }],
+      }).success).toBe(false);
+    });
+
+    it('legacy body without layout is still valid', () => {
+      expect(dashboardPreferencesSchema.safeParse({
+        hiddenTiles: ['headlines'],
+        tileOrder: { left: ['rocks', 'meetings'], right: ['issues'] },
+        fontSize: 'lg',
+      }).success).toBe(true);
+    });
+  });
 });
 
 describe('mergeDashboardPreferences', () => {
@@ -135,6 +234,20 @@ describe('mergeDashboardPreferences', () => {
       hiddenTiles: ['kpi-summary'],
     });
     expect(merged).toEqual({ fontSize: 'lg', hiddenTiles: ['kpi-summary'] });
+  });
+
+  it('merges layout without disturbing sibling keys (and vice versa)', () => {
+    const layout = [{ pattern: '6-6', cells: [['meetings'], ['todos']] }];
+    // layout arrives, existing fontSize/hiddenTiles survive
+    expect(mergeDashboardPreferences(
+      { fontSize: 'xxl', hiddenTiles: ['headlines'] },
+      { layout } as DashboardPreferences,
+    )).toEqual({ fontSize: 'xxl', hiddenTiles: ['headlines'], layout });
+    // fontSize arrives, existing layout survives
+    expect(mergeDashboardPreferences(
+      { layout },
+      { fontSize: 'xl' },
+    )).toEqual({ layout, fontSize: 'xl' });
   });
 
   it('merges sidebarCollapsed without disturbing other keys', () => {
