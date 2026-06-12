@@ -1258,6 +1258,32 @@
   </div>
 </section>
 
+<% if (typeof meetingTemplateCards !== 'undefined' && meetingTemplateCards.length) { %>
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-16 sm:py-20">
+    <div class="flex items-end justify-between gap-4 mb-8 flex-wrap">
+      <div>
+        <div class="bg-card-cat mb-2" style="color:var(--blue-deep);">Free Meeting Templates</div>
+        <h2 class="font-display text-[var(--ink)]" style="font-size:clamp(1.5rem,3vw,2rem); font-weight:700;">Ready-to-run agendas for every meeting</h2>
+        <p class="bg-card-desc mt-2" style="max-width:560px;">EOS, Scaling Up, Agile, 1:1s, retrospectives, focus groups, and more. Free to download, print, or run live.</p>
+      </div>
+      <a href="/templates" class="text-[14px] text-[var(--ink)] link-u whitespace-nowrap">Browse the full library &rarr;</a>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <% meetingTemplateCards.forEach(function(t){ %>
+        <a href="/templates/<%= t.slug %>" class="card lift bg-card group">
+          <div class="p-5 flex flex-col flex-1">
+            <div class="bg-card-meta mb-2.5" style="color:var(--blue-deep);"><span><%= t.methodology %></span><span class="dot"></span><span><%= t.minutes %> min</span><span class="dot"></span><span><%= t.cadence %></span></div>
+            <h3 class="bg-card-title mb-2" style="font-size:1.05rem;"><%= t.shortName %> Template</h3>
+            <p class="bg-card-desc"><%= t.description %></p>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+<% } %>
+
 <script>
 (function () {
   // Index of every post this page can show. Embedded via jsonForScript --
@@ -1274,9 +1300,9 @@
   var countEl = document.getElementById('bs-count');
   if (!input) return;
 
-  var cards = Array.prototype.slice.call(document.querySelectorAll('a.bg-card[href^="/blog/"]'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('a.bg-card[href^="/blog/"], a.bg-card[href^="/templates/"]'));
   var cardText = cards.map(function (card) {
-    var slug = (card.getAttribute('href') || '').replace(/^\/blog\//, '').replace(/[?#].*$/, '');
+    var slug = (card.getAttribute('href') || '').replace(/^\/(blog|templates)\//, '').replace(/[?#].*$/, '');
     // Registry text when we have it; fall back to the card's own visible text
     // so cards outside the registry are still searchable.
     return { slug: slug, text: byMatchText[slug] || (card.textContent || '').toLowerCase() };
@@ -1308,7 +1334,7 @@
       clearBtn.style.display = 'none';
     } else {
       var n = Object.keys(matchedSlugs).length;
-      countEl.textContent = n === 1 ? '1 post matches' : n + ' posts match';
+      countEl.textContent = n === 1 ? '1 result matches' : n + ' results match';
       clearBtn.style.display = 'inline-block';
     }
     try {

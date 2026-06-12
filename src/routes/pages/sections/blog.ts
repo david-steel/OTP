@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { BASE_URL, bc, renderInShell } from '../_shared.js';
 import { listConatusPosts, getConatusPost } from '../../../services/conatus-posts.js';
+import { MEETING_TEMPLATES, CATEGORY_LABELS } from '../../../data/meeting-templates.js';
 
 // Standard BlogPosting schema for a David-authored hardcoded post. The
 // previous god-router rebuilt this object on every route; here we build once.
@@ -476,7 +477,17 @@ export default async function blogRoutes(app: FastifyInstance) {
     const blogSearchIndex = [
       ...allDynamicPosts.map(p => ({ slug: p.slug, title: p.title, summary: p.description, tags: [p.author, p.type].filter(Boolean) })),
       ...BLOG_POSTS.map(p => ({ slug: p.slug, title: p.title.replace(/ - OTP$/, ''), summary: p.description, tags: [] as string[] })),
+      // Meeting templates are searchable from /blog too (they render as cards
+      // in the "Free Meeting Templates" section, linking to /templates/:slug).
+      // Tags carry methodology + keywords so a query like "template",
+      // "retrospective", or "L10" surfaces them even when not in the visible text.
+      ...MEETING_TEMPLATES.map(t => ({ slug: t.slug, title: t.title, summary: t.description, tags: [t.methodology, CATEGORY_LABELS[t.category] || t.category, 'meeting template', ...t.keywords] })),
     ];
+    // Slim list for rendering the templates section on the blog index.
+    const meetingTemplateCards = MEETING_TEMPLATES.map(t => ({
+      slug: t.slug, shortName: t.shortName, description: t.description,
+      methodology: t.methodology, minutes: t.minutes, cadence: t.cadence,
+    }));
     // Index AND individual /blog/:slug posts are dual-rendered (app shell
     // for signed-in viewers). The post templates are v7 bodies with no
     // layout assumptions of their own; the one nav-clearing pad lives in
@@ -499,6 +510,7 @@ export default async function blogRoutes(app: FastifyInstance) {
       founderTotal: allFounder.length,
       showAll,
       blogSearchIndex,
+      meetingTemplateCards,
     });
   });
 
