@@ -766,6 +766,9 @@ await app.register(import('./routes/api/api-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/recommendations.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
+// Rock AI assist -- PAID SMART-Rock builder upsell (monetization Phase 3).
+// Ships gated OFF behind AI_ROCK_ASSIST_LIVE (default = "coming soon").
+await app.register(import('./routes/api/rock-ai.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/milestones.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/values.js'), { prefix: '/api/v1' });

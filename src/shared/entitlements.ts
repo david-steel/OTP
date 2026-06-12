@@ -10,8 +10,14 @@
  * ENTITLEMENT CHOKEPOINT REGISTRY -- every paid surface that MUST gate on this.
  * When you add a new paid surface, gate it with hasEntitlement() AND add a line.
  * ----------------------------------------------------------------------------
- *  [ ] (Phase 3) src/routes/api/rocks-ai.ts  POST /rocks/:id/smart-draft  -> 'ai_assist'
- *  [ ] (Phase 3) src/routes/api/rocks-ai.ts  POST /rocks/:id/critique     -> 'ai_assist'
+ *  [x] (Phase 3) src/routes/api/rock-ai.ts  POST /rocks/:id/ai/draft     -> PAID
+ *  [x] (Phase 3) src/routes/api/rock-ai.ts  POST /rocks/:id/ai/critique  -> PAID
+ *      NOTE: Rock AI assist is PAID via the WALLET (pre-check balance >= floor +
+ *      debit from real usage), the same metering model as Ask AI -- NOT via
+ *      hasEntitlement('ai_assist'). It is additionally gated behind the
+ *      AI_ROCK_ASSIST_LIVE launch flag (default OFF = "coming soon"). If we later
+ *      want a plan-tier entitlement on top of pay-per-use, add hasEntitlement
+ *      here and a line above.
  *  [-] Ask AI (src/routes/api/ask-ai.ts) is FREE today and gated only by the
  *      WALLET metering flag (balance), NOT by hasEntitlement. Do not add a
  *      hasEntitlement gate there without an explicit product decision.

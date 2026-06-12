@@ -67,6 +67,36 @@
   .sr-ms-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line, #eef0f2); }
   .sr-ms-row:last-child { border-bottom: none; }
 
+  /* AI assist (PAID upsell). Premium framing -- a subtle violet gradient card. */
+  .sr-ai-card {
+    border: 1.5px solid #d9caf7; border-radius: 14px; padding: 18px 20px;
+    background: linear-gradient(180deg, #faf7ff 0%, #f4eeff 100%);
+  }
+  .sr-ai-badge {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800;
+    letter-spacing: .04em; text-transform: uppercase; color: #6d28d9;
+    background: #ede4ff; border: 1px solid #d9caf7; border-radius: 999px; padding: 3px 9px;
+  }
+  .sr-ai-title { font-family: 'Schibsted Grotesk','Inter',sans-serif; font-weight: 800; font-size: 1.02rem; color: var(--ink, #1f2937); }
+  .sr-ai-btn-primary { background: #7c3aed; color: #fff; border: 1.5px solid transparent; }
+  .sr-ai-btn-primary:hover { background: #6d28d9; }
+  .sr-ai-btn-primary:disabled { opacity: .55; cursor: default; }
+  .sr-ai-btn-ghost { background: #fff; color: #6d28d9; border: 1.5px solid #d9caf7; }
+  .sr-ai-btn-ghost:hover { border-color: #7c3aed; color: #5b21b6; }
+  .sr-ai-panel { margin-top: 14px; border-top: 1px dashed #d9caf7; padding-top: 14px; }
+  .sr-ai-soon {
+    margin-top: 14px; border: 1px solid #d9caf7; border-radius: 10px; padding: 12px 14px;
+    background: #fff; font-size: 13.5px; color: var(--ink-soft, #374151);
+  }
+  .sr-ai-cost { font-size: 12px; color: #6d28d9; font-weight: 600; }
+  .sr-crit-row { padding: 8px 0; border-bottom: 1px solid #ece3ff; font-size: 13.5px; }
+  .sr-crit-row:last-child { border-bottom: none; }
+  .sr-crit-sev { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; border-radius: 6px; padding: 1px 7px; margin-right: 7px; }
+  .sr-crit-weak { background: #fef3c7; color: #92400e; }
+  .sr-crit-missing { background: #fee2e2; color: #991b1b; }
+  .sr-crit-ok { background: #dcfce7; color: #166534; }
+  @media print { .sr-ai-card { display: none !important; } }
+
   /* Print: hide chrome, black on white, prints like the PDF planner. */
   @media print {
     .no-print { display: none !important; }
@@ -136,6 +166,26 @@
       <p class="sr-hint mt-0.5">In a sentence or two, what does done look like?</p>
       <textarea id="sr-description" class="sr-textarea mt-2" maxlength="5000" <%= canEdit ? '' : 'disabled' %> placeholder="Describe the priority and why it matters this quarter..."><%= rock.description || '' %></textarea>
     </div>
+
+    <!-- AI assist (PAID upsell, Phase 3). Hidden for read-only roles (the
+         assist edits the form). Ships gated OFF -> "coming soon" panel, no API
+         call. The live flag + endpoints are gated in rock-ai.ts as well. -->
+    <% if (canEdit) { %>
+    <div class="sr-ai-card no-print mt-5" id="sr-ai-card">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <span class="sr-ai-badge">&#10024; AI</span>
+          <div class="sr-ai-title mt-1.5">Let AI draft your SMART Rock</div>
+          <p class="sr-hint mt-0.5" style="max-width:520px;">Describe your goal in one sentence and OTP drafts the full SMART Rock, milestones and all, then flags any weak spots. A premium add-on.</p>
+        </div>
+        <div class="flex items-center gap-2 flex-none">
+          <button type="button" id="sr-ai-draft-btn" class="sr-btn sr-ai-btn-primary">&#10024; Draft with AI</button>
+          <button type="button" id="sr-ai-critique-btn" class="sr-btn sr-ai-btn-ghost">Critique my Rock</button>
+        </div>
+      </div>
+      <div id="sr-ai-panel"></div>
+    </div>
+    <% } %>
 
     <!-- Is my Rock SMART? Five free-text prompts -> smart_data -->
     <div class="sr-card p-5 sm:p-6 mt-5">
@@ -249,6 +299,8 @@
   var MILESTONES = <%- jsonForScript(milestones || []) %>;
   var RESOURCES = <%- jsonForScript(_resources) %>;
   var OBSTACLES = <%- jsonForScript(_obstacles) %>;
+  // AI assist launch gate. false (default) = "coming soon" -- no API call.
+  var AI_LIVE = <%- jsonForScript(typeof aiRockAssistLive !== 'undefined' ? !!aiRockAssistLive : false) %>;
 
   // ---- API helper (cookie auth, same pattern as the dashboard) ----
   function api(method, path, body){
@@ -447,6 +499,193 @@
       .then(function(){ buttons.forEach(function(b){ b.disabled = false; }); });
   }
   [$('sr-save'), $('sr-save-2')].forEach(function(b){ if (b) b.addEventListener('click', function(){ doSave(b); }); });
+
+  // ---- AI assist (PAID upsell) ----
+  // All AI strings are rendered via textContent, never innerHTML, so a hostile
+  // model/string can never inject markup (same discipline as the lists above).
+  var aiPanel = $('sr-ai-panel');
+  var aiDraftBtn = $('sr-ai-draft-btn');
+  var aiCritiqueBtn = $('sr-ai-critique-btn');
+
+  function aiClearPanel(){ if (aiPanel) aiPanel.innerHTML = ''; }
+  function aiBusy(busy){
+    [aiDraftBtn, aiCritiqueBtn].forEach(function(b){ if (b) b.disabled = busy; });
+  }
+  function aiCostLine(costCents){
+    var p = document.createElement('div');
+    p.className = 'sr-ai-cost'; p.style.marginTop = '8px';
+    var cents = (typeof costCents === 'number') ? costCents : 0;
+    p.textContent = 'This used ' + cents + ' credit' + (cents === 1 ? '' : 's') + '.';
+    return p;
+  }
+  function aiNote(text){
+    var p = document.createElement('p');
+    p.className = 'sr-hint'; p.style.marginTop = '4px'; p.textContent = text;
+    return p;
+  }
+
+  // Coming-soon panel (default state, no API call).
+  function showComingSoon(){
+    aiClearPanel(); if (!aiPanel) return;
+    var box = document.createElement('div'); box.className = 'sr-ai-soon';
+    var t = document.createElement('div');
+    t.style.fontWeight = '700'; t.textContent = '✨ AI Rock drafting is coming soon.';
+    var d = aiNote('Describe your goal in a sentence and OTP will draft your full SMART Rock and flag weak spots. We’ll let you know the moment it’s live.');
+    box.appendChild(t); box.appendChild(d);
+    var ok = document.createElement('button');
+    ok.type = 'button'; ok.className = 'sr-btn sr-ai-btn-ghost'; ok.style.marginTop = '10px';
+    ok.textContent = 'OK'; ok.addEventListener('click', aiClearPanel);
+    box.appendChild(ok);
+    aiPanel.appendChild(box);
+  }
+
+  // Handle an error from an AI endpoint with a graceful, on-brand message.
+  function aiHandleError(e){
+    aiClearPanel(); if (!aiPanel) return;
+    var box = document.createElement('div'); box.className = 'sr-ai-soon';
+    var code = e && e.code;
+    if (code === 'COMING_SOON') { showComingSoon(); return; }
+    if (code === 'INSUFFICIENT_BALANCE') {
+      box.appendChild(aiNote('You’re out of AI credits. Add credits to use AI assist.'));
+      var link = document.createElement('a');
+      link.href = '/settings/billing'; link.className = 'sr-btn sr-ai-btn-primary';
+      link.style.marginTop = '10px'; link.style.display = 'inline-block'; link.style.textDecoration = 'none';
+      link.textContent = 'Add credits';
+      box.appendChild(link);
+    } else if (code === 'NOT_CONFIGURED') {
+      box.appendChild(aiNote('AI assist isn’t available right now. Please try again later.'));
+    } else {
+      box.appendChild(aiNote('AI assist failed: ' + fmtErr(e)));
+    }
+    aiPanel.appendChild(box);
+  }
+
+  // ---- Draft: one sentence -> populate the whole form ----
+  function showDraftInput(){
+    aiClearPanel(); if (!aiPanel) return;
+    var wrap = document.createElement('div'); wrap.className = 'sr-ai-panel';
+    var label = document.createElement('label');
+    label.className = 'sr-label'; label.setAttribute('for', 'sr-ai-sentence');
+    label.textContent = 'Describe your Rock in one sentence';
+    var input = document.createElement('input');
+    input.id = 'sr-ai-sentence'; input.className = 'sr-input'; input.style.marginTop = '8px';
+    input.type = 'text'; input.maxLength = 500;
+    input.placeholder = 'e.g. By end of Q3, lift our qualified-lead close rate from 12% to 20%.';
+    var row = document.createElement('div');
+    row.style.display = 'flex'; row.style.gap = '8px'; row.style.marginTop = '10px'; row.style.flexWrap = 'wrap';
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'sr-btn sr-ai-btn-primary'; go.textContent = '✨ Generate draft';
+    var cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'sr-btn sr-ai-btn-ghost'; cancel.textContent = 'Cancel';
+    cancel.addEventListener('click', aiClearPanel);
+    row.appendChild(go); row.appendChild(cancel);
+    wrap.appendChild(label); wrap.appendChild(input); wrap.appendChild(row);
+    aiPanel.appendChild(wrap);
+    input.focus();
+
+    function submit(){
+      var sentence = (input.value || '').trim();
+      if (sentence.length < 8) { alert('Describe your Rock in at least a sentence.'); return; }
+      aiBusy(true); go.disabled = true; go.textContent = 'Drafting…';
+      api('POST', '/rocks/' + ROCK_ID + '/ai/draft', { sentence: sentence })
+        .then(function(res){ applyDraft(res.draft, res.costCents); })
+        .catch(aiHandleError)
+        .then(function(){ aiBusy(false); });
+    }
+    go.addEventListener('click', submit);
+    input.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') { ev.preventDefault(); submit(); } });
+  }
+
+  // Fill the form from a validated draft. The user reviews + Saves via the
+  // existing Save button -- the draft does NOT auto-persist.
+  function applyDraft(draft, costCents){
+    if (!draft) { aiClearPanel(); return; }
+    function set(id, v){ var el = $(id); if (el && typeof v === 'string') el.value = v; }
+    set('sr-title', draft.title);
+    set('sr-description', draft.description);
+    set('sr-specific', draft.specific);
+    set('sr-measurable', draft.measurable);
+    set('sr-attainable', draft.attainable);
+    set('sr-relevant', draft.relevant);
+    set('sr-timeFramed', draft.timeFramed);
+    set('sr-finishLine', draft.finishLine);
+
+    aiClearPanel();
+    if (!aiPanel) return;
+    var box = document.createElement('div'); box.className = 'sr-ai-soon';
+    var t = document.createElement('div');
+    t.style.fontWeight = '700'; t.textContent = '✨ Draft ready — review and Save.';
+    box.appendChild(t);
+    box.appendChild(aiNote('We filled in the fields below. Edit anything, then hit Save to keep it.'));
+
+    // Suggested milestones (the draft does not create them; the user adds the
+    // ones they want via the milestone form). List them as suggestions.
+    if (Array.isArray(draft.milestones) && draft.milestones.length) {
+      var msTitle = document.createElement('div');
+      msTitle.className = 'sr-label'; msTitle.style.fontSize = '0.9rem'; msTitle.style.marginTop = '10px';
+      msTitle.textContent = 'Suggested milestones';
+      box.appendChild(msTitle);
+      draft.milestones.forEach(function(m){
+        if (!m || typeof m.title !== 'string') return;
+        var row = document.createElement('div'); row.className = 'sr-crit-row';
+        var span = document.createElement('span'); span.textContent = m.title + (m.dueDate ? ' — by ' + m.dueDate : '');
+        row.appendChild(span);
+        var add = document.createElement('button');
+        add.type = 'button'; add.className = 'sr-chip-del'; add.style.color = '#7c3aed'; add.style.fontSize = '13px';
+        add.textContent = '+ add'; add.style.marginLeft = '8px';
+        add.addEventListener('click', function(){
+          var body = { title: m.title }; if (m.dueDate) body.dueDate = m.dueDate;
+          api('POST', '/rocks/' + ROCK_ID + '/milestones', body)
+            .then(function(r){ if (r.milestone) { MILESTONES.push(r.milestone); renderMilestones(); } add.disabled = true; add.textContent = 'added'; })
+            .catch(function(e){ alert('Add milestone failed: ' + fmtErr(e)); });
+        });
+        row.appendChild(add);
+        box.appendChild(row);
+      });
+    }
+    box.appendChild(aiCostLine(costCents));
+    aiPanel.appendChild(box);
+  }
+
+  // ---- Critique: review the stored Rock field by field ----
+  function runCritique(){
+    aiBusy(true);
+    aiClearPanel();
+    if (aiPanel) aiPanel.appendChild(aiNote('Reviewing your Rock…'));
+    api('POST', '/rocks/' + ROCK_ID + '/ai/critique', {})
+      .then(function(res){ showCritique(res.critique, res.costCents); })
+      .catch(aiHandleError)
+      .then(function(){ aiBusy(false); });
+  }
+  function showCritique(crit, costCents){
+    aiClearPanel(); if (!aiPanel || !crit) return;
+    var box = document.createElement('div'); box.className = 'sr-ai-soon';
+    var t = document.createElement('div');
+    t.style.fontWeight = '700'; t.textContent = 'Critique';
+    box.appendChild(t);
+    if (typeof crit.overall === 'string' && crit.overall) box.appendChild(aiNote(crit.overall));
+    (crit.critiques || []).forEach(function(c){
+      if (!c || typeof c.field !== 'string') return;
+      var row = document.createElement('div'); row.className = 'sr-crit-row';
+      var sev = document.createElement('span');
+      var sevClass = c.severity === 'missing' ? 'sr-crit-missing' : (c.severity === 'ok' ? 'sr-crit-ok' : 'sr-crit-weak');
+      sev.className = 'sr-crit-sev ' + sevClass; sev.textContent = c.severity || 'weak';
+      row.appendChild(sev);
+      var field = document.createElement('strong'); field.textContent = c.field + ': '; row.appendChild(field);
+      var issue = document.createElement('span'); issue.textContent = c.issue || ''; row.appendChild(issue);
+      if (c.suggestion) {
+        var sug = document.createElement('div');
+        sug.className = 'sr-hint'; sug.style.marginTop = '2px'; sug.textContent = 'Fix: ' + c.suggestion;
+        row.appendChild(sug);
+      }
+      box.appendChild(row);
+    });
+    box.appendChild(aiCostLine(costCents));
+    aiPanel.appendChild(box);
+  }
+
+  if (aiDraftBtn) aiDraftBtn.addEventListener('click', function(){ if (!AI_LIVE) { showComingSoon(); return; } showDraftInput(); });
+  if (aiCritiqueBtn) aiCritiqueBtn.addEventListener('click', function(){ if (!AI_LIVE) { showComingSoon(); return; } runCritique(); });
 
   // ---- Print ----
   var printBtn = $('sr-print');

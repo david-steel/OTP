@@ -29,6 +29,7 @@ import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
 import { GUIDE_SECTIONS } from '../../data/guide-content.js';
 import { renderInShell } from './_shared.js';
+import { aiRockAssistLive } from '../api/rock-ai.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { useScorecardSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
 
@@ -473,6 +474,10 @@ export default async function pageRoutes(app: FastifyInstance) {
       milestones,
       assignablePeople,
       canEdit,
+      // AI assist (PAID upsell, Phase 3). Ships gated OFF -> the buttons show a
+      // "coming soon" panel and make no API call until AI_ROCK_ASSIST_LIVE is
+      // truthy. The backend endpoints are gated independently in rock-ai.ts.
+      aiRockAssistLive: aiRockAssistLive(),
     });
   });
 
