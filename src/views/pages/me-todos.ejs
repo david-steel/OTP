@@ -373,6 +373,7 @@
             <div class="me-desc-toggle" onclick="toggleDesc(this.previousElementSibling)">Tap description to expand</div>
           <% } %>
         <% } %>
+        <div data-att-host data-att-type="todo" data-att-id="<%= t.id %>"></div>
         <div class="me-actions">
           <button class="me-btn secondary" onclick="openEdit(this)">Edit</button>
           <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Done</button>
@@ -1046,3 +1047,5 @@ function humanAgo(d) {
   });
 })();
 </script>
+
+<%- include("../partials/attachments-ui") %>

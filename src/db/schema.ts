@@ -11,6 +11,7 @@ import {
   pgEnum,
   uniqueIndex,
   index,
+  customType,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -1261,4 +1262,51 @@ export const conversionLog = pgTable('conversion_log', {
   clerkUserIdx: index('conversion_log_clerk_user_idx').on(table.clerkUserId),
   statusIdx: index('conversion_log_status_idx').on(table.status),
   createdAtIdx: index('conversion_log_created_at_idx').on(table.createdAt),
+}));
+
+// =====================================================================
+// File attachments on to-dos / issues / rocks -- ensure-attachments.ts
+// =====================================================================
+// The blob lives ONCE in `attachments` (bytea, 5MB cap enforced by the
+// API); `attachment_links` is the many-to-many onto todos / tickets
+// ("issue") / rocks. "Carry" an attachment from a to-do onto an issue or
+// rock = insert a second link row; the blob is never duplicated. Deleting
+// the last link deletes the attachment (no orphan blobs).
+
+// Drizzle has no built-in bytea column; customType is the documented
+// escape hatch. node-postgres maps bytea <-> Buffer natively.
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea';
+  },
+});
+
+export const attachments = pgTable('attachments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  filename: varchar('filename', { length: 255 }).notNull(),
+  mimeType: varchar('mime_type', { length: 120 }).notNull(),
+  sizeBytes: integer('size_bytes').notNull(),
+  data: bytea('data').notNull(),
+  // Actor stamp: Clerk user id or 'api_key' -- same convention as
+  // todos.created_by / rocks.created_by.
+  uploadedBy: varchar('uploaded_by', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('attachments_org_idx').on(table.organizationId),
+}));
+
+export const attachmentLinks = pgTable('attachment_links', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  attachmentId: uuid('attachment_id').references(() => attachments.id, { onDelete: 'cascade' }).notNull(),
+  // 'todo' | 'issue' | 'rock' (issues live in the tickets table). Kept as
+  // varchar (not a pg enum) so adding entity kinds is DDL-free.
+  entityType: varchar('entity_type', { length: 20 }).notNull(),
+  entityId: uuid('entity_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueLink: uniqueIndex('attachment_links_unique_idx').on(table.attachmentId, table.entityType, table.entityId),
+  orgIdx: index('attachment_links_org_idx').on(table.organizationId),
+  entityIdx: index('attachment_links_entity_idx').on(table.entityType, table.entityId),
 }));

@@ -753,6 +753,7 @@ await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/seats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/values.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/todos.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/attachments.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/notifications.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/dashboard-preferences.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/whats-new.js'), { prefix: '/api/v1' });
@@ -1015,6 +1016,14 @@ try {
   app.log.info('todos v2 columns are ready (kind, priority, recurrence, subtasks)');
 } catch (err) {
   app.log.error({ err }, 'ensureTodosV2 failed -- /me/todos and /l8 todo separation will not work until resolved');
+}
+
+try {
+  const { ensureAttachmentTables } = await import('./db/ensure-attachments.js');
+  await ensureAttachmentTables();
+  app.log.info('attachments + attachment_links tables are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureAttachmentTables failed -- to-do/issue/rock file attachments will not persist until resolved');
 }
 
 try {

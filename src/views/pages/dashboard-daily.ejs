@@ -465,6 +465,7 @@
                         <button type="button" class="na-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
                       </form>
                     </div>
+                    <div data-att-host data-att-type="rock" data-att-id="<%= r.id %>"></div>
                   </div>
                 </div>
               </li>
@@ -678,6 +679,7 @@
                             <% }); %>
                           </div>
                         <% } %>
+                        <div data-att-host data-att-type="todo" data-att-id="<%= t.id %>"></div>
                       </div>
                       <form class="todo-edit hidden space-y-1.5">
                         <input type="text" name="title" required maxlength="500" value="<%= t.title %>" class="w-full rounded border border-gray-300 px-2 py-1 text-sm">
@@ -896,6 +898,7 @@
                         <button type="button" class="na-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
                       </form>
                     </div>
+                    <div data-att-host data-att-type="issue" data-att-id="<%= t.id %>"></div>
                   </div>
                   <% if (isIntegrator) { %>
                     <button class="issue-solve-btn text-[11px] font-semibold rounded px-2 py-0.5 bg-white border border-gray-300 text-gray-700 hover:border-status-ontrack hover:text-status-ontrack whitespace-nowrap">&#10003; Mark solved</button>
@@ -2500,3 +2503,5 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
   });
 })();
 </script>
+
+<%- include("../partials/attachments-ui") %>
