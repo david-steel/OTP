@@ -1,6 +1,10 @@
 <%# /blog -- v7 layout (light, editorial). Blog index / listing.
     Rendered via reply.view('pages/blog', data, { layout: 'layouts/v7' }).
-    Restyled to v7. Every post link, EJS loop, and data reference preserved. %>
+    Restyled to v7. Every post link, EJS loop, and data reference preserved.
+    Search: client-side filter over blogSearchIndex (embedded below via
+    jsonForScript, never raw JSON.stringify), matching title + summary + tags
+    and showing/hiding the post cards already on the page. Deep link: ?q= %>
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <style>
   .bg-float { animation:bg-float 6.5s ease-in-out infinite; }
   @keyframes bg-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
@@ -46,6 +50,23 @@
   .cap-orange { background:linear-gradient(135deg, rgba(255,122,26,.13), rgba(212,84,10,.08)); }
   .cap-green  { background:linear-gradient(135deg, rgba(10,157,99,.13), rgba(6,114,74,.08)); }
   .cap-grey   { background:linear-gradient(135deg, var(--grey), #e8e9ec); }
+
+  /* blog search -- index filter box */
+  .bs-search-wrap { position:relative; max-width:30rem; }
+  .bs-search {
+    width:100%; padding:12px 96px 12px 42px; font-size:14px; color:var(--ink);
+    background:var(--card); border:1.5px solid var(--line); border-radius:12px;
+    outline:none; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .bs-search:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(13,125,242,.12); }
+  .bs-search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); pointer-events:none; }
+  .bs-clear {
+    position:absolute; right:9px; top:50%; transform:translateY(-50%);
+    display:none; padding:5px 11px; font-size:12px; font-weight:600;
+    color:var(--ink-soft); background:var(--grey); border:1px solid var(--line);
+    border-radius:9999px; cursor:pointer;
+  }
+  .bs-count { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-mute); min-height:18px; }
 </style>
 
 <%# In-shell trim: inside the authed main layout (renderInShell), the app
@@ -68,6 +89,13 @@
         <p class="text-[17px] sm:text-[18px] text-[var(--ink-soft)] leading-[1.6] max-w-[36rem] mx-auto md:mx-0 mt-5">
           Dispatches from the frontier of organizational intelligence. Notes from inside the build, not from the conference circuit.
         </p>
+        <div class="bs-search-wrap mx-auto md:mx-0 mt-7">
+          <svg class="bs-search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-mute)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="bs-search" class="bs-search" type="search" placeholder="Search articles&hellip;"
+                 autocomplete="off" spellcheck="false" aria-label="Search blog posts">
+          <button id="bs-clear" class="bs-clear" type="button">Clear</button>
+        </div>
+        <div id="bs-count" class="bs-count mt-2.5 text-center md:text-left" aria-live="polite"></div>
       </div>
       <div class="relative shrink-0" style="width:212px; max-width:54vw;">
         <div class="bg-glow"></div>
@@ -1229,3 +1257,74 @@
     </div>
   </div>
 </section>
+
+<script>
+(function () {
+  // Index of every post this page can show. Embedded via jsonForScript --
+  // angle brackets are unicode-escaped so a title containing a script-closing
+  // tag cannot break out of this script context.
+  var INDEX = <%- jsonForScript(typeof blogSearchIndex !== 'undefined' ? blogSearchIndex : []) %>;
+  var byMatchText = {};
+  INDEX.forEach(function (e) {
+    byMatchText[e.slug] = (e.title + ' ' + e.summary + ' ' + (e.tags || []).join(' ')).toLowerCase();
+  });
+
+  var input = document.getElementById('bs-search');
+  var clearBtn = document.getElementById('bs-clear');
+  var countEl = document.getElementById('bs-count');
+  if (!input) return;
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('a.bg-card[href^="/blog/"]'));
+  var cardText = cards.map(function (card) {
+    var slug = (card.getAttribute('href') || '').replace(/^\/blog\//, '').replace(/[?#].*$/, '');
+    // Registry text when we have it; fall back to the card's own visible text
+    // so cards outside the registry are still searchable.
+    return { slug: slug, text: byMatchText[slug] || (card.textContent || '').toLowerCase() };
+  });
+  // Sections that contain post cards (Featured / Founder / Conatus / grid):
+  // hidden whole when none of their cards match, so headers don't dangle.
+  var sections = [];
+  cards.forEach(function (card) {
+    var sec = card.closest('section');
+    if (sec && sections.indexOf(sec) === -1) sections.push(sec);
+  });
+
+  function runSearch(q) {
+    var terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var matchedSlugs = {};
+    cards.forEach(function (card, i) {
+      var hit = terms.length === 0 || terms.every(function (t) { return cardText[i].text.indexOf(t) !== -1; });
+      card.style.display = hit ? '' : 'none';
+      if (hit) matchedSlugs[cardText[i].slug] = true;
+    });
+    sections.forEach(function (sec) {
+      var any = Array.prototype.some.call(sec.querySelectorAll('a.bg-card'), function (c) {
+        return c.style.display !== 'none';
+      });
+      sec.style.display = (terms.length === 0 || any) ? '' : 'none';
+    });
+    if (terms.length === 0) {
+      countEl.textContent = '';
+      clearBtn.style.display = 'none';
+    } else {
+      var n = Object.keys(matchedSlugs).length;
+      countEl.textContent = n === 1 ? '1 post matches' : n + ' posts match';
+      clearBtn.style.display = 'inline-block';
+    }
+    try {
+      var url = new URL(window.location.href);
+      if (terms.length > 0) url.searchParams.set('q', q.trim()); else url.searchParams.delete('q');
+      history.replaceState(null, '', url.toString());
+    } catch (e) { /* URL sync is best-effort */ }
+  }
+
+  input.addEventListener('input', function () { runSearch(input.value); });
+  clearBtn.addEventListener('click', function () { input.value = ''; runSearch(''); input.focus(); });
+
+  // Deep link: /blog?q=term
+  try {
+    var initial = new URLSearchParams(window.location.search).get('q');
+    if (initial) { input.value = initial; runSearch(initial); }
+  } catch (e) { /* no-op */ }
+})();
+</script>

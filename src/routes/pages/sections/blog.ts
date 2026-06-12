@@ -468,6 +468,15 @@ export default async function blogRoutes(app: FastifyInstance) {
     const PER_SECTION = 24;
     const conatusPosts = showAll ? allConatus : allConatus.slice(0, PER_SECTION);
     const founderPosts = showAll ? allFounder : allFounder.slice(0, PER_SECTION);
+    // Client-side search index for the index page: one entry per post the
+    // page can show (dynamic markdown posts + the hardcoded archive grid).
+    // Embedded in blog.ejs via jsonForScript (never raw JSON.stringify --
+    // post titles/summaries are file-sourced but the script-context escape
+    // rule applies to every embedded payload).
+    const blogSearchIndex = [
+      ...allDynamicPosts.map(p => ({ slug: p.slug, title: p.title, summary: p.description, tags: [p.author, p.type].filter(Boolean) })),
+      ...BLOG_POSTS.map(p => ({ slug: p.slug, title: p.title.replace(/ - OTP$/, ''), summary: p.description, tags: [] as string[] })),
+    ];
     // Index AND individual /blog/:slug posts are dual-rendered (app shell
     // for signed-in viewers). The post templates are v7 bodies with no
     // layout assumptions of their own; the one nav-clearing pad lives in
@@ -489,6 +498,7 @@ export default async function blogRoutes(app: FastifyInstance) {
       conatusTotal: allConatus.length,
       founderTotal: allFounder.length,
       showAll,
+      blogSearchIndex,
     });
   });
 

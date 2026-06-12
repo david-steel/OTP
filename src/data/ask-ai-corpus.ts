@@ -5,9 +5,11 @@
 // (no Date.now, no timestamps, no randomness, no per-request data). A single
 // byte of drift between requests invalidates the prompt cache.
 //
-// DB-free: imports only src/data/changelog.ts (a static array) so the unit
-// test can import this module without DATABASE_URL.
+// DB-free: imports only src/data/changelog.ts (a static array) and
+// src/data/guide-content.ts (static guide text) so the unit test can import
+// this module without DATABASE_URL.
 import { changelog } from './changelog.js';
+import { GUIDE_PLAIN_TEXT } from './guide-content.js';
 
 // ---------------------------------------------------------------------------
 // Product overview
@@ -65,33 +67,14 @@ operating system. An organization runs its whole operating cadence inside it:
 - /publish -- publish or update the org's OOS.
 - /tickets -- Raise a Ticket: contact support, report a problem, ask for help
   from a human.
-- /guide -- the user guide / help center: why OTP exists, the three ways to
-  get started, how publishing and learning work, what an OOS is.
+- /guide -- the searchable user guide / help center: the full OrgTP End-User
+  Guide (every page explained), with instant search. /guide?q=term deep-links
+  a search.
 - /whats-new -- the product changelog page (every shipped update).
 - /blog -- the EOS + AI article library.
 - /premium-support -- Premium Support: priority help in a dedicated Slack
   channel plus quarterly founder reviews.
 - /settings/api -- MCP / API keys for connecting AI agents.
-
-## Getting started (from the user guide)
-
-Three ways in:
-
-1. **Publish on the web (fastest).** Sign up free at orgtp.com, go to /publish,
-   paste a CLAUDE.md (or any file describing how your AI agents coordinate),
-   and click Publish. OTP extracts claims, scores quality, and shows how you
-   compare to other organizations -- about 60 seconds to a first OOS.
-2. **Generate with AI first.** No CLAUDE.md yet? The guide at /guide includes a
-   copy-paste prompt for any AI assistant (Claude, ChatGPT, Gemini) that
-   generates a complete OOS file -- YAML frontmatter, a Purpose section, Prime
-   Directives, and 15+ structured claims -- ready to paste into /publish.
-3. **Connect your AI agent (power users).** For Claude Code, Cursor, Windsurf,
-   or any MCP-compatible client: one install command
-   (curl -fsSL https://orgtp.com/install.sh | bash) sets up the OTP MCP server
-   (16 tools) and 5 slash commands (/otp dashboard, /otp-publish, /otp-morning
-   briefing, /otp-browse, /otp-learn). Requires Node.js v18+ and the Claude
-   Code CLI. Manual MCP config (npx otp-mcp-server with an OTP_API_KEY from
-   /settings/api) works for other clients.
 
 ## How the network loop works
 
@@ -104,19 +87,18 @@ Three ways in:
    cross-org patterns; accept, reject, or adapt each one. Your OOS evolves
    with the network.
 
-## What makes a great OOS (guide tips)
-
-Do: be specific ("Agent A writes file X, Agent B reads file X" beats "agents
-share data"); include failures (failure_patterns claims are the most valuable);
-be honest about confidence (LOW/SPECULATION shows intellectual honesty); update
-it as the AI setup evolves. Do not: include client names, employee PII, or
-proprietary pricing; write generic advice ("AI should be supervised" is not a
-claim); pad it -- 15 specific claims beat 30 vague ones.
-
 OOS claim sections: core_operating_rules, agent_roles_and_authority,
 coordination_patterns, operational_heuristics, failure_patterns,
 human_ai_boundary_conditions.
 `.trim();
+
+// ---------------------------------------------------------------------------
+// Full End-User Guide -- the canonical product walkthrough, sourced from
+// src/data/guide-content.ts (same content the /guide help center renders).
+// Replaces the hand-curated guide excerpt that used to live in OVERVIEW.
+// GUIDE_PLAIN_TEXT is a static constant, so this stays byte-stable.
+// ---------------------------------------------------------------------------
+const GUIDE_BLOCK = '# OrgTP End-User Guide (full text)\n\n' + GUIDE_PLAIN_TEXT.trim();
 
 // ---------------------------------------------------------------------------
 // Changelog digest -- latest 30 entries, title + summary + date only.
@@ -131,4 +113,4 @@ function renderChangelogDigest(): string {
 }
 
 /** The full byte-stable corpus. Computed once at module load. */
-export const ASK_AI_CORPUS: string = OVERVIEW + '\n\n' + renderChangelogDigest();
+export const ASK_AI_CORPUS: string = OVERVIEW + '\n\n' + GUIDE_BLOCK + '\n\n' + renderChangelogDigest();

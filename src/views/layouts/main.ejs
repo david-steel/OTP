@@ -347,6 +347,14 @@
                   <div style="font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.06em;">Help &amp; Support</div>
                   <div style="font-size:12px; color:#6b7280; line-height:1.45; margin-top:2px;">Talk to us or learn on your own &mdash; we've got you covered.</div>
                 </div>
+                <!-- Guide search: a plain GET form -- submitting navigates to
+                     /guide?q=term, where the help center runs the search on
+                     load. No JS needed; the query never touches innerHTML. -->
+                <form action="/guide" method="get" style="padding:10px 14px 0; margin:0;">
+                  <input type="search" name="q" id="otp-help-search" placeholder="Search the guide and articles&hellip;"
+                         autocomplete="off" aria-label="Search the user guide"
+                         style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; color:#111827; background:#f9fafb; border:1px solid rgba(20,22,28,0.12); border-radius:8px; outline:none;" />
+                </form>
                 <div style="padding:16px 14px 4px; text-align:center;">
                   <img src="/public/images/orgy/inquiries.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="Orgy, the OTP mascot" width="64" height="64" style="width:64px; height:64px; object-fit:contain; display:inline-block;" />
                   <div style="font-size:14px; font-weight:600; color:#111827; margin-top:8px;">Hi! How can we help?</div>

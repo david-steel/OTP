@@ -95,6 +95,15 @@ describe('ASK_AI_CORPUS', () => {
     // Guard against someone interpolating a timestamp into the corpus.
     expect(ASK_AI_CORPUS).not.toMatch(/\$\{new Date|Date\.now/);
   });
+
+  it('embeds the full End-User Guide (GUIDE_PLAIN_TEXT)', async () => {
+    const { GUIDE_PLAIN_TEXT } = await import('../data/guide-content.js');
+    expect(ASK_AI_CORPUS).toContain('# OrgTP End-User Guide (full text)');
+    expect(ASK_AI_CORPUS).toContain(GUIDE_PLAIN_TEXT.trim());
+    // sanity ceiling: the prompt-cached prefix must stay well under ~30k
+    // tokens (~4 chars/token heuristic)
+    expect(ASK_AI_CORPUS.length).toBeLessThan(120_000);
+  });
 });
 
 describe('buildSystemPrompt', () => {

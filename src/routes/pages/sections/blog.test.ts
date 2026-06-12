@@ -51,6 +51,20 @@ describe('blog routes', () => {
     expect(res.body).toContain('"@type":"BlogPosting"');
   });
 
+  it('serves the index with the client-side search wiring', async () => {
+    const res = await app.inject({ method: 'GET', url: '/blog' });
+    expect(res.statusCode).toBe(200);
+    // search box + live match count + ?q deep-link support
+    expect(res.body).toContain('id="bs-search"');
+    expect(res.body).toContain('id="bs-count"');
+    expect(res.body).toContain("get('q')");
+    // the search index payload is embedded (via jsonForScript -- the EJS XSS
+    // lint test enforces no raw JSON.stringify reaches a <%- sink)
+    expect(res.body).toContain('var INDEX =');
+    // hardcoded registry entries are searchable too
+    expect(res.body).toContain('"why-we-built-otp"');
+  });
+
   it('returns 404 for unknown blog slugs', async () => {
     const res = await app.inject({
       method: 'GET',

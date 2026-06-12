@@ -26,6 +26,7 @@ import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECK
 import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
+import { GUIDE_SECTIONS } from '../../data/guide-content.js';
 import { renderInShell } from './_shared.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { useScorecardSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
@@ -295,10 +296,13 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the OTP intelligence network. Visualize how AI organizations connect through shared coordination patterns, operational claims, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: BASE_URL + '/public/og-image.png', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
   });
 
-  // Guide page. Dual-rendered: signed-in viewers keep the app shell
+  // Guide page -- the searchable OrgTP User Guide help center. Content comes
+  // from src/data/guide-content.ts; search/highlight is client-side (?q=term
+  // deep links run the search on load -- the Help panel's search box lands
+  // here). Dual-rendered: signed-in viewers keep the app shell
   // (renderInShell), signed-out visitors get the v7 marketing layout.
   app.get('/guide', async (request, reply) => {
-    return renderInShell(request, reply, 'guide', { title: 'How to Generate Your OOS - OTP', description: 'Learn how to create and publish your organizational operating system. A step-by-step guide to documenting your AI team\'s coordination intelligence on OTP.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'Guide', url: BASE_URL + '/guide' }) });
+    return renderInShell(request, reply, 'guide', { title: 'OrgTP User Guide - OTP', description: 'The complete end-user guide to every part of OrgTP: dashboard, weekly meetings, to-dos, KPIs, Rocks, issues, org chart, the intelligence layer, imports, and settings. Searchable.', canonical: BASE_URL + '/guide', breadcrumbs: bc({ name: 'User Guide', url: BASE_URL + '/guide' }), guideSections: GUIDE_SECTIONS });
   });
 
   // Why OTP -- the persuasion page (frustrations + outcomes + objections)
