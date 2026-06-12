@@ -1,0 +1,518 @@
+<% /*
+  /processes -- the Processes hub. Phase 1 of the SOP/Process feature.
+  Dual-rendered (renderInShell): a signed-in viewer gets the app shell; the
+  route redirects signed-out users to /sign-in before we get here.
+
+  SOURCE OF TRUTH: SOPs live embedded per-seat in the OOS/chart graph. This
+  page only READS them (aggregated server-side via process-hub.ts) and WRITES
+  them back through the EXISTING PATCH /api/v1/team/entity route -- the same
+  call /dashboard/team uses. To add/edit/delete a SOP we take the owning
+  seat's current sops[] (rebuilt client-side from `entries`), mutate it, and
+  PATCH the seat with the full new array. No new persistence.
+
+  Locals:
+    entries        [{ seatExternalId, seatName, seatRole, seatType,
+                      sop:{title,trigger,steps,outputs,tools,notes}, sopIndex,
+                      inheritedBy:[name], canEdit }]
+    totalCount     int
+    seatFacets     [{ externalId, name, role, type, count }]  (sop-owning seats)
+    pickableSeats  [{ externalId, name, role, type, count }]  (editable seats for "+ New")
+    templateGroups SOP_TEMPLATE_GROUPS (role-grouped starter SOPs)
+    canEdit        bool (viewer can edit at least one seat)
+
+  Security (the repo's recurring EJS + XSS gotchas):
+    - All user/AI strings rendered via the escaping interpolation tag, and via
+      textContent in the client script -- never innerHTML with user data.
+    - jsonForScript() serializes the inline payload so a value containing a
+      closing script tag cannot break out of the script context.
+    - This header is a JS block comment, NOT an EJS hash comment (a hash
+      comment closes on the first percent-gt it sees -- the May 2026 500 class).
+*/ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<%
+  var _entries = Array.isArray(entries) ? entries : [];
+  var _seatFacets = Array.isArray(seatFacets) ? seatFacets : [];
+  var _pickable = Array.isArray(pickableSeats) ? pickableSeats : [];
+  var _groups = Array.isArray(templateGroups) ? templateGroups : [];
+  var _total = typeof totalCount === 'number' ? totalCount : _entries.length;
+  var _canEdit = !!canEdit;
+%>
+<style>
+  .ph-wrap { max-width: 1080px; }
+  .ph-card { background: var(--card, #fff); border: 1.5px solid var(--line, #e5e7eb); border-radius: 14px; transition: border-color .15s ease, box-shadow .15s ease; }
+  .ph-card:hover { border-color: var(--blue, #0d7df2); box-shadow: 0 2px 14px rgba(13,125,242,.08); }
+  .ph-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 640px) { .ph-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .ph-grid { grid-template-columns: repeat(3, 1fr); } }
+  .ph-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; line-height: 1.4; }
+  .ph-chip-human { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .ph-chip-agent { background: var(--orgy-soft, #fff6da); color: var(--orgy-on-light, #8a6d1a); border-color: var(--orgy-line, #f0dca0); }
+  .ph-chip-mute { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+  .ph-chip-tool { background: #f8fafc; color: #475569; border-color: #e2e8f0; font-weight: 600; }
+  .ph-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; padding: 10px 18px; border-radius: 10px; border: 1.5px solid transparent; cursor: pointer; text-decoration: none; }
+  .ph-btn-primary { background: var(--blue, #0d7df2); color: #fff; }
+  .ph-btn-primary:hover { background: var(--blue-deep, #0a63c2); }
+  .ph-btn-ghost { background: #fff; color: var(--ink, #1f2937); border-color: var(--line, #e5e7eb); }
+  .ph-btn-ghost:hover { border-color: var(--blue, #0d7df2); color: var(--blue-deep, #0a63c2); }
+  .ph-btn-sm { font-size: 12px; padding: 5px 11px; border-radius: 8px; }
+  .ph-input { width: 100%; font-size: 14px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line, #e5e7eb); background: #fff; color: var(--ink, #1f2937); }
+  .ph-input:focus { outline: none; border-color: var(--blue, #0d7df2); }
+  .ph-detail { display: none; }
+  .ph-detail.open { display: block; }
+  .ph-modal-back { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 60; display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
+  .ph-modal-back.open { display: flex; }
+  .ph-modal { background: #fff; border-radius: 16px; width: 100%; max-width: 640px; box-shadow: 0 20px 60px rgba(15,23,42,.25); }
+  .ph-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft, #374151); margin-bottom: 4px; }
+  .ph-list-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .ph-step-num { flex: 0 0 auto; width: 22px; height: 38px; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 700; color: var(--ink-mute, #9ca3af); }
+</style>
+
+<section class="bg-[var(--white)]">
+  <div class="ph-wrap mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px]"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
+
+    <nav class="text-[12.5px] text-[var(--ink-mute,#6b7280)] mb-4">
+      <a href="/dashboard" class="hover:text-[var(--ink,#1f2937)] font-semibold">Dashboard</a>
+      <span class="mx-1.5">/</span>
+      <span>Processes</span>
+    </nav>
+
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="font-bold text-[2rem] tracking-[-0.02em] text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">Processes <span class="text-[var(--ink-mute,#9ca3af)] font-semibold text-[1.1rem] align-middle" id="ph-count"><%= _total %></span></h1>
+        <p class="text-[15px] text-[var(--ink-soft,#374151)] mt-1.5 max-w-[42rem]">The documented processes your team -- humans and agents -- runs on. Author once on a seat; every AI agent under it inherits the SOP at runtime.</p>
+      </div>
+      <% if (_canEdit) { %>
+      <button type="button" id="ph-new" class="ph-btn ph-btn-primary" title="Document a new process">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        New Process
+      </button>
+      <% } %>
+    </div>
+
+    <!-- Search + facets -->
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <div class="relative flex-1 min-w-[220px]">
+        <input id="ph-search" class="ph-input pl-9" type="search" placeholder="Search processes by title, seat, trigger, or tool..." autocomplete="off">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-mute,#9ca3af)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      </div>
+      <select id="ph-facet" class="ph-input" style="width:auto; min-width:180px;">
+        <option value="all">All processes</option>
+        <option value="humans">Humans only</option>
+        <option value="agents">Agents only</option>
+        <option value="has-trigger">Has a trigger</option>
+        <% _seatFacets.forEach(function(s){ %>
+          <option value="<%= s.externalId %>"><%= s.name %> (<%= s.count %>)</option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- Empty state -->
+    <div id="ph-empty" class="ph-card mt-8 px-6 py-12 text-center" style="<%= _entries.length === 0 ? '' : 'display:none;' %>border-style:dashed;">
+      <div class="mx-auto mb-4 flex items-center justify-center" style="width:48px;height:48px;border-radius:12px;background:var(--orgy-soft,#fff6da);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orgy-on-light,#8a6d1a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      </div>
+      <h2 class="text-[1.05rem] font-bold text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">No processes documented yet</h2>
+      <p class="text-[14px] text-[var(--ink-soft,#374151)] mt-1.5">Start from a template -- proven SOPs for founders, sales, customer success, and marketing.</p>
+      <% if (_canEdit) { %>
+      <div class="mt-5">
+        <button type="button" id="ph-new-empty" class="ph-btn ph-btn-primary">Start from a template</button>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- No-results-after-filter state -->
+    <div id="ph-noresults" class="ph-card mt-8 px-6 py-10 text-center" style="display:none; border-style:dashed;">
+      <p class="text-[14px] text-[var(--ink-soft,#374151)]">No processes match your search.</p>
+    </div>
+
+    <!-- Cards -->
+    <div id="ph-grid" class="ph-grid mt-8"<%= _entries.length === 0 ? ' style="display:none;"' : '' %>>
+      <% _entries.forEach(function(e, i){
+           var sop = e.sop || {};
+           var steps = Array.isArray(sop.steps) ? sop.steps : [];
+           var tools = Array.isArray(sop.tools) ? sop.tools : [];
+           var outputs = Array.isArray(sop.outputs) ? sop.outputs : [];
+           var inheritedBy = Array.isArray(e.inheritedBy) ? e.inheritedBy : [];
+      %>
+      <div class="ph-card p-5 flex flex-col gap-3" data-idx="<%= i %>"
+           data-seat="<%= e.seatExternalId %>" data-type="<%= e.seatType %>" data-sopindex="<%= e.sopIndex %>">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="ph-chip <%= e.seatType === 'agent' ? 'ph-chip-agent' : 'ph-chip-human' %>"><%= e.seatType === 'agent' ? 'Agent' : 'Human' %></span>
+          <span class="ph-chip ph-chip-mute"><%= e.seatName %><% if (e.seatRole) { %> &middot; <%= e.seatRole %><% } %></span>
+          <% if (steps.length) { %><span class="ph-chip ph-chip-mute"><%= steps.length %> step<%= steps.length === 1 ? '' : 's' %></span><% } %>
+        </div>
+        <div class="font-bold text-[15.5px] leading-snug text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;"><%= sop.title || '(untitled process)' %></div>
+        <% if (sop.trigger) { %>
+          <div class="text-[12.5px] text-[var(--ink-mute,#6b7280)]"><span class="font-semibold">Trigger:</span> <%= sop.trigger %></div>
+        <% } %>
+        <% if (tools.length) { %>
+          <div class="flex flex-wrap gap-1.5">
+            <% tools.forEach(function(t){ %><span class="ph-chip ph-chip-tool"><%= t %></span><% }); %>
+          </div>
+        <% } %>
+        <% if (inheritedBy.length) { %>
+          <div class="text-[11.5px] text-[var(--ink-mute,#9ca3af)]">Inherited by <%= inheritedBy.join(', ') %></div>
+        <% } %>
+
+        <!-- Expandable detail -->
+        <div class="ph-detail border-t pt-3 mt-1" style="border-color:var(--line,#e5e7eb);">
+          <% if (steps.length) { %>
+            <div class="ph-label">Steps</div>
+            <ol class="list-decimal pl-5 text-[13px] text-[var(--ink-soft,#374151)] space-y-1 mb-3">
+              <% steps.forEach(function(s){ %><li><%= s %></li><% }); %>
+            </ol>
+          <% } %>
+          <% if (outputs.length) { %>
+            <div class="ph-label">Outputs</div>
+            <ul class="list-disc pl-5 text-[13px] text-[var(--ink-soft,#374151)] space-y-1 mb-3">
+              <% outputs.forEach(function(o){ %><li><%= o %></li><% }); %>
+            </ul>
+          <% } %>
+          <% if (sop.notes) { %>
+            <div class="ph-label">Notes</div>
+            <p class="text-[13px] text-[var(--ink-soft,#374151)] mb-1"><%= sop.notes %></p>
+          <% } %>
+        </div>
+
+        <div class="mt-auto pt-1 flex items-center justify-between">
+          <button type="button" class="ph-toggle text-[12.5px] font-semibold text-[var(--blue,#0d7df2)] hover:text-[var(--blue-deep,#0a63c2)]">Show details</button>
+          <% if (e.canEdit) { %>
+          <div class="flex items-center gap-2">
+            <button type="button" class="ph-edit ph-btn ph-btn-ghost ph-btn-sm">Edit</button>
+            <button type="button" class="ph-delete ph-btn ph-btn-ghost ph-btn-sm" style="color:#be123c;">Delete</button>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<% if (_canEdit) { %>
+<!-- New / Edit modal -->
+<div id="ph-modal-back" class="ph-modal-back" role="dialog" aria-modal="true" aria-labelledby="ph-modal-title">
+  <div class="ph-modal">
+    <div class="flex items-center justify-between px-6 pt-5 pb-3 border-b" style="border-color:var(--line,#e5e7eb);">
+      <h2 id="ph-modal-title" class="text-[1.15rem] font-bold text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">New Process</h2>
+      <button type="button" id="ph-modal-close" class="text-[var(--ink-mute,#9ca3af)] hover:text-[var(--ink,#1f2937)]" aria-label="Close">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="px-6 py-5 space-y-4">
+      <!-- Template picker (shown only when creating) -->
+      <div id="ph-tpl-wrap">
+        <label class="ph-label" for="ph-tpl">Insert from template (optional)</label>
+        <select id="ph-tpl" class="ph-input">
+          <option value="">Start from blank</option>
+          <% _groups.forEach(function(g, gi){ %>
+            <optgroup label="<%= g.role %>">
+              <% (g.templates || []).forEach(function(t, ti){ %>
+                <option value="<%= gi %>:<%= ti %>"><%= t.title %></option>
+              <% }); %>
+            </optgroup>
+          <% }); %>
+        </select>
+      </div>
+
+      <div>
+        <label class="ph-label" for="ph-seat">Owning seat</label>
+        <select id="ph-seat" class="ph-input">
+          <% _pickable.forEach(function(s){ %>
+            <option value="<%= s.externalId %>" data-type="<%= s.type %>"><%= s.name %><% if (s.role) { %> &middot; <%= s.role %><% } %> (<%= s.type %>)</option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div>
+        <label class="ph-label" for="ph-title">Title</label>
+        <input id="ph-title" class="ph-input" type="text" maxlength="200" placeholder="e.g. Daily inbox triage">
+      </div>
+
+      <div>
+        <label class="ph-label" for="ph-trigger">Trigger (optional)</label>
+        <input id="ph-trigger" class="ph-input" type="text" maxlength="500" placeholder="e.g. Every weekday at 8 AM">
+      </div>
+
+      <div>
+        <label class="ph-label">Steps</label>
+        <div id="ph-steps"></div>
+        <button type="button" id="ph-add-step" class="ph-btn ph-btn-ghost ph-btn-sm mt-1">+ Add step</button>
+      </div>
+
+      <div>
+        <label class="ph-label">Outputs (optional)</label>
+        <div id="ph-outputs"></div>
+        <button type="button" id="ph-add-output" class="ph-btn ph-btn-ghost ph-btn-sm mt-1">+ Add output</button>
+      </div>
+
+      <div>
+        <label class="ph-label" for="ph-tools">Tools (optional, comma-separated)</label>
+        <input id="ph-tools" class="ph-input" type="text" placeholder="e.g. Gmail, Slack, CRM">
+      </div>
+
+      <div>
+        <label class="ph-label" for="ph-notes">Notes (optional)</label>
+        <textarea id="ph-notes" class="ph-input" rows="2" maxlength="2000"></textarea>
+      </div>
+
+      <div id="ph-error" class="text-[13px] text-[#be123c]" style="display:none;"></div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 px-6 py-4 border-t" style="border-color:var(--line,#e5e7eb);">
+      <button type="button" id="ph-cancel" class="ph-btn ph-btn-ghost">Cancel</button>
+      <button type="button" id="ph-save" class="ph-btn ph-btn-primary">Save process</button>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<script>
+(function(){
+  var ENTRIES = <%- jsonForScript(entries || []) %>;
+  var TEMPLATE_GROUPS = <%- jsonForScript(templateGroups || []) %>;
+  var CAN_EDIT = <%- _canEdit ? 'true' : 'false' %>;
+
+  // ---- Search + facet filtering (client mirror of process-hub.filterSops) ----
+  var searchEl = document.getElementById('ph-search');
+  var facetEl = document.getElementById('ph-facet');
+  var grid = document.getElementById('ph-grid');
+  var noResults = document.getElementById('ph-noresults');
+  var emptyState = document.getElementById('ph-empty');
+  var countEl = document.getElementById('ph-count');
+
+  function entryMatches(e, q, facet){
+    var sop = e.sop || {};
+    if (facet && facet !== 'all') {
+      if (facet === 'humans' && e.seatType !== 'human') return false;
+      else if (facet === 'agents' && e.seatType !== 'agent') return false;
+      else if (facet === 'has-trigger' && !(sop.trigger && String(sop.trigger).trim())) return false;
+      else if (facet !== 'humans' && facet !== 'agents' && facet !== 'has-trigger' && e.seatExternalId !== facet) return false;
+    }
+    var needle = (q || '').trim().toLowerCase();
+    if (!needle) return true;
+    var hay = [sop.title || '', e.seatName || '', e.seatRole || '', sop.trigger || ''].concat(Array.isArray(sop.tools) ? sop.tools : []);
+    return hay.some(function(h){ return String(h).toLowerCase().indexOf(needle) !== -1; });
+  }
+
+  function applyFilter(){
+    if (!grid) return;
+    var q = searchEl ? searchEl.value : '';
+    var facet = facetEl ? facetEl.value : 'all';
+    var cards = grid.querySelectorAll('[data-idx]');
+    var shown = 0;
+    cards.forEach(function(card){
+      var e = ENTRIES[Number(card.getAttribute('data-idx'))];
+      var ok = e && entryMatches(e, q, facet);
+      card.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    if (countEl) countEl.textContent = String(shown);
+    if (ENTRIES.length === 0) return; // empty state already shown server-side
+    if (noResults) noResults.style.display = shown === 0 ? '' : 'none';
+    grid.style.display = shown === 0 ? 'none' : '';
+  }
+  if (searchEl) searchEl.addEventListener('input', applyFilter);
+  if (facetEl) facetEl.addEventListener('change', applyFilter);
+
+  // ---- Expand / collapse card detail ----
+  if (grid) grid.addEventListener('click', function(ev){
+    var t = ev.target;
+    if (t.classList && t.classList.contains('ph-toggle')) {
+      var card = t.closest('[data-idx]');
+      var detail = card && card.querySelector('.ph-detail');
+      if (detail) {
+        var open = detail.classList.toggle('open');
+        t.textContent = open ? 'Hide details' : 'Show details';
+      }
+    }
+  });
+
+  if (!CAN_EDIT) return;
+
+  // ---- Write path: PATCH /api/v1/team/entity with the seat's full sops[] ----
+  function api(method, path, body){
+    var opts = { method: method, headers: {}, credentials: 'same-origin' };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch('/api/v1' + path, opts).then(function(r){
+      if (!r.ok) {
+        return r.text().then(function(text){
+          var j = {}; try { j = text ? JSON.parse(text) : {}; } catch(e){}
+          var inner = j.error || {};
+          throw { status: r.status, code: inner.code || 'API_ERROR', message: inner.message || ('HTTP ' + r.status) };
+        });
+      }
+      return r.status === 204 ? {} : r.json();
+    });
+  }
+  function fmtErr(e){ return e ? ((e.code ? e.code + ': ' : '') + (e.message || 'error')) : 'Unknown error'; }
+
+  // Rebuild a seat's current sops[] array from the entries we rendered.
+  // entries carry sopIndex so we can place them back in order, then mutate.
+  function seatSops(seatExternalId){
+    var rows = ENTRIES
+      .filter(function(e){ return e.seatExternalId === seatExternalId; })
+      .sort(function(a, b){ return (a.sopIndex || 0) - (b.sopIndex || 0); });
+    return rows.map(function(e){ return e.sop; });
+  }
+  function seatType(seatExternalId){
+    var hit = ENTRIES.find(function(e){ return e.seatExternalId === seatExternalId; });
+    if (hit) return hit.seatType;
+    // New seat with no SOPs yet: read from the picker option.
+    var opt = document.querySelector('#ph-seat option[value="' + cssEsc(seatExternalId) + '"]');
+    return opt ? opt.getAttribute('data-type') : 'agent';
+  }
+  function cssEsc(s){ return String(s).replace(/["\\]/g, '\\$&'); }
+
+  function patchSeatSops(seatExternalId, type, sops){
+    return api('PATCH', '/team/entity', { type: type, externalId: seatExternalId, patch: { sops: sops } });
+  }
+
+  // ---- Modal ----
+  var back = document.getElementById('ph-modal-back');
+  var modalTitle = document.getElementById('ph-modal-title');
+  var tplWrap = document.getElementById('ph-tpl-wrap');
+  var tplSel = document.getElementById('ph-tpl');
+  var seatSel = document.getElementById('ph-seat');
+  var titleEl = document.getElementById('ph-title');
+  var triggerEl = document.getElementById('ph-trigger');
+  var stepsWrap = document.getElementById('ph-steps');
+  var outputsWrap = document.getElementById('ph-outputs');
+  var toolsEl = document.getElementById('ph-tools');
+  var notesEl = document.getElementById('ph-notes');
+  var errEl = document.getElementById('ph-error');
+  var saveBtn = document.getElementById('ph-save');
+
+  var editing = null; // { seatExternalId, sopIndex } when editing, null when creating
+
+  function lineRow(wrap, value, placeholder){
+    var row = document.createElement('div');
+    row.className = 'ph-list-row';
+    var input = document.createElement('input');
+    input.className = 'ph-input';
+    input.type = 'text';
+    input.value = value || '';
+    input.placeholder = placeholder || '';
+    var rm = document.createElement('button');
+    rm.type = 'button';
+    rm.className = 'ph-btn ph-btn-ghost ph-btn-sm';
+    rm.textContent = '✕';
+    rm.addEventListener('click', function(){ row.remove(); });
+    row.appendChild(input);
+    row.appendChild(rm);
+    wrap.appendChild(row);
+    return input;
+  }
+  function readLines(wrap){
+    return Array.prototype.slice.call(wrap.querySelectorAll('input'))
+      .map(function(i){ return i.value.trim(); })
+      .filter(Boolean);
+  }
+  function setLines(wrap, arr, placeholder){
+    wrap.innerHTML = '';
+    (arr && arr.length ? arr : ['']).forEach(function(v){ lineRow(wrap, v, placeholder); });
+  }
+
+  function openModal(mode, seat, sop, sopIndex){
+    editing = mode === 'edit' ? { seatExternalId: seat, sopIndex: sopIndex } : null;
+    modalTitle.textContent = mode === 'edit' ? 'Edit Process' : 'New Process';
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (tplWrap) tplWrap.style.display = mode === 'edit' ? 'none' : '';
+    if (tplSel) tplSel.value = '';
+    sop = sop || {};
+    titleEl.value = sop.title || '';
+    triggerEl.value = sop.trigger || '';
+    setLines(stepsWrap, sop.steps || [''], 'Describe the step');
+    setLines(outputsWrap, sop.outputs || [], 'Describe the output');
+    toolsEl.value = Array.isArray(sop.tools) ? sop.tools.join(', ') : '';
+    notesEl.value = sop.notes || '';
+    if (mode === 'edit' && seat) {
+      // Lock the seat select to the owning seat (a SOP can't change owners here).
+      seatSel.value = seat;
+      seatSel.disabled = true;
+    } else {
+      seatSel.disabled = false;
+    }
+    back.classList.add('open');
+  }
+  function closeModal(){ back.classList.remove('open'); editing = null; }
+
+  function applyTemplate(){
+    if (!tplSel || !tplSel.value) return;
+    var parts = tplSel.value.split(':');
+    var g = TEMPLATE_GROUPS[Number(parts[0])];
+    var t = g && g.templates ? g.templates[Number(parts[1])] : null;
+    if (!t) return;
+    titleEl.value = t.title || '';
+    triggerEl.value = t.trigger || '';
+    setLines(stepsWrap, t.steps || [''], 'Describe the step');
+    setLines(outputsWrap, t.outputs || [], 'Describe the output');
+    toolsEl.value = Array.isArray(t.tools) ? t.tools.join(', ') : '';
+    notesEl.value = t.notes || '';
+  }
+  if (tplSel) tplSel.addEventListener('change', applyTemplate);
+
+  document.getElementById('ph-add-step').addEventListener('click', function(){ lineRow(stepsWrap, '', 'Describe the step'); });
+  document.getElementById('ph-add-output').addEventListener('click', function(){ lineRow(outputsWrap, '', 'Describe the output'); });
+
+  ['ph-new', 'ph-new-empty'].forEach(function(id){
+    var b = document.getElementById(id);
+    if (b) b.addEventListener('click', function(){ openModal('new'); });
+  });
+  document.getElementById('ph-modal-close').addEventListener('click', closeModal);
+  document.getElementById('ph-cancel').addEventListener('click', closeModal);
+  back.addEventListener('click', function(ev){ if (ev.target === back) closeModal(); });
+
+  function buildSop(){
+    var sop = { title: titleEl.value.trim() };
+    if (triggerEl.value.trim()) sop.trigger = triggerEl.value.trim();
+    var steps = readLines(stepsWrap); if (steps.length) sop.steps = steps;
+    var outputs = readLines(outputsWrap); if (outputs.length) sop.outputs = outputs;
+    var tools = toolsEl.value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    if (tools.length) sop.tools = tools;
+    if (notesEl.value.trim()) sop.notes = notesEl.value.trim();
+    return sop;
+  }
+
+  saveBtn.addEventListener('click', function(){
+    var sop = buildSop();
+    if (!sop.title) {
+      errEl.textContent = 'Title is required.'; errEl.style.display = ''; return;
+    }
+    var seat = editing ? editing.seatExternalId : seatSel.value;
+    if (!seat) { errEl.textContent = 'Pick an owning seat.'; errEl.style.display = ''; return; }
+    var type = seatType(seat);
+    var sops = seatSops(seat);
+    if (editing) {
+      sops = sops.slice();
+      sops[editing.sopIndex] = sop;
+    } else {
+      sops = sops.concat([sop]);
+    }
+    saveBtn.disabled = true;
+    patchSeatSops(seat, type, sops)
+      .then(function(){ window.location.reload(); })
+      .catch(function(e){ saveBtn.disabled = false; errEl.textContent = 'Save failed: ' + fmtErr(e); errEl.style.display = ''; });
+  });
+
+  // ---- Edit / Delete from a card ----
+  if (grid) grid.addEventListener('click', function(ev){
+    var t = ev.target;
+    var card = t.closest && t.closest('[data-idx]');
+    if (!card) return;
+    var e = ENTRIES[Number(card.getAttribute('data-idx'))];
+    if (!e) return;
+    if (t.classList.contains('ph-edit')) {
+      openModal('edit', e.seatExternalId, e.sop, e.sopIndex);
+    } else if (t.classList.contains('ph-delete')) {
+      if (!window.confirm('Delete "' + (e.sop && e.sop.title ? e.sop.title : 'this process') + '"? This removes it from ' + e.seatName + "'s SOPs.")) return;
+      var sops = seatSops(e.seatExternalId).slice();
+      sops.splice(e.sopIndex, 1);
+      t.disabled = true;
+      patchSeatSops(e.seatExternalId, e.seatType, sops)
+        .then(function(){ window.location.reload(); })
+        .catch(function(err){ t.disabled = false; alert('Delete failed: ' + fmtErr(err)); });
+    }
+  });
+})();
+</script>

@@ -423,6 +423,90 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // ============================================================
+  // GET /processes -- the Processes hub. Phase 1 of the SOP/Process feature.
+  // ============================================================
+  // SOPs live embedded per-seat in the OOS/chart graph (node.properties.sops).
+  // That chart is the SINGLE SOURCE OF TRUTH. This page only READS the graph
+  // via getOrgTeamGraph and aggregates every seat's SOPs into one searchable
+  // hub. Writes (create/edit/delete a SOP) go through the EXISTING
+  // PATCH /api/v1/team/entity route -- the same call /dashboard/team uses --
+  // by mutating the owning seat's sops[] array and PATCHing it back. No new
+  // table, no parallel write path.
+  //
+  // Auth/org-resolution mirrors /dashboard/team exactly: signed-out ->
+  // /sign-in redirect; impersonation-aware resolveOrgForUser; per-tile
+  // edit/view gating via computeEditableTiles / computeViewableTiles so a
+  // viewer never sees or edits a SOP on a seat outside their scope.
+  app.get('/processes', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    if (!resolved) return reply.redirect('/dashboard');
+    const { org, role, claimedEntityId } = resolved;
+
+    let team = await getOrgTeamGraph(org.id, org.name || 'Organization');
+
+    const { computeEditableTiles, computeViewableTiles } = await import('../../services/chart-permissions.js');
+    const {
+      aggregateSops,
+      seatsWithSops,
+      pickableSeats,
+    } = await import('../../services/process-hub.js');
+    const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
+
+    // Same viewer-context shape /dashboard/team builds (legacy founders have no
+    // org_members row; resolveOrgForUser already synthesized role='owner').
+    const viewerMember = (request as any).orgMember || {
+      role,
+      claimedEntityId: claimedEntityId || null,
+    };
+    const editableTilesSet = computeEditableTiles(viewerMember, team);
+    const viewableTilesSet = computeViewableTiles(viewerMember, team);
+
+    // View scoping: filter the graph to what this viewer may SEE before
+    // aggregating, so lower roles never get another seat's SOPs in the HTML.
+    if (viewableTilesSet.size < team.nodes.length) {
+      team = {
+        ...team,
+        nodes: team.nodes.filter(n => viewableTilesSet.has(n.externalId)),
+        edges: team.edges.filter(e =>
+          viewableTilesSet.has(e.sourceId) && viewableTilesSet.has(e.targetId)),
+      };
+    }
+
+    const entries = aggregateSops(team);
+    // Per-SOP edit affordance: only SOPs on a tile the viewer can edit get
+    // edit/delete buttons. The owning-seat picker for "+ New" is likewise the
+    // editable subset of pickable seats.
+    const allSeats = pickableSeats(team);
+    const editableSeats = allSeats.filter(s => editableTilesSet.has(s.externalId));
+    const canEdit = editableSeats.length > 0;
+
+    // Annotate each entry with whether the viewer can edit it (used for the
+    // per-card edit/delete buttons). textContent/escaped in the view.
+    const entriesForView = entries.map(e => ({
+      ...e,
+      canEdit: editableTilesSet.has(e.seatExternalId),
+    }));
+
+    return renderInShell(request, reply, 'processes-hub', {
+      title: 'Processes - OTP',
+      description: 'Every documented process your team -- humans and agents -- runs on, in one searchable hub. Author SOPs that any AI agent under a seat inherits at runtime.',
+      noindex: true,
+      canonical: BASE_URL + '/processes',
+      breadcrumbs: bc({ name: 'Dashboard', url: BASE_URL + '/dashboard' }, { name: 'Processes', url: BASE_URL + '/processes' }),
+      org,
+      viewerRole: role,
+      canEdit,
+      entries: entriesForView,
+      totalCount: entries.length,
+      seatFacets: seatsWithSops(entries),
+      pickableSeats: editableSeats,
+      templateGroups: SOP_TEMPLATE_GROUPS,
+    });
+  });
+
   // SMART Rock builder (free, Phase 1). A dedicated, printable planner for one
   // Rock: the "Describe the Rock" long description, the five free-text SMART
   // answers, milestones (reused from the existing milestones API), a finish
