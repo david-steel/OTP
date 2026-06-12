@@ -1,0 +1,188 @@
+<%# /process-templates -- the free Process Library index. v7 layout,
+    dual-rendered (renderInShell): signed-in viewers get the app shell,
+    signed-out visitors get the v7 marketing compose. Content comes from
+    src/data/sop-templates.ts via the sop-library route (sops /
+    sopSearchIndex / categoryLabels / categoryOrder locals). NOTE: an EJS
+    comment closes on the first percent-gt it sees, so no EJS tag examples
+    in here.
+
+    Search + category filter are fully client-side over an embedded index
+    serialized with jsonForScript (escapes < and > so a value containing a
+    closing script tag cannot break out of the script context). %>
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing a closing script tag can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
+<style>
+  .sp-search-wrap { position:relative; }
+  .sp-search {
+    width:100%; padding:14px 110px 14px 46px; font-size:15px; color:var(--ink);
+    background:var(--card); border:1.5px solid var(--line); border-radius:14px;
+    outline:none; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .sp-search:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(13,125,242,.12); }
+  .sp-search-icon { position:absolute; left:16px; top:50%; transform:translateY(-50%); pointer-events:none; }
+  .sp-clear {
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    display:none; padding:6px 12px; font-size:12px; font-weight:600;
+    color:var(--ink-soft); background:var(--grey); border:1px solid var(--line);
+    border-radius:9999px; cursor:pointer;
+  }
+  .sp-count { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-mute); min-height:18px; }
+
+  .sp-chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .sp-chip {
+    font-size:13px; font-weight:600; line-height:1; padding:8px 14px; border-radius:9999px;
+    color:var(--ink-soft); background:var(--card); border:1.5px solid var(--line);
+    cursor:pointer; transition:all .12s ease; white-space:nowrap;
+  }
+  .sp-chip:hover { border-color:var(--blue); color:var(--ink); }
+  .sp-chip.sp-chip-on { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+  .sp-grid { display:grid; gap:16px; grid-template-columns:1fr; }
+  @media (min-width:640px){ .sp-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (min-width:1024px){ .sp-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+  .sp-card {
+    display:flex; flex-direction:column; gap:10px; padding:20px; height:100%;
+    background:var(--card); border:1.5px solid var(--line); border-radius:16px;
+    text-decoration:none; transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+  .sp-card:hover { border-color:var(--blue); box-shadow:0 8px 24px rgba(20,22,28,.07); transform:translateY(-2px); }
+  .sp-card-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sp-badge {
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:0.04em;
+    text-transform:uppercase; color:var(--blue-deep); background:rgba(13,125,242,.08);
+    border:1px solid rgba(13,125,242,.16); border-radius:6px; padding:3px 8px;
+  }
+  .sp-meta { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-mute); }
+  .sp-card h2 {
+    font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:1.05rem;
+    color:var(--ink); letter-spacing:-0.015em; line-height:1.25; margin:0;
+  }
+  .sp-card p { font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0; }
+  .sp-card-go { margin-top:auto; font-size:12.5px; font-weight:600; color:var(--blue-deep); }
+  .sp-empty { display:none; }
+</style>
+
+<!-- ================= HERO + SEARCH ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1080px] mx-auto px-6 pt-[124px] pb-10 sm:pt-[148px] sm:pb-12"<%- (typeof authUserId !== 'undefined' && authUserId) ? ' style="padding-top:56px;"' : '' %>>
+    <div class="eyebrow mb-4 flex items-center gap-2.5">
+      <span class="tick" style="background:var(--orgy);"></span>Free Process Library
+    </div>
+    <h1 class="font-display text-[var(--ink)]"
+        style="font-size:clamp(2rem,4.4vw,3.2rem); line-height:1.1; font-weight:700; letter-spacing:-0.025em;">
+      Free SOP &amp; Process Templates
+    </h1>
+    <p class="text-[16px] text-[var(--ink-soft)] leading-[1.7] max-w-[44rem] mt-4">
+      Original, ready-to-run standard operating procedures for sales, marketing, customer success, operations, finance, HR, engineering, and more. Each one is built for both people and AI agents. Free to download as Markdown or run live in OrgTP.
+    </p>
+
+    <div class="max-w-[44rem] mt-7">
+      <div class="sp-search-wrap">
+        <svg class="sp-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-mute)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="sp-search" class="sp-search" type="search" placeholder="Search SOPs&hellip; (e.g. onboarding, deploy, invoicing)"
+               autocomplete="off" spellcheck="false" aria-label="Search SOP and process templates">
+        <button id="sp-clear" class="sp-clear" type="button">Clear</button>
+      </div>
+      <div id="sp-count" class="sp-count mt-2.5" aria-live="polite"></div>
+    </div>
+
+    <div class="sp-chips mt-5" role="group" aria-label="Filter by category">
+      <button class="sp-chip sp-chip-on" type="button" data-cat="">All</button>
+      <% categoryOrder.forEach(function(cat) { %>
+        <button class="sp-chip" type="button" data-cat="<%= cat %>"><%= categoryLabels[cat] || cat %></button>
+      <% }); %>
+    </div>
+
+    <p class="text-[13px] text-[var(--ink-mute)] mt-6">
+      Looking for meeting agendas instead? <a href="/templates" class="text-[var(--blue-deep)] link-u">Browse the free Meeting Templates &rarr;</a>
+    </p>
+  </div>
+</section>
+
+<!-- ================= GRID ================= -->
+<section class="bg-[var(--grey)]">
+  <div class="max-w-[1080px] mx-auto px-6 py-12 sm:py-16">
+    <div id="sp-no-results" class="sp-empty card p-8 text-center">
+      <p class="text-[15px] text-[var(--ink)] font-semibold mb-1.5">No SOPs match.</p>
+      <p class="text-[13.5px] text-[var(--ink-soft)]">Try a different word or category, or <a href="/tickets" class="text-[var(--blue-deep)] link-u">ask for one</a>.</p>
+    </div>
+    <div id="sp-grid" class="sp-grid">
+      <% sops.forEach(function(s) { %>
+        <a class="sp-card" href="/process-templates/<%= s.slug %>" data-cat="<%= s.category %>" data-slug="<%= s.slug %>">
+          <div class="sp-card-top">
+            <span class="sp-badge"><%= categoryLabels[s.category] || s.category %></span>
+            <span class="sp-meta"><%= s.stepCount %> step<%= s.stepCount === 1 ? '' : 's' %></span>
+          </div>
+          <h2><%= s.shortName %></h2>
+          <p><%= s.description %></p>
+          <span class="sp-card-go">View SOP &rarr;</span>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var input = document.getElementById('sp-search');
+  var clearBtn = document.getElementById('sp-clear');
+  var countEl = document.getElementById('sp-count');
+  var noResults = document.getElementById('sp-no-results');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.sp-chip'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.sp-card'));
+
+  // Embedded search index (one entry per SOP). jsonForScript-escaped, so a
+  // closing-script-tag in any field can't break out of the script context.
+  var INDEX = <%- jsonForScript(typeof sopSearchIndex !== 'undefined' ? sopSearchIndex : []) %>;
+  var BY_SLUG = {};
+  INDEX.forEach(function (e) { BY_SLUG[e.slug] = (e.search || '').toLowerCase(); });
+
+  var activeCat = '';
+
+  function apply() {
+    var terms = (input.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var matches = 0;
+    cards.forEach(function (card) {
+      var slug = card.getAttribute('data-slug');
+      var cat = card.getAttribute('data-cat');
+      var blob = BY_SLUG[slug] || (card.textContent || '').toLowerCase();
+      var catOk = !activeCat || cat === activeCat;
+      var textOk = terms.length === 0 || terms.every(function (t) { return blob.indexOf(t) !== -1; });
+      var hit = catOk && textOk;
+      card.style.display = hit ? '' : 'none';
+      if (hit) matches++;
+    });
+    countEl.textContent = matches === 1 ? '1 SOP' : matches + ' SOPs';
+    clearBtn.style.display = (terms.length > 0) ? 'inline-block' : 'none';
+    noResults.style.display = matches === 0 ? 'block' : 'none';
+    // Keep ?q= and ?category= shareable without adding history entries.
+    try {
+      var url = new URL(window.location.href);
+      if (terms.length > 0) url.searchParams.set('q', input.value.trim()); else url.searchParams.delete('q');
+      if (activeCat) url.searchParams.set('category', activeCat); else url.searchParams.delete('category');
+      history.replaceState(null, '', url.toString());
+    } catch (e) { /* older browsers: filtering still works, URL just doesn't sync */ }
+  }
+
+  function setCat(cat) {
+    activeCat = cat || '';
+    chips.forEach(function (c) { c.classList.toggle('sp-chip-on', (c.getAttribute('data-cat') || '') === activeCat); });
+    apply();
+  }
+
+  input.addEventListener('input', apply);
+  clearBtn.addEventListener('click', function () { input.value = ''; apply(); input.focus(); });
+  chips.forEach(function (c) { c.addEventListener('click', function () { setCat(c.getAttribute('data-cat') || ''); }); });
+
+  // Deep links: /process-templates?q=term&category=cat run on load.
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var q0 = params.get('q');
+    var cat0 = params.get('category');
+    if (q0) input.value = q0;
+    if (cat0) activeCat = cat0;
+    chips.forEach(function (c) { c.classList.toggle('sp-chip-on', (c.getAttribute('data-cat') || '') === activeCat); });
+  } catch (e) { /* no-op */ }
+  apply();
+})();
+</script>

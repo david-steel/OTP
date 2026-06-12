@@ -448,7 +448,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // /sign-in redirect; impersonation-aware resolveOrgForUser; per-tile
   // edit/view gating via computeEditableTiles / computeViewableTiles so a
   // viewer never sees or edits a SOP on a seat outside their scope.
-  app.get('/processes', async (request, reply) => {
+  app.get<{ Querystring: { insert?: string } }>('/processes', async (request, reply) => {
     const auth = getAuth(request);
     const _demoCtx = await resolveDemoPageContext(request);
     if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
@@ -464,7 +464,28 @@ export default async function pageRoutes(app: FastifyInstance) {
       seatsWithSops,
       pickableSeats,
     } = await import('../../services/process-hub.js');
-    const { SOP_TEMPLATE_GROUPS } = await import('../../data/sop-templates.js');
+    const { SOP_TEMPLATE_GROUPS, getSopBySlug } = await import('../../data/sop-templates.js');
+
+    // Process Library deep-link: /processes?insert=<slug> opens the New Process
+    // modal prefilled from a library SOP. Look it up here and pass a picker-
+    // shaped projection (title/trigger/steps/outputs/tools/notes) to the view.
+    // Unknown/invalid slug -> null, modal opens empty (no error). Slug is
+    // validated against the same charset the public route enforces.
+    let insertSop: { title: string; trigger?: string; steps?: string[]; outputs?: string[]; tools?: string[]; notes?: string } | null = null;
+    const insertSlug = (request.query.insert || '').toString();
+    if (insertSlug && /^[a-z0-9-]+$/.test(insertSlug)) {
+      const lib = getSopBySlug(insertSlug);
+      if (lib) {
+        insertSop = {
+          title: lib.title,
+          trigger: lib.trigger,
+          steps: lib.steps,
+          outputs: lib.outputs,
+          tools: lib.tools,
+          notes: lib.notes,
+        };
+      }
+    }
 
     // Same viewer-context shape /dashboard/team builds (legacy founders have no
     // org_members row; resolveOrgForUser already synthesized role='owner').
@@ -515,6 +536,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       seatFacets: seatsWithSops(entries),
       pickableSeats: editableSeats,
       templateGroups: SOP_TEMPLATE_GROUPS,
+      insertSop,
     });
   });
 

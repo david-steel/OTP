@@ -639,6 +639,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/about', priority: '0.6', changefreq: 'monthly' },
     { loc: '/whats-new', priority: '0.7', changefreq: 'weekly' },
     { loc: '/templates', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/process-templates', priority: '0.8', changefreq: 'monthly' },
     { loc: '/premium-support', priority: '0.8', changefreq: 'monthly' },
     { loc: '/guide/connect-your-agent', priority: '0.7', changefreq: 'monthly' },
   ];
@@ -740,6 +741,18 @@ app.get('/sitemap.xml', async (request, reply) => {
     // If the templates barrel fails to load, skip
   }
 
+  // Process Library SOPs (authored, byte-stable; one /process-templates/<slug>
+  // per SOP). Same fixed-lastmod discipline as the meeting templates above.
+  try {
+    const { SOP_TEMPLATES } = await import('./data/sop-templates.js');
+    const SOPS_LASTMOD = '2026-06-12';
+    for (const s of SOP_TEMPLATES) {
+      dynamicUrls += `  <url><loc>${BASE}/process-templates/${s.slug}</loc><lastmod>${SOPS_LASTMOD}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+    }
+  } catch {
+    // If the SOP barrel fails to load, skip
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticPages.map(p => `  <url><loc>${BASE}${p.loc}</loc><lastmod>${today}</lastmod><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`).join('\n')}
@@ -823,6 +836,7 @@ await app.register(import('./routes/api/ninety-import.js'), { prefix: '/api/v1' 
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/sections/blog.js'));
 await app.register(import('./routes/pages/sections/templates.js'));
+await app.register(import('./routes/pages/sections/sop-library.js'));
 await app.register(import('./routes/pages/sections/dashboard.js'));
 await app.register(import('./routes/pages/coach-claim.js'));
 await app.register(import('./routes/pages/coach-invite.js'));

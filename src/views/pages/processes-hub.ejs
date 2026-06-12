@@ -89,6 +89,7 @@
       <div>
         <h1 class="font-bold text-[2rem] tracking-[-0.02em] text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;">Processes <span class="text-[var(--ink-mute,#9ca3af)] font-semibold text-[1.1rem] align-middle" id="ph-count"><%= _total %></span></h1>
         <p class="text-[15px] text-[var(--ink-soft,#374151)] mt-1.5 max-w-[42rem]">The documented processes your team -- humans and agents -- runs on. Author once on a seat; every AI agent under it inherits the SOP at runtime.</p>
+        <p class="text-[13px] text-[var(--ink-mute,#6b7280)] mt-2">Need a starting point? <a href="/process-templates" class="text-[var(--blue-deep,#0a63c2)] font-semibold hover:underline">Browse the free Process Library &rarr;</a></p>
       </div>
       <% if (_canEdit) { %>
       <button type="button" id="ph-new" class="ph-btn ph-btn-primary" title="Document a new process">
@@ -290,6 +291,9 @@
 (function(){
   var ENTRIES = <%- jsonForScript(entries || []) %>;
   var TEMPLATE_GROUPS = <%- jsonForScript(templateGroups || []) %>;
+  // Process Library deep-link payload (/processes?insert=<slug>). null unless a
+  // valid library SOP slug was passed. jsonForScript-escaped like the rest.
+  var INSERT_SOP = <%- jsonForScript(typeof insertSop !== 'undefined' ? insertSop : null) %>;
   var CAN_EDIT = <%- _canEdit ? 'true' : 'false' %>;
 
   // ---- Search + facet filtering (client mirror of process-hub.filterSops) ----
@@ -660,5 +664,19 @@
         .catch(function(err){ t.disabled = false; alert('Delete failed: ' + fmtErr(err)); });
     }
   });
+
+  // ---- Process Library deep-link: open New Process prefilled from a SOP ----
+  // Fires when arriving via /processes?insert=<slug> with a valid library SOP.
+  // openModal('new', ..., sop) fills title/trigger/steps/outputs/tools/notes;
+  // the user still picks the owning seat and saves. Strip ?insert= from the URL
+  // so a refresh doesn't re-open the modal.
+  if (INSERT_SOP && INSERT_SOP.title) {
+    openModal('new', null, INSERT_SOP);
+    try {
+      var u = new URL(window.location.href);
+      u.searchParams.delete('insert');
+      history.replaceState(null, '', u.toString());
+    } catch (e) { /* no-op */ }
+  }
 })();
 </script>
