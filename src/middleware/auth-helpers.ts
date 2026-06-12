@@ -100,6 +100,25 @@ export async function getAuthOrg(request: FastifyRequest) {
     return orgArr[0] || null;
   }
 
+  // Secret-gated demo login (no Clerk). When enabled AND a valid signed
+  // otp_demo cookie is present, API writes resolve to the Acme demo org. The
+  // org is loaded SOLELY by the constant DEMO_LOGIN_ORG_CLERK_ID (forge-proof
+  // org binding, invariant 1) with a belt-and-suspenders clerkOrgId assert.
+  // gateReadOnlyRole returns true for !userId, so the demo session may write --
+  // fine, it's hard-scoped to the non-private Acme org.
+  {
+    const { demoLoginEnabled, verifyDemoCookie, DEMO_COOKIE_NAME, DEMO_LOGIN_ORG_CLERK_ID } =
+      await import('./demo-access.js');
+    if (demoLoginEnabled()) {
+      const demoRaw = (request as any).cookies?.[DEMO_COOKIE_NAME] as string | undefined;
+      if (verifyDemoCookie(demoRaw)) {
+        const orgArr = await db.select().from(organizations)
+          .where(eq(organizations.clerkOrgId, DEMO_LOGIN_ORG_CLERK_ID)).limit(1);
+        if (orgArr[0] && orgArr[0].clerkOrgId === DEMO_LOGIN_ORG_CLERK_ID) return orgArr[0];
+      }
+    }
+  }
+
   // Dev-only override: ?orgId=<uuid|clerkOrgId> -- never enabled in production.
   // Lets the L8 page work end-to-end on localhost without Clerk session.
   if (process.env.NODE_ENV !== 'production') {

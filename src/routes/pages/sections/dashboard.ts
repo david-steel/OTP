@@ -2643,7 +2643,14 @@ Founder, OTP</p>
   app.get('/dashboard', async (request, reply) => {
     const auth = getAuth(request);
 
-    if (!auth.userId) {
+    // Secret-gated demo login (no Clerk). guards.ts has already set
+    // request.orgMember to the Acme demo member; fall through to the normal
+    // org-resolution block below (which reads request.orgMember.orgId), so the
+    // demo session lands on the real Acme dashboard instead of the unauth
+    // publisher prompt. NOT impersonation / NOT super-admin (invariant 5).
+    const _demoSession = (request as any).demoSession as { active?: boolean } | null;
+
+    if (!auth.userId && !_demoSession?.active) {
       // Not signed in -- show prompt to sign in (handled client-side by Clerk JS)
       return reply.view('pages/dashboard-admin', {
         title: 'Publisher Dashboard - OTP',
@@ -2670,8 +2677,10 @@ Founder, OTP</p>
       const [m] = await db.select().from(organizations).where(eq(organizations.id, memberDecoration.orgId)).limit(1);
       if (m) org = m;
     }
-    if (!org) {
-      // Fallback to legacy "I founded this org" lookup.
+    if (!org && auth.userId) {
+      // Fallback to legacy "I founded this org" lookup. Skipped on the demo
+      // session path (no Clerk userId) -- the demo org is already resolved
+      // above from the request.orgMember decoration.
       const [legacy] = await db.select().from(organizations)
         .where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
       if (legacy) org = legacy;
@@ -2700,7 +2709,10 @@ Founder, OTP</p>
       : (member ? member.role : 'owner');
 
     // ---- Multi-org awareness ----
-    const userOrgs = await getOrgsForUser(auth.userId);
+    // auth.userId may be undefined on the demo-session path (no Clerk);
+    // getOrgsForUser returns [] for an empty id, so the demo session falls
+    // through to the single-org (Acme) list below.
+    const userOrgs = await getOrgsForUser(auth.userId || '');
     const orgListBasic: { id: string; name: string }[] = [];
     if (userOrgs.length > 0) {
       const ids = userOrgs.map(u => u.orgId);

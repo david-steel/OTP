@@ -1579,6 +1579,44 @@ export default async function pageRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /demo-login  -- secret-gated, no-Clerk demo session into the Acme org.
+  // A presenter hits /demo-login?key=<DEMO_LOGIN_SECRET> and gets a signed
+  // otp_demo cookie that resolves to the Acme demo org (a normal member, NOT
+  // super-admin, NOT impersonation). Safety:
+  //   - Inert without the secret (invariant 2): 404 when disabled.
+  //   - Unguessable + non-revealing (invariant 6): 404 (never 403) on a
+  //     missing/wrong key, compared in constant time; the secret is never
+  //     logged or echoed.
+  //   - Cookie carries NO org reference (invariant 1/3); the org is bound
+  //     server-side by the constant clerk_org_id in the resolvers.
+  app.get<{ Querystring: { key?: string } }>('/demo-login', async (request, reply) => {
+    const { demoLoginEnabled, demoKeyMatches, encodeDemoCookie, DEMO_COOKIE_NAME } =
+      await import('../../middleware/demo-access.js');
+    // Invariant 2: dead unless the secret is set.
+    if (!demoLoginEnabled()) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+    // Invariant 6: constant-time key check, 404 (not 403) on mismatch.
+    if (!demoKeyMatches(request.query.key)) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+    reply.setCookie(DEMO_COOKIE_NAME, encodeDemoCookie(), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 12 * 60 * 60,
+      path: '/',
+    });
+    return reply.redirect('/dashboard');
+  });
+
+  // GET /demo-logout  -- clear the demo session cookie and go home.
+  app.get('/demo-logout', async (_request, reply) => {
+    const { DEMO_COOKIE_NAME } = await import('../../middleware/demo-access.js');
+    reply.clearCookie(DEMO_COOKIE_NAME, { path: '/' });
+    return reply.redirect('/');
+  });
+
   // POST /admin/impersonate/by-clerk/:clerkUserId  -- resolve member by Clerk
   // user id, then start impersonation. Convenience for /admin users table
   // which doesn't already have member ids on hand.
@@ -3215,6 +3253,19 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     const auth = getAuth(request);
     if (!auth.userId) {
+      // Secret-gated demo login (no Clerk). guards.ts sets request.orgMember to
+      // the Acme demo member when a valid otp_demo cookie is present. Resolve
+      // to Acme by the CONSTANT clerk_org_id (forge-proof, invariant 1) with a
+      // belt-and-suspenders assert, so L8/other pages render under the demo
+      // session. Mirrors the getAuthOrg demo branch.
+      const _demo = (request as any).demoSession as { active?: boolean } | null;
+      if (_demo?.active) {
+        const { DEMO_LOGIN_ORG_CLERK_ID } = await import('../../middleware/demo-access.js');
+        const [demoOrg] = await db.select().from(organizations)
+          .where(eq(organizations.clerkOrgId, DEMO_LOGIN_ORG_CLERK_ID)).limit(1);
+        if (demoOrg && demoOrg.clerkOrgId === DEMO_LOGIN_ORG_CLERK_ID) return demoOrg;
+      }
+
       // Bounce unauthenticated visitors to sign-in and remember where they were
       // headed. The /sign-in page reads ?redirect= and persists it to
       // localStorage so the existing post-signin flow lands them back here.

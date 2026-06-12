@@ -52,6 +52,10 @@ declare module 'fastify' {
       bySuperAdmin: string;
     } | null;
     serviceAuth: { actAsClerkUserId: string } | null;
+    // Secret-gated no-Clerk demo session (lands in the Acme demo org). NOT
+    // impersonation and NOT super-admin -- a normal Acme member, scoped to
+    // Acme. Distinct from request.impersonation by design (safety invariant 5).
+    demoSession: { active: boolean } | null;
   }
 }
 
@@ -61,6 +65,7 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
   app.decorateRequest('orgMember', null);
   app.decorateRequest('impersonation', null);
   app.decorateRequest('serviceAuth', null);
+  app.decorateRequest('demoSession', null);
 
   app.addHook('preHandler', async (request) => {
     try {
@@ -75,6 +80,79 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         if (svc) {
           (request as any).orgMember = svc.member;
           (request as any).serviceAuth = { actAsClerkUserId: svc.clerkUserId };
+          return;
+        }
+
+        // Secret-gated demo login (no Clerk). If the feature is enabled AND a
+        // valid signed otp_demo cookie is present, resolve to the Acme demo org
+        // and act as its normal member. This is NOT impersonation and NOT
+        // super-admin: it sets request.demoSession only, scoped to Acme.
+        //
+        // Safety invariants enforced here:
+        //   (1) Forge-proof org binding: the org is loaded ONLY by the constant
+        //       DEMO_LOGIN_ORG_CLERK_ID -- never from the cookie/URL. The
+        //       belt-and-suspenders assert below bails if the loaded org's
+        //       clerkOrgId !== that constant.
+        //   (2) Inert without the secret: demoLoginEnabled() short-circuits.
+        //   (3) HMAC-signed cookie: verifyDemoCookie checks sig + exp.
+        //   (5) No privilege beyond a normal Acme member: we set request
+        //       .demoSession, NOT request.impersonation / isSuperAdmin, and
+        //       resolve to the existing Acme org_members row.
+        const { demoLoginEnabled, verifyDemoCookie, DEMO_COOKIE_NAME, DEMO_LOGIN_ORG_CLERK_ID } =
+          await import('./demo-access.js');
+        if (demoLoginEnabled()) {
+          const demoRaw = (request as any).cookies?.[DEMO_COOKIE_NAME] as string | undefined;
+          if (verifyDemoCookie(demoRaw)) {
+            // Load the Acme org SOLELY by the constant clerk_org_id.
+            const [demoOrg] = await db.select()
+              .from(organizations)
+              .where(eq(organizations.clerkOrgId, DEMO_LOGIN_ORG_CLERK_ID))
+              .limit(1);
+            // Invariant 1 belt-and-suspenders: never proceed unless the loaded
+            // org is exactly the demo org. If anything is off, set NOTHING.
+            if (demoOrg && demoOrg.clerkOrgId === DEMO_LOGIN_ORG_CLERK_ID) {
+              // The single Acme member this session acts as. Prefer an owner
+              // seat; else the first member row.
+              const demoMembers = await db.select({
+                id: orgMembers.id,
+                orgId: orgMembers.orgId,
+                clerkUserId: orgMembers.clerkUserId,
+                role: orgMembers.role,
+                status: orgMembers.status,
+                email: orgMembers.email,
+                displayName: orgMembers.displayName,
+                featureAccess: orgMembers.featureAccess,
+                dataAccess: orgMembers.dataAccess,
+                agentAccess: orgMembers.agentAccess,
+                preferences: orgMembers.preferences,
+                claimedEntityId: orgMembers.claimedEntityId,
+                claimedEntityIds: orgMembers.claimedEntityIds,
+              })
+                .from(orgMembers)
+                .where(eq(orgMembers.orgId, demoOrg.id));
+              const dm = demoMembers.find((m) => m.role === 'owner') || demoMembers[0];
+              if (dm) {
+                (request as any).orgMember = {
+                  id: dm.id,
+                  orgId: dm.orgId,
+                  clerkUserId: dm.clerkUserId!,
+                  role: dm.role as Role,
+                  status: dm.status,
+                  email: dm.email,
+                  displayName: dm.displayName,
+                  featureAccess: (dm.featureAccess as Record<string, boolean>) || {},
+                  dataAccess: (dm.dataAccess as Record<string, boolean>) || {},
+                  agentAccess: (dm.agentAccess as Record<string, boolean>) || {},
+                  preferences: (dm.preferences as Record<string, unknown>) || {},
+                  // Required by chart-permissions.ts helpers or the chart
+                  // renders empty (same lesson as the impersonation path).
+                  claimedEntityId: dm.claimedEntityId || null,
+                  claimedEntityIds: (dm.claimedEntityIds as string[] | null) || null,
+                };
+                (request as any).demoSession = { active: true };
+              }
+            }
+          }
         }
         return;
       }
