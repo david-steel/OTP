@@ -94,6 +94,27 @@ export function cronToCadence(cron: string): Required<CadenceSpec> | null {
   return { cadence: 'weekly', minute, hour, weekday };
 }
 
+const WEEKDAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatClock(hour: number, minute: number): string {
+  const h12 = ((hour + 11) % 12) + 1;
+  const ampm = hour < 12 ? 'AM' : 'PM';
+  return `${h12}:${String(minute).padStart(2, '0')} ${ampm}`;
+}
+
+/**
+ * Human-readable label for one of OUR canonical cron strings, for the schedule
+ * badge on a SOP card. E.g. 'Hourly · :00', 'Daily · 8:00 AM',
+ * 'Weekly · Mon 8:00 AM'. Unknown/foreign cron -> 'Scheduled'.
+ */
+export function cadenceLabel(cron: string): string {
+  const spec = cronToCadence(cron);
+  if (!spec) return 'Scheduled';
+  if (spec.cadence === 'hourly') return `Hourly · :${String(spec.minute).padStart(2, '0')}`;
+  if (spec.cadence === 'daily') return `Daily · ${formatClock(spec.hour, spec.minute)}`;
+  return `Weekly · ${WEEKDAY_ABBR[spec.weekday]} ${formatClock(spec.hour, spec.minute)}`;
+}
+
 // ---- Timezone helpers (Intl-based, no external dep) ----
 
 /**

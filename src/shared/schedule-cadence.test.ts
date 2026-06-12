@@ -4,7 +4,28 @@ import {
   cronToCadence,
   normalizeCadence,
   nextRunAt,
+  cadenceLabel,
 } from './schedule-cadence.js';
+
+describe('cadenceLabel', () => {
+  it('labels hourly with the minute', () => {
+    expect(cadenceLabel('0 * * * *')).toBe('Hourly · :00');
+    expect(cadenceLabel('30 * * * *')).toBe('Hourly · :30');
+  });
+  it('labels daily with 12h clock', () => {
+    expect(cadenceLabel('0 8 * * *')).toBe('Daily · 8:00 AM');
+    expect(cadenceLabel('0 0 * * *')).toBe('Daily · 12:00 AM');
+    expect(cadenceLabel('30 13 * * *')).toBe('Daily · 1:30 PM');
+  });
+  it('labels weekly with weekday + clock', () => {
+    expect(cadenceLabel('0 8 * * 1')).toBe('Weekly · Mon 8:00 AM');
+    expect(cadenceLabel('0 17 * * 0')).toBe('Weekly · Sun 5:00 PM');
+  });
+  it('falls back to Scheduled for foreign/invalid cron', () => {
+    expect(cadenceLabel('*/5 * * * *')).toBe('Scheduled');
+    expect(cadenceLabel('garbage')).toBe('Scheduled');
+  });
+});
 
 describe('cadenceToCron', () => {
   it('builds canonical cron for hourly', () => {

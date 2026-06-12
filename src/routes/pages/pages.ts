@@ -517,10 +517,30 @@ export default async function pageRoutes(app: FastifyInstance) {
 
     // Annotate each entry with whether the viewer can edit it (used for the
     // per-card edit/delete buttons). textContent/escaped in the view.
-    const entriesForView = entries.map(e => ({
-      ...e,
-      canEdit: editableTilesSet.has(e.seatExternalId),
-    }));
+    // Schedule badges (Phase 2b): which SOPs have an ACTIVE schedule, matched by
+    // agent externalId + sop_id (preferred) or sop_title. Enabled only.
+    const { cadenceLabel } = await import('../../shared/schedule-cadence.js');
+    const schedRows = (await db.execute(sql`
+      SELECT agent_external_id, sop_id, sop_title, cron, next_run_at
+      FROM agent_schedules
+      WHERE org_id = ${org.id} AND enabled = true
+    `)).rows as Array<{ agent_external_id: string; sop_id: string | null; sop_title: string | null; cron: string; next_run_at: string | Date | null }>;
+    const entriesForView = entries.map(e => {
+      const sopId = (e.sop as { id?: string } | undefined)?.id;
+      const sopTitle = (e.sop?.title || '').trim().toLowerCase();
+      const sched = schedRows.find(s =>
+        s.agent_external_id === e.seatExternalId && (
+          (s.sop_id && sopId && s.sop_id === sopId) ||
+          (!!s.sop_title && !!sopTitle && s.sop_title.trim().toLowerCase() === sopTitle)
+        ));
+      return {
+        ...e,
+        canEdit: editableTilesSet.has(e.seatExternalId),
+        schedule: sched
+          ? { label: cadenceLabel(sched.cron), nextRunAt: sched.next_run_at ? new Date(sched.next_run_at).toISOString() : null }
+          : null,
+      };
+    });
 
     return renderInShell(request, reply, 'processes-hub', {
       title: 'Processes - OTP',

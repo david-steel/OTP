@@ -49,6 +49,7 @@
   .ph-chip-agent { background: var(--orgy-soft, #fff6da); color: var(--orgy-on-light, #8a6d1a); border-color: var(--orgy-line, #f0dca0); }
   .ph-chip-mute { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
   .ph-chip-tool { background: #f8fafc; color: #475569; border-color: #e2e8f0; font-weight: 600; }
+  .ph-chip-sched { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
   .ph-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; padding: 10px 18px; border-radius: 10px; border: 1.5px solid transparent; cursor: pointer; text-decoration: none; }
   .ph-btn-primary { background: var(--blue, #0d7df2); color: #fff; }
   .ph-btn-primary:hover { background: var(--blue-deep, #0a63c2); }
@@ -199,6 +200,7 @@
           <span class="ph-chip <%= e.seatType === 'agent' ? 'ph-chip-agent' : 'ph-chip-human' %>"><%= e.seatType === 'agent' ? 'Agent' : 'Human' %></span>
           <span class="ph-chip ph-chip-mute"><%= e.seatName %><% if (e.seatRole) { %> &middot; <%= e.seatRole %><% } %></span>
           <% if (steps.length) { %><span class="ph-chip ph-chip-mute"><%= steps.length %> step<%= steps.length === 1 ? '' : 's' %></span><% } %>
+          <% if (e.schedule) { %><span class="ph-chip ph-chip-sched"<% if (e.schedule.nextRunAt) { %> title="Next run: <%= e.schedule.nextRunAt %>"<% } %>>&#9200; <%= e.schedule.label %></span><% } %>
         </div>
         <div class="font-bold text-[15.5px] leading-snug text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;"><%= sop.title || '(untitled process)' %></div>
         <% if (sop.trigger) { %>
