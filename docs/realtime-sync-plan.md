@@ -200,9 +200,15 @@ Each phase ships value alone, is flag-gated, and degrades to current behavior wh
 - Delegated on document: add-headline (`#add-headline`), mark-addressed (`[data-headline-done]`), the shared notes Save buttons (`[data-save]` — segue/headlines/cascading), and save-on-blur for the notes textareas (focusin snapshots, focusout saves if changed — replaces the per-element `blur` so the headlines-notes textarea survives a swap). Flag-headline buttons were already delegated in R2.5. The segue per-attendee check-in handlers (which carry the `attendees` baked-closure) are in `#segue` and left untouched.
 - Validated: EJS compile + JS-syntax check + suite 454/454.
 
-**Remaining R2 surfaces (R2.7+, not yet built):**
-1. **Extend live-swap to todos** — same pattern. (Segue/conclude are lower-churn; reload is fine there for now — segue would need the `attendees` closure refactored.)
-2. **Scorecard auto re-snapshot** — agent/Tally KPI pushes update an in-progress meeting (generalizes 840b1bd).
+**R2.7 — L8 meeting To-dos section live-swaps (no reload) — ✅ SHIPPED 2026-06-13**
+- On a `meeting-updated` event with `kind === 'todo'`, swap just `#todos` (`refreshTodosSection`) instead of reloading; other kinds reload; fetch failure falls back to reload.
+- Delegated on document: the done-checkbox (`[data-todo-toggle]`, change) and add-to-do (`#add-todo`, click). Both DOM-driven, no closure trap.
+- **All four high-churn meeting sections are now reload-free: Issues, Rocks, Scorecard, Headlines, To-dos.** Only Segue/Conclude still reload (low-churn; Segue would need the `attendees` baked-closure refactored first).
+- Validated: EJS compile + JS-syntax check + suite 454/454.
+
+**Remaining R2 surfaces (R2.8+, not yet built):**
+1. **Scorecard auto re-snapshot** (backend) — agent/Tally KPI pushes update an in-progress meeting's frozen scorecard, not just in-meeting edits (generalizes 840b1bd).
+2. **Segue section** (optional, low priority) — needs the `attendees` baked-closure refactored to be swap-safe.
 2. **Dashboard true per-section swap** (currently guarded reload, R2.2) — same pattern once its JS is delegated.
 3. **Scorecard auto re-snapshot:** on a KPI value save (incl. agent/Tally pushes) for a team with an in-progress meeting, server re-snapshots + publishes — generalizes the 840b1bd in-meeting-edit fix to ALL value writes.
 - **Rollback:** per-surface; each consumer no-ops/reloads when the stream is absent.

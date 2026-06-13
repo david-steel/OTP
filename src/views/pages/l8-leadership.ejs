@@ -1476,6 +1476,30 @@
     }
   }
 
+  // Same live-swap for the To-dos (#todos) section.
+  let todosRefreshing = false;
+  async function refreshTodosSection() {
+    const current = document.getElementById('todos');
+    if (!current || todosRefreshing) return;
+    todosRefreshing = true;
+    try {
+      const resp = await fetch(window.location.href, { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('status ' + resp.status);
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const fresh = doc.getElementById('todos');
+      const live = document.getElementById('todos');
+      if (!fresh || !live) throw new Error('no #todos');
+      rehomeFlagForm();
+      live.replaceWith(fresh);
+    } catch (e) {
+      try { snapshotDrafts(); } catch (e2) {}
+      window.location.reload();
+    } finally {
+      todosRefreshing = false;
+    }
+  }
+
   // ===== Per-section timer =====
   const chips = Array.from(document.querySelectorAll('.agenda-chip'));
   const clock = document.getElementById('meeting-clock');
@@ -2061,12 +2085,15 @@
     }
   });
 
-  // To-do toggle
-  document.querySelectorAll('[data-todo-toggle]').forEach(box => {
-    box.addEventListener('change', async () => {
-      const todoId = box.closest('[data-todo-id]').dataset.todoId;
-      await api('/todos/' + todoId, { method: 'PUT', body: JSON.stringify({ done: box.checked }) });
-    });
+  // To-do toggle (delegated -- #todos gets live-swapped on a teammate's change).
+  document.addEventListener('change', async (e) => {
+    const box = e.target.closest('[data-todo-toggle]');
+    if (!box) return;
+    const todosRoot = document.getElementById('todos');
+    if (!todosRoot || !todosRoot.contains(box)) return;
+    const card = box.closest('[data-todo-id]');
+    if (!card) return;
+    await api('/todos/' + card.dataset.todoId, { method: 'PUT', body: JSON.stringify({ done: box.checked }) });
   });
 
   // ===== Editable KPI value (event-delegated on document) =====
@@ -2205,9 +2232,9 @@
     reloadKeep();
   });
 
-  // Add new to-do
-  const addTodo = document.getElementById('add-todo');
-  if (addTodo) addTodo.addEventListener('click', async () => {
+  // Add new to-do (delegated -- #add-todo lives inside #todos).
+  document.addEventListener('click', async (e) => {
+    if (!e.target.closest('#add-todo')) return;
     const title = document.getElementById('new-todo-title').value.trim();
     // Multi-assignee: each selected person gets their own independent copy.
     const ownerSel = document.getElementById('new-todo-owner');
@@ -2676,6 +2703,20 @@
       headlinesRefreshTimer = setTimeout(() => { headlinesRefreshTimer = null; refreshHeadlinesSection(); }, 600);
     }
 
+    // Same for the To-dos section (kind === 'todo').
+    let todosRefreshTimer = null;
+    function scheduleTodosRefresh() {
+      const active = document.activeElement;
+      const todosEl = document.getElementById('todos');
+      if (active && todosEl && todosEl.contains(active) &&
+          (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.isContentEditable)) {
+        document.body.dataset.pendingTodosRefresh = '1';
+        return;
+      }
+      if (todosRefreshTimer) return;
+      todosRefreshTimer = setTimeout(() => { todosRefreshTimer = null; refreshTodosSection(); }, 600);
+    }
+
     function applyPresence(presence) {
       if (!Array.isArray(presence)) return;
       if (countEl) countEl.textContent = String(presence.length);
@@ -2738,11 +2779,12 @@
         try {
           const payload = JSON.parse(e.data);
           const kind = payload.kind || 'updated';
-          // Issues + Rocks + Scorecard + Headlines update live (targeted swap); else reload.
+          // Issues + Rocks + Scorecard + Headlines + To-dos update live (targeted swap); else reload.
           if (kind === 'issue') scheduleIssueRefresh();
           else if (kind === 'rock') scheduleRockRefresh();
           else if (kind === 'kpi') scheduleScorecardRefresh();
           else if (kind === 'headline') scheduleHeadlinesRefresh();
+          else if (kind === 'todo') scheduleTodosRefresh();
           else scheduleReload(kind);
         } catch (err) { scheduleReload('unknown'); }
       });
@@ -2775,6 +2817,10 @@
         if (document.body.dataset.pendingHeadlinesRefresh === '1') {
           delete document.body.dataset.pendingHeadlinesRefresh;
           refreshHeadlinesSection();
+        }
+        if (document.body.dataset.pendingTodosRefresh === '1') {
+          delete document.body.dataset.pendingTodosRefresh;
+          refreshTodosSection();
         }
         if (document.body.dataset.pendingReload === '1') {
           delete document.body.dataset.pendingReload;
