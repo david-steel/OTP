@@ -15,6 +15,7 @@ import { deliverToAgentInbox } from '../../services/agent-inbox.js';
 import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
 import { ensureNextOccurrence, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { planSeriesDeletion, isDeleteScope } from '../../services/meeting-series.js';
+import { buildScorecardSnapshot } from '../../services/meeting-resnapshot.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -180,32 +181,9 @@ async function checkMeetingEdit(
   return true;
 }
 
-async function buildScorecardSnapshot(orgId: string, teamId: string | null) {
-  // Team-scoped: a meeting's scorecard only carries its own team's KPIs.
-  // teamId null = org-level meeting, which owns only unteamed KPIs. Before
-  // 2026-06-04 this was org-wide, leaking e.g. the AI Army "OTP -- Real
-  // signups" KPI onto the Leadership L10 snapshot.
-  const orgKpis = await db.select().from(kpis).where(and(
-    eq(kpis.organizationId, orgId),
-    teamId ? eq(kpis.teamId, teamId) : isNull(kpis.teamId),
-    isNull(kpis.deletedAt),
-    isNull(kpis.archivedAt),
-  ));
-  const kpiIds = orgKpis.map(k => k.id);
-  const latestValues: Record<string, any> = {};
-  const previousValues: Record<string, any> = {};
-  for (const k of orgKpis) {
-    const rows = await db.select().from(kpiValues)
-      .where(eq(kpiValues.kpiId, k.id))
-      .orderBy(desc(kpiValues.periodStart))
-      .limit(2);
-    const latest = rows[0];
-    const previous = rows[1];
-    if (latest) latestValues[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
-    if (previous) previousValues[k.id] = { value: previous.value, periodStart: previous.periodStart, periodEnd: previous.periodEnd };
-  }
-  return { kpis: orgKpis, latestValues, previousValues, capturedAt: new Date().toISOString(), kpiCount: kpiIds.length };
-}
+// buildScorecardSnapshot moved to services/meeting-resnapshot.ts (imported
+// above) so the meeting routes and the auto-resnapshot path share one snapshot
+// definition.
 
 async function buildRocksSnapshot(orgId: string, teamId: string | null) {
   // Team-scoped, mirroring buildScorecardSnapshot (see note there).

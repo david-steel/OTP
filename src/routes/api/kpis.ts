@@ -18,6 +18,7 @@ import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { emitOrgEventSafe } from '../../services/org-events.js';
+import { resnapshotMeetingsForKpi } from '../../services/meeting-resnapshot.js';
 import { resolveOrgForUser } from '../../services/membership.js';
 import {
   createKpi,
@@ -280,6 +281,10 @@ export default async function kpiRoutes(app: FastifyInstance) {
         actorType: source === 'api' ? 'agent' : 'user', actorId: getCreatedBy(request),
         payload: { periodStart: periodStart.toISOString(), value: body.data.value },
       });
+      // If this KPI's team has a live L8 meeting, re-snapshot its frozen
+      // scorecard so the value shows up on everyone's screen now -- not just on
+      // the in-meeting edit path. Best-effort + cheap when no meeting is live.
+      await resnapshotMeetingsForKpi(org.id, request.params.id);
       return reply.status(201).send(row);
     } catch (e) {
       if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });

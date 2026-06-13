@@ -206,9 +206,13 @@ Each phase ships value alone, is flag-gated, and degrades to current behavior wh
 - **All four high-churn meeting sections are now reload-free: Issues, Rocks, Scorecard, Headlines, To-dos.** Only Segue/Conclude still reload (low-churn; Segue would need the `attendees` baked-closure refactored first).
 - Validated: EJS compile + JS-syntax check + suite 454/454.
 
-**Remaining R2 surfaces (R2.8+, not yet built):**
-1. **Scorecard auto re-snapshot** (backend) — agent/Tally KPI pushes update an in-progress meeting's frozen scorecard, not just in-meeting edits (generalizes 840b1bd).
-2. **Segue section** (optional, low priority) — needs the `attendees` baked-closure refactored to be swap-safe.
+**R2.8 — Scorecard auto re-snapshot (backend) — ✅ SHIPPED 2026-06-13**
+- Generalizes the 840b1bd in-meeting-edit fix to EVERY KPI value write. New `src/services/meeting-resnapshot.ts`: `buildScorecardSnapshot` (moved out of meetings.ts so the routes + auto path share one definition), `resnapshotInProgressMeetingsForTeam`, and `resnapshotMeetingsForKpi`. `POST /kpis/:id/values` now calls `resnapshotMeetingsForKpi` after the write: if the KPI's team has an in-progress L8 meeting, it rebuilds that meeting's frozen scorecard snapshot and publishes a `kind:'kpi'` meeting event — so an **agent/Tally push during a live L10 shows up on everyone's scorecard within ~1s** (via the R2.5 client-side scorecard live-swap), not just manual in-meeting edits.
+- Best-effort (never throws into the KPI write) and cheap when idle (one indexed query returning nothing → early exit). Targeted `publishMeetingUpdate(meetingId, …)` so an org-level KPI never fans out to unrelated meetings.
+- Tests: `meeting-resnapshot.test.ts` (5, pglite) — snapshot latest/previous, re-snapshot makes a post-`/start` value appear, no-op when no meeting in progress, KPI→team resolution, unknown KPI. Suite 459/459; typecheck + lint clean. This is backend (not flag-gated) — it improves the meeting flow directly.
+
+**Remaining R2 surfaces (optional, low priority):**
+1. **Segue section** — needs the `attendees` baked-closure refactored to be swap-safe (low-churn; reload is fine for now).
 2. **Dashboard true per-section swap** (currently guarded reload, R2.2) — same pattern once its JS is delegated.
 3. **Scorecard auto re-snapshot:** on a KPI value save (incl. agent/Tally pushes) for a team with an in-progress meeting, server re-snapshots + publishes — generalizes the 840b1bd in-meeting-edit fix to ALL value writes.
 - **Rollback:** per-surface; each consumer no-ops/reloads when the stream is absent.
