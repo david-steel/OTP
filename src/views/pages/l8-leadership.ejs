@@ -1357,6 +1357,35 @@
     } catch (e) {}
   })();
 
+  // Realtime (R2.3): live-swap ONLY the Issues (#ids) section when a teammate
+  // changes an issue -- no full-page reload. Safe because the IDS + add-issue
+  // handlers below are event-delegated on document, so the freshly-fetched nodes
+  // work without rebinding (and the issue handlers read state from the DOM, not
+  // baked closures). Fetches the page, lifts out the new #ids, and swaps it in.
+  // Any failure falls back to the same full reload everything else uses.
+  let issuesRefreshing = false;
+  async function refreshIssuesSection() {
+    const current = document.getElementById('ids');
+    if (!current || issuesRefreshing) return;
+    issuesRefreshing = true;
+    try {
+      const resp = await fetch(window.location.href, { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('status ' + resp.status);
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const fresh = doc.getElementById('ids');
+      const live = document.getElementById('ids');
+      if (!fresh || !live) throw new Error('no #ids');
+      live.replaceWith(fresh);
+    } catch (e) {
+      // Safe fallback: the exact reload path every other kind uses.
+      try { snapshotDrafts(); } catch (e2) {}
+      window.location.reload();
+    } finally {
+      issuesRefreshing = false;
+    }
+  }
+
   // ===== Per-section timer =====
   const chips = Array.from(document.querySelectorAll('.agenda-chip'));
   const clock = document.getElementById('meeting-clock');
@@ -2044,13 +2073,21 @@
     reloadKeep();
   });
 
-  // ===== Add issue =====
-  const issueToggle = document.getElementById('issue-add-toggle');
-  const issueForm = document.getElementById('issue-add-form');
-  if (issueToggle) issueToggle.addEventListener('click', () => issueForm.classList.toggle('hidden'));
-  document.getElementById('new-issue-cancel')?.addEventListener('click', () => issueForm.classList.add('hidden'));
-  document.getElementById('new-issue-save')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
+  // ===== Add issue (event-delegated) =====
+  // #issue-add-form lives INSIDE #ids, which gets live-swapped on a teammate's
+  // change (refreshIssuesSection), so id-bound handlers would orphan. Delegate
+  // on document; reads fields by id at click time (always the fresh ones).
+  document.addEventListener('click', async (e) => {
+    const trigger = e.target.closest('#issue-add-toggle, #new-issue-cancel, #new-issue-save');
+    if (!trigger) return;
+    if (trigger.id === 'issue-add-toggle') {
+      const f = document.getElementById('issue-add-form'); if (f) f.classList.toggle('hidden'); return;
+    }
+    if (trigger.id === 'new-issue-cancel') {
+      const f = document.getElementById('issue-add-form'); if (f) f.classList.add('hidden'); return;
+    }
+    // new-issue-save
+    const btn = trigger;
     const title = document.getElementById('new-issue-title').value.trim();
     const description = document.getElementById('new-issue-desc').value.trim();
     const priority = document.getElementById('new-issue-priority').value;
@@ -2058,7 +2095,6 @@
     const owner = parseOwner(ownerVal);
     if (!title) return alert('Issue title is required.');
     btn.disabled = true; btn.textContent = 'Adding...';
-    // POST to /tickets first (no owner field on create), then PUT to set owner if picked.
     const createBody = {
       title,
       description: description || ('Added during meeting on ' + new Date().toISOString().slice(0,10)),
@@ -2079,7 +2115,6 @@
       btn.disabled = false; btn.textContent = 'Add Issue';
       return;
     }
-    // Owner + teamId now go through POST in createBody, no follow-up PUT needed.
     reloadKeep();
   });
 
@@ -2122,44 +2157,53 @@
     reloadKeep();
   });
 
-  // ===== IDS issue actions =====
-  document.querySelectorAll('[data-ticket-id]').forEach(card => {
+  // ===== IDS issue actions (event-delegated on document) =====
+  // Delegated so the Issues (#ids) section can be live-swapped on a teammate's
+  // change (refreshIssuesSection) without rebinding -- the fresh cards' clicks
+  // bubble to these document-level listeners. Every handler reads its state from
+  // the closest [data-ticket-id] card in the DOM, never a baked closure.
+  function hideIssueForms(card) {
+    ['edit', 'solve', 'convert'].forEach(k => {
+      const f = card.querySelector('[data-form="' + k + '"]');
+      if (f) f.classList.add('hidden');
+    });
+  }
+  document.addEventListener('click', async (e) => {
+    const idsRoot = document.getElementById('ids');
+    if (!idsRoot) return;
+    const trigger = e.target.closest('[data-ids-set],[data-action]');
+    if (!trigger || !idsRoot.contains(trigger)) return;
+    const card = trigger.closest('[data-ticket-id]');
+    if (!card) return;
     const ticketId = card.dataset.ticketId;
+
+    // Identify / Discuss (repaint the IDS status pill in place, no reload)
+    if (trigger.matches('[data-ids-set]')) {
+      const idsStatus = trigger.dataset.idsSet;
+      const res = await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus }) });
+      if (res && res.error) { alert('Update failed: ' + errMsg(res)); return; }
+      const pill = card.querySelector('[data-ids-pill]');
+      if (pill) {
+        pill.textContent = idsStatus;
+        const cls = idsStatus === 'identified' ? 'bg-blue-100 text-blue-800'
+                  : idsStatus === 'discussed' ? 'bg-amber-100 text-amber-800'
+                  : idsStatus === 'solved' ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-gray-100 text-gray-700';
+        pill.className = 'text-xs px-2 py-0.5 rounded ' + cls;
+      }
+      return;
+    }
+
+    const action = trigger.dataset.action;
     const editForm = card.querySelector('[data-form="edit"]');
     const solveForm = card.querySelector('[data-form="solve"]');
     const convertForm = card.querySelector('[data-form="convert"]');
 
-    function hideAllForms() {
-      [editForm, solveForm, convertForm].forEach(f => f && f.classList.add('hidden'));
-    }
-
-    // Identify / Discuss buttons (state change only)
-    card.querySelectorAll('[data-ids-set]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const idsStatus = btn.dataset.idsSet;
-        const res = await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus }) });
-        if (res && res.error) { alert('Update failed: ' + errMsg(res)); return; }
-        // In-place: repaint the IDS status pill, no reload.
-        const pill = card.querySelector('[data-ids-pill]');
-        if (pill) {
-          pill.textContent = idsStatus;
-          const cls = idsStatus === 'identified' ? 'bg-blue-100 text-blue-800'
-                    : idsStatus === 'discussed' ? 'bg-amber-100 text-amber-800'
-                    : idsStatus === 'solved' ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-gray-100 text-gray-700';
-          pill.className = 'text-xs px-2 py-0.5 rounded ' + cls;
-        }
-      });
-    });
-
-    // Solve - reveal form
-    card.querySelector('[data-action="solve"]')?.addEventListener('click', () => {
-      hideAllForms();
-      solveForm?.classList.remove('hidden');
-    });
-    card.querySelector('[data-action="solve-cancel"]')?.addEventListener('click', () => solveForm?.classList.add('hidden'));
-    card.querySelector('[data-action="solve-confirm"]')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
+    // Solve
+    if (action === 'solve') { hideIssueForms(card); if (solveForm) solveForm.classList.remove('hidden'); return; }
+    if (action === 'solve-cancel') { if (solveForm) solveForm.classList.add('hidden'); return; }
+    if (action === 'solve-confirm') {
+      const btn = trigger;
       const resolution = card.querySelector('[data-field="resolution"]').value.trim();
       if (!resolution) return alert('Resolution is required');
       const createFollowUp = card.querySelector('[data-field="create-followup"]').checked;
@@ -2179,8 +2223,8 @@
       btn.disabled = true; btn.textContent = 'Solving...';
       const res = await api('/tickets/' + ticketId + '/solve', { method: 'POST', body: JSON.stringify(body) });
       if (res?.error) { alert('Error: ' + errMsg(res)); btn.disabled = false; btn.textContent = 'Solve + Cascade'; return; }
-      // Live-refresh: pull latest meeting state, update cascading textarea inline,
-      // then collapse this card so the user sees the cascade build up without a reload.
+      // Pull latest meeting state, update cascading textarea inline, then
+      // collapse this card so the cascade builds up without a reload.
       const meetingNow = await api('/meetings/' + meetingId);
       if (meetingNow?.meeting) {
         const ta = document.getElementById('cascading-message');
@@ -2202,16 +2246,14 @@
         card.style.overflow = 'hidden';
       });
       setTimeout(() => card.remove(), 400);
-    });
+      return;
+    }
 
     // Convert to to-do
-    card.querySelector('[data-action="convert"]')?.addEventListener('click', () => {
-      hideAllForms();
-      convertForm?.classList.remove('hidden');
-    });
-    card.querySelector('[data-action="convert-cancel"]')?.addEventListener('click', () => convertForm?.classList.add('hidden'));
-    card.querySelector('[data-action="convert-confirm"]')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
+    if (action === 'convert') { hideIssueForms(card); if (convertForm) convertForm.classList.remove('hidden'); return; }
+    if (action === 'convert-cancel') { if (convertForm) convertForm.classList.add('hidden'); return; }
+    if (action === 'convert-confirm') {
+      const btn = trigger;
       const ownerVal = card.querySelector('[data-field="convert-owner"]').value;
       const owner = parseOwner(ownerVal);
       const title = card.querySelector('[data-field="convert-title"]').value.trim();
@@ -2229,36 +2271,14 @@
         await api('/tickets/' + ticketId, { method: 'DELETE' });
       }
       reloadKeep();
-    });
-
-    // Move to a different team -- PATCH /tickets/:id { teamId } then
-    // remove the card from this meeting's view (it now lives on a
-    // different team's L10).
-    card.querySelector('[data-action="move-team"]')?.addEventListener('change', async (e) => {
-      const sel = e.currentTarget;
-      const newTeamId = sel.value;
-      if (!newTeamId) return;
-      sel.disabled = true;
-      const res = await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ teamId: newTeamId }) });
-      if (res?.error) {
-        alert('Move failed: ' + errMsg(res));
-        sel.disabled = false;
-        sel.value = '';
-        return;
-      }
-      card.style.transition = 'opacity 0.25s';
-      card.style.opacity = '0';
-      setTimeout(() => card.remove(), 250);
-    });
+      return;
+    }
 
     // Edit
-    card.querySelector('[data-action="edit"]')?.addEventListener('click', () => {
-      hideAllForms();
-      editForm?.classList.remove('hidden');
-    });
-    card.querySelector('[data-action="edit-cancel"]')?.addEventListener('click', () => editForm?.classList.add('hidden'));
-    card.querySelector('[data-action="edit-save"]')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
+    if (action === 'edit') { hideIssueForms(card); if (editForm) editForm.classList.remove('hidden'); return; }
+    if (action === 'edit-cancel') { if (editForm) editForm.classList.add('hidden'); return; }
+    if (action === 'edit-save') {
+      const btn = trigger;
       const title = editForm.querySelector('[data-field="title"]').value.trim();
       const description = editForm.querySelector('[data-field="description"]').value;
       const ownerVal = editForm.querySelector('[data-field="owner"]').value;
@@ -2277,12 +2297,12 @@
       btn.disabled = true; btn.textContent = 'Saving...';
       await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify(body) });
       reloadKeep();
-    });
+      return;
+    }
 
-    // Delete (works on both open and solved cards) -- removes the row instantly,
-    // no reload, so the UI matches what the server already did.
-    card.querySelector('[data-action="delete"]')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
+    // Delete (open + solved cards) -- removes the row instantly, no reload.
+    if (action === 'delete') {
+      const btn = trigger;
       if (!confirm('Delete this issue? This cannot be undone from the UI.')) return;
       btn.disabled = true; btn.textContent = '...';
       const res = await api('/tickets/' + ticketId, { method: 'DELETE' });
@@ -2298,13 +2318,39 @@
         card.style.overflow = 'hidden';
       });
       setTimeout(() => card.remove(), 300);
-    });
+      return;
+    }
 
-    // Reopen (only on solved-list cards) -- moves it back to open IDS lifecycle.
-    card.querySelector('[data-action="reopen"]')?.addEventListener('click', async () => {
+    // Reopen (solved-list cards) -- back to open IDS lifecycle.
+    if (action === 'reopen') {
       await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ idsStatus: 'open', solvedInMeetingId: null }) });
       reloadKeep();
-    });
+      return;
+    }
+  });
+
+  // Move issue to a different team (select change, delegated).
+  document.addEventListener('change', async (e) => {
+    const idsRoot = document.getElementById('ids');
+    if (!idsRoot) return;
+    const sel = e.target.closest('[data-action="move-team"]');
+    if (!sel || !idsRoot.contains(sel)) return;
+    const card = sel.closest('[data-ticket-id]');
+    if (!card) return;
+    const ticketId = card.dataset.ticketId;
+    const newTeamId = sel.value;
+    if (!newTeamId) return;
+    sel.disabled = true;
+    const res = await api('/tickets/' + ticketId, { method: 'PUT', body: JSON.stringify({ teamId: newTeamId }) });
+    if (res?.error) {
+      alert('Move failed: ' + errMsg(res));
+      sel.disabled = false;
+      sel.value = '';
+      return;
+    }
+    card.style.transition = 'opacity 0.25s';
+    card.style.opacity = '0';
+    setTimeout(() => card.remove(), 250);
   });
 
   // ===== Add headline =====
@@ -2477,6 +2523,23 @@
       reloadTimer = setTimeout(() => { snapshotDrafts(); window.location.reload(); }, 600);
     }
 
+    // Realtime (R2.3): a teammate changed an issue -> live-swap ONLY the #ids
+    // section instead of a full reload. Same mid-edit guard as scheduleReload,
+    // but scoped to #ids: if the user is typing INSIDE the Issues section, defer
+    // to focusout (editing elsewhere is undisturbed by an #ids swap).
+    let issueRefreshTimer = null;
+    function scheduleIssueRefresh() {
+      const active = document.activeElement;
+      const idsEl = document.getElementById('ids');
+      if (active && idsEl && idsEl.contains(active) &&
+          (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.isContentEditable)) {
+        document.body.dataset.pendingIssueRefresh = '1';
+        return;
+      }
+      if (issueRefreshTimer) return;
+      issueRefreshTimer = setTimeout(() => { issueRefreshTimer = null; refreshIssuesSection(); }, 600);
+    }
+
     function applyPresence(presence) {
       if (!Array.isArray(presence)) return;
       if (countEl) countEl.textContent = String(presence.length);
@@ -2538,7 +2601,10 @@
       es.addEventListener('meeting-updated', (e) => {
         try {
           const payload = JSON.parse(e.data);
-          scheduleReload(payload.kind || 'updated');
+          const kind = payload.kind || 'updated';
+          // Issues update live (targeted #ids swap); every other kind reloads.
+          if (kind === 'issue') scheduleIssueRefresh();
+          else scheduleReload(kind);
         } catch (err) { scheduleReload('unknown'); }
       });
       es.addEventListener('error', () => {
@@ -2555,6 +2621,10 @@
     // away from is preserved across the round-trip.
     document.addEventListener('focusout', () => {
       setTimeout(() => {
+        if (document.body.dataset.pendingIssueRefresh === '1') {
+          delete document.body.dataset.pendingIssueRefresh;
+          refreshIssuesSection();
+        }
         if (document.body.dataset.pendingReload === '1') {
           delete document.body.dataset.pendingReload;
           snapshotDrafts();
