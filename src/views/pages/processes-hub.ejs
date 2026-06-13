@@ -41,10 +41,11 @@
   .ph-wrap { max-width: 1080px; }
   .ph-card { background: var(--card, #fff); border: 1.5px solid var(--line, #e5e7eb); border-radius: 14px; transition: border-color .15s ease, box-shadow .15s ease; }
   .ph-card:hover { border-color: var(--blue, #0d7df2); box-shadow: 0 2px 14px rgba(13,125,242,.08); }
-  /* align-items:start keeps rows from stretching a short card to a tall
-     neighbor's height. min-width:0 on cards lets long content shrink/scroll
-     instead of overflowing the column. */
-  .ph-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+  /* align-items:stretch -> every card in a row matches the tallest, so the
+     boxes are uniform. The card is flex-col with .ph-actions at margin-top:auto,
+     so the action toolbars line up at the bottom across the row. min-width:0
+     lets long content shrink/scroll instead of overflowing the column. */
+  .ph-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: stretch; }
   @media (min-width: 640px) { .ph-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1024px) { .ph-grid { grid-template-columns: repeat(3, 1fr); } }
   .ph-card { min-width: 0; }
