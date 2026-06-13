@@ -189,8 +189,14 @@ Each phase ships value alone, is flag-gated, and degrades to current behavior wh
 - Because the swap re-fetches the full page, the swapped `#rocks` includes milestones (the agenda endpoint's missing-milestones gap doesn't apply). Note: milestone check-offs by a teammate still don't auto-refresh — `milestones.ts` emits no meeting-bus event (true before this change too; no regression).
 - Validated: EJS compile + JS-syntax check + suite 454/454.
 
-**Remaining R2 surfaces (R2.5+, not yet built):**
-1. **Extend live-swap to scorecard, headlines, todos** — same delegation-then-swap pattern, section by section, reload fallback for the rest.
+**R2.5 — L8 meeting Scorecard section live-swaps (no reload) — ✅ SHIPPED 2026-06-13**
+- On a `meeting-updated` event with `kind === 'kpi'`, swap just `#scorecard` (`refreshScorecardSection`) instead of reloading; every other kind reloads; fetch failure falls back to reload.
+- Delegated on document: KPI cell edit (display→edit, cancel, save with in-progress re-snapshot), the `↻ Refresh` (`#refresh-scorecard`) button (lives inside `#scorecard`), and the flag-KPI buttons.
+- **Shared flag-to-issue form hardened.** `#flag-issue-form` lives between `#ids` and `#conclude` (outside every section), but `openFlagForm` relocates it into `#scorecard`/`#headlines`. New `rehomeFlagForm()` moves it back home before ANY section swap, so a swap can't destroy it — and the flag buttons are now delegated. This retroactively hardens the `#ids`/`#rocks` swaps too. The form's own Create/Cancel handlers reference the stable form, so they didn't need changing.
+- Validated: EJS compile + JS-syntax check + suite 454/454.
+
+**Remaining R2 surfaces (R2.6+, not yet built):**
+1. **Extend live-swap to headlines + todos** — same delegation-then-swap pattern, reload fallback for the rest. (Segue/conclude are lower-churn; reload is fine there.)
 2. **Dashboard true per-section swap** (currently guarded reload, R2.2) — same pattern once its JS is delegated.
 3. **Scorecard auto re-snapshot:** on a KPI value save (incl. agent/Tally pushes) for a team with an in-progress meeting, server re-snapshots + publishes — generalizes the 840b1bd in-meeting-edit fix to ALL value writes.
 - **Rollback:** per-surface; each consumer no-ops/reloads when the stream is absent.

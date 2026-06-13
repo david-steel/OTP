@@ -1376,6 +1376,7 @@
       const fresh = doc.getElementById('ids');
       const live = document.getElementById('ids');
       if (!fresh || !live) throw new Error('no #ids');
+      rehomeFlagForm();
       live.replaceWith(fresh);
     } catch (e) {
       // Safe fallback: the exact reload path every other kind uses.
@@ -1402,12 +1403,52 @@
       const fresh = doc.getElementById('rocks');
       const live = document.getElementById('rocks');
       if (!fresh || !live) throw new Error('no #rocks');
+      rehomeFlagForm();
       live.replaceWith(fresh);
     } catch (e) {
       try { snapshotDrafts(); } catch (e2) {}
       window.location.reload();
     } finally {
       rocksRefreshing = false;
+    }
+  }
+
+  // The shared flag-to-issue form (#flag-issue-form) lives between #ids and
+  // #conclude -- outside every swappable section. But openFlagForm RELOCATES it
+  // next to the flagged KPI/headline (into #scorecard or #headlines). Before any
+  // swap, move it back home so a swap can never destroy it (captured refs in
+  // openFlagForm/flag-create then stay valid). Hoisted, so the refresh helpers
+  // above can call it.
+  function rehomeFlagForm() {
+    const ff = document.getElementById('flag-issue-form');
+    const conclude = document.getElementById('conclude');
+    if (ff && conclude && conclude.parentNode && ff.parentNode !== conclude.parentNode) {
+      ff.classList.add('hidden');
+      conclude.parentNode.insertBefore(ff, conclude);
+    }
+  }
+
+  // Same live-swap for the Scorecard (#scorecard) section.
+  let scorecardRefreshing = false;
+  async function refreshScorecardSection() {
+    const current = document.getElementById('scorecard');
+    if (!current || scorecardRefreshing) return;
+    scorecardRefreshing = true;
+    try {
+      const resp = await fetch(window.location.href, { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('status ' + resp.status);
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const fresh = doc.getElementById('scorecard');
+      const live = document.getElementById('scorecard');
+      if (!fresh || !live) throw new Error('no #scorecard');
+      rehomeFlagForm();
+      live.replaceWith(fresh);
+    } catch (e) {
+      try { snapshotDrafts(); } catch (e2) {}
+      window.location.reload();
+    } finally {
+      scorecardRefreshing = false;
     }
   }
 
@@ -1835,15 +1876,17 @@
 
   renderAttendeeChips();
 
-  // Refresh scorecard (only rendered while the meeting is in progress)
-  const refreshScorecardBtn = document.getElementById('refresh-scorecard');
-  if (refreshScorecardBtn) refreshScorecardBtn.addEventListener('click', async () => {
-    const orig = refreshScorecardBtn.textContent;
-    refreshScorecardBtn.disabled = true; refreshScorecardBtn.textContent = 'Refreshing...';
+  // Refresh scorecard (delegated -- #refresh-scorecard lives inside #scorecard,
+  // which gets live-swapped, so an id-bound handler would orphan).
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#refresh-scorecard');
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Refreshing...';
     const res = await api('/meetings/' + meetingId + '/refresh-scorecard', { method: 'POST' });
     if (res?.error) {
       alert('Refresh failed: ' + errMsg(res));
-      refreshScorecardBtn.disabled = false; refreshScorecardBtn.textContent = orig;
+      btn.disabled = false; btn.textContent = orig;
       return;
     }
     reloadKeep();
@@ -1994,49 +2037,55 @@
     });
   });
 
-  // ===== Editable KPI value =====
-  document.querySelectorAll('[data-kpi-id]').forEach(cell => {
-    const kpiId = cell.dataset.kpiId;
+  // ===== Editable KPI value (event-delegated on document) =====
+  // Delegated so the Scorecard (#scorecard) can be live-swapped on a teammate's
+  // change (refreshScorecardSection) without rebinding. Each handler resolves
+  // the cell via the closest [data-kpi-id].
+  document.addEventListener('click', async (e) => {
+    const scoreRoot = document.getElementById('scorecard');
+    if (!scoreRoot) return;
+    const trigger = e.target.closest('[data-kpi-display],[data-kpi-cancel],[data-kpi-save]');
+    if (!trigger || !scoreRoot.contains(trigger)) return;
+    const cell = trigger.closest('[data-kpi-id]');
+    if (!cell) return;
     const display = cell.querySelector('[data-kpi-display]');
     const editor = cell.querySelector('[data-kpi-editor]');
     const input = cell.querySelector('[data-kpi-input]');
-    const saveBtn = cell.querySelector('[data-kpi-save]');
-    const cancelBtn = cell.querySelector('[data-kpi-cancel]');
 
-    display?.addEventListener('click', () => {
-      display.classList.add('hidden');
-      editor.classList.remove('hidden');
-      input?.focus();
-    });
-    cancelBtn?.addEventListener('click', () => {
-      editor.classList.add('hidden');
-      display.classList.remove('hidden');
-    });
-    saveBtn?.addEventListener('click', async () => {
-      const raw = input.value.trim();
-      const value = raw === '' ? null : parseFloat(raw);
-      // Always write a new dated value: prior value becomes "Previous", this one becomes "Latest" with today's date.
-      const periodStart = new Date().toISOString();
-      saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
-      const res = await api('/kpis/' + kpiId + '/values', { method: 'POST', body: JSON.stringify({ periodStart, value }) });
-      if (res?.error) {
-        alert('Save failed: ' + errMsg(res));
-        saveBtn.disabled = false; saveBtn.textContent = 'Save';
-        return;
-      }
-      // An in-progress meeting renders the FROZEN /start scorecard snapshot,
-      // so without a re-snapshot the value we just wrote never appears after
-      // reload -- the save looks silently ignored (David, 2026-06-10 live
-      // L10: "I had 0 sales and 0 close rate and it would not update"; any
-      // value was swallowed, not just 0). Re-snapshot the same way the
-      // ↻ Refresh button does, then reload. If the refresh fails the value
-      // is still persisted, so fall through to the reload either way.
-      const statusEl = document.getElementById('meeting-status');
-      if (statusEl && statusEl.textContent.trim() === 'in_progress') {
-        await api('/meetings/' + meetingId + '/refresh-scorecard', { method: 'POST' });
-      }
-      reloadKeep();
-    });
+    if (trigger.matches('[data-kpi-display]')) {
+      if (display) display.classList.add('hidden');
+      if (editor) editor.classList.remove('hidden');
+      if (input) input.focus();
+      return;
+    }
+    if (trigger.matches('[data-kpi-cancel]')) {
+      if (editor) editor.classList.add('hidden');
+      if (display) display.classList.remove('hidden');
+      return;
+    }
+    // data-kpi-save
+    const saveBtn = trigger;
+    const raw = input.value.trim();
+    const value = raw === '' ? null : parseFloat(raw);
+    // Always write a new dated value: prior becomes "Previous", this one "Latest".
+    const periodStart = new Date().toISOString();
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
+    const res = await api('/kpis/' + cell.dataset.kpiId + '/values', { method: 'POST', body: JSON.stringify({ periodStart, value }) });
+    if (res?.error) {
+      alert('Save failed: ' + errMsg(res));
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      return;
+    }
+    // An in-progress meeting renders the FROZEN /start scorecard snapshot, so
+    // without a re-snapshot the value we just wrote never appears after reload
+    // (David, 2026-06-10 live L10: "0 sales/close rate and it would not update").
+    // Re-snapshot like the ↻ Refresh button, then reload. If the refresh fails
+    // the value is still persisted, so reload either way.
+    const statusEl = document.getElementById('meeting-status');
+    if (statusEl && statusEl.textContent.trim() === 'in_progress') {
+      await api('/meetings/' + meetingId + '/refresh-scorecard', { method: 'POST' });
+    }
+    reloadKeep();
   });
 
   // ===== Add quarterly priority (event-delegated) =====
@@ -2416,8 +2465,16 @@
     flagTitle.focus();
   }
 
-  document.querySelectorAll('[data-flag-headline]').forEach(btn => {
-    btn.addEventListener('click', () => openFlagForm(btn, 'Headlines'));
+  // Flag-to-issue buttons (delegated): KPI rows in #scorecard + headline items
+  // in #headlines. Both live in swappable sections, so per-element binding would
+  // orphan. openFlagForm + the form's own buttons reference the stable
+  // #flag-issue-form (kept out of every section by rehomeFlagForm), so only the
+  // triggers need delegating.
+  document.addEventListener('click', (e) => {
+    const kpiBtn = e.target.closest('[data-flag-kpi]');
+    if (kpiBtn) { openFlagForm(kpiBtn, 'Scorecard'); return; }
+    const hlBtn = e.target.closest('[data-flag-headline]');
+    if (hlBtn) { openFlagForm(hlBtn, 'Headlines'); return; }
   });
 
   // ===== Mark headline addressed =====
@@ -2434,9 +2491,7 @@
       reloadKeep();
     });
   });
-  document.querySelectorAll('[data-flag-kpi]').forEach(btn => {
-    btn.addEventListener('click', () => openFlagForm(btn, 'Scorecard'));
-  });
+  // (data-flag-kpi handled by the delegated flag-button listener above.)
 
   document.getElementById('flag-cancel')?.addEventListener('click', () => {
     flagForm.classList.add('hidden');
@@ -2560,6 +2615,20 @@
       rockRefreshTimer = setTimeout(() => { rockRefreshTimer = null; refreshRocksSection(); }, 600);
     }
 
+    // Same for the Scorecard section (kind === 'kpi').
+    let scorecardRefreshTimer = null;
+    function scheduleScorecardRefresh() {
+      const active = document.activeElement;
+      const scoreEl = document.getElementById('scorecard');
+      if (active && scoreEl && scoreEl.contains(active) &&
+          (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.isContentEditable)) {
+        document.body.dataset.pendingScorecardRefresh = '1';
+        return;
+      }
+      if (scorecardRefreshTimer) return;
+      scorecardRefreshTimer = setTimeout(() => { scorecardRefreshTimer = null; refreshScorecardSection(); }, 600);
+    }
+
     function applyPresence(presence) {
       if (!Array.isArray(presence)) return;
       if (countEl) countEl.textContent = String(presence.length);
@@ -2622,9 +2691,10 @@
         try {
           const payload = JSON.parse(e.data);
           const kind = payload.kind || 'updated';
-          // Issues + Rocks update live (targeted section swap); else reload.
+          // Issues + Rocks + Scorecard update live (targeted swap); else reload.
           if (kind === 'issue') scheduleIssueRefresh();
           else if (kind === 'rock') scheduleRockRefresh();
+          else if (kind === 'kpi') scheduleScorecardRefresh();
           else scheduleReload(kind);
         } catch (err) { scheduleReload('unknown'); }
       });
@@ -2649,6 +2719,10 @@
         if (document.body.dataset.pendingRockRefresh === '1') {
           delete document.body.dataset.pendingRockRefresh;
           refreshRocksSection();
+        }
+        if (document.body.dataset.pendingScorecardRefresh === '1') {
+          delete document.body.dataset.pendingScorecardRefresh;
+          refreshScorecardSection();
         }
         if (document.body.dataset.pendingReload === '1') {
           delete document.body.dataset.pendingReload;
