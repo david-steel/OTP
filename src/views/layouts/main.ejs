@@ -182,6 +182,11 @@
   <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 0) { %>
   <script type="application/ld+json"><%- jsonForScript({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map(function(b, i) { return { '@type': 'ListItem', position: i + 1, name: b.name, item: b.url }; }) }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %></script>
   <% } %>
+  <%# Realtime sync (R2): gate the live stream on the server flag AND an authed
+      viewer, then load the shared client BEFORE body scripts so window.OTPLive
+      exists when the bell / other consumers run. Inert while the flag is off. %>
+  <script>window.OTP_REALTIME_ENABLED = <%= (typeof realtimeStreamEnabled !== 'undefined' && realtimeStreamEnabled && typeof authUserId !== 'undefined' && authUserId) ? 'true' : 'false' %>;</script>
+  <script src="/public/js/otp-live.js?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>"></script>
 </head>
 <body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %><%= ((typeof authUserId !== 'undefined' && authUserId) && !(typeof isEmbed !== 'undefined' && isEmbed)) ? (' otp-has-rail' + ((typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? ' otp-rail-collapsed' : '')) : '' %>">
 <%
@@ -1005,6 +1010,15 @@
   refresh();
   ensurePushSubscription();
   setInterval(refresh, 120000); // light poll: every 2 minutes while the tab is open
+
+  // Realtime (R2): when the live org stream is up, refresh the bell the moment
+  // anything changes (debounced to coalesce bursts). The 2-min poll above stays
+  // as the fallback, so behaviour is unchanged when the stream is off.
+  if (window.OTPLive && window.OTPLive.enabled()) {
+    var liveT;
+    var bump = function () { clearTimeout(liveT); liveT = setTimeout(refresh, 500); };
+    window.OTPLive.subscribe({ onEvent: bump, onResync: bump });
+  }
 })();
 </script>
 <script>

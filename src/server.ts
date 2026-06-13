@@ -257,6 +257,9 @@ app.addHook('preHandler', async (request, reply) => {
     // column and may be null/corrupt; a missing member (legacy founder with no
     // org_members row) simply defaults to expanded.
     const sidebarCollapsed = !!(om?.preferences as any)?.dashboard?.sidebarCollapsed;
+    // Realtime sync (R2): the client only opens the live SSE stream when this
+    // is true (server flag + an authed viewer). Default false -> inert.
+    const realtimeStreamEnabled = process.env.REALTIME_STREAM_ENABLED === 'true';
     return origView(template, {
       ...(data || {}),
       authUserId: userId,
@@ -266,6 +269,7 @@ app.addHook('preHandler', async (request, reply) => {
       isCoach,
       coachSlug,
       sidebarCollapsed,
+      realtimeStreamEnabled,
     }, opts);
   };
 });
