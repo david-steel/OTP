@@ -183,8 +183,14 @@ Each phase ships value alone, is flag-gated, and degrades to current behavior wh
 - This was deliberately the FIRST section because its handlers are DOM-driven and self-contained. Other sections (rocks/scorecard/headlines/todos) keep reloading until each gets the same delegation treatment.
 - Validated: EJS compile + JS-syntax check of the script + suite 454/454. The real proof is a live two-browser L10 — reload fallback makes a bad swap degrade to today's behavior, not a break.
 
-**Remaining R2 surfaces (R2.4+, not yet built):**
-1. **Extend live-swap to the other meeting sections** (rocks, scorecard, headlines, todos) — same delegation-then-swap pattern, section by section, reload fallback for the rest. Rocks/headlines also need their missing data (milestones/headlines) handled since the swap re-fetches the full page (works today) or a fragment endpoint later.
+**R2.4 — L8 meeting Rocks section live-swaps (no reload) — ✅ SHIPPED 2026-06-13**
+- Same pattern as Issues, applied to the Rocks (`#rocks`) section: on a `meeting-updated` event with `kind === 'rock'`, swap just `#rocks` (`refreshRocksSection`) instead of reloading; every other kind still reloads; fetch failure falls back to reload.
+- All rock handlers delegated on document: On/Off toggle (with in-place badge/button/"changed this meeting" repaint), Complete/Archive/Reopen, due-date, move-to-team, manual ordering, the milestone `.ms-check` check-off, AND the add-priority form (inside `#rocks`). All DOM-driven, no stale-closure trap. Mid-edit guard scoped to `#rocks`.
+- Because the swap re-fetches the full page, the swapped `#rocks` includes milestones (the agenda endpoint's missing-milestones gap doesn't apply). Note: milestone check-offs by a teammate still don't auto-refresh — `milestones.ts` emits no meeting-bus event (true before this change too; no regression).
+- Validated: EJS compile + JS-syntax check + suite 454/454.
+
+**Remaining R2 surfaces (R2.5+, not yet built):**
+1. **Extend live-swap to scorecard, headlines, todos** — same delegation-then-swap pattern, section by section, reload fallback for the rest.
 2. **Dashboard true per-section swap** (currently guarded reload, R2.2) — same pattern once its JS is delegated.
 3. **Scorecard auto re-snapshot:** on a KPI value save (incl. agent/Tally pushes) for a team with an in-progress meeting, server re-snapshots + publishes — generalizes the 840b1bd in-meeting-edit fix to ALL value writes.
 - **Rollback:** per-surface; each consumer no-ops/reloads when the stream is absent.
