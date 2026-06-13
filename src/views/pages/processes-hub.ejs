@@ -41,9 +41,14 @@
   .ph-wrap { max-width: 1080px; }
   .ph-card { background: var(--card, #fff); border: 1.5px solid var(--line, #e5e7eb); border-radius: 14px; transition: border-color .15s ease, box-shadow .15s ease; }
   .ph-card:hover { border-color: var(--blue, #0d7df2); box-shadow: 0 2px 14px rgba(13,125,242,.08); }
-  .ph-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  /* align-items:start keeps rows from stretching a short card to a tall
+     neighbor's height. min-width:0 on cards lets long content shrink/scroll
+     instead of overflowing the column. */
+  .ph-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
   @media (min-width: 640px) { .ph-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1024px) { .ph-grid { grid-template-columns: repeat(3, 1fr); } }
+  .ph-card { min-width: 0; }
+  .ph-card * { min-width: 0; }
   .ph-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; line-height: 1.4; }
   .ph-chip-human { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
   .ph-chip-agent { background: var(--orgy-soft, #fff6da); color: var(--orgy-on-light, #8a6d1a); border-color: var(--orgy-line, #f0dca0); }
@@ -67,9 +72,36 @@
   .ph-input:focus { outline: none; border-color: var(--blue, #0d7df2); }
   .ph-detail { display: none; }
   .ph-detail.open { display: block; }
+  /* Role/description as a plain muted subtitle -- NOT a pill. Wraps naturally,
+     soft-clamped to 3 lines so a long description can't balloon the card. */
+  .ph-card-desc { font-size: 13px; line-height: 1.5; color: var(--ink-mute, #6b7280); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .ph-modal-back { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 60; display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
   .ph-modal-back.open { display: flex; }
   .ph-modal { background: #fff; border-radius: 16px; width: 100%; max-width: 640px; box-shadow: 0 20px 60px rgba(15,23,42,.25); }
+
+  /* ---- Shared run/runs/schedule overlay (centered modal) ----
+     Running, viewing recent runs, and scheduling ALL happen here so the card
+     grid never changes height (the inline-expansion grid distortion is gone).
+     Fixed max-width + max-height with an internally scrolling body keeps long
+     output / wide code blocks contained -- they never widen the page. */
+  .ph-overlay-back { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 65; display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
+  .ph-overlay-back.open { display: flex; }
+  .ph-overlay { background: #fff; border-radius: 16px; width: 100%; max-width: 760px; max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(15,23,42,.25); overflow: hidden; }
+  .ph-overlay-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid var(--line, #e5e7eb); flex: 0 0 auto; }
+  .ph-overlay-title { font-size: 1.05rem; font-weight: 700; color: var(--ink, #1f2937); font-family: 'Schibsted Grotesk','Inter',sans-serif; letter-spacing: -.01em; line-height: 1.3; }
+  .ph-overlay-spacer { flex: 1 1 auto; }
+  .ph-overlay-close { flex: 0 0 auto; color: var(--ink-mute, #9ca3af); background: none; border: 0; cursor: pointer; line-height: 0; padding: 2px; border-radius: 8px; }
+  .ph-overlay-close:hover { color: var(--ink, #1f2937); background: #f3f4f6; }
+  /* Scrollable body. min-width:0 lets inner pre/code shrink + scroll instead of
+     stretching the overlay wider than its max-width. */
+  .ph-overlay-body { flex: 1 1 auto; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 18px 20px; }
+  .ph-overlay-foot { flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line, #e5e7eb); background: #fafbfc; }
+  /* In the overlay the rendered markdown can use the full body width/height. */
+  .ph-overlay-body .ph-md { padding: 0; max-height: none; }
+  .ph-overlay-body .ph-result { border: 0; }
+  .ph-overlay-body .ph-result-head { padding: 0 0 12px; background: none; border-bottom: 1px solid var(--line, #e5e7eb); margin-bottom: 14px; }
+  .ph-overlay-body .ph-result-foot { padding: 14px 0 0; margin-top: 14px; background: none; }
+  .ph-overlay-body .ph-stream { max-height: 56vh; }
   .ph-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft, #374151); margin-bottom: 4px; }
   .ph-list-row { display: flex; gap: 8px; margin-bottom: 6px; }
   .ph-step-num { flex: 0 0 auto; width: 22px; height: 38px; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 700; color: var(--ink-mute, #9ca3af); }
@@ -205,10 +237,12 @@
            data-seat="<%= e.seatExternalId %>" data-type="<%= e.seatType %>" data-sopindex="<%= e.sopIndex %>">
         <div class="flex flex-wrap items-center gap-1.5">
           <span class="ph-chip <%= e.seatType === 'agent' ? 'ph-chip-agent' : 'ph-chip-human' %>"><%= e.seatType === 'agent' ? 'Agent' : 'Human' %><% if (e.seatName) { %> &middot; <%= e.seatName %><% } %></span>
-          <% if (e.seatRole) { %><span class="ph-chip ph-chip-mute"><%= e.seatRole %></span><% } %>
           <% if (steps.length) { %><span class="ph-chip ph-chip-mute"><%= steps.length %> step<%= steps.length === 1 ? '' : 's' %></span><% } %>
           <% if (e.schedule) { %><span class="ph-chip ph-chip-sched"<% if (e.schedule.nextRunAt) { %> title="Next run: <%= e.schedule.nextRunAt %>"<% } %>>&#9200; <%= e.schedule.label %></span><% } %>
         </div>
+        <% if (e.seatRole) { %>
+          <p class="ph-card-desc"><%= e.seatRole %></p>
+        <% } %>
         <div class="font-bold text-[15.5px] leading-snug text-[var(--ink,#1f2937)]" style="font-family:'Schibsted Grotesk','Inter',sans-serif;"><%= sop.title || '(untitled process)' %></div>
         <% if (sop.trigger) { %>
           <div class="text-[12.5px] text-[var(--ink-mute,#6b7280)]"><span class="font-semibold">Trigger:</span> <%= sop.trigger %></div>
@@ -269,17 +303,30 @@
           <% } %>
         </div>
 
-        <% if (e.canEdit && e.seatType === 'agent') { %>
-        <!-- Inline run-result + recent-runs panel (populated client-side) -->
-        <div class="ph-run-panel" style="display:none; border-top:1px solid var(--line,#e5e7eb); padding-top:12px; margin-top:4px;"></div>
-        <!-- Inline schedule form + existing-schedules list (populated client-side) -->
-        <div class="ph-sched-panel" style="display:none; border-top:1px solid var(--line,#e5e7eb); padding-top:12px; margin-top:4px;"></div>
-        <% } %>
       </div>
       <% }); %>
     </div>
   </div>
 </section>
+
+<!-- Shared run / recent-runs / schedule overlay. ONE instance, reused for every
+     card. Run output, recent runs, and the schedule form all render into
+     #ph-overlay-body so the card grid never grows (kills the grid distortion).
+     Empty + hidden until a Run/Runs/Schedule click populates it. -->
+<div id="ph-overlay-back" class="ph-overlay-back" role="dialog" aria-modal="true" aria-labelledby="ph-overlay-title">
+  <div class="ph-overlay">
+    <div class="ph-overlay-head">
+      <span id="ph-overlay-chip" class="ph-result-agent" style="display:none;"></span>
+      <span id="ph-overlay-title" class="ph-overlay-title"></span>
+      <div class="ph-overlay-spacer"></div>
+      <button type="button" id="ph-overlay-close" class="ph-overlay-close" aria-label="Close">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="ph-overlay-body" class="ph-overlay-body"></div>
+    <div id="ph-overlay-foot" class="ph-overlay-foot" style="display:none;"></div>
+  </div>
+</div>
 
 <% if (_canEdit) { %>
 <!-- New / Edit modal -->
@@ -626,6 +673,53 @@
     return null;
   }
 
+  // ---- Shared overlay controller ----------------------------------------
+  // One overlay reused for Run / Runs / Schedule. All three render into the
+  // body so the card grid never changes height. Header shows the agent chip +
+  // a title; the body scrolls; an optional footer holds actions (Run again /
+  // Close). API contracts are unchanged -- only WHERE results render moved.
+  var ovBack = document.getElementById('ph-overlay-back');
+  var ovBody = document.getElementById('ph-overlay-body');
+  var ovTitle = document.getElementById('ph-overlay-title');
+  var ovChip = document.getElementById('ph-overlay-chip');
+  var ovFoot = document.getElementById('ph-overlay-foot');
+  var ovCloseBtn = document.getElementById('ph-overlay-close');
+
+  function overlaySetHeader(title, agentName){
+    if (ovTitle) ovTitle.textContent = title || '';
+    if (ovChip){
+      if (agentName){ ovChip.textContent = agentName; ovChip.style.display = ''; }
+      else { ovChip.textContent = ''; ovChip.style.display = 'none'; }
+    }
+  }
+  function overlayClearFoot(){
+    if (!ovFoot) return;
+    ovFoot.innerHTML = '';
+    ovFoot.style.display = 'none';
+  }
+  function overlaySetFoot(buttons){
+    if (!ovFoot) return;
+    ovFoot.innerHTML = '';
+    if (!buttons || !buttons.length){ ovFoot.style.display = 'none'; return; }
+    buttons.forEach(function(b){ ovFoot.appendChild(b); });
+    ovFoot.style.display = '';
+  }
+  // Returns the body element to render into (cleared).
+  function openOverlay(title, agentName){
+    overlaySetHeader(title, agentName);
+    overlayClearFoot();
+    if (ovBody){ ovBody.innerHTML = ''; ovBody.scrollTop = 0; }
+    if (ovBack) ovBack.classList.add('open');
+    return ovBody;
+  }
+  function closeOverlay(){ if (ovBack) ovBack.classList.remove('open'); }
+  if (ovCloseBtn) ovCloseBtn.addEventListener('click', closeOverlay);
+  if (ovBack) ovBack.addEventListener('click', function(ev){ if (ev.target === ovBack) closeOverlay(); });
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape' && ovBack && ovBack.classList.contains('open')) closeOverlay();
+  });
+  function ovBtn(cls, label){ var b = el('button', cls, label); b.type = 'button'; return b; }
+
   // Footer pill chips: model, tokens, cost, duration. Small + roomy, not a
   // cramped one-liner.
   function footChips(run){
@@ -707,13 +801,28 @@
     return wrap;
   }
 
+  // Re-enable the card's Run button + reset its label (it stays in the grid
+  // behind the overlay). Stored so the stream/JSON paths can call it.
+  function makeBtnReset(btn, label){
+    return function(){ if (btn){ btn.disabled = false; btn.innerHTML = label; } };
+  }
+  // Footer for a finished run: "Run again" + "Close".
+  function setRunFinishedFoot(e, btn, label){
+    var again = ovBtn('ph-btn ph-btn-ghost ph-btn-sm', 'Run again');
+    again.addEventListener('click', function(){ runSop(e, btn, label); });
+    var close = ovBtn('ph-btn ph-btn-primary ph-btn-sm', 'Close');
+    close.addEventListener('click', closeOverlay);
+    overlaySetFoot([again, close]);
+  }
+
   // Stream a run over SSE. We POST with Accept: text/event-stream and read the
   // response body with a reader + TextDecoder, parsing `data: {...}\n\n` frames.
   // (EventSource can't POST, so we hand-roll the SSE consumer.) Each {t} delta
   // is appended to a live transcript so the user watches the agent type; the
   // final {done,...} event swaps in the nicely formatted outputHtml + chips.
-  // Falls back to the JSON path if the browser lacks fetch-stream support.
-  function streamRun(card, e, btn, label, panel){
+  // Renders into the shared overlay body (`panel`). Falls back to the JSON path
+  // if the browser lacks fetch-stream support. API request shape unchanged.
+  function streamRun(e, btn, label, panel){
     var sop = e.sop || {};
     var body = sop.id ? { sopId: sop.id } : { sopTitle: sop.title };
 
@@ -728,11 +837,12 @@
       stream.appendChild(caret);
       stream.scrollTop = stream.scrollHeight;
     }
-    function done(){ btn.disabled = false; btn.innerHTML = label; }
+    var done = makeBtnReset(btn, label);
     function showFail(code, message){
       panel.innerHTML = '';
       var msg = friendlyState(code) || message || 'Run failed';
       panel.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
+      setRunFinishedFoot(e, btn, label);
     }
     function showFinal(evt){
       panel.innerHTML = '';
@@ -743,6 +853,7 @@
         tokensInput: evt.tokensInput, tokensOutput: evt.tokensOutput,
         costCents: evt.costCents, startedAt: evt.startedAt, completedAt: evt.completedAt,
       }));
+      setRunFinishedFoot(e, btn, label);
     }
 
     return fetch('/api/v1/agents/' + encodeURIComponent(e.seatExternalId) + '/run', {
@@ -762,7 +873,7 @@
       }
       if (!r.body || !r.body.getReader) {
         // No stream-reading support: degrade to the JSON run path.
-        return runSopJson(e, panel, body);
+        return runSopJson(e, btn, label, panel, body);
       }
       var reader = r.body.getReader();
       var decoder = new TextDecoder();
@@ -803,43 +914,52 @@
   }
 
   // JSON fallback (back-compat / no fetch-stream support). Mirrors the old flow.
-  function runSopJson(e, panel, body){
+  // Renders into the shared overlay body (`panel`). API request shape unchanged.
+  function runSopJson(e, btn, label, panel, body){
     return api('POST', '/agents/' + encodeURIComponent(e.seatExternalId) + '/run', body)
-      .then(function(run){ panel.innerHTML = ''; panel.appendChild(resultCard(e, run)); })
+      .then(function(run){ panel.innerHTML = ''; panel.appendChild(resultCard(e, run)); setRunFinishedFoot(e, btn, label); })
       .catch(function(err){
         panel.innerHTML = '';
         var code = err && err.code ? err.code : 'ERROR';
         var msg = friendlyState(code) || (err && err.message ? err.message : 'Run failed');
         panel.appendChild(el('div', 'ph-msg ph-msg-fail', msg));
+        setRunFinishedFoot(e, btn, label);
       });
   }
 
-  function runSop(card, e, btn){
-    var panel = card.querySelector('.ph-run-panel');
+  // Run a SOP: open the overlay immediately with the "working" state, then
+  // stream the result into it. The card grid is untouched -- the run output
+  // lives in the overlay. `btn`/`label` are the card's Run button (optional,
+  // used only to reset its spinner + power "Run again").
+  function runSop(e, btn, label){
+    var sop = e.sop || {};
+    var panel = openOverlay(sop.title || 'Process run', e.seatName || 'Agent');
     if (!panel) return;
-    panel.style.display = '';
-    panel.innerHTML = '';
     panel.appendChild(workingCard(e));
-    var label = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="ph-spin"></span> Running';
+    if (btn){
+      if (label == null) label = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="ph-spin"></span> Running';
+    }
+    var reset = makeBtnReset(btn, label);
     // Prefer the live SSE stream; fall back to JSON where fetch streaming is
     // unavailable (handled inside streamRun).
     if (window.fetch && window.ReadableStream && window.TextDecoder) {
-      streamRun(card, e, btn, label, panel);
+      streamRun(e, btn, label, panel);
     } else {
-      runSopJson(e, panel, e.sop && e.sop.id ? { sopId: e.sop.id } : { sopTitle: e.sop && e.sop.title })
-        .then(function(){ btn.disabled = false; btn.innerHTML = label; });
+      runSopJson(e, btn, label, panel, sop.id ? { sopId: sop.id } : { sopTitle: sop.title })
+        .then(reset);
     }
   }
 
-  function showRecentRuns(card, e, btn){
-    var panel = card.querySelector('.ph-run-panel');
+  function showRecentRuns(e, btn){
+    var panel = openOverlay('Recent runs', e.seatName || 'Agent');
     if (!panel) return;
-    panel.style.display = '';
-    panel.innerHTML = '';
+    var closeBtn = ovBtn('ph-btn ph-btn-ghost ph-btn-sm', 'Close');
+    closeBtn.addEventListener('click', closeOverlay);
+    overlaySetFoot([closeBtn]);
     panel.appendChild(el('div', 'ph-run-meta', 'Loading recent runs...'));
-    btn.disabled = true;
+    if (btn) btn.disabled = true;
     api('GET', '/agents/' + encodeURIComponent(e.seatExternalId) + '/runs?limit=25', null)
       .then(function(res){
         panel.innerHTML = '';
@@ -887,7 +1007,7 @@
         panel.innerHTML = '';
         panel.appendChild(el('div', 'ph-run-err', (err && err.message) ? err.message : 'Could not load runs'));
       })
-      .then(function(){ btn.disabled = false; });
+      .then(function(){ if (btn) btn.disabled = false; });
   }
 
   // ---- Schedule a SOP (autonomous cadence) ----
@@ -1103,40 +1223,45 @@
       });
   }
 
-  function openSchedule(card, e, btn){
-    var panel = card.querySelector('.ph-sched-panel');
+  function openSchedule(e, btn){
+    var panel = openOverlay('Schedule', e.seatName || 'Agent');
     if (!panel) return;
-    // Toggle closed if already open.
-    if (panel.style.display !== 'none' && panel.innerHTML){ panel.style.display = 'none'; return; }
+    var close = ovBtn('ph-btn ph-btn-ghost ph-btn-sm', 'Close');
+    close.addEventListener('click', closeOverlay);
+    overlaySetFoot([close]);
     renderSchedulePanel(panel, e);
   }
 
   // ---- Edit / Delete / Run / Recent runs from a card ----
+  // Run / Runs / Schedule all open the shared overlay (no inline expansion, so
+  // the card grid never changes height). closest() resolves the owning button
+  // even if a click lands on a child node. API contracts are unchanged.
   if (grid) grid.addEventListener('click', function(ev){
     var t = ev.target;
+    var btn = t.closest && t.closest('button');
     var card = t.closest && t.closest('[data-idx]');
-    if (!card) return;
+    if (!card || !btn) return;
     var e = ENTRIES[Number(card.getAttribute('data-idx'))];
     if (!e) return;
-    if (t.classList.contains('ph-schedule')) {
-      openSchedule(card, e, t); return;
+    if (btn.classList.contains('ph-schedule')) {
+      openSchedule(e, btn); return;
     }
-    if (t.classList.contains('ph-run')) {
-      runSop(card, e, t); return;
+    if (btn.classList.contains('ph-run')) {
+      runSop(e, btn); return;
     }
-    if (t.classList.contains('ph-runs')) {
-      showRecentRuns(card, e, t); return;
+    if (btn.classList.contains('ph-runs')) {
+      showRecentRuns(e, btn); return;
     }
-    if (t.classList.contains('ph-edit')) {
+    if (btn.classList.contains('ph-edit')) {
       openModal('edit', e.seatExternalId, e.sop, e.sopIndex);
-    } else if (t.classList.contains('ph-delete')) {
+    } else if (btn.classList.contains('ph-delete')) {
       if (!window.confirm('Delete "' + (e.sop && e.sop.title ? e.sop.title : 'this process') + '"? This removes it from ' + e.seatName + "'s SOPs.")) return;
       var sops = seatSops(e.seatExternalId).slice();
       sops.splice(e.sopIndex, 1);
-      t.disabled = true;
+      btn.disabled = true;
       patchSeatSops(e.seatExternalId, e.seatType, sops)
         .then(function(){ window.location.reload(); })
-        .catch(function(err){ t.disabled = false; alert('Delete failed: ' + fmtErr(err)); });
+        .catch(function(err){ btn.disabled = false; alert('Delete failed: ' + fmtErr(err)); });
     }
   });
 
