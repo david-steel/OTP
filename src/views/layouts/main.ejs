@@ -573,10 +573,10 @@
          zap:    '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
          target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
        };
-       // Gates + hrefs mirror the retired dashboard-tabs.ejs rail 1:1:
-       // Issues=INVITER, My Practice=ORG_WIDE+coachOnly, CEO=owner/visionary,
-       // Teams=INVITER, Docs/Workspaces/Inquiries=ORG_WIDE. Middle-group order
-       // follows the old rail (Plan, Practice, CEO, then Workspace group).
+       // Rail focused on daily-use items + Upgrade. Practice / Docs / Workspaces
+       // / Inquiries moved to the Settings hub (partials/settings-nav.ejs);
+       // Tickets + Guide live in the Help menu (top nav). Gates: Issues=INVITER,
+       // CEO=owner/visionary, Members/Teams=INVITER, the rest ORG_WIDE.
        var _sbItems = [
          { href:'/dashboard',                    label:'Daily',          icon:_sbI.sun,    allow:true },
          { href:'/l8',                           label:'Meetings',       icon:_sbI.cal,    allow:true },
@@ -588,20 +588,13 @@
          { href:'/dashboard/oos-operating-plan', label:'Operating plan', icon:_sbI.map,    allow:_sbORG_WIDE },
          { href:'/rocks',                        label:'Quarterly Priorities', icon:_sbI.target, allow:true },
          { href:'/processes',                    label:'Processes',      icon:_sbI.map,    allow:true },
-         { href:'/dashboard/practice',           label:'My Practice',    icon:_sbI.case2,  allow:_sbORG_WIDE, coach:true },
          { href:'/dashboard/ceo',                label:'CEO',            icon:_sbI.star,   allow:_sbCEO },
          { href:'/dashboard/members',            label:'Members',        icon:_sbI.people, allow:_sbINVITER },
          { href:'/dashboard/teams',              label:'Teams',          icon:_sbI.teams,  allow:_sbINVITER },
-         { href:'/dashboard/source-documents',   label:'Docs',           icon:_sbI.doc,    allow:_sbORG_WIDE },
-         { href:'/dashboard/workspaces',         label:'Workspaces',     icon:_sbI.grid4,  allow:_sbORG_WIDE },
-         { href:'/dashboard/inquiries',          label:'Inquiries',      icon:_sbI.inbox,  allow:_sbORG_WIDE },
          { href:'/dashboard/publisher',          label:'Publisher',      icon:_sbI.send,   allow:_sbORG_WIDE },
          { href:'/settings/api',                 label:'MCP / API keys', icon:_sbI.key,    allow:_sbORG_WIDE },
          { divider:true },
-         { href:'/pricing',                      label:'Upgrade',        icon:_sbI.zap,    allow:true, upsell:true },
-         { divider:true },
-         { href:'/tickets',                      label:'Tickets',        icon:_sbI.buoy,   allow:true },
-         { href:'/guide',                        label:'Guide',          icon:_sbI.book,   allow:true }
+         { href:'/pricing',                      label:'Upgrade',        icon:_sbI.zap,    allow:true, upsell:true }
        ];
        // Render sequentially; a divider only prints when items rendered on both
        // sides of it (so a fully role-gated-out group can't leave a double rule).

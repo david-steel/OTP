@@ -30,6 +30,15 @@
     { href: '/settings/language',      label: 'Language' },
     { href: '/settings/billing',       label: 'Billing' }
   ];
+  // Moved off the left rail (2026-06-13) to keep the rail daily-focused.
+  // My Practice is coach-only; Docs/Workspaces/Inquiries are org-wide (the whole
+  // Workspace group already sits inside the org-wide gate below).
+  var _sn_isCoach = (typeof isCoach !== 'undefined' && isCoach) ? true : false;
+  var _sn_workspace = [];
+  if (_sn_isCoach) _sn_workspace.push({ href: '/dashboard/practice', label: 'My Practice' });
+  _sn_workspace.push({ href: '/dashboard/source-documents', label: 'Docs' });
+  _sn_workspace.push({ href: '/dashboard/workspaces',       label: 'Workspaces' });
+  _sn_workspace.push({ href: '/dashboard/inquiries',        label: 'Inquiries' });
   function _sn_link(item) {
     var active = (item.href === _sn_path);
     var cls = 'settings-nav-link' + (active ? ' active' : '');
@@ -64,6 +73,8 @@
   <div class="settings-nav-grp">User</div>
   <%- _sn_user.map(_sn_link).join('') %>
   <% if (_sn_isOrgWide) { %>
+    <div class="settings-nav-grp">Workspace</div>
+    <%- _sn_workspace.map(_sn_link).join('') %>
     <div class="settings-nav-grp">Company</div>
     <%- _sn_company.map(_sn_link).join('') %>
   <% } %>
