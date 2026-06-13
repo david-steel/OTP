@@ -13,6 +13,7 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { patchTeamEntity, deleteTeamEntity, createTeamEntity, bulkImportHumans, TeamMutationError, buildAgentContext, getOrgTeamGraph } from '../../services/team-graph.js';
 import type { EntityType, ImportRow } from '../../services/team-graph.js';
 import { computeEditableTiles } from '../../services/chart-permissions.js';
@@ -294,6 +295,14 @@ export default async function teamRoutes(app: FastifyInstance) {
         body.data.patch,
         body.data.chartId,
       );
+      {
+        const actor = getAuth(request).userId;
+        await emitOrgEventSafe({
+          orgId: org.id, topic: 'chart', entityType: body.data.type, entityId: body.data.externalId,
+          action: 'updated', actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+          payload: { chartId: body.data.chartId, fields: Object.keys(body.data.patch || {}) },
+        });
+      }
       return result;
     } catch (e) {
       if (e instanceof TeamMutationError) {
@@ -329,7 +338,17 @@ export default async function teamRoutes(app: FastifyInstance) {
 
     try {
       const { chartId, ...createInput } = body.data;
-      return await createTeamEntity(org.id, createInput, chartId);
+      const createdEntity = await createTeamEntity(org.id, createInput, chartId);
+      {
+        const actor = getAuth(request).userId;
+        await emitOrgEventSafe({
+          orgId: org.id, topic: 'chart', entityType: createInput.type,
+          entityId: (createdEntity as { externalId?: string })?.externalId ?? null,
+          action: 'created', actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+          payload: { name: createInput.name, chartId },
+        });
+      }
+      return createdEntity;
     } catch (e) {
       if (e instanceof TeamMutationError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
       request.log.error(e);
@@ -364,7 +383,16 @@ export default async function teamRoutes(app: FastifyInstance) {
       if (!(await checkChartEdit(request, reply, org.id, externalId))) return;
 
       try {
-        return await deleteTeamEntity(org.id, type as EntityType, externalId, chartId);
+        const deletedEntity = await deleteTeamEntity(org.id, type as EntityType, externalId, chartId);
+        {
+          const actor = getAuth(request).userId;
+          await emitOrgEventSafe({
+            orgId: org.id, topic: 'chart', entityType: type, entityId: externalId,
+            action: 'deleted', actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+            payload: { chartId },
+          });
+        }
+        return deletedEntity;
       } catch (e) {
         if (e instanceof TeamMutationError) {
           return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });

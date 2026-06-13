@@ -27,6 +27,7 @@ import {
 import { resolveOrgForUser, type Role } from '../../services/membership.js';
 import { canIntegrate } from '../../middleware/permissions.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 
@@ -111,6 +112,12 @@ export default async function headlineRoutes(app: FastifyInstance) {
 
     const { publishMeetingUpdate } = await import('../../services/meeting-bus.js');
     publishMeetingUpdate(id, { kind: 'headline', action: 'created', entityId: created.id });
+    await emitOrgEventSafe({
+      orgId: ctx.org.id, topic: 'meeting', entityType: 'meeting_headline', entityId: created.id,
+      action: 'headline_created', teamId: created.teamId,
+      actorType: ctx.userId ? 'user' : 'agent', actorId: ctx.userId || 'api_key',
+      payload: { meetingId: id, kind: body.data.kind },
+    });
 
     return reply.status(201).send({ headline: created });
   });

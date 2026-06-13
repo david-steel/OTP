@@ -1144,6 +1144,14 @@ try {
 }
 
 try {
+  const { ensureOrgEvents } = await import('./db/ensure-org-events.js');
+  await ensureOrgEvents();
+  app.log.info('org_events table is ready (realtime sync outbox; emit gated by ORG_EVENTS_ENABLED)');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgEvents failed -- realtime sync outbox will not persist until resolved');
+}
+
+try {
   const { ensureGlossaryTermsTable } = await import('./db/ensure-glossary-terms.js');
   await ensureGlossaryTermsTable();
   app.log.info('glossary_terms table is ready and seeded');
@@ -1211,6 +1219,13 @@ try {
   if (process.env.NODE_ENV === 'production' || process.env.ENABLE_LIFECYCLE_SCHEDULER === 'true') {
     const { startLifecycleScheduler } = await import('./services/lifecycle-scheduler.js');
     startLifecycleScheduler();
+  }
+
+  // Realtime sync outbox retention. Safe to run regardless of ORG_EVENTS_ENABLED
+  // (no-op DELETE when the table is empty); prunes events older than 30 days.
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_ORG_EVENTS_RETENTION === 'true') {
+    const { startOrgEventsRetention } = await import('./services/org-events-retention.js');
+    startOrgEventsRetention();
   }
 } catch (err) {
   app.log.error(err);

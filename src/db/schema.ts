@@ -4,6 +4,7 @@ import {
   varchar,
   text,
   integer,
+  bigserial,
   real,
   boolean,
   timestamp,
@@ -1414,4 +1415,42 @@ export const orgEntitlements = pgTable('org_entitlements', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   orgIdx: index('org_entitlements_org_idx').on(table.orgId),
+}));
+
+// ---- Org event outbox (realtime sync R0) ----
+// Append-only durable log of every mutation worth fanning out live. Written
+// (gated by ORG_EVENTS_ENABLED) beside each entity write -- inside the same
+// transaction where one exists, best-effort beside the audit row where it
+// doesn't. Serves three jobs at once: the realtime fan-out source, the
+// Last-Event-ID replay/catch-up source, and an agent "what changed since"
+// cursor. `id` is a bigserial so it is strictly monotonic per insert order --
+// that ordering IS the cursor (uuid/createdAt can't give it). Payloads are
+// THIN (ids + minimal hints); subscribers refetch through the normal authorized
+// GET, so this channel can never leak more than the REST API already allows.
+// Pruned to 30 days by org-events-retention.ts. Created by ensure-org-events.ts
+// at boot (Drizzle migrate is broken in this repo); this def exists so the test
+// harness (drizzle-kit push) and typed queries see the table.
+export const orgEvents = pgTable('org_events', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  // Coarse subscription channel (claim/chart/kpi/rock/todo/issue/meeting/...);
+  // see ORG_EVENT_TOPICS in src/shared/org-event-types.ts.
+  topic: varchar('topic', { length: 40 }).notNull(),
+  // Nullable: org-wide events (no team scope). No FK -- kept loose like other
+  // team-id references so a team delete never blocks the append-only log.
+  teamId: uuid('team_id'),
+  entityType: varchar('entity_type', { length: 50 }).notNull(),
+  // varchar(120), not uuid: some entities key on uuid (rocks), others on an
+  // external/claim id (claims, graph nodes). Holds both.
+  entityId: varchar('entity_id', { length: 120 }),
+  action: varchar('action', { length: 60 }).notNull(),
+  actorType: varchar('actor_type', { length: 20 }).notNull().default('system'),
+  actorId: varchar('actor_id', { length: 255 }),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  // The replay cursor: WHERE org_id = $ AND id > $last ORDER BY id.
+  orgCursorIdx: index('org_events_org_cursor_idx').on(table.orgId, table.id),
+  // Retention prune scans by age.
+  createdIdx: index('org_events_created_idx').on(table.createdAt),
 }));

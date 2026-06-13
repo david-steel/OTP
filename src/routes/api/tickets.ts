@@ -5,6 +5,7 @@ import { tickets, todos, meetings, auditLogs } from '../../db/schema.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { z } from 'zod';
@@ -104,6 +105,12 @@ export default async function ticketRoutes(app: FastifyInstance) {
 
     const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
     publishToTeamMeetings(ticket.teamId, { kind: 'issue', action: 'created', entityId: ticket.id });
+    // ticket.orgId (not org?.id): public bug reports may have no auth'd org.
+    // Nullable -> '' makes the builder drop the event (anonymous, no org scope).
+    await emitOrgEventSafe({
+      orgId: ticket.orgId ?? '', topic: 'issue', entityType: 'ticket', entityId: ticket.id, action: 'created',
+      teamId: ticket.teamId, payload: { title: body.data.title, category: body.data.category },
+    });
 
     return reply.status(201).send({ ticket });
   });
@@ -236,6 +243,10 @@ export default async function ticketRoutes(app: FastifyInstance) {
 
     const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
     publishToTeamMeetings(updated.teamId, { kind: 'issue', action: 'updated', entityId: id });
+    await emitOrgEventSafe({
+      orgId: org.id, topic: 'issue', entityType: 'ticket', entityId: id, action: 'updated',
+      teamId: updated.teamId, payload: { idsStatus: updated.idsStatus, status: updated.status },
+    });
 
     return { ticket: updated };
   });
@@ -384,6 +395,10 @@ export default async function ticketRoutes(app: FastifyInstance) {
       orgId: org.id, entityId: id,
       details: { resolution: body.data.resolution, followUpTodoId: createdTodo?.id, meetingId: body.data.meetingId },
     }));
+    await emitOrgEventSafe({
+      orgId: org.id, topic: 'issue', entityType: 'ticket', entityId: id, action: 'solved',
+      teamId: ticket.teamId, payload: { meetingId: body.data.meetingId, followUpTodoId: createdTodo?.id },
+    });
 
     return { ticket, todo: createdTodo };
   });

@@ -8,6 +8,7 @@ import { getAuth } from '@clerk/fastify';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { notify, resolveMemberIdentity } from '../../services/notifications.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
@@ -222,6 +223,13 @@ export default async function todoRoutes(app: FastifyInstance) {
         const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
         publishToTeamMeetings(todo.teamId, { kind: 'todo', action: 'created', entityId: todo.id });
       }
+      // Emit for personal AND l10 todos -- /me/todos live updates need the
+      // personal ones too (the bus publish above is l10-only by design).
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'todo', entityType: 'todo', entityId: todo.id, action: 'created',
+        teamId: todo.teamId, actorType: createdBy === 'api_key' ? 'agent' : 'user', actorId: createdBy,
+        payload: { kind: todo.kind, priority: todo.priority },
+      });
 
       created.push(todo);
     }
@@ -527,6 +535,14 @@ export default async function todoRoutes(app: FastifyInstance) {
       const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
       publishToTeamMeetings(updated.teamId, { kind: 'todo', action: 'updated', entityId: id });
     }
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'todo', entityType: 'todo', entityId: id, action: 'updated',
+        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+        payload: { kind: updated.kind, done: !!updated.doneAt },
+      });
+    }
 
     return { todo: responseTodo };
   });
@@ -552,6 +568,14 @@ export default async function todoRoutes(app: FastifyInstance) {
     if (deleted.kind === 'l10') {
       const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
       publishToTeamMeetings(deleted.teamId, { kind: 'todo', action: 'deleted', entityId: id });
+    }
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'todo', entityType: 'todo', entityId: id, action: 'deleted',
+        teamId: deleted.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+        payload: { kind: deleted.kind },
+      });
     }
 
     return { ok: true };

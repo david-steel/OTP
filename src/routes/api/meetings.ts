@@ -7,6 +7,7 @@ import { getAuth } from '@clerk/fastify';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isAttendee } from '../../services/meeting-access.js';
@@ -385,6 +386,13 @@ export default async function meetingRoutes(app: FastifyInstance) {
     }));
 
     publishMeetingUpdate(id, { kind: 'meeting', action: 'started' });
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'meeting', entityType: 'meeting', entityId: id, action: 'started',
+        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+      });
+    }
     return { meeting: updated };
   });
 
@@ -421,6 +429,13 @@ export default async function meetingRoutes(app: FastifyInstance) {
     }));
 
     publishMeetingUpdate(id, { kind: 'kpi', action: 'refreshed' });
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'meeting', entityType: 'meeting', entityId: id, action: 'scorecard_refreshed',
+        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+      });
+    }
     return { meeting: updated };
   });
 
@@ -470,6 +485,13 @@ export default async function meetingRoutes(app: FastifyInstance) {
     }
 
     publishMeetingUpdate(id, { kind: 'meeting', action: 'ended' });
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'meeting', entityType: 'meeting', entityId: id, action: 'ended',
+        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+      });
+    }
     return { meeting: updated, nextOccurrence };
   });
 
@@ -603,6 +625,14 @@ export default async function meetingRoutes(app: FastifyInstance) {
       kind: 'attendees' in updates ? 'attendees' : 'meeting',
       action: 'updated',
     });
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'meeting', entityType: 'meeting', entityId: id, action: 'updated',
+        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+        payload: { fields: Object.keys(updates) },
+      });
+    }
 
     return { meeting: updated };
   });

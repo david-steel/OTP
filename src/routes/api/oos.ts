@@ -12,6 +12,7 @@ import { calculateAgenticLevel } from '../../services/agentic-level-calculator.j
 import { computeAllSimilarities } from '../../services/similarity.js';
 import { computeDiff } from '../../services/diff-engine.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
+import { emitOrgEvent, emitOrgEventSafe } from '../../services/org-events.js';
 import { extractGraph } from '../../graph/graph-extractor.js';
 import { autoFixOOS } from '../../services/auto-fixer.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
@@ -764,6 +765,13 @@ ${claimSections.join('\n')}`.trim();
           },
         })
       );
+      // Inside the tx: a failed emit rolls the publish back with it (atomic).
+      await emitOrgEvent(tx, {
+        orgId: org.id, topic: 'claim', entityType: 'oos_file', entityId: id, action: 'published',
+        actorType: getAuth(request).userId ? 'user' : 'agent',
+        actorId: getAuth(request).userId || 'api_key',
+        payload: { version: oosFile.version, claimCount: parsed.claims.length, qualityTier: qualityResult.tier },
+      });
 
       return pubRow;
     });
@@ -942,6 +950,11 @@ ${claimSections.join('\n')}`.trim();
         },
       })
     );
+    await emitOrgEventSafe({
+      orgId: org.id, topic: 'claim', entityType: 'claim', entityId: newClaim.id, action: 'captured',
+      actorType: 'agent', actorId: body.agent || 'api_key',
+      payload: { claimId, section, oosVersion: draft.version, confidence, evidence },
+    });
 
     return {
       success: true,

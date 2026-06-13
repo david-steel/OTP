@@ -17,6 +17,7 @@ import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { resolveOrgForUser } from '../../services/membership.js';
 import {
   createKpi,
@@ -141,6 +142,11 @@ export default async function kpiRoutes(app: FastifyInstance) {
 
     try {
       const kpi = await createKpi(org.id, body.data, getCreatedBy(request));
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'kpi', entityType: 'kpi', entityId: kpi.id, action: 'created',
+        actorType: isApiKeyAuth(request) ? 'agent' : 'user', actorId: getCreatedBy(request),
+        payload: { title: kpi.title },
+      });
       return reply.status(201).send(kpi);
     } catch (e) {
       if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
@@ -269,6 +275,11 @@ export default async function kpiRoutes(app: FastifyInstance) {
         { periodStart, value: body.data.value, notes: body.data.notes ?? null, source },
         getCreatedBy(request),
       );
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'kpi', entityType: 'kpi_value', entityId: request.params.id, action: 'value_recorded',
+        actorType: source === 'api' ? 'agent' : 'user', actorId: getCreatedBy(request),
+        payload: { periodStart: periodStart.toISOString(), value: body.data.value },
+      });
       return reply.status(201).send(row);
     } catch (e) {
       if (e instanceof KpiError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });

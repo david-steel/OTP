@@ -7,6 +7,7 @@ import { getAuth } from '@clerk/fastify';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { smartDataSchema } from '../../shared/smart-rock.js';
@@ -118,6 +119,11 @@ export default async function rockRoutes(app: FastifyInstance) {
 
     const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
     publishToTeamMeetings(rock.teamId, { kind: 'rock', action: 'created', entityId: rock.id });
+    await emitOrgEventSafe({
+      orgId: org.id, topic: 'rock', entityType: 'rock', entityId: rock.id, action: 'created',
+      teamId: rock.teamId, actorType: createdBy === 'api_key' ? 'agent' : 'user', actorId: createdBy,
+      payload: { title: rock.title, quarter: rock.quarter },
+    });
 
     return reply.status(201).send({ rock });
   });
@@ -209,6 +215,13 @@ export default async function rockRoutes(app: FastifyInstance) {
 
     const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
     publishToTeamMeetings(updated.teamId, { kind: 'rock', action: 'updated', entityId: id });
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'rock', entityType: 'rock', entityId: id, action: 'updated',
+        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+      });
+    }
 
     return { rock: updated };
   });
@@ -233,6 +246,13 @@ export default async function rockRoutes(app: FastifyInstance) {
 
     const { publishToTeamMeetings } = await import('../../services/meeting-bus.js');
     publishToTeamMeetings(deleted.teamId, { kind: 'rock', action: 'deleted', entityId: id });
+    {
+      const actor = getAuth(request).userId;
+      await emitOrgEventSafe({
+        orgId: org.id, topic: 'rock', entityType: 'rock', entityId: id, action: 'deleted',
+        teamId: deleted.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
+      });
+    }
 
     return { ok: true };
   });
