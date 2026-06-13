@@ -801,6 +801,9 @@ await app.register(import('./routes/api/billing.js'), { prefix: '/api/v1' });
   await app.register(stripeWebhookRoutes);
 }
 await app.register(import('./routes/api/push.js'), { prefix: '/api/v1' });
+// Realtime sync (R1): org-wide live event stream (SSE). Route 404s unless
+// REALTIME_STREAM_ENABLED=true, so registering it is inert until flipped.
+await app.register(import('./routes/api/events.js'), { prefix: '/api/v1' });
 
 // Service worker at the ORIGIN ROOT (scope '/'), with no-cache so updates
 // propagate. Do NOT move this under /public/* -- that path is

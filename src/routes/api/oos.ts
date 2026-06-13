@@ -13,6 +13,7 @@ import { computeAllSimilarities } from '../../services/similarity.js';
 import { computeDiff } from '../../services/diff-engine.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { emitOrgEvent, emitOrgEventSafe } from '../../services/org-events.js';
+import { publishOrgEvent, type OrgEventEnvelope } from '../../services/event-bus.js';
 import { extractGraph } from '../../graph/graph-extractor.js';
 import { autoFixOOS } from '../../services/auto-fixer.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
@@ -702,6 +703,9 @@ ${claimSections.join('\n')}`.trim();
       evidence: c.evidence,
     })), org.pseudonym || org.name);
 
+    // Captured inside the tx, published to the live bus AFTER commit (a
+    // pre-commit publish could surface a phantom event if the tx rolls back).
+    let publishedEvent: OrgEventEnvelope | null = null;
     const published = await db.transaction(async (tx) => {
       // Persist the scrubbed copies (if the user picked strip_contacts)
       // alongside the status flip so the published row matches what the
@@ -766,7 +770,7 @@ ${claimSections.join('\n')}`.trim();
         })
       );
       // Inside the tx: a failed emit rolls the publish back with it (atomic).
-      await emitOrgEvent(tx, {
+      publishedEvent = await emitOrgEvent(tx, {
         orgId: org.id, topic: 'claim', entityType: 'oos_file', entityId: id, action: 'published',
         actorType: getAuth(request).userId ? 'user' : 'agent',
         actorId: getAuth(request).userId || 'api_key',
@@ -775,6 +779,8 @@ ${claimSections.join('\n')}`.trim();
 
       return pubRow;
     });
+    // Now committed -- safe to fan out to live subscribers.
+    if (publishedEvent) publishOrgEvent(publishedEvent);
 
     // Step 5: Compute similarities + notify (fire-and-forget, OUTSIDE the
     // transaction so the response returns immediately and a similarity
