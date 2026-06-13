@@ -1523,6 +1523,50 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
 
   function reload() { window.location.reload(); }
 
+  // --- Realtime (R2.2): auto-refresh this dashboard when someone ELSE changes
+  // shared data (a teammate or an agent completes a to-do, moves a rock, saves
+  // a KPI, etc). The page already reload()s after the viewer's own mutations,
+  // so a remote-event reload is symmetric -- not a new disruption pattern. We
+  // debounce bursts and never yank the page mid-edit: if a field is focused or
+  // the add-to-do form is open, we show a small "Updated -- refresh" pill and
+  // apply once the viewer is idle. Gated by OTPLive (only connects when the live
+  // stream is on); a complete no-op otherwise. NOTE: this is a guarded reload,
+  // not per-section targeted-swap -- the dashboard binds its handlers at load
+  // with no re-init path, so an innerHTML swap would kill them. Targeted-swap is
+  // a later increment that first needs that JS refactored to be re-callable.
+  (function(){
+    if (!(window.OTPLive && window.OTPLive.enabled())) return;
+    var RELEVANT = { todo: 1, rock: 1, kpi: 1, issue: 1, meeting: 1 };
+    var timer = null;
+    function userBusy(){
+      var a = document.activeElement;
+      if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return true;
+      var addForm = document.getElementById('todo-add-form');
+      if (addForm && !addForm.classList.contains('hidden')) return true; // mid add-to-do
+      return false;
+    }
+    function showPill(){
+      if (document.getElementById('otp-live-pill')) return;
+      var p = document.createElement('button');
+      p.id = 'otp-live-pill';
+      p.type = 'button';
+      p.textContent = 'Refresh for new updates';
+      p.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:9999;background:#1742d6;color:#fff;border:none;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,0.18);cursor:pointer;';
+      p.addEventListener('click', reload);
+      document.body.appendChild(p);
+    }
+    function apply(){
+      timer = null;
+      if (userBusy()) { showPill(); timer = setTimeout(apply, 4000); return; } // wait for idle
+      reload();
+    }
+    function schedule(){ clearTimeout(timer); timer = setTimeout(apply, 1500); } // coalesce bursts
+    window.OTPLive.subscribe({
+      onEvent: function(env){ if (RELEVANT[env.topic]) schedule(); },
+      onResync: schedule,
+    });
+  })();
+
   // --- Headlines ---
   var headlineTeamId = <%- jsonForScript(selectedTeamId || '') %>;
   var hlForm = document.getElementById('headline-form');
