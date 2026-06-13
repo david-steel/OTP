@@ -1452,6 +1452,30 @@
     }
   }
 
+  // Same live-swap for the Headlines (#headlines) section.
+  let headlinesRefreshing = false;
+  async function refreshHeadlinesSection() {
+    const current = document.getElementById('headlines');
+    if (!current || headlinesRefreshing) return;
+    headlinesRefreshing = true;
+    try {
+      const resp = await fetch(window.location.href, { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('status ' + resp.status);
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const fresh = doc.getElementById('headlines');
+      const live = document.getElementById('headlines');
+      if (!fresh || !live) throw new Error('no #headlines');
+      rehomeFlagForm();
+      live.replaceWith(fresh);
+    } catch (e) {
+      try { snapshotDrafts(); } catch (e2) {}
+      window.location.reload();
+    } finally {
+      headlinesRefreshing = false;
+    }
+  }
+
   // ===== Per-section timer =====
   const chips = Array.from(document.querySelectorAll('.agenda-chip'));
   const clock = document.getElementById('meeting-clock');
@@ -1649,17 +1673,19 @@
     cascadeBtn.disabled = false; cascadeBtn.textContent = orig;
   });
 
-  // Save segue / headlines / cascading message
-  document.querySelectorAll('[data-save]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const field = btn.dataset.save;
-      const map = { segueNotes: 'segue-notes', headlines: 'headlines-notes', cascadingMessage: 'cascading-message' };
-      const value = document.getElementById(map[field]).value;
-      btn.textContent = 'Saving...';
-      await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
-      btn.textContent = 'Saved';
-      setTimeout(() => btn.textContent = 'Save', 1500);
-    });
+  // Save segue / headlines / cascading message (delegated -- the headlines Save
+  // button lives in #headlines, which gets live-swapped).
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-save]');
+    if (!btn) return;
+    const field = btn.dataset.save;
+    const map = { segueNotes: 'segue-notes', headlines: 'headlines-notes', cascadingMessage: 'cascading-message' };
+    const el = document.getElementById(map[field]);
+    if (!el) return;
+    btn.textContent = 'Saving...';
+    await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [field]: el.value }) });
+    btn.textContent = 'Saved';
+    setTimeout(() => btn.textContent = 'Save', 1500);
   });
 
   // ===== Per-attendee check-in (Segue) =====
@@ -1712,17 +1738,23 @@
   });
 
   // Save-on-blur for the free-text segments, so notes are never lost by
-  // forgetting to click Save.
-  [['segueNotes','segue-notes'],['headlines','headlines-notes'],['cascadingMessage','cascading-message']].forEach(function(pair){
-    const el = document.getElementById(pair[1]);
-    if (!el) return;
-    let lastSaved = el.value;
-    el.addEventListener('blur', async function(){
-      if (el.value === lastSaved) return;
-      lastSaved = el.value;
-      await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [pair[0]]: el.value }) });
+  // forgetting to click Save. Delegated (focusin snapshots, focusout saves if
+  // changed) so the headlines-notes textarea survives a #headlines swap.
+  (function(){
+    const NOTES = { 'segue-notes': 'segueNotes', 'headlines-notes': 'headlines', 'cascading-message': 'cascadingMessage' };
+    document.addEventListener('focusin', function(e){
+      const el = e.target;
+      if (el && el.id && NOTES[el.id]) el.dataset.savedValue = el.value;
     });
-  });
+    document.addEventListener('focusout', async function(e){
+      const el = e.target;
+      if (!el || !el.id || !NOTES[el.id]) return;
+      const base = el.dataset.savedValue;
+      if (base === undefined || el.value === base) return;
+      el.dataset.savedValue = el.value;
+      await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ [NOTES[el.id]]: el.value }) });
+    });
+  })();
 
   // Start / end meeting
   const startBtn = document.getElementById('start-meeting');
@@ -2408,20 +2440,21 @@
     setTimeout(() => card.remove(), 250);
   });
 
-  // ===== Add headline =====
-  const addHeadlineBtn = document.getElementById('add-headline');
-  if (addHeadlineBtn) addHeadlineBtn.addEventListener('click', async () => {
+  // ===== Add headline (delegated -- #add-headline lives inside #headlines) =====
+  document.addEventListener('click', async (e) => {
+    const addBtn = e.target.closest('#add-headline');
+    if (!addBtn) return;
     const kind = (document.getElementById('new-headline-kind') || {}).value || 'other';
     const body = (document.getElementById('new-headline-body') || {}).value.trim();
     if (!body) return alert('Headline text is required.');
-    addHeadlineBtn.disabled = true; addHeadlineBtn.textContent = 'Adding...';
+    addBtn.disabled = true; addBtn.textContent = 'Adding...';
     const res = await api('/meetings/' + meetingId + '/headlines', {
       method: 'POST',
       body: JSON.stringify({ kind, body }),
     });
     if (res?.error || !res?.headline) {
       alert('Add failed: ' + errMsg(res));
-      addHeadlineBtn.disabled = false; addHeadlineBtn.textContent = 'Add';
+      addBtn.disabled = false; addBtn.textContent = 'Add';
       return;
     }
     reloadKeep();
@@ -2477,19 +2510,19 @@
     if (hlBtn) { openFlagForm(hlBtn, 'Headlines'); return; }
   });
 
-  // ===== Mark headline addressed =====
-  document.querySelectorAll('[data-headline-done]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-headline-done');
-      btn.disabled = true; btn.textContent = 'Marking...';
-      const res = await api('/meetings/' + meetingId + '/headlines/' + id + '/read', { method: 'POST' });
-      if (res?.error) {
-        alert('Failed: ' + errMsg(res));
-        btn.disabled = false; btn.textContent = '✓ Addressed';
-        return;
-      }
-      reloadKeep();
-    });
+  // ===== Mark headline addressed (delegated) =====
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-headline-done]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-headline-done');
+    btn.disabled = true; btn.textContent = 'Marking...';
+    const res = await api('/meetings/' + meetingId + '/headlines/' + id + '/read', { method: 'POST' });
+    if (res?.error) {
+      alert('Failed: ' + errMsg(res));
+      btn.disabled = false; btn.textContent = '✓ Addressed';
+      return;
+    }
+    reloadKeep();
   });
   // (data-flag-kpi handled by the delegated flag-button listener above.)
 
@@ -2629,6 +2662,20 @@
       scorecardRefreshTimer = setTimeout(() => { scorecardRefreshTimer = null; refreshScorecardSection(); }, 600);
     }
 
+    // Same for the Headlines section (kind === 'headline').
+    let headlinesRefreshTimer = null;
+    function scheduleHeadlinesRefresh() {
+      const active = document.activeElement;
+      const hlEl = document.getElementById('headlines');
+      if (active && hlEl && hlEl.contains(active) &&
+          (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.isContentEditable)) {
+        document.body.dataset.pendingHeadlinesRefresh = '1';
+        return;
+      }
+      if (headlinesRefreshTimer) return;
+      headlinesRefreshTimer = setTimeout(() => { headlinesRefreshTimer = null; refreshHeadlinesSection(); }, 600);
+    }
+
     function applyPresence(presence) {
       if (!Array.isArray(presence)) return;
       if (countEl) countEl.textContent = String(presence.length);
@@ -2691,10 +2738,11 @@
         try {
           const payload = JSON.parse(e.data);
           const kind = payload.kind || 'updated';
-          // Issues + Rocks + Scorecard update live (targeted swap); else reload.
+          // Issues + Rocks + Scorecard + Headlines update live (targeted swap); else reload.
           if (kind === 'issue') scheduleIssueRefresh();
           else if (kind === 'rock') scheduleRockRefresh();
           else if (kind === 'kpi') scheduleScorecardRefresh();
+          else if (kind === 'headline') scheduleHeadlinesRefresh();
           else scheduleReload(kind);
         } catch (err) { scheduleReload('unknown'); }
       });
@@ -2723,6 +2771,10 @@
         if (document.body.dataset.pendingScorecardRefresh === '1') {
           delete document.body.dataset.pendingScorecardRefresh;
           refreshScorecardSection();
+        }
+        if (document.body.dataset.pendingHeadlinesRefresh === '1') {
+          delete document.body.dataset.pendingHeadlinesRefresh;
+          refreshHeadlinesSection();
         }
         if (document.body.dataset.pendingReload === '1') {
           delete document.body.dataset.pendingReload;
