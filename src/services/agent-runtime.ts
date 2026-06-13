@@ -8,9 +8,11 @@
  *     once the cron tick + scheduling UI ship.
  *   - Single ANTHROPIC_API_KEY env var (the platform's). BYO key per
  *     org is on the roadmap.
- *   - No tool use. The agent's "tools" + "mcps" entries are passed as
- *     descriptive context only. Real MCP wiring is Stage 3.
- *   - Output is a plain string (Claude's text response).
+ *   - Tool use (Inc 3): when AGENT_TOOLS_ENABLED is on AND the org has active
+ *     Composio connections, the run executes a bounded Claude<->tool loop over
+ *     the org's read-only connected tools (see composio-tools.ts). Off/unconnected
+ *     => zero tools passed => byte-identical single-shot behavior as before.
+ *   - Output is a plain string (Claude's final text response).
  *
  * Reads the published OOS chart for the agent's properties, so an agent
  * has to be on the chart before it can run. If the chart entry is in a
@@ -23,11 +25,17 @@ import { sql } from 'drizzle-orm';
 import { getOrgTeamGraph } from './team-graph.js';
 import { getBalanceCents, debitWallet } from './wallet.js';
 import { computeDebitCents, markupMultipleFromEnv } from '../shared/ai-pricing.js';
+import { getOrgTools, executeOrgTool, type OrgToolset } from './composio-tools.js';
 
 // Default to Sonnet -- ~10x cheaper than Opus and plenty capable for the
 // agent-runtime use case. Override with OTP_AGENT_MODEL env var per-org.
 const DEFAULT_MODEL = process.env.OTP_AGENT_MODEL || 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 4096;
+
+// Inc 3: max Claude<->tool round-trips before we stop looping. The agent gets
+// this many chances to call tools + reason over results before producing final
+// text. Bounds both latency and token spend. 6 is plenty for read-only KPI work.
+const MAX_TOOL_ITERATIONS = 6;
 
 // Smallest balance we require before starting a metered agent run. The real
 // cost is debited from actual token counts after the run; this is a fail-closed
@@ -299,6 +307,83 @@ async function debitRun(opts: RunAgentOptions, runId: string, runModel: string, 
   return costCents;
 }
 
+interface ToolLoopResult {
+  output: string;
+  tokensInput: number;
+  tokensOutput: number;
+  model: string;
+  toolCalls: number;
+}
+
+/**
+ * The Claude<->tool round-trip loop (Inc 3). Runs up to MAX_TOOL_ITERATIONS
+ * turns: call Claude, and while it asks for tools, execute them (read-only, via
+ * Composio) and feed the results back, until it produces final text. Token usage
+ * is SUMMED across every turn so the caller debits the whole run once.
+ *
+ * When `toolset.tools` is empty (the default: feature off, no Composio, or no
+ * active connections) the loop makes exactly ONE Claude call with NO tools param
+ * -- byte-identical to the pre-Inc-3 single-shot behavior. So this is safe to put
+ * on the hot path unconditionally; tools only ever engage when explicitly armed.
+ */
+async function runToolLoop(
+  client: Anthropic,
+  systemPrompt: string,
+  userPrompt: string,
+  toolset: OrgToolset,
+  orgId: string,
+): Promise<ToolLoopResult> {
+  const hasTools = toolset.tools.length > 0;
+  const messages: any[] = [{ role: 'user', content: userPrompt }];
+  let tokensInput = 0;
+  let tokensOutput = 0;
+  let model = DEFAULT_MODEL;
+  let toolCalls = 0;
+  let finalText = '';
+
+  for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+    const response = await client.messages.create({
+      model: DEFAULT_MODEL,
+      max_tokens: DEFAULT_MAX_TOKENS,
+      system: systemPrompt,
+      messages,
+      ...(hasTools ? { tools: toolset.tools as any } : {}),
+    });
+    tokensInput += response.usage?.input_tokens ?? 0;
+    tokensOutput += response.usage?.output_tokens ?? 0;
+    model = response.model || model;
+
+    const textPart = response.content
+      .filter((c: any) => c.type === 'text')
+      .map((c: any) => c.text)
+      .join('\n');
+    if (textPart) finalText = textPart;
+
+    if (response.stop_reason !== 'tool_use') break;
+
+    const toolUses = response.content.filter((c: any) => c.type === 'tool_use');
+    if (!toolUses.length) break;
+
+    // Echo the assistant's tool-call turn back, then answer each tool_use.
+    messages.push({ role: 'assistant', content: response.content });
+    const toolResults: any[] = [];
+    for (const tu of toolUses as any[]) {
+      toolCalls++;
+      const result = await executeOrgTool(orgId, tu.name, tu.input);
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: tu.id,
+        content: JSON.stringify(result).slice(0, 8000),
+        ...(result.successful ? {} : { is_error: true }),
+      });
+    }
+    messages.push({ role: 'user', content: toolResults });
+  }
+
+  if (!finalText) finalText = '(no text output -- tool iteration limit reached)';
+  return { output: finalText, tokensInput, tokensOutput, model, toolCalls };
+}
+
 export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   const startedAt = new Date();
   const prep = await prepareRun(opts, startedAt);
@@ -308,21 +393,16 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
-    const response = await client.messages.create({
-      model: DEFAULT_MODEL,
-      max_tokens: DEFAULT_MAX_TOKENS,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    });
+    // Inc 3: resolve the org's read-only tools (empty unless armed + connected),
+    // then run the bounded tool loop. With no tools this is one Claude call.
+    const toolset = await getOrgTools(opts.orgId);
+    const loop = await runToolLoop(client, systemPrompt, userPrompt, toolset, opts.orgId);
 
     const completedAt = new Date();
-    const textContent = response.content
-      .filter((c: any) => c.type === 'text')
-      .map((c: any) => c.text)
-      .join('\n');
-    const tokensInput = response.usage?.input_tokens ?? null;
-    const tokensOutput = response.usage?.output_tokens ?? null;
-    const runModel = response.model || DEFAULT_MODEL;
+    const textContent = loop.output;
+    const tokensInput = loop.tokensInput;
+    const tokensOutput = loop.tokensOutput;
+    const runModel = loop.model;
 
     const costCents = metering ? await debitRun(opts, runId, runModel, tokensInput, tokensOutput, sopTitle) : null;
 
@@ -383,6 +463,30 @@ export async function runAgentStream(
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
+    // Inc 3: if the org has armed, connected tools, run the (non-streaming) tool
+    // loop and emit the final text in one delta. Tool round-trips don't interleave
+    // cleanly with token streaming, so we trade live streaming for real tool use
+    // ONLY when tools are present. The common no-tools path streams as before.
+    const toolset = await getOrgTools(opts.orgId);
+    if (toolset.tools.length > 0) {
+      const loop = await runToolLoop(client, systemPrompt, userPrompt, toolset, opts.orgId);
+      try { onDelta(loop.output); } catch { /* consumer (SSE socket) gone */ }
+      const completedAt = new Date();
+      const costCents = metering ? await debitRun(opts, runId, loop.model, loop.tokensInput, loop.tokensOutput, sopTitle) : null;
+      await db.execute(sql`
+        UPDATE agent_runs
+        SET status = 'succeeded', output = ${loop.output}, model = ${loop.model},
+            tokens_input = ${loop.tokensInput}, tokens_output = ${loop.tokensOutput},
+            cost_cents = ${costCents}, completed_at = ${completedAt}
+        WHERE id = ${runId}
+      `);
+      return {
+        runId, status: 'succeeded', output: loop.output, error: null,
+        tokensInput: loop.tokensInput, tokensOutput: loop.tokensOutput, costCents, sopTitle,
+        model: loop.model, startedAt, completedAt,
+      };
+    }
+
     const stream = client.messages.stream({
       model: DEFAULT_MODEL,
       max_tokens: DEFAULT_MAX_TOKENS,
