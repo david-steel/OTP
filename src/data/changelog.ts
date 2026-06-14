@@ -7,6 +7,8 @@ export interface ChangelogEntry {
   title: string;        // 'Vulnerability Scanner, Foundation Score, and Share Your Score'
   summary: string;      // 1-2 sentence plain text summary for the email
   details?: string;     // Full HTML description (for the What's New page, optional for email)
+  why?: string;         // The Orgy Weekly "↳ so you..." line: reconnect this update to why they signed up.
+  cta?: { text: string; url: string };  // Weekly-email button; if absent, the sender derives one from tags.
 }
 
 export const changelog: ChangelogEntry[] = [
@@ -17,6 +19,8 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-06-12',
     tags: ['Major', 'Templates'],
     title: 'A free library of 180+ meeting templates and agendas',
+    why: 'One more thing off your plate. You never start a meeting from a blank page again.',
+    cta: { text: 'Raid the library', url: '/templates' },
     summary: 'OrgTP now has a free meeting template library at /templates: ready-to-run agendas for every kind of meeting and every major operating system. EOS, Scaling Up, Pinnacle, the Accelerate Operating System, Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, Balanced Scorecard, plus Agile and Scrum ceremonies, one-on-ones, retrospectives, focus groups, QBRs, board meetings, and more. Search by name or methodology, download any template as markdown, print it, or adapt it and run it live in OrgTP. No sign-in required.',
     details: `<p>Every meeting worth running has a shape. We wrote down more than 180 of them.</p>
 <ul class="list-disc pl-6 space-y-1">
@@ -33,6 +37,8 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-06-12',
     tags: ['Major', 'Privacy'],
     title: 'Private mode is live: keep your organization off the network entirely',
+    why: 'Put your real numbers in and trust it completely.',
+    cta: { text: 'Flip the switch', url: '/settings/configuration' },
     summary: 'Organizations on the Private plan can now flip a single switch and disappear from every shared surface. A private organization never appears in browse, search, the intelligence graph, the experts and coaches directories, or org comparisons, and its data is never sourced into another organization\'s recommendations or cross-org learnings. Your members still see everything inside your own workspace. Turn it on under Settings, Configuration.',
     details: `<p>The whole operating system, behind a closed door, enforced everywhere.</p>
 <ul class="list-disc pl-6 space-y-1">
@@ -47,6 +53,8 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-06-12',
     tags: ['Help', 'Search'],
     title: 'Search the user guide and the article library',
+    why: 'Never stuck, never waiting on an answer.',
+    cta: { text: 'Try it', url: '/guide' },
     summary: 'The User Guide is now a searchable help center: every part of OrgTP explained, with a table of contents and an instant search box that highlights matches as you type. The article library at /blog is searchable too, and the search box in the Help panel jumps you straight into the guide with your results. There is also a dedicated Connect Your Agent page with the copy-paste prompt that builds your first OOS in about a minute.',
     details: `<ul class="list-disc pl-6 space-y-1">
 <li><strong>Searchable guide.</strong> Open the User Guide (or the Help panel), type what you are looking for, and matching sections surface instantly with the terms highlighted. Shareable: /guide?q=scorecard deep-links a search.</li>
@@ -61,6 +69,8 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-06-11',
     tags: ['Major', 'Dashboard'],
     title: 'Design your own dashboard: row layouts and fonts up to 3XL',
+    why: 'This is the morning you pictured when you signed up: one screen, your whole operation, the way you run it.',
+    cta: { text: 'Go make it yours', url: '/dashboard' },
     summary: 'Customize mode now goes much further than rearranging tiles. The Daily dashboard is a set of rows, and every row gets its own shape: one column, thirds, halves, one-third plus two-thirds, or the reverse -- mixed freely, up to eight rows. Drag tiles between any row and cell, add or remove rows, and nothing is ever lost. Font sizes also grew: S, M, L, XL, 2XL, and 3XL, with layouts that adapt instead of squishing. Everything saves to your profile as you go.',
     details: `<p>Hit Customize on the Daily dashboard.</p>
 <ul class="list-disc pl-6 space-y-1">
@@ -82,6 +92,8 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-06-11',
     tags: ['Major', 'Rocks'],
     title: 'Milestones on Quarterly Priorities: break a Rock into checkable steps',
+    why: 'The priorities you set actually move, instead of just getting set.',
+    cta: { text: 'Open a Rock', url: '/rocks' },
     summary: 'Every Rock can now carry milestones: the concrete steps between here and done, each with its own due date and a checkbox. Check them off as you go and the Rock shows live progress (3 of 5). Each milestone can also have to-dos assigned to people, so the step has owners, not just a name. Add and manage milestones on the Daily dashboard; check them off live during your weekly meeting in the Rock Review.',
     details: `<p>Rocks tell you the destination. Milestones tell you whether you are on the road.</p>
 <ul class="list-disc pl-6 space-y-1">

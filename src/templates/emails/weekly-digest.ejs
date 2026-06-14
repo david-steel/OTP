@@ -1,142 +1,138 @@
-<!DOCTYPE html>
+<%
+  // THE ORGY WEEKLY -- the customer-facing weekly product email.
+  // Reusable engine: fed by changelog.ts each week, Orgy's pose rotates by week
+  // so it never looks the same twice. Locals (all provided by the sender):
+  //   issueLabel   - string, e.g. "Issue #24 · Jun 16"
+  //   streakBadge  - string | null, e.g. "🔥 24-week ship streak" (null = hide; never fake a number)
+  //   dropCount    - number of updates this week
+  //   heroPose, nudgePose, peekPose - absolute https image URLs (rotate weekly)
+  //   pick         - the headliner entry { title, summary, why, ctaText, ctaUrl }
+  //   haul         - array of remaining entries [{ title, summary, why, tags, ctaText, ctaUrl }]
+  //   baseUrl      - e.g. https://orgtp.com
+  //   whyHeadline  - the constant promise (reconnect to why they signed up)
+  // Email-safe: table layout, inline styles, hosted images, no CSS animation
+  // (clients strip it; a looping GIF is the way if we ever want motion).
+  function emojiFor(tags){
+    var t = (tags || []).join(' ').toLowerCase();
+    if (t.indexOf('template') > -1) return '📚';
+    if (t.indexOf('privacy') > -1 || t.indexOf('security') > -1) return '🥷';
+    if (t.indexOf('dashboard') > -1) return '🎛️';
+    if (t.indexOf('rock') > -1) return '🎯';
+    if (t.indexOf('meeting') > -1) return '📅';
+    if (t.indexOf('search') > -1 || t.indexOf('help') > -1) return '🔎';
+    if (t.indexOf('fix') > -1) return '🔧';
+    if (t.indexOf('kpi') > -1) return '📊';
+    return '✨';
+  }
+  var _tileThemes = [
+    { bg:'#DFF5AE', ink:'#14271a', sub:'#3c4636', link:'#14271a', why:'#5a7d1f' },
+    { bg:'#E6F0FF', ink:'#14271a', sub:'#33405a', link:'#1d4ed8', why:'#1d4ed8' },
+    { bg:'#14271a', ink:'#B8F042', sub:'#c7d6b4', link:'#B8F042', why:'#B8F042' }
+  ];
+%><!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>What's New on OTP</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Orgy Weekly</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+<body style="margin:0;padding:0;background:#14271a;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#14271a;">
+ <tr><td align="center" style="padding:26px 12px;">
+  <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:22px;overflow:hidden;border:4px solid #14271a;">
 
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #0a0f1e; padding: 32px 40px; border-radius: 12px 12px 0 0;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td>
-                    <span style="color: #0095ff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">OTP</span>
-                    <span style="color: #7cc4fe; font-size: 14px; font-weight: 400; margin-left: 8px;">Product Updates</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px;">
-                    <span style="color: #5a6577; font-size: 13px;"><%= dateRangeStart %> - <%= dateRangeEnd %></span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+   <!-- MASTHEAD -->
+   <tr><td style="background:#14271a;padding:18px 30px 16px;">
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+       <td>
+         <div style="font-size:26px;font-weight:900;letter-spacing:-1px;color:#B8F042;line-height:1;">THE ORGY WEEKLY</div>
+         <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7e9a5a;margin-top:5px;"><%= issueLabel %> &nbsp;·&nbsp; brought to you by [OTP]</div>
+       </td>
+       <% if (streakBadge) { %><td align="right" valign="top"><span style="display:inline-block;background:#B8F042;color:#14271a;font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;padding:6px 11px;border-radius:20px;"><%= streakBadge %></span></td><% } %>
+     </tr></table>
+   </td></tr>
 
-          <!-- Body -->
-          <tr>
-            <td style="background-color: #ffffff; padding: 40px;">
+   <!-- HERO -->
+   <tr><td style="background:radial-gradient(circle at 80% 25%,#C6F95A 0%,#A8E63A 42%,#8BC42A 100%);padding:30px 34px 8px;">
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+       <td valign="middle" style="width:58%;">
+         <h1 style="margin:0 0 12px;font-size:50px;line-height:0.92;font-weight:900;color:#14271a;letter-spacing:-2px;">We shipped.<br>Again.</h1>
+         <p style="margin:0;font-size:17px;line-height:1.45;font-weight:700;color:#1f3a10;"><%= dropCount %> new thing<%= dropCount === 1 ? '' : 's' %> this week. That is just a Tuesday around here. Come grab them.</p>
+       </td>
+       <td valign="bottom" align="right" style="width:42%;"><img src="<%= heroPose %>" width="200" alt="Orgy" style="display:block;width:200px;height:auto;"></td>
+     </tr></table>
+   </td></tr>
 
-              <!-- Greeting -->
-              <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0a0f1e; line-height: 1.3;">
-                What's New on OTP
-              </h1>
-              <p style="margin: 0 0 32px 0; font-size: 15px; color: #5a6577; line-height: 1.6;">
-                <%= entries.length %> update<%= entries.length === 1 ? '' : 's' %> shipped this week. Here's what changed.
-              </p>
+   <!-- WHY band (reconnect to the reason they signed up) -->
+   <tr><td style="padding:26px 30px 0;">
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4FBE4;border-left:7px solid #A8E63A;border-radius:6px;"><tr><td style="padding:18px 22px;">
+       <div style="font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:#5a7d1f;margin-bottom:6px;">Remember why you're here</div>
+       <p style="margin:0;font-size:19px;line-height:1.35;font-weight:800;color:#14271a;letter-spacing:-0.4px;"><%= whyHeadline %></p>
+       <p style="margin:8px 0 0;font-size:14.5px;line-height:1.5;color:#3c4636;">Every drop below is one more step toward that. Here is the one I'm proudest of 👇</p>
+     </td></tr></table>
+   </td></tr>
 
-              <!-- Changelog entries -->
-              <% for (const entry of entries) { %>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
-                <tr>
-                  <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; border-left: 3px solid #0095ff;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+   <!-- ORGY'S PICK (headliner) -->
+   <tr><td style="padding:24px 30px 0;">
+     <div style="background:#14271a;color:#B8F042;display:inline-block;font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:10px 10px 0 0;">⭐ Orgy's pick of the week</div>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4FBE4;border:4px solid #14271a;border-radius:0 18px 18px 18px;"><tr><td style="padding:26px 26px 24px;">
+       <h2 style="margin:0 0 10px;font-size:28px;line-height:1.06;font-weight:900;color:#14271a;letter-spacing:-0.7px;"><%= pick.title %></h2>
+       <p style="margin:0 0 <%= pick.why ? '14' : '20' %>px;font-size:16px;line-height:1.6;color:#384230;"><%= pick.summary %></p>
+       <% if (pick.why) { %><p style="margin:0 0 20px;font-size:15px;line-height:1.45;font-weight:800;color:#5a7d1f;">↳ <%= pick.why %></p><% } %>
+       <a href="<%= pick.ctaUrl %>" style="display:inline-block;background:#14271a;color:#B8F042;font-size:16px;font-weight:900;text-decoration:none;padding:16px 32px;border-radius:12px;"><%= pick.ctaText %> &rarr;</a>
+     </td></tr></table>
+   </td></tr>
 
-                      <!-- Date + tags row -->
-                      <tr>
-                        <td style="padding-bottom: 8px;">
-                          <span style="font-size: 12px; font-weight: 600; color: #0095ff; background-color: #f0f7ff; padding: 2px 8px; border-radius: 4px;"><%= new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
-                          <% for (const tag of entry.tags) { %>
-                          <%
-                            let tagColor = '#5a6577';
-                            let tagBg = '#f1f5f9';
-                            if (tag === 'Core') { tagColor = '#e11d48'; tagBg = '#fff1f2'; }
-                            else if (tag === 'Security') { tagColor = '#dc2626'; tagBg = '#fef2f2'; }
-                            else if (tag === 'Quality') { tagColor = '#7c3aed'; tagBg = '#f5f3ff'; }
-                            else if (tag === 'Major') { tagColor = '#d97706'; tagBg = '#fffbeb'; }
-                            else if (tag === 'Improvement') { tagColor = '#059669'; tagBg = '#ecfdf5'; }
-                            else if (tag === 'Performance') { tagColor = '#2563eb'; tagBg = '#eff6ff'; }
-                            else if (tag === 'SEO') { tagColor = '#7c3aed'; tagBg = '#f5f3ff'; }
-                            else if (tag === 'Infrastructure') { tagColor = '#d97706'; tagBg = '#fffbeb'; }
-                          %>
-                          <span style="font-size: 11px; font-weight: 600; color: <%= tagColor %>; background-color: <%= tagBg %>; padding: 2px 8px; border-radius: 4px; margin-left: 4px;"><%= tag %></span>
-                          <% } %>
-                        </td>
-                      </tr>
+   <!-- THE HAUL -->
+   <% if (haul && haul.length) { %>
+   <tr><td style="padding:30px 30px 4px;"><div style="font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#14271a;">📦 The rest of the haul</div></td></tr>
+   <% haul.forEach(function(item, i){
+        var th = _tileThemes[i % _tileThemes.length];
+        var isDark = th.bg === '#14271a';
+   %>
+   <tr><td style="padding:12px 30px 0;">
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:<%= th.bg %>;border:3px solid #14271a;border-radius:16px;"><tr>
+       <td width="64" valign="top" style="padding:20px 0 20px 20px;"><div style="font-size:34px;line-height:1;"><%= emojiFor(item.tags) %></div></td>
+       <td style="padding:20px <%= isDark ? '8' : '22' %>px 20px 8px;">
+         <h4 style="margin:0 0 4px;font-size:19px;font-weight:900;color:<%= th.ink %>;"><%= item.title %></h4>
+         <p style="margin:0 0 <%= item.why ? '6' : '8' %>px;font-size:14.5px;line-height:1.55;color:<%= th.sub %>;"><%= item.summary %></p>
+         <% if (item.why) { %><p style="margin:0 0 8px;font-size:13px;font-weight:800;color:<%= th.why %>;">↳ <%= item.why %></p><% } %>
+         <a href="<%= item.ctaUrl %>" style="font-size:14px;font-weight:900;color:<%= th.link %>;text-decoration:underline;"><%= item.ctaText %> &rarr;</a>
+       </td>
+       <% if (isDark) { %><td width="74" valign="bottom" align="right" style="padding:0;"><img src="<%= peekPose %>" width="70" alt="" style="display:block;width:70px;height:auto;"></td><% } %>
+     </tr></table>
+   </td></tr>
+   <% }); %>
+   <% } %>
 
-                      <!-- Title -->
-                      <tr>
-                        <td>
-                          <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 700; color: #0a0f1e; line-height: 1.4;">
-                            <%= entry.title %>
-                          </p>
-                        </td>
-                      </tr>
+   <!-- NUDGE -->
+   <tr><td style="padding:28px 30px 6px;">
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#C6F95A,#8BC42A);border:4px solid #14271a;border-radius:20px;"><tr>
+       <td valign="middle" width="120" align="center" style="padding:16px 0 16px 12px;"><img src="<%= nudgePose %>" width="106" alt="Orgy" style="display:block;width:106px;height:auto;"></td>
+       <td style="padding:22px 24px 22px 6px;">
+         <h2 style="margin:0 0 6px;font-size:26px;font-weight:900;color:#14271a;letter-spacing:-0.5px;">This is what you signed up for.</h2>
+         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#1f3a10;font-weight:700;">People and AI, one team, the week running itself. Two minutes inside gets you closer to it.</p>
+         <a href="<%= baseUrl %>/dashboard" style="display:inline-block;background:#14271a;color:#B8F042;font-size:17px;font-weight:900;text-decoration:none;padding:15px 32px;border-radius:12px;">Get my time back &rarr;</a>
+       </td>
+     </tr></table>
+   </td></tr>
 
-                      <!-- Summary -->
-                      <tr>
-                        <td>
-                          <p style="margin: 0; font-size: 14px; color: #5a6577; line-height: 1.6;">
-                            <%= entry.summary %>
-                          </p>
-                        </td>
-                      </tr>
+   <!-- SIGNOFF -->
+   <tr><td style="padding:24px 30px 4px;">
+     <p style="margin:0 0 3px;font-size:15px;line-height:1.6;color:#384230;">Same time next week. I will have more. I always do.</p>
+     <p style="margin:0;font-size:17px;font-weight:900;color:#14271a;">Orgy <span style="font-weight:500;font-size:13px;color:#8a93a0;">(and David, who let me out of the lab)</span></p>
+   </td></tr>
 
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              <% } %>
+   <!-- FOOTER -->
+   <tr><td style="padding:24px 30px 30px;">
+     <div style="border-top:2px solid #eceef2;padding-top:16px;">
+       <div style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;font-weight:800;color:#9aa3af;">[OTP] <span style="font-weight:400;font-size:10px;letter-spacing:1px;">ORGANIZATION TRANSPORT PROTOCOL</span></div>
+       <p style="margin:8px 0 0;font-size:12px;line-height:1.6;color:#aab2bd;">The Orgy Weekly lands every week because we ship every week. <a href="<%= baseUrl %>/settings/notifications" style="color:#aab2bd;text-decoration:underline;">Email preferences</a> &nbsp;·&nbsp; <a href="<%= typeof unsubscribeUrl !== 'undefined' && unsubscribeUrl ? unsubscribeUrl : (baseUrl + '/unsubscribe') %>" style="color:#aab2bd;text-decoration:underline;">Unsubscribe</a></p>
+     </div>
+   </td></tr>
 
-              <!-- CTA -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://orgtp.com/whats-new" style="display: inline-block; background-color: #0095ff; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
-                      See all updates
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Network Stats Footer -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
-                <tr>
-                  <td align="center" style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                    <p style="margin: 0; font-size: 13px; color: #7c8a9c; line-height: 1.5;">
-                      <%= networkStats.totalOrgs %> organization<%= networkStats.totalOrgs === 1 ? '' : 's' %> &middot; <%= networkStats.totalClaims.toLocaleString() %> coordination skills published
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f4f6f9; padding: 24px 40px; text-align: center; border-radius: 0 0 12px 12px;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #7c8a9c; line-height: 1.5;">
-                OTP - Organization Transport Protocol<br>
-                <a href="https://orgtp.com" style="color: #0076cc; text-decoration: none;">orgtp.com</a>
-              </p>
-              <p style="margin: 0; font-size: 11px; color: #a0aab8; line-height: 1.5;">
-                You're receiving this because you published on OTP.<br>
-                <a href="https://orgtp.com/settings" style="color: #7c8a9c; text-decoration: underline;">Unsubscribe</a>
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
   </table>
+ </td></tr>
+</table>
 </body>
 </html>

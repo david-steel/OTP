@@ -28,6 +28,10 @@ export interface SendEmailOptions {
    *  open/click/bounce analytics by campaign + per-recipient. Values must
    *  be ASCII letters/digits/underscores/dashes. */
   tags?: Array<{ name: string; value: string }>;
+  /** Resend scheduled send. ISO 8601 (e.g. '2026-06-16T14:00:00Z') or natural
+   *  language (e.g. 'in 1 hour'). Up to ~72h out. Omit to send immediately.
+   *  Scheduled sends can be cancelled in the Resend dashboard before they fire. */
+  scheduledAt?: string;
 }
 
 /** Sends an email via Resend. Returns the Resend email ID on success (a UUID),
@@ -49,6 +53,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<string | nul
       html: options.html,
       replyTo: options.replyTo,
       tags: options.tags,
+      ...(options.scheduledAt ? { scheduledAt: options.scheduledAt } : {}),
     });
 
     if (error) {
