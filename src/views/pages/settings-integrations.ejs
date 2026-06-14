@@ -91,8 +91,9 @@
           <section>
             <h2 class="font-bold text-gray-900 text-lg mb-1">Available</h2>
             <p class="text-sm text-gray-500 mb-3">Connect a tool to pull its data into your scorecard and processes.</p>
-            <input id="otp-catalog-search" type="search" autocomplete="off" placeholder="Search integrations (Google Sheets, GoHighLevel, Stripe, HubSpot…)"
-                   class="w-full mb-4 px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-300" />
+            <input id="otp-catalog-search" type="search" autocomplete="off" placeholder="Search 1,000+ integrations (Google Sheets, GoHighLevel, Stripe, HubSpot…)"
+                   class="w-full mb-2 px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-300" />
+            <p id="otp-catalog-count" class="text-xs text-gray-400 mb-3"></p>
             <div id="otp-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div class="text-sm text-gray-400 p-4">Loading integrations…</div>
             </div>
@@ -181,6 +182,11 @@
               var b=el('button','otp-connect-btn px-4 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm','Connect');
               b.type='button'; b.setAttribute('data-provider',item.slug); b.addEventListener('click',onConnect); return b;
             }
+            function renderCount(shown, total){
+              var c=document.getElementById('otp-catalog-count'); if(!c) return;
+              if(!total){ c.textContent=''; return; }
+              c.textContent = shown < total ? ('Showing '+shown+' of '+total.toLocaleString()+' integrations. Search to find any.') : (total.toLocaleString()+' integration'+(total===1?'':'s')+'.');
+            }
             function renderGrid(items){
               var grid=document.getElementById('otp-catalog-grid'); grid.innerHTML='';
               if(!items.length){ grid.appendChild(el('div','text-sm text-gray-400 p-4','No integrations match your search.')); return; }
@@ -201,8 +207,8 @@
               var grid=document.getElementById('otp-catalog-grid');
               grid.innerHTML=''; grid.appendChild(el('div','text-sm text-gray-400 p-4','Loading integrations…'));
               fetch(API+'/catalog'+(q?('?search='+encodeURIComponent(q)):''), { credentials:'same-origin' })
-                .then(function(r){ return r.ok?r.json():{items:[]}; })
-                .then(function(d){ renderGrid(d.items||[]); })
+                .then(function(r){ return r.ok?r.json():{items:[],total:0,shown:0}; })
+                .then(function(d){ renderGrid(d.items||[]); renderCount(d.shown||((d.items||[]).length), d.total||((d.items||[]).length)); })
                 .catch(function(){ grid.innerHTML=''; grid.appendChild(el('div','text-sm text-red-500 p-4','Could not load integrations.')); });
             }
 

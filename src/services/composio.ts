@@ -116,28 +116,67 @@ export interface ComposioToolkit {
 
 /**
  * Browse the Composio toolkit catalog (searchable). Powers the integrations
- * page "Available" grid -- ALL Composio apps, not just the curated set. Returns
- * [] on any failure so the page degrades gracefully rather than 500ing.
+ * page "Available" grid -- the ENTIRE Composio catalog (1000+ apps), not one
+ * page. Returns [] on total failure so the page degrades rather than 500ing.
  */
-export async function listToolkits(search = '', limit = 100): Promise<ComposioToolkit[]> {
-  try {
-    const qs = new URLSearchParams();
-    if (search.trim()) qs.set('search', search.trim());
-    qs.set('limit', String(Math.min(Math.max(limit, 1), 200)));
+
+function mapToolkit(t: any): ComposioToolkit | null {
+  if (!t?.slug || t.is_local_toolkit) return null;
+  return {
+    slug: String(t.slug),
+    name: String(t.name || t.slug),
+    description: String(t.meta?.description || '').slice(0, 240),
+    logo: t.meta?.logo || null,
+    toolsCount: Number(t.meta?.tools_count || 0),
+  };
+}
+
+// In-process cache of the full catalog. Composio paginates ~1000 toolkits over
+// several pages; fetching them on every request would be wasteful, so we cache
+// the assembled list for an hour. Cleared implicitly on process restart.
+let _toolkitCache: { at: number; items: ComposioToolkit[] } | null = null;
+const TOOLKIT_TTL_MS = 60 * 60 * 1000;
+
+/** Fetch EVERY toolkit by following Composio's cursor pagination (safety-capped). */
+async function fetchAllToolkits(): Promise<ComposioToolkit[]> {
+  const all: ComposioToolkit[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < 12; page++) { // 12 * 200 = 2400, well above the ~1000 total
+    const qs = new URLSearchParams({ limit: '200' });
+    if (cursor) qs.set('cursor', cursor);
     const j = await call('GET', `/toolkits?${qs.toString()}`);
-    const items: any[] = j?.items || j?.data || [];
-    return items
-      .filter((t) => t?.slug && !t.is_local_toolkit)
-      .map((t) => ({
-        slug: String(t.slug),
-        name: String(t.name || t.slug),
-        description: String(t.meta?.description || '').slice(0, 240),
-        logo: t.meta?.logo || null,
-        toolsCount: Number(t.meta?.tools_count || 0),
-      }));
-  } catch {
-    return [];
+    for (const t of (j?.items || j?.data || [])) {
+      const m = mapToolkit(t);
+      if (m) all.push(m);
+    }
+    cursor = j?.next_cursor || null;
+    if (!cursor) break;
   }
+  return all;
+}
+
+/**
+ * The full catalog, filtered by `search` (substring on slug/name/description).
+ * Served from the hour-long cache; on a fetch error we fall back to the last
+ * good cache (or []), so a transient Composio blip never empties the page.
+ */
+export async function listToolkits(search = ''): Promise<ComposioToolkit[]> {
+  let catalog: ComposioToolkit[];
+  try {
+    if (_toolkitCache && Date.now() - _toolkitCache.at < TOOLKIT_TTL_MS) {
+      catalog = _toolkitCache.items;
+    } else {
+      catalog = await fetchAllToolkits();
+      if (catalog.length) _toolkitCache = { at: Date.now(), items: catalog };
+    }
+  } catch {
+    catalog = _toolkitCache?.items || [];
+  }
+  const q = search.trim().toLowerCase();
+  if (!q) return catalog;
+  return catalog.filter(
+    (t) => t.slug.toLowerCase().includes(q) || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q),
+  );
 }
 
 /** Revoke/delete a connection in Composio. Idempotent: 404 is treated as done. */
