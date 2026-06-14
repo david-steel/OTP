@@ -2487,7 +2487,7 @@ Founder, OTP</p>
     const canEdit = CONFIG_EDIT_ROLES.includes(member?.role);
     return reply.view('pages/settings-configuration', {
       title: 'Configuration - OTP', noindex: true, authState: 'authenticated',
-      org: { name: org.name, website: org.website || '', description: org.description || '', public: !!org.public, isPrivate: !!org.isPrivate },
+      org: { id: org.id, name: org.name, website: org.website || '', description: org.description || '', public: !!org.public, isPrivate: !!org.isPrivate },
       canEdit,
     });
   });

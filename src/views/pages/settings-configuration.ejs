@@ -16,6 +16,7 @@
   var _desc   = (_org.description !== undefined && _org.description !== null) ? String(_org.description) : '';
   var _public = !!_org.public;
   var _isPrivate = !!_org.isPrivate;
+  var _orgId  = (_org.id !== undefined && _org.id !== null) ? String(_org.id) : '';
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -106,6 +107,45 @@
                 </span>
               </label>
             </div>
+
+            <!-- Company ID (read-only, copyable) -->
+            <% if (_orgId) { %>
+            <div>
+              <label class="block font-bold text-gray-900 mb-1">Company ID</label>
+              <p class="text-sm text-gray-500 mb-2">Your organization's unique ID. Share it with support or paste it when reporting a correction.</p>
+              <div class="flex items-center gap-2 w-full sm:max-w-md">
+                <input type="text" id="cfg-org-id" value="<%= _orgId %>" readonly
+                       class="flex-1 px-3 py-2 border rounded-lg text-sm bg-gray-100 text-gray-600 font-mono select-all focus:outline-none">
+                <button type="button" id="cfg-org-id-copy" aria-label="Copy Company ID" title="Copy"
+                        class="flex-none p-2 border rounded-lg bg-white hover:bg-gray-50 text-gray-600 hover:text-otp-600 transition-colors">
+                  <svg id="cfg-org-id-copy-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                    <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <script>
+              (function(){
+                var btn = document.getElementById('cfg-org-id-copy');
+                var input = document.getElementById('cfg-org-id');
+                var icon = document.getElementById('cfg-org-id-copy-icon');
+                if (!btn || !input) return;
+                var CHECK = '<path d="M20 6L9 17l-5-5"></path>';
+                var COPY = '<rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path>';
+                btn.addEventListener('click', function(){
+                  var done = function(){
+                    if (icon) { icon.innerHTML = CHECK; setTimeout(function(){ icon.innerHTML = COPY; }, 1500); }
+                  };
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(input.value).then(done).catch(function(){ input.select(); document.execCommand('copy'); done(); });
+                  } else {
+                    input.select(); document.execCommand('copy'); done();
+                  }
+                });
+              })();
+            </script>
+            <% } %>
 
           </div>
 
