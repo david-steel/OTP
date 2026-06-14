@@ -109,10 +109,10 @@ async function main() {
   const weekOf = issueMonday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
   const issueNum = arg('issue') || String(streak);
   const issueLabel = `Issue #${issueNum} · ${weekOf}`;
-  const streakBadge = `🔥 ${streak}-week ship streak`;
+  const streakBadge = `🔥 ${streak} weeks deep in the swamp`;
 
   const dropCount = windowEntries.length;
-  const subject = arg('subject') || `We shipped again. ${dropCount} new things this week 🚀`;
+  const subject = arg('subject') || `Fresh from the swamp: ${dropCount} new things this week 🚀`;
 
   const templatePath = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -124,7 +124,7 @@ async function main() {
     pick, haul, baseUrl: BASE_URL, whyHeadline: WHY_HEADLINE, unsubscribeUrl: null,
   }, { async: false }) as unknown as string;
 
-  console.log('--- THE ORGY WEEKLY ---');
+  console.log('--- IN THE SWAMP (OTP weekly) ---');
   console.log('Subject :', subject);
   console.log('Window  :', `${days} days, ${dropCount} entries`);
   console.log('Pick    :', pick.title);
