@@ -678,6 +678,52 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Marketplace (partner channel) catalog. Gated through OTP Labs: an org sees
+  // the live catalog once it opts the 'marketplace' beta feature in at
+  // /settings/labs (or once we graduate the feature to status:'live' for all).
+  // Everyone else gets a coming-soon state. Money paths (Stripe Connect) are a
+  // later increment and gated separately at install time (marketplace-gate.ts).
+  app.get('/marketplace', async (request, reply) => {
+    const { isFeatureEnabledForOrg } = await import('../../services/lab-features.js');
+    let labEnabled = false;
+    const auth = getAuth(request);
+    if (auth.userId) {
+      const viewerOrg = await resolveRequestOrg(request);
+      if (viewerOrg) labEnabled = await isFeatureEnabledForOrg(viewerOrg.id, 'marketplace');
+    } else {
+      // Logged-out: only visible if the feature has graduated to 'live'.
+      labEnabled = await isFeatureEnabledForOrg(null, 'marketplace');
+    }
+    const comingSoonMessage = 'The OTP Marketplace is coming soon.';
+
+    let listings: any[] = [];
+    if (labEnabled) {
+      const rows = await db.execute(sql`
+        SELECT ml.id, ml.slug, ml.name, ml.tagline, ml.listing_type, ml.icon_url,
+               ml.pricing_model, ml.price_monthly_cents, ml.currency,
+               ml.expertise_tags, ml.install_count, o.name as partner_name
+        FROM marketplace_listings ml
+        JOIN organizations o ON o.id = ml.partner_org_id
+        WHERE ml.status = 'published'
+          AND ml.deleted_at IS NULL
+          AND o.is_private IS NOT TRUE
+        ORDER BY ml.install_count DESC, ml.published_at DESC
+      `) as any;
+      listings = rows.rows || [];
+    }
+
+    return renderV7(reply, 'marketplace', {
+      title: 'OTP Marketplace - Agents, Integrations & Content Packs for Your Org',
+      description: 'Install partner-built agents, integrations, and operating-system content packs directly into your OTP workspace. Every add-on gets a seat, an SOP, and a scorecard on your org chart.',
+      canonical: BASE_URL + '/marketplace',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Marketplace', url: BASE_URL + '/marketplace' }),
+      comingSoon: !labEnabled,
+      comingSoonMessage,
+      listings,
+    });
+  });
+
   app.get('/why-otp', async (request, reply) => {
     return renderV7(reply, 'why-otp', {
       title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',

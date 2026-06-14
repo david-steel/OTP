@@ -1,0 +1,101 @@
+<%# /marketplace -- v7 layout (light, editorial). The partner channel catalog.
+    Two states:
+      comingSoon = true  -> dormant panel + partner CTA (MARKETPLACE_LIVE off)
+      comingSoon = false -> published listing grid (when the flag is flipped)
+    Rendered via renderV7 -> reply.view('pages/marketplace', data, { layout: 'layouts/v7' }). %>
+<style>
+  .mk-card { transition:transform .15s ease, box-shadow .15s ease; }
+  .mk-card:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(20,30,55,.08); }
+  .mk-type { font-family:'IBM Plex Mono','ui-monospace',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="bg-[var(--white)]">
+  <div class="max-w-[1180px] mx-auto px-6 pt-[124px] pb-12 sm:pt-[148px] sm:pb-16">
+    <div class="eyebrow mb-5 flex items-center gap-2.5">
+      <span class="tick" style="background:var(--blue);"></span>OTP / marketplace
+    </div>
+    <h1 class="font-display text-[var(--ink)] max-w-[20ch]"
+        style="font-size:clamp(2.1rem,4.6vw,3.4rem); line-height:1.08; font-weight:700; letter-spacing:-0.025em;">
+      Every add-on gets a <span class="text-[var(--blue)]">seat</span>.
+    </h1>
+    <p class="mt-6 max-w-[58ch] text-[var(--ink-mute)]" style="font-size:clamp(1.05rem,1.6vw,1.2rem); line-height:1.55;">
+      Install partner-built agents, integrations, and operating-system content packs straight into your
+      OTP workspace. Each one lands on your org chart with an SOP and a scorecard, accountable like any seat.
+    </p>
+  </div>
+</section>
+
+<!-- ================= THREE LISTING TYPES ================= -->
+<section class="bg-[var(--white)] border-t" style="border-color:var(--hairline);">
+  <div class="max-w-[1180px] mx-auto px-6 py-14 sm:py-20">
+    <div class="grid sm:grid-cols-3 gap-6">
+      <div class="rounded-2xl border p-7" style="border-color:var(--hairline);">
+        <div class="mk-type text-[var(--blue)] mb-3">Agent</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.25rem] font-semibold mb-2">Hire a ready-built agent</h3>
+        <p class="text-[var(--ink-mute)] text-[0.95rem] leading-relaxed">A partner-authored agent, scored and MCP-connected, cloned into your org with a single install.</p>
+      </div>
+      <div class="rounded-2xl border p-7" style="border-color:var(--hairline);">
+        <div class="mk-type text-[var(--blue)] mb-3">Integration</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.25rem] font-semibold mb-2">Plug in your stack</h3>
+        <p class="text-[var(--ink-mute)] text-[0.95rem] leading-relaxed">Connect a partner's MCP endpoint so your existing tools report into the same chart and scorecard.</p>
+      </div>
+      <div class="rounded-2xl border p-7" style="border-color:var(--hairline);">
+        <div class="mk-type text-[var(--blue)] mb-3">Content pack</div>
+        <h3 class="font-display text-[var(--ink)] text-[1.25rem] font-semibold mb-2">Drop in proven operating systems</h3>
+        <p class="text-[var(--ink-mute)] text-[0.95rem] leading-relaxed">Curated OOS, best-practice libraries, and meeting/rock templates from operators who've run them.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<% if (comingSoon) { %>
+<!-- ================= COMING SOON ================= -->
+<section class="bg-[var(--paper,#faf9f7)] border-t" style="border-color:var(--hairline);">
+  <div class="max-w-[760px] mx-auto px-6 py-20 sm:py-28 text-center">
+    <div class="mk-type text-[var(--ink-mute)] mb-4">Opening soon</div>
+    <h2 class="font-display text-[var(--ink)] mb-4" style="font-size:clamp(1.6rem,3vw,2.2rem); font-weight:700; letter-spacing:-0.02em;">
+      <%= comingSoonMessage %>
+    </h2>
+    <p class="text-[var(--ink-mute)] max-w-[48ch] mx-auto mb-9" style="font-size:1.05rem; line-height:1.55;">
+      We're onboarding the first cohort of builders now. If you've built an agent, an integration, or a
+      content pack worth selling to OTP organizations, the partner channel is how you reach them.
+    </p>
+    <a href="/partners" class="v7-cta-publish inline-flex whitespace-nowrap">Become a partner</a>
+  </div>
+</section>
+<% } else { %>
+<!-- ================= LISTING GRID ================= -->
+<section class="bg-[var(--paper,#faf9f7)] border-t" style="border-color:var(--hairline);">
+  <div class="max-w-[1180px] mx-auto px-6 py-14 sm:py-20">
+    <% if (!listings || listings.length === 0) { %>
+      <div class="text-center py-16">
+        <p class="text-[var(--ink-mute)] text-lg">No listings published yet. <a href="/partners" class="text-[var(--blue)] underline">Be the first to list.</a></p>
+      </div>
+    <% } else { %>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% listings.forEach(function(l){ %>
+          <a href="/marketplace/<%= l.slug %>" class="mk-card block rounded-2xl border bg-[var(--white)] p-6" style="border-color:var(--hairline);">
+            <div class="flex items-center gap-3 mb-4">
+              <% if (l.icon_url) { %>
+                <img src="<%= l.icon_url %>" alt="" class="w-10 h-10 rounded-lg object-cover" />
+              <% } else { %>
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center font-mono font-semibold text-[var(--blue)]" style="background:rgba(56,108,255,.1);"><%= (l.name||'?').slice(0,1).toUpperCase() %></div>
+              <% } %>
+              <span class="mk-type text-[var(--ink-mute)]"><%= (l.listing_type||'').replace('_',' ') %></span>
+            </div>
+            <h3 class="font-display text-[var(--ink)] text-[1.15rem] font-semibold mb-1"><%= l.name %></h3>
+            <% if (l.tagline) { %><p class="text-[var(--ink-mute)] text-[0.92rem] leading-snug mb-3"><%= l.tagline %></p><% } %>
+            <div class="flex items-center justify-between mt-4 pt-4 border-t" style="border-color:var(--hairline);">
+              <span class="text-[var(--ink-mute)] text-xs">by <%= l.partner_name %></span>
+              <span class="text-[var(--ink)] text-sm font-medium">
+                <% if (l.pricing_model === 'free') { %>Free<% } else if (l.price_monthly_cents) { %>$<%= (l.price_monthly_cents/100).toFixed(0) %>/mo<% } else { %>Paid<% } %>
+              </span>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</section>
+<% } %>

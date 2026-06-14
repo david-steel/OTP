@@ -2429,6 +2429,21 @@ Founder, OTP</p>
     });
   });
 
+  // GET /settings/labs -- OTP Labs: per-org early access to in-progress features.
+  app.get('/settings/labs', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/settings-labs', { title: 'Labs - OTP', noindex: true, authState: 'unauthenticated', features: [] });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/settings-labs', { title: 'Labs - OTP', noindex: true, authState: 'no_org', features: [] });
+    }
+    const { getOrgLabState } = await import('../../../services/lab-features.js');
+    const features = await getOrgLabState(org.id);
+    return reply.view('pages/settings-labs', { title: 'Labs - OTP', noindex: true, authState: 'authenticated', features });
+  });
+
   // GET /settings/notifications
   app.get('/settings/notifications', async (request, reply) => {
     const auth = getAuth(request);

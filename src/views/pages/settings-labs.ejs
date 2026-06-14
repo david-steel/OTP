@@ -1,0 +1,127 @@
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Settings: Labs (OTP early access) ----
+  // Auto-injected: memberRole, currentPath, assetVersion, authState.
+  // `features` is OrgLabFeatureState[] from services/lab-features.getOrgLabState.
+  // Each beta feature has a toggle that POSTs to /api/v1/labs/:key. status:
+  //   beta        -> toggleable now (opt-in early)
+  //   coming_soon -> shown, disabled toggle ("Not yet available")
+  //   live        -> shipped to everyone (no toggle)
+  // Use plain JS line comments only -- never an EJS close-delimiter in a comment.
+  var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _feats = (typeof features !== 'undefined' && Array.isArray(features)) ? features : [];
+  function _statusLabel(s) {
+    if (s === 'live') return 'Live';
+    if (s === 'coming_soon') return 'Coming soon';
+    return 'Beta';
+  }
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <%- include('../partials/ui-page-header', { helpKey: 'settings.labs', title: 'Labs', eyebrow: 'Company Settings', subtitle: 'Test out new features before everyone else.', mascot: 'mcp-api' }) %>
+
+    <% if (_auth === 'unauthenticated') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Sign in to manage Labs features.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Sign In</a>
+      </div>
+    <% } else if (_auth === 'no_org') { %>
+      <div class="bg-gray-50 border rounded-xl p-8 text-center">
+        <p class="text-gray-600 mb-4">Complete your organization profile first.</p>
+        <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Set Up Profile</a>
+      </div>
+    <% } else { %>
+
+      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+
+        <%- include('../partials/settings-nav') %>
+
+        <div class="flex-1 min-w-0 w-full space-y-6">
+
+          <!-- ===== Welcome to the Beta Program ===== -->
+          <div class="rounded-2xl p-7 text-white" style="background:linear-gradient(135deg,#386cff,#2b54d6);">
+            <h2 class="font-bold text-2xl mb-2">Welcome to our Beta Program</h2>
+            <p class="text-white/90 max-w-[60ch] leading-relaxed">
+              Experiment with our latest features before they're available to everyone. These are in
+              early access and may change as we develop them. Your feedback helps shape what they become.
+            </p>
+          </div>
+
+          <% if (_feats.length === 0) { %>
+            <div class="bg-gray-50 border rounded-xl p-8 text-center">
+              <p class="text-gray-600">No Labs features right now. Check back soon.</p>
+            </div>
+          <% } else { %>
+            <div class="space-y-4" id="labs-list">
+              <% _feats.forEach(function(f){ %>
+                <div class="bg-white border rounded-xl p-6" data-lab-card="<%= f.key %>">
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2.5 mb-1.5">
+                        <h3 class="font-bold text-gray-900 text-lg"><%= f.name %></h3>
+                        <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full
+                          <%= f.status === 'live' ? 'bg-green-100 text-green-700' : (f.status === 'coming_soon' ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700') %>">
+                          <%= _statusLabel(f.status) %>
+                        </span>
+                      </div>
+                      <p class="text-sm text-gray-500 leading-relaxed max-w-[70ch]"><%= f.description %></p>
+                      <% if (f.targetLiveDate) { %>
+                        <p class="text-xs text-gray-400 mt-2">Targeted live: <%= f.targetLiveDate %></p>
+                      <% } %>
+                      <% if (f.enabled && f.surfaceUrl) { %>
+                        <a href="<%= f.surfaceUrl %>" class="inline-block mt-3 text-sm font-semibold text-otp-600 hover:underline">Open <%= f.name %> &rarr;</a>
+                      <% } %>
+                    </div>
+
+                    <div class="flex-none pt-1">
+                      <% if (f.toggleable) { %>
+                        <button type="button" role="switch" aria-checked="<%= f.enabled ? 'true' : 'false' %>"
+                                class="lab-toggle relative inline-flex h-7 w-12 items-center rounded-full transition-colors <%= f.enabled ? 'bg-otp-500' : 'bg-gray-300' %>"
+                                data-key="<%= f.key %>" data-enabled="<%= f.enabled ? '1' : '0' %>" aria-label="Toggle <%= f.name %>">
+                          <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform <%= f.enabled ? 'translate-x-6' : 'translate-x-1' %>"></span>
+                        </button>
+                      <% } else if (f.status === 'live') { %>
+                        <span class="text-xs font-semibold text-green-600">Enabled for all</span>
+                      <% } else { %>
+                        <span class="text-xs text-gray-400">Not yet available</span>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+
+        </div>
+      </div>
+    <% } %>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll('.lab-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-key');
+        var current = btn.getAttribute('data-enabled') === '1';
+        var next = !current;
+        btn.disabled = true;
+        fetch('/api/v1/labs/' + encodeURIComponent(key), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: next })
+        })
+          .then(function (r) { return r.ok ? r.json() : r.json().then(function (e) { throw new Error((e && e.error && e.error.message) || 'Failed'); }); })
+          .then(function () {
+            // Reload so the surface link + enabled-state render server-side and
+            // newly-enabled features (e.g. nav surfaces) appear consistently.
+            window.location.reload();
+          })
+          .catch(function (err) {
+            btn.disabled = false;
+            alert(err.message || 'Could not update this feature.');
+          });
+      });
+    });
+  })();
+</script>

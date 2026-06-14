@@ -801,6 +801,7 @@ await app.register(import('./routes/api/ask-ai.js'), { prefix: '/api/v1' });
 // webhook is registered SEPARATELY at root scope below so no auth gate blocks
 // Stripe and the raw body survives for signature verification.
 await app.register(import('./routes/api/billing.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/labs.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
   await app.register(stripeWebhookRoutes);
@@ -904,6 +905,22 @@ try {
   app.log.info('partner_signups table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensurePartnerSignupsTable failed -- /partners and /admin/partners may 500 until resolved');
+}
+
+try {
+  const { ensureMarketplaceTables } = await import('./db/ensure-marketplace.js');
+  await ensureMarketplaceTables();
+  app.log.info('marketplace tables are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMarketplaceTables failed -- /marketplace may 500 until resolved (gated off by default)');
+}
+
+try {
+  const { ensureLabOptinsTable } = await import('./db/ensure-lab-optins.js');
+  await ensureLabOptinsTable();
+  app.log.info('org_lab_optins table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureLabOptinsTable failed -- /settings/labs may 500 until resolved');
 }
 
 try {

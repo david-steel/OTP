@@ -531,6 +531,148 @@ export const partnerSignups = pgTable('partner_signups', {
   sourceIdx: index('ps_source_idx').on(table.source),
 }));
 
+// ---- Marketplace (Partner Channel) ----
+// Framework for partners to list sellable agents, integrations, and content
+// packs that OTP orgs install. Lives ON TOP of the existing partner program
+// (partner_signups = recruitment/approval) and managerAgents (an org's own
+// runtime agents). A LISTING is a product; an INSTALL is one org adopting it;
+// a PARTNER record holds the Stripe Connect account the seller is paid through.
+// The whole surface is gated OFF behind MARKETPLACE_LIVE until there are users
+// and Connect onboarding is wired (see shared/marketplace-gate.ts).
+// DDL self-heals on boot via ensure-marketplace.ts.
+
+export const marketplaceListingTypeEnum = pgEnum('marketplace_listing_type', [
+  'agent',
+  'integration',
+  'content_pack',
+]);
+
+export const marketplaceListingStatusEnum = pgEnum('marketplace_listing_status', [
+  'draft',
+  'submitted',
+  'approved',
+  'published',
+  'rejected',
+  'suspended',
+]);
+
+export const marketplacePricingModelEnum = pgEnum('marketplace_pricing_model', [
+  'free',
+  'subscription',
+]);
+
+export const marketplaceConnectStatusEnum = pgEnum('marketplace_connect_status', [
+  'not_started',
+  'onboarding',
+  'active',
+  'restricted',
+]);
+
+// A partner's payout identity. One per selling org. Holds the Stripe Connect
+// account the partner is paid through. Created when a partner starts listing;
+// payouts stay dormant until connect_status = 'active' AND billing is live.
+export const marketplacePartners = pgTable('marketplace_partners', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  displayName: varchar('display_name', { length: 255 }),
+  supportEmail: varchar('support_email', { length: 255 }),
+  websiteUrl: text('website_url'),
+  stripeConnectAccountId: varchar('stripe_connect_account_id', { length: 255 }),
+  connectStatus: marketplaceConnectStatusEnum('connect_status').notNull().default('not_started'),
+  payoutsEnabled: boolean('payouts_enabled').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: uniqueIndex('mkp_partner_org_idx').on(table.orgId),
+  connectIdx: index('mkp_partner_connect_idx').on(table.stripeConnectAccountId),
+}));
+
+// A sellable product in the catalog. type-specific payload columns are nullable
+// and only one is meaningful per listing_type:
+//   agent        -> agent_template_md (CLAUDE.md-style def cloned into managerAgents on install)
+//   integration  -> mcp_endpoint_url (the partner's MCP server the org connects to)
+//   content_pack -> content_payload (OOS / best-practice / template references)
+export const marketplaceListings = pgTable('marketplace_listings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  partnerOrgId: uuid('partner_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  tagline: varchar('tagline', { length: 255 }),
+  description: text('description'),
+  listingType: marketplaceListingTypeEnum('listing_type').notNull(),
+  status: marketplaceListingStatusEnum('status').notNull().default('draft'),
+  iconUrl: text('icon_url'),
+  expertiseTags: text('expertise_tags').array(),
+  // Pricing. Subscription is the default model; per-listing Stripe ids are
+  // minted at publish time on the partner's Connect account.
+  pricingModel: marketplacePricingModelEnum('pricing_model').notNull().default('subscription'),
+  priceMonthlyCents: integer('price_monthly_cents'),
+  priceYearlyCents: integer('price_yearly_cents'),
+  currency: varchar('currency', { length: 3 }).notNull().default('usd'),
+  stripeProductId: varchar('stripe_product_id', { length: 255 }),
+  stripePriceMonthlyId: varchar('stripe_price_monthly_id', { length: 255 }),
+  stripePriceYearlyId: varchar('stripe_price_yearly_id', { length: 255 }),
+  // Type-specific payloads (see comment above).
+  agentTemplateMd: text('agent_template_md'),
+  mcpEndpointUrl: text('mcp_endpoint_url'),
+  contentPayload: jsonb('content_payload'),
+  frontmatter: jsonb('frontmatter').notNull().default({}),
+  installCount: integer('install_count').notNull().default(0),
+  adminNotes: text('admin_notes'),
+  submittedAt: timestamp('submitted_at'),
+  approvedAt: timestamp('approved_at'),
+  rejectedAt: timestamp('rejected_at'),
+  publishedAt: timestamp('published_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  partnerIdx: index('mkl_partner_idx').on(table.partnerOrgId),
+  statusIdx: index('mkl_status_idx').on(table.status),
+  typeIdx: index('mkl_type_idx').on(table.listingType),
+  // Fast public catalog query: published listings only.
+  publishedIdx: index('mkl_published_idx').on(table.status, table.publishedAt),
+}));
+
+// One org adopting one listing. The subscription that pays the partner lives on
+// stripe_subscription_id; for agent listings, provisioned_agent_id points at the
+// managerAgents row cloned into the installing org.
+export const marketplaceInstalls = pgTable('marketplace_installs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  listingId: uuid('listing_id').references(() => marketplaceListings.id, { onDelete: 'cascade' }).notNull(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  installedByUserId: varchar('installed_by_user_id', { length: 255 }),
+  status: varchar('status', { length: 20 }).notNull().default('active'), // active | cancelled | suspended
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+  provisionedAgentId: uuid('provisioned_agent_id').references(() => managerAgents.id, { onDelete: 'set null' }),
+  installedAt: timestamp('installed_at').defaultNow().notNull(),
+  cancelledAt: timestamp('cancelled_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  listingOrgIdx: uniqueIndex('mki_listing_org_idx').on(table.listingId, table.orgId),
+  orgIdx: index('mki_org_idx').on(table.orgId),
+  listingIdx: index('mki_listing_idx').on(table.listingId),
+}));
+
+// ---- OTP Labs (per-org early access) ----
+// One row per (org, feature) the org has opted into early. The catalog of
+// features lives in code (shared/lab-features.ts); this table only records
+// which orgs flipped which beta feature on. Resolution: a beta feature is ON
+// for an org iff a row here has enabled = true.
+export const orgLabOptins = pgTable('org_lab_optins', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  featureKey: varchar('feature_key', { length: 80 }).notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  optedInBy: varchar('opted_in_by', { length: 255 }),
+  optedInAt: timestamp('opted_in_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgFeatureIdx: uniqueIndex('olo_org_feature_idx').on(table.orgId, table.featureKey),
+  orgIdx: index('olo_org_idx').on(table.orgId),
+}));
+
 export const practiceVotes = pgTable('practice_votes', {
   id: uuid('id').defaultRandom().primaryKey(),
   bestPracticeId: uuid('best_practice_id').references(() => bestPractices.id, { onDelete: 'cascade' }).notNull(),
