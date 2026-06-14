@@ -919,6 +919,13 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       }
     } catch { /* best-effort: the scorecard still renders without rollups */ }
 
+    // Persisted KPI group display order (kpi_groups). Empty -> alpha fallback in the view.
+    let kpiGroupOrder: string[] = [];
+    try {
+      const gr = (await db.execute(sql`SELECT name FROM kpi_groups WHERE org_id = ${org.id} ORDER BY sort_order, name`)) as any;
+      kpiGroupOrder = (gr.rows || []).map((r: any) => String(r.name));
+    } catch { kpiGroupOrder = []; }
+
     return reply.view('pages/dashboard-kpis', {
       title: 'KPIs - Dashboard - OTP',
       description: 'Scoreboard view of every measurable on your org chart.',
@@ -927,6 +934,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       viewerRole: role,
       teamNodes: team.nodes,
       groupNames,
+      kpiGroupOrder,
       scoreboard,
       periodLabels,
       grain,

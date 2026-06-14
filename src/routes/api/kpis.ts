@@ -14,7 +14,7 @@ import { getAuth } from '@clerk/fastify';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { emitOrgEventSafe } from '../../services/org-events.js';
@@ -131,6 +131,86 @@ const listQuerySchema = z.object({
 });
 
 export default async function kpiRoutes(app: FastifyInstance) {
+  // ---- KPI groups: persisted display order + add/rename/delete ----
+  // Groups are the group_name string on each KPI; kpi_groups persists a custom
+  // order and lets a group exist independent of its KPIs.
+  const groupNameSchema = z.object({ name: z.string().trim().min(1).max(120) });
+
+  // GET /api/v1/kpi-groups -- ordered groups (registry UNION live KPI groups) + counts.
+  app.get('/kpi-groups', async (request, reply) => {
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    const reg = (await db.execute(sql`SELECT name, sort_order FROM kpi_groups WHERE org_id = ${org.id} ORDER BY sort_order, name`)) as any;
+    const live = (await db.execute(sql`SELECT group_name AS name, COUNT(*)::int AS cnt FROM kpis WHERE organization_id = ${org.id} AND deleted_at IS NULL AND group_name IS NOT NULL GROUP BY group_name`)) as any;
+    const counts = new Map<string, number>((live.rows || []).map((r: any) => [r.name, Number(r.cnt)]));
+    const ordered: Array<{ name: string; sortOrder: number; kpiCount: number }> = [];
+    const seen = new Set<string>();
+    for (const r of (reg.rows || [])) { ordered.push({ name: r.name, sortOrder: r.sort_order, kpiCount: counts.get(r.name) || 0 }); seen.add(r.name); }
+    // Live groups not yet in the registry, appended alphabetically.
+    for (const name of Array.from(counts.keys()).sort()) { if (!seen.has(name)) ordered.push({ name, sortOrder: 9999, kpiCount: counts.get(name) || 0 }); }
+    return { groups: ordered };
+  });
+
+  // POST /api/v1/kpi-groups { name } -- create an (empty) group at the end.
+  app.post('/kpi-groups', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    const body = groupNameSchema.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'A group name is required' } });
+    await db.execute(sql`
+      INSERT INTO kpi_groups (org_id, name, sort_order)
+      VALUES (${org.id}, ${body.data.name}, COALESCE((SELECT MAX(sort_order) + 1 FROM kpi_groups WHERE org_id = ${org.id}), 0))
+      ON CONFLICT (org_id, name) DO NOTHING`);
+    return { ok: true };
+  });
+
+  // PATCH /api/v1/kpi-groups/reorder { names: [...] } -- set order by index.
+  app.patch('/kpi-groups/reorder', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    const parsed = z.object({ names: z.array(z.string().trim().min(1).max(120)).max(200) }).safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'names[] required' } });
+    let i = 0;
+    for (const name of parsed.data.names) {
+      await db.execute(sql`
+        INSERT INTO kpi_groups (org_id, name, sort_order) VALUES (${org.id}, ${name}, ${i})
+        ON CONFLICT (org_id, name) DO UPDATE SET sort_order = ${i}, updated_at = now()`);
+      i++;
+    }
+    return { ok: true };
+  });
+
+  // PATCH /api/v1/kpi-groups/rename { from, to } -- rename group + move its KPIs.
+  app.patch('/kpi-groups/rename', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    const parsed = z.object({ from: z.string().trim().min(1).max(120), to: z.string().trim().min(1).max(120) }).safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'from + to required' } });
+    const { from, to } = parsed.data;
+    await db.execute(sql`UPDATE kpis SET group_name = ${to}, updated_at = now() WHERE organization_id = ${org.id} AND group_name = ${from}`);
+    await db.execute(sql`
+      INSERT INTO kpi_groups (org_id, name, sort_order)
+      VALUES (${org.id}, ${to}, COALESCE((SELECT sort_order FROM kpi_groups WHERE org_id = ${org.id} AND name = ${from}), 9999))
+      ON CONFLICT (org_id, name) DO NOTHING`);
+    await db.execute(sql`DELETE FROM kpi_groups WHERE org_id = ${org.id} AND name = ${from}`);
+    return { ok: true };
+  });
+
+  // DELETE /api/v1/kpi-groups { name } -- remove the group; its KPIs become ungrouped.
+  app.delete('/kpi-groups', async (request, reply) => {
+    if (!(await checkScope(request, reply, 'write'))) return;
+    const org = await getOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
+    const body = groupNameSchema.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'A group name is required' } });
+    await db.execute(sql`UPDATE kpis SET group_name = NULL, updated_at = now() WHERE organization_id = ${org.id} AND group_name = ${body.data.name}`);
+    await db.execute(sql`DELETE FROM kpi_groups WHERE org_id = ${org.id} AND name = ${body.data.name}`);
+    return { ok: true };
+  });
+
   app.post('/kpis', async (request, reply) => {
     if (!(await checkScope(request, reply, 'write'))) return;
     const org = await getOrg(request);

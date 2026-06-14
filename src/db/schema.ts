@@ -880,6 +880,21 @@ export const kpiTimeGrainEnum = pgEnum('kpi_time_grain', ['weekly', 'monthly', '
 export const kpiAggregationEnum = pgEnum('kpi_aggregation', ['sum', 'avg', 'last', 'first', 'min', 'max']);
 export const kpiValueSourceEnum = pgEnum('kpi_value_source', ['manual', 'api', 'computed']);
 
+// KPI group registry + display order. Groups are otherwise just the group_name
+// string on each KPI; this table persists a custom order and lets a group exist
+// (and be reordered) independent of which KPIs are in it. Keyed by (org, name).
+export const kpiGroups = pgTable('kpi_groups', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 120 }).notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgNameIdx: uniqueIndex('kpi_groups_org_name_idx').on(table.orgId, table.name),
+  orgIdx: index('kpi_groups_org_idx').on(table.orgId),
+}));
+
 export const kpis = pgTable('kpis', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),

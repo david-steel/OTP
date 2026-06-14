@@ -940,6 +940,14 @@ try {
 }
 
 try {
+  const { ensureKpiGroupsTable } = await import('./db/ensure-kpi-groups.js');
+  await ensureKpiGroupsTable();
+  app.log.info('kpi_groups table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureKpiGroupsTable failed -- KPI group ordering may fall back to alphabetical');
+}
+
+try {
   const { ensureConversionLogTable } = await import('./db/ensure-conversion-log.js');
   await ensureConversionLogTable();
   app.log.info('conversion_log table is ready');
