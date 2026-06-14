@@ -237,9 +237,9 @@
       </div>
     </div>
   <% } else { %>
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div class="<%= _inApp ? 'px-4 sm:px-6' : 'max-w-6xl mx-auto px-4 sm:px-6' %> py-4 flex items-center justify-between">
       <a href="/" class="flex items-baseline gap-2.5" aria-label="OTP — Organization Transport Protocol">
-        <span class="font-mono font-semibold text-[18px]"><span style="color:var(--blue);">[</span><span style="color:var(--ink);">OTP</span><span style="color:var(--blue);">]</span></span>
+        <span class="font-mono font-semibold <%= _inApp ? 'text-[26px]' : 'text-[18px]' %>"><span style="color:var(--blue);">[</span><span style="color:var(--ink);">OTP</span><span style="color:var(--blue);">]</span></span>
         <span class="eyebrow text-[9px] hidden sm:inline">Organization&nbsp;Transport&nbsp;Protocol</span>
       </a>
 
