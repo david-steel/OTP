@@ -285,7 +285,14 @@ export async function issueInvite(opts: IssueInviteOptions, baseUrl: string): Pr
       await db.update(orgInvitations)
         .set({ claimedEntityId: ent.externalId, claimedEntityIds: [ent.externalId] })
         .where(eq(orgInvitations.id, created.id));
-    } catch { /* best-effort: invitee still gets the invite even if the tile fails */ }
+    } catch (err) {
+      // Best-effort: invitee still gets the invite even if the tile fails. But
+      // do NOT swallow silently -- a thrown createTeamEntity here (e.g. no OOS
+      // draft yet on a brand-new org) is exactly how a member ends up with no
+      // chart seat and invisible to KPIs. acceptInvite self-heals it; this log
+      // makes the failure diagnosable instead of invisible.
+      console.error('[createInvite] chart tile creation failed; invitee will be seated on accept', err);
+    }
   }
 
   const acceptUrl = `${baseUrl.replace(/\/$/, '')}/accept-invite?token=${token}`;
@@ -511,6 +518,32 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
   // claim set didn't, and fixes wrong primary claims by matching the
   // member's email against chart human contact_email values.
   try { await reconcileChartClaimByEmail(inv.orgId, member.id); } catch { /* best-effort */ }
+
+  // Self-heal: if the member STILL has no chart seat after reconcile, create one
+  // now. This is the root-cause guard for the "member with no seat, invisible to
+  // KPIs" bug: when the invite-time createTeamEntity was swallowed (e.g. the org
+  // had no OOS draft yet), the invitee would otherwise accept and remain seatless
+  // forever. By accept time the org is set up, so the seat creates cleanly.
+  // Best-effort + logged, and runs AFTER the invitation is already marked
+  // accepted, so a failure here can never break an otherwise-successful accept.
+  try {
+    const [cur] = await db.select().from(orgMembers).where(eq(orgMembers.id, member.id)).limit(1);
+    const hasSeat = !!cur?.claimedEntityId || (((cur?.claimedEntityIds as string[] | null) || []).length > 0);
+    if (!hasSeat) {
+      const { createTeamEntity } = await import('./team-graph.js');
+      const ent = await createTeamEntity(inv.orgId, {
+        type: 'human',
+        name: inv.displayName || userEmail || inv.email,
+        role: String(inv.role),
+        contactEmail: userEmail || inv.email || undefined,
+      } as any);
+      await db.update(orgMembers)
+        .set({ claimedEntityId: ent.externalId, claimedEntityIds: [ent.externalId] })
+        .where(eq(orgMembers.id, member.id));
+    }
+  } catch (err) {
+    console.error('[acceptInvite] self-heal seat creation failed for member', member.id, err);
+  }
 
   const [reread] = await db.select().from(orgMembers).where(eq(orgMembers.id, member.id)).limit(1);
 
