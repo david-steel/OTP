@@ -136,8 +136,11 @@ export default async function integrationRoutes(app: FastifyInstance) {
     if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
     const search = String((request.query as any)?.search || '').slice(0, 80);
     const toolkits = await listToolkits(search);
-    const items = toolkits.map((t) => ({ ...t, connectable: authConfigIdFor(t.slug) !== null }));
-    return reply.send({ items, query: search });
+    // Cap the rendered payload; `total` tells the UI how many matched so it can
+    // say "showing N of M -- search to narrow". Every app is reachable by search.
+    const RENDER_CAP = 150;
+    const items = toolkits.slice(0, RENDER_CAP).map((t) => ({ ...t, connectable: authConfigIdFor(t.slug) !== null }));
+    return reply.send({ items, total: toolkits.length, shown: items.length, query: search });
   });
 
   // ---- CONNECT (start OAuth) ----
