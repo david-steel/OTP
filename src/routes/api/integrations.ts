@@ -32,10 +32,12 @@ import {
   createConnectLink,
   findConnection,
   deleteConnection,
+  listToolkits,
   ComposioError,
 } from '../../services/composio.js';
 import { z } from 'zod';
 import { KpiError } from '../../services/kpi.js';
+import { isBillingLive, canRunLive } from '../../services/integration-live-gate.js';
 import {
   upsertKpiSource,
   getKpiSource,
@@ -112,11 +114,38 @@ export default async function integrationRoutes(app: FastifyInstance) {
     return reply.send({ connections: rows });
   });
 
+  // ---- STATUS: the live-gate state for this org (drives the UI banner) ----
+  app.get('/integrations/status', async (request, reply) => {
+    const ctx = await getMemberOrg(request);
+    if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    const gate = await canRunLive(ctx.org.id);
+    return reply.send({
+      billingLive: isBillingLive(),
+      live: gate.ok,
+      reason: gate.reason,
+      message: gate.message,
+      balanceCents: gate.balanceCents,
+      floorCents: gate.floorCents,
+    });
+  });
+
+  // ---- CATALOG: ALL Composio apps, searchable (?search=). connectable = an ----
+  // auth_config is configured for that provider (COMPOSIO_AUTHCFG_<slug>).
+  app.get('/integrations/catalog', async (request, reply) => {
+    const ctx = await getMemberOrg(request);
+    if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    const search = String((request.query as any)?.search || '').slice(0, 80);
+    const toolkits = await listToolkits(search);
+    const items = toolkits.map((t) => ({ ...t, connectable: authConfigIdFor(t.slug) !== null }));
+    return reply.send({ items, query: search });
+  });
+
   // ---- CONNECT (start OAuth) ----
   app.post<{ Params: { provider: string } }>('/integrations/:provider/connect', async (request, reply) => {
     const ctx = await getMemberOrg(request);
     if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in to connect integrations' } });
     if (!composioConfigured()) return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: 'Integrations are not configured yet.' } });
+    if (!isBillingLive()) return reply.status(402).send({ error: { code: 'BILLING_NOT_LIVE', message: 'Integrations activate once billing is live.' } });
 
     const provider = request.params.provider;
     if (!providerBySlug(provider)) return reply.status(404).send({ error: { code: 'UNKNOWN_PROVIDER', message: 'No such integration' } });
@@ -209,6 +238,7 @@ export default async function integrationRoutes(app: FastifyInstance) {
     const ctx = await getMemberOrg(request);
     if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
     if (!composioConfigured()) return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: 'Integrations are not configured yet.' } });
+    if (!isBillingLive()) return reply.status(402).send({ error: { code: 'BILLING_NOT_LIVE', message: 'Integrations activate once billing is live.' } });
 
     const parsed = kpiSourceSchema.safeParse(request.body || {});
     if (!parsed.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid source mapping' } });

@@ -16,6 +16,7 @@
 import { db } from '../config/database.js';
 import { sql } from 'drizzle-orm';
 import { composioConfigured } from './composio.js';
+import { canRunLive } from './integration-live-gate.js';
 import { agentToolsEnabled, buildReadTools, type AnthropicTool } from './composio-tools-logic.js';
 
 export { agentToolsEnabled } from './composio-tools-logic.js';
@@ -56,6 +57,9 @@ async function fetchReadToolsFor(providerSlug: string): Promise<AnthropicTool[]>
  */
 export async function getOrgTools(orgId: string): Promise<OrgToolset> {
   if (!agentToolsEnabled() || !composioConfigured()) return EMPTY;
+  // Money-safety: no tools => no execution unless billing is live AND the wallet
+  // is above the floor. The SAME live gate the KPI fetch uses.
+  if (!(await canRunLive(orgId)).ok) return EMPTY;
   try {
     const rows = (await db.execute(sql`
       SELECT DISTINCT provider FROM integration_connections

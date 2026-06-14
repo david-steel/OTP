@@ -26,6 +26,7 @@ import { getOrgTeamGraph } from './team-graph.js';
 import { getBalanceCents, debitWallet } from './wallet.js';
 import { computeDebitCents, markupMultipleFromEnv } from '../shared/ai-pricing.js';
 import { getOrgTools, executeOrgTool, type OrgToolset } from './composio-tools.js';
+import { walletFloorCents } from './integration-live-gate.js';
 
 // Default to Sonnet -- ~10x cheaper than Opus and plenty capable for the
 // agent-runtime use case. Override with OTP_AGENT_MODEL env var per-org.
@@ -37,10 +38,10 @@ const DEFAULT_MAX_TOKENS = 4096;
 // text. Bounds both latency and token spend. 6 is plenty for read-only KPI work.
 const MAX_TOOL_ITERATIONS = 6;
 
-// Smallest balance we require before starting a metered agent run. The real
-// cost is debited from actual token counts after the run; this is a fail-closed
-// floor so a near-empty wallet can't start a call it can't pay for.
-const METERING_FLOOR_CENTS = 1;
+// Smallest balance we require before starting a metered agent run -- the shared
+// wallet floor ($1 by default). A run is refused at/below the floor so the
+// balance always keeps a buffer larger than any single run's cost and can never
+// go negative. Read at call time (see prepareRun) so the env stays authoritative.
 
 /**
  * One SOP, as authored on a seat (node.properties.sops[i]). When passed to
@@ -257,7 +258,7 @@ async function prepareRun(opts: RunAgentOptions, startedAt: Date): Promise<
   // the org's balance is below the floor -- never stream what you can't bill.
   if (metering) {
     const balanceCents = await getBalanceCents(opts.orgId);
-    if (balanceCents < METERING_FLOOR_CENTS) {
+    if (balanceCents <= walletFloorCents()) {
       return failWith('INSUFFICIENT_BALANCE');
     }
   }

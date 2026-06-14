@@ -3,25 +3,14 @@
 <%
   // ---- Settings: Integrations (User Settings) ----
   // Auto-injected: memberRole, currentPath, assetVersion, authState.
-  // Inc 1 locals (only on authenticated): integrationsLive (master flag),
-  // catalog ([{provider,connectable}]), categoryLabels. All typeof-guarded so the
-  // page never throws on a missing local. While integrationsLive is false the
-  // page renders the legacy "Coming soon" view -- the branch ships dark.
+  // integrationsLive (master flag) gates the whole live UI; when false the page
+  // shows the legacy "Coming soon" view. When true, the catalog + connect + the
+  // live-gate banner render. The banner + connectability come from the API
+  // (/integrations/status, /integrations/catalog) at runtime -- NOTHING is live
+  // until billing is live AND the wallet is funded (enforced server-side too).
   var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
   var _live = (typeof integrationsLive !== 'undefined') && integrationsLive === true;
-  var _catalog = (typeof catalog !== 'undefined' && Array.isArray(catalog)) ? catalog : [];
-  var _labels = (typeof categoryLabels !== 'undefined' && categoryLabels) ? categoryLabels : {};
 
-  // Group catalog by category, preserving label order.
-  var _order = ['workspace','crm','finance','marketing','ops','support'];
-  var _grouped = {};
-  _catalog.forEach(function(c){ (_grouped[c.provider.category] = _grouped[c.provider.category] || []).push(c); });
-
-  // slug -> display name, injected once into the inline script (XSS-safe).
-  var _nameMap = {};
-  _catalog.forEach(function(c){ _nameMap[c.provider.slug] = c.provider.name; });
-
-  // Legacy coming-soon list (used when the flag is OFF).
   var _comingSoon = [
     { name: 'Slack',            note: 'Push agent updates and standups into channels.' },
     { name: 'Google Workspace', note: 'Calendar, Drive, and Gmail context for agents.' },
@@ -54,7 +43,6 @@
         <% if (!_live) { %>
           <!-- ===== Flag OFF: legacy view ===== -->
           <h2 class="font-bold text-gray-900 text-lg">Connected Tools</h2>
-
           <div class="bg-gray-50 border rounded-xl p-6">
             <h3 class="font-bold text-gray-900 mb-1">MCP &amp; API</h3>
             <p class="text-sm text-gray-500 mb-4">
@@ -67,7 +55,6 @@
               Manage API &amp; MCP keys
             </a>
           </div>
-
           <div class="bg-gray-50 border rounded-xl p-6">
             <h3 class="font-bold text-gray-900 mb-1">Coming soon</h3>
             <p class="text-sm text-gray-500 mb-4">Planned native integrations. These are not available yet.</p>
@@ -87,43 +74,28 @@
         <% } else { %>
           <!-- ===== Flag ON: live integrations ===== -->
 
+          <!-- Live-gate banner (populated from /integrations/status) -->
+          <div id="otp-gate-banner" class="hidden rounded-xl p-4 text-sm border"></div>
+
           <!-- Connected -->
           <section>
             <h2 class="font-bold text-gray-900 text-lg mb-1">Connected</h2>
             <p class="text-sm text-gray-500 mb-4">Tools this organization has linked. Connections are read-only.</p>
             <div id="otp-connected-empty" class="bg-gray-50 border rounded-xl p-6 text-sm text-gray-500">
-              Nothing connected yet. Pick a tool below to get started.
+              Nothing connected yet. Find a tool below to get started.
             </div>
             <ul id="otp-connected-list" class="space-y-2.5 hidden"></ul>
           </section>
 
-          <!-- Available -->
+          <!-- Available: full Composio catalog, searchable -->
           <section>
             <h2 class="font-bold text-gray-900 text-lg mb-1">Available</h2>
-            <p class="text-sm text-gray-500 mb-4">Connect a tool to pull its data into your scorecard and processes.</p>
-            <% _order.forEach(function(cat){ if(!_grouped[cat]) return; %>
-              <div class="mb-5">
-                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2"><%= _labels[cat] || cat %></h3>
-                <ul class="space-y-2.5">
-                  <% _grouped[cat].forEach(function(c){ %>
-                    <li class="otp-provider-row flex items-center justify-between gap-3 bg-gray-50 border rounded-xl p-4"
-                        data-provider="<%= c.provider.slug %>" data-connectable="<%= c.connectable ? '1':'0' %>">
-                      <span class="min-w-0">
-                        <span class="text-sm text-gray-900 font-medium"><%= c.provider.name %></span>
-                        <span class="block text-sm text-gray-400"><%= c.provider.blurb %></span>
-                      </span>
-                      <span class="otp-provider-action whitespace-nowrap">
-                        <% if (c.connectable) { %>
-                          <button type="button" class="otp-connect-btn px-4 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm">Connect</button>
-                        <% } else { %>
-                          <span class="text-xs font-semibold uppercase tracking-wide text-gray-400 border rounded-full px-2.5 py-1">Coming soon</span>
-                        <% } %>
-                      </span>
-                    </li>
-                  <% }); %>
-                </ul>
-              </div>
-            <% }); %>
+            <p class="text-sm text-gray-500 mb-3">Connect a tool to pull its data into your scorecard and processes.</p>
+            <input id="otp-catalog-search" type="search" autocomplete="off" placeholder="Search integrations (Google Sheets, GoHighLevel, Stripe, HubSpot…)"
+                   class="w-full mb-4 px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-300" />
+            <div id="otp-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="text-sm text-gray-400 p-4">Loading integrations…</div>
+            </div>
           </section>
 
           <!-- Custom -->
@@ -139,80 +111,120 @@
           <script>
           (function(){
             var API = '/api/v1/integrations';
-            var nameBySlug = <%- jsonForScript(_nameMap) %>;
+            var billingLive = false;       // from /status -- gates Connect buttons
+            var connectedSlugs = [];
+            var nameBySlug = {};
 
-            function badge(status){
-              var map = { active: ['Connected','text-green-700 bg-green-50 border-green-200'],
-                          pending: ['Pending','text-amber-700 bg-amber-50 border-amber-200'],
-                          error: ['Error','text-red-700 bg-red-50 border-red-200'],
-                          revoked: ['Revoked','text-gray-500 bg-gray-50 border-gray-200'] };
-              var m = map[status] || map.revoked;
-              return '<span class="text-xs font-semibold uppercase tracking-wide border rounded-full px-2.5 py-1 '+m[1]+'">'+m[0]+'</span>';
+            function el(tag, cls, text){ var e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+
+            // ---- live-gate banner ----
+            function renderBanner(s){
+              var b = document.getElementById('otp-gate-banner');
+              if(!b) return;
+              if(s.live){ b.className='hidden'; return; }
+              b.classList.remove('hidden');
+              if(s.reason === 'LOW_BALANCE'){
+                b.className='rounded-xl p-4 text-sm border bg-amber-50 border-amber-200 text-amber-800';
+                b.innerHTML = '';
+                b.appendChild(el('span','font-semibold','Activity paused. '));
+                b.appendChild(document.createTextNode(s.message + ' '));
+                var a=el('a','underline font-semibold','Add funds'); a.href='/settings/billing'; b.appendChild(a);
+              } else {
+                b.className='rounded-xl p-4 text-sm border bg-gray-50 border-gray-200 text-gray-700';
+                b.textContent = s.message || 'Integrations activate once billing is live.';
+              }
             }
 
+            function loadStatus(){
+              return fetch(API+'/status', { credentials:'same-origin' })
+                .then(function(r){ return r.ok ? r.json() : { live:false, billingLive:false, reason:'BILLING_NOT_LIVE', message:'Integrations activate once billing is live.' }; })
+                .then(function(s){ billingLive = !!s.billingLive; renderBanner(s); return s; })
+                .catch(function(){ billingLive=false; });
+            }
+
+            // ---- connected list ----
+            function badge(status){
+              var map={active:['Connected','text-green-700 bg-green-50 border-green-200'],pending:['Pending','text-amber-700 bg-amber-50 border-amber-200'],error:['Error','text-red-700 bg-red-50 border-red-200'],revoked:['Revoked','text-gray-500 bg-gray-50 border-gray-200']};
+              var m=map[status]||map.revoked; var s=el('span','text-xs font-semibold uppercase tracking-wide border rounded-full px-2.5 py-1 '+m[1], m[0]); return s;
+            }
             function renderConnected(rows){
-              var list = document.getElementById('otp-connected-list');
-              var empty = document.getElementById('otp-connected-empty');
-              var live = (rows||[]).filter(function(r){ return r.status==='active' || r.status==='pending' || r.status==='error'; });
+              var list=document.getElementById('otp-connected-list'), empty=document.getElementById('otp-connected-empty');
+              var live=(rows||[]).filter(function(r){return r.status==='active'||r.status==='pending'||r.status==='error';});
+              connectedSlugs = live.map(function(r){return r.provider;});
               if(!live.length){ empty.classList.remove('hidden'); list.classList.add('hidden'); list.innerHTML=''; return; }
-              empty.classList.add('hidden'); list.classList.remove('hidden');
-              list.innerHTML = live.map(function(r){
-                return '<li class="flex items-center justify-between gap-3 bg-white border rounded-xl p-4">'
-                  + '<span class="text-sm text-gray-900 font-medium">'+(nameBySlug[r.provider]||r.provider)+'</span>'
-                  + '<span class="flex items-center gap-3">'+badge(r.status)
-                  + '<button type="button" data-provider="'+r.provider+'" class="otp-disconnect-btn text-sm text-red-600 hover:text-red-700 font-medium">Disconnect</button>'
-                  + '</span></li>';
-              }).join('');
-              list.querySelectorAll('.otp-disconnect-btn').forEach(function(b){ b.addEventListener('click', onDisconnect); });
-              // Reflect connected state in the Available list.
-              var connectedSlugs = live.map(function(r){return r.provider;});
-              document.querySelectorAll('.otp-provider-row').forEach(function(row){
-                var slug = row.getAttribute('data-provider');
-                var act = row.querySelector('.otp-provider-action');
-                if(connectedSlugs.indexOf(slug)>=0 && act){ act.innerHTML = '<span class="text-xs font-semibold uppercase tracking-wide text-green-700">Connected</span>'; }
+              empty.classList.add('hidden'); list.classList.remove('hidden'); list.innerHTML='';
+              live.forEach(function(r){
+                var li=el('li','flex items-center justify-between gap-3 bg-white border rounded-xl p-4');
+                li.appendChild(el('span','text-sm text-gray-900 font-medium', nameBySlug[r.provider]||r.provider));
+                var right=el('span','flex items-center gap-3'); right.appendChild(badge(r.status));
+                var btn=el('button','otp-disconnect-btn text-sm text-red-600 hover:text-red-700 font-medium','Disconnect'); btn.type='button'; btn.setAttribute('data-provider',r.provider);
+                btn.addEventListener('click',onDisconnect); right.appendChild(btn); li.appendChild(right); list.appendChild(li);
               });
             }
-
-            function load(){
-              fetch(API, { credentials:'same-origin' })
+            function loadConnected(){
+              return fetch(API, { credentials:'same-origin' })
                 .then(function(r){ return r.ok ? r.json() : {connections:[]}; })
-                .then(function(d){
-                  renderConnected(d.connections||[]);
-                  (d.connections||[]).filter(function(r){return r.status==='pending';}).forEach(function(r){ sync(r.provider); });
-                })
+                .then(function(d){ renderConnected(d.connections||[]); (d.connections||[]).filter(function(r){return r.status==='pending';}).forEach(function(r){ sync(r.provider); }); })
                 .catch(function(){});
             }
-
             function sync(provider){
-              fetch(API+'/'+provider+'/sync', { method:'POST', credentials:'same-origin' })
-                .then(function(r){ return r.ok ? r.json() : null; })
-                .then(function(d){ if(d && d.connected){ load(); } })
-                .catch(function(){});
+              fetch(API+'/'+provider+'/sync',{method:'POST',credentials:'same-origin'})
+                .then(function(r){return r.ok?r.json():null;}).then(function(d){ if(d&&d.connected){ loadConnected(); } }).catch(function(){});
             }
 
+            // ---- catalog (searchable) ----
+            function actionEl(item){
+              var connected = connectedSlugs.indexOf(item.slug) >= 0;
+              if(connected) return el('span','text-xs font-semibold uppercase tracking-wide text-green-700','Connected');
+              if(!item.connectable) return el('span','text-xs font-semibold uppercase tracking-wide text-gray-400 border rounded-full px-2.5 py-1','Coming soon');
+              if(!billingLive){ var s=el('span','text-xs font-semibold uppercase tracking-wide text-gray-400 border rounded-full px-2.5 py-1','Billing required'); s.title='Activate billing to connect.'; return s; }
+              var b=el('button','otp-connect-btn px-4 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm','Connect');
+              b.type='button'; b.setAttribute('data-provider',item.slug); b.addEventListener('click',onConnect); return b;
+            }
+            function renderGrid(items){
+              var grid=document.getElementById('otp-catalog-grid'); grid.innerHTML='';
+              if(!items.length){ grid.appendChild(el('div','text-sm text-gray-400 p-4','No integrations match your search.')); return; }
+              items.forEach(function(item){
+                nameBySlug[item.slug]=item.name;
+                var card=el('div','flex items-center justify-between gap-3 bg-gray-50 border rounded-xl p-4');
+                var leftWrap=el('span','min-w-0 flex items-center gap-3');
+                if(item.logo){ var img=document.createElement('img'); img.src=item.logo; img.alt=''; img.className='w-8 h-8 rounded object-contain bg-white border shrink-0'; img.loading='lazy'; leftWrap.appendChild(img); }
+                var txt=el('span','min-w-0'); txt.appendChild(el('span','text-sm text-gray-900 font-medium block truncate', item.name));
+                if(item.description) txt.appendChild(el('span','block text-xs text-gray-400 line-clamp-2', item.description));
+                leftWrap.appendChild(txt); card.appendChild(leftWrap);
+                var act=el('span','whitespace-nowrap shrink-0'); act.appendChild(actionEl(item)); card.appendChild(act);
+                grid.appendChild(card);
+              });
+            }
+            var searchTimer=null;
+            function loadCatalog(q){
+              var grid=document.getElementById('otp-catalog-grid');
+              grid.innerHTML=''; grid.appendChild(el('div','text-sm text-gray-400 p-4','Loading integrations…'));
+              fetch(API+'/catalog'+(q?('?search='+encodeURIComponent(q)):''), { credentials:'same-origin' })
+                .then(function(r){ return r.ok?r.json():{items:[]}; })
+                .then(function(d){ renderGrid(d.items||[]); })
+                .catch(function(){ grid.innerHTML=''; grid.appendChild(el('div','text-sm text-red-500 p-4','Could not load integrations.')); });
+            }
+
+            // ---- connect / disconnect ----
             function onConnect(e){
-              var btn = e.currentTarget; var row = btn.closest('.otp-provider-row');
-              var provider = row.getAttribute('data-provider');
-              btn.disabled = true; btn.textContent = 'Opening…';
-              fetch(API+'/'+provider+'/connect', { method:'POST', credentials:'same-origin' })
-                .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-                .then(function(res){
-                  if(res.ok && res.j.redirectUrl){ window.location.href = res.j.redirectUrl; }
-                  else { btn.disabled=false; btn.textContent='Connect'; alert((res.j.error&&res.j.error.message)||'Could not start connection.'); }
-                })
+              var btn=e.currentTarget; var provider=btn.getAttribute('data-provider');
+              btn.disabled=true; btn.textContent='Opening…';
+              fetch(API+'/'+provider+'/connect',{method:'POST',credentials:'same-origin'})
+                .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+                .then(function(res){ if(res.ok&&res.j.redirectUrl){ window.location.href=res.j.redirectUrl; } else { btn.disabled=false; btn.textContent='Connect'; alert((res.j.error&&res.j.error.message)||'Could not start connection.'); } })
                 .catch(function(){ btn.disabled=false; btn.textContent='Connect'; });
             }
-
             function onDisconnect(e){
-              var provider = e.currentTarget.getAttribute('data-provider');
+              var provider=e.currentTarget.getAttribute('data-provider');
               if(!confirm('Disconnect '+(nameBySlug[provider]||provider)+'? OTP will revoke its access.')) return;
-              fetch(API+'/'+provider, { method:'DELETE', credentials:'same-origin' })
-                .then(function(){ load(); })
-                .catch(function(){});
+              fetch(API+'/'+provider,{method:'DELETE',credentials:'same-origin'}).then(function(){ loadConnected().then(function(){ loadCatalog(document.getElementById('otp-catalog-search').value.trim()); }); }).catch(function(){});
             }
 
-            document.querySelectorAll('.otp-connect-btn').forEach(function(b){ b.addEventListener('click', onConnect); });
-            load();
+            // ---- boot ----
+            var search=document.getElementById('otp-catalog-search');
+            search.addEventListener('input', function(){ clearTimeout(searchTimer); var q=search.value.trim(); searchTimer=setTimeout(function(){ loadCatalog(q); }, 250); });
+            Promise.all([loadStatus(), loadConnected()]).then(function(){ loadCatalog(''); });
           })();
           </script>
 

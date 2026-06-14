@@ -12,6 +12,7 @@ import { db } from '../config/database.js';
 import { sql } from 'drizzle-orm';
 import { getKpi, writeKpiValue } from './kpi.js';
 import { executeOrgTool } from './composio-tools.js';
+import { canRunLive } from './integration-live-gate.js';
 import { extractValue, type ExtractSpec } from '../shared/kpi-extract.js';
 
 export class KpiSourceError extends Error {
@@ -109,6 +110,11 @@ export interface RefreshResult {
 export async function refreshKpiSource(orgId: string, kpiId: string, now: Date = new Date()): Promise<RefreshResult> {
   const src = await getKpiSource(orgId, kpiId);
   if (!src) throw new KpiSourceError('NO_SOURCE', 404, 'This KPI has no connected source');
+
+  // Money-safety: a fetch can spend tokens, so it requires the live gate
+  // (billing live + wallet above the floor). 402 with the specific reason.
+  const gate = await canRunLive(orgId);
+  if (!gate.ok) throw new KpiSourceError(gate.reason, 402, gate.message);
 
   const exec = await executeOrgTool(orgId, src.action, src.params);
   if (!exec.successful) {
