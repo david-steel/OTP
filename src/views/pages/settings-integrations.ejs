@@ -1,12 +1,27 @@
 <%- include('../partials/orgy-palette'); %>
+<% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%
   // ---- Settings: Integrations (User Settings) ----
   // Auto-injected: memberRole, currentPath, assetVersion, authState.
-  // Everything below is typeof-guarded so the page never throws on a missing local.
+  // Inc 1 locals (only on authenticated): integrationsLive (master flag),
+  // catalog ([{provider,connectable}]), categoryLabels. All typeof-guarded so the
+  // page never throws on a missing local. While integrationsLive is false the
+  // page renders the legacy "Coming soon" view -- the branch ships dark.
   var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _live = (typeof integrationsLive !== 'undefined') && integrationsLive === true;
+  var _catalog = (typeof catalog !== 'undefined' && Array.isArray(catalog)) ? catalog : [];
+  var _labels = (typeof categoryLabels !== 'undefined' && categoryLabels) ? categoryLabels : {};
 
-  // Planned integrations -- shown as muted, non-clickable "Coming soon" items.
-  // These do NOT work yet. Do not imply otherwise.
+  // Group catalog by category, preserving label order.
+  var _order = ['workspace','crm','finance','marketing','ops','support'];
+  var _grouped = {};
+  _catalog.forEach(function(c){ (_grouped[c.provider.category] = _grouped[c.provider.category] || []).push(c); });
+
+  // slug -> display name, injected once into the inline script (XSS-safe).
+  var _nameMap = {};
+  _catalog.forEach(function(c){ _nameMap[c.provider.slug] = c.provider.name; });
+
+  // Legacy coming-soon list (used when the flag is OFF).
   var _comingSoon = [
     { name: 'Slack',            note: 'Push agent updates and standups into channels.' },
     { name: 'Google Workspace', note: 'Calendar, Drive, and Gmail context for agents.' },
@@ -17,7 +32,6 @@
 <div class="max-w-5xl mx-auto px-4 py-8">
 
   <%- include('../partials/ui-page-header', { helpKey: 'settings.integrations', title: 'Integrations', eyebrow: 'User Settings', subtitle: 'Connect OTP to the tools your agents use.', mascot: 'mcp-api' }) %>
-
 
     <% if (_auth === 'unauthenticated') { %>
       <div class="bg-gray-50 border rounded-xl p-8 text-center">
@@ -31,18 +45,16 @@
       </div>
     <% } else { %>
 
-      <!-- two-column: nav stacks above content on mobile, sidebar on >=md -->
       <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
 
-        <!-- left: settings nav -->
         <%- include('../partials/settings-nav') %>
 
-        <!-- right: content -->
         <div class="flex-1 min-w-0 w-full space-y-6">
 
+        <% if (!_live) { %>
+          <!-- ===== Flag OFF: legacy view ===== -->
           <h2 class="font-bold text-gray-900 text-lg">Connected Tools</h2>
 
-          <!-- Card 1: MCP / API (the real integration surface) -->
           <div class="bg-gray-50 border rounded-xl p-6">
             <h3 class="font-bold text-gray-900 mb-1">MCP &amp; API</h3>
             <p class="text-sm text-gray-500 mb-4">
@@ -56,7 +68,6 @@
             </a>
           </div>
 
-          <!-- Card 2: Coming soon -->
           <div class="bg-gray-50 border rounded-xl p-6">
             <h3 class="font-bold text-gray-900 mb-1">Coming soon</h3>
             <p class="text-sm text-gray-500 mb-4">Planned native integrations. These are not available yet.</p>
@@ -72,6 +83,140 @@
               <% }); %>
             </ul>
           </div>
+
+        <% } else { %>
+          <!-- ===== Flag ON: live integrations ===== -->
+
+          <!-- Connected -->
+          <section>
+            <h2 class="font-bold text-gray-900 text-lg mb-1">Connected</h2>
+            <p class="text-sm text-gray-500 mb-4">Tools this organization has linked. Connections are read-only.</p>
+            <div id="otp-connected-empty" class="bg-gray-50 border rounded-xl p-6 text-sm text-gray-500">
+              Nothing connected yet. Pick a tool below to get started.
+            </div>
+            <ul id="otp-connected-list" class="space-y-2.5 hidden"></ul>
+          </section>
+
+          <!-- Available -->
+          <section>
+            <h2 class="font-bold text-gray-900 text-lg mb-1">Available</h2>
+            <p class="text-sm text-gray-500 mb-4">Connect a tool to pull its data into your scorecard and processes.</p>
+            <% _order.forEach(function(cat){ if(!_grouped[cat]) return; %>
+              <div class="mb-5">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2"><%= _labels[cat] || cat %></h3>
+                <ul class="space-y-2.5">
+                  <% _grouped[cat].forEach(function(c){ %>
+                    <li class="otp-provider-row flex items-center justify-between gap-3 bg-gray-50 border rounded-xl p-4"
+                        data-provider="<%= c.provider.slug %>" data-connectable="<%= c.connectable ? '1':'0' %>">
+                      <span class="min-w-0">
+                        <span class="text-sm text-gray-900 font-medium"><%= c.provider.name %></span>
+                        <span class="block text-sm text-gray-400"><%= c.provider.blurb %></span>
+                      </span>
+                      <span class="otp-provider-action whitespace-nowrap">
+                        <% if (c.connectable) { %>
+                          <button type="button" class="otp-connect-btn px-4 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm">Connect</button>
+                        <% } else { %>
+                          <span class="text-xs font-semibold uppercase tracking-wide text-gray-400 border rounded-full px-2.5 py-1">Coming soon</span>
+                        <% } %>
+                      </span>
+                    </li>
+                  <% }); %>
+                </ul>
+              </div>
+            <% }); %>
+          </section>
+
+          <!-- Custom -->
+          <section>
+            <h2 class="font-bold text-gray-900 text-lg mb-1">Custom</h2>
+            <div class="bg-gray-50 border rounded-xl p-6">
+              <h3 class="font-bold text-gray-900 mb-1">Custom tool (MCP / API)</h3>
+              <p class="text-sm text-gray-500 mb-3">Connect a tool that isn't listed by pointing OTP at your own MCP endpoint or REST API.</p>
+              <span class="text-xs font-semibold uppercase tracking-wide text-gray-400 border rounded-full px-2.5 py-1">Coming soon</span>
+            </div>
+          </section>
+
+          <script>
+          (function(){
+            var API = '/api/v1/integrations';
+            var nameBySlug = <%- jsonForScript(_nameMap) %>;
+
+            function badge(status){
+              var map = { active: ['Connected','text-green-700 bg-green-50 border-green-200'],
+                          pending: ['Pending','text-amber-700 bg-amber-50 border-amber-200'],
+                          error: ['Error','text-red-700 bg-red-50 border-red-200'],
+                          revoked: ['Revoked','text-gray-500 bg-gray-50 border-gray-200'] };
+              var m = map[status] || map.revoked;
+              return '<span class="text-xs font-semibold uppercase tracking-wide border rounded-full px-2.5 py-1 '+m[1]+'">'+m[0]+'</span>';
+            }
+
+            function renderConnected(rows){
+              var list = document.getElementById('otp-connected-list');
+              var empty = document.getElementById('otp-connected-empty');
+              var live = (rows||[]).filter(function(r){ return r.status==='active' || r.status==='pending' || r.status==='error'; });
+              if(!live.length){ empty.classList.remove('hidden'); list.classList.add('hidden'); list.innerHTML=''; return; }
+              empty.classList.add('hidden'); list.classList.remove('hidden');
+              list.innerHTML = live.map(function(r){
+                return '<li class="flex items-center justify-between gap-3 bg-white border rounded-xl p-4">'
+                  + '<span class="text-sm text-gray-900 font-medium">'+(nameBySlug[r.provider]||r.provider)+'</span>'
+                  + '<span class="flex items-center gap-3">'+badge(r.status)
+                  + '<button type="button" data-provider="'+r.provider+'" class="otp-disconnect-btn text-sm text-red-600 hover:text-red-700 font-medium">Disconnect</button>'
+                  + '</span></li>';
+              }).join('');
+              list.querySelectorAll('.otp-disconnect-btn').forEach(function(b){ b.addEventListener('click', onDisconnect); });
+              // Reflect connected state in the Available list.
+              var connectedSlugs = live.map(function(r){return r.provider;});
+              document.querySelectorAll('.otp-provider-row').forEach(function(row){
+                var slug = row.getAttribute('data-provider');
+                var act = row.querySelector('.otp-provider-action');
+                if(connectedSlugs.indexOf(slug)>=0 && act){ act.innerHTML = '<span class="text-xs font-semibold uppercase tracking-wide text-green-700">Connected</span>'; }
+              });
+            }
+
+            function load(){
+              fetch(API, { credentials:'same-origin' })
+                .then(function(r){ return r.ok ? r.json() : {connections:[]}; })
+                .then(function(d){
+                  renderConnected(d.connections||[]);
+                  (d.connections||[]).filter(function(r){return r.status==='pending';}).forEach(function(r){ sync(r.provider); });
+                })
+                .catch(function(){});
+            }
+
+            function sync(provider){
+              fetch(API+'/'+provider+'/sync', { method:'POST', credentials:'same-origin' })
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(d){ if(d && d.connected){ load(); } })
+                .catch(function(){});
+            }
+
+            function onConnect(e){
+              var btn = e.currentTarget; var row = btn.closest('.otp-provider-row');
+              var provider = row.getAttribute('data-provider');
+              btn.disabled = true; btn.textContent = 'Opening…';
+              fetch(API+'/'+provider+'/connect', { method:'POST', credentials:'same-origin' })
+                .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+                .then(function(res){
+                  if(res.ok && res.j.redirectUrl){ window.location.href = res.j.redirectUrl; }
+                  else { btn.disabled=false; btn.textContent='Connect'; alert((res.j.error&&res.j.error.message)||'Could not start connection.'); }
+                })
+                .catch(function(){ btn.disabled=false; btn.textContent='Connect'; });
+            }
+
+            function onDisconnect(e){
+              var provider = e.currentTarget.getAttribute('data-provider');
+              if(!confirm('Disconnect '+(nameBySlug[provider]||provider)+'? OTP will revoke its access.')) return;
+              fetch(API+'/'+provider, { method:'DELETE', credentials:'same-origin' })
+                .then(function(){ load(); })
+                .catch(function(){});
+            }
+
+            document.querySelectorAll('.otp-connect-btn').forEach(function(b){ b.addEventListener('click', onConnect); });
+            load();
+          })();
+          </script>
+
+        <% } %>
 
         </div>
       </div>

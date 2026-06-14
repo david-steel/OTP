@@ -777,6 +777,7 @@ await app.register(import('./routes/api/charts.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/teams.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/agents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/schedules.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/integrations.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/kpis.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/scanner.js'), { prefix: '/api/v1' });
@@ -980,6 +981,14 @@ try {
   startScheduleRunner(app);
 } catch (err) {
   app.log.error({ err }, 'ensureAgentRuntimeTables failed -- agent runtime will not work until resolved');
+}
+
+try {
+  const { ensureIntegrationsTables } = await import('./db/ensure-integrations.js');
+  await ensureIntegrationsTables();
+  app.log.info('integration_connections + kpi_sources tables are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureIntegrationsTables failed -- integrations (Composio) will not work until resolved');
 }
 
 try {

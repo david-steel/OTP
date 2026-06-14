@@ -2418,7 +2418,15 @@ Founder, OTP</p>
     if (!org) {
       return reply.view('pages/settings-integrations', { title: 'Integrations - OTP', noindex: true, authState: 'no_org' });
     }
-    return reply.view('pages/settings-integrations', { title: 'Integrations - OTP', noindex: true, authState: 'authenticated' });
+    const { integrationsEnabled, catalogView, CATEGORY_LABELS } = await import('../../../shared/integrations-catalog.js');
+    return reply.view('pages/settings-integrations', {
+      title: 'Integrations - OTP',
+      noindex: true,
+      authState: 'authenticated',
+      integrationsLive: integrationsEnabled(),
+      catalog: catalogView(),
+      categoryLabels: CATEGORY_LABELS,
+    });
   });
 
   // GET /settings/notifications
