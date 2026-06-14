@@ -1,82 +1,12 @@
-<%
-  // Settings hub left-nav. Two-group vertical sidebar (Ninety-style, adapted to OTP).
-  // Included by settings pages as: include('../partials/settings-nav')
-  //
-  // Optional locals (auto-injected on most authed routes):
-  //   currentPath - string like '/settings/preferences'; the matching link is highlighted.
-  //   memberRole  - string like 'owner','admin','manager','observer'; gates the Company group.
-  // Both are typeof-guarded so this partial never errors when a local is missing.
-  //
-  // Use plain JS line comments here, and never put an EJS close-delimiter in a
-  // comment: a stray close-delimiter ends the scriptlet early and has 500'd
-  // pages before (see memory). The User group always shows; the Company group
-  // shows only for org-wide roles (mirrors ORG_WIDE in dashboard-tabs.ejs).
-  var _sn_path = (typeof currentPath !== 'undefined' && currentPath) ? String(currentPath) : '';
-  var _sn_role = (typeof memberRole !== 'undefined' && memberRole) ? String(memberRole) : '';
-  var _sn_orgWide = ['owner','admin','implementer','visionary','integrator'];
-  var _sn_isOrgWide = false;
-  for (var _i = 0; _i < _sn_orgWide.length; _i++) { if (_sn_orgWide[_i] === _sn_role) { _sn_isOrgWide = true; } }
+<%#
+  DEPRECATED (2026-06-14): the in-page settings nav card was replaced by the
+  left-rail settings sub-menu (see src/views/layouts/main.ejs -- on /settings/*
+  the rail switches to Go Back + settings items, themed orgy-green).
 
-  var _sn_user = [
-    { href: '/settings/profile',       label: 'Profile' },
-    { href: '/settings/account',       label: 'Account' },
-    { href: '/settings/preferences',   label: 'Preferences' },
-    { href: '/settings/notifications', label: 'Notifications' },
-    { href: '/settings/integrations',  label: 'Integrations' }
-  ];
-  var _sn_company = [
-    { href: '/settings/configuration', label: 'Configuration' },
-    { href: '/settings/teams',         label: 'Teams' },
-    { href: '/settings/language',      label: 'Language' },
-    { href: '/settings/billing',       label: 'Billing' },
-    { href: '/settings/labs',          label: 'Labs' }
-  ];
-  // Moved off the left rail (2026-06-13) to keep the rail daily-focused.
-  // My Practice is coach-only; Docs/Workspaces/Inquiries are org-wide (the whole
-  // Workspace group already sits inside the org-wide gate below).
-  var _sn_isCoach = (typeof isCoach !== 'undefined' && isCoach) ? true : false;
-  var _sn_workspace = [];
-  if (_sn_isCoach) _sn_workspace.push({ href: '/dashboard/practice', label: 'My Practice' });
-  _sn_workspace.push({ href: '/dashboard/source-documents', label: 'Docs' });
-  _sn_workspace.push({ href: '/dashboard/workspaces',       label: 'Workspaces' });
-  _sn_workspace.push({ href: '/dashboard/inquiries',        label: 'Inquiries' });
-  function _sn_link(item) {
-    var active = (item.href === _sn_path);
-    var cls = 'settings-nav-link' + (active ? ' active' : '');
-    return '<a href="' + item.href + '" class="' + cls + '">' + item.label + '</a>';
-  }
+  This partial is intentionally a no-op so the ~10 settings pages that still
+  `include('../partials/settings-nav')` keep rendering without a second nav.
+  Their flex wrapper now lays out a single full-width content column, which is
+  the desired "free up the space" outcome. Safe to delete the includes + unwrap
+  the flex wrappers in a later cleanup; blanking here is the one-edit, low-risk
+  path that can't 500 a page.
 %>
-<style>
-  .settings-nav {
-    width: 220px; flex: none; align-self: flex-start;
-    background: var(--white, #fcfcfd);
-    border: 1px solid var(--line, #e6e8ec); border-radius: 12px;
-    padding: 12px;
-  }
-  .settings-nav-grp {
-    font-size: 10.5px; font-weight: 700; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--ink-mute, #888c96);
-    padding: 14px 12px 6px;
-  }
-  .settings-nav-grp:first-child { padding-top: 4px; }
-  .settings-nav-link {
-    display: block; padding: 9px 12px; border-radius: 9px;
-    color: var(--ink-soft, #494d57); text-decoration: none;
-    font-weight: 600; font-size: 14px;
-  }
-  .settings-nav-link:hover { background: #f4f6f8; color: var(--ink, #14161c); }
-  .settings-nav-link.active {
-    background: var(--orgy-tint, #f1fadd);
-    color: var(--orgy-onlight, #5a7d1f); font-weight: 700;
-  }
-</style>
-<nav class="settings-nav" aria-label="Settings navigation">
-  <div class="settings-nav-grp">User</div>
-  <%- _sn_user.map(_sn_link).join('') %>
-  <% if (_sn_isOrgWide) { %>
-    <div class="settings-nav-grp">Workspace</div>
-    <%- _sn_workspace.map(_sn_link).join('') %>
-    <div class="settings-nav-grp">Company</div>
-    <%- _sn_company.map(_sn_link).join('') %>
-  <% } %>
-</nav>
