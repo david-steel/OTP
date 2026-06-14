@@ -29,6 +29,13 @@ export interface LabFeature {
   targetLiveDate?: string;
   /** Where the org lands once the feature is on (shown as an "Open" link). */
   surfaceUrl?: string;
+  /**
+   * If set (with surfaceUrl), an ENABLED feature gets a left-rail nav item.
+   * navLabel defaults to `name`; navIcon is a key into the rail's icon set
+   * (src/views/layouts/main.ejs `_sbI`), falling back to a generic grid icon.
+   */
+  navLabel?: string;
+  navIcon?: string;
 }
 
 /**
@@ -43,6 +50,8 @@ export const LAB_FEATURES: LabFeature[] = [
       'Install partner-built agents, integrations, and operating-system content packs directly into your workspace. Each add-on gets a seat, an SOP, and a scorecard on your org chart.',
     status: 'beta',
     surfaceUrl: '/marketplace',
+    navLabel: 'Marketplace',
+    navIcon: 'store',
   },
 ];
 

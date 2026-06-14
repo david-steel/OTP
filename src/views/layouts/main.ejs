@@ -571,7 +571,10 @@
          grid4:  '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
          inbox:  '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
          zap:    '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
-         target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
+         target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+         store:  '<path d="M3 9l1.5-5h15L21 9M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M3 9h18M9 13h6"/>',
+         cog:    '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+         back:   '<path d="M19 12H5M12 19l-7-7 7-7"/>'
        };
        // Rail focused on daily-use items + Upgrade. Practice / Docs / Workspaces
        // / Inquiries moved to the Settings hub (partials/settings-nav.ejs);
@@ -596,6 +599,37 @@
          { divider:true },
          { href:'/pricing',                      label:'Upgrade',        icon:_sbI.zap,    allow:true, upsell:true }
        ];
+       // OTP Labs: features the org turned on that expose a navigable surface get
+       // a rail item, injected just above the trailing divider+Upgrade group.
+       var _sbLab = (locals.labNavItems && locals.labNavItems.length) ? locals.labNavItems : [];
+       if (_sbLab.length) {
+         var _sbLabItems = [{ divider:true }];
+         for (var _li = 0; _li < _sbLab.length; _li++) {
+           _sbLabItems.push({ href:_sbLab[_li].href, label:_sbLab[_li].label, icon:(_sbI[_sbLab[_li].iconKey] || _sbI.grid4), allow:true });
+         }
+         _sbItems = _sbItems.slice(0, _sbItems.length - 2).concat(_sbLabItems).concat(_sbItems.slice(_sbItems.length - 2));
+       }
+       // Settings mode: on a /settings/* page the rail becomes the settings
+       // sub-menu (Go Back + settings items), themed orgy-green. Item list mirrors
+       // partials/settings-nav.ejs; company items gated to org-wide roles.
+       var _sbSettings = _appPath.indexOf('/settings') === 0;
+       if (_sbSettings) {
+         _sbItems = [
+           { href:'/dashboard',              label:'Go Back',        icon:_sbI.back,   allow:true },
+           { divider:true },
+           { href:'/settings/profile',       label:'Profile',        icon:_sbI.people, allow:true },
+           { href:'/settings/account',       label:'Account',        icon:_sbI.key,    allow:true },
+           { href:'/settings/preferences',   label:'Preferences',    icon:_sbI.cog,    allow:true },
+           { href:'/settings/notifications', label:'Notifications',  icon:_sbI.alert,  allow:true },
+           { href:'/settings/integrations',  label:'Integrations',   icon:_sbI.zap,    allow:true },
+           { href:'/settings/api',           label:'MCP / API keys', icon:_sbI.key,    allow:_sbORG_WIDE },
+           { divider:true },
+           { href:'/settings/configuration', label:'Configuration',  icon:_sbI.cog,    allow:_sbORG_WIDE },
+           { href:'/settings/teams',         label:'Teams',          icon:_sbI.teams,  allow:_sbORG_WIDE },
+           { href:'/settings/billing',       label:'Billing',        icon:_sbI.chart,  allow:_sbORG_WIDE },
+           { href:'/settings/labs',          label:'Labs',           icon:_sbI.target, allow:_sbORG_WIDE }
+         ];
+       }
        // Render sequentially; a divider only prints when items rendered on both
        // sides of it (so a fully role-gated-out group can't leave a double rule).
        var _sbHtml = '';
@@ -681,11 +715,26 @@
     /* Grey app canvas on dashboard/meeting pages -- preserved from the old
        dashboard-tabs rail so tiles keep their card-on-grey treatment. */
     main.otp-app-canvas { background: var(--grey, #f0f1f3); min-height: 100vh; }
+    /* Settings mode: the rail switches to OTP's orgy-green accent so it's
+       visually obvious you've stepped into Settings (vs the blue app rail).
+       Hardcoded hex (orgy-palette vars aren't in this layout): tint #f1fadd,
+       on-light #5a7d1f. */
+    .otp-sb-settings .otp-sb-org { color: #5a7d1f; }
+    .otp-sb-settings .otp-sb-link:hover { background: #f1fadd; color: #4f7a17; }
+    .otp-sb-settings .otp-sb-link.active { background: #e7f5c6; color: #4f7a17; font-weight: 600; }
   </style>
-  <aside id="otp-sidebar" class="otp-sb" aria-label="App navigation">
-    <div class="otp-sb-org"><span class="otp-sb-label"><%= (locals.orgName || 'Workspace') %></span></div>
+  <aside id="otp-sidebar" class="otp-sb<%= _sbSettings ? ' otp-sb-settings' : '' %>" aria-label="App navigation">
+    <div class="otp-sb-org"><span class="otp-sb-label"><%= _sbSettings ? 'Settings' : (locals.orgName || 'Workspace') %></span></div>
     <nav class="otp-sb-nav"><%- _sbHtml %></nav>
-    <% if (_sbUpgradeHtml) { %><div class="otp-sb-foot"><%- _sbUpgradeHtml %></div><% } %>
+    <% if (!_sbSettings) { %>
+      <div class="otp-sb-foot">
+        <a href="/settings/profile" class="otp-sb-link" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><%- _sbI.cog %></svg>
+          <span class="otp-sb-label">Settings</span>
+        </a>
+        <% if (_sbUpgradeHtml) { %><%- _sbUpgradeHtml %><% } %>
+      </div>
+    <% } %>
     <button type="button" id="otp-sb-toggle" class="otp-sb-toggle" title="<%= (typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? 'Expand sidebar' : 'Collapse sidebar' %>" aria-label="Toggle sidebar">
       <svg class="otp-sb-chev-l" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       <svg class="otp-sb-chev-r" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>

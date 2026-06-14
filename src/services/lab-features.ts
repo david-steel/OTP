@@ -49,6 +49,24 @@ export async function isFeatureEnabledForOrg(orgId: string | null | undefined, k
   return resolveLabEnabled(feature, optins.has(key));
 }
 
+export interface LabNavItem {
+  href: string;
+  label: string;
+  iconKey: string;
+}
+
+/**
+ * The left-rail nav items an org has unlocked via Labs: enabled features that
+ * expose a navigable surface (surfaceUrl). Cheap single query; called per
+ * authed page render from the server.ts preHandler.
+ */
+export async function getOrgLabNavItems(orgId: string): Promise<LabNavItem[]> {
+  const optins = await getOrgOptins(orgId);
+  return LAB_FEATURES
+    .filter((f) => !!f.surfaceUrl && resolveLabEnabled(f, optins.has(f.key)))
+    .map((f) => ({ href: f.surfaceUrl as string, label: f.navLabel || f.name, iconKey: f.navIcon || 'grid4' }));
+}
+
 /** Full Labs state for an org -- one entry per registered feature. */
 export async function getOrgLabState(orgId: string): Promise<OrgLabFeatureState[]> {
   const optins = await getOrgOptins(orgId);

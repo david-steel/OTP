@@ -270,6 +270,7 @@ app.addHook('preHandler', async (request, reply) => {
       coachSlug,
       sidebarCollapsed,
       realtimeStreamEnabled,
+      labNavItems: (request as any).labNavItems || [],
     }, opts);
   };
 });
@@ -310,6 +311,21 @@ app.addHook('preHandler', async (request) => {
   } catch (err) {
     (request as any).isCoach = false;
     request.log.debug({ err }, 'isCoach decorator failed');
+  }
+});
+
+// Labs nav decorator: stash the org's unlocked Labs nav items (enabled features
+// with a navigable surface) on the request so the layout rail can render them.
+// Fail-soft: any error leaves an empty list (the rail just shows core items).
+app.addHook('preHandler', async (request) => {
+  const om = (request as any).orgMember;
+  if (!om || !om.orgId) return;
+  try {
+    const { getOrgLabNavItems } = await import('./services/lab-features.js');
+    (request as any).labNavItems = await getOrgLabNavItems(om.orgId);
+  } catch (err) {
+    (request as any).labNavItems = [];
+    request.log.debug({ err }, 'labNavItems decorator failed');
   }
 });
 
