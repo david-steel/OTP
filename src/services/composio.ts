@@ -106,6 +106,40 @@ export async function getConnection(connectionId: string): Promise<ComposioConne
   }
 }
 
+export interface ComposioToolkit {
+  slug: string;
+  name: string;
+  description: string;
+  logo: string | null;
+  toolsCount: number;
+}
+
+/**
+ * Browse the Composio toolkit catalog (searchable). Powers the integrations
+ * page "Available" grid -- ALL Composio apps, not just the curated set. Returns
+ * [] on any failure so the page degrades gracefully rather than 500ing.
+ */
+export async function listToolkits(search = '', limit = 100): Promise<ComposioToolkit[]> {
+  try {
+    const qs = new URLSearchParams();
+    if (search.trim()) qs.set('search', search.trim());
+    qs.set('limit', String(Math.min(Math.max(limit, 1), 200)));
+    const j = await call('GET', `/toolkits?${qs.toString()}`);
+    const items: any[] = j?.items || j?.data || [];
+    return items
+      .filter((t) => t?.slug && !t.is_local_toolkit)
+      .map((t) => ({
+        slug: String(t.slug),
+        name: String(t.name || t.slug),
+        description: String(t.meta?.description || '').slice(0, 240),
+        logo: t.meta?.logo || null,
+        toolsCount: Number(t.meta?.tools_count || 0),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 /** Revoke/delete a connection in Composio. Idempotent: 404 is treated as done. */
 export async function deleteConnection(connectionId: string): Promise<void> {
   try {
