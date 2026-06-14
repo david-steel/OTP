@@ -34,6 +34,41 @@ import {
   deleteConnection,
   ComposioError,
 } from '../../services/composio.js';
+import { z } from 'zod';
+import { KpiError } from '../../services/kpi.js';
+import {
+  upsertKpiSource,
+  getKpiSource,
+  deleteKpiSource,
+  refreshKpiSource,
+  KpiSourceError,
+} from '../../services/kpi-source-puller.js';
+
+const extractSchema = z.object({
+  mode: z.enum(['cell', 'sum_column', 'count_rows', 'sum_column_since']),
+  row: z.number().int().optional(),
+  column: z.number().int().optional(),
+  skip_header: z.boolean().optional(),
+  nonempty_column: z.number().int().optional(),
+  date_column: z.number().int().optional(),
+  value_column: z.number().int().optional(),
+  since: z.string().max(60).optional(),
+}).passthrough();
+
+const kpiSourceSchema = z.object({
+  connectionId: z.string().min(1).max(120),
+  action: z.string().min(1).max(160),
+  params: z.record(z.unknown()).default({}),
+  extract: extractSchema,
+  cadence: z.string().max(120).nullish(),
+});
+
+/** Map a thrown error to {status, code, message} for the KPI-source routes. */
+function kpiSourceErr(e: unknown): { status: number; code: string; message: string } {
+  if (e instanceof KpiSourceError) return { status: e.httpStatus, code: e.code, message: e.message };
+  if (e instanceof KpiError) return { status: e.httpStatus, code: e.code, message: e.message };
+  return { status: 500, code: 'INTERNAL_ERROR', message: 'KPI source operation failed' };
+}
 
 async function getMemberOrg(
   request: FastifyRequest,
@@ -157,5 +192,60 @@ export default async function integrationRoutes(app: FastifyInstance) {
       DELETE FROM integration_connections WHERE org_id = ${ctx.org.id} AND provider = ${provider}
     `);
     return reply.send({ disconnected: true });
+  });
+
+  // ===== KPI sources: map a scorecard KPI to a connected tool (Inc 4) =====
+
+  // GET the source mapping for a KPI (null if none).
+  app.get<{ Params: { id: string } }>('/kpis/:id/source', async (request, reply) => {
+    const ctx = await getMemberOrg(request);
+    if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    const source = await getKpiSource(ctx.org.id, request.params.id);
+    return reply.send({ source });
+  });
+
+  // PUT (create/replace) the source mapping for a KPI.
+  app.put<{ Params: { id: string }; Body: unknown }>('/kpis/:id/source', async (request, reply) => {
+    const ctx = await getMemberOrg(request);
+    if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    if (!composioConfigured()) return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: 'Integrations are not configured yet.' } });
+
+    const parsed = kpiSourceSchema.safeParse(request.body || {});
+    if (!parsed.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid source mapping' } });
+
+    try {
+      const row = await upsertKpiSource(
+        ctx.org.id, request.params.id,
+        { connectionId: parsed.data.connectionId, action: parsed.data.action, params: parsed.data.params, extract: parsed.data.extract as any, cadence: parsed.data.cadence ?? null },
+        ctx.userId,
+      );
+      return reply.status(201).send({ source: row });
+    } catch (e) {
+      const m = kpiSourceErr(e);
+      return reply.status(m.status).send({ error: { code: m.code, message: m.message } });
+    }
+  });
+
+  // DELETE the source mapping (the KPI keeps its recorded values).
+  app.delete<{ Params: { id: string } }>('/kpis/:id/source', async (request, reply) => {
+    const ctx = await getMemberOrg(request);
+    if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    const removed = await deleteKpiSource(ctx.org.id, request.params.id);
+    if (!removed) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No source on this KPI' } });
+    return reply.send({ deleted: true });
+  });
+
+  // POST refresh: pull the mapped source now and write the value to the scorecard.
+  app.post<{ Params: { id: string } }>('/kpis/:id/source/refresh', async (request, reply) => {
+    const ctx = await getMemberOrg(request);
+    if (!ctx) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
+    if (!composioConfigured()) return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: 'Integrations are not configured yet.' } });
+    try {
+      const result = await refreshKpiSource(ctx.org.id, request.params.id);
+      return reply.send(result);
+    } catch (e) {
+      const m = kpiSourceErr(e);
+      return reply.status(m.status).send({ error: { code: m.code, message: m.message } });
+    }
   });
 }

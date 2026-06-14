@@ -64,6 +64,10 @@ const DDL: string[] = [
   `CREATE UNIQUE INDEX IF NOT EXISTS "kpi_sources_kpi_uk" ON "kpi_sources" ("kpi_id");`,
   `CREATE INDEX IF NOT EXISTS "kpi_sources_org_idx" ON "kpi_sources" ("org_id");`,
   `CREATE INDEX IF NOT EXISTS "kpi_sources_conn_idx" ON "kpi_sources" ("connection_id");`,
+
+  // Inc 4: the extraction spec (mode + column/date/since config) that reduces the
+  // tool response to one number. Stored as jsonb alongside the action + params.
+  `ALTER TABLE kpi_sources ADD COLUMN IF NOT EXISTS extract jsonb NOT NULL DEFAULT '{}'::jsonb;`,
 ];
 
 export async function ensureIntegrationsTables(): Promise<void> {
