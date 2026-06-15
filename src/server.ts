@@ -818,6 +818,7 @@ await app.register(import('./routes/api/ask-ai.js'), { prefix: '/api/v1' });
 // Stripe and the raw body survives for signature verification.
 await app.register(import('./routes/api/billing.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/labs.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/meeting-formats.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
   await app.register(stripeWebhookRoutes);
@@ -945,6 +946,14 @@ try {
   app.log.info('kpi_groups table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureKpiGroupsTable failed -- KPI group ordering may fall back to alphabetical');
+}
+
+try {
+  const { ensureMeetingFormatsTable } = await import('./db/ensure-meeting-formats.js');
+  await ensureMeetingFormatsTable();
+  app.log.info('meeting_formats table is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingFormatsTable failed -- custom meeting formats may 500 until resolved');
 }
 
 try {

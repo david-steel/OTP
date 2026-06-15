@@ -880,6 +880,27 @@ export const kpiTimeGrainEnum = pgEnum('kpi_time_grain', ['weekly', 'monthly', '
 export const kpiAggregationEnum = pgEnum('kpi_aggregation', ['sum', 'avg', 'last', 'first', 'min', 'max']);
 export const kpiValueSourceEnum = pgEnum('kpi_value_source', ['manual', 'api', 'computed']);
 
+// Custom meeting formats: a user-authored, reusable agenda (ordered sections).
+// visibility: 'private' (creator only) or 'org' (everyone in the org can run it).
+// structure is MeetingSection[] (see shared/meeting-sections.ts). source_listing_id
+// is set when a format was installed from a marketplace listing (provenance).
+export const meetingFormats = pgTable('meeting_formats', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  createdBy: varchar('created_by', { length: 255 }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  structure: jsonb('structure').notNull().default([]),
+  visibility: varchar('visibility', { length: 20 }).notNull().default('org'),
+  sourceListingId: uuid('source_listing_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  orgIdx: index('meeting_formats_org_idx').on(table.orgId),
+  orgVisIdx: index('meeting_formats_org_vis_idx').on(table.orgId, table.visibility),
+}));
+
 // KPI group registry + display order. Groups are otherwise just the group_name
 // string on each KPI; this table persists a custom order and lets a group exist
 // (and be reordered) independent of which KPIs are in it. Keyed by (org, name).
