@@ -6,6 +6,8 @@
   // List + builder are driven client-side off /api/v1/meeting-formats.
   var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
   var _types = (typeof sectionTypes !== 'undefined' && Array.isArray(sectionTypes)) ? sectionTypes : [];
+  var _groups = (typeof kpiGroups !== 'undefined' && Array.isArray(kpiGroups)) ? kpiGroups : [];
+  var _teams = (typeof mfTeams !== 'undefined' && Array.isArray(mfTeams)) ? mfTeams : [];
 %>
 <style>
   .mf-card { border:1px solid #e5e7eb; border-radius:12px; background:#fff; padding:1rem 1.1rem; }
@@ -58,6 +60,13 @@
           <button type="button" id="mf-add" class="mf-btn mf-btn-ghost" style="padding:0.35rem 0.7rem;">+ Add section</button>
         </span>
       </div>
+      <div style="display:flex; align-items:center; gap:6px; padding:0 8px 4px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#9ca3af;">
+        <span style="flex:0 0 150px;">Section</span>
+        <span style="flex:1;">Title</span>
+        <span style="width:64px; text-align:center;">Min</span>
+        <span style="flex:1.3;">Notes</span>
+        <span style="width:78px;"></span>
+      </div>
       <div id="mf-sections" style="display:flex; flex-direction:column; gap:6px;"></div>
 
       <div style="margin-top:1rem; display:flex; gap:0.5rem;">
@@ -73,6 +82,8 @@
 
 <script>
   var MF_TYPES = <%- JSON.stringify(_types) %>;
+  var MF_GROUPS = <%- JSON.stringify(_groups) %>;
+  var MF_TEAMS = <%- JSON.stringify(_teams) %>;
   (function() {
     if (!document.getElementById('mf-list')) return;
     var typeByKey = {}; MF_TYPES.forEach(function(t){ typeByKey[t.key] = t; });
@@ -88,9 +99,23 @@
     function esc(s){ var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
 
     // ----- builder -----
+    function bindControl(type, bind) {
+      // Options: All + (scorecard -> KPI groups) or (rocks/todos/issues -> teams).
+      var opts = [{ v: 'all', l: type === 'scorecard' ? 'All KPIs' : 'All' }];
+      if (type === 'scorecard') { MF_GROUPS.forEach(function(g){ opts.push({ v: 'group:' + g, l: 'Group: ' + g }); }); }
+      else { MF_TEAMS.forEach(function(tm){ opts.push({ v: 'team:' + tm.id, l: 'Team: ' + tm.name }); }); }
+      var cur = 'all';
+      if (bind && bind.scope === 'group' && bind.value) cur = 'group:' + bind.value;
+      else if (bind && bind.scope === 'team' && bind.value) cur = 'team:' + bind.value;
+      var html = '<select class="mf-in mf-bind" style="font-size:12px;">';
+      opts.forEach(function(o){ html += '<option value="' + esc(o.v) + '"' + (o.v === cur ? ' selected' : '') + '>' + esc(o.l) + '</option>'; });
+      return html + '</select>';
+    }
     function sectionRow(sec) {
-      var t = typeByKey[sec.type] || { label: sec.type, description: '' };
-      var row = document.createElement('div'); row.className = 'mf-sec-row'; row.dataset.type = sec.type;
+      var t = typeByKey[sec.type] || { label: sec.type, description: '', dataLinked: false };
+      var wrap = document.createElement('div'); wrap.className = 'mf-section'; wrap.dataset.type = sec.type;
+      wrap.style.cssText = 'display:flex; flex-direction:column; gap:4px;';
+      var row = document.createElement('div'); row.className = 'mf-sec-row';
       row.innerHTML =
         '<span style="flex:0 0 150px; font-size:12px; font-weight:700; color:#374151;" title="' + esc(t.description) + '">' + esc(t.label) + '</span>' +
         '<input class="mf-in mf-title" style="flex:1;" placeholder="Section title" />' +
@@ -102,11 +127,18 @@
       row.querySelector('.mf-title').value = sec.title || t.label;
       row.querySelector('.mf-min').value = (sec.minutes != null ? sec.minutes : (t.defaultMinutes || 5));
       row.querySelector('.mf-notes').value = sec.notes || '';
-      row.querySelector('.mf-up').addEventListener('click', function(){ if (row.previousElementSibling) { secWrap.insertBefore(row, row.previousElementSibling); recalc(); } });
-      row.querySelector('.mf-down').addEventListener('click', function(){ if (row.nextElementSibling) { secWrap.insertBefore(row.nextElementSibling, row); recalc(); } });
-      row.querySelector('.mf-del').addEventListener('click', function(){ row.remove(); recalc(); });
+      row.querySelector('.mf-up').addEventListener('click', function(){ if (wrap.previousElementSibling) { secWrap.insertBefore(wrap, wrap.previousElementSibling); recalc(); } });
+      row.querySelector('.mf-down').addEventListener('click', function(){ if (wrap.nextElementSibling) { secWrap.insertBefore(wrap.nextElementSibling, wrap); recalc(); } });
+      row.querySelector('.mf-del').addEventListener('click', function(){ wrap.remove(); recalc(); });
       row.querySelector('.mf-min').addEventListener('input', recalc);
-      return row;
+      wrap.appendChild(row);
+      if (t.dataLinked) {
+        var bl = document.createElement('div');
+        bl.style.cssText = 'display:flex; align-items:center; gap:6px; padding-left:156px;';
+        bl.innerHTML = '<span style="font-size:11px; font-weight:600; color:#9ca3af;">Pulls data from:</span>' + bindControl(sec.type, sec.bind);
+        wrap.appendChild(bl);
+      }
+      return wrap;
     }
     function recalc() {
       var total = 0; secWrap.querySelectorAll('.mf-min').forEach(function(i){ var n = Number(i.value); if (!isNaN(n)) total += n; });
@@ -114,8 +146,20 @@
     }
     function readSections() {
       var out = [];
-      secWrap.querySelectorAll('.mf-sec-row').forEach(function(row){
-        out.push({ type: row.dataset.type, title: row.querySelector('.mf-title').value.trim(), minutes: Number(row.querySelector('.mf-min').value) || 0, notes: row.querySelector('.mf-notes').value.trim() });
+      secWrap.querySelectorAll('.mf-section').forEach(function(wrap){
+        var sec = {
+          type: wrap.dataset.type,
+          title: wrap.querySelector('.mf-title').value.trim(),
+          minutes: Number(wrap.querySelector('.mf-min').value) || 0,
+          notes: wrap.querySelector('.mf-notes').value.trim(),
+        };
+        var bindSel = wrap.querySelector('.mf-bind');
+        if (bindSel) {
+          var v = bindSel.value;
+          if (v && v !== 'all') { var p = v.split(':'); sec.bind = { scope: p[0], value: p.slice(1).join(':') }; }
+          else { sec.bind = { scope: 'all' }; }
+        }
+        out.push(sec);
       });
       return out;
     }

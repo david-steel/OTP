@@ -957,9 +957,22 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       return reply.view('pages/meeting-formats', { title: 'Meeting formats - OTP', noindex: true, authState: 'no_org', sectionTypes: [] });
     }
     const { MEETING_SECTION_TYPES } = await import('../../../shared/meeting-sections.js');
+    // Data sources a section can bind to: KPI groups (for scorecard) + teams (rocks/issues/todos).
+    let kpiGroups: string[] = [];
+    let mfTeams: Array<{ id: string; name: string }> = [];
+    try {
+      const gr = (await db.execute(sql`
+        SELECT DISTINCT name FROM (
+          SELECT name FROM kpi_groups WHERE org_id = ${org.id}
+          UNION SELECT group_name AS name FROM kpis WHERE organization_id = ${org.id} AND group_name IS NOT NULL AND deleted_at IS NULL
+        ) g ORDER BY name`)) as any;
+      kpiGroups = (gr.rows || []).map((r: any) => String(r.name));
+      const tr = (await db.execute(sql`SELECT id, name FROM teams WHERE org_id = ${org.id} ORDER BY name`)) as any;
+      mfTeams = (tr.rows || []).map((r: any) => ({ id: String(r.id), name: String(r.name) }));
+    } catch { /* best-effort: builder still works with "All" only */ }
     return reply.view('pages/meeting-formats', {
       title: 'Meeting formats - OTP', noindex: true, authState: 'authenticated',
-      sectionTypes: MEETING_SECTION_TYPES,
+      sectionTypes: MEETING_SECTION_TYPES, kpiGroups, mfTeams,
     });
   });
 

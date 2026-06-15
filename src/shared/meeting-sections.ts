@@ -39,11 +39,31 @@ export function sectionTypeLabel(key: string): string {
   return TYPE_BY_KEY.get(key)?.label || 'Section';
 }
 
+/**
+ * Data binding for a data-linked section. Bind by REFERENCE so the section
+ * resolves live at run time and automatically picks up newly added data:
+ *   { scope: 'all' }                      -> all KPIs / rocks / etc.
+ *   { scope: 'group', value: 'Sales' }    -> a KPI group (scorecard sections)
+ *   { scope: 'team',  value: '<teamId>' } -> a team (rocks / todos / issues)
+ * A static id-list is deliberately NOT the model: it would go stale the moment
+ * someone adds a new KPI. Reference binding never goes stale.
+ */
+export interface SectionBind {
+  scope: 'all' | 'group' | 'team';
+  value?: string;
+}
+
 export interface MeetingSection {
   type: string;
   title: string;
   minutes: number;
   notes: string;
+  /** Only meaningful when the section type is dataLinked. */
+  bind?: SectionBind;
+}
+
+export function isDataLinked(typeKey: string): boolean {
+  return TYPE_BY_KEY.get(typeKey)?.dataLinked === true;
 }
 
 const MAX_SECTIONS = 40;
@@ -68,12 +88,20 @@ export function normalizeStructure(input: unknown): MeetingSection[] {
     const titleRaw = typeof r.title === 'string' ? r.title.trim() : '';
     const minutesRaw = Number(r.minutes);
     const notesRaw = typeof r.notes === 'string' ? r.notes : '';
-    out.push({
+    const section: MeetingSection = {
       type,
       title: (titleRaw || def.label).slice(0, MAX_TITLE),
       minutes: Number.isFinite(minutesRaw) && minutesRaw >= 0 ? Math.min(600, Math.round(minutesRaw)) : def.defaultMinutes,
       notes: notesRaw.slice(0, MAX_NOTES),
-    });
+    };
+    // Bind only applies to data-linked sections; ignore otherwise.
+    if (def.dataLinked && r.bind && typeof r.bind === 'object') {
+      const b = r.bind as Record<string, unknown>;
+      const scope = b.scope === 'group' || b.scope === 'team' ? b.scope : 'all';
+      const value = typeof b.value === 'string' ? b.value.slice(0, 120) : undefined;
+      section.bind = scope === 'all' ? { scope: 'all' } : { scope, value };
+    }
+    out.push(section);
   }
   return out;
 }
