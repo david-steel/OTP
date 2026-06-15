@@ -972,9 +972,14 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       const tr = (await db.execute(sql`SELECT id, name FROM teams WHERE org_id = ${org.id} ORDER BY name`)) as any;
       mfTeams = (tr.rows || []).map((r: any) => ({ id: String(r.id), name: String(r.name) }));
     } catch { /* best-effort: builder still works with "All" only */ }
+    let templateIndex: any[] = [];
+    try {
+      const { templateSearchIndex } = await import('../../../data/meeting-templates.js');
+      templateIndex = templateSearchIndex().map((t) => ({ slug: t.slug, title: t.title, shortName: t.shortName, category: t.category, minutes: t.minutes }));
+    } catch { templateIndex = []; }
     return reply.view('pages/meeting-formats', {
       title: 'Meeting formats - OTP', noindex: true, authState: 'authenticated',
-      sectionTypes: MEETING_SECTION_TYPES, kpiGroups, mfTeams,
+      sectionTypes: MEETING_SECTION_TYPES, kpiGroups, mfTeams, templateIndex,
     });
   });
 

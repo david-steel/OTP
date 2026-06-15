@@ -21,6 +21,7 @@ import { canEditOrgSettings } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { normalizeStructure } from '../../shared/meeting-sections.js';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
+import { getTemplateBySlug } from '../../data/meeting-templates.js';
 
 const upsertSchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -51,6 +52,22 @@ export default async function meetingFormatsRoutes(app: FastifyInstance) {
       WHERE org_id = ${org.id} AND deleted_at IS NULL AND (visibility = 'org' OR created_by = ${uid})
       ORDER BY name`)) as any;
     return { formats: rows.rows || [] };
+  });
+
+  // GET /meeting-formats/template/:slug -- convert a library template into a
+  // draft format structure (each template step becomes a 'notes' section). The
+  // builder loads this as a starting point. Static segment, so it never clashes
+  // with /:id below.
+  app.get<{ Params: { slug: string } }>('/meeting-formats/template/:slug', async (request, reply) => {
+    const org = await getAuthOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
+    const tpl = getTemplateBySlug(request.params.slug);
+    if (!tpl) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Template not found' } });
+    const structure = normalizeStructure((tpl.steps || []).map((s) => ({
+      type: 'notes', title: s.name, minutes: s.minutes, notes: s.text,
+    })));
+    return { name: tpl.shortName || tpl.title, description: tpl.description || '', structure };
   });
 
   app.get<{ Params: { id: string } }>('/meeting-formats/:id', async (request, reply) => {
