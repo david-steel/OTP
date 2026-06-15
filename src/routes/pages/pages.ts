@@ -30,6 +30,7 @@ import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
 import { meetingFormats } from '../../db/schema.js';
 import { normalizeStructure, MEETING_SECTION_TYPES } from '../../shared/meeting-sections.js';
+import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { GUIDE_SECTIONS } from '../../data/guide-content.js';
 import { renderInShell } from './_shared.js';
 import { aiRockAssistLive } from '../api/rock-ai.js';
@@ -3535,6 +3536,8 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const defaultTeamId = orgTeams.find(t => t.slug === 'leadership')?.id || orgTeams[0]?.id || '';
 
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
+    let meetingFormatsEnabled = false;
+    try { meetingFormatsEnabled = await isFeatureEnabledForOrg(org.id, 'meeting_formats'); } catch { meetingFormatsEnabled = false; }
     return reply.view('pages/l8-list', {
       title: 'L8 Meetings -- OTP',
       description: 'Run your weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
@@ -3546,6 +3549,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       filterTeamId: effectiveFilter,
       defaultTeamId,
       devOrgIdParam,
+      meetingFormatsEnabled,
     });
   });
 
@@ -3603,6 +3607,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
   app.post<{ Params: { id: string } }>('/l8/run-format/:id', async (request, reply) => {
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.redirect('/l8');
     const auth = getAuth(request);
     const uid = auth.userId || '';
     if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) return reply.status(400).send('Invalid format id');

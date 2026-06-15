@@ -20,6 +20,7 @@ import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { canEditOrgSettings } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { normalizeStructure } from '../../shared/meeting-sections.js';
+import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 
 const upsertSchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -42,6 +43,7 @@ export default async function meetingFormatsRoutes(app: FastifyInstance) {
   app.get('/meeting-formats', async (request, reply) => {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
     const uid = userId(request);
     const rows = (await db.execute(sql`
       SELECT id, name, description, structure, visibility, created_by, updated_at
@@ -54,6 +56,7 @@ export default async function meetingFormatsRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/meeting-formats/:id', async (request, reply) => {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
     const uid = userId(request);
     const rows = (await db.execute(sql`
       SELECT id, name, description, structure, visibility, created_by, updated_at
@@ -69,6 +72,7 @@ export default async function meetingFormatsRoutes(app: FastifyInstance) {
   app.post('/meeting-formats', async (request, reply) => {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
     const body = upsertSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: body.error.issues[0]?.message || 'Invalid format' } });
     const structure = normalizeStructure(body.data.structure);
@@ -82,6 +86,7 @@ export default async function meetingFormatsRoutes(app: FastifyInstance) {
   app.patch<{ Params: { id: string } }>('/meeting-formats/:id', async (request, reply) => {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
     const existing = (await db.execute(sql`SELECT created_by FROM meeting_formats WHERE id = ${request.params.id} AND org_id = ${org.id} AND deleted_at IS NULL LIMIT 1`)) as any;
     const row = (existing.rows || [])[0];
     if (!row) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Format not found' } });
@@ -102,6 +107,7 @@ export default async function meetingFormatsRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>('/meeting-formats/:id', async (request, reply) => {
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
     const existing = (await db.execute(sql`SELECT created_by FROM meeting_formats WHERE id = ${request.params.id} AND org_id = ${org.id} AND deleted_at IS NULL LIMIT 1`)) as any;
     const row = (existing.rows || [])[0];
     if (!row) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Format not found' } });

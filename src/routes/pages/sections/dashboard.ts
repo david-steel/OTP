@@ -956,6 +956,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     if (!org) {
       return reply.view('pages/meeting-formats', { title: 'Meeting formats - OTP', noindex: true, authState: 'no_org', sectionTypes: [] });
     }
+    const { isFeatureEnabledForOrg } = await import('../../../services/lab-features.js');
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.redirect('/l8');
     const { MEETING_SECTION_TYPES } = await import('../../../shared/meeting-sections.js');
     // Data sources a section can bind to: KPI groups (for scorecard) + teams (rocks/issues/todos).
     let kpiGroups: string[] = [];

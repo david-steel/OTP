@@ -53,6 +53,15 @@ export const LAB_FEATURES: LabFeature[] = [
     navLabel: 'Marketplace',
     navIcon: 'store',
   },
+  {
+    key: 'meeting_formats',
+    name: 'Custom meeting formats',
+    description:
+      'Build your own meeting agendas (sections, timeboxes, facilitator notes, live data bindings) and run them as timed meetings. In testing; off until fully validated.',
+    status: 'beta',
+    // No surfaceUrl on purpose: reached via a button on the Meetings page, not the
+    // left rail. (surfaceUrl would inject a rail item when enabled.)
+  },
 ];
 
 export function getLabFeature(key: string): LabFeature | undefined {
