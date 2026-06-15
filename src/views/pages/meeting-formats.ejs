@@ -220,11 +220,16 @@
               (f.description ? '<div style="font-size:13px; color:#6b7280; margin-top:2px;">' + esc(f.description) + '</div>' : '') +
               '<div style="font-size:12px; color:#9ca3af; margin-top:6px;">' + structure.length + ' section' + (structure.length === 1 ? '' : 's') + (mins ? ' · ' + mins + ' min' : '') + '</div>' +
             '</div>' +
-            '<div style="display:flex; gap:4px; flex:none;">' +
+            '<div style="display:flex; gap:6px; flex:none; align-items:center;">' +
+              '<button type="button" class="mf-btn mf-btn-primary mf-run" style="padding:0.35rem 0.85rem;">Run</button>' +
               '<button type="button" class="mf-mini mf-edit">Edit</button>' +
               '<button type="button" class="mf-mini danger mf-delete">Delete</button>' +
             '</div>' +
           '</div>';
+        card.querySelector('.mf-run').addEventListener('click', function(){
+          var form = document.createElement('form'); form.method = 'POST'; form.action = '/l8/run-format/' + encodeURIComponent(f.id);
+          document.body.appendChild(form); form.submit();
+        });
         card.querySelector('.mf-edit').addEventListener('click', function(){ openBuilder(f); });
         card.querySelector('.mf-delete').addEventListener('click', function(){
           if (!confirm('Delete the format "' + f.name + '"? This cannot be undone.')) return;

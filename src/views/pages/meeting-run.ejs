@@ -1,0 +1,143 @@
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Custom meeting runner (structure-driven) ----
+  // Locals: org, meeting, agenda (MeetingSection[]), runState {activeIndex, notes{}}, sectionTypes.
+  var _agenda = (typeof agenda !== 'undefined' && Array.isArray(agenda)) ? agenda : [];
+  var _types = (typeof sectionTypes !== 'undefined' && Array.isArray(sectionTypes)) ? sectionTypes : [];
+  var _typeByKey = {}; _types.forEach(function(t){ _typeByKey[t.key] = t; });
+  var _rs = (typeof runState !== 'undefined' && runState && typeof runState === 'object') ? runState : {};
+  var _notes = (_rs.notes && typeof _rs.notes === 'object') ? _rs.notes : {};
+  var _active = (typeof _rs.activeIndex === 'number' && _rs.activeIndex >= 0 && _rs.activeIndex < _agenda.length) ? _rs.activeIndex : 0;
+  var _total = _agenda.reduce(function(s, x){ return s + (Number(x.minutes) || 0); }, 0);
+  var _links = { scorecard: '/dashboard/kpis', rocks: '/rocks', todos: '/me/todos', issues: '/dashboard/ids' };
+  function _bindLabel(s) {
+    if (!s.bind || s.bind.scope === 'all') return (s.type === 'scorecard') ? 'All KPIs' : 'All';
+    if (s.bind.scope === 'group') return (s.bind.value || '') + ' group';
+    return 'a specific team';
+  }
+%>
+<style>
+  .mr-nav-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px; color:#374151; }
+  .mr-nav-item:hover { background:#f3f4f6; }
+  .mr-nav-item.active { background:#eef2ff; color:#1e3a8a; font-weight:700; }
+  .mr-nav-num { flex:none; width:22px; height:22px; border-radius:9999px; background:#e5e7eb; color:#374151; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .mr-nav-item.active .mr-nav-num { background:#2563eb; color:#fff; }
+  .mr-callout { background:#F4FBE4; border:1px solid #DCEFB6; border-radius:10px; padding:10px 12px; font-size:13px; color:#3c4636; }
+  .mr-facil { background:#f9fafb; border-left:3px solid #c7d2fe; border-radius:6px; padding:10px 12px; font-size:13px; color:#4b5563; white-space:pre-wrap; }
+  .mr-btn { font-size:13px; font-weight:600; padding:0.5rem 1rem; border-radius:8px; cursor:pointer; border:1px solid #e5e7eb; background:#fff; color:#374151; }
+  .mr-btn.primary { background:#14271a; color:#B8F042; border:none; }
+</style>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <div class="text-xs uppercase tracking-wide text-gray-500 font-semibold">Running</div>
+      <h1 class="text-2xl font-extrabold text-gray-900"><%= meeting.title %></h1>
+      <div class="text-sm text-gray-500 mt-0.5"><%= _agenda.length %> sections · <%= _total %> min planned</div>
+    </div>
+    <a href="/l8" class="mr-btn">Finish &amp; exit</a>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-6 items-start">
+    <!-- Agenda nav -->
+    <div class="w-full md:w-64 flex-none bg-white border rounded-xl p-2">
+      <% _agenda.forEach(function(s, i){ %>
+        <div class="mr-nav-item<%= i === _active ? ' active' : '' %>" data-nav="<%= i %>">
+          <span class="mr-nav-num"><%= i + 1 %></span>
+          <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= s.title %></span>
+          <span style="flex:none; font-size:11px; color:#9ca3af;"><%= s.minutes %>m</span>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- Active section panels -->
+    <div class="flex-1 min-w-0 w-full">
+      <% _agenda.forEach(function(s, i){ var st = _typeByKey[s.type] || {}; %>
+        <div class="mr-panel bg-white border rounded-xl p-6" data-panel="<%= i %>" style="display:<%= i === _active ? 'block' : 'none' %>;">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xl font-bold text-gray-900"><%= s.title %></h2>
+            <div class="text-sm font-semibold" style="color:#6b7280;">Timebox <%= s.minutes %>m · <span class="mr-timer" data-min="<%= s.minutes %>">0:00</span></div>
+          </div>
+
+          <% if (s.notes) { %><div class="mr-facil mb-3"><%= s.notes %></div><% } %>
+
+          <% if (st.dataLinked) { %>
+            <div class="mr-callout mb-4">
+              Pulls data from: <strong><%= _bindLabel(s) %></strong>.
+              <% if (_links[s.type]) { %>
+                <a href="<%= _links[s.type] %>" target="_blank" rel="noopener" style="color:#2563eb; font-weight:700; text-decoration:underline; margin-left:6px;">Open <%= (st.label || s.type) %> &rarr;</a>
+              <% } %>
+            </div>
+          <% } %>
+
+          <label style="display:block; font-size:12px; font-weight:600; color:#374151; margin-bottom:4px;">Meeting notes for this section</label>
+          <textarea class="mr-notes" data-idx="<%= i %>" rows="5" style="width:100%; font-size:13px; padding:0.5rem 0.6rem; border:1px solid #e5e7eb; border-radius:8px;" placeholder="Capture decisions, owners, follow-ups…"><%= (_notes[i] != null ? _notes[i] : '') %></textarea>
+
+          <div class="flex items-center justify-between mt-4">
+            <button type="button" class="mr-btn mr-prev"<%= i === 0 ? ' disabled style="opacity:0.4;"' : '' %>>&larr; Previous</button>
+            <% if (i < _agenda.length - 1) { %>
+              <button type="button" class="mr-btn primary mr-next">Next section &rarr;</button>
+            <% } else { %>
+              <a href="/l8" class="mr-btn primary" style="text-decoration:none;">Finish meeting</a>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.mr-panel'));
+    var navs = Array.prototype.slice.call(document.querySelectorAll('[data-nav]'));
+    if (!panels.length) return;
+    var meetingId = <%- JSON.stringify(meeting.id) %>;
+    var active = <%- JSON.stringify(_active) %>;
+    var count = panels.length;
+    var timerInt = null, timerStart = 0;
+
+    function saveState() {
+      var notes = {};
+      document.querySelectorAll('.mr-notes').forEach(function(t){ var v = t.value; if (v) notes[t.getAttribute('data-idx')] = v; });
+      fetch('/l8/run/' + encodeURIComponent(meetingId) + '/state', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runState: { activeIndex: active, notes: notes } }),
+        keepalive: true,
+      }).catch(function(){});
+    }
+    var saveTimer = null;
+    function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 800); }
+
+    function fmt(sec) { var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+    function runTimer(panel) {
+      if (timerInt) clearInterval(timerInt);
+      var el = panel.querySelector('.mr-timer'); if (!el) return;
+      var box = Number(el.getAttribute('data-min')) || 0;
+      timerStart = Date.now();
+      var tick = function() {
+        var sec = Math.floor((Date.now() - timerStart) / 1000);
+        el.textContent = fmt(sec);
+        el.style.color = (box && sec > box * 60) ? '#dc2626' : '#6b7280';
+      };
+      tick(); timerInt = setInterval(tick, 1000);
+    }
+    function show(i) {
+      if (i < 0 || i >= count) return;
+      active = i;
+      panels.forEach(function(p, idx){ p.style.display = (idx === i) ? 'block' : 'none'; });
+      navs.forEach(function(n, idx){ n.classList.toggle('active', idx === i); });
+      runTimer(panels[i]);
+      panels[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      saveSoon();
+    }
+
+    navs.forEach(function(n, idx){ n.addEventListener('click', function(){ show(idx); }); });
+    document.querySelectorAll('.mr-next').forEach(function(b){ b.addEventListener('click', function(){ show(active + 1); }); });
+    document.querySelectorAll('.mr-prev').forEach(function(b){ b.addEventListener('click', function(){ show(active - 1); }); });
+    document.querySelectorAll('.mr-notes').forEach(function(t){ t.addEventListener('input', saveSoon); });
+    window.addEventListener('beforeunload', saveState);
+
+    runTimer(panels[active]);
+  })();
+</script>

@@ -957,6 +957,14 @@ try {
 }
 
 try {
+  const { ensureMeetingAgendaColumns } = await import('./db/ensure-meeting-agenda.js');
+  await ensureMeetingAgendaColumns();
+  app.log.info('meetings agenda columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingAgendaColumns failed -- running a custom format may 500 until resolved');
+}
+
+try {
   const { ensureConversionLogTable } = await import('./db/ensure-conversion-log.js');
   await ensureConversionLogTable();
   app.log.info('conversion_log table is ready');

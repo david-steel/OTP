@@ -1148,6 +1148,13 @@ export const meetings = pgTable('meetings', {
   ratings: jsonb('ratings').notNull().default({}),
   scorecardSnapshot: jsonb('scorecard_snapshot'),
   rocksSnapshot: jsonb('rocks_snapshot'),
+  // Custom meeting formats: agenda = snapshot of the format's structure at run
+  // time (MeetingSection[]); formatId = the source format; runState = the
+  // runner's live state (active section index + per-section notes). Columns
+  // added by ensure-meeting-agenda.ts on boot.
+  agenda: jsonb('agenda'),
+  formatId: uuid('format_id'),
+  runState: jsonb('run_state'),
   // Per-segment notes for the Strategy Reset meeting type. Keyed by segment
   // identifier; defaults to {} so callers can safely merge. Column added by
   // ensure-strategy-reset.ts on boot.

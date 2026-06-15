@@ -28,6 +28,8 @@ import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECK
 import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
+import { meetingFormats } from '../../db/schema.js';
+import { normalizeStructure, MEETING_SECTION_TYPES } from '../../shared/meeting-sections.js';
 import { GUIDE_SECTIONS } from '../../data/guide-content.js';
 import { renderInShell } from './_shared.js';
 import { aiRockAssistLive } from '../api/rock-ai.js';
@@ -3594,6 +3596,65 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     }).returning();
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
     return reply.redirect('/l8/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
+  });
+
+  // POST /l8/run-format/:id -- start a meeting from a custom format, snapshotting
+  // its agenda onto the meeting (so later format edits never rewrite this run).
+  app.post<{ Params: { id: string } }>('/l8/run-format/:id', async (request, reply) => {
+    const org = await l8ResolveOrg(request, reply);
+    if (!org) return;
+    const auth = getAuth(request);
+    const uid = auth.userId || '';
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) return reply.status(400).send('Invalid format id');
+    const [fmt] = await db.select().from(meetingFormats)
+      .where(and(eq(meetingFormats.id, request.params.id), eq(meetingFormats.orgId, org.id), isNull(meetingFormats.deletedAt)))
+      .limit(1);
+    if (!fmt || (fmt.visibility !== 'org' && fmt.createdBy !== uid)) return reply.status(404).send('Format not found');
+    const agenda = normalizeStructure(fmt.structure);
+    const [m] = await db.insert(meetings).values({
+      organizationId: org.id,
+      title: fmt.name,
+      meetingType: 'custom',
+      scheduledAt: new Date(),
+      startedAt: new Date(),
+      attendees: [],
+      agenda,
+      formatId: fmt.id,
+      createdBy: uid || 'unknown',
+    }).returning();
+    const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
+    return reply.redirect('/l8/run/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
+  });
+
+  // GET /l8/run/:id -- the structure-driven runner for a custom-format meeting.
+  app.get<{ Params: { id: string } }>('/l8/run/:id', async (request, reply) => {
+    const org = await l8ResolveOrg(request, reply);
+    if (!org) return;
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) return reply.status(400).send('Invalid meeting id');
+    const [meeting] = await db.select().from(meetings)
+      .where(and(eq(meetings.id, request.params.id), eq(meetings.organizationId, org.id)))
+      .limit(1);
+    if (!meeting) return reply.status(404).send('Meeting not found');
+    const agenda = normalizeStructure(meeting.agenda);
+    if (!agenda.length) return reply.redirect('/l8/meeting/' + meeting.id);
+    return reply.view('pages/meeting-run', {
+      title: meeting.title + ' -- OTP', noindex: true,
+      org, meeting, agenda,
+      runState: (meeting.runState && typeof meeting.runState === 'object') ? meeting.runState : {},
+      sectionTypes: MEETING_SECTION_TYPES,
+    });
+  });
+
+  // POST /l8/run/:id/state -- persist runner state (active index + per-section notes).
+  app.post<{ Params: { id: string }, Body: { runState?: unknown } }>('/l8/run/:id/state', async (request, reply) => {
+    const org = await l8ResolveOrg(request, reply);
+    if (!org) return reply.status(401).send({ error: 'unauthenticated' });
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) return reply.status(400).send({ error: 'bad id' });
+    const rs = (request.body || {}).runState;
+    const safe = (rs && typeof rs === 'object' && !Array.isArray(rs)) ? rs : {};
+    await db.update(meetings).set({ runState: safe as any })
+      .where(and(eq(meetings.id, request.params.id), eq(meetings.organizationId, org.id)));
+    return { ok: true };
   });
 
   // /l8/meeting/:id  -- the L8 page itself
