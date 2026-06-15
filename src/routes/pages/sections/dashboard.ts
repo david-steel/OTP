@@ -946,6 +946,23 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     });
   });
 
+  // GET /dashboard/meeting-formats -- build/manage custom meeting formats.
+  app.get('/dashboard/meeting-formats', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.view('pages/meeting-formats', { title: 'Meeting formats - OTP', noindex: true, authState: 'unauthenticated', sectionTypes: [] });
+    }
+    const org = await resolveRequestOrg(request);
+    if (!org) {
+      return reply.view('pages/meeting-formats', { title: 'Meeting formats - OTP', noindex: true, authState: 'no_org', sectionTypes: [] });
+    }
+    const { MEETING_SECTION_TYPES } = await import('../../../shared/meeting-sections.js');
+    return reply.view('pages/meeting-formats', {
+      title: 'Meeting formats - OTP', noindex: true, authState: 'authenticated',
+      sectionTypes: MEETING_SECTION_TYPES,
+    });
+  });
+
   // Accept-invite landing page
   app.get<{ Querystring: { token?: string } }>('/accept-invite', async (request, reply) => {
     const token = String(request.query.token || '').trim();
