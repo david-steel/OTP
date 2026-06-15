@@ -1246,6 +1246,26 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Terms of Service -- OTP, LLC. Static legal page, v7 layout, public + indexable.
+  app.get('/terms', async (_request, reply) => {
+    return renderV7(reply, 'terms', {
+      title: 'Terms of Service - OTP',
+      description: 'Terms of Service for OTP, LLC and the OTP platform at orgtp.com.',
+      canonical: BASE_URL + '/terms',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Terms of Service', url: BASE_URL + '/terms', publisher: { '@type': 'Organization', name: 'OTP, LLC', url: BASE_URL } }
+    });
+  });
+
+  // Privacy Policy -- OTP, LLC. Static legal page, v7 layout, public + indexable.
+  app.get('/privacy', async (_request, reply) => {
+    return renderV7(reply, 'privacy', {
+      title: 'Privacy Policy - OTP',
+      description: 'Privacy Policy for OTP, LLC and the OTP platform at orgtp.com.',
+      canonical: BASE_URL + '/privacy',
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Privacy Policy', url: BASE_URL + '/privacy', publisher: { '@type': 'Organization', name: 'OTP, LLC', url: BASE_URL } }
+    });
+  });
+
   // Lifecycle email previews. Renders any rung of the 90-day series live, so the
   // Google Sheet registry can deep-link to the real (always-current) email.
   // Public + noindex; the content is marketing copy that gets sent anyway.
