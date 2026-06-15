@@ -73,6 +73,13 @@
         </optgroup>
         <option value="strategy_reset">Strategy Reset</option>
         <option value="other">Other</option>
+        <% if (typeof meetingFormatsEnabled !== 'undefined' && meetingFormatsEnabled && typeof meetingFormatsList !== 'undefined' && meetingFormatsList.length) { %>
+          <optgroup label="Your formats">
+            <% meetingFormatsList.forEach(function(f) { %>
+              <option value="format:<%= f.id %>"><%= f.name %></option>
+            <% }) %>
+          </optgroup>
+        <% } %>
       </select>
       <select name="recurrenceRule" class="border rounded p-2 text-sm" title="Repeat this meeting? OTP rolls the next one forward automatically.">
         <option value="">Does not repeat</option>

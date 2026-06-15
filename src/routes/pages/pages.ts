@@ -3537,7 +3537,18 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
     let meetingFormatsEnabled = false;
-    try { meetingFormatsEnabled = await isFeatureEnabledForOrg(org.id, 'meeting_formats'); } catch { meetingFormatsEnabled = false; }
+    let meetingFormatsList: Array<{ id: string; name: string }> = [];
+    try {
+      meetingFormatsEnabled = await isFeatureEnabledForOrg(org.id, 'meeting_formats');
+      if (meetingFormatsEnabled) {
+        let uid = ''; try { uid = getAuth(request).userId || ''; } catch { uid = ''; }
+        const fr = (await db.execute(sql`
+          SELECT id, name FROM meeting_formats
+          WHERE org_id = ${org.id} AND deleted_at IS NULL AND (visibility = 'org' OR created_by = ${uid})
+          ORDER BY name`)) as any;
+        meetingFormatsList = (fr.rows || []).map((r: any) => ({ id: String(r.id), name: String(r.name) }));
+      }
+    } catch { meetingFormatsEnabled = false; }
     return reply.view('pages/l8-list', {
       title: 'L8 Meetings -- OTP',
       description: 'Run your weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
@@ -3550,6 +3561,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       defaultTeamId,
       devOrgIdParam,
       meetingFormatsEnabled,
+      meetingFormatsList,
     });
   });
 
@@ -3561,6 +3573,34 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const { title, scheduledAt, meetingType, teamId, recurrenceRule } = request.body || {};
     if (!scheduledAt) {
       return reply.status(400).send('scheduledAt required');
+    }
+
+    // Custom-format meeting: meetingType arrives as "format:<id>". Snapshot the
+    // format's agenda onto the meeting and route it to the structure runner.
+    // Gated on the Labs flag (same as the rest of the feature).
+    if (typeof meetingType === 'string' && meetingType.indexOf('format:') === 0) {
+      if (!(await isFeatureEnabledForOrg(org.id, 'meeting_formats'))) return reply.redirect('/l8');
+      const fid = meetingType.slice('format:'.length);
+      if (!/^[0-9a-f-]{36}$/i.test(fid)) return reply.status(400).send('Invalid format');
+      let uid = ''; try { uid = getAuth(request).userId || ''; } catch { uid = ''; }
+      const [fmt] = await db.select().from(meetingFormats)
+        .where(and(eq(meetingFormats.id, fid), eq(meetingFormats.orgId, org.id), isNull(meetingFormats.deletedAt)))
+        .limit(1);
+      if (!fmt || (fmt.visibility !== 'org' && fmt.createdBy !== uid)) return reply.status(404).send('Format not found');
+      const [fm] = await db.insert(meetings).values({
+        organizationId: org.id,
+        teamId: teamId || null,
+        title: (title || '').trim() || fmt.name,
+        meetingType: 'custom',
+        scheduledAt: new Date(scheduledAt),
+        attendees: [],
+        agenda: normalizeStructure(fmt.structure),
+        formatId: fmt.id,
+        recurrenceRule: (recurrenceRule || '').trim() || null,
+        createdBy: uid || 'unknown',
+      }).returning();
+      const devOrgIdParam2 = (request.query as any)?.orgId || (request.query as any)?.org || '';
+      return reply.redirect('/l8/run/' + fm.id + (devOrgIdParam2 ? ('?orgId=' + devOrgIdParam2) : ''));
     }
 
     // Resolve team: explicit teamId from form, else this org's default
@@ -3668,6 +3708,17 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     if (!validateUuidParam(id)) {
       return reply.status(400).send('Invalid meeting id');
     }
+
+    // Custom-format meetings run in the structure runner, not the leadership
+    // view. Cheap early check so a scheduled custom meeting (opened from the
+    // list) lands on /l8/run/:id.
+    try {
+      const [_mt] = await db.select({ mt: meetings.meetingType, ag: meetings.agenda }).from(meetings).where(eq(meetings.id, id)).limit(1);
+      if (_mt && (_mt.mt === 'custom' || (Array.isArray(_mt.ag) && _mt.ag.length > 0))) {
+        const qsp = (request.query as any)?.orgId || (request.query as any)?.org || '';
+        return reply.redirect('/l8/run/' + id + (qsp ? ('?orgId=' + qsp) : ''));
+      }
+    } catch { /* fall through to the normal meeting render */ }
 
     // Public preview branch for UNAUTHENTICATED requests (humans clicking a
     // shared meeting link AND link-unfurl bots: Slackbot, Twitterbot,
