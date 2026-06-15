@@ -40,7 +40,7 @@ export const EMAILS: LifecycleEmail[] = [
     ],
     "cta": {
       "label": "Book 20 minutes with me",
-      "url": "https://calendly.com/davidsteel/otp-intro"
+      "url": "https://calendly.com/dawson-orgtp/30min"
     },
     "cards": [
       {
@@ -85,7 +85,7 @@ export const EMAILS: LifecycleEmail[] = [
       "label": "Invite your team",
       "url": "https://orgtp.com/dashboard/members"
     },
-    "secondary": "Want me to walk you through it instead? <a href=\"https://calendly.com/davidsteel/otp-intro\" style=\"color:#5a7d1f;font-weight:700;text-decoration:none;\">Grab 20 minutes</a> and we'll set it up together."
+    "secondary": "Want me to walk you through it instead? <a href=\"https://calendly.com/dawson-orgtp/30min\" style=\"color:#5a7d1f;font-weight:700;text-decoration:none;\">Grab 20 minutes</a> and we'll set it up together."
   },
   {
     "n": 3,
@@ -168,7 +168,7 @@ export const EMAILS: LifecycleEmail[] = [
       "label": "Set your first KPI",
       "url": "https://orgtp.com/onboarding/kpis"
     },
-    "secondary": "Not sure which number to track? <a href=\"https://calendly.com/davidsteel/otp-intro\" style=\"color:#5a7d1f;font-weight:700;text-decoration:none;\">Grab 20 minutes</a> and I'll help you pick."
+    "secondary": "Not sure which number to track? <a href=\"https://calendly.com/dawson-orgtp/30min\" style=\"color:#5a7d1f;font-weight:700;text-decoration:none;\">Grab 20 minutes</a> and I'll help you pick."
   },
   {
     "n": 7,
@@ -570,7 +570,7 @@ export const EMAILS: LifecycleEmail[] = [
     ],
     "cta": {
       "label": "Book a strategic review",
-      "url": "https://calendly.com/davidsteel/otp-intro"
+      "url": "https://calendly.com/dawson-orgtp/30min"
     }
   },
   {
@@ -627,7 +627,7 @@ export const EMAILS: LifecycleEmail[] = [
     ],
     "cta": {
       "label": "Book time with me",
-      "url": "https://calendly.com/davidsteel/otp-intro"
+      "url": "https://calendly.com/dawson-orgtp/30min"
     }
   }
 ];
@@ -651,5 +651,5 @@ export const REENGAGE: LifecycleEmail = {
     "label": "Pick up where you left off",
     "url": "https://orgtp.com/dashboard"
   },
-  "secondary": "Stuck on something? <a href=\"https://calendly.com/davidsteel/otp-intro\" style=\"color:#5a7d1f;font-weight:700;text-decoration:none;\">Grab 20 minutes with me</a>."
+  "secondary": "Stuck on something? <a href=\"https://calendly.com/dawson-orgtp/30min\" style=\"color:#5a7d1f;font-weight:700;text-decoration:none;\">Grab 20 minutes with me</a>."
 };

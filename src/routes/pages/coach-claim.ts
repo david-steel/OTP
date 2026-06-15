@@ -182,7 +182,7 @@ Org id: ${escapeHtml(userOrg.id)}</p>
       try {
         const firstName = (profile.displayName || '').split(' ')[0] || 'there';
         const inviteUrl = finalInviteToken ? `${BASE_URL}/join/${finalInviteToken}` : null;
-        const calendlyUrl = 'https://calendly.com/davidsteel/performance-call';
+        const calendlyUrl = 'https://calendly.com/dawson-orgtp/30min';
         await sendEmail({
           to: coachEmail,
           subject: `Welcome to the Founding 25, ${firstName}`,
