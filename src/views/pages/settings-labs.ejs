@@ -39,12 +39,14 @@
 
         <div class="flex-1 min-w-0 w-full space-y-6">
 
-          <!-- ===== Welcome to the Beta Program ===== -->
+          <!-- ===== The Lab: a first look at what's next ===== -->
           <div class="rounded-2xl p-7 text-white" style="background:linear-gradient(135deg,#386cff,#2b54d6);">
-            <h2 class="font-bold text-2xl mb-2">Welcome to our Beta Program</h2>
-            <p class="text-white/90 max-w-[60ch] leading-relaxed">
-              Experiment with our latest features before they're available to everyone. These are in
-              early access and may change as we develop them. Your feedback helps shape what they become.
+            <div class="text-xs font-bold uppercase tracking-widest text-white/70 mb-1.5">The Lab</div>
+            <h2 class="font-extrabold text-2xl mb-2">A first look at what's next in OTP.</h2>
+            <p class="text-white/90 max-w-[64ch] leading-relaxed">
+              This is where the next wave of OTP shows up first. Flip something on to start using it now,
+              while it is still taking shape, and your feedback steers where it lands. Each one is on when
+              you want it and invisible to your team until then.
             </p>
           </div>
 
@@ -65,7 +67,13 @@
                           <%= _statusLabel(f.status) %>
                         </span>
                       </div>
-                      <p class="text-sm text-gray-500 leading-relaxed max-w-[70ch]"><%= f.description %></p>
+                      <p class="text-sm text-gray-600 leading-relaxed max-w-[70ch]"><%= f.description %></p>
+                      <% if (f.whyNow) { %>
+                        <div class="mt-3 rounded-lg px-3 py-2 max-w-[70ch]" style="background:#f0f7ff; border:1px solid #dbeafe;">
+                          <span class="text-[10px] font-bold uppercase tracking-wide" style="color:#2563eb;">Why turn it on now</span>
+                          <p class="text-sm text-gray-600 mt-0.5"><%= f.whyNow %></p>
+                        </div>
+                      <% } %>
                       <% if (f.targetLiveDate) { %>
                         <p class="text-xs text-gray-400 mt-2">Targeted live: <%= f.targetLiveDate %></p>
                       <% } %>

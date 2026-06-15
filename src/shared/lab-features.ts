@@ -27,6 +27,9 @@ export interface LabFeature {
   status: LabFeatureStatus;
   /** ISO date (YYYY-MM-DD) the feature is expected to go fully live, if known. */
   targetLiveDate?: string;
+  /** The reason to turn it on now instead of waiting (early-access value +
+   *  honest caveat). Shown as the "Why turn it on now" line on the Labs card. */
+  whyNow?: string;
   /** Where the org lands once the feature is on (shown as an "Open" link). */
   surfaceUrl?: string;
   /**
@@ -47,7 +50,9 @@ export const LAB_FEATURES: LabFeature[] = [
     key: 'marketplace',
     name: 'Marketplace',
     description:
-      'Install partner-built agents, integrations, and operating-system content packs directly into your workspace. Each add-on gets a seat, an SOP, and a scorecard on your org chart.',
+      'Stop building everything yourself. Plug in agents, integrations, and ready-made operating-system playbooks that other teams have already proven, each landing on your chart with a seat and a scorecard.',
+    whyNow:
+      'Switch it on to get first pick of new add-ons and help shape what partners build, before it opens to everyone. It is early, so the catalog is small today and growing fast.',
     status: 'beta',
     surfaceUrl: '/marketplace',
     navLabel: 'Marketplace',
@@ -57,7 +62,9 @@ export const LAB_FEATURES: LabFeature[] = [
     key: 'meeting_formats',
     name: 'Custom meeting formats',
     description:
-      'Build your own meeting agendas (sections, timeboxes, facilitator notes, live data bindings) and run them as timed meetings. In testing; off until fully validated.',
+      'Make every recurring meeting yours. Design an agenda once, with your own sections and timeboxes, then run it live with timers, shared notes, and your real scorecard and rocks pulled right in.',
+    whyNow:
+      'Switch it on to build and run your own formats now and tell us what is missing while it still bends to your feedback. Still in testing, so expect a few rough edges.',
     status: 'beta',
     // No surfaceUrl on purpose: reached via a button on the Meetings page, not the
     // left rail. (surfaceUrl would inject a rail item when enabled.)
