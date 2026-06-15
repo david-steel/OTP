@@ -238,6 +238,16 @@ app.addHook('preHandler', async (request, reply) => {
   let userId: string | null = null;
   try { userId = getAuth(request).userId || null; } catch { userId = null; }
   (request as any).authUserId = userId;
+  // Demo session (no-Clerk, otp_demo cookie). The layout treats this as "in app"
+  // so the left rail renders for a /demo-login visitor (else the menu vanishes).
+  let demoSession = false;
+  if (!userId) {
+    try {
+      const { verifyDemoCookie, DEMO_COOKIE_NAME } = await import('./middleware/demo-access.js');
+      demoSession = verifyDemoCookie((request as any).cookies?.[DEMO_COOKIE_NAME]);
+    } catch { demoSession = false; }
+  }
+  (request as any).demoSession = demoSession;
   // Auto-inject authUserId + impersonation context into every reply.view
   // call so layout can render auth-aware nav and the impersonation banner
   // without each route needing to remember to pass them.
@@ -271,6 +281,7 @@ app.addHook('preHandler', async (request, reply) => {
       sidebarCollapsed,
       realtimeStreamEnabled,
       labNavItems: (request as any).labNavItems || [],
+      demoSession: (request as any).demoSession || false,
     }, opts);
   };
 });
