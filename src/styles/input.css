@@ -80,3 +80,15 @@ body { background: var(--orgy-bg); }
 .dash-clean .dk-bar.ok { background: #86c79a; }   /* calmer green than the saturated tint */
 .dash-clean .dk-bar.bad { background: #e6aeae; }  /* muted red, not an alarming wall */
 .dash-clean .dk-bar.na { background: #e3e7ec; }
+
+/* v2: row actions behind a quiet overflow menu (clean mode). Native <details>,
+   so the same Edit/Delete buttons (and their handlers) just live in a popover. */
+.dash-clean .td-menu { position: relative; display: inline-block; }
+.dash-clean .td-menu-btn { cursor: pointer; list-style: none; color: #aeb4bc; font-weight: 700; letter-spacing: 1px; padding: 0 4px; user-select: none; }
+.dash-clean .td-menu-btn::-webkit-details-marker { display: none; }
+.dash-clean .td-menu[open] .td-menu-btn { color: #6b7280; }
+.dash-clean .td-menu-pop { position: absolute; right: 0; top: 100%; margin-top: 4px; min-width: 104px; background: #fff; border: 1px solid #e6e8ec; border-radius: 8px; box-shadow: 0 8px 24px rgba(20,22,28,.12); padding: 5px; display: flex; flex-direction: column; gap: 2px; z-index: 30; }
+.dash-clean .td-menu-pop .todo-edit-btn,
+.dash-clean .td-menu-pop .todo-delete-btn { color: #374151 !important; font-weight: 500 !important; text-align: left; padding: 5px 8px; border-radius: 6px; text-decoration: none !important; }
+.dash-clean .td-menu-pop .todo-edit-btn:hover { background: #f1f3f5; color: var(--orgy-blue) !important; }
+.dash-clean .td-menu-pop .todo-delete-btn:hover { background: #fff1f1; color: #dc2626 !important; }

@@ -736,8 +736,10 @@
                             <span class="td-chip td-chip-recur px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Repeats: <%= t.recurrenceRule %>">↻ <%= rp.label %></span>
                           <% } %>
                           <span class="td-due <%= overdue ? 'td-overdue text-rose-600 font-semibold' : 'text-gray-500' %>"><%= due ? (overdue ? 'OVERDUE — ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
+                          <% if (typeof dashClean !== 'undefined' && dashClean) { %><details class="td-menu"><summary class="td-menu-btn" aria-label="To-do actions" title="Actions">&#8943;</summary><div class="td-menu-pop"><% } %>
                           <button type="button" class="todo-edit-btn text-orgy-blue font-semibold hover:underline">Edit</button>
                           <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
+                          <% if (typeof dashClean !== 'undefined' && dashClean) { %></div></details><% } %>
                         </div>
                         <% if ((t.dueAtHistory || []).length > 0) { %>
                           <div class="mt-1 space-y-0.5">
