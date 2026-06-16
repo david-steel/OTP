@@ -69,6 +69,16 @@ export const LAB_FEATURES: LabFeature[] = [
     // No surfaceUrl on purpose: reached via a button on the Meetings page, not the
     // left rail. (surfaceUrl would inject a rail item when enabled.)
   },
+  {
+    key: 'dashboard_clean',
+    name: 'Clean dashboard',
+    description:
+      'A calmer Daily dashboard. The same panels and data, with less chrome: no per-card mascots or help icons, quiet row actions, and the focus on your work instead of the decoration around it.',
+    whyNow:
+      'Switch it on to try the cleaner look and tell us if anything reads better or worse before it becomes the default. Still polishing, so a few panels are calmer than others.',
+    status: 'beta',
+    // No surfaceUrl: this is a skin on /dashboard, not a new nav destination.
+  },
 ];
 
 export function getLabFeature(key: string): LabFeature | undefined {

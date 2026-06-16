@@ -45,3 +45,20 @@ body { background: var(--orgy-bg); }
 @media (prefers-reduced-motion: reduce) {
   .orgy-mascot-wave { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Labs: "Clean dashboard" skin (lab feature `dashboard_clean`, off by default).
+   Scoped to #daily-dashboard.dash-clean so it only affects orgs that opted in
+   at /settings/labs. Same markup + data; this only removes chrome per
+   src/DESIGN.md: no per-card mascots or per-card help icons, and quiet row
+   actions (danger red only on hover/intent, not always-on). Deeper structural
+   polish (status pills, a row overflow menu, a KPI heatmap) is a v2 that needs
+   markup changes, tracked under the same lab.
+--------------------------------------------------------------------------- */
+.dash-clean .otp-dic-img { display: none !important; }
+.dash-clean .help-q { display: none !important; }
+.dash-clean .todo-edit-btn,
+.dash-clean .todo-delete-btn,
+.dash-clean #todo-add-attach { color: #8a93a0 !important; font-weight: 500 !important; }
+.dash-clean .todo-edit-btn:hover { color: var(--orgy-blue) !important; }
+.dash-clean .todo-delete-btn:hover { color: #dc2626 !important; }

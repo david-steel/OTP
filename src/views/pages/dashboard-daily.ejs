@@ -132,7 +132,7 @@
   #daily-dashboard .dash-row-btn { font-weight: 600; color: #2563eb; background: none; border: none; cursor: pointer; font-size: 11px; padding: 0; }
   #daily-dashboard .dash-row-btn[disabled] { color: #94a3b8; cursor: not-allowed; }
 </style>
-<div class="w-full px-4 sm:px-6 lg:px-8 py-8" id="daily-dashboard"
+<div class="w-full px-4 sm:px-6 lg:px-8 py-8<%= (typeof dashClean !== 'undefined' && dashClean) ? ' dash-clean' : '' %>" id="daily-dashboard"
      style="zoom: <%= dashZoom %>"
      data-org-id="<%= locals.org && locals.org.id %>"
      data-meeting-id="<%= selectedMeetingId %>"

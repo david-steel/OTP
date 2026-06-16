@@ -3477,12 +3477,20 @@ Founder, OTP</p>
       dashboardPrefs = {};
     }
 
+    // Labs: the "Clean dashboard" skin is opt-in per org (off by default). When
+    // on, the view adds a `dash-clean` class that the scoped CSS in input.css
+    // styles down (no per-card mascots/help, quiet row actions). Same markup +
+    // data, so nothing changes for orgs that have not opted in.
+    const { isFeatureEnabledForOrg: _isFeatOn } = await import('../../../services/lab-features.js');
+    const dashClean = await _isFeatOn(org.id, 'dashboard_clean');
+
     return reply.view('pages/dashboard-daily', {
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
       renderDescription,
       ogImage: BASE_URL + '/public/og-image.png',
       noindex: true,
+      dashClean,
       org,
       orgs: orgListBasic,
       member: member ? { ...member, role: effectiveRole } : { role: effectiveRole, displayName: null, email: null, agentAccess: {}, featureAccess: {}, dataAccess: {} },
