@@ -13,6 +13,46 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 22, 2026 (SCHEDULED) ----
+  // Future-dated on purpose: the visibility gate (see isPublishedEntry below,
+  // honored by the What's New page, the unread badge, and the weekly email)
+  // hides these until 2026-06-22, so they land in next week's drop, not today.
+
+  {
+    date: '2026-06-22',
+    tags: ['Major', 'KPI'],
+    title: 'Organize your scoreboard: KPI groups and full inline editing',
+    why: 'Your numbers, grouped the way your business actually runs.',
+    cta: { text: 'Open your scoreboard', url: '/dashboard/kpis' },
+    summary: 'The scoreboard now supports KPI groups: create them, drag to reorder, rename, and move any KPI into the group where it belongs. Plus a full edit panel on every KPI row, so you can change the name, target, owner, and group without leaving the page.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Groups.</strong> Add, rename, delete, and reorder KPI groups, and move any metric into the group where it belongs.</li>
+<li><strong>Full inline edit.</strong> Every KPI row opens a complete edit panel (name, target, owner, group) right on the scoreboard.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-22',
+    tags: ['Major', 'Labs'],
+    title: 'OTP Labs: turn on early-access features before everyone else',
+    why: 'Get the newest tools first, on your terms.',
+    cta: { text: 'Open Labs', url: '/settings/labs' },
+    summary: 'OTP Labs lets your organization flip on new features while they are still in early access. Anything you enable shows up in your left rail and settings. Admins only, opt in per organization, nothing changes until you turn it on. Find it under Settings, Labs.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Opt in per organization.</strong> Admins choose which early-access features to switch on; nothing changes for anyone until you flip the toggle.</li>
+<li><strong>See what's cooking.</strong> Each Lab explains what it does and why you would want it on now.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-22',
+    tags: ['Settings'],
+    title: 'Copy your Company ID from Settings',
+    why: 'One click when support or an integration needs it.',
+    cta: { text: 'Settings, Configuration', url: '/settings/configuration' },
+    summary: 'Your organization\'s Company ID now appears in Settings, Configuration with a one-click copy button, handy for support requests and integration setup.',
+  },
+
   // ---- June 12, 2026 ----
 
   {
@@ -1178,9 +1218,27 @@ export const changelog: ChangelogEntry[] = [
 /**
  * Returns changelog entries from the last N days.
  */
+// Visibility gate. Entries can be future-dated to SCHEDULE a drop: an entry
+// dated after today is hidden everywhere (What's New page, unread badge, weekly
+// email) until its date arrives. Keep all "is this live yet?" logic here so the
+// surfaces stay consistent.
+export function isPublishedEntry(entry: ChangelogEntry, now: Date = new Date()): boolean {
+  return entry.date <= now.toISOString().slice(0, 10);
+}
+
+// Published entries only (no future-scheduled), newest first.
+export function publishedChangelog(now: Date = new Date()): ChangelogEntry[] {
+  return changelog
+    .filter(e => isPublishedEntry(e, now))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+
 export function getRecentEntries(days: number = 7): ChangelogEntry[] {
+  const now = new Date();
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
-  return changelog.filter(entry => entry.date >= cutoffStr);
+  const todayStr = now.toISOString().slice(0, 10);
+  // >= cutoff AND <= today: recent but not future-scheduled.
+  return changelog.filter(entry => entry.date >= cutoffStr && entry.date <= todayStr);
 }

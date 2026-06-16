@@ -13,7 +13,7 @@ import { db } from '../../config/database.js';
 import { orgMembers } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
-import { changelog } from '../../data/changelog.js';
+import { publishedChangelog } from '../../data/changelog.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 120 });
 
@@ -21,8 +21,8 @@ const ENTRY_LIMIT = 8;
 const FIRST_VISIT_WINDOW_DAYS = 30;
 
 function latestEntries() {
-  return [...changelog]
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  // publishedChangelog() already excludes future-scheduled entries and sorts newest-first.
+  return publishedChangelog()
     .slice(0, ENTRY_LIMIT)
     .map(({ date, tags, title, summary }) => ({ date, tags, title, summary }));
 }

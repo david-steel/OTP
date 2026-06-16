@@ -91,9 +91,11 @@ export function buildOllieWeekly(opts: BuildOptions): OllieWeeklyBuild {
   const days = opts.days ?? 7;
   const now = opts.now;
   const cutoff = new Date(now.getTime() - days * 864e5);
+  const todayStr = now.toISOString().slice(0, 10);
 
+  // Within the last N days AND not future-scheduled (date <= today), newest first.
   const windowEntries = [...changelog]
-    .filter((e) => new Date(e.date + 'T12:00:00Z') >= cutoff)
+    .filter((e) => new Date(e.date + 'T12:00:00Z') >= cutoff && e.date <= todayStr)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   // Pick = first 'Major' that isn't only a Fix; else the newest. Haul = next 4

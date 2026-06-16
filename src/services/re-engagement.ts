@@ -63,6 +63,10 @@ const SUPPRESSED_EMAILS = new Set<string>([
   // also marked skipped in lifecycle_sends, but that data guard doesn't cover
   // future rungs or behavioral re-engagement nudges; this one does.
   'victorliu@clearskiestitle.com',
+  // Internal test / sandbox mailboxes -- they slipped into the 2026-06-16
+  // Ollie Weekly broadcast; never include them in a real audience again.
+  'deploy-smoke-test@orger.ai',
+  'izac.sandbox@gmail.com',
 ]);
 
 export function isSuppressedRecipient(email: string): boolean {
