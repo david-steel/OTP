@@ -63,6 +63,11 @@ function readPostFile(filename: string): { meta: ConatusPostMeta; body: string }
   let raw: string;
   try { raw = readFileSync(full, 'utf8'); } catch { return null; }
   const { data, body: rawBody } = splitFrontmatter(raw);
+  // Draft gate: a post with `status: draft` in frontmatter is hidden from both
+  // the index and direct /blog/:slug access until the status is flipped to
+  // published. Lets us commit finished drafts to the live posts dir for review
+  // without exposing them. Any other status (or none) renders as before.
+  if (String(data.status || '').trim().toLowerCase() === 'draft') return null;
   const fmSlug = String(data.slug || '').trim();
   const slug = (fmSlug && SLUG_RE.test(fmSlug)) ? fmSlug : fileSlug;
   if (!SLUG_RE.test(slug)) return null;
