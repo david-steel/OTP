@@ -3091,8 +3091,10 @@ export default async function pageRoutes(app: FastifyInstance) {
     // changelog is reverse-chronological, so [0] is the latest entry.
     // Same data source the /whats-new page reads from -- single source
     // of truth, auto-updates here when product ships.
-    const { changelog } = await import('../../data/changelog.js');
-    const latestUpdate = changelog[0] || null;
+    // publishedChangelog() excludes future-scheduled entries, so the sidebar
+    // never previews a drop before its date.
+    const { publishedChangelog } = await import('../../data/changelog.js');
+    const latestUpdate = publishedChangelog()[0] || null;
     return renderV7(reply, 'sign-in', {
       title: 'Sign in - OTP',
       description: 'Sign in to OTP, the operating platform where your people and AI agents run as one team.',
@@ -3124,14 +3126,15 @@ export default async function pageRoutes(app: FastifyInstance) {
   // What's New. Dual-rendered: signed-in viewers (arriving from the nav
   // megaphone) keep the app shell; signed-out visitors get the v7 layout.
   app.get('/whats-new', async (request, reply) => {
-    const { changelog } = await import('../../data/changelog.js');
+    // publishedChangelog() hides future-scheduled entries until their date.
+    const { publishedChangelog } = await import('../../data/changelog.js');
     return renderInShell(request, reply, 'whats-new', {
       title: "What's New on OTP - Latest Platform Updates",
       description: 'Latest platform updates, features, and improvements to OTP. See what is new in the coordination intelligence layer for AI-native organizations.',
       canonical: BASE_URL + '/whats-new',
       ogImage: BASE_URL + '/public/og-image.png',
       breadcrumbs: bc({ name: "What's New", url: BASE_URL + '/whats-new' }),
-      changelog,
+      changelog: publishedChangelog(),
     });
   });
 
