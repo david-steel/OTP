@@ -1,4 +1,5 @@
 <%- include('../partials/orgy-palette'); %>
+<% /* XSS guard: jsonForScript escapes < and > so an embedded value cannot break out of the <script> context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%
   // ---- Custom Meeting Formats (build) ----
   // Auto-injected: memberRole, currentPath, assetVersion, authState.
@@ -95,10 +96,10 @@
 </div>
 
 <script>
-  var MF_TYPES = <%- JSON.stringify(_types) %>;
-  var MF_GROUPS = <%- JSON.stringify(_groups) %>;
-  var MF_TEAMS = <%- JSON.stringify(_teams) %>;
-  var MF_TEMPLATES = <%- JSON.stringify(_templates) %>;
+  var MF_TYPES = <%- jsonForScript(_types) %>;
+  var MF_GROUPS = <%- jsonForScript(_groups) %>;
+  var MF_TEAMS = <%- jsonForScript(_teams) %>;
+  var MF_TEMPLATES = <%- jsonForScript(_templates) %>;
   (function() {
     if (!document.getElementById('mf-list')) return;
     var typeByKey = {}; MF_TYPES.forEach(function(t){ typeByKey[t.key] = t; });

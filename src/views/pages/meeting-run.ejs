@@ -1,4 +1,5 @@
 <%- include('../partials/orgy-palette'); %>
+<% /* XSS guard: jsonForScript escapes < and > so an embedded value cannot break out of the <script> context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%
   // ---- Custom meeting runner (structure-driven) ----
   // Locals: org, meeting, agenda (MeetingSection[]), runState {activeIndex, notes{}}, sectionTypes.
@@ -92,8 +93,8 @@
     var panels = Array.prototype.slice.call(document.querySelectorAll('.mr-panel'));
     var navs = Array.prototype.slice.call(document.querySelectorAll('[data-nav]'));
     if (!panels.length) return;
-    var meetingId = <%- JSON.stringify(meeting.id) %>;
-    var active = <%- JSON.stringify(_active) %>;
+    var meetingId = <%- jsonForScript(meeting.id) %>;
+    var active = <%- jsonForScript(_active) %>;
     var count = panels.length;
     var timerInt = null, timerStart = 0;
 
