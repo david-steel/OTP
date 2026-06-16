@@ -33,4 +33,4 @@ None of this is technology. It is the operating model, and it is exactly the lay
 
 ## OTP Is Where the Work Gets Redesigned
 
-OTP is the operating layer where the work actually gets redesigned around people and agents. It puts humans and AI on a single org chart where every seat has an owner and an accountability, adds a scorecard, priorities, and issues for cadence, layers in a structured coordination and governance system called the OOS, and tracks progress against a tiered agentic maturity model. It is the operating model, productized: something you run, not an expensive consulting engagement. See how it works at [OTP](https://orgtp.com).
+OTP is the operating layer where the work actually gets redesigned around people and agents. It puts humans and AI on a single org chart where every seat has an owner and an accountability, adds a scorecard, priorities, and issues for cadence, layers in a structured coordination and governance system called the OOS, and tracks progress against OTP's 8 Levels of agentic maturity. It is the operating model, productized: something you run, not an expensive consulting engagement. See how it works at [OTP](https://orgtp.com).

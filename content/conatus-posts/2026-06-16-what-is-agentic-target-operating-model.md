@@ -29,7 +29,7 @@ Second, a cadence layer. This includes a scorecard of measurable KPIs, a short l
 
 Third, a coordination and governance layer. This is the structured set of rules and protocols that decides who owns what, how agents escalate to humans, and how decisions get made and recorded. It is what turns a collection of individual agents into a coordinated team.
 
-Fourth, a maturity path. A staged model maps how far autonomy extends, from simple assistance to fully autonomous agent teams, so leaders can see where they are today and what the next concrete step looks like.
+Fourth, a maturity path. OTP's 8 Levels of agentic maturity map how far autonomy extends, from simple assistance to fully autonomous agent teams, so leaders can see where they are today and what the next concrete step looks like.
 
 ## How You Build One
 
@@ -39,4 +39,4 @@ The discipline is to earn complexity. Validate that each seat performs before ad
 
 ## OTP Is the Model, Productized
 
-OTP is an agentic target operating model you can run today. It puts people and agents on one chart with clear ownership, a scorecard and issues cadence that keeps them aligned, a coordination and governance layer, and a staged maturity path you can climb deliberately. It is the operating model itself, turned into something you operate rather than an expensive consulting engagement. See how it works at [orgtp.com](https://orgtp.com).
+OTP is an agentic target operating model you can run today. It puts people and agents on one chart with clear ownership, a scorecard and issues cadence that keeps them aligned, a coordination and governance layer, and OTP's 8 Levels of agentic maturity, a path you can climb deliberately. It is the operating model itself, turned into something you operate rather than an expensive consulting engagement. See how it works at [orgtp.com](https://orgtp.com).
