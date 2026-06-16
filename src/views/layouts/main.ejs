@@ -307,16 +307,16 @@
                // _role is still needed for the avatar menu's role line.
                var _role = (locals.memberRole || '').toString();
           %>
-            <!-- Ask AI (signed-in): purple pill, GHL-style chat drawer. Streams
+            <!-- Ask AI (signed-in): brand-blue pill, GHL-style chat drawer. Streams
                  product-help answers from POST /api/v1/ask-ai (SSE); see script
                  near end of body for send loop + mutual exclusion. -->
             <div class="relative z-50" id="otp-askai" style="position:relative; display:flex; align-items:center;">
-              <button id="otp-askai-btn" aria-label="Ask AI" style="display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:9999px; background:#6d28d9; color:#fff; font-size:12.5px; font-weight:600; line-height:1.4; border:none; cursor:pointer; white-space:nowrap;">
+              <button id="otp-askai-btn" aria-label="Ask AI" style="display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:9999px; background:#2563EB; color:#fff; font-size:12.5px; font-weight:600; line-height:1.4; border:none; cursor:pointer; white-space:nowrap;">
                 <span aria-hidden="true" style="font-size:13px; line-height:1;">&#10038;</span>Ask AI
               </button>
               <div id="otp-askai-panel" style="display:none; position:absolute; top:100%; right:0; margin-top:10px; width:400px; max-height:560px; flex-direction:column; background:#fff; border:1px solid rgba(20,22,28,0.12); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,0.12); overflow:hidden;">
                 <div style="padding:12px 14px; border-bottom:1px solid rgba(20,22,28,0.06); flex:0 0 auto;">
-                  <div style="font-size:11px; font-weight:700; color:#6d28d9; text-transform:uppercase; letter-spacing:0.06em;">Ask AI</div>
+                  <div style="font-size:11px; font-weight:700; color:#2563EB; text-transform:uppercase; letter-spacing:0.06em;">Ask AI</div>
                   <div style="font-size:12px; color:#6b7280; line-height:1.45; margin-top:2px;">Answers about using OTP</div>
                 </div>
                 <div id="otp-askai-msgs" style="flex:1 1 auto; min-height:120px; overflow:auto; padding:12px 14px; display:flex; flex-direction:column; gap:8px;">
@@ -324,7 +324,7 @@
                 </div>
                 <div style="display:flex; gap:8px; align-items:flex-end; padding:10px 14px; border-top:1px solid rgba(20,22,28,0.06); flex:0 0 auto;">
                   <textarea id="otp-askai-input" rows="1" placeholder="Ask a question&hellip;" style="flex:1; resize:none; max-height:64px; padding:8px 10px; font-size:13px; line-height:1.45; color:#111827; background:#f9fafb; border:1px solid rgba(20,22,28,0.12); border-radius:8px; outline:none; font-family:inherit;"></textarea>
-                  <button id="otp-askai-send" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; background:#6d28d9; color:#fff; font-size:12.5px; font-weight:600; border:none; cursor:pointer;">Send</button>
+                  <button id="otp-askai-send" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; background:#2563EB; color:#fff; font-size:12.5px; font-weight:600; border:none; cursor:pointer;">Send</button>
                 </div>
                 <div style="padding:6px 14px 10px; font-size:11px; color:#9ca3af; text-align:center; flex:0 0 auto;">Ask AI can make mistakes. Verify important details.</div>
               </div>
