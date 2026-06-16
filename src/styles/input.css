@@ -75,8 +75,8 @@ body { background: var(--orgy-bg); }
 /* v2: My KPIs trend heatmap (clean mode only). One soft cell per recent value:
    green when the value meets its goal, red when it misses, neutral when blank.
    Our calm answer to a scorecard heatmap, without saturated fills. */
-.dash-clean .dk-spark { display: flex; gap: 3px; align-items: center; }
-.dash-clean .dk-cell { width: 13px; height: 13px; border-radius: 3px; background: #eef1f4; }
-.dash-clean .dk-cell.ok { background: #dcfce7; }
-.dash-clean .dk-cell.bad { background: #fee2e2; }
-.dash-clean .dk-cell.na { background: #eef1f4; }
+.dash-clean .dk-spark { display: flex; gap: 2px; align-items: flex-end; height: 22px; }
+.dash-clean .dk-bar { width: 5px; border-radius: 1.5px; background: #e3e7ec; min-height: 2px; }
+.dash-clean .dk-bar.ok { background: #86c79a; }   /* calmer green than the saturated tint */
+.dash-clean .dk-bar.bad { background: #e6aeae; }  /* muted red, not an alarming wall */
+.dash-clean .dk-bar.na { background: #e3e7ec; }

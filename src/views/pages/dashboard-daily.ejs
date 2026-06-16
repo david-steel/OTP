@@ -342,8 +342,8 @@
                 <option value="employee">Employee</option>
                 <option value="other" selected>Other</option>
               </select>
-              <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
-              <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1.5 hover:bg-orgy-blue-deep">Add</button>
+              <input type="text" name="body" required maxlength="2000" placeholder="One headline..." class="flex-1 min-w-0 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
+              <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1.5 whitespace-nowrap shrink-0 hover:bg-orgy-blue-deep">Add</button>
             </div>
             <% if ((orgTeams || []).length > 0) { %>
             <label class="block text-[11px] font-semibold text-gray-500">Team <span class="font-normal text-gray-400">&middot; shows on this team's meeting</span></label>
@@ -850,9 +850,12 @@
                            case 'eq': return v === k.goalValue; default: return null;
                          }
                        };
+                       var _nums = _series.filter(function(v){ return typeof v === 'number'; });
+                       var _max = Math.max.apply(null, _nums.concat([ (typeof k.goalValue === 'number' ? k.goalValue : 0) ]));
+                       if (!(_max > 0)) _max = 1;
                   %>
                   <td class="py-2 pr-3">
-                    <div class="dk-spark"><% _series.forEach(function(v){ var m = _meets(v); %><span class="dk-cell <%= m === true ? 'ok' : (m === false ? 'bad' : 'na') %>" title="<%= v === null || v === undefined ? 'no value' : v %>"></span><% }); %></div>
+                    <div class="dk-spark"><% _series.forEach(function(v){ var m = _meets(v); var h = (typeof v === 'number') ? Math.max(10, Math.round((Math.max(0, v) / _max) * 100)) : 0; %><span class="dk-bar <%= m === true ? 'ok' : (m === false ? 'bad' : 'na') %>" style="height:<%= h %>%" title="<%= v === null || v === undefined ? 'no value' : v %>"></span><% }); %></div>
                   </td>
                   <% } %>
                   <td class="py-2">
