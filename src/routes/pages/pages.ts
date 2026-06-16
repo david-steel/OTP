@@ -22,6 +22,8 @@ import { listConatusPosts, getConatusPost } from '../../services/conatus-posts.j
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../services/team-graph.js';
 import { reportsSubtree } from '../../services/chart-permissions.js';
 import { ruleToLabel, RECURRENCE_OPTIONS, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
+import { autoEndStaleMeetings } from '../../services/meeting-lifecycle.js';
+import { isMeetingLocked } from '../../shared/meeting-timing.js';
 import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
 import { resolveDemoPageContext } from '../../middleware/demo-access.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
@@ -3587,6 +3589,10 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
 
+    // Lazy auto-end sweep before listing, so the list never shows a meeting as
+    // still "in progress" an hour after everyone left it. Best-effort.
+    try { await autoEndStaleMeetings(org.id); } catch (err) { request.log.warn({ err }, 'auto-end sweep failed on l8 list'); }
+
     // Strict team-membership scope (same rule as /dashboard meetings):
     // only show meetings on teams the current member belongs to.
     const member = (request as any).orgMember as { id: string } | null;
@@ -3611,7 +3617,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // Ignore filter requests for teams the user isn't on.
     const effectiveFilter = filterTeamId && myTeamIds.includes(filterTeamId) ? filterTeamId : '';
 
-    const myMeetings = myTeamIds.length === 0
+    const myMeetingRows = myTeamIds.length === 0
       ? []
       : await db.select().from(meetings)
           .where(and(
@@ -3621,6 +3627,10 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
           ))
           .orderBy(desc(meetings.scheduledAt))
           .limit(50);
+    // Tag future-dated, not-yet-started occurrences so the list renders them as
+    // locked (non-clickable "Upcoming") -- people kept opening next week's
+    // recurring meeting and entering data into it instead of the current one.
+    const myMeetings = myMeetingRows.map(m => ({ ...m, locked: isMeetingLocked(m) }));
 
     const defaultTeamId = orgTeams.find(t => t.slug === 'leadership')?.id || orgTeams[0]?.id || '';
 
@@ -3891,6 +3901,11 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
 
     const org = await l8ResolveOrg(request, reply);
     if (!org) return;
+
+    // Lazy auto-end sweep: complete any of this org's meetings left in_progress
+    // past their 1-hour deadline before we render. If THIS meeting is the stale
+    // one, it loads below already marked completed. Best-effort.
+    try { await autoEndStaleMeetings(org.id); } catch (err) { request.log.warn({ err }, 'auto-end sweep failed on meeting load'); }
 
     const [meeting] = await db.select().from(meetings)
       .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
@@ -4442,6 +4457,10 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       noindex: true,
       org,
       meeting,
+      // Future-dated, not-yet-started occurrence: render read-only with a
+      // banner so people don't enter data into next week's meeting instead of
+      // the current one. Unlocks on Start / its date arriving / completion.
+      locked: isMeetingLocked(meeting),
       scorecard,
       rocks: rocksData,
       rockMilestones: rockMilestonesMap,

@@ -1134,6 +1134,14 @@ export const meetings = pgTable('meetings', {
   scheduledAt: timestamp('scheduled_at').notNull(),
   startedAt: timestamp('started_at'),
   endedAt: timestamp('ended_at'),
+  // Auto-end safety net: when a meeting is started we stamp a deadline
+  // (startedAt + 60min). A meeting still in_progress past this deadline is
+  // auto-completed (lazily on page load + by a periodic backstop) so a meeting
+  // left open by someone who forgot to press End does not linger forever.
+  // "Extend" pushes this out. null = no deadline (legacy / never started).
+  // Column added by ensure-meeting-auto-end.ts on boot (Drizzle migrate is
+  // broken; schema self-heals).
+  autoEndAt: timestamp('auto_end_at'),
   attendees: jsonb('attendees').notNull().default([]),
   segueNotes: text('segue_notes'),
   headlines: text('headlines'),

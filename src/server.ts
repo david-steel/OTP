@@ -986,6 +986,14 @@ try {
 }
 
 try {
+  const { ensureMeetingAutoEndColumn } = await import('./db/ensure-meeting-auto-end.js');
+  await ensureMeetingAutoEndColumn();
+  app.log.info('meetings.auto_end_at column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingAutoEndColumn failed -- the 1-hour auto-end safety net will not fire until resolved');
+}
+
+try {
   const { ensureConversionLogTable } = await import('./db/ensure-conversion-log.js');
   await ensureConversionLogTable();
   app.log.info('conversion_log table is ready');
@@ -1321,6 +1329,15 @@ try {
   if (process.env.NODE_ENV === 'production' || process.env.ENABLE_ORG_EVENTS_RETENTION === 'true') {
     const { startOrgEventsRetention } = await import('./services/org-events-retention.js');
     startOrgEventsRetention();
+  }
+
+  // 1-hour auto-end safety net (backstop). The lazy page-load sweep handles the
+  // common case; this catches a meeting nobody loads a page for. No wallet/email
+  // side effects, so it is safe to run everywhere (gate only to disable in
+  // local dev if noisy). Lazy sweeps still fire regardless of this scheduler.
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_MEETING_AUTO_END === 'true') {
+    const { startMeetingAutoEndScheduler } = await import('./services/meeting-lifecycle.js');
+    startMeetingAutoEndScheduler();
   }
 } catch (err) {
   app.log.error(err);

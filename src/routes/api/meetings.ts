@@ -13,9 +13,11 @@ import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { deliverToAgentInbox } from '../../services/agent-inbox.js';
 import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
-import { ensureNextOccurrence, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
+import { defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { planSeriesDeletion, isDeleteScope } from '../../services/meeting-series.js';
 import { buildScorecardSnapshot } from '../../services/meeting-resnapshot.js';
+import { endMeetingCore } from '../../services/meeting-lifecycle.js';
+import { computeAutoEndAt, isMeetingLocked } from '../../shared/meeting-timing.js';
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -109,9 +111,27 @@ async function checkMeetingEdit(
   reply: any,
   orgId: string,
   meetingId: string,
+  opts: { allowLocked?: boolean } = {},
 ): Promise<boolean> {
   const auth = getAuth(request);
   if (!auth.userId) return true; // API-key path
+
+  // Lock gate: a future-dated, not-yet-started meeting is "locked" so people
+  // cannot enter data into next week's recurring occurrence by mistake instead
+  // of the current one. Applies to everyone (founder included) -- it is about
+  // editing the WRONG meeting, not about permissions. /start opts out
+  // (allowLocked) so a meeting can still be deliberately opened early; once
+  // started it is no longer locked.
+  if (!opts.allowLocked) {
+    const [lockRow] = await db.select({ status: meetings.status, scheduledAt: meetings.scheduledAt })
+      .from(meetings)
+      .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
+      .limit(1);
+    if (lockRow && isMeetingLocked(lockRow)) {
+      reply.status(423).send({ error: { code: 'MEETING_LOCKED', message: 'This meeting is scheduled for the future. Start it to begin, or wait until its date arrives.' } });
+      return false;
+    }
+  }
 
   // Legacy founder: their Clerk user id is stored as organizations.clerkOrgId
   // (the same identity getAuthOrg Path 1 uses to resolve the org). They own
@@ -335,7 +355,8 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!(await gateWriteScope(request, reply))) return;
     const org = await authedOrFail(request, reply);
     if (!org) return;
-    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+    // allowLocked: starting IS the act of opening a future meeting early.
+    if (!(await checkMeetingEdit(request, reply, org.id, id, { allowLocked: true }))) return;
 
     // Snapshots are team-scoped to this meeting's team.
     const [_startMeeting] = await db.select({ teamId: meetings.teamId }).from(meetings)
@@ -346,10 +367,13 @@ export default async function meetingRoutes(app: FastifyInstance) {
       buildRocksSnapshot(org.id, _startMeeting.teamId),
     ]);
 
+    const _startedAt = new Date();
     const [updated] = await db.update(meetings)
       .set({
         status: 'in_progress',
-        startedAt: new Date(),
+        startedAt: _startedAt,
+        // Arm the 1-hour auto-end safety net. "Extend" pushes this out.
+        autoEndAt: computeAutoEndAt(_startedAt),
         scorecardSnapshot,
         rocksSnapshot,
         updatedAt: new Date(),
@@ -426,51 +450,33 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (!org) return;
     if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
 
-    // Re-snapshot the scorecard at /end so the completed record preserves the
-    // FINAL reviewed KPI values, not the pre-meeting numbers captured at
-    // /start. Rocks are deliberately NOT snapshotted -- they always render
-    // live (see services/meeting-snapshot.ts).
-    const [_endMeeting] = await db.select({ teamId: meetings.teamId }).from(meetings)
-      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id))).limit(1);
-    if (!_endMeeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
-    const scorecardSnapshot = await buildScorecardSnapshot(org.id, _endMeeting.teamId);
+    // Ending is centralized in endMeetingCore (services/meeting-lifecycle.ts):
+    // it re-snapshots the scorecard so the record keeps the FINAL reviewed KPI
+    // values, stamps endedAt, rolls the next recurrence, and emits audit +
+    // realtime events. The auto-end safety net calls the same path, so a
+    // meeting ends identically whether a person or the net ends it.
+    const result = await endMeetingCore(org.id, id, { reason: 'manual', actorId: getAuth(request).userId || null });
+    if (!result) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+    return { meeting: result.meeting, nextOccurrence: result.nextOccurrence };
+  });
 
+  // POST /api/v1/meetings/:id/extend  (push the 1-hour auto-end deadline out)
+  app.post<{ Params: { id: string } }>('/meetings/:id/extend', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    // Only an in-progress meeting has a live deadline to extend. Reset it to a
+    // fresh full window from now so the meeting keeps running.
     const [updated] = await db.update(meetings)
-      .set({ status: 'completed', endedAt: new Date(), scorecardSnapshot, updatedAt: new Date() })
-      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+      .set({ autoEndAt: computeAutoEndAt(new Date()), updatedAt: new Date() })
+      .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id), eq(meetings.status, 'in_progress')))
       .returning();
-    if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
-
-    await db.insert(auditLogs).values(createAuditEntry('meeting.ended', 'meeting', {
-      orgId: org.id, entityId: id,
-    }));
-
-    // If this meeting is part of a recurring series, roll the next occurrence
-    // forward so an upcoming meeting always exists. Best-effort: a recurrence
-    // failure must not block ending the meeting.
-    let nextOccurrence: typeof updated | null = null;
-    if (updated.recurrenceRule) {
-      try {
-        nextOccurrence = await ensureNextOccurrence(updated);
-        if (nextOccurrence) {
-          await db.insert(auditLogs).values(createAuditEntry('meeting.recurrence.rolled', 'meeting', {
-            orgId: org.id, entityId: nextOccurrence.id, details: { fromMeetingId: id, scheduledAt: nextOccurrence.scheduledAt },
-          }));
-        }
-      } catch (err) {
-        request.log.error({ err, meetingId: id }, 'ensureNextOccurrence failed on meeting end');
-      }
-    }
-
-    publishMeetingUpdate(id, { kind: 'meeting', action: 'ended' });
-    {
-      const actor = getAuth(request).userId;
-      await emitOrgEventSafe({
-        orgId: org.id, topic: 'meeting', entityType: 'meeting', entityId: id, action: 'ended',
-        teamId: updated.teamId, actorType: actor ? 'user' : 'agent', actorId: actor || 'api_key',
-      });
-    }
-    return { meeting: updated, nextOccurrence };
+    if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No in-progress meeting to extend' } });
+    return { meeting: updated, autoEndAt: updated.autoEndAt };
   });
 
   // DELETE /api/v1/meetings/:id  (soft-delete -- any status is deletable)

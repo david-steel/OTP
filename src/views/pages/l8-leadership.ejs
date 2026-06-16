@@ -85,14 +85,17 @@
         var _ratingAvg = _ratingVals.length ? (_ratingVals.reduce(function(a,b){ return a + b; }, 0) / _ratingVals.length) : null;
       %>
       <% if (meeting.status === 'scheduled') { %>
-        <button id="start-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">
+        <button class="js-start-meeting px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">
           ▶ Start meeting
         </button>
-        <button id="end-meeting" class="px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Mark this meeting complete (you don't have to Start it first)">
+        <button class="js-end-meeting px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Mark this meeting complete (you don't have to Start it first)">
           ✓ End meeting
         </button>
       <% } else if (meeting.status === 'in_progress') { %>
-        <button id="end-meeting" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">
+        <button class="js-extend-meeting px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Push the 1-hour auto-end out by another hour">
+          ⏱ Extend
+        </button>
+        <button class="js-end-meeting px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">
           ✓ End meeting
         </button>
       <% } else if (meeting.status === 'completed') { %>
@@ -104,6 +107,20 @@
       <button id="delete-meeting" class="text-xs text-gray-400 hover:text-red-600 hover:underline" title="Delete this meeting permanently (soft delete)">Delete</button>
     </div>
   </div>
+
+  <% if (typeof locked !== 'undefined' && locked) { %>
+  <!-- Locked: a future-dated occurrence opened directly. Read-only with a
+       banner so data goes into the CURRENT meeting, not next week's. Editing
+       is also rejected server-side (423 MEETING_LOCKED); the script below
+       disables the inputs so it reads clearly as not-yet-open. -->
+  <div class="mb-6 border border-amber-300 bg-amber-50 rounded-lg px-4 py-3 flex items-start justify-between gap-3">
+    <div>
+      <div class="text-sm font-semibold text-amber-900">This is an upcoming meeting</div>
+      <div class="text-xs text-amber-800 mt-0.5">Scheduled for <%= new Date(meeting.scheduledAt).toLocaleString() %>. It opens on its own when that time arrives. Use your current meeting until then — or start this one now if you mean to run it early.</div>
+    </div>
+    <button class="js-start-meeting shrink-0 px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">▶ Start now</button>
+  </div>
+  <% } %>
 
   <!-- Add to calendar (Phase 0: manual paste path -- no OAuth). Hand the user
        a copyable block to drop into a recurring invite they build themselves
@@ -1080,6 +1097,18 @@
     </div>
   </section>
 
+  <!-- Bottom end bar: the foot of the meeting is where you naturally finish, so
+       End lives here too (not just in the header). Hidden once completed. -->
+  <% if (meeting.status === 'scheduled' || meeting.status === 'in_progress') { %>
+  <div class="mt-10 pt-6 border-t border-gray-200 flex items-center justify-end gap-2">
+    <% if (meeting.status === 'in_progress') { %>
+      <span class="text-xs text-gray-400 mr-auto">This meeting auto-ends an hour after it started unless you end or extend it.</span>
+      <button class="js-extend-meeting px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft">⏱ Extend</button>
+    <% } %>
+    <button class="js-end-meeting px-5 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">✓ End meeting</button>
+  </div>
+  <% } %>
+
 </div>
 
 <script>
@@ -1780,36 +1809,71 @@
     });
   })();
 
-  // Start / end meeting
-  const startBtn = document.getElementById('start-meeting');
-  if (startBtn) startBtn.addEventListener('click', async () => {
-    const orig = startBtn.textContent;
-    startBtn.disabled = true; startBtn.textContent = 'Starting...';
-    const res = await api('/meetings/' + meetingId + '/start', { method: 'POST' });
-    if (!res || res.error) {
-      alert('Could not start the meeting: ' + errMsg(res));
-      startBtn.disabled = false; startBtn.textContent = orig;
-      return;
-    }
-    reloadKeep();
+  // Start / end / extend meeting. Bound by class so the header AND footer
+  // buttons (and the locked-banner Start) all work from one handler each.
+  document.querySelectorAll('.js-start-meeting').forEach((startBtn) => {
+    startBtn.addEventListener('click', async () => {
+      const orig = startBtn.textContent;
+      startBtn.disabled = true; startBtn.textContent = 'Starting...';
+      const res = await api('/meetings/' + meetingId + '/start', { method: 'POST' });
+      if (!res || res.error) {
+        alert('Could not start the meeting: ' + errMsg(res));
+        startBtn.disabled = false; startBtn.textContent = orig;
+        return;
+      }
+      reloadKeep();
+    });
   });
-  const endBtn = document.getElementById('end-meeting');
-  if (endBtn) endBtn.addEventListener('click', async () => {
-    if (!confirm('End the meeting?')) return;
-    const orig = endBtn.textContent;
-    endBtn.disabled = true; endBtn.textContent = 'Ending...';
-    // Stop the agenda clock and clear its persisted state so it doesn't
-    // resurrect as "running" after the reload.
-    try { pauseTimer(); } catch (e) { /* timer not initialized */ }
-    try { localStorage.removeItem(TIMER_KEY); } catch (e) { /* storage unavailable */ }
-    const res = await api('/meetings/' + meetingId + '/end', { method: 'POST' });
-    if (!res || res.error) {
-      alert('Could not end the meeting: ' + errMsg(res));
-      endBtn.disabled = false; endBtn.textContent = orig;
-      return;
-    }
-    reloadKeep();
+  document.querySelectorAll('.js-end-meeting').forEach((endBtn) => {
+    endBtn.addEventListener('click', async () => {
+      if (!confirm('End the meeting?')) return;
+      const orig = endBtn.textContent;
+      // Disable every End button so the header + footer can't double-fire.
+      document.querySelectorAll('.js-end-meeting').forEach((b) => { b.disabled = true; });
+      endBtn.textContent = 'Ending...';
+      // Stop the agenda clock and clear its persisted state so it doesn't
+      // resurrect as "running" after the reload.
+      try { pauseTimer(); } catch (e) { /* timer not initialized */ }
+      try { localStorage.removeItem(TIMER_KEY); } catch (e) { /* storage unavailable */ }
+      const res = await api('/meetings/' + meetingId + '/end', { method: 'POST' });
+      if (!res || res.error) {
+        alert('Could not end the meeting: ' + errMsg(res));
+        document.querySelectorAll('.js-end-meeting').forEach((b) => { b.disabled = false; });
+        endBtn.textContent = orig;
+        return;
+      }
+      reloadKeep();
+    });
   });
+  document.querySelectorAll('.js-extend-meeting').forEach((extendBtn) => {
+    extendBtn.addEventListener('click', async () => {
+      const orig = extendBtn.textContent;
+      extendBtn.disabled = true; extendBtn.textContent = 'Extending...';
+      const res = await api('/meetings/' + meetingId + '/extend', { method: 'POST' });
+      if (!res || res.error) {
+        alert('Could not extend the meeting: ' + errMsg(res));
+        extendBtn.disabled = false; extendBtn.textContent = orig;
+        return;
+      }
+      extendBtn.textContent = 'Extended +1h';
+      setTimeout(() => { extendBtn.disabled = false; extendBtn.textContent = orig; }, 2000);
+    });
+  });
+
+  // Locked = a future occurrence opened directly. Make the body read-only so
+  // data goes into the current meeting, not this one. Edits are also rejected
+  // server-side (423); this just makes it visually clear. Start stays usable.
+  <% if (typeof locked !== 'undefined' && locked) { %>
+  (function lockMeetingBody(){
+    const root = document.getElementById('l8-meeting');
+    if (!root) return;
+    root.querySelectorAll('input, textarea, select').forEach((el) => { el.disabled = true; });
+    root.querySelectorAll('button').forEach((b) => {
+      if (b.classList.contains('js-start-meeting') || b.id === 'cal-toggle' || b.id === 'cal-close') return;
+      b.disabled = true;
+    });
+  })();
+  <% } %>
 
   // Delete meeting. A recurring meeting asks for a scope (this one / this and
   // following / the whole series), like any calendar app; a one-off keeps the

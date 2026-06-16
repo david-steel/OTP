@@ -109,27 +109,47 @@
   <% } else { %>
     <div class="space-y-2">
       <% meetings.forEach(function(m) { %>
-        <a href="/l8/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-4 hover:bg-gray-50">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium"><%= m.title %></div>
-              <div class="text-xs text-gray-500 mt-1">
-                <% var teamName = m.teamId && teamLookup[m.teamId] ? teamLookup[m.teamId].name : ''; %>
-                <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
-                <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
+        <% var teamName = m.teamId && teamLookup[m.teamId] ? teamLookup[m.teamId].name : ''; %>
+        <% if (m.locked) { %>
+          <%# Future-dated occurrence: not clickable yet, so people don't enter
+              data into next week's recurring meeting instead of the current one.
+              It opens automatically once its date arrives. %>
+          <div class="block border border-dashed rounded p-4 bg-gray-50 opacity-70 cursor-not-allowed" title="Opens on its own when its scheduled time arrives">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium text-gray-500">🔒 <%= m.title %></div>
+                <div class="text-xs text-gray-500 mt-1">
+                  <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
+                  <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
+                </div>
+              </div>
+              <div class="text-xs">
+                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">Upcoming</span>
               </div>
             </div>
-            <div class="text-xs">
-              <span class="px-2 py-0.5 rounded
-                <%= m.status === 'scheduled' ? 'bg-gray-100 text-gray-700' :
-                   m.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                   m.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                   'bg-red-100 text-red-800' %>">
-                <%= m.status %>
-              </span>
-            </div>
           </div>
-        </a>
+        <% } else { %>
+          <a href="/l8/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-4 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium"><%= m.title %></div>
+                <div class="text-xs text-gray-500 mt-1">
+                  <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
+                  <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
+                </div>
+              </div>
+              <div class="text-xs">
+                <span class="px-2 py-0.5 rounded
+                  <%= m.status === 'scheduled' ? 'bg-gray-100 text-gray-700' :
+                     m.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                     m.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                     'bg-red-100 text-red-800' %>">
+                  <%= m.status %>
+                </span>
+              </div>
+            </div>
+          </a>
+        <% } %>
       <% }); %>
     </div>
   <% } %>
