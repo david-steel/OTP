@@ -21,7 +21,7 @@ Same backend (Clerk, Postgres, API, MCP). Different brands, different domains, d
 
 ## Design Systems
 
-When working on OTP code (`src/`): no formal design system yet — match existing patterns.
+When working on OTP code (`src/`): **read `src/DESIGN.md` before any visual or UI decision.** It defines the palette tokens, typography scale, spacing, the shared Row component, button rules, status pills, and the light/warm/editorial philosophy. Do not deviate without explicit user approval. In QA mode, flag any code that doesn't match `src/DESIGN.md`.
 
 When working on Orger code (`orger/`): **always read `orger/DESIGN.md` before any visual or UI decision.** All font choices, colors, spacing, microcopy voice, and the Shrub mascot rules are defined there. Do not deviate without explicit user approval. In QA mode, flag any code that doesn't match `orger/DESIGN.md`.
 
