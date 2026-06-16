@@ -79,6 +79,17 @@ export const LAB_FEATURES: LabFeature[] = [
     status: 'beta',
     // No surfaceUrl: this is a skin on /dashboard, not a new nav destination.
   },
+  {
+    key: 'meetings_broken_out',
+    name: 'Run meetings step by step',
+    description:
+      'A guided run mode for your L8 meeting. Instead of one long page, step through the agenda one section at a time -- segue, scorecard, rocks, headlines, to-dos, IDS, conclude -- with the timebox and your real data in front of you, and the agenda as a stepper down the side.',
+    whyNow:
+      'Coming soon. It builds on the meeting you already run, so it will land as an opt-in run mode you can switch on per org and tell us how it feels in a real meeting.',
+    status: 'coming_soon',
+    // Built as a step-mode layer over the existing l8-leadership sections
+    // (#segue ... #conclude); flips to beta once the run mode is verified live.
+  },
 ];
 
 export function getLabFeature(key: string): LabFeature | undefined {
