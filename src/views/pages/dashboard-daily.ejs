@@ -728,14 +728,14 @@
                           <div class="text-xs text-gray-600 mt-1 break-words"><%- renderDescription(t.description) %></div>
                         <% } %>
                         <div class="text-[11px] flex items-center gap-2 mt-1 flex-wrap">
-                          <span class="px-1.5 py-0.5 rounded font-medium <%= sourceClass %>"><%= sourceLabel %></span>
+                          <span class="td-chip px-1.5 py-0.5 rounded font-medium <%= sourceClass %>"><%= sourceLabel %></span>
                           <% var rp = recurrencePreset(t.recurrenceRule); %>
                           <% if (t.recurrenceParentId) { %>
-                            <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Spawned from a recurring template">↻ from template</span>
+                            <span class="td-chip td-chip-recur px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Spawned from a recurring template">↻ from template</span>
                           <% } else if (rp.key !== 'none') { %>
-                            <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Repeats: <%= t.recurrenceRule %>">↻ <%= rp.label %></span>
+                            <span class="td-chip td-chip-recur px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium" title="Repeats: <%= t.recurrenceRule %>">↻ <%= rp.label %></span>
                           <% } %>
-                          <span class="<%= overdue ? 'text-rose-600 font-semibold' : 'text-gray-500' %>"><%= due ? (overdue ? 'OVERDUE — ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
+                          <span class="td-due <%= overdue ? 'td-overdue text-rose-600 font-semibold' : 'text-gray-500' %>"><%= due ? (overdue ? 'OVERDUE — ' : 'Due ') + due.toLocaleDateString() : 'No due date' %></span>
                           <button type="button" class="todo-edit-btn text-orgy-blue font-semibold hover:underline">Edit</button>
                           <button type="button" class="todo-delete-btn text-rose-600 font-semibold hover:underline">Delete</button>
                         </div>

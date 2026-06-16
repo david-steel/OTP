@@ -62,3 +62,12 @@ body { background: var(--orgy-bg); }
 .dash-clean #todo-add-attach { color: #8a93a0 !important; font-weight: 500 !important; }
 .dash-clean .todo-edit-btn:hover { color: var(--orgy-blue) !important; }
 .dash-clean .todo-delete-btn:hover { color: #dc2626 !important; }
+
+/* v2: crisp, on-palette status pills (clean mode only). The chips are already
+   chip-shaped; pill them fully, recolor the off-palette violet recurrence chip
+   to neutral, and turn the bare due-date text into a soft pill (red-soft when
+   overdue). Color stays tied to meaning per src/DESIGN.md. */
+.dash-clean .td-chip { border-radius: 9999px !important; padding: 2px 9px !important; }
+.dash-clean .td-chip-recur { background: #eef1f4 !important; color: #5b6573 !important; }
+.dash-clean .td-due { border-radius: 9999px; padding: 2px 9px; background: #f1f3f5; color: #6b7280; font-weight: 600; }
+.dash-clean .td-due.td-overdue { background: #fee2e2; color: #b91c1c; }
