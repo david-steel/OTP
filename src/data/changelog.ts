@@ -20,6 +20,33 @@ export const changelog: ChangelogEntry[] = [
 
   {
     date: '2026-06-22',
+    tags: ['Major', 'Integrations'],
+    title: 'Connect your stack: a searchable catalog of 1,000+ integrations',
+    why: 'OTP plugs into the tools you already run, so the work flows in on its own.',
+    cta: { text: 'Browse integrations', url: '/settings/integrations' },
+    summary: 'OTP now has a full, searchable integrations catalog with more than 1,000 apps. Find the tools your team already uses and connect them from Settings, Integrations.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>1,000+ apps.</strong> The complete catalog, searchable by name, so you can find your stack fast.</li>
+<li><strong>Connect from Settings.</strong> Link a tool in a few clicks under Settings, Integrations.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-22',
+    tags: ['Major', 'Meetings', 'Labs'],
+    title: 'Build your own meeting format (early access in Labs)',
+    why: 'Run your meetings your way, not someone else\'s template.',
+    cta: { text: 'Turn it on in Labs', url: '/settings/labs' },
+    summary: 'You can now design a custom meeting format with your own sections, columns, and agenda, then run a live meeting from it, or start from any of the 180+ library templates. It is in early access: switch on "Custom meeting formats" under Settings, Labs to try it.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Your sections, your agenda.</strong> Build a format with the parts your meeting actually needs, then run it live in OTP.</li>
+<li><strong>Start from a template.</strong> Import any of the 180+ library agendas as a starting point.</li>
+<li><strong>Early access.</strong> Enable "Custom meeting formats" in Settings, Labs.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-22',
     tags: ['Major', 'KPI'],
     title: 'Organize your scoreboard: KPI groups and full inline editing',
     why: 'Your numbers, grouped the way your business actually runs.',
