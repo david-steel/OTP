@@ -1,7 +1,7 @@
 ---
 type: content
 date: 2026-06-16
-status: draft
+status: published
 domain: otp
 author: David Steel
 content_type: thesis_argument
