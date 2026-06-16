@@ -71,3 +71,12 @@ body { background: var(--orgy-bg); }
 .dash-clean .td-chip-recur { background: #eef1f4 !important; color: #5b6573 !important; }
 .dash-clean .td-due { border-radius: 9999px; padding: 2px 9px; background: #f1f3f5; color: #6b7280; font-weight: 600; }
 .dash-clean .td-due.td-overdue { background: #fee2e2; color: #b91c1c; }
+
+/* v2: My KPIs trend heatmap (clean mode only). One soft cell per recent value:
+   green when the value meets its goal, red when it misses, neutral when blank.
+   Our calm answer to a scorecard heatmap, without saturated fills. */
+.dash-clean .dk-spark { display: flex; gap: 3px; align-items: center; }
+.dash-clean .dk-cell { width: 13px; height: 13px; border-radius: 3px; background: #eef1f4; }
+.dash-clean .dk-cell.ok { background: #dcfce7; }
+.dash-clean .dk-cell.bad { background: #fee2e2; }
+.dash-clean .dk-cell.na { background: #eef1f4; }

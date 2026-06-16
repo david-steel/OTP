@@ -3009,6 +3009,9 @@ Founder, OTP</p>
     // ---- My KPIs ----
     let myKpis: any[] = [];
     let kpiValuesMap: Record<string, { value: number | null; periodStart: Date; periodEnd: Date }> = {};
+    // Last ~8 values per KPI (oldest -> newest), for the clean-dashboard heatmap
+    // sparkline. Latest is series[last]. Empty for KPIs with no history.
+    const kpiSeriesMap: Record<string, (number | null)[]> = {};
     if (myExternalId) {
       myKpis = await db.select().from(kpis)
         .where(and(
@@ -3019,11 +3022,15 @@ Founder, OTP</p>
         ))
         .orderBy(kpis.title);
       for (const k of myKpis) {
-        const [latest] = await db.select().from(kpiValues)
+        const recent = await db.select().from(kpiValues)
           .where(eq(kpiValues.kpiId, k.id))
           .orderBy(desc(kpiValues.periodStart))
-          .limit(1);
-        if (latest) kpiValuesMap[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
+          .limit(8);
+        if (recent.length) {
+          const latest = recent[0];
+          kpiValuesMap[k.id] = { value: latest.value, periodStart: latest.periodStart, periodEnd: latest.periodEnd };
+          kpiSeriesMap[k.id] = recent.map((r) => r.value).reverse();
+        }
       }
     }
 
@@ -3507,6 +3514,7 @@ Founder, OTP</p>
       rockMilestones: rockMilestonesMap,
       myKpis,
       kpiValues: kpiValuesMap,
+      kpiSeries: kpiSeriesMap,
       myTodos,
       delegatedWaiting,
       delegatedVerify,

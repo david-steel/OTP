@@ -827,6 +827,7 @@
                 <th class="py-1">KPI</th>
                 <th class="py-1">Goal</th>
                 <th class="py-1">Latest</th>
+                <% if (typeof dashClean !== 'undefined' && dashClean) { %><th class="py-1">Trend</th><% } %>
                 <th class="py-1">Enter</th>
               </tr>
             </thead>
@@ -839,6 +840,21 @@
                   <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
                   <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
                   <td class="py-2 pr-3 text-gray-700" data-kpi-latest><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
+                  <% if (typeof dashClean !== 'undefined' && dashClean) {
+                       var _series = (typeof kpiSeries !== 'undefined' && kpiSeries[k.id]) ? kpiSeries[k.id] : [];
+                       var _meets = function(v){
+                         if (v === null || v === undefined || k.goalValue === null || k.goalValue === undefined) return null;
+                         switch (k.goalOperator) {
+                           case 'gte': return v >= k.goalValue; case 'lte': return v <= k.goalValue;
+                           case 'gt': return v > k.goalValue;  case 'lt': return v < k.goalValue;
+                           case 'eq': return v === k.goalValue; default: return null;
+                         }
+                       };
+                  %>
+                  <td class="py-2 pr-3">
+                    <div class="dk-spark"><% _series.forEach(function(v){ var m = _meets(v); %><span class="dk-cell <%= m === true ? 'ok' : (m === false ? 'bad' : 'na') %>" title="<%= v === null || v === undefined ? 'no value' : v %>"></span><% }); %></div>
+                  </td>
+                  <% } %>
                   <td class="py-2">
                     <div class="flex items-center gap-1.5">
                       <input type="number" step="any" class="kpi-value-input rounded border border-gray-300 px-2 py-1 text-xs w-20" placeholder="value" value="<%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '' %>">
