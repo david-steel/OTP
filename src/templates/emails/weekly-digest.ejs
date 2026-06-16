@@ -1,6 +1,6 @@
 <%
-  // THE ORGY WEEKLY -- the customer-facing weekly product email.
-  // Reusable engine: fed by changelog.ts each week, Orgy's pose rotates by week
+  // THE OLLIE WEEKLY -- the customer-facing weekly product email.
+  // Reusable engine: fed by changelog.ts each week, Ollie's pose rotates by week
   // so it never looks the same twice. Locals (all provided by the sender):
   //   issueLabel   - string, e.g. "Issue #24 · Jun 16"
   //   streakBadge  - string | null, e.g. "🔥 24-week ship streak" (null = hide; never fake a number)
@@ -34,7 +34,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Orgy Weekly</title>
+<title>The Ollie Weekly</title>
 </head>
 <body style="margin:0;padding:0;background:#14271a;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#14271a;">
@@ -59,7 +59,7 @@
          <h1 style="margin:0 0 12px;font-size:50px;line-height:0.92;font-weight:900;color:#14271a;letter-spacing:-2px;">We shipped.<br>Again.</h1>
          <p style="margin:0;font-size:17px;line-height:1.45;font-weight:700;color:#1f3a10;"><%= dropCount %> new thing<%= dropCount === 1 ? '' : 's' %> this week. That is just a Tuesday around here. Come grab them.</p>
        </td>
-       <td valign="bottom" align="right" style="width:42%;"><img src="<%= heroPose %>" width="200" alt="Orgy" style="display:block;width:200px;height:auto;"></td>
+       <td valign="bottom" align="right" style="width:42%;"><img src="<%= heroPose %>" width="200" alt="Ollie" style="display:block;width:200px;height:auto;"></td>
      </tr></table>
    </td></tr>
 
@@ -72,9 +72,9 @@
      </td></tr></table>
    </td></tr>
 
-   <!-- ORGY'S PICK (headliner) -->
+   <!-- OLLIE'S PICK (headliner) -->
    <tr><td style="padding:24px 30px 0;">
-     <div style="background:#14271a;color:#B8F042;display:inline-block;font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:10px 10px 0 0;">⭐ Orgy's pick of the week</div>
+     <div style="background:#14271a;color:#B8F042;display:inline-block;font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:10px 10px 0 0;">⭐ Ollie's pick of the week</div>
      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4FBE4;border:4px solid #14271a;border-radius:0 18px 18px 18px;"><tr><td style="padding:26px 26px 24px;">
        <h2 style="margin:0 0 10px;font-size:28px;line-height:1.06;font-weight:900;color:#14271a;letter-spacing:-0.7px;"><%= pick.title %></h2>
        <p style="margin:0 0 <%= pick.why ? '14' : '20' %>px;font-size:16px;line-height:1.6;color:#384230;"><%= pick.summary %></p>
@@ -108,7 +108,7 @@
    <!-- NUDGE -->
    <tr><td style="padding:28px 30px 6px;">
      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#C6F95A,#8BC42A);border:4px solid #14271a;border-radius:20px;"><tr>
-       <td valign="middle" width="120" align="center" style="padding:16px 0 16px 12px;"><img src="<%= nudgePose %>" width="106" alt="Orgy" style="display:block;width:106px;height:auto;"></td>
+       <td valign="middle" width="120" align="center" style="padding:16px 0 16px 12px;"><img src="<%= nudgePose %>" width="106" alt="Ollie" style="display:block;width:106px;height:auto;"></td>
        <td style="padding:22px 24px 22px 6px;">
          <h2 style="margin:0 0 6px;font-size:26px;font-weight:900;color:#14271a;letter-spacing:-0.5px;">This is what you signed up for.</h2>
          <p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#1f3a10;font-weight:700;">People and AI, one team, the week running itself. Two minutes inside gets you closer to it.</p>
@@ -120,7 +120,7 @@
    <!-- SIGNOFF -->
    <tr><td style="padding:24px 30px 4px;">
      <p style="margin:0 0 3px;font-size:15px;line-height:1.6;color:#384230;">See you in the swamp. Same time next week, I'll have more. I always do.</p>
-     <p style="margin:0;font-size:17px;font-weight:900;color:#14271a;">Orgy <span style="font-weight:500;font-size:13px;color:#8a93a0;">(and David, who let me out of the lab)</span></p>
+     <p style="margin:0;font-size:17px;font-weight:900;color:#14271a;">Ollie <span style="font-weight:500;font-size:13px;color:#8a93a0;">(and David, who let me out of the lab)</span></p>
    </td></tr>
 
    <!-- FOOTER -->

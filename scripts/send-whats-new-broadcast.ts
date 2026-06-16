@@ -4,12 +4,13 @@
 
 import { sql } from 'drizzle-orm';
 import { createClerkClient } from '@clerk/backend';
-import ejs from 'ejs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { db } from '../src/config/database.js';
 import { sendEmail } from '../src/config/email.js';
-import { getRecentEntries } from '../src/data/changelog.js';
+import { buildOllieWeekly, renderOllieWeekly } from '../src/services/ollie-weekly.js';
+import { unsubscribeUrl } from '../src/services/unsubscribe-token.js';
+import { isSuppressedRecipient } from '../src/services/re-engagement.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -120,46 +121,39 @@ async function main() {
     console.log(`[broadcast] --to override: ${recipients.length} explicit recipient(s)`);
   }
 
+  // Hard suppression: never mass-mail internal/relationship addresses. Same
+  // guard the re-engagement engine uses -- includes Victor (first paying
+  // customer, David handles personally) and suppressed domains. Applies even to
+  // --to overrides so a guarded address can never be blasted by accident.
+  const suppressed = recipients.filter(r => isSuppressedRecipient(r.email));
+  if (suppressed.length) {
+    recipients = recipients.filter(r => !isSuppressedRecipient(r.email));
+    console.log(`[broadcast] suppressed ${suppressed.length} guarded address(es): ${suppressed.map(s => s.email).join(', ')}`);
+  }
+
   console.log(`[broadcast] subscribers: ${subs.length}, clerk users: ${clerkUsers.length}, partner signups: ${partners.length}, unique: ${recipients.length}`);
   console.log('[broadcast] final audience:');
   for (const r of recipients) console.log(`  - ${r.email} | ${r.name || '(no name)'} | via ${r.source} | ${r.ref}`);
 
-  const entries = getRecentEntries(7);
-  console.log(`[broadcast] changelog entries (last 7d): ${entries.length}`);
-  if (entries.length === 0) {
+  // Build the Ollie Weekly from the same shared engine the explicit-list sender
+  // uses (scripts/send-orgy-weekly.ts), so the broadcast can never drift from
+  // the live template again. unsubscribeUrl is supplied per-recipient at render.
+  const now = new Date();
+  const { locals, subject, windowEntries } = buildOllieWeekly({ now, days: 7 });
+  console.log(`[broadcast] changelog entries (last 7d): ${windowEntries.length}`);
+  if (windowEntries.length === 0) {
     console.log('[broadcast] no entries; aborting.');
     process.exit(0);
   }
-
-  const orgCountRes = await db.execute(sql`
-    SELECT COUNT(DISTINCT org_id) AS cnt
-    FROM oos_files WHERE status = 'published'
-  `);
-  const totalOrgs = parseInt((orgCountRes.rows as any[])?.[0]?.cnt || '0', 10);
-  const claimCountRes = await db.execute(sql`
-    SELECT COUNT(*) AS cnt FROM claims
-    WHERE oos_file_id IN (SELECT id FROM oos_files WHERE status = 'published')
-  `);
-  const totalClaims = parseInt((claimCountRes.rows as any[])?.[0]?.cnt || '0', 10);
-
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const data = {
-    dateRangeStart: weekAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    dateRangeEnd: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    entries,
-    networkStats: { totalOrgs, totalClaims },
-  };
-
-  const templatePath = path.resolve(__dirname, '../src/templates/emails/weekly-digest.ejs');
-  const html = await ejs.renderFile(templatePath, data);
-  const subject = `What's New on OTP -- ${entries.length} update${entries.length === 1 ? '' : 's'} this week`;
 
   console.log(`[broadcast] subject: ${subject}`);
 
   if (process.argv.includes('--dry-run')) {
     const fs = await import('fs');
     const previewPath = path.resolve(__dirname, 'whats-new-preview.html');
+    // Preview with a real (sample) unsubscribe link so the footer renders true.
+    const sampleUnsub = recipients[0] ? unsubscribeUrl(recipients[0].email) : null;
+    const html = await renderOllieWeekly(locals, sampleUnsub);
     fs.writeFileSync(previewPath, html);
     console.log('\n[broadcast] ===== DRY RUN -- nothing sent =====');
     console.log(`would send to ${recipients.length} recipients`);
@@ -174,11 +168,13 @@ async function main() {
 
   for (const r of recipients) {
     try {
+      // Render per recipient so the one-click unsubscribe link is theirs (signed).
+      const html = await renderOllieWeekly(locals, unsubscribeUrl(r.email));
       const ok = await sendEmail({
         to: r.email,
         subject,
         html,
-        from: 'OTP <notifications@mail.orgtp.com>',
+        from: 'Ollie at OTP <notifications@mail.orgtp.com>',
       });
       if (ok) {
         sent.push(r.email);
