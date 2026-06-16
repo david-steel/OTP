@@ -92,3 +92,32 @@ body { background: var(--orgy-bg); }
 .dash-clean .td-menu-pop .todo-delete-btn { color: #374151 !important; font-weight: 500 !important; text-align: left; padding: 5px 8px; border-radius: 6px; text-decoration: none !important; }
 .dash-clean .td-menu-pop .todo-edit-btn:hover { background: #f1f3f5; color: var(--orgy-blue) !important; }
 .dash-clean .td-menu-pop .todo-delete-btn:hover { background: #fff1f1; color: #dc2626 !important; }
+
+/* ---------------------------------------------------------------------------
+   Labs: focused meeting run-mode (meetings_broken_out). Two parts, both gated:
+   1) body.otp-focus -> hide the product chrome (sidebar + top nav) and zero the
+      rail offset, so the meeting is full-focus.
+   2) #l8-meeting.meeting-stepped -> reflow the horizontal agenda nav into a
+      fixed LEFT RAIL (it already contains the timer + start), push the meeting
+      content right, and step through one section at a time (the stepper JS).
+--------------------------------------------------------------------------- */
+body.otp-focus .otp-sb,
+body.otp-focus .v7-nav { display: none !important; }
+body.otp-focus main { margin-left: 0 !important; padding-top: 0 !important; }
+
+#l8-meeting.meeting-stepped { max-width: none !important; margin: 0 !important; padding: 24px 32px 24px 296px !important; }
+#l8-meeting.meeting-stepped #agenda-nav {
+  position: fixed; top: 16px; left: 16px; width: 256px; max-height: calc(100vh - 32px); overflow: auto;
+  flex-direction: column; align-items: stretch; gap: 3px;
+  background: #fff; border: 1px solid #e6e8ec; border-radius: 16px; padding: 14px; box-shadow: 0 1px 2px rgba(20,22,28,.04);
+}
+#l8-meeting.meeting-stepped #agenda-nav #meeting-clock { order: -2; align-self: center; margin: 2px 0 0 !important; }
+#l8-meeting.meeting-stepped #agenda-nav #timer-toggle { order: -1; width: 100%; margin: 8px 0 6px !important; padding: 8px !important; font-size: 13px; }
+#l8-meeting.meeting-stepped #agenda-nav .agenda-chip {
+  flex: none !important; text-align: left !important; background: transparent !important;
+  border-radius: 9px; padding: 9px 11px !important; font-size: 13.5px; font-weight: 600; min-width: 0;
+}
+#l8-meeting.meeting-stepped #agenda-nav .agenda-chip:hover { background: #f6f7f9 !important; border-color: transparent !important; }
+#l8-meeting.meeting-stepped #agenda-nav .agenda-chip.step-current {
+  background: #e8f0ff !important; color: #2563EB !important; box-shadow: none !important;
+}

@@ -188,7 +188,7 @@
   <script>window.OTP_REALTIME_ENABLED = <%= (typeof realtimeStreamEnabled !== 'undefined' && realtimeStreamEnabled && typeof authUserId !== 'undefined' && authUserId) ? 'true' : 'false' %>;</script>
   <script src="/public/js/otp-live.js?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>"></script>
 </head>
-<body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %><%= (((typeof authUserId !== 'undefined' && authUserId) || (typeof demoSession !== 'undefined' && demoSession)) && !(typeof isEmbed !== 'undefined' && isEmbed)) ? (' otp-has-rail' + ((typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? ' otp-rail-collapsed' : '')) : '' %>">
+<body class="bg-white text-gray-900 min-h-screen<%= (typeof isEmbed !== 'undefined' && isEmbed) ? ' is-embed' : '' %><%= (((typeof authUserId !== 'undefined' && authUserId) || (typeof demoSession !== 'undefined' && demoSession)) && !(typeof isEmbed !== 'undefined' && isEmbed)) ? (' otp-has-rail' + ((typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? ' otp-rail-collapsed' : '')) : '' %><%= (typeof meetingStepped !== 'undefined' && meetingStepped) ? ' otp-focus' : '' %>">
 <%
   // _inApp: authed user on a dashboard/l8/settings page. Used to streamline the
   // top nav (hide marketing links) and suppress the marketing footer so the app
