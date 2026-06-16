@@ -1518,6 +1518,72 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // ---------- /admin/signups -- New-signup sales work queue ----------
+  // Signups-only access: anyone in SIGNUPS_VIEWERS plus super-admins. This is
+  // deliberately NOT super-admin-gated so Dawson can work the queue without
+  // impersonation / health / subscriber powers. Built 2026-06-16.
+  const SIGNUP_STATUSES = ['new', 'contacted', 'booked', 'lost'] as const;
+  app.get<{ Querystring: { status?: string } }>('/admin/signups', async (request, reply) => {
+    if (!(request as any).isSignupsViewer) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+
+    const requested = request.query.status;
+    const all = await db.select().from(onboardingSequence).orderBy(desc(onboardingSequence.signupAt));
+    const norm = (s: any) => (s.salesStatus || 'new');
+
+    let visible = all;
+    if (requested && requested !== 'all' && (SIGNUP_STATUSES as readonly string[]).includes(requested)) {
+      visible = all.filter(s => norm(s) === requested);
+    }
+
+    const counts = {
+      total: all.length,
+      new: all.filter(s => norm(s) === 'new').length,
+      contacted: all.filter(s => norm(s) === 'contacted').length,
+      booked: all.filter(s => norm(s) === 'booked').length,
+      lost: all.filter(s => norm(s) === 'lost').length,
+    };
+
+    return reply.view('pages/admin-signups', {
+      title: 'New Signups — Sales Queue',
+      noindex: true,
+      signups: visible,
+      counts,
+      activeStatus: requested || 'all',
+    });
+  });
+
+  // Status / notes update. Plain same-origin HTML form POST (urlencoded body is
+  // parsed app-wide), Clerk session auth, signups-viewer gate. Redirects back to
+  // the queue preserving the active filter so the page just refreshes in place.
+  app.post<{ Params: { id: string }, Body: { status?: string; notes?: string; back?: string } }>(
+    '/admin/signups/:id/status',
+    async (request, reply) => {
+      if (!(request as any).isSignupsViewer) {
+        return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+      }
+      const { id } = request.params;
+      const body = request.body || {};
+      const patch: Record<string, any> = {};
+      const status = (body.status || '').trim();
+      if ((SIGNUP_STATUSES as readonly string[]).includes(status)) {
+        patch.salesStatus = status;
+        patch.salesStatusAt = new Date();
+      }
+      if (typeof body.notes === 'string') {
+        patch.salesNotes = body.notes.slice(0, 2000);
+      }
+      if (Object.keys(patch).length > 0) {
+        await db.update(onboardingSequence).set(patch).where(eq(onboardingSequence.id, id));
+      }
+      const back = typeof body.back === 'string' && body.back.startsWith('/admin/signups')
+        ? body.back
+        : '/admin/signups';
+      return reply.redirect(back);
+    },
+  );
+
   // ---------- /admin/health -- Clerk webhook + funnel health audit ----------
   // Cross-references the live Clerk user list against the OTP DB to answer:
   //   - Is the Clerk user.created webhook reliably writing

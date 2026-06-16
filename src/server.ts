@@ -227,12 +227,14 @@ await app.register(fastifyView, {
 });
 
 // Super admin detection -- makes isSuperAdmin available to all page routes
-import { isSuperAdmin } from './middleware/super-admin.js';
+import { isSuperAdmin, isSignupsViewer } from './middleware/super-admin.js';
 import { getAuth } from '@clerk/fastify';
 app.decorateRequest('isSuperAdmin', false);
+app.decorateRequest('isSignupsViewer', false);
 app.decorateRequest('authUserId', null as string | null);
 app.addHook('preHandler', async (request, reply) => {
   (request as any).isSuperAdmin = isSuperAdmin(request);
+  (request as any).isSignupsViewer = isSignupsViewer(request);
   // Server-side auth state for nav rendering. Best-effort: getAuth throws if
   // Clerk plugin didn't register, in which case we treat the user as logged out.
   let userId: string | null = null;
@@ -933,6 +935,14 @@ try {
   app.log.info('partner_signups table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensurePartnerSignupsTable failed -- /partners and /admin/partners may 500 until resolved');
+}
+
+try {
+  const { ensureSignupsSalesColumns } = await import('./db/ensure-signups-sales.js');
+  await ensureSignupsSalesColumns();
+  app.log.info('onboarding_sequence sales columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureSignupsSalesColumns failed -- /admin/signups may 500 until resolved');
 }
 
 try {

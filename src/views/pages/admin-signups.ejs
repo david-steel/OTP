@@ -1,0 +1,120 @@
+<!-- ============================================================
+     /admin/signups — New-signup sales work queue (Dawson)
+     Signups-only access (SIGNUPS_VIEWERS + super-admins). Status
+     moves new -> contacted -> booked / lost via a same-origin
+     form POST to /admin/signups/:id/status. Styles are scoped and
+     inline to avoid Tailwind JIT purge dropping hand-rolled combos.
+     Built 2026-06-16.
+     ============================================================ -->
+<%
+  function fmtAge(d) {
+    if (!d) return '';
+    const ms = Date.now() - new Date(d).getTime();
+    const min = Math.floor(ms / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return min + 'm ago';
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return hr + 'h ago';
+    const day = Math.floor(hr / 24);
+    return day + 'd ago';
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    return dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  const STATUSES = ['new', 'contacted', 'booked', 'lost'];
+  const STATUS_LABEL = { new: 'New', contacted: 'Contacted', booked: 'Booked', lost: 'Lost' };
+  const STATUS_COLOR = {
+    new:       { bg: '#fef3c7', fg: '#92400e' },
+    contacted: { bg: '#dbeafe', fg: '#1e40af' },
+    booked:    { bg: '#dcfce7', fg: '#166534' },
+    lost:      { bg: '#f3f4f6', fg: '#6b7280' },
+  };
+  const tabs = [
+    { key: 'all',       label: 'All',       n: counts.total },
+    { key: 'new',       label: 'New',       n: counts.new },
+    { key: 'contacted', label: 'Contacted', n: counts.contacted },
+    { key: 'booked',    label: 'Booked',    n: counts.booked },
+    { key: 'lost',      label: 'Lost',      n: counts.lost },
+  ];
+  const backQs = '/admin/signups' + (activeStatus && activeStatus !== 'all' ? ('?status=' + activeStatus) : '');
+%>
+
+<style>
+  .sq-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 20px 80px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2937; }
+  .sq-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+  .sq-head h1 { font-size: 24px; font-weight: 700; margin: 0; }
+  .sq-sub { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
+  .sq-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .sq-tab { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fff; color: #374151; font-size: 13px; font-weight: 600; text-decoration: none; }
+  .sq-tab.active { background: #111827; color: #fff; border-color: #111827; }
+  .sq-tab .pill { background: rgba(0,0,0,0.08); border-radius: 999px; padding: 0 7px; font-size: 12px; }
+  .sq-tab.active .pill { background: rgba(255,255,255,0.22); }
+  .sq-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; background: #fff; }
+  .sq-row1 { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .sq-email { font-size: 15px; font-weight: 600; word-break: break-all; }
+  .sq-meta { color: #6b7280; font-size: 13px; margin-top: 2px; }
+  .sq-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .sq-form { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+  .sq-form select, .sq-form input[type=text] { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+  .sq-form input[type=text] { flex: 1; min-width: 200px; }
+  .sq-btn { padding: 7px 16px; border: none; border-radius: 8px; background: #111827; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .sq-btn:hover { background: #374151; }
+  .sq-empty { text-align: center; color: #9ca3af; padding: 48px 0; font-size: 15px; }
+  .sq-notes { color: #4b5563; font-size: 13px; margin-top: 6px; font-style: italic; }
+</style>
+
+<div class="sq-wrap">
+  <div class="sq-head">
+    <h1>New Signups</h1>
+  </div>
+  <p class="sq-sub">Work each signup like an inbox: New &rarr; Contacted &rarr; Booked. Newest first.</p>
+
+  <div class="sq-tabs">
+    <% tabs.forEach(function(t) { %>
+      <a class="sq-tab <%= activeStatus === t.key ? 'active' : '' %>"
+         href="/admin/signups<%= t.key === 'all' ? '' : ('?status=' + t.key) %>">
+        <%= t.label %> <span class="pill"><%= t.n %></span>
+      </a>
+    <% }); %>
+  </div>
+
+  <% if (!signups || signups.length === 0) { %>
+    <div class="sq-empty">No signups in this view yet.</div>
+  <% } else { %>
+    <% signups.forEach(function(s) {
+         const st = s.salesStatus || 'new';
+         const c = STATUS_COLOR[st] || STATUS_COLOR.new;
+    %>
+      <div class="sq-card">
+        <div class="sq-row1">
+          <div>
+            <div class="sq-email"><%= s.email %></div>
+            <div class="sq-meta">
+              Signed up <%= fmtAge(s.signupAt) %> &middot; <%= fmtDate(s.signupAt) %>
+              <% if (s.unsubscribedAt) { %> &middot; <span style="color:#b91c1c;">unsubscribed</span><% } %>
+              <% if (s.salesStatusAt) { %> &middot; updated <%= fmtAge(s.salesStatusAt) %><% } %>
+            </div>
+          </div>
+          <span class="sq-badge" style="background: <%= c.bg %>; color: <%= c.fg %>;"><%= STATUS_LABEL[st] || st %></span>
+        </div>
+
+        <% if (s.salesNotes) { %>
+          <div class="sq-notes">&ldquo;<%= s.salesNotes %>&rdquo;</div>
+        <% } %>
+
+        <form class="sq-form" method="POST" action="/admin/signups/<%= s.id %>/status">
+          <input type="hidden" name="back" value="<%= backQs %>" />
+          <select name="status">
+            <% STATUSES.forEach(function(opt) { %>
+              <option value="<%= opt %>" <%= st === opt ? 'selected' : '' %>><%= STATUS_LABEL[opt] %></option>
+            <% }); %>
+          </select>
+          <input type="text" name="notes" placeholder="Notes (optional)" value="<%= s.salesNotes || '' %>" maxlength="2000" />
+          <button class="sq-btn" type="submit">Save</button>
+        </form>
+      </div>
+    <% }); %>
+  <% } %>
+</div>

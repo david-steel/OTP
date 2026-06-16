@@ -693,11 +693,18 @@ export const onboardingSequence = pgTable('onboarding_sequence', {
   email2SentAt: timestamp('email_2_sent_at'),
   email3SentAt: timestamp('email_3_sent_at'),
   unsubscribedAt: timestamp('unsubscribed_at'),
+  // Sales work-queue fields. Surfaced at /admin/signups so Dawson can work
+  // each new signup like an inbox. salesStatus moves new -> contacted ->
+  // booked (or lost). Added 2026-06-16.
+  salesStatus: varchar('sales_status', { length: 20 }).default('new').notNull(),
+  salesStatusAt: timestamp('sales_status_at'),
+  salesNotes: text('sales_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   clerkUserIdx: uniqueIndex('onb_clerk_user_idx').on(table.clerkUserId),
   emailIdx: index('onb_email_idx').on(table.email),
   signupIdx: index('onb_signup_idx').on(table.signupAt),
+  salesStatusIdx: index('onb_sales_status_idx').on(table.salesStatus),
 }));
 
 // ---- 90-day lifecycle email series (rungs 1-30) ----

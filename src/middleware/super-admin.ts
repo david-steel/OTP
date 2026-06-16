@@ -23,3 +23,25 @@ export function isSuperAdmin(request: FastifyRequest): boolean {
     return false;
   }
 }
+
+// Narrow, signups-only access for the sales queue at /admin/signups.
+// Distinct from super-admin: someone in SIGNUPS_VIEWERS (comma-separated Clerk
+// user IDs) can work the new-signup queue WITHOUT getting impersonation, the
+// health dashboard, subscribers, or any other admin surface. Super-admins are
+// always included. Added 2026-06-16 to give Dawson least-privilege access.
+const SIGNUPS_VIEWER_IDS = new Set<string>(
+  (process.env.SIGNUPS_VIEWERS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean),
+);
+
+export function isSignupsViewer(request: FastifyRequest): boolean {
+  try {
+    const auth = getAuth(request);
+    if (!auth.userId) return false;
+    return SIGNUPS_VIEWER_IDS.has(auth.userId) || SUPER_ADMIN_IDS.has(auth.userId);
+  } catch {
+    return false;
+  }
+}
