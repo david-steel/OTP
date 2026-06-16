@@ -16,22 +16,27 @@ describe('computeAutoEndAt', () => {
 });
 
 describe('isMeetingLocked', () => {
-  it('locks a future-dated scheduled meeting', () => {
-    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60) }, NOW)).toBe(true);
+  it('locks a future-dated scheduled RECURRING meeting (rule or parent)', () => {
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60), recurrenceRule: 'FREQ=WEEKLY' }, NOW)).toBe(true);
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60), recurrenceParentId: 'abc' }, NOW)).toBe(true);
+  });
+  it('never locks a one-off (non-recurring) future meeting', () => {
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60) }, NOW)).toBe(false);
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60), recurrenceRule: null, recurrenceParentId: null }, NOW)).toBe(false);
   });
   it('unlocks once the date has arrived/passed', () => {
-    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: past(1) }, NOW)).toBe(false);
-    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: NOW }, NOW)).toBe(false);
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: past(1), recurrenceRule: 'FREQ=WEEKLY' }, NOW)).toBe(false);
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: NOW, recurrenceRule: 'FREQ=WEEKLY' }, NOW)).toBe(false);
   });
   it('unlocks once started or completed regardless of date', () => {
-    expect(isMeetingLocked({ status: 'in_progress', scheduledAt: future(60) }, NOW)).toBe(false);
-    expect(isMeetingLocked({ status: 'completed', scheduledAt: future(60) }, NOW)).toBe(false);
+    expect(isMeetingLocked({ status: 'in_progress', scheduledAt: future(60), recurrenceRule: 'FREQ=WEEKLY' }, NOW)).toBe(false);
+    expect(isMeetingLocked({ status: 'completed', scheduledAt: future(60), recurrenceRule: 'FREQ=WEEKLY' }, NOW)).toBe(false);
   });
   it('never locks a cancelled meeting', () => {
-    expect(isMeetingLocked({ status: 'cancelled', scheduledAt: future(60) }, NOW)).toBe(false);
+    expect(isMeetingLocked({ status: 'cancelled', scheduledAt: future(60), recurrenceRule: 'FREQ=WEEKLY' }, NOW)).toBe(false);
   });
   it('accepts string timestamps', () => {
-    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60).toISOString() }, NOW)).toBe(true);
+    expect(isMeetingLocked({ status: 'scheduled', scheduledAt: future(60).toISOString(), recurrenceParentId: 'abc' }, NOW)).toBe(true);
   });
 });
 

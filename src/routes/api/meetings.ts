@@ -123,7 +123,12 @@ async function checkMeetingEdit(
   // (allowLocked) so a meeting can still be deliberately opened early; once
   // started it is no longer locked.
   if (!opts.allowLocked) {
-    const [lockRow] = await db.select({ status: meetings.status, scheduledAt: meetings.scheduledAt })
+    const [lockRow] = await db.select({
+      status: meetings.status,
+      scheduledAt: meetings.scheduledAt,
+      recurrenceRule: meetings.recurrenceRule,
+      recurrenceParentId: meetings.recurrenceParentId,
+    })
       .from(meetings)
       .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
       .limit(1);

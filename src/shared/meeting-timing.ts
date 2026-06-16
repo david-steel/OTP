@@ -17,18 +17,25 @@ export function computeAutoEndAt(startedAt: Date, minutes: number = AUTO_END_MIN
 
 /**
  * A meeting is LOCKED (a future occurrence that should not yet be opened or
- * edited) when it is still merely scheduled AND its scheduled time is in the
- * future. It unlocks the moment ANY of David's three conditions holds:
+ * edited) when it is a RECURRING occurrence, still merely scheduled, AND its
+ * scheduled time is in the future. Locking is scoped to recurring meetings on
+ * purpose: the problem is people entering data into next week's recurring
+ * occurrence instead of the current one. A one-off future-dated meeting is
+ * never locked -- you scheduled it deliberately and may want to prep it.
+ *
+ * It unlocks the moment ANY of David's three conditions holds:
  *   - it has been started   -> status is no longer 'scheduled'
  *   - its date has arrived  -> scheduledAt <= now
  *   - it is completed       -> status is no longer 'scheduled'
  * A cancelled meeting is never "locked" (it is just gone).
  */
 export function isMeetingLocked(
-  m: { status: string | null; scheduledAt: Date | string },
+  m: { status: string | null; scheduledAt: Date | string; recurrenceRule?: string | null; recurrenceParentId?: string | null },
   now: Date = new Date(),
 ): boolean {
   if (m.status !== 'scheduled') return false;
+  const isRecurring = !!(m.recurrenceRule || m.recurrenceParentId);
+  if (!isRecurring) return false;
   return new Date(m.scheduledAt).getTime() > now.getTime();
 }
 
