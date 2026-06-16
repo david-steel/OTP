@@ -47,7 +47,7 @@
     color: var(--orgy-onlight, #5a7d1f) !important;
   }
 </style>
-<div class="max-w-6xl mx-auto px-4 py-8" id="l8-meeting" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
+<div class="max-w-6xl mx-auto px-4 py-8<%= (typeof meetingStepped !== 'undefined' && meetingStepped) ? ' meeting-stepped' : '' %>" id="l8-meeting" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
 
   <!-- Header -->
   <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
@@ -2903,4 +2903,56 @@
 </script>
 <style>
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* Labs: "Run meetings step by step" (meetings_broken_out). Shows one agenda
+     section at a time with a Back/Next bar; the agenda chips act as the stepper.
+     Scoped to #l8-meeting.meeting-stepped so it never affects the normal view. */
+  .meeting-stepped .step-nav { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; border-top: 1px solid #e6e8ec; padding: 12px 2px; margin-top: 18px; z-index: 20; }
+  .meeting-stepped .step-nav button { font-size: 14px; font-weight: 600; color: #2563EB; background: #e8f0ff; border: none; border-radius: 9px; padding: 8px 18px; cursor: pointer; }
+  .meeting-stepped .step-nav button:disabled { opacity: .4; cursor: default; }
+  .meeting-stepped .step-count { font-size: 12px; color: #8a93a0; font-weight: 600; }
+  .meeting-stepped .agenda-chip.step-current { box-shadow: inset 0 0 0 2px #2563EB; font-weight: 600; }
 </style>
+<script>
+(function(){
+  // Step-mode: show one agenda section at a time. Defensive -- if the structure
+  // isn't what we expect or anything throws, reveal every section so the meeting
+  // is never left broken.
+  try {
+    var mt = document.getElementById('l8-meeting');
+    if (!mt || !mt.classList.contains('meeting-stepped')) return;
+    var ORDER = ['segue','scorecard','rocks','headlines','todos','ids','conclude'];
+    var present = [];
+    ORDER.forEach(function(id){ var s = document.getElementById(id); if (s) present.push(s); });
+    if (present.length < 2) return;
+    var chips = Array.prototype.slice.call(document.querySelectorAll('.agenda-chip'));
+    var pos = 0;
+    var nav = document.createElement('div');
+    nav.className = 'step-nav';
+    nav.innerHTML = '<button type="button" class="step-prev">← Back</button><span class="step-count"></span><button type="button" class="step-next">Next →</button>';
+    mt.appendChild(nav);
+    var prevB = nav.querySelector('.step-prev'), nextB = nav.querySelector('.step-next'), cnt = nav.querySelector('.step-count');
+    function render(){
+      for (var i = 0; i < present.length; i++) present[i].style.display = (i === pos) ? '' : 'none';
+      var curId = present[pos].id;
+      chips.forEach(function(c){ c.classList.toggle('step-current', c.getAttribute('data-section') === curId); });
+      cnt.textContent = (pos + 1) + ' of ' + present.length;
+      prevB.disabled = pos <= 0;
+      nextB.disabled = pos >= present.length - 1;
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    }
+    chips.forEach(function(c){
+      c.addEventListener('click', function(e){
+        var sec = c.getAttribute('data-section');
+        for (var i = 0; i < present.length; i++) { if (present[i].id === sec) { e.preventDefault(); pos = i; render(); return; } }
+      });
+    });
+    prevB.addEventListener('click', function(){ if (pos > 0) { pos--; render(); } });
+    nextB.addEventListener('click', function(){ if (pos < present.length - 1) { pos++; render(); } });
+    render();
+  } catch (err) {
+    try { ['segue','scorecard','rocks','headlines','todos','ids','conclude'].forEach(function(id){ var s = document.getElementById(id); if (s) s.style.display = ''; }); } catch (e) {}
+    if (window.console) console.warn('meeting step-mode disabled:', err);
+  }
+})();
+</script>

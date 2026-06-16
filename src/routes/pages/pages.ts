@@ -4450,11 +4450,20 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       ? 'pages/strategy-reset-meeting'
       : 'pages/l8-leadership';
 
+    // Labs: opt-in "Run meetings step by step" (off by default). When on, the
+    // l8-leadership view adds a `meeting-stepped` class and a stepper script
+    // shows one agenda section at a time. strategy_reset uses a different view,
+    // so it never steps.
+    const meetingStepped = meeting.meetingType !== 'strategy_reset'
+      ? await isFeatureEnabledForOrg(org.id, 'meetings_broken_out')
+      : false;
+
     return reply.view(_meetingView, {
       title: meeting.title + ' -- OTP',
       description: 'Weekly leadership meeting -- the cadence that drives your org to agentic maturity.',
       canonical: BASE_URL + '/l8/meeting/' + meeting.id,
       noindex: true,
+      meetingStepped,
       org,
       meeting,
       // Future-dated, not-yet-started occurrence: render read-only with a
