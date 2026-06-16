@@ -397,9 +397,9 @@
         <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
           <span class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/quarterly-priorities.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Quarterly Priorities
             <button type="button" class="help-q" data-help="dashboard.rocks" aria-label="About Quarterly Priorities">?</button>
-            <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px]"><%= quarter %></span><% } %>
-            <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px]">(<%= myRocks.length %>)</span><% } %>
-            <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
+            <% if (quarter) { %><span class="text-gray-400 font-normal text-[10px] whitespace-nowrap"><%= quarter %></span><% } %>
+            <% if (myRocks.length > 0) { %><span class="ml-1 text-gray-400 font-normal text-[11px] whitespace-nowrap">(<%= myRocks.length %>)</span><% } %>
+            <% if (_rocksOpen > 0) { %><span class="ml-1 inline-block whitespace-nowrap px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"><%= _rocksOpen %> off track</span><% } %>
           </span>
           <% if (isIntegrator) { %>
           <button type="button" id="rocks-build-smart" class="ml-2 shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-gray-500 hover:text-orgy-blue hover:border-orgy-blue transition text-base font-bold leading-none" title="Build a SMART quarterly priority" aria-label="Build a SMART quarterly priority">+</button>
@@ -839,7 +839,7 @@
                 <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>">
                   <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
                   <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
-                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></td>
+                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><span data-kpi-latest-val><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></span><% if (latest && latest.periodStart) { %><span class="block text-[10px] text-gray-400 font-normal" data-kpi-latest-date><%= new Date(latest.periodStart).toLocaleDateString() %></span><% } else { %><span class="block text-[10px] text-gray-400 font-normal" data-kpi-latest-date>—</span><% } %></td>
                   <% if (typeof dashClean !== 'undefined' && dashClean) {
                        var _series = (typeof kpiSeries !== 'undefined' && kpiSeries[k.id]) ? kpiSeries[k.id] : [];
                        var _meets = function(v){
@@ -1782,7 +1782,12 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
         inp.classList.add('ring-1'); inp.classList.add('ring-emerald-400');
         setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800);
         var latestCell = tr.querySelector('[data-kpi-latest]');
-        if (latestCell) latestCell.textContent = val;
+        if (latestCell) {
+          var _vEl = latestCell.querySelector('[data-kpi-latest-val]');
+          if (_vEl) { _vEl.textContent = val; } else { latestCell.textContent = val; }
+          var _dEl = latestCell.querySelector('[data-kpi-latest-date]');
+          if (_dEl) { _dEl.textContent = new Date().toLocaleDateString(); }
+        }
         if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.textContent = 'Save'; btn.disabled = false; }, 1200); }
       })
       .catch(function(err){
