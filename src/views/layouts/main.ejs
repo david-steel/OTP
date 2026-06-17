@@ -630,6 +630,41 @@
            { href:'/settings/labs',          label:'Labs',           icon:_sbI.target, allow:_sbORG_WIDE }
          ];
        }
+       // Labs: owner-controlled sidebar customization. Apply the org's saved
+       // order + hidden set to the MAIN rail (never the settings sub-rail), and
+       // build the full role-gated item list for the Customize modal.
+       var _sbCustOn = (typeof sidebarCustomizeOn !== 'undefined' && sidebarCustomizeOn) && !_sbSettings;
+       var _sbAllForModal = [];
+       var _hiddenSet = [];
+       if (_sbCustOn) {
+         var _cfg = (typeof sidebarConfig !== 'undefined' && sidebarConfig) ? sidebarConfig : {};
+         _hiddenSet = Array.isArray(_cfg.hidden) ? _cfg.hidden : [];
+         var _orderArr = Array.isArray(_cfg.order) ? _cfg.order : [];
+         var _custItems = [], _pinItems = [];
+         for (var _ci = 0; _ci < _sbItems.length; _ci++) {
+           var _cit = _sbItems[_ci];
+           if (_cit.divider) continue;
+           if (!_sbHas(_cit.allow)) continue;
+           if (_cit.coach && !_sbIsCoach) continue;
+           if (_cit.upsell) { _pinItems.push(_cit); continue; }
+           _sbAllForModal.push({ href: _cit.href, label: _cit.label });
+           if (_hiddenSet.indexOf(_cit.href) === -1) { _custItems.push(_cit); }
+           // Hidden item: the admin (owner/visionary) ALWAYS keeps access -- it
+           // shows locked. Everyone else loses the rail link (the route gates them).
+           else if (memberRole === 'owner' || memberRole === 'visionary') { _cit._locked = true; _custItems.push(_cit); }
+         }
+         if (_orderArr.length) {
+           var _sbByOrder = function (a, b) {
+             var ia = _orderArr.indexOf(a.href), ib = _orderArr.indexOf(b.href);
+             if (ia === -1 && ib === -1) return 0;
+             if (ia === -1) return 1; if (ib === -1) return -1;
+             return ia - ib;
+           };
+           _custItems.sort(_sbByOrder);
+           _sbAllForModal.sort(_sbByOrder);
+         }
+         _sbItems = _custItems.concat(_pinItems.length ? [{ divider: true }].concat(_pinItems) : []);
+       }
        // Render sequentially; a divider only prints when items rendered on both
        // sides of it (so a fully role-gated-out group can't leave a double rule).
        var _sbHtml = '';
@@ -650,9 +685,11 @@
            continue;
          }
          if (_sbPendingDivider) { _sbHtml += '<div class="otp-sb-divider"></div>'; _sbPendingDivider = false; }
-         _sbHtml += '<a href="' + _sbIt.href + '" class="otp-sb-link' + (_sbIt.upsell ? ' otp-sb-upsell' : '') + (_sbActive(_sbIt.href) ? ' active' : '') + '" title="' + _sbIt.label + '">'
+         var _sbLockCls = _sbIt._locked ? ' otp-sb-locked' : '';
+         var _sbLockBadge = _sbIt._locked ? '<svg class="otp-sb-lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' : '';
+         _sbHtml += '<a href="' + _sbIt.href + '" class="otp-sb-link' + _sbLockCls + (_sbActive(_sbIt.href) ? ' active' : '') + '" title="' + _sbIt.label + (_sbIt._locked ? ' (hidden for your org -- admin access)' : '') + '">'
            + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + _sbIt.icon + '</svg>'
-           + '<span class="otp-sb-label">' + _sbIt.label + '</span></a>';
+           + '<span class="otp-sb-label">' + _sbIt.label + '</span>' + _sbLockBadge + '</a>';
          _sbRenderedAny = true;
        }
   %>
@@ -692,6 +729,10 @@
     .otp-sb-link.otp-sb-upsell:hover { background: #fef3c7; color: #92400e; }
     .otp-sb-link.otp-sb-upsell.active { background: #fef3c7; color: #92400e; font-weight: 600; }
     .otp-sb-divider { flex: none; height: 1px; background: rgba(20,22,28,0.06); margin: 8px 6px; }
+    /* locked-for-org item: only the admin sees it, dimmed with a lock badge. */
+    .otp-sb-link.otp-sb-locked { opacity: .55; }
+    .otp-sb-link.otp-sb-locked .otp-sb-lock { margin-left: auto; color: #b45309; flex: none; }
+    body.otp-rail-collapsed .otp-sb-lock { display: none; }
     body.otp-rail-collapsed .otp-sb .otp-sb-label { display: none; }
     .otp-sb-toggle {
       flex: none; display: flex; align-items: center; gap: 10px; margin: 8px;
@@ -735,12 +776,65 @@
         <% if (_sbUpgradeHtml) { %><%- _sbUpgradeHtml %><% } %>
       </div>
     <% } %>
+    <% if (_sbCustOn && (memberRole === 'owner' || memberRole === 'visionary')) { %>
+    <button type="button" id="sb-cust-open" class="otp-sb-toggle" title="Customize sidebar" aria-label="Customize sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+      <span class="otp-sb-label">Customize</span>
+    </button>
+    <% } %>
     <button type="button" id="otp-sb-toggle" class="otp-sb-toggle" title="<%= (typeof sidebarCollapsed !== 'undefined' && sidebarCollapsed) ? 'Expand sidebar' : 'Collapse sidebar' %>" aria-label="Toggle sidebar">
       <svg class="otp-sb-chev-l" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       <svg class="otp-sb-chev-r" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       <span class="otp-sb-label">Collapse</span>
     </button>
   </aside>
+  <% if (_sbCustOn && (memberRole === 'owner' || memberRole === 'visionary')) { %>
+  <div id="sb-cust-modal" class="sb-cust" hidden>
+    <div class="sb-cust-card">
+      <div class="sb-cust-head"><h3>Customize sidebar</h3><button type="button" class="sb-cust-x" id="sb-cust-x" aria-label="Close">&times;</button></div>
+      <p class="sb-cust-sub">Toggle items off to hide them for everyone in your org, and drag to reorder.</p>
+      <ul class="sb-cust-list" id="sb-cust-list">
+        <% _sbAllForModal.forEach(function(it){ var on = _hiddenSet.indexOf(it.href) === -1; %>
+          <li class="sb-cust-row" draggable="true" data-href="<%= it.href %>">
+            <span class="sb-cust-grip" aria-hidden="true">&#10303;</span>
+            <span class="sb-cust-label"><%= it.label %></span>
+            <input type="checkbox" class="sb-cust-toggle" <%= on ? 'checked' : '' %> aria-label="Show <%= it.label %>">
+          </li>
+        <% }); %>
+      </ul>
+      <div class="sb-cust-foot">
+        <button type="button" class="sb-cust-reset" id="sb-cust-reset">Reset to defaults</button>
+        <button type="button" class="sb-cust-save" id="sb-cust-save">Done</button>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var openBtn = document.getElementById('sb-cust-open'), modal = document.getElementById('sb-cust-modal');
+    if (!openBtn || !modal || window.__sbCustInit) return; window.__sbCustInit = true;
+    var list = document.getElementById('sb-cust-list');
+    function show(){ modal.hidden = false; } function hide(){ modal.hidden = true; }
+    openBtn.addEventListener('click', show);
+    document.getElementById('sb-cust-x').addEventListener('click', hide);
+    modal.addEventListener('mousedown', function(e){ if (e.target === modal) hide(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) hide(); });
+    var dragEl = null;
+    list.addEventListener('dragstart', function(e){ var li = e.target.closest('.sb-cust-row'); dragEl = li; if (li) li.classList.add('sb-dragging'); });
+    list.addEventListener('dragend', function(){ if (dragEl) dragEl.classList.remove('sb-dragging'); dragEl = null; });
+    list.addEventListener('dragover', function(e){ e.preventDefault(); if (!dragEl) return; var after = getAfter(e.clientY); if (after == null) list.appendChild(dragEl); else list.insertBefore(dragEl, after); });
+    function getAfter(y){ var els = [].slice.call(list.querySelectorAll('.sb-cust-row:not(.sb-dragging)')); var closest = { offset: -Infinity, el: null }; els.forEach(function(c){ var box = c.getBoundingClientRect(); var off = y - box.top - box.height / 2; if (off < 0 && off > closest.offset) closest = { offset: off, el: c }; }); return closest.el; }
+    function save(reset){
+      var order = [], hidden = [];
+      if (!reset) { [].slice.call(list.querySelectorAll('.sb-cust-row')).forEach(function(li){ order.push(li.getAttribute('data-href')); if (!li.querySelector('.sb-cust-toggle').checked) hidden.push(li.getAttribute('data-href')); }); }
+      fetch('/settings/sidebar', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reset ? { reset: true } : { order: order, hidden: hidden }) })
+        .then(function(r){ if (r.ok) location.reload(); else alert('Could not save the sidebar.'); })
+        .catch(function(){ alert('Could not save the sidebar.'); });
+    }
+    document.getElementById('sb-cust-save').addEventListener('click', function(){ save(false); });
+    document.getElementById('sb-cust-reset').addEventListener('click', function(){ save(true); });
+  })();
+  </script>
+  <% } %>
   <script>
     (function () {
       var sbToggle = document.getElementById('otp-sb-toggle');

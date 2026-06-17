@@ -74,6 +74,9 @@ export const organizations = pgTable('organizations', {
   description: text('description'),
   website: text('website'),
   chart: jsonb('chart'),
+  // Owner-controlled sidebar customization (Labs: sidebar_customize). Shape:
+  // { order: string[] (hrefs in desired order), hidden: string[] (hrefs to hide) }.
+  sidebarConfig: jsonb('sidebar_config'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({

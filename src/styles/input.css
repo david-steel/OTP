@@ -421,3 +421,26 @@ body.otp-focus .help-q { display: none !important; }
 .tool-ov-close { font-size: 24px; line-height: 1; color: #8a93a0; background: none; border: none; cursor: pointer; }
 .tool-ov-close:hover { color: #14271a; }
 .tool-ov-frame { flex: 1 1 auto; width: 100%; border: 0; }
+
+/* ---------------------------------------------------------------------------
+   Customize sidebar (Labs: sidebar_customize). Owner-only modal: toggle items
+   on/off and drag to reorder; saved org-wide.
+--------------------------------------------------------------------------- */
+.sb-cust { position: fixed; inset: 0; background: rgba(20,22,28,.5); z-index: 95; display: flex; align-items: flex-start; justify-content: center; padding: 8vh 16px; }
+.sb-cust[hidden] { display: none; }
+.sb-cust-card { width: 100%; max-width: 460px; background: #fff; border-radius: 16px; box-shadow: 0 24px 60px rgba(20,22,28,.28); overflow: hidden; }
+.sb-cust-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 4px; }
+.sb-cust-head h3 { margin: 0; font-size: 16px; font-weight: 800; color: #14271a; }
+.sb-cust-x { font-size: 22px; line-height: 1; color: #8a93a0; background: none; border: none; cursor: pointer; }
+.sb-cust-sub { margin: 0; padding: 0 20px 12px; font-size: 12.5px; color: #6b7280; }
+.sb-cust-list { list-style: none; margin: 0; padding: 4px 12px; max-height: 56vh; overflow: auto; }
+.sb-cust-row { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 9px; background: #fff; }
+.sb-cust-row:hover { background: #f6f7f9; }
+.sb-cust-row.sb-dragging { opacity: .5; }
+.sb-cust-grip { cursor: grab; color: #c0c6cd; font-size: 14px; }
+.sb-cust-label { flex: 1; font-size: 14px; font-weight: 600; color: #14271a; }
+.sb-cust-toggle { width: 16px; height: 16px; flex: 0 0 auto; accent-color: var(--orgy-blue); }
+.sb-cust-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid #edeff2; }
+.sb-cust-reset { background: none; border: none; color: #6b7280; font-size: 13px; cursor: pointer; }
+.sb-cust-reset:hover { color: #14271a; }
+.sb-cust-save { background: var(--orgy-blue); color: #fff; border: none; border-radius: 9px; padding: 8px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }

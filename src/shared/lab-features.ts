@@ -97,6 +97,16 @@ export const LAB_FEATURES: LabFeature[] = [
     // Step-mode layer over the existing l8-leadership sections (#segue ... #conclude).
     // 2026-06-17: default-ON for all current + future orgs, still toggleable (opt-out).
   },
+  {
+    key: 'sidebar_customize',
+    name: 'Customize the sidebar',
+    description:
+      'Let the account owner decide which left-rail items everyone sees, and in what order. Hide what your team does not use and reorder the rest from one panel.',
+    whyNow:
+      'Turn it on to give owners a "Customize sidebar" panel: toggle items on/off and drag to reorder. The choice applies org-wide. Off by default.',
+    status: 'beta',
+    // Reads/writes organizations.sidebar_config; applied in layouts/main.ejs.
+  },
 ];
 
 export function getLabFeature(key: string): LabFeature | undefined {

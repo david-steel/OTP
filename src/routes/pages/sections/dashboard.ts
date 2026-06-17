@@ -2624,6 +2624,28 @@ Founder, OTP</p>
     return reply.send({ ok: true });
   });
 
+  // PUT /settings/sidebar -- owner-controlled sidebar customization (Labs:
+  // sidebar_customize). Saves { order, hidden } (nav hrefs) org-wide; owner/
+  // visionary only; no-ops if the lab is off. reset:true clears the config.
+  app.put<{ Body: { reset?: boolean; order?: unknown; hidden?: unknown } }>('/settings/sidebar', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) return reply.status(401).send({ error: 'unauthenticated' });
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.status(401).send({ error: 'no_org' });
+    const om = (request as any).orgMember;
+    if (!om || !(om.role === 'owner' || om.role === 'visionary')) return reply.status(403).send({ error: 'forbidden' });
+    const { isFeatureEnabledForOrg } = await import('../../../services/lab-features.js');
+    if (!(await isFeatureEnabledForOrg(org.id, 'sidebar_customize'))) return reply.status(404).send({ error: 'not_enabled' });
+    const b = (request.body || {}) as { reset?: boolean; order?: unknown; hidden?: unknown };
+    let cfg: { order: string[]; hidden: string[] } | null = null;
+    if (!b.reset) {
+      const onlyStr = (a: unknown): string[] => Array.isArray(a) ? (a.filter((x): x is string => typeof x === 'string' && x.length < 200).slice(0, 60)) : [];
+      cfg = { order: onlyStr(b.order), hidden: onlyStr(b.hidden) };
+    }
+    await db.update(organizations).set({ sidebarConfig: cfg, updatedAt: new Date() }).where(eq(organizations.id, org.id));
+    return { ok: true };
+  });
+
   // PUT /settings/profile -- merge profile fields into orgMember.preferences.
   app.put<{ Body: { profile?: unknown } }>('/settings/profile', async (request, reply) => {
     const auth = getAuth(request);

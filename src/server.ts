@@ -284,6 +284,8 @@ app.addHook('preHandler', async (request, reply) => {
       realtimeStreamEnabled,
       labNavItems: (request as any).labNavItems || [],
       demoSession: (request as any).demoSession || false,
+      sidebarCustomizeOn: (request as any).sidebarCustomizeOn || false,
+      sidebarConfig: (request as any).sidebarConfig || null,
     }, opts);
   };
 });
@@ -334,8 +336,20 @@ app.addHook('preHandler', async (request) => {
   const om = (request as any).orgMember;
   if (!om || !om.orgId) return;
   try {
-    const { getOrgLabNavItems } = await import('./services/lab-features.js');
-    (request as any).labNavItems = await getOrgLabNavItems(om.orgId);
+    const labMod = await import('./services/lab-features.js');
+    (request as any).labNavItems = await labMod.getOrgLabNavItems(om.orgId);
+    // Owner-controlled sidebar customization (Labs: sidebar_customize). Only
+    // load the org's saved config when the lab is on for this org.
+    const sbOn = await labMod.isFeatureEnabledForOrg(om.orgId, 'sidebar_customize');
+    (request as any).sidebarCustomizeOn = sbOn;
+    if (sbOn) {
+      const { db } = await import('./config/database.js');
+      const { organizations } = await import('./db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const [o] = await db.select({ sidebarConfig: organizations.sidebarConfig })
+        .from(organizations).where(eq(organizations.id, om.orgId)).limit(1);
+      (request as any).sidebarConfig = (o && o.sidebarConfig) || null;
+    }
   } catch (err) {
     (request as any).labNavItems = [];
     request.log.debug({ err }, 'labNavItems decorator failed');
@@ -991,6 +1005,14 @@ try {
   app.log.info('meetings.auto_end_at column is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureMeetingAutoEndColumn failed -- the 1-hour auto-end safety net will not fire until resolved');
+}
+
+try {
+  const { ensureOrgSidebarColumn } = await import('./db/ensure-org-sidebar.js');
+  await ensureOrgSidebarColumn();
+  app.log.info('organizations.sidebar_config column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgSidebarColumn failed -- Customize sidebar (Labs) will not persist until resolved');
 }
 
 try {
