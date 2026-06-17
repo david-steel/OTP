@@ -332,6 +332,133 @@
     </div>
   <% } %>
 
+  <% if (meeting.status === 'completed') { %>
+  <!-- Post-meeting: transcript + recording (source-agnostic) and the AI
+       follow-ups wizard. The wizard endpoint is Labs-gated server-side, so the
+       button handles a 503 (coming soon) rather than the view needing a flag. -->
+  <section id="post-meeting" class="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-4">
+    <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-2">Transcript &amp; recording</div>
+    <p class="text-xs text-gray-500 mb-3">Attach the transcript and a recording link from any tool &mdash; Plaud, Fireflies, Gemini, or your own notes.</p>
+    <div class="grid sm:grid-cols-2 gap-3 mb-3">
+      <label class="block">
+        <span class="block text-xs font-medium text-gray-600 mb-1">Recording link</span>
+        <input id="pm-recording" type="url" value="<%= meeting.recordingUrl || '' %>" placeholder="https://..." class="w-full border rounded px-2 py-1.5 text-sm">
+      </label>
+      <label class="block">
+        <span class="block text-xs font-medium text-gray-600 mb-1">Transcript file (fills the box below)</span>
+        <input id="pm-file" type="file" accept=".txt,.vtt,.srt,.md,text/plain" class="w-full text-xs text-gray-600">
+      </label>
+    </div>
+    <textarea id="pm-transcript" rows="6" placeholder="Paste the transcript here..." class="w-full border rounded p-2 text-sm font-mono"><%= meeting.transcript || '' %></textarea>
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+      <button id="pm-save" class="text-xs px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 font-medium">Save</button>
+      <span id="pm-save-msg" class="text-xs text-gray-500"></span>
+      <button id="pm-generate" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-semibold ml-auto">&#10024; Generate follow-ups</button>
+    </div>
+    <% if (meeting.aiSummary) { %>
+      <div class="mt-3 rounded-lg bg-orgy-tint border border-orgy-soft px-3 py-2">
+        <div class="text-[11px] font-bold uppercase tracking-wide text-orgy-on-light mb-1">Summary</div>
+        <div class="text-sm text-gray-700 whitespace-pre-wrap"><%= meeting.aiSummary %></div>
+      </div>
+    <% } %>
+    <div class="mt-3" data-att-host data-att-type="meeting" data-att-id="<%= meeting.id %>"></div>
+    <select id="pm-owner-tpl" class="hidden">
+      <option value="">(no owner)</option>
+      <% (availableOwners || []).forEach(function(a) { %>
+        <option value="<%= a.entityType %>:<%= a.externalId %>"><%= a.name || a.externalId %></option>
+      <% }); %>
+    </select>
+    <div id="pm-review" class="hidden mt-4 border-t border-gray-200 pt-4"></div>
+  </section>
+  <%- include('../partials/attachments-ui.ejs'); %>
+  <script>
+  (function(){
+    var root = document.getElementById('post-meeting');
+    if (!root) return;
+    var mId = (document.querySelector('#l8-meeting')||{dataset:{}}).dataset.meetingId;
+    var teamIdVal = (document.querySelector('[data-team-id]')||{dataset:{}}).dataset.teamId || null;
+    function api(method, path, body){
+      return fetch('/api/v1'+path, { method:method, credentials:'include', headers: body?{'Content-Type':'application/json'}:{}, body: body?JSON.stringify(body):undefined })
+        .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){ if(!r.ok) throw (j.error||{message:'HTTP '+r.status}); return j; }); });
+    }
+    function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+    var rec=document.getElementById('pm-recording'), txt=document.getElementById('pm-transcript'), file=document.getElementById('pm-file');
+    var saveBtn=document.getElementById('pm-save'), saveMsg=document.getElementById('pm-save-msg'), genBtn=document.getElementById('pm-generate');
+    var review=document.getElementById('pm-review'), ownerTpl=document.getElementById('pm-owner-tpl');
+
+    if (file) file.addEventListener('change', function(){
+      var f = file.files && file.files[0]; if(!f) return;
+      var rd = new FileReader(); rd.onload=function(){ txt.value = String(rd.result||''); }; rd.readAsText(f);
+    });
+    saveBtn.addEventListener('click', function(){
+      saveBtn.disabled=true; saveMsg.textContent='Saving...';
+      api('PUT','/meetings/'+mId, { transcript: txt.value, recordingUrl: rec.value })
+        .then(function(){ saveMsg.textContent='Saved'; setTimeout(function(){saveMsg.textContent='';},1500); })
+        .catch(function(e){ saveMsg.textContent=(e&&e.message)||'Save failed'; })
+        .then(function(){ saveBtn.disabled=false; });
+    });
+    genBtn.addEventListener('click', function(){
+      if (!txt.value.trim()){ alert('Add a transcript first.'); return; }
+      var orig=genBtn.textContent; genBtn.disabled=true; genBtn.textContent='Generating...';
+      api('PUT','/meetings/'+mId, { transcript: txt.value, recordingUrl: rec.value })
+        .then(function(){ return api('POST','/meetings/'+mId+'/ai/followups'); })
+        .then(function(res){ renderReview(res.followups||{}); })
+        .catch(function(e){
+          if (e && e.code === 'COMING_SOON') alert('AI meeting follow-ups is in early access. Turn it on under Settings, Labs.');
+          else alert('Could not generate follow-ups: ' + ((e&&e.message)||'error'));
+        })
+        .then(function(){ genBtn.disabled=false; genBtn.textContent=orig; });
+    });
+    function ownerSelect(suggested){
+      var sel=ownerTpl.cloneNode(true); sel.removeAttribute('id'); sel.className='border rounded px-1.5 py-1 text-xs';
+      if (suggested){ for (var i=0;i<sel.options.length;i++){ if (sel.options[i].textContent.toLowerCase()===String(suggested).toLowerCase()){ sel.selectedIndex=i; break; } } }
+      return sel;
+    }
+    function renderReview(fu){
+      var todos=fu.todos||[], issues=fu.issues||[], heads=fu.headlines||[], summary=fu.summary||'';
+      var h='<div class="text-sm font-bold text-gray-800 mb-2">Review &amp; create</div>';
+      if (summary) h+='<label class="flex items-start gap-2 mb-3 text-sm"><input type="checkbox" class="pm-sum mt-0.5" checked> <span><strong>Summary:</strong> <span class="pm-sum-text">'+esc(summary)+'</span></span></label>';
+      if (todos.length){ h+='<div class="text-[11px] font-bold uppercase text-gray-500 mt-2 mb-1">To-dos</div>'; todos.forEach(function(t){ h+='<div class="pm-todo flex items-center gap-2 mb-1.5"><input type="checkbox" class="pm-chk" checked><input class="pm-title flex-1 border rounded px-1.5 py-1 text-xs" value="'+esc(t.title)+'"><span class="pm-owner" data-suggest="'+esc(t.owner||'')+'"></span></div>'; }); }
+      if (issues.length){ h+='<div class="text-[11px] font-bold uppercase text-gray-500 mt-3 mb-1">Issues</div>'; issues.forEach(function(t){ h+='<div class="pm-issue flex items-center gap-2 mb-1.5"><input type="checkbox" class="pm-chk" checked><input class="pm-title flex-1 border rounded px-1.5 py-1 text-xs" value="'+esc(t.title)+'" data-desc="'+esc(t.description||'')+'"></div>'; }); }
+      if (heads.length){ h+='<div class="text-[11px] font-bold uppercase text-gray-500 mt-3 mb-1">Headlines</div>'; heads.forEach(function(t){ h+='<div class="pm-head flex items-center gap-2 mb-1.5"><input type="checkbox" class="pm-chk" checked><input class="pm-title flex-1 border rounded px-1.5 py-1 text-xs" value="'+esc(t.body)+'" data-kind="'+esc(t.kind||'other')+'"></div>'; }); }
+      if (!todos.length && !issues.length && !heads.length && !summary){ h+='<div class="text-sm text-gray-500">Nothing actionable found in the transcript.</div>'; }
+      else { h+='<div class="mt-3 flex items-center gap-2"><button id="pm-create" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded font-semibold hover:bg-orgy-blue-deep">Create selected</button><button id="pm-discard" class="text-xs px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200">Discard</button><span id="pm-create-msg" class="text-xs text-gray-500"></span></div>'; }
+      review.innerHTML=h; review.classList.remove('hidden');
+      review.querySelectorAll('.pm-owner').forEach(function(span){ span.appendChild(ownerSelect(span.getAttribute('data-suggest'))); });
+      var c=document.getElementById('pm-create'), d=document.getElementById('pm-discard');
+      if (d) d.addEventListener('click', function(){ review.classList.add('hidden'); review.innerHTML=''; });
+      if (c) c.addEventListener('click', function(){ createSelected(c); });
+    }
+    function createSelected(btn){
+      btn.disabled=true; var msg=document.getElementById('pm-create-msg'); if(msg) msg.textContent='Creating...';
+      var tasks=[];
+      var sum=review.querySelector('.pm-sum');
+      if (sum && sum.checked){ var st=review.querySelector('.pm-sum-text'); if (st) tasks.push(api('PUT','/meetings/'+mId,{ aiSummary: st.textContent })); }
+      review.querySelectorAll('.pm-todo').forEach(function(row){
+        if (!row.querySelector('.pm-chk').checked) return;
+        var title=row.querySelector('.pm-title').value.trim(); if(!title) return;
+        var ownerVal=(row.querySelector('select')||{}).value||'';
+        var body={ kind:'l10', title:title, meetingId:mId }; if (teamIdVal) body.teamId=teamIdVal;
+        if (ownerVal){ var p=ownerVal.split(':'); body.ownerEntityType=p[0]; body.ownerExternalId=p.slice(1).join(':'); }
+        tasks.push(api('POST','/todos', body).catch(function(){}));
+      });
+      review.querySelectorAll('.pm-issue').forEach(function(row){
+        if (!row.querySelector('.pm-chk').checked) return;
+        var t=row.querySelector('.pm-title'); var title=t.value.trim(); if(!title) return;
+        var body={ title:title, description: t.getAttribute('data-desc')||title }; if (teamIdVal) body.teamId=teamIdVal;
+        tasks.push(api('POST','/tickets', body).catch(function(){}));
+      });
+      review.querySelectorAll('.pm-head').forEach(function(row){
+        if (!row.querySelector('.pm-chk').checked) return;
+        var t=row.querySelector('.pm-title'); var b=t.value.trim(); if(!b) return;
+        tasks.push(api('POST','/meetings/'+mId+'/headlines', { body:b, kind: t.getAttribute('data-kind')||'other' }).catch(function(){}));
+      });
+      Promise.all(tasks).then(function(){ window.location.reload(); }).catch(function(){ window.location.reload(); });
+    }
+  })();
+  </script>
+  <% } %>
+
 <%
   // Section metadata for the agenda-driven rail (custom-format meetings). id =
   // the DOM anchor the section partial renders (issues -> #ids); label = chip
