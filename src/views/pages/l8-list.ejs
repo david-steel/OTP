@@ -30,6 +30,10 @@
     <% } %>
   </div>
 
+  <div class="flex items-center justify-end mb-6">
+    <button type="button" id="open-newmtg" class="px-4 py-2 bg-otp-500 text-white rounded-lg text-sm font-semibold hover:bg-otp-400">+ New meeting</button>
+  </div>
+
   <!-- Team filter -->
   <% if (teamsList.length > 1) { %>
     <form method="GET" action="/l8" class="mb-4 flex items-center gap-2 text-sm">
@@ -44,13 +48,16 @@
     </form>
   <% } %>
 
-  <!-- Quick create -->
-  <form action="/l8/create<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" method="POST" class="border rounded-lg p-4 mb-8 bg-gray-50">
-    <div class="flex items-center gap-2 mb-3">
-      <h2 class="font-semibold text-sm uppercase tracking-wide text-gray-700">New Meeting</h2>
-      <button type="button" class="help-q" data-help="l8.cadence" aria-label="About the meeting cadence" title="What are these meeting types?">?</button>
-    </div>
-    <div class="grid grid-cols-3 gap-3">
+  <!-- New meeting (modal) -->
+  <div id="newmtg-modal" class="mtg-modal" hidden>
+    <div class="mtg-modal-card">
+      <div class="mtg-modal-head">
+        <h3 class="mtg-modal-title">New meeting <button type="button" class="help-q" data-help="l8.cadence" aria-label="About the meeting cadence">?</button></h3>
+        <button type="button" class="mtg-modal-x" id="close-newmtg" aria-label="Close">&times;</button>
+      </div>
+      <div class="mtg-modal-body">
+        <form action="/l8/create<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" method="POST">
+          <div class="grid grid-cols-3 gap-3">
       <input name="title" type="text" placeholder="Title (optional) — defaults to type + team"
              class="col-span-2 border rounded p-2 text-sm">
       <input name="scheduledAt" type="datetime-local" required
@@ -98,7 +105,10 @@
         Create + Open
       </button>
     </div>
-  </form>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- Meeting list -->
   <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-700">Recent Meetings</h2>
@@ -186,3 +196,20 @@
 })();
 </script>
 
+
+<script>
+// New-meeting modal: present the create form (which already includes Labs custom
+// formats) as a centered modal instead of an inline block.
+(function () {
+  var openBtn = document.getElementById('open-newmtg');
+  var modal = document.getElementById('newmtg-modal');
+  var closeBtn = document.getElementById('close-newmtg');
+  if (!openBtn || !modal) return;
+  function show() { modal.hidden = false; var t = modal.querySelector('input[name="title"]'); if (t) setTimeout(function () { t.focus(); }, 10); }
+  function hide() { modal.hidden = true; }
+  openBtn.addEventListener('click', show);
+  if (closeBtn) closeBtn.addEventListener('click', hide);
+  modal.addEventListener('mousedown', function (e) { if (e.target === modal) hide(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) hide(); });
+})();
+</script>
