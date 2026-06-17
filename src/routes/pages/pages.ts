@@ -31,7 +31,7 @@ import { sendEmail } from '../../config/email.js';
 import { createHash } from 'crypto';
 import { aeoClusters } from '../../data/aeo-clusters.js';
 import { meetingFormats } from '../../db/schema.js';
-import { normalizeStructure, MEETING_SECTION_TYPES } from '../../shared/meeting-sections.js';
+import { normalizeStructure } from '../../shared/meeting-sections.js';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { GUIDE_SECTIONS } from '../../data/guide-content.js';
 import { renderInShell } from './_shared.js';
@@ -3729,7 +3729,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         createdBy: uid || 'unknown',
       }).returning();
       const devOrgIdParam2 = (request.query as any)?.orgId || (request.query as any)?.org || '';
-      return reply.redirect('/l8/run/' + fm.id + (devOrgIdParam2 ? ('?orgId=' + devOrgIdParam2) : ''));
+      return reply.redirect('/l8/meeting/' + fm.id + (devOrgIdParam2 ? ('?orgId=' + devOrgIdParam2) : ''));
     }
 
     // Resolve team: explicit teamId from form, else this org's default
@@ -3797,26 +3797,16 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       createdBy: uid || 'unknown',
     }).returning();
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
-    return reply.redirect('/l8/run/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
+    return reply.redirect('/l8/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''));
   });
 
-  // GET /l8/run/:id -- the structure-driven runner for a custom-format meeting.
+  // GET /l8/run/:id -- RETIRED. Custom-format meetings now run through the
+  // unified, agenda-driven l8-leadership shell (meeting-runner convergence).
+  // meeting-run.ejs is no longer rendered; redirect any old /l8/run link.
   app.get<{ Params: { id: string } }>('/l8/run/:id', async (request, reply) => {
-    const org = await l8ResolveOrg(request, reply);
-    if (!org) return;
     if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) return reply.status(400).send('Invalid meeting id');
-    const [meeting] = await db.select().from(meetings)
-      .where(and(eq(meetings.id, request.params.id), eq(meetings.organizationId, org.id)))
-      .limit(1);
-    if (!meeting) return reply.status(404).send('Meeting not found');
-    const agenda = normalizeStructure(meeting.agenda);
-    if (!agenda.length) return reply.redirect('/l8/meeting/' + meeting.id);
-    return reply.view('pages/meeting-run', {
-      title: meeting.title + ' -- OTP', noindex: true,
-      org, meeting, agenda,
-      runState: (meeting.runState && typeof meeting.runState === 'object') ? meeting.runState : {},
-      sectionTypes: MEETING_SECTION_TYPES,
-    });
+    const qsp = (request.query as any)?.orgId || (request.query as any)?.org || '';
+    return reply.redirect('/l8/meeting/' + request.params.id + (qsp ? ('?orgId=' + qsp) : ''));
   });
 
   // POST /l8/run/:id/state -- persist runner state (active index + per-section notes).
@@ -3838,16 +3828,9 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       return reply.status(400).send('Invalid meeting id');
     }
 
-    // Custom-format meetings run in the structure runner, not the leadership
-    // view. Cheap early check so a scheduled custom meeting (opened from the
-    // list) lands on /l8/run/:id.
-    try {
-      const [_mt] = await db.select({ mt: meetings.meetingType, ag: meetings.agenda }).from(meetings).where(eq(meetings.id, id)).limit(1);
-      if (_mt && (_mt.mt === 'custom' || (Array.isArray(_mt.ag) && _mt.ag.length > 0))) {
-        const qsp = (request.query as any)?.orgId || (request.query as any)?.org || '';
-        return reply.redirect('/l8/run/' + id + (qsp ? ('?orgId=' + qsp) : ''));
-      }
-    } catch { /* fall through to the normal meeting render */ }
+    // Custom-format meetings now render through this same l8-leadership shell
+    // (agenda-driven via meeting.agenda + the shared section partials), so there
+    // is no longer a redirect to a separate structure runner.
 
     // Public preview branch for UNAUTHENTICATED requests (humans clicking a
     // shared meeting link AND link-unfurl bots: Slackbot, Twitterbot,

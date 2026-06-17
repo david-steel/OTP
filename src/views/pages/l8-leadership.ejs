@@ -332,7 +332,40 @@
     </div>
   <% } %>
 
-<% if (typeof meetingStepped !== 'undefined' && meetingStepped) { %>
+<%
+  // Section metadata for the agenda-driven rail (custom-format meetings). id =
+  // the DOM anchor the section partial renders (issues -> #ids); label = chip
+  // text. 'notes' (free-form discussion) is intentionally absent: it needs
+  // per-section persistence the unified runner does not yet provide, so it is
+  // skipped in BOTH the rail and the section loop until that follow-up lands.
+  var _secMeta = {
+    segue:     { id: 'segue',     label: 'Check-in' },
+    scorecard: { id: 'scorecard', label: 'Scorecard' },
+    rocks:     { id: 'rocks',     label: 'Quarterly Priorities' },
+    headlines: { id: 'headlines', label: 'Headlines' },
+    todos:     { id: 'todos',     label: 'To-Dos' },
+    issues:    { id: 'ids',       label: 'Issues (IDS)' },
+    conclude:  { id: 'conclude',  label: 'Conclude' },
+  };
+  var _railAgenda = (Array.isArray(meeting.agenda) && meeting.agenda.length && meeting.meetingType === 'custom')
+    ? meeting.agenda : null;
+%>
+<% if (_railAgenda) { %>
+  <!-- Agenda-driven rail (custom-format meetings): chips come from the saved
+       agenda, anchored to each section partial's DOM id via _secMeta. Reuses the
+       same control ids (meeting-clock, timer-*) so the core timer/focus JS drives
+       it unchanged. -->
+  <nav id="agenda-nav" class="flex items-center gap-1 mb-6 text-xs whitespace-nowrap overflow-x-auto" data-active="">
+    <% _railAgenda.forEach(function(_rs, _ri){ var _rm = _secMeta[_rs.type]; if (!_rm) return; %>
+      <a href="#<%= _rm.id %>" data-section="<%= _rm.id %>" data-budget="<%= Number(_rs.minutes) || 0 %>" class="agenda-chip flex-1 px-2 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-center min-w-0"><%= _ri + 1 %>. <%= _rm.label %> <span class="text-gray-500"><%= Number(_rs.minutes) || 0 %>m</span></a>
+    <% }); %>
+    <span id="meeting-clock" class="ml-3 px-2 py-1 rounded bg-gray-900 text-white font-mono text-xs whitespace-nowrap">--:--</span>
+    <button id="timer-toggle" class="ml-1 px-2 py-1 bg-orgy-blue text-white rounded text-xs hover:bg-orgy-blue-deep">Start</button>
+    <button id="timer-prev"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Previous section">&larr; Prev</button>
+    <button id="timer-skip"   class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Next section">Next &rarr;</button>
+    <button id="focus-toggle" class="ml-1 px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300" title="Focus mode">Focus</button>
+  </nav>
+<% } else if (typeof meetingStepped !== 'undefined' && meetingStepped) { %>
   <!-- Agenda rail (Labs: meetings_broken_out). Same .agenda-chip ids + data so the
        core timer/focus JS drives it unchanged; only the chrome is the focused rail. -->
   <nav id="agenda-nav" class="otp-rail" data-active="">
