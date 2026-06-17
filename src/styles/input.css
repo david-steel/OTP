@@ -222,12 +222,31 @@ body.otp-focus .help-q { display: none !important; }
    into quiet ghost pills (color only on intent), and clean the scorecard table.
    The markup + handlers are unchanged; this is presentation only.
 --------------------------------------------------------------------------- */
+/* rows live on ONE white card per list (not boxed per row, not gray-on-gray) */
+.meeting-stepped #ids .space-y-2,
+.meeting-stepped #todos ul.space-y-1,
+.meeting-stepped #headlines .space-y-2 {
+  background: #fff !important; border: 1px solid #edeff2; border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(20,22,28,.03); padding: 2px 18px !important;
+}
+.meeting-stepped #scorecard table {
+  border-collapse: separate !important; border-spacing: 0; background: #fff;
+  border: 1px solid #edeff2 !important; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(20,22,28,.03);
+}
+/* clean info / empty states onto the same white card */
+.meeting-stepped #todos .bg-gray-50,
+.meeting-stepped #ids .bg-yellow-50,
+.meeting-stepped #scorecard .bg-yellow-50 {
+  background: #fff !important; border: 1px solid #edeff2 !important; border-radius: 14px !important;
+  color: #6b7280 !important; box-shadow: 0 1px 2px rgba(20,22,28,.03);
+}
 /* flatten boxed rows into divider rows (To-Dos / Headlines / Issues) */
 .meeting-stepped #todos li[data-todo-id],
 .meeting-stepped #headlines [data-headline-id],
 .meeting-stepped #ids [data-ticket-id] {
   border: 0 !important; border-bottom: 1px solid #edeff2 !important; border-radius: 0 !important;
-  background: transparent !important; box-shadow: none !important; padding: 13px 4px !important; margin: 0 !important;
+  background: transparent !important; box-shadow: none !important; padding: 14px 0 !important; margin: 0 !important;
 }
 .meeting-stepped #todos ul.space-y-1 > li + li,
 .meeting-stepped #headlines .space-y-2 > div + div,
@@ -270,3 +289,26 @@ body.otp-focus .help-q { display: none !important; }
 .meeting-stepped #scorecard tbody td { border: 0 !important; border-bottom: 1px solid #f1f3f5 !important; padding: 12px !important; }
 .meeting-stepped #scorecard tbody tr:last-child td { border-bottom: 0 !important; }
 .meeting-stepped #scorecard h3 { color: #8a93a0; }
+
+/* ---------------------------------------------------------------------------
+   Labs stepped: slim focus top bar. Collapse the meeting header into a thin
+   sticky bar -- just the title + the start/extend action -- and hide the
+   pre-meeting chrome (eyebrow, scheduled/edit affordances, add-to-calendar,
+   delete). The rail's Finish button is the end action, so End is hidden here
+   to avoid a duplicate. Scoped to focus mode; the normal header is untouched.
+--------------------------------------------------------------------------- */
+.meeting-stepped .mtg-header { position: sticky; top: 0; z-index: 30; background: var(--orgy-bg); margin: -30px 0 22px 0 !important; padding: 12px 0 13px !important; border-bottom: 1px solid #e6e8ec !important; }
+.meeting-stepped .mtg-header #meeting-title { font-size: 18px !important; line-height: 1.2 !important; letter-spacing: -.01em; }
+.meeting-stepped .mtg-eyebrow,
+.meeting-stepped .mtg-sched,
+.meeting-stepped #title-edit-btn,
+.meeting-stepped #title-editor,
+.meeting-stepped #sched-editor,
+.meeting-stepped #cal-toggle,
+.meeting-stepped #delete-meeting,
+.meeting-stepped .mtg-header .js-end-meeting { display: none !important; }
+.meeting-stepped .mtg-header .js-start-meeting,
+.meeting-stepped .mtg-header .js-extend-meeting { padding: 7px 14px !important; font-size: 13px !important; }
+@media (max-width: 760px) {
+  .meeting-stepped .mtg-header { position: static; margin: 0 0 16px 0 !important; padding: 12px 0 !important; }
+}
