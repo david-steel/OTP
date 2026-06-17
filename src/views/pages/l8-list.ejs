@@ -110,27 +110,29 @@
     <div class="space-y-2">
       <% meetings.forEach(function(m) { %>
         <% var teamName = m.teamId && teamLookup[m.teamId] ? teamLookup[m.teamId].name : ''; %>
+        <% var _joinHref = '/l8/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''); %>
         <% if (m.locked) { %>
-          <%# Future-dated occurrence: not clickable yet, so people don't enter
-              data into next week's recurring meeting instead of the current one.
-              It opens automatically once its date arrives. %>
-          <div class="block border border-dashed rounded p-4 bg-gray-50 opacity-70 cursor-not-allowed" title="Opens on its own when its scheduled time arrives">
-            <div class="flex items-center justify-between">
+          <%# Future-dated occurrence. It opens on its own at its time, but a live
+              countdown shows when, and a Join button appears in the last 10 min. %>
+          <div class="mtg-card block border rounded p-4 bg-gray-50" data-starts-at="<%= new Date(m.scheduledAt).toISOString() %>">
+            <div class="flex items-center justify-between gap-3">
               <div>
-                <div class="font-medium text-gray-500">🔒 <%= m.title %></div>
+                <div class="font-medium text-gray-700"><%= m.title %></div>
                 <div class="text-xs text-gray-500 mt-1">
                   <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
                   <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
                 </div>
               </div>
-              <div class="text-xs">
-                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">Upcoming</span>
+              <div class="flex items-center gap-2 text-xs shrink-0">
+                <span class="mtg-countdown text-gray-500 font-medium"></span>
+                <a class="mtg-join hidden px-3 py-1.5 rounded bg-otp-500 text-white font-semibold hover:bg-otp-400" href="<%= _joinHref %>">Join &rarr;</a>
+                <span class="mtg-upcoming px-2 py-0.5 rounded bg-amber-100 text-amber-800">Upcoming</span>
               </div>
             </div>
           </div>
         <% } else { %>
-          <a href="/l8/meeting/<%= m.id %><%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="block border rounded p-4 hover:bg-gray-50">
-            <div class="flex items-center justify-between">
+          <a href="<%= _joinHref %>" class="mtg-card block border rounded p-4 hover:bg-gray-50"<% if (m.status === 'scheduled') { %> data-starts-at="<%= new Date(m.scheduledAt).toISOString() %>"<% } %>>
+            <div class="flex items-center justify-between gap-3">
               <div>
                 <div class="font-medium"><%= m.title %></div>
                 <div class="text-xs text-gray-500 mt-1">
@@ -138,13 +140,14 @@
                   <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
                 </div>
               </div>
-              <div class="text-xs">
+              <div class="flex items-center gap-2 text-xs shrink-0">
+                <% if (m.status === 'scheduled') { %><span class="mtg-countdown text-gray-500 font-medium"></span><% } %>
                 <span class="px-2 py-0.5 rounded
                   <%= m.status === 'scheduled' ? 'bg-gray-100 text-gray-700' :
                      m.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                      m.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
                      'bg-red-100 text-red-800' %>">
-                  <%= m.status %>
+                  <%= m.status === 'in_progress' ? 'live' : m.status %>
                 </span>
               </div>
             </div>
@@ -154,4 +157,32 @@
     </div>
   <% } %>
 </div>
+
+<script>
+// Live "Starts in …" countdown on upcoming/scheduled meetings; reveal Join in the
+// last 10 minutes so people can jump in right before it begins (success.co-style).
+(function () {
+  function fmt(ms) {
+    var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    if (h > 0) return 'Starts in ' + h + 'h ' + m + 'm';
+    if (m > 0) return 'Starts in ' + m + ':' + String(r).padStart(2, '0');
+    return 'Starts in ' + r + 's';
+  }
+  function tick() {
+    var now = Date.now();
+    document.querySelectorAll('.mtg-card[data-starts-at]').forEach(function (card) {
+      var t = Date.parse(card.getAttribute('data-starts-at'));
+      if (isNaN(t)) return;
+      var rem = t - now;
+      var cd = card.querySelector('.mtg-countdown');
+      var join = card.querySelector('.mtg-join');
+      var up = card.querySelector('.mtg-upcoming');
+      if (cd) cd.textContent = rem > 0 ? fmt(rem) : 'Starting now';
+      if (join && rem <= 10 * 60 * 1000) { join.classList.remove('hidden'); if (up) up.classList.add('hidden'); }
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
 
