@@ -1893,6 +1893,26 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.redirect('/dashboard');
   });
 
+  // GET /demo  -- permanent, always-on entry to the Acme demo org. No key in the
+  // URL (the demo org is seeded sandbox data, meant to be shown to anyone), so the
+  // link never goes stale: https://orgtp.com/demo . The session cookie is still
+  // HMAC-signed server-side with DEMO_LOGIN_SECRET; this only drops the URL key.
+  app.get('/demo', async (_request, reply) => {
+    const { demoLoginEnabled, encodeDemoCookie, DEMO_COOKIE_NAME } =
+      await import('../../middleware/demo-access.js');
+    if (!demoLoginEnabled()) {
+      return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+    }
+    reply.setCookie(DEMO_COOKIE_NAME, encodeDemoCookie(), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 12 * 60 * 60,
+      path: '/',
+    });
+    return reply.redirect('/dashboard');
+  });
+
   // GET /demo-logout  -- clear the demo session cookie and go home.
   app.get('/demo-logout', async (_request, reply) => {
     const { DEMO_COOKIE_NAME } = await import('../../middleware/demo-access.js');
