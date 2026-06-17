@@ -103,6 +103,11 @@ can't be auto-rendered offline.)
 
 ### How to verify each increment
 1. `node -e "ejs.compile(...)"` on every touched template (catches parse errors).
+   NOTE: compile does NOT resolve include() paths -- a compile-clean partial can
+   still 500 at render on a bad include. When extracting a partial to a new
+   directory depth, rewrite its nested include() paths (e.g. '../partials/X' ->
+   '../X') and verify each include target resolves to a real file from the new
+   path. (Cost a live 500 on 2026-06-17: ui-pill / rich-description-editor.)
 2. `npx tsc --noEmit` (catches route/type breakage).
 3. Behind the flag on prod, David runs a real custom meeting and walks every
    section against the list above. Built-in meeting is only re-pointed at the
