@@ -96,6 +96,7 @@
       <details class="hdr-overflow">
         <summary class="hdr-overflow-btn" aria-label="More meeting actions" title="More actions">&#8943;</summary>
         <div class="hdr-overflow-menu">
+          <a href="/l8" class="hdr-mi" title="Leave this meeting and go back to your meetings">&larr; Exit to meetings</a>
           <% if (meeting.status === 'scheduled') { %>
             <button class="js-end-meeting hdr-mi" title="Mark this meeting complete (you don't have to Start it first)">✓ End meeting</button>
           <% } else if (meeting.status === 'in_progress') { %>
@@ -1923,6 +1924,9 @@
         endBtn.textContent = orig;
         return;
       }
+      // In the focused run-mode the global nav is hidden, so finishing must take
+      // you OUT of the meeting. Elsewhere keep the in-place reload (frozen record).
+      if (document.getElementById('agenda-nav')?.classList.contains('otp-rail')) { window.location.href = '/l8'; return; }
       reloadKeep();
     });
   });
