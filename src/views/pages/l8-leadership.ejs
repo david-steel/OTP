@@ -338,23 +338,46 @@
     <div class="rail-timer">
       <div class="rail-ring">
         <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-bg" cx="60" cy="60" r="54" fill="none" stroke-width="8"/><circle id="ring-arc" cx="60" cy="60" r="54" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="339" transform="rotate(-90 60 60)"/></svg>
-        <div class="rail-ring-t"><span id="meeting-clock">--:--</span><small id="ring-budget"></small></div>
+        <div class="rail-ring-t">
+          <span id="meeting-clock">--:--</span>
+          <small id="ring-budget"></small>
+          <button id="timer-toggle" class="rail-toggle" title="Start / pause ( space )">Start</button>
+        </div>
       </div>
-      <button id="timer-toggle" class="rail-start">Start</button>
     </div>
     <div class="rail-steps">
-      <a href="#segue"     data-section="segue"     data-budget="5"  class="agenda-chip"><span class="st-n">1</span><span class="st-nm">Check-in</span><span class="st-tm">5m</span></a>
-      <a href="#scorecard" data-section="scorecard" data-budget="5"  class="agenda-chip"><span class="st-n">2</span><span class="st-nm">Scorecard</span><span class="st-tm">5m</span></a>
-      <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip"><span class="st-n">3</span><span class="st-nm">Quarterly Priorities</span><span class="st-tm">5m</span></a>
-      <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip"><span class="st-n">4</span><span class="st-nm">Headlines</span><span class="st-tm">5m</span></a>
-      <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip"><span class="st-n">5</span><span class="st-nm">To-Dos</span><span class="st-tm">5m</span></a>
-      <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip"><span class="st-n">6</span><span class="st-nm">Issues (IDS)</span><span class="st-tm">60m</span></a>
-      <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip"><span class="st-n">7</span><span class="st-nm">Conclude</span><span class="st-tm">5m</span></a>
+      <a href="#segue"     data-section="segue"     data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Check-in</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#scorecard" data-section="scorecard" data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Scorecard</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Quarterly Priorities</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13v16H6a2 2 0 0 1-2-2z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><line x1="7" y1="9" x2="13" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Headlines</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">To-Dos</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Issues (IDS)</span></span><span class="st-tm">60m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Conclude</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
     </div>
-    <div class="rail-tools">
-      <button id="timer-prev" type="button" title="Previous section ( [ )">← Back</button>
-      <button id="timer-skip" type="button" title="Next section ( ] )">Next →</button>
+    <div class="rail-actions">
+      <details class="rail-pop">
+        <summary class="rail-act"><span class="ra-ico">+</span> Add</summary>
+        <div class="rail-pop-menu">
+          <button type="button" data-add="ids">New issue</button>
+          <button type="button" data-add="todos">New to-do</button>
+          <button type="button" data-add="headlines">New headline</button>
+        </div>
+      </details>
+      <details class="rail-pop">
+        <summary class="rail-act"><span class="ra-ico">▤</span> Tools</summary>
+        <div class="rail-pop-menu">
+          <a href="/dashboard" target="_blank" rel="noopener">Dashboard</a>
+          <a href="/dashboard/team" target="_blank" rel="noopener">Accountability chart</a>
+          <a href="/dashboard/kpis" target="_blank" rel="noopener">Scorecard</a>
+          <a href="/l8" target="_blank" rel="noopener">All meetings</a>
+        </div>
+      </details>
+      <button type="button" class="rail-act" id="rail-tangent"><span class="ra-ico">&#9888;</span> Tangent</button>
+      <button type="button" class="rail-act" id="rail-notes"><span class="ra-ico">&#9998;</span> Notes</button>
     </div>
+    <button type="button" class="rail-finish" id="rail-finish">Finish meeting <span aria-hidden="true">&rarr;]</span></button>
+    <button id="timer-prev"  type="button" hidden aria-hidden="true">Back</button>
+    <button id="timer-skip"  type="button" hidden aria-hidden="true">Next</button>
     <button id="focus-toggle" type="button" hidden aria-hidden="true">Focus</button>
   </nav>
 <% } else { %>
@@ -1562,8 +1585,13 @@
   const clock = document.getElementById('meeting-clock');
   const toggleBtn = document.getElementById('timer-toggle');
   const skipBtn = document.getElementById('timer-skip');
-  let timerState = { running: false, sectionIdx: 0, elapsed: 0, intervalId: null };
+  let timerState = { running: false, sectionIdx: 0, elapsed: 0, intervalId: null, sectionTimes: {} };
   const TIMER_KEY = 'otp-l8-timer-' + meetingId;
+  // Total meeting budget (sum of every section's minutes) drives the rail's
+  // total-time ring in stepped mode.
+  const TOTAL_BUDGET = chips.reduce(function(s, c){ return s + (parseInt(c.dataset.budget || '5', 10) * 60); }, 0);
+  function totalElapsed(){ var s = 0, t = timerState.sectionTimes || {}; for (var k in t) s += (t[k] || 0); return s; }
+  function fmtHMS(s){ var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), r = s%60; return (h ? h + ':' : '') + String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0'); }
 
   // Restore a persisted timer. If it was running, add the wall-clock seconds
   // that passed while the page was away so the meeting clock stays true
@@ -1574,6 +1602,11 @@
       timerState.sectionIdx = Math.min(Math.max(0, _savedTimer.sectionIdx || 0), Math.max(0, chips.length - 1));
       timerState.elapsed = _savedTimer.elapsed;
       timerState.running = !!_savedTimer.running;
+      timerState.sectionTimes = (_savedTimer.sectionTimes && typeof _savedTimer.sectionTimes === 'object') ? _savedTimer.sectionTimes : {};
+      if (timerState.running && _savedTimer.savedAt) {
+        var _away = Math.max(0, Math.floor((Date.now() - _savedTimer.savedAt) / 1000));
+        timerState.sectionTimes[timerState.sectionIdx] = (timerState.sectionTimes[timerState.sectionIdx] || 0) + _away;
+      }
       if (timerState.running && _savedTimer.savedAt) {
         timerState.elapsed += Math.max(0, Math.floor((Date.now() - _savedTimer.savedAt) / 1000));
       }
@@ -1591,6 +1624,7 @@
         sectionIdx: timerState.sectionIdx,
         elapsed: timerState.elapsed,
         running: timerState.running,
+        sectionTimes: timerState.sectionTimes,
         savedAt: Date.now(),
       }));
     } catch (e) { /* storage unavailable -- timer still works for this page */ }
@@ -1614,31 +1648,49 @@
   function tick() {
     if (!timerState.running) return;
     timerState.elapsed++;
+    timerState.sectionTimes[timerState.sectionIdx] = (timerState.sectionTimes[timerState.sectionIdx] || 0) + 1;
     render();
   }
+  // Rail (stepped) view: a total-meeting ring + a live time on every step,
+  // green while inside budget, red once over.
+  function renderStepped() {
+    var total = totalElapsed();
+    clock.textContent = fmt(total);
+    clock.classList.remove('bg-gray-900', 'bg-red-600', 'bg-amber-500', 'animate-pulse');
+    var arc = document.getElementById('ring-arc');
+    if (arc) {
+      var frac = TOTAL_BUDGET > 0 ? Math.max(0, Math.min(1, total / TOTAL_BUDGET)) : 0;
+      arc.style.strokeDashoffset = String(339 * (1 - frac));
+      arc.style.stroke = total > TOTAL_BUDGET ? '#dc2626' : '#16a34a';
+    }
+    var rb = document.getElementById('ring-budget');
+    if (rb) rb.textContent = '/ ' + fmtHMS(TOTAL_BUDGET);
+    chips.forEach(function(c, i){
+      var tm = c.querySelector('.st-tm');
+      if (!tm) return;
+      var sec = timerState.sectionTimes[i] || 0;
+      var bud = parseInt(c.dataset.budget || '5', 10) * 60;
+      if (sec > 0) { tm.textContent = fmt(sec); tm.classList.toggle('st-over', sec > bud); tm.classList.add('st-spent'); }
+    });
+  }
   function render() {
-    const remaining = activeBudgetSec() - timerState.elapsed;
-    clock.textContent = fmt(remaining);
-    if (remaining < 0) {
-      clock.classList.remove('bg-gray-900');
-      clock.classList.add('bg-red-600', 'animate-pulse');
-    } else if (remaining < 60) {
-      clock.classList.remove('bg-gray-900', 'bg-red-600', 'animate-pulse');
-      clock.classList.add('bg-amber-500');
+    var railMode = !!document.getElementById('agenda-nav')?.classList.contains('otp-rail');
+    if (railMode) {
+      renderStepped();
     } else {
-      clock.classList.remove('bg-red-600', 'bg-amber-500', 'animate-pulse');
-      clock.classList.add('bg-gray-900');
+      const remaining = activeBudgetSec() - timerState.elapsed;
+      clock.textContent = fmt(remaining);
+      if (remaining < 0) {
+        clock.classList.remove('bg-gray-900');
+        clock.classList.add('bg-red-600', 'animate-pulse');
+      } else if (remaining < 60) {
+        clock.classList.remove('bg-gray-900', 'bg-red-600', 'animate-pulse');
+        clock.classList.add('bg-amber-500');
+      } else {
+        clock.classList.remove('bg-red-600', 'bg-amber-500', 'animate-pulse');
+        clock.classList.add('bg-gray-900');
+      }
     }
-    // Labs rail: drive the SVG progress ring + budget label from the same state.
-    var _arc = document.getElementById('ring-arc');
-    if (_arc) {
-      var _C = 339, _bud = activeBudgetSec();
-      var _frac = _bud > 0 ? Math.max(0, Math.min(1, timerState.elapsed / _bud)) : 0;
-      _arc.style.strokeDashoffset = String(_C * (1 - _frac));
-      _arc.style.stroke = remaining < 0 ? '#dc2626' : (remaining < 60 ? '#d97706' : '#2563EB');
-    }
-    var _rb = document.getElementById('ring-budget');
-    if (_rb) _rb.textContent = 'of ' + Math.round(activeBudgetSec() / 60) + ':00';
     paintChip();
     saveTimer();
   }
@@ -2945,3 +2997,93 @@
 <style>
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
+<script>
+// Labs meetings_broken_out rail actions: Add / Tools / Tangent / Notes / Finish,
+// plus the per-step advance arrow. Talks to the core meeting only through DOM
+// clicks (the hidden #timer-skip and the section chips), so it stays decoupled.
+(function(){
+  var rail = document.getElementById('agenda-nav');
+  if (!rail || !rail.classList.contains('otp-rail')) return;
+  var mtg = document.getElementById('l8-meeting');
+  var mid = (mtg && mtg.dataset && mtg.dataset.meetingId) ? mtg.dataset.meetingId : '';
+
+  function goToSection(id){ var chip = rail.querySelector('.agenda-chip[data-section="' + id + '"]'); if (chip) chip.click(); }
+  function openIssueForm(){
+    var t = document.getElementById('issue-add-toggle');
+    if (t) { var f = document.getElementById('issue-add-form'); if (f && f.classList.contains('hidden')) t.click(); }
+    var ti = document.getElementById('new-issue-title'); if (ti) ti.focus();
+  }
+  function focusFirstField(sel){ var el = document.querySelector(sel + ' input, ' + sel + ' textarea'); if (el) el.focus(); }
+
+  // close popovers on outside click
+  document.addEventListener('click', function(e){
+    rail.querySelectorAll('details.rail-pop[open]').forEach(function(d){ if (!d.contains(e.target)) d.removeAttribute('open'); });
+  });
+
+  // Add menu -> jump to a section and open its add affordance
+  rail.querySelectorAll('.rail-pop-menu [data-add]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var sec = btn.getAttribute('data-add');
+      var d = btn.closest('details'); if (d) d.removeAttribute('open');
+      goToSection(sec);
+      setTimeout(function(){
+        if (sec === 'ids') openIssueForm();
+        else focusFirstField('#' + sec);
+      }, 140);
+    });
+  });
+
+  // per-step advance arrow (only the active step shows it)
+  rail.querySelectorAll('.st-go').forEach(function(go){
+    go.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); var n = document.getElementById('timer-skip'); if (n) n.click(); });
+  });
+
+  // Finish meeting -> the real End-meeting control
+  var fin = document.getElementById('rail-finish');
+  if (fin) fin.addEventListener('click', function(){ var e = document.querySelector('.js-end-meeting'); if (e) e.click(); });
+
+  // Notes: localStorage-backed scratch panel for this meeting
+  var notesBtn = document.getElementById('rail-notes');
+  var panel = null;
+  function buildNotes(){
+    panel = document.createElement('aside'); panel.className = 'rail-notes-panel'; panel.hidden = true;
+    panel.innerHTML = '<div class="rnp-head"><span>Notes</span><button type="button" class="rnp-close" aria-label="Close">&times;</button></div><textarea class="rnp-ta" placeholder="Meeting notes (saved in this browser)..."></textarea>';
+    document.body.appendChild(panel);
+    var ta = panel.querySelector('.rnp-ta');
+    try { ta.value = localStorage.getItem('otp-l8-notes-' + mid) || ''; } catch (e) {}
+    ta.addEventListener('input', function(){ try { localStorage.setItem('otp-l8-notes-' + mid, ta.value); } catch (e) {} });
+    panel.querySelector('.rnp-close').addEventListener('click', function(){ panel.hidden = true; notesBtn.classList.remove('rail-act-on'); });
+  }
+  if (notesBtn) notesBtn.addEventListener('click', function(){
+    if (!panel) buildNotes();
+    panel.hidden = !panel.hidden;
+    notesBtn.classList.toggle('rail-act-on', !panel.hidden);
+    if (!panel.hidden) panel.querySelector('.rnp-ta').focus();
+  });
+
+  // Tangent: a playful Ollie nudge to park off-script talk as an issue
+  var tanBtn = document.getElementById('rail-tangent');
+  var modal = null;
+  function buildTangent(){
+    modal = document.createElement('div'); modal.className = 'rail-tangent-modal'; modal.hidden = true;
+    modal.innerHTML = '<div class="rtm-card"><button type="button" class="rtm-x" aria-label="Close">&times;</button>'
+      + '<h3 class="rtm-h">Tangent alert!</h3>'
+      + '<img class="rtm-ollie" src="/images/orgy-run.webp" alt="Ollie" />'
+      + '<p class="rtm-p">Looks like we have wandered off-script. If it matters, <button type="button" class="rtm-link" id="rtm-park">park it as an issue</button> so it does not get lost.</p>'
+      + '<button type="button" class="rtm-ok">&#128077; Got it</button></div>';
+    document.body.appendChild(modal);
+    function close(){ modal.hidden = true; }
+    modal.addEventListener('click', function(e){ if (e.target === modal) close(); });
+    modal.querySelector('.rtm-x').addEventListener('click', close);
+    modal.querySelector('.rtm-ok').addEventListener('click', close);
+    modal.querySelector('#rtm-park').addEventListener('click', function(){ close(); goToSection('ids'); setTimeout(openIssueForm, 140); });
+  }
+  if (tanBtn) tanBtn.addEventListener('click', function(){ if (!modal) buildTangent(); modal.hidden = false; });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    if (modal && !modal.hidden) modal.hidden = true;
+    if (panel && !panel.hidden) { panel.hidden = true; if (notesBtn) notesBtn.classList.remove('rail-act-on'); }
+  });
+})();
+</script>

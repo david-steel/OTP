@@ -132,26 +132,68 @@ body.otp-focus .help-q { display: none !important; }
 .otp-rail .rail-ring-t { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .otp-rail .rail-ring-t #meeting-clock { font-size: 24px; font-weight: 800; letter-spacing: -.5px; color: #14271a; background: transparent !important; padding: 0 !important; border-radius: 0 !important; font-family: inherit; }
 .otp-rail .rail-ring-t small { font-size: 11px; color: #8a93a0; margin-top: 1px; }
-.otp-rail .rail-start { width: 100%; margin-top: 14px; background: #2563EB; color: #fff; border: none; border-radius: 11px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.otp-rail .rail-start:hover { background: #1d4ed8; }
+.otp-rail .rail-toggle { margin-top: 10px; background: #fff; color: #3b4a3f; border: 1px solid #d6dbe2; border-radius: 999px; padding: 4px 16px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.otp-rail .rail-toggle:hover { background: #f6f7f9; }
 
-.otp-rail .rail-steps { margin-top: 20px; display: flex; flex-direction: column; gap: 2px; }
+/* agenda steps */
+.otp-rail .rail-steps { margin-top: 22px; display: flex; flex-direction: column; gap: 2px; }
 .otp-rail .agenda-chip { display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 10px; color: #3b4a3f; text-decoration: none; cursor: pointer; }
 .otp-rail .agenda-chip:hover { background: #f6f7f9; }
-.otp-rail .agenda-chip .st-n { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #e6e8ec; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #8a93a0; flex: 0 0 auto; }
-.otp-rail .agenda-chip .st-nm { flex: 1; font-size: 13.5px; font-weight: 600; }
-.otp-rail .agenda-chip .st-tm { font-size: 11px; color: #aeb6bf; }
-/* active step (paintChip toggles ring-2 ring-orgy on the current chip) */
-.otp-rail .agenda-chip.ring-2 { background: #e8f0ff !important; box-shadow: none !important; }
-.otp-rail .agenda-chip.ring-2 .st-nm { color: #2563EB; }
-.otp-rail .agenda-chip.ring-2 .st-n { border-color: #2563EB; color: #2563EB; }
+.otp-rail .agenda-chip .st-ico { width: 22px; height: 22px; flex: 0 0 auto; color: #aab2bc; display: flex; align-items: center; justify-content: center; }
+.otp-rail .agenda-chip .st-ico svg { width: 17px; height: 17px; stroke-linecap: round; stroke-linejoin: round; }
+.otp-rail .agenda-chip .st-body { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.otp-rail .agenda-chip .st-eyebrow { display: none; font-size: 9.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #16a34a; margin-bottom: 1px; }
+.otp-rail .agenda-chip .st-nm { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.otp-rail .agenda-chip .st-tm { font-size: 11px; font-weight: 600; color: #aeb6bf; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.otp-rail .agenda-chip .st-tm.st-spent { color: #16a34a; }
+.otp-rail .agenda-chip .st-tm.st-over { color: #dc2626; }
+.otp-rail .agenda-chip .st-go { display: none; width: 22px; height: 22px; border-radius: 7px; align-items: center; justify-content: center; color: #16a34a; flex: 0 0 auto; font-weight: 700; }
+.otp-rail .agenda-chip .st-go:hover { background: #d6f5e0; }
+/* active step = green "Currently on" card (paintChip toggles ring-2 on it) */
+.otp-rail .agenda-chip.ring-2 { background: #ecfdf3 !important; box-shadow: inset 0 0 0 1px #bbf7d0 !important; }
+.otp-rail .agenda-chip.ring-2 .st-ico { color: #16a34a; }
+.otp-rail .agenda-chip.ring-2 .st-nm { color: #15803d; font-weight: 700; }
+.otp-rail .agenda-chip.ring-2 .st-eyebrow { display: block; }
+.otp-rail .agenda-chip.ring-2 .st-go { display: flex; }
 
-.otp-rail .rail-tools { margin-top: auto; padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.otp-rail .rail-tools button { font-size: 12.5px; font-weight: 600; color: #3b4a3f; background: #fff; border: 1px solid #e6e8ec; border-radius: 9px; padding: 8px; cursor: pointer; }
-.otp-rail .rail-tools button:hover { background: #f6f7f9; }
+/* action buttons (Add / Tools / Tangent / Notes) */
+.otp-rail .rail-actions { margin-top: auto; padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.otp-rail .rail-act { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: #3b4a3f; background: #fff; border: 1px solid #e6e8ec; border-radius: 9px; padding: 9px 8px; cursor: pointer; list-style: none; }
+.otp-rail .rail-act::-webkit-details-marker { display: none; }
+.otp-rail .rail-act:hover { background: #f6f7f9; }
+.otp-rail .rail-act-on { background: #e8f0ff; border-color: #c7dbff; color: #2563EB; }
+.otp-rail .rail-act .ra-ico { font-size: 13px; line-height: 1; }
+.otp-rail .rail-pop { position: relative; }
+.otp-rail .rail-pop[open] > .rail-act { background: #f1f3f5; }
+.otp-rail .rail-pop-menu { position: absolute; bottom: calc(100% + 6px); left: 0; min-width: 184px; background: #fff; border: 1px solid #e6e8ec; border-radius: 11px; box-shadow: 0 10px 30px rgba(20,22,28,.14); padding: 6px; display: flex; flex-direction: column; gap: 2px; z-index: 60; }
+.otp-rail .rail-pop-menu a,
+.otp-rail .rail-pop-menu button { text-align: left; font-size: 13px; font-weight: 500; color: #2b3640; background: none; border: none; border-radius: 7px; padding: 8px 10px; cursor: pointer; text-decoration: none; }
+.otp-rail .rail-pop-menu a:hover,
+.otp-rail .rail-pop-menu button:hover { background: #f1f3f5; color: #2563EB; }
+
+/* finish meeting -- the prominent terminal action */
+.otp-rail .rail-finish { margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #ea6a23; color: #fff; border: none; border-radius: 11px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.otp-rail .rail-finish:hover { background: #d65d18; }
+
+/* Notes slide-in panel */
+.rail-notes-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; max-width: 86vw; background: #fff; border-left: 1px solid #e6e8ec; box-shadow: -12px 0 32px rgba(20,22,28,.10); z-index: 80; display: flex; flex-direction: column; }
+.rail-notes-panel .rnp-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #edeff2; font-size: 15px; font-weight: 800; }
+.rail-notes-panel .rnp-close { font-size: 22px; line-height: 1; color: #8a93a0; background: none; border: none; cursor: pointer; }
+.rail-notes-panel .rnp-ta { flex: 1; margin: 0; border: none; resize: none; padding: 18px; font-size: 14px; font-family: inherit; color: #14271a; outline: none; }
+
+/* Tangent modal -- the fun Ollie nudge */
+.rail-tangent-modal { position: fixed; inset: 0; background: rgba(20,22,28,.55); z-index: 90; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.rail-tangent-modal .rtm-card { position: relative; background: #fff; border-radius: 20px; max-width: 380px; width: 100%; padding: 28px 26px 26px; text-align: center; box-shadow: 0 24px 60px rgba(20,22,28,.30); }
+.rail-tangent-modal .rtm-x { position: absolute; top: 12px; right: 14px; font-size: 22px; line-height: 1; color: #aab2bc; background: none; border: none; cursor: pointer; }
+.rail-tangent-modal .rtm-h { margin: 0 0 14px; font-size: 24px; font-weight: 800; color: #8b5cf6; }
+.rail-tangent-modal .rtm-ollie { width: 150px; height: 150px; object-fit: contain; margin: 0 auto 14px; display: block; }
+.rail-tangent-modal .rtm-p { margin: 0 0 20px; font-size: 14.5px; line-height: 1.5; color: #3b4a3f; }
+.rail-tangent-modal .rtm-link { color: #2563EB; font-weight: 700; text-decoration: underline; background: none; border: none; cursor: pointer; font-size: inherit; padding: 0; }
+.rail-tangent-modal .rtm-ok { background: #ea6a23; color: #fff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.rail-tangent-modal .rtm-ok:hover { background: #d65d18; }
 
 @media (max-width: 760px) {
   #l8-meeting.meeting-stepped { padding: 16px !important; }
   #l8-meeting.meeting-stepped #agenda-nav.otp-rail { position: static; width: auto; border-right: none; border-bottom: 1px solid #e6e8ec; margin-bottom: 18px; padding: 16px; }
-  .otp-rail .rail-tools { margin-top: 14px; }
+  .otp-rail .rail-actions { margin-top: 14px; }
 }
