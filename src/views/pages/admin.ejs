@@ -280,11 +280,12 @@
               <th class="px-4 py-2">Quality</th>
               <th class="px-4 py-2">Level</th>
               <th class="px-4 py-2">Joined</th>
+              <th class="px-4 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             <% orgs.forEach(function(org) { %>
-              <tr class="border-t hover:bg-gray-50">
+              <tr class="border-t hover:bg-gray-50 <%= org.deletion_requested_at ? 'opacity-60' : '' %>">
                 <td class="px-4 py-2">
                   <a href="/org/<%= org.id %>" class="text-otp-600 hover:underline font-medium"><%= org.name %></a>
                   <% if (org.badge) { %><span class="ml-1 text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 capitalize"><%= org.badge %></span><% } %>
@@ -304,12 +305,89 @@
                 </td>
                 <td class="px-4 py-2 text-gray-500"><%= org.agentic_level ? 'L' + org.agentic_level : '--' %></td>
                 <td class="px-4 py-2 text-gray-400 text-xs"><%= new Date(org.created_at).toLocaleDateString() %></td>
+                <td class="px-4 py-2 text-right whitespace-nowrap">
+                  <% if (org.deletion_requested_at) { %>
+                    <% var _dleft = Math.max(0, Math.ceil((new Date(org.deletion_requested_at).getTime() + 7*86400000 - Date.now())/86400000)); %>
+                    <span class="text-[11px] text-red-600 font-semibold mr-2" title="Permanently purged when the countdown hits 0">Deleting &middot; <%= _dleft %>d left</span>
+                    <button type="button" class="adm-restore text-xs px-2 py-1 border border-gray-300 rounded hover:bg-gray-50" data-org-id="<%= org.id %>" data-org-name="<%= org.name %>">Restore</button>
+                  <% } else { %>
+                    <button type="button" class="adm-delete text-xs text-gray-400 hover:text-red-600 hover:underline" data-org-id="<%= org.id %>" data-org-name="<%= org.name %>">Delete</button>
+                  <% } %>
+                </td>
               </tr>
             <% }); %>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Org hard-delete confirmation modal (super admin). Two checkboxes + type
+         DELETE (case-sensitive) to arm the button. Mirrors the GHL pattern. -->
+    <div id="org-del-overlay" class="hidden fixed inset-0" style="background:rgba(15,23,42,0.45);z-index:80;"></div>
+    <div id="org-del-modal" class="hidden fixed inset-0 flex items-center justify-center p-4" style="z-index:81;">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="text-lg font-bold text-gray-900">Delete <span id="org-del-name"></span></h3>
+          <button type="button" id="org-del-x" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">This soft-deletes the organization. It can be restored for 7 days, then all of its data is permanently and irreversibly purged.</p>
+        <div class="mt-4 space-y-3 border-t border-gray-100 pt-4">
+          <label class="flex items-start gap-2 text-sm text-gray-700">
+            <input type="checkbox" id="org-del-ack1" class="mt-0.5"> I confirm I have discussed this with the client and have authority to take this action.
+          </label>
+          <label class="flex items-start gap-2 text-sm text-gray-700">
+            <input type="checkbox" id="org-del-ack2" class="mt-0.5"> I understand this is irreversible after 7 days and all data inside this organization will be lost.
+          </label>
+          <label class="block text-sm text-gray-700">
+            Type <span class="font-mono font-bold">DELETE</span> to confirm:
+            <input type="text" id="org-del-word" autocomplete="off" spellcheck="false" class="mt-1 w-full border rounded px-2 py-1.5 text-sm" placeholder="DELETE">
+          </label>
+        </div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" id="org-del-cancel" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Not now</button>
+          <button type="button" id="org-del-confirm" disabled class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" style="opacity:0.5;cursor:not-allowed;">Delete account</button>
+        </div>
+        <p id="org-del-msg" class="mt-2 text-xs text-red-600"></p>
+      </div>
+    </div>
+    <script>
+      (function(){
+        var overlay=document.getElementById('org-del-overlay'), modal=document.getElementById('org-del-modal');
+        var nameEl=document.getElementById('org-del-name'), ack1=document.getElementById('org-del-ack1'), ack2=document.getElementById('org-del-ack2');
+        var word=document.getElementById('org-del-word'), confirmBtn=document.getElementById('org-del-confirm'), msg=document.getElementById('org-del-msg');
+        var currentId=null;
+        function refresh(){
+          var ok = ack1.checked && ack2.checked && word.value === 'DELETE';
+          confirmBtn.disabled = !ok;
+          confirmBtn.style.opacity = ok ? '1' : '0.5';
+          confirmBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+        }
+        function open(id, name){ currentId=id; nameEl.textContent=name||'organization'; ack1.checked=false; ack2.checked=false; word.value=''; msg.textContent=''; refresh(); overlay.classList.remove('hidden'); modal.classList.remove('hidden'); }
+        function close(){ overlay.classList.add('hidden'); modal.classList.add('hidden'); currentId=null; }
+        [ack1,ack2].forEach(function(el){ el.addEventListener('change', refresh); });
+        word.addEventListener('input', refresh);
+        document.getElementById('org-del-x').addEventListener('click', close);
+        document.getElementById('org-del-cancel').addEventListener('click', close);
+        overlay.addEventListener('click', close);
+        confirmBtn.addEventListener('click', function(){
+          if(!currentId || confirmBtn.disabled) return;
+          confirmBtn.disabled=true; confirmBtn.textContent='Deleting...';
+          fetch('/api/v1/admin/orgs/'+currentId+'/delete', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body: JSON.stringify({ ackAuthority:true, ackIrreversible:true, confirm:'DELETE' }) })
+            .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){ if(!r.ok) throw (j.error||{message:'HTTP '+r.status}); return j; }); })
+            .then(function(){ window.location.reload(); })
+            .catch(function(e){ msg.textContent = (e && e.message) || 'Delete failed'; confirmBtn.disabled=false; confirmBtn.textContent='Delete account'; refresh(); });
+        });
+        document.querySelectorAll('.adm-delete').forEach(function(b){ b.addEventListener('click', function(){ open(b.getAttribute('data-org-id'), b.getAttribute('data-org-name')); }); });
+        document.querySelectorAll('.adm-restore').forEach(function(b){ b.addEventListener('click', function(){
+          if(!confirm('Restore "'+(b.getAttribute('data-org-name')||'this org')+'"? It becomes active again immediately.')) return;
+          b.disabled=true;
+          fetch('/api/v1/admin/orgs/'+b.getAttribute('data-org-id')+'/restore', { method:'POST', credentials:'same-origin' })
+            .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+            .then(function(){ window.location.reload(); })
+            .catch(function(){ b.disabled=false; alert('Restore failed.'); });
+        }); });
+      })();
+    </script>
 
     <!-- Recent Audit Logs -->
     <div>

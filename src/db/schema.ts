@@ -77,6 +77,13 @@ export const organizations = pgTable('organizations', {
   // Owner-controlled sidebar customization (Labs: sidebar_customize). Shape:
   // { order: string[] (hrefs in desired order), hidden: string[] (hrefs to hide) }.
   sidebarConfig: jsonb('sidebar_config'),
+  // Two-phase hard delete. deletionRequestedAt = when a delete was initiated;
+  // null = active. While set, the org is hidden/blocked everywhere (see
+  // getAuthOrg). It is restorable for 7 days; after that the purge job
+  // (services/org-purge.ts) permanently deletes the org and ALL its data.
+  // Columns added by ensure-org-deletion.ts on boot (Drizzle migrate is broken).
+  deletionRequestedAt: timestamp('deletion_requested_at'),
+  deletionRequestedBy: varchar('deletion_requested_by', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
@@ -1177,6 +1184,15 @@ export const meetings = pgTable('meetings', {
   // identifier; defaults to {} so callers can safely merge. Column added by
   // ensure-strategy-reset.ts on boot.
   segmentNotes: jsonb('segment_notes').notNull().default({}),
+  // Post-meeting record (set on completed meetings). transcript = pasted/uploaded
+  // text (source-agnostic: Plaud, Fireflies, Gemini, etc.) and the input the AI
+  // follow-ups wizard reads; recordingUrl = a link to the recording (recordings
+  // are too large for the 5MB attachment cap); aiSummary = the wizard's summary.
+  // Columns added by ensure-meeting-transcript.ts on boot (Drizzle migrate is
+  // broken; schema self-heals).
+  transcript: text('transcript'),
+  recordingUrl: varchar('recording_url', { length: 2048 }),
+  aiSummary: text('ai_summary'),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

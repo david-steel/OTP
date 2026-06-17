@@ -131,11 +131,12 @@ describe('contentDispositionFor', () => {
 });
 
 describe('schemas', () => {
-  it('entity type enum accepts todo/issue/rock only', () => {
+  it('entity type enum accepts todo/issue/rock/meeting', () => {
     expect(attachmentEntityTypeSchema.safeParse('todo').success).toBe(true);
     expect(attachmentEntityTypeSchema.safeParse('issue').success).toBe(true);
     expect(attachmentEntityTypeSchema.safeParse('rock').success).toBe(true);
-    expect(attachmentEntityTypeSchema.safeParse('meeting').success).toBe(false);
+    expect(attachmentEntityTypeSchema.safeParse('meeting').success).toBe(true);
+    expect(attachmentEntityTypeSchema.safeParse('nope').success).toBe(false);
   });
 
   it('createAttachmentSchema accepts a valid payload', () => {
