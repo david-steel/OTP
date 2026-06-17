@@ -359,7 +359,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const ROLE_LABELS: Record<Role, string> = {
       owner: 'Owner -- full access + can delete the company',
       visionary: 'Visionary -- EOS Visionary (CEO), full access',
-      integrator: 'Integrator -- EOS Integrator (operating partner), full access + runs L10',
+      integrator: 'Integrator -- operating partner, full access + runs the Leadership Meeting',
       admin: 'Admin -- full access except delete',
       manager: 'Manager -- assigned teams, can invite + create teams',
       managee: 'Managee -- assigned teams, edit own items',

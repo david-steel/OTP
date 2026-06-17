@@ -298,7 +298,7 @@
         <option value="FREQ=MONTHLY">Monthly</option>
       </select>
       <% if (upcomingMeetings && upcomingMeetings.length > 0) { %>
-        <select id="new-todo-meeting" title="Attach to a meeting (makes it an L10 todo)">
+        <select id="new-todo-meeting" title="Attach to a meeting (makes it a Leadership Meeting to-do)">
           <option value="">No meeting (personal)</option>
           <% upcomingMeetings.forEach(function(m) {
             const d = new Date(m.scheduledAt);
@@ -377,7 +377,7 @@
         <div class="me-actions">
           <button class="me-btn secondary" onclick="openEdit(this)">Edit</button>
           <button class="me-btn primary" onclick="markDone(this, '<%= t.id %>')">Done</button>
-          <button class="me-btn secondary" onclick="promoteToL10(this, '<%= t.id %>')" title="Send this to the leadership L10">→ L10</button>
+          <button class="me-btn secondary" onclick="promoteToL10(this, '<%= t.id %>')" title="Send this to the Leadership Meeting">→ Leadership</button>
           <button class="me-btn danger" onclick="confirmDelete(this, '<%= t.id %>')">Delete</button>
         </div>
       </div>
@@ -434,7 +434,7 @@
 
   <% if (l10Todos && l10Todos.length > 0) { %>
     <div class="me-section-l10">
-      <div class="l10-title"><%= l10Todos.length %> L10 to-do<%= l10Todos.length === 1 ? '' : 's' %> assigned to you</div>
+      <div class="l10-title"><%= l10Todos.length %> Leadership Meeting to-do<%= l10Todos.length === 1 ? '' : 's' %> assigned to you</div>
       <div style="font-size: 13px; color: inherit; margin-top: 4px;">
         Action items from leadership team meetings. Manage in <a href="/l8">/l8</a>.
       </div>
@@ -701,7 +701,7 @@ async function createTodo(btn) {
 }
 
 async function promoteToL10(btn, id) {
-  if (!confirm('Send this to-do to the leadership L10? It will leave your personal queue and become visible to the whole team.')) return;
+  if (!confirm('Send this to-do to the Leadership Meeting? It will leave your personal queue and become visible to the whole team.')) return;
   btn.disabled = true;
   const origText = btn.textContent;
   btn.textContent = 'Promoting...';
