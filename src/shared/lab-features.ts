@@ -98,6 +98,17 @@ export const LAB_FEATURES: LabFeature[] = [
     // 2026-06-17: default-ON for all current + future orgs, still toggleable (opt-out).
   },
   {
+    key: 'unassigned_agent_actions',
+    name: 'Act on unassigned agents',
+    description:
+      'Turn the read-only "Unassigned Agents" tray on your Daily dashboard into a control panel. For every agent you have uploaded but never placed, assign it to a seat on your chart in one move, archive the ones you are not running yet, or clear out test entries -- so the tray becomes the place you finish wiring your AI team, not just a list of loose ends.',
+    whyNow:
+      'Switch it on to clear your backlog of unplaced agents right from the dashboard: one click to seat an agent on the chart, a tidy archive for the ones on the bench, and a guarded delete for true junk. Early, so the assign flow keeps it simple (pick the seat it reports to) while we add richer placement next.',
+    status: 'beta',
+    // No surfaceUrl: this adds row actions inside the Daily dashboard's
+    // Unassigned Agents tray, not a new left-rail destination.
+  },
+  {
     key: 'sidebar_customize',
     name: 'Customize the sidebar',
     description:

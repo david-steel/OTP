@@ -1101,6 +1101,52 @@
         </div>
       </details>
 
+      <!-- Unassigned Agents tray. Agents that exist as records but are not yet
+           placed on the chart as a seat. Read-only by default; the per-agent
+           Assign / Archive / Delete actions render only when the org has the
+           'unassigned_agent_actions' Lab on (uaActions below). The matching
+           API endpoints in routes/api/manager-agents.ts 404 when the Lab is
+           off, so the UI gate and the API gate agree. -->
+      <%
+         var unassignedAgents = locals.unassignedAgents || [];
+         var uaActions = locals.unassignedAgentActions === true;
+         var assignableSeats = locals.assignableSeats || [];
+      %>
+      <% if (unassignedAgents.length > 0) { %>
+        <details id="unassigned-agents-details" class="rounded-lg border border-gray-200 bg-white">
+          <summary class="cursor-pointer select-none px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition rounded-lg">
+            <span class="flex items-center gap-3 flex-wrap min-w-0">
+              <span class="text-sm font-bold uppercase tracking-wide text-gray-700">Unassigned Agents</span>
+              <span class="text-[11px] text-gray-500"><strong class="text-gray-700"><%= unassignedAgents.length %></strong> not on the chart</span>
+            </span>
+            <% if (!uaActions) { %>
+              <a href="/dashboard/team" class="text-xs text-orgy-blue font-semibold hover:underline shrink-0 ml-3" onclick="event.stopPropagation()">Place on chart &rarr;</a>
+            <% } %>
+          </summary>
+          <div class="px-5 pb-5 pt-1 border-t border-gray-100">
+            <p class="text-xs text-gray-500 mt-3">These agents exist in your account but have no seat on the org chart.</p>
+            <ul class="divide-y divide-gray-100 -mx-2 mt-2" id="unassigned-agents-list">
+              <% unassignedAgents.forEach(function(a){ %>
+                <li class="px-2 py-2" data-ua-id="<%= a.id %>" data-ua-name="<%= a.name %>">
+                  <div class="flex items-center gap-2 text-sm">
+                    <span class="inline-block w-2 h-2 rounded-full bg-gray-300 shrink-0"></span>
+                    <span class="font-medium text-gray-900 truncate flex-1 min-w-0"><%= a.name %></span>
+                    <% if (uaActions) { %>
+                      <span class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" class="ua-assign text-[11px] font-semibold text-orgy-blue border border-orgy rounded px-2 py-1 hover:bg-orgy-soft">Assign &rarr; seat</button>
+                        <button type="button" class="ua-archive text-[11px] font-semibold text-gray-600 border border-gray-200 rounded px-2 py-1 hover:bg-gray-50">Archive</button>
+                        <button type="button" class="ua-delete text-[11px] font-semibold text-rose-600 border border-rose-200 rounded px-2 py-1 hover:bg-rose-50" title="Permanently delete. For test/junk entries only.">Delete</button>
+                      </span>
+                    <% } %>
+                  </div>
+                  <% if (a.description) { %><p class="text-[11px] text-gray-500 mt-0.5 truncate pl-4"><%= a.description %></p><% } %>
+                </li>
+              <% }); %>
+            </ul>
+          </div>
+        </details>
+      <% } %>
+
     </div>
     <div class="lg:col-span-8 space-y-5" data-dash-cell><!-- OTP Insights (aligned row) -->
   <!-- OTP Insights: diagnostic surfaces moved out of the main grid 2026-05-24
@@ -2803,5 +2849,71 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
   });
 })();
 </script>
+
+<% if (locals.unassignedAgentActions === true) { %>
+<!-- Unassigned Agents actions (Labs: unassigned_agent_actions). Self-contained
+     so it does not depend on the IIFE-scoped api() helper above. Each call
+     hits a Labs-gated endpoint that 404s when the flag is off for the org, so
+     the server is the source of truth even if this script somehow renders. -->
+<script>
+(function(){
+  var list = document.getElementById('unassigned-agents-list');
+  if (!list) return;
+  var seats = <%- jsonForScript((locals.assignableSeats || []).map(function(s){ return { externalId: s.externalId, name: s.name, entityType: s.entityType }; })) %>;
+
+  function call(method, path, body){
+    var opts = { method: method, headers: {}, credentials: 'same-origin' };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch('/api/v1' + path, opts).then(function(r){
+      if (!r.ok) return r.text().then(function(t){ var j={}; try{ j=t?JSON.parse(t):{}; }catch(e){} throw (j.error||{message:'HTTP '+r.status}); });
+      return r.status === 204 ? {} : r.json().catch(function(){ return {}; });
+    });
+  }
+  function row(btn){ return btn.closest('[data-ua-id]'); }
+  function removeRow(li){
+    li.parentNode.removeChild(li);
+    if (!list.querySelector('[data-ua-id]')) {
+      var det = document.getElementById('unassigned-agents-details');
+      if (det) det.parentNode.removeChild(det);
+    }
+  }
+
+  list.addEventListener('click', function(ev){
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var li = row(btn); if (!li) return;
+    var id = li.getAttribute('data-ua-id');
+    var name = li.getAttribute('data-ua-name') || 'this agent';
+
+    if (btn.classList.contains('ua-archive')) {
+      if (!window.confirm('Archive "' + name + '"? It leaves this tray but the agent record is kept (not deleted).')) return;
+      btn.disabled = true;
+      call('POST', '/manager-agents/' + id + '/archive').then(function(){ removeRow(li); }, function(e){ btn.disabled = false; alert('Could not archive: ' + (e.message||'error')); });
+      return;
+    }
+    if (btn.classList.contains('ua-delete')) {
+      if (!window.confirm('Permanently DELETE "' + name + '"? This cannot be undone. Use this only for test or junk entries -- to keep the record, choose Archive instead.')) return;
+      if (!window.confirm('Really delete "' + name + '" for good?')) return;
+      btn.disabled = true;
+      call('DELETE', '/manager-agents/' + id + '/hard-delete').then(function(){ removeRow(li); }, function(e){ btn.disabled = false; alert('Could not delete: ' + (e.message||'error')); });
+      return;
+    }
+    if (btn.classList.contains('ua-assign')) {
+      var opts = ['(top of chart -- no one above)'].concat(seats.map(function(s,i){ return (i+1) + '. ' + s.name + ' [' + s.entityType + ']'; })).join('\n');
+      var pick = window.prompt('Assign "' + name + '" to a seat on the chart.\nWhich seat should it escalate to? Enter a number, or leave blank for top of chart.\n\n0. ' + opts);
+      if (pick === null) return; // cancelled
+      var escalatesTo = null;
+      var n = parseInt(pick, 10);
+      if (!isNaN(n) && n >= 1 && n <= seats.length) escalatesTo = seats[n-1].externalId;
+      btn.disabled = true;
+      call('POST', '/manager-agents/' + id + '/assign', { escalatesTo: escalatesTo }).then(function(){
+        removeRow(li);
+      }, function(e){ btn.disabled = false; alert('Could not assign: ' + (e.message||'error')); });
+      return;
+    }
+  });
+})();
+</script>
+<% } %>
 
 <%- include("../partials/attachments-ui") %>

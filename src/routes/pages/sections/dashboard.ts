@@ -3565,6 +3565,41 @@ Founder, OTP</p>
       founderDependency = { hasTopSeat: false, pct: 0, ownedByTop: 0, totalOpen: 0, topNames: [] };
     }
 
+    // ---- Unassigned Agents tray (Labs: unassigned_agent_actions) ----
+    // Agents that EXIST as records (manager_agents) but are not placed on the
+    // chart as a seat -- i.e. their externalId isn't a node in the team graph
+    // (or they have no externalId at all). The tray is read-only today; the
+    // Labs flag below turns on per-agent Assign / Archive / Delete actions
+    // (rendered in the view + enforced in routes/api/manager-agents.ts). We
+    // always compute the list (cheap, org-scoped) but only flip the action
+    // flag when the org has opted in, so a non-opted org sees the same tray
+    // it sees now, just without the buttons.
+    const { isFeatureEnabledForOrg: _isFeatOnUA } = await import('../../../services/lab-features.js');
+    const unassignedAgentActions = await _isFeatOnUA(org.id, 'unassigned_agent_actions');
+    let unassignedAgents: { id: string; name: string; externalId: string | null; description: string | null; score: number | null }[] = [];
+    try {
+      const chartAgentIds = new Set(
+        teamGraphForAgents.nodes.filter(n => n.type === 'agent').map(n => n.externalId),
+      );
+      const uaRows = await db.select({
+        id: managerAgents.id,
+        name: managerAgents.name,
+        externalId: managerAgents.externalId,
+        description: managerAgents.description,
+        score: managerAgents.score,
+      })
+        .from(managerAgents)
+        .where(and(eq(managerAgents.orgId, org.id), isNull(managerAgents.deletedAt)))
+        .orderBy(asc(managerAgents.name));
+      unassignedAgents = uaRows.filter(a => !a.externalId || !chartAgentIds.has(a.externalId));
+    } catch {
+      unassignedAgents = [];
+    }
+    // Seats the user can park a newly-assigned agent under (escalates_to). The
+    // existing assignablePeople list already covers humans + agents, chart-
+    // sourced and impersonation-safe; reuse it so the picker matches the chart.
+    const assignableSeats = assignablePeople;
+
     // ---- Per-user dashboard personalization prefs ----
     // Read from orgMembers.preferences.dashboard (jsonb). request.orgMember is
     // attached by guards.ts and is impersonation-aware -- never derive the
@@ -3625,6 +3660,9 @@ Founder, OTP</p>
       meEntityType,
       myIssues,
       myAgents,
+      unassignedAgents,
+      unassignedAgentActions,
+      assignableSeats,
       mcpStatus,
       accountabilityGaps,
       delegateElevate,

@@ -31,6 +31,9 @@ import { resolveOrgForUser } from '../../services/membership.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
+import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
+import { createTeamEntity, getOrgTeamGraph, TeamMutationError } from '../../services/team-graph.js';
+import { emitOrgEventSafe } from '../../services/org-events.js';
 
 const rl = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -307,5 +310,133 @@ export default async function managerAgentRoutes(app: FastifyInstance) {
       updatedAt: new Date(),
     }).where(eq(managerAgents.id, id)).returning();
     return { agent: updated };
+  });
+
+  // ============================================================
+  // Unassigned Agents tray actions (Labs: unassigned_agent_actions)
+  // ------------------------------------------------------------
+  // These three endpoints back the per-agent actions on the Daily
+  // dashboard's "Unassigned Agents" tray. Each is gated by the Lab flag and
+  // 404s when the org has not opted in -- so the UI gate (the buttons only
+  // render when the flag is on) and the API gate agree. Org resolution +
+  // ownership reuse the same authedCtx() the rest of this router uses, so
+  // these obey the same org scoping as create/update/delete above.
+  // ============================================================
+
+  const labGate = async (ctx: { org: { id: string } }, reply: any): Promise<boolean> => {
+    if (!(await isFeatureEnabledForOrg(ctx.org.id, 'unassigned_agent_actions'))) {
+      reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not available' } });
+      return false;
+    }
+    return true;
+  };
+
+  // POST /api/v1/manager-agents/:id/assign  -- place the agent on the chart as
+  // a seat. Creates an agent tile in the latest chart draft (mirrors
+  // POST /team/entity / createTeamEntity), then writes the new tile's
+  // externalId back onto the manager_agents row so it leaves the unassigned
+  // tray (it now matches a chart node). Body: { escalatesTo?: string }.
+  const assignSchema = z.object({ escalatesTo: z.string().max(120).nullable().optional() });
+  app.post<{ Params: { id: string } }>('/manager-agents/:id/assign', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const ctx = await authedCtx(request, reply);
+    if (!ctx) return;
+    if (!(await labGate(ctx, reply))) return;
+
+    const body = assignSchema.safeParse(request.body || {});
+    if (!body.success) return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'Invalid input', details: body.error.issues } });
+
+    const [agent] = await db.select().from(managerAgents)
+      .where(and(eq(managerAgents.id, id), eq(managerAgents.orgId, ctx.org.id), eq(managerAgents.ownerUserId, ctx.userId), isNull(managerAgents.deletedAt)))
+      .limit(1);
+    if (!agent) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Agent not found' } });
+
+    // If escalatesTo is provided it must be a real seat on the org chart.
+    const escalatesTo = body.data.escalatesTo || undefined;
+    if (escalatesTo) {
+      const team = await getOrgTeamGraph(ctx.org.id, '');
+      const seatIds = new Set(team.nodes.filter(n => n.type === 'human' || n.type === 'agent').map(n => n.externalId));
+      if (!seatIds.has(escalatesTo)) {
+        return reply.status(400).send({ error: { code: 'INVALID_SEAT', message: 'escalatesTo is not a seat on your chart' } });
+      }
+    }
+
+    try {
+      const created = await createTeamEntity(ctx.org.id, {
+        type: 'agent',
+        name: agent.name,
+        role: agent.description || undefined,
+        escalatesTo,
+      });
+      // Bind the record to its new tile so it leaves the unassigned tray.
+      await db.update(managerAgents)
+        .set({ externalId: created.externalId, updatedAt: new Date() })
+        .where(and(eq(managerAgents.id, id), eq(managerAgents.orgId, ctx.org.id)));
+      await db.insert(auditLogs).values(createAuditEntry('manager_agent.assigned', 'manager_agent', {
+        orgId: ctx.org.id, entityId: id, details: { externalId: created.externalId, escalatesTo: escalatesTo || null },
+      }));
+      await emitOrgEventSafe({
+        orgId: ctx.org.id, topic: 'chart', entityType: 'agent', entityId: created.externalId,
+        action: 'created', actorType: 'user', actorId: ctx.userId,
+        payload: { name: agent.name, fromManagerAgentId: id },
+      });
+      return reply.send({ ok: true, externalId: created.externalId });
+    } catch (e) {
+      if (e instanceof TeamMutationError) return reply.status(e.httpStatus).send({ error: { code: e.code, message: e.message } });
+      request.log.error(e);
+      return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Failed to assign agent to a seat' } });
+    }
+  });
+
+  // POST /api/v1/manager-agents/:id/archive  -- soft-delete: remove from the
+  // tray + (it is not on the chart anyway) while PRESERVING the record. This
+  // mirrors the "no agent's soul is erased" precedent: archived, never wiped.
+  app.post<{ Params: { id: string } }>('/manager-agents/:id/archive', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const ctx = await authedCtx(request, reply);
+    if (!ctx) return;
+    if (!(await labGate(ctx, reply))) return;
+
+    const [archived] = await db.update(managerAgents)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(and(
+        eq(managerAgents.id, id),
+        eq(managerAgents.orgId, ctx.org.id),
+        eq(managerAgents.ownerUserId, ctx.userId),
+        isNull(managerAgents.deletedAt),
+      ))
+      .returning();
+    if (!archived) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Agent not found' } });
+    await db.insert(auditLogs).values(createAuditEntry('manager_agent.archived', 'manager_agent', {
+      orgId: ctx.org.id, entityId: id, details: { name: archived.name },
+    }));
+    return reply.send({ ok: true, archived: true });
+  });
+
+  // DELETE /api/v1/manager-agents/:id/hard-delete  -- true hard delete, for
+  // test/junk entries only. Deliberately a separate path from the soft DELETE
+  // above so it can never be the default. UI confirm-gates it twice.
+  app.delete<{ Params: { id: string } }>('/manager-agents/:id/hard-delete', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const ctx = await authedCtx(request, reply);
+    if (!ctx) return;
+    if (!(await labGate(ctx, reply))) return;
+
+    // Capture for the audit log before the row is gone.
+    const [target] = await db.select({ name: managerAgents.name })
+      .from(managerAgents)
+      .where(and(eq(managerAgents.id, id), eq(managerAgents.orgId, ctx.org.id), eq(managerAgents.ownerUserId, ctx.userId)))
+      .limit(1);
+    if (!target) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Agent not found' } });
+
+    await db.delete(managerAgents)
+      .where(and(eq(managerAgents.id, id), eq(managerAgents.orgId, ctx.org.id), eq(managerAgents.ownerUserId, ctx.userId)));
+    await db.insert(auditLogs).values(createAuditEntry('manager_agent.hard_deleted', 'manager_agent', {
+      orgId: ctx.org.id, entityId: id, details: { name: target.name },
+    }));
+    return reply.send({ ok: true, deleted: true });
   });
 }
