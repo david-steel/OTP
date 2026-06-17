@@ -63,8 +63,17 @@ export function quarterLabel(d: Date): string {
 // (sections/dashboard.ts) can import it.
 export async function resolveRequestOrg(request: any) {
   const auth = getAuth(request);
-  if (!auth?.userId) return null;
   const member = (request as any).orgMember as { orgId: string } | null;
+  // Demo / service sessions have no Clerk userId but DO carry a resolved member
+  // (request.orgMember, set by the decorator). Honor it so they see their org
+  // instead of a sign-in wall.
+  if (!auth?.userId) {
+    if (member?.orgId) {
+      const [m] = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
+      if (m) return m;
+    }
+    return null;
+  }
   if (member?.orgId) {
     const [m] = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
     if (m) return m;
@@ -4534,7 +4543,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
   // and Slack-DM-as-todolist as the canonical agent→human action channel.
   app.get('/me/todos', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) return reply.redirect('/sign-in?redirect=/me/todos');
+    if (!auth.userId && !(request as any).orgMember) return reply.redirect('/sign-in?redirect=/me/todos');
 
     // Resolve org (same pattern as /dashboard).
     const memberDecoration = (request as any).orgMember as { orgId: string } | null;
@@ -4543,7 +4552,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       const [m] = await db.select().from(organizations).where(eq(organizations.id, memberDecoration.orgId)).limit(1);
       if (m) org = m;
     }
-    if (!org) {
+    if (!org && auth.userId) {
       const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
       if (legacy) org = legacy;
     }
@@ -4565,13 +4574,21 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     //      This preserves the pre-fix behavior for the founder seat
     //      regardless of whether the chart was claimed yet.
     //   3. Otherwise: empty list, no todos shown. Safer than leaking.
-    const [me] = await db.select({
-      id: orgMembers.id,
-      claimedEntityIds: orgMembers.claimedEntityIds,
-    })
-      .from(orgMembers)
-      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
-      .limit(1);
+    // Demo / no-Clerk sessions resolve the viewer from the decorated member
+    // (request.orgMember = the Acme member) instead of by Clerk user id.
+    let me: { id: string; claimedEntityIds: unknown } | undefined;
+    if (auth.userId) {
+      [me] = await db.select({
+        id: orgMembers.id,
+        claimedEntityIds: orgMembers.claimedEntityIds,
+      })
+        .from(orgMembers)
+        .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+        .limit(1);
+    } else {
+      const _dm = (request as any).orgMember as { id?: string; claimedEntityIds?: unknown } | null;
+      if (_dm?.id) me = { id: _dm.id, claimedEntityIds: _dm.claimedEntityIds };
+    }
 
     // Defense-in-depth: HUM_DAVIDSTEEL must NEVER appear in a non-founder's
     // claimedEntityIds. The chart-claim-reconcile email-match path has a
@@ -4715,10 +4732,16 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
     // re-assign on creation if needed.
     const meExternalId = ownerExternalIds[0] || '';
     const meEntityType = 'human';
-    const [meMember] = await db.select({ displayName: orgMembers.displayName })
-      .from(orgMembers)
-      .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
-      .limit(1);
+    let meMember: { displayName: string | null } | undefined;
+    if (auth.userId) {
+      [meMember] = await db.select({ displayName: orgMembers.displayName })
+        .from(orgMembers)
+        .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, auth.userId)))
+        .limit(1);
+    } else {
+      const _dm = (request as any).orgMember as { displayName?: string } | null;
+      if (_dm) meMember = { displayName: _dm.displayName || null };
+    }
     const meName = meMember?.displayName || org.name || 'Me';
 
     return reply.view('pages/me-todos', {

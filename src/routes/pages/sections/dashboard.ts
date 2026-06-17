@@ -993,7 +993,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   // GET /dashboard/meeting-formats -- build/manage custom meeting formats.
   app.get('/dashboard/meeting-formats', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/meeting-formats', { title: 'Meeting formats - OTP', noindex: true, authState: 'unauthenticated', sectionTypes: [] });
     }
     const org = await resolveRequestOrg(request);
@@ -2225,7 +2225,7 @@ Founder, OTP</p>
 
   app.get('/settings/api', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'unauthenticated', keys: [] });
     }
 
@@ -2252,7 +2252,7 @@ Founder, OTP</p>
 
   app.get('/settings/preferences', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-preferences', { title: 'Preferences - OTP', noindex: true, authState: 'unauthenticated', preferences: {}, teams: [] });
     }
 
@@ -2348,7 +2348,7 @@ Founder, OTP</p>
     const billingEnabled = process.env.BILLING_ENABLED === 'true';
 
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-billing', {
         title: 'Billing - OTP', noindex: true, authState: 'unauthenticated',
         agents: { total: 0 }, hasApiMcp: false, rate: BILLING_PRICE_BASIC,
@@ -2475,7 +2475,7 @@ Founder, OTP</p>
   const settingsStub = (path: string, pageTitle: string, pageGroup: string) => {
     app.get(path, async (request, reply) => {
       const auth = getAuth(request);
-      if (!auth.userId) {
+      if (!auth.userId && !(request as any).orgMember) {
         return reply.view('pages/settings-stub', { title: pageTitle + ' - OTP', noindex: true, authState: 'unauthenticated', pageTitle, pageGroup });
       }
       const org = await resolveRequestOrg(request);
@@ -2491,7 +2491,7 @@ Founder, OTP</p>
   // GET /settings/account -- Clerk mounts the account UI client-side; no server data.
   app.get('/settings/account', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-account', { title: 'Account - OTP', noindex: true, authState: 'unauthenticated' });
     }
     const org = await resolveRequestOrg(request);
@@ -2504,7 +2504,7 @@ Founder, OTP</p>
   // GET /settings/integrations
   app.get('/settings/integrations', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-integrations', { title: 'Integrations - OTP', noindex: true, authState: 'unauthenticated' });
     }
     const org = await resolveRequestOrg(request);
@@ -2525,7 +2525,7 @@ Founder, OTP</p>
   // GET /settings/labs -- OTP Labs: per-org early access to in-progress features.
   app.get('/settings/labs', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-labs', { title: 'Labs - OTP', noindex: true, authState: 'unauthenticated', features: [] });
     }
     const org = await resolveRequestOrg(request);
@@ -2540,7 +2540,7 @@ Founder, OTP</p>
   // GET /settings/notifications
   app.get('/settings/notifications', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-notifications', { title: 'Notifications - OTP', noindex: true, authState: 'unauthenticated', notifications: {} });
     }
     const org = await resolveRequestOrg(request);
@@ -2554,7 +2554,7 @@ Founder, OTP</p>
   // GET /settings/profile
   app.get('/settings/profile', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-profile', { title: 'Profile - OTP', noindex: true, authState: 'unauthenticated', profile: {} });
     }
     const org = await resolveRequestOrg(request);
@@ -2569,7 +2569,7 @@ Founder, OTP</p>
   const CONFIG_EDIT_ROLES = ['owner', 'admin', 'implementer', 'visionary', 'integrator'];
   app.get('/settings/configuration', async (request, reply) => {
     const auth = getAuth(request);
-    if (!auth.userId) {
+    if (!auth.userId && !(request as any).orgMember) {
       return reply.view('pages/settings-configuration', { title: 'Configuration - OTP', noindex: true, authState: 'unauthenticated', org: { name: '', website: '', description: '', public: false, isPrivate: false }, canEdit: false });
     }
     const org = await resolveRequestOrg(request);
