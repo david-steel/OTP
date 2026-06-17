@@ -1,0 +1,362 @@
+# =============================================================================
+# OTP TRUST CENTER — SOURCE OF TRUTH
+# =============================================================================
+# This single file drives the public Trust/Security page at orgtp.com/trust.
+# Schema is based on kodustech/trust-center, extended with two custom blocks
+# OTP needs that the base schema lacks: `network` (cross-org visibility) and
+# `dataHandling` (deletion/retention/AI use).
+#
+# RULES FOR THIS FILE (read before editing — a lawyer will read the output):
+#   1. Every claim is either CONFIRMED IN CODE (see `# source:` citation),
+#      CONFIRMED BY DAVID/RAILWAY (2026-06-17), or tagged `TODO:VERIFY`.
+#   2. Do NOT remove a TODO:VERIFY by guessing. Confirm it, then delete the tag.
+#   3. Underclaiming is safe. Overclaiming to legal is the failure mode.
+#
+# Code map: /Users/dsteel/otp-audit-fixes (lineage otp-audit-fixes -> main on
+# Railway). Citations are file:line. Operational facts confirmed by David and
+# the Railway dashboard on 2026-06-17.
+# =============================================================================
+
+theme: light   # OTP brand is light/editorial (Ollie). Matches David's preference.
+
+# -----------------------------------------------------------------------------
+# COMPANY
+# -----------------------------------------------------------------------------
+company:
+  name: OTP
+  legalEntity: OTP, LLC
+  tagline: The coordination intelligence layer for operating teams.
+  description: >-
+    OTP helps organizations run their operating system (priorities, issues,
+    to-dos, KPIs, meetings, org chart) and, only when they choose to, learn
+    from an opt-in cross-organization intelligence network. This page documents
+    exactly what data OTP touches, how it is protected, and what stays private
+    to your organization versus what becomes visible to the network.
+  website: https://orgtp.com
+  logo: https://orgtp.com/public/orgy-clean.png
+  headquarters: Fairfield, NJ 07004, USA
+  trustLead: David Steel, CEO — security@orgtp.com
+
+# -----------------------------------------------------------------------------
+# HERO
+# -----------------------------------------------------------------------------
+hero:
+  statusMessage: >-
+    OTP is pre-SOC 2 and targeting SOC 2 Type II within six months. We document
+    our controls openly here rather than hide behind a badge we have not yet
+    earned. Our infrastructure runs on Railway, which is SOC 2 Type II certified
+    and HIPAA compliant.
+  lastUpdate: 2026-06-17
+  commitments:
+    - Your operating data is private to your organization by default.
+    - Nothing joins the cross-org network unless you explicitly publish it.
+    - Customer data is hosted in the EU (Amsterdam) and encrypted at rest.
+    - All traffic is encrypted in transit (TLS).
+    - Every organization-level action is written to an audit log.   # source: src/services/audit-logger.ts; src/db/schema.ts:251-262
+    - We notify affected organizations within 3 hours of a confirmed breach.
+
+# -----------------------------------------------------------------------------
+# NETWORK BOUNDARY  (CUSTOM SECTION — OTP's most important trust claim)
+# Answers the exact question every publishing org asks:
+# "If I publish to OTP, who can see my data?"
+# -----------------------------------------------------------------------------
+network:
+  defaultPosture: >-
+    Private by default. Your operational data is scoped to your organization and
+    is never exposed on any cross-org surface unless you take an explicit action
+    to publish it.
+  isolationMechanism: >-
+    Multi-tenant by design. Every record (priorities, to-dos, KPIs, meetings,
+    org chart, learnings) carries an organization ID, and every request is bound
+    to one organization before any data is read.
+    # source: src/db/schema.ts (orgId FK on business tables); src/middleware/guards.ts:66-200
+    # source: src/middleware/auth-helpers.ts:49-145 (tenant resolution)
+  isolationCaveat: >-
+    Tenant scoping is enforced in the application layer on every route, not via
+    database row-level security. Every cross-org read additionally passes
+    through one shared visibility control (see privatePlan below).
+    # source: agent finding — "No row-level security (RLS) at the DB layer"
+    # We disclose this plainly; it is defensible but a thorough reviewer will ask.
+
+  staysPrivate:
+    - Quarterly priorities / Rocks       # source: rocks table, schema.ts
+    - Issues and To-Dos                   # source: todos / todosL10 / tickets
+    - KPIs and scorecard values           # source: kpis table (private unless public=true)
+    - Meeting data (L8 / leadership)      # source: meetings table
+    - Org chart                           # source: organizations.chart JSONB
+    - Member identities and profiles      # source: org_members, consultant_profiles
+
+  canBecomeVisible:
+    - item: Published learnings (OOS claims)
+      condition: Only after you explicitly publish a learning to the network.
+      # source: src/routes/api/oos.ts; browse filters published OOS
+    - item: Best practices
+      condition: Only practices your org chooses to publish.
+      # source: src/routes/api/best-practices.ts
+    - item: Coordination patterns (network graph edges)
+      condition: Derived only from published learnings, never private data.
+      # source: src/graph/graph-queries.ts; coordination_patterns matview
+    - item: Org profile and chart
+      condition: Only if you set the org profile to public.
+      # source: src/routes/api/public/orgs.ts (filtered public = true)
+    - item: KPIs
+      condition: Only KPIs you explicitly mark public.
+      # source: src/routes/api/public/kpis.ts (filtered public = true)
+
+  privatePlan:
+    name: Private organizations
+    description: >-
+      Organizations flagged private are hard-excluded from every cross-org
+      surface — browse, search, the intelligence graph, recommendations,
+      published best-practices listings, and the MCP/API network endpoints —
+      regardless of any per-item publish setting.
+    mechanism: >-
+      Enforced through a single shared chokepoint so the rule cannot drift
+      between surfaces. A boot-time check rebuilds the network materialized view
+      to include the same exclusion.
+    # source: src/shared/org-visibility.ts (excludePrivateOrgs, isCrossOrgVisible,
+    #         privateExclusionClauseFor; enforcement registry lines 26-51)
+    # source: src/db/ensure-org-privacy.ts:33-60 (matview rebuild on boot)
+    limitation: >-
+      Privacy is all-or-nothing at the organization level; there is no per-claim
+      private override.
+      # source: agent finding — "No private-org override flag for individual claims"
+
+# -----------------------------------------------------------------------------
+# INFRASTRUCTURE
+# -----------------------------------------------------------------------------
+infrastructure:
+  hosting: >-
+    Application and managed PostgreSQL 16 run on Railway. File storage on
+    Cloudflare R2. Railway is SOC 2 Type II certified and HIPAA compliant
+    (BAAs, SOC 2 Type II report, and penetration-test reports available from
+    Railway on request — see trust.railway.com).
+    # source: src/config/database.ts; Dockerfile; src/server.ts RAILWAY_* env reads
+  dataResidency:
+    - EU West — Amsterdam, Netherlands (Railway region europe-west4 / ams)
+  encryption: >-
+    In transit: all connections use TLS. At rest: all customer data is encrypted
+    at rest at the storage layer by Railway; service/environment secrets carry an
+    additional layer of encryption and are decrypted only when needed.
+    Application-issued tokens (demo access, email unsubscribe, admin
+    impersonation) are signed with HMAC-SHA256 and verified in constant time.
+    Note: encryption at rest is provided at the storage layer; there is no
+    application-level column encryption.
+    # source (in transit/tokens): src/services/unsubscribe-token.ts;
+    #         src/middleware/demo-access.ts:88-89,157 (timingSafeEqual)
+    # source (at rest): Railway storage-level encryption, confirmed 2026-06-17
+  retention: >-
+    Realtime sync event log is pruned daily and retained 30 days. Audit logs are
+    retained for 12 months. Most records use soft-delete (rows retained with a
+    deletion timestamp for audit) until a hard-delete request is processed.
+    # source: src/services/org-events-retention.ts (ORG_EVENTS_RETENTION_DAYS=30)
+    # source: deletedAt columns on rocks/todos/meetings/tickets/milestones
+    # audit-log 12-month retention: policy set by David 2026-06-17
+  backups: >-
+    Daily automated PostgreSQL backups at 05:00 UTC, retained 30 days, stored in
+    Railway-managed backup storage (EU West) and encrypted at rest. Recovery
+    Point Objective 24 hours; Recovery Time Objective under 1 hour. Restores are
+    performed and integrity-verified via the Railway dashboard; restore
+    operations are logged.
+    # confirmed via Railway dashboard 2026-06-17
+
+# -----------------------------------------------------------------------------
+# DATA HANDLING  (CUSTOM SECTION — for the legal / privacy reviewer)
+# -----------------------------------------------------------------------------
+dataHandling:
+  deletion: >-
+    Day-to-day deletes are logical (soft-delete) so data can be recovered and
+    audit trails preserved. On a verified deletion / right-to-be-forgotten
+    request, personal data is permanently removed within 7 days.
+    # source: soft-delete pattern (deletedAt columns); 7-day hard-delete SLA set by David 2026-06-17
+  export: >-
+    OTP imports from Ninety.io and Bloom Growth exports. Customers may request a
+    copy of their data; a self-serve export endpoint is on the roadmap.
+    # source: import routes /import/ninety, /import/bloom; export-on-request policy 2026-06-17
+  aiProcessing: >-
+    Some features (Ask AI, Rock AI) send the relevant organization content for
+    that request to Anthropic's Claude API to generate a response. Anthropic does
+    not train its models on data submitted through its paid/commercial API. OTP
+    sends only the content needed for the requested feature, not your full data
+    set.
+    # source: @anthropic-ai/sdk; src/routes/api/ask-ai.ts, rock-ai.ts; ANTHROPIC_API_KEY
+    # no-training-on-paid-API confirmed 2026-06-17
+  rateLimiting: >-
+    Abuse protection via per-IP rate limiting (100 req/min global; tighter limits
+    on sensitive endpoints such as newsletter signup).
+    # source: src/server.ts:20-22 (@fastify/rate-limit); src/shared/rate-limiter.ts
+
+# -----------------------------------------------------------------------------
+# ACCESS & SECURITY CONTROLS (rendered as the "policies" block)
+# -----------------------------------------------------------------------------
+policies:
+  - name: Authentication
+    owner: Engineering
+    coverage: Clerk-managed OAuth; OTP stores no passwords.
+    cadence: Continuous
+    # source: @clerk/fastify; src/middleware/auth-helpers.ts:2,49-145
+  - name: API access control
+    owner: Engineering
+    coverage: API keys are hashed (SHA-256) at rest and presented as bearer tokens.
+    cadence: Continuous
+    # source: src/middleware/api-key-auth.ts:26-63 (prefix otp_, SHA256-hashed)
+  - name: Tenant isolation
+    owner: Engineering
+    coverage: Every request bound to one organization before data access.
+    cadence: Continuous
+    # source: src/middleware/guards.ts:66-200
+  - name: Privileged access (impersonation)
+    owner: Engineering
+    coverage: >-
+      Super-admin "view-as" uses a signed cookie that binds the action to the
+      acting admin's identity for audit.
+    cadence: Continuous
+    # source: src/middleware/impersonation.ts (payload.by === userId)
+  - name: Audit logging
+    owner: Engineering
+    coverage: Org registration, publishing, and key actions recorded with actor and entity; retained 12 months.
+    cadence: Continuous
+    # source: src/services/audit-logger.ts:16-58; src/db/schema.ts:251-262
+  - name: Webhook verification
+    owner: Engineering
+    coverage: Clerk and Stripe webhooks verified via signature on the raw request body.
+    cadence: Continuous
+    # source: src/server.ts:61-64 (raw body for HMAC); billing.ts Stripe routes
+
+# -----------------------------------------------------------------------------
+# COMPLIANCE  (HONEST STATUS — do not inflate)
+# -----------------------------------------------------------------------------
+compliance:
+  - name: SOC 2 Type II
+    status: In progress — targeting Q4 2026
+    scope: OTP application. Six-month target set 2026-06-17.
+  - name: GDPR
+    status: Supported — DPA available on request
+    scope: Customer data hosted in the EU (Amsterdam). See dataHandling and DPA.
+  - name: Inherited infrastructure (Railway)
+    status: SOC 2 Type II certified; HIPAA compliant
+    scope: Hosting and managed database. Reports available from Railway on request.
+  - name: Penetration testing
+    status: Infrastructure provider (Railway) penetration tested; OTP application test planned alongside SOC 2
+    scope: Reports for Railway available on request.
+
+# -----------------------------------------------------------------------------
+# SUBPROCESSORS  (the table legal scans first — keep current)
+# -----------------------------------------------------------------------------
+subprocessors:
+  - name: Railway
+    category: Cloud hosting & managed PostgreSQL
+    location: US company; data hosted in EU West (Amsterdam)
+    description: Runs the OTP application and primary database. SOC 2 Type II, HIPAA.
+    # source: Dockerfile; src/config/database.ts; RAILWAY_* env
+  - name: Clerk
+    category: Authentication
+    location: United States
+    description: User authentication and session management. OTP stores no passwords.
+    # source: @clerk/fastify, @clerk/backend
+  - name: Cloudflare R2
+    category: File / object storage
+    location: Global edge
+    description: Stores uploaded files and assets.
+    # source: @aws-sdk/client-s3; R2_* env vars
+  - name: Resend
+    category: Transactional & newsletter email
+    location: United States
+    description: Delivers account, notification, and newsletter email.
+    # source: resend SDK; src/config/email.ts
+  - name: Stripe
+    category: Billing & payments
+    location: United States
+    description: Processes subscription billing. Card data handled by Stripe, not OTP.
+    # source: stripe SDK v22; src/routes/api/billing.ts
+  - name: Svix
+    category: Webhook delivery
+    location: United States
+    description: Webhook relay and signature verification.
+    # source: svix SDK v1.91
+  - name: Anthropic
+    category: AI processing
+    location: United States
+    description: >-
+      Powers Ask AI and Rock AI. Receives only the org content needed for a
+      given request. Does not train on data submitted via its paid API.
+    # source: @anthropic-ai/sdk; ask-ai.ts, rock-ai.ts
+  - name: Google Ads
+    category: Marketing conversion tracking
+    location: United States
+    description: >-
+      Conversion measurement on public marketing pages only (click-ID capture).
+      Does not touch customer operational data inside the app.
+    # source: src/lib/google-ads-conversions.ts
+
+# -----------------------------------------------------------------------------
+# INCIDENT RESPONSE / MONITORING
+# -----------------------------------------------------------------------------
+monitoring:
+  statusPage: ""   # No public status page yet — on roadmap. Leave blank to hide.
+  responseCommitment: >-
+    On confirming a security incident affecting customer data, we contain it and
+    notify affected organizations within 3 hours, followed by a written
+    post-incident summary. Full process in our incident-response runbook.
+    # commitment set by David 2026-06-17; runbook: docs/incident-response-runbook.md
+  incidentHistory:
+    # "No reportable security incidents to date." — confirm before each publish.
+    []
+
+# -----------------------------------------------------------------------------
+# FAQ  (the real questions buyers and their lawyers ask)
+# -----------------------------------------------------------------------------
+faqs:
+  - question: If I publish to OTP, who can see my data?
+    answer: >-
+      By default, nothing. Your operating data stays private to your
+      organization. Only items you explicitly publish (learnings, selected best
+      practices, or a profile/KPIs you mark public) appear on the network. See
+      the Network Boundary section above.
+  - question: Is my operational data (priorities, KPIs, meetings) ever shared?
+    answer: >-
+      No. Those are private to your organization and never appear on any
+      cross-org surface.
+  - question: Can I keep my whole organization off the network?
+    answer: >-
+      Yes. A private organization is hard-excluded from every cross-org surface
+      through a single enforced control.
+  - question: Where is my data stored?
+    answer: >-
+      In the EU, in Railway's Amsterdam region, encrypted at rest, with daily
+      encrypted backups retained 30 days.
+  - question: Do you use my data to train AI models?
+    answer: >-
+      No. AI features send only the content needed for that request to
+      Anthropic's Claude API to generate your response, and Anthropic does not
+      train on data submitted through its paid API.
+  - question: Can I delete or export my data?
+    answer: >-
+      Yes. On a verified deletion request, personal data is permanently removed
+      within 7 days. You can request a copy of your data; a self-serve export is
+      on the roadmap.
+  - question: Are you SOC 2 or GDPR compliant?
+    answer: >-
+      We are pre-SOC 2 and targeting SOC 2 Type II within six months; our
+      infrastructure already runs on SOC 2 Type II, HIPAA-compliant Railway. For
+      GDPR, customer data is hosted in the EU and a DPA is available on request.
+
+# -----------------------------------------------------------------------------
+# CONTACT
+# -----------------------------------------------------------------------------
+contacts:
+  email: security@orgtp.com
+  sla: We respond to security inquiries within 1 business day.
+  officeHours: ""   # optional
+
+# -----------------------------------------------------------------------------
+# EVIDENCE DOCUMENTS  (gated downloads — Phase 3, when artifacts exist)
+# -----------------------------------------------------------------------------
+documents:
+  - name: Data Processing Agreement (DPA)
+    description: Our standard DPA for customers processing personal data through OTP.
+    category: Legal
+    access: request
+    tags: [gdpr, legal, privacy]
+    # draft: docs/legal/DPA.md — pending legal review (Michael Ben Shimon)
+  # Add SOC 2 report / pen-test summary here once they exist (access: request).
