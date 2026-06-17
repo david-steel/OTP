@@ -3155,7 +3155,7 @@
         var inviteRes = await fetch('/api/v1/team/invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, claimedEntityId: created.externalId, role: 'member' }),
+          body: JSON.stringify({ email: email, displayName: name, claimedEntityId: created.externalId, role: 'member' }),
         });
         if (!inviteRes.ok) {
           var ie = await inviteRes.json().catch(function() { return {}; });
@@ -3188,7 +3188,7 @@
       status.textContent = '';
       OTP.apiSave({
         method: 'POST', url: '/api/v1/team/invite',
-        body: { email: email, claimedEntityId: currentNode.externalId, role: 'member' },
+        body: { email: email, displayName: (currentNode.label || '').trim() || undefined, claimedEntityId: currentNode.externalId, role: 'member' },
         btnEl: btn,
         onSuccess: function(data) {
           status.style.color = '#059669';

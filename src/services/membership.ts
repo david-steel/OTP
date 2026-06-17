@@ -317,7 +317,7 @@ export interface AcceptInviteResult {
   memberId: string;
 }
 
-export async function acceptInvite(token: string, clerkUserId: string, userEmail: string | null): Promise<AcceptInviteResult> {
+export async function acceptInvite(token: string, clerkUserId: string, userEmail: string | null, clerkName: string | null = null): Promise<AcceptInviteResult> {
   if (!token) throw new MembershipError('MISSING_TOKEN', 'Token is required');
   if (!clerkUserId) throw new MembershipError('NOT_AUTHENTICATED', 'You must sign in to accept', 401);
 
@@ -366,7 +366,7 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
       updates.featureAccess = (inv.featureAccess as Record<string, boolean>) || {};
       updates.dataAccess = (inv.dataAccess as Record<string, boolean>) || {};
       updates.agentAccess = (inv.agentAccess as Record<string, boolean>) || {};
-      if (inv.displayName) updates.displayName = inv.displayName;
+      if (inv.displayName || clerkName) updates.displayName = inv.displayName || clerkName;
     }
     if (userEmail || inv.email) updates.email = userEmail || inv.email;
     // Always reactivate (revoked / suspended / inactive -> active).
@@ -416,7 +416,7 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     claimedEntityId: inv.claimedEntityId,
     claimedEntityIds: ((inv.claimedEntityIds as string[]) || []),
     email: userEmail || inv.email,
-    displayName: inv.displayName || null,
+    displayName: inv.displayName || clerkName || null,
     featureAccess: (inv.featureAccess as Record<string, boolean>) || {},
     dataAccess: (inv.dataAccess as Record<string, boolean>) || {},
     agentAccess: (inv.agentAccess as Record<string, boolean>) || {},
@@ -507,7 +507,7 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
         try {
           await patchTeamEntity(inv.orgId, 'human', tile, {
             contactEmail: fillEmail,
-            ...(inv.displayName ? { name: inv.displayName } : {}),
+            ...((inv.displayName || clerkName) ? { name: inv.displayName || clerkName } : {}),
           } as any);
         } catch { /* tile may be agent or already filled -- skip */ }
       }
@@ -533,7 +533,7 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
       const { createTeamEntity } = await import('./team-graph.js');
       const ent = await createTeamEntity(inv.orgId, {
         type: 'human',
-        name: inv.displayName || userEmail || inv.email,
+        name: inv.displayName || clerkName || userEmail || inv.email,
         role: String(inv.role),
         contactEmail: userEmail || inv.email || undefined,
       } as any);

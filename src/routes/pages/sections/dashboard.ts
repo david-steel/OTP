@@ -217,6 +217,50 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     let members = await listMembers(org.id);
     let invitations = await listPendingInvites(org.id);
 
+    // ----- Heal names from Clerk for members with no display_name -----
+    // Members invited from a chart tile land with display_name=null (the
+    // tile-invite path historically dropped the name), so the table showed
+    // "(no name)" even though Clerk has their real name. Look up any such
+    // member, write the name back so this is a one-time heal, and reflect it
+    // in the rows we render now. Gated on !displayName ALONE -- the older
+    // team-page enrichment also required !email, which skipped exactly these
+    // rows (they carry an email but no name). Best-effort: a Clerk outage
+    // must never break the members page.
+    {
+      const needHeal = members.filter(m =>
+        !(m as any).displayName && (m as any).clerkUserId?.startsWith('user_')
+      );
+      if (needHeal.length > 0) {
+        try {
+          const { createClerkClient } = await import('@clerk/backend');
+          const secretKey = process.env.CLERK_SECRET_KEY;
+          if (secretKey) {
+            const clerk = createClerkClient({ secretKey });
+            for (const m of needHeal) {
+              try {
+                const u = await clerk.users.getUser((m as any).clerkUserId);
+                const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+                  || u.username
+                  || null;
+                const email = u.primaryEmailAddress?.emailAddress || null;
+                if (name || email) {
+                  await db.update(orgMembers)
+                    .set({ displayName: name || undefined, email: email || undefined, updatedAt: new Date() })
+                    .where(and(eq(orgMembers.clerkUserId, (m as any).clerkUserId), eq(orgMembers.orgId, org.id)));
+                  if (name) (m as any).displayName = name;
+                  if (email && !(m as any).email) (m as any).email = email;
+                }
+              } catch (e) {
+                request.log.warn({ clerkUserId: (m as any).clerkUserId, err: (e as Error).message }, 'members: Clerk name heal failed');
+              }
+            }
+          }
+        } catch (err) {
+          request.log.warn({ err }, 'members: Clerk client unavailable -- names fall back to (no name)');
+        }
+      }
+    }
+
     // Non-admin scoping (added 2026-05-27 per David's spec: members should
     // only show her + her direct reports). Tier matches the canonical
     // chart-permissions.ts authority: only owner/admin/implementer are
@@ -1059,6 +1103,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         // Pull the Clerk user's primary email so acceptInvite can populate
         // the chart tile's contact_email when claimed.
         let clerkEmail: string | null = null;
+        let clerkName: string | null = null;
         try {
           const secretKey = process.env.CLERK_SECRET_KEY;
           if (secretKey) {
@@ -1068,10 +1113,13 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             clerkEmail = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
               || u.emailAddresses[0]?.emailAddress
               || null;
+            clerkName = [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+              || u.username
+              || null;
           }
         } catch { /* Clerk lookup failed -- fall back to invite email */ }
 
-        await acceptInvite(token, auth.userId, clerkEmail);
+        await acceptInvite(token, auth.userId, clerkEmail, clerkName);
         // Skip the "Welcome aboard" interstitial -- David wants new
         // members landing straight on their dashboard. The /dashboard
         // route resolves their org via the request.orgMember decorator
