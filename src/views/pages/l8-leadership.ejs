@@ -52,7 +52,7 @@
   <!-- Header -->
   <div class="mtg-header flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
     <div>
-      <div class="mtg-eyebrow text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %> &middot; Weekly Leadership L10</div>
+      <div class="mtg-eyebrow text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %> &middot; Weekly Leadership Meeting</div>
       <div class="flex items-start gap-2">
         <h1 id="meeting-title" class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.1] tracking-tight"><%= meeting.title %></h1>
         <button id="title-edit-btn" type="button" class="mt-1 text-xs text-orgy-blue hover:underline shrink-0" title="Edit the meeting title">Edit</button>
@@ -344,7 +344,7 @@
     rocks:     { id: 'rocks',     label: 'Quarterly Priorities' },
     headlines: { id: 'headlines', label: 'Headlines' },
     todos:     { id: 'todos',     label: 'To-Dos' },
-    issues:    { id: 'ids',       label: 'Issues (IDS)' },
+    issues:    { id: 'ids',       label: 'Issues' },
     conclude:  { id: 'conclude',  label: 'Conclude' },
   };
   var _railAgenda = (Array.isArray(meeting.agenda) && meeting.agenda.length && meeting.meetingType === 'custom')
@@ -385,7 +385,7 @@
       <a href="#rocks"     data-section="rocks"     data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Quarterly Priorities</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
       <a href="#headlines" data-section="headlines" data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13v16H6a2 2 0 0 1-2-2z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><line x1="7" y1="9" x2="13" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Headlines</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
       <a href="#todos"     data-section="todos"     data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">To-Dos</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
-      <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Issues (IDS)</span></span><span class="st-tm">60m</span><span class="st-go" title="Next section">&darr;</span></a>
+      <a href="#ids"       data-section="ids"       data-budget="60" class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Issues</span></span><span class="st-tm">60m</span><span class="st-go" title="Next section">&darr;</span></a>
       <a href="#conclude"  data-section="conclude"  data-budget="5"  class="agenda-chip"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="st-body"><span class="st-eyebrow">Currently on</span><span class="st-nm">Conclude</span></span><span class="st-tm">5m</span><span class="st-go" title="Next section">&darr;</span></a>
     </div>
     <div class="rail-actions">
@@ -1568,7 +1568,7 @@
     // Complete / Archive / Reopen -- fade then reloadKeep() re-renders.
     if (trigger.matches('[data-rock-complete]')) { rockStatusWrite(trigger, { completed: true }, 'Complete'); return; }
     if (trigger.matches('[data-rock-archive]')) {
-      if (!confirm('Archive this priority? It will be hidden from the active Rock Review (you can Reopen it later).')) return;
+      if (!confirm('Archive this priority? It will be hidden from the active Quarterly Priorities (you can Reopen it later).')) return;
       rockStatusWrite(trigger, { archived: true }, 'Archive');
       return;
     }
@@ -1644,7 +1644,7 @@
       return;
     }
 
-    // Rock move-to-team (fade out -- it now belongs to a different team's L10).
+    // Rock move-to-team (fade out -- it now belongs to a different team's Leadership Meeting).
     if (t.matches('[data-rock-move-team]')) {
       const newTeamId = t.value;
       if (!newTeamId) return;
@@ -1731,7 +1731,7 @@
     }
     // An in-progress meeting renders the FROZEN /start scorecard snapshot, so
     // without a re-snapshot the value we just wrote never appears after reload
-    // (David, 2026-06-10 live L10: "0 sales/close rate and it would not update").
+    // (David, 2026-06-10 live Leadership Meeting: "0 sales/close rate and it would not update").
     // Re-snapshot like the ↻ Refresh button, then reload. If the refresh fails
     // the value is still persisted, so reload either way.
     const statusEl = document.getElementById('meeting-status');
@@ -1810,7 +1810,7 @@
       category: 'other',
     };
     // Tag the new issue with this meeting's team so it shows up on the
-    // right L10 (and stays off others).
+    // right Leadership Meeting (and stays off others).
     if (teamId) createBody.teamId = teamId;
     if (owner) {
       createBody.ownerEntityType = owner.entityType;
@@ -1841,9 +1841,9 @@
     const recurrenceRule = (document.getElementById('new-todo-recur') || {}).value || null;
     const description = (document.getElementById('new-todo-desc') || {}).value || '';
     // Custom due date wins; fall back to 7-day default if the user leaves it
-    // blank. Default behavior preserved -- pre-2026-05-26 every L10 todo was
+    // blank. Default behavior preserved -- pre-2026-05-26 every Leadership Meeting todo was
     // stamped with this auto-default and there was no way to override it
-    // from inside the L10 view.
+    // from inside the Leadership Meeting view.
     const dueOverride = (document.getElementById('new-todo-due') || {}).value || '';
     let dueAt;
     if (dueOverride) {
@@ -2494,7 +2494,7 @@
   // Tools open IN the meeting (iframe overlay) so you never bounce away.
   var TOOL_ITEMS = [
     { label: 'Dashboard',            desc: 'Your team dashboard',   run: function(){ openTool('/dashboard', 'Dashboard'); } },
-    { label: 'Accountability chart', desc: 'Seats and owners',      run: function(){ openTool('/dashboard/team', 'Accountability chart'); } },
+    { label: 'Accountability Map', desc: 'Seats and owners',      run: function(){ openTool('/dashboard/team', 'Accountability Map'); } },
     { label: 'Scorecard',            desc: 'KPIs and trends',       run: function(){ openTool('/dashboard/kpis', 'Scorecard'); } },
     { label: 'CEO dashboard',        desc: 'The vision + numbers',  run: function(){ openTool('/dashboard/ceo', 'CEO dashboard'); } },
     { label: 'Meeting formats',      desc: 'Build a custom agenda', run: function(){ openTool('/dashboard/meeting-formats', 'Meeting formats'); } },

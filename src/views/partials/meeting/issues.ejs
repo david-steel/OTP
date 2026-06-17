@@ -1,12 +1,12 @@
 <!-- meeting section partial: issues -- verbatim extract from l8-leadership.ejs (Inc 1, additive). Props contract: src/shared/meeting-section-props.ts -->
   <section id="ids" class="mb-12 bg-orgy-blue-soft -mx-4 px-4 py-6 rounded-lg">
-    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span> <button type="button" class="help-q" data-help="l8meeting.ids" aria-label="About Issues and IDS">?</button></h2>
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Spot, discuss, solve -- where most of the value of this meeting comes from</span> <button type="button" class="help-q" data-help="l8meeting.ids" aria-label="About Issues">?</button></h2>
     <% // Open: anything not yet solved AND owned by a human (or unowned).
-       // EOS leadership L10 is humans-only by convention -- agent-owned
+       // EOS leadership Leadership Meeting is humans-only by convention -- agent-owned
        // issues belong in an agent review, not the main IDS list.
        // Solved this meeting: only issues whose solvedInMeetingId matches
        // THIS meeting. Issues solved in prior meetings are gone -- they
-       // shouldn't clutter a fresh L10 agenda.
+       // shouldn't clutter a fresh Leadership Meeting agenda.
        function _isAgentOwner(o) {
          if (!o) return false;
          if (o.ownerEntityType === 'agent') return true;

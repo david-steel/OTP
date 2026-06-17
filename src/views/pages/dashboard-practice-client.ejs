@@ -84,7 +84,7 @@
         <div>
           <div class="text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-1">Weekly meeting cadence</div>
           <% if (_lastMtg) { %>
-            <div class="text-sm text-gray-800">Last L10: <strong><%= _lastMtg.toLocaleDateString() %></strong>
+            <div class="text-sm text-gray-800">Last Leadership Meeting: <strong><%= _lastMtg.toLocaleDateString() %></strong>
               <span class="text-gray-500">(<%= _daysSince === 0 ? 'today' : _daysSince + ' day' + (_daysSince === 1 ? '' : 's') + ' ago' %>)</span>
             </div>
           <% } else { %>
@@ -93,7 +93,7 @@
         </div>
         <div class="text-3xl font-extrabold text-gray-900"><%= (typeof cadence !== 'undefined' && cadence) ? cadence.meetingCount : 0 %><span class="text-sm font-medium text-gray-500 ml-1.5">meetings run</span></div>
         <div class="ml-auto text-xs <%= (_daysSince !== null && _daysSince > 21) ? 'text-red-700 font-semibold' : 'text-gray-500' %>">
-          <% if (_daysSince === null) { %>Get them running their weekly L10.
+          <% if (_daysSince === null) { %>Get them running their weekly Leadership Meeting.
           <% } else if (_daysSince > 21) { %>Cadence has gone quiet &mdash; nudge them.
           <% } else if (_daysSince > 10) { %>A bit overdue for this week's meeting.
           <% } else { %>Cadence is healthy.<% } %>

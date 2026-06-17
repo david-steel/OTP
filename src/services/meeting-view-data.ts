@@ -47,7 +47,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
       // Snapshots were historically captured org-wide, so an older one can
       // carry other teams' KPIs. The scorecard is team-scoped, so filter the
       // snapshot to this meeting's team -- fixes the 2026-06-04 leak where the
-      // AI Army KPI "OTP -- Real signups" surfaced on the Leadership L10.
+      // AI Army KPI "OTP -- Real signups" surfaced on the Leadership Meeting.
       const _snap = meeting.scorecardSnapshot as any;
       const _kpisScoped = (_snap.kpis || []).filter((k: any) => belongsToMeetingTeam(k.teamId, meeting.teamId));
       scorecard = { ..._snap, kpis: _kpisScoped, kpiCount: _kpisScoped.length };
@@ -55,7 +55,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
       scorecard = { kpis: orgKpis, latestValues, previousValues, kpiCount: orgKpis.length };
     }
 
-    // Rock Review hides completed + archived rocks by default; ?rocks=all
+    // Quarterly Priorities hides completed + archived rocks by default; ?rocks=all
     // reveals them (rendered at the bottom with a Reopen button).
     const _showHiddenRocks = (request.query as any)?.rocks === 'all';
     const _rockConds = [
@@ -84,7 +84,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
     // Rocks ALWAYS render live (current state), for scheduled / in_progress /
     // completed alike. Unlike the scorecard (which freezes a weekly KPI reading
     // as-of meeting start), rocks are current-state objects edited DURING the
-    // meeting (the Rock Review). Snapshotting them caused the 2026-06-04 bugs:
+    // meeting (the Quarterly Priorities). Snapshotting them caused the 2026-06-04 bugs:
     // live edits looked unsaved, and the org-wide snapshot leaked other teams'
     // rocks. The /start rocksSnapshot is retained ONLY as the baseline for the
     // "changed this meeting" diff below, never as a render source.
@@ -131,7 +131,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
     }
 
     // Team-scoped issues. Strict match on meeting.team_id so a Leadership
-    // L10 never sees issues that another team (e.g. "David x Dan") owns.
+    // Leadership Meeting never sees issues that another team (e.g. "David x Dan") owns.
     // Tickets with team_id IS NULL are hidden -- post-backfill they should
     // be impossible, but if one slips through it can be assigned via the
     // issue card's team selector.
@@ -159,10 +159,10 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
         .where(eq(teamMemberships.teamId, meeting.teamId));
     }
 
-    // L10 todos only -- filter by kind='l10' AND the meeting's team so
-    // personal todos from /me/todos can never leak into a leadership L10.
+    // Leadership Meeting todos only -- filter by kind='l10' AND the meeting's team so
+    // personal todos from /me/todos can never leak into a leadership Leadership Meeting.
     // Recurrence templates hidden by default; only instances appear.
-    // OPEN ONLY: EOS L10 convention is that completed to-dos drop off
+    // OPEN ONLY: EOS Leadership Meeting convention is that completed to-dos drop off
     // and only carry-forward open ones surface. David flagged 2026-05-25
     // that done items lingered with strikethrough -- killed.
     const orgTodos = await db.select().from(todos)
@@ -179,7 +179,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
 
     // Build the full roster for owner dropdowns. The template was previously
     // restricting owner selection to meeting.attendees, which excluded the
-    // meeting creator (David ran the L10 but never added himself as an
+    // meeting creator (David ran the Leadership Meeting but never added himself as an
     // attendee) and made it impossible to assign to-dos to people outside
     // the room (delegating to a Crystal/Pulse/etc. that isn't there).
     //
@@ -332,7 +332,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
     }
 
     // ---- Milestones for the rocks on this meeting (+ linked to-do
-    // summaries), keyed by rock id. Server-side so the Rock Review paints
+    // summaries), keyed by rock id. Server-side so the Quarterly Priorities paints
     // with milestones on first render; the in-meeting checkbox toggles via
     // /api/v1/milestones/:id/complete.
     const rockMilestonesMap: Record<string, any[]> = {};
@@ -369,7 +369,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
         }
       }
     } catch (err) {
-      request.log.warn({ err }, 'rock milestones load failed -- rendering Rock Review without them');
+      request.log.warn({ err }, 'rock milestones load failed -- rendering Quarterly Priorities without them');
     }
 
   return {

@@ -1,7 +1,7 @@
 <% /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing </script> can't break out of the script context (stored-XSS guard). */ function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); } %>
 <%
   // Daily Manager Dashboard. The home base for anyone who runs a meeting --
-  // EOS-style L10 with Headlines / Rocks / KPIs / To-Dos / Issues, plus an
+  // EOS-style Leadership Meeting with Headlines / Rocks / KPIs / To-Dos / Issues, plus an
   // OTP-native "My Agents" surface. Designed to be opened every morning.
   //
   // Data shape passed in by the /dashboard route:
@@ -713,10 +713,10 @@
                          sourceLabel = 'From ' + t.meetingTitle;
                          sourceClass = 'bg-indigo-50 text-indigo-700';
                        } else if (t.kind === 'l10' && t.teamName) {
-                         sourceLabel = t.teamName + ' L10';
+                         sourceLabel = t.teamName + ' Leadership Meeting';
                          sourceClass = 'bg-indigo-50 text-indigo-700';
                        } else if (t.kind === 'l10') {
-                         sourceLabel = 'L10';
+                         sourceLabel = 'Leadership Meeting';
                          sourceClass = 'bg-indigo-50 text-indigo-700';
                        } else {
                          sourceLabel = 'Personal';
@@ -910,7 +910,7 @@
       <!-- IDS Issues -->
       <section data-tile-id="issues" data-tile-col="right" class="rounded-lg border border-gray-200 bg-white p-5<%= dashHide('issues') %>">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/issues.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Issues (IDS) <button type="button" class="help-q" data-help="dashboard.issues" aria-label="About Issues and IDS">?</button></h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 otp-dic-h2"><img class="otp-dic-img" src="/public/images/orgy/issues.png?v=<%= typeof assetVersion !== "undefined" ? assetVersion : "dev" %>" alt="">Issues <button type="button" class="help-q" data-help="dashboard.issues" aria-label="About Issues">?</button></h2>
           <button id="issue-add-toggle" class="text-xs text-orgy-blue font-semibold">+ Add</button>
         </div>
         <form id="issue-add-form" class="hidden mb-3 space-y-2">
@@ -927,7 +927,7 @@
           <button type="submit" class="rounded bg-orgy-blue text-white text-xs font-semibold px-3 py-1 hover:bg-orgy-blue-deep">Add issue</button>
         </form>
         <% if (myIssues.length === 0) { %>
-          <p class="text-xs text-gray-500">No open issues for you. Use this list at L10 -- Identify, Discuss, Solve.</p>
+          <p class="text-xs text-gray-500">No open issues for you. Use this list at Leadership Meeting -- Spot, discuss, solve.</p>
         <% } else { %>
           <%
             var issueCounts = { open: 0, identified: 0, discussed: 0 };
@@ -1482,7 +1482,7 @@
 
   <!-- Footer -->
   <footer class="mt-10 text-xs text-gray-400">
-    Daily dashboard v1. Run an L10 from this page every week. Push KPIs and pull rocks via MCP.
+    Daily dashboard v1. Run an Leadership Meeting from this page every week. Push KPIs and pull rocks via MCP.
     <% if (caps.canEditOrgSettings) { %>
       &middot; <a href="/dashboard/publisher" class="underline hover:text-orgy-blue">Switch to publisher view</a>
     <% } %>
@@ -1886,7 +1886,7 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
         body.delegatorExternalId = <%- jsonForScript(locals.meExternalId || '') %>;
         body.delegatorName = <%- jsonForScript(locals.meName || '') %>;
       }
-      // Team scoping: if a team is picked, this becomes an L10 (team) to-do.
+      // Team scoping: if a team is picked, this becomes an Leadership Meeting (team) to-do.
       var teamSel = document.getElementById('todo-team-select');
       var teamVal = teamSel ? teamSel.value : '';
       if (teamVal) {

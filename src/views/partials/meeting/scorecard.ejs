@@ -12,16 +12,16 @@
     <% } else {
       // Group KPIs by groupName so Leadership / OTP scorecards render
       // separately. Agent-owned KPIs and the "Agent Scorecard" group are
-      // hidden from the L10 main agenda by default -- they surface in the
+      // hidden from the Leadership Meeting main agenda by default -- they surface in the
       // Agent Reports section when agents are explicitly added to the
-      // meeting. EOS L10 convention: humans-only scorecard.
+      // meeting. EOS Leadership Meeting convention: humans-only scorecard.
       const groups = {};
       // Resolve a KPI owner's external id to a friendly name via the chart roster.
       const _ownerNames = {};
       (availableOwners || []).forEach(function(o){ _ownerNames[o.externalId] = o.name; });
       const ownerName = function(extId){ return _ownerNames[extId] || extId; };
       (scorecard.kpis || []).forEach(function(k) {
-        if (k.ownerEntityType === 'agent') return; // hide agent-owned KPIs from L10
+        if (k.ownerEntityType === 'agent') return; // hide agent-owned KPIs from Leadership Meeting
         const g = k.groupName || 'Scorecard';
         if (g === 'Agent Scorecard') return; // hide the agent-scorecard group too
         (groups[g] = groups[g] || []).push(k);

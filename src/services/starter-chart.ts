@@ -60,7 +60,7 @@ function starterFrontmatterYAML(orgName: string, industry: string | null, orgSiz
 function starterRawContent(orgName: string, industry: string | null, orgSize: string | null): string {
   const fm = starterFrontmatterYAML(orgName, industry, orgSize);
   const body = [
-    `# ${orgName} -- Accountability Chart`,
+    `# ${orgName} -- Accountability Map`,
     '',
     'This chart was started during onboarding. Edit any seat, invite teammates, or add agents from the team dashboard.',
     '',

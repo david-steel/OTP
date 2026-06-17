@@ -11,7 +11,7 @@
         <a href="?rocks=all<%= _devQ %>#rocks" class="text-xs px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50 whitespace-nowrap">Show completed &amp; archived (<%= _hiddenCount %>)</a>
       <% } %>
     </div>
-    <% // Hide agent-owned rocks from the L10 main agenda. Humans own
+    <% // Hide agent-owned rocks from the Leadership Meeting main agenda. Humans own
        // quarterly priorities in EOS; agent commitments belong in the
        // agent's own review surface.
        var _humanRocks = (rocks.rocks || []).filter(function(r){
@@ -26,7 +26,7 @@
        var _rockChanges = (typeof rockChanges !== 'undefined' && rockChanges) ? rockChanges : {};
        var _rockBaseline = (typeof rockBaseline !== 'undefined' && rockBaseline) ? rockBaseline : {};
        // Milestones keyed by rock id (server-fetched). Read-only here except
-       // the checkbox -- checking off a milestone during Rock Review is the
+       // the checkbox -- checking off a milestone during Quarterly Priorities is the
        // natural EOS motion. Add/edit forms live on the daily dashboard.
        var _rockMs = (typeof rockMilestones !== 'undefined' && rockMilestones) ? rockMilestones : {};
        var _msToday = (function(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
@@ -131,12 +131,12 @@
             </div>
             <div class="flex gap-1 ml-4 items-center">
               <% if (_hidden) { %>
-                <button data-rock-reopen class="text-xs px-2 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" title="Restore this priority to the active Rock Review">Reopen</button>
+                <button data-rock-reopen class="text-xs px-2 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" title="Restore this priority to the active Quarterly Priorities">Reopen</button>
               <% } else { %>
                 <input type="number" min="1" step="1" data-rock-position
                        value="<%= (r.position === null || r.position === undefined) ? '' : r.position %>"
                        class="w-12 text-xs px-1 py-1 border rounded text-gray-600 text-center"
-                       title="Display order for the Rock Review (lower sorts first). Leave blank to sort by due date.">
+                       title="Display order for the Quarterly Priorities (lower sorts first). Leave blank to sort by due date.">
                 <% if ((orgTeams || []).length > 1) { %>
                   <select data-rock-move-team class="text-xs px-1 py-1 border rounded text-gray-500" title="Move this priority to a different team">
                     <option value="">move…</option>
@@ -147,7 +147,7 @@
                 <% } %>
                 <button data-rock-toggle="on"  class="text-xs px-2 py-1 rounded hover:opacity-80 <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack font-bold' : 'bg-gray-100 text-gray-400' %>" title="Mark this priority On Track (green)">On</button>
                 <button data-rock-toggle="off" class="text-xs px-2 py-1 rounded hover:opacity-80 <%= r.onTrack === false ? 'bg-status-offtrack-soft text-status-offtrack font-bold' : 'bg-gray-100 text-gray-400' %>" title="Mark this priority Off Track (red)">Off</button>
-                <button data-rock-complete class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80" title="Mark complete (hides from the active Rock Review)">&#128077;</button>
+                <button data-rock-complete class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80" title="Mark complete (hides from the active Quarterly Priorities)">&#128077;</button>
                 <button data-rock-archive class="text-xs px-2 py-1 bg-gray-100 rounded hover:opacity-80" title="Archive / kill this priority (hides it, recoverable)">&#128078;</button>
               <% } %>
             </div>

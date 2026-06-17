@@ -404,7 +404,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     });
   });
 
-  // /dashboard/ids -- admin-only cross-team Issues (IDS) view.
+  // /dashboard/ids -- admin-only cross-team Issues view.
   // Lists every open issue across the whole org with a team chip per row
   // and an admin-only mover. Restricted to owner/admin/manager so the
   // private-team data ('David x Dan' issues) doesn't leak to managee
@@ -465,7 +465,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       .limit(500);
 
     return reply.view('pages/dashboard-ids', {
-      title: 'Issues (IDS) - Dashboard - OTP',
+      title: 'Issues - Dashboard - OTP',
       noindex: true,
       org,
       viewerRole,
@@ -3061,7 +3061,7 @@ Founder, OTP</p>
           eq(rocks.organizationId, org.id),
           isNull(rocks.deletedAt),
           // Hide completed + archived from the glanceable "My Rocks" list,
-          // matching the meeting Rock Review. Manage them on the L8 meeting
+          // matching the meeting Quarterly Priorities. Manage them on the L8 meeting
           // page (Show completed & archived / Reopen).
           isNull(rocks.completedAt),
           isNull(rocks.archivedAt),

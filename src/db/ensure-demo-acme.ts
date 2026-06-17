@@ -138,7 +138,7 @@ export async function ensureDemoAcme(): Promise<void> {
     await db.insert(oosFiles).values({
       orgId: org.id, chartId: chart.id, name: 'Acme Corp Chart', template: 'org_chart',
       version: 1, status: 'published', visibilityDefault: 'free', wordCount: 0, claimCount: 0,
-      rawContent: '---\n---\n\n# Acme Corp -- Accountability Chart\n',
+      rawContent: '---\n---\n\n# Acme Corp -- Accountability Map\n',
       frontmatter: {
         oos_version: '1.0', org_pseudonym: 'Acme Corp', industry: 'manufacturing', org_size: 'medium',
         template: 'org_chart', generated_at: new Date().toISOString(), version: 1, parent_version: null,
