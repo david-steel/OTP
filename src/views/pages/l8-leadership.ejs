@@ -94,7 +94,7 @@
       <!-- Secondary actions live in one overflow so the header has a single clear
            primary (DESIGN.md: one primary per screen). Same ids/classes/handlers. -->
       <details class="hdr-overflow">
-        <summary class="hdr-overflow-btn" aria-label="More meeting actions" title="More actions">&#8943;</summary>
+        <summary class="hdr-overflow-btn" aria-label="More meeting actions" title="More actions">Actions <span class="hdr-caret" aria-hidden="true">&#9662;</span></summary>
         <div class="hdr-overflow-menu">
           <a href="/l8" class="hdr-mi" title="Leave this meeting and go back to your meetings">&larr; Exit to meetings</a>
           <% if (meeting.status === 'scheduled') { %>
@@ -1137,17 +1137,9 @@
     </div>
   </section>
 
-  <!-- Bottom end bar: the foot of the meeting is where you naturally finish, so
-       End lives here too (not just in the header). Hidden once completed. -->
-  <% if (meeting.status === 'scheduled' || meeting.status === 'in_progress') { %>
-  <div class="mt-10 pt-6 border-t border-gray-200 flex items-center justify-end gap-2">
-    <% if (meeting.status === 'in_progress') { %>
-      <span class="text-xs text-gray-400 mr-auto">This meeting auto-ends an hour after it started unless you end or extend it.</span>
-      <button class="js-extend-meeting px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft">⏱ Extend</button>
-    <% } %>
-    <button class="js-end-meeting px-5 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">✓ End meeting</button>
-  </div>
-  <% } %>
+  <!-- The foot-of-page End bar was removed: ending now lives in the header's
+       Actions menu (and the rail's Finish meeting in focus mode), so the page
+       has one clear place to finish instead of a bolted-on bottom bar. -->
 
 </div>
 
@@ -3182,7 +3174,7 @@
     modal = document.createElement('div'); modal.className = 'rail-tangent-modal'; modal.hidden = true;
     modal.innerHTML = '<div class="rtm-card"><button type="button" class="rtm-x" aria-label="Close">&times;</button>'
       + '<h3 class="rtm-h">Tangent alert!</h3>'
-      + '<img class="rtm-ollie" src="/images/orgy-run.webp" alt="Ollie" />'
+      + '<img class="rtm-ollie" src="/public/images/orgy/coach.png" alt="Ollie" />'
       + '<p class="rtm-p">Looks like we have wandered off-script. If it matters, <button type="button" class="rtm-link" id="rtm-park">park it as an issue</button> so it does not get lost.</p>'
       + '<button type="button" class="rtm-ok">&#128077; Got it</button></div>';
     document.body.appendChild(modal);
