@@ -612,6 +612,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog', priority: '0.8', changefreq: 'weekly' },
     { loc: '/publish', priority: '0.7', changefreq: 'monthly' },
     { loc: '/pricing', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/trust', priority: '0.7', changefreq: 'monthly' },
     { loc: '/investors', priority: '0.5', changefreq: 'monthly' },
     { loc: '/tickets', priority: '0.4', changefreq: 'weekly' },
     { loc: '/blog/why-we-built-otp', priority: '0.7', changefreq: 'monthly' },

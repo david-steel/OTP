@@ -35,6 +35,7 @@ import { normalizeStructure } from '../../shared/meeting-sections.js';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { GUIDE_SECTIONS } from '../../data/guide-content.js';
 import { renderInShell } from './_shared.js';
+import { trust as trustData } from '../../config/trust.js';
 import { aiRockAssistLive } from '../api/rock-ai.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { useScorecardSnapshot, belongsToMeetingTeam } from '../../services/meeting-snapshot.js';
@@ -959,6 +960,27 @@ export default async function pageRoutes(app: FastifyInstance) {
         headline: 'For the first time, your strategy is an artifact your agents can read',
         description: "The OOS file format: where your team's plan and your agents' rules live together. Humans read it, agents query it, no translation layer.",
         url: BASE_URL + '/protocol',
+      },
+    });
+  });
+
+  // Trust & Security page (public). Data: src/config/trust.ts. Spec + code
+  // citations: /trust.yaml. The claim that matters most here is the network
+  // boundary: what stays private vs. what becomes visible on publish.
+  app.get('/trust', async (request, reply) => {
+    return renderV7(reply, 'trust', {
+      title: 'Trust & Security - OTP',
+      description: 'How OTP protects your data: the network privacy boundary, encryption, access controls, subprocessors, incident response, and compliance status.',
+      canonical: BASE_URL + '/trust',
+      ogImage: BASE_URL + '/public/og-image.png',
+      breadcrumbs: bc({ name: 'Trust & Security', url: BASE_URL + '/trust' }),
+      trust: trustData,
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Trust & Security - OTP',
+        description: 'How OTP protects your data: privacy boundary, encryption, access controls, subprocessors, incident response, and compliance.',
+        url: BASE_URL + '/trust',
       },
     });
   });
