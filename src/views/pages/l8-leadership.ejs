@@ -3092,6 +3092,13 @@
     });
   }
   buildIdsRowMenus();
+  // Live sync: when a teammate's change live-swaps a section (refreshIssuesSection
+  // replaceWith()s #ids), re-tuck the per-row ⋯ so it persists for everyone in the
+  // meeting. childList-only on the section parent -> fires on section swaps, not on
+  // the per-second clock tick. Idempotent: cards with a menu are skipped.
+  var _idsObs = (typeof MutationObserver !== 'undefined') ? new MutationObserver(function(){ buildIdsRowMenus(); }) : null;
+  var _idsRoot = document.getElementById('l8-meeting');
+  if (_idsObs && _idsRoot) _idsObs.observe(_idsRoot, { childList: true });
   document.addEventListener('click', function(e){
     document.querySelectorAll('.ids-row-menu[open]').forEach(function(d){ if (!d.contains(e.target)) d.removeAttribute('open'); });
   });
@@ -3159,8 +3166,10 @@
     det.querySelectorAll('.hdr-mi').forEach(function(b){ b.addEventListener('click', function(){ setTimeout(function(){ det.removeAttribute('open'); }, 0); }); });
     document.addEventListener('click', function(e){ if (det.open && !det.contains(e.target)) det.removeAttribute('open'); });
   }
-  var tt = document.getElementById('todo-add-toggle'), tf = document.getElementById('todo-add-form');
-  if (tt && tf) tt.addEventListener('click', function(){
+  // Delegated so it survives #todos being live-swapped on a teammate's change.
+  document.addEventListener('click', function(e){
+    if (!e.target.closest || !e.target.closest('#todo-add-toggle')) return;
+    var tf = document.getElementById('todo-add-form'); if (!tf) return;
     tf.classList.toggle('hidden');
     if (!tf.classList.contains('hidden')) { var i = document.getElementById('new-todo-title'); if (i) i.focus(); }
   });
