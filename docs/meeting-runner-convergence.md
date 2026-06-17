@@ -38,9 +38,27 @@ proven byte-identical inside the gated custom runner.
   `missingLocalsForSection`, `sectionTypesInAgenda`, and a verbatim `normalizeAttendees`
   port). tsc clean + runtime-verified. `l8-leadership.ejs` UNCHANGED (additive).
   `notes` has no built-in partial (custom-only discussion block; folded in Inc 2).
-- **Inc 2** — gated custom runner renders the shared partials with live data
-  (route resolves scorecard/rocks/issues/todos; partials embed, not link).
-  Prove the full behavior here, behind the flag.
+- **Inc 2** — gated custom runner renders the shared partials with live data.
+  SPLIT after reading the built-in handler (2026-06-17):
+  - **Inc 2a** — extract a SHARED, tenant-safe data resolver + share the section
+    JS. Two findings driving this:
+    1. Built-in handler resolution (pages.ts ~3902-4459) is ~400 lines of
+       **tenant-scoped** queries (every KPI/rock/issue/todo filters by
+       meeting.teamId) interleaved with the access gate, lazy attendee self-heal
+       WRITES, and scorecard-snapshot semantics (incl. the 2026-06-04 team-filter
+       fix). A divergent reimplementation risks a cross-team data leak. Resolve by
+       extracting ONE shared function used by both routes (decision pending: touch
+       live handler now vs. duplicate-then-dedupe in Inc 5). Recommended: shared
+       function (verbatim query move, tsc-checkable, render-locals bundle
+       unchanged) — one tested scoping implementation, not two.
+    2. Section BEHAVIOR lives in ~2,300 lines of document-delegated JS in
+       l8-leadership's <script> (check-in save, KPI edit, rock actions, IDS,
+       ratings), NOT in the markup partials Inc 1 extracted. The custom runner
+       must SHARE that JS or the embedded partials are dead UIs. Extract to a
+       shared script include.
+  - **Inc 2b** — wire meeting-run.ejs to render the partials + shared JS per
+    section type, behind the flag; walk the regression checklist on a real
+    custom meeting.
 - **Inc 3** — unify persistence (built-in meeting state vs custom `runState`).
 - **Inc 4** — seed built-in L8/L10 as canonical `MeetingSection[]` (+ unit test
   == today's agendas).
