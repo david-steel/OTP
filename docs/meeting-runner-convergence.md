@@ -1,5 +1,15 @@
 # Meeting runner convergence — plan + regression contract
 
+**STATUS 2026-06-17: COMPLETE (gated).** Built-in L10 (verified live) + custom
+meetings both run through the agenda-driven l8-leadership shell on the shared
+partials (`partials/meeting/<type>.ejs`) + shared resolver (`meeting-view-data.ts`).
+`meeting-run.ejs` retired (/l8/run -> /l8/meeting). Shipped: 8d38491 (built-in
+via partials), 7279cfd (include-path hotfix), ac6305b (shared resolver),
+41e898e (custom routed through unified runner). Known follow-ups: free-form
+'notes' sections (need per-section persistence) are skipped; custom agendas
+assume each structured type at most once (section partials have fixed DOM ids);
+the orphaned /l8/run/:id/state POST can be removed.
+
 **Decision (2026-06-17, David):** converge to ONE structure-driven meeting runner.
 Each section type is ONE rich component (`partials/meeting/<type>.ejs`) used
 identically in built-in (L8/L10) and custom-format meetings; built-in meetings
