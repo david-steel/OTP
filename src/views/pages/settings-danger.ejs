@@ -1,0 +1,123 @@
+<%- include('../partials/orgy-palette'); %>
+<%
+  var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _pending = (typeof pending !== 'undefined') && pending;
+  var _isOwner = (typeof isOwner !== 'undefined') && isOwner;
+  var _orgName = (typeof orgName !== 'undefined' && orgName) ? orgName : 'your organization';
+  var _daysLeft = null;
+  if (_pending && typeof deletionRequestedAt !== 'undefined' && deletionRequestedAt) {
+    _daysLeft = Math.max(0, Math.ceil((new Date(deletionRequestedAt).getTime() + 7*86400000 - Date.now())/86400000));
+  }
+%>
+
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <%- include('../partials/ui-page-header', { helpKey: 'settings.danger', title: 'Delete organization', eyebrow: 'Company Settings', subtitle: 'Permanently remove this organization and all of its data.', mascot: 'mcp-api' }) %>
+
+  <% if (_auth === 'unauthenticated' || _auth === 'no_org') { %>
+    <div class="bg-gray-50 border rounded-xl p-8 text-center">
+      <p class="text-gray-600">Sign in to your organization to manage this setting.</p>
+    </div>
+
+  <% } else if (!_isOwner) { %>
+    <div class="bg-gray-50 border rounded-xl p-8 text-center">
+      <p class="text-gray-600">Only the organization <strong>owner</strong> can delete or restore this organization.</p>
+    </div>
+
+  <% } else if (_pending) { %>
+    <!-- Pending deletion: owner can restore within the 7-day window -->
+    <div class="border border-amber-300 bg-amber-50 rounded-xl p-6">
+      <h2 class="text-lg font-bold text-amber-900">Scheduled for deletion</h2>
+      <p class="text-sm text-amber-800 mt-1">
+        <strong><%= _orgName %></strong> is scheduled for permanent deletion<% if (_daysLeft !== null) { %> in <strong><%= _daysLeft %> day<%= _daysLeft === 1 ? '' : 's' %></strong><% } %>.
+        Until then it is hidden and no one can use it. Restore it any time before the countdown ends to bring everything back, untouched.
+      </p>
+      <div class="mt-4">
+        <button id="org-restore-btn" class="px-4 py-2 text-sm bg-orgy-blue hover:bg-orgy-blue-deep text-white rounded-lg font-semibold">Restore organization</button>
+        <span id="org-restore-msg" class="ml-2 text-xs text-gray-600"></span>
+      </div>
+    </div>
+
+  <% } else { %>
+    <!-- Active: owner danger zone -->
+    <div class="border border-red-200 bg-red-50 rounded-xl p-6">
+      <h2 class="text-lg font-bold text-red-900">Danger zone</h2>
+      <p class="text-sm text-red-700 mt-1">
+        Deleting <strong><%= _orgName %></strong> schedules it for removal. You can restore it for <strong>7 days</strong>; after that it and all of its data (chart, KPIs, meetings, to-dos, members, everything) are permanently and irreversibly deleted.
+      </p>
+      <div class="mt-4">
+        <button id="org-delete-open" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">Delete organization</button>
+      </div>
+    </div>
+
+    <!-- Confirm modal -->
+    <div id="org-del-overlay" class="hidden fixed inset-0" style="background:rgba(15,23,42,0.45);z-index:80;"></div>
+    <div id="org-del-modal" class="hidden fixed inset-0 flex items-center justify-center p-4" style="z-index:81;">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="text-lg font-bold text-gray-900">Delete <%= _orgName %></h3>
+          <button type="button" id="org-del-x" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">This can be restored for 7 days, then all data is permanently purged.</p>
+        <div class="mt-4 space-y-3 border-t border-gray-100 pt-4">
+          <label class="flex items-start gap-2 text-sm text-gray-700">
+            <input type="checkbox" id="org-del-ack1" class="mt-0.5"> I confirm I have authority to delete this organization.
+          </label>
+          <label class="flex items-start gap-2 text-sm text-gray-700">
+            <input type="checkbox" id="org-del-ack2" class="mt-0.5"> I understand this is irreversible after 7 days and all data inside will be lost.
+          </label>
+          <label class="block text-sm text-gray-700">
+            Type <span class="font-mono font-bold">DELETE</span> to confirm:
+            <input type="text" id="org-del-word" autocomplete="off" spellcheck="false" class="mt-1 w-full border rounded px-2 py-1.5 text-sm" placeholder="DELETE">
+          </label>
+        </div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" id="org-del-cancel" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Not now</button>
+          <button type="button" id="org-del-confirm" disabled class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" style="opacity:0.5;cursor:not-allowed;">Delete organization</button>
+        </div>
+        <p id="org-del-msg" class="mt-2 text-xs text-red-600"></p>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script>
+(function(){
+  function post(path){
+    return fetch('/api/v1' + path, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body: JSON.stringify({ ackAuthority:true, ackIrreversible:true, confirm:'DELETE' }) })
+      .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){ if(!r.ok) throw (j.error||{message:'HTTP '+r.status}); return j; }); });
+  }
+  // Restore (pending state)
+  var restoreBtn = document.getElementById('org-restore-btn');
+  if (restoreBtn) restoreBtn.addEventListener('click', function(){
+    restoreBtn.disabled = true; restoreBtn.textContent = 'Restoring...';
+    fetch('/api/v1/org/restore-deletion', { method:'POST', credentials:'same-origin' })
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(){ window.location.href = '/dashboard'; })
+      .catch(function(){ restoreBtn.disabled=false; restoreBtn.textContent='Restore organization'; var m=document.getElementById('org-restore-msg'); if(m) m.textContent='Restore failed. Try again.'; });
+  });
+  // Delete (active state)
+  var openBtn = document.getElementById('org-delete-open');
+  if (openBtn) {
+    var overlay=document.getElementById('org-del-overlay'), modal=document.getElementById('org-del-modal');
+    var ack1=document.getElementById('org-del-ack1'), ack2=document.getElementById('org-del-ack2'), word=document.getElementById('org-del-word');
+    var confirmBtn=document.getElementById('org-del-confirm'), msg=document.getElementById('org-del-msg');
+    function refresh(){ var ok = ack1.checked && ack2.checked && word.value === 'DELETE'; confirmBtn.disabled = !ok; confirmBtn.style.opacity = ok ? '1' : '0.5'; confirmBtn.style.cursor = ok ? 'pointer' : 'not-allowed'; }
+    function open(){ ack1.checked=false; ack2.checked=false; word.value=''; msg.textContent=''; refresh(); overlay.classList.remove('hidden'); modal.classList.remove('hidden'); }
+    function close(){ overlay.classList.add('hidden'); modal.classList.add('hidden'); }
+    openBtn.addEventListener('click', open);
+    [ack1,ack2].forEach(function(el){ el.addEventListener('change', refresh); });
+    word.addEventListener('input', refresh);
+    document.getElementById('org-del-x').addEventListener('click', close);
+    document.getElementById('org-del-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', close);
+    confirmBtn.addEventListener('click', function(){
+      if (confirmBtn.disabled) return;
+      confirmBtn.disabled=true; confirmBtn.textContent='Deleting...';
+      post('/org/request-deletion')
+        .then(function(){ window.location.href = '/settings/danger'; })
+        .catch(function(e){ msg.textContent = (e && e.message) || 'Delete failed'; confirmBtn.disabled=false; confirmBtn.textContent='Delete organization'; refresh(); });
+    });
+  }
+})();
+</script>
