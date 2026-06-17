@@ -26,27 +26,29 @@ export interface OrgLabFeatureState extends LabFeature {
   toggleable: boolean;
 }
 
-/** The set of feature keys this org has explicitly enabled. */
-async function getOrgOptins(orgId: string): Promise<Set<string>> {
+/** This org's explicit Labs rows, split into opted-IN (on) and opted-OUT (off). */
+async function getOrgOptinSets(orgId: string): Promise<{ on: Set<string>; off: Set<string> }> {
   const rows = (await db.execute(sql`
-    SELECT feature_key FROM org_lab_optins
-    WHERE org_id = ${orgId} AND enabled = true
+    SELECT feature_key, enabled FROM org_lab_optins WHERE org_id = ${orgId}
   `)) as any;
-  return new Set((rows.rows || []).map((r: any) => r.feature_key as string));
+  const on = new Set<string>();
+  const off = new Set<string>();
+  for (const r of (rows.rows || [])) { (r.enabled ? on : off).add(r.feature_key as string); }
+  return { on, off };
 }
 
 /**
- * Is a feature enabled for an org? `live` features are on regardless of org;
- * `beta` features require an opt-in; a null org (logged-out / no org) only ever
- * sees `live` features.
+ * Is a feature enabled for an org? `live` -> everyone; `beta` with defaultOn ->
+ * on unless explicitly opted out; plain `beta` -> on iff opted in. A null org
+ * (logged-out) sees `live` and defaultOn-beta features.
  */
 export async function isFeatureEnabledForOrg(orgId: string | null | undefined, key: string): Promise<boolean> {
   const feature = getLabFeature(key);
   if (!feature) return false;
   if (feature.status === 'live') return true;
-  if (!orgId) return false;
-  const optins = await getOrgOptins(orgId);
-  return resolveLabEnabled(feature, optins.has(key));
+  if (!orgId) return resolveLabEnabled(feature, false, false);
+  const { on, off } = await getOrgOptinSets(orgId);
+  return resolveLabEnabled(feature, on.has(key), off.has(key));
 }
 
 export interface LabNavItem {
@@ -61,21 +63,21 @@ export interface LabNavItem {
  * authed page render from the server.ts preHandler.
  */
 export async function getOrgLabNavItems(orgId: string): Promise<LabNavItem[]> {
-  const optins = await getOrgOptins(orgId);
+  const { on, off } = await getOrgOptinSets(orgId);
   return LAB_FEATURES
-    .filter((f) => !!f.surfaceUrl && resolveLabEnabled(f, optins.has(f.key)))
+    .filter((f) => !!f.surfaceUrl && resolveLabEnabled(f, on.has(f.key), off.has(f.key)))
     .map((f) => ({ href: f.surfaceUrl as string, label: f.navLabel || f.name, iconKey: f.navIcon || 'grid4' }));
 }
 
 /** Full Labs state for an org -- one entry per registered feature. */
 export async function getOrgLabState(orgId: string): Promise<OrgLabFeatureState[]> {
-  const optins = await getOrgOptins(orgId);
-  return LAB_FEATURES.map((f) => ({
-    ...f,
-    enabled: resolveLabEnabled(f, optins.has(f.key)),
-    optedIn: optins.has(f.key),
-    toggleable: isLabToggleable(f),
-  }));
+  const { on, off } = await getOrgOptinSets(orgId);
+  return LAB_FEATURES.map((f) => {
+    // The Settings toggle should reflect the actual on/off state, so a defaultOn
+    // feature reads ON even when there's no explicit opt-in row.
+    const enabled = resolveLabEnabled(f, on.has(f.key), off.has(f.key));
+    return { ...f, enabled, optedIn: enabled, toggleable: isLabToggleable(f) };
+  });
 }
 
 /**

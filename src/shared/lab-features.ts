@@ -25,6 +25,9 @@ export interface LabFeature {
   name: string;
   description: string;
   status: LabFeatureStatus;
+  /** Beta features only: ON by default for every org, but still toggleable -- an
+   *  org can opt OUT from /settings/labs. (Plain beta is OFF until opted in.) */
+  defaultOn?: boolean;
   /** ISO date (YYYY-MM-DD) the feature is expected to go fully live, if known. */
   targetLiveDate?: string;
   /** The reason to turn it on now instead of waiting (early-access value +
@@ -85,10 +88,11 @@ export const LAB_FEATURES: LabFeature[] = [
     description:
       'A guided run mode for your L8 meeting. Instead of one long page, step through the agenda one section at a time -- segue, scorecard, rocks, headlines, to-dos, IDS, conclude -- with the timebox and your real data in front of you, and the agenda as a stepper down the side.',
     whyNow:
-      'The default way to run your L8 meeting: one agenda section at a time, with the timebox and your real data in front of you, the agenda as a stepper down the side, a shared timer, and in-meeting Add/Tools. On for every organization.',
-    status: 'live',
+      'The default way to run your L8 meeting: one agenda section at a time, with the timebox and your real data in front of you, the agenda as a stepper down the side, a shared timer, and in-meeting Add/Tools. On for every org by default -- turn it off here if you prefer the classic one-page meeting.',
+    status: 'beta',
+    defaultOn: true,
     // Step-mode layer over the existing l8-leadership sections (#segue ... #conclude).
-    // Graduated from beta to live 2026-06-17: on for all current + future orgs.
+    // 2026-06-17: default-ON for all current + future orgs, still toggleable (opt-out).
   },
 ];
 
@@ -97,15 +101,16 @@ export function getLabFeature(key: string): LabFeature | undefined {
 }
 
 /**
- * Is the feature ON for an org, given whether that org has opted in?
- *   live        -> on for everyone (opt-in irrelevant)
- *   beta        -> on iff the org opted in
- *   coming_soon -> always off (not toggleable yet)
+ * Is the feature ON for an org, given its explicit opt-in / opt-out rows?
+ *   live              -> on for everyone (opt-in irrelevant)
+ *   beta + defaultOn  -> on UNLESS the org explicitly opted out (toggleable)
+ *   beta              -> on iff the org opted in
+ *   coming_soon       -> always off (not toggleable yet)
  */
-export function resolveLabEnabled(feature: LabFeature | undefined, optedIn: boolean): boolean {
+export function resolveLabEnabled(feature: LabFeature | undefined, optedIn: boolean, optedOut = false): boolean {
   if (!feature) return false;
   if (feature.status === 'live') return true;
-  if (feature.status === 'beta') return optedIn;
+  if (feature.status === 'beta') return feature.defaultOn ? !optedOut : optedIn;
   return false;
 }
 
