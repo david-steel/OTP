@@ -80,6 +80,49 @@ export const changelog: ChangelogEntry[] = [
     summary: 'Your organization\'s Company ID now appears in Settings, Configuration with a one-click copy button, handy for support requests and integration setup.',
   },
 
+  // ---- June 17, 2026 ----
+
+  {
+    date: '2026-06-17',
+    tags: ['Meetings'],
+    title: 'End anywhere, an hour-long safety net, and no more editing next week\'s meeting by mistake',
+    why: 'Your weekly meeting stays clean: the right data lands on the right meeting, and nothing is left hanging.',
+    cta: { text: 'Open your meetings', url: '/l8' },
+    summary: 'Three meeting fixes: End meeting now sits at the bottom of the page where you naturally finish (not just the top); a meeting left running auto-ends an hour after it started, and you can Extend it if you are still going; and a future occurrence of a recurring meeting stays locked until its time, so notes and to-dos go onto the current meeting instead of next week\'s.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>End at the bottom too.</strong> The End meeting button now lives at the foot of the meeting, where you naturally wrap up, as well as the header.</li>
+<li><strong>One-hour auto-end.</strong> A meeting still running an hour after it started ends itself, so nothing is left open forever. Press <strong>Extend</strong> to add another hour when you need it. Everything entered is kept.</li>
+<li><strong>Future recurring meetings stay locked.</strong> Next week\'s occurrence does not open until its date arrives (or you start it on purpose), so your check-ins, headlines, to-dos, and issues land on the current meeting, not a future one.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-17',
+    tags: ['Polish', 'Core'],
+    title: 'A cleaner Accountability Map header, plus zoom',
+    why: 'Your org chart is easier to read and to work with: less clutter up top, and you can zoom to see the whole picture or one corner.',
+    cta: { text: 'Open your Accountability Map', url: '/dashboard/team' },
+    summary: 'The Accountability Map header is tidied up: filters and actions now live in two clean dropdowns (Filter, and Actions) instead of a crowded row of buttons, with one clear primary action. And the chart now zooms: use the on-screen controls or Cmd/Ctrl + scroll to zoom from 40% to 200%.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Filter dropdown.</strong> Switch between All, Agents, and Humans from one tidy control.</li>
+<li><strong>Actions dropdown.</strong> Run Leadership Meeting, People Review, Invite member, Import CSV, and Pending invites are grouped together instead of crowding the header.</li>
+<li><strong>Zoom.</strong> Use the on-screen controls (bottom-right of the chart) or Cmd/Ctrl + scroll to zoom in and out, then click the percentage to reset.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-17',
+    tags: ['Rocks'],
+    title: 'Archive or delete a Quarterly Priority from the board',
+    why: 'You can keep your priorities board current without leaving it.',
+    cta: { text: 'Open Quarterly Priorities', url: '/rocks' },
+    summary: 'Each Quarterly Priority card now has Archive and Delete actions, so you can clear a priority that is done or no longer relevant right from the board. Archive hides it but keeps it recoverable; delete removes it.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Archive.</strong> Hide a priority from the board while keeping it on record, recoverable later.</li>
+<li><strong>Delete.</strong> Remove a priority you no longer need, right from the card.</li>
+</ul>`,
+  },
+
   // ---- June 12, 2026 ----
 
   {
