@@ -395,6 +395,9 @@ body.otp-focus .help-q { display: none !important; }
 /* normalize a moved-in section form to a clean stacked modal form */
 .mtg-modal-body > div { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
 .mtg-modal-body .grid { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; }
+/* the headline add-form is a flex row; stack it so the body field isn't squished */
+.mtg-modal-body #headline-add-form { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+.mtg-modal-body #headline-add-form #add-headline { align-self: flex-end; }
 .mtg-modal-body [class*="col-span-"] { grid-column: 1 / -1 !important; }
 .mtg-modal-body input, .mtg-modal-body select, .mtg-modal-body textarea { width: 100% !important; border: 1px solid #e6e8ec !important; border-radius: 9px !important; padding: 9px 11px !important; font-size: 14px; }
 .mtg-modal-body button { border-radius: 9px !important; }

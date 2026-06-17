@@ -85,9 +85,10 @@ export const LAB_FEATURES: LabFeature[] = [
     description:
       'A guided run mode for your L8 meeting. Instead of one long page, step through the agenda one section at a time -- segue, scorecard, rocks, headlines, to-dos, IDS, conclude -- with the timebox and your real data in front of you, and the agenda as a stepper down the side.',
     whyNow:
-      'Switch it on to run your L8 meeting one agenda section at a time, with the agenda as a stepper down the side. Early run mode, so tell us how it feels in a real meeting. Off by default for everyone else.',
-    status: 'beta',
+      'The default way to run your L8 meeting: one agenda section at a time, with the timebox and your real data in front of you, the agenda as a stepper down the side, a shared timer, and in-meeting Add/Tools. On for every organization.',
+    status: 'live',
     // Step-mode layer over the existing l8-leadership sections (#segue ... #conclude).
+    // Graduated from beta to live 2026-06-17: on for all current + future orgs.
   },
 ];
 

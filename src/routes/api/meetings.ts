@@ -63,7 +63,7 @@ const updateMeetingSchema = z.object({
   segueNotes: z.string().optional(),
   headlines: z.string().optional(),
   cascadingMessage: z.string().optional(),
-  ratings: z.record(z.number().min(1).max(10)).optional(),
+  ratings: z.record(z.union([z.number().min(1).max(10), z.literal('absent')])).optional(),
   teamId: z.string().uuid().nullable().optional(),
   // Phase 0 meeting scheduler (manual paste path): a user-pasted video link.
   // Empty string clears it. Loose URL cap at 2048 to match the column; we
