@@ -253,13 +253,13 @@
     <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
       <a href="/dashboard" class="hover:text-orgy-blue">Dashboard</a>
       <span>/</span>
-      <span class="text-gray-700 font-medium">Team</span>
+      <span class="text-gray-700 font-medium">Accountability Map</span>
     </div>
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div class="flex items-center gap-3">
         <img src="/public/images/orgy/team.png?v=<%= typeof assetVersion !== 'undefined' ? assetVersion : 'dev' %>" alt="" class="orgy-mascot-wave w-14 sm:w-16 shrink-0" loading="eager" decoding="async">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Team <button type="button" class="help-q" data-help="page.orgChart" aria-label="About the org chart">?</button></h1>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= org.name %> &mdash; Accountability Map <button type="button" class="help-q" data-help="page.orgChart" aria-label="About the Accountability Map">?</button></h1>
           <p class="text-sm text-gray-500 mt-1">Click any agent or human to edit. Edits save to a draft until you publish.</p>
         </div>
       </div>
@@ -279,9 +279,9 @@
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Published v<%= teamMeta.oosVersion %></span>
         <% } %>
         <% if (typeof viewerRole !== 'undefined' && viewerRole === 'owner') { %>
-          <a href="/l8" class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-1.5 transition-colors" title="Run your weekly L8 meeting -- the cadence that drives your org to agentic maturity. Scorecard, quarterly priorities, headlines, to-dos, issues, conclude.">
+          <a href="/l8" class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-1.5 transition-colors" title="Run your weekly Leadership Meeting -- the cadence that drives your org to agentic maturity. Scorecard, quarterly priorities, headlines, to-dos, issues, conclude.">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Run L8 Meeting
+            Run Leadership Meeting
           </a>
           <a href="/team/review" class="text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium inline-flex items-center gap-1.5" title="Rate each person against their seat and your organization's values.">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
