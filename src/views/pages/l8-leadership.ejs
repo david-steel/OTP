@@ -801,7 +801,7 @@
     </div>
 
     <!-- Add headline -->
-    <div class="flex gap-2 mb-4">
+    <div id="headline-add-form" class="flex gap-2 mb-4">
       <select id="new-headline-kind" class="border rounded p-2 text-sm">
         <option value="customer">customer</option>
         <option value="employee">employee</option>
@@ -1145,6 +1145,68 @@
   <!-- The foot-of-page End bar was removed: ending now lives in the header's
        Actions menu (and the rail's Finish meeting in focus mode), so the page
        has one clear place to finish instead of a bolted-on bottom bar. -->
+
+  <!-- Add modals (Labs): one shell. The +Add palette opens it; the section's own
+       add-form is MOVED in (its delegated handler + reloadKeep on success are
+       reused), except Measurable which has its own KPI form below. -->
+  <div id="mtg-modal" class="mtg-modal" hidden>
+    <div class="mtg-modal-card">
+      <div class="mtg-modal-head">
+        <h3 class="mtg-modal-title" id="mtg-modal-title">Add</h3>
+        <button type="button" class="mtg-modal-x" id="mtg-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="mtg-modal-body" id="mtg-modal-body"></div>
+      <!-- Measurable (KPI) -- a dedicated in-meeting add form (no section form exists) -->
+      <div id="kpi-add-form" class="hidden">
+        <input id="new-kpi-title" type="text" placeholder="Measurable title (e.g. Weekly Revenue)" class="w-full border rounded-lg p-2.5 text-sm mb-2">
+        <textarea id="new-kpi-desc" rows="2" placeholder="Description (optional)" class="w-full border rounded-lg p-2.5 text-sm mb-3"></textarea>
+        <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1">Goal</div>
+        <div class="grid grid-cols-12 gap-2 mb-3">
+          <select id="new-kpi-op" class="col-span-3 border rounded-lg p-2.5 text-sm">
+            <option value="gte" selected>&ge;</option>
+            <option value="lte">&le;</option>
+            <option value="eq">=</option>
+            <option value="gt">&gt;</option>
+            <option value="lt">&lt;</option>
+          </select>
+          <input id="new-kpi-goal" type="number" step="any" placeholder="100" class="col-span-5 border rounded-lg p-2.5 text-sm">
+          <input id="new-kpi-unit" type="text" placeholder="unit (e.g. $, %)" class="col-span-4 border rounded-lg p-2.5 text-sm">
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-1">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1">Cadence</div>
+            <select id="new-kpi-grain" class="w-full border rounded-lg p-2.5 text-sm">
+              <option value="weekly" selected>Weekly</option>
+              <option value="daily">Daily</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1">Owner</div>
+            <select id="new-kpi-owner" class="w-full border rounded-lg p-2.5 text-sm">
+              <% (availableOwners || []).filter(function(a){ return a.entityType === 'human'; }).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1">Team</div>
+            <select id="new-kpi-team" class="w-full border rounded-lg p-2.5 text-sm">
+              <% (orgTeams || []).forEach(function(tm) { %>
+                <option value="<%= tm.id %>" <%= tm.id === meeting.teamId ? 'selected' : '' %>><%= tm.name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        <div class="mtg-modal-foot">
+          <span id="kpi-add-status" class="text-xs text-gray-500"></span>
+          <button id="kpi-add-save" type="button" class="px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">+ Add measurable</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -3099,10 +3161,13 @@
   var MOD = isMac ? '⌘' : 'Ctrl ';
 
   // ---- command palette (Add / Tools), keyboard-driven like the best meeting apps ----
+  function _addModal(kind){ if (window.openAddModal) window.openAddModal(kind); }
   var ADD_ITEMS = [
-    { label: 'Issue',    desc: 'Identify, discuss, solve',     run: function(){ addThen('ids', openIssueForm); } },
-    { label: 'To-do',    desc: 'A 7-day commitment',           run: function(){ addThen('todos', function(){ var t=document.getElementById('todo-add-toggle'), f=document.getElementById('todo-add-form'); if (f && f.classList.contains('hidden') && t) t.click(); var i=document.getElementById('new-todo-title'); if (i) i.focus(); }); } },
-    { label: 'Headline', desc: 'Customer or employee news',    run: function(){ addThen('headlines', function(){ focusFirstField('#headlines'); }); } }
+    { label: 'Quarterly Priority', desc: 'A Rock for the quarter',     run: function(){ _addModal('rocks'); } },
+    { label: 'To-do',              desc: 'A 7-day commitment',         run: function(){ _addModal('todos'); } },
+    { label: 'Issue',              desc: 'Identify, discuss, solve',   run: function(){ _addModal('ids'); } },
+    { label: 'Headline',           desc: 'Customer or employee news',  run: function(){ _addModal('headlines'); } },
+    { label: 'Measurable',         desc: 'A scorecard KPI',            run: function(){ _addModal('measurable'); } }
   ];
   var TOOL_ITEMS = [
     { label: 'Dashboard',            desc: 'Your team dashboard', run: function(){ window.open('/dashboard', '_blank', 'noopener'); } },
@@ -3228,7 +3293,7 @@
     modal.addEventListener('click', function(e){ if (e.target === modal) close(); });
     modal.querySelector('.rtm-x').addEventListener('click', close);
     modal.querySelector('.rtm-ok').addEventListener('click', close);
-    modal.querySelector('#rtm-park').addEventListener('click', function(){ close(); goToSection('ids'); setTimeout(openIssueForm, 140); });
+    modal.querySelector('#rtm-park').addEventListener('click', function(){ close(); if (window.openAddModal) window.openAddModal('ids'); else { goToSection('ids'); setTimeout(openIssueForm, 140); } });
   }
   if (tanBtn) tanBtn.addEventListener('click', function(){ if (!modal) buildTangent(); modal.hidden = false; });
 
@@ -3259,6 +3324,100 @@
     var tf = document.getElementById('todo-add-form'); if (!tf) return;
     tf.classList.toggle('hidden');
     if (!tf.classList.contains('hidden')) { var i = document.getElementById('new-todo-title'); if (i) i.focus(); }
+  });
+})();
+</script>
+<script>
+// Add modals (Labs): the +Add palette opens a centered modal. For Rock / To-do /
+// Issue / Headline we MOVE the section's existing add-form in (its delegated
+// handler + reloadKeep-on-success are reused), and put it back on close. For
+// Measurable we use the dedicated #kpi-add-form and POST /kpis directly.
+(function () {
+  var modal = document.getElementById('mtg-modal');
+  if (!modal) return;
+  var bodyEl = document.getElementById('mtg-modal-body');
+  var titleEl = document.getElementById('mtg-modal-title');
+  var kpiForm = document.getElementById('kpi-add-form');
+  var moved = null, home = null;
+  var MAP = {
+    rocks:     { form: 'rock-add-form',     title: 'Add quarterly priority', focus: 'new-rock-title' },
+    todos:     { form: 'todo-add-form',     title: 'Add to-do',              focus: 'new-todo-title' },
+    ids:       { form: 'issue-add-form',    title: 'Add issue',              focus: 'new-issue-title' },
+    headlines: { form: 'headline-add-form', title: 'Add headline',           focus: 'new-headline-body' }
+  };
+  function putBack() {
+    if (moved && home) {
+      moved.classList.add('hidden');
+      if (home.next && home.next.parentNode === home.parent) home.parent.insertBefore(moved, home.next);
+      else home.parent.appendChild(moved);
+    }
+    moved = null; home = null;
+  }
+  function closeModal() { putBack(); if (kpiForm) kpiForm.classList.add('hidden'); bodyEl.style.display = ''; modal.hidden = true; }
+  function openAddModal(kind) {
+    putBack();
+    if (kind === 'measurable') {
+      titleEl.textContent = 'Add measurable';
+      bodyEl.style.display = 'none';
+      if (kpiForm) kpiForm.classList.remove('hidden');
+      modal.hidden = false;
+      var kt = document.getElementById('new-kpi-title'); if (kt) setTimeout(function () { kt.focus(); }, 10);
+      return;
+    }
+    var m = MAP[kind]; if (!m) return;
+    var form = document.getElementById(m.form); if (!form) return;
+    home = { parent: form.parentNode, next: form.nextSibling };
+    moved = form;
+    form.classList.remove('hidden');
+    if (kpiForm) kpiForm.classList.add('hidden');
+    bodyEl.style.display = '';
+    bodyEl.appendChild(form);
+    titleEl.textContent = m.title;
+    modal.hidden = false;
+    var f = document.getElementById(m.focus); if (f) setTimeout(function () { f.focus(); }, 10);
+  }
+  window.openAddModal = openAddModal;
+  window.closeAddModal = closeModal;
+
+  var closeBtn = document.getElementById('mtg-modal-close');
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('mousedown', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+  // Measurable (KPI) create -> POST /api/v1/kpis, then reload to show it.
+  var kpiSave = document.getElementById('kpi-add-save');
+  if (kpiSave) kpiSave.addEventListener('click', async function () {
+    var title = (document.getElementById('new-kpi-title').value || '').trim();
+    var status = document.getElementById('kpi-add-status');
+    if (!title) { if (status) status.textContent = 'Title is required.'; return; }
+    var owner = (document.getElementById('new-kpi-owner').value || '').split(':');
+    var goalRaw = document.getElementById('new-kpi-goal').value;
+    var payload = {
+      ownerEntityType: owner[0] || 'human',
+      ownerExternalId: owner[1] || '',
+      title: title,
+      description: (document.getElementById('new-kpi-desc').value || '').trim() || undefined,
+      goalOperator: document.getElementById('new-kpi-op').value,
+      goalValue: goalRaw === '' ? null : Number(goalRaw),
+      unit: (document.getElementById('new-kpi-unit').value || '').trim() || undefined,
+      timeGrain: document.getElementById('new-kpi-grain').value,
+      teamId: document.getElementById('new-kpi-team').value || undefined
+    };
+    if (!payload.ownerExternalId) { if (status) status.textContent = 'Pick an owner.'; return; }
+    kpiSave.disabled = true; kpiSave.textContent = 'Adding...';
+    try {
+      var res = await fetch('/api/v1/kpis', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        var j = await res.json().catch(function () { return null; });
+        if (status) status.textContent = 'Error: ' + ((j && j.error && j.error.message) || ('HTTP ' + res.status));
+        kpiSave.disabled = false; kpiSave.textContent = '+ Add measurable';
+        return;
+      }
+      window.location.reload();
+    } catch (e) {
+      if (status) status.textContent = 'Network error.';
+      kpiSave.disabled = false; kpiSave.textContent = '+ Add measurable';
+    }
   });
 })();
 </script>
