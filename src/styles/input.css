@@ -128,7 +128,7 @@ body.otp-focus .help-q { display: none !important; }
 .otp-rail .rail-ring { position: relative; width: 132px; height: 132px; }
 .otp-rail .rail-ring svg { width: 132px; height: 132px; display: block; }
 .otp-rail .rail-ring .ring-bg { stroke: #eef0f3; }
-.otp-rail .rail-ring #ring-arc { stroke: #2563EB; transition: stroke-dashoffset .35s linear, stroke .35s; }
+.otp-rail .rail-ring #ring-arc { stroke: #16a34a; transition: stroke-dashoffset .35s linear, stroke .35s; }
 .otp-rail .rail-ring-t { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .otp-rail .rail-ring-t #meeting-clock { font-size: 24px; font-weight: 800; letter-spacing: -.5px; color: #14271a; background: transparent !important; padding: 0 !important; border-radius: 0 !important; font-family: inherit; }
 .otp-rail .rail-ring-t small { font-size: 11px; color: #8a93a0; margin-top: 1px; }
@@ -171,9 +171,26 @@ body.otp-focus .help-q { display: none !important; }
 .otp-rail .rail-pop-menu a:hover,
 .otp-rail .rail-pop-menu button:hover { background: #f1f3f5; color: #2563EB; }
 
-/* finish meeting -- the prominent terminal action */
-.otp-rail .rail-finish { margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #ea6a23; color: #fff; border: none; border-radius: 11px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.otp-rail .rail-finish:hover { background: #d65d18; }
+/* finish meeting -- the one primary action of the rail (orgy-blue per DESIGN.md) */
+.otp-rail .rail-finish { margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--orgy-blue); color: #fff; border: none; border-radius: 11px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.otp-rail .rail-finish:hover { background: #1d4ed8; }
+
+/* command palette (Add / Tools) */
+.rail-palette { position: fixed; inset: 0; background: rgba(20,22,28,.45); z-index: 95; display: flex; align-items: flex-start; justify-content: center; padding: 12vh 16px 16px; }
+.rail-palette .rp-card { width: 100%; max-width: 480px; background: #fff; border: 1px solid #e6e8ec; border-radius: 14px; box-shadow: 0 24px 60px rgba(20,22,28,.28); overflow: hidden; }
+.rail-palette .rp-search { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid #edeff2; }
+.rail-palette .rp-mag { width: 18px; height: 18px; color: #8a93a0; flex: 0 0 auto; }
+.rail-palette .rp-input { flex: 1; border: none; outline: none; font-size: 16px; font-family: inherit; color: #14271a; background: transparent; }
+.rail-palette .rp-hint { font-size: 11px; font-weight: 700; color: #8a93a0; border: 1px solid #e6e8ec; border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+.rail-palette .rp-list { max-height: 320px; overflow: auto; padding: 6px; }
+.rail-palette .rp-row { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: none; border: none; border-radius: 9px; padding: 10px 12px; cursor: pointer; text-align: left; }
+.rail-palette .rp-row.rp-sel { background: var(--orgy-blue-soft); }
+.rail-palette .rp-lbl { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.rail-palette .rp-lbl b { font-size: 14px; font-weight: 600; color: #14271a; }
+.rail-palette .rp-row.rp-sel .rp-lbl b { color: var(--orgy-blue); }
+.rail-palette .rp-lbl small { font-size: 12px; color: #8a93a0; }
+.rail-palette .rp-num { font-size: 11px; font-weight: 700; color: #8a93a0; background: #f1f3f5; border-radius: 6px; padding: 2px 7px; flex: 0 0 auto; }
+.rail-palette .rp-empty { padding: 18px; text-align: center; color: #8a93a0; font-size: 13px; }
 
 /* Notes slide-in panel */
 .rail-notes-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; max-width: 86vw; background: #fff; border-left: 1px solid #e6e8ec; box-shadow: -12px 0 32px rgba(20,22,28,.10); z-index: 80; display: flex; flex-direction: column; }
@@ -185,12 +202,12 @@ body.otp-focus .help-q { display: none !important; }
 .rail-tangent-modal { position: fixed; inset: 0; background: rgba(20,22,28,.55); z-index: 90; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .rail-tangent-modal .rtm-card { position: relative; background: #fff; border-radius: 20px; max-width: 380px; width: 100%; padding: 28px 26px 26px; text-align: center; box-shadow: 0 24px 60px rgba(20,22,28,.30); }
 .rail-tangent-modal .rtm-x { position: absolute; top: 12px; right: 14px; font-size: 22px; line-height: 1; color: #aab2bc; background: none; border: none; cursor: pointer; }
-.rail-tangent-modal .rtm-h { margin: 0 0 14px; font-size: 24px; font-weight: 800; color: #8b5cf6; }
+.rail-tangent-modal .rtm-h { margin: 0 0 14px; font-size: 24px; font-weight: 800; color: #d97706; }
 .rail-tangent-modal .rtm-ollie { width: 150px; height: 150px; object-fit: contain; margin: 0 auto 14px; display: block; }
 .rail-tangent-modal .rtm-p { margin: 0 0 20px; font-size: 14.5px; line-height: 1.5; color: #3b4a3f; }
 .rail-tangent-modal .rtm-link { color: #2563EB; font-weight: 700; text-decoration: underline; background: none; border: none; cursor: pointer; font-size: inherit; padding: 0; }
-.rail-tangent-modal .rtm-ok { background: #ea6a23; color: #fff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.rail-tangent-modal .rtm-ok:hover { background: #d65d18; }
+.rail-tangent-modal .rtm-ok { background: var(--orgy-blue); color: #fff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.rail-tangent-modal .rtm-ok:hover { background: #1d4ed8; }
 
 @media (max-width: 760px) {
   #l8-meeting.meeting-stepped { padding: 16px !important; }
