@@ -77,6 +77,9 @@
                       <% if (f.targetLiveDate) { %>
                         <p class="text-xs text-gray-400 mt-2">Targeted live: <%= f.targetLiveDate %></p>
                       <% } %>
+                      <% if (f.launchedOn) { %>
+                        <p class="text-xs text-gray-400 mt-2">Launched <%= f.launchedOn %></p>
+                      <% } %>
                       <% if (f.enabled && f.surfaceUrl) { %>
                         <a href="<%= f.surfaceUrl %>" class="inline-block mt-3 text-sm font-semibold text-otp-600 hover:underline">Open <%= f.name %> &rarr;</a>
                       <% } %>

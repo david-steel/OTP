@@ -30,6 +30,8 @@ export interface LabFeature {
   defaultOn?: boolean;
   /** ISO date (YYYY-MM-DD) the feature is expected to go fully live, if known. */
   targetLiveDate?: string;
+  /** Display date a feature launched, shown on the Labs card (e.g. "6-17-26"). */
+  launchedOn?: string;
   /** The reason to turn it on now instead of waiting (early-access value +
    *  honest caveat). Shown as the "Why turn it on now" line on the Labs card. */
   whyNow?: string;
@@ -91,6 +93,7 @@ export const LAB_FEATURES: LabFeature[] = [
       'The default way to run your L8 meeting: one agenda section at a time, with the timebox and your real data in front of you, the agenda as a stepper down the side, a shared timer, and in-meeting Add/Tools. On for every org by default -- turn it off here if you prefer the classic one-page meeting.',
     status: 'beta',
     defaultOn: true,
+    launchedOn: '6-17-26',
     // Step-mode layer over the existing l8-leadership sections (#segue ... #conclude).
     // 2026-06-17: default-ON for all current + future orgs, still toggleable (opt-out).
   },
