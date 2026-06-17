@@ -214,3 +214,59 @@ body.otp-focus .help-q { display: none !important; }
   #l8-meeting.meeting-stepped #agenda-nav.otp-rail { position: static; width: auto; border-right: none; border-bottom: 1px solid #e6e8ec; margin-bottom: 18px; padding: 16px; }
   .otp-rail .rail-actions { margin-top: 14px; }
 }
+
+/* ---------------------------------------------------------------------------
+   Labs stepped: section rows on the DESIGN.md Row component. Scoped to
+   #l8-meeting.meeting-stepped so the normal meeting view is untouched. Flatten
+   the box-per-row look into clean divider rows, calm the loud action buttons
+   into quiet ghost pills (color only on intent), and clean the scorecard table.
+   The markup + handlers are unchanged; this is presentation only.
+--------------------------------------------------------------------------- */
+/* flatten boxed rows into divider rows (To-Dos / Headlines / Issues) */
+.meeting-stepped #todos li[data-todo-id],
+.meeting-stepped #headlines [data-headline-id],
+.meeting-stepped #ids [data-ticket-id] {
+  border: 0 !important; border-bottom: 1px solid #edeff2 !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important; padding: 13px 4px !important; margin: 0 !important;
+}
+.meeting-stepped #todos ul.space-y-1 > li + li,
+.meeting-stepped #headlines .space-y-2 > div + div,
+.meeting-stepped #ids .space-y-2 > div + div { margin-top: 0 !important; }
+.meeting-stepped #todos li[data-todo-id]:last-child,
+.meeting-stepped #headlines [data-headline-id]:last-child,
+.meeting-stepped #ids [data-ticket-id]:last-child { border-bottom: 0 !important; }
+
+/* row titles 15/600 ink, descriptions muted */
+.meeting-stepped #todos li[data-todo-id] .flex-1 > .text-sm:first-child,
+.meeting-stepped #headlines [data-headline-id] .flex-1 > .text-sm { font-size: 15px; font-weight: 600; color: #14271a; }
+
+/* Issues: title first (Row order), then a quiet meta + actions line, then desc */
+.meeting-stepped #ids [data-ticket-id] { display: flex; flex-direction: column; }
+.meeting-stepped #ids [data-ticket-title-display] { order: -1; margin: 0 0 7px !important; font-size: 15px; font-weight: 600; color: #14271a; }
+.meeting-stepped #ids [data-ticket-id] > .justify-between { order: 0; }
+.meeting-stepped #ids [data-ticket-desc-display] { order: 1; margin-top: 6px !important; color: #6b7280; }
+.meeting-stepped #ids [data-form] { order: 2; }
+.meeting-stepped #ids [data-ids-pill] { border-radius: 9999px; padding: 2px 9px; font-weight: 600; }
+
+/* Issues + Headlines: quiet ghost action buttons; semantic color only on hover */
+.meeting-stepped #ids .justify-between > div:last-child { gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.meeting-stepped #ids .justify-between > div:last-child button,
+.meeting-stepped #ids .justify-between > div:last-child select,
+.meeting-stepped #headlines [data-headline-id] > div:last-child button {
+  background: transparent !important; color: #5b6573 !important; border: 1px solid #e6e8ec !important;
+  border-radius: 7px !important; font-weight: 600 !important;
+}
+.meeting-stepped #ids .justify-between > div:last-child button:hover,
+.meeting-stepped #headlines [data-headline-id] > div:last-child button:hover { background: #f1f3f5 !important; color: #14271a !important; }
+.meeting-stepped #ids [data-ids-set="identified"]:hover { background: var(--orgy-blue-soft) !important; color: var(--orgy-blue) !important; border-color: #c7dbff !important; }
+.meeting-stepped #ids [data-ids-set="discussed"]:hover { background: #fef3c7 !important; color: #92610a !important; border-color: #fde68a !important; }
+.meeting-stepped #ids [data-action="solve"]:hover { background: #dcfce7 !important; color: #166534 !important; border-color: #bbf7d0 !important; }
+.meeting-stepped #ids [data-action="delete"]:hover { background: #fee2e2 !important; color: #b91c1c !important; border-color: #fecaca !important; }
+
+/* Scorecard: clean borderless table, muted uppercase head, soft row dividers */
+.meeting-stepped #scorecard table { border: 0 !important; }
+.meeting-stepped #scorecard thead { background: transparent !important; }
+.meeting-stepped #scorecard thead th { border: 0 !important; border-bottom: 1px solid #edeff2 !important; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #8a93a0; font-weight: 700; padding: 10px 12px !important; }
+.meeting-stepped #scorecard tbody td { border: 0 !important; border-bottom: 1px solid #f1f3f5 !important; padding: 12px !important; }
+.meeting-stepped #scorecard tbody tr:last-child td { border-bottom: 0 !important; }
+.meeting-stepped #scorecard h3 { color: #8a93a0; }
