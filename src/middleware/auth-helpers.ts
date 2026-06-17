@@ -47,6 +47,16 @@ export async function gateReadOnlyRole(request: FastifyRequest, reply: any): Pro
  * Returns the org row or null if unauthenticated.
  */
 export async function getAuthOrg(request: FastifyRequest) {
+  const org = await resolveAuthOrg(request);
+  // An org pending hard-delete is hidden/blocked everywhere -- normal in-org
+  // access resolves to null (member is locked out). Super-admins act on it by
+  // id through the /admin delete & restore endpoints, which do NOT use
+  // getAuthOrg, so this gate does not block restoring it.
+  if (org && org.deletionRequestedAt) return null;
+  return org;
+}
+
+async function resolveAuthOrg(request: FastifyRequest) {
   // Try Clerk auth first
   const auth = getAuth(request);
   if (auth.userId) {

@@ -1009,6 +1009,22 @@ try {
 }
 
 try {
+  const { ensureMeetingTranscriptColumns } = await import('./db/ensure-meeting-transcript.js');
+  await ensureMeetingTranscriptColumns();
+  app.log.info('meetings transcript/recording columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingTranscriptColumns failed -- post-meeting transcript/recording will not save until resolved');
+}
+
+try {
+  const { ensureOrgDeletionColumns } = await import('./db/ensure-org-deletion.js');
+  await ensureOrgDeletionColumns();
+  app.log.info('organizations deletion columns are ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgDeletionColumns failed -- org delete/restore will not work until resolved');
+}
+
+try {
   const { ensureOrgSidebarColumn } = await import('./db/ensure-org-sidebar.js');
   await ensureOrgSidebarColumn();
   app.log.info('organizations.sidebar_config column is ready');
@@ -1361,6 +1377,15 @@ try {
   if (process.env.NODE_ENV === 'production' || process.env.ENABLE_MEETING_AUTO_END === 'true') {
     const { startMeetingAutoEndScheduler } = await import('./services/meeting-lifecycle.js');
     startMeetingAutoEndScheduler();
+  }
+
+  // Organization hard-delete purge sweep. DESTRUCTIVE and DORMANT by design:
+  // it only starts when explicitly armed with ENABLE_ORG_PURGE=true (NOT on by
+  // default, not even in production). Soft-delete and restore work without it;
+  // arm it only once the purge has been validated on a real pending org.
+  if (process.env.ENABLE_ORG_PURGE === 'true') {
+    const { startOrgPurgeScheduler } = await import('./services/org-purge.js');
+    startOrgPurgeScheduler();
   }
 } catch (err) {
   app.log.error(err);

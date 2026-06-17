@@ -3,7 +3,7 @@ import { getAuth } from '@clerk/fastify';
 import { eq, sql, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
-import { oosFiles, auditLogs, newsletterSubscribers, partnerSignups, improvements } from '../../db/schema.js';
+import { oosFiles, auditLogs, newsletterSubscribers, partnerSignups, improvements, organizations } from '../../db/schema.js';
 import { renameOOSSchema } from '../../shared/validation.js';
 import { createAuditEntry, AUDIT_ACTIONS } from '../../services/audit-logger.js';
 import { isSuperAdmin } from '../../middleware/super-admin.js';
@@ -15,6 +15,14 @@ const founderAddSchema = z.object({
   name: z.string().max(200).optional(),
   notes: z.string().max(2000).optional(),
   source: z.string().max(50).default('founder-add'),
+});
+
+// Org hard-delete confirmation. Both boxes must be checked AND the word must be
+// exactly "DELETE" (case-sensitive) -- z.literal enforces both.
+const orgDeleteSchema = z.object({
+  ackAuthority: z.literal(true),
+  ackIrreversible: z.literal(true),
+  confirm: z.literal('DELETE'),
 });
 
 function requireSuperAdmin(request: FastifyRequest) {
@@ -30,6 +38,62 @@ function requireAdminOrKey(request: FastifyRequest): boolean {
 }
 
 export default async function adminRoutes(app: FastifyInstance) {
+
+  // ============================================================
+  // POST /api/v1/admin/orgs/:id/delete -- soft-delete an org (super admin).
+  // Phase 1 of the two-phase hard delete: marks the org for deletion (hidden +
+  // blocked everywhere), restorable for 7 days, then purged. Requires both
+  // confirmation boxes + the exact word "DELETE" (case-sensitive).
+  // ============================================================
+  app.post<{ Params: { id: string } }>('/admin/orgs/:id/delete', async (request, reply) => {
+    if (!requireSuperAdmin(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Super admin access required' } });
+    }
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const parsed = orgDeleteSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: { code: 'CONFIRM_REQUIRED', message: 'Check both boxes and type DELETE (capitalized) to confirm.' } });
+    }
+    const [org] = await db.select({ id: organizations.id, name: organizations.name, deletionRequestedAt: organizations.deletionRequestedAt })
+      .from(organizations).where(eq(organizations.id, id)).limit(1);
+    if (!org) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Organization not found' } });
+    if (org.deletionRequestedAt) {
+      return reply.status(409).send({ error: { code: 'ALREADY_PENDING', message: 'This organization is already scheduled for deletion.' } });
+    }
+    const actor = getAuth(request).userId || 'super-admin';
+    await db.update(organizations)
+      .set({ deletionRequestedAt: new Date(), deletionRequestedBy: actor, updatedAt: new Date() })
+      .where(eq(organizations.id, id));
+    await db.insert(auditLogs).values(createAuditEntry('org.deletion.requested', 'organization', {
+      orgId: id, entityId: id, details: { by: actor, name: org.name },
+    }));
+    return { ok: true, scheduledPurgeInDays: 7 };
+  });
+
+  // POST /api/v1/admin/orgs/:id/restore -- cancel a pending deletion (super
+  // admin), any time within the 7-day grace window. Brings the org fully back.
+  app.post<{ Params: { id: string } }>('/admin/orgs/:id/restore', async (request, reply) => {
+    if (!requireSuperAdmin(request)) {
+      return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Super admin access required' } });
+    }
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    const [org] = await db.select({ id: organizations.id, deletionRequestedAt: organizations.deletionRequestedAt })
+      .from(organizations).where(eq(organizations.id, id)).limit(1);
+    if (!org) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Organization not found' } });
+    if (!org.deletionRequestedAt) {
+      return reply.status(409).send({ error: { code: 'NOT_PENDING', message: 'This organization is not scheduled for deletion.' } });
+    }
+    const actor = getAuth(request).userId || 'super-admin';
+    await db.update(organizations)
+      .set({ deletionRequestedAt: null, deletionRequestedBy: null, updatedAt: new Date() })
+      .where(eq(organizations.id, id));
+    await db.insert(auditLogs).values(createAuditEntry('org.deletion.restored', 'organization', {
+      orgId: id, entityId: id, details: { by: actor },
+    }));
+    return { ok: true };
+  });
 
   // ============================================================
   // GET /api/v1/admin/oos -- List all OOS files (super admin only)
