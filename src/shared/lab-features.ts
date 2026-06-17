@@ -118,6 +118,20 @@ export const LAB_FEATURES: LabFeature[] = [
     status: 'beta',
     // Reads/writes organizations.sidebar_config; applied in layouts/main.ejs.
   },
+  {
+    key: 'meeting_ai_followups',
+    name: 'AI meeting follow-ups',
+    description:
+      'After a meeting, paste or attach the transcript and let OTP turn it into follow-ups: a short summary, to-dos with owners, issues for the IDS list, and headlines. You review and pick what to create. Bring a transcript from any source -- Plaud, Fireflies, Gemini, or your own notes.',
+    whyNow:
+      'Turn it on to try the wizard on a completed meeting: paste the transcript, click Generate, and review the suggested to-dos, issues, and headlines before anything is created. Early access while we tune the extraction. Attaching a transcript or a recording link works for everyone without the flag.',
+    status: 'beta',
+    // Opt-in (no defaultOn): OFF for every org until they enable it here. Gates
+    // the AI "Generate follow-ups" wizard on the completed L8 meeting page
+    // (POST /meetings/:id/ai/followups). Transcript/recording attach + link are
+    // ungated. AI-assist is a paid tool: wallet metering plugs in at that route
+    // when billing is live (mirror src/routes/api/rock-ai.ts).
+  },
 ];
 
 export function getLabFeature(key: string): LabFeature | undefined {

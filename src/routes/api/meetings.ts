@@ -18,6 +18,14 @@ import { planSeriesDeletion, isDeleteScope } from '../../services/meeting-series
 import { buildScorecardSnapshot } from '../../services/meeting-resnapshot.js';
 import { endMeetingCore } from '../../services/meeting-lifecycle.js';
 import { computeAutoEndAt, isMeetingLocked } from '../../shared/meeting-timing.js';
+import Anthropic from '@anthropic-ai/sdk';
+import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
+import { FOLLOWUPS_SYSTEM_PROMPT, buildFollowupsUserMessage, parseFollowups } from '../../shared/meeting-followups.js';
+
+// Lazy Anthropic client for the meeting follow-ups wizard (mirror rock-ai.ts).
+let _anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic { if (!_anthropic) _anthropic = new Anthropic(); return _anthropic; }
+function aiModel(): string { return process.env.ASK_AI_MODEL || 'claude-opus-4-8'; }
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -73,6 +81,11 @@ const updateMeetingSchema = z.object({
   // empty string clears it back to one-time. The UI only sends the four
   // RECURRENCE_OPTIONS values; we accept any short string defensively.
   recurrenceRule: z.string().max(255).optional(),
+  // Post-meeting record (completed meetings). transcript can be long (a full
+  // meeting transcript); empty string clears each field.
+  transcript: z.string().max(500_000).optional(),
+  recordingUrl: z.string().max(2048).optional(),
+  aiSummary: z.string().max(20_000).optional(),
   segmentNotes: segmentNotesSchema.optional(),
 });
 
@@ -484,6 +497,67 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return { meeting: updated, autoEndAt: updated.autoEndAt };
   });
 
+  // POST /api/v1/meetings/:id/ai/followups  -- AI wizard: read the saved
+  // transcript and PROPOSE follow-ups (summary, to-dos, issues, headlines).
+  // Preview only: it creates nothing. The page lets the user review and then
+  // create the chosen items via the normal todo/ticket/headline endpoints.
+  // Gated behind the "meeting_ai_followups" Lab flag (off until an org enables
+  // it). AI-assist is a paid tool: wallet metering plugs in here when billing
+  // is live (mirror src/routes/api/rock-ai.ts).
+  app.post<{ Params: { id: string } }>('/meetings/:id/ai/followups', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_ai_followups'))) {
+      return reply.status(503).send({ error: { code: 'COMING_SOON', message: 'AI meeting follow-ups is in early access. Turn it on under Settings, Labs.' } });
+    }
+
+    const [meeting] = await db.select({ title: meetings.title, transcript: meetings.transcript, attendees: meetings.attendees })
+      .from(meetings).where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id))).limit(1);
+    if (!meeting) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+    const transcript = (meeting.transcript || '').trim();
+    if (transcript.length < 40) {
+      return reply.status(400).send({ error: { code: 'NO_TRANSCRIPT', message: 'Add a transcript first, then generate follow-ups.' } });
+    }
+
+    const attendeeNames = Array.isArray(meeting.attendees)
+      ? (meeting.attendees as any[]).map(a => (a && (a.name || a.externalId)) ? String(a.name || a.externalId) : '').filter(Boolean).slice(0, 40)
+      : [];
+    const userMsg = buildFollowupsUserMessage({ transcript: transcript.slice(0, 200_000), meetingTitle: meeting.title, attendees: attendeeNames });
+
+    async function callModel() {
+      const res = await getAnthropic().messages.create({
+        model: aiModel(),
+        max_tokens: 2000,
+        system: [{ type: 'text', text: FOLLOWUPS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: userMsg }],
+      });
+      const text = res.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+      return parseFollowups(text);
+    }
+
+    let followups;
+    try {
+      followups = await callModel();
+    } catch {
+      try { followups = await callModel(); }
+      catch (err) {
+        request.log.error({ err, meetingId: id }, 'meeting follow-ups generation failed');
+        return reply.status(502).send({ error: { code: 'AI_FAILED', message: 'Could not generate follow-ups. Try again.' } });
+      }
+    }
+
+    await db.insert(auditLogs).values(createAuditEntry('meeting.ai.followups', 'meeting', {
+      orgId: org.id, entityId: id,
+      details: { todos: followups.todos.length, issues: followups.issues.length, headlines: followups.headlines.length },
+    }));
+    return { followups };
+  });
+
   // POST /api/v1/meetings/:id/timer  (shared meeting stopwatch)
   // Whoever starts/pauses or changes section drives the clock for the whole
   // room: this caches the state in the meeting bus and broadcasts a kind:'timer'
@@ -611,6 +685,10 @@ export default async function meetingRoutes(app: FastifyInstance) {
     if (d.videoLink !== undefined) updates.videoLink = d.videoLink.trim() || null;
     // Empty string clears recurrence back to one-time.
     if (d.recurrenceRule !== undefined) updates.recurrenceRule = d.recurrenceRule.trim() || null;
+    // Post-meeting record. Empty string clears each field.
+    if (d.transcript !== undefined) updates.transcript = d.transcript || null;
+    if (d.recordingUrl !== undefined) updates.recordingUrl = d.recordingUrl.trim() || null;
+    if (d.aiSummary !== undefined) updates.aiSummary = d.aiSummary || null;
     if (d.segmentNotes !== undefined) {
       const [current] = await db.select({ segmentNotes: meetings.segmentNotes })
         .from(meetings)

@@ -10,7 +10,7 @@ import { z } from 'zod';
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
 /** Entities an attachment can be linked to. 'issue' rows live in `tickets`. */
-export const attachmentEntityTypes = ['todo', 'issue', 'rock'] as const;
+export const attachmentEntityTypes = ['todo', 'issue', 'rock', 'meeting'] as const;
 export type AttachmentEntityType = (typeof attachmentEntityTypes)[number];
 export const attachmentEntityTypeSchema = z.enum(attachmentEntityTypes);
 
