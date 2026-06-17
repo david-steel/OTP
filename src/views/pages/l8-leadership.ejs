@@ -1112,14 +1112,19 @@
       <% if (humanAttendees.length === 0) { %>
         <div class="text-xs text-gray-500 italic">No human attendees to rate the meeting. Add attendees above.</div>
       <% } else { %>
-        <div class="flex flex-wrap gap-3 mb-2">
-          <% humanAttendees.forEach(function(a){ %>
-            <label class="flex items-center gap-1.5 text-sm">
-              <span><%= a.name || a.externalId %></span>
+        <div class="flex flex-wrap gap-2.5 mb-2">
+          <% humanAttendees.forEach(function(a){ var _isAbsent = savedRatings[a.externalId] === 'absent'; %>
+            <span class="rating-cell flex items-center gap-2 text-sm border rounded-lg px-2.5 py-1.5">
+              <span class="font-medium"><%= a.name || a.externalId %></span>
               <input type="number" min="1" max="10" data-rating-input data-attendee-key="<%= a.externalId %>"
-                     value="<%= savedRatings[a.externalId] != null ? savedRatings[a.externalId] : '' %>"
+                     value="<%= (typeof savedRatings[a.externalId] === 'number') ? savedRatings[a.externalId] : '' %>"
+                     <%= _isAbsent ? 'disabled' : '' %>
                      class="w-14 border rounded p-1 text-sm text-center">
-            </label>
+              <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer" title="Mark this person absent (no score needed)">
+                <input type="checkbox" data-absent-input data-attendee-key="<%= a.externalId %>" <%= _isAbsent ? 'checked' : '' %>>
+                absent
+              </label>
+            </span>
           <% }); %>
         </div>
         <button id="save-ratings" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save ratings</button>
@@ -1948,6 +1953,20 @@
   });
   document.querySelectorAll('.js-end-meeting').forEach((endBtn) => {
     endBtn.addEventListener('click', async () => {
+      // Gate (in-progress only): every attendee needs a score or an absent mark
+      // before finishing. A never-started scheduled meeting can still be ended.
+      try {
+        var _st = document.getElementById('meeting-status');
+        var _inProgress = _st && _st.textContent.trim() === 'in_progress';
+        var _miss = (_inProgress && typeof ratingsMissing === 'function') ? ratingsMissing() : [];
+        if (_miss.length) {
+          alert('Add a rating for each person (or mark them absent) before finishing the meeting.');
+          var _chip = document.querySelector('.agenda-chip[data-section="conclude"]'); if (_chip) _chip.click();
+          var _f = document.querySelector('[data-rating-input][data-attendee-key="' + _attKey(_miss[0]) + '"]');
+          if (_f) { try { _f.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} _f.focus(); }
+          return;
+        }
+      } catch (e) { /* if the gate errors, don't block ending */ }
       if (!confirm('End the meeting?')) return;
       const orig = endBtn.textContent;
       // Disable every End button so the header + footer can't double-fire.
@@ -1957,6 +1976,8 @@
       // resurrect as "running" after the reload.
       try { pauseTimer(); } catch (e) { /* timer not initialized */ }
       try { localStorage.removeItem(TIMER_KEY); } catch (e) { /* storage unavailable */ }
+      // Persist ratings entered this session so finishing never loses them.
+      try { await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ ratings: collectRatings() }) }); } catch (e) { /* keep ending */ }
       const res = await api('/meetings/' + meetingId + '/end', { method: 'POST' });
       if (!res || res.error) {
         alert('Could not end the meeting: ' + errMsg(res));
@@ -2777,6 +2798,30 @@
   });
 
   // ===== Meeting rating (Conclude) =====
+  function _attKey(k) { return (window.CSS && CSS.escape) ? CSS.escape(k) : k; }
+  function _absentFor(k) { return document.querySelector('[data-absent-input][data-attendee-key="' + _attKey(k) + '"]'); }
+  // Build the ratings payload: a number 1-10, or the sentinel 'absent'.
+  function collectRatings() {
+    var r = {};
+    document.querySelectorAll('[data-rating-input]').forEach(function (i) {
+      var k = i.dataset.attendeeKey;
+      var ab = _absentFor(k);
+      if (ab && ab.checked) { r[k] = 'absent'; return; }
+      var v = parseFloat(i.value);
+      if (!isNaN(v) && v >= 1 && v <= 10) r[k] = v;
+    });
+    return r;
+  }
+  // Attendees still needing a score or an absent mark (gates finishing).
+  function ratingsMissing() {
+    var miss = [];
+    document.querySelectorAll('[data-rating-input]').forEach(function (i) {
+      var ab = _absentFor(i.dataset.attendeeKey);
+      var hasScore = i.value !== '' && !isNaN(parseFloat(i.value));
+      if (!hasScore && !(ab && ab.checked)) miss.push(i.dataset.attendeeKey);
+    });
+    return miss;
+  }
   function renderRatingAvg() {
     const inputs = Array.from(document.querySelectorAll('[data-rating-input]'));
     const vals = inputs.map(i => parseFloat(i.value)).filter(v => !isNaN(v) && v >= 1 && v <= 10);
@@ -2784,17 +2829,18 @@
     if (avgEl) avgEl.textContent = vals.length ? ('avg ' + (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : '';
   }
   document.querySelectorAll('[data-rating-input]').forEach(i => i.addEventListener('input', renderRatingAvg));
+  // Absent toggle: disable + clear the score while absent.
+  document.querySelectorAll('[data-absent-input]').forEach(function (ab) {
+    function sync() { var inp = document.querySelector('[data-rating-input][data-attendee-key="' + _attKey(ab.dataset.attendeeKey) + '"]'); if (inp) { inp.disabled = ab.checked; if (ab.checked) inp.value = ''; } }
+    ab.addEventListener('change', function () { sync(); renderRatingAvg(); });
+    sync();
+  });
   renderRatingAvg();
   const saveRatingsBtn = document.getElementById('save-ratings');
   if (saveRatingsBtn) saveRatingsBtn.addEventListener('click', async () => {
-    const ratings = {};
-    document.querySelectorAll('[data-rating-input]').forEach(i => {
-      const v = parseFloat(i.value);
-      if (!isNaN(v) && v >= 1 && v <= 10) ratings[i.dataset.attendeeKey] = v;
-    });
     const status = document.getElementById('ratings-status');
     saveRatingsBtn.disabled = true; saveRatingsBtn.textContent = 'Saving...';
-    const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ ratings }) });
+    const res = await api('/meetings/' + meetingId, { method: 'PUT', body: JSON.stringify({ ratings: collectRatings() }) });
     saveRatingsBtn.disabled = false; saveRatingsBtn.textContent = 'Save ratings';
     if (res && res.error) { if (status) status.textContent = 'Error: ' + errMsg(res); return; }
     if (status) { status.textContent = 'Saved'; setTimeout(() => { status.textContent = ''; }, 2000); }
