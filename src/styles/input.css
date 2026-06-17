@@ -312,3 +312,56 @@ body.otp-focus .help-q { display: none !important; }
 @media (max-width: 760px) {
   .meeting-stepped .mtg-header { position: static; margin: 0 0 16px 0 !important; padding: 12px 0 !important; }
 }
+
+/* ---------------------------------------------------------------------------
+   Header overflow menu (ALL meetings, not gated): one clear primary action in
+   the header, every secondary action behind a single ⋯ (DESIGN.md: one primary
+   per screen, no competing buttons). Same ids/classes/handlers, just relocated.
+--------------------------------------------------------------------------- */
+.hdr-overflow { position: relative; }
+.hdr-overflow-btn { list-style: none; cursor: pointer; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e6e8ec; border-radius: 9px; color: #6b7280; font-weight: 800; letter-spacing: 1px; background: #fff; }
+.hdr-overflow-btn::-webkit-details-marker { display: none; }
+.hdr-overflow-btn:hover { background: #f6f7f9; }
+.hdr-overflow[open] .hdr-overflow-btn { background: #f1f3f5; }
+.hdr-overflow-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 204px; background: #fff; border: 1px solid #e6e8ec; border-radius: 11px; box-shadow: 0 10px 30px rgba(20,22,28,.14); padding: 6px; display: flex; flex-direction: column; gap: 2px; z-index: 50; }
+.hdr-overflow-menu .hdr-mi { text-align: left; font-size: 13px; font-weight: 600; color: #2b3640; background: none; border: none; border-radius: 7px; padding: 9px 11px; cursor: pointer; width: 100%; }
+.hdr-overflow-menu .hdr-mi:hover { background: #f1f3f5; color: var(--orgy-blue); }
+.hdr-overflow-menu .hdr-mi-danger:hover { background: #fff1f1; color: #dc2626; }
+/* focus mode keeps only the single primary; the overflow + the mascot hide */
+.meeting-stepped .hdr-overflow { display: none !important; }
+.meeting-stepped section h2 img,
+.meeting-stepped section h2 .otp-dic-img { display: none !important; }
+
+/* ---------------------------------------------------------------------------
+   To-Dos quick-add: a clean stacked form instead of the cramped 12-col grid
+   (title full, owners full, then due/priority/repeat in a tidy row, description,
+   a right-aligned primary Add). Scoped to stepped mode.
+--------------------------------------------------------------------------- */
+.meeting-stepped #todo-add-toggle { background: #fff !important; color: var(--orgy-blue) !important; border: 1px solid #e6e8ec !important; }
+.meeting-stepped #todo-add-toggle:hover { background: #f6f7f9 !important; }
+.meeting-stepped #todo-add-form { background: #fff; border: 1px solid #edeff2; border-radius: 14px; box-shadow: 0 1px 2px rgba(20,22,28,.03); padding: 16px !important; }
+.meeting-stepped #todo-add-form .grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; }
+.meeting-stepped #todo-add-form #new-todo-title { grid-column: 1 / -1 !important; }
+.meeting-stepped #todo-add-form #new-todo-owner { grid-column: 1 / -1 !important; min-height: 84px; }
+.meeting-stepped #todo-add-form #new-todo-due { grid-column: span 1 !important; }
+.meeting-stepped #todo-add-form #new-todo-priority { grid-column: span 1 !important; }
+.meeting-stepped #todo-add-form #new-todo-recur { grid-column: span 1 !important; }
+.meeting-stepped #todo-add-form #add-todo { grid-column: 1 / -1 !important; justify-self: end; width: auto !important; padding: 9px 22px !important; }
+.meeting-stepped #todo-add-form input,
+.meeting-stepped #todo-add-form select,
+.meeting-stepped #todo-add-form textarea { border: 1px solid #e6e8ec !important; border-radius: 9px !important; padding: 9px 11px !important; font-size: 14px; background: #fff; }
+.meeting-stepped #todo-add-form #add-todo { border: none !important; }
+
+/* ---------------------------------------------------------------------------
+   Issues: per-row overflow. Edit / Delete / move-to are tucked behind a ⋯ on
+   each row (built by JS), leaving the IDS workflow (Identify / Discuss / Solve /
+   To-Do) inline. The buttons keep their data-action handlers (delegated).
+--------------------------------------------------------------------------- */
+.meeting-stepped .ids-row-menu { position: relative; }
+.meeting-stepped .ids-row-menu-btn { list-style: none; cursor: pointer; border: 1px solid #e6e8ec !important; border-radius: 7px; padding: 3px 9px !important; color: #5b6573 !important; font-weight: 700; background: transparent !important; }
+.meeting-stepped .ids-row-menu-btn::-webkit-details-marker { display: none; }
+.meeting-stepped .ids-row-menu[open] .ids-row-menu-btn { background: #f1f3f5 !important; }
+.meeting-stepped .ids-row-menu-pop { position: absolute; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid #e6e8ec; border-radius: 9px; box-shadow: 0 8px 24px rgba(20,22,28,.12); padding: 5px; display: flex; flex-direction: column; gap: 2px; min-width: 130px; z-index: 30; }
+.meeting-stepped .ids-row-menu-pop button,
+.meeting-stepped .ids-row-menu-pop select { width: 100% !important; text-align: left !important; border: none !important; border-radius: 6px !important; padding: 8px 10px !important; }
+.meeting-stepped .ids-row-menu-pop button:hover { background: #f1f3f5 !important; }

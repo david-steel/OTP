@@ -50,11 +50,11 @@
 <div class="max-w-6xl mx-auto px-4 py-8<%= (typeof meetingStepped !== 'undefined' && meetingStepped) ? ' meeting-stepped' : '' %>" id="l8-meeting" data-meeting-id="<%= meeting.id %>" data-team-id="<%= meeting.teamId || '' %>">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
+  <div class="mtg-header flex items-center justify-between mb-6 border-b border-gray-200 pb-5">
     <div>
-      <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %> &middot; Weekly Leadership L10</div>
+      <div class="mtg-eyebrow text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-1.5"><%= (org && org.name) ? org.name : 'Your company' %> &middot; Weekly Leadership L10</div>
       <div class="flex items-start gap-2">
-        <h1 id="meeting-title" class="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-[1.05] tracking-tight"><%= meeting.title %></h1>
+        <h1 id="meeting-title" class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.1] tracking-tight"><%= meeting.title %></h1>
         <button id="title-edit-btn" type="button" class="mt-1 text-xs text-orgy-blue hover:underline shrink-0" title="Edit the meeting title">Edit</button>
       </div>
       <div id="title-editor" class="hidden mt-2 flex flex-wrap items-center gap-2">
@@ -63,7 +63,7 @@
         <button id="title-cancel" type="button" class="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
         <span id="title-status" class="text-xs text-gray-500"></span>
       </div>
-      <p class="text-sm text-gray-600 mt-1.5">
+      <p class="mtg-sched text-sm text-gray-600 mt-1.5">
         Scheduled <span id="sched-display"><%= new Date(meeting.scheduledAt).toLocaleString() %></span>
         <button id="sched-edit-btn" type="button" class="text-xs text-orgy-blue hover:underline ml-1">Edit time</button>
         <span class="mx-1.5 text-gray-300">&middot;</span>
@@ -85,26 +85,26 @@
         var _ratingAvg = _ratingVals.length ? (_ratingVals.reduce(function(a,b){ return a + b; }, 0) / _ratingVals.length) : null;
       %>
       <% if (meeting.status === 'scheduled') { %>
-        <button class="js-start-meeting px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">
-          ▶ Start meeting
-        </button>
-        <button class="js-end-meeting px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Mark this meeting complete (you don't have to Start it first)">
-          ✓ End meeting
-        </button>
+        <button class="js-start-meeting px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep" title="Snapshots the scorecard and rocks so the discussion is anchored to what's true right now">▶ Start meeting</button>
       <% } else if (meeting.status === 'in_progress') { %>
-        <button class="js-extend-meeting px-4 py-2 border border-orgy-blue text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-blue-soft" title="Push the 1-hour auto-end out by another hour">
-          ⏱ Extend
-        </button>
-        <button class="js-end-meeting px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">
-          ✓ End meeting
-        </button>
+        <button class="js-end-meeting px-4 py-2 bg-orgy-blue text-white rounded-lg text-sm font-semibold hover:bg-orgy-blue-deep">✓ End meeting</button>
       <% } else if (meeting.status === 'completed') { %>
         <span class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium" title="Meeting ended; data is frozen as the historical record">Ended<% if (_ratingAvg != null) { %> &middot; <%= _ratingAvg.toFixed(1) %>/10<% } %></span>
       <% } %>
-      <button id="cal-toggle" class="px-4 py-2 border border-orgy text-orgy-blue rounded-lg text-sm font-semibold hover:bg-orgy-soft" title="Get a link to paste into a Google Calendar or Outlook invite">Add to calendar</button>
-      <!-- Delete is intentionally low-visibility; full meeting delete is rare
-           and should never be a one-click neighbor of "End meeting". -->
-      <button id="delete-meeting" class="text-xs text-gray-400 hover:text-red-600 hover:underline" title="Delete this meeting permanently (soft delete)">Delete</button>
+      <!-- Secondary actions live in one overflow so the header has a single clear
+           primary (DESIGN.md: one primary per screen). Same ids/classes/handlers. -->
+      <details class="hdr-overflow">
+        <summary class="hdr-overflow-btn" aria-label="More meeting actions" title="More actions">&#8943;</summary>
+        <div class="hdr-overflow-menu">
+          <% if (meeting.status === 'scheduled') { %>
+            <button class="js-end-meeting hdr-mi" title="Mark this meeting complete (you don't have to Start it first)">✓ End meeting</button>
+          <% } else if (meeting.status === 'in_progress') { %>
+            <button class="js-extend-meeting hdr-mi" title="Push the 1-hour auto-end out by another hour">⏱ Extend meeting</button>
+          <% } %>
+          <button id="cal-toggle" class="hdr-mi" title="Get a link to paste into a Google Calendar or Outlook invite">Add to calendar</button>
+          <button id="delete-meeting" class="hdr-mi hdr-mi-danger" title="Delete this meeting permanently (soft delete)">Delete meeting</button>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -840,8 +840,10 @@
       </ul>
     <% } %>
 
-    <!-- New todo quick-add -->
-    <div class="mt-3 space-y-2">
+    <!-- New todo quick-add (collapsed behind a toggle so the section reads clean) -->
+    <div class="mt-3">
+    <button id="todo-add-toggle" type="button" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">+ Add to-do</button>
+    <div id="todo-add-form" class="hidden mt-3 space-y-2">
     <div class="grid grid-cols-12 gap-2">
       <input id="new-todo-title" type="text" placeholder="New to-do (assigned at this meeting)..." class="col-span-5 border rounded p-2 text-sm">
       <select id="new-todo-owner" class="col-span-3 border rounded p-2 text-sm" multiple size="3" title="Assign to one or more. Each person gets their own copy of this to-do.">
@@ -868,6 +870,7 @@
     <div>
       <%- include('../partials/rich-description-editor', { targetId: 'new-todo-desc' }) %>
       <textarea id="new-todo-desc" rows="2" placeholder="Description (optional). Markdown: **bold**, *italic*, [link](https://...)" class="w-full border rounded p-2 text-sm"></textarea>
+    </div>
     </div>
     </div>
   </section>
@@ -3007,7 +3010,7 @@
   // ---- command palette (Add / Tools), keyboard-driven like the best meeting apps ----
   var ADD_ITEMS = [
     { label: 'Issue',    desc: 'Identify, discuss, solve',     run: function(){ addThen('ids', openIssueForm); } },
-    { label: 'To-do',    desc: 'A 7-day commitment',           run: function(){ addThen('todos', function(){ focusFirstField('#todos'); }); } },
+    { label: 'To-do',    desc: 'A 7-day commitment',           run: function(){ addThen('todos', function(){ var t=document.getElementById('todo-add-toggle'), f=document.getElementById('todo-add-form'); if (f && f.classList.contains('hidden') && t) t.click(); var i=document.getElementById('new-todo-title'); if (i) i.focus(); }); } },
     { label: 'Headline', desc: 'Customer or employee news',    run: function(){ addThen('headlines', function(){ focusFirstField('#headlines'); }); } }
   ];
   var TOOL_ITEMS = [
@@ -3068,6 +3071,27 @@
     go.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); var n = document.getElementById('timer-skip'); if (n) n.click(); });
   });
 
+  // Issues: tuck Edit / Delete / move-to behind a per-row ⋯, leaving the IDS
+  // workflow (Identify / Discuss / Solve / To-Do) inline. Buttons keep their
+  // delegated data-action handlers -- we only relocate them in the DOM.
+  function buildIdsRowMenus(){
+    document.querySelectorAll('#ids [data-ticket-id]').forEach(function(card){
+      var actions = card.querySelector('.justify-between > div:last-child');
+      if (!actions || actions.querySelector('.ids-row-menu')) return;
+      var menu = document.createElement('details'); menu.className = 'ids-row-menu';
+      menu.innerHTML = '<summary class="ids-row-menu-btn" title="More">⋯</summary><div class="ids-row-menu-pop"></div>';
+      var pop = menu.querySelector('.ids-row-menu-pop');
+      ['[data-action="edit"]', '[data-action="delete"]', '[data-action="move-team"]'].forEach(function(sel){
+        var el = actions.querySelector(sel); if (el) pop.appendChild(el);
+      });
+      if (pop.children.length) actions.appendChild(menu);
+    });
+  }
+  buildIdsRowMenus();
+  document.addEventListener('click', function(e){
+    document.querySelectorAll('.ids-row-menu[open]').forEach(function(d){ if (!d.contains(e.target)) d.removeAttribute('open'); });
+  });
+
   // Finish meeting -> the real End-meeting control
   var fin = document.getElementById('rail-finish');
   if (fin) fin.addEventListener('click', function(){ var e = document.querySelector('.js-end-meeting'); if (e) e.click(); });
@@ -3120,6 +3144,21 @@
       if (modal && !modal.hidden) modal.hidden = true;
       if (panel && !panel.hidden) { panel.hidden = true; if (notesBtn) notesBtn.classList.remove('rail-act-on'); }
     }
+  });
+})();
+</script>
+<script>
+// Ungated (all meetings): header overflow menu + the To-Dos quick-add toggle.
+(function(){
+  var det = document.querySelector('.hdr-overflow');
+  if (det) {
+    det.querySelectorAll('.hdr-mi').forEach(function(b){ b.addEventListener('click', function(){ setTimeout(function(){ det.removeAttribute('open'); }, 0); }); });
+    document.addEventListener('click', function(e){ if (det.open && !det.contains(e.target)) det.removeAttribute('open'); });
+  }
+  var tt = document.getElementById('todo-add-toggle'), tf = document.getElementById('todo-add-form');
+  if (tt && tf) tt.addEventListener('click', function(){
+    tf.classList.toggle('hidden');
+    if (!tf.classList.contains('hidden')) { var i = document.getElementById('new-todo-title'); if (i) i.focus(); }
   });
 })();
 </script>
