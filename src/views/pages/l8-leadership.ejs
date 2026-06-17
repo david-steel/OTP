@@ -3169,12 +3169,32 @@
     { label: 'Headline',           desc: 'Customer or employee news',  run: function(){ _addModal('headlines'); } },
     { label: 'Measurable',         desc: 'A scorecard KPI',            run: function(){ _addModal('measurable'); } }
   ];
+  // Tools open IN the meeting (iframe overlay) so you never bounce away.
   var TOOL_ITEMS = [
-    { label: 'Dashboard',            desc: 'Your team dashboard', run: function(){ window.open('/dashboard', '_blank', 'noopener'); } },
-    { label: 'Accountability chart', desc: 'Seats and owners',    run: function(){ window.open('/dashboard/team', '_blank', 'noopener'); } },
-    { label: 'Scorecard',            desc: 'KPIs and trends',     run: function(){ window.open('/dashboard/kpis', '_blank', 'noopener'); } },
-    { label: 'All meetings',         desc: 'Meetings home',       run: function(){ window.open('/l8', '_blank', 'noopener'); } }
+    { label: 'Dashboard',            desc: 'Your team dashboard',   run: function(){ openTool('/dashboard', 'Dashboard'); } },
+    { label: 'Accountability chart', desc: 'Seats and owners',      run: function(){ openTool('/dashboard/team', 'Accountability chart'); } },
+    { label: 'Scorecard',            desc: 'KPIs and trends',       run: function(){ openTool('/dashboard/kpis', 'Scorecard'); } },
+    { label: 'CEO dashboard',        desc: 'The vision + numbers',  run: function(){ openTool('/dashboard/ceo', 'CEO dashboard'); } },
+    { label: 'Meeting formats',      desc: 'Build a custom agenda', run: function(){ openTool('/dashboard/meeting-formats', 'Meeting formats'); } },
+    { label: 'All meetings',         desc: 'Meetings home',         run: function(){ openTool('/l8', 'Meetings'); } }
   ];
+  // ---- in-meeting tool overlay (iframe) ----
+  var toolOv = null;
+  function buildToolOverlay() {
+    toolOv = document.createElement('div'); toolOv.className = 'tool-overlay'; toolOv.hidden = true;
+    toolOv.innerHTML = '<div class="tool-ov-card"><div class="tool-ov-head"><span class="tool-ov-title"></span><div class="tool-ov-actions"><a class="tool-ov-newtab" target="_blank" rel="noopener" title="Open in a full tab">Open &#8599;</a><button type="button" class="tool-ov-close" aria-label="Close">&times;</button></div></div><iframe class="tool-ov-frame" title="Tool"></iframe></div>';
+    document.body.appendChild(toolOv);
+    toolOv.addEventListener('mousedown', function (e) { if (e.target === toolOv) closeTool(); });
+    toolOv.querySelector('.tool-ov-close').addEventListener('click', closeTool);
+  }
+  function openTool(url, title) {
+    if (!toolOv) buildToolOverlay();
+    toolOv.querySelector('.tool-ov-title').textContent = title;
+    toolOv.querySelector('.tool-ov-newtab').href = url;
+    toolOv.querySelector('.tool-ov-frame').src = url;
+    toolOv.hidden = false;
+  }
+  function closeTool() { if (toolOv) { toolOv.hidden = true; var fr = toolOv.querySelector('.tool-ov-frame'); if (fr) fr.src = 'about:blank'; } }
   var pal = null, palInput = null, palList = null, palHint = null, palItems = [], palView = [], palSel = 0;
   function buildPalette(){
     pal = document.createElement('div'); pal.className = 'rail-palette'; pal.hidden = true;
@@ -3306,6 +3326,7 @@
       if (pal && !pal.hidden) pal.hidden = true;
       if (modal && !modal.hidden) modal.hidden = true;
       if (panel && !panel.hidden) { panel.hidden = true; if (notesBtn) notesBtn.classList.remove('rail-act-on'); }
+      if (toolOv && !toolOv.hidden) closeTool();
     }
   });
 })();

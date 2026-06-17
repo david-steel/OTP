@@ -112,8 +112,10 @@ body.otp-focus .mtg-prelude { display: none !important; }
 body.otp-focus .otp-dic-img,
 body.otp-focus .help-q { display: none !important; }
 
-/* content pane: full width, room for the fixed rail */
-#l8-meeting.meeting-stepped { max-width: none !important; margin: 0 !important; padding: 30px 44px 64px 324px !important; }
+/* content pane: room for the fixed rail; the content itself is a centered column
+   so the meeting reads as one composed frame, not a wide tile bolted to the page. */
+#l8-meeting.meeting-stepped { max-width: none !important; margin: 0 !important; padding: 26px 40px 64px 324px !important; }
+#l8-meeting.meeting-stepped > *:not(#agenda-nav):not(.mtg-modal) { max-width: 1040px; margin-left: auto !important; margin-right: auto !important; }
 #l8-meeting.meeting-stepped section { margin-bottom: 0 !important; }
 /* neutralize the IDS section's full-bleed green box in the clean view */
 #l8-meeting.meeting-stepped #ids { background: transparent !important; margin: 0 !important; padding: 0 !important; }
@@ -399,3 +401,20 @@ body.otp-focus .help-q { display: none !important; }
 /* the modal X is the cancel; hide the in-form cancels + any inline add-status */
 .mtg-modal-body #new-issue-cancel, .mtg-modal-body #new-rock-cancel { display: none !important; }
 .mtg-modal-body #new-issue-save, .mtg-modal-body #new-rock-save, .mtg-modal-body #add-todo, .mtg-modal-body #add-headline { background: var(--orgy-blue) !important; color: #fff !important; padding: 9px 18px !important; font-weight: 700 !important; }
+
+/* ---------------------------------------------------------------------------
+   In-meeting Tools overlay: a tool (Dashboard, Scorecard, Accountability chart,
+   etc.) opens in an iframe panel over the meeting instead of bouncing to a new
+   tab, so you stay in the room. "Open ↗" still gives the full-tab page.
+--------------------------------------------------------------------------- */
+.tool-overlay { position: fixed; inset: 0; background: rgba(20,22,28,.5); z-index: 96; display: flex; align-items: center; justify-content: center; padding: 3vh 3vw; }
+.tool-overlay[hidden] { display: none; }
+.tool-ov-card { width: 100%; height: 100%; max-width: 1280px; background: #fff; border-radius: 16px; box-shadow: 0 24px 60px rgba(20,22,28,.30); display: flex; flex-direction: column; overflow: hidden; }
+.tool-ov-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid #edeff2; flex: 0 0 auto; }
+.tool-ov-title { font-size: 15px; font-weight: 800; color: #14271a; }
+.tool-ov-actions { display: flex; align-items: center; gap: 14px; }
+.tool-ov-newtab { font-size: 13px; font-weight: 600; color: var(--orgy-blue); text-decoration: none; }
+.tool-ov-newtab:hover { text-decoration: underline; }
+.tool-ov-close { font-size: 24px; line-height: 1; color: #8a93a0; background: none; border: none; cursor: pointer; }
+.tool-ov-close:hover { color: #14271a; }
+.tool-ov-frame { flex: 1 1 auto; width: 100%; border: 0; }
