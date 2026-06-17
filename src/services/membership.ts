@@ -340,6 +340,57 @@ export async function acceptInvite(token: string, clerkUserId: string, userEmail
     throw new MembershipError('INVITATION_EXPIRED', 'This invitation has expired', 410);
   }
 
+  return applyAcceptedInvitation(inv, clerkUserId, userEmail, clerkName);
+}
+
+/**
+ * Find a pending, non-expired invitation matching the given email and accept
+ * it for this Clerk user -- WITHOUT requiring the email token. This is the
+ * stranded-user cure: a user who signed up / logged in via Clerk but never
+ * landed on the tokenized /accept-invite link (e.g. the ?token= was dropped
+ * across the Clerk sign-up round-trip) ends up with a Clerk account, no
+ * membership, and an invite stuck 'pending' forever. Callers run this only
+ * when the user resolved to NO org, so it never fires on the common path.
+ *
+ * Matches by case-insensitive email. If multiple orgs invited the same email,
+ * accepts the OLDEST pending invite (deterministic). Returns null when there
+ * is nothing to accept; reuses the exact same accept core as the token path.
+ */
+export async function acceptPendingInviteByEmail(
+  clerkUserId: string,
+  email: string | null,
+  clerkName: string | null = null,
+): Promise<AcceptInviteResult | null> {
+  if (!clerkUserId || !email) return null;
+  const norm = String(email).trim().toLowerCase();
+  if (!norm) return null;
+
+  const [inv] = await db
+    .select()
+    .from(orgInvitations)
+    .where(and(eq(orgInvitations.email, norm), eq(orgInvitations.status, 'pending')))
+    .orderBy(orgInvitations.createdAt)
+    .limit(1);
+  if (!inv) return null;
+  if (inv.expiresAt < new Date()) {
+    await db.update(orgInvitations).set({ status: 'expired' }).where(eq(orgInvitations.id, inv.id));
+    return null;
+  }
+
+  return applyAcceptedInvitation(inv, clerkUserId, norm, clerkName);
+}
+
+/**
+ * Core of invite acceptance, shared by the token path (acceptInvite) and the
+ * by-email stranded-user reconcile (acceptPendingInviteByEmail). Assumes `inv`
+ * is a validated, pending, non-expired invitation row.
+ */
+async function applyAcceptedInvitation(
+  inv: typeof orgInvitations.$inferSelect,
+  clerkUserId: string,
+  userEmail: string | null,
+  clerkName: string | null,
+): Promise<AcceptInviteResult> {
   // Soft email check: if the invitee email and the Clerk-account email mismatch,
   // log it but still accept (owner-controlled invitation flow). If you want
   // strict email-match, return an error here instead.

@@ -20,7 +20,7 @@ import { getStripe } from '../../../services/stripe.js';
 import { getOrCreateWallet } from '../../../services/wallet.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
 import type { Role } from '../../../services/membership.js';
-import { getOrgsForUser, resolveOrgForUser, acceptInvite, MembershipError, getFounderTileIds } from '../../../services/membership.js';
+import { getOrgsForUser, resolveOrgForUser, acceptInvite, acceptPendingInviteByEmail, MembershipError, getFounderTileIds } from '../../../services/membership.js';
 import { computeDiff } from '../../../services/diff-engine.js';
 import { generateMergePreview } from '../../../services/merge-preview.js';
 import type { ParsedClaim } from '../../../shared/types.js';
@@ -2807,6 +2807,37 @@ Founder, OTP</p>
       const [legacy] = await db.select().from(organizations)
         .where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
       if (legacy) org = legacy;
+    }
+
+    if (!org && auth.userId) {
+      // Stranded-user reconcile: this user is logged in but resolved to no
+      // org. Before showing the register form, check whether a pending invite
+      // matches their Clerk email and auto-accept it (covers the case where
+      // the ?token= was dropped across the Clerk sign-up round-trip, leaving
+      // them with a Clerk account, no membership, and an invite stuck
+      // 'pending'). Only runs on the no-org path, so it never touches the
+      // common case. Best-effort: a Clerk/DB hiccup falls through to register.
+      try {
+        const secretKey = process.env.CLERK_SECRET_KEY;
+        if (secretKey) {
+          const { createClerkClient } = await import('@clerk/backend');
+          const clerk = createClerkClient({ secretKey });
+          const u = await clerk.users.getUser(auth.userId);
+          const clerkEmail = u.emailAddresses.find(e => e.id === u.primaryEmailAddressId)?.emailAddress
+            || u.emailAddresses[0]?.emailAddress
+            || null;
+          const clerkName = [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+            || u.username
+            || null;
+          const accepted = await acceptPendingInviteByEmail(auth.userId, clerkEmail, clerkName);
+          if (accepted) {
+            request.log.info({ clerkUserId: auth.userId, orgId: accepted.orgId }, 'stranded user auto-accepted pending invite by email');
+            return reply.redirect('/dashboard');
+          }
+        }
+      } catch (err) {
+        request.log.warn({ err, clerkUserId: auth.userId }, 'stranded-user by-email reconcile failed; falling through to register');
+      }
     }
 
     if (!org) {
