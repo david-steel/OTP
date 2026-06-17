@@ -94,30 +94,64 @@ body { background: var(--orgy-bg); }
 .dash-clean .td-menu-pop .todo-delete-btn:hover { background: #fff1f1; color: #dc2626 !important; }
 
 /* ---------------------------------------------------------------------------
-   Labs: focused meeting run-mode (meetings_broken_out). Two parts, both gated:
-   1) body.otp-focus -> hide the product chrome (sidebar + top nav) and zero the
-      rail offset, so the meeting is full-focus.
-   2) #l8-meeting.meeting-stepped -> reflow the horizontal agenda nav into a
-      fixed LEFT RAIL (it already contains the timer + start), push the meeting
-      content right, and step through one section at a time (the stepper JS).
+   Labs: focused meeting run-mode (meetings_broken_out). Renders the approved
+   run-mode mockup: full-focus (product chrome hidden), a left agenda RAIL with
+   an SVG timer ring + vertical icon steps + tools, and one clean section in the
+   main pane (the green pre-meeting boxes, per-card mascots, and help "?" hide).
+   All gated behind body.otp-focus / #l8-meeting.meeting-stepped, so orgs that
+   have not opted in see no change.
 --------------------------------------------------------------------------- */
+body.otp-focus { padding-top: 0 !important; }
 body.otp-focus .otp-sb,
+body.otp-focus aside#otp-sidebar,
 body.otp-focus .v7-nav { display: none !important; }
 body.otp-focus main { margin-left: 0 !important; padding-top: 0 !important; }
 
-#l8-meeting.meeting-stepped { max-width: none !important; margin: 0 !important; padding: 24px 32px 24px 296px !important; }
-#l8-meeting.meeting-stepped #agenda-nav {
-  position: fixed; top: 16px; left: 16px; width: 256px; max-height: calc(100vh - 32px); overflow: auto;
-  flex-direction: column; align-items: stretch; gap: 3px;
-  background: #fff; border: 1px solid #e6e8ec; border-radius: 16px; padding: 14px; box-shadow: 0 1px 2px rgba(20,22,28,.04);
+/* hide the pre-meeting clutter, mascots, and help "?" while focused */
+body.otp-focus .mtg-prelude { display: none !important; }
+body.otp-focus .otp-dic-img,
+body.otp-focus .help-q { display: none !important; }
+
+/* content pane: full width, room for the fixed rail */
+#l8-meeting.meeting-stepped { max-width: none !important; margin: 0 !important; padding: 30px 44px 64px 324px !important; }
+#l8-meeting.meeting-stepped section { margin-bottom: 0 !important; }
+/* neutralize the IDS section's full-bleed green box in the clean view */
+#l8-meeting.meeting-stepped #ids { background: transparent !important; margin: 0 !important; padding: 0 !important; }
+
+/* the rail */
+#l8-meeting.meeting-stepped #agenda-nav.otp-rail {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 284px; z-index: 40;
+  display: flex; flex-direction: column; overflow: auto;
+  background: #fff; border-right: 1px solid #e6e8ec; padding: 24px 18px;
 }
-#l8-meeting.meeting-stepped #agenda-nav #meeting-clock { order: -2; align-self: center; margin: 2px 0 0 !important; }
-#l8-meeting.meeting-stepped #agenda-nav #timer-toggle { order: -1; width: 100%; margin: 8px 0 6px !important; padding: 8px !important; font-size: 13px; }
-#l8-meeting.meeting-stepped #agenda-nav .agenda-chip {
-  flex: none !important; text-align: left !important; background: transparent !important;
-  border-radius: 9px; padding: 9px 11px !important; font-size: 13.5px; font-weight: 600; min-width: 0;
-}
-#l8-meeting.meeting-stepped #agenda-nav .agenda-chip:hover { background: #f6f7f9 !important; border-color: transparent !important; }
-#l8-meeting.meeting-stepped #agenda-nav .agenda-chip.step-current {
-  background: #e8f0ff !important; color: #2563EB !important; box-shadow: none !important;
+.otp-rail .rail-timer { display: flex; flex-direction: column; align-items: center; }
+.otp-rail .rail-ring { position: relative; width: 132px; height: 132px; }
+.otp-rail .rail-ring svg { width: 132px; height: 132px; display: block; }
+.otp-rail .rail-ring .ring-bg { stroke: #eef0f3; }
+.otp-rail .rail-ring #ring-arc { stroke: #2563EB; transition: stroke-dashoffset .35s linear, stroke .35s; }
+.otp-rail .rail-ring-t { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.otp-rail .rail-ring-t #meeting-clock { font-size: 24px; font-weight: 800; letter-spacing: -.5px; color: #14271a; background: transparent !important; padding: 0 !important; border-radius: 0 !important; font-family: inherit; }
+.otp-rail .rail-ring-t small { font-size: 11px; color: #8a93a0; margin-top: 1px; }
+.otp-rail .rail-start { width: 100%; margin-top: 14px; background: #2563EB; color: #fff; border: none; border-radius: 11px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.otp-rail .rail-start:hover { background: #1d4ed8; }
+
+.otp-rail .rail-steps { margin-top: 20px; display: flex; flex-direction: column; gap: 2px; }
+.otp-rail .agenda-chip { display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 10px; color: #3b4a3f; text-decoration: none; cursor: pointer; }
+.otp-rail .agenda-chip:hover { background: #f6f7f9; }
+.otp-rail .agenda-chip .st-n { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #e6e8ec; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #8a93a0; flex: 0 0 auto; }
+.otp-rail .agenda-chip .st-nm { flex: 1; font-size: 13.5px; font-weight: 600; }
+.otp-rail .agenda-chip .st-tm { font-size: 11px; color: #aeb6bf; }
+/* active step (paintChip toggles ring-2 ring-orgy on the current chip) */
+.otp-rail .agenda-chip.ring-2 { background: #e8f0ff !important; box-shadow: none !important; }
+.otp-rail .agenda-chip.ring-2 .st-nm { color: #2563EB; }
+.otp-rail .agenda-chip.ring-2 .st-n { border-color: #2563EB; color: #2563EB; }
+
+.otp-rail .rail-tools { margin-top: auto; padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.otp-rail .rail-tools button { font-size: 12.5px; font-weight: 600; color: #3b4a3f; background: #fff; border: 1px solid #e6e8ec; border-radius: 9px; padding: 8px; cursor: pointer; }
+.otp-rail .rail-tools button:hover { background: #f6f7f9; }
+
+@media (max-width: 760px) {
+  #l8-meeting.meeting-stepped { padding: 16px !important; }
+  #l8-meeting.meeting-stepped #agenda-nav.otp-rail { position: static; width: auto; border-right: none; border-bottom: 1px solid #e6e8ec; margin-bottom: 18px; padding: 16px; }
+  .otp-rail .rail-tools { margin-top: 14px; }
 }
