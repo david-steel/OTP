@@ -19,12 +19,15 @@ export type MeetingUpdateKind =
   | 'checkin'
   | 'attendees'
   | 'meeting'
-  | 'rating';
+  | 'rating'
+  | 'timer';
 
 export interface MeetingUpdate {
   kind: MeetingUpdateKind;
   action?: string;
   entityId?: string;
+  // For kind:'timer' -- the shared stopwatch state broadcast to the room.
+  timer?: unknown;
 }
 
 export interface PresenceInfo {
@@ -50,7 +53,24 @@ const byMeeting = new Map<string, Set<Subscriber>>();
 // data (todos, rocks, issues, headlines) can fan out to live meetings
 // of that team without a DB lookup.
 const meetingTeamId = new Map<string, string | null>();
+// Last-known shared timer state per meeting, so late joiners sync to the
+// running stopwatch. Ephemeral (in-memory): a server restart resets it, which
+// is fine for a live meeting clock. Cleared when the room empties.
+const lastTimer = new Map<string, unknown>();
 let cleanupTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Store + broadcast the shared meeting timer. Driven by POST /meetings/:id/timer
+// whenever anyone starts/pauses or changes section, so the whole room sees one
+// clock.
+export function setMeetingTimer(meetingId: string, timer: Record<string, unknown>): void {
+  const stored = { ...timer, at: Date.now() };
+  lastTimer.set(meetingId, stored);
+  publishMeetingUpdate(meetingId, { kind: 'timer', timer: stored });
+}
+
+export function getMeetingTimer(meetingId: string): unknown {
+  return lastTimer.get(meetingId);
+}
 
 function ensureCleanupTimer() {
   if (cleanupTimer) return;
@@ -70,7 +90,7 @@ function sweepStalePresence() {
       }
     }
     if (changed) broadcastPresence(meetingId);
-    if (subs.size === 0) byMeeting.delete(meetingId);
+    if (subs.size === 0) { byMeeting.delete(meetingId); meetingTeamId.delete(meetingId); lastTimer.delete(meetingId); }
   }
 }
 
@@ -122,6 +142,11 @@ export function subscribeToMeeting(opts: {
   meetingTeamId.set(opts.meetingId, opts.teamId);
   // Push initial presence to the new subscriber and announce to the room.
   try { sub.send('presence', { meetingId: opts.meetingId, presence: presenceListFor(opts.meetingId) }); } catch { /* ignore */ }
+  // Sync a late joiner to the room's running stopwatch, if one is set.
+  {
+    const t = lastTimer.get(opts.meetingId);
+    if (t) { try { sub.send('meeting-updated', { meetingId: opts.meetingId, kind: 'timer', timer: t, at: new Date().toISOString() }); } catch { /* ignore */ } }
+  }
   broadcastPresence(opts.meetingId);
   return {
     subscriberId: id,
@@ -135,6 +160,7 @@ export function subscribeToMeeting(opts: {
       if (set.size === 0) {
         byMeeting.delete(opts.meetingId);
         meetingTeamId.delete(opts.meetingId);
+        lastTimer.delete(opts.meetingId);
       } else broadcastPresence(opts.meetingId);
     },
   };

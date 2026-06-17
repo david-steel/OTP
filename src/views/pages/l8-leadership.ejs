@@ -1683,17 +1683,60 @@
     paintChip();
     saveTimer();
   }
+  // ===== Shared timer sync (the whole room sees one clock) =====
+  // A user start/pause/section-change POSTs the state; the server caches it and
+  // broadcasts a kind:'timer' event that applyRemoteTimer() applies on every other
+  // client. _applyingRemote stops an applied update from re-posting; _timerReady
+  // stops the initial auto-start from broadcasting before we're set up.
+  let _applyingRemote = false;
+  let _timerReady = false;
+  let _postTimerT = null;
+  function postTimer() {
+    if (_applyingRemote || !_timerReady) return;
+    if (_postTimerT) clearTimeout(_postTimerT);
+    _postTimerT = setTimeout(function () {
+      try {
+        fetch('/api/v1/meetings/' + meetingId + '/timer', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ running: timerState.running, sectionIdx: timerState.sectionIdx, elapsed: timerState.elapsed, sectionTimes: timerState.sectionTimes }),
+        }).catch(function () {});
+      } catch (e) { /* offline -- the local timer still runs */ }
+    }, 150);
+  }
+  function applyRemoteTimer(t) {
+    if (!t || typeof t !== 'object') return;
+    _applyingRemote = true;
+    try {
+      timerState.sectionIdx = Math.min(Math.max(0, parseInt(t.sectionIdx, 10) || 0), Math.max(0, chips.length - 1));
+      timerState.sectionTimes = (t.sectionTimes && typeof t.sectionTimes === 'object') ? t.sectionTimes : {};
+      timerState.elapsed = (typeof t.elapsed === 'number') ? t.elapsed : 0;
+      timerState.running = !!t.running;
+      if (timerState.running) {
+        if (!timerState.intervalId) timerState.intervalId = setInterval(tick, 1000);
+        if (toggleBtn) toggleBtn.textContent = 'Pause';
+      } else {
+        if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
+        if (toggleBtn) toggleBtn.textContent = timerState.elapsed > 0 ? 'Resume' : 'Start';
+      }
+      applyFocus();
+      render();
+    } finally { _applyingRemote = false; }
+  }
+
   function startTimer() {
     timerState.running = true;
     if (!timerState.intervalId) timerState.intervalId = setInterval(tick, 1000);
     toggleBtn.textContent = 'Pause';
     render();
+    postTimer();
   }
   function pauseTimer() {
     timerState.running = false;
     if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
     toggleBtn.textContent = 'Resume';
     render();
+    postTimer();
   }
   function jumpTo(idx) {
     timerState.sectionIdx = Math.max(0, Math.min(chips.length - 1, idx));
@@ -1705,6 +1748,7 @@
       chips[timerState.sectionIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     render();
+    postTimer();
   }
   toggleBtn?.addEventListener('click', () => { timerState.running ? pauseTimer() : startTimer(); });
   skipBtn?.addEventListener('click', () => { jumpTo(timerState.sectionIdx + 1); });
@@ -1768,6 +1812,10 @@
     if (_statusEl && _statusEl.textContent.trim() === 'in_progress') startTimer();
   }
   render();
+  // From here on, user-driven timer changes broadcast to the room. (The initial
+  // auto-start above is intentionally local -- the SSE replay syncs us to any
+  // clock the room already has running.)
+  _timerReady = true;
 
   // Rebuild cascading message from meeting state
   const rebuildBtn = document.getElementById('rebuild-cascading');
@@ -2934,6 +2982,7 @@
           else if (kind === 'kpi') scheduleScorecardRefresh();
           else if (kind === 'headline') scheduleHeadlinesRefresh();
           else if (kind === 'todo') scheduleTodosRefresh();
+          else if (kind === 'timer') applyRemoteTimer(payload.timer);
           else scheduleReload(kind);
         } catch (err) { scheduleReload('unknown'); }
       });

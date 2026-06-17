@@ -12,7 +12,7 @@ import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isAttendee } from '../../services/meeting-access.js';
 import { deliverToAgentInbox } from '../../services/agent-inbox.js';
-import { subscribeToMeeting, publishMeetingUpdate } from '../../services/meeting-bus.js';
+import { subscribeToMeeting, publishMeetingUpdate, setMeetingTimer } from '../../services/meeting-bus.js';
 import { defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { planSeriesDeletion, isDeleteScope } from '../../services/meeting-series.js';
 import { buildScorecardSnapshot } from '../../services/meeting-resnapshot.js';
@@ -482,6 +482,36 @@ export default async function meetingRoutes(app: FastifyInstance) {
       .returning();
     if (!updated) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'No in-progress meeting to extend' } });
     return { meeting: updated, autoEndAt: updated.autoEndAt };
+  });
+
+  // POST /api/v1/meetings/:id/timer  (shared meeting stopwatch)
+  // Whoever starts/pauses or changes section drives the clock for the whole
+  // room: this caches the state in the meeting bus and broadcasts a kind:'timer'
+  // event to every connected attendee. Ephemeral (in-memory), member-gated.
+  app.post<{ Params: { id: string } }>('/meetings/:id/timer', async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    const b = (request.body || {}) as Record<string, unknown>;
+    const rawTimes = (b.sectionTimes && typeof b.sectionTimes === 'object') ? b.sectionTimes as Record<string, unknown> : {};
+    const sectionTimes: Record<string, number> = {};
+    let n = 0;
+    for (const k in rawTimes) {
+      if (n++ > 50) break; // bound: a meeting has a handful of sections
+      const v = Number(rawTimes[k]);
+      if (Number.isFinite(v)) sectionTimes[String(k)] = Math.max(0, Math.floor(v));
+    }
+    setMeetingTimer(id, {
+      running: !!b.running,
+      sectionIdx: Number.isFinite(Number(b.sectionIdx)) ? Math.max(0, Math.floor(Number(b.sectionIdx))) : 0,
+      elapsed: Number.isFinite(Number(b.elapsed)) ? Math.max(0, Math.floor(Number(b.elapsed))) : 0,
+      sectionTimes,
+    });
+    return { ok: true };
   });
 
   // DELETE /api/v1/meetings/:id  (soft-delete -- any status is deletable)
