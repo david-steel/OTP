@@ -877,6 +877,7 @@ await app.register(import('./routes/api/workspaces.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/source-documents.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/inquiries.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/admin.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/org-deletion.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/best-practices.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/digest.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/newsletter.js'), { prefix: '/api/v1' });
@@ -889,6 +890,7 @@ await app.register(import('./routes/api/ninety-import.js'), { prefix: '/api/v1' 
 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
+await app.register(import('./routes/pages/org-danger.js'));
 await app.register(import('./routes/pages/sections/blog.js'));
 await app.register(import('./routes/pages/sections/templates.js'));
 await app.register(import('./routes/pages/sections/sop-library.js'));
