@@ -1,0 +1,125 @@
+<!-- meeting section partial: scorecard -- verbatim extract from l8-leadership.ejs (Inc 1, additive). Props contract: src/shared/meeting-section-props.ts -->
+  <section id="scorecard" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">2. Scorecard <span class="text-sm text-gray-400 font-normal">5 min &middot; <%= scorecard.kpiCount || 0 %> KPIs</span> <button type="button" class="help-q" data-help="l8meeting.scorecard" aria-label="About the Scorecard">?</button>
+      <% if (meeting.status === 'in_progress') { %>
+        <button id="refresh-scorecard" class="ml-2 text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100 font-normal align-middle">↻ Refresh</button>
+      <% } %>
+    </h2>
+    <% if (!scorecard.kpis || scorecard.kpis.length === 0) { %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm">
+        No KPIs yet for this org. Push values via <code>/tally</code> or POST to <code>/api/v1/kpis/values</code>.
+      </div>
+    <% } else {
+      // Group KPIs by groupName so Leadership / OTP scorecards render
+      // separately. Agent-owned KPIs and the "Agent Scorecard" group are
+      // hidden from the L10 main agenda by default -- they surface in the
+      // Agent Reports section when agents are explicitly added to the
+      // meeting. EOS L10 convention: humans-only scorecard.
+      const groups = {};
+      // Resolve a KPI owner's external id to a friendly name via the chart roster.
+      const _ownerNames = {};
+      (availableOwners || []).forEach(function(o){ _ownerNames[o.externalId] = o.name; });
+      const ownerName = function(extId){ return _ownerNames[extId] || extId; };
+      (scorecard.kpis || []).forEach(function(k) {
+        if (k.ownerEntityType === 'agent') return; // hide agent-owned KPIs from L10
+        const g = k.groupName || 'Scorecard';
+        if (g === 'Agent Scorecard') return; // hide the agent-scorecard group too
+        (groups[g] = groups[g] || []).push(k);
+      });
+      const groupOrder = ['Leadership Scorecard', 'OTP Scorecard'];
+      const otherGroups = Object.keys(groups).filter(g => !groupOrder.includes(g)).sort();
+      const orderedGroups = [...groupOrder.filter(g => groups[g]), ...otherGroups];
+      // A KPI is stale if it has no latest value, or its period end is older than
+      // a grace window sized to the KPI's time grain.
+      const staleWindowDays = { daily: 2, weekly: 10, monthly: 38, quarterly: 100, yearly: 380 };
+      const isKpiStale = function(k, v) {
+        if (!v || !v.periodEnd) return true;
+        const ageMs = Date.now() - new Date(v.periodEnd).getTime();
+        const windowDays = staleWindowDays[k && k.timeGrain] || 14;
+        return ageMs > windowDays * 24 * 60 * 60 * 1000;
+      };
+    %>
+      <% orderedGroups.forEach(function(groupName) { %>
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide"><%= groupName %></h3>
+          <table class="w-full border text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left p-2">KPI</th>
+                <th class="text-left p-2">Owner</th>
+                <th class="text-right p-2">Goal</th>
+                <th class="text-right p-2">Previous</th>
+                <th class="text-right p-2">Latest</th>
+                <th class="text-center p-2">On Track</th>
+                <th class="text-center p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% groups[groupName].forEach(function(k) {
+                   const v = (scorecard.latestValues || {})[k.id];
+                   let onTrack = null;
+                   if (v && k.goalValue != null && k.goalOperator) {
+                     const lhs = v.value;
+                     const rhs = k.goalValue;
+                     onTrack = (k.goalOperator === 'gte' && lhs >= rhs) ||
+                               (k.goalOperator === 'gt'  && lhs >  rhs) ||
+                               (k.goalOperator === 'lte' && lhs <= rhs) ||
+                               (k.goalOperator === 'lt'  && lhs <  rhs) ||
+                               (k.goalOperator === 'eq'  && lhs === rhs);
+                   }
+              %>
+                <tr class="border-t">
+                  <td class="p-2"><%= k.title %></td>
+                  <td class="p-2 text-gray-600">
+                    <span class="text-xs px-1.5 py-0.5 rounded mr-1 <%= k.ownerEntityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' %>"><%= k.ownerEntityType %></span>
+                    <%= ownerName(k.ownerExternalId) %>
+                  </td>
+                  <td class="p-2 text-right text-gray-700"><%
+                    const opSym = { gte: '≥', lte: '≤', gt: '>', lt: '<', eq: '=' }[k.goalOperator] || '';
+                  %><%= opSym %> <%= k.goalValue != null ? k.goalValue : '—' %><% if (k.unit) { %> <span class="text-gray-400 text-xs"><%= k.unit %></span><% } %></td>
+                  <% const pv = (scorecard.previousValues || {})[k.id]; %>
+                  <td class="p-2 text-right text-gray-500">
+                    <% if (pv) { %>
+                      <%= pv.value %>
+                      <div class="text-xs text-gray-400">as of <%= new Date(pv.periodEnd).toLocaleDateString() %></div>
+                    <% } else { %>
+                      —
+                    <% } %>
+                  </td>
+                  <td class="p-2 text-right font-medium" data-kpi-id="<%= k.id %>" data-period-start="<%= v ? new Date(v.periodStart).toISOString() : '' %>">
+                    <div data-kpi-display class="cursor-pointer hover:text-orgy-blue" title="Click to edit">
+                      <%= v ? v.value : '—' %>
+                      <% if (v) { %>
+                        <div class="text-xs text-gray-400 font-normal">as of <%= new Date(v.periodEnd).toLocaleDateString() %></div>
+                      <% } %>
+                      <% if (isKpiStale(k, v)) { %>
+                        <div class="text-[10px] text-amber-700 bg-amber-100 rounded px-1 inline-block mt-0.5">⚠ <%= v ? 'stale' : 'no data' %></div>
+                      <% } %>
+                    </div>
+                    <div data-kpi-editor class="hidden">
+                      <input type="number" step="any" data-kpi-input class="w-20 border rounded p-1 text-sm text-right" value="<%= v ? v.value : '' %>">
+                      <div class="flex gap-1 justify-end mt-1">
+                        <button data-kpi-save class="text-xs px-2 py-0.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save</button>
+                        <button data-kpi-cancel class="text-xs px-2 py-0.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-2 text-center">
+                    <% if (onTrack === true) { %><%- include('../partials/ui-pill', { status: 'ontrack' }) %><% } %>
+                    <% if (onTrack === false) { %><%- include('../partials/ui-pill', { status: 'offtrack' }) %><% } %>
+                    <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
+                  </td>
+                  <td class="p-2 text-center">
+                    <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft"
+                            data-flag-kpi="<%= k.id %>"
+                            data-flag-title="<%= String('KPI: ' + (k.title || '')).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') %>"
+                            data-owner="<%= (k.ownerEntityType && k.ownerExternalId) ? (k.ownerEntityType + ':' + k.ownerExternalId) : '' %>">→ Issue</button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% }); %>
+    <% } %>
+  </section>

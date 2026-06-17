@@ -1,0 +1,59 @@
+<!-- meeting section partial: segue -- verbatim extract from l8-leadership.ejs (Inc 1, additive). Props contract: src/shared/meeting-section-props.ts -->
+  <section id="segue" class="mb-12">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">1. Checkin <span class="text-sm text-gray-400 font-normal">5 min &middot; Personal best, business best -- one per attendee</span> <button type="button" class="help-q" data-help="l8meeting.checkin" aria-label="About Check-in">?</button></h2>
+    <% var _checkinsDone = normalizedAttendees.filter(function(a){ return a.checkinText && String(a.checkinText).trim(); }).length; %>
+    <% // Edit only while the meeting is live; entry allowed before (prep) and live; never on a completed (frozen) meeting.
+       var _canCheckinEdit = meeting.status === 'in_progress';
+       var _canCheckinEnter = meeting.status === 'in_progress' || meeting.status === 'scheduled'; %>
+    <div class="text-xs text-gray-500 mb-2"><%= _checkinsDone %> of <%= normalizedAttendees.length %> checked in</div>
+    <% if (meeting.status === 'scheduled') { %>
+      <div class="text-xs text-orgy-on-light bg-orgy-tint border border-orgy-soft rounded-lg px-3 py-2 mb-3">Pre-meeting check-ins. Captured now, they lock in when you press <strong>Start meeting</strong>.</div>
+    <% } else if (meeting.status === 'completed') { %>
+      <div class="text-xs text-gray-500 mb-3">Check-ins from this meeting &middot; read-only record.</div>
+    <% } %>
+    <div class="space-y-2">
+      <% if (normalizedAttendees.length === 0) { %>
+        <div class="text-sm text-gray-500 italic">No attendees yet -- add some in the panel above so each can check in.</div>
+      <% } %>
+      <% normalizedAttendees.forEach(function(a){
+           var ckey = a.externalId || a.memberId || '';
+           var hasCheckin = a.checkinText && String(a.checkinText).trim() !== '';
+           var badgeClass = a.entityType === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+      %>
+        <div class="border rounded-lg p-3" data-checkin-attendee="<%= ckey %>">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs px-2 py-0.5 rounded-full <%= badgeClass %>"><%= a.name || a.externalId %></span>
+            <% if (hasCheckin) { %>
+              <span class="text-xs text-emerald-700 font-medium">&#10003; checked in<% if (a.checkinAt) { %> &middot; <%= new Date(a.checkinAt).toLocaleString() %><% } %></span>
+            <% } else { %>
+              <span class="text-xs text-gray-400">not yet checked in</span>
+            <% } %>
+          </div>
+          <% if (hasCheckin) { %>
+            <div data-checkin-display>
+              <div class="text-sm text-gray-800 whitespace-pre-wrap<%= _canCheckinEdit ? ' mb-2' : '' %>"><%= a.checkinText %></div>
+              <% if (_canCheckinEdit) { %><button type="button" class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" data-checkin-edit>Edit</button><% } %>
+            </div>
+            <div data-checkin-editor class="hidden">
+              <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."><%= a.checkinText || '' %></textarea>
+              <div class="flex gap-2 mt-2 items-center">
+                <button type="button" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" data-checkin-save>Save</button>
+                <button type="button" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" data-checkin-cancel>Cancel</button>
+                <span class="text-xs text-gray-500" data-checkin-msg></span>
+              </div>
+            </div>
+          <% } else if (_canCheckinEnter) { %>
+            <div data-checkin-editor>
+              <textarea data-checkin-input rows="2" class="w-full border rounded p-2 text-sm" placeholder="One personal best, one business best..."></textarea>
+              <div class="flex gap-2 mt-2 items-center">
+                <button type="button" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" data-checkin-save>Save</button>
+                <span class="text-xs text-gray-500" data-checkin-msg></span>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="text-sm text-gray-400 italic">No check-in recorded.</div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </section>

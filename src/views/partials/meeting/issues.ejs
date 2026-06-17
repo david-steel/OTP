@@ -1,0 +1,175 @@
+<!-- meeting section partial: issues -- verbatim extract from l8-leadership.ejs (Inc 1, additive). Props contract: src/shared/meeting-section-props.ts -->
+  <section id="ids" class="mb-12 bg-orgy-blue-soft -mx-4 px-4 py-6 rounded-lg">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">6. Issues <span class="text-sm text-gray-400 font-normal">60 min &middot; Identify, Discuss, Solve -- where most of the value of this meeting comes from</span> <button type="button" class="help-q" data-help="l8meeting.ids" aria-label="About Issues and IDS">?</button></h2>
+    <% // Open: anything not yet solved AND owned by a human (or unowned).
+       // EOS leadership L10 is humans-only by convention -- agent-owned
+       // issues belong in an agent review, not the main IDS list.
+       // Solved this meeting: only issues whose solvedInMeetingId matches
+       // THIS meeting. Issues solved in prior meetings are gone -- they
+       // shouldn't clutter a fresh L10 agenda.
+       function _isAgentOwner(o) {
+         if (!o) return false;
+         if (o.ownerEntityType === 'agent') return true;
+         if (typeof o.ownerExternalId === 'string' && o.ownerExternalId.startsWith('AGT_')) return true;
+         return false;
+       }
+       const openIssues = (issues || []).filter(function(i){ return i.idsStatus !== 'solved' && !_isAgentOwner(i); });
+       const solvedIssues = (issues || []).filter(function(i){ return i.idsStatus === 'solved' && i.solvedInMeetingId === meeting.id && !_isAgentOwner(i); }); %>
+
+    <div class="mb-2 text-sm text-gray-600">
+      <%= openIssues.length %> open &middot; <%= solvedIssues.length %> solved
+    </div>
+
+    <div class="space-y-2">
+      <% openIssues.forEach(function(i) { %>
+        <div class="border rounded p-3 bg-white" data-ticket-id="<%= i.id %>" data-ticket-title="<%= i.title.replace(/"/g, '&quot;') %>">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span data-ids-pill class="text-xs px-2 py-0.5 rounded
+                <%= i.idsStatus === 'open' ? 'bg-gray-100 text-gray-700' :
+                   i.idsStatus === 'identified' ? 'bg-blue-100 text-blue-800' :
+                   i.idsStatus === 'discussed' ? 'bg-amber-100 text-amber-800' :
+                   'bg-emerald-100 text-emerald-800' %>">
+                <%= i.idsStatus %>
+              </span>
+              <span class="text-xs text-gray-500">priority: <%= i.priority %></span>
+              <% if (i.priorityRank != null) { %>
+                <span class="text-xs font-medium text-orgy-blue">#<%= i.priorityRank %></span>
+              <% } %>
+              <% if (i.ownerExternalId) { %>
+                <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-800 rounded">owner: <%= i.ownerName || i.ownerExternalId %></span>
+              <% } %>
+            </div>
+            <div class="flex gap-1 items-center">
+              <% if ((orgTeams || []).length > 1) { %>
+                <select data-action="move-team" class="text-xs px-1 py-1 border rounded" title="Move this issue to a different team">
+                  <option value="">move to…</option>
+                  <% orgTeams.forEach(function(tm) { if (tm.id === i.teamId) return; %>
+                    <option value="<%= tm.id %>"><%= tm.name %></option>
+                  <% }); %>
+                </select>
+              <% } %>
+              <button data-ids-set="identified" class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:opacity-80">Identify</button>
+              <button data-ids-set="discussed"  class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Discuss</button>
+              <button data-action="solve"       class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80 font-medium">Solve</button>
+              <button data-action="convert"     class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft">→ To-Do</button>
+              <button data-action="edit"        class="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">Edit</button>
+              <button data-action="delete"      class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
+            </div>
+          </div>
+          <div class="mt-2 text-sm font-medium" data-ticket-title-display><%= i.title %></div>
+          <% if (i.description) { %><div class="text-xs text-gray-600 mt-1" data-ticket-desc-display><%= i.description %></div><% } %>
+
+          <!-- Inline edit form (hidden by default) -->
+          <div data-form="edit" class="hidden mt-3 border-t pt-3">
+            <input data-field="title" type="text" value="<%= i.title %>" class="w-full border rounded p-2 text-sm mb-2">
+            <textarea data-field="description" class="w-full border rounded p-2 text-sm h-20 mb-2" placeholder="Description"><%= i.description || '' %></textarea>
+            <select data-field="owner" class="border rounded p-2 text-sm">
+              <option value="">-- assign issue owner --</option>
+              <% (availableOwners || []).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>" <%= (i.ownerExternalId === a.externalId) ? 'selected' : '' %>><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+              <% }); %>
+            </select>
+            <div class="flex gap-2 mt-2">
+              <button data-action="edit-save" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save</button>
+              <button data-action="edit-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Inline solve form (hidden by default) -->
+          <div data-form="solve" class="hidden mt-3 border-t pt-3 bg-emerald-50 -mx-3 -mb-3 px-3 pb-3">
+            <label class="block text-xs font-medium text-emerald-900 mb-1">Resolution (how was this solved? cascades to all attendees)</label>
+            <textarea data-field="resolution" class="w-full border rounded p-2 text-sm h-20 mb-2" placeholder="Decision, rationale, owner, next step..."></textarea>
+            <label class="flex items-center gap-2 text-xs mb-2">
+              <input type="checkbox" data-field="create-followup" checked> Create a 7-day follow-up to-do
+            </label>
+            <div data-followup-fields class="space-y-2">
+              <input data-field="followup-title" type="text" placeholder="Follow-up to-do title (defaults to issue title)" class="w-full border rounded p-2 text-sm">
+              <select data-field="followup-owner" class="border rounded p-2 text-sm w-full">
+                <option value="">-- to-do owner (required to create follow-up) --</option>
+                <% (availableOwners || []).forEach(function(a) { %>
+                  <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button data-action="solve-confirm" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Solve + Cascade</button>
+              <button data-action="solve-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Inline convert-to-todo form (hidden by default) -->
+          <div data-form="convert" class="hidden mt-3 border-t pt-3 bg-orgy-blue-soft/40 -mx-3 -mb-3 px-3 pb-3">
+            <label class="block text-xs font-medium text-orgy-blue mb-1">Convert this issue to a 7-day to-do</label>
+            <input data-field="convert-title" type="text" value="<%= i.title %>" class="w-full border rounded p-2 text-sm mb-2">
+            <select data-field="convert-owner" class="border rounded p-2 text-sm w-full mb-2">
+              <option value="">-- to-do owner --</option>
+              <% (availableOwners || []).forEach(function(a) { %>
+                <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+              <% }); %>
+            </select>
+            <label class="flex items-center gap-2 text-xs mb-2">
+              <input type="checkbox" data-field="delete-after-convert"> Also delete this issue after creating the to-do
+            </label>
+            <div class="flex gap-2">
+              <button data-action="convert-confirm" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Create To-Do</button>
+              <button data-action="convert-cancel" class="text-xs px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+
+      <% if (openIssues.length === 0) { %>
+        <div class="bg-white border rounded p-4 text-sm text-gray-600">No open issues. Add one below.</div>
+      <% } %>
+    </div>
+
+    <!-- Add issue (collapsed by default) -->
+    <div class="mt-3">
+      <button id="issue-add-toggle" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">+ Add issue</button>
+      <div id="issue-add-form" class="hidden mt-3 border rounded p-3 bg-white">
+        <div class="grid grid-cols-12 gap-2">
+          <input id="new-issue-title" type="text" placeholder="Issue title (the thing the team needs to identify, discuss, solve)" class="col-span-12 border rounded p-2 text-sm">
+          <textarea id="new-issue-desc" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Description (optional context)"></textarea>
+          <select id="new-issue-priority" class="col-span-4 border rounded p-2 text-sm">
+            <option value="low">low priority</option>
+            <option value="medium" selected>medium priority</option>
+            <option value="high">high priority</option>
+            <option value="critical">critical priority</option>
+          </select>
+          <select id="new-issue-owner" class="col-span-8 border rounded p-2 text-sm">
+            <option value="">-- owner (optional, can assign later) --</option>
+            <% (availableOwners || []).forEach(function(a) { %>
+              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button id="new-issue-save" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Add Issue</button>
+          <button id="new-issue-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <% if (solvedIssues.length > 0) { %>
+      <details class="mt-4" open>
+        <summary class="cursor-pointer text-sm text-gray-600">Solved in this meeting (<%= solvedIssues.length %>)</summary>
+        <ul class="mt-2 space-y-2 text-sm">
+          <% solvedIssues.forEach(function(i) { %>
+            <li class="border rounded p-2 bg-white flex items-start justify-between gap-3" data-ticket-id="<%= i.id %>" data-ticket-title="<%= i.title.replace(/"/g, '&quot;') %>">
+              <div class="flex-1">
+                <div class="text-gray-500 line-through"><%= i.title %></div>
+                <% if (i.resolution) { %>
+                  <div class="text-xs text-emerald-800 mt-1"><strong>Resolution:</strong> <%= i.resolution %></div>
+                <% } %>
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
+                <button data-action="reopen" class="text-xs px-2 py-1 bg-amber-100 rounded hover:bg-amber-200">Reopen</button>
+                <button data-action="delete" class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      </details>
+    <% } %>
+  </section>

@@ -1,0 +1,65 @@
+<!-- meeting section partial: conclude -- verbatim extract from l8-leadership.ejs (Inc 1, additive). Props contract: src/shared/meeting-section-props.ts -->
+  <section id="conclude" class="mb-8">
+    <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 mb-3">7. Conclude <span class="text-sm text-gray-400 font-normal">5 min &middot; Recap, cascading message, ratings</span> <button type="button" class="help-q" data-help="l8meeting.conclude" aria-label="About Conclude">?</button></h2>
+
+    <!-- To-dos created in this meeting -->
+    <% var meetingTodos = (todos || []).filter(function(t){ return t.meetingId === meeting.id; }); %>
+    <div class="mb-5 border rounded-lg p-3 bg-gray-50">
+      <div class="text-xs uppercase tracking-wider text-gray-600 font-medium mb-2">To-Dos from this meeting (<%= meetingTodos.length %>)</div>
+      <% if (meetingTodos.length === 0) { %>
+        <div class="text-xs text-gray-500 italic">No to-dos created in this meeting yet. Capture 7-day commitments in section 5 or by solving an issue.</div>
+      <% } else { %>
+        <ul class="space-y-1">
+          <% meetingTodos.forEach(function(t){ %>
+            <li class="text-sm flex items-center gap-2">
+              <span class="<%= t.doneAt ? 'text-emerald-600' : 'text-gray-400' %>"><%= t.doneAt ? '✓' : '○' %></span>
+              <span><%= t.title %></span>
+              <span class="text-xs text-gray-500"><%= t.ownerName || t.ownerExternalId %><% if (t.dueAt) { %> &middot; due <%= new Date(t.dueAt).toLocaleDateString() %><% } %></span>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+
+    <!-- Meeting rating -->
+    <%
+      var humanAttendees = normalizedAttendees.filter(function(a){ return a.entityType === 'human'; });
+      var savedRatings = (meeting.ratings && typeof meeting.ratings === 'object') ? meeting.ratings : {};
+    %>
+    <div class="mb-5 border rounded-lg p-3">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase tracking-wider text-gray-600 font-medium">Meeting Rating <span class="text-gray-400 normal-case">&mdash; each person, 1 to 10. Aim for an 8+ average.</span></div>
+        <span id="rating-avg" class="text-sm font-bold text-gray-700"></span>
+      </div>
+      <% if (humanAttendees.length === 0) { %>
+        <div class="text-xs text-gray-500 italic">No human attendees to rate the meeting. Add attendees above.</div>
+      <% } else { %>
+        <div class="flex flex-wrap gap-2.5 mb-2">
+          <% humanAttendees.forEach(function(a){ var _isAbsent = savedRatings[a.externalId] === 'absent'; %>
+            <span class="rating-cell flex items-center gap-2 text-sm border rounded-lg px-2.5 py-1.5">
+              <span class="font-medium"><%= a.name || a.externalId %></span>
+              <input type="number" min="1" max="10" data-rating-input data-attendee-key="<%= a.externalId %>"
+                     value="<%= (typeof savedRatings[a.externalId] === 'number') ? savedRatings[a.externalId] : '' %>"
+                     <%= _isAbsent ? 'disabled' : '' %>
+                     class="w-14 border rounded p-1 text-sm text-center">
+              <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer" title="Mark this person absent (no score needed)">
+                <input type="checkbox" data-absent-input data-attendee-key="<%= a.externalId %>" <%= _isAbsent ? 'checked' : '' %>>
+                absent
+              </label>
+            </span>
+          <% }); %>
+        </div>
+        <button id="save-ratings" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Save ratings</button>
+        <span id="ratings-status" class="text-xs text-gray-500 ml-2"></span>
+      <% } %>
+    </div>
+
+    <label class="block text-sm font-medium mb-1">Cascading message <span class="text-xs text-gray-500 font-normal">-- auto-appended on each Solve. Use Rebuild to regenerate from headlines + solved issues + new to-dos.</span></label>
+    <textarea id="cascading-message" class="w-full border rounded p-3 text-sm h-48 font-mono"><%= meeting.cascadingMessage || '' %></textarea>
+    <div class="mt-2 flex gap-2 items-center">
+      <button data-save="cascadingMessage" class="text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Save</button>
+      <button id="rebuild-cascading" class="text-xs px-3 py-1 border border-gray-300 text-orgy-blue bg-white rounded hover:bg-orgy-blue-soft">Rebuild draft from meeting</button>
+      <button id="cascade-to-team" class="text-xs px-3 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">Cascade to team</button>
+      <span id="cascading-status" class="text-xs text-gray-500"></span>
+    </div>
+  </section>

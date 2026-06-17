@@ -31,9 +31,13 @@ proven byte-identical inside the gated custom runner.
 
 ## Sequence (revised — live template last)
 - **Inc 0 (this doc)** — regression contract. DONE.
-- **Inc 1** — author shared `partials/meeting/<type>.ejs` + a `meetingSectionProps`
-  helper that resolves each section's data from render locals. Built additively;
-  does NOT modify `l8-leadership.ejs` yet.
+- **Inc 1** — DONE (2026-06-17). 7 built-in section partials extracted verbatim to
+  `src/views/partials/meeting/{segue,scorecard,rocks,headlines,todos,issues,conclude}.ejs`
+  (all EJS-compile clean). Props contract codified in `src/shared/meeting-section-props.ts`
+  (`SECTION_REQUIRED_LOCALS`, `DATA_LINKED_SECTIONS`, `sectionPartialPath`,
+  `missingLocalsForSection`, `sectionTypesInAgenda`, and a verbatim `normalizeAttendees`
+  port). tsc clean + runtime-verified. `l8-leadership.ejs` UNCHANGED (additive).
+  `notes` has no built-in partial (custom-only discussion block; folded in Inc 2).
 - **Inc 2** — gated custom runner renders the shared partials with live data
   (route resolves scorecard/rocks/issues/todos; partials embed, not link).
   Prove the full behavior here, behind the flag.

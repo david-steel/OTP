@@ -1,0 +1,192 @@
+<!-- meeting section partial: rocks -- verbatim extract from l8-leadership.ejs (Inc 1, additive). Props contract: src/shared/meeting-section-props.ts -->
+  <section id="rocks" class="mb-12">
+    <% var _devQ = (typeof devOrgIdParam !== 'undefined' && devOrgIdParam) ? ('&orgId=' + devOrgIdParam) : '';
+       var _rocksFilter = (typeof rocksFilter !== 'undefined') ? rocksFilter : 'active';
+       var _hiddenCount = (typeof hiddenRocksCount !== 'undefined') ? hiddenRocksCount : 0; %>
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <h2 class="text-2xl font-extrabold tracking-tight text-gray-900">3. Quarterly Priorities <span class="text-sm text-gray-400 font-normal">5 min &middot; Big bets for the quarter, on-track or off-track</span> <button type="button" class="help-q" data-help="l8meeting.rocks" aria-label="About Quarterly Priorities">?</button></h2>
+      <% if (_rocksFilter === 'all') { %>
+        <a href="?rocks=active<%= _devQ %>#rocks" class="text-xs px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50 whitespace-nowrap">Hide completed &amp; archived</a>
+      <% } else if (_hiddenCount > 0) { %>
+        <a href="?rocks=all<%= _devQ %>#rocks" class="text-xs px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50 whitespace-nowrap">Show completed &amp; archived (<%= _hiddenCount %>)</a>
+      <% } %>
+    </div>
+    <% // Hide agent-owned rocks from the L10 main agenda. Humans own
+       // quarterly priorities in EOS; agent commitments belong in the
+       // agent's own review surface.
+       var _humanRocks = (rocks.rocks || []).filter(function(r){
+         if (r && r.ownerEntityType === 'agent') return false;
+         if (r && typeof r.ownerExternalId === 'string' && r.ownerExternalId.indexOf('AGT_') === 0) return false;
+         return true;
+       });
+       // Active first, then completed/archived (only present when ?rocks=all).
+       // A rock completed/archived DURING this live meeting (it has a
+       // rockChanges entry) stays in the active flow so its "this meeting" note
+       // is visible instead of the rock silently vanishing.
+       var _rockChanges = (typeof rockChanges !== 'undefined' && rockChanges) ? rockChanges : {};
+       var _rockBaseline = (typeof rockBaseline !== 'undefined' && rockBaseline) ? rockBaseline : {};
+       // Milestones keyed by rock id (server-fetched). Read-only here except
+       // the checkbox -- checking off a milestone during Rock Review is the
+       // natural EOS motion. Add/edit forms live on the daily dashboard.
+       var _rockMs = (typeof rockMilestones !== 'undefined' && rockMilestones) ? rockMilestones : {};
+       var _msToday = (function(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+       var _activeRocks = _humanRocks.filter(function(r){ return !(r.completedAt || r.archivedAt) || _rockChanges[r.id]; });
+       var _hiddenRocks = _humanRocks.filter(function(r){ return (r.completedAt || r.archivedAt) && !_rockChanges[r.id]; });
+       var _orderedRocks = _activeRocks.concat(_hiddenRocks); %>
+    <% if (_humanRocks.length === 0) { %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm mb-3">
+        <% if (_hiddenCount > 0) { %>
+          No active quarterly priorities. <%= _hiddenCount %> completed/archived &mdash; use &ldquo;Show completed &amp; archived&rdquo; above to view them.
+        <% } else { %>
+          No quarterly priorities yet. Add one below.
+        <% } %>
+      </div>
+    <% } else { %>
+      <% var _execLabel = {}; (executionItems || []).forEach(function(it){ _execLabel[it.id] = it.label; }); %>
+      <div class="space-y-2">
+        <% _orderedRocks.forEach(function(r) {
+             var _completed = !!r.completedAt;
+             var _archived = !!r.archivedAt;
+             var _hidden = _completed || _archived; %>
+          <% var _chg = _rockChanges[r.id];
+             var _baseOnTrack = Object.prototype.hasOwnProperty.call(_rockBaseline, r.id) ? (_rockBaseline[r.id] ? 'on' : 'off') : 'none'; %>
+          <div class="border rounded p-3 flex items-start justify-between <%= _hidden ? 'bg-gray-50 opacity-75' : '' %>" data-rock-id="<%= r.id %>" data-rock-baseline="<%= _baseOnTrack %>">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <% if (_completed) { %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-status-ontrack-soft text-status-ontrack">&#128077; Completed</span>
+                <% } else if (_archived) { %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-gray-200 text-gray-600">&#128078; Archived</span>
+                <% } else { %>
+                  <span data-rock-status-badge class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack' : 'bg-status-offtrack-soft text-status-offtrack' %>">
+                    <%= r.onTrack ? 'On Track' : 'Off Track' %>
+                  </span>
+                <% } %>
+                <span class="text-xs text-gray-500"><%= r.quarter %></span>
+                <label class="text-xs text-gray-500 inline-flex items-center gap-1">Due
+                  <input type="date" data-rock-due
+                         value="<%= r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : '' %>"
+                         class="text-xs border rounded px-1 py-0.5 text-gray-600 bg-white"
+                         title="Change this priority's due date">
+                </label>
+              </div>
+              <div class="font-medium text-sm"><%= r.title %></div>
+              <div class="text-xs text-gray-600 mt-0.5">Owner: <%= r.ownerName || r.ownerExternalId %></div>
+              <%# "Changed this meeting" provenance. data-rock-change is updated
+                  client-side by the On/Off toggle so it stays accurate without a reload. %>
+              <div data-rock-change class="text-xs mt-1 font-semibold text-orgy-blue<%= _chg ? '' : ' hidden' %>">
+                <% if (_chg && _chg.kind === 'completed') { %>&#8627; Completed this meeting<% }
+                   else if (_chg && _chg.kind === 'archived') { %>&#8627; Archived this meeting<% }
+                   else if (_chg) { %>&#8627; Changed this meeting: <%= _chg.from ? 'On Track' : 'Off Track' %> &rarr; <%= _chg.to ? 'On Track' : 'Off Track' %><% } %>
+              </div>
+              <% if (r.executionItemId && _execLabel[r.executionItemId]) { %>
+                <div class="text-xs text-orgy-blue mt-0.5">&#8627; Serves plan: <%= _execLabel[r.executionItemId] %></div>
+              <% } else { %>
+                <div class="text-xs text-amber-700 mt-0.5">&#9888; Not laddered to the 90-day plan</div>
+              <% } %>
+              <% if (r.statusNote) { %>
+                <div class="text-xs text-gray-500 mt-1 italic">"<%= r.statusNote %>"</div>
+              <% } %>
+              <%# SMART brief: read-only in the meeting. Shows the description,
+                  the five SMART answers, and the finish line when present. No
+                  editing here -- the planner lives at /rocks/:id/smart. %>
+              <% var _sd = (r.smartData && typeof r.smartData === 'object') ? r.smartData : null;
+                 var _sdHas = _sd && (_sd.specific||_sd.measurable||_sd.attainable||_sd.relevant||_sd.timeFramed||_sd.finishLine||r.description);
+                 if (_sdHas) { %>
+                <details class="mt-2">
+                  <summary class="cursor-pointer select-none text-[11px] font-semibold text-gray-500 hover:text-gray-700">SMART brief</summary>
+                  <div class="mt-1.5 pl-3 border-l border-gray-200 text-xs text-gray-700 space-y-1">
+                    <% if (r.description) { %><p><%= r.description %></p><% } %>
+                    <% if (_sd && _sd.specific) { %><p><strong>Specific:</strong> <%= _sd.specific %></p><% } %>
+                    <% if (_sd && _sd.measurable) { %><p><strong>Measurable:</strong> <%= _sd.measurable %></p><% } %>
+                    <% if (_sd && _sd.attainable) { %><p><strong>Attainable:</strong> <%= _sd.attainable %></p><% } %>
+                    <% if (_sd && _sd.relevant) { %><p><strong>Relevant:</strong> <%= _sd.relevant %></p><% } %>
+                    <% if (_sd && _sd.timeFramed) { %><p><strong>Time-framed:</strong> <%= _sd.timeFramed %></p><% } %>
+                    <% if (_sd && _sd.finishLine) { %><p><strong>Finish line:</strong> <%= _sd.finishLine %></p><% } %>
+                  </div>
+                </details>
+              <% } %>
+              <% var _msL = _rockMs[r.id] || []; %>
+              <% if (_msL.length > 0) {
+                   var _msD = _msL.filter(function(m){ return m.completedAt; }).length; %>
+                <div class="mt-2" data-ms-rock="<%= r.id %>">
+                  <div class="text-[11px] font-semibold text-gray-500">Milestones <span class="ms-chip text-gray-400 font-normal"><%= _msD %>/<%= _msL.length %></span></div>
+                  <ul class="mt-1 space-y-0.5">
+                    <% _msL.forEach(function(m){
+                         var _msDue = m.dueDate ? String(m.dueDate).slice(0, 10) : '';
+                         var _msOver = _msDue && !m.completedAt && _msDue < _msToday; %>
+                      <li class="text-xs flex items-start gap-1.5" data-ms-id="<%= m.id %>">
+                        <input type="checkbox" class="ms-check mt-0.5 accent-emerald-600" <%= m.completedAt ? 'checked' : '' %> title="Mark milestone complete">
+                        <span class="ms-title flex-1 break-words <%= m.completedAt ? 'line-through text-gray-400' : 'text-gray-700' %>"><%= m.title %></span>
+                        <% if (_msDue) { %><span class="shrink-0 text-[10px] <%= _msOver ? 'text-rose-600 font-semibold' : 'text-gray-400' %>"><%= _msDue %></span><% } %>
+                        <% var _msT = m.todos || []; if (_msT.length > 0) {
+                             var _msTD = _msT.filter(function(t){ return t.doneAt; }).length; %>
+                          <span class="shrink-0 text-[10px] text-gray-400" title="<%= _msT.map(function(t){ return (t.doneAt ? '[done] ' : '[open] ') + t.title + (t.ownerName ? ' -- ' + t.ownerName : ''); }).join('\n') %>"><%= _msTD %>/<%= _msT.length %> to-dos</span>
+                        <% } %>
+                      </li>
+                    <% }); %>
+                  </ul>
+                </div>
+              <% } %>
+            </div>
+            <div class="flex gap-1 ml-4 items-center">
+              <% if (_hidden) { %>
+                <button data-rock-reopen class="text-xs px-2 py-1 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep" title="Restore this priority to the active Rock Review">Reopen</button>
+              <% } else { %>
+                <input type="number" min="1" step="1" data-rock-position
+                       value="<%= (r.position === null || r.position === undefined) ? '' : r.position %>"
+                       class="w-12 text-xs px-1 py-1 border rounded text-gray-600 text-center"
+                       title="Display order for the Rock Review (lower sorts first). Leave blank to sort by due date.">
+                <% if ((orgTeams || []).length > 1) { %>
+                  <select data-rock-move-team class="text-xs px-1 py-1 border rounded text-gray-500" title="Move this priority to a different team">
+                    <option value="">move…</option>
+                    <% (orgTeams || []).forEach(function(tm) { if (tm.id === r.teamId) return; %>
+                      <option value="<%= tm.id %>"><%= tm.name %></option>
+                    <% }); %>
+                  </select>
+                <% } %>
+                <button data-rock-toggle="on"  class="text-xs px-2 py-1 rounded hover:opacity-80 <%= r.onTrack ? 'bg-status-ontrack-soft text-status-ontrack font-bold' : 'bg-gray-100 text-gray-400' %>" title="Mark this priority On Track (green)">On</button>
+                <button data-rock-toggle="off" class="text-xs px-2 py-1 rounded hover:opacity-80 <%= r.onTrack === false ? 'bg-status-offtrack-soft text-status-offtrack font-bold' : 'bg-gray-100 text-gray-400' %>" title="Mark this priority Off Track (red)">Off</button>
+                <button data-rock-complete class="text-xs px-2 py-1 bg-status-ontrack-soft rounded hover:opacity-80" title="Mark complete (hides from the active Rock Review)">&#128077;</button>
+                <button data-rock-archive class="text-xs px-2 py-1 bg-gray-100 rounded hover:opacity-80" title="Archive / kill this priority (hides it, recoverable)">&#128078;</button>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- Add quarterly priority (collapsed by default) -->
+    <div class="mt-3">
+      <button id="rock-add-toggle" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep">+ Add quarterly priority</button>
+      <div id="rock-add-form" class="hidden mt-3 border rounded p-3 bg-gray-50">
+        <div class="grid grid-cols-12 gap-2">
+          <input id="new-rock-title" type="text" placeholder="Priority title (e.g. 'Move to Trello -- full Accelo decommission')" class="col-span-12 border rounded p-2 text-sm">
+          <select id="new-rock-owner" class="col-span-3 border rounded p-2 text-sm">
+            <option value="">-- owner --</option>
+            <% (availableOwners || []).forEach(function(a) { %>
+              <option value="<%= a.entityType %>:<%= a.externalId %>:<%= a.name || a.externalId %>"><%= a.name || a.externalId %><%= a.isAttendee ? '' : ' (not in room)' %></option>
+            <% }); %>
+          </select>
+          <select id="new-rock-team" class="col-span-3 border rounded p-2 text-sm">
+            <% (orgTeams || []).forEach(function(tm) { %>
+              <option value="<%= tm.id %>" <%= tm.id === meeting.teamId ? 'selected' : '' %>><%= tm.name %></option>
+            <% }); %>
+          </select>
+          <select id="new-rock-exec" class="col-span-3 border rounded p-2 text-sm" title="Link this priority to a 90-day execution item">
+            <option value="">— no plan link —</option>
+            <% (executionItems || []).forEach(function(it) { %>
+              <option value="<%= it.id %>"><%= it.label %></option>
+            <% }); %>
+          </select>
+          <input id="new-rock-quarter" type="text" placeholder="2026-Q2" pattern="\d{4}-Q[1-4]" class="col-span-3 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3)+1; return d.getFullYear()+'-Q'+q; })() %>">
+          <input id="new-rock-due" type="date" class="col-span-12 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3); var endMonth=q*3+2; var end=new Date(d.getFullYear(),endMonth+1,0); return end.toISOString().slice(0,10); })() %>">
+          <textarea id="new-rock-status" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Initial status note (optional)"></textarea>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button id="new-rock-save" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Add Priority</button>
+          <button id="new-rock-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </section>
