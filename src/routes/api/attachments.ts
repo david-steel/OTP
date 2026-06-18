@@ -20,7 +20,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { eq, and, sql, isNull, inArray } from 'drizzle-orm';
 import { getAuth } from '@clerk/fastify';
 import { db } from '../../config/database.js';
-import { attachments, attachmentLinks, todos, tickets, rocks, auditLogs } from '../../db/schema.js';
+import { attachments, attachmentLinks, todos, tickets, rocks, meetings, auditLogs } from '../../db/schema.js';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
@@ -88,6 +88,12 @@ async function entityExistsInOrg(orgId: string, entityType: AttachmentEntityType
   if (entityType === 'issue') {
     const [row] = await db.select({ id: tickets.id }).from(tickets)
       .where(and(eq(tickets.id, entityId), eq(tickets.orgId, orgId), isNull(tickets.deletedAt)))
+      .limit(1);
+    return !!row;
+  }
+  if (entityType === 'meeting') {
+    const [row] = await db.select({ id: meetings.id }).from(meetings)
+      .where(and(eq(meetings.id, entityId), eq(meetings.organizationId, orgId), isNull(meetings.deletedAt)))
       .limit(1);
     return !!row;
   }
