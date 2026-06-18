@@ -1,0 +1,333 @@
+<%# /cio -- role-specific sales page for CIOs / heads of AI, especially at
+    PE-backed and multi-company operators. Sells OTP on its own. Built from the
+    Andrew Frey (CIO, Searchlight) demo: the resonance was "spend with no
+    accountability", "the organizing function of a value-creation plan", and
+    "it's a new category, not a better Salesforce/Workday". v7 layout, v7.css is
+    PREBUILT -> scoped .cio-* CSS + inline styles only (no new Tailwind utils). %>
+<% var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev'); %>
+<style>
+  .cio-sec   { padding-top: 84px; padding-bottom: 84px; }
+  .cio-wrap  { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .cio-center{ text-align: center; }
+  .cio-paper { background: var(--white, #fcfcfd); }
+  .cio-grey  { background: var(--grey, #f0f1f3); }
+  .cio-quoteband { background:linear-gradient(180deg,#f2f7ff 0%, #eef3fb 100%); border-top:1px solid var(--line,#e6e8ec); border-bottom:1px solid var(--line,#e6e8ec); }
+  .cio-qmark { display:block; font-family:'Schibsted Grotesk',serif; font-weight:900; font-size:64px; line-height:.3; color:var(--orgy-deep,#8BC42A); }
+  @media (max-width: 640px){ .cio-sec { padding-top: 54px; padding-bottom: 54px; } }
+
+  .cio-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; gap:10px; }
+  .cio-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .cio-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.05; font-size:clamp(2.2rem,4.6vw,3.5rem); color:var(--ink,#14161c); margin:0; max-width:18ch; }
+  .cio-h2 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.02em; line-height:1.12; font-size:clamp(1.7rem,3.2vw,2.5rem); color:var(--ink,#14161c); }
+  .cio-lead { font-size:18px; line-height:1.62; color:var(--ink-soft,#494d57); }
+  .cio-body { font-size:16px; line-height:1.65; color:var(--ink-soft,#494d57); }
+  .cio-max640 { max-width:640px; } .cio-max720 { max-width:720px; }
+  .accent { color:var(--blue,#0d7df2); } .accent-g { color:var(--green-deep,#06724a); }
+
+  .cio-btn  { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; font-size:16px; font-weight:700; border-radius:12px; text-decoration:none; white-space:nowrap; }
+  .cio-btn.primary { background:var(--blue,#0d7df2); color:#fff; box-shadow:0 10px 26px -10px rgba(13,125,242,.6); transition:transform .15s ease, box-shadow .15s ease; }
+  .cio-btn.primary:hover { transform:translateY(-1px); box-shadow:0 14px 30px -10px rgba(13,125,242,.7); }
+  .cio-btn.ghost { background:transparent; color:var(--ink,#14161c); border:1px solid var(--line,#e6e8ec); }
+  .cio-btn.ghost:hover { border-color:#c8ccd4; }
+  .cio-cta-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:30px; }
+
+  /* cards / grids */
+  .cio-grid3 { display:grid; gap:18px; grid-template-columns:1fr; margin-top:36px; }
+  @media (min-width:780px){ .cio-grid3 { grid-template-columns:repeat(3,1fr); } }
+  .cio-grid2 { display:grid; gap:18px; grid-template-columns:1fr; margin-top:36px; }
+  @media (min-width:780px){ .cio-grid2 { grid-template-columns:repeat(2,1fr); } }
+  .cio-card { background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); border-radius:16px; padding:24px 22px; box-shadow:0 10px 28px rgba(20,22,28,.05); }
+  .cio-card h3 { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:18px; color:var(--ink,#14161c); margin:0 0 8px; }
+  .cio-card p { font-size:14.5px; line-height:1.6; color:var(--ink-soft,#494d57); margin:0; }
+  .cio-chip { display:inline-flex; width:38px; height:38px; border-radius:11px; align-items:center; justify-content:center; margin-bottom:14px; }
+
+  /* governance feature list */
+  .cio-feat { display:grid; gap:2px 28px; grid-template-columns:1fr; margin-top:34px; }
+  @media (min-width:720px){ .cio-feat { grid-template-columns:1fr 1fr; } }
+  .cio-feat-row { display:flex; gap:13px; align-items:flex-start; padding:15px 0; border-bottom:1px solid var(--line,#e6e8ec); }
+  .cio-feat-row svg { flex:none; margin-top:2px; }
+  .cio-feat-row b { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--ink,#14161c); display:block; }
+  .cio-feat-row span { font-size:13.5px; line-height:1.55; color:var(--ink-soft,#494d57); }
+
+  .cio-quote { font-family:'Schibsted Grotesk',sans-serif; font-weight:600; font-size:clamp(1.35rem,2.6vw,1.9rem); line-height:1.4; letter-spacing:-0.01em; color:var(--ink,#14161c); max-width:22ch; }
+  .cio-quote .accent { color:var(--blue,#0d7df2); }
+  .cio-cite { font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-mute,#888c96); margin-top:18px; }
+
+  .cio-trust-strip { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px 14px; margin-top:30px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
+  .cio-trust-strip b { color:var(--ink-soft,#494d57); }
+
+  @media (prefers-reduced-motion: no-preference){
+    body.cio-anim .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    body.cio-anim .reveal.in { opacity:1; transform:none; }
+  }
+
+  /* ===== animated hero scene: seats roll up into the number ===== */
+  .cio-hero { background:var(--white,#fcfcfd); overflow:hidden; }
+  .cio-hero-wrap { max-width:1240px; margin:0 auto; padding:120px 24px 60px; }
+  .cio-hero-grid { display:flex; gap:40px; align-items:center; flex-wrap:wrap; }
+  .cio-hero-copy { flex:1 1 430px; min-width:330px; padding-top:8px; }
+  .cio-stage { flex:0 0 560px; position:relative; width:560px; height:500px; }
+  .rise { opacity:0; animation:c-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes c-rise { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  .pop { opacity:0; animation:c-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
+  @keyframes c-pop { from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+
+  .c-conn { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible; }
+  .c-conn path { fill:none; stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:c-draw 1.1s ease forwards; }
+  @keyframes c-draw { to{stroke-dashoffset:0;} }
+  .c-pulse { stroke-width:0; }
+
+  /* the master scoreboard the seats roll up into */
+  .c-board { position:absolute; left:120px; top:6px; width:320px; z-index:4; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:16px; box-shadow:0 18px 44px -16px rgba(20,22,28,.28); padding:14px 16px; }
+  .c-board-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .c-board-t { font-family:'Schibsted Grotesk',sans-serif; font-weight:800; font-size:12.5px; letter-spacing:.04em; color:var(--ink,#14161c); }
+  .c-live { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.04em; color:var(--green-deep,#06724a); }
+  .c-live i { width:6px; height:6px; border-radius:50%; background:var(--green,#0a9d63); animation:c-dot 1.8s ease-in-out infinite; }
+  @keyframes c-dot { 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
+  .c-kpi { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid var(--line,#eef0f3); }
+  .c-kpi:first-of-type { border-top:0; }
+  .c-kpi-name { font-size:12.5px; color:var(--ink-soft,#494d57); display:flex; align-items:center; gap:7px; }
+  .c-owner { width:17px; height:17px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .c-kpi-val { font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:var(--ink,#14161c); }
+  .c-pill { font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; }
+  .c-on { color:#0a7d3f; background:#dcfce7; } .c-watch { color:#b4690e; background:#fef3c7; }
+
+  /* seat cards feeding the board */
+  .c-seat { position:absolute; width:186px; z-index:3; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:13px; padding:10px 12px; box-shadow:0 8px 22px -10px rgba(20,22,28,.22); }
+  .c-seat-top { display:flex; gap:9px; align-items:center; }
+  .c-av { width:30px; height:30px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .c-nm { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:12.5px; color:var(--ink,#14161c); line-height:1.1; }
+  .c-rl { font-size:10px; color:var(--ink-mute,#888c96); margin-top:1px; }
+  .c-tag { font-size:8.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:1px 6px; border-radius:999px; margin-left:auto; }
+  .c-tag.hu { color:var(--orange-deep,#d4540a); background:rgba(255,122,26,.12); }
+  .c-tag.ag { color:var(--blue-deep,#0a56b0); background:rgba(13,125,242,.12); }
+  .c-meter { margin-top:9px; }
+  .c-meter-l { display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-mute,#888c96); margin-bottom:3px; }
+  .c-meter-l b { font-family:'JetBrains Mono',monospace; color:var(--ink-soft,#494d57); font-weight:600; }
+  .c-bar { height:5px; border-radius:3px; background:var(--grey,#f0f1f3); overflow:hidden; }
+  .c-bar i { display:block; height:100%; border-radius:3px; transform:scaleX(0); transform-origin:left; animation:c-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes c-grow { to{transform:scaleX(1);} }
+
+  .c-seat.s1 { left:0;   top:250px; } .c-seat.s2 { left:0;   top:372px; }
+  .c-seat.s3 { right:0;  top:250px; } .c-seat.s4 { right:0;  top:372px; }
+
+  @media (max-width:980px){ .cio-stage{ transform:scale(.84); transform-origin:top center; margin:0 auto -70px; } }
+  @media (max-width:860px){
+    .cio-hero-grid{ justify-content:center; }
+    .cio-hero-copy{ text-align:center; min-width:0; }
+    .cio-cta-row{ justify-content:center; }
+    .cio-stage{ display:none; }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="cio-hero">
+  <div class="cio-hero-wrap">
+    <div class="cio-hero-grid">
+      <div class="cio-hero-copy">
+        <div class="cio-eyebrow" style="margin-bottom:16px;"><span class="cio-tick"></span>For CIOs &amp; heads of AI</div>
+        <h1 class="cio-h1">You can see what your AI <span class="accent">costs</span>. Can you see what it's <span class="accent-g">doing</span>?</h1>
+        <p class="cio-lead" style="margin-top:20px;max-width:36rem;">Every employee can spend tokens. Almost no one can tell you whether that spend moved a single number. OTP is the operating layer where every person <em>and</em> every AI agent gets a seat, a number, and a real job &mdash; so cost finally connects to contribution.</p>
+        <div class="cio-cta-row">
+          <a href="https://calendly.com/davidsteel/performance-call" class="cio-btn primary">Book a walkthrough &rarr;</a>
+          <a href="/trust" class="cio-btn ghost">Read the security model</a>
+        </div>
+        <div class="cio-trust-strip" style="justify-content:flex-start;margin-top:34px;">
+          <span>SOC&nbsp;2 <b>in progress</b></span><span style="color:#cfd3da;">&middot;</span>
+          <span>HIPAA-aligned</span><span style="color:#cfd3da;">&middot;</span>
+          <span>EU data residency</span><span style="color:#cfd3da;">&middot;</span>
+          <span>Your API keys</span>
+        </div>
+      </div>
+
+      <!-- animated scene: human + agent seats roll up into one scoreboard -->
+      <div class="cio-stage">
+        <svg class="c-conn" viewBox="0 0 560 500">
+          <path pathLength="1" d="M150,300 C150,210 250,150 282,128" stroke="var(--orange,#ff7a1a)" style="animation-delay:.7s"/>
+          <path pathLength="1" d="M150,400 C150,250 250,160 282,134" stroke="var(--orange,#ff7a1a)" style="animation-delay:.85s"/>
+          <path pathLength="1" d="M410,300 C410,210 310,150 278,128" stroke="var(--blue,#0d7df2)" style="animation-delay:.9s"/>
+          <path pathLength="1" d="M410,400 C410,250 310,160 278,134" stroke="var(--blue,#0d7df2)" style="animation-delay:1.05s"/>
+          <circle class="c-pulse" r="3.5" fill="var(--orange,#ff7a1a)"><animateMotion dur="3s" repeatCount="indefinite" begin="1.8s" path="M150,300 C150,210 250,150 282,128"/></circle>
+          <circle class="c-pulse" r="3.5" fill="var(--blue,#0d7df2)"><animateMotion dur="3s" repeatCount="indefinite" begin="2.4s" path="M410,400 C410,250 310,160 278,134"/></circle>
+        </svg>
+
+        <div class="c-board pop" style="animation-delay:.4s">
+          <div class="c-board-h"><div class="c-board-t">Master scoreboard &middot; Q3</div><span class="c-live"><i></i>LIVE</span></div>
+          <div class="c-kpi"><div class="c-kpi-name"><span class="c-owner" style="background:#e07a3a">B</span>Pipeline created</div><span class="c-kpi-val">$1.4M</span><span class="c-pill c-on">on&nbsp;track</span></div>
+          <div class="c-kpi"><div class="c-kpi-name"><span class="c-owner" style="background:#0d7df2">D</span>Reports auto-shipped</div><span class="c-kpi-val">38/40</span><span class="c-pill c-on">on&nbsp;track</span></div>
+          <div class="c-kpi"><div class="c-kpi-name"><span class="c-owner" style="background:#0a9d63">T</span>Cost&nbsp;per&nbsp;outcome</div><span class="c-kpi-val">&minus;22%</span><span class="c-pill c-watch">watch</span></div>
+        </div>
+
+        <div class="c-seat s1 rise" style="animation-delay:.7s">
+          <div class="c-seat-top"><div class="c-av" style="background:#e07a3a">SK</div><div><div class="c-nm">Sarah Kim</div><div class="c-rl">Product Manager</div></div><span class="c-tag hu">Human</span></div>
+          <div class="c-meter"><div class="c-meter-l"><span>Value delivered</span><b>92%</b></div><div class="c-bar"><i style="width:92%;background:var(--orange,#ff7a1a);animation-delay:1.2s"></i></div></div>
+        </div>
+        <div class="c-seat s2 rise" style="animation-delay:.85s">
+          <div class="c-seat-top"><div class="c-av" style="background:#c4612a">AR</div><div><div class="c-nm">Alex Rivera</div><div class="c-rl">RevOps Lead</div></div><span class="c-tag hu">Human</span></div>
+          <div class="c-meter"><div class="c-meter-l"><span>Value delivered</span><b>78%</b></div><div class="c-bar"><i style="width:78%;background:var(--orange,#ff7a1a);animation-delay:1.35s"></i></div></div>
+        </div>
+        <div class="c-seat s3 rise" style="animation-delay:.95s">
+          <div class="c-seat-top"><div class="c-av" style="background:#0d7df2">RA</div><div><div class="c-nm">Research Agent</div><div class="c-rl">Reports to Alex</div></div><span class="c-tag ag">Agent</span></div>
+          <div class="c-meter"><div class="c-meter-l"><span>$ spend &rarr; value</span><b>3.1&times;</b></div><div class="c-bar"><i style="width:84%;background:var(--blue,#0d7df2);animation-delay:1.45s"></i></div></div>
+        </div>
+        <div class="c-seat s4 rise" style="animation-delay:1.1s">
+          <div class="c-seat-top"><div class="c-av" style="background:#0a64c4">WF</div><div><div class="c-nm">Workflow Agent</div><div class="c-rl">Reports to Sarah</div></div><span class="c-tag ag">Agent</span></div>
+          <div class="c-meter"><div class="c-meter-l"><span>$ spend &rarr; value</span><b>1.2&times;</b></div><div class="c-bar"><i style="width:34%;background:#d97706;animation-delay:1.55s"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE GAP ================= -->
+<section class="cio-grey">
+  <div class="cio-wrap cio-sec">
+    <div class="cio-max720">
+      <div class="cio-eyebrow" style="margin-bottom:16px;">The accountability gap</div>
+      <h2 class="cio-h2">Your AI has a spend dashboard. It doesn't have an accountability layer.</h2>
+      <p class="cio-body" style="margin-top:18px;max-width:44rem;">You rolled out Claude, Copilot, a dozen agents. You can report the bill to the dollar. What you can't answer is the only question that matters to the board: <strong style="color:var(--ink,#14161c);">did any of it move the number?</strong></p>
+    </div>
+    <div class="cio-grid3 reveal">
+      <div class="cio-card">
+        <span class="cio-chip" style="background:rgba(220,38,38,.1);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20"/></svg></span>
+        <h3>Spend &ne; value</h3>
+        <p>You can tell me what each person spends on AI. You can't tell me whether they were more productive for it. That disconnect is invisible on a usage report.</p>
+      </div>
+      <div class="cio-card">
+        <span class="cio-chip" style="background:rgba(217,119,6,.12);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01"/></svg></span>
+        <h3>Agents act unsupervised</h3>
+        <p>Agents do work between meetings, call tools, and soon spend money &mdash; with no seat, no owner, and no one checking it's the right work. Usage looks like progress. It isn't.</p>
+      </div>
+      <div class="cio-card">
+        <span class="cio-chip" style="background:rgba(13,125,242,.1);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+        <h3>Tokens are a vanity metric</h3>
+        <p>Adoption measured in tokens is gameable &mdash; anyone can burn budget to look engaged. Real adoption shows up as a KPI that moved. OTP measures that one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ONE OPERATING SYSTEM ================= -->
+<section class="cio-paper">
+  <div class="cio-wrap cio-sec">
+    <div class="cio-max720">
+      <div class="cio-eyebrow" style="margin-bottom:16px;">One operating system</div>
+      <h2 class="cio-h2">Every human and every agent on the same chart, scored on the same numbers.</h2>
+      <p class="cio-body" style="margin-top:18px;max-width:44rem;">OTP puts your whole org on one accountability map. People feed their KPIs. Agents report theirs automatically &mdash; through an MCP snippet that pulls their role, SOPs, and results straight off Claude, n8n, or whatever they run on. Everything rolls up to your operating plan: the 3&ndash;5 year targets and the one number this quarter. Humans and agents drive the <em>same</em> goals.</p>
+    </div>
+    <div class="cio-grid2 reveal">
+      <div class="cio-card">
+        <h3>A seat and a number for every agent</h3>
+        <p>Each agent carries a role, a mission, a maturity level, the SOPs it owns, who it reports to, and the KPI it's accountable for &mdash; the same scorecard you hold a person to. When an agent stops earning its seat, you see it and retire it.</p>
+      </div>
+      <div class="cio-card">
+        <h3>Visibility that rolls up</h3>
+        <p>An agent that reports to your RevOps lead rolls up to you. You finally see the work happening two and three levels down &mdash; people, agents, and the dependency and accountability gaps between them &mdash; without asking anyone for a status update.</p>
+      </div>
+      <div class="cio-card">
+        <h3>Source code you keep</h3>
+        <p>Every agent's setup is housed in OTP. If the person who built it leaves, the agent doesn't &mdash; you re-seat it on someone else, or port a great one from one team to another. Institutional knowledge stops walking out the door.</p>
+      </div>
+      <div class="cio-card">
+        <h3>Skate to where the work is going</h3>
+        <p>You already know how to manage people. OTP runs that play and the next one at the same time &mdash; the one where the decision is "should this seat be a person or an agent?" You'll be making that call. Make it with data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GOVERNANCE & CONTROL ================= -->
+<section class="cio-grey">
+  <div class="cio-wrap cio-sec">
+    <div class="cio-max720">
+      <div class="cio-eyebrow" style="margin-bottom:16px;">Governance &amp; control</div>
+      <h2 class="cio-h2">Built for the person who has to sign off on it.</h2>
+      <p class="cio-body" style="margin-top:18px;max-width:44rem;">The reason you're reading this far is that AI without governance is a liability. OTP was built upstream &mdash; the controls a CIO asks for are the product, not a roadmap promise.</p>
+    </div>
+    <div class="cio-feat">
+      <div class="cio-feat-row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><path d="M12 3l8 4v5c0 4.4-3.4 7.6-8 9-4.6-1.4-8-4.6-8-9V7z"/></svg><div><b>Granular access control</b><span>Decide who sees what, down through the whole org. Hide the chart, a meeting, a KPI &mdash; it disappears from their screen, not just dims. You hold the keys.</span></div></div>
+      <div class="cio-feat-row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><div><b>Append-only audit logging</b><span>Every change is recorded and immutable. How data is created, deleted, and retained is documented &mdash; in plain English on the trust page, not buried in a contract.</span></div></div>
+      <div class="cio-feat-row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><div><b>Private data &mdash; no model training</b><span>Turn on private mode and we don't learn from your data, ever. Issues, KPIs, scorecards, learnings stay yours. You control who has access; we don't repurpose it.</span></div></div>
+      <div class="cio-feat-row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><div><b>EU data residency</b><span>Hosted in the EU (Amsterdam) on PostgreSQL&nbsp;16 + Cloudflare&nbsp;R2. SOC&nbsp;2 underway; HIPAA-aligned infrastructure. Full data map on request.</span></div></div>
+      <div class="cio-feat-row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><path d="M15 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg><div><b>Bring your own keys &amp; cloud</b><span>Plug in your enterprise API key &mdash; your negotiated rates, your minimums, your cloud. AI work runs on your account, not a reseller markup.</span></div></div>
+      <div class="cio-feat-row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.3 11l7.4-4M8.3 13l7.4 4"/></svg><div><b>Model-agnostic &amp; 1,100+ integrations</b><span>Claude, OpenAI, your own stack &mdash; OTP doesn't care. Install our MCP to pull agents in automatically, or use 1,100+ built-in integrations and an open API.</span></div></div>
+    </div>
+    <div style="margin-top:30px;"><a href="/trust" class="cio-btn ghost">See the full trust &amp; security model &rarr;</a></div>
+  </div>
+</section>
+
+<!-- ================= PULL QUOTE (the new category) ================= -->
+<section class="cio-quoteband">
+  <div class="cio-wrap cio-sec cio-center" style="max-width:880px;">
+    <div class="cio-eyebrow" style="justify-content:center;margin-bottom:20px;">Not a better tool &mdash; a new layer</div>
+    <span class="cio-qmark">&ldquo;</span>
+    <p class="cio-quote" style="margin:6px auto 0;max-width:24ch;">It's not a better Salesforce or Workday. It's the <span class="accent">category</span> they were never built to be.</p>
+    <p class="cio-body" style="max-width:44rem;margin:22px auto 0;">SaaS was built to manage people. The next decade is people <em>and</em> agents working the same plan &mdash; and nothing you own today was designed for that. OTP isn't software-as-a-service. It's data-as-a-service for the org you're about to run.</p>
+    <p class="cio-cite">&mdash; What a CIO saw 30 minutes into his first walkthrough</p>
+  </div>
+</section>
+
+<!-- ================= PORTFOLIO / VALUE CREATION ================= -->
+<section class="cio-paper">
+  <div class="cio-wrap cio-sec">
+    <div class="cio-max720">
+      <div class="cio-eyebrow" style="margin-bottom:16px;">For operators &amp; portfolios</div>
+      <h2 class="cio-h2">The organizing function of a value-creation plan.</h2>
+      <p class="cio-body" style="margin-top:18px;max-width:44rem;">Ask a PE operator what one portfolio company can learn from another today and the honest answer is: nothing structured. OTP turns that into an asset. Connect every company into one view, compare how they actually operate &mdash; seats, agents, SOPs &mdash; and push proven best practices from one into the next.</p>
+    </div>
+    <div class="cio-grid3 reveal">
+      <div class="cio-card">
+        <h3>Master KPIs roll up</h3>
+        <p>Every entity's numbers cascade into one portfolio scoreboard &mdash; 22 companies or 300 sub-orgs &mdash; set up automatically, AI-driven, not by hand. From 140 people to 3,000, same view.</p>
+      </div>
+      <div class="cio-card">
+        <h3>Compare operating systems</h3>
+        <p>Look at how one company runs versus another at the operating level &mdash; not the financials, the <em>machine</em>. Spot what's working and ingest it where it isn't.</p>
+      </div>
+      <div class="cio-card">
+        <h3>A portfolio intelligence layer</h3>
+        <p>Best practices, agents, and whole operating systems become portable assets across the book &mdash; the cross-company learning that's worth zero today, finally captured.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ROLLOUT ================= -->
+<section class="cio-grey">
+  <div class="cio-wrap cio-sec">
+    <div class="cio-max720">
+      <div class="cio-eyebrow" style="margin-bottom:16px;">Start contained</div>
+      <h2 class="cio-h2">Start with your leadership team. Expand when it earns it.</h2>
+      <p class="cio-body" style="margin-top:18px;max-width:44rem;">You don't roll this out to 140 people on day one &mdash; and you shouldn't. The smart path is contained: prove value at the top, then let it cascade as people pull it in.</p>
+    </div>
+    <div class="cio-grid3 reveal">
+      <div class="cio-card"><h3>1 &middot; We load it for you</h3><p>White-glove onboarding. We import your org chart with contacts, upload your SOPs into each person's file, and invite your leadership team &mdash; you don't build a thing.</p></div>
+      <div class="cio-card"><h3>2 &middot; Humans first, then agents</h3><p>Start with people on the system you already run (EOS, Scaling Up, or your own &mdash; 180+ meeting templates). Add agents as seats once the chart is real.</p></div>
+      <div class="cio-card"><h3>3 &middot; It cascades on its own</h3><p>Leaders add their teams; people add below them, never above. Adoption spreads by pull, not push &mdash; and you watch who's really moving the needle.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="cio-paper">
+  <div class="cio-wrap cio-sec cio-center" style="max-width:760px;">
+    <h2 class="cio-h2">See it running on your own org.</h2>
+    <p class="cio-lead" style="margin:18px auto 0;max-width:40rem;">A 30-minute walkthrough on your chart. We'll show you cost-to-contribution for humans and agents on day one &mdash; and exactly where your accountability gaps are.</p>
+    <div class="cio-cta-row" style="justify-content:center;">
+      <a href="https://calendly.com/davidsteel/performance-call" class="cio-btn primary">Book a walkthrough &rarr;</a>
+      <a href="/sign-up" class="cio-btn ghost">Start free instead</a>
+    </div>
+    <p style="font-size:13px;color:var(--ink-mute,#888c96);margin-top:18px;">We run our own company on these exact agents &mdash; live, on this platform. We'll show you ours, working.</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('cio-anim');
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px 5% 0px', threshold:0.01 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  setTimeout(function(){ document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); }); }, 1500);
+})();
+</script>

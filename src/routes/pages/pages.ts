@@ -164,6 +164,18 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
+  // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
+  app.get('/cio', async (_request, reply) => {
+    return renderV7(reply, 'cio', {
+      title: 'OTP for CIOs - Govern people and AI agents on one accountability layer',
+      description: 'You can see what your AI costs. OTP shows you what it does. One operating system where every person and every AI agent gets a seat, a number, and a real job - with the governance, audit, and data controls a CIO signs off on.',
+      canonical: BASE_URL + '/cio',
+      ogImage: OG_DEFAULT,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CIOs', url: BASE_URL + '/cio', description: 'Govern people and AI agents on one accountability layer. The operating system for the org of people and agents.' },
+    });
+  });
+
   // Browse
   app.get('/browse', async (request, reply) => {
     // One card per organization: the most recent published OOS file per org.
@@ -2567,7 +2579,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/sign-up', async (_request, reply) => {
     return renderV7(reply, 'sign-up', {
       title: 'Create your free OTP workspace',
-      description: 'The free operating platform for EOSÂ teams. Run your 1:1s, weekly Level 10Â, org chart, and a lot more on OTP. Free for your team, forever.',
+      description: 'The free operating platform for EOSï¿½ teams. Run your 1:1s, weekly Level 10ï¿½, org chart, and a lot more on OTP. Free for your team, forever.',
       canonical: BASE_URL + '/sign-up',
       noindex: true,
       loadClerk: true,
