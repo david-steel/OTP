@@ -121,36 +121,32 @@
       <% meetings.forEach(function(m) { %>
         <% var teamName = m.teamId && teamLookup[m.teamId] ? teamLookup[m.teamId].name : ''; %>
         <% var _joinHref = '/l8/meeting/' + m.id + (devOrgIdParam ? ('?orgId=' + devOrgIdParam) : ''); %>
-        <% if (m.locked) { %>
-          <%# Future-dated occurrence. It opens on its own at its time, but a live
-              countdown shows when, and a Join button appears in the last 10 min. %>
-          <div class="mtg-card block border rounded p-4 bg-gray-50" data-starts-at="<%= new Date(m.scheduledAt).toISOString() %>">
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <div class="font-medium text-gray-700"><%= m.title %></div>
-                <div class="text-xs text-gray-500 mt-1">
-                  <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
-                  <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
-                </div>
+        <%# Manage menu (Edit / Delete) shows to everyone who is not a read-only
+            role. The API (checkMeetingEdit) is the real gate -- it allows the
+            founder, the meeting's creator, owners/admins, and team managers, and
+            rejects anyone else with a clear message. A null role = legacy founder,
+            so default to showing it (never hide management from the owner). %>
+        <% var _ro = ['observer','inactive','free']; %>
+        <% var _canManage = (typeof memberRole === 'undefined' || memberRole === null) ? true : (_ro.indexOf(memberRole) === -1); %>
+        <div class="mtg-card relative border rounded p-4 <%= m.locked ? 'bg-gray-50' : 'hover:bg-gray-50' %>"<% if (m.locked || m.status === 'scheduled') { %> data-starts-at="<%= new Date(m.scheduledAt).toISOString() %>"<% } %>>
+          <%# Non-locked cards open on click via a stretched link underneath, so the
+              manage menu can sit above it without nesting a button inside an anchor.
+              Locked (future) cards are not openable yet -- no stretched link. %>
+          <% if (!m.locked) { %><a href="<%= _joinHref %>" class="absolute inset-0 z-0" aria-label="Open <%= m.title %>"></a><% } %>
+          <div class="relative z-10 flex items-center justify-between gap-3 pointer-events-none">
+            <div>
+              <div class="font-medium <%= m.locked ? 'text-gray-700' : '' %>"><%= m.title %></div>
+              <div class="text-xs text-gray-500 mt-1">
+                <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
+                <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
               </div>
-              <div class="flex items-center gap-2 text-xs shrink-0">
+            </div>
+            <div class="flex items-center gap-2 text-xs shrink-0 pointer-events-auto">
+              <% if (m.locked) { %>
                 <span class="mtg-countdown text-gray-500 font-medium"></span>
                 <a class="mtg-join hidden px-3 py-1.5 rounded bg-otp-500 text-white font-semibold hover:bg-otp-400" href="<%= _joinHref %>">Join &rarr;</a>
                 <span class="mtg-upcoming px-2 py-0.5 rounded bg-amber-100 text-amber-800">Upcoming</span>
-              </div>
-            </div>
-          </div>
-        <% } else { %>
-          <a href="<%= _joinHref %>" class="mtg-card block border rounded p-4 hover:bg-gray-50"<% if (m.status === 'scheduled') { %> data-starts-at="<%= new Date(m.scheduledAt).toISOString() %>"<% } %>>
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <div class="font-medium"><%= m.title %></div>
-                <div class="text-xs text-gray-500 mt-1">
-                  <% if (teamName) { %><span class="text-otp-700 font-medium"><%= teamName %></span> &middot; <% } %>
-                  <%= meetingTypeLabel(m.meetingType) %> &middot; <%= new Date(m.scheduledAt).toLocaleString() %>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 text-xs shrink-0">
+              <% } else { %>
                 <% if (m.status === 'scheduled') { %><span class="mtg-countdown text-gray-500 font-medium"></span><% } %>
                 <span class="px-2 py-0.5 rounded
                   <%= m.status === 'scheduled' ? 'bg-gray-100 text-gray-700' :
@@ -159,10 +155,19 @@
                      'bg-red-100 text-red-800' %>">
                   <%= m.status === 'in_progress' ? 'live' : m.status %>
                 </span>
-              </div>
+              <% } %>
+              <% if (_canManage) { %>
+                <div class="relative mtg-menu-wrap">
+                  <button type="button" class="mtg-menu-btn px-2 py-0.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 text-base leading-none" aria-label="Manage meeting" title="Manage">&#8943;</button>
+                  <div class="mtg-menu hidden absolute right-0 mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 text-left">
+                    <button type="button" class="mtg-edit block w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" data-id="<%= m.id %>" data-title="<%= m.title %>" data-at="<%= new Date(m.scheduledAt).toISOString() %>" data-rrule="<%= m.recurrenceRule || '' %>">Edit details</button>
+                    <button type="button" class="mtg-delete block w-full text-left px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50" data-id="<%= m.id %>" data-title="<%= m.title %>"<% if (m.recurrenceRule || m.recurrenceParentId) { %> data-recurring="1"<% } %>>Delete</button>
+                  </div>
+                </div>
+              <% } %>
             </div>
-          </a>
-        <% } %>
+          </div>
+        </div>
       <% }); %>
     </div>
   <% } %>
@@ -224,5 +229,166 @@
   if (closeBtn) closeBtn.addEventListener('click', hide);
   modal.addEventListener('mousedown', function (e) { if (e.target === modal) hide(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) hide(); });
+})();
+</script>
+
+<!-- Edit-meeting modal (shown after picking "Edit details" from a card's menu) -->
+<div id="mtg-edit-modal" hidden class="fixed inset-0 z-[90] flex items-center justify-center p-4" style="background:rgba(15,23,42,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6" role="dialog" aria-modal="true">
+    <div class="flex items-start justify-between gap-3">
+      <h3 class="text-lg font-bold text-gray-900">Edit meeting</h3>
+      <button type="button" id="mtg-edit-x" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+    <div class="mt-4 space-y-3">
+      <label class="block text-sm text-gray-700">Title
+        <input type="text" id="mtg-edit-title" maxlength="255" class="mt-1 w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+      </label>
+      <label class="block text-sm text-gray-700">Date &amp; time
+        <input type="datetime-local" id="mtg-edit-at" class="mt-1 w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-otp-500">
+      </label>
+      <p id="mtg-edit-rrule-note" class="hidden text-xs text-gray-500">This meeting is part of a recurring series. Changing the date moves this occurrence only.</p>
+    </div>
+    <div class="mt-5 flex justify-end gap-2">
+      <button type="button" id="mtg-edit-cancel" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+      <button type="button" id="mtg-edit-save" class="px-4 py-2 text-sm bg-otp-500 text-white rounded-lg font-semibold hover:bg-otp-400">Save changes</button>
+    </div>
+    <p id="mtg-edit-msg" class="mt-2 text-xs text-rose-600"></p>
+  </div>
+</div>
+
+<!-- Delete-scope modal: only shown for recurring meetings, so the user can choose
+     this occurrence / this + future / the whole series. Non-recurring meetings use
+     a plain confirm() instead. -->
+<div id="mtg-del-modal" hidden class="fixed inset-0 z-[90] flex items-center justify-center p-4" style="background:rgba(15,23,42,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6" role="dialog" aria-modal="true">
+    <div class="flex items-start justify-between gap-3">
+      <h3 class="text-lg font-bold text-gray-900">Delete recurring meeting</h3>
+      <button type="button" id="mtg-del-x" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+    <p class="text-sm text-gray-600 mt-1"><span id="mtg-del-title" class="font-semibold"></span> is part of a recurring series. What should be deleted?</p>
+    <div class="mt-4 space-y-2">
+      <button type="button" data-scope="occurrence" class="mtg-del-go block w-full text-left px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">Just this occurrence</button>
+      <button type="button" data-scope="following" class="mtg-del-go block w-full text-left px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">This and all future occurrences</button>
+      <button type="button" data-scope="series" class="mtg-del-go block w-full text-left px-3 py-2 text-sm border border-rose-200 text-rose-700 rounded-lg hover:bg-rose-50">The entire series</button>
+    </div>
+    <div class="mt-4 flex justify-end">
+      <button type="button" id="mtg-del-cancel" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+    </div>
+    <p id="mtg-del-msg" class="mt-2 text-xs text-rose-600"></p>
+  </div>
+</div>
+
+<script>
+// Per-card manage menu: Edit details (title + date) and Delete. The API enforces
+// who may actually do it; the UI just surfaces the affordance and the messages.
+(function () {
+  function closeAllMenus() { document.querySelectorAll('.mtg-menu').forEach(function (el) { el.classList.add('hidden'); }); }
+  document.querySelectorAll('.mtg-menu-wrap').forEach(function (wrap) {
+    var btn = wrap.querySelector('.mtg-menu-btn');
+    var menu = wrap.querySelector('.mtg-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var wasHidden = menu.classList.contains('hidden');
+      closeAllMenus();
+      if (wasHidden) menu.classList.remove('hidden');
+    });
+  });
+  document.addEventListener('click', function () { closeAllMenus(); });
+
+  // ---- Edit ----
+  var modal = document.getElementById('mtg-edit-modal');
+  var fTitle = document.getElementById('mtg-edit-title');
+  var fAt = document.getElementById('mtg-edit-at');
+  var note = document.getElementById('mtg-edit-rrule-note');
+  var msg = document.getElementById('mtg-edit-msg');
+  var saveBtn = document.getElementById('mtg-edit-save');
+  var editingId = null;
+  function toLocalInput(iso) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    var off = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - off).toISOString().slice(0, 16);
+  }
+  function openEdit(id, title, atISO, rrule) {
+    editingId = id; msg.textContent = '';
+    fTitle.value = title || ''; fAt.value = toLocalInput(atISO);
+    if (note) note.classList.toggle('hidden', !rrule);
+    saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+    modal.hidden = false; setTimeout(function () { fTitle.focus(); }, 10);
+  }
+  function closeEdit() { modal.hidden = true; editingId = null; }
+  document.querySelectorAll('.mtg-edit').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation(); closeAllMenus();
+      openEdit(this.getAttribute('data-id'), this.getAttribute('data-title'), this.getAttribute('data-at'), this.getAttribute('data-rrule'));
+    });
+  });
+  document.getElementById('mtg-edit-x').addEventListener('click', closeEdit);
+  document.getElementById('mtg-edit-cancel').addEventListener('click', closeEdit);
+  modal.addEventListener('mousedown', function (e) { if (e.target === modal) closeEdit(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) closeEdit(); });
+  saveBtn.addEventListener('click', function () {
+    if (!editingId) return;
+    var title = fTitle.value.trim();
+    if (!title) { msg.textContent = 'Title is required.'; return; }
+    if (!fAt.value) { msg.textContent = 'Pick a date and time.'; return; }
+    var iso;
+    try { iso = new Date(fAt.value).toISOString(); } catch (e) { msg.textContent = 'That date is not valid.'; return; }
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
+    fetch('/api/v1/meetings/' + editingId, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ title: title, scheduledAt: iso })
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw (j.error || { message: 'HTTP ' + r.status }); return j; }); })
+      .then(function () { window.location.reload(); })
+      .catch(function (err) { msg.textContent = (err && err.message) || 'Could not save.'; saveBtn.disabled = false; saveBtn.textContent = 'Save changes'; });
+  });
+
+  // ---- Delete ----
+  var delModal = document.getElementById('mtg-del-modal');
+  var delTitleEl = document.getElementById('mtg-del-title');
+  var delMsg = document.getElementById('mtg-del-msg');
+  var deletingId = null;
+  function doDelete(id, body) {
+    return fetch('/api/v1/meetings/' + id, {
+      method: 'DELETE', credentials: 'same-origin',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw (j.error || { message: 'HTTP ' + r.status }); return j; }); });
+  }
+  function closeDel() { delModal.hidden = true; deletingId = null; }
+  document.querySelectorAll('.mtg-delete').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation(); closeAllMenus();
+      var id = this.getAttribute('data-id');
+      var title = this.getAttribute('data-title') || 'this meeting';
+      var recurring = this.getAttribute('data-recurring') === '1';
+      if (recurring) {
+        deletingId = id; delMsg.textContent = '';
+        delTitleEl.textContent = '"' + title + '"';
+        delModal.hidden = false;
+        return;
+      }
+      if (!window.confirm('Delete "' + title + '"? This cannot be undone.')) return;
+      doDelete(id)
+        .then(function () { window.location.reload(); })
+        .catch(function (err) { window.alert((err && err.message) || 'Could not delete this meeting.'); });
+    });
+  });
+  document.querySelectorAll('.mtg-del-go').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!deletingId) return;
+      var scope = this.getAttribute('data-scope');
+      delMsg.textContent = 'Deleting...';
+      doDelete(deletingId, { scope: scope })
+        .then(function () { window.location.reload(); })
+        .catch(function (err) { delMsg.textContent = (err && err.message) || 'Could not delete.'; });
+    });
+  });
+  document.getElementById('mtg-del-x').addEventListener('click', closeDel);
+  document.getElementById('mtg-del-cancel').addEventListener('click', closeDel);
+  delModal.addEventListener('mousedown', function (e) { if (e.target === delModal) closeDel(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !delModal.hidden) closeDel(); });
 })();
 </script>
