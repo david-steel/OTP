@@ -1193,6 +1193,11 @@ export const meetings = pgTable('meetings', {
   transcript: text('transcript'),
   recordingUrl: varchar('recording_url', { length: 2048 }),
   aiSummary: text('ai_summary'),
+  // Manual on/off-track overrides set during the meeting, keyed by KPI id:
+  // { [kpiId]: 'ontrack' | 'offtrack' }. When present, the scorecard shows the
+  // override instead of the auto-computed (latest vs goal) status. Column added
+  // by ensure-meeting-scorecard-status.ts on boot.
+  scorecardStatus: jsonb('scorecard_status').notNull().default({}),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
