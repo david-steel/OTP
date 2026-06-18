@@ -30,9 +30,12 @@ const NON_CASCADING_DELETES = (orgId: string) => [
   sql`DELETE FROM "consultant_profiles" WHERE "org_id" = ${orgId}`,
   sql`DELETE FROM "tickets" WHERE "org_id" = ${orgId}`,
   sql`DELETE FROM "oos_files" WHERE "org_id" = ${orgId}`,
-  sql`DELETE FROM "audit_logs" WHERE "org_id" = ${orgId}`,
   sql`DELETE FROM "workspaces" WHERE "consultant_org_id" = ${orgId} OR "owner_id" = ${orgId}`,
 ];
+// audit_logs is deliberately NOT in the list above: it is an append-only table
+// (DO INSTEAD NOTHING rules on UPDATE/DELETE), so a plain DELETE is a silent
+// no-op and the org row then fails its RESTRICT FK. It is handled separately in
+// hardDeleteOrganization -- the audit trail is preserved, only unlinked.
 
 /**
  * Permanently delete one organization and all its data. Atomic. Throws if the
@@ -43,6 +46,15 @@ export async function hardDeleteOrganization(orgId: string): Promise<void> {
     for (const stmt of NON_CASCADING_DELETES(orgId)) {
       await tx.execute(stmt);
     }
+    // Unlink the immutable audit trail: audit_logs.org_id RESTRICTs the org
+    // delete, but the table is append-only (audit_no_update DO INSTEAD NOTHING),
+    // so a normal UPDATE can't null it. Lift the rule just long enough to set
+    // org_id NULL, then restore it. This is transactional -- if the purge rolls
+    // back, the rule is restored too, so audit can never be left mutable. The
+    // audit rows survive (unlinked); only the org and its content are deleted.
+    await tx.execute(sql`ALTER TABLE audit_logs DISABLE RULE audit_no_update`);
+    await tx.execute(sql`UPDATE audit_logs SET org_id = NULL WHERE org_id = ${orgId}`);
+    await tx.execute(sql`ALTER TABLE audit_logs ENABLE RULE audit_no_update`);
     // The org row delete cascades the ~34 tables that DO have ON DELETE CASCADE.
     await tx.execute(sql`DELETE FROM "organizations" WHERE "id" = ${orgId}`);
   });
