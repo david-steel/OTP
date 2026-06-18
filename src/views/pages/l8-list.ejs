@@ -157,13 +157,8 @@
                 </span>
               <% } %>
               <% if (_canManage) { %>
-                <div class="relative mtg-menu-wrap">
-                  <button type="button" class="mtg-menu-btn px-2 py-0.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 text-base leading-none" aria-label="Manage meeting" title="Manage">&#8943;</button>
-                  <div class="mtg-menu hidden absolute right-0 mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 text-left">
-                    <button type="button" class="mtg-edit block w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" data-id="<%= m.id %>" data-title="<%= m.title %>" data-at="<%= new Date(m.scheduledAt).toISOString() %>" data-rrule="<%= m.recurrenceRule || '' %>">Edit details</button>
-                    <button type="button" class="mtg-delete block w-full text-left px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50" data-id="<%= m.id %>" data-title="<%= m.title %>"<% if (m.recurrenceRule || m.recurrenceParentId) { %> data-recurring="1"<% } %>>Delete</button>
-                  </div>
-                </div>
+                <button type="button" class="mtg-edit font-semibold text-otp-700 hover:underline px-1" data-id="<%= m.id %>" data-title="<%= m.title %>" data-at="<%= new Date(m.scheduledAt).toISOString() %>" data-rrule="<%= m.recurrenceRule || '' %>">Edit</button>
+                <button type="button" class="mtg-delete font-semibold text-rose-600 hover:underline px-1" data-id="<%= m.id %>" data-title="<%= m.title %>"<% if (m.recurrenceRule || m.recurrenceParentId) { %> data-recurring="1"<% } %>>Delete</button>
               <% } %>
             </div>
           </div>
@@ -279,23 +274,9 @@
 </div>
 
 <script>
-// Per-card manage menu: Edit details (title + date) and Delete. The API enforces
-// who may actually do it; the UI just surfaces the affordance and the messages.
+// Per-card Edit / Delete buttons. The API enforces who may actually do it; the UI
+// just surfaces the affordance and shows the messages.
 (function () {
-  function closeAllMenus() { document.querySelectorAll('.mtg-menu').forEach(function (el) { el.classList.add('hidden'); }); }
-  document.querySelectorAll('.mtg-menu-wrap').forEach(function (wrap) {
-    var btn = wrap.querySelector('.mtg-menu-btn');
-    var menu = wrap.querySelector('.mtg-menu');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      var wasHidden = menu.classList.contains('hidden');
-      closeAllMenus();
-      if (wasHidden) menu.classList.remove('hidden');
-    });
-  });
-  document.addEventListener('click', function () { closeAllMenus(); });
-
   // ---- Edit ----
   var modal = document.getElementById('mtg-edit-modal');
   var fTitle = document.getElementById('mtg-edit-title');
@@ -319,7 +300,7 @@
   function closeEdit() { modal.hidden = true; editingId = null; }
   document.querySelectorAll('.mtg-edit').forEach(function (b) {
     b.addEventListener('click', function (e) {
-      e.preventDefault(); e.stopPropagation(); closeAllMenus();
+      e.preventDefault(); e.stopPropagation();
       openEdit(this.getAttribute('data-id'), this.getAttribute('data-title'), this.getAttribute('data-at'), this.getAttribute('data-rrule'));
     });
   });
@@ -360,7 +341,7 @@
   function closeDel() { delModal.hidden = true; deletingId = null; }
   document.querySelectorAll('.mtg-delete').forEach(function (b) {
     b.addEventListener('click', function (e) {
-      e.preventDefault(); e.stopPropagation(); closeAllMenus();
+      e.preventDefault(); e.stopPropagation();
       var id = this.getAttribute('data-id');
       var title = this.getAttribute('data-title') || 'this meeting';
       var recurring = this.getAttribute('data-recurring') === '1';
