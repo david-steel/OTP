@@ -1,0 +1,16 @@
+<%- include('../partials/orgy-palette'); %>
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <a href="/l8" class="text-sm font-semibold text-otp-700 hover:underline">&larr; Meetings</a>
+    <h1 class="text-2xl font-bold text-gray-900 mt-2"><%= meeting.title %></h1>
+    <p class="text-sm text-gray-500 mt-1">Post-meeting follow-ups &mdash; add the transcript and recording, then generate to-dos, issues, and headlines from it.</p>
+  </div>
+  <% if (typeof meetingAiEnabled !== 'undefined' && meetingAiEnabled) { %>
+    <%- include('../partials/meeting/followups.ejs'); %>
+  <% } else { %>
+    <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+      AI meeting follow-ups is in early access. Turn it on under
+      <a href="/settings/labs" class="font-semibold text-otp-700 hover:underline">Settings &rsaquo; Labs</a>.
+    </div>
+  <% } %>
+</div>

@@ -514,6 +514,42 @@ export default async function meetingRoutes(app: FastifyInstance) {
     return { meeting: updated, autoEndAt: updated.autoEndAt };
   });
 
+  // POST /api/v1/meetings/:id/transcript/extract -- parse an uploaded transcript
+  // file and return its plain text so the client can fill the transcript box.
+  // PDF + DOCX are parsed server-side (the browser can't read them as text);
+  // text formats are decoded. Same gate as the AI wizard. Carries its own larger
+  // bodyLimit because a PDF's base64 easily exceeds Fastify's 1 MB default.
+  app.post<{ Params: { id: string } }>('/meetings/:id/transcript/extract', { bodyLimit: 16 * 1024 * 1024 }, async (request, reply) => {
+    const id = requireUuidParam(request, reply);
+    if (!id) return;
+    if (!(await gateWriteScope(request, reply))) return;
+    const org = await authedOrFail(request, reply);
+    if (!org) return;
+    if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+    if (!(await isFeatureEnabledForOrg(org.id, 'meeting_ai_followups'))) {
+      return reply.status(503).send({ error: { code: 'COMING_SOON', message: 'AI meeting follow-ups is in early access. Turn it on under Settings, Labs.' } });
+    }
+    const body = z.object({ filename: z.string().min(1).max(255), dataBase64: z.string().min(1) }).safeParse(request.body);
+    if (!body.success) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_FAILED', message: 'filename and dataBase64 are required', details: body.error.issues } });
+    }
+    const { extractTranscriptText, MAX_TRANSCRIPT_BYTES } = await import('../../services/transcript-extract.js');
+    let buf: Buffer;
+    try { buf = Buffer.from(body.data.dataBase64, 'base64'); }
+    catch { return reply.status(400).send({ error: { code: 'BAD_FILE', message: 'Could not decode the uploaded file.' } }); }
+    if (buf.length === 0) return reply.status(400).send({ error: { code: 'BAD_FILE', message: 'The uploaded file was empty.' } });
+    if (buf.length > MAX_TRANSCRIPT_BYTES) {
+      return reply.status(413).send({ error: { code: 'TOO_LARGE', message: 'That file is too large (max 10 MB).' } });
+    }
+    let text = '';
+    try { text = await extractTranscriptText(buf, body.data.filename); }
+    catch (err) {
+      request.log.error({ err, meetingId: id }, 'transcript extract failed');
+      return reply.status(422).send({ error: { code: 'EXTRACT_FAILED', message: 'Could not read text from that file. Try pasting the transcript instead.' } });
+    }
+    return { text: text.slice(0, 500_000) };
+  });
+
   // POST /api/v1/meetings/:id/ai/followups  -- AI wizard: read the saved
   // transcript and PROPOSE follow-ups (summary, to-dos, issues, headlines).
   // Preview only: it creates nothing. The page lets the user review and then
