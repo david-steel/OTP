@@ -2907,11 +2907,29 @@ Founder, OTP</p>
     const selectedTeamId = (selectedTeamIdRaw === 'all') ? '' : selectedTeamIdRaw;
     const teamFilterActive = !!selectedTeamId;
     const scopeMine = ((request.query as any)?.scope) === 'mine';
-    const orgTeams = await db
-      .select({ id: teams.id, name: teams.name, slug: teams.slug })
-      .from(teams)
-      .where(eq(teams.orgId, org.id))
-      .orderBy(asc(teams.name));
+    // Headline / team-move dropdowns must show only the teams the VIEWER
+    // belongs to -- a member should never see (or be able to move a headline
+    // onto) a team they are not on. This was the "Kristen sees AI-Army, and is
+    // missing some of her own teams" bug: the list was every team in the org.
+    // Owners/admins who are not on any team fall back to the full list so the
+    // dropdown is never empty for them.
+    const _viewerTeamRows = (member && (member as any).id)
+      ? await db.select({ teamId: teamMemberships.teamId })
+          .from(teamMemberships)
+          .where(eq(teamMemberships.memberId, (member as any).id))
+      : [];
+    const _viewerTeamIds = _viewerTeamRows.map(r => r.teamId).filter(Boolean) as string[];
+    const orgTeams = _viewerTeamIds.length > 0
+      ? await db
+          .select({ id: teams.id, name: teams.name, slug: teams.slug })
+          .from(teams)
+          .where(and(eq(teams.orgId, org.id), inArray(teams.id, _viewerTeamIds)))
+          .orderBy(asc(teams.name))
+      : await db
+          .select({ id: teams.id, name: teams.name, slug: teams.slug })
+          .from(teams)
+          .where(eq(teams.orgId, org.id))
+          .orderBy(asc(teams.name));
 
     // ---- Meetings ----
     // Strict team-membership scope: a member only sees meetings on teams
