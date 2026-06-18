@@ -287,6 +287,7 @@ app.addHook('preHandler', async (request, reply) => {
       sidebarCollapsed,
       realtimeStreamEnabled,
       labNavItems: (request as any).labNavItems || [],
+      meetingAiEnabled: (request as any).meetingAiEnabled || false,
       demoSession: (request as any).demoSession || false,
       sidebarCustomizeOn: (request as any).sidebarCustomizeOn || false,
       sidebarConfig: (request as any).sidebarConfig || null,
@@ -346,6 +347,9 @@ app.addHook('preHandler', async (request) => {
     // load the org's saved config when the lab is on for this org.
     const sbOn = await labMod.isFeatureEnabledForOrg(om.orgId, 'sidebar_customize');
     (request as any).sidebarCustomizeOn = sbOn;
+    // Gates the completed-meeting transcript + AI follow-ups section (Labs:
+    // meeting_ai_followups). Auto-injected into every view below.
+    (request as any).meetingAiEnabled = await labMod.isFeatureEnabledForOrg(om.orgId, 'meeting_ai_followups');
     if (sbOn) {
       const { db } = await import('./config/database.js');
       const { organizations } = await import('./db/schema.js');

@@ -332,10 +332,11 @@
     </div>
   <% } %>
 
-  <% if (meeting.status === 'completed') { %>
-  <!-- Post-meeting: transcript + recording (source-agnostic) and the AI
-       follow-ups wizard. The wizard endpoint is Labs-gated server-side, so the
-       button handles a 503 (coming soon) rather than the view needing a flag. -->
+  <% if (typeof meetingAiEnabled !== 'undefined' && meetingAiEnabled && meeting.status === 'completed') { %>
+  <!-- Post-meeting transcript + recording + AI follow-ups wizard. Gated behind
+       the 'meeting_ai_followups' Labs flag (meetingAiEnabled, auto-injected by
+       the reply.view wrapper in server.ts) so it appears ONLY for orgs that
+       opted in -- not on every completed meeting. -->
   <section id="post-meeting" class="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-4">
     <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-orgy-blue mb-2">Transcript &amp; recording</div>
     <p class="text-xs text-gray-500 mb-3">Attach the transcript and a recording link from any tool &mdash; Plaud, Fireflies, Gemini, or your own notes.</p>
