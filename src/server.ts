@@ -1027,6 +1027,14 @@ try {
 }
 
 try {
+  const { ensureMeetingScorecardStatusColumn } = await import('./db/ensure-meeting-scorecard-status.js');
+  await ensureMeetingScorecardStatusColumn();
+  app.log.info('meetings.scorecard_status column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureMeetingScorecardStatusColumn failed -- manual scorecard on/off-track overrides will not save until resolved');
+}
+
+try {
   const { ensureOrgDeletionColumns } = await import('./db/ensure-org-deletion.js');
   await ensureOrgDeletionColumns();
   app.log.info('organizations deletion columns are ready');

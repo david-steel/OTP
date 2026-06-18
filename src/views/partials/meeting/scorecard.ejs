@@ -105,9 +105,13 @@
                     </div>
                   </td>
                   <td class="p-2 text-center">
-                    <% if (onTrack === true) { %><%- include('../ui-pill', { status: 'ontrack' }) %><% } %>
-                    <% if (onTrack === false) { %><%- include('../ui-pill', { status: 'offtrack' }) %><% } %>
-                    <% if (onTrack === null) { %><span class="text-gray-400">—</span><% } %>
+                    <% var _ov = (meeting.scorecardStatus || {})[k.id];
+                       var _eff = _ov || (onTrack === true ? 'ontrack' : (onTrack === false ? 'offtrack' : null)); %>
+                    <button type="button" class="kpi-status-btn align-middle" data-kpi-status="<%= k.id %>" data-status="<%= _eff || '' %>" title="Click to set On-Track / Off-Track (cycle: set -> On -> Off)">
+                      <% if (_eff === 'ontrack') { %><%- include('../ui-pill', { status: 'ontrack' }) %><% } %>
+                      <% if (_eff === 'offtrack') { %><%- include('../ui-pill', { status: 'offtrack' }) %><% } %>
+                      <% if (!_eff) { %><span class="text-gray-400 px-2.5 py-1 inline-block rounded-full border border-dashed border-gray-300 hover:text-gray-600 text-xs">&mdash; set</span><% } %>
+                    </button>
                   </td>
                   <td class="p-2 text-center">
                     <button class="text-xs px-2 py-1 bg-orgy-blue-soft rounded hover:bg-orgy-soft"
@@ -123,3 +127,32 @@
       <% }); %>
     <% } %>
   </section>
+<script>
+(function(){
+  var mId = (document.querySelector('#l8-meeting') || { dataset: {} }).dataset.meetingId;
+  if (!mId) return;
+  var PILL = {
+    ontrack:  '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap bg-status-ontrack-soft text-status-ontrack"><span class="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>On-Track</span>',
+    offtrack: '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap bg-status-offtrack-soft text-status-offtrack"><span class="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>Off-Track</span>',
+    '':       '<span class="text-gray-400 px-2.5 py-1 inline-block rounded-full border border-dashed border-gray-300 hover:text-gray-600 text-xs">&mdash; set</span>'
+  };
+  // Cycle: set(—) -> On-Track -> Off-Track -> set(—, clears the override).
+  var NEXT = { '': 'ontrack', ontrack: 'offtrack', offtrack: '' };
+  // Delegated on document so it survives the scorecard section being live-swapped.
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('[data-kpi-status]');
+    if (!btn) return;
+    var kid = btn.getAttribute('data-kpi-status');
+    var cur = btn.getAttribute('data-status') || '';
+    var next = (NEXT[cur] != null) ? NEXT[cur] : 'ontrack';
+    btn.setAttribute('data-status', next);
+    btn.innerHTML = PILL[next];
+    var body = {}; body[kid] = next || 'auto';   // 'auto' clears the override
+    fetch('/api/v1/meetings/' + mId, {
+      method: 'PUT', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scorecardStatus: body })
+    }).catch(function(){});
+  });
+})();
+</script>

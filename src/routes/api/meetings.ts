@@ -86,6 +86,9 @@ const updateMeetingSchema = z.object({
   transcript: z.string().max(500_000).optional(),
   recordingUrl: z.string().max(2048).optional(),
   aiSummary: z.string().max(20_000).optional(),
+  // Manual scorecard on/off-track overrides, keyed by KPI id. 'auto' clears the
+  // override (revert to the computed status). Merged into the existing map.
+  scorecardStatus: z.record(z.string().uuid(), z.enum(['ontrack', 'offtrack', 'auto'])).optional(),
   segmentNotes: segmentNotesSchema.optional(),
 });
 
@@ -703,6 +706,19 @@ export default async function meetingRoutes(app: FastifyInstance) {
         }
       }
       updates.segmentNotes = merged;
+    }
+    if (d.scorecardStatus !== undefined) {
+      const [current] = await db.select({ scorecardStatus: meetings.scorecardStatus })
+        .from(meetings)
+        .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)))
+        .limit(1);
+      if (!current) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Meeting not found' } });
+      const merged: Record<string, string> = { ...((current.scorecardStatus as Record<string, string>) ?? {}) };
+      for (const [kpiId, status] of Object.entries(d.scorecardStatus)) {
+        if (status === 'auto') delete merged[kpiId];   // clear override -> revert to computed
+        else merged[kpiId] = status;
+      }
+      updates.scorecardStatus = merged;
     }
 
     const [updated] = await db.update(meetings)
