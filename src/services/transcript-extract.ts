@@ -25,7 +25,13 @@ function ext(filename: string): string {
 export async function extractTranscriptText(buffer: Buffer, filename: string): Promise<string> {
   const e = ext(filename);
   if (e === 'pdf') {
-    const mod: any = await import('pdf-parse');
+    // Import the INNER lib, not the package root. pdf-parse's index.js runs a
+    // debug harness on `!module.parent` -- true under an ESM dynamic import --
+    // which readFileSync's a bundled test PDF relative to cwd and throws ENOENT
+    // in production. The lib entry is just the parser, no harness. (Variable
+    // specifier so TS doesn't try to type-resolve the subpath.)
+    const pdfSpec = 'pdf-parse/lib/pdf-parse.js';
+    const mod: any = await import(pdfSpec);
     const pdfParse = mod.default || mod;
     const data = await pdfParse(buffer);
     return String(data?.text || '').trim();
