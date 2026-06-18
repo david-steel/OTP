@@ -844,7 +844,7 @@
                 <tr class="border-b border-gray-100" data-kpi-id="<%= k.id %>" data-owner-type="<%= k.ownerEntityType %>">
                   <td class="py-2 pr-3 font-medium text-gray-900"><%= k.title %></td>
                   <td class="py-2 pr-3 text-gray-600"><%= goalSym %> <%= (k.goalValue !== null && k.goalValue !== undefined) ? k.goalValue : '--' %><%= k.unit ? ' ' + k.unit : '' %></td>
-                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><span data-kpi-latest-val><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></span><% if (latest && latest.periodStart) { %><span class="block text-[10px] text-gray-400 font-normal" data-kpi-latest-date><%= new Date(latest.periodStart).toLocaleDateString() %></span><% } else { %><span class="block text-[10px] text-gray-400 font-normal" data-kpi-latest-date>—</span><% } %></td>
+                  <td class="py-2 pr-3 text-gray-700" data-kpi-latest><span data-kpi-latest-val><%= latest && latest.value !== null && latest.value !== undefined ? latest.value : '--' %></span><% if (latest && latest.periodStart) { %><span class="block text-[10px] text-gray-400 font-normal" data-kpi-latest-date><%= new Date(latest.periodStart).toLocaleDateString('en-US', { timeZone: 'UTC' }) %></span><% } else { %><span class="block text-[10px] text-gray-400 font-normal" data-kpi-latest-date>—</span><% } %></td>
                   <% if (typeof dashClean !== 'undefined' && dashClean) {
                        var _series = (typeof kpiSeries !== 'undefined' && kpiSeries[k.id]) ? kpiSeries[k.id] : [];
                        var _meets = function(v){
@@ -1824,11 +1824,16 @@ window.__dashboardPrefs = <%- jsonForScript(locals.dashboardPrefs || {}) %>;
     var val = inp.value === '' ? null : parseFloat(inp.value);
     if (val === null || Number.isNaN(val)) { alert('Enter a number first.'); inp.focus(); return; }
     var now = new Date();
-    var dow = now.getDay(); // 0 Sun .. 6 Sat
-    var weekStart = new Date(now); weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
-    var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
+    // Send a timezone-safe anchor INSIDE today's intended period (noon UTC of
+    // the local calendar day) and let the server's periodFor() bucket it into
+    // the correct ISO week / month. Previously this pre-snapped to the LOCAL
+    // Sunday, which the server (Monday-start ISO weeks, UTC) read as the prior
+    // week -- filing every weekly entry one week early and rendering the stored
+    // Monday-00:00Z as the day before. Now matches the meeting scorecard, which
+    // already sends a today anchor. (Fixed 2026-06-18.)
+    var anchor = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0));
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-    api('POST', '/kpis/' + kid + '/values', { periodStart: weekStart.toISOString(), periodEnd: weekEnd.toISOString(), value: val, source: 'manual' })
+    api('POST', '/kpis/' + kid + '/values', { periodStart: anchor.toISOString(), value: val, source: 'manual' })
       .then(function(){
         inp.classList.add('ring-1'); inp.classList.add('ring-emerald-400');
         setTimeout(function(){ inp.classList.remove('ring-1'); inp.classList.remove('ring-emerald-400'); }, 800);
