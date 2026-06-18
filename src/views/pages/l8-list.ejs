@@ -62,7 +62,7 @@
              class="col-span-2 border rounded p-2 text-sm">
       <input name="scheduledAt" type="datetime-local" required
              class="border rounded p-2 text-sm"
-             value="<%= new Date(Date.now() + 86400000).toISOString().slice(0,16) %>">
+             value="<%= new Date(Math.round(Date.now() / 1800000) * 1800000).toISOString().slice(0,16) %>">
     </div>
     <div class="mt-3 flex flex-wrap items-center gap-3">
       <select name="meetingType" class="border rounded p-2 text-sm" title="Which meeting in the cadence is this? See the (?) next to New Meeting.">
@@ -205,7 +205,20 @@
   var modal = document.getElementById('newmtg-modal');
   var closeBtn = document.getElementById('close-newmtg');
   if (!openBtn || !modal) return;
-  function show() { modal.hidden = false; var t = modal.querySelector('input[name="title"]'); if (t) setTimeout(function () { t.focus(); }, 10); }
+  function show() {
+    modal.hidden = false;
+    // Default the date to today, rounded to the nearest half-hour (local time),
+    // freshly each time the modal opens -- so hitting Create drops you into a
+    // meeting starting about now.
+    var s = modal.querySelector('input[name="scheduledAt"]');
+    if (s) {
+      var ms = 30 * 60 * 1000;
+      var d = new Date(Math.round(Date.now() / ms) * ms);
+      var p = function (n) { return (n < 10 ? '0' : '') + n; };
+      s.value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    var t = modal.querySelector('input[name="title"]'); if (t) setTimeout(function () { t.focus(); }, 10);
+  }
   function hide() { modal.hidden = true; }
   openBtn.addEventListener('click', show);
   if (closeBtn) closeBtn.addEventListener('click', hide);

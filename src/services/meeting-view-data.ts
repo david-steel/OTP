@@ -230,12 +230,23 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
     // Carry the dev orgId through so client-side fetches keep the same auth context locally.
     const devOrgIdParam = (request.query as any)?.orgId || (request.query as any)?.org || '';
 
-    // Org teams for the issue "move to team" dropdown.
-    const orgTeamsList = await db
-      .select({ id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault })
-      .from(teams)
-      .where(eq(teams.orgId, org.id))
-      .orderBy(desc(teams.isDefault), asc(teams.name));
+    // Teams for the meeting's team dropdowns (e.g. "move to team"). Scope to the
+    // teams the VIEWER belongs to -- a member should only see their own teams,
+    // not every org team (Kristen, not on AI-Army, was seeing it and missing
+    // hers). Legacy founder / no member row falls back to all org teams.
+    const _viewer = (request as any).orgMember as { id?: string } | null;
+    const orgTeamsList = (_viewer && _viewer.id)
+      ? await db
+          .select({ id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault })
+          .from(teams)
+          .innerJoin(teamMemberships, eq(teamMemberships.teamId, teams.id))
+          .where(and(eq(teams.orgId, org.id), eq(teamMemberships.memberId, _viewer.id)))
+          .orderBy(desc(teams.isDefault), asc(teams.name))
+      : await db
+          .select({ id: teams.id, name: teams.name, slug: teams.slug, isDefault: teams.isDefault })
+          .from(teams)
+          .where(eq(teams.orgId, org.id))
+          .orderBy(desc(teams.isDefault), asc(teams.name));
 
     // Agent last-run data: for every agent attendee, surface its most recent
     // run so the UI can badge each agent with status + last-run time. The
