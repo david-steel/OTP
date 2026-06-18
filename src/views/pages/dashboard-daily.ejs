@@ -950,7 +950,8 @@
                     <% if (t.description) { %><p class="text-xs text-gray-600 mt-0.5"><%= t.description %></p><% } %>
                     <div class="text-[11px] text-gray-500 mt-0.5">
                       <%= t.idsStatus %><%= t.priorityRank ? ' &middot; #' + t.priorityRank : '' %><%- teamTag(t.teamId) %>
-                      <% if (isIntegrator) { %><button type="button" class="ix-manage-toggle ml-1 text-gray-400 hover:text-gray-700 font-semibold">&middot;&middot;&middot; manage</button><% } %>
+                      <% if (isIntegrator) { %><button type="button" class="ix-manage-toggle ml-1 text-gray-400 hover:text-gray-700 font-semibold">&middot;&middot;&middot; manage</button>
+                      <% } else { %><button type="button" class="ix-edit ml-1 text-orgy-blue hover:underline font-semibold" title="Edit this issue's text">edit</button><% } %>
                     </div>
                     <% if (isIntegrator) { %>
                     <div class="ix-manage hidden mt-2 pt-2 border-t border-gray-100 flex flex-wrap items-center gap-2 text-[11px]">
@@ -965,12 +966,15 @@
                       <button type="button" class="ix-edit text-orgy-blue font-semibold hover:underline">edit</button>
                       <button type="button" class="ix-delete text-rose-600 font-semibold hover:underline ml-auto">delete</button>
                     </div>
+                    <% } %>
+                    <%# Edit-text form is available to the issue OWNER too, not just the Integrator. %>
+                    <%# myIssues is owner/team-scoped (ccScope) so every row here is the viewer's own; %>
+                    <%# move/reassign/delete stay Integrator-only above, this only edits the title text. %>
                     <form class="ix-edit-form hidden mt-1 flex gap-1.5">
                       <input type="text" class="ix-edit-input flex-1 rounded border border-gray-300 px-2 py-1 text-xs" maxlength="500" value="<%= t.title %>">
                       <button type="submit" class="text-[11px] rounded bg-orgy-blue text-white font-semibold px-2 py-1 hover:bg-orgy-blue-deep">Save</button>
                       <button type="button" class="ix-edit-cancel text-[11px] text-gray-500 font-semibold px-1">Cancel</button>
                     </form>
-                    <% } %>
                     <!-- Next Action: same machinery as Rocks. -->
                     <div class="next-action mt-2 text-xs" data-na-id="<%= t.id %>" data-na-kind="issue">
                       <% if (t.nextAction) { %>
