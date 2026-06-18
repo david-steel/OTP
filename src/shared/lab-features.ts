@@ -90,12 +90,11 @@ export const LAB_FEATURES: LabFeature[] = [
     description:
       'A guided run mode for your L8 meeting. Instead of one long page, step through the agenda one section at a time -- segue, scorecard, rocks, headlines, to-dos, IDS, conclude -- with the timebox and your real data in front of you, and the agenda as a stepper down the side.',
     whyNow:
-      'The default way to run your L8 meeting: one agenda section at a time, with the timebox and your real data in front of you, the agenda as a stepper down the side, a shared timer, and in-meeting Add/Tools. On for every org by default -- turn it off here if you prefer the classic one-page meeting.',
-    status: 'beta',
-    defaultOn: true,
+      'The default way to run your L8 meeting: one agenda section at a time, with the timebox and your real data in front of you, the agenda as a stepper down the side, a shared timer, and in-meeting Add/Tools.',
+    status: 'live',
     launchedOn: '6-17-26',
     // Step-mode layer over the existing l8-leadership sections (#segue ... #conclude).
-    // 2026-06-17: default-ON for all current + future orgs, still toggleable (opt-out).
+    // 2026-06-18: graduated to `live` -- on for every org, no longer a Labs toggle.
   },
   {
     key: 'unassigned_agent_actions',
@@ -114,9 +113,10 @@ export const LAB_FEATURES: LabFeature[] = [
     description:
       'Let the account owner decide which left-rail items everyone sees, and in what order. Hide what your team does not use and reorder the rest from one panel.',
     whyNow:
-      'Turn it on to give owners a "Customize sidebar" panel: toggle items on/off and drag to reorder. The choice applies org-wide. Off by default.',
-    status: 'beta',
+      'Owners get a "Customize sidebar" panel: toggle items on/off and drag to reorder. The choice applies org-wide.',
+    status: 'live',
     // Reads/writes organizations.sidebar_config; applied in layouts/main.ejs.
+    // 2026-06-18: graduated to `live` -- on for every org, no longer a Labs toggle.
   },
   {
     key: 'meeting_ai_followups',

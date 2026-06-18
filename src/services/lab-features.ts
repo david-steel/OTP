@@ -69,10 +69,12 @@ export async function getOrgLabNavItems(orgId: string): Promise<LabNavItem[]> {
     .map((f) => ({ href: f.surfaceUrl as string, label: f.navLabel || f.name, iconKey: f.navIcon || 'grid4' }));
 }
 
-/** Full Labs state for an org -- one entry per registered feature. */
+/** Full Labs state for an org -- one entry per registered feature.
+ *  `live` (graduated) features leave Labs entirely: they're on for everyone in
+ *  production, so they no longer belong on the "test new features early" page. */
 export async function getOrgLabState(orgId: string): Promise<OrgLabFeatureState[]> {
   const { on, off } = await getOrgOptinSets(orgId);
-  return LAB_FEATURES.map((f) => {
+  return LAB_FEATURES.filter((f) => f.status !== 'live').map((f) => {
     // The Settings toggle should reflect the actual on/off state, so a defaultOn
     // feature reads ON even when there's no explicit opt-in row.
     const enabled = resolveLabEnabled(f, on.has(f.key), off.has(f.key));
