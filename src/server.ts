@@ -212,6 +212,7 @@ const clerkInstance = clerkPubKey.startsWith('pk_')
   : '';
 
 // EJS templates
+import { OG_DEFAULT } from './routes/pages/_shared.js';
 await app.register(fastifyView, {
   engine: { ejs: await import('ejs') },
   root: path.join(__dirname, 'views'),
@@ -219,6 +220,9 @@ await app.register(fastifyView, {
   defaultContext: {
     clerkPubKey,
     clerkInstance,
+    // Default social/share image for any page that passes no ogImage. Single
+    // source of truth lives in routes/pages/_shared.ts (OG_DEFAULT).
+    ogDefault: OG_DEFAULT,
     // Per-deploy cache-buster for /public/* assets. They are served
     // immutable/max-age=1yr, so without a versioned URL a new styles.css is
     // never picked up at the edge. The commit SHA changes every deploy.

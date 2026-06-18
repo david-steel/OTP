@@ -36,7 +36,7 @@ import { createHash } from 'crypto';
 import { aeoClusters } from '../../../data/aeo-clusters.js';
 import { isAttendee } from '../../../services/meeting-access.js';
 import { ensureUpcomingForOrg, ruleToLabel } from '../../../services/meeting-recurrence.js';
-import { BASE_URL, bc, renderV7, escapeHtml } from '../_shared.js';
+import { BASE_URL, bc, renderV7, escapeHtml, OG_DEFAULT } from '../_shared.js';
 import { resolveRequestOrg, quarterLabel } from '../pages.js';
 import { resolveDemoPageContext } from '../../../middleware/demo-access.js';
 
@@ -2800,7 +2800,7 @@ Founder, OTP</p>
       return reply.view('pages/dashboard-admin', {
         title: 'Publisher Dashboard - OTP',
         description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
-        ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+        ogImage: OG_DEFAULT,
         noindex: true,
         authState: 'unauthenticated',
         dashboard: {
@@ -3631,7 +3631,7 @@ Founder, OTP</p>
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
       renderDescription,
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       noindex: true,
       dashClean,
       org,
@@ -3755,7 +3755,7 @@ Founder, OTP</p>
     return reply.view('pages/dashboard-admin', {
       title: 'Publisher Dashboard - OTP',
       description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       noindex: true,
       authState: 'authenticated',
       dashboard: {

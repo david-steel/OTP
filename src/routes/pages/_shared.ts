@@ -5,6 +5,13 @@ import { fileURLToPath } from 'node:url';
 
 export const BASE_URL = 'https://orgtp.com';
 
+// The single source of truth for the default social/share (Open Graph) image.
+// Every page's og:image and the layout fallbacks resolve to this. To rebrand
+// the share card site-wide, change this one line (and ship a new filename so
+// scrapers, which cache by URL, refetch). Page-specific cards still pass their
+// own ogImage and are unaffected.
+export const OG_DEFAULT = BASE_URL + '/public/images/og-otp-home-v2.png';
+
 export function bc(...items: Array<{ name: string; url: string }>) {
   return [{ name: 'Home', url: BASE_URL + '/' }, ...items];
 }
@@ -33,6 +40,7 @@ export async function renderV7(reply: any, page: string, data: Record<string, an
     clerkPubKey: V7_CLERK_PUB_KEY,
     clerkInstance: V7_CLERK_INSTANCE,
     assetVersion: ASSET_VERSION,
+    ogDefault: OG_DEFAULT,
     ...data,
   };
   const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, ctx);
