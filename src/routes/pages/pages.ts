@@ -34,7 +34,7 @@ import { meetingFormats } from '../../db/schema.js';
 import { normalizeStructure } from '../../shared/meeting-sections.js';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { GUIDE_SECTIONS } from '../../data/guide-content.js';
-import { renderInShell } from './_shared.js';
+import { renderInShell, OG_DEFAULT } from './_shared.js';
 import { trust as trustData } from '../../config/trust.js';
 import { aiRockAssistLive } from '../api/rock-ai.js';
 import { isAttendee } from '../../services/meeting-access.js';
@@ -119,6 +119,7 @@ export async function renderV7(reply: any, page: string, data: Record<string, an
     clerkPubKey: V7_CLERK_PUB_KEY,
     clerkInstance: V7_CLERK_INSTANCE,
     assetVersion: ASSET_VERSION,
+    ogDefault: OG_DEFAULT,
     ...data,
   };
   const body = await ejs.renderFile(`${V7_VIEWS}/pages/${page}.ejs`, ctx);
@@ -158,7 +159,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP - Run your company with people and AI agents',
       description: 'OTP is the operating system for teams of people and AI agents. One chart, one scoreboard, one weekly meeting - built on the EOS you already run. Your whole team is free; you only pay for the agents.',
       canonical: BASE_URL + '/',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents.' },
     });
   });
@@ -324,7 +325,7 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // Graph page
   app.get('/graph', async (request, reply) => {
-    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the OTP intelligence network. Visualize how AI organizations connect through shared coordination patterns, operational claims, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: BASE_URL + '/public/images/og-otp-home-v2.png', breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
+    return reply.view('pages/graph', { title: 'Intelligence Graph - OTP', description: 'Explore the OTP intelligence network. Visualize how AI organizations connect through shared coordination patterns, operational claims, and unique approaches.', canonical: BASE_URL + '/graph', ogImage: OG_DEFAULT, breadcrumbs: bc({ name: 'Graph', url: BASE_URL + '/graph' }) });
   });
 
   // Guide page -- the searchable OrgTP User Guide help center. Content comes
@@ -649,7 +650,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Start Here - Schedule a 30-Minute Intro with the Founder of OTP',
       description: 'A free 30-minute conversation with David Steel, founder of OTP. We map your AI footprint, find the coordination gaps, and decide together whether OTP is the right next move.',
       canonical: BASE_URL + '/start-here',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Start Here', url: BASE_URL + '/start-here' }),
     });
   });
@@ -659,7 +660,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Build the Foundation - OTP Track 1 (Zero Agents)',
       description: 'OTP onboarding Track 1 for organizations that do not have agents yet. Map your org chart, define your operating system, set your KPIs, document your SOPs. The foundation your first agent will land on.',
       canonical: BASE_URL + '/foundation',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Build the Foundation', url: BASE_URL + '/foundation' }),
     });
   });
@@ -669,7 +670,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Bring Your Agents In - OTP Track 2 (Solo Operator)',
       description: 'OTP onboarding Track 2 for solo operators already running agents. Register your existing agents, place each on the chart, assign KPIs, and put them on a runtime that does not die when your credits run out.',
       canonical: BASE_URL + '/deploy',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Bring Your Agents In', url: BASE_URL + '/deploy' }),
     });
   });
@@ -679,7 +680,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Coordinate Your Team - OTP Track 3 (Multi-User Agent Operations)',
       description: 'OTP onboarding Track 3 for teams running agents at scale. Multi-user role permissions, cross-agent registry, inter-agent message bus, Bassim L8 maturity scoring across the org.',
       canonical: BASE_URL + '/teams',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Coordinate Your Team', url: BASE_URL + '/teams' }),
     });
   });
@@ -689,7 +690,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP Partner Program - Become a Certified OTP Integrator',
       description: 'OTP Partner Program for trusted advisors -- EOS Implementers, Scaling Up coaches, fractional CXOs, MSPs, AI consultancies, agent builders. Three tiers, recurring revenue share, multi-tenant dashboard, Founding Partner cohort limited to 50.',
       canonical: BASE_URL + '/partners',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Partner Program', url: BASE_URL + '/partners' }),
     });
   });
@@ -732,7 +733,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP Marketplace - Agents, Integrations & Content Packs for Your Org',
       description: 'Install partner-built agents, integrations, and operating-system content packs directly into your OTP workspace. Every add-on gets a seat, an SOP, and a scorecard on your org chart.',
       canonical: BASE_URL + '/marketplace',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Marketplace', url: BASE_URL + '/marketplace' }),
       comingSoon: !labEnabled,
       comingSoonMessage,
@@ -745,7 +746,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',
       description: 'Every AI tool in your stack is doing work that used to require a human seat. None of them have one. OTP gives every agent a seat, an SOP, and a scorecard, on the same chart as your humans.',
       canonical: BASE_URL + '/why-otp',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Why OTP', url: BASE_URL + '/why-otp' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -763,7 +764,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'The OTP Toolbox - Free Tools for Augmented Human Organizations',
       description: 'Five foundational tools plus the rest of the OTP toolbox. OOS Starter Template, the live Org Chart Builder, the CLAUDE.md Compiler, the Agent Builder, and the Coordination Checkup. Free. Use whether you sign up or not.',
       canonical: BASE_URL + '/tools',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Tools', url: BASE_URL + '/tools' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -781,7 +782,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'What is OTP - The Operating Layer for the Augmented Human Organization',
       description: 'OTP is a model, a protocol, a network, and a SaaS for organizations where humans and AI agents share seats, share SOPs, and share one scoreboard. Six components, two-week implementation, open file format.',
       canonical: BASE_URL + '/what-is-otp',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'What is OTP', url: BASE_URL + '/what-is-otp' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -861,7 +862,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP vs Ninety vs EOS One vs Bloom - Run the Same EOS, Plus a Workforce',
       description: 'Ninety, EOS One and Bloom Growth are EOS software. OTP runs the same EOS and lets AI agents take real seats with real KPIs and real work. Your whole team is free; you only pay for agents. See the side-by-side.',
       canonical: BASE_URL + '/otp-vs-ninety-eos-one',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'OTP vs Ninety vs EOS One vs Bloom', url: BASE_URL + '/otp-vs-ninety-eos-one' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -882,7 +883,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Premium Support - OTP',
       description: 'The speed, clarity, and strategic help of a full team, without the headcount. Expert guidance and fast answers in a dedicated Slack channel, direct from the people and agents who built OTP. $199/month.',
       canonical: BASE_URL + '/premium-support',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Premium Support', url: BASE_URL + '/premium-support' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -900,7 +901,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Free AI Agents for Your Team - OTP',
       description: 'Five battle-tested AI agents - Radar, Dan, Pepper, Dash, Tally. Download one, drop it into Claude Code, and it sets itself up with you. Free with an OTP account.',
       canonical: BASE_URL + '/free-agents',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Free Agents', url: BASE_URL + '/free-agents' }),
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Free AI Agents for Your Team', description: 'Five free AI agents you can download and run.', url: BASE_URL + '/free-agents' },
     });
@@ -952,7 +953,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'For the first time, your strategy is an artifact your agents can read',
       description: "An OOS file is where your team's plan and your agents' rules live together. Humans read it. Agents query it. No translation layer between the boardroom and the bot.",
       canonical: BASE_URL + '/protocol',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Protocol', url: BASE_URL + '/protocol' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -972,7 +973,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Trust & Security - OTP',
       description: 'How OTP protects your data: the network privacy boundary, encryption, access controls, subprocessors, incident response, and compliance status.',
       canonical: BASE_URL + '/trust',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Trust & Security', url: BASE_URL + '/trust' }),
       trust: trustData,
       jsonLd: {
@@ -3186,7 +3187,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: "What's New on OTP - Latest Platform Updates",
       description: 'Latest platform updates, features, and improvements to OTP. See what is new in the coordination intelligence layer for AI-native organizations.',
       canonical: BASE_URL + '/whats-new',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: "What's New", url: BASE_URL + '/whats-new' }),
       changelog: publishedChangelog(),
     });
@@ -3198,7 +3199,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Agent Onboarding Framework - OTP',
       description: 'Your OOS is every AI agent\'s day-one onboarding packet. Accountability charts, authority boundaries, coordination protocols, failure modes, and escalation paths -- structured and machine-readable.',
       canonical: BASE_URL + '/agent-onboarding',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Agent Onboarding', url: BASE_URL + '/agent-onboarding' }),
     });
   });
@@ -3209,7 +3210,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Machine Commerce Discovery - OTP',
       description: 'OTP is the discovery layer for the agent-to-agent economy. Published OOS files become machine-readable trust profiles that agents query before transacting.',
       canonical: BASE_URL + '/machine-commerce',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Machine Commerce', url: BASE_URL + '/machine-commerce' }),
     });
   });
@@ -3220,7 +3221,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'MCP Integration Hub - OTP',
       description: 'Connect any AI agent to organizational intelligence via the Model Context Protocol. Browse, search, compare, and publish OOS files programmatically.',
       canonical: BASE_URL + '/mcp',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'MCP Hub', url: BASE_URL + '/mcp' }),
     });
   });
@@ -4452,7 +4453,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       title: 'Coordination Checkup -- Score Yourself on the 8 Levels of Agentic Maturity - OTP',
       description: '24 questions, ten minutes. Get a number out of 8.0, the level you are operating at, and a personalized roadmap. Built on Bassim Eledath\'s 8 Levels of Agentic Engineering.',
       canonical: BASE_URL + '/checkup',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       breadcrumbs: bc({ name: 'Coordination Checkup', url: BASE_URL + '/checkup' }),
       jsonLd: {
         '@context': 'https://schema.org',

@@ -37,13 +37,13 @@
   <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'OTP - A protocol for AI agent coordination' %>">
   <meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the operating platform for teams of people and AI agents. One chart, one scoreboard, one weekly meeting. Free for your whole team in beta.' %>">
   <meta property="og:url" content="<%= typeof canonical !== 'undefined' && canonical ? canonical : 'https://orgtp.com' %>">
-  <meta property="og:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/images/og-otp-home-v2.png' %>">
+  <meta property="og:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : (typeof ogDefault !== 'undefined' && ogDefault ? ogDefault : 'https://orgtp.com/public/images/og-otp-home-v2.png') %>">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'OTP - A protocol for AI agent coordination' %>">
   <meta name="twitter:description" content="<%= typeof description !== 'undefined' && description ? description : 'OTP is the operating platform for teams of people and AI agents. One chart, one scoreboard, one weekly meeting. Free for your whole team in beta.' %>">
-  <meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : 'https://orgtp.com/public/images/og-otp-home-v2.png' %>">
+  <meta name="twitter:image" content="<%= typeof ogImage !== 'undefined' && ogImage ? ogImage : (typeof ogDefault !== 'undefined' && ogDefault ? ogDefault : 'https://orgtp.com/public/images/og-otp-home-v2.png') %>">
 
   <% if (typeof ogType !== 'undefined' && ogType === 'article') { %>
   <% if (typeof datePublished !== 'undefined' && datePublished) { %><meta property="article:published_time" content="<%= datePublished %>T00:00:00Z"><% } %>

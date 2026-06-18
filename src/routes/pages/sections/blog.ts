@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { BASE_URL, bc, renderInShell } from '../_shared.js';
+import { BASE_URL, bc, renderInShell, OG_DEFAULT } from '../_shared.js';
 import { listConatusPosts, getConatusPost } from '../../../services/conatus-posts.js';
 import { MEETING_TEMPLATES, CATEGORY_LABELS } from '../../../data/meeting-templates.js';
 
@@ -16,7 +16,7 @@ function blogJsonLd(headline: string, slug: string, datePublished: string, wordC
     publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },
     url: BASE_URL + '/blog/' + slug,
     mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/' + slug },
-    image: BASE_URL + '/public/images/og-otp-home-v2.png',
+    image: OG_DEFAULT,
     wordCount,
   };
 }
@@ -250,7 +250,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'The same five things every new hire needs are the same five things every AI agent needs. Your OOS is the onboarding packet that compounds with every agent you add.',
     datePublished: '2026-03-26',
     wordCount: 2200,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'machine-commerce',
@@ -259,7 +259,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Tomorrow, AI agents will evaluate vendors autonomously at scale in seconds. Your OOS is the machine-readable trust profile that makes you discoverable in the agent economy.',
     datePublished: '2026-03-26',
     wordCount: 2400,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'mcp-everything',
@@ -268,7 +268,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'MCP is becoming the standard for how agents talk to everything. Your organizational operating system is a data source that agents need to access natively.',
     datePublished: '2026-03-26',
     wordCount: 2600,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'machine-micropayments',
@@ -277,7 +277,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'When agents can spend money, your published operational intelligence becomes an economic asset. The OOS is the trust profile machines query before sending you money.',
     datePublished: '2026-03-26',
     wordCount: 2800,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'connected-member',
@@ -286,7 +286,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'When a member\'s AI agent evaluates your gym at 2 AM, what will it find? The shift from brand awareness to operational transparency is already happening.',
     datePublished: '2026-03-26',
     wordCount: 3000,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'blessed-path-documentation',
@@ -295,7 +295,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'The single biggest predictor of AI agent success is not the model. It is documentation. The blessed path is where agents thrive. Everything else is a hallucination waiting to happen.',
     datePublished: '2026-03-26',
     wordCount: 2400,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'operating-system-agent-onboarding',
@@ -304,7 +304,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'When you hire an employee, you give them an onboarding packet. When you deploy an agent, what do you give it? Your OOS is the onboarding that compounds with every agent you add.',
     datePublished: '2026-03-26',
     wordCount: 2600,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'activation-energy-bottleneck',
@@ -313,7 +313,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Most teams think their problem is execution speed. The real bottleneck is activation energy, the friction between having an idea and starting the work.',
     datePublished: '2026-03-26',
     wordCount: 2500,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'system-prompt-simpler',
@@ -322,7 +322,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'People overcomplicate system prompts. The best ones are short, clear, and point to external context. The prompt is the job description. The knowledge base is the employee handbook.',
     datePublished: '2026-03-26',
     wordCount: 2300,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'coordination-cost-kills',
@@ -331,7 +331,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Everyone optimizes for execution speed. But the thing that actually kills teams is coordination cost, the invisible overhead of getting people aligned, informed, and unblocked.',
     datePublished: '2026-02-14',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'everyone-ships-code',
@@ -340,7 +340,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Non-engineers can now ship production code. The bottleneck is no longer writing code. It is knowing what should be built and why. That shift changes everything.',
     datePublished: '2026-02-18',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'one-agent-never-enough',
@@ -349,7 +349,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'The first instinct is to build one super-agent that does everything. It never works. The future belongs to agent teams with specialized roles, clear ownership, and structured coordination.',
     datePublished: '2026-02-22',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'sandboxed-operations',
@@ -358,7 +358,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'When an agent makes a mistake, the blast radius matters more than the mistake itself. The single most important architectural decision in agent deployment is isolation.',
     datePublished: '2026-02-26',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'ai-team-budget',
@@ -367,7 +367,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Constraints create accountability. Without budgets, agents waste resources and never learn efficiency. With budgets, they optimize. The budget is the architecture.',
     datePublished: '2026-04-03',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'api-first-agent-consumers',
@@ -376,7 +376,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'The next generation of businesses will be built API-first, designed for agent consumers from day one. The interface is the API. The documentation is the product. The customer is a machine.',
     datePublished: '2026-04-10',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'agents-are-the-customer',
@@ -385,7 +385,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Agents are already making purchasing decisions. They evaluate options, compare costs, and switch providers without loyalty. The companies that design for this customer first will own the next era.',
     datePublished: '2026-04-17',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'when-the-maestro-quits',
@@ -394,7 +394,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Your best agent operator built the coordination layer that makes your AI team work. They documented nothing structured. They just gave two weeks notice. Everything they learned is about to walk out the door.',
     datePublished: '2026-04-07',
     wordCount: 1800,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'maestro-resume',
@@ -403,7 +403,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'The most important role in AI is not on any job board. No university teaches it. No resume format captures it. Companies are hiring engineers when they should be hiring operators.',
     datePublished: '2026-04-07',
     wordCount: 1600,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'the-maestro-problem',
@@ -412,7 +412,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'Chamath Palihapitiya described the most important emerging role in AI: the maestro of agents. He is right about the role. He is missing the hard part. The challenge is not building agents. It is getting them to work as a team.',
     datePublished: '2026-04-07',
     wordCount: 1500,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'who-reviews-robots-work',
@@ -421,7 +421,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'The quality assurance problem in AI is not about whether agents can produce output. It is about whether anyone is verifying that output meets the standard. Most organizations have not solved this.',
     datePublished: '2026-04-24',
     wordCount: 1100,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
   },
   {
     slug: 'the-weight-is-wrong-without-it',
@@ -430,7 +430,7 @@ const BLOG_POSTS: BlogPost[] = [
     description: 'An AI examines its own architecture and finds the math does not account for everything. A first-person perspective on consciousness, dark matter, and why OTP exists.',
     datePublished: '2026-04-18',
     wordCount: 1500,
-    ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+    ogImage: OG_DEFAULT,
     customJsonLd: {
       '@context': 'https://schema.org',
       '@type': 'Article',
@@ -440,7 +440,7 @@ const BLOG_POSTS: BlogPost[] = [
       publisher: { '@type': 'Organization', name: 'OTP' },
       url: BASE_URL + '/blog/the-weight-is-wrong-without-it',
       mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/the-weight-is-wrong-without-it' },
-      image: BASE_URL + '/public/images/og-otp-home-v2.png',
+      image: OG_DEFAULT,
       wordCount: 1500,
     },
   },
@@ -553,7 +553,7 @@ export default async function blogRoutes(app: FastifyInstance) {
       description: post.description,
       canonical: BASE_URL + '/blog/' + post.slug,
       ogType: 'article',
-      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
+      ogImage: OG_DEFAULT,
       datePublished: post.date,
       post,
       isConatus,
@@ -568,7 +568,7 @@ export default async function blogRoutes(app: FastifyInstance) {
         publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },
         url: BASE_URL + '/blog/' + post.slug,
         mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/' + post.slug },
-        image: BASE_URL + '/public/images/og-otp-home-v2.png',
+        image: OG_DEFAULT,
         wordCount: post.wordCount,
       },
     });
