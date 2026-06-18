@@ -2800,7 +2800,7 @@ Founder, OTP</p>
       return reply.view('pages/dashboard-admin', {
         title: 'Publisher Dashboard - OTP',
         description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
-        ogImage: BASE_URL + '/public/og-image.png',
+        ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
         noindex: true,
         authState: 'unauthenticated',
         dashboard: {
@@ -3631,7 +3631,7 @@ Founder, OTP</p>
       title: 'Dashboard - OTP',
       description: 'Your daily manager dashboard -- run your meeting, track rocks, push KPIs, manage your agents.',
       renderDescription,
-      ogImage: BASE_URL + '/public/og-image.png',
+      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
       noindex: true,
       dashClean,
       org,
@@ -3755,7 +3755,7 @@ Founder, OTP</p>
     return reply.view('pages/dashboard-admin', {
       title: 'Publisher Dashboard - OTP',
       description: 'Manage your OOS files, track publisher stats, and monitor your coordination intelligence on OTP.',
-      ogImage: BASE_URL + '/public/og-image.png',
+      ogImage: BASE_URL + '/public/images/og-otp-home-v2.png',
       noindex: true,
       authState: 'authenticated',
       dashboard: {
