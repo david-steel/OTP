@@ -167,6 +167,17 @@ async function checkMeetingEdit(
     .limit(1);
   if (ownerOrg && (ownerOrg as any).clerkOrgId === auth.userId) return true;
 
+  // The meeting's creator can always edit/delete their own meeting, regardless
+  // of role or team membership. (Kristen created a recurring meeting but could
+  // not change its date or delete it because she was not on the meeting's team.)
+  {
+    const [_creatorRow] = await db.select({ createdBy: meetings.createdBy })
+      .from(meetings)
+      .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
+      .limit(1);
+    if (_creatorRow && _creatorRow.createdBy === auth.userId) return true;
+  }
+
   const member = (request as any).orgMember as
     | { id: string; role: any }
     | null;
