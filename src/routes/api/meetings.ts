@@ -132,28 +132,6 @@ async function checkMeetingEdit(
   const auth = getAuth(request);
   if (!auth.userId) return true; // API-key path
 
-  // Lock gate: a future-dated, not-yet-started meeting is "locked" so people
-  // cannot enter data into next week's recurring occurrence by mistake instead
-  // of the current one. Applies to everyone (founder included) -- it is about
-  // editing the WRONG meeting, not about permissions. /start opts out
-  // (allowLocked) so a meeting can still be deliberately opened early; once
-  // started it is no longer locked.
-  if (!opts.allowLocked) {
-    const [lockRow] = await db.select({
-      status: meetings.status,
-      scheduledAt: meetings.scheduledAt,
-      recurrenceRule: meetings.recurrenceRule,
-      recurrenceParentId: meetings.recurrenceParentId,
-    })
-      .from(meetings)
-      .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
-      .limit(1);
-    if (lockRow && isMeetingLocked(lockRow)) {
-      reply.status(423).send({ error: { code: 'MEETING_LOCKED', message: 'This meeting is scheduled for the future. Start it to begin, or wait until its date arrives.' } });
-      return false;
-    }
-  }
-
   // Legacy founder: their Clerk user id is stored as organizations.clerkOrgId
   // (the same identity getAuthOrg Path 1 uses to resolve the org). They own
   // this org and may always edit its meetings -- regardless of whether an
@@ -190,6 +168,31 @@ async function checkMeetingEdit(
   if (member.role === 'owner' || member.role === 'admin' || member.role === 'implementer') {
     return true;
   }
+
+  // Lock gate: a future-dated, not-yet-started recurring occurrence is "locked"
+  // so a regular team member cannot enter data into NEXT week's meeting by
+  // mistake instead of the current one. It runs AFTER the founder / creator /
+  // owner / admin / implementer allowances above on purpose: those users manage
+  // the meeting (reschedule it, delete it, retitle it) and must never be blocked
+  // from a locked one -- which was exactly the "I can't edit/delete my own
+  // recurring meeting" bug (David as owner, Kristen as creator). /start opts out
+  // (allowLocked) so a meeting can still be deliberately opened early.
+  if (!opts.allowLocked) {
+    const [lockRow] = await db.select({
+      status: meetings.status,
+      scheduledAt: meetings.scheduledAt,
+      recurrenceRule: meetings.recurrenceRule,
+      recurrenceParentId: meetings.recurrenceParentId,
+    })
+      .from(meetings)
+      .where(and(eq(meetings.id, meetingId), eq(meetings.organizationId, orgId)))
+      .limit(1);
+    if (lockRow && isMeetingLocked(lockRow)) {
+      reply.status(423).send({ error: { code: 'MEETING_LOCKED', message: 'This meeting is scheduled for the future. Start it to begin, or wait until its date arrives.' } });
+      return false;
+    }
+  }
+
   if (member.role === 'observer' || member.role === 'inactive' || member.role === 'free') {
     reply.status(403).send({ error: { code: 'MEETING_READ_ONLY', message: 'Your role is read-only for meetings' } });
     return false;
