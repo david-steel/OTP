@@ -899,6 +899,7 @@ await app.register(import('./routes/api/ninety-import.js'), { prefix: '/api/v1' 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/org-danger.js'));
+await app.register(import('./routes/pages/meeting-followups.js'));
 await app.register(import('./routes/pages/sections/blog.js'));
 await app.register(import('./routes/pages/sections/templates.js'));
 await app.register(import('./routes/pages/sections/sop-library.js'));

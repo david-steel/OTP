@@ -156,6 +156,9 @@
                   <%= m.status === 'in_progress' ? 'live' : m.status %>
                 </span>
               <% } %>
+              <% if (m.status === 'completed' && (typeof meetingAiEnabled !== 'undefined' && meetingAiEnabled)) { %>
+                <a href="/l8/meeting/<%= m.id %>/followups<%= devOrgIdParam ? ('?orgId=' + devOrgIdParam) : '' %>" class="px-2 py-0.5 rounded bg-otp-500 text-white font-semibold hover:bg-otp-400" title="Transcript &amp; AI follow-ups">Follow-ups</a>
+              <% } %>
               <% if (_canManage) { %>
                 <button type="button" class="mtg-edit font-semibold text-otp-700 hover:underline px-1" data-id="<%= m.id %>" data-title="<%= m.title %>" data-at="<%= new Date(m.scheduledAt).toISOString() %>" data-rrule="<%= m.recurrenceRule || '' %>">Edit</button>
                 <button type="button" class="mtg-delete font-semibold text-rose-600 hover:underline px-1" data-id="<%= m.id %>" data-title="<%= m.title %>"<% if (m.recurrenceRule || m.recurrenceParentId) { %> data-recurring="1"<% } %>>Delete</button>
