@@ -176,6 +176,30 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /coo -- role-specific sales page for COOs / heads of operations. Sibling of
+  // /cio reframed for the execution owner.
+  app.get('/coo', async (_request, reply) => {
+    return renderV7(reply, 'coo', {
+      title: 'OTP for COOs - Run the whole operation, people and agents, on one chart',
+      description: 'The work between meetings is where execution dies. OTP runs your whole operating cadence - chart, scorecard, meeting, to-dos, done - for people and agents, so every commitment closes and the business runs on the system, not on you.',
+      canonical: BASE_URL + '/coo',
+      ogImage: OG_DEFAULT,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for COOs', url: BASE_URL + '/coo', description: 'The operating cadence for a workforce of people and agents. Every commitment closes the loop.' },
+    });
+  });
+
+  // /ceo -- role-specific sales page for CEOs / founders. Sibling of /cio
+  // reframed for the vision owner.
+  app.get('/ceo', async (_request, reply) => {
+    return renderV7(reply, 'ceo', {
+      title: 'OTP for CEOs - See your whole company, people and agents, driving one plan',
+      description: 'Your vision is only as real as the org running it. OTP makes the plan live: every person and every agent on one chart, laddering to your operating plan, so you can see your whole company executing the future you set.',
+      canonical: BASE_URL + '/ceo',
+      ogImage: OG_DEFAULT,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CEOs', url: BASE_URL + '/ceo', description: 'See your whole company - people and agents - driving one plan. The operating system for the company you are building.' },
+    });
+  });
+
   // /cfo -- role-specific sales page for CFOs / finance leaders (esp. PE-backed
   // & multi-entity). Sells OTP on its own; sibling of /cio reframed for the P&L.
   app.get('/cfo', async (_request, reply) => {
