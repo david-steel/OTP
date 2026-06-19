@@ -130,12 +130,13 @@
               </div>
             </div>
 
-            <% if (!_stripeOn) { %>
+            <% if (!_billingOn) { %>
               <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-2">
-                <p class="text-sm text-amber-800">Billing isn't set up yet. Adding credits will be available once payments are configured.</p>
+                <p class="text-sm text-amber-800">Billing isn't switched on yet. Adding credits and auto-recharge become available once billing goes live.</p>
               </div>
             <% } %>
 
+            <% if (_billingOn) { %>
             <!-- Add balance -->
             <div class="border-t pt-4 mb-4">
               <div class="text-sm font-semibold text-gray-900 mb-2">Add balance</div>
@@ -171,6 +172,7 @@
                 <span id="wallet-ar-status" class="text-sm text-gray-500"></span>
               </div>
             </div>
+            <% } %>
 
             <!-- Usage this month -->
             <div class="border-t pt-4 mb-4">

@@ -64,6 +64,11 @@ export default async function billingRoutes(app: FastifyInstance) {
   // POST /api/v1/wallet/topup -- create a Stripe Checkout session to fund the
   // wallet. Role-gated. 503 NOT_CONFIGURED when Stripe isn't set up.
   app.post('/wallet/topup', async (request, reply) => {
+    // Master switch: no money moves until billing is turned on, even if Stripe
+    // keys are present (so flipping to a live key alone can't take real charges).
+    if (process.env.BILLING_ENABLED !== 'true') {
+      return reply.status(403).send({ error: { code: 'BILLING_OFF', message: 'Billing is not switched on yet.' } });
+    }
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
     if (!callerCanEditSettings(request, org)) {
@@ -112,6 +117,9 @@ export default async function billingRoutes(app: FastifyInstance) {
 
   // PUT /api/v1/wallet/auto-recharge -- persist auto-recharge config. Role-gated.
   app.put('/wallet/auto-recharge', async (request, reply) => {
+    if (process.env.BILLING_ENABLED !== 'true') {
+      return reply.status(403).send({ error: { code: 'BILLING_OFF', message: 'Billing is not switched on yet.' } });
+    }
     const org = await getAuthOrg(request);
     if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required' } });
     if (!callerCanEditSettings(request, org)) {
