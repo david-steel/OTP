@@ -20,6 +20,7 @@ import { askAiRequestSchema, buildSystemPrompt } from '../../shared/ask-ai.js';
 import { ASK_AI_CORPUS } from '../../data/ask-ai-corpus.js';
 import { getBalanceCents, debitWallet } from '../../services/wallet.js';
 import { computeDebitCents, markupMultipleFromEnv } from '../../shared/ai-pricing.js';
+import { resolveAiKey } from '../../services/org-ai-keys.js';
 
 // Wallet metering is OFF by default. When the env flag is falsy this whole
 // feature is inert: zero behavior change to Ask AI (no balance check, no debit).
@@ -40,13 +41,10 @@ const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 20 });
 // Built once -- must be byte-identical across requests (prompt cache prefix).
 const SYSTEM_PROMPT = buildSystemPrompt(ASK_AI_CORPUS);
 
-// Module-level singleton, constructed lazily so booting without
-// ANTHROPIC_API_KEY never throws (the route 503s instead).
-let anthropicClient: Anthropic | null = null;
-function getClient(): Anthropic {
-  if (!anthropicClient) anthropicClient = new Anthropic(); // reads ANTHROPIC_API_KEY
-  return anthropicClient;
-}
+// The Anthropic client is built PER-REQUEST from the org's resolved BYOK key
+// (resolveAiKey). When the org has no org/portfolio key, resolveAiKey returns
+// the platform ANTHROPIC_API_KEY, so behavior is identical to the old env-only
+// singleton. Constructing per request is cheap.
 
 // Structural type for reply.raw -- avoids the NodeJS global namespace (which
 // the lint env doesn't register under no-undef) while matching how we use it.
@@ -101,7 +99,11 @@ export default async function askAiRoutes(app: FastifyInstance) {
 
     const model = process.env.ASK_AI_MODEL || 'claude-opus-4-8';
     try {
-      const stream = getClient().messages.stream({
+      // Resolve the org's BYOK key (falls back to the platform key for orgs
+      // without an org/portfolio key) and build a per-request client.
+      const ai = await resolveAiKey(org.id);
+      const client = new Anthropic({ apiKey: ai.key });
+      const stream = client.messages.stream({
         model,
         max_tokens: 4000,
         thinking: { type: 'adaptive' },

@@ -17,6 +17,7 @@ import { canEditOrgSettings } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { setOrgLabOptin } from '../../services/lab-features.js';
 import { getLabFeature, isLabToggleable } from '../../shared/lab-features.js';
+import { markOrgEnterprise } from '../../services/portfolios.js';
 
 const toggleSchema = z.object({ enabled: z.boolean() });
 
@@ -54,6 +55,18 @@ export default async function labsRoutes(app: FastifyInstance) {
 
     const userId = getAuth(request).userId || null;
     await setOrgLabOptin(org.id, key, parsed.data.enabled, userId);
+
+    // Turning the Portfolio feature on flips the org to enterprise. One-way for
+    // now: disabling it does NOT downgrade the tier. Best-effort -- never let the
+    // tier flag break the toggle response.
+    if (key === 'portfolio' && parsed.data.enabled) {
+      try {
+        await markOrgEnterprise(org.id);
+      } catch {
+        // ignore -- tier flag is secondary to the toggle.
+      }
+    }
+
     return { ok: true, key, enabled: parsed.data.enabled };
   });
 }

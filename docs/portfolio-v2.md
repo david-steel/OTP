@@ -25,7 +25,23 @@ Schema (`organizations.kind`, `kpis.rollup_excluded`, `portfolio_members`, `port
 
 > Note — linking an **org** transfers no data and changes no ownership; the portfolio only aggregates, and the member controls roll-up via the private flag. Attaching a **person** is the separate super-member roster (must belong to a member org). This should be stated in the member-facing UI to keep trust.
 
-## v2.1 (next) — Enterprise tier + BYOK AI key
+## v2.1 (SHIPPED — inert until activated) — Enterprise tier + BYOK AI key
+
+**Built and shipped.** Enterprise tier flag is live (flips on portfolio create / enabling the `portfolio` Labs feature; idempotent, one-way). BYOK is fully built and security-reviewed (SHIP-READY) but **dormant until you provision the encryption secret** — until then, all AI features keep using the platform key exactly as before.
+
+### Activation (one step, by David)
+Set a 32-byte master key in Railway, then redeploy:
+```
+# generate once:
+openssl rand -hex 32          # or: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# add to Railway env (production service):
+AI_KEYS_ENCRYPTION_KEY=<the 64-hex value>
+```
+Rotating this value makes previously-stored customer keys undecryptable (they silently fall back to the platform key, no crash) — customers would re-enter their keys. Treat it as a long-lived secret, backed up separately from the DB.
+
+Once set: an owner/admin sets their key at **Settings → Company (Bring your own AI key)** for a normal org, or while switched into a **Portfolio** for a portfolio-wide key. Resolution order: member-org key → parent-portfolio key → platform default.
+
+### Original scope notes
 
 ### Enterprise pricing — BLOCKED on a decision
 When the Portfolio feature is turned on, the client moves to **enterprise pricing** (amount + packaging **TBD — David**). Build now: an `enterprise` tier flag flipped when the portfolio feature is enabled / a portfolio is created. Defer: the price and Stripe/billing wiring until the number/packaging is set.
