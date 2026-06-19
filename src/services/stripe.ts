@@ -133,3 +133,40 @@ export async function chargeAutoRecharge(
   });
   return { paymentIntentId: pi.id, status: pi.status };
 }
+
+/**
+ * Create a Checkout Session for the per-agent subscription. `priceId` is a
+ * recurring Stripe Price (per-unit / month); `quantity` is the agent count.
+ * subscription_data.metadata carries { orgId, kind:'agent_subscription' } so the
+ * customer.subscription.* webhooks can resolve the org. Returns the hosted URL.
+ */
+export async function createSubscriptionCheckout(
+  stripe: Stripe,
+  opts: { orgId: string; customerId: string; priceId: string; quantity: number },
+): Promise<{ url: string | null; sessionId: string }> {
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer: opts.customerId,
+    line_items: [{ price: opts.priceId, quantity: Math.max(1, opts.quantity) }],
+    subscription_data: { metadata: { orgId: opts.orgId, kind: 'agent_subscription' } },
+    metadata: { orgId: opts.orgId, kind: 'agent_subscription' },
+    success_url: `${baseUrl()}/settings/billing?sub=success`,
+    cancel_url: `${baseUrl()}/settings/billing?sub=cancelled`,
+  });
+  return { url: session.url, sessionId: session.id };
+}
+
+/**
+ * Create a Stripe Billing Portal session so the customer can manage / cancel
+ * their subscription and update their card. Returns the hosted portal URL.
+ */
+export async function createBillingPortalSession(
+  stripe: Stripe,
+  opts: { customerId: string },
+): Promise<{ url: string }> {
+  const session = await stripe.billingPortal.sessions.create({
+    customer: opts.customerId,
+    return_url: `${baseUrl()}/settings/billing`,
+  });
+  return { url: session.url };
+}

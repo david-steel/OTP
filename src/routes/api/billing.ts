@@ -16,7 +16,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { eq } from 'drizzle-orm';
 import { db } from '../../config/database.js';
-import { orgWallets } from '../../db/schema.js';
+import { orgWallets, subscriptions } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { canEditOrgSettings } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
@@ -210,6 +210,36 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
               createdBy: 'stripe_webhook',
             });
           }
+        }
+      } else if (
+        event.type === 'customer.subscription.created' ||
+        event.type === 'customer.subscription.updated' ||
+        event.type === 'customer.subscription.deleted'
+      ) {
+        // Per-agent subscription lifecycle -> mirror into the subscriptions table
+        // (status, quantity, period end). These events only fire once billing is
+        // configured; the upsert is idempotent, keyed on org (unique index).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sub = event.data.object as any;
+        const orgId = (sub.metadata || {}).orgId as string | undefined;
+        if (orgId) {
+          const item = ((sub.items && sub.items.data) || [])[0] || {};
+          const qty = Number(item.quantity) || 0;
+          const unit = item.price && Number.isInteger(item.price.unit_amount) ? Number(item.price.unit_amount) : null;
+          const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+          const status = event.type === 'customer.subscription.deleted' ? 'canceled' : String(sub.status || 'none');
+          const row = {
+            stripeCustomerId: sub.customer ? String(sub.customer) : null,
+            stripeSubscriptionId: sub.id ? String(sub.id) : null,
+            status,
+            planRate: unit,
+            agentQuantity: qty,
+            currentPeriodEnd: periodEnd,
+          };
+          await db.insert(subscriptions).values({ orgId, ...row }).onConflictDoUpdate({
+            target: subscriptions.orgId,
+            set: { ...row, updatedAt: new Date() },
+          });
         }
       }
     } catch (err) {
