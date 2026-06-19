@@ -34,6 +34,7 @@ import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { createTeamEntity, getOrgTeamGraph, TeamMutationError } from '../../services/team-graph.js';
 import { emitOrgEventSafe } from '../../services/org-events.js';
+import { syncEnterpriseSeats } from '../../services/enterprise-billing.js';
 
 const rl = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
 
@@ -202,6 +203,9 @@ export default async function managerAgentRoutes(app: FastifyInstance) {
       orgId: ctx.org.id, entityId: created.id, details: { name: parsed.name, externalId },
     }));
 
+    // Agent count changed -> reconcile billed Enterprise seats (best-effort, fire-and-forget).
+    syncEnterpriseSeats(ctx.org.id).catch(() => {});
+
     return reply.status(201).send({ agent: { ...created, score: s.score, scoreBreakdown: s.breakdown } });
   });
 
@@ -286,6 +290,8 @@ export default async function managerAgentRoutes(app: FastifyInstance) {
       ))
       .returning();
     if (!deleted) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Agent not found' } });
+    // Agent count changed -> reconcile billed Enterprise seats (best-effort, fire-and-forget).
+    syncEnterpriseSeats(ctx.org.id).catch(() => {});
     return { ok: true };
   });
 
@@ -412,6 +418,8 @@ export default async function managerAgentRoutes(app: FastifyInstance) {
     await db.insert(auditLogs).values(createAuditEntry('manager_agent.archived', 'manager_agent', {
       orgId: ctx.org.id, entityId: id, details: { name: archived.name },
     }));
+    // Agent count changed -> reconcile billed Enterprise seats (best-effort, fire-and-forget).
+    syncEnterpriseSeats(ctx.org.id).catch(() => {});
     return reply.send({ ok: true, archived: true });
   });
 
@@ -437,6 +445,8 @@ export default async function managerAgentRoutes(app: FastifyInstance) {
     await db.insert(auditLogs).values(createAuditEntry('manager_agent.hard_deleted', 'manager_agent', {
       orgId: ctx.org.id, entityId: id, details: { name: target.name },
     }));
+    // Agent count changed -> reconcile billed Enterprise seats (best-effort, fire-and-forget).
+    syncEnterpriseSeats(ctx.org.id).catch(() => {});
     return reply.send({ ok: true, deleted: true });
   });
 }

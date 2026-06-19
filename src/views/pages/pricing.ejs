@@ -164,6 +164,42 @@
         </div>
       </div>
 
+      <!-- ENTERPRISE -- self-serve seat plan. $250/mo base (25 seats), +$10/seat,
+           optional +$199/mo support, BYOK, never trained on. -->
+      <div class="card p-8 sm:p-9 flex flex-col relative border-t-[3px]"
+           style="border-top-color:var(--ink);">
+        <div class="eyebrow mb-3" style="color:var(--ink);">Self-serve at scale</div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <span class="font-display text-[var(--ink)] text-[3rem] font-bold leading-none">$250</span>
+          <span class="font-mono text-[13px] text-[var(--ink-mute)]">/ month base</span>
+        </div>
+        <p class="text-[14px] text-[var(--ink-soft)] leading-[1.65] mb-6">
+          25 agent seats included at $10/seat/mo. Add seats as your team grows, bring your own AI key, and keep your data yours. Upgrade yourself, no sales call.
+        </p>
+        <div class="border-t border-[var(--line)] pt-6 flex-1">
+          <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] mb-4" style="color:var(--ink);">Everything in Free, plus:</p>
+          <ul class="space-y-3">
+            <% var enterpriseFeatures = [
+              ['25 agent seats included', ' -- a $250/mo base, billed at $10 per seat per month'],
+              ['Scale by the seat', ' -- every additional agent seat is just $10/mo'],
+              ['Optional priority support', ' -- add it for $199/mo whenever you need it'],
+              ['Bring your own AI key (BYOK)', ' -- run on your own model provider and key'],
+              ['Never used to train or teach', ' -- your data and prompts never train any model']
+            ]; %>
+            <% enterpriseFeatures.forEach(function(f){ %>
+            <li class="flex items-start gap-3">
+              <svg class="pr-check" fill="none" stroke="var(--ink)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span class="text-[14px] text-[var(--ink-soft)] leading-[1.55]"><strong class="text-[var(--ink)] font-semibold"><%= f[0] %></strong><%= f[1] %></span>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="mt-8">
+          <a href="<%= (typeof authUserId !== 'undefined' && authUserId) ? '/settings/billing' : '/sign-up' %>" class="btn-ink block w-full text-center px-6 py-3.5 text-[15px]">Upgrade to Enterprise</a>
+          <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">Self-serve. 25-seat minimum.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>

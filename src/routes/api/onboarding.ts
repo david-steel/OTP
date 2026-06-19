@@ -28,6 +28,7 @@ import { issueInvite, MembershipError, type Role } from '../../services/membersh
 import { sendEmail } from '../../config/email.js';
 import { ONBOARDING_ROLE_KEYS } from '../../data/onboarding-roles.js';
 import { placeOwnerOnStarterChart } from '../../services/starter-chart.js';
+import { syncEnterpriseSeats } from '../../services/enterprise-billing.js';
 import { reconcileChartClaimByEmail } from '../../services/chart-claim-reconcile.js';
 
 // ---- helpers --------------------------------------------------------
@@ -456,6 +457,9 @@ export default async function onboardingApiRoutes(app: FastifyInstance) {
       rawMd,
       frontmatter: runtime ? { runtime } : {},
     }).returning();
+
+    // Agent count changed -> reconcile billed Enterprise seats (best-effort, fire-and-forget).
+    syncEnterpriseSeats(org.id).catch(() => {});
 
     return { ok: true, id: agent.id };
   });
