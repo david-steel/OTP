@@ -37,6 +37,11 @@ const DDL = [
 
   `CREATE UNIQUE INDEX IF NOT EXISTS "portfolio_metric_sources_uk" ON "portfolio_metric_sources" ("portfolio_kpi_id", "member_org_id", "member_kpi_id");`,
   `CREATE INDEX IF NOT EXISTS "portfolio_metric_sources_kpi_idx" ON "portfolio_metric_sources" ("portfolio_kpi_id");`,
+
+  // v2: portfolio-level preset defaults + invite/consent metadata.
+  `ALTER TABLE "organizations" ADD COLUMN IF NOT EXISTS "portfolio_presets" jsonb;`,
+  `ALTER TABLE "portfolio_members" ADD COLUMN IF NOT EXISTS "invited_by_user_id" varchar(255);`,
+  `ALTER TABLE "portfolio_members" ADD COLUMN IF NOT EXISTS "invited_email" varchar(200);`,
 ];
 
 export async function ensurePortfolioSchema(): Promise<void> {

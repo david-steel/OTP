@@ -81,6 +81,10 @@ export const organizations = pgTable('organizations', {
   // Owner-controlled sidebar customization (Labs: sidebar_customize). Shape:
   // { order: string[] (hrefs in desired order), hidden: string[] (hrefs to hide) }.
   sidebarConfig: jsonb('sidebar_config'),
+  // Portfolio-level preset defaults that member orgs inherit. Shape roughly:
+  // { sidebar?: any, settings?: any, locked?: string[] }. Added by
+  // ensure-portfolio.ts on boot (Drizzle migrate is broken).
+  portfolioPresets: jsonb('portfolio_presets'),
   // Two-phase hard delete. deletionRequestedAt = when a delete was initiated;
   // null = active. While set, the org is hidden/blocked everywhere (see
   // getAuthOrg). It is restorable for 7 days; after that the purge job
@@ -1024,6 +1028,10 @@ export const portfolioMembers = pgTable('portfolio_members', {
   portfolioOrgId: uuid('portfolio_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   memberOrgId: uuid('member_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   status: varchar('status', { length: 20 }).notNull().default('active'),
+  // Invite/consent flow: who invited the org, and the owner email it was sent to.
+  // Columns added by ensure-portfolio.ts on boot (Drizzle migrate is broken).
+  invitedByUserId: varchar('invited_by_user_id', { length: 255 }),
+  invitedEmail: varchar('invited_email', { length: 200 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   uk: uniqueIndex('portfolio_members_uk').on(table.portfolioOrgId, table.memberOrgId),

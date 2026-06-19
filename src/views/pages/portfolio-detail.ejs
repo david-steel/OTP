@@ -154,6 +154,34 @@
       <% } %>
     </section>
 
+    <!-- ===== Presets (inherited by member orgs) ===== -->
+    <section class="mt-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-3">Presets (inherited by member orgs)</h2>
+      <div class="bg-white border rounded-xl p-6">
+        <p class="text-sm text-gray-600 mb-4">
+          Set a default sidebar that member organizations inherit. Lock it to prevent members from overriding.
+        </p>
+
+        <label for="presets-sidebar" class="block text-sm font-semibold text-gray-900 mb-2">Sidebar preset (JSON)</label>
+        <textarea id="presets-sidebar" rows="10" spellcheck="false"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-otp-500/40"
+                  placeholder="null"></textarea>
+
+        <label class="flex items-center gap-2 mt-3 text-sm text-gray-700">
+          <input type="checkbox" id="presets-lock-sidebar"
+                 class="h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
+          Lock sidebar (members cannot override)
+        </label>
+
+        <div class="flex items-center gap-3 mt-4">
+          <button type="button" id="presets-save-btn"
+                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Save presets</button>
+          <span id="presets-status" class="text-xs text-gray-500" style="display:none;"></span>
+        </div>
+        <p id="presets-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
+      </div>
+    </section>
+
   <% } %>
 </div>
 
@@ -251,6 +279,81 @@
         .catch(function (err) {
           addSubmit.disabled = false;
           showAddErr(err.message || 'Could not add member org.');
+        });
+    });
+
+    // ---- Presets (sidebar inherited by member orgs) ----
+    var presetsSidebar = document.getElementById('presets-sidebar');
+    var presetsLock = document.getElementById('presets-lock-sidebar');
+    var presetsSaveBtn = document.getElementById('presets-save-btn');
+    var presetsStatus = document.getElementById('presets-status');
+    var presetsError = document.getElementById('presets-error');
+
+    function showPresetsErr(msg) {
+      if (!presetsError) return;
+      presetsError.textContent = msg;
+      presetsError.style.display = 'block';
+    }
+    function clearPresetsErr() {
+      if (!presetsError) return;
+      presetsError.textContent = '';
+      presetsError.style.display = 'none';
+    }
+    function showPresetsStatus(msg) {
+      if (!presetsStatus) return;
+      presetsStatus.textContent = msg;
+      presetsStatus.style.display = 'inline';
+    }
+
+    // Prefill the textarea + lock checkbox from the saved presets.
+    if (presetsSidebar) {
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/presets', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data) { presetsSidebar.value = ''; return; }
+          var sb = (data && typeof data.sidebar !== 'undefined') ? data.sidebar : null;
+          presetsSidebar.value = (sb === null || typeof sb === 'undefined')
+            ? '' : JSON.stringify(sb, null, 2);
+          var locked = (data && Array.isArray(data.locked)) ? data.locked : [];
+          if (presetsLock) presetsLock.checked = locked.indexOf('sidebar') !== -1;
+        })
+        .catch(function () { /* leave empty on failure */ });
+    }
+
+    if (presetsSaveBtn) presetsSaveBtn.addEventListener('click', function () {
+      clearPresetsErr();
+      var raw = (presetsSidebar.value || '').trim();
+      var sidebar = null;
+      if (raw !== '') {
+        try {
+          sidebar = JSON.parse(raw);
+        } catch (e) {
+          showPresetsErr('Sidebar must be valid JSON: ' + (e && e.message ? e.message : 'parse error'));
+          return;
+        }
+      }
+      var locked = (presetsLock && presetsLock.checked) ? ['sidebar'] : [];
+      presetsSaveBtn.disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ sidebar: sidebar, locked: locked })
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not save presets.');
+          });
+          presetsSaveBtn.disabled = false;
+          showPresetsStatus('Saved.');
+        })
+        .catch(function (err) {
+          presetsSaveBtn.disabled = false;
+          showPresetsErr(err.message || 'Could not save presets.');
         });
     });
   })();
