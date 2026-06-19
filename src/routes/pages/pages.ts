@@ -1305,23 +1305,23 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  // Terms of Service -- OTP, LLC. Static legal page, v7 layout, public + indexable.
+  // Terms of Service -- OrgTP, LLC. Static legal page, v7 layout, public + indexable.
   app.get('/terms', async (_request, reply) => {
     return renderV7(reply, 'terms', {
       title: 'Terms of Service - OTP',
-      description: 'Terms of Service for OTP, LLC and the OTP platform at orgtp.com.',
+      description: 'Terms of Service for OrgTP, LLC and the OTP platform at orgtp.com.',
       canonical: BASE_URL + '/terms',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Terms of Service', url: BASE_URL + '/terms', publisher: { '@type': 'Organization', name: 'OTP, LLC', url: BASE_URL } }
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Terms of Service', url: BASE_URL + '/terms', publisher: { '@type': 'Organization', name: 'OrgTP, LLC', url: BASE_URL } }
     });
   });
 
-  // Privacy Policy -- OTP, LLC. Static legal page, v7 layout, public + indexable.
+  // Privacy Policy -- OrgTP, LLC. Static legal page, v7 layout, public + indexable.
   app.get('/privacy', async (_request, reply) => {
     return renderV7(reply, 'privacy', {
       title: 'Privacy Policy - OTP',
-      description: 'Privacy Policy for OTP, LLC and the OTP platform at orgtp.com.',
+      description: 'Privacy Policy for OrgTP, LLC and the OTP platform at orgtp.com.',
       canonical: BASE_URL + '/privacy',
-      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Privacy Policy', url: BASE_URL + '/privacy', publisher: { '@type': 'Organization', name: 'OTP, LLC', url: BASE_URL } }
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Privacy Policy', url: BASE_URL + '/privacy', publisher: { '@type': 'Organization', name: 'OrgTP, LLC', url: BASE_URL } }
     });
   });
 

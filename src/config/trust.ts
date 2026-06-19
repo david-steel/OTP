@@ -49,7 +49,7 @@ export interface TrustData {
 export const trust: TrustData = {
   company: {
     name: 'OTP',
-    legalEntity: 'OTP, LLC',
+    legalEntity: 'OrgTP, LLC',
     tagline: 'The coordination intelligence layer for operating teams.',
     description:
       'OTP helps organizations run their operating system (priorities, issues, to-dos, KPIs, meetings, org chart) and, only when they choose to, learn from an opt-in cross-organization intelligence network. This page documents exactly what data OTP touches, how it is protected, and what stays private to your organization versus what becomes visible to the network.',
