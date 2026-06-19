@@ -224,6 +224,15 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /founder -- company-record / founder page for OrgTP LLC, published for bank /
+  // KYC verification. noindex; intentionally NOT in the nav or sitemap.
+  app.get('/founder', async (_request, reply) => {
+    return renderV7(reply, 'founder', {
+      title: 'David Sieradzky - Founder, OrgTP LLC',
+      noindex: true,
+    });
+  });
+
   // Browse
   app.get('/browse', async (request, reply) => {
     // One card per organization: the most recent published OOS file per org.
