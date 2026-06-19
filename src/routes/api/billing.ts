@@ -13,6 +13,7 @@
  * Without STRIPE_SECRET_KEY, the topup endpoint returns 503 NOT_CONFIGURED,
  * mirroring ask-ai.ts. The webhook 400s on a bad/absent signature.
  */
+import type Stripe from 'stripe';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { eq } from 'drizzle-orm';
 import { db } from '../../config/database.js';
@@ -28,6 +29,7 @@ import {
   constructWebhookEvent,
 } from '../../services/stripe.js';
 import { topupSchema, autoRechargeSchema } from '../../shared/wallet-validation.js';
+import { recordSubscriptionFromStripe } from '../../services/enterprise-billing.js';
 
 // Owner/admin-style gate. A legacy founder (no member row, owns the org via
 // clerkOrgId) is treated as able to edit settings; otherwise require a role that
@@ -192,11 +194,19 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const session = event.data.object as any;
         const md = (session.metadata || {}) as Record<string, string>;
-        if (md.kind === 'wallet_topup' && md.orgId) {
+        if (session.mode === 'subscription' || md.kind === 'enterprise') {
+          // Enterprise subscription checkout: do NOT credit the wallet. Retrieve
+          // the subscription and reconcile our subscriptions row + plan_tier.
+          const subId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+          if (subId) {
+            const sub = await stripe.subscriptions.retrieve(subId);
+            await recordSubscriptionFromStripe(sub);
+          }
+        } else if (md.kind === 'wallet_topup' && md.orgId) {
+          // Wallet top-up (mode='payment') only. Idempotent on the session id: a
+          // retried webhook returns the prior result rather than crediting twice.
           const amountCents = Number(md.amountCents);
           if (Number.isInteger(amountCents) && amountCents > 0) {
-            // Idempotent on the session id: a retried webhook returns the prior
-            // result rather than crediting twice.
             await creditWallet(md.orgId, amountCents, 'topup', {
               idempotencyKey: `stripe_checkout_${session.id}`,
               metadata: { stripeSessionId: session.id, source: 'checkout' },
@@ -204,6 +214,23 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
             });
           }
         }
+      } else if (
+        event.type === 'customer.subscription.created' ||
+        event.type === 'customer.subscription.updated' ||
+        event.type === 'customer.subscription.deleted'
+      ) {
+        // The event payload IS a Stripe.Subscription. Reconcile our row +
+        // plan_tier (recordSubscriptionFromStripe no-ops if it's not one of ours).
+        await recordSubscriptionFromStripe(event.data.object as Stripe.Subscription);
+      } else if (event.type === 'invoice.payment_failed') {
+        // Best-effort: the matching customer.subscription.updated event carries
+        // the new (e.g. past_due) status, so we only log here. No PII.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const invoice = event.data.object as any;
+        request.log.warn(
+          { invoiceId: invoice.id, subscriptionId: invoice.subscription ?? null },
+          'stripe invoice payment failed',
+        );
       } else if (event.type === 'payment_intent.succeeded') {
         // Auto-recharge path (off-session PaymentIntent). Same idempotent credit.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

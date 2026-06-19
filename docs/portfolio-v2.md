@@ -43,9 +43,22 @@ Once set: an owner/admin sets their key at **Settings → Company (Bring your ow
 
 ### Original scope notes
 
-### Enterprise pricing — BLOCKED on a decision
-When the Portfolio feature is turned on, the client moves to **enterprise pricing** (amount + packaging **TBD — David**). Build now: an `enterprise` tier flag flipped when the portfolio feature is enabled / a portfolio is created. Defer: the price and Stripe/billing wiring until the number/packaging is set.
-- **Decision needed:** enterprise price + what it includes (seats? member-org count? AI usage?).
+### Enterprise pricing — SHIPPED (test-mode; activate with live keys)
+Plan: **$10/agent-seat/mo with a 25-seat floor** (= $250/mo base), +$10/mo per additional seat, **+$199/mo optional support**, BYOK required, data never used to train/teach. Source of truth: `src/shared/enterprise-pricing.ts`.
+
+Built end-to-end and security-reviewed (SHIP-READY): find-or-create Stripe Price objects (stable `lookup_key`s), self-serve **Stripe Checkout (subscription mode)** from Settings→Billing, subscription webhooks reconciling the `subscriptions` table + `organizations.plan_tier`, seat-quantity sync on agent add/remove, owner/admin gating, an Enterprise card on `/pricing`. **No silent charges** — the Portfolio toggle sets the *tier*; an actual charge requires the owner to complete Checkout + enter a card.
+
+**Activation (David), all gated behind `STRIPE_BILLING_LIVE`:**
+```
+# Stripe keys (test first; sk_test_… = no real money):
+STRIPE_SECRET_KEY=sk_test_…           # or sk_live_… when going live
+STRIPE_WEBHOOK_SECRET=whsec_…         # from the Stripe webhook endpoint config
+STRIPE_BILLING_LIVE=true              # gates the whole enterprise flow on
+APP_BASE_URL=https://orgtp.com        # Checkout redirect base
+```
+Point a Stripe webhook at `POST https://orgtp.com/webhooks/stripe` for: `checkout.session.completed`, `customer.subscription.created/updated/deleted`, `invoice.payment_failed`. Test the full flow in Stripe **test mode** (test card 4242…) before swapping to `sk_live_…`. Until `STRIPE_BILLING_LIVE=true`, every money endpoint returns 503 (inert).
+
+Follow-ups (not blockers): wire `org_entitlements.planTier` (today `organizations.plan_tier` is the authoritative gate); the scaffolded auto-recharge cron is still unwired.
 
 ### BYOK (bring-your-own AI key)
 Customer supplies their own Anthropic/OpenAI (or other) API key at the **org or Portfolio level**; all OTP AI features use that key, so their AI data stays in their account — moving data-handling responsibility/security to them.

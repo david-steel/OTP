@@ -898,6 +898,7 @@ await app.register(import('./routes/api/admin-portfolios.js'), { prefix: '/api/v
 await app.register(import('./routes/api/portfolio-invites.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-presets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/org-ai-keys.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/enterprise.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
   await app.register(stripeWebhookRoutes);
