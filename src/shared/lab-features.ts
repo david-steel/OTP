@@ -64,6 +64,18 @@ export const LAB_FEATURES: LabFeature[] = [
     navIcon: 'store',
   },
   {
+    key: 'portfolio',
+    name: 'Portfolio',
+    description:
+      'Run multiple OTP organizations as one group, with rolled-up super-metrics across every org, cross-org membership, and a single group meeting -- built for PE firms, coaches, franchisors, and multi-org operators.',
+    whyNow:
+      'Switch it on to manage your whole group from one place and shape the roll-up views while it is still early, before it opens to everyone.',
+    status: 'beta',
+    surfaceUrl: '/portfolio',
+    navLabel: 'Portfolios',
+    navIcon: 'org',
+  },
+  {
     key: 'meeting_formats',
     name: 'Custom meeting formats',
     description:

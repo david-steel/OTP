@@ -1,10 +1,11 @@
 import type { FastifyRequest } from 'fastify';
 import { getAuth } from '@clerk/fastify';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../config/database.js';
-import { organizations } from '../db/schema.js';
+import { organizations, orgMembers } from '../db/schema.js';
 import { resolveApiKey } from './api-key-auth.js';
 import { resolveServiceAuth } from './service-auth.js';
+import { readActiveOrgCookie } from '../services/active-org.js';
 
 // Roles that may never mutate org data (same set meetings.ts enforces).
 const READ_ONLY_ROLES = new Set(['observer', 'inactive', 'free']);
@@ -90,6 +91,29 @@ async function resolveAuthOrg(request: FastifyRequest) {
     // the team-membership-or-attendee rule once the org is resolved.
     const member = (request as any).orgMember as { orgId: string } | null;
     if (member?.orgId) {
+      // Org-switching: if the user has pinned an `otp_active_org` preference
+      // AND they hold an ACTIVE org_members row for that exact org, resolve to
+      // THAT org. The cookie is validated against org_members here every time
+      // (never trusted alone), and this runs AFTER the impersonation branch
+      // above so it never overrides "view as". If the cookie names an org the
+      // user isn't an active member of, we fall through to the existing
+      // first-membership org on request.orgMember unchanged. Mirrors the
+      // validated-preference logic in guards.ts; see services/active-org.ts.
+      const activeOrgPref = readActiveOrgCookie(request);
+      if (activeOrgPref && activeOrgPref !== member.orgId) {
+        const [prefMembership] = await db.select({ orgId: orgMembers.orgId })
+          .from(orgMembers)
+          .where(and(
+            eq(orgMembers.clerkUserId, auth.userId),
+            eq(orgMembers.status, 'active'),
+            eq(orgMembers.orgId, activeOrgPref),
+          ))
+          .limit(1);
+        if (prefMembership) {
+          const prefOrgArr = await db.select().from(organizations).where(eq(organizations.id, prefMembership.orgId)).limit(1);
+          if (prefOrgArr[0]) return prefOrgArr[0];
+        }
+      }
       const memberOrgArr = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
       if (memberOrgArr[0]) return memberOrgArr[0];
     }

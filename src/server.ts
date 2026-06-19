@@ -287,6 +287,8 @@ app.addHook('preHandler', async (request, reply) => {
       sidebarCollapsed,
       realtimeStreamEnabled,
       labNavItems: (request as any).labNavItems || [],
+      isPortfolio: (request as any).isPortfolio || false,
+      orgKind: (request as any).orgKind || 'standard',
       meetingAiEnabled: (request as any).meetingAiEnabled || false,
       demoSession: (request as any).demoSession || false,
       sidebarCustomizeOn: (request as any).sidebarCustomizeOn || false,
@@ -358,8 +360,25 @@ app.addHook('preHandler', async (request) => {
         .from(organizations).where(eq(organizations.id, om.orgId)).limit(1);
       (request as any).sidebarConfig = (o && o.sidebarConfig) || null;
     }
+    // Portfolio context: resolve the org's kind so views can branch on whether
+    // the active org is a portfolio "super-org". Auto-injected into every view
+    // below alongside labNavItems. Fail-soft: any error defaults isPortfolio=false.
+    try {
+      const { db } = await import('./config/database.js');
+      const { organizations } = await import('./db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const [orgRow] = await db.select({ kind: organizations.kind })
+        .from(organizations).where(eq(organizations.id, om.orgId)).limit(1);
+      const kind = (orgRow && orgRow.kind) || 'standard';
+      (request as any).isPortfolio = (kind === 'portfolio');
+      (request as any).orgKind = kind;
+    } catch (kindErr) {
+      (request as any).isPortfolio = false;
+      request.log.debug({ err: kindErr }, 'org kind decorator failed');
+    }
   } catch (err) {
     (request as any).labNavItems = [];
+    (request as any).isPortfolio = false;
     request.log.debug({ err }, 'labNavItems decorator failed');
   }
 });
@@ -855,6 +874,8 @@ await app.register(import('./routes/api/ask-ai.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/billing.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/labs.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meeting-formats.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/portfolios.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/active-org.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
   await app.register(stripeWebhookRoutes);
@@ -899,6 +920,7 @@ await app.register(import('./routes/api/ninety-import.js'), { prefix: '/api/v1' 
 // ---- Page Routes (SSR) ----
 await app.register(import('./routes/pages/pages.js'));
 await app.register(import('./routes/pages/org-danger.js'));
+await app.register(import('./routes/pages/portfolio.js'));
 await app.register(import('./routes/pages/meeting-followups.js'));
 await app.register(import('./routes/pages/sections/blog.js'));
 await app.register(import('./routes/pages/sections/templates.js'));
@@ -1093,6 +1115,14 @@ try {
   app.log.info('teams + team_memberships tables are ready');
 } catch (err) {
   app.log.error({ err }, 'ensureTeamsTables failed -- team-scoped features will not work until resolved');
+}
+
+try {
+  const { ensurePortfolioSchema } = await import('./db/ensure-portfolio.js');
+  await ensurePortfolioSchema();
+  app.log.info('portfolio schema (kind, rollup_excluded, portfolio tables) is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensurePortfolioSchema failed -- portfolio features will not work until resolved');
 }
 
 try {

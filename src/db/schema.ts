@@ -61,6 +61,10 @@ export const organizations = pgTable('organizations', {
   qualityTier: qualityTierEnum('quality_tier'),
   agenticLevel: integer('agentic_level'),
   slug: text('slug').unique(),
+  // Portfolio support: an org can be a normal org ('standard') or a portfolio
+  // ('portfolio') composed of member orgs (see portfolio_members). Column added
+  // by ensure-portfolio.ts on boot (Drizzle migrate is broken).
+  kind: varchar('kind', { length: 20 }).default('standard').notNull(),
   public: boolean('public').default(false).notNull(),
   // Private-plan enforcement (2026-06-11): hard, additive cross-org exclusion.
   // When true, this org's data NEVER appears in any cross-org read surface
@@ -959,6 +963,9 @@ export const kpis = pgTable('kpis', {
   claimId: uuid('claim_id'),
   isPublished: boolean('is_published').notNull().default(false),
   public: boolean('public').default(false).notNull(),
+  // Portfolio rollup: a member org can block this KPI from rolling up into a
+  // portfolio super-metric. Column added by ensure-portfolio.ts on boot.
+  rollupExcluded: boolean('rollup_excluded').notNull().default(false),
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -1004,6 +1011,35 @@ export const kpiDependencies = pgTable('kpi_dependencies', {
 }, (table) => ({
   uk: uniqueIndex('kpi_deps_uk').on(table.kpiId, table.dependsOnKpiId),
   dependsOnIdx: index('kpi_deps_depends_on_idx').on(table.dependsOnKpiId),
+}));
+
+// ---- Portfolio (an org composed of other orgs) ----
+// A portfolio is an organizations row with kind='portfolio'. Member orgs link
+// to it via portfolio_members; portfolio super-metrics are ordinary kpis rows
+// in the portfolio org, fed by portfolio_metric_sources. Tables created by
+// ensure-portfolio.ts at boot (Drizzle migrate is broken).
+
+export const portfolioMembers = pgTable('portfolio_members', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  portfolioOrgId: uuid('portfolio_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  memberOrgId: uuid('member_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('active'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uk: uniqueIndex('portfolio_members_uk').on(table.portfolioOrgId, table.memberOrgId),
+  portfolioIdx: index('portfolio_members_portfolio_idx').on(table.portfolioOrgId),
+}));
+
+export const portfolioMetricSources = pgTable('portfolio_metric_sources', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  portfolioKpiId: uuid('portfolio_kpi_id').references(() => kpis.id, { onDelete: 'cascade' }).notNull(),
+  memberOrgId: uuid('member_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  memberKpiId: uuid('member_kpi_id').references(() => kpis.id, { onDelete: 'cascade' }).notNull(),
+  weight: real('weight').notNull().default(1),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uk: uniqueIndex('portfolio_metric_sources_uk').on(table.portfolioKpiId, table.memberOrgId, table.memberKpiId),
+  portfolioKpiIdx: index('portfolio_metric_sources_kpi_idx').on(table.portfolioKpiId),
 }));
 
 // ---- In-app notifications (nav alert bell) ----
