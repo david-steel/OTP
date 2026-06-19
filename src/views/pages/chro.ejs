@@ -1,0 +1,305 @@
+<%# /chro -- role-specific sales page for CHROs / heads of people. Sells OTP on
+    its own. Sibling of /cio /cfo /coo /ceo, reframed for the people/org-design
+    owner: the org chart is a picture that doesn't know what anyone does; roles
+    are fuzzy; activity hides contribution; the workforce is going hybrid. An
+    accountability chart where every seat (person + agent) has a role, a number,
+    and a fit. v7 layout, v7.css PREBUILT -> scoped .chro-* CSS + inline only. %>
+<% var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev'); %>
+<style>
+  .chro-sec   { padding-top: 84px; padding-bottom: 84px; }
+  .chro-wrap  { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .chro-center{ text-align: center; }
+  .chro-paper { background: var(--white, #fcfcfd); }
+  .chro-grey  { background: var(--grey, #f0f1f3); }
+  @media (max-width: 640px){ .chro-sec { padding-top: 54px; padding-bottom: 54px; } }
+
+  .chro-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; gap:10px; }
+  .chro-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .chro-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.05; font-size:clamp(2.2rem,4.6vw,3.5rem); color:var(--ink,#14161c); margin:0; max-width:19ch; }
+  .chro-h2 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.02em; line-height:1.12; font-size:clamp(1.7rem,3.2vw,2.5rem); color:var(--ink,#14161c); }
+  .chro-lead { font-size:18px; line-height:1.62; color:var(--ink-soft,#494d57); }
+  .chro-body { font-size:16px; line-height:1.65; color:var(--ink-soft,#494d57); }
+  .chro-max720 { max-width:720px; }
+  .accent { color:var(--blue,#0d7df2); } .accent-g { color:var(--green-deep,#06724a); }
+
+  .chro-btn  { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; font-size:16px; font-weight:700; border-radius:12px; text-decoration:none; white-space:nowrap; }
+  .chro-btn.primary { background:var(--blue,#0d7df2); color:#fff; box-shadow:0 10px 26px -10px rgba(13,125,242,.6); transition:transform .15s ease, box-shadow .15s ease; }
+  .chro-btn.primary:hover { transform:translateY(-1px); box-shadow:0 14px 30px -10px rgba(13,125,242,.7); }
+  .chro-btn.ghost { background:transparent; color:var(--ink,#14161c); border:1px solid var(--line,#e6e8ec); }
+  .chro-btn.ghost:hover { border-color:#c8ccd4; }
+  .chro-cta-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:30px; }
+
+  .chro-grid3 { display:grid; gap:18px; grid-template-columns:1fr; margin-top:36px; }
+  @media (min-width:780px){ .chro-grid3 { grid-template-columns:repeat(3,1fr); } }
+  .chro-grid2 { display:grid; gap:18px; grid-template-columns:1fr; margin-top:36px; }
+  @media (min-width:780px){ .chro-grid2 { grid-template-columns:repeat(2,1fr); } }
+  .chro-card { background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); border-radius:16px; padding:24px 22px; box-shadow:0 10px 28px rgba(20,22,28,.05); }
+  .chro-card h3 { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:18px; color:var(--ink,#14161c); margin:0 0 8px; }
+  .chro-card p { font-size:14.5px; line-height:1.6; color:var(--ink-soft,#494d57); margin:0; }
+  .chro-chip { display:inline-flex; width:38px; height:38px; border-radius:11px; align-items:center; justify-content:center; margin-bottom:14px; }
+
+  .chro-quoteband { background:linear-gradient(180deg,#f2f7ff 0%, #eef3fb 100%); border-top:1px solid var(--line,#e6e8ec); border-bottom:1px solid var(--line,#e6e8ec); }
+  .chro-qmark { display:block; font-family:'Schibsted Grotesk',serif; font-weight:900; font-size:64px; line-height:.3; color:var(--orgy-deep,#8BC42A); }
+  .chro-quote { font-family:'Schibsted Grotesk',sans-serif; font-weight:600; font-size:clamp(1.35rem,2.6vw,1.9rem); line-height:1.4; letter-spacing:-0.01em; color:var(--ink,#14161c); }
+  .chro-quote .accent { color:var(--blue,#0d7df2); }
+
+  .chro-trust-strip { display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; margin-top:30px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
+  .chro-trust-strip b { color:var(--ink-soft,#494d57); }
+
+  @media (prefers-reduced-motion: no-preference){
+    body.chro-anim .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    body.chro-anim .reveal.in { opacity:1; transform:none; }
+  }
+
+  /* ===== animated hero scene: seats roll up into org health ===== */
+  .chro-hero { background:var(--white,#fcfcfd); overflow:hidden; }
+  .chro-hero-wrap { max-width:1240px; margin:0 auto; padding:120px 24px 60px; }
+  .chro-hero-grid { display:flex; gap:40px; align-items:center; flex-wrap:wrap; }
+  .chro-hero-copy { flex:1 1 430px; min-width:330px; padding-top:8px; }
+  .chro-stage { flex:0 0 560px; position:relative; width:560px; height:500px; }
+  .rise { opacity:0; animation:r-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes r-rise { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  .pop { opacity:0; animation:r-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
+  @keyframes r-pop { from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+
+  .r-conn { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible; }
+  .r-conn path { fill:none; stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:r-draw 1.1s ease forwards; }
+  @keyframes r-draw { to{stroke-dashoffset:0;} }
+
+  .r-board { position:absolute; left:120px; top:6px; width:320px; z-index:4; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:16px; box-shadow:0 18px 44px -16px rgba(20,22,28,.28); padding:14px 16px; }
+  .r-board-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .r-board-t { font-family:'Schibsted Grotesk',sans-serif; font-weight:800; font-size:12.5px; letter-spacing:.04em; color:var(--ink,#14161c); }
+  .r-live { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.04em; color:var(--green-deep,#06724a); }
+  .r-live i { width:6px; height:6px; border-radius:50%; background:var(--green,#0a9d63); animation:r-dot 1.8s ease-in-out infinite; }
+  @keyframes r-dot { 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
+  .r-kpi { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid var(--line,#eef0f3); }
+  .r-kpi:first-of-type { border-top:0; }
+  .r-kpi-name { font-size:12.5px; color:var(--ink-soft,#494d57); display:flex; align-items:center; gap:7px; }
+  .r-owner { width:17px; height:17px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .r-kpi-val { font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:var(--ink,#14161c); }
+  .r-pill { font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; }
+  .r-on { color:#0a7d3f; background:#dcfce7; } .r-watch { color:#b4690e; background:#fef3c7; }
+
+  .r-seat { position:absolute; width:186px; z-index:3; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:13px; padding:10px 12px; box-shadow:0 8px 22px -10px rgba(20,22,28,.22); }
+  .r-seat-top { display:flex; gap:9px; align-items:center; }
+  .r-av { width:30px; height:30px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .r-nm { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:12.5px; color:var(--ink,#14161c); line-height:1.1; }
+  .r-rl { font-size:10px; color:var(--ink-mute,#888c96); margin-top:1px; }
+  .r-tag { font-size:8.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:1px 6px; border-radius:999px; margin-left:auto; }
+  .r-tag.hu { color:var(--orange-deep,#d4540a); background:rgba(255,122,26,.12); }
+  .r-tag.ag { color:var(--blue-deep,#0a56b0); background:rgba(13,125,242,.12); }
+  .r-meter { margin-top:9px; }
+  .r-meter-l { display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-mute,#888c96); margin-bottom:3px; }
+  .r-meter-l b { font-family:'JetBrains Mono',monospace; color:var(--ink-soft,#494d57); font-weight:600; }
+  .r-bar { height:5px; border-radius:3px; background:var(--grey,#f0f1f3); overflow:hidden; }
+  .r-bar i { display:block; height:100%; border-radius:3px; transform:scaleX(0); transform-origin:left; animation:r-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes r-grow { to{transform:scaleX(1);} }
+  .r-seat.s1 { left:0;   top:250px; } .r-seat.s2 { left:0;   top:372px; }
+  .r-seat.s3 { right:0;  top:250px; } .r-seat.s4 { right:0;  top:372px; }
+
+  @media (max-width:980px){ .chro-stage{ transform:scale(.84); transform-origin:top center; margin:0 auto -70px; } }
+  @media (max-width:860px){
+    .chro-hero-grid{ justify-content:center; }
+    .chro-hero-copy{ text-align:center; min-width:0; }
+    .chro-cta-row{ justify-content:center; }
+    .chro-trust-strip{ justify-content:center; }
+    .chro-stage{ display:none; }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="chro-hero">
+  <div class="chro-hero-wrap">
+    <div class="chro-hero-grid">
+      <div class="chro-hero-copy">
+        <div class="chro-eyebrow" style="margin-bottom:16px;"><span class="chro-tick"></span>For CHROs &amp; heads of people</div>
+        <h1 class="chro-h1">The right people in the right seats &mdash; <span class="accent">agents included</span>.</h1>
+        <p class="chro-lead" style="margin-top:20px;max-width:36rem;">Org design used to stop at the people. Now real work is moving to agents, and your chart, your reviews, and your workforce plan don't account for them. OTP puts every person <em>and</em> every agent on one accountability chart &mdash; each with a seat, a role they own, and a number they're measured on &mdash; so you can see who's <em class="accent-g">thriving</em>, where the gaps are, and how to grow a workforce that's now both.</p>
+        <div class="chro-cta-row">
+          <a href="https://calendly.com/dawson-orgtp/30min" target="_blank" rel="noopener" class="chro-btn primary">Book a walkthrough &rarr;</a>
+          <a href="/sign-up" class="chro-btn ghost">Start free</a>
+        </div>
+        <div class="chro-trust-strip">
+          <span>Accountability <b>chart</b></span><span style="color:#cfd3da;">&middot;</span>
+          <span>Right-seat reviews</span><span style="color:#cfd3da;">&middot;</span>
+          <span>People &amp; agents, one chart</span>
+        </div>
+      </div>
+
+      <!-- animated scene: every seat carries a role + fit, rolling up to org health -->
+      <div class="chro-stage">
+        <svg class="r-conn" viewBox="0 0 560 500">
+          <path pathLength="1" d="M150,300 C150,210 250,150 282,128" stroke="var(--orange,#ff7a1a)" style="animation-delay:.7s"/>
+          <path pathLength="1" d="M150,400 C150,250 250,160 282,134" stroke="var(--orange,#ff7a1a)" style="animation-delay:.85s"/>
+          <path pathLength="1" d="M410,300 C410,210 310,150 278,128" stroke="var(--blue,#0d7df2)" style="animation-delay:.9s"/>
+          <path pathLength="1" d="M410,400 C410,250 310,160 278,134" stroke="var(--blue,#0d7df2)" style="animation-delay:1.05s"/>
+          <circle r="3.5" fill="var(--orange,#ff7a1a)"><animateMotion dur="3s" repeatCount="indefinite" begin="1.8s" path="M150,300 C150,210 250,150 282,128"/></circle>
+          <circle r="3.5" fill="var(--blue,#0d7df2)"><animateMotion dur="3s" repeatCount="indefinite" begin="2.4s" path="M410,400 C410,250 310,160 278,134"/></circle>
+        </svg>
+
+        <div class="r-board pop" style="animation-delay:.4s">
+          <div class="r-board-h"><div class="r-board-t">Org health &middot; this quarter</div><span class="r-live"><i></i>LIVE</span></div>
+          <div class="r-kpi"><div class="r-kpi-name"><span class="r-owner" style="background:#e07a3a">B</span>Seats clearly owned</div><span class="r-kpi-val">34/34</span><span class="r-pill r-on">on&nbsp;track</span></div>
+          <div class="r-kpi"><div class="r-kpi-name"><span class="r-owner" style="background:#0d7df2">D</span>Right people, right seats</div><span class="r-kpi-val">31/34</span><span class="r-pill r-watch">watch</span></div>
+          <div class="r-kpi"><div class="r-kpi-name"><span class="r-owner" style="background:#0a9d63">T</span>Team growing with AI</div><span class="r-kpi-val">+18%</span><span class="r-pill r-on">on&nbsp;track</span></div>
+        </div>
+
+        <div class="r-seat s1 rise" style="animation-delay:.7s">
+          <div class="r-seat-top"><div class="r-av" style="background:#e07a3a">SK</div><div><div class="r-nm">Sarah Kim</div><div class="r-rl">Product Manager</div></div><span class="r-tag hu">Human</span></div>
+          <div class="r-meter"><div class="r-meter-l"><span>Right-seat fit</span><b>strong</b></div><div class="r-bar"><i style="width:94%;background:var(--orange,#ff7a1a);animation-delay:1.2s"></i></div></div>
+        </div>
+        <div class="r-seat s2 rise" style="animation-delay:.85s">
+          <div class="r-seat-top"><div class="r-av" style="background:#c4612a">AR</div><div><div class="r-nm">Alex Rivera</div><div class="r-rl">Support Lead</div></div><span class="r-tag hu">Human</span></div>
+          <div class="r-meter"><div class="r-meter-l"><span>Right-seat fit</span><b>review</b></div><div class="r-bar"><i style="width:58%;background:#d97706;animation-delay:1.35s"></i></div></div>
+        </div>
+        <div class="r-seat s3 rise" style="animation-delay:.95s">
+          <div class="r-seat-top"><div class="r-av" style="background:#0d7df2">OA</div><div><div class="r-nm">Onboarding Agent</div><div class="r-rl">Reports to Sarah</div></div><span class="r-tag ag">Agent</span></div>
+          <div class="r-meter"><div class="r-meter-l"><span>Role + SOPs defined</span><b>100%</b></div><div class="r-bar"><i style="width:100%;background:var(--blue,#0d7df2);animation-delay:1.45s"></i></div></div>
+        </div>
+        <div class="r-seat s4 rise" style="animation-delay:1.1s">
+          <div class="r-seat-top"><div class="r-av" style="background:#0a64c4">SA</div><div><div class="r-nm">Support Agent</div><div class="r-rl">Reports to Alex</div></div><span class="r-tag ag">Agent</span></div>
+          <div class="r-meter"><div class="r-meter-l"><span>Role + SOPs defined</span><b>92%</b></div><div class="r-bar"><i style="width:92%;background:var(--blue,#0d7df2);animation-delay:1.55s"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE GAP ================= -->
+<section class="chro-grey">
+  <div class="chro-wrap chro-sec">
+    <div class="chro-max720">
+      <div class="chro-eyebrow" style="margin-bottom:16px;">The clarity gap</div>
+      <h2 class="chro-h2">Your org chart is a picture. It doesn't know what anyone does.</h2>
+      <p class="chro-body" style="margin-top:18px;max-width:44rem;">A box with a name and a title tells you who reports to whom &mdash; not who owns which number, who's thriving versus coasting, or where the work actually sits. The most important asset you steward is the one you can see the least clearly.</p>
+    </div>
+    <div class="chro-grid3 reveal">
+      <div class="chro-card">
+        <span class="chro-chip" style="background:rgba(220,38,38,.1);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="3 3"/></svg></span>
+        <h3>Roles are fuzzy</h3>
+        <p>A title isn't a role. Without a clear owner and a number per seat, accountability blurs &mdash; the same work gets done twice, or falls through the cracks, and no one's quite sure whose it was.</p>
+      </div>
+      <div class="chro-card">
+        <span class="chro-chip" style="background:rgba(217,119,6,.12);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+        <h3>Activity hides contribution</h3>
+        <p>You can see who's busy. You can't easily see who's moving the business. Reviews end up running on impressions and recency, not on what each person actually owned and delivered.</p>
+      </div>
+      <div class="chro-card">
+        <span class="chro-chip" style="background:rgba(13,125,242,.1);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><rect x="16" y="5" width="6" height="6" rx="2"/></svg></span>
+        <h3>The workforce is going hybrid</h3>
+        <p>Your people are bringing on agents that do real work. Your headcount plan, your chart, and your reviews still only count humans &mdash; so half the future workforce isn't anywhere in your system.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ONE OPERATING SYSTEM ================= -->
+<section class="chro-paper">
+  <div class="chro-wrap chro-sec">
+    <div class="chro-max720">
+      <div class="chro-eyebrow" style="margin-bottom:16px;">One operating system</div>
+      <h2 class="chro-h2">An accountability chart that knows what every seat actually owns.</h2>
+      <p class="chro-body" style="margin-top:18px;max-width:44rem;">OTP turns the org chart from a picture into the source of truth. Every seat &mdash; person or agent &mdash; carries the role it owns, the SOPs behind it, who it reports to, and the number it's measured on. The people decisions you make every week finally have data underneath them.</p>
+    </div>
+    <div class="chro-grid2 reveal">
+      <div class="chro-card">
+        <h3>Every seat, clearly owned</h3>
+        <p>Roles, responsibilities, and the one number each seat is accountable for &mdash; defined and visible. No more guessing who owns what, or discovering a gap only when something is dropped.</p>
+      </div>
+      <div class="chro-card">
+        <h3>Right people, right seats</h3>
+        <p>See where someone's in the wrong seat, where a seat has no owner, and where the work has outgrown the role. The hardest people calls become evidence-based, not gut-based.</p>
+      </div>
+      <div class="chro-card">
+        <h3>Performance by contribution</h3>
+        <p>Hold people to a number they own, visible all quarter &mdash; not reconstructed the week before a review. Recognition and development land on what actually moved.</p>
+      </div>
+      <div class="chro-card">
+        <h3>Onboarding done for you</h3>
+        <p>We import your chart and load SOPs straight into each person's file, so a new hire lands in a fully-built system with their role, owner, and resources already in place.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE HYBRID WORKFORCE ================= -->
+<section class="chro-grey">
+  <div class="chro-wrap chro-sec">
+    <div class="chro-max720">
+      <div class="chro-eyebrow" style="margin-bottom:16px;">The hybrid workforce</div>
+      <h2 class="chro-h2">Plan a workforce that's now half human, half agent.</h2>
+      <p class="chro-body" style="margin-top:18px;max-width:44rem;">The next workforce is people and agents, side by side. AI doesn't replace your team &mdash; it makes the people who embrace it markedly more effective. OTP shows you who's growing, where to invest, and how to plan for both.</p>
+    </div>
+    <div class="chro-grid3 reveal">
+      <div class="chro-card"><h3>See who's growing with AI</h3><p>As people adopt agents, the lift shows up &mdash; who's compounding their impact and who needs support &mdash; early enough to coach it, not discover it at review time.</p></div>
+      <div class="chro-card"><h3>Knowledge that stays</h3><p>Agents and SOPs are housed in OTP. When someone leaves, the way the work gets done doesn't leave with them &mdash; you re-seat it instead of rebuilding it.</p></div>
+      <div class="chro-card"><h3>Workforce planning for both</h3><p>Capacity, seats, and gaps across people and agents in one view &mdash; so headcount planning finally matches how the work actually gets done.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE NEW LAYER (light editorial statement) ================= -->
+<section class="chro-quoteband">
+  <div class="chro-wrap chro-sec chro-center" style="max-width:880px;">
+    <div class="chro-eyebrow" style="justify-content:center;margin-bottom:20px;">Not a better tool &mdash; a new layer</div>
+    <span class="chro-qmark">&ldquo;</span>
+    <p class="chro-quote" style="margin:6px auto 0;max-width:25ch;">It's not a better HRIS. It's the org chart that finally knows what everyone &mdash; and every agent &mdash; actually <span class="accent">does</span>.</p>
+    <p class="chro-body" style="max-width:44rem;margin:22px auto 0;">HR systems were built to store people records. The org of the next decade is people <em>and</em> agents doing measurable work side by side &mdash; and nothing on your stack was built to design, staff, or grow it. OTP isn't software-as-a-service. It's data-as-a-service for the workforce you're about to lead.</p>
+  </div>
+</section>
+
+<!-- ================= MULTI-ENTITY ================= -->
+<section class="chro-paper">
+  <div class="chro-wrap chro-sec">
+    <div class="chro-max720">
+      <div class="chro-eyebrow" style="margin-bottom:16px;">For multi-entity people teams</div>
+      <h2 class="chro-h2">Standardize how every company is built &mdash; and find the ones that aren't.</h2>
+      <p class="chro-body" style="margin-top:18px;max-width:44rem;">Across many companies or locations, consistent org design is the whole game. OTP rolls every entity into one view, shows you where one is structured and staffed tighter than another, and lets you push the proven org-design playbook across the whole book.</p>
+    </div>
+    <div class="chro-grid3 reveal">
+      <div class="chro-card"><h3>Org health rolls up</h3><p>Seat clarity, right-seat fit, and adoption cascade into one view across every company &mdash; a dozen entities or 300 sub-orgs, set up automatically.</p></div>
+      <div class="chro-card"><h3>Compare how they're built</h3><p>See how one company is structured and staffed versus another, and spot where roles are unclear or seats sit empty.</p></div>
+      <div class="chro-card"><h3>Port the playbook</h3><p>Roles, SOPs, agents, and whole operating systems become portable &mdash; so your best-run org becomes the template for the rest.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ROLLOUT ================= -->
+<section class="chro-grey">
+  <div class="chro-wrap chro-sec">
+    <div class="chro-max720">
+      <div class="chro-eyebrow" style="margin-bottom:16px;">Start contained</div>
+      <h2 class="chro-h2">Start with your leadership team. Cascade as people pull it in.</h2>
+      <p class="chro-body" style="margin-top:18px;max-width:44rem;">You know change can only be pushed down so fast. The disciplined path is contained: stand it up at the top first, then let it cascade as people adopt it on their own.</p>
+    </div>
+    <div class="chro-grid3 reveal">
+      <div class="chro-card"><h3>1 &middot; We load it for you</h3><p>White-glove onboarding. We import your org chart with contacts and load your SOPs straight into each person's file &mdash; you don't build a thing.</p></div>
+      <div class="chro-card"><h3>2 &middot; People first, then agents</h3><p>Get the chart, roles, and cadence running for your people on the system you already use. Add agents as accountable seats once the chart is real.</p></div>
+      <div class="chro-card"><h3>3 &middot; It cascades on its own</h3><p>Leaders add their teams; people add below them, never above. Adoption spreads by pull, not push &mdash; and you see exactly who's leaning in.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="chro-paper">
+  <div class="chro-wrap chro-sec chro-center" style="max-width:760px;">
+    <h2 class="chro-h2">See your org as it really runs.</h2>
+    <p class="chro-lead" style="margin:18px auto 0;max-width:40rem;">A 30-minute walkthrough on your org. We'll show you every seat &mdash; people and agents &mdash; with its role, its number, and its fit, and we'll load your leadership team so you're not building it yourself.</p>
+    <div class="chro-cta-row" style="justify-content:center;">
+      <a href="https://calendly.com/dawson-orgtp/30min" target="_blank" rel="noopener" class="chro-btn primary">Book a walkthrough &rarr;</a>
+      <a href="/sign-up" class="chro-btn ghost">Start free instead</a>
+    </div>
+    <p style="font-size:13px;color:var(--ink-mute,#888c96);margin-top:18px;">We run our own company on these exact agents &mdash; live, on this platform. We'll show you ours, working.</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('chro-anim');
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px 5% 0px', threshold:0.01 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  setTimeout(function(){ document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); }); }, 1500);
+})();
+</script>

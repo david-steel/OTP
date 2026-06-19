@@ -212,6 +212,18 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /chro -- role-specific sales page for CHROs / heads of people. Sibling of
+  // /cio reframed for the people / org-design owner.
+  app.get('/chro', async (_request, reply) => {
+    return renderV7(reply, 'chro', {
+      title: 'OTP for CHROs - The right people in the right seats, agents included',
+      description: 'Org design used to stop at the people. OTP puts every person and every agent on one accountability chart - each with a seat, a role they own, and a number - so you can see who is thriving, where the gaps are, and how to grow a hybrid workforce.',
+      canonical: BASE_URL + '/chro',
+      ogImage: OG_DEFAULT,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CHROs', url: BASE_URL + '/chro', description: 'An accountability chart that knows what every seat - person or agent - actually owns. Org design for the hybrid workforce.' },
+    });
+  });
+
   // Browse
   app.get('/browse', async (request, reply) => {
     // One card per organization: the most recent published OOS file per org.

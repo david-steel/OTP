@@ -2,6 +2,20 @@
 <%# NOTE: v7.css is a pre-built stylesheet -- new Tailwind utilities silently
     no-op here. The mobile menu below therefore reuses only classes already
     present in this file and inline styles for everything else. %>
+<style>
+  /* "By role" dropdown -- CSS hover/focus only (no Tailwind utils on prebuilt v7.css). */
+  .v7-roles { position:relative; }
+  .v7-roles::after { content:""; position:absolute; left:-12px; right:-12px; top:100%; height:16px; } /* hover bridge across the gap */
+  .v7-roles-trigger { display:inline-flex; align-items:center; gap:5px; background:none; border:0; padding:0; margin:0; font:inherit; font-size:14px; color:var(--ink-soft,#494d57); cursor:pointer; transition:color .15s ease; }
+  .v7-roles-trigger:hover, .v7-roles:hover .v7-roles-trigger, .v7-roles:focus-within .v7-roles-trigger { color:var(--ink,#14161c); }
+  .v7-roles-trigger svg { transition:transform .18s ease; }
+  .v7-roles:hover .v7-roles-trigger svg, .v7-roles:focus-within .v7-roles-trigger svg { transform:rotate(180deg); }
+  .v7-roles-menu { position:absolute; top:100%; left:50%; transform:translateX(-50%) translateY(2px); min-width:226px; background:var(--white,#fff); border:1px solid var(--line,#e6e8ec); border-radius:13px; box-shadow:0 20px 44px -16px rgba(20,22,28,.26); padding:6px; opacity:0; visibility:hidden; transition:opacity .16s ease, transform .16s ease; z-index:60; }
+  .v7-roles:hover .v7-roles-menu, .v7-roles:focus-within .v7-roles-menu { opacity:1; visibility:visible; transform:translateX(-50%) translateY(12px); }
+  .v7-roles-menu a { display:flex; align-items:baseline; gap:7px; padding:9px 12px; border-radius:9px; font-size:14px; font-weight:600; color:var(--ink,#14161c); text-decoration:none; white-space:nowrap; }
+  .v7-roles-menu a:hover { background:var(--grey,#f0f1f3); }
+  .v7-roles-menu a span { font-size:11.5px; font-weight:500; color:var(--ink-mute,#888c96); }
+</style>
 <nav class="fixed top-0 inset-x-0 z-50 bg-[var(--white)]/90 backdrop-blur-md border-b border-[var(--line-soft)]">
   <div class="max-w-[1180px] mx-auto px-6 h-[64px] flex items-center justify-between">
     <a href="/" class="flex items-baseline gap-2.5">
@@ -11,6 +25,18 @@
     <div class="hidden md:flex items-center gap-7 text-[14px] text-[var(--ink-soft)]">
       <a href="/protocol" class="hover:text-[var(--ink)] transition-colors">Protocol</a>
       <a href="/pricing" class="hover:text-[var(--ink)] transition-colors">Pricing</a>
+      <div class="v7-roles">
+        <button type="button" class="v7-roles-trigger" aria-haspopup="true">By role
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="v7-roles-menu" role="menu">
+          <a href="/ceo" role="menuitem">For CEOs <span>&amp; founders</span></a>
+          <a href="/coo" role="menuitem">For COOs <span>operations</span></a>
+          <a href="/cfo" role="menuitem">For CFOs <span>finance</span></a>
+          <a href="/cio" role="menuitem">For CIOs <span>&amp; heads of AI</span></a>
+          <a href="/chro" role="menuitem">For CHROs <span>people</span></a>
+        </div>
+      </div>
       <a href="/browse" class="hover:text-[var(--ink)] transition-colors">Browse</a>
       <a href="/whats-new" class="hover:text-[var(--ink)] transition-colors">What's New</a>
       <a href="/sign-in" class="hover:text-[var(--ink)] transition-colors">Sign in</a>
@@ -29,6 +55,12 @@
   <div id="v7-nav-menu" class="md:hidden" style="display:none;border-top:1px solid var(--line-soft,#e8e4dd);background:var(--white,#fff);padding:6px 24px 14px;">
     <a href="/protocol" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">Protocol</a>
     <a href="/pricing" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">Pricing</a>
+    <div style="padding:13px 0 5px;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute,#888c96);">By role</div>
+    <a href="/ceo" style="display:block;padding:9px 0 9px 12px;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">For CEOs</a>
+    <a href="/coo" style="display:block;padding:9px 0 9px 12px;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">For COOs</a>
+    <a href="/cfo" style="display:block;padding:9px 0 9px 12px;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">For CFOs</a>
+    <a href="/cio" style="display:block;padding:9px 0 9px 12px;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">For CIOs</a>
+    <a href="/chro" style="display:block;padding:9px 0 9px 12px;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">For CHROs / People</a>
     <a href="/browse" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">Browse</a>
     <a href="/whats-new" style="display:block;padding:11px 0;font-size:15px;color:var(--ink-soft,#555);text-decoration:none;border-bottom:1px solid var(--line-soft,#e8e4dd);">What's New</a>
     <a href="/sign-in" style="display:block;padding:11px 0;font-size:15px;font-weight:600;color:var(--ink,#14161c);text-decoration:none;">Sign in</a>

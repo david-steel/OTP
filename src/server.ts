@@ -639,6 +639,12 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog', priority: '0.8', changefreq: 'weekly' },
     { loc: '/publish', priority: '0.7', changefreq: 'monthly' },
     { loc: '/pricing', priority: '0.8', changefreq: 'monthly' },
+    // Role-specific sales pages (outreach + SEO landing pages).
+    { loc: '/ceo', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/coo', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/cfo', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/cio', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/chro', priority: '0.8', changefreq: 'monthly' },
     { loc: '/trust', priority: '0.7', changefreq: 'monthly' },
     { loc: '/investors', priority: '0.5', changefreq: 'monthly' },
     { loc: '/tickets', priority: '0.4', changefreq: 'weekly' },
