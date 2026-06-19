@@ -2471,6 +2471,79 @@ Founder, OTP</p>
     });
   });
 
+  // POST /settings/billing/checkout -- start the per-agent subscription. MONEY.
+  // Gated three ways: BILLING_ENABLED=true, Stripe keys present, and owner/admin
+  // (or founder). Quantity = agents on the chart; rate picks Basic vs API+MCP.
+  app.post('/settings/billing/checkout', async (request, reply) => {
+    if (process.env.BILLING_ENABLED !== 'true') {
+      return reply.status(403).send({ error: { code: 'BILLING_OFF', message: 'Self-serve billing is not switched on yet.' } });
+    }
+    const stripeMod = await import('../../../services/stripe.js');
+    const stripe = stripeMod.getStripe();
+    if (!stripe) return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: "Billing isn't set up yet." } });
+
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required.' } });
+    const _auth = getAuth(request);
+    const _m = (request as any).orgMember as { role?: Role } | null;
+    const _canManage = (!!org.clerkOrgId && !!_auth.userId && org.clerkOrgId === _auth.userId) || canEditOrgSettings(_m?.role);
+    if (!_canManage) return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Only an owner or admin can start a subscription.' } });
+
+    let totalAgents = 0;
+    try { const team = await getOrgTeamGraph(org.id, org.name || 'Organization'); totalAgents = team.nodes.filter(n => n.type === 'agent').length; } catch { totalAgents = 0; }
+    if (totalAgents < 1) {
+      return reply.status(400).send({ error: { code: 'NO_AGENTS', message: 'Add at least one agent to your chart before subscribing.' } });
+    }
+    let _activeApiKeys = 0;
+    try {
+      const [r] = await db.select({ c: sql<number>`count(*)::int` }).from(apiKeys)
+        .where(and(eq(apiKeys.orgId, org.id), isNull(apiKeys.revokedAt), or(isNull(apiKeys.expiresAt), gt(apiKeys.expiresAt, new Date()))));
+      _activeApiKeys = Number(r?.c || 0);
+    } catch { _activeApiKeys = 0; }
+    const priceId = _activeApiKeys >= 1 ? process.env.STRIPE_PRICE_AGENT_APIMCP : process.env.STRIPE_PRICE_AGENT_BASIC;
+    if (!priceId) return reply.status(503).send({ error: { code: 'NO_PRICE', message: 'Billing price is not configured.' } });
+
+    try {
+      const wallet = await getOrCreateWallet(org.id);
+      const customerId = await stripeMod.ensureStripeCustomer(stripe, {
+        orgId: org.id, orgName: org.name,
+        existingCustomerId: wallet?.stripeCustomerId || (org as any).stripeCustomerId || null,
+      });
+      if (wallet && wallet.stripeCustomerId !== customerId) {
+        await db.update(orgWallets).set({ stripeCustomerId: customerId, updatedAt: new Date() }).where(eq(orgWallets.orgId, org.id));
+      }
+      const { url } = await stripeMod.createSubscriptionCheckout(stripe, { orgId: org.id, customerId, priceId, quantity: totalAgents });
+      if (!url) return reply.status(502).send({ error: { code: 'CHECKOUT_FAILED', message: 'Stripe did not return a checkout URL.' } });
+      return reply.send({ url });
+    } catch (err) {
+      request.log.error({ err }, 'subscription checkout failed');
+      return reply.status(502).send({ error: { code: 'CHECKOUT_FAILED', message: 'Could not start checkout. Please try again.' } });
+    }
+  });
+
+  // POST /settings/billing/portal -- Stripe customer portal (manage / cancel).
+  app.post('/settings/billing/portal', async (request, reply) => {
+    const stripeMod = await import('../../../services/stripe.js');
+    const stripe = stripeMod.getStripe();
+    if (!stripe) return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: "Billing isn't set up yet." } });
+    const org = await resolveRequestOrg(request);
+    if (!org) return reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in required.' } });
+    const _auth = getAuth(request);
+    const _m = (request as any).orgMember as { role?: Role } | null;
+    const _canManage = (!!org.clerkOrgId && !!_auth.userId && org.clerkOrgId === _auth.userId) || canEditOrgSettings(_m?.role);
+    if (!_canManage) return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Only an owner or admin can manage billing.' } });
+    try {
+      const wallet = await getOrCreateWallet(org.id);
+      const customerId = wallet?.stripeCustomerId || (org as any).stripeCustomerId;
+      if (!customerId) return reply.status(400).send({ error: { code: 'NO_CUSTOMER', message: 'No billing account yet. Start a subscription first.' } });
+      const { url } = await stripeMod.createBillingPortalSession(stripe, { customerId });
+      return reply.send({ url });
+    } catch (err) {
+      request.log.error({ err }, 'billing portal failed');
+      return reply.status(502).send({ error: { code: 'PORTAL_FAILED', message: 'Could not open the billing portal.' } });
+    }
+  });
+
   // Settings stub pages — scaffold routes that render a placeholder page.
   const settingsStub = (path: string, pageTitle: string, pageGroup: string) => {
     app.get(path, async (request, reply) => {
