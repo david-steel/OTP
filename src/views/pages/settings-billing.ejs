@@ -349,7 +349,7 @@
                       if (res.ok && data && data.url) {
                         window.location.href = data.url;
                       } else {
-                        alert((data && (data.message || data.error)) || ('Checkout unavailable (HTTP ' + res.status + ').'));
+                        alert((data && data.error && (data.error.message || data.error.code)) || ('Checkout unavailable (HTTP ' + res.status + ').'));
                         btn.disabled = false;
                       }
                     }).catch(function () {
