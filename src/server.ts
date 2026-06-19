@@ -1449,6 +1449,14 @@ try {
     startOrgEventsRetention();
   }
 
+  // Billing seat-quantity reconcile. Hourly; self-gates on BILLING_ENABLED +
+  // Stripe, so it's a no-op until billing is live. Keeps each active subscription's
+  // seat count in sync with the org's agent count (added/removed agents).
+  {
+    const { startBillingReconcileScheduler } = await import('./services/billing-reconcile.js');
+    startBillingReconcileScheduler();
+  }
+
   // 1-hour auto-end safety net (backstop). The lazy page-load sweep handles the
   // common case; this catches a meeting nobody loads a page for. No wallet/email
   // side effects, so it is safe to run everywhere (gate only to disable in
