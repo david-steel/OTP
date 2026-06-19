@@ -849,6 +849,28 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // Legal pages. Operated by OrgTP, LLC. Baseline copy -- counsel to review.
+  // LEGAL_LAST_UPDATED bumps whenever the terms/privacy copy materially changes.
+  const LEGAL_LAST_UPDATED = 'June 19, 2026';
+
+  app.get('/terms', async (_request, reply) => {
+    return renderV7(reply, 'terms', {
+      title: 'Terms of Service - OTP',
+      description: 'The terms governing use of OTP (Organization Transport Protocol), operated by OrgTP, LLC.',
+      canonical: BASE_URL + '/terms',
+      lastUpdated: LEGAL_LAST_UPDATED,
+    });
+  });
+
+  app.get('/privacy', async (_request, reply) => {
+    return renderV7(reply, 'privacy', {
+      title: 'Privacy Policy - OTP',
+      description: 'How OrgTP, LLC collects, uses, and shares information for the OTP platform.',
+      canonical: BASE_URL + '/privacy',
+      lastUpdated: LEGAL_LAST_UPDATED,
+    });
+  });
+
   // Lifecycle email previews. Renders any rung of the 90-day series live, so the
   // Google Sheet registry can deep-link to the real (always-current) email.
   // Public + noindex; the content is marketing copy that gets sent anyway.
