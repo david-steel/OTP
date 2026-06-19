@@ -215,10 +215,16 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         }
       }
 
-      // Active member of any org. We currently scope to the first hit; a
-      // multi-org user sees one org at a time. When org-switching ships,
-      // this resolution will read a session preference.
-      const [row] = await db.select({
+      // Active member of any org. A multi-org user (incl. a Portfolio-org
+      // member) sees one org at a time. Org-switching: if the user has set an
+      // `otp_active_org` preference cookie AND they hold an ACTIVE org_members
+      // row for that exact org, resolve to THAT membership; otherwise fall
+      // back to the first active hit. The cookie is a preference, never an
+      // authority -- it is validated against org_members every time and can
+      // only select among already-granted memberships (see services/
+      // active-org.ts). It runs AFTER impersonation above, so it never
+      // overrides "view as".
+      const memberCols = {
         id: orgMembers.id,
         orgId: orgMembers.orgId,
         clerkUserId: orgMembers.clerkUserId,
@@ -237,13 +243,36 @@ export function registerOrgMemberDecorator(app: FastifyInstance): void {
         // no tile context to derive a subtree from.
         claimedEntityId: orgMembers.claimedEntityId,
         claimedEntityIds: orgMembers.claimedEntityIds,
-      })
-        .from(orgMembers)
-        .where(and(
-          eq(orgMembers.clerkUserId, userId),
-          eq(orgMembers.status, 'active'),
-        ))
-        .limit(1);
+      };
+
+      const { readActiveOrgCookie } = await import('../services/active-org.js');
+      const activeOrgPref = readActiveOrgCookie(request);
+
+      let row: any = undefined;
+
+      if (activeOrgPref) {
+        // Honor the preference ONLY when it maps to a genuine active membership
+        // for this user in that exact org. Never trust the cookie value alone.
+        const [prefRow] = await db.select(memberCols)
+          .from(orgMembers)
+          .where(and(
+            eq(orgMembers.clerkUserId, userId),
+            eq(orgMembers.status, 'active'),
+            eq(orgMembers.orgId, activeOrgPref),
+          ))
+          .limit(1);
+        if (prefRow) row = prefRow;
+      }
+
+      if (!row) {
+        [row] = await db.select(memberCols)
+          .from(orgMembers)
+          .where(and(
+            eq(orgMembers.clerkUserId, userId),
+            eq(orgMembers.status, 'active'),
+          ))
+          .limit(1);
+      }
 
       if (!row) return;
 

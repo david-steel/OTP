@@ -451,6 +451,12 @@
                   <a href="/settings/configuration">Company Settings</a>
                   <a href="/settings/billing">Billing</a>
                   <% if (typeof memberRole !== 'undefined' && memberRole === 'owner') { %><a href="/settings/danger">Delete organization</a><% } %>
+                  <!-- Switch company: orgs + portfolios the user belongs to.
+                       Hydrated client-side from GET /api/v1/active-org/options so
+                       individual page routes don't need to pass an org list. -->
+                  <div class="v7-dd-divider"></div>
+                  <div style="padding:6px 12px 2px;font-size:11px;font-weight:700;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;">Switch company</div>
+                  <div id="otp-switch-list"><div style="padding:8px 12px;font-size:13px;color:var(--ink-mute);">Loading…</div></div>
                   <div class="v7-dd-divider"></div>
                   <a href="#" id="otp-avatar-logout">Log Out</a>
                 </div>
@@ -600,9 +606,25 @@
          { divider:true },
          { href:'/pricing',                      label:'Upgrade',        icon:_sbI.zap,    allow:true, upsell:true }
        ];
+       // Portfolio mode: when the ACTIVE org is a Portfolio, the rail becomes a
+       // portfolio-scoped nav (only the surfaces that exist at the portfolio
+       // level) and re-tints (orgy/amber) so it's obvious you've left a normal
+       // org context. Guard the local with typeof since some render paths won't
+       // set it; mirror the locals.* access pattern used elsewhere in this file.
+       var _sbIsPortfolio = (typeof isPortfolio !== 'undefined' && isPortfolio) || (typeof locals !== 'undefined' && locals.isPortfolio);
+       if (_sbIsPortfolio) {
+         _sbItems = [
+           { href:'/portfolio',       label:'Portfolio',            icon:_sbI.grid4, allow:true },
+           { href:'/dashboard/kpis',  label:'Super-Metrics',        icon:_sbI.chart, allow:true },
+           { href:'/l8',              label:'Meetings',             icon:_sbI.cal,   allow:true },
+           { href:'/portfolio',       label:'Member organizations', icon:_sbI.org,   allow:true }
+         ];
+       }
        // OTP Labs: features the org turned on that expose a navigable surface get
        // a rail item, injected just above the trailing divider+Upgrade group.
-       var _sbLab = (locals.labNavItems && locals.labNavItems.length) ? locals.labNavItems : [];
+       // Skip in portfolio mode -- the rail is deliberately scoped to portfolio
+       // surfaces only.
+       var _sbLab = (!_sbIsPortfolio && locals.labNavItems && locals.labNavItems.length) ? locals.labNavItems : [];
        if (_sbLab.length) {
          var _sbLabItems = [{ divider:true }];
          for (var _li = 0; _li < _sbLab.length; _li++) {
@@ -634,7 +656,7 @@
        // Labs: owner-controlled sidebar customization. Apply the org's saved
        // order + hidden set to the MAIN rail (never the settings sub-rail), and
        // build the full role-gated item list for the Customize modal.
-       var _sbCustOn = (typeof sidebarCustomizeOn !== 'undefined' && sidebarCustomizeOn) && !_sbSettings;
+       var _sbCustOn = (typeof sidebarCustomizeOn !== 'undefined' && sidebarCustomizeOn) && !_sbSettings && !_sbIsPortfolio;
        var _sbAllForModal = [];
        var _hiddenSet = [];
        if (_sbCustOn) {
@@ -764,9 +786,30 @@
     .otp-sb-settings .otp-sb-org { color: #5a7d1f; }
     .otp-sb-settings .otp-sb-link:hover { background: #f1fadd; color: #4f7a17; }
     .otp-sb-settings .otp-sb-link.active { background: #e7f5c6; color: #4f7a17; font-weight: 600; }
+    /* Portfolio mode: the rail re-tints to the OTP signal-amber world so it's
+       immediately obvious the active org is a Portfolio, not a normal org ("not
+       in Kansas anymore"). Warm ink rail surface + amber accent/active, matching
+       DESIGN.md tokens (signal #ffab1d, signal-deep #b06c08, ink #17130d,
+       ink-raised #221d14, on-ink #f4ecda, muted-ink #a99c7f). Hardcoded hex --
+       the brand vars aren't in this layout (same approach as settings mode). */
+    .otp-sb-portfolio { background: #17130d; border-right: 1px solid rgba(244,236,218,0.12); }
+    .otp-sb-portfolio .otp-sb-org { color: #f4ecda; border-bottom: 1px solid rgba(244,236,218,0.12); }
+    .otp-sb-portfolio .otp-sb-link { color: #f4ecda; }
+    .otp-sb-portfolio .otp-sb-link:hover { background: #221d14; color: #ffab1d; }
+    .otp-sb-portfolio .otp-sb-link.active { background: rgba(255,171,29,0.14); color: #ffab1d; font-weight: 600; box-shadow: inset 2px 0 0 #ffab1d; }
+    .otp-sb-portfolio .otp-sb-foot { border-top: 1px solid rgba(244,236,218,0.12); }
+    .otp-sb-portfolio .otp-sb-toggle { color: #a99c7f; }
+    .otp-sb-portfolio .otp-sb-toggle:hover { background: #221d14; color: #ffab1d; }
+    /* Portfolio marker badge beside the org name: amber pill on warm ink. */
+    .otp-sb-pf-badge {
+      display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+      background: #ffab1d; color: #17130d; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; vertical-align: middle;
+    }
+    body.otp-rail-collapsed .otp-sb-pf-badge { display: none; }
   </style>
-  <aside id="otp-sidebar" class="otp-sb<%= _sbSettings ? ' otp-sb-settings' : '' %>" aria-label="App navigation">
-    <div class="otp-sb-org"><span class="otp-sb-label"><%= _sbSettings ? 'Settings' : (locals.orgName || 'Workspace') %></span></div>
+  <aside id="otp-sidebar" class="otp-sb<%= _sbSettings ? ' otp-sb-settings' : '' %><%= _sbIsPortfolio ? ' otp-sb-portfolio' : '' %>" aria-label="App navigation">
+    <div class="otp-sb-org"><span class="otp-sb-label"><%= _sbSettings ? 'Settings' : (locals.orgName || 'Workspace') %><% if (_sbIsPortfolio && !_sbSettings) { %><span class="otp-sb-pf-badge">Portfolio</span><% } %></span></div>
     <nav class="otp-sb-nav"><%- _sbHtml %></nav>
     <% if (!_sbSettings) { %>
       <div class="otp-sb-foot">
@@ -957,6 +1000,74 @@
             window.location.href = '/sign-in';
           });
         }
+        // ---- "Switch company" hydration ----
+        // Fetch the user's orgs + portfolios and render clickable rows into
+        // #otp-switch-list. Clicking a row POSTs the selection then reloads.
+        // Vanilla, dependency-free; mirrors the Clerk-hydration style above.
+        (function hydrateSwitcher() {
+          var listEl = document.getElementById('otp-switch-list');
+          if (!listEl) return;
+          var loaded = false;
+          function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+              return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+          }
+          function rowHtml(item, isActive) {
+            // Mirror .v7-dropdown a markup so it inherits hover/padding/typography.
+            var check = isActive
+              ? '<span style="margin-left:auto;color:var(--blue-deep);font-weight:700;">✓</span>'
+              : '';
+            return '<a href="#" class="otp-switch-row" data-org-id="' + esc(item.id) + '"' +
+              ' style="display:flex;align-items:center;gap:8px;' + (isActive ? 'font-weight:600;' : '') + '">' +
+              '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(item.name) + '</span>' +
+              check + '</a>';
+          }
+          function render(data) {
+            var orgs = (data && data.orgs) || [];
+            var portfolios = (data && data.portfolios) || [];
+            var active = data && data.activeOrgId;
+            var html = '';
+            if (!orgs.length && !portfolios.length) {
+              html = '<div style="padding:8px 12px;font-size:13px;color:var(--ink-mute);">No companies</div>';
+            } else {
+              orgs.forEach(function (o) { html += rowHtml(o, active === o.id); });
+              if (portfolios.length) {
+                html += '<div style="padding:6px 12px 2px;font-size:10px;font-weight:700;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;">Portfolios</div>';
+                portfolios.forEach(function (p) { html += rowHtml(p, active === p.id); });
+              }
+            }
+            listEl.innerHTML = html;
+            Array.prototype.forEach.call(listEl.querySelectorAll('.otp-switch-row'), function (row) {
+              row.addEventListener('click', function (e) {
+                e.preventDefault();
+                var id = row.getAttribute('data-org-id');
+                if (!id) return;
+                fetch('/api/v1/active-org', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ orgId: id }),
+                }).then(function () { window.location.reload(); })
+                  .catch(function () { window.location.reload(); });
+              });
+            });
+          }
+          function load() {
+            if (loaded) return;
+            loaded = true;
+            fetch('/api/v1/active-org/options', { headers: { 'Accept': 'application/json' } })
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (data) { if (data) render(data); else loaded = false; })
+              .catch(function () { loaded = false; });
+          }
+          // Load on first hover/focus of the menu; fall back to immediate load.
+          var menuRoot = document.getElementById('otp-avatar-menu');
+          if (menuRoot) {
+            menuRoot.addEventListener('mouseenter', load);
+            menuRoot.addEventListener('focusin', load);
+          }
+          load();
+        })();
       } else if (clerk.user && desktopNav && !avatarMenu) {
         // Fallback for state mismatch (server thought signed-out, Clerk
         // says signed-in). Build the same dropdown the server would.

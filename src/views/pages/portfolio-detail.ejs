@@ -1,0 +1,258 @@
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Portfolio detail ----
+  // Locals:
+  //   authState: 'authenticated' | 'not_found' | 'feature_off'
+  //   portfolio: organizations row
+  //   memberOrgs: [{ id, name }]
+  //   superMetrics: [{ ...kpi, sources: [{ memberOrgId, memberKpiId, weight }] }]
+  //   latestByKpi: { [kpiId]: number | null }
+  //   memberNameById: { [orgId]: name }
+  // Plain JS line comments only -- never an EJS close-delimiter in a comment.
+  var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _portfolio = (typeof portfolio !== 'undefined' && portfolio) ? portfolio : null;
+  var _members = (typeof memberOrgs !== 'undefined' && Array.isArray(memberOrgs)) ? memberOrgs : [];
+  var _metrics = (typeof superMetrics !== 'undefined' && Array.isArray(superMetrics)) ? superMetrics : [];
+  var _latest = (typeof latestByKpi !== 'undefined' && latestByKpi) ? latestByKpi : {};
+  var _nameById = (typeof memberNameById !== 'undefined' && memberNameById) ? memberNameById : {};
+  function _opLabel(op) {
+    if (op === 'gte') return '≥'; if (op === 'lte') return '≤';
+    if (op === 'gt') return '>'; if (op === 'lt') return '<';
+    if (op === 'eq') return '='; return '';
+  }
+  function _fmt(v) {
+    if (v === null || typeof v === 'undefined') return '—';
+    return (Math.round(v * 100) / 100).toLocaleString();
+  }
+%>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <% if (_auth === 'not_found') { %>
+    <div class="bg-white border rounded-xl p-10 text-center">
+      <h1 class="text-xl font-extrabold text-gray-900 mb-2">Portfolio not found</h1>
+      <p class="text-sm text-gray-600 mb-5">This portfolio does not exist, or you do not have access to it.</p>
+      <a href="/portfolio" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Back to portfolios</a>
+    </div>
+
+  <% } else if (_auth === 'feature_off') { %>
+    <div class="bg-white border rounded-xl p-10 text-center">
+      <h1 class="text-xl font-extrabold text-gray-900 mb-2">Portfolios are in Labs</h1>
+      <p class="text-sm text-gray-600 mb-5">Turn the Portfolio feature on in Labs to view this portfolio.</p>
+      <a href="/settings/labs" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Enable in Labs</a>
+    </div>
+
+  <% } else { %>
+
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">
+          <a href="/portfolio" class="hover:underline">Portfolios</a>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><%= _portfolio ? _portfolio.name : 'Portfolio' %></h1>
+      </div>
+      <div class="shrink-0 flex items-center gap-2">
+        <button type="button" id="recompute-btn"
+                class="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">
+          Recompute
+        </button>
+        <button type="button" id="start-meeting-btn"
+                class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">
+          Start portfolio meeting
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Member organizations ===== -->
+    <section class="mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold text-gray-900">Member organizations</h2>
+        <button type="button" id="add-member-btn"
+                class="text-sm font-semibold text-otp-600 hover:underline">Add member org</button>
+      </div>
+
+      <!-- Add-member affordance (POSTs to the link API; wired by a later task) -->
+      <div id="add-member-form" class="bg-white border rounded-xl p-5 mb-4" style="display:none;">
+        <label for="add-member-org-id" class="block text-sm font-semibold text-gray-900 mb-2">Member organization ID</label>
+        <div class="flex flex-wrap gap-2 items-center">
+          <input type="text" id="add-member-org-id" placeholder="Organization UUID"
+                 class="flex-1 min-w-[18rem] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500/40">
+          <button type="button" id="add-member-submit"
+                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Add</button>
+          <button type="button" id="add-member-cancel"
+                  class="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">Cancel</button>
+        </div>
+        <p id="add-member-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
+      </div>
+
+      <% if (_members.length === 0) { %>
+        <div class="bg-white border rounded-xl p-8 text-center">
+          <p class="text-sm text-gray-600">No member organizations linked yet. Add one to start rolling KPIs up.</p>
+        </div>
+      <% } else { %>
+        <div class="bg-white border rounded-xl overflow-hidden">
+          <% _members.forEach(function(m) { %>
+            <div class="flex items-center justify-between gap-4 px-5 py-4 border-b last:border-b-0">
+              <div class="font-medium text-gray-900 truncate"><%= m.name %></div>
+              <span class="text-xs text-gray-400 truncate"><%= m.id %></span>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- ===== Super-metrics ===== -->
+    <section>
+      <h2 class="text-lg font-bold text-gray-900 mb-3">Super-metrics</h2>
+
+      <% if (_metrics.length === 0) { %>
+        <div class="bg-white border rounded-xl p-8 text-center">
+          <p class="text-sm text-gray-600">No super-metrics yet. A super-metric rolls one KPI per member org up into a single number.</p>
+        </div>
+      <% } else { %>
+        <div class="space-y-4">
+          <% _metrics.forEach(function(sm) {
+            var latest = _latest[sm.id];
+            var goalText = (sm.goalValue !== null && typeof sm.goalValue !== 'undefined')
+              ? (_opLabel(sm.goalOperator) + ' ' + _fmt(sm.goalValue)).trim()
+              : null;
+          %>
+            <div class="bg-white border rounded-xl p-6">
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <h3 class="font-bold text-gray-900 text-base"><%= sm.title %></h3>
+                  <div class="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                    <% if (sm.unit) { %><span>Unit: <%= sm.unit %></span><% } %>
+                    <% if (goalText) { %><span>Goal: <%= goalText %></span><% } %>
+                    <% if (sm.timeGrain) { %><span><%= sm.timeGrain %></span><% } %>
+                  </div>
+                </div>
+                <div class="shrink-0 text-right">
+                  <div class="text-2xl font-extrabold text-gray-900"><%= _fmt(latest) %></div>
+                  <div class="text-[11px] uppercase tracking-wide text-gray-400">latest</div>
+                </div>
+              </div>
+
+              <% if (sm.sources && sm.sources.length > 0) { %>
+                <div class="mt-4 border-t pt-3">
+                  <div class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mb-2">Contributing orgs</div>
+                  <div class="space-y-1.5">
+                    <% sm.sources.forEach(function(s) { %>
+                      <div class="flex items-center justify-between gap-3 text-sm">
+                        <span class="text-gray-700 truncate"><%= _nameById[s.memberOrgId] || s.memberOrgId %></span>
+                        <span class="text-xs text-gray-500 shrink-0">weight <%= _fmt(s.weight) %></span>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } else { %>
+                <p class="mt-3 text-xs text-gray-400">No source KPIs mapped yet.</p>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+
+  <% } %>
+</div>
+
+<% if (_auth === 'authenticated' && _portfolio) { %>
+<script>
+  (function () {
+    var portfolioId = <%- JSON.stringify(_portfolio.id) %>;
+
+    // ---- Recompute ----
+    var recomputeBtn = document.getElementById('recompute-btn');
+    if (recomputeBtn) recomputeBtn.addEventListener('click', function () {
+      recomputeBtn.disabled = true;
+      var orig = recomputeBtn.textContent;
+      recomputeBtn.textContent = 'Recomputing…';
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/recompute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Recompute failed.');
+          });
+          location.reload();
+        })
+        .catch(function (err) {
+          recomputeBtn.disabled = false;
+          recomputeBtn.textContent = orig;
+          alert(err.message || 'Recompute failed.');
+        });
+    });
+
+    // ---- Start portfolio meeting ----
+    var meetingBtn = document.getElementById('start-meeting-btn');
+    if (meetingBtn) meetingBtn.addEventListener('click', function () {
+      meetingBtn.disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/meeting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          return r.ok ? r.json() : r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not start meeting.');
+          });
+        })
+        .then(function (data) {
+          var mid = data && (data.meetingId || (data.meeting && data.meeting.id));
+          if (mid) window.location.href = '/l8/meeting/' + mid;
+          else throw new Error('No meeting id returned.');
+        })
+        .catch(function (err) {
+          meetingBtn.disabled = false;
+          alert(err.message || 'Could not start meeting.');
+        });
+    });
+
+    // ---- Add member org ----
+    var addBtn = document.getElementById('add-member-btn');
+    var addForm = document.getElementById('add-member-form');
+    var addInput = document.getElementById('add-member-org-id');
+    var addSubmit = document.getElementById('add-member-submit');
+    var addCancel = document.getElementById('add-member-cancel');
+    var addErr = document.getElementById('add-member-error');
+
+    function showAddErr(msg) { addErr.textContent = msg; addErr.style.display = 'block'; }
+    function clearAddErr() { addErr.textContent = ''; addErr.style.display = 'none'; }
+
+    if (addBtn) addBtn.addEventListener('click', function () {
+      addForm.style.display = 'block';
+      addInput.focus();
+    });
+    if (addCancel) addCancel.addEventListener('click', function () {
+      addForm.style.display = 'none';
+      addInput.value = '';
+      clearAddErr();
+    });
+    if (addSubmit) addSubmit.addEventListener('click', function () {
+      var memberOrgId = (addInput.value || '').trim();
+      clearAddErr();
+      if (!memberOrgId) { showAddErr('A member organization ID is required.'); return; }
+      addSubmit.disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ memberOrgId: memberOrgId })
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not add member org.');
+          });
+          location.reload();
+        })
+        .catch(function (err) {
+          addSubmit.disabled = false;
+          showAddErr(err.message || 'Could not add member org.');
+        });
+    });
+  })();
+</script>
+<% } %>
