@@ -21,10 +21,12 @@ import { computeAutoEndAt, isMeetingLocked } from '../../shared/meeting-timing.j
 import Anthropic from '@anthropic-ai/sdk';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { FOLLOWUPS_SYSTEM_PROMPT, buildFollowupsUserMessage, parseFollowups } from '../../shared/meeting-followups.js';
+import { resolveAiKey } from '../../services/org-ai-keys.js';
 
-// Lazy Anthropic client for the meeting follow-ups wizard (mirror rock-ai.ts).
-let _anthropic: Anthropic | null = null;
-function getAnthropic(): Anthropic { if (!_anthropic) _anthropic = new Anthropic(); return _anthropic; }
+// The Anthropic client for the meeting follow-ups wizard is built PER-REQUEST
+// from the org's resolved BYOK key (resolveAiKey). When the org has no
+// org/portfolio key, resolveAiKey returns the platform ANTHROPIC_API_KEY, so
+// behavior is identical to the old env-only singleton (mirror rock-ai.ts).
 function aiModel(): string { return process.env.ASK_AI_MODEL || 'claude-opus-4-8'; }
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
@@ -582,8 +584,12 @@ export default async function meetingRoutes(app: FastifyInstance) {
       : [];
     const userMsg = buildFollowupsUserMessage({ transcript: transcript.slice(0, 200_000), meetingTitle: meeting.title, attendees: attendeeNames });
 
+    // Resolve the org's BYOK key (falls back to the platform key) per request.
+    const ai = await resolveAiKey(org.id);
+    const client = new Anthropic({ apiKey: ai.key });
+
     async function callModel() {
-      const res = await getAnthropic().messages.create({
+      const res = await client.messages.create({
         model: aiModel(),
         max_tokens: 2000,
         system: [{ type: 'text', text: FOLLOWUPS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],

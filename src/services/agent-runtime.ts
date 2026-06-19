@@ -27,6 +27,7 @@ import { getBalanceCents, debitWallet } from './wallet.js';
 import { computeDebitCents, markupMultipleFromEnv } from '../shared/ai-pricing.js';
 import { getOrgTools, executeOrgTool, type OrgToolset } from './composio-tools.js';
 import { walletFloorCents } from './integration-live-gate.js';
+import { resolveAiKey } from './org-ai-keys.js';
 
 // Default to Sonnet -- ~10x cheaper than Opus and plenty capable for the
 // agent-runtime use case. Override with OTP_AGENT_MODEL env var per-org.
@@ -391,7 +392,10 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   if (!prep.ready) return prep.result;
   const { runId, systemPrompt, userPrompt, sopTitle, metering } = prep;
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // Resolve the org's BYOK key (falls back to the platform ANTHROPIC_API_KEY
+  // for orgs without an org/portfolio key, so this is a no-op for them).
+  const ai = await resolveAiKey(opts.orgId);
+  const client = new Anthropic({ apiKey: ai.key });
 
   try {
     // Inc 3: resolve the org's read-only tools (empty unless armed + connected),
@@ -461,7 +465,10 @@ export async function runAgentStream(
   if (!prep.ready) return prep.result;
   const { runId, systemPrompt, userPrompt, sopTitle, metering } = prep;
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // Resolve the org's BYOK key (falls back to the platform ANTHROPIC_API_KEY
+  // for orgs without an org/portfolio key, so this is a no-op for them).
+  const ai = await resolveAiKey(opts.orgId);
+  const client = new Anthropic({ apiKey: ai.key });
 
   try {
     // Inc 3: if the org has armed, connected tools, run the (non-streaming) tool

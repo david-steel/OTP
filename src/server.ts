@@ -897,6 +897,7 @@ await app.register(import('./routes/api/active-org.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/admin-portfolios.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-invites.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-presets.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/org-ai-keys.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
   await app.register(stripeWebhookRoutes);
@@ -1144,6 +1145,14 @@ try {
   app.log.info('portfolio schema (kind, rollup_excluded, portfolio tables) is ready');
 } catch (err) {
   app.log.error({ err }, 'ensurePortfolioSchema failed -- portfolio features will not work until resolved');
+}
+
+try {
+  const { ensureAiKeysSchema } = await import('./db/ensure-ai-keys.js');
+  await ensureAiKeysSchema();
+  app.log.info('ai keys schema (plan_tier, org_ai_keys) is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureAiKeysSchema failed -- BYOK/enterprise features will not work until resolved');
 }
 
 try {

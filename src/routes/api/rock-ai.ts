@@ -24,6 +24,7 @@ import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { getBalanceCents, debitWallet } from '../../services/wallet.js';
 import { computeDebitCents, markupMultipleFromEnv } from '../../shared/ai-pricing.js';
+import { resolveAiKey } from '../../services/org-ai-keys.js';
 import {
   rockAiDraftRequestSchema,
   buildDraftSystemPrompt,
@@ -60,13 +61,10 @@ const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 15 });
 const DRAFT_SYSTEM_PROMPT = buildDraftSystemPrompt();
 const CRITIQUE_SYSTEM_PROMPT = buildCritiqueSystemPrompt();
 
-// Module-level singleton, constructed lazily so booting without
-// ANTHROPIC_API_KEY never throws (the route 503s instead). Mirrors ask-ai.ts.
-let anthropicClient: Anthropic | null = null;
-function getClient(): Anthropic {
-  if (!anthropicClient) anthropicClient = new Anthropic(); // reads ANTHROPIC_API_KEY
-  return anthropicClient;
-}
+// The Anthropic client is built PER-REQUEST from the org's resolved BYOK key
+// (resolveAiKey, threaded into runStructured). When the org has no org/portfolio
+// key, resolveAiKey returns the platform ANTHROPIC_API_KEY, so behavior is
+// identical to the old env-only singleton. Mirrors ask-ai.ts.
 
 function model(): string {
   return process.env.ASK_AI_MODEL || 'claude-opus-4-8';
@@ -166,6 +164,7 @@ async function checkBalance(orgId: string, reply: FastifyReply): Promise<boolean
 // or null on bad output (caller 502s). The usage from the LAST call is always
 // returned for billing even when the parsed value is good.
 async function runStructured<T>(args: {
+  client: Anthropic;
   system: string;
   userMessage: string;
   parse: (v: unknown) => { success: true; data: T } | { success: false };
@@ -173,7 +172,7 @@ async function runStructured<T>(args: {
 }): Promise<{ value: T; usage: Usage } | { value: null; usage: Usage }> {
   let lastUsage: Usage = {};
   for (let attempt = 0; attempt < 2; attempt++) {
-    const message = await getClient().messages.create({
+    const message = await args.client.messages.create({
       model: model(),
       max_tokens: MAX_TOKENS,
       thinking: { type: 'adaptive' },
@@ -252,9 +251,14 @@ export default async function rockAiRoutes(app: FastifyInstance) {
 
     if (!(await checkBalance(loaded.org.id, reply))) return;
 
+    // Resolve the org's BYOK key (falls back to the platform key) per request.
+    const ai = await resolveAiKey(loaded.org.id);
+    const client = new Anthropic({ apiKey: ai.key });
+
     let out: { value: RockAiDraftResponse | null; usage: Usage };
     try {
       out = await runStructured<RockAiDraftResponse>({
+        client,
         system: DRAFT_SYSTEM_PROMPT,
         userMessage: buildDraftUserMessage(parsedReq.data),
         parse: (v) => rockAiDraftResponseSchema.safeParse(v) as { success: true; data: RockAiDraftResponse } | { success: false },
@@ -283,6 +287,10 @@ export default async function rockAiRoutes(app: FastifyInstance) {
 
     if (!(await checkBalance(loaded.org.id, reply))) return;
 
+    // Resolve the org's BYOK key (falls back to the platform key) per request.
+    const ai = await resolveAiKey(loaded.org.id);
+    const client = new Anthropic({ apiKey: ai.key });
+
     const userMessage = buildCritiqueUserMessage({
       description: loaded.rock.description,
       // smartData is the persisted jsonb slice; shape matches smartDataSchema.
@@ -292,6 +300,7 @@ export default async function rockAiRoutes(app: FastifyInstance) {
     let out: { value: RockAiCritiqueResponse | null; usage: Usage };
     try {
       out = await runStructured<RockAiCritiqueResponse>({
+        client,
         system: CRITIQUE_SYSTEM_PROMPT,
         userMessage,
         parse: (v) => rockAiCritiqueResponseSchema.safeParse(v) as { success: true; data: RockAiCritiqueResponse } | { success: false },

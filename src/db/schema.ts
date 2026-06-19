@@ -59,6 +59,9 @@ export const organizations = pgTable('organizations', {
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   badge: badgeEnum('badge'),
   qualityTier: qualityTierEnum('quality_tier'),
+  // Plan tier gating (BYOK + enterprise). Values: 'standard' | 'enterprise'.
+  // Column added by ensure-ai-keys.ts on boot (Drizzle migrate is broken).
+  planTier: varchar('plan_tier', { length: 20 }).default('standard').notNull(),
   agenticLevel: integer('agentic_level'),
   slug: text('slug').unique(),
   // Portfolio support: an org can be a normal org ('standard') or a portfolio
@@ -204,6 +207,26 @@ export const apiKeys = pgTable('api_keys', {
 }, (table) => ({
   hashIdx: index('idx_api_keys_hash').on(table.keyHash),
   orgIdx: index('idx_api_keys_org').on(table.orgId),
+}));
+
+// BYOK (bring-your-own-key) AI provider keys, one active per org. encryptedKey
+// holds packed ciphertext (never the plaintext); keyLast4 is the masked display
+// suffix. The partial unique index enforces a single active key per org. DDL
+// self-heals on boot via ensure-ai-keys.ts (Drizzle migrate is broken).
+export const orgAiKeys = pgTable('org_ai_keys', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  provider: varchar('provider', { length: 20 }).notNull(), // 'anthropic' | 'openai'
+  encryptedKey: text('encrypted_key').notNull(),
+  keyLast4: varchar('key_last4', { length: 8 }),
+  status: varchar('status', { length: 20 }).notNull().default('active'), // 'active' | 'revoked'
+  lastRotatedAt: timestamp('last_rotated_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // One active key per org (partial unique). Drizzle uniqueIndex supports .where().
+  oneActiveIdx: uniqueIndex('org_ai_keys_one_active_idx').on(table.orgId).where(sql`status = 'active'`),
+  orgIdx: index('org_ai_keys_org_idx').on(table.orgId),
 }));
 
 // Scaffolding for per-agent Stripe billing (humans free; $12/agent/mo, $16 if

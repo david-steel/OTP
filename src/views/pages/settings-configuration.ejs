@@ -183,6 +183,58 @@
           <% } %>
 
         </form>
+
+        <!-- Card: Bring your own AI key (BYOK). Hydrates client-side from
+             GET /api/v1/org/ai-key so this card needs no extra route locals. -->
+        <div class="flex-1 min-w-0 w-full">
+          <div class="bg-gray-50 border rounded-xl p-6 space-y-5">
+            <div>
+              <h3 class="font-bold text-gray-900">Bring your own AI key</h3>
+              <p class="text-sm text-gray-500 mt-1">Providing a key routes all AI features through your own provider account instead of OTP's shared key.</p>
+            </div>
+
+            <p id="ai-key-status" class="text-sm text-gray-600">Loading…</p>
+
+            <div id="ai-key-noenc" class="hidden bg-gray-100 border rounded-lg p-3">
+              <p class="text-sm text-gray-500">Your administrator must set AI_KEYS_ENCRYPTION_KEY before customer keys can be stored.</p>
+            </div>
+
+            <% if (_canEdit) { %>
+            <div id="ai-key-form" class="hidden space-y-4">
+              <div>
+                <label for="ai-key-provider" class="block font-bold text-gray-900 mb-1">Provider</label>
+                <select id="ai-key-provider"
+                        class="w-full sm:max-w-md px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+                  <option value="anthropic">Anthropic</option>
+                  <option value="openai">OpenAI</option>
+                </select>
+              </div>
+              <div>
+                <label for="ai-key-input" class="block font-bold text-gray-900 mb-1">API key</label>
+                <p class="text-sm text-gray-500 mb-2">Stored encrypted. We never display it again.</p>
+                <input type="password" id="ai-key-input" autocomplete="off"
+                       placeholder="sk-…"
+                       class="w-full sm:max-w-md px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500">
+              </div>
+              <div class="flex items-center gap-4">
+                <button type="button" id="ai-key-save"
+                        class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                  Save key
+                </button>
+                <button type="button" id="ai-key-revoke"
+                        class="hidden px-5 py-2 border border-red-300 text-red-700 font-semibold rounded-lg hover:bg-red-50 transition-colors text-sm whitespace-nowrap">
+                  Revoke key
+                </button>
+                <span id="ai-key-msg" class="hidden text-sm font-semibold text-green-600">Saved</span>
+              </div>
+            </div>
+            <% } else { %>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p class="text-sm text-amber-800 font-medium">Only owners and admins can change the AI key.</p>
+            </div>
+            <% } %>
+          </div>
+        </div>
       </div>
 
     <% } %>
@@ -231,3 +283,98 @@
   })();
 </script>
 <% } %>
+
+<script>
+  // BYOK AI-key card: hydrate META client-side; never render the key itself.
+  (function () {
+    var statusEl  = document.getElementById('ai-key-status');
+    if (!statusEl) return;
+    var noencEl   = document.getElementById('ai-key-noenc');
+    var formEl    = document.getElementById('ai-key-form');
+    var providerEl = document.getElementById('ai-key-provider');
+    var inputEl   = document.getElementById('ai-key-input');
+    var saveBtn   = document.getElementById('ai-key-save');
+    var revokeBtn = document.getElementById('ai-key-revoke');
+    var msgEl     = document.getElementById('ai-key-msg');
+    var canEdit   = !!formEl;
+
+    function providerLabel(p) {
+      if (p === 'anthropic') return 'Anthropic';
+      if (p === 'openai') return 'OpenAI';
+      return p || 'your';
+    }
+
+    function render(meta) {
+      if (meta && meta.encryptionConfigured === false) {
+        if (noencEl) noencEl.classList.remove('hidden');
+        if (formEl) formEl.classList.add('hidden');
+      }
+      if (meta && meta.configured) {
+        statusEl.textContent = 'Using your own ' + providerLabel(meta.provider) + ' key ••••' + (meta.last4 || '');
+        if (canEdit && revokeBtn) revokeBtn.classList.remove('hidden');
+      } else {
+        statusEl.textContent = "Using OTP's shared key";
+        if (canEdit && revokeBtn) revokeBtn.classList.add('hidden');
+      }
+    }
+
+    function flash(text, ok) {
+      if (!msgEl) return;
+      msgEl.textContent = text;
+      msgEl.className = 'text-sm font-semibold ' + (ok ? 'text-green-600' : 'text-red-600');
+      msgEl.classList.remove('hidden');
+      setTimeout(function () { msgEl.classList.add('hidden'); }, 2500);
+    }
+
+    async function load() {
+      try {
+        var res = await fetch('/api/v1/org/ai-key', { headers: { 'Accept': 'application/json' } });
+        var meta = await res.json();
+        render(meta);
+      } catch (e) {
+        statusEl.textContent = 'Could not load AI key status.';
+      }
+    }
+
+    if (canEdit) {
+      formEl.classList.remove('hidden');
+
+      saveBtn.addEventListener('click', async function () {
+        var key = (inputEl.value || '').trim();
+        if (!key) { flash('Enter a key first', false); return; }
+        try {
+          var res = await fetch('/api/v1/org/ai-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: providerEl.value, key: key })
+          });
+          if (!res.ok) {
+            var data = {};
+            try { data = await res.json(); } catch (_) {}
+            flash((data && data.error && data.error.message) || 'Failed to save key', false);
+            return;
+          }
+          inputEl.value = '';
+          flash('Saved', true);
+          await load();
+        } catch (e) {
+          flash('Failed to save key', false);
+        }
+      });
+
+      revokeBtn.addEventListener('click', async function () {
+        if (!window.confirm('Revoke this key and fall back to OTP\'s shared key?')) return;
+        try {
+          var res = await fetch('/api/v1/org/ai-key', { method: 'DELETE' });
+          if (!res.ok) { flash('Failed to revoke key', false); return; }
+          flash('Revoked', true);
+          await load();
+        } catch (e) {
+          flash('Failed to revoke key', false);
+        }
+      });
+    }
+
+    load();
+  })();
+</script>

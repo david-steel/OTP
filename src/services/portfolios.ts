@@ -29,6 +29,23 @@ export class PortfolioError extends Error {
   }
 }
 
+// ---- Plan tier ----
+
+/**
+ * Flag an org as enterprise tier. Idempotent: a no-op when the org is already
+ * enterprise (the WHERE guard keeps the update from rewriting an unchanged row).
+ * One-way for now -- nothing downgrades the tier back to standard.
+ */
+export async function markOrgEnterprise(orgId: string): Promise<void> {
+  await db
+    .update(organizations)
+    .set({ planTier: 'enterprise' })
+    .where(and(
+      eq(organizations.id, orgId),
+      sql`${organizations.planTier} <> 'enterprise'`,
+    ));
+}
+
 // ---- Create ----
 
 export interface CreatePortfolioInput {
@@ -84,6 +101,14 @@ export async function createPortfolio(
     role: 'owner',
     status: 'active',
   });
+
+  // A portfolio is itself enterprise. Best-effort: the tier flag is secondary to
+  // creation, so a failure here must not abort the portfolio.
+  try {
+    await markOrgEnterprise(portfolio.id);
+  } catch {
+    // ignore -- tier flag is secondary to creation.
+  }
 
   return portfolio;
 }
