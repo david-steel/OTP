@@ -419,6 +419,171 @@
     </div>
   </div>
 
+  <!-- Portfolios (super-admin tooling: bring existing orgs into the portfolio model).
+       Loads entirely client-side from GET /api/v1/admin/portfolios so this panel
+       does NOT require the /admin page route to pre-load any data. -->
+  <div class="mb-8" id="adm-portfolios">
+    <h3 class="font-semibold mb-3">Portfolios</h3>
+    <div class="grid lg:grid-cols-2 gap-6 mb-4">
+      <!-- Create portfolio above an org -->
+      <div class="bg-white border rounded-lg p-4">
+        <div class="font-medium text-sm mb-1">Create a portfolio above an org</div>
+        <p class="text-xs text-gray-500 mb-3">The org becomes the first member; a new parent portfolio is created above it.</p>
+        <div class="space-y-2">
+          <input type="text" id="adm-pf-above-org" placeholder="Existing org ID (UUID)" autocomplete="off" spellcheck="false" class="w-full border rounded px-2 py-1.5 text-sm">
+          <input type="text" id="adm-pf-above-name" placeholder="Portfolio name (optional)" autocomplete="off" class="w-full border rounded px-2 py-1.5 text-sm">
+          <button type="button" id="adm-pf-above-btn" class="text-xs px-3 py-1.5 bg-otp-600 text-white rounded-lg font-semibold hover:bg-otp-700">Create above</button>
+        </div>
+        <p id="adm-pf-above-msg" class="mt-2 text-xs text-red-600"></p>
+      </div>
+
+      <!-- Promote org to portfolio -->
+      <div class="bg-white border rounded-lg p-4">
+        <div class="font-medium text-sm mb-1">Promote an org to a portfolio</div>
+        <p class="text-xs text-gray-500 mb-3">Turns an existing org INTO a portfolio in place. Its data and members stay put.</p>
+        <div class="space-y-2">
+          <input type="text" id="adm-pf-promote-org" placeholder="Org ID (UUID)" autocomplete="off" spellcheck="false" class="w-full border rounded px-2 py-1.5 text-sm">
+          <button type="button" id="adm-pf-promote-btn" class="text-xs px-3 py-1.5 bg-otp-600 text-white rounded-lg font-semibold hover:bg-otp-700">Promote</button>
+        </div>
+        <p id="adm-pf-promote-msg" class="mt-2 text-xs text-red-600"></p>
+      </div>
+    </div>
+
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs text-gray-500">
+          <tr>
+            <th class="px-4 py-2">Portfolio</th>
+            <th class="px-4 py-2 text-right">Members</th>
+            <th class="px-4 py-2">Member orgs</th>
+          </tr>
+        </thead>
+        <tbody id="adm-pf-tbody">
+          <tr><td colspan="3" class="px-4 py-6 text-center text-gray-400 text-xs">Loading portfolios...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var tbody = document.getElementById('adm-pf-tbody');
+
+      function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+
+      function renderError(el, e) {
+        el.textContent = (e && e.message) ? e.message : 'Request failed';
+      }
+
+      function readJson(r) {
+        return r.json().catch(function(){ return {}; }).then(function(j) {
+          if (!r.ok) throw (j.error || { message: 'HTTP ' + r.status });
+          return j;
+        });
+      }
+
+      function loadPortfolios() {
+        fetch('/api/v1/admin/portfolios', { credentials: 'same-origin' })
+          .then(readJson)
+          .then(function(j) {
+            var list = (j && j.portfolios) || [];
+            if (list.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-6 text-center text-gray-400 text-xs">No portfolios yet.</td></tr>';
+              return;
+            }
+            tbody.innerHTML = list.map(function(p) {
+              var members = (p.members || []).map(function(m) {
+                return '<span class="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 mr-1 mb-1">'
+                  + esc(m.name)
+                  + ' <button type="button" class="adm-pf-unlink text-gray-400 hover:text-red-600" data-pf="' + esc(p.id) + '" data-member="' + esc(m.id) + '" title="Unlink">&times;</button>'
+                  + '</span>';
+              }).join('') || '<span class="text-gray-300 text-xs">none</span>';
+              return '<tr class="border-t align-top">'
+                + '<td class="px-4 py-2"><div class="font-medium">' + esc(p.name) + '</div><div class="text-xs text-gray-400 font-mono">' + esc(p.id) + '</div></td>'
+                + '<td class="px-4 py-2 text-right text-otp-600 font-semibold">' + esc(p.memberCount) + '</td>'
+                + '<td class="px-4 py-2">'
+                  + '<div class="mb-2">' + members + '</div>'
+                  + '<div class="flex items-center gap-1">'
+                    + '<input type="text" class="adm-pf-link-input border rounded px-2 py-1 text-xs w-56" placeholder="Member org ID (UUID)" data-pf="' + esc(p.id) + '">'
+                    + '<button type="button" class="adm-pf-link-btn text-xs px-2 py-1 border border-gray-300 rounded hover:bg-gray-50" data-pf="' + esc(p.id) + '">Link</button>'
+                  + '</div>'
+                + '</td>'
+                + '</tr>';
+            }).join('');
+            wireRowControls();
+          })
+          .catch(function(e) {
+            tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-6 text-center text-red-500 text-xs">' + esc((e && e.message) || 'Failed to load portfolios') + '</td></tr>';
+          });
+      }
+
+      function wireRowControls() {
+        document.querySelectorAll('.adm-pf-link-btn').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var pf = b.getAttribute('data-pf');
+            var input = document.querySelector('.adm-pf-link-input[data-pf="' + pf + '"]');
+            var memberOrgId = input ? input.value.trim() : '';
+            if (!memberOrgId) return;
+            b.disabled = true;
+            fetch('/api/v1/admin/portfolios/' + pf + '/members', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+              body: JSON.stringify({ memberOrgId: memberOrgId })
+            }).then(readJson).then(function() { loadPortfolios(); })
+              .catch(function(e) { b.disabled = false; alert((e && e.message) || 'Link failed'); });
+          });
+        });
+        document.querySelectorAll('.adm-pf-unlink').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var pf = b.getAttribute('data-pf'), member = b.getAttribute('data-member');
+            if (!confirm('Unlink this member org from the portfolio?')) return;
+            b.disabled = true;
+            fetch('/api/v1/admin/portfolios/' + pf + '/members/' + member, { method: 'DELETE', credentials: 'same-origin' })
+              .then(readJson).then(function() { loadPortfolios(); })
+              .catch(function(e) { b.disabled = false; alert((e && e.message) || 'Unlink failed'); });
+          });
+        });
+      }
+
+      var aboveBtn = document.getElementById('adm-pf-above-btn');
+      aboveBtn.addEventListener('click', function() {
+        var msg = document.getElementById('adm-pf-above-msg'); msg.textContent = '';
+        var orgId = document.getElementById('adm-pf-above-org').value.trim();
+        var name = document.getElementById('adm-pf-above-name').value.trim();
+        if (!orgId) { msg.textContent = 'Enter an org ID.'; return; }
+        var body = { existingOrgId: orgId };
+        if (name) body.name = name;
+        aboveBtn.disabled = true;
+        fetch('/api/v1/admin/portfolios/create-above', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify(body)
+        }).then(readJson).then(function() {
+          document.getElementById('adm-pf-above-org').value = '';
+          document.getElementById('adm-pf-above-name').value = '';
+          aboveBtn.disabled = false;
+          loadPortfolios();
+        }).catch(function(e) { aboveBtn.disabled = false; renderError(msg, e); });
+      });
+
+      var promoteBtn = document.getElementById('adm-pf-promote-btn');
+      promoteBtn.addEventListener('click', function() {
+        var msg = document.getElementById('adm-pf-promote-msg'); msg.textContent = '';
+        var orgId = document.getElementById('adm-pf-promote-org').value.trim();
+        if (!orgId) { msg.textContent = 'Enter an org ID.'; return; }
+        promoteBtn.disabled = true;
+        fetch('/api/v1/admin/portfolios/promote', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ orgId: orgId })
+        }).then(readJson).then(function() {
+          document.getElementById('adm-pf-promote-org').value = '';
+          promoteBtn.disabled = false;
+          loadPortfolios();
+        }).catch(function(e) { promoteBtn.disabled = false; renderError(msg, e); });
+      });
+
+      loadPortfolios();
+    })();
+  </script>
+
   <!-- OOS Files -->
   <h3 class="font-semibold mb-3">All OOS Files (<%= oosFiles.length %>)</h3>
   <div class="bg-white border rounded-lg overflow-hidden mb-8">

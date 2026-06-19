@@ -144,6 +144,131 @@ export async function unlinkMemberOrg(portfolioOrgId: string, memberOrgId: strin
     ));
 }
 
+// ---- Adopt existing orgs into the portfolio model ----
+
+export interface CreatePortfolioAboveOrgInput {
+  existingOrgId: string;
+  actorClerkUserId: string;
+  actorEmail?: string | null;
+  name?: string | null;
+}
+
+/**
+ * PE case: an org has already signed up; create a parent portfolio above it and
+ * keep the original org as a normal member. Validates that the existing org is a
+ * standard org (not already a portfolio), creates the portfolio (seating the
+ * actor as owner), links the existing org as the first member, and grants
+ * portfolio ownership to the existing org's active owners.
+ */
+export async function createPortfolioAboveOrg(
+  input: CreatePortfolioAboveOrgInput,
+): Promise<{ id: string; name: string }> {
+  if (!input.existingOrgId) {
+    throw new PortfolioError('INVALID_ORG', 'An existing org is required');
+  }
+  if (!input.actorClerkUserId) {
+    throw new PortfolioError('NOT_AUTHENTICATED', 'An actor is required', 401);
+  }
+
+  const [existingOrg] = await db
+    .select({ id: organizations.id, name: organizations.name, kind: organizations.kind })
+    .from(organizations)
+    .where(eq(organizations.id, input.existingOrgId))
+    .limit(1);
+  if (!existingOrg) throw new PortfolioError('ORG_NOT_FOUND', 'Org not found', 404);
+  if (existingOrg.kind !== 'standard') {
+    throw new PortfolioError('ALREADY_A_PORTFOLIO', 'Org is already a portfolio');
+  }
+
+  const portfolio = await createPortfolio({
+    name: input.name || `${existingOrg.name} Group`,
+    creatorClerkUserId: input.actorClerkUserId,
+    creatorEmail: input.actorEmail,
+  });
+
+  await linkMemberOrg(portfolio.id, existingOrg.id);
+
+  // Grant portfolio ownership to the existing org's active owners. The actor is
+  // already an owner via createPortfolio; skip any clerkUserId already owning
+  // the portfolio so we never insert a duplicate owner row.
+  const orgOwners = await db
+    .select({ clerkUserId: orgMembers.clerkUserId, email: orgMembers.email })
+    .from(orgMembers)
+    .where(and(
+      eq(orgMembers.orgId, existingOrg.id),
+      eq(orgMembers.role, 'owner'),
+      eq(orgMembers.status, 'active'),
+    ));
+
+  const existingPortfolioOwners = await db
+    .select({ clerkUserId: orgMembers.clerkUserId })
+    .from(orgMembers)
+    .where(and(
+      eq(orgMembers.orgId, portfolio.id),
+      eq(orgMembers.role, 'owner'),
+    ));
+  const alreadyOwners = new Set(existingPortfolioOwners.map(o => o.clerkUserId));
+
+  const toGrant = new Map<string, string | null>();
+  for (const owner of orgOwners) {
+    if (alreadyOwners.has(owner.clerkUserId)) continue;
+    if (!toGrant.has(owner.clerkUserId)) toGrant.set(owner.clerkUserId, owner.email ?? null);
+  }
+
+  if (toGrant.size > 0) {
+    await db.insert(orgMembers).values(
+      [...toGrant].map(([clerkUserId, email]) => ({
+        orgId: portfolio.id,
+        clerkUserId,
+        email,
+        role: 'owner' as const,
+        status: 'active' as const,
+      })),
+    ).onConflictDoNothing();
+  }
+
+  return { id: portfolio.id, name: portfolio.name };
+}
+
+export interface PromoteOrgToPortfolioInput {
+  orgId: string;
+  actorClerkUserId: string;
+}
+
+/**
+ * Holdco case: turn an existing org INTO a portfolio in place. Validates that
+ * the org is a standard org (cannot promote an already-portfolio), flips it to
+ * kind='portfolio' + isPrivate=true, and leaves its existing data/members
+ * untouched.
+ */
+export async function promoteOrgToPortfolio(
+  input: PromoteOrgToPortfolioInput,
+): Promise<{ id: string; name: string }> {
+  if (!input.orgId) {
+    throw new PortfolioError('INVALID_ORG', 'An org is required');
+  }
+  if (!input.actorClerkUserId) {
+    throw new PortfolioError('NOT_AUTHENTICATED', 'An actor is required', 401);
+  }
+
+  const [org] = await db
+    .select({ id: organizations.id, name: organizations.name, kind: organizations.kind })
+    .from(organizations)
+    .where(eq(organizations.id, input.orgId))
+    .limit(1);
+  if (!org) throw new PortfolioError('ORG_NOT_FOUND', 'Org not found', 404);
+  if (org.kind !== 'standard') {
+    throw new PortfolioError('ALREADY_A_PORTFOLIO', 'Org is already a portfolio');
+  }
+
+  await db
+    .update(organizations)
+    .set({ kind: 'portfolio', isPrivate: true })
+    .where(eq(organizations.id, org.id));
+
+  return { id: org.id, name: org.name };
+}
+
 // ---- Read: portfolios for a user ----
 
 /**

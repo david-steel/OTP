@@ -26,6 +26,7 @@ import {
   listPortfoliosForUser,
   getPortfolioDetail,
 } from '../../services/portfolios.js';
+import { listPendingInvitesForUser } from '../../services/portfolio-invites.js';
 
 export default async function portfolioPages(app: FastifyInstance) {
   // GET /portfolio -- list the viewer's portfolios (or the Labs-gate state).
@@ -67,12 +68,17 @@ export default async function portfolioPages(app: FastifyInstance) {
       ? await listPortfoliosForUser(auth.userId)
       : [];
 
+    const pendingInvites = auth.userId
+      ? await listPendingInvitesForUser(auth.userId)
+      : [];
+
     return reply.view('pages/portfolio', {
       title: 'Portfolios - OTP',
       noindex: true,
       authState: 'authenticated',
       featureEnabled: true,
       portfolios,
+      pendingInvites,
     });
   });
 

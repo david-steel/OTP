@@ -9,6 +9,7 @@
   var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
   var _on = (typeof featureEnabled !== 'undefined') ? !!featureEnabled : false;
   var _ports = (typeof portfolios !== 'undefined' && Array.isArray(portfolios)) ? portfolios : [];
+  var _invites = (typeof pendingInvites !== 'undefined' && Array.isArray(pendingInvites)) ? pendingInvites : [];
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -44,6 +45,36 @@
 
   <% } else { %>
     <!-- Feature on: list of the user's portfolios -->
+
+    <% if (_invites.length > 0) { %>
+      <!-- Pending invites: portfolios that have invited an org this user owns -->
+      <div class="bg-white border rounded-xl p-6 mb-6">
+        <h2 class="font-bold text-gray-900 text-base mb-1">Pending portfolio invitations</h2>
+        <p class="text-sm text-gray-600 mb-4">An organization you own has been invited to join a portfolio.</p>
+        <div class="border rounded-lg overflow-hidden">
+          <% _invites.forEach(function(inv) { %>
+            <div class="flex items-center justify-between gap-4 px-5 py-4 border-b last:border-b-0"
+                 data-invite-portfolio="<%= inv.portfolioOrgId %>" data-invite-member="<%= inv.memberOrgId %>">
+              <div class="min-w-0">
+                <div class="font-semibold text-gray-900 truncate"><%= inv.portfolioName %></div>
+                <div class="text-sm text-gray-600 truncate">Inviting <span class="font-medium"><%= inv.memberOrgName %></span></div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button type="button"
+                        class="invite-accept-btn px-3 py-1.5 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">
+                  Accept
+                </button>
+                <button type="button"
+                        class="invite-decline-btn px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">
+                  Decline
+                </button>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
     <div class="flex items-center justify-end mb-4">
       <button type="button" id="new-portfolio-btn"
               class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">
@@ -147,6 +178,43 @@
     if (nameInput) nameInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); create(); }
     });
+
+    // ---- Pending invite accept / decline ----
+    function actOnInvite(row, action) {
+      var portfolioId = row.getAttribute('data-invite-portfolio');
+      var memberId = row.getAttribute('data-invite-member');
+      var btns = row.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/invites/' + encodeURIComponent(memberId) + '/' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+      })
+        .then(function (r) {
+          if (r.ok) return;
+          return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not update invite.');
+          });
+        })
+        .then(function () { window.location.reload(); })
+        .catch(function (err) {
+          for (var i = 0; i < btns.length; i++) btns[i].disabled = false;
+          window.alert(err.message || 'Could not update invite.');
+        });
+    }
+
+    var acceptBtns = document.querySelectorAll('.invite-accept-btn');
+    for (var a = 0; a < acceptBtns.length; a++) {
+      acceptBtns[a].addEventListener('click', function (e) {
+        actOnInvite(e.target.closest('[data-invite-portfolio]'), 'accept');
+      });
+    }
+    var declineBtns = document.querySelectorAll('.invite-decline-btn');
+    for (var d = 0; d < declineBtns.length; d++) {
+      declineBtns[d].addEventListener('click', function (e) {
+        actOnInvite(e.target.closest('[data-invite-portfolio]'), 'decline');
+      });
+    }
   })();
 </script>
 <% } %>

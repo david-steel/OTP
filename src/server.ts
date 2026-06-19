@@ -359,6 +359,18 @@ app.addHook('preHandler', async (request) => {
       const [o] = await db.select({ sidebarConfig: organizations.sidebarConfig })
         .from(organizations).where(eq(organizations.id, om.orgId)).limit(1);
       (request as any).sidebarConfig = (o && o.sidebarConfig) || null;
+      // If this is a MEMBER org whose parent portfolio supplies a sidebar preset,
+      // prefer the EFFECTIVE (inherited) sidebar over the org's own. Fail-safe:
+      // any error falls back to the org's own sidebarConfig set just above.
+      try {
+        const { resolveEffectivePresets } = await import('./services/portfolio-presets.js');
+        const eff = await resolveEffectivePresets(om.orgId);
+        if (eff && eff.source !== 'own' && eff.sidebar != null) {
+          (request as any).sidebarConfig = eff.sidebar;
+        }
+      } catch (presetErr) {
+        request.log.debug({ err: presetErr }, 'portfolio preset sidebar resolve failed');
+      }
     }
     // Portfolio context: resolve the org's kind so views can branch on whether
     // the active org is a portfolio "super-org". Auto-injected into every view
@@ -876,6 +888,9 @@ await app.register(import('./routes/api/labs.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/meeting-formats.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolios.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/active-org.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/admin-portfolios.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/portfolio-invites.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/portfolio-presets.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
   await app.register(stripeWebhookRoutes);
