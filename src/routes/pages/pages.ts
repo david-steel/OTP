@@ -176,6 +176,18 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /cfo -- role-specific sales page for CFOs / finance leaders (esp. PE-backed
+  // & multi-entity). Sells OTP on its own; sibling of /cio reframed for the P&L.
+  app.get('/cfo', async (_request, reply) => {
+    return renderV7(reply, 'cfo', {
+      title: 'OTP for CFOs - Put a cost and a return on every seat, human or agent',
+      description: 'AI is now a line item. OTP shows you its return: a cost and a number on every seat - person or agent - rolled up to your operating plan, with the spend controls, audit trail, and bring-your-own-rate billing a CFO signs off on.',
+      canonical: BASE_URL + '/cfo',
+      ogImage: OG_DEFAULT,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CFOs', url: BASE_URL + '/cfo', description: 'Put a cost and a return on every seat - human or agent. The operating layer that connects AI spend to contribution.' },
+    });
+  });
+
   // Browse
   app.get('/browse', async (request, reply) => {
     // One card per organization: the most recent published OOS file per org.
