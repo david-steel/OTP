@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OTP OG Card</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --signal: #ffab1d;
+      --signal-deep: #b06c08;
+      --ink: #17130d;
+      --ink-raised: #221d14;
+      --on-ink: #f4ecda;
+      --muted-ink: #a99c7f;
+      --line-ink: #f4ecda1f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1200px; height: 630px; overflow: hidden; }
+    body {
+      background: var(--ink);
+      color: var(--on-ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      position: relative;
+      padding: 64px 80px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top wordmark row */
+    .wordmark-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .tick {
+      width: 14px;
+      height: 14px;
+      background: var(--signal);
+      flex-shrink: 0;
+    }
+    .wordmark {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 28px;
+      color: var(--signal);
+      letter-spacing: 0.04em;
+    }
+    .protocol-label {
+      margin-top: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      color: var(--muted-ink);
+      text-transform: uppercase;
+    }
+
+    /* Display headline */
+    .headline {
+      margin-top: auto;
+      margin-bottom: 36px;
+      font-family: 'Archivo', sans-serif;
+      font-weight: 900;
+      font-size: 72px;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: var(--on-ink);
+      max-width: 980px;
+    }
+    .headline .accent {
+      color: var(--signal);
+    }
+
+    /* Sub line — the canonical positioning */
+    .subline-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+    .subline-tick {
+      width: 7px;
+      height: 7px;
+      background: var(--signal);
+      flex-shrink: 0;
+    }
+    .subline {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      font-size: 16px;
+      letter-spacing: 0.06em;
+      color: var(--on-ink);
+      text-transform: uppercase;
+    }
+
+    /* Footer URL */
+    .footer {
+      position: absolute;
+      bottom: 64px;
+      right: 80px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+      color: var(--muted-ink);
+    }
+
+    /* Subtle amber bottom border line, full width */
+    .ribbon {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--signal);
+    }
+  </style>
+</head>
+<body>
+  <div class="wordmark-row">
+    <div class="tick"></div>
+    <div class="wordmark">[OTP]</div>
+  </div>
+  <div class="protocol-label">Organization Transport Protocol</div>
+
+  <h1 class="headline">
+    The operating platform for<br>
+    teams of people and <span class="accent">AI agents</span>.
+  </h1>
+
+  <div class="subline-row">
+    <div class="subline-tick"></div>
+    <div class="subline">One chart &middot; One scoreboard &middot; One weekly meeting</div>
+  </div>
+
+  <div class="footer">orgtp.com</div>
+  <div class="ribbon"></div>
+</body>
+</html>
