@@ -1,0 +1,303 @@
+<%# /ceo -- role-specific sales page for CEOs / founders. Sells OTP on its own.
+    Sibling of /cio /cfo /coo, reframed for the vision owner: the plan disappears
+    into the org; can't see if it runs without you; building the future hybrid
+    org of people + agents. Everything ladders to the operating plan. v7 layout,
+    v7.css PREBUILT -> scoped .ceo-* CSS + inline styles only (no new Tailwind). %>
+<% var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev'); %>
+<style>
+  .ceo-sec   { padding-top: 84px; padding-bottom: 84px; }
+  .ceo-wrap  { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .ceo-center{ text-align: center; }
+  .ceo-paper { background: var(--white, #fcfcfd); }
+  .ceo-grey  { background: var(--grey, #f0f1f3); }
+  @media (max-width: 640px){ .ceo-sec { padding-top: 54px; padding-bottom: 54px; } }
+
+  .ceo-eyebrow { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); display:flex; align-items:center; gap:10px; }
+  .ceo-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  .ceo-h1 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.025em; line-height:1.05; font-size:clamp(2.2rem,4.6vw,3.5rem); color:var(--ink,#14161c); margin:0; max-width:18ch; }
+  .ceo-h2 { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; letter-spacing:-0.02em; line-height:1.12; font-size:clamp(1.7rem,3.2vw,2.5rem); color:var(--ink,#14161c); }
+  .ceo-lead { font-size:18px; line-height:1.62; color:var(--ink-soft,#494d57); }
+  .ceo-body { font-size:16px; line-height:1.65; color:var(--ink-soft,#494d57); }
+  .ceo-max720 { max-width:720px; }
+  .accent { color:var(--blue,#0d7df2); } .accent-g { color:var(--green-deep,#06724a); }
+
+  .ceo-btn  { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; font-size:16px; font-weight:700; border-radius:12px; text-decoration:none; white-space:nowrap; }
+  .ceo-btn.primary { background:var(--blue,#0d7df2); color:#fff; box-shadow:0 10px 26px -10px rgba(13,125,242,.6); transition:transform .15s ease, box-shadow .15s ease; }
+  .ceo-btn.primary:hover { transform:translateY(-1px); box-shadow:0 14px 30px -10px rgba(13,125,242,.7); }
+  .ceo-btn.ghost { background:transparent; color:var(--ink,#14161c); border:1px solid var(--line,#e6e8ec); }
+  .ceo-btn.ghost:hover { border-color:#c8ccd4; }
+  .ceo-cta-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:30px; }
+
+  .ceo-grid3 { display:grid; gap:18px; grid-template-columns:1fr; margin-top:36px; }
+  @media (min-width:780px){ .ceo-grid3 { grid-template-columns:repeat(3,1fr); } }
+  .ceo-grid2 { display:grid; gap:18px; grid-template-columns:1fr; margin-top:36px; }
+  @media (min-width:780px){ .ceo-grid2 { grid-template-columns:repeat(2,1fr); } }
+  .ceo-card { background:var(--white,#fcfcfd); border:1px solid var(--line,#e6e8ec); border-radius:16px; padding:24px 22px; box-shadow:0 10px 28px rgba(20,22,28,.05); }
+  .ceo-card h3 { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:18px; color:var(--ink,#14161c); margin:0 0 8px; }
+  .ceo-card p { font-size:14.5px; line-height:1.6; color:var(--ink-soft,#494d57); margin:0; }
+  .ceo-chip { display:inline-flex; width:38px; height:38px; border-radius:11px; align-items:center; justify-content:center; margin-bottom:14px; }
+
+  .ceo-quoteband { background:linear-gradient(180deg,#f2f7ff 0%, #eef3fb 100%); border-top:1px solid var(--line,#e6e8ec); border-bottom:1px solid var(--line,#e6e8ec); }
+  .ceo-qmark { display:block; font-family:'Schibsted Grotesk',serif; font-weight:900; font-size:64px; line-height:.3; color:var(--orgy-deep,#8BC42A); }
+  .ceo-quote { font-family:'Schibsted Grotesk',sans-serif; font-weight:600; font-size:clamp(1.35rem,2.6vw,1.9rem); line-height:1.4; letter-spacing:-0.01em; color:var(--ink,#14161c); }
+  .ceo-quote .accent { color:var(--blue,#0d7df2); }
+
+  .ceo-trust-strip { display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; margin-top:30px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
+  .ceo-trust-strip b { color:var(--ink-soft,#494d57); }
+
+  /* dogfood proof band -- single restrained brand-blue slab (matches home) */
+  .ceo-proof { background:var(--blue-block,#0d5fd6); }
+  .ceo-proof .ceo-h2, .ceo-proof .ceo-eyebrow { color:#fff; }
+  .ceo-proof .ceo-eyebrow { color:var(--orgy,#a8e63a); justify-content:center; }
+  .ceo-proof .ceo-lead { color:rgba(255,255,255,.85); }
+
+  @media (prefers-reduced-motion: no-preference){
+    body.ceo-anim .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    body.ceo-anim .reveal.in { opacity:1; transform:none; }
+  }
+
+  /* ===== animated hero scene: seats roll up into the operating plan ===== */
+  .ceo-hero { background:var(--white,#fcfcfd); overflow:hidden; }
+  .ceo-hero-wrap { max-width:1240px; margin:0 auto; padding:120px 24px 60px; }
+  .ceo-hero-grid { display:flex; gap:40px; align-items:center; flex-wrap:wrap; }
+  .ceo-hero-copy { flex:1 1 430px; min-width:330px; padding-top:8px; }
+  .ceo-stage { flex:0 0 560px; position:relative; width:560px; height:500px; }
+  .rise { opacity:0; animation:e-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes e-rise { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  .pop { opacity:0; animation:e-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
+  @keyframes e-pop { from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+
+  .e-conn { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible; }
+  .e-conn path { fill:none; stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:e-draw 1.1s ease forwards; }
+  @keyframes e-draw { to{stroke-dashoffset:0;} }
+
+  .e-board { position:absolute; left:120px; top:6px; width:320px; z-index:4; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:16px; box-shadow:0 18px 44px -16px rgba(20,22,28,.28); padding:14px 16px; }
+  .e-board-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .e-board-t { font-family:'Schibsted Grotesk',sans-serif; font-weight:800; font-size:12.5px; letter-spacing:.04em; color:var(--ink,#14161c); }
+  .e-live { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.04em; color:var(--green-deep,#06724a); }
+  .e-live i { width:6px; height:6px; border-radius:50%; background:var(--green,#0a9d63); animation:e-dot 1.8s ease-in-out infinite; }
+  @keyframes e-dot { 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
+  .e-kpi { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid var(--line,#eef0f3); }
+  .e-kpi:first-of-type { border-top:0; }
+  .e-kpi-name { font-size:12.5px; color:var(--ink-soft,#494d57); display:flex; align-items:center; gap:7px; }
+  .e-owner { width:17px; height:17px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .e-kpi-val { font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:var(--ink,#14161c); }
+  .e-pill { font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; }
+  .e-on { color:#0a7d3f; background:#dcfce7; } .e-watch { color:#b4690e; background:#fef3c7; }
+
+  .e-seat { position:absolute; width:186px; z-index:3; background:var(--card,#fff); border:1px solid var(--line,#e6e8ec); border-radius:13px; padding:10px 12px; box-shadow:0 8px 22px -10px rgba(20,22,28,.22); }
+  .e-seat-top { display:flex; gap:9px; align-items:center; }
+  .e-av { width:30px; height:30px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .e-nm { font-family:'Schibsted Grotesk',sans-serif; font-weight:700; font-size:12.5px; color:var(--ink,#14161c); line-height:1.1; }
+  .e-rl { font-size:10px; color:var(--ink-mute,#888c96); margin-top:1px; }
+  .e-tag { font-size:8.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:1px 6px; border-radius:999px; margin-left:auto; }
+  .e-tag.hu { color:var(--orange-deep,#d4540a); background:rgba(255,122,26,.12); }
+  .e-tag.ag { color:var(--blue-deep,#0a56b0); background:rgba(13,125,242,.12); }
+  .e-meter { margin-top:9px; }
+  .e-meter-l { display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-mute,#888c96); margin-bottom:3px; }
+  .e-meter-l b { font-family:'JetBrains Mono',monospace; color:var(--ink-soft,#494d57); font-weight:600; }
+  .e-bar { height:5px; border-radius:3px; background:var(--grey,#f0f1f3); overflow:hidden; }
+  .e-bar i { display:block; height:100%; border-radius:3px; transform:scaleX(0); transform-origin:left; animation:e-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes e-grow { to{transform:scaleX(1);} }
+  .e-seat.s1 { left:0;   top:250px; } .e-seat.s2 { left:0;   top:372px; }
+  .e-seat.s3 { right:0;  top:250px; } .e-seat.s4 { right:0;  top:372px; }
+
+  @media (max-width:980px){ .ceo-stage{ transform:scale(.84); transform-origin:top center; margin:0 auto -70px; } }
+  @media (max-width:860px){
+    .ceo-hero-grid{ justify-content:center; }
+    .ceo-hero-copy{ text-align:center; min-width:0; }
+    .ceo-cta-row{ justify-content:center; }
+    .ceo-trust-strip{ justify-content:center; }
+    .ceo-stage{ display:none; }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<section class="ceo-hero">
+  <div class="ceo-hero-wrap">
+    <div class="ceo-hero-grid">
+      <div class="ceo-hero-copy">
+        <div class="ceo-eyebrow" style="margin-bottom:16px;"><span class="ceo-tick"></span>For CEOs &amp; founders</div>
+        <h1 class="ceo-h1">Your vision is only as real as the org <span class="accent">running it</span>.</h1>
+        <p class="ceo-lead" style="margin-top:20px;max-width:36rem;">You set the plan &mdash; the three-year target, the one big bet. Then it disappears into the org and you hope. OTP makes the plan <em class="accent-g">live</em>: every person and every agent on one chart, driving the same numbers, so you can watch your whole company executing the future you set &mdash; not just hear about it once a quarter.</p>
+        <div class="ceo-cta-row">
+          <a href="https://calendly.com/dawson-orgtp/30min" target="_blank" rel="noopener" class="ceo-btn primary">Book a walkthrough &rarr;</a>
+          <a href="/sign-up" class="ceo-btn ghost">Start free</a>
+        </div>
+        <div class="ceo-trust-strip">
+          <span>One screen, <b>whole company</b></span><span style="color:#cfd3da;">&middot;</span>
+          <span>People &amp; agents</span><span style="color:#cfd3da;">&middot;</span>
+          <span>Built on the EOS you run</span>
+        </div>
+      </div>
+
+      <!-- animated scene: every seat ladders up to the long-range plan -->
+      <div class="ceo-stage">
+        <svg class="e-conn" viewBox="0 0 560 500">
+          <path pathLength="1" d="M150,300 C150,210 250,150 282,128" stroke="var(--orange,#ff7a1a)" style="animation-delay:.7s"/>
+          <path pathLength="1" d="M150,400 C150,250 250,160 282,134" stroke="var(--orange,#ff7a1a)" style="animation-delay:.85s"/>
+          <path pathLength="1" d="M410,300 C410,210 310,150 278,128" stroke="var(--blue,#0d7df2)" style="animation-delay:.9s"/>
+          <path pathLength="1" d="M410,400 C410,250 310,160 278,134" stroke="var(--blue,#0d7df2)" style="animation-delay:1.05s"/>
+          <circle r="3.5" fill="var(--orange,#ff7a1a)"><animateMotion dur="3s" repeatCount="indefinite" begin="1.8s" path="M150,300 C150,210 250,150 282,128"/></circle>
+          <circle r="3.5" fill="var(--blue,#0d7df2)"><animateMotion dur="3s" repeatCount="indefinite" begin="2.4s" path="M410,400 C410,250 310,160 278,134"/></circle>
+        </svg>
+
+        <div class="e-board pop" style="animation-delay:.4s">
+          <div class="e-board-h"><div class="e-board-t">Operating plan &middot; 2029</div><span class="e-live"><i></i>LIVE</span></div>
+          <div class="e-kpi"><div class="e-kpi-name"><span class="e-owner" style="background:#e07a3a">B</span>Revenue &middot; $50M target</div><span class="e-kpi-val">68%</span><span class="e-pill e-on">on&nbsp;track</span></div>
+          <div class="e-kpi"><div class="e-kpi-name"><span class="e-owner" style="background:#0d7df2">D</span>This quarter's #1</div><span class="e-kpi-val">on&nbsp;pace</span><span class="e-pill e-on">on&nbsp;track</span></div>
+          <div class="e-kpi"><div class="e-kpi-name"><span class="e-owner" style="background:#0a9d63">T</span>Seats in right roles</div><span class="e-kpi-val">31/34</span><span class="e-pill e-watch">watch</span></div>
+        </div>
+
+        <div class="e-seat s1 rise" style="animation-delay:.7s">
+          <div class="e-seat-top"><div class="e-av" style="background:#e07a3a">JM</div><div><div class="e-nm">Jordan Mara</div><div class="e-rl">VP Sales</div></div><span class="e-tag hu">Human</span></div>
+          <div class="e-meter"><div class="e-meter-l"><span>Driving plan target</span><b>+12%</b></div><div class="e-bar"><i style="width:82%;background:var(--orange,#ff7a1a);animation-delay:1.2s"></i></div></div>
+        </div>
+        <div class="e-seat s2 rise" style="animation-delay:.85s">
+          <div class="e-seat-top"><div class="e-av" style="background:#c4612a">PL</div><div><div class="e-nm">Priya Lang</div><div class="e-rl">Head of Product</div></div><span class="e-tag hu">Human</span></div>
+          <div class="e-meter"><div class="e-meter-l"><span>Driving plan target</span><b>+8%</b></div><div class="e-bar"><i style="width:70%;background:var(--orange,#ff7a1a);animation-delay:1.35s"></i></div></div>
+        </div>
+        <div class="e-seat s3 rise" style="animation-delay:.95s">
+          <div class="e-seat-top"><div class="e-av" style="background:#0d7df2">GA</div><div><div class="e-nm">Growth Agent</div><div class="e-rl">Reports to Jordan</div></div><span class="e-tag ag">Agent</span></div>
+          <div class="e-meter"><div class="e-meter-l"><span>Contribution</span><b>live</b></div><div class="e-bar"><i style="width:86%;background:var(--blue,#0d7df2);animation-delay:1.45s"></i></div></div>
+        </div>
+        <div class="e-seat s4 rise" style="animation-delay:1.1s">
+          <div class="e-seat-top"><div class="e-av" style="background:#0a64c4">IA</div><div><div class="e-nm">Insights Agent</div><div class="e-rl">Reports to Priya</div></div><span class="e-tag ag">Agent</span></div>
+          <div class="e-meter"><div class="e-meter-l"><span>Contribution</span><b>live</b></div><div class="e-bar"><i style="width:78%;background:var(--blue,#0d7df2);animation-delay:1.55s"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE GAP ================= -->
+<section class="ceo-grey">
+  <div class="ceo-wrap ceo-sec">
+    <div class="ceo-max720">
+      <div class="ceo-eyebrow" style="margin-bottom:16px;">The vision-to-reality gap</div>
+      <h2 class="ceo-h2">You set the plan. Then you hope.</h2>
+      <p class="ceo-body" style="margin-top:18px;max-width:44rem;">The strategy lives in a deck. The org lives in a hundred tools and a thousand conversations. Between the two is a gap you can't see across &mdash; and you only find out it widened when a number misses.</p>
+    </div>
+    <div class="ceo-grid3 reveal">
+      <div class="ceo-card">
+        <span class="ceo-chip" style="background:rgba(220,38,38,.1);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><path d="M3 3l18 18"/></svg></span>
+        <h3>The plan disappears into the org</h3>
+        <p>Your three-year targets become a quarterly ritual, not a daily force. Below the leadership team, almost no one can tell you how their work ladders up to the number you actually care about.</p>
+      </div>
+      <div class="ceo-card">
+        <span class="ceo-chip" style="background:rgba(217,119,6,.12);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"><path d="M12 2l9 5v6c0 5-3.8 8.2-9 9-5.2-.8-9-4-9-9V7z"/></svg></span>
+        <h3>It still runs on you</h3>
+        <p>You can't fully step back, because you can't fully see &mdash; whether the right people are in the right seats, where the business depends on a single person, what's actually getting done.</p>
+      </div>
+      <div class="ceo-card">
+        <span class="ceo-chip" style="background:rgba(13,125,242,.1);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d7df2" stroke-width="2" stroke-linecap="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg></span>
+        <h3>Half your future workforce is invisible</h3>
+        <p>Your team is bringing on AI agents that do real work. They're not on the chart, not on the scoreboard, not in the plan &mdash; so you're steering the next decade half-blind.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ONE OPERATING SYSTEM ================= -->
+<section class="ceo-paper">
+  <div class="ceo-wrap ceo-sec">
+    <div class="ceo-max720">
+      <div class="ceo-eyebrow" style="margin-bottom:16px;">One operating system</div>
+      <h2 class="ceo-h2">Your whole company on one chart, laddering to one plan.</h2>
+      <p class="ceo-body" style="margin-top:18px;max-width:44rem;">OTP puts every person and every agent on one accountability map, and rolls everything up to your operating plan &mdash; the 3&ndash;5 and 10-year targets, and the one number this quarter. You see the whole business at a glance, and you can tell, top to bottom, whether the org is actually running the future you set.</p>
+    </div>
+    <div class="ceo-grid2 reveal">
+      <div class="ceo-card">
+        <h3>Everything ladders to the plan</h3>
+        <p>From the daily to-do to the 10-year target, every seat's number rolls up. The plan stops being a document and becomes the thing the whole company is visibly, measurably driving toward.</p>
+      </div>
+      <div class="ceo-card">
+        <h3>Right people, right seats &mdash; and agents too</h3>
+        <p>See whether the right people are in the right roles doing the right work, where you're carrying a wrong seat, and which work should be a person versus an agent. Steer the org, not just react to it.</p>
+      </div>
+      <div class="ceo-card">
+        <h3>A business that runs without you</h3>
+        <p>Watch how much already runs without you in the room, where it still depends on you, and close those gaps deliberately &mdash; so stepping back is a decision you can see, not a leap of faith.</p>
+      </div>
+      <div class="ceo-card">
+        <h3>Your leadership team, aligned</h3>
+        <p>One weekly meeting, one scoreboard, one set of numbers everyone drives. The leadership team stops debating whose data is right and starts deciding what to do about it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE FUTURE ORG ================= -->
+<section class="ceo-grey">
+  <div class="ceo-wrap ceo-sec">
+    <div class="ceo-max720">
+      <div class="ceo-eyebrow" style="margin-bottom:16px;">The org you're building</div>
+      <h2 class="ceo-h2">Skate to where the company is going.</h2>
+      <p class="ceo-body" style="margin-top:18px;max-width:44rem;">The next decade isn't people <em>or</em> agents &mdash; it's both, on the same plan, and the winners will be the leaders who could see and steer the whole thing. OTP runs the org you have today and the one you're becoming, on one system.</p>
+    </div>
+    <div class="ceo-grid3 reveal">
+      <div class="ceo-card"><h3>Person or agent, on evidence</h3><p>As roles open and work shifts, decide what a person should own and what an agent should &mdash; with real cost and contribution in front of you, not a guess.</p></div>
+      <div class="ceo-card"><h3>A workforce you keep</h3><p>Every agent's setup and SOPs are housed in OTP. The capability you build doesn't live in one employee's laptop &mdash; it's an asset the company owns.</p></div>
+      <div class="ceo-card"><h3>Governed by design</h3><p>Granular access, append-only audit, private data with no model training, EU residency, your own API keys. The control your board expects, built in.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE NEW LAYER (light editorial statement) ================= -->
+<section class="ceo-quoteband">
+  <div class="ceo-wrap ceo-sec ceo-center" style="max-width:880px;">
+    <div class="ceo-eyebrow" style="justify-content:center;margin-bottom:20px;">Not a better tool &mdash; a new layer</div>
+    <span class="ceo-qmark">&ldquo;</span>
+    <p class="ceo-quote" style="margin:6px auto 0;max-width:24ch;">It's not a better Salesforce or Workday. It's the operating system for the <span class="accent">company you're becoming</span>.</p>
+    <p class="ceo-body" style="max-width:44rem;margin:22px auto 0;">Those tools were built to manage the org of the last twenty years. The next twenty are people <em>and</em> agents, on one plan &mdash; and nothing you own was designed for it. OTP isn't software-as-a-service. It's data-as-a-service for the company you're building next.</p>
+  </div>
+</section>
+
+<!-- ================= DOGFOOD PROOF ================= -->
+<section class="ceo-proof">
+  <div class="ceo-wrap ceo-sec ceo-center" style="max-width:820px;">
+    <div class="ceo-eyebrow" style="margin-bottom:20px;">The proof</div>
+    <h2 class="ceo-h2">We run our own company on these exact agents.</h2>
+    <p class="ceo-lead" style="margin:18px auto 0;max-width:44rem;">OTP isn't a deck. The agents you'd start with are the same team that runs the company that built OTP &mdash; live, on this platform. No one else can hand you a hybrid workforce and show you theirs, working.</p>
+    <div class="ceo-cta-row" style="justify-content:center;"><a href="https://calendly.com/dawson-orgtp/30min" target="_blank" rel="noopener" class="ceo-btn primary" style="background:#fff;color:var(--blue-block,#0d5fd6);box-shadow:none;">Book a walkthrough &rarr;</a></div>
+  </div>
+</section>
+
+<!-- ================= PORTFOLIO ================= -->
+<section class="ceo-paper">
+  <div class="ceo-wrap ceo-sec">
+    <div class="ceo-max720">
+      <div class="ceo-eyebrow" style="margin-bottom:16px;">For holdcos &amp; serial operators</div>
+      <h2 class="ceo-h2">One operating view across every company you run.</h2>
+      <p class="ceo-body" style="margin-top:18px;max-width:44rem;">Own more than one company and the hardest question is what one can learn from another. OTP turns that into an asset: connect every business into one view, compare how they actually operate, and move proven playbooks &mdash; people, agents, and whole operating systems &mdash; from one into the next.</p>
+    </div>
+    <div class="ceo-grid3 reveal">
+      <div class="ceo-card"><h3>Master KPIs roll up</h3><p>Every company cascades into one portfolio scoreboard &mdash; a dozen businesses or 300 sub-orgs &mdash; set up automatically, not by hand.</p></div>
+      <div class="ceo-card"><h3>Compare what works</h3><p>See how one company operates versus another at the system level &mdash; and ingest what's working into the ones that aren't.</p></div>
+      <div class="ceo-card"><h3>A value-creation engine</h3><p>The organizing function of a value-creation plan &mdash; best practices and operating systems made portable across the whole book.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="ceo-paper" style="border-top:1px solid var(--line,#e6e8ec);">
+  <div class="ceo-wrap ceo-sec ceo-center" style="max-width:760px;">
+    <h2 class="ceo-h2">See your whole company driving one plan.</h2>
+    <p class="ceo-lead" style="margin:18px auto 0;max-width:40rem;">A 30-minute walkthrough on your org. We'll show you the plan, the chart, and the people and agents executing it &mdash; and we'll load your leadership team so you're not pushing it down yourself.</p>
+    <div class="ceo-cta-row" style="justify-content:center;">
+      <a href="https://calendly.com/dawson-orgtp/30min" target="_blank" rel="noopener" class="ceo-btn primary">Book a walkthrough &rarr;</a>
+      <a href="/sign-up" class="ceo-btn ghost">Start free instead</a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('ceo-anim');
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px 5% 0px', threshold:0.01 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  setTimeout(function(){ document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); }); }, 1500);
+})();
+</script>
