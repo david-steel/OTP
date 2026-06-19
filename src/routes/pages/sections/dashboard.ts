@@ -2345,7 +2345,7 @@ Founder, OTP</p>
   const BILLING_PRICE_BASIC = 12;
   const BILLING_PRICE_API_MCP = 16;
   app.get('/settings/billing', async (request, reply) => {
-    const billingEnabled = process.env.BILLING_ENABLED === 'true';
+    const billingEnabled = (process.env.BILLING_ENABLED || '').trim().toLowerCase() === 'true';
 
     const auth = getAuth(request);
     if (!auth.userId && !(request as any).orgMember) {
@@ -2475,7 +2475,7 @@ Founder, OTP</p>
   // Gated three ways: BILLING_ENABLED=true, Stripe keys present, and owner/admin
   // (or founder). Quantity = agents on the chart; rate picks Basic vs API+MCP.
   app.post('/settings/billing/checkout', async (request, reply) => {
-    if (process.env.BILLING_ENABLED !== 'true') {
+    if ((process.env.BILLING_ENABLED || '').trim().toLowerCase() !== 'true') {
       return reply.status(403).send({ error: { code: 'BILLING_OFF', message: 'Self-serve billing is not switched on yet.' } });
     }
     const stripeMod = await import('../../../services/stripe.js');
