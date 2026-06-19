@@ -55,6 +55,8 @@ export async function recomputePortfolioMetric(
       .where(and(eq(kpis.id, source.memberKpiId), isNull(kpis.deletedAt)))
       .limit(1);
     if (!memberKpi || memberKpi.rollupExcluded) {
+      const reason = !memberKpi ? 'member KPI missing or soft-deleted' : 'rollupExcluded';
+      console.warn(`[portfolio-metrics] skipped source for portfolioKpi ${portfolioKpiId} (memberOrg ${source.memberOrgId}, memberKpi ${source.memberKpiId}): ${reason}`);
       sourcesSkipped++;
       continue;
     }
@@ -67,6 +69,8 @@ export async function recomputePortfolioMetric(
       .orderBy(desc(kpiValues.periodStart))
       .limit(1);
     if (!latest || latest.value === null) {
+      const reason = !latest ? 'no values' : 'null latest value';
+      console.warn(`[portfolio-metrics] skipped source for portfolioKpi ${portfolioKpiId} (memberOrg ${source.memberOrgId}, memberKpi ${source.memberKpiId}): ${reason}`);
       sourcesSkipped++;
       continue;
     }

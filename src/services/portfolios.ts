@@ -12,7 +12,7 @@
 // This layer is pure CRUD. It never imports or triggers the rollup aggregator --
 // the API layer recomputes super-metrics separately after a mutation.
 
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../config/database.js';
 import {
@@ -50,6 +50,22 @@ export async function createPortfolio(
   if (!input.creatorClerkUserId) {
     throw new PortfolioError('NOT_AUTHENTICATED', 'A creator is required', 401);
   }
+
+  // Idempotency: if this creator already OWNS an active portfolio with the same
+  // name (trimmed, case-insensitive), return it so a retried POST is a no-op.
+  const [existing] = await db
+    .select({ org: organizations })
+    .from(orgMembers)
+    .innerJoin(organizations, eq(organizations.id, orgMembers.orgId))
+    .where(and(
+      eq(orgMembers.clerkUserId, input.creatorClerkUserId),
+      eq(orgMembers.role, 'owner'),
+      eq(orgMembers.status, 'active'),
+      eq(organizations.kind, 'portfolio'),
+      sql`lower(${organizations.name}) = lower(${name})`,
+    ))
+    .limit(1);
+  if (existing) return existing.org;
 
   const [portfolio] = await db.insert(organizations).values({
     name,

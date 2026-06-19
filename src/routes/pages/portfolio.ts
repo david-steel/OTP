@@ -136,13 +136,18 @@ export default async function portfolioPages(app: FastifyInstance) {
     // Latest computed rollup value per super-metric (most recent period).
     const latestByKpi: Record<string, number | null> = {};
     for (const sm of detail.superMetrics) {
-      const [latest] = await db
-        .select({ value: kpiValues.value })
-        .from(kpiValues)
-        .where(eq(kpiValues.kpiId, sm.id))
-        .orderBy(desc(kpiValues.periodStart))
-        .limit(1);
-      latestByKpi[sm.id] = latest ? latest.value : null;
+      try {
+        const [latest] = await db
+          .select({ value: kpiValues.value })
+          .from(kpiValues)
+          .where(eq(kpiValues.kpiId, sm.id))
+          .orderBy(desc(kpiValues.periodStart))
+          .limit(1);
+        latestByKpi[sm.id] = latest ? latest.value : null;
+      } catch (err) {
+        request.log.warn({ err, kpiId: sm.id }, 'portfolio detail: latest value lookup failed');
+        latestByKpi[sm.id] = null;
+      }
     }
 
     // Member-org name lookup so source rows can show a label, not a raw id.
