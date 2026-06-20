@@ -2,18 +2,20 @@
 //   POST /api/v1/rocks/:id/ai/draft      body {sentence, context?}
 //   POST /api/v1/rocks/:id/ai/critique
 //
-// PAID, no free path. Every call: wallet pre-check (>= floor) -> Claude
-// (non-streaming structured JSON) -> validate -> debit the wallet from REAL
-// usage. Mirrors ask-ai.ts's lazy client, NOT_CONFIGURED 503, rate limiter,
-// markup/debit math, and "user-already-served => still return on debit failure"
-// philosophy. Org-scoped to the rock exactly like rocks.ts (eq(organizationId)
-// + 404), role-gated for edit via gateReadOnlyRole.
+// Billing is platform-key only, via token-metering.ts (the shared 2x platform
+// multiplier). Every call: resolve the AI key/source -> wallet pre-check ONLY
+// when shouldMeterPlatform(source) (BYOK / metering-off skip it, never blocked)
+// -> Claude (non-streaming structured JSON) -> validate -> debit via
+// debitPlatformTokens (no-ops for BYOK; idempotent on a deterministic per-request
+// key). Mirrors ask-ai.ts's lazy client, NOT_CONFIGURED 503, rate limiter, and
+// "user-already-served => still return on debit failure" philosophy. Org-scoped
+// to the rock exactly like rocks.ts (eq(organizationId) + 404), role-gated for
+// edit via gateReadOnlyRole.
 //
 // LAUNCH GATE: this whole feature ships OFF (coming soon). aiRockAssistLive()
 // reads AI_ROCK_ASSIST_LIVE; when falsy BOTH endpoints refuse with COMING_SOON
 // (the backend is gated, not just the UI) and the UI shows a "coming soon"
 // panel. Flip the env to truthy to go live.
-import { randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { eq, and, isNull } from 'drizzle-orm';
 import Anthropic from '@anthropic-ai/sdk';
@@ -22,9 +24,12 @@ import { rocks } from '../../db/schema.js';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
-import { getBalanceCents, debitWallet } from '../../services/wallet.js';
-import { computeDebitCents, markupMultipleFromEnv } from '../../shared/ai-pricing.js';
 import { resolveAiKey } from '../../services/org-ai-keys.js';
+import {
+  shouldMeterPlatform,
+  platformPrecheck,
+  debitPlatformTokens,
+} from '../../services/token-metering.js';
 import {
   rockAiDraftRequestSchema,
   buildDraftSystemPrompt,
@@ -47,11 +52,6 @@ export function aiRockAssistLive(): boolean {
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
 
-// Smallest balance we require before starting a metered call. Real cost is
-// debited from actual token counts after; this is a fail-closed floor so a
-// near-empty wallet can't start a call it can't pay for.
-const BALANCE_FLOOR_CENTS = 1;
-
 // Structured JSON, not a chat stream: bounded output.
 const MAX_TOKENS = 2000;
 
@@ -73,19 +73,6 @@ function model(): string {
 // Loose shape for the Anthropic message response usage block.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Usage = any;
-
-function usageDebitCents(usage: Usage): number {
-  return computeDebitCents(
-    {
-      model: model(),
-      inputTokens: Number(usage?.input_tokens) || 0,
-      outputTokens: Number(usage?.output_tokens) || 0,
-      cacheReadTokens: Number(usage?.cache_read_input_tokens) || 0,
-      cacheWriteTokens: Number(usage?.cache_creation_input_tokens) || 0,
-    },
-    markupMultipleFromEnv(),
-  );
-}
 
 /** Pull the concatenated text out of a non-streaming Messages response. */
 function textOf(message: { content?: Array<{ type: string; text?: string }> }): string {
@@ -148,11 +135,14 @@ async function gateAndLoadRock(
   return { org, rock };
 }
 
-// Pre-check the wallet (PAID, no free path). Returns true to proceed, false
-// after having sent the reply.
-async function checkBalance(orgId: string, reply: FastifyReply): Promise<boolean> {
-  const balanceCents = await getBalanceCents(orgId);
-  if (balanceCents < BALANCE_FLOOR_CENTS) {
+// Wallet pre-check. Runs ONLY for platform-metered calls (shouldMeterPlatform):
+// BYOK orgs (source 'org'/'portfolio') and metering-off draw on their own key
+// and are NEVER blocked here. Returns true to proceed, false after having sent
+// the 503 INSUFFICIENT_BALANCE reply.
+async function checkBalance(orgId: string, source: string, reply: FastifyReply): Promise<boolean> {
+  if (!shouldMeterPlatform(source)) return true;
+  const { ok } = await platformPrecheck(orgId);
+  if (!ok) {
     reply.status(503).send({ error: { code: 'INSUFFICIENT_BALANCE', message: 'Add credits to use AI assist.' } });
     return false;
   }
@@ -187,38 +177,37 @@ async function runStructured<T>(args: {
   return { value: null, usage: lastUsage };
 }
 
-// Debit the wallet from REAL usage. Idempotency-keyed per call. On failure
-// AFTER a successful AI call we log loudly but still return the result (the
-// user was served) -- same philosophy as ask-ai's post-stream debit.
+// Debit the wallet for PLATFORM-key usage from REAL token counts. Routes through
+// debitPlatformTokens, which no-ops for BYOK (source 'org'/'portfolio') and for
+// metering-off, and bills at the standard 2x platform multiplier otherwise.
+//
+// IDEMPOTENCY: the key is DETERMINISTIC per request+operation --
+// `rock-ai_${feature}_${requestId}` -- so a client retry of the SAME request
+// can't double-charge. The two operations (draft vs critique) carry distinct
+// `feature` values, so their keys never collide within one request.
+//
+// On a debit failure AFTER a successful AI call we never throw (debitPlatformTokens
+// swallows + logs internally) -- the user was already served. Returns the cents
+// debited (0 when not metered) so the response can echo costCents.
 async function debitForUsage(
   orgId: string,
+  source: string,
   usage: Usage,
   feature: 'rock-ai-draft' | 'rock-ai-critique',
-  rockId: string,
-  log: FastifyRequest['log'],
+  idempotencyKey: string,
 ): Promise<number> {
-  const cents = usageDebitCents(usage);
-  try {
-    const result = await debitWallet(orgId, cents, 'ai_usage', {
-      idempotencyKey: `${feature}_${randomUUID()}`,
-      metadata: {
-        model: model(),
-        inputTokens: Number(usage?.input_tokens) || 0,
-        outputTokens: Number(usage?.output_tokens) || 0,
-        cacheReadTokens: Number(usage?.cache_read_input_tokens) || 0,
-        cacheWriteTokens: Number(usage?.cache_creation_input_tokens) || 0,
-        feature,
-        rockId,
-      },
-      createdBy: 'rock-ai',
-    });
-    if (!result.ok) {
-      log.error({ orgId, cents, code: result.code }, 'rock-ai wallet debit failed (user already served)');
-    }
-  } catch (err) {
-    log.error({ err, orgId }, 'rock-ai wallet debit threw (user already served)');
-  }
-  return cents;
+  const { cents } = await debitPlatformTokens({
+    orgId,
+    source,
+    model: model(),
+    inputTokens: Number(usage?.input_tokens) || 0,
+    outputTokens: Number(usage?.output_tokens) || 0,
+    cacheReadTokens: Number(usage?.cache_read_input_tokens) || 0,
+    cacheWriteTokens: Number(usage?.cache_creation_input_tokens) || 0,
+    idempotencyKey,
+    feature,
+  });
+  return cents ?? 0;
 }
 
 // Map an Anthropic SDK error to a safe status + body. Mirrors ask-ai's branch.
@@ -249,11 +238,12 @@ export default async function rockAiRoutes(app: FastifyInstance) {
       });
     }
 
-    if (!(await checkBalance(loaded.org.id, reply))) return;
-
-    // Resolve the org's BYOK key (falls back to the platform key) per request.
+    // Resolve the org's BYOK key (falls back to the platform key) per request,
+    // BEFORE the balance pre-check: only platform-key usage is metered/blocked.
     const ai = await resolveAiKey(loaded.org.id);
     const client = new Anthropic({ apiKey: ai.key });
+
+    if (!(await checkBalance(loaded.org.id, ai.source, reply))) return;
 
     let out: { value: RockAiDraftResponse | null; usage: Usage };
     try {
@@ -269,7 +259,14 @@ export default async function rockAiRoutes(app: FastifyInstance) {
     }
 
     // Debit from REAL usage regardless of parse outcome (the tokens were spent).
-    const costCents = await debitForUsage(loaded.org.id, out.usage, 'rock-ai-draft', loaded.rock.id, request.log);
+    // Deterministic idempotency key: stable across retries of THIS request.
+    const costCents = await debitForUsage(
+      loaded.org.id,
+      ai.source,
+      out.usage,
+      'rock-ai-draft',
+      `rock-ai_rock-ai-draft_${request.id}`,
+    );
 
     if (!out.value) {
       return reply.status(502).send({ error: { code: 'AI_BAD_OUTPUT', message: 'AI returned an unreadable draft. Please try again.' } });
@@ -285,11 +282,12 @@ export default async function rockAiRoutes(app: FastifyInstance) {
     const loaded = await gateAndLoadRock(request, reply);
     if (!loaded) return;
 
-    if (!(await checkBalance(loaded.org.id, reply))) return;
-
-    // Resolve the org's BYOK key (falls back to the platform key) per request.
+    // Resolve the org's BYOK key (falls back to the platform key) per request,
+    // BEFORE the balance pre-check: only platform-key usage is metered/blocked.
     const ai = await resolveAiKey(loaded.org.id);
     const client = new Anthropic({ apiKey: ai.key });
+
+    if (!(await checkBalance(loaded.org.id, ai.source, reply))) return;
 
     const userMessage = buildCritiqueUserMessage({
       description: loaded.rock.description,
@@ -310,7 +308,15 @@ export default async function rockAiRoutes(app: FastifyInstance) {
       return sendAiError(reply, err, request.log);
     }
 
-    const costCents = await debitForUsage(loaded.org.id, out.usage, 'rock-ai-critique', loaded.rock.id, request.log);
+    // Deterministic idempotency key: stable across retries of THIS request,
+    // distinct from the draft op via the feature segment.
+    const costCents = await debitForUsage(
+      loaded.org.id,
+      ai.source,
+      out.usage,
+      'rock-ai-critique',
+      `rock-ai_rock-ai-critique_${request.id}`,
+    );
 
     if (!out.value) {
       return reply.status(502).send({ error: { code: 'AI_BAD_OUTPUT', message: 'AI returned an unreadable critique. Please try again.' } });

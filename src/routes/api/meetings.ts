@@ -22,6 +22,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
 import { FOLLOWUPS_SYSTEM_PROMPT, buildFollowupsUserMessage, parseFollowups } from '../../shared/meeting-followups.js';
 import { resolveAiKey } from '../../services/org-ai-keys.js';
+import { shouldMeterPlatform, platformPrecheck, debitPlatformTokens } from '../../services/token-metering.js';
 
 // The Anthropic client for the meeting follow-ups wizard is built PER-REQUEST
 // from the org's resolved BYOK key (resolveAiKey). When the org has no
@@ -586,15 +587,31 @@ export default async function meetingRoutes(app: FastifyInstance) {
 
     // Resolve the org's BYOK key (falls back to the platform key) per request.
     const ai = await resolveAiKey(org.id);
+
+    // Wallet pre-check -- platform-key usage only. BYOK (source 'org'/'portfolio')
+    // and metering-off skip this and are never blocked. Runs BEFORE the model call.
+    if (shouldMeterPlatform(ai.source)) {
+      const { ok } = await platformPrecheck(org.id);
+      if (!ok) {
+        return reply.status(503).send({ error: { code: 'INSUFFICIENT_BALANCE', message: 'Add credits to use AI assist.' } });
+      }
+    }
+
     const client = new Anthropic({ apiKey: ai.key });
+    // Hoisted so the same model id drives the call and the debit. lastUsage holds
+    // the usage of whichever call's output we actually return (overwritten per
+    // call -- never double-counted). If both calls throw we 502 before any debit.
+    const model = aiModel();
+    let lastUsage: any = {};
 
     async function callModel() {
       const res = await client.messages.create({
-        model: aiModel(),
+        model,
         max_tokens: 2000,
         system: [{ type: 'text', text: FOLLOWUPS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
         messages: [{ role: 'user', content: userMsg }],
       });
+      lastUsage = res.usage;
       const text = res.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
       return parseFollowups(text);
     }
@@ -609,6 +626,22 @@ export default async function meetingRoutes(app: FastifyInstance) {
         return reply.status(502).send({ error: { code: 'AI_FAILED', message: 'Could not generate follow-ups. Try again.' } });
       }
     }
+
+    // Debit the wallet from REAL token counts. No-ops for BYOK / metering-off,
+    // idempotent on a deterministic per-request key, and never throws -- a
+    // metering issue can't lose the follow-ups we already built.
+    const usage = lastUsage;
+    await debitPlatformTokens({
+      orgId: org.id,
+      source: ai.source,
+      model,
+      inputTokens: Number(usage?.input_tokens) || 0,
+      outputTokens: Number(usage?.output_tokens) || 0,
+      cacheReadTokens: Number(usage?.cache_read_input_tokens) || 0,
+      cacheWriteTokens: Number(usage?.cache_creation_input_tokens) || 0,
+      idempotencyKey: 'meeting-followups_' + id + '_' + request.id,
+      feature: 'meeting_followups',
+    });
 
     await db.insert(auditLogs).values(createAuditEntry('meeting.ai.followups', 'meeting', {
       orgId: org.id, entityId: id,

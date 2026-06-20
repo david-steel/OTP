@@ -18,9 +18,8 @@ import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
 import { askAiRequestSchema, buildSystemPrompt } from '../../shared/ask-ai.js';
 import { ASK_AI_CORPUS } from '../../data/ask-ai-corpus.js';
-import { getBalanceCents, debitWallet } from '../../services/wallet.js';
-import { computeDebitCents, markupMultipleFromEnv } from '../../shared/ai-pricing.js';
 import { resolveAiKey } from '../../services/org-ai-keys.js';
+import { shouldMeterPlatform, platformPrecheck, debitPlatformTokens } from '../../services/token-metering.js';
 
 // Wallet metering is OFF by default. When the env flag is falsy this whole
 // feature is inert: zero behavior change to Ask AI (no balance check, no debit).
@@ -30,11 +29,6 @@ export function meteringEnabled(): boolean {
   const v = process.env.WALLET_METERING_ENABLED;
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
-
-// Smallest balance we require before starting a metered stream. The real cost is
-// debited from actual token counts after the stream; this is just a fail-closed
-// floor so a near-empty wallet can't start a call it can't pay for.
-const METERING_FLOOR_CENTS = 1;
 
 const checkRateLimit = createRateLimiter({ windowMs: 60_000, maxRequests: 20 });
 
@@ -74,13 +68,18 @@ export default async function askAiRoutes(app: FastifyInstance) {
       return reply.status(503).send({ error: { code: 'NOT_CONFIGURED', message: "Ask AI isn't configured yet." } });
     }
 
-    // --- Wallet metering pre-check (GATED). When disabled this block is a
-    // no-op and Ask AI behaves exactly as before. When enabled, fail closed if
-    // the org's balance is below the floor (mirrors the NOT_CONFIGURED shape).
-    const metering = meteringEnabled();
-    if (metering) {
-      const balanceCents = await getBalanceCents(org.id);
-      if (balanceCents < METERING_FLOOR_CENTS) {
+    // Resolve the org's AI key/source BEFORE any metering pre-check. BYOK orgs
+    // (source 'org' / 'portfolio') use their own key and must NEVER be blocked
+    // by the platform wallet -- only platform-key usage draws from the wallet.
+    const ai = await resolveAiKey(org.id);
+
+    // --- Wallet metering pre-check (GATED, platform-key only). Runs ONLY when
+    // metering is on AND this call uses the platform key. For BYOK or
+    // metering-off, this is skipped entirely (never blocks). Fail closed if the
+    // org's balance is below the shared wallet floor.
+    if (shouldMeterPlatform(ai.source)) {
+      const { ok } = await platformPrecheck(org.id);
+      if (!ok) {
         return reply.status(503).send({ error: { code: 'INSUFFICIENT_BALANCE', message: 'Add credits to use Ask AI.' } });
       }
     }
@@ -99,9 +98,8 @@ export default async function askAiRoutes(app: FastifyInstance) {
 
     const model = process.env.ASK_AI_MODEL || 'claude-opus-4-8';
     try {
-      // Resolve the org's BYOK key (falls back to the platform key for orgs
-      // without an org/portfolio key) and build a per-request client.
-      const ai = await resolveAiKey(org.id);
+      // Build a per-request client from the already-resolved key (resolved
+      // before the metering pre-check above).
       const client = new Anthropic({ apiKey: ai.key });
       const stream = client.messages.stream({
         model,
@@ -123,44 +121,30 @@ export default async function askAiRoutes(app: FastifyInstance) {
       }
       if (!clientGone) sseWrite(raw, { done: true });
 
-      // --- Wallet metering debit (GATED). After the stream completes, read the
-      // real token usage and debit the wallet from actual cost x markup. If the
-      // debit fails we log loudly but do NOT crash the response -- the user
-      // already received their answer. Idempotency-keyed per request so a retry
-      // can't double-charge. No-op entirely when metering is disabled.
-      if (metering) {
-        try {
-          const final = await stream.finalMessage();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const usage = (final?.usage || {}) as any;
-          const debitCents = computeDebitCents(
-            {
-              model,
-              inputTokens: Number(usage.input_tokens) || 0,
-              outputTokens: Number(usage.output_tokens) || 0,
-              cacheReadTokens: Number(usage.cache_read_input_tokens) || 0,
-              cacheWriteTokens: Number(usage.cache_creation_input_tokens) || 0,
-            },
-            markupMultipleFromEnv(),
-          );
-          const result = await debitWallet(org.id, debitCents, 'ai_usage', {
-            idempotencyKey: `ask-ai_${requestId}`,
-            metadata: {
-              model,
-              inputTokens: Number(usage.input_tokens) || 0,
-              outputTokens: Number(usage.output_tokens) || 0,
-              cacheReadTokens: Number(usage.cache_read_input_tokens) || 0,
-              cacheWriteTokens: Number(usage.cache_creation_input_tokens) || 0,
-              feature: 'ask-ai',
-            },
-            createdBy: 'ask-ai',
-          });
-          if (!result.ok) {
-            request.log.error({ orgId: org.id, debitCents, code: result.code }, 'ask-ai post-stream wallet debit failed (user already served)');
-          }
-        } catch (debitErr) {
-          request.log.error({ err: debitErr, orgId: org.id }, 'ask-ai post-stream wallet debit threw (user already served)');
-        }
+      // --- Platform-key token metering debit. After the stream completes, read
+      // the real token usage and hand it to the centralized helper, which
+      // debits the wallet at the 2x platform multiplier ONLY for platform-key
+      // usage (BYOK / metering-off are no-ops inside the helper). Idempotency-
+      // keyed per request so a retry can't double-charge. The helper never
+      // throws on a normal debit failure -- the user already received their
+      // answer -- so a metering bug can't lose a served response.
+      try {
+        const final = await stream.finalMessage();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const usage = (final?.usage || {}) as any;
+        await debitPlatformTokens({
+          orgId: org.id,
+          source: ai.source,
+          model,
+          inputTokens: Number(usage.input_tokens) || 0,
+          outputTokens: Number(usage.output_tokens) || 0,
+          cacheReadTokens: Number(usage.cache_read_input_tokens) || 0,
+          cacheWriteTokens: Number(usage.cache_creation_input_tokens) || 0,
+          idempotencyKey: `ask-ai_${requestId}`,
+          feature: 'ask_ai',
+        });
+      } catch (debitErr) {
+        request.log.error({ err: debitErr, orgId: org.id }, 'ask-ai post-stream metering threw (user already served)');
       }
     } catch (err) {
       request.log.error({ err }, 'ask-ai stream failed');

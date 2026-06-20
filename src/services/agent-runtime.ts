@@ -23,11 +23,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../config/database.js';
 import { sql } from 'drizzle-orm';
 import { getOrgTeamGraph } from './team-graph.js';
-import { getBalanceCents, debitWallet } from './wallet.js';
-import { computeDebitCents, markupMultipleFromEnv } from '../shared/ai-pricing.js';
 import { getOrgTools, executeOrgTool, type OrgToolset } from './composio-tools.js';
-import { walletFloorCents } from './integration-live-gate.js';
 import { resolveAiKey } from './org-ai-keys.js';
+import { shouldMeterPlatform, platformPrecheck, debitPlatformTokens } from './token-metering.js';
 
 // Default to Sonnet -- ~10x cheaper than Opus and plenty capable for the
 // agent-runtime use case. Override with OTP_AGENT_MODEL env var per-org.
@@ -211,13 +209,17 @@ function buildUserPrompt(opts: RunAgentOptions): string {
  * runAgentStream so the agent_runs lifecycle + metering are identical.
  */
 async function prepareRun(opts: RunAgentOptions, startedAt: Date): Promise<
-  | { ready: true; runId: string; systemPrompt: string; userPrompt: string; sopTitle: string | null; metering: boolean }
+  | { ready: true; runId: string; systemPrompt: string; userPrompt: string; sopTitle: string | null; ai: { key: string; source: string } }
   | { ready: false; result: RunAgentResult }
 > {
   const trigger = opts.trigger || 'manual';
   const sopTitle = opts.sop?.title ? String(opts.sop.title).trim() : null;
-  const metering = meteringEnabled();
   const userPrompt = buildUserPrompt(opts);
+
+  // Resolve the org's AI key/source up front so the metering pre-check can gate
+  // on it. BYOK orgs (source !== 'platform') resolve to their own key and are
+  // NEVER balance-blocked here; only platform-key orgs draw from the wallet.
+  const ai = await resolveAiKey(opts.orgId);
 
   // Insert a queued/running row up front so even crashes leave a record.
   const [queuedRow] = await db.execute(sql`
@@ -254,12 +256,14 @@ async function prepareRun(opts: RunAgentOptions, startedAt: Date): Promise<
     };
   };
 
-  // --- Wallet metering pre-check (GATED). When metering is OFF this block is a
-  // no-op and runs stay free. When ON, fail closed BEFORE spending any tokens if
-  // the org's balance is below the floor -- never stream what you can't bill.
-  if (metering) {
-    const balanceCents = await getBalanceCents(opts.orgId);
-    if (balanceCents <= walletFloorCents()) {
+  // --- Wallet metering pre-check (GATED). Runs ONLY for platform-key usage when
+  // metering is on (shouldMeterPlatform). BYOK orgs (source !== 'platform') and
+  // metering-off both skip it entirely -- they are never balance-blocked. When it
+  // does apply, fail closed BEFORE spending any tokens if the balance is below
+  // the floor -- never stream what you can't bill.
+  if (shouldMeterPlatform(ai.source)) {
+    const { ok } = await platformPrecheck(opts.orgId);
+    if (!ok) {
       return failWith('INSUFFICIENT_BALANCE');
     }
   }
@@ -276,37 +280,28 @@ async function prepareRun(opts: RunAgentOptions, startedAt: Date): Promise<
     return failWith('ANTHROPIC_API_KEY env var is not set on the server');
   }
 
-  return { ready: true, runId, systemPrompt, userPrompt, sopTitle, metering };
+  return { ready: true, runId, systemPrompt, userPrompt, sopTitle, ai };
 }
 
 /**
- * Post-run wallet debit (GATED, success-only). Shared by both run paths. When
- * metering is OFF this returns null (runs free, cost_cents stays null). When ON,
- * debit actual cost x markup; a debit failure AFTER a served run logs loudly but
- * does NOT throw (the user was served), idempotency-keyed per run so a retry
- * can't double-charge. Returns the cost in cents (or null).
+ * Post-run wallet debit (GATED, success-only). Shared by both run paths. Delegates
+ * entirely to debitPlatformTokens, which no-ops for BYOK (source !== 'platform')
+ * and metering-off, and otherwise debits at the standard 2x platform multiplier.
+ * Idempotency-keyed per run (`agent-run_<runId>`) so a retry can't double-charge.
+ * Returns the cents actually debited, or null when nothing was debited (BYOK /
+ * metering-off) so the caller records cost_cents = null for those runs.
  */
-async function debitRun(opts: RunAgentOptions, runId: string, runModel: string, tokensInput: number | null, tokensOutput: number | null, sopTitle: string | null): Promise<number | null> {
-  let costCents: number | null = null;
-  try {
-    costCents = computeDebitCents(
-      { model: runModel, inputTokens: tokensInput ?? 0, outputTokens: tokensOutput ?? 0 },
-      markupMultipleFromEnv(),
-    );
-    const result = await debitWallet(opts.orgId, costCents, 'ai_usage', {
-      idempotencyKey: `agent-run_${runId}`,
-      metadata: { feature: 'agent-run', agentExternalId: opts.externalId, sopTitle, tokensInput, tokensOutput, model: runModel },
-      createdBy: 'agent-run',
-    });
-    if (!result.ok) {
-      // eslint-disable-next-line no-console
-      console.error('[agent-runtime] post-run wallet debit failed (user already served)', { orgId: opts.orgId, runId, costCents, code: result.code });
-    }
-  } catch (debitErr) {
-    // eslint-disable-next-line no-console
-    console.error('[agent-runtime] post-run wallet debit threw (user already served)', { orgId: opts.orgId, runId, err: debitErr });
-  }
-  return costCents;
+async function debitRun(opts: RunAgentOptions, source: string, runId: string, runModel: string, tokensInput: number | null, tokensOutput: number | null): Promise<number | null> {
+  const { debited, cents } = await debitPlatformTokens({
+    orgId: opts.orgId,
+    source,
+    model: runModel,
+    inputTokens: tokensInput ?? 0,
+    outputTokens: tokensOutput ?? 0,
+    idempotencyKey: `agent-run_${runId}`,
+    feature: 'agent_run',
+  });
+  return debited ? (cents ?? null) : null;
 }
 
 interface ToolLoopResult {
@@ -390,11 +385,10 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   const startedAt = new Date();
   const prep = await prepareRun(opts, startedAt);
   if (!prep.ready) return prep.result;
-  const { runId, systemPrompt, userPrompt, sopTitle, metering } = prep;
+  const { runId, systemPrompt, userPrompt, sopTitle, ai } = prep;
 
-  // Resolve the org's BYOK key (falls back to the platform ANTHROPIC_API_KEY
-  // for orgs without an org/portfolio key, so this is a no-op for them).
-  const ai = await resolveAiKey(opts.orgId);
+  // prepareRun already resolved the org's AI key/source (BYOK or platform),
+  // falling back to the platform ANTHROPIC_API_KEY for orgs without their own.
   const client = new Anthropic({ apiKey: ai.key });
 
   try {
@@ -409,7 +403,8 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
     const tokensOutput = loop.tokensOutput;
     const runModel = loop.model;
 
-    const costCents = metering ? await debitRun(opts, runId, runModel, tokensInput, tokensOutput, sopTitle) : null;
+    // No-ops (returns null) for BYOK / metering-off; debits 2x for platform-key.
+    const costCents = await debitRun(opts, ai.source, runId, runModel, tokensInput, tokensOutput);
 
     await db.execute(sql`
       UPDATE agent_runs
@@ -463,11 +458,10 @@ export async function runAgentStream(
   const startedAt = new Date();
   const prep = await prepareRun(opts, startedAt);
   if (!prep.ready) return prep.result;
-  const { runId, systemPrompt, userPrompt, sopTitle, metering } = prep;
+  const { runId, systemPrompt, userPrompt, sopTitle, ai } = prep;
 
-  // Resolve the org's BYOK key (falls back to the platform ANTHROPIC_API_KEY
-  // for orgs without an org/portfolio key, so this is a no-op for them).
-  const ai = await resolveAiKey(opts.orgId);
+  // prepareRun already resolved the org's AI key/source (BYOK or platform),
+  // falling back to the platform ANTHROPIC_API_KEY for orgs without their own.
   const client = new Anthropic({ apiKey: ai.key });
 
   try {
@@ -480,7 +474,8 @@ export async function runAgentStream(
       const loop = await runToolLoop(client, systemPrompt, userPrompt, toolset, opts.orgId);
       try { onDelta(loop.output); } catch { /* consumer (SSE socket) gone */ }
       const completedAt = new Date();
-      const costCents = metering ? await debitRun(opts, runId, loop.model, loop.tokensInput, loop.tokensOutput, sopTitle) : null;
+      // No-ops (null) for BYOK / metering-off; debits 2x for platform-key.
+      const costCents = await debitRun(opts, ai.source, runId, loop.model, loop.tokensInput, loop.tokensOutput);
       await db.execute(sql`
         UPDATE agent_runs
         SET status = 'succeeded', output = ${loop.output}, model = ${loop.model},
@@ -522,7 +517,8 @@ export async function runAgentStream(
     const tokensOutput = final?.usage?.output_tokens ?? null;
     const runModel = final?.model || DEFAULT_MODEL;
 
-    const costCents = metering ? await debitRun(opts, runId, runModel, tokensInput, tokensOutput, sopTitle) : null;
+    // No-ops (null) for BYOK / metering-off; debits 2x for platform-key.
+    const costCents = await debitRun(opts, ai.source, runId, runModel, tokensInput, tokensOutput);
 
     await db.execute(sql`
       UPDATE agent_runs
