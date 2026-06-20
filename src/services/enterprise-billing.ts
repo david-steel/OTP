@@ -120,6 +120,20 @@ export async function createEnterpriseCheckoutSession(opts: {
   const org = orgRow[0];
   if (!org) throw new Error(`Organization ${opts.orgId} not found.`);
 
+  // Mutual exclusion: an org must never run both an Enterprise and a standard
+  // per-agent subscription at once (that would double-charge). If a live standard
+  // sub exists, refuse to start Enterprise until it is cancelled.
+  const existingSubRow = await db
+    .select({ status: subscriptions.status, planKind: subscriptions.planKind })
+    .from(subscriptions)
+    .where(eq(subscriptions.orgId, org.id))
+    .limit(1);
+  const existingSub = existingSubRow[0];
+  const liveStatuses = new Set(['active', 'trialing', 'past_due']);
+  if (existingSub && existingSub.planKind === 'standard_agent' && liveStatuses.has(existingSub.status)) {
+    throw new Error('org already has an active standard subscription; cancel it before starting Enterprise');
+  }
+
   const customerId = await ensureStripeCustomer(stripe, {
     orgId: org.id,
     orgName: org.name,
@@ -171,7 +185,8 @@ export async function recordSubscriptionFromStripe(sub: Stripe.Subscription): Pr
     return;
   }
 
-  const seatQty = findSeatQuantity(sub);
+  const planKind = planKindFromMetadata(sub.metadata?.kind);
+  const seatQty = extractQuantity(sub, planKind);
   // current_period_end is a unix timestamp (seconds). Cast narrowly: some Stripe
   // type versions surface this on the item rather than the subscription root.
   const periodEndUnix = (sub as unknown as { current_period_end?: number }).current_period_end;
@@ -189,6 +204,7 @@ export async function recordSubscriptionFromStripe(sub: Stripe.Subscription): Pr
       stripeSubscriptionId: sub.id,
       status: sub.status,
       agentQuantity: seatQty,
+      planKind,
       currentPeriodEnd,
       updatedAt: now,
     })
@@ -199,18 +215,24 @@ export async function recordSubscriptionFromStripe(sub: Stripe.Subscription): Pr
         stripeSubscriptionId: sub.id,
         status: sub.status,
         agentQuantity: seatQty,
+        planKind,
         currentPeriodEnd,
         updatedAt: now,
       },
     });
 
-  // Flip the org plan tier based on subscription status.
-  const activeStatuses = new Set(['active', 'trialing', 'past_due']);
-  const deadStatuses = new Set(['canceled', 'incomplete_expired', 'unpaid']);
-  if (activeStatuses.has(sub.status)) {
-    await db.update(organizations).set({ planTier: 'enterprise' }).where(eq(organizations.id, orgId));
-  } else if (deadStatuses.has(sub.status)) {
-    await db.update(organizations).set({ planTier: 'standard' }).where(eq(organizations.id, orgId));
+  // plan_tier rule: ONLY enterprise-kind subscriptions manage the enterprise
+  // tier. A standard per-agent sub must never flip an org to 'enterprise', and
+  // must not clobber an org made enterprise by other means -- so for any
+  // non-enterprise kind we do NOT touch plan_tier at all.
+  if (planKind === 'enterprise') {
+    const activeStatuses = new Set(['active', 'trialing', 'past_due']);
+    const deadStatuses = new Set(['canceled', 'incomplete_expired', 'unpaid']);
+    if (activeStatuses.has(sub.status)) {
+      await db.update(organizations).set({ planTier: 'enterprise' }).where(eq(organizations.id, orgId));
+    } else if (deadStatuses.has(sub.status)) {
+      await db.update(organizations).set({ planTier: 'standard' }).where(eq(organizations.id, orgId));
+    }
   }
   // Best-effort entitlements sync: the entitlements service (getOrgEntitlements)
   // exposes no clean planTier setter today (it only lazily creates a default
@@ -234,6 +256,64 @@ function findSeatQuantity(sub: Stripe.Subscription): number | null {
   return null;
 }
 
+/** Discriminated plan kind for a subscriptions row. */
+export type PlanKind = 'enterprise' | 'standard_agent' | 'unknown';
+
+/**
+ * Map the Stripe subscription_data.metadata.kind value (stamped at checkout) to
+ * our internal PlanKind. Enterprise checkout stamps 'enterprise'; the standard
+ * per-agent checkout (in ./stripe.ts) stamps 'agent_subscription'. Anything else
+ * (missing / legacy / unrecognized) is 'unknown'.
+ */
+function planKindFromMetadata(kind: string | undefined): PlanKind {
+  if (kind === 'enterprise') return 'enterprise';
+  if (kind === 'agent_subscription') return 'standard_agent';
+  return 'unknown';
+}
+
+/**
+ * Robustly extract the billed quantity from a Stripe Subscription. For the
+ * enterprise plan we prefer the seat line item (matched by lookup_key) and fall
+ * back to the first item. For standard_agent / unknown there is no lookup_key,
+ * so we use the first item directly. Never returns null when at least one item
+ * exists; returns 0 only when the subscription truly has no items.
+ */
+function extractQuantity(sub: Stripe.Subscription, planKind: PlanKind): number {
+  const items = sub.items?.data || [];
+  if (planKind === 'enterprise') {
+    const seatQty = findSeatQuantity(sub);
+    if (seatQty !== null) return seatQty;
+  }
+  return items[0]?.quantity ?? 0;
+}
+
+/**
+ * Plan-aware desired billed quantity for an org. Counts the org's live agents,
+ * then: enterprise -> billedSeats(count) (enforces the 25-seat floor); standard
+ * per-agent / unknown -> max(1, count) (at least one billable unit, no floor).
+ * Shared by syncEnterpriseSeats and the reconcile job so the two never diverge.
+ */
+export async function desiredSeatQuantity(orgId: string, planKind: PlanKind): Promise<number> {
+  const count = await countOrgAgents(orgId);
+  if (planKind === 'enterprise') return billedSeats(count);
+  return Math.max(1, count);
+}
+
+/**
+ * Find the line item id to update for a quantity change. For enterprise we
+ * target the seat item (matched by lookup_key), falling back to the first item.
+ * For standard_agent / unknown there is a single per-agent item, so use the
+ * first item. Returns null only when the subscription has no items.
+ */
+export function seatItemId(stripeSub: Stripe.Subscription, planKind: PlanKind): string | null {
+  const items = stripeSub.items?.data || [];
+  if (planKind === 'enterprise') {
+    const seatItem = items.find((item) => item.price && item.price.lookup_key === SEAT_PRICE_LOOKUP_KEY);
+    if (seatItem) return seatItem.id;
+  }
+  return items[0]?.id ?? null;
+}
+
 /**
  * Reconcile the org's enterprise seat quantity with its live agent count. If an
  * active enterprise subscription exists and the billed seat quantity differs
@@ -251,6 +331,7 @@ export async function syncEnterpriseSeats(orgId: string): Promise<void> {
       .select({
         stripeSubscriptionId: subscriptions.stripeSubscriptionId,
         status: subscriptions.status,
+        planKind: subscriptions.planKind,
       })
       .from(subscriptions)
       .where(eq(subscriptions.orgId, orgId))
@@ -258,20 +339,23 @@ export async function syncEnterpriseSeats(orgId: string): Promise<void> {
     const row = subRow[0];
     if (!row || !row.stripeSubscriptionId) return;
 
+    // Seat sync is an enterprise-only concern. A standard per-agent sub manages
+    // its own quantity elsewhere and must never be touched by this path.
+    if (row.planKind !== 'enterprise') return;
+
     const activeStatuses = new Set(['active', 'trialing', 'past_due']);
     if (!activeStatuses.has(row.status)) return;
 
     const sub = await stripe.subscriptions.retrieve(row.stripeSubscriptionId);
-    const seatItem = (sub.items?.data || []).find(
-      (item) => item.price && item.price.lookup_key === SEAT_PRICE_LOOKUP_KEY,
-    );
-    if (!seatItem) return;
+    const itemId = seatItemId(sub, 'enterprise');
+    if (!itemId) return;
+    const seatItem = (sub.items?.data || []).find((item) => item.id === itemId);
 
-    const desiredQty = billedSeats(await countOrgAgents(orgId));
-    if (seatItem.quantity === desiredQty) return; // already in sync
+    const desiredQty = await desiredSeatQuantity(orgId, 'enterprise');
+    if (seatItem && seatItem.quantity === desiredQty) return; // already in sync
 
     await stripe.subscriptions.update(sub.id, {
-      items: [{ id: seatItem.id, quantity: desiredQty }],
+      items: [{ id: itemId, quantity: desiredQty }],
     });
   } catch (err) {
     // Best-effort: seat drift is reconciled again on the next agent change /

@@ -15,10 +15,15 @@ import { eq } from 'drizzle-orm';
 import { db } from '../config/database.js';
 import { subscriptions, organizations } from '../db/schema.js';
 import { getStripe } from './stripe.js';
-import { getOrgTeamGraph } from './team-graph.js';
+import { desiredSeatQuantity, seatItemId, type PlanKind } from './enterprise-billing.js';
 
 function billingOn(): boolean {
   return (process.env.BILLING_ENABLED || '').trim().toLowerCase() === 'true';
+}
+
+/** Narrow the stored plan_kind varchar to a PlanKind; anything else -> 'unknown'. */
+function toPlanKind(raw: string | null | undefined): PlanKind {
+  return raw === 'enterprise' || raw === 'standard_agent' ? raw : 'unknown';
 }
 
 /**
@@ -35,22 +40,32 @@ export async function reconcileSubscriptionQuantity(
   const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.orgId, orgId)).limit(1);
   if (!sub || sub.status !== 'active' || !sub.stripeSubscriptionId) return { status: 'no_active_sub' };
 
-  let agents = 0;
+  // Plan-aware desired quantity: enterprise -> billedSeats(count) (25-seat floor);
+  // standard per-agent / unknown -> max(1, count). desiredSeatQuantity counts the
+  // org's live agents internally, so there is no separate chart walk here.
+  const planKind = toPlanKind(sub.planKind);
+  let want: number;
   try {
-    const team = await getOrgTeamGraph(orgId, orgName || 'Organization');
-    agents = team.nodes.filter((n) => n.type === 'agent').length;
+    want = await desiredSeatQuantity(orgId, planKind);
   } catch {
     return { status: 'chart_error' };
   }
-  const want = Math.max(1, agents);
-  if (want === sub.agentQuantity) return { status: 'unchanged', to: want };
+
+  // Resolve the CORRECT seat line item to update. For enterprise the subscription
+  // has two items (seat + support); items[0] may be the support line, so target
+  // the seat item by lookup_key. For standard / unknown this is items[0].
+  const stripeSub = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
+  const itemId = seatItemId(stripeSub, planKind);
+  if (!itemId) return { status: 'no_item' };
+
+  // Drift compare against the CURRENT quantity of THAT seat item (not blindly the
+  // stored agentQuantity), so multi-item enterprise subs compare the right line.
+  const currentQty = stripeSub.items.data.find((i) => i.id === itemId)?.quantity ?? null;
+  if (currentQty === want) return { status: 'unchanged', to: want };
 
   // Drift -> update Stripe (prorate the difference), then mirror locally. The
   // resulting customer.subscription.updated webhook also upserts the row, so this
   // local write is just for immediacy.
-  const stripeSub = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
-  const itemId = stripeSub.items?.data?.[0]?.id;
-  if (!itemId) return { status: 'no_item' };
   await stripe.subscriptions.update(sub.stripeSubscriptionId, {
     items: [{ id: itemId, quantity: want }],
     proration_behavior: 'create_prorations',
