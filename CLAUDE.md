@@ -25,6 +25,19 @@ When working on OTP code (`src/`): **read `src/DESIGN.md` before any visual or U
 
 When working on Orger code (`orger/`): **always read `orger/DESIGN.md` before any visual or UI decision.** All font choices, colors, spacing, microcopy voice, and the Shrub mascot rules are defined there. Do not deviate without explicit user approval. In QA mode, flag any code that doesn't match `orger/DESIGN.md`.
 
+## Billing is a SERIALIZED zone (one session at a time)
+
+Billing code (Stripe subscriptions, the webhook, wallet metering, the reconcile job, pricing) is touched by many files, and parallel sessions editing it have caused a red prod deploy and a silently-reverted edit. **Before editing ANY billing-sensitive file, acquire the lock:**
+
+```bash
+scripts/billing-lock.sh status                      # is it held?
+scripts/billing-lock.sh acquire "what you're doing"  # claim it (fails if held)
+# ...edit, PR, merge...
+scripts/billing-lock.sh release                      # after it's merged
+```
+
+If `acquire` is BLOCKED, do **not** edit billing files — coordinate or wait. The full file list, the protocol, and how the billing layer fits together are in **`docs/billing-coordination.md`** — read it before any billing work.
+
 ## Config Files
 - `package.json`
 - `tsconfig.json`
