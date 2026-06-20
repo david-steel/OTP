@@ -28,6 +28,7 @@ import { AGENTIC_LEVEL_LABELS } from '../../../shared/enums.js';
 import { validateUuidParam } from '../../../shared/param-validation.js';
 import { currentPeriod } from '../../../shared/period.js';
 import { renderDescription } from '../../../shared/markdown-lite.js';
+import { AGENT_PRICE_CENTS, PLATFORM_TOKEN_MULTIPLIER, STANDARD_DATA_NOTE } from '../../../shared/standard-pricing.js';
 import { annotateOosStaleness } from '../../../services/oos-staleness.js';
 import { getOrgTeamGraph, computeAgentComparisonPairs } from '../../../services/team-graph.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../../services/checkup-scoring.js';
@@ -2336,14 +2337,16 @@ Founder, OTP</p>
   });
 
   // Billing (Company Settings) -- live preview of agent-team cost + plan state.
-  // Pricing model: humans free; every AI agent on the chart is billable.
-  // $12/agent/mo Basic; $16/agent/mo if that agent uses API + MCP. There is no
-  // per-agent API/MCP signal in the data today (api_keys are org-level only and
-  // not linked to chart agents), so apiMcpAgents is held at 0 and every agent
-  // bills at Basic until per-agent connection tracking ships. Stripe/payment
-  // collection is a later increment -- this page charges nothing.
-  const BILLING_PRICE_BASIC = 12;
-  const BILLING_PRICE_API_MCP = 16;
+  // Pricing model (standard, non-Enterprise): humans free; every AI agent on the
+  // chart bills at a flat $16/agent/mo (AGENT_PRICE_CENTS from standard-pricing).
+  // Display-only estimate -- Stripe/payment collection is a later increment and
+  // this page charges nothing. Platform-key token usage bills at
+  // PLATFORM_TOKEN_MULTIPLIER (2x) drawn from the wallet; see STANDARD_DATA_NOTE.
+  // The basic/apiMcp split is retired (both rates collapse to the flat $16); the
+  // two constants are kept only to satisfy the existing view contract.
+  const BILLING_PRICE_FLAT = AGENT_PRICE_CENTS / 100; // $16 / agent / mo (flat)
+  const BILLING_PRICE_BASIC = BILLING_PRICE_FLAT;
+  const BILLING_PRICE_API_MCP = BILLING_PRICE_FLAT;
   app.get('/settings/billing', async (request, reply) => {
     const billingEnabled = (process.env.BILLING_ENABLED || '').trim().toLowerCase() === 'true';
 
@@ -2393,11 +2396,15 @@ Founder, OTP</p>
       activeApiKeys = 0;
     }
 
-    // Pricing rule: humans free; every agent on the chart is billable.
-    // >=1 active API key => all agents at $16/mo (API+MCP); else $12/mo (Basic).
+    // Pricing rule: humans free; every agent on the chart is billable at a flat
+    // $16/agent/mo (AGENT_PRICE_CENTS). The old $12 Basic / $16 API+MCP split is
+    // gone -- rate is the flat figure regardless of active API keys. hasApiMcp is
+    // still surfaced to the view for the BYOK/token-note copy.
     const hasApiMcp = activeApiKeys >= 1;
-    const rate = hasApiMcp ? BILLING_PRICE_API_MCP : BILLING_PRICE_BASIC;
+    const rate = BILLING_PRICE_FLAT;
     const monthlyTotal = totalAgents * rate;
+    // Platform-key token usage bills at PLATFORM_TOKEN_MULTIPLIER (2x) from the
+    // wallet; BYOK orgs use their own key. STANDARD_DATA_NOTE carries the copy.
 
     // --- Wallet (monetization Phase 2). Real data from org_wallets +
     // wallet_ledger. Never 500 the page if the wallet layer hiccups.
@@ -2454,6 +2461,8 @@ Founder, OTP</p>
       activeApiKeys,
       billingEnabled,
       prices: { basic: BILLING_PRICE_BASIC, apiMcp: BILLING_PRICE_API_MCP },
+      dataNote: STANDARD_DATA_NOTE,
+      tokenMultiplier: PLATFORM_TOKEN_MULTIPLIER,
       orgName: org.name,
       stripeCustomerId: org.stripeCustomerId || null,
       // Wallet section locals.
