@@ -47,6 +47,22 @@ export async function getOrgEntitlements(orgId: string): Promise<OrgEntitlements
   return { planTier: 'free', addons: [], featureFlags: {} };
 }
 
+/**
+ * Mirror the org's billing plan tier into org_entitlements so entitlement-based
+ * gates (e.g. services/mcp-gate.ts, which reads ent.planTier) see paid tiers.
+ * Call this wherever organizations.plan_tier changes. Upsert is race-safe via
+ * the unique org_id index.
+ */
+export async function setOrgPlanTier(orgId: string, planTier: string): Promise<void> {
+  await db
+    .insert(orgEntitlements)
+    .values({ orgId, planTier })
+    .onConflictDoUpdate({
+      target: orgEntitlements.orgId,
+      set: { planTier, updatedAt: new Date() },
+    });
+}
+
 function normalize(row: typeof orgEntitlements.$inferSelect): OrgEntitlements {
   return {
     planTier: row.planTier || 'free',

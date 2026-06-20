@@ -193,7 +193,7 @@ async function debitForUsage(
   orgId: string,
   source: string,
   usage: Usage,
-  feature: 'rock-ai-draft' | 'rock-ai-critique',
+  feature: 'rock_ai_draft' | 'rock_ai_critique',
   idempotencyKey: string,
 ): Promise<number> {
   const { cents } = await debitPlatformTokens({
@@ -264,8 +264,8 @@ export default async function rockAiRoutes(app: FastifyInstance) {
       loaded.org.id,
       ai.source,
       out.usage,
-      'rock-ai-draft',
-      `rock-ai_rock-ai-draft_${request.id}`,
+      'rock_ai_draft',
+      `rock_ai_draft_${request.id}`,
     );
 
     if (!out.value) {
@@ -314,8 +314,8 @@ export default async function rockAiRoutes(app: FastifyInstance) {
       loaded.org.id,
       ai.source,
       out.usage,
-      'rock-ai-critique',
-      `rock-ai_rock-ai-critique_${request.id}`,
+      'rock_ai_critique',
+      `rock_ai_critique_${request.id}`,
     );
 
     if (!out.value) {
