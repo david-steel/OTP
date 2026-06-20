@@ -218,4 +218,20 @@ export default async function adminPortfoliosRoutes(app: FastifyInstance) {
 
     return { portfolios };
   });
+
+  // All orgs (id + name + kind + tier) so the admin UI can resolve a name to a
+  // UUID to paste into the create-above / link forms. Super-admin only.
+  app.get('/admin/orgs', async (request, reply) => {
+    if (!requireSuperAdminOr404(request, reply)) return;
+    const orgs = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        kind: organizations.kind,
+        planTier: organizations.planTier,
+      })
+      .from(organizations)
+      .orderBy(organizations.name);
+    return { orgs };
+  });
 }

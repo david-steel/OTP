@@ -449,6 +449,15 @@
       </div>
     </div>
 
+    <!-- Org UUID reference: filter, click a UUID to copy it + fill "Create above". -->
+    <div class="bg-white border rounded-lg p-4 mb-4">
+      <div class="font-medium text-sm mb-1">Organizations <span class="text-gray-400 font-normal">— click a UUID to copy &amp; fill "Create above"</span></div>
+      <input type="text" id="adm-org-search" placeholder="Filter by name..." autocomplete="off" class="w-full border rounded px-2 py-1.5 text-sm mb-2">
+      <div id="adm-org-list" class="text-xs" style="max-height:15rem;overflow:auto;">
+        <div class="px-1 py-2 text-gray-400">Loading orgs...</div>
+      </div>
+    </div>
+
     <div class="bg-white border rounded-lg overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-left text-xs text-gray-500">
@@ -479,6 +488,42 @@
         return r.json().catch(function(){ return {}; }).then(function(j) {
           if (!r.ok) throw (j.error || { message: 'HTTP ' + r.status });
           return j;
+        });
+      }
+
+      // ---- Org UUID reference (find an org -> copy its UUID -> fill create-above) ----
+      var allOrgs = [];
+      var orgList = document.getElementById('adm-org-list');
+      var orgSearch = document.getElementById('adm-org-search');
+      function renderOrgs() {
+        if (!orgList) return;
+        var q = ((orgSearch && orgSearch.value) || '').toLowerCase();
+        var rows = allOrgs.filter(function(o) { return !q || (o.name || '').toLowerCase().indexOf(q) >= 0; });
+        if (!rows.length) { orgList.innerHTML = '<div class="px-1 py-2 text-gray-400">No match.</div>'; return; }
+        orgList.innerHTML = rows.slice(0, 300).map(function(o) {
+          var tag = o.kind === 'portfolio' ? 'portfolio' : (o.planTier || 'standard');
+          return '<div class="flex items-center justify-between gap-2 px-1 py-1.5 border-b">'
+            + '<span class="truncate">' + esc(o.name || '(no name)') + ' <span class="text-gray-400">' + esc(tag) + '</span></span>'
+            + '<button type="button" data-id="' + esc(o.id) + '" class="adm-org-copy font-mono text-blue-600 hover:underline whitespace-nowrap" title="Copy + fill">' + esc(o.id) + '</button>'
+            + '</div>';
+        }).join('');
+      }
+      if (orgList) {
+        fetch('/api/v1/admin/orgs', { credentials: 'same-origin' })
+          .then(readJson)
+          .then(function(j) { allOrgs = (j && j.orgs) || []; renderOrgs(); })
+          .catch(function(e) { orgList.innerHTML = '<div class="px-1 py-2 text-red-600">' + esc((e && e.message) || 'failed to load orgs') + '</div>'; });
+        if (orgSearch) orgSearch.addEventListener('input', renderOrgs);
+        orgList.addEventListener('click', function(ev) {
+          var b = ev.target && ev.target.closest ? ev.target.closest('.adm-org-copy') : null;
+          if (!b) return;
+          var id = b.getAttribute('data-id');
+          try { if (navigator.clipboard) navigator.clipboard.writeText(id); } catch (e) {}
+          var above = document.getElementById('adm-pf-above-org');
+          if (above) above.value = id;
+          var prev = b.textContent;
+          b.textContent = 'copied ✓';
+          setTimeout(function() { b.textContent = prev; }, 1000);
         });
       }
 
