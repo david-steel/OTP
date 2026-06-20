@@ -196,6 +196,9 @@ export const apiKeys = pgTable('api_keys', {
   id: uuid('id').defaultRandom().primaryKey(),
   orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   name: varchar('name', { length: 255 }).notNull().default('Default'),
+  // 'api'  = a manually-minted REST/MCP key (Authorization: Bearer otp_...)
+  // 'mcp'  = a token minted for a Remote MCP connection (lives in the URL path)
+  kind: varchar('kind', { length: 16 }).notNull().default('api'),
   keyPrefix: varchar('key_prefix', { length: 8 }).notNull(),
   keyHash: varchar('key_hash', { length: 64 }).notNull(),
   scopes: text('scopes').array().notNull(),

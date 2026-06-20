@@ -8,27 +8,21 @@ export interface ApiKeyContext {
   orgId: string;
   keyId: string;
   scopes: string[];
+  kind: string;
 }
 
 function hashKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');
 }
 
-export function generateApiKey(): { key: string; prefix: string; hash: string } {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  const key = 'otp_' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  const prefix = key.slice(0, 8);
-  const hash = hashKey(key);
-  return { key, prefix, hash };
-}
-
-export async function resolveApiKey(request: FastifyRequest): Promise<ApiKeyContext | null> {
-  const authHeader = request.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) return null;
-
-  const token = authHeader.slice(7);
-  if (!token.startsWith('otp_')) return null;
+/**
+ * Core token validation, shared by the header-based REST path (resolveApiKey)
+ * and the URL-path Remote MCP path (resolveMcpToken). Hashes the raw token,
+ * looks it up by hash, checks revoke/expiry, bumps usage. Returns null on any
+ * miss so callers can fail closed.
+ */
+export async function resolveTokenString(token: string | undefined | null): Promise<ApiKeyContext | null> {
+  if (!token || !token.startsWith('otp_')) return null;
 
   const hash = hashKey(token);
 
@@ -37,6 +31,7 @@ export async function resolveApiKey(request: FastifyRequest): Promise<ApiKeyCont
       id: apiKeys.id,
       orgId: apiKeys.orgId,
       scopes: apiKeys.scopes,
+      kind: apiKeys.kind,
       expiresAt: apiKeys.expiresAt,
     })
     .from(apiKeys)
@@ -59,7 +54,32 @@ export async function resolveApiKey(request: FastifyRequest): Promise<ApiKeyCont
     orgId: row.orgId,
     keyId: row.id,
     scopes: row.scopes || ['read'],
+    kind: row.kind || 'api',
   };
+}
+
+/**
+ * Resolve a Remote MCP token taken from the URL path (e.g. /api/mcp/:token).
+ * The Claude/Cursor connector dialog has no header field, so MCP tokens travel
+ * in the path. Same validation as a Bearer key.
+ */
+export async function resolveMcpToken(token: string | undefined | null): Promise<ApiKeyContext | null> {
+  return resolveTokenString(token);
+}
+
+export function generateApiKey(): { key: string; prefix: string; hash: string } {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const key = 'otp_' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  const prefix = key.slice(0, 8);
+  const hash = hashKey(key);
+  return { key, prefix, hash };
+}
+
+export async function resolveApiKey(request: FastifyRequest): Promise<ApiKeyContext | null> {
+  const authHeader = request.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  return resolveTokenString(authHeader.slice(7));
 }
 
 export function requireScope(ctx: { scopes: string[] }, requiredScope: string): boolean {

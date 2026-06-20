@@ -26,6 +26,65 @@
         <!-- right: content -->
         <div class="flex-1 min-w-0 w-full">
 
+          <!-- Remote MCP connection (Labs + paid) -->
+          <div class="bg-gray-50 border rounded-xl p-6 mb-8">
+            <div class="flex items-center gap-2 mb-1">
+              <h2 class="font-bold text-gray-900">Remote MCP connection</h2>
+              <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Recommended</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Connect OTP to Claude, Cursor, or Windsurf with one hosted URL. No install, no terminal.</p>
+
+            <% var _mcp = (typeof mcpAccess !== 'undefined') ? mcpAccess : null; %>
+            <% if (_mcp && _mcp.allowed) { %>
+              <button id="create-mcp-btn" class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                Create connection
+              </button>
+
+              <!-- New connection URL (hidden by default) -->
+              <div id="new-mcp-display" class="hidden mt-4 bg-white border rounded-lg p-4">
+                <p class="text-sm font-semibold text-gray-900 mb-1">Your connection URL</p>
+                <p class="text-xs text-gray-500 mb-3">Copy it now &mdash; it is shown only once. Paste it into Claude &rarr; Settings &rarr; Connectors &rarr; Add custom connector.</p>
+                <div class="flex items-center gap-2">
+                  <code id="new-mcp-url" class="flex-1 bg-gray-50 px-3 py-2 rounded border text-sm font-mono break-all select-all"></code>
+                  <button onclick="navigator.clipboard.writeText(document.getElementById('new-mcp-url').textContent)"
+                          class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm whitespace-nowrap">Copy</button>
+                </div>
+              </div>
+
+              <!-- Existing connections -->
+              <% var mcpList = (typeof keys !== 'undefined' ? keys : []).filter(function(k){ return k.kind === 'mcp'; }); %>
+              <% if (mcpList.length > 0) { %>
+                <div class="mt-5 space-y-2">
+                  <% mcpList.forEach(function(c){ %>
+                    <div class="flex items-center justify-between bg-white border rounded-lg px-4 py-3" data-key-id="<%= c.id %>">
+                      <div>
+                        <div class="text-sm font-semibold text-gray-900"><%= c.name %></div>
+                        <div class="text-xs text-gray-400 mt-1">
+                          <code class="font-mono"><%= c.keyPrefix %>...****</code>
+                          &middot; Created <%= new Date(c.createdAt).toLocaleDateString() %>
+                          <% if (c.lastUsedAt) { %> &middot; Last used <%= new Date(c.lastUsedAt).toLocaleDateString() %><% } else { %> &middot; Never used<% } %>
+                        </div>
+                      </div>
+                      <button onclick="revokeKey('<%= c.id %>', this)"
+                              class="px-3 py-1.5 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 text-xs font-medium transition-colors">Revoke</button>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } %>
+
+            <% } else if (_mcp && _mcp.reason === 'not_paid') { %>
+              <div class="bg-white border rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-3">Remote MCP is a paid feature. Upgrade your plan to connect your AI directly to OTP.</p>
+                <a href="/settings/billing" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm">Upgrade plan</a>
+              </div>
+            <% } else { %>
+              <div class="bg-white border rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-3">Remote MCP is in Labs. Enable it to create a connection. A paid plan is required to keep it on.</p>
+                <a href="/settings/labs" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm">Enable in Labs</a>
+              </div>
+            <% } %>
+          </div>
+
           <!-- Generate Key -->
           <div class="bg-gray-50 border rounded-xl p-6 mb-8">
             <h2 class="font-bold text-gray-900 mb-3">Generate New Key</h2>
@@ -51,13 +110,14 @@
           <!-- Active Keys -->
           <h2 class="font-bold text-gray-900 mb-4">Active Keys</h2>
 
-          <% if (keys.length === 0) { %>
+          <% var apiKeyList = keys.filter(function(k){ return k.kind !== 'mcp'; }); %>
+          <% if (apiKeyList.length === 0) { %>
             <div class="bg-gray-50 border rounded-xl p-6 text-center text-gray-500 text-sm">
               No API keys yet. Generate one above to connect your AI agents.
             </div>
           <% } else { %>
             <div class="space-y-3">
-              <% keys.forEach(function(key) { %>
+              <% apiKeyList.forEach(function(key) { %>
                 <div class="border rounded-xl p-4 flex items-center justify-between" data-key-id="<%= key.id %>">
                   <div>
                     <div class="flex items-center gap-3">
@@ -82,22 +142,22 @@
             </div>
           <% } %>
 
-          <!-- MCP Setup Instructions -->
+          <!-- Advanced: local (self-hosted) MCP -->
           <div class="mt-10 border-t pt-8">
-            <h2 class="font-bold text-gray-900 mb-4">MCP Setup</h2>
-            <p class="text-sm text-gray-600 mb-4">Add this to your Claude Code MCP config to connect your agents to OTP:</p>
+            <h2 class="font-bold text-gray-900 mb-4">Advanced: local (self-hosted)</h2>
+            <p class="text-sm text-gray-600 mb-4">Prefer to run the server yourself? Add this to your Claude Code / Cursor MCP config using one of the API keys above:</p>
             <pre class="bg-gray-900 text-gray-100 text-xs p-4 rounded-lg overflow-x-auto"><code>{
   "mcpServers": {
     "otp": {
       "command": "npx",
-      "args": ["@otp/mcp-server"],
+      "args": ["-y", "otp-mcp-server"],
       "env": {
         "OTP_API_KEY": "your-api-key-here"
       }
     }
   }
 }</code></pre>
-            <p class="text-xs text-gray-400 mt-3">Read-only tools (browse, search, compare) work without an API key. Publishing requires one.</p>
+            <p class="text-xs text-gray-400 mt-3">Read-only tools (browse, search, compare) work without an API key. Publishing and your org data require one. For a no-install connection, use the Remote MCP connection above.</p>
           </div>
 
         </div>
@@ -134,6 +194,33 @@
       setTimeout(() => location.reload(), 3000);
     } catch (err) {
       alert('Failed to create API key');
+    }
+  });
+
+  // Remote MCP connection: mint an 'mcp' token and reveal its one-time URL.
+  const MCP_CONNECT_BASE = ('<%= typeof connectBase !== "undefined" ? connectBase : "" %>' || location.origin).replace(/\/$/, '');
+  document.getElementById('create-mcp-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('create-mcp-btn');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/v1/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'mcp', name: 'Remote MCP connection', scopes: ['read', 'write'] }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error?.message || 'Failed to create connection');
+        btn.disabled = false;
+        return;
+      }
+      document.getElementById('new-mcp-url').textContent = MCP_CONNECT_BASE + '/api/mcp/' + data.key;
+      document.getElementById('new-mcp-display').classList.remove('hidden');
+      btn.textContent = 'Connection created';
+      // No auto-reload: the URL contains a secret shown only once.
+    } catch (err) {
+      alert('Failed to create connection');
+      btn.disabled = false;
     }
   });
 
