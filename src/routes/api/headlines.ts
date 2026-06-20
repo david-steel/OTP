@@ -24,7 +24,7 @@ import {
   orgMembers,
   auditLogs,
 } from '../../db/schema.js';
-import { resolveOrgForUser, type Role } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest, type Role } from '../../services/membership.js';
 import { canIntegrate } from '../../middleware/permissions.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { emitOrgEventSafe } from '../../services/org-events.js';
@@ -51,7 +51,7 @@ async function authedMember(request: any, reply: any) {
     reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in to manage headlines' } });
     return null;
   }
-  const resolved = await resolveOrgForUser(auth.userId);
+  const resolved = await resolveOrgForRequest(request);
   if (!resolved) {
     // Try legacy
     const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);

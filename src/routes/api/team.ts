@@ -25,6 +25,7 @@ import {
   listMembers,
   getRoleForUser,
   resolveOrgForUser,
+  resolveOrgForRequest,
   MembershipError,
 } from '../../services/membership.js';
 import { sendEmail } from '../../config/email.js';
@@ -79,7 +80,7 @@ async function checkScope(request: FastifyRequest, reply: any, requiredScope: st
 async function getOrg(request: FastifyRequest) {
   const auth = getAuth(request);
   if (auth.userId) {
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForRequest(request);
     if (resolved) return resolved.org;
     // Fallback to legacy direct match (covers any pre-membership orgs).
     const [row] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);

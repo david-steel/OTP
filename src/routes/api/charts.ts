@@ -17,12 +17,12 @@ import { db } from '../../config/database.js';
 import { charts, organizations, oosFiles } from '../../db/schema.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
-import { resolveOrgForUser } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest } from '../../services/membership.js';
 
 async function getOrg(request: FastifyRequest) {
   const auth = getAuth(request);
   if (auth.userId) {
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForRequest(request);
     if (resolved) return resolved.org;
     const [row] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     return row || null;

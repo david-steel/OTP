@@ -10,9 +10,12 @@
 
 import { eq, and, lte, sql } from 'drizzle-orm';
 import { randomBytes, createHash } from 'crypto';
+import type { FastifyRequest } from 'fastify';
+import { getAuth } from '@clerk/fastify';
 import { db } from '../config/database.js';
 import { orgMembers, orgInvitations, organizations } from '../db/schema.js';
 import { reconcileChartClaimByEmail } from './chart-claim-reconcile.js';
+import { readActiveOrgCookie } from './active-org.js';
 
 export const INVITATION_TTL_DAYS = 30;
 
@@ -108,6 +111,85 @@ export async function resolveOrgForUser(clerkUserId: string): Promise<{
   if (legacy) return { org: legacy, role: 'owner', claimedEntityId: null };
 
   return null;
+}
+
+/**
+ * Request-aware org resolver -- the founder-safe, switch-aware sibling of
+ * resolveOrgForUser. Resolution order (mirrors getAuthOrg / l8ResolveOrg):
+ *   1. Impersonation: under super-admin "view as", guards.ts swaps
+ *      request.orgMember to the target -- resolve to THEIR org.
+ *   2. Validated active-org switch cookie: if the user pinned a "Switch
+ *      company" choice AND holds an ACTIVE org_members row for that exact org,
+ *      resolve to it. This is what makes the switcher work for FOUNDERS --
+ *      resolveOrgForUser(userId) alone always returns their oldest membership
+ *      (their home org), silently ignoring the switch (caught 2026-06-20).
+ *   3. Fallback: the deterministic per-user pick (unchanged behavior for users
+ *      with no impersonation and no switch cookie -- i.e. everyone today).
+ *
+ * The cookie is validated against org_members every time -- never trusted alone
+ * (services/active-org.ts invariant 1) -- so it can only ever select among orgs
+ * the user is already a member of. No cross-tenant exposure.
+ */
+export async function resolveOrgForRequest(request: FastifyRequest): Promise<{
+  org: typeof organizations.$inferSelect;
+  role: Role;
+  claimedEntityId: string | null;
+} | null> {
+  const userId = getAuth(request).userId || null;
+  if (userId) {
+    // 1. Impersonation wins.
+    const imp = (request as any).impersonation as { active?: boolean } | null;
+    const impMember = (request as any).orgMember as { orgId?: string; role?: string; claimedEntityId?: string | null } | null;
+    if (imp?.active && impMember?.orgId) {
+      const [org] = await db.select().from(organizations).where(eq(organizations.id, impMember.orgId)).limit(1);
+      if (org) return { org, role: (impMember.role as Role) || 'managee', claimedEntityId: impMember.claimedEntityId ?? null };
+    }
+
+    // 2. Validated active-org switch cookie (founder-safe).
+    const pref = readActiveOrgCookie(request);
+    if (pref) {
+      const [m] = await db
+        .select({ org: organizations, role: orgMembers.role, claimedEntityId: orgMembers.claimedEntityId })
+        .from(orgMembers)
+        .innerJoin(organizations, eq(organizations.id, orgMembers.orgId))
+        .where(and(
+          eq(orgMembers.clerkUserId, userId),
+          eq(orgMembers.status, 'active'),
+          eq(orgMembers.orgId, pref),
+        ))
+        .limit(1);
+      if (m) return { org: m.org, role: m.role as Role, claimedEntityId: m.claimedEntityId };
+    }
+  }
+
+  // 3. Deterministic fallback (unchanged).
+  return resolveOrgForUser(userId || '');
+}
+
+/**
+ * Validated active-org switch cookie -> organization row, or null. NO
+ * deterministic fallback and NO impersonation handling -- it returns non-null
+ * ONLY when a genuine switch cookie maps to one of the user's ACTIVE
+ * memberships. Use it in resolvers that already handle impersonation and a
+ * legacy-founder path, to insert founder-safe switching WITHOUT changing the
+ * no-cookie behavior (e.g. l8ResolveOrg). Cookie validated every time.
+ */
+export async function resolveSwitchedOrgRow(request: FastifyRequest): Promise<typeof organizations.$inferSelect | null> {
+  const userId = getAuth(request).userId || null;
+  if (!userId) return null;
+  const pref = readActiveOrgCookie(request);
+  if (!pref) return null;
+  const [m] = await db
+    .select({ org: organizations })
+    .from(orgMembers)
+    .innerJoin(organizations, eq(organizations.id, orgMembers.orgId))
+    .where(and(
+      eq(orgMembers.clerkUserId, userId),
+      eq(orgMembers.status, 'active'),
+      eq(orgMembers.orgId, pref),
+    ))
+    .limit(1);
+  return m?.org || null;
 }
 
 /**
