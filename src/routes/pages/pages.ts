@@ -1274,7 +1274,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       { q: 'What are agentic maturity levels?', a: 'An 8-level framework measuring AI agent coordination sophistication, from L1 Tab Complete through L8 Autonomous Agent Teams.' },
       { q: 'What size organization can use OTP?', a: 'Any organization running AI agents, from solo operators to enterprises. The OOS format scales with your team.' },
       { q: 'Does OTP have an API?', a: 'Yes. REST API and MCP server for programmatic access to OOS data, claims, search, and the Intelligence Graph.' },
-      { q: 'How do I connect OTP to Claude, Cursor, or Windsurf?', a: 'Two ways. Easiest is a Remote MCP connection: generate a hosted connection URL under Settings, API and paste it into your client (in Claude, that is Settings, Connectors, Add custom connector). Or self-host the open-source server locally with "npx -y otp-mcp-server" and an API key. The hosted Remote MCP connection is a paid feature.' },
+      { q: 'How do I connect OTP to Claude, Cursor, or Windsurf?', a: 'Easiest: in Claude, go to Settings, Connectors, Add custom connector, paste https://orgtp.com/api/mcp, and sign in -- one click, no token to copy. If your client does not support sign-in, generate a token URL under Settings, API instead. Or self-host the open-source server locally with "npx -y otp-mcp-server" and an API key. The hosted Remote MCP connection is a paid feature.' },
     ];
     return renderV7(reply, 'faq', {
       title: 'FAQ - Organization Transport Protocol - OTP',
