@@ -31,7 +31,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { resolveOrgForUser } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest } from '../../services/membership.js';
 import { getOrgTeamGraph } from '../../services/team-graph.js';
 import { computeEditableTiles } from '../../services/chart-permissions.js';
 import { resolveSopFromNode } from './agents.js';
@@ -57,7 +57,7 @@ async function getMemberOrg(request: FastifyRequest): Promise<
 > {
   const auth = getAuth(request);
   if (!auth.userId) return null;
-  const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+  const resolved = await resolveOrgForRequest(request);
   if (resolved) {
     const viewerMember = (request as any).orgMember || {
       role: resolved.role,

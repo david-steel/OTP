@@ -74,6 +74,33 @@ async function resolveAuthOrg(request: FastifyRequest) {
       if (impArr[0]) return impArr[0];
     }
 
+    // Org-switching for ANY user (INCLUDING founders): if the user pinned an
+    // `otp_active_org` preference AND holds an ACTIVE org_members row for that
+    // exact org, resolve to THAT org. This MUST run before the legacy-founder
+    // path below: a founder's auth.userId == their own org.clerkOrgId, so Path
+    // 1 would short-circuit to their home org and silently ignore a switch INTO
+    // another org they belong to. Without this the switcher only ever worked
+    // for invited members, never founders (caught 2026-06-20: David switched to
+    // OTP but API writes still resolved to Sneeze It -> "does not belong to your
+    // org"). Runs AFTER impersonation so it never overrides "view as". The
+    // cookie is validated against org_members every time -- never trusted alone
+    // (services/active-org.ts invariant 1).
+    const activeOrgPref = readActiveOrgCookie(request);
+    if (activeOrgPref) {
+      const [prefMembership] = await db.select({ orgId: orgMembers.orgId })
+        .from(orgMembers)
+        .where(and(
+          eq(orgMembers.clerkUserId, auth.userId),
+          eq(orgMembers.status, 'active'),
+          eq(orgMembers.orgId, activeOrgPref),
+        ))
+        .limit(1);
+      if (prefMembership) {
+        const prefOrgArr = await db.select().from(organizations).where(eq(organizations.id, prefMembership.orgId)).limit(1);
+        if (prefOrgArr[0]) return prefOrgArr[0];
+      }
+    }
+
     // Path 1: legacy founder -- their Clerk user ID is stored as
     // organizations.clerkOrgId (single-tenant founder pattern).
     const orgArr = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
@@ -89,31 +116,14 @@ async function resolveAuthOrg(request: FastifyRequest) {
     // gate didn't). The two resolvers must agree. See also
     // checkMeetingEdit in routes/api/meetings.ts which already handles
     // the team-membership-or-attendee rule once the org is resolved.
+    // Path 2: team-member invite. The user joined an existing org via
+    // org_members; guards.ts resolved their active membership onto
+    // request.orgMember (already honoring the active-org cookie). The validated
+    // active-org switch is handled above for everyone, so here we just resolve
+    // the membership's org. Without this path invited members are implicitly
+    // read-only against every API write (the 2026-05-26 Kristen segue bug).
     const member = (request as any).orgMember as { orgId: string } | null;
     if (member?.orgId) {
-      // Org-switching: if the user has pinned an `otp_active_org` preference
-      // AND they hold an ACTIVE org_members row for that exact org, resolve to
-      // THAT org. The cookie is validated against org_members here every time
-      // (never trusted alone), and this runs AFTER the impersonation branch
-      // above so it never overrides "view as". If the cookie names an org the
-      // user isn't an active member of, we fall through to the existing
-      // first-membership org on request.orgMember unchanged. Mirrors the
-      // validated-preference logic in guards.ts; see services/active-org.ts.
-      const activeOrgPref = readActiveOrgCookie(request);
-      if (activeOrgPref && activeOrgPref !== member.orgId) {
-        const [prefMembership] = await db.select({ orgId: orgMembers.orgId })
-          .from(orgMembers)
-          .where(and(
-            eq(orgMembers.clerkUserId, auth.userId),
-            eq(orgMembers.status, 'active'),
-            eq(orgMembers.orgId, activeOrgPref),
-          ))
-          .limit(1);
-        if (prefMembership) {
-          const prefOrgArr = await db.select().from(organizations).where(eq(organizations.id, prefMembership.orgId)).limit(1);
-          if (prefOrgArr[0]) return prefOrgArr[0];
-        }
-      }
       const memberOrgArr = await db.select().from(organizations).where(eq(organizations.id, member.orgId)).limit(1);
       if (memberOrgArr[0]) return memberOrgArr[0];
     }

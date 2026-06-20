@@ -24,7 +24,7 @@ import { reportsSubtree } from '../../services/chart-permissions.js';
 import { ruleToLabel, RECURRENCE_OPTIONS, defaultMeetingTitle } from '../../services/meeting-recurrence.js';
 import { autoEndStaleMeetings } from '../../services/meeting-lifecycle.js';
 import { isMeetingLocked } from '../../shared/meeting-timing.js';
-import { resolveOrgForUser, acceptInvite, MembershipError } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest, resolveSwitchedOrgRow, acceptInvite, MembershipError } from '../../services/membership.js';
 import { resolveDemoPageContext } from '../../middleware/demo-access.js';
 import { calculateCheckup, QUESTIONS as CHECKUP_QUESTIONS, LEVEL_LABELS as CHECKUP_LEVEL_LABELS } from '../../services/checkup-scoring.js';
 import { sendEmail } from '../../config/email.js';
@@ -538,7 +538,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     const auth = getAuth(request);
     const _demoCtx = await resolveDemoPageContext(request);
     if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = _demoCtx || await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const resolved = _demoCtx || await resolveOrgForRequest(request);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
 
@@ -3690,6 +3690,15 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
       const [impOrg] = await db.select().from(organizations).where(eq(organizations.id, _impMemberL8.orgId)).limit(1);
       if (impOrg) return impOrg;
     }
+
+    // Founder-safe org switch: honor a validated active-org cookie BEFORE the
+    // legacy-founder lookup. Without this a founder (auth.userId ==
+    // org.clerkOrgId) always lands in their home org and the switcher silently
+    // does nothing on L8 pages. Returns non-null only when a genuine switch
+    // cookie maps to one of the user's active memberships, so no-cookie
+    // behavior is unchanged. Runs AFTER impersonation above. (2026-06-20)
+    const _switchedL8 = await resolveSwitchedOrgRow(request);
+    if (_switchedL8) return _switchedL8;
 
     const [legacyOrg] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     if (legacyOrg) return legacyOrg;

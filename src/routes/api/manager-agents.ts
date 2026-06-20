@@ -27,7 +27,7 @@ import {
   apiKeys,
   auditLogs,
 } from '../../db/schema.js';
-import { resolveOrgForUser } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest } from '../../services/membership.js';
 import { createAuditEntry } from '../../services/audit-logger.js';
 import { requireUuidParam } from '../../shared/param-validation.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
@@ -62,7 +62,7 @@ async function authedCtx(request: any, reply: any) {
     reply.status(401).send({ error: { code: 'AUTH_REQUIRED', message: 'Sign in' } });
     return null;
   }
-  const resolved = await resolveOrgForUser(auth.userId);
+  const resolved = await resolveOrgForRequest(request);
   if (!resolved) {
     const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     if (legacy) return { userId: auth.userId, org: legacy, memberId: null as string | null };

@@ -19,7 +19,7 @@ import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { emitOrgEventSafe } from '../../services/org-events.js';
 import { resnapshotMeetingsForKpi } from '../../services/meeting-resnapshot.js';
-import { resolveOrgForUser } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest } from '../../services/membership.js';
 import {
   createKpi,
   updateKpi,
@@ -61,7 +61,7 @@ async function checkScope(request: FastifyRequest, reply: any, requiredScope: st
 async function getOrg(request: FastifyRequest) {
   const auth = getAuth(request);
   if (auth.userId) {
-    const resolved = await resolveOrgForUser(auth.userId);
+    const resolved = await resolveOrgForRequest(request);
     if (resolved) return resolved.org;
     const [row] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
     return row || null;

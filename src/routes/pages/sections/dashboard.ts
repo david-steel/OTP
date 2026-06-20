@@ -20,7 +20,7 @@ import { getStripe } from '../../../services/stripe.js';
 import { getOrCreateWallet } from '../../../services/wallet.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
 import type { Role } from '../../../services/membership.js';
-import { getOrgsForUser, resolveOrgForUser, acceptInvite, acceptPendingInviteByEmail, MembershipError, getFounderTileIds } from '../../../services/membership.js';
+import { getOrgsForUser, resolveOrgForUser, resolveOrgForRequest, acceptInvite, acceptPendingInviteByEmail, MembershipError, getFounderTileIds } from '../../../services/membership.js';
 import { computeDiff } from '../../../services/diff-engine.js';
 import { generateMergePreview } from '../../../services/merge-preview.js';
 import type { ParsedClaim } from '../../../shared/types.js';
@@ -199,7 +199,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get('/dashboard/members', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const resolved = await resolveOrgForRequest(request);
     if (!resolved) return reply.redirect('/dashboard');
     const { org } = resolved;
 
@@ -413,7 +413,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { teamId?: string; idsStatus?: string } }>('/dashboard/ids', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const resolved = await resolveOrgForRequest(request);
     if (!resolved) return reply.redirect('/dashboard');
     const { org } = resolved;
     // Impersonation-aware role read.
@@ -481,7 +481,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.get('/dashboard/teams', async (request, reply) => {
     const auth = getAuth(request);
     if (!auth.userId) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const resolved = await resolveOrgForRequest(request);
     if (!resolved) return reply.redirect('/dashboard');
     const { org } = resolved;
     // Impersonation-aware role read.
@@ -645,7 +645,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const auth = getAuth(request);
     const _demoCtx = await resolveDemoPageContext(request);
     if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = _demoCtx || await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const resolved = _demoCtx || await resolveOrgForRequest(request);
     if (!resolved) return reply.redirect('/dashboard');
     const { org, role, claimedEntityId } = resolved;
     const highlightSkill = (request.query.highlightSkill || '').toString().slice(0, 120);
@@ -796,7 +796,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const auth = getAuth(request);
     const _demoCtx = await resolveDemoPageContext(request);
     if (!auth.userId && !_demoCtx) return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
-    const resolved = _demoCtx || await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+    const resolved = _demoCtx || await resolveOrgForRequest(request);
     if (!resolved) return reply.redirect('/dashboard');
     // resolveOrgForUser uses auth.userId and is impersonation-BLIND -- under
     // super-admin "view as <user>" it returns the admin's role, not the
@@ -2239,6 +2239,7 @@ Founder, OTP</p>
       .select({
         id: apiKeys.id,
         name: apiKeys.name,
+        kind: apiKeys.kind,
         keyPrefix: apiKeys.keyPrefix,
         scopes: apiKeys.scopes,
         lastUsedAt: apiKeys.lastUsedAt,
@@ -2248,7 +2249,12 @@ Founder, OTP</p>
       .where(and(eq(apiKeys.orgId, org.id), isNull(apiKeys.revokedAt)))
       .orderBy(desc(apiKeys.createdAt));
 
-    return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'authenticated', keys });
+    // Remote MCP (Labs + paid) access state and the public base for connection URLs.
+    const { checkMcpRemoteAccess } = await import('../../../services/mcp-gate.js');
+    const mcpAccess = await checkMcpRemoteAccess(org.id);
+    const connectBase = process.env.PUBLIC_BASE_URL || 'https://orgtp.com';
+
+    return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'authenticated', keys, mcpAccess, connectBase });
   });
 
   app.get('/settings/preferences', async (request, reply) => {

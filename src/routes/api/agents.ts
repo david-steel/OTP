@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
 import { eq, sql } from 'drizzle-orm';
-import { resolveOrgForUser } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest } from '../../services/membership.js';
 import { runAgent, runAgentStream, listAgentRuns, type RunAgentSop } from '../../services/agent-runtime.js';
 import { getOrgTeamGraph } from '../../services/team-graph.js';
 import { createRateLimiter } from '../../shared/rate-limiter.js';
@@ -39,7 +39,7 @@ async function getOrg(request: FastifyRequest) {
     const demo = await resolveDemoPageContext(request);
     return demo?.org || null;
   }
-  const resolved = await resolveOrgForUser(auth.userId);
+  const resolved = await resolveOrgForRequest(request);
   if (resolved) return resolved.org;
   const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
   return legacy || null;

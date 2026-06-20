@@ -20,7 +20,7 @@ import { getAuth } from '@clerk/fastify';
 import { sql, eq } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations } from '../../db/schema.js';
-import { resolveOrgForUser } from '../../services/membership.js';
+import { resolveOrgForUser, resolveOrgForRequest } from '../../services/membership.js';
 import {
   integrationsEnabled,
   authConfigIdFor,
@@ -77,7 +77,7 @@ async function getMemberOrg(
 ): Promise<{ org: { id: string; name: string | null }; userId: string } | null> {
   const auth = getAuth(request);
   if (!auth.userId) return null;
-  const resolved = await resolveOrgForUser((request as any).impersonation?.as || auth.userId);
+  const resolved = await resolveOrgForRequest(request);
   if (resolved) return { org: resolved.org, userId: auth.userId };
   const [legacy] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, auth.userId)).limit(1);
   if (!legacy) return null;
