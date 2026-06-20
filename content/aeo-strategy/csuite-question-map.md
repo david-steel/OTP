@@ -1,6 +1,8 @@
 # OTP AEO Question Map — The C-Suite in the Age of Agents
 
 > **SHIPPED 2026-06-20:** First batch of 50 posts published to orgtp.com/blog. Covered: all 35 CFO questions, all 5 CEO, all 5 CIO, all 4 COO, and CHRO.1. Remaining open: CHRO.2-4 and all CMO. URLs registered in `public/llms.txt` under the AI-* series sections. Research that grounds these: `research-cfo-business-schools.md`, `research-cfo-metrics.md`.
+>
+> **SHIPPED 2026-06-21:** CIO deepening batch — 22 distinct CIO posts (series ai-cio, parts 6-27) published, dated 2026-06-21, grounded in `research-cio-business-schools.md` + `research-cio-industry.md`. Angle: "advice and frameworks (schools + Gartner) vs. a running operating system (OTP)." These go beyond the 5 high-level CIO questions in the map. Registered in llms.txt AI CIO Series.
 
 **Purpose:** the editorial calendar for OTP's C-suite content series. Companion to `question-map.md` (the Organizing Agents operator series). This map targets the executive buyer: the CFO, CEO, CIO, COO, CHRO, CMO who is being asked, by their board and by the market, "what does my job become when agents do the operational work."
 
