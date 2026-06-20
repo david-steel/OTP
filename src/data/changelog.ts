@@ -20,6 +20,20 @@ export const changelog: ChangelogEntry[] = [
 
   {
     date: '2026-06-22',
+    tags: ['Major', 'Integrations', 'Labs'],
+    title: 'Connect OTP to Claude with one URL (Remote MCP, early access in Labs)',
+    why: 'Your AI works from your real chart, scorecard, and rocks, with no setup tax.',
+    cta: { text: 'Turn it on in Labs', url: '/settings/labs' },
+    summary: 'You can now connect OTP to Claude, Cursor, or Windsurf with a single hosted URL, no install and no terminal. Generate a connection URL under Settings, API and paste it into your client. It is in early access: switch on "Remote MCP connection" under Settings, Labs (a paid plan is required to keep it on).',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>One hosted URL.</strong> Generate a connection from Settings, API and paste it into Claude (Settings, Connectors, Add custom connector) or any MCP client. No npx, no config file.</li>
+<li><strong>Your org, scoped.</strong> Your agent gets your real chart, scorecard, rocks, to-dos, and the coordination graph as tools, limited to your organization.</li>
+<li><strong>Early access.</strong> Enable "Remote MCP connection" in Settings, Labs. A paid plan is required.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-22',
     tags: ['Major', 'Integrations'],
     title: 'Connect your stack: a searchable catalog of 1,000+ integrations',
     why: 'OTP plugs into the tools you already run, so the work flows in on its own.',
