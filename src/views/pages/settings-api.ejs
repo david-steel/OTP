@@ -38,24 +38,38 @@
             <% if (_mcp && _mcp.allowed) { %>
               <!-- Easiest: one-click OAuth with the bare base URL (no token to copy) -->
               <div class="bg-white border rounded-lg p-4 mb-4">
-                <p class="text-sm font-semibold text-gray-900 mb-1">Easiest: one-click sign-in</p>
-                <p class="text-xs text-gray-500 mb-2">In Claude, go to Settings &rarr; Connectors &rarr; Add custom connector, paste this URL, and sign in. No token to copy.</p>
-                <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-gray-900 mb-1">Connect in one click (recommended)</p>
+                <p class="text-xs text-gray-500 mb-3">This is an address you paste into your AI app&rsquo;s connector settings &mdash; <span class="font-semibold">not a page to open in a browser</span>, and nothing you send a request to yourself. The app connects for you.</p>
+
+                <div class="flex items-center gap-2 mb-3">
                   <code class="flex-1 bg-gray-50 px-3 py-2 rounded border text-sm font-mono break-all select-all"><%= (typeof connectBase !== 'undefined' ? connectBase : 'https://orgtp.com') %>/api/mcp</code>
                   <button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)"
                           class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm whitespace-nowrap">Copy</button>
                 </div>
+
+                <div class="text-sm text-gray-600 space-y-1">
+                  <p><span class="font-semibold text-gray-900">1.</span> In Claude, open <span class="font-semibold">Settings &rarr; Connectors</span> &rarr; <span class="font-semibold">Add custom connector</span>.</p>
+                  <p><span class="font-semibold text-gray-900">2.</span> Paste the URL above into the connector&rsquo;s <span class="font-semibold">URL</span> field and add it.</p>
+                  <p><span class="font-semibold text-gray-900">3.</span> Click <span class="font-semibold">Connect</span>, sign in to OTP, choose your organization, and Authorize. Your tools load automatically.</p>
+                </div>
+                <p class="text-xs text-gray-400 mt-3">Cursor, Windsurf, and other MCP clients: paste the same URL into their MCP server / connector URL field.</p>
               </div>
 
-              <p class="text-sm text-gray-600 mb-2">Or generate a token URL (for clients without sign-in support):</p>
-              <button id="create-mcp-btn" class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
-                Create connection
-              </button>
+              <!-- Secondary: token-in-URL for clients without sign-in support -->
+              <details class="mb-2">
+                <summary class="text-sm text-gray-600">Advanced: generate a token URL (for clients that can&rsquo;t sign in)</summary>
+                <div class="mt-3">
+                  <p class="text-xs text-gray-500 mb-2">Builds the token into a single URL. Paste it the same way &mdash; into the connector&rsquo;s URL field. Shown only once.</p>
+                  <button id="create-mcp-btn" class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
+                    Create token URL
+                  </button>
+                </div>
+              </details>
 
               <!-- New connection URL (hidden by default) -->
               <div id="new-mcp-display" class="hidden mt-4 bg-white border rounded-lg p-4">
                 <p class="text-sm font-semibold text-gray-900 mb-1">Your connection URL</p>
-                <p class="text-xs text-gray-500 mb-3">Copy it now &mdash; it is shown only once. Paste it into Claude &rarr; Settings &rarr; Connectors &rarr; Add custom connector.</p>
+                <p class="text-xs text-gray-500 mb-3">Copy it now &mdash; it is shown only once. Paste it into your AI app&rsquo;s connector URL field (in Claude: Settings &rarr; Connectors &rarr; Add custom connector).</p>
                 <div class="flex items-center gap-2">
                   <code id="new-mcp-url" class="flex-1 bg-gray-50 px-3 py-2 rounded border text-sm font-mono break-all select-all"></code>
                   <button onclick="navigator.clipboard.writeText(document.getElementById('new-mcp-url').textContent)"
