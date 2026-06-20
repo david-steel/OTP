@@ -131,6 +131,20 @@ export const LAB_FEATURES: LabFeature[] = [
     // 2026-06-18: graduated to `live` -- on for every org, no longer a Labs toggle.
   },
   {
+    key: 'mcp_remote',
+    name: 'Remote MCP connection',
+    description:
+      'Connect OTP straight to Claude, Cursor, Windsurf, or any MCP client with one hosted URL -- no install, no terminal. Your AI gets your real chart, scorecard, rocks, to-dos, and the coordination graph as tools, scoped to your organization.',
+    whyNow:
+      'Switch it on to connect your AI to OTP from the Connectors screen in seconds: copy your connection URL from Settings, paste it in, and your tools appear. Early access while we harden it; a paid plan is required to keep it on once it leaves Labs.',
+    status: 'beta',
+    surfaceUrl: '/settings/api',
+    // Opt-in (no defaultOn): OFF for every org until enabled here. Gates the
+    // Remote MCP block on /settings/api and the /api/mcp HTTP endpoint. Access
+    // additionally requires a paid plan (see services/mcp-gate.ts) -- the Labs
+    // toggle is the early-access switch, the paid check is the entitlement.
+  },
+  {
     key: 'meeting_ai_followups',
     name: 'AI meeting follow-ups',
     description:
