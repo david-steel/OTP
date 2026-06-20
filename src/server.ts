@@ -872,6 +872,7 @@ await app.register(import('./routes/api/merge.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/scanner.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/api-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/mcp.js'), { prefix: '/api' });
+await app.register(import('./routes/oauth.js')); // Remote MCP OAuth: /.well-known/*, /oauth/* (root, after Clerk)
 await app.register(import('./routes/api/recommendations.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/tickets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/rocks.js'), { prefix: '/api/v1' });
@@ -1122,6 +1123,8 @@ try {
   await ensureSubscriptionsTable();
   const { ensureApiKeyKindColumn } = await import('./db/ensure-api-key-kind.js');
   await ensureApiKeyKindColumn();
+  const { ensureOauthTables } = await import('./db/ensure-oauth.js');
+  await ensureOauthTables();
   app.log.info('org_members table is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureOrgMembersTable failed -- employee/role features will not work until resolved');

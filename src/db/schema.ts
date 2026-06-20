@@ -212,6 +212,41 @@ export const apiKeys = pgTable('api_keys', {
   orgIdx: index('idx_api_keys_org').on(table.orgId),
 }));
 
+// OAuth 2.1 Dynamic Client Registration records (RFC 7591). Remote MCP clients
+// (Claude, Cursor, ...) self-register here before the authorization-code flow.
+// Public clients: PKCE only, no client secret.
+export const oauthClients = pgTable('oauth_clients', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  clientId: varchar('client_id', { length: 64 }).notNull().unique(),
+  clientName: varchar('client_name', { length: 255 }),
+  redirectUris: text('redirect_uris').array().notNull(),
+  grantTypes: text('grant_types').array().notNull().default(['authorization_code']),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  clientIdx: index('idx_oauth_clients_client_id').on(table.clientId),
+}));
+
+// Short-lived single-use authorization codes (the auth-code + PKCE flow). The
+// code itself is stored hashed; rows expire in minutes and are consumed once at
+// /oauth/token. The long-lived access token issued in exchange is an api_keys
+// row (kind='mcp') -- no separate token table (long-lived, no refresh).
+export const oauthCodes = pgTable('oauth_codes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  codeHash: varchar('code_hash', { length: 64 }).notNull(),
+  clientId: varchar('client_id', { length: 64 }).notNull(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  redirectUri: text('redirect_uri').notNull(),
+  scopes: text('scopes').array().notNull(),
+  codeChallenge: varchar('code_challenge', { length: 255 }).notNull(),
+  codeChallengeMethod: varchar('code_challenge_method', { length: 16 }).notNull().default('S256'),
+  expiresAt: timestamp('expires_at').notNull(),
+  usedAt: timestamp('used_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  codeIdx: index('idx_oauth_codes_code_hash').on(table.codeHash),
+}));
+
 // BYOK (bring-your-own-key) AI provider keys, one active per org. encryptedKey
 // holds packed ciphertext (never the plaintext); keyLast4 is the masked display
 // suffix. The partial unique index enforces a single active key per org. DDL
