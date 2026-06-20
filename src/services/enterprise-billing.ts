@@ -18,6 +18,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../config/database.js';
 import { organizations, subscriptions, managerAgents } from '../db/schema.js';
 import { getStripe, ensureStripeCustomer } from './stripe.js';
+import { setOrgPlanTier } from './entitlements.js';
 import {
   ENTERPRISE_CURRENCY,
   ENTERPRISE_INTERVAL,
@@ -230,14 +231,15 @@ export async function recordSubscriptionFromStripe(sub: Stripe.Subscription): Pr
     const deadStatuses = new Set(['canceled', 'incomplete_expired', 'unpaid']);
     if (activeStatuses.has(sub.status)) {
       await db.update(organizations).set({ planTier: 'enterprise' }).where(eq(organizations.id, orgId));
+      await setOrgPlanTier(orgId, 'enterprise');
     } else if (deadStatuses.has(sub.status)) {
       await db.update(organizations).set({ planTier: 'standard' }).where(eq(organizations.id, orgId));
+      await setOrgPlanTier(orgId, 'standard');
     }
   }
-  // Best-effort entitlements sync: the entitlements service (getOrgEntitlements)
-  // exposes no clean planTier setter today (it only lazily creates a default
-  // 'free' row), so there is nothing safe to call here. organizations.plan_tier
-  // above is the authoritative gate. Noted in the build report.
+  // organizations.plan_tier and org_entitlements.plan_tier are kept in lockstep
+  // (setOrgPlanTier) so entitlement-based gates -- e.g. mcp-gate -- see the paid
+  // tier. organizations.plan_tier remains the authoritative billing record.
 }
 
 /**

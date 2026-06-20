@@ -15,6 +15,7 @@
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../config/database.js';
+import { setOrgPlanTier } from './entitlements.js';
 import {
   organizations,
   orgMembers,
@@ -44,6 +45,8 @@ export async function markOrgEnterprise(orgId: string): Promise<void> {
       eq(organizations.id, orgId),
       sql`${organizations.planTier} <> 'enterprise'`,
     ));
+  // Mirror into org_entitlements so entitlement gates (mcp-gate) see the paid tier.
+  await setOrgPlanTier(orgId, 'enterprise');
 }
 
 // ---- Create ----
