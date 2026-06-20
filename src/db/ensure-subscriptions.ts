@@ -23,6 +23,7 @@ const DDL = [
       "created_at" timestamp NOT NULL DEFAULT now(),
       "updated_at" timestamp NOT NULL DEFAULT now()
    );`,
+  `ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "plan_kind" varchar(40) NOT NULL DEFAULT 'unknown';`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_org_idx" ON "subscriptions" ("org_id");`,
   `CREATE INDEX IF NOT EXISTS "subscriptions_stripe_sub_idx" ON "subscriptions" ("stripe_subscription_id");`,
 ];

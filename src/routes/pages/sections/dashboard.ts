@@ -15,7 +15,7 @@ import type { FastifyInstance } from 'fastify';
 import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull, gt } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
-import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, rockMilestones, orgWallets, walletLedger } from '../../../db/schema.js';
+import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, rockMilestones, orgWallets, walletLedger, subscriptions } from '../../../db/schema.js';
 import { getStripe } from '../../../services/stripe.js';
 import { getOrCreateWallet } from '../../../services/wallet.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
@@ -2497,6 +2497,12 @@ Founder, OTP</p>
     const _m = (request as any).orgMember as { role?: Role } | null;
     const _canManage = (!!org.clerkOrgId && !!_auth.userId && org.clerkOrgId === _auth.userId) || canEditOrgSettings(_m?.role);
     if (!_canManage) return reply.status(403).send({ error: { code: 'FORBIDDEN', message: 'Only an owner or admin can start a subscription.' } });
+
+    // Plan mutual exclusion: block the per-agent plan if Enterprise is live. MONEY.
+    const [_existingSub] = await db.select().from(subscriptions).where(eq(subscriptions.orgId, org.id)).limit(1);
+    if (_existingSub && ['active', 'trialing', 'past_due'].includes(_existingSub.status) && _existingSub.planKind === 'enterprise') {
+      return reply.status(409).send({ error: { code: 'ENTERPRISE_ACTIVE', message: 'This organization is on the Enterprise plan. Cancel it before starting a per-agent subscription.' } });
+    }
 
     let totalAgents = 0;
     try { const team = await getOrgTeamGraph(org.id, org.name || 'Organization'); totalAgents = team.nodes.filter(n => n.type === 'agent').length; } catch { totalAgents = 0; }

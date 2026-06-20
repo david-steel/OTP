@@ -238,6 +238,7 @@ export const subscriptions = pgTable('subscriptions', {
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
   status: varchar('status', { length: 40 }).notNull().default('none'),
+  planKind: varchar('plan_kind', { length: 40 }).notNull().default('unknown'),
   planRate: integer('plan_rate'),
   agentQuantity: integer('agent_quantity'),
   currentPeriodEnd: timestamp('current_period_end'),
