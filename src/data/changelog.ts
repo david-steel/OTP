@@ -92,7 +92,7 @@ export const changelog: ChangelogEntry[] = [
     details: `<ul class="list-disc pl-6 space-y-1">
 <li><strong>End at the bottom too.</strong> The End meeting button now lives at the foot of the meeting, where you naturally wrap up, as well as the header.</li>
 <li><strong>One-hour auto-end.</strong> A meeting still running an hour after it started ends itself, so nothing is left open forever. Press <strong>Extend</strong> to add another hour when you need it. Everything entered is kept.</li>
-<li><strong>Future recurring meetings stay locked.</strong> Next week\'s occurrence does not open until its date arrives (or you start it on purpose), so your check-ins, headlines, to-dos, and issues land on the current meeting, not a future one.</li>
+<li><strong>Future recurring meetings stay locked.</strong> Next week's occurrence does not open until its date arrives (or you start it on purpose), so your check-ins, headlines, to-dos, and issues land on the current meeting, not a future one.</li>
 </ul>`,
   },
 
