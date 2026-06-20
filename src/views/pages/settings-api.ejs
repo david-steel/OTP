@@ -36,6 +36,18 @@
 
             <% var _mcp = (typeof mcpAccess !== 'undefined') ? mcpAccess : null; %>
             <% if (_mcp && _mcp.allowed) { %>
+              <!-- Easiest: one-click OAuth with the bare base URL (no token to copy) -->
+              <div class="bg-white border rounded-lg p-4 mb-4">
+                <p class="text-sm font-semibold text-gray-900 mb-1">Easiest: one-click sign-in</p>
+                <p class="text-xs text-gray-500 mb-2">In Claude, go to Settings &rarr; Connectors &rarr; Add custom connector, paste this URL, and sign in. No token to copy.</p>
+                <div class="flex items-center gap-2">
+                  <code class="flex-1 bg-gray-50 px-3 py-2 rounded border text-sm font-mono break-all select-all"><%= (typeof connectBase !== 'undefined' ? connectBase : 'https://orgtp.com') %>/api/mcp</code>
+                  <button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)"
+                          class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm whitespace-nowrap">Copy</button>
+                </div>
+              </div>
+
+              <p class="text-sm text-gray-600 mb-2">Or generate a token URL (for clients without sign-in support):</p>
               <button id="create-mcp-btn" class="px-5 py-2 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors text-sm whitespace-nowrap">
                 Create connection
               </button>
