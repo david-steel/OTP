@@ -2239,7 +2239,6 @@ Founder, OTP</p>
       .select({
         id: apiKeys.id,
         name: apiKeys.name,
-        kind: apiKeys.kind,
         keyPrefix: apiKeys.keyPrefix,
         scopes: apiKeys.scopes,
         lastUsedAt: apiKeys.lastUsedAt,
@@ -2249,12 +2248,7 @@ Founder, OTP</p>
       .where(and(eq(apiKeys.orgId, org.id), isNull(apiKeys.revokedAt)))
       .orderBy(desc(apiKeys.createdAt));
 
-    // Remote MCP (Labs + paid) access state and the public base for connection URLs.
-    const { checkMcpRemoteAccess } = await import('../../../services/mcp-gate.js');
-    const mcpAccess = await checkMcpRemoteAccess(org.id);
-    const connectBase = process.env.PUBLIC_BASE_URL || 'https://orgtp.com';
-
-    return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'authenticated', keys, mcpAccess, connectBase });
+    return reply.view('pages/settings-api', { title: 'API Keys - OTP', noindex: true, authState: 'authenticated', keys });
   });
 
   app.get('/settings/preferences', async (request, reply) => {
