@@ -734,6 +734,8 @@
       border-bottom: 1px solid rgba(20,22,28,0.06);
     }
     body.otp-rail-collapsed .otp-sb-org { display: none; }
+    /* Org logo in the rail header: sized to the header line, name shows if unset. */
+    .otp-sb-logo { max-height: 22px; width: auto; max-width: 100%; vertical-align: middle; display: inline-block; }
     .otp-sb-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; }
     /* Pinned footer: keeps Upgrade above the fold no matter how tall the nav is. */
     .otp-sb-foot { flex: none; padding: 6px 8px; border-top: 1px solid rgba(20,22,28,0.06); }
@@ -786,30 +788,31 @@
     .otp-sb-settings .otp-sb-org { color: #5a7d1f; }
     .otp-sb-settings .otp-sb-link:hover { background: #f1fadd; color: #4f7a17; }
     .otp-sb-settings .otp-sb-link.active { background: #e7f5c6; color: #4f7a17; font-weight: 600; }
-    /* Portfolio mode: the rail re-tints to the OTP signal-amber world so it's
-       immediately obvious the active org is a Portfolio, not a normal org ("not
-       in Kansas anymore"). Warm ink rail surface + amber accent/active, matching
-       DESIGN.md tokens (signal #ffab1d, signal-deep #b06c08, ink #17130d,
-       ink-raised #221d14, on-ink #f4ecda, muted-ink #a99c7f). Hardcoded hex --
-       the brand vars aren't in this layout (same approach as settings mode). */
+    /* Portfolio mode: the rail keeps the distinct dark "departure board" surface
+       so it's immediately obvious the active org is a Portfolio, not a normal org
+       ("not in Kansas anymore"), but tinted to the Ollie/Orgy BRAND green rather
+       than amber so it fits the palette. Dark ink rail + lime-green accent/active.
+       Orgy-green tokens (input.css): green #A8E63A, green-deep #8BC42A, green-soft
+       #D6F59C; ink #17130d, ink-raised #221d14, on-ink #f4ecda, muted-ink #a99c7f.
+       Hardcoded hex -- the brand vars aren't in this layout (same as settings). */
     .otp-sb-portfolio { background: #17130d; border-right: 1px solid rgba(244,236,218,0.12); }
     .otp-sb-portfolio .otp-sb-org { color: #f4ecda; border-bottom: 1px solid rgba(244,236,218,0.12); }
     .otp-sb-portfolio .otp-sb-link { color: #f4ecda; }
-    .otp-sb-portfolio .otp-sb-link:hover { background: #221d14; color: #ffab1d; }
-    .otp-sb-portfolio .otp-sb-link.active { background: rgba(255,171,29,0.14); color: #ffab1d; font-weight: 600; box-shadow: inset 2px 0 0 #ffab1d; }
+    .otp-sb-portfolio .otp-sb-link:hover { background: #221d14; color: #A8E63A; }
+    .otp-sb-portfolio .otp-sb-link.active { background: rgba(168,230,58,0.14); color: #A8E63A; font-weight: 600; box-shadow: inset 2px 0 0 #A8E63A; }
     .otp-sb-portfolio .otp-sb-foot { border-top: 1px solid rgba(244,236,218,0.12); }
     .otp-sb-portfolio .otp-sb-toggle { color: #a99c7f; }
-    .otp-sb-portfolio .otp-sb-toggle:hover { background: #221d14; color: #ffab1d; }
-    /* Portfolio marker badge beside the org name: amber pill on warm ink. */
+    .otp-sb-portfolio .otp-sb-toggle:hover { background: #221d14; color: #A8E63A; }
+    /* Portfolio marker badge beside the org name: brand-green pill on warm ink. */
     .otp-sb-pf-badge {
       display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
-      background: #ffab1d; color: #17130d; font-size: 10px; font-weight: 700;
+      background: #A8E63A; color: #17130d; font-size: 10px; font-weight: 700;
       letter-spacing: 0.04em; text-transform: uppercase; vertical-align: middle;
     }
     body.otp-rail-collapsed .otp-sb-pf-badge { display: none; }
   </style>
   <aside id="otp-sidebar" class="otp-sb<%= _sbSettings ? ' otp-sb-settings' : '' %><%= _sbIsPortfolio ? ' otp-sb-portfolio' : '' %>" aria-label="App navigation">
-    <div class="otp-sb-org"><span class="otp-sb-label"><%= _sbSettings ? 'Settings' : (locals.orgName || 'Workspace') %><% if (_sbIsPortfolio && !_sbSettings) { %><span class="otp-sb-pf-badge">Portfolio</span><% } %></span></div>
+    <div class="otp-sb-org"><span class="otp-sb-label"><% if (_sbSettings) { %>Settings<% } else if (locals.orgLogoUrl) { %><img src="<%= locals.orgLogoUrl %>" alt="<%= locals.orgName || 'Workspace' %>" class="otp-sb-logo"><% } else { %><%= locals.orgName || 'Workspace' %><% } %><% if (_sbIsPortfolio && !_sbSettings) { %><span class="otp-sb-pf-badge">Portfolio</span><% } %></span></div>
     <nav class="otp-sb-nav"><%- _sbHtml %></nav>
     <% if (!_sbSettings) { %>
       <div class="otp-sb-foot">

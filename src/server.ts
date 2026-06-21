@@ -289,6 +289,7 @@ app.addHook('preHandler', async (request, reply) => {
       labNavItems: (request as any).labNavItems || [],
       isPortfolio: (request as any).isPortfolio || false,
       orgKind: (request as any).orgKind || 'standard',
+      orgLogoUrl: (request as any).orgLogoUrl || null,
       meetingAiEnabled: (request as any).meetingAiEnabled || false,
       demoSession: (request as any).demoSession || false,
       sidebarCustomizeOn: (request as any).sidebarCustomizeOn || false,
@@ -379,13 +380,18 @@ app.addHook('preHandler', async (request) => {
       const { db } = await import('./config/database.js');
       const { organizations } = await import('./db/schema.js');
       const { eq } = await import('drizzle-orm');
-      const [orgRow] = await db.select({ kind: organizations.kind })
+      const [orgRow] = await db.select({ kind: organizations.kind, logoUrl: organizations.logoUrl })
         .from(organizations).where(eq(organizations.id, om.orgId)).limit(1);
       const kind = (orgRow && orgRow.kind) || 'standard';
       (request as any).isPortfolio = (kind === 'portfolio');
       (request as any).orgKind = kind;
+      // Sidebar logo: the org's uploaded logo data-URI (or null). The wrapped
+      // reply.view injects this as locals.orgLogoUrl so the rail header can show
+      // the logo in place of the org name.
+      (request as any).orgLogoUrl = (orgRow && orgRow.logoUrl) || null;
     } catch (kindErr) {
       (request as any).isPortfolio = false;
+      (request as any).orgLogoUrl = null;
       request.log.debug({ err: kindErr }, 'org kind decorator failed');
     }
   } catch (err) {
@@ -900,6 +906,7 @@ await app.register(import('./routes/api/admin-portfolios.js'), { prefix: '/api/v
 await app.register(import('./routes/api/portfolio-invites.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-presets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/org-ai-keys.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/org-logo.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/enterprise.js'), { prefix: '/api/v1' });
 {
   const { stripeWebhookRoutes } = await import('./routes/api/billing.js');
@@ -1096,6 +1103,14 @@ try {
   app.log.info('organizations.sidebar_config column is ready');
 } catch (err) {
   app.log.error({ err }, 'ensureOrgSidebarColumn failed -- Customize sidebar (Labs) will not persist until resolved');
+}
+
+try {
+  const { ensureOrgLogoColumn } = await import('./db/ensure-org-logo.js');
+  await ensureOrgLogoColumn();
+  app.log.info('organizations.logo_url column is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensureOrgLogoColumn failed -- org logo upload + sidebar logo will not persist until resolved');
 }
 
 try {
