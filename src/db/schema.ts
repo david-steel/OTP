@@ -1139,6 +1139,8 @@ export const portfolioChampionInvites = pgTable('portfolio_champion_invites', {
   // Invite link expiry. NULL = never expires (legacy rows). New invites get a
   // 14-day window; accept rejects expired tokens.
   expiresAt: timestamp('expires_at'),
+  // Optional personal note from the inviter ("why") shown in the invite email.
+  message: text('message'),
 }, (table) => ({
   tokenUk: uniqueIndex('portfolio_champion_invites_token_uk').on(table.token),
   portfolioIdx: index('portfolio_champion_invites_portfolio_idx').on(table.portfolioOrgId),

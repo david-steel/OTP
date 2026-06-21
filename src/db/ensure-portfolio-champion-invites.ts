@@ -26,11 +26,13 @@ const DDL = [
      "created_org_id" uuid REFERENCES "organizations"("id") ON DELETE SET NULL,
      "created_at" timestamp NOT NULL DEFAULT now(),
      "accepted_at" timestamp,
-     "expires_at" timestamp
+     "expires_at" timestamp,
+     "message" text
    );`,
 
-  // Backfill for tables created before expiry existed (idempotent).
+  // Backfill for tables created before these columns existed (idempotent).
   `ALTER TABLE "portfolio_champion_invites" ADD COLUMN IF NOT EXISTS "expires_at" timestamp;`,
+  `ALTER TABLE "portfolio_champion_invites" ADD COLUMN IF NOT EXISTS "message" text;`,
 
   `CREATE UNIQUE INDEX IF NOT EXISTS "portfolio_champion_invites_token_uk" ON "portfolio_champion_invites" ("token");`,
   `CREATE INDEX IF NOT EXISTS "portfolio_champion_invites_portfolio_idx" ON "portfolio_champion_invites" ("portfolio_org_id");`,

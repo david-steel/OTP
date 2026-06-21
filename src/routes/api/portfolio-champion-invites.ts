@@ -41,28 +41,58 @@ function escapeHtmlSafe(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 }
 
-/** Champion-invite email. Mirrors team.ts renderInviteEmail's table layout +
- *  inline styles (the look every OTP transactional email uses via Resend). */
-function renderChampionInviteEmail(opts: { portfolioName: string; acceptUrl: string; expiresAt: Date }): string {
+/** Champion-invite email, branded to OTP (DESIGN.md tokens: bg #F5F7FA, ink
+ *  #14271a, brand green #A8E63A, primary orgy-blue #2563EB). Says WHO invited and
+ *  WHY (optional note), all inline-styled + table layout for email-client safety. */
+function renderChampionInviteEmail(opts: {
+  portfolioName: string; acceptUrl: string; expiresAt: Date;
+  inviterName?: string | null; message?: string | null;
+}): string {
   const expires = opts.expiresAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const pf = escapeHtmlSafe(opts.portfolioName);
+  const inviter = opts.inviterName ? escapeHtmlSafe(opts.inviterName) : '';
+  const introLine = inviter
+    ? `<b style="color:#14271a;">${inviter}</b> invited you to <b style="color:#14271a;">${pf}</b> on OTP`
+    : `<b style="color:#14271a;">${pf}</b> invited you on OTP`;
+
+  const noteBlock = opts.message
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 0 0 18px 0;"><tr>
+         <td style="background: rgba(168,230,58,0.10); border-left: 3px solid #A8E63A; border-radius: 6px; padding: 12px 14px; font-size:14px; line-height:1.6; color:#374151;">
+           <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:#5a7d1f; font-weight:700; margin-bottom:4px;">A note ${inviter ? 'from ' + inviter : ''}</div>
+           ${escapeHtmlSafe(opts.message).replace(/\n/g, '<br>')}
+         </td></tr></table>`
+    : '';
+
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0; padding:0; background:#f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#1f2937;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc; padding: 32px 0;">
+<body style="margin:0; padding:0; background:#F5F7FA; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#374151;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#F5F7FA; padding: 32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff; border-radius:12px; border:1px solid #e5e7eb;">
-        <tr><td style="padding: 28px 32px 8px 32px;">
-          <div style="font-size:13px; color:#6b7280; margin-bottom: 4px;">${pf} invited you</div>
-          <h1 style="font-size:22px; line-height:1.3; font-weight:800; margin: 4px 0 16px 0; color:#0f172a;">Set up your organization on OTP</h1>
+      <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff; border-radius:14px; border:1px solid #e6e8eb; overflow:hidden;">
+        <tr><td style="height:6px; background:#A8E63A; font-size:0; line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding: 22px 32px 0 32px;">
+          <div style="font-size:18px; font-weight:800; color:#14271a; letter-spacing:-0.01em;">OTP <span style="color:#9aa0a6; font-weight:600; font-size:13px;">· orgtp.com</span></div>
         </td></tr>
-        <tr><td style="padding: 0 32px 24px 32px; font-size:15px; line-height:1.65; color:#1f2937;">
+        <tr><td style="padding: 18px 32px 4px 32px;">
+          <div style="font-size:14px; color:#6b7280; margin-bottom: 6px;">${introLine}</div>
+          <h1 style="font-size:23px; line-height:1.3; font-weight:800; margin: 4px 0 14px 0; color:#14271a;">Set up your organization</h1>
+        </td></tr>
+        <tr><td style="padding: 0 32px 24px 32px; font-size:15px; line-height:1.65; color:#374151;">
+          ${noteBlock}
           <p style="margin: 0 0 14px 0;">${pf} set up a ready-made operating system for your organization on OTP — your scorecard, structure, and AI agent team, preconfigured.</p>
-          <p style="margin: 0 0 14px 0;">When you accept, a new organization is created for you (owned by you) and connected into ${pf}. You can run it from day one and make it your own.</p>
-          <p style="margin: 24px 0;">
-            <a href="${opts.acceptUrl}" style="display:inline-block; padding: 12px 20px; background:#0ea5e9; color:#ffffff; text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">Accept &amp; set up</a>
+          <p style="margin: 0 0 6px 0; font-weight:600; color:#14271a;">When you accept:</p>
+          <ul style="margin: 0 0 18px 0; padding-left: 20px; color:#374151;">
+            <li style="margin-bottom:4px;">A new organization is created — <b>owned by you</b>.</li>
+            <li style="margin-bottom:4px;">It opens pre-loaded with ${pf}'s scorecard and setup, ready on day one.</li>
+            <li>It's connected into ${pf} so the team can see the rollup.</li>
+          </ul>
+          <p style="margin: 22px 0;">
+            <a href="${opts.acceptUrl}" style="display:inline-block; padding: 13px 22px; background:#2563EB; color:#ffffff; text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">Accept &amp; set up your org</a>
           </p>
           <p style="margin: 0; font-size:12px; color:#9ca3af;">This link expires ${expires}. If you did not expect this email, you can ignore it.</p>
+        </td></tr>
+        <tr><td style="padding: 16px 32px 22px 32px; border-top:1px solid #f0f1f3; font-size:12px; color:#9aa0a6;">
+          Sent by ${pf} via OTP — the operating system for organizations and their AI agents. <a href="https://orgtp.com" style="color:#2563EB; text-decoration:none;">orgtp.com</a>
         </td></tr>
       </table>
     </td></tr>
@@ -105,6 +135,7 @@ async function assertPortfolioOwnerOrAdmin(
 const createSchema = z.object({
   email: z.string().trim().email().max(200),
   orgName: z.string().trim().max(255).nullable().optional(),
+  message: z.string().trim().max(1000).nullable().optional(),
 });
 
 const acceptSchema = z.object({
@@ -130,6 +161,7 @@ export default async function portfolioChampionInviteRoutes(app: FastifyInstance
         email: body.data.email,
         orgName: body.data.orgName ?? null,
         invitedByUserId: userId,
+        message: body.data.message ?? null,
       });
       const acceptUrl = `${BASE_URL}/portfolio/invite/${invite.token}`;
 
@@ -138,8 +170,8 @@ export default async function portfolioChampionInviteRoutes(app: FastifyInstance
       // API, and the owner still has the copyable link as a fallback.
       sendEmail({
         to: invite.email,
-        subject: `${invite.portfolioName} invited you to set up your organization on OTP`,
-        html: renderChampionInviteEmail({ portfolioName: invite.portfolioName, acceptUrl, expiresAt: invite.expiresAt }),
+        subject: `${invite.inviterName || invite.portfolioName} invited you to set up your organization on OTP`,
+        html: renderChampionInviteEmail({ portfolioName: invite.portfolioName, acceptUrl, expiresAt: invite.expiresAt, inviterName: invite.inviterName, message: invite.message }),
         from: 'OTP Invitations <notifications@mail.orgtp.com>',
         tags: [{ name: 'type', value: 'champion_invite' }],
       }).catch((err) => request.log.error({ err }, '[champion-invite] email send failed'));
@@ -215,8 +247,8 @@ export default async function portfolioChampionInviteRoutes(app: FastifyInstance
       const acceptUrl = `${BASE_URL}/portfolio/invite/${resent.token}`;
       sendEmail({
         to: resent.email,
-        subject: `${resent.portfolioName} invited you to set up your organization on OTP (resent)`,
-        html: renderChampionInviteEmail({ portfolioName: resent.portfolioName, acceptUrl, expiresAt: resent.expiresAt }),
+        subject: `${resent.inviterName || resent.portfolioName} invited you to set up your organization on OTP (resent)`,
+        html: renderChampionInviteEmail({ portfolioName: resent.portfolioName, acceptUrl, expiresAt: resent.expiresAt, inviterName: resent.inviterName, message: resent.message }),
         from: 'OTP Invitations <notifications@mail.orgtp.com>',
         tags: [{ name: 'type', value: 'champion_invite_resend' }],
       }).catch((err) => request.log.error({ err }, '[champion-invite] resend email failed'));

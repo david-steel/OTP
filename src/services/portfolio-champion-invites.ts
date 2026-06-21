@@ -43,26 +43,50 @@ export interface CreateChampionInviteInput {
   email: string;
   orgName?: string | null;
   invitedByUserId: string;
+  /** Optional personal note ("why") from the inviter, shown in the email. */
+  message?: string | null;
 }
 
-/**
- * Create a pending champion invite for a portfolio. Validates the org is a real
- * portfolio. Returns the new invite's id, token, and email.
- */
 export interface CreatedChampionInvite {
   id: string;
   token: string;
   email: string;
   expiresAt: Date;
   portfolioName: string;
+  /** Display name of whoever sent the invite (for "Invited by ..."). */
+  inviterName: string | null;
+  message: string | null;
 }
 
+/**
+ * Best-effort display name for whoever sent the invite: their active
+ * org_members row in the portfolio (displayName, else email). Null if unknown.
+ */
+async function lookupInviterName(portfolioOrgId: string, clerkUserId: string): Promise<string | null> {
+  if (!portfolioOrgId || !clerkUserId) return null;
+  try {
+    const [m] = await db
+      .select({ displayName: orgMembers.displayName, email: orgMembers.email })
+      .from(orgMembers)
+      .where(and(eq(orgMembers.orgId, portfolioOrgId), eq(orgMembers.clerkUserId, clerkUserId)))
+      .limit(1);
+    return (m?.displayName || m?.email || null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Create a pending champion invite for a portfolio. Validates the org is a real
+ * portfolio. Returns the invite + the data the email needs (inviter, note, expiry).
+ */
 export async function createChampionInvite(
   input: CreateChampionInviteInput,
 ): Promise<CreatedChampionInvite> {
   const { portfolioOrgId, invitedByUserId } = input;
   const email = String(input.email || '').trim().toLowerCase();
   const orgName = input.orgName ? String(input.orgName).trim().slice(0, 255) : null;
+  const message = input.message ? String(input.message).trim().slice(0, 1000) || null : null;
 
   if (!portfolioOrgId) {
     throw new PortfolioError('INVALID_ORG', 'A portfolio org is required');
@@ -84,6 +108,8 @@ export async function createChampionInvite(
     throw new PortfolioError('NOT_A_PORTFOLIO', 'Org is not a portfolio');
   }
 
+  const inviterName = await lookupInviterName(portfolioOrgId, invitedByUserId);
+
   const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
   const [row] = await db.insert(portfolioChampionInvites).values({
     portfolioOrgId,
@@ -93,9 +119,10 @@ export async function createChampionInvite(
     status: 'pending',
     invitedByUserId,
     expiresAt,
+    message,
   }).returning({ id: portfolioChampionInvites.id, token: portfolioChampionInvites.token, email: portfolioChampionInvites.email });
 
-  return { id: row.id, token: row.token, email: row.email, expiresAt, portfolioName: portfolio.name };
+  return { id: row.id, token: row.token, email: row.email, expiresAt, portfolioName: portfolio.name, inviterName, message };
 }
 
 /**
@@ -107,12 +134,18 @@ export async function createChampionInvite(
 export async function resendChampionInvite(
   portfolioOrgId: string,
   inviteId: string,
-): Promise<{ token: string; email: string; expiresAt: Date; portfolioName: string }> {
+): Promise<{ token: string; email: string; expiresAt: Date; portfolioName: string; inviterName: string | null; message: string | null }> {
   if (!portfolioOrgId || !inviteId) {
     throw new PortfolioError('INVALID_REQUEST', 'Portfolio and invite are required');
   }
   const [invite] = await db
-    .select({ id: portfolioChampionInvites.id, email: portfolioChampionInvites.email, status: portfolioChampionInvites.status })
+    .select({
+      id: portfolioChampionInvites.id,
+      email: portfolioChampionInvites.email,
+      status: portfolioChampionInvites.status,
+      message: portfolioChampionInvites.message,
+      invitedByUserId: portfolioChampionInvites.invitedByUserId,
+    })
     .from(portfolioChampionInvites)
     .where(and(
       eq(portfolioChampionInvites.id, inviteId),
@@ -129,6 +162,7 @@ export async function resendChampionInvite(
     .from(organizations)
     .where(eq(organizations.id, portfolioOrgId))
     .limit(1);
+  const inviterName = invite.invitedByUserId ? await lookupInviterName(portfolioOrgId, invite.invitedByUserId) : null;
 
   const token = freshToken();
   const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
@@ -137,7 +171,7 @@ export async function resendChampionInvite(
     .set({ token, expiresAt })
     .where(eq(portfolioChampionInvites.id, inviteId));
 
-  return { token, email: invite.email, expiresAt, portfolioName: portfolio?.name || 'Portfolio' };
+  return { token, email: invite.email, expiresAt, portfolioName: portfolio?.name || 'Portfolio', inviterName, message: invite.message ?? null };
 }
 
 // ---- Read: invites for a portfolio (owner UI) ----
