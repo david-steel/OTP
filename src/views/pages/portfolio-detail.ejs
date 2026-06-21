@@ -15,6 +15,9 @@
   var _metrics = (typeof superMetrics !== 'undefined' && Array.isArray(superMetrics)) ? superMetrics : [];
   var _latest = (typeof latestByKpi !== 'undefined' && latestByKpi) ? latestByKpi : {};
   var _nameById = (typeof memberNameById !== 'undefined' && memberNameById) ? memberNameById : {};
+  var _memberStats = (typeof memberStats !== 'undefined' && Array.isArray(memberStats)) ? memberStats : [];
+  var _statsById = {};
+  _memberStats.forEach(function (s) { _statsById[s.id] = s; });
   function _opLabel(op) {
     if (op === 'gte') return '≥'; if (op === 'lte') return '≤';
     if (op === 'gt') return '>'; if (op === 'lt') return '<';
@@ -88,7 +91,7 @@
           Each organization's owner or admin can find it in
           <span class="font-medium text-gray-700">Settings → Company</span>, under
           <span class="font-mono text-gray-700">Company ID</span> — they copy it there and send it to you.
-          Already-linked orgs below show their ID; click it to copy.
+          Click a member card below to open its panel, where you can copy its ID.
         </p>
       </div>
 
@@ -97,17 +100,52 @@
           <p class="text-sm text-gray-600">No member organizations linked yet. Add one to start rolling KPIs up.</p>
         </div>
       <% } else { %>
-        <div class="bg-white border rounded-xl overflow-hidden">
-          <% _members.forEach(function(m) { %>
-            <div class="flex items-center justify-between gap-4 px-5 py-4 border-b last:border-b-0">
-              <div class="font-medium text-gray-900 truncate"><%= m.name %></div>
-              <button type="button" class="member-id-copy text-xs text-gray-400 hover:text-otp-600 font-mono truncate transition-colors"
-                      data-org-id="<%= m.id %>" title="Click to copy organization ID"><%= m.id %></button>
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <% _members.forEach(function(m) {
+               var st = _statsById[m.id] || { humanCount: 0, agentCount: 0, kpiCount: 0 };
+          %>
+            <button type="button"
+                    class="member-card text-left bg-white border rounded-xl p-4 hover:border-otp-400 hover:shadow-sm transition-all"
+                    data-org-id="<%= m.id %>" data-org-name="<%= m.name %>"
+                    data-humans="<%= st.humanCount %>" data-agents="<%= st.agentCount %>" data-kpis="<%= st.kpiCount %>">
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="font-bold text-gray-900 truncate"><%= m.name %></div>
+                <svg class="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span class="text-gray-700"><span class="font-bold"><%= st.humanCount %></span> <span class="text-gray-500">humans</span></span>
+                <span class="text-gray-700"><span class="font-bold"><%= st.agentCount %></span> <span class="text-gray-500">agents</span></span>
+                <span class="text-gray-700"><span class="font-bold"><%= st.kpiCount %></span> <span class="text-gray-500">KPIs</span></span>
+              </div>
+            </button>
           <% }); %>
         </div>
       <% } %>
     </section>
+
+    <!-- Member side panel (org-map style drawer) -->
+    <div id="member-panel-overlay" class="fixed inset-0 bg-black/30 z-40" style="display:none;"></div>
+    <aside id="member-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-white border-l shadow-xl z-50 overflow-y-auto"
+           style="transform: translateX(100%); transition: transform 0.2s ease;" aria-hidden="true">
+      <div class="p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 id="mp-name" class="text-lg font-bold text-gray-900 truncate pr-2">Member</h3>
+          <button type="button" id="mp-close" class="p-1 text-gray-400 hover:text-gray-700 shrink-0" aria-label="Close panel">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-5">
+          <div class="bg-gray-50 rounded-lg p-3 text-center"><div id="mp-humans" class="text-2xl font-extrabold text-gray-900">0</div><div class="text-xs text-gray-500">Humans</div></div>
+          <div class="bg-gray-50 rounded-lg p-3 text-center"><div id="mp-agents" class="text-2xl font-extrabold text-gray-900">0</div><div class="text-xs text-gray-500">Agents</div></div>
+          <div class="bg-gray-50 rounded-lg p-3 text-center"><div id="mp-kpis" class="text-2xl font-extrabold text-gray-900">0</div><div class="text-xs text-gray-500">KPIs</div></div>
+        </div>
+        <div class="mb-4">
+          <div class="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-1">Organization ID</div>
+          <button type="button" id="mp-id-copy" class="text-xs text-gray-500 hover:text-otp-600 font-mono break-all text-left" title="Click to copy">—</button>
+        </div>
+        <p class="text-xs text-gray-400 border-t pt-4">More detail lands here as we build it out — recent activity, this org's contribution to each super-metric, and quick links into the member org.</p>
+      </div>
+    </aside>
 
     <!-- ===== Portfolio team ===== -->
     <section class="mb-8">
@@ -831,19 +869,57 @@
 
     loadChampInvites();
 
-    // ---- Click-to-copy member org IDs ----
-    Array.prototype.forEach.call(document.querySelectorAll('.member-id-copy'), function (btn) {
-      btn.addEventListener('click', function () {
-        var id = btn.getAttribute('data-org-id') || '';
-        var orig = btn.textContent;
-        var done = function () { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = orig; }, 1200); };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(id).then(done).catch(function () { done(); });
-        } else {
-          var t = document.createElement('textarea'); t.value = id; document.body.appendChild(t);
-          t.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); done();
-        }
+    // ---- Member org chart: card click -> side panel ----
+    var memberPanel = document.getElementById('member-panel');
+    var memberOverlay = document.getElementById('member-panel-overlay');
+    var mpName = document.getElementById('mp-name');
+    var mpHumans = document.getElementById('mp-humans');
+    var mpAgents = document.getElementById('mp-agents');
+    var mpKpis = document.getElementById('mp-kpis');
+    var mpIdCopy = document.getElementById('mp-id-copy');
+    var mpClose = document.getElementById('mp-close');
+
+    function openMemberPanel(data) {
+      if (!memberPanel) return;
+      if (mpName) mpName.textContent = data.name || 'Member';
+      if (mpHumans) mpHumans.textContent = data.humans || '0';
+      if (mpAgents) mpAgents.textContent = data.agents || '0';
+      if (mpKpis) mpKpis.textContent = data.kpis || '0';
+      if (mpIdCopy) { mpIdCopy.textContent = data.id || '—'; mpIdCopy.setAttribute('data-org-id', data.id || ''); }
+      memberPanel.style.transform = 'translateX(0)';
+      memberPanel.setAttribute('aria-hidden', 'false');
+      if (memberOverlay) memberOverlay.style.display = 'block';
+    }
+    function closeMemberPanel() {
+      if (!memberPanel) return;
+      memberPanel.style.transform = 'translateX(100%)';
+      memberPanel.setAttribute('aria-hidden', 'true');
+      if (memberOverlay) memberOverlay.style.display = 'none';
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.member-card'), function (card) {
+      card.addEventListener('click', function () {
+        openMemberPanel({
+          id: card.getAttribute('data-org-id') || '',
+          name: card.getAttribute('data-org-name') || '',
+          humans: card.getAttribute('data-humans') || '0',
+          agents: card.getAttribute('data-agents') || '0',
+          kpis: card.getAttribute('data-kpis') || '0'
+        });
       });
+    });
+    if (mpClose) mpClose.addEventListener('click', closeMemberPanel);
+    if (memberOverlay) memberOverlay.addEventListener('click', closeMemberPanel);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMemberPanel(); });
+    if (mpIdCopy) mpIdCopy.addEventListener('click', function () {
+      var id = mpIdCopy.getAttribute('data-org-id') || '';
+      var orig = mpIdCopy.textContent;
+      var done = function () { mpIdCopy.textContent = 'Copied!'; setTimeout(function () { mpIdCopy.textContent = orig; }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(id).then(done).catch(done);
+      } else {
+        var t = document.createElement('textarea'); t.value = id; document.body.appendChild(t);
+        t.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); done();
+      }
     });
   })();
 </script>
