@@ -274,21 +274,35 @@
     <section class="mt-8">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-lg font-bold text-gray-900">Organization template</h2>
-        <span class="text-xs text-gray-500">Standard setup inherited by member orgs and seeded into new ones</span>
+        <span class="text-xs text-gray-500">Define your standard once — every member org follows it</span>
       </div>
       <div class="bg-white border rounded-xl p-6 space-y-6">
 
+        <!-- What this is -->
+        <div class="rounded-lg p-4" style="background: rgba(168,230,58,0.10); border: 1px solid rgba(168,230,58,0.45);">
+          <p class="text-sm font-semibold text-gray-900 mb-1">What is a template?</p>
+          <p class="text-sm text-gray-700 mb-2">
+            The template is your portfolio's standard operating setup — the navigation, scorecard KPIs, and AI-key rules
+            every member organization should run. You set it once here and it applies two ways:
+          </p>
+          <ul class="text-sm text-gray-700 space-y-1 list-disc pl-5 mb-2">
+            <li><span class="font-medium text-gray-900">Existing member orgs inherit it.</span> Anything you turn on below flows down to every org already linked to this portfolio.</li>
+            <li><span class="font-medium text-gray-900">New orgs are seeded from it.</span> When you invite a champion (in “Bring in a location” above), the org created when they accept starts pre-loaded with these KPIs and settings — ready on day one.</li>
+          </ul>
+          <p class="text-xs text-gray-500">Example: a franchisor sets “Leads / week, Show rate, Revenue” once, and every location — current and future — opens with the same scorecard.</p>
+        </div>
+
         <!-- Sidebar & menus -->
-        <div>
+        <div class="border-t pt-5">
           <h3 class="font-semibold text-gray-900 mb-1">Sidebar &amp; menus</h3>
-          <p class="text-sm text-gray-600 mb-3">Standardize the sidebar across member organizations. Lock it to prevent overrides.</p>
+          <p class="text-sm text-gray-600 mb-3">Make every member org's left-hand navigation match the portfolio's, so anyone moving between locations sees the same menu. Leave this off and each org keeps its own.</p>
 
           <label class="flex items-start gap-2 text-sm text-gray-700">
             <input type="checkbox" id="presets-inherit-sidebar"
                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
             <span>
               <span class="font-semibold text-gray-900">Member organizations inherit the portfolio sidebar</span><br>
-              <span class="text-xs text-gray-500">Member orgs use this portfolio's standardized sidebar instead of their own.</span>
+              <span class="text-xs text-gray-500">On: member orgs show this portfolio's standardized sidebar. Off: each org uses its own.</span>
             </span>
           </label>
 
@@ -297,7 +311,7 @@
                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
             <span>
               <span class="font-semibold text-gray-900">Lock it</span><br>
-              <span class="text-xs text-gray-500">Members cannot override the inherited sidebar.</span>
+              <span class="text-xs text-gray-500">Members can't change it. Use this to enforce one brand-standard navigation everywhere.</span>
             </span>
           </label>
         </div>
@@ -308,24 +322,29 @@
             <h3 class="font-semibold text-gray-900">Starter KPIs</h3>
             <button type="button" id="tpl-kpi-add" class="text-sm font-semibold text-otp-600 hover:underline">+ Add KPI</button>
           </div>
-          <p class="text-sm text-gray-600 mb-3">Scorecard metrics seeded into a new organization created from this template.</p>
+          <p class="text-sm text-gray-600 mb-3">
+            The scorecard metrics every new organization should track from the start. Each row becomes a real KPI on the new
+            org's scorecard — with the goal and cadence you set here — the moment a champion accepts. They just fill in the
+            weekly numbers. <span class="text-gray-500">Title is required; unit, goal, and cadence are optional.</span>
+          </p>
           <div id="tpl-kpi-list" class="space-y-2"></div>
-          <p id="tpl-kpi-empty" class="text-sm text-gray-400" style="display:none;">No starter KPIs yet. Add the metrics every location should track.</p>
+          <p id="tpl-kpi-empty" class="text-sm text-gray-400" style="display:none;">No starter KPIs yet. Add the metrics every location should track — e.g. <span class="font-medium">Leads per week</span> (≥ 50), <span class="font-medium">Show rate</span> (≥ 70 %), <span class="font-medium">Revenue</span>.</p>
         </div>
 
         <!-- AI key policy -->
         <div class="border-t pt-5">
           <h3 class="font-semibold text-gray-900 mb-1">AI key policy</h3>
           <p class="text-sm text-gray-600 mb-3">
-            The portfolio's own API key (set in <span class="font-medium text-gray-700">Settings → Company → Bring your own AI key</span>)
-            is the default for member organizations. Keys are never used to train or teach.
+            Who pays for the AI that runs each org's agents. By default every member org uses the <span class="font-medium text-gray-700">portfolio's own key</span>
+            (set in <span class="font-medium text-gray-700">Settings → Company → Bring your own AI key</span>) — one bill, central control.
+            Keys are encrypted and <span class="font-medium text-gray-700">never used to train or teach</span>.
           </p>
           <label class="flex items-start gap-2 text-sm text-gray-700">
             <input type="checkbox" id="tpl-allow-override"
                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
             <span>
               <span class="font-semibold text-gray-900">Locations may set their own AI key</span><br>
-              <span class="text-xs text-gray-500">A member org can override the portfolio default with its own Anthropic / OpenAI key.</span>
+              <span class="text-xs text-gray-500">On: a member org can override the portfolio default with its own Anthropic / OpenAI key (it pays for its own usage). Off: everyone runs on the portfolio key.</span>
             </span>
           </label>
         </div>
