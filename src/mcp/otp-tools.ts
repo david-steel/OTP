@@ -656,7 +656,7 @@ server.tool(
       try {
         const bpResult = await otpFetch(`/best-practices/for-oos/${latestOos.id}?min_score=0.05`);
         bestPractices = bpResult.matches || [];
-      } catch {}
+      } catch { /* best practices are an optional enrichment -- ignore failures */ }
     }
 
     // Build markdown

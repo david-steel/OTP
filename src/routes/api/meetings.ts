@@ -95,6 +95,12 @@ const updateMeetingSchema = z.object({
   segmentNotes: segmentNotesSchema.optional(),
 });
 
+// Body accepted by POST /meetings/:id/end -- optional final ratings to flush
+// before the meeting is ended (same shape as the update schema's ratings field).
+const endRatingsSchema = z.object({
+  ratings: z.record(z.union([z.number().min(1).max(10), z.literal('absent')])).optional(),
+});
+
 async function authedOrFail(request: any, reply: any) {
   const org = await getAuthOrg(request);
   if (!org) {
@@ -487,6 +493,18 @@ export default async function meetingRoutes(app: FastifyInstance) {
     const org = await authedOrFail(request, reply);
     if (!org) return;
     if (!(await checkMeetingEdit(request, reply, org.id, id))) return;
+
+    // Flush ratings submitted WITH the end request before ending. endMeetingCore
+    // (and the shared auto-end path) only stamps status/endedAt/snapshot and
+    // never touches ratings -- so a client that sends final ratings as part of
+    // "End meeting" would otherwise lose them. Persist them here in the route,
+    // where the request body exists. Regression guard: meetings.end-ratings.test.ts.
+    const endBody = endRatingsSchema.safeParse(request.body || {});
+    if (endBody.success && endBody.data.ratings !== undefined) {
+      await db.update(meetings)
+        .set({ ratings: endBody.data.ratings, updatedAt: new Date() })
+        .where(and(eq(meetings.id, id), eq(meetings.organizationId, org.id)));
+    }
 
     // Ending is centralized in endMeetingCore (services/meeting-lifecycle.ts):
     // it re-snapshots the scorecard so the record keeps the FINAL reviewed KPI

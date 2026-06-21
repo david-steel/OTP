@@ -224,7 +224,13 @@ export const oauthClients = pgTable('oauth_clients', {
   clientId: varchar('client_id', { length: 64 }).notNull().unique(),
   clientName: varchar('client_name', { length: 255 }),
   redirectUris: text('redirect_uris').array().notNull(),
-  grantTypes: text('grant_types').array().notNull().default(['authorization_code']),
+  // NOTE: use an explicit sql`` array literal (like `roles` above), NOT
+  // .default(['authorization_code']). drizzle-kit 0.21 renders the JS-array form
+  // as a bare `DEFAULT authorization_code` (no quotes) -- Postgres/pglite read
+  // that as a COLUMN REFERENCE and reject it ("cannot use column reference in
+  // DEFAULT expression"), which aborted `drizzle-kit push` and broke the entire
+  // pglite test harness (every DB-backed suite). Semantically identical.
+  grantTypes: text('grant_types').array().notNull().default(sql`'{authorization_code}'::text[]`),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   clientIdx: index('idx_oauth_clients_client_id').on(table.clientId),

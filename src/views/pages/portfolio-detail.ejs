@@ -27,6 +27,8 @@
     if (v === null || typeof v === 'undefined') return '—';
     return (Math.round(v * 100) / 100).toLocaleString();
   }
+  /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing the closing script tag can't break out of the script context. */
+  function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); }
 %>
 
 <div class="max-w-5xl mx-auto px-4 py-8">
@@ -367,7 +369,7 @@
 <% if (_auth === 'authenticated' && _portfolio) { %>
 <script>
   (function () {
-    var portfolioId = <%- JSON.stringify(_portfolio.id) %>;
+    var portfolioId = <%- jsonForScript(_portfolio.id) %>;
 
     // ---- Recompute ----
     var recomputeBtn = document.getElementById('recompute-btn');
