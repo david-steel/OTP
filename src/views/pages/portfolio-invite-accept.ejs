@@ -1,0 +1,91 @@
+<%- include('../partials/orgy-palette'); %>
+<%
+  // ---- Portfolio champion invite accept ----
+  // Locals:
+  //   authState: 'authenticated' | 'not_found'
+  //   token: the invite token (string)
+  //   portfolioName: name of the inviting portfolio
+  //   suggestedOrgName: prefill for the org-name input
+  // Plain JS line comments only -- never an EJS close-delimiter in a comment.
+  var _auth = (typeof authState !== 'undefined' && authState) ? String(authState) : 'authenticated';
+  var _token = (typeof token !== 'undefined' && token) ? String(token) : '';
+  var _portfolioName = (typeof portfolioName !== 'undefined' && portfolioName) ? String(portfolioName) : 'a portfolio';
+  var _suggestedOrgName = (typeof suggestedOrgName !== 'undefined' && suggestedOrgName) ? String(suggestedOrgName) : '';
+%>
+
+<div class="max-w-xl mx-auto px-4 py-12">
+
+  <% if (_auth === 'not_found') { %>
+    <div class="bg-white border rounded-xl p-10 text-center">
+      <h1 class="text-xl font-extrabold text-gray-900 mb-2">Invite not available</h1>
+      <p class="text-sm text-gray-600 mb-5">This invite link is invalid, has already been used, or was revoked.</p>
+      <a href="/dashboard" class="inline-block px-5 py-2.5 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">Go to dashboard</a>
+    </div>
+
+  <% } else { %>
+
+    <div class="bg-white border rounded-xl p-8">
+      <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">You've been invited</div>
+      <h1 class="text-2xl font-extrabold text-gray-900 mb-2">Join <%= _portfolioName %></h1>
+      <p class="text-sm text-gray-600 leading-relaxed mb-6 max-w-[60ch]">
+        Accepting creates a brand-new organization for you, set up from
+        <span class="font-medium text-gray-700"><%= _portfolioName %></span>'s standard template — its
+        starter scorecard and shared sidebar. You'll be its owner, and it joins the portfolio automatically.
+      </p>
+
+      <label for="accept-org-name" class="block text-sm font-semibold text-gray-900 mb-2">Name your organization</label>
+      <input type="text" id="accept-org-name" value="<%= _suggestedOrgName %>" placeholder="e.g. Downtown Location"
+             class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-otp-500/40">
+      <p class="text-xs text-gray-400 mb-5">You can change this later in Settings.</p>
+
+      <button type="button" id="accept-btn"
+              class="w-full px-5 py-3 bg-otp-500 text-white font-semibold rounded-lg hover:bg-otp-600 transition-colors">
+        Accept and create my organization
+      </button>
+      <p id="accept-error" class="text-sm text-red-600 mt-3" style="display:none;"></p>
+    </div>
+
+  <% } %>
+</div>
+
+<% if (_auth === 'authenticated') { %>
+<script>
+  (function () {
+    var token = <%- JSON.stringify(_token) %>;
+    var btn = document.getElementById('accept-btn');
+    var nameInput = document.getElementById('accept-org-name');
+    var errEl = document.getElementById('accept-error');
+
+    function showErr(msg) { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } }
+    function clearErr() { if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; } }
+
+    if (btn) btn.addEventListener('click', function () {
+      clearErr();
+      btn.disabled = true;
+      var orig = btn.textContent;
+      btn.textContent = 'Creating…';
+      var orgName = (nameInput && nameInput.value || '').trim();
+      fetch('/api/v1/portfolio/invite/' + encodeURIComponent(token) + '/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(orgName ? { orgName: orgName } : {})
+      })
+        .then(function (r) {
+          return r.ok ? r.json() : r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not accept the invite.');
+          });
+        })
+        .then(function (data) {
+          // New org created; send the champion to its dashboard.
+          window.location.href = '/dashboard';
+        })
+        .catch(function (err) {
+          btn.disabled = false;
+          btn.textContent = orig;
+          showErr(err.message || 'Could not accept the invite.');
+        });
+    });
+  })();
+</script>
+<% } %>

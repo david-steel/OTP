@@ -27,8 +27,40 @@ import {
   getPortfolioDetail,
 } from '../../services/portfolios.js';
 import { listPendingInvitesForUser } from '../../services/portfolio-invites.js';
+import { getChampionInviteByToken } from '../../services/portfolio-champion-invites.js';
 
 export default async function portfolioPages(app: FastifyInstance) {
+
+  // GET /portfolio/invite/:token -- the champion accept page. A signed-in user
+  // who opens the link sees "You've been invited to <portfolio>" + an org-name
+  // input and an Accept button (which POSTs to the accept API, then redirects
+  // to the new org). Not-signed-in -> sign-in with redirect back. Invalid/used
+  // token -> a tasteful not-found state.
+  app.get<{ Params: { token: string } }>('/portfolio/invite/:token', async (request, reply) => {
+    const auth = getAuth(request);
+    if (!auth.userId) {
+      return reply.redirect('/sign-in?redirect=' + encodeURIComponent(request.url));
+    }
+
+    const token = String(request.params.token || '').trim();
+    let invite = token && token.length <= 64 ? await getChampionInviteByToken(token) : null;
+    if (!invite || invite.status !== 'pending') {
+      return reply.status(404).view('pages/portfolio-invite-accept', {
+        title: 'Invite - OTP',
+        noindex: true,
+        authState: 'not_found',
+      });
+    }
+
+    return reply.view('pages/portfolio-invite-accept', {
+      title: 'Join ' + invite.portfolioName + ' - OTP',
+      noindex: true,
+      authState: 'authenticated',
+      token,
+      portfolioName: invite.portfolioName,
+      suggestedOrgName: invite.orgName || '',
+    });
+  });
   // GET /portfolio -- list the viewer's portfolios (or the Labs-gate state).
   app.get('/portfolio', async (request, reply) => {
     const auth = getAuth(request);

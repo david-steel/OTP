@@ -135,6 +135,50 @@
       </div>
     </section>
 
+    <!-- ===== Bring in a location (invite a champion) ===== -->
+    <section class="mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold text-gray-900">Bring in a location</h2>
+        <span class="text-xs text-gray-500">Invite a champion; a new org is created from this template on accept</span>
+      </div>
+      <div class="bg-white border rounded-xl p-5">
+        <p class="text-sm text-gray-600 mb-4 max-w-[70ch]">
+          Invite a person by email. They get a link to accept; when they do, a brand-new organization is
+          created from this portfolio's template (starter KPIs + sidebar), they become its owner, and it
+          joins this portfolio automatically. Send them the accept link yourself — no email is sent from here.
+        </p>
+
+        <div class="flex flex-wrap gap-2 items-center">
+          <input type="email" id="champ-email" placeholder="champion@example.com"
+                 class="flex-1 min-w-[16rem] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500/40">
+          <input type="text" id="champ-org-name" placeholder="Org name (optional)"
+                 class="flex-1 min-w-[12rem] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500/40">
+          <button type="button" id="champ-create-btn"
+                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Create invite</button>
+        </div>
+        <p id="champ-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
+
+        <!-- New-link callout shown right after a successful create -->
+        <div id="champ-new-link" class="mt-4 border border-otp-200 bg-otp-50 rounded-lg p-3" style="display:none;">
+          <div class="text-xs font-semibold text-gray-700 mb-1">Accept link — send this to your champion</div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <input type="text" id="champ-new-link-url" readonly
+                   class="flex-1 min-w-[18rem] px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono bg-white">
+            <button type="button" id="champ-new-link-copy"
+                    class="px-3 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-xs font-medium transition-colors">Copy</button>
+          </div>
+        </div>
+
+        <!-- Pending + accepted invites list (fetched client-side) -->
+        <div class="border-t mt-5 pt-4">
+          <div class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mb-2">Invites</div>
+          <div id="champ-list" class="space-y-2">
+            <p class="text-sm text-gray-500">Loading invites…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== Super-metrics ===== -->
     <section>
       <h2 class="text-lg font-bold text-gray-900 mb-3">Super-metrics</h2>
@@ -641,6 +685,151 @@
     });
 
     loadTeam();
+
+    // ---- Bring in a location (champion invites) ----
+    var champEmail = document.getElementById('champ-email');
+    var champOrgName = document.getElementById('champ-org-name');
+    var champCreateBtn = document.getElementById('champ-create-btn');
+    var champError = document.getElementById('champ-error');
+    var champList = document.getElementById('champ-list');
+    var champNewLink = document.getElementById('champ-new-link');
+    var champNewLinkUrl = document.getElementById('champ-new-link-url');
+    var champNewLinkCopy = document.getElementById('champ-new-link-copy');
+
+    function showChampErr(msg) { if (champError) { champError.textContent = msg; champError.style.display = 'block'; } }
+    function clearChampErr() { if (champError) { champError.textContent = ''; champError.style.display = 'none'; } }
+
+    function copyToClipboard(text, doneEl) {
+      var orig = doneEl ? doneEl.textContent : '';
+      var done = function () { if (doneEl) { doneEl.textContent = 'Copied!'; setTimeout(function () { doneEl.textContent = orig; }, 1200); } };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { done(); });
+      } else {
+        var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t);
+        t.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); done();
+      }
+    }
+
+    function renderChampInvites(invites) {
+      if (!champList) return;
+      champList.innerHTML = '';
+      if (!invites || invites.length === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'text-sm text-gray-500';
+        empty.textContent = 'No invites yet.';
+        champList.appendChild(empty);
+        return;
+      }
+      invites.forEach(function (inv) {
+        var row = document.createElement('div');
+        row.className = 'flex flex-wrap items-center justify-between gap-2 py-1.5 border-b last:border-b-0';
+
+        var left = document.createElement('div');
+        left.className = 'min-w-0';
+        var nm = document.createElement('div');
+        nm.className = 'text-sm font-medium text-gray-900 truncate';
+        nm.textContent = inv.email + (inv.orgName ? ' · ' + inv.orgName : '');
+        var sub = document.createElement('div');
+        sub.className = 'text-xs text-gray-500';
+        sub.textContent = inv.status === 'accepted' ? 'Accepted' : 'Pending';
+        left.appendChild(nm); left.appendChild(sub);
+        row.appendChild(left);
+
+        var actions = document.createElement('div');
+        actions.className = 'flex items-center gap-2 shrink-0';
+        if (inv.status === 'pending') {
+          var copyBtn = document.createElement('button');
+          copyBtn.type = 'button';
+          copyBtn.className = 'text-xs font-semibold text-otp-600 hover:underline';
+          copyBtn.textContent = 'Copy link';
+          copyBtn.addEventListener('click', function () { copyToClipboard(inv.acceptUrl, copyBtn); });
+          actions.appendChild(copyBtn);
+
+          var revokeBtn = document.createElement('button');
+          revokeBtn.type = 'button';
+          revokeBtn.className = 'text-xs font-semibold text-red-600 hover:underline';
+          revokeBtn.textContent = 'Revoke';
+          revokeBtn.addEventListener('click', function () { revokeChampInvite(inv.id, revokeBtn); });
+          actions.appendChild(revokeBtn);
+        } else if (inv.status === 'accepted') {
+          var done = document.createElement('span');
+          done.className = 'text-xs text-gray-400';
+          done.textContent = '✓';
+          actions.appendChild(done);
+        }
+        row.appendChild(actions);
+        champList.appendChild(row);
+      });
+    }
+
+    function loadChampInvites() {
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/champion-invites', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data) renderChampInvites(data.invites);
+          else if (champList) champList.innerHTML = '<p class="text-sm text-gray-500">Could not load invites.</p>';
+        })
+        .catch(function () { if (champList) champList.innerHTML = '<p class="text-sm text-gray-500">Could not load invites.</p>'; });
+    }
+
+    function revokeChampInvite(inviteId, btn) {
+      if (btn) btn.disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/champion-invites/' + encodeURIComponent(inviteId), {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not revoke invite.');
+          });
+          loadChampInvites();
+        })
+        .catch(function (err) { if (btn) btn.disabled = false; showChampErr(err.message || 'Could not revoke invite.'); });
+    }
+
+    if (champCreateBtn) champCreateBtn.addEventListener('click', function () {
+      clearChampErr();
+      var email = (champEmail && champEmail.value || '').trim();
+      var orgName = (champOrgName && champOrgName.value || '').trim();
+      if (!email) { showChampErr('A champion email is required.'); return; }
+      champCreateBtn.disabled = true;
+      var body = { email: email };
+      if (orgName) body.orgName = orgName;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/champion-invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(body)
+      })
+        .then(function (r) {
+          return r.ok ? r.json() : r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not create invite.');
+          });
+        })
+        .then(function (data) {
+          champCreateBtn.disabled = false;
+          if (champEmail) champEmail.value = '';
+          if (champOrgName) champOrgName.value = '';
+          var url = data && data.invite && data.invite.acceptUrl;
+          if (url && champNewLink && champNewLinkUrl) {
+            champNewLinkUrl.value = url;
+            champNewLink.style.display = 'block';
+          }
+          loadChampInvites();
+        })
+        .catch(function (err) { champCreateBtn.disabled = false; showChampErr(err.message || 'Could not create invite.'); });
+    });
+
+    if (champNewLinkCopy) champNewLinkCopy.addEventListener('click', function () {
+      copyToClipboard(champNewLinkUrl ? champNewLinkUrl.value : '', champNewLinkCopy);
+    });
+
+    loadChampInvites();
 
     // ---- Click-to-copy member org IDs ----
     Array.prototype.forEach.call(document.querySelectorAll('.member-id-copy'), function (btn) {

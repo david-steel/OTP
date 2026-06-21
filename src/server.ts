@@ -906,6 +906,7 @@ await app.register(import('./routes/api/admin-portfolios.js'), { prefix: '/api/v
 await app.register(import('./routes/api/portfolio-invites.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-presets.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-team.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/portfolio-champion-invites.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/org-ai-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/org-logo.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/enterprise.js'), { prefix: '/api/v1' });
@@ -1168,6 +1169,14 @@ try {
   app.log.info('portfolio schema (kind, rollup_excluded, portfolio tables) is ready');
 } catch (err) {
   app.log.error({ err }, 'ensurePortfolioSchema failed -- portfolio features will not work until resolved');
+}
+
+try {
+  const { ensurePortfolioChampionInvitesSchema } = await import('./db/ensure-portfolio-champion-invites.js');
+  await ensurePortfolioChampionInvitesSchema();
+  app.log.info('portfolio champion invites schema is ready');
+} catch (err) {
+  app.log.error({ err }, 'ensurePortfolioChampionInvitesSchema failed -- champion invites will not work until resolved');
 }
 
 try {
