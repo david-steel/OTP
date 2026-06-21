@@ -27,6 +27,7 @@ import {
   getPortfolioDetail,
 } from '../../services/portfolios.js';
 import { listPendingInvitesForUser } from '../../services/portfolio-invites.js';
+import { getPortfolioMemberStats } from '../../services/portfolio-member-stats.js';
 import { getChampionInviteByToken } from '../../services/portfolio-champion-invites.js';
 
 export default async function portfolioPages(app: FastifyInstance) {
@@ -188,6 +189,15 @@ export default async function portfolioPages(app: FastifyInstance) {
     const memberNameById: Record<string, string> = {};
     for (const m of detail.memberOrgs) memberNameById[m.id] = m.name;
 
+    // Per-member stats (humans / agents / KPIs) for the org-chart cards.
+    // Best-effort: a stats failure must not blank the whole portfolio page.
+    let memberStats: Awaited<ReturnType<typeof getPortfolioMemberStats>> = [];
+    try {
+      memberStats = await getPortfolioMemberStats(portfolioId);
+    } catch (err) {
+      request.log.warn({ err, portfolioId }, 'portfolio detail: member stats lookup failed');
+    }
+
     return reply.view('pages/portfolio-detail', {
       title: (detail.portfolio.name || 'Portfolio') + ' - OTP',
       noindex: true,
@@ -197,6 +207,7 @@ export default async function portfolioPages(app: FastifyInstance) {
       superMetrics: detail.superMetrics,
       latestByKpi,
       memberNameById,
+      memberStats,
     });
   });
 }
