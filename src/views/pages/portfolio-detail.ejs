@@ -181,9 +181,9 @@
       </div>
       <div class="bg-white border rounded-xl p-5">
         <p class="text-sm text-gray-600 mb-4 max-w-[70ch]">
-          Invite a person by email. They get a link to accept; when they do, a brand-new organization is
-          created from this portfolio's template (starter KPIs + sidebar), they become its owner, and it
-          joins this portfolio automatically. Send them the accept link yourself — no email is sent from here.
+          Invite a person by email. We send them a branded link; when they accept, a brand-new organization is
+          created from this portfolio's template (starter KPIs + sidebar), they become its owner, and it joins
+          this portfolio automatically. Add a short note so they know who's reaching out and why.
         </p>
 
         <div class="flex flex-wrap gap-2 items-center">
@@ -192,8 +192,11 @@
           <input type="text" id="champ-org-name" placeholder="Org name (optional)"
                  class="flex-1 min-w-[12rem] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500/40">
           <button type="button" id="champ-create-btn"
-                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Create invite</button>
+                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Create &amp; email invite</button>
         </div>
+        <textarea id="champ-message" rows="2" maxlength="1000"
+                  placeholder="Personal note (optional) — e.g. why you're bringing them in. Shown in the invite email."
+                  class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500/40"></textarea>
         <p id="champ-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
 
         <!-- New-link callout shown right after a successful create -->
@@ -746,6 +749,7 @@
     // ---- Bring in a location (champion invites) ----
     var champEmail = document.getElementById('champ-email');
     var champOrgName = document.getElementById('champ-org-name');
+    var champMessage = document.getElementById('champ-message');
     var champCreateBtn = document.getElementById('champ-create-btn');
     var champError = document.getElementById('champ-error');
     var champList = document.getElementById('champ-list');
@@ -878,10 +882,12 @@
       clearChampErr();
       var email = (champEmail && champEmail.value || '').trim();
       var orgName = (champOrgName && champOrgName.value || '').trim();
+      var message = (champMessage && champMessage.value || '').trim();
       if (!email) { showChampErr('A champion email is required.'); return; }
       champCreateBtn.disabled = true;
       var body = { email: email };
       if (orgName) body.orgName = orgName;
+      if (message) body.message = message;
       fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/champion-invites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -897,6 +903,7 @@
           champCreateBtn.disabled = false;
           if (champEmail) champEmail.value = '';
           if (champOrgName) champOrgName.value = '';
+          if (champMessage) champMessage.value = '';
           var url = data && data.invite && data.invite.acceptUrl;
           if (url && champNewLink && champNewLinkUrl) {
             champNewLinkUrl.value = url;
