@@ -49,9 +49,17 @@ export interface CreateChampionInviteInput {
  * Create a pending champion invite for a portfolio. Validates the org is a real
  * portfolio. Returns the new invite's id, token, and email.
  */
+export interface CreatedChampionInvite {
+  id: string;
+  token: string;
+  email: string;
+  expiresAt: Date;
+  portfolioName: string;
+}
+
 export async function createChampionInvite(
   input: CreateChampionInviteInput,
-): Promise<{ id: string; token: string; email: string }> {
+): Promise<CreatedChampionInvite> {
   const { portfolioOrgId, invitedByUserId } = input;
   const email = String(input.email || '').trim().toLowerCase();
   const orgName = input.orgName ? String(input.orgName).trim().slice(0, 255) : null;
@@ -67,7 +75,7 @@ export async function createChampionInvite(
   }
 
   const [portfolio] = await db
-    .select({ kind: organizations.kind })
+    .select({ kind: organizations.kind, name: organizations.name })
     .from(organizations)
     .where(eq(organizations.id, portfolioOrgId))
     .limit(1);
@@ -76,6 +84,7 @@ export async function createChampionInvite(
     throw new PortfolioError('NOT_A_PORTFOLIO', 'Org is not a portfolio');
   }
 
+  const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
   const [row] = await db.insert(portfolioChampionInvites).values({
     portfolioOrgId,
     email,
@@ -83,10 +92,52 @@ export async function createChampionInvite(
     token: freshToken(),
     status: 'pending',
     invitedByUserId,
-    expiresAt: new Date(Date.now() + INVITE_EXPIRY_MS),
+    expiresAt,
   }).returning({ id: portfolioChampionInvites.id, token: portfolioChampionInvites.token, email: portfolioChampionInvites.email });
 
-  return { id: row.id, token: row.token, email: row.email };
+  return { id: row.id, token: row.token, email: row.email, expiresAt, portfolioName: portfolio.name };
+}
+
+/**
+ * Re-fire a pending invite: rotate to a fresh token + a new 14-day expiry, keep
+ * the same row. Scoped to the portfolio so an inviteId from elsewhere can't be
+ * resent here. Returns the data needed to re-send the email. Mirrors the team
+ * invite resend flow.
+ */
+export async function resendChampionInvite(
+  portfolioOrgId: string,
+  inviteId: string,
+): Promise<{ token: string; email: string; expiresAt: Date; portfolioName: string }> {
+  if (!portfolioOrgId || !inviteId) {
+    throw new PortfolioError('INVALID_REQUEST', 'Portfolio and invite are required');
+  }
+  const [invite] = await db
+    .select({ id: portfolioChampionInvites.id, email: portfolioChampionInvites.email, status: portfolioChampionInvites.status })
+    .from(portfolioChampionInvites)
+    .where(and(
+      eq(portfolioChampionInvites.id, inviteId),
+      eq(portfolioChampionInvites.portfolioOrgId, portfolioOrgId),
+    ))
+    .limit(1);
+  if (!invite) throw new PortfolioError('INVITE_NOT_FOUND', 'Invite not found', 404);
+  if (invite.status !== 'pending') {
+    throw new PortfolioError('INVITE_NOT_PENDING', 'Only a pending invite can be resent', 409);
+  }
+
+  const [portfolio] = await db
+    .select({ name: organizations.name })
+    .from(organizations)
+    .where(eq(organizations.id, portfolioOrgId))
+    .limit(1);
+
+  const token = freshToken();
+  const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
+  await db
+    .update(portfolioChampionInvites)
+    .set({ token, expiresAt })
+    .where(eq(portfolioChampionInvites.id, inviteId));
+
+  return { token, email: invite.email, expiresAt, portfolioName: portfolio?.name || 'Portfolio' };
 }
 
 // ---- Read: invites for a portfolio (owner UI) ----
