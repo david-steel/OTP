@@ -1116,6 +1116,31 @@ export const portfolioMetricSources = pgTable('portfolio_metric_sources', {
   portfolioKpiIdx: index('portfolio_metric_sources_kpi_idx').on(table.portfolioKpiId),
 }));
 
+// ---- Portfolio "champion invite" (seed a new org from the template) ----
+// A portfolio owner invites ONE champion (a person, by email). On accept a
+// BRAND-NEW org is created from the portfolio's template, the champion becomes
+// its owner, and the new org is auto-linked into the portfolio. Distinct from
+// portfolio_members (which links EXISTING orgs). Table created by
+// ensure-portfolio-champion-invites.ts at boot (Drizzle migrate is broken).
+
+export const portfolioChampionInvites = pgTable('portfolio_champion_invites', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  portfolioOrgId: uuid('portfolio_org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  email: varchar('email', { length: 200 }).notNull(),
+  // Optional name for the org to create; the champion can name it on accept.
+  orgName: varchar('org_name', { length: 255 }),
+  token: varchar('token', { length: 64 }).notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  invitedByUserId: varchar('invited_by_user_id', { length: 255 }),
+  // Set on accept: the new org seeded from the template.
+  createdOrgId: uuid('created_org_id').references(() => organizations.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  acceptedAt: timestamp('accepted_at'),
+}, (table) => ({
+  tokenUk: uniqueIndex('portfolio_champion_invites_token_uk').on(table.token),
+  portfolioIdx: index('portfolio_champion_invites_portfolio_idx').on(table.portfolioOrgId),
+}));
+
 // ---- In-app notifications (nav alert bell) ----
 // Created by ensure-notifications.ts at boot. Recipients are chart seats;
 // org_members.claimed_entity_ids maps seats to signed-in users at read time.
