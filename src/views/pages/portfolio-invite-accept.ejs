@@ -11,6 +11,8 @@
   var _token = (typeof token !== 'undefined' && token) ? String(token) : '';
   var _portfolioName = (typeof portfolioName !== 'undefined' && portfolioName) ? String(portfolioName) : 'a portfolio';
   var _suggestedOrgName = (typeof suggestedOrgName !== 'undefined' && suggestedOrgName) ? String(suggestedOrgName) : '';
+  /* XSS guard: embed a value in an inline <script> via jsonForScript() -- escapes < and > so a value containing the closing script tag can't break out of the script context. */
+  function jsonForScript(v){ return JSON.stringify(v === undefined ? null : v).replace(/</g,'\\u003c').replace(/>/g,'\\u003e'); }
 %>
 
 <div class="max-w-xl mx-auto px-4 py-12">
@@ -51,7 +53,7 @@
 <% if (_auth === 'authenticated') { %>
 <script>
   (function () {
-    var token = <%- JSON.stringify(_token) %>;
+    var token = <%- jsonForScript(_token) %>;
     var btn = document.getElementById('accept-btn');
     var nameInput = document.getElementById('accept-org-name');
     var errEl = document.getElementById('accept-error');
