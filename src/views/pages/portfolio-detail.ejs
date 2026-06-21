@@ -198,7 +198,7 @@
 
         <!-- New-link callout shown right after a successful create -->
         <div id="champ-new-link" class="mt-4 border border-otp-200 bg-otp-50 rounded-lg p-3" style="display:none;">
-          <div class="text-xs font-semibold text-gray-700 mb-1">Accept link — send this to your champion</div>
+          <div class="text-xs font-semibold text-gray-700 mb-1" id="champ-new-link-label">Invitation emailed to your champion — here's the link too, as a backup</div>
           <div class="flex flex-wrap gap-2 items-center">
             <input type="text" id="champ-new-link-url" readonly
                    class="flex-1 min-w-[18rem] px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono bg-white">
@@ -783,6 +783,13 @@
           copyBtn.addEventListener('click', function () { copyToClipboard(inv.acceptUrl, copyBtn); });
           actions.appendChild(copyBtn);
 
+          var resendBtn = document.createElement('button');
+          resendBtn.type = 'button';
+          resendBtn.className = 'text-xs font-semibold text-otp-600 hover:underline';
+          resendBtn.textContent = 'Resend';
+          resendBtn.addEventListener('click', function () { resendChampInvite(inv.id, resendBtn); });
+          actions.appendChild(resendBtn);
+
           var revokeBtn = document.createElement('button');
           revokeBtn.type = 'button';
           revokeBtn.className = 'text-xs font-semibold text-red-600 hover:underline';
@@ -828,6 +835,24 @@
           loadChampInvites();
         })
         .catch(function (err) { if (btn) btn.disabled = false; showChampErr(err.message || 'Could not revoke invite.'); });
+    }
+
+    function resendChampInvite(inviteId, btn) {
+      clearChampErr();
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/champion-invites/' + encodeURIComponent(inviteId) + '/resend', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not resend invite.');
+          });
+          if (btn) { btn.textContent = 'Sent!'; setTimeout(function () { loadChampInvites(); }, 600); }
+          else loadChampInvites();
+        })
+        .catch(function (err) { if (btn) { btn.disabled = false; btn.textContent = 'Resend'; } showChampErr(err.message || 'Could not resend invite.'); });
     }
 
     if (champCreateBtn) champCreateBtn.addEventListener('click', function () {
