@@ -20,6 +20,23 @@ export const changelog: ChangelogEntry[] = [
 
   {
     date: '2026-06-22',
+    tags: ['Major', 'Portfolios', 'Labs'],
+    title: 'Portfolios: run many organizations as one (early access in Labs)',
+    why: 'See every location, franchise, or portfolio company on one scorecard and meet as one leadership team, without flattening them into a single org.',
+    cta: { text: 'Turn it on in Labs', url: '/settings/labs' },
+    summary: 'A Portfolio is an organization made of other organizations. Roll KPIs up from every member org into weighted super-metrics, run one portfolio meeting across the group, set a standard template (starter KPIs, sidebar, AI-key policy) that members inherit, and bring in a new location by email, which spins up a fully set-up org on accept. Built for PE firms, coaches, franchisors, and multi-org operators. Early access: switch on "Portfolio" under Settings, Labs.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Super-metrics.</strong> Roll one KPI per member org up into a single number, with per-org weights, so "leads this week" across a dozen locations becomes one line on the portfolio scorecard.</li>
+<li><strong>One meeting across the group.</strong> Start a portfolio meeting that reports the rolled-up scorecard, with attendees drawn from your member organizations.</li>
+<li><strong>An organization template.</strong> Define your standard once, the starter KPIs, the sidebar items every location shows, and the AI-key policy, and every member org inherits it. Lock it to enforce one brand standard everywhere.</li>
+<li><strong>Bring in a location by email.</strong> Invite a champion; when they accept, a brand-new organization is created from your template, owned by them, and linked into the portfolio, ready on day one.</li>
+<li><strong>Member org chart.</strong> See every member organization as a card with its people, agents, and KPI counts, and open a side panel for the details.</li>
+<li><strong>Early access.</strong> Enable "Portfolio" in Settings, Labs. Member organizations keep their own data; only the metrics you choose roll up.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-22',
     tags: ['Major', 'Integrations', 'Labs'],
     title: 'Connect OTP to Claude with one URL (Remote MCP, early access in Labs)',
     why: 'Your AI works from your real chart, scorecard, and rocks, with no setup tax.',
