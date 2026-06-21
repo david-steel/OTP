@@ -88,6 +88,10 @@ export const organizations = pgTable('organizations', {
   // { sidebar?: any, settings?: any, locked?: string[] }. Added by
   // ensure-portfolio.ts on boot (Drizzle migrate is broken).
   portfolioPresets: jsonb('portfolio_presets'),
+  // Organization logo, stored as a `data:image/...;base64,...` string (capped
+  // ~150KB). Renders in the left-sidebar header in place of the org name.
+  // Column added by ensure-org-logo.ts on boot (Drizzle migrate is broken).
+  logoUrl: text('logo_url'),
   // Two-phase hard delete. deletionRequestedAt = when a delete was initiated;
   // null = active. While set, the org is hidden/blocked everywhere (see
   // getAuthOrg). It is restorable for 7 days; after that the purge job
