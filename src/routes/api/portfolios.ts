@@ -26,6 +26,7 @@ import { meetings, orgMembers } from '../../db/schema.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { requireUuidParam, validateUuidParam } from '../../shared/param-validation.js';
 import { isFeatureEnabledForOrg } from '../../services/lab-features.js';
+import { ACTIVE_ORG_COOKIE_NAME } from '../../services/active-org.js';
 import {
   createPortfolio,
   linkMemberOrg,
@@ -277,6 +278,18 @@ export default async function portfolioRoutes(app: FastifyInstance) {
         attendees,
         createdBy: userId,
       }).returning();
+
+      // Pin the active org to the portfolio so the /l8/meeting/:id loader
+      // (l8ResolveOrg -> resolveSwitchedOrgRow) resolves THIS portfolio and finds
+      // the meeting we just created. Without this, the meeting lives in the
+      // portfolio org while l8ResolveOrg returns the caller's normal active org,
+      // and the page 404s with "Meeting not found". assertPortfolioMember above
+      // already validated active membership, so this mirrors the switcher's
+      // validated-switch semantics (services/active-org.ts invariant 1).
+      reply.setCookie(ACTIVE_ORG_COOKIE_NAME, id, {
+        path: '/', httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 60 * 60 * 24 * 365,
+      });
 
       return reply.status(201).send({ meetingId: meeting.id });
     } catch (e) {
