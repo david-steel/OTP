@@ -118,15 +118,11 @@ export default async function portfolioPages(app: FastifyInstance) {
       });
     }
 
-    // The whole surface is Labs-gated; check the portfolio org's own flag.
-    const featureEnabled = await isFeatureEnabledForOrg(portfolioId, 'portfolio');
-    if (!featureEnabled) {
-      return reply.view('pages/portfolio-detail', {
-        title: 'Portfolio - OTP',
-        noindex: true,
-        authState: 'feature_off',
-      });
-    }
+    // Active membership in the portfolio org (checked above) is the gate for
+    // viewing a portfolio you belong to. We do NOT require the Labs flag on the
+    // portfolio org itself -- it never carries that flag (the flag lives on the
+    // member orgs that opted into the feature), so checking it here locked an
+    // owner out of their own portfolio.
 
     let detail;
     try {
