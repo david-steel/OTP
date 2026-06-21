@@ -188,35 +188,69 @@
       <% } %>
     </section>
 
-    <!-- ===== Presets (inherited by member orgs) ===== -->
+    <!-- ===== Organization template ===== -->
     <section class="mt-8">
-      <h2 class="text-lg font-bold text-gray-900 mb-3">Presets (inherited by member orgs)</h2>
-      <div class="bg-white border rounded-xl p-6">
-        <p class="text-sm text-gray-600 mb-4">
-          Standardize the sidebar across member organizations. Lock it to prevent members from overriding.
-        </p>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold text-gray-900">Organization template</h2>
+        <span class="text-xs text-gray-500">Standard setup inherited by member orgs and seeded into new ones</span>
+      </div>
+      <div class="bg-white border rounded-xl p-6 space-y-6">
 
-        <label class="flex items-start gap-2 text-sm text-gray-700">
-          <input type="checkbox" id="presets-inherit-sidebar"
-                 class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
-          <span>
-            <span class="font-semibold text-gray-900">Member organizations inherit the portfolio sidebar</span><br>
-            <span class="text-xs text-gray-500">Member orgs use this portfolio's standardized sidebar instead of their own.</span>
-          </span>
-        </label>
+        <!-- Sidebar & menus -->
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">Sidebar &amp; menus</h3>
+          <p class="text-sm text-gray-600 mb-3">Standardize the sidebar across member organizations. Lock it to prevent overrides.</p>
 
-        <label class="flex items-start gap-2 mt-3 text-sm text-gray-700">
-          <input type="checkbox" id="presets-lock-sidebar"
-                 class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
-          <span>
-            <span class="font-semibold text-gray-900">Lock it</span><br>
-            <span class="text-xs text-gray-500">Members cannot override the inherited sidebar.</span>
-          </span>
-        </label>
+          <label class="flex items-start gap-2 text-sm text-gray-700">
+            <input type="checkbox" id="presets-inherit-sidebar"
+                   class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
+            <span>
+              <span class="font-semibold text-gray-900">Member organizations inherit the portfolio sidebar</span><br>
+              <span class="text-xs text-gray-500">Member orgs use this portfolio's standardized sidebar instead of their own.</span>
+            </span>
+          </label>
 
-        <div class="flex items-center gap-3 mt-4">
+          <label class="flex items-start gap-2 mt-3 text-sm text-gray-700">
+            <input type="checkbox" id="presets-lock-sidebar"
+                   class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
+            <span>
+              <span class="font-semibold text-gray-900">Lock it</span><br>
+              <span class="text-xs text-gray-500">Members cannot override the inherited sidebar.</span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Starter KPIs -->
+        <div class="border-t pt-5">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-gray-900">Starter KPIs</h3>
+            <button type="button" id="tpl-kpi-add" class="text-sm font-semibold text-otp-600 hover:underline">+ Add KPI</button>
+          </div>
+          <p class="text-sm text-gray-600 mb-3">Scorecard metrics seeded into a new organization created from this template.</p>
+          <div id="tpl-kpi-list" class="space-y-2"></div>
+          <p id="tpl-kpi-empty" class="text-sm text-gray-400" style="display:none;">No starter KPIs yet. Add the metrics every location should track.</p>
+        </div>
+
+        <!-- AI key policy -->
+        <div class="border-t pt-5">
+          <h3 class="font-semibold text-gray-900 mb-1">AI key policy</h3>
+          <p class="text-sm text-gray-600 mb-3">
+            The portfolio's own API key (set in <span class="font-medium text-gray-700">Settings → Company → Bring your own AI key</span>)
+            is the default for member organizations. Keys are never used to train or teach.
+          </p>
+          <label class="flex items-start gap-2 text-sm text-gray-700">
+            <input type="checkbox" id="tpl-allow-override"
+                   class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
+            <span>
+              <span class="font-semibold text-gray-900">Locations may set their own AI key</span><br>
+              <span class="text-xs text-gray-500">A member org can override the portfolio default with its own Anthropic / OpenAI key.</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="flex items-center gap-3 border-t pt-5">
           <button type="button" id="presets-save-btn"
-                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Save presets</button>
+                  class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Save template</button>
           <span id="presets-status" class="text-xs text-gray-500" style="display:none;"></span>
         </div>
         <p id="presets-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
@@ -329,6 +363,86 @@
     var presetsSaveBtn = document.getElementById('presets-save-btn');
     var presetsStatus = document.getElementById('presets-status');
     var presetsError = document.getElementById('presets-error');
+    var tplKpiList = document.getElementById('tpl-kpi-list');
+    var tplKpiAdd = document.getElementById('tpl-kpi-add');
+    var tplKpiEmpty = document.getElementById('tpl-kpi-empty');
+    var tplAllowOverride = document.getElementById('tpl-allow-override');
+
+    var KPI_OPS = [['', '—'], ['gte', '≥'], ['lte', '≤'], ['gt', '>'], ['lt', '<'], ['eq', '=']];
+    var KPI_GRAINS = ['weekly', 'monthly', 'quarterly'];
+
+    function refreshKpiEmpty() {
+      if (!tplKpiList || !tplKpiEmpty) return;
+      tplKpiEmpty.style.display = tplKpiList.children.length ? 'none' : 'block';
+    }
+    function addKpiRow(kpi) {
+      if (!tplKpiList) return;
+      kpi = kpi || {};
+      var inp = 'px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-otp-500/40';
+      var row = document.createElement('div');
+      row.className = 'tpl-kpi-row flex flex-wrap items-center gap-2';
+
+      var title = document.createElement('input');
+      title.type = 'text'; title.placeholder = 'KPI title';
+      title.className = 'tpl-kpi-title flex-1 min-w-[12rem] ' + inp;
+      title.value = kpi.title || '';
+
+      var unit = document.createElement('input');
+      unit.type = 'text'; unit.placeholder = 'Unit';
+      unit.className = 'tpl-kpi-unit w-24 ' + inp;
+      unit.value = kpi.unit || '';
+
+      var op = document.createElement('select');
+      op.className = 'tpl-kpi-op ' + inp;
+      KPI_OPS.forEach(function (o) {
+        var opt = document.createElement('option'); opt.value = o[0]; opt.textContent = o[1];
+        if ((kpi.goalOperator || '') === o[0]) opt.selected = true;
+        op.appendChild(opt);
+      });
+
+      var goal = document.createElement('input');
+      goal.type = 'number'; goal.step = 'any'; goal.placeholder = 'Goal';
+      goal.className = 'tpl-kpi-goal w-24 ' + inp;
+      if (kpi.goalValue !== null && typeof kpi.goalValue !== 'undefined') goal.value = kpi.goalValue;
+
+      var grain = document.createElement('select');
+      grain.className = 'tpl-kpi-grain ' + inp;
+      KPI_GRAINS.forEach(function (g) {
+        var opt = document.createElement('option'); opt.value = g; opt.textContent = g;
+        if ((kpi.timeGrain || 'weekly') === g) opt.selected = true;
+        grain.appendChild(opt);
+      });
+
+      var rm = document.createElement('button');
+      rm.type = 'button'; rm.textContent = '✕'; rm.setAttribute('aria-label', 'Remove KPI');
+      rm.className = 'tpl-kpi-remove px-2 py-1 text-gray-400 hover:text-red-600 text-sm';
+      rm.addEventListener('click', function () { tplKpiList.removeChild(row); refreshKpiEmpty(); });
+
+      row.appendChild(title); row.appendChild(unit); row.appendChild(op);
+      row.appendChild(goal); row.appendChild(grain); row.appendChild(rm);
+      tplKpiList.appendChild(row);
+      refreshKpiEmpty();
+    }
+    function collectKpis() {
+      if (!tplKpiList) return [];
+      var out = [];
+      Array.prototype.forEach.call(tplKpiList.querySelectorAll('.tpl-kpi-row'), function (row) {
+        var title = (row.querySelector('.tpl-kpi-title').value || '').trim();
+        if (!title) return;
+        var unit = (row.querySelector('.tpl-kpi-unit').value || '').trim();
+        var op = row.querySelector('.tpl-kpi-op').value || '';
+        var goalRaw = row.querySelector('.tpl-kpi-goal').value;
+        var grain = row.querySelector('.tpl-kpi-grain').value || 'weekly';
+        var k = { title: title, timeGrain: grain };
+        if (unit) k.unit = unit;
+        if (op) k.goalOperator = op;
+        if (goalRaw !== '' && !isNaN(parseFloat(goalRaw))) k.goalValue = parseFloat(goalRaw);
+        out.push(k);
+      });
+      return out;
+    }
+    if (tplKpiAdd) tplKpiAdd.addEventListener('click', function () { addKpiRow({}); });
+    refreshKpiEmpty();
 
     function showPresetsErr(msg) {
       if (!presetsError) return;
@@ -361,6 +475,18 @@
           presetsInherit.checked = (sb !== null && typeof sb !== 'undefined');
           var locked = (data && Array.isArray(data.locked)) ? data.locked : [];
           if (presetsLock) presetsLock.checked = locked.indexOf('sidebar') !== -1;
+          // Starter KPIs
+          if (tplKpiList) {
+            tplKpiList.innerHTML = '';
+            var kpis = (data && Array.isArray(data.kpis)) ? data.kpis : [];
+            kpis.forEach(function (k) { addKpiRow(k); });
+            refreshKpiEmpty();
+          }
+          // API key policy (default: override allowed)
+          if (tplAllowOverride) {
+            var apk = (data && data.apiKeyPolicy) ? data.apiKeyPolicy : null;
+            tplAllowOverride.checked = apk ? (apk.allowLocationOverride !== false) : true;
+          }
         })
         .catch(function () { /* leave defaults on failure */ });
     }
@@ -371,12 +497,14 @@
       // when inheriting.
       var sidebar = (presetsInherit && presetsInherit.checked) ? { inherit: true } : null;
       var locked = (sidebar && presetsLock && presetsLock.checked) ? ['sidebar'] : [];
+      var kpis = collectKpis();
+      var apiKeyPolicy = { allowLocationOverride: !!(tplAllowOverride && tplAllowOverride.checked) };
       presetsSaveBtn.disabled = true;
       fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/presets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ sidebar: sidebar, locked: locked })
+        body: JSON.stringify({ sidebar: sidebar, locked: locked, kpis: kpis, apiKeyPolicy: apiKeyPolicy })
       })
         .then(function (r) {
           if (!r.ok) return r.json().then(function (e) {

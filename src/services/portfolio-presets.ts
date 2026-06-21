@@ -19,25 +19,85 @@ import { db } from '../config/database.js';
 import { organizations, portfolioMembers } from '../db/schema.js';
 import { PortfolioError } from './portfolios.js';
 
-// The intended shape of organizations.portfolioPresets (nullable jsonb).
+// A starter KPI carried by a portfolio's template -- seeded into member orgs
+// (and orgs created from the template). Definition only, no values.
+export type TemplateKpiGoalOp = 'gte' | 'lte' | 'gt' | 'lt' | 'eq';
+export type TemplateKpiGrain = 'weekly' | 'monthly' | 'quarterly';
+export type TemplateKpiOwnerType = 'agent' | 'human';
+export interface TemplateKpi {
+  title: string;
+  unit?: string | null;
+  goalOperator?: TemplateKpiGoalOp | null;
+  goalValue?: number | null;
+  timeGrain?: TemplateKpiGrain;
+  ownerType?: TemplateKpiOwnerType;
+}
+
+// How member orgs / seeded orgs handle the AI key. The portfolio's OWN active
+// org_ai_keys row is the default; allowLocationOverride lets a member set its own.
+export interface ApiKeyPolicy {
+  allowLocationOverride: boolean;
+}
+
+// The intended shape of organizations.portfolioPresets (nullable jsonb). Beyond
+// the original sidebar/settings/locked groups, a portfolio template also carries
+// starter KPIs and an API-key policy (the "Organization template" editor).
 export interface PortfolioPresets {
   sidebar?: any;
   settings?: any;
   locked?: string[];
+  kpis?: TemplateKpi[];
+  apiKeyPolicy?: ApiKeyPolicy;
 }
 
 const PRESET_GROUPS = ['sidebar', 'settings'] as const;
 type PresetGroup = (typeof PRESET_GROUPS)[number];
 
+const GOAL_OPS: TemplateKpiGoalOp[] = ['gte', 'lte', 'gt', 'lt', 'eq'];
+const GRAINS: TemplateKpiGrain[] = ['weekly', 'monthly', 'quarterly'];
+
+/** Defensively coerce an unknown jsonb value into a clean TemplateKpi[]. */
+export function sanitizeTemplateKpis(raw: unknown): TemplateKpi[] {
+  if (!Array.isArray(raw)) return [];
+  const out: TemplateKpi[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const r = item as Record<string, unknown>;
+    const title = typeof r.title === 'string' ? r.title.trim() : '';
+    if (!title) continue; // a KPI with no title is meaningless
+    const op = typeof r.goalOperator === 'string' && GOAL_OPS.includes(r.goalOperator as TemplateKpiGoalOp)
+      ? (r.goalOperator as TemplateKpiGoalOp) : null;
+    const grain = typeof r.timeGrain === 'string' && GRAINS.includes(r.timeGrain as TemplateKpiGrain)
+      ? (r.timeGrain as TemplateKpiGrain) : 'weekly';
+    const gv = (typeof r.goalValue === 'number' && Number.isFinite(r.goalValue)) ? r.goalValue : null;
+    const ownerType: TemplateKpiOwnerType = r.ownerType === 'agent' ? 'agent' : 'human';
+    out.push({
+      title: title.slice(0, 255),
+      unit: typeof r.unit === 'string' && r.unit.trim() ? r.unit.trim().slice(0, 40) : null,
+      goalOperator: op,
+      goalValue: gv,
+      timeGrain: grain,
+      ownerType,
+    });
+    if (out.length >= 100) break; // sanity cap
+  }
+  return out;
+}
+
 /** Coerce an unknown jsonb value into a defensive PortfolioPresets object. */
-function normalizePresets(raw: unknown): { sidebar: any; settings: any; locked: string[] } {
+function normalizePresets(raw: unknown): {
+  sidebar: any; settings: any; locked: string[]; kpis: TemplateKpi[]; apiKeyPolicy: ApiKeyPolicy;
+} {
   const p = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const lockedRaw = Array.isArray(p.locked) ? p.locked : [];
   const locked = lockedRaw.filter((g): g is string => typeof g === 'string');
+  const apk = (p.apiKeyPolicy && typeof p.apiKeyPolicy === 'object') ? p.apiKeyPolicy as Record<string, unknown> : {};
   return {
     sidebar: p.sidebar ?? null,
     settings: p.settings ?? null,
     locked,
+    kpis: sanitizeTemplateKpis(p.kpis),
+    apiKeyPolicy: { allowLocationOverride: apk.allowLocationOverride !== false },
   };
 }
 
@@ -163,14 +223,17 @@ export async function resolveEffectivePresets(
  */
 export async function setPortfolioPresets(
   portfolioOrgId: string,
-  presets: { sidebar?: any; settings?: any; locked?: string[] },
+  presets: {
+    sidebar?: any; settings?: any; locked?: string[];
+    kpis?: TemplateKpi[]; apiKeyPolicy?: ApiKeyPolicy;
+  },
 ): Promise<void> {
   if (!portfolioOrgId) {
     throw new PortfolioError('INVALID_ORG', 'A portfolio org is required');
   }
 
   const [org] = await db
-    .select({ kind: organizations.kind })
+    .select({ kind: organizations.kind, portfolioPresets: organizations.portfolioPresets })
     .from(organizations)
     .where(eq(organizations.id, portfolioOrgId))
     .limit(1);
@@ -179,12 +242,20 @@ export async function setPortfolioPresets(
     throw new PortfolioError('NOT_A_PORTFOLIO', 'Org is not a portfolio');
   }
 
+  // Merge with whatever is already stored so a partial save (e.g. just the
+  // sidebar checkbox, or just the KPI list) never drops the other template
+  // fields. Only keys explicitly provided overwrite.
+  const current = normalizePresets(org.portfolioPresets);
   const toStore: PortfolioPresets = {
-    sidebar: presets?.sidebar ?? null,
-    settings: presets?.settings ?? null,
-    locked: Array.isArray(presets?.locked)
+    sidebar: presets.sidebar !== undefined ? presets.sidebar : current.sidebar,
+    settings: presets.settings !== undefined ? presets.settings : current.settings,
+    locked: presets.locked !== undefined
       ? presets.locked.filter((g): g is string => typeof g === 'string')
-      : [],
+      : current.locked,
+    kpis: presets.kpis !== undefined ? sanitizeTemplateKpis(presets.kpis) : current.kpis,
+    apiKeyPolicy: presets.apiKeyPolicy !== undefined
+      ? { allowLocationOverride: presets.apiKeyPolicy.allowLocationOverride !== false }
+      : current.apiKeyPolicy,
   };
 
   await db
@@ -199,7 +270,7 @@ export async function setPortfolioPresets(
  */
 export async function getPortfolioPresets(
   portfolioOrgId: string,
-): Promise<{ sidebar: any; settings: any; locked: string[] } | null> {
+): Promise<{ sidebar: any; settings: any; locked: string[]; kpis: TemplateKpi[]; apiKeyPolicy: ApiKeyPolicy } | null> {
   if (!portfolioOrgId) return null;
 
   const [org] = await db
