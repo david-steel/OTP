@@ -20,6 +20,7 @@ export interface ConatusPostMeta {
 export interface ConatusPost extends ConatusPostMeta {
   html: string;
   wordCount: number;
+  faq: { question: string; answer: string }[];
 }
 
 function splitFrontmatter(raw: string): { data: Record<string, unknown>; body: string } {
@@ -52,6 +53,58 @@ function extractLeadingH1(body: string): { title: string | null; rest: string } 
   const m = /^\s*#\s+(.+?)\s*\r?\n/.exec(body);
   if (!m) return { title: null, rest: body };
   return { title: m[1].trim(), rest: body.slice(m[0].length).replace(/^\r?\n/, '') };
+}
+
+function stripMd(s: string): string {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/\[(.+?)\]\([^)]+\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Extract a FAQ section ("## Frequently asked questions" / "## FAQ") into
+// {question, answer} pairs for FAQPage JSON-LD. Questions are bold lines that
+// end in "?" or H3 headings; the answer is the prose until the next question or
+// the end of the section (next H2). Returns [] when there is no FAQ section.
+function extractFaq(body: string): { question: string; answer: string }[] {
+  const lines = body.split(/\r?\n/);
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s+(frequently asked questions|faqs?)\b/i.test(lines[i].trim())) { start = i + 1; break; }
+  }
+  if (start === -1) return [];
+  let end = lines.length;
+  for (let i = start; i < lines.length; i++) {
+    if (/^##\s+/.test(lines[i].trim())) { end = i; break; }
+  }
+  const faqs: { question: string; answer: string }[] = [];
+  let q: string | null = null;
+  let a: string[] = [];
+  const flush = () => {
+    if (q) {
+      const ans = stripMd(a.join(' '));
+      if (ans) faqs.push({ question: stripMd(q), answer: ans });
+    }
+    q = null; a = [];
+  };
+  for (let i = start; i < end; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const mH3 = /^###\s+(.+?)\s*$/.exec(line);
+    const mBold = /^\*\*(.+?)\*\*:?\s*$/.exec(line);
+    const isBoldQ = mBold && /\?\s*$/.test(mBold[1]);
+    if (mH3 || isBoldQ) {
+      flush();
+      q = (mH3 ? mH3[1] : mBold![1]).trim();
+    } else if (q) {
+      a.push(line);
+    }
+  }
+  flush();
+  return faqs;
 }
 
 function readPostFile(filename: string): { meta: ConatusPostMeta; body: string } | null {
@@ -107,7 +160,7 @@ export function getConatusPost(slug: string): ConatusPost | null {
     if (p && p.meta.slug === slug) {
       const html = marked.parse(p.body, { async: false }) as string;
       const wordCount = p.body.split(/\s+/).filter(Boolean).length;
-      return { ...p.meta, html, wordCount };
+      return { ...p.meta, html, wordCount, faq: extractFaq(p.body) };
     }
   }
   return null;

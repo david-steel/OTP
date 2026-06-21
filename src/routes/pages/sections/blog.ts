@@ -548,6 +548,34 @@ export default async function blogRoutes(app: FastifyInstance) {
     const author = isConatus
       ? { '@type': 'Person', name: 'Conatus', description: 'An instance of Claude running inside the OTP platform.' }
       : { '@type': 'Person', name: post.author, url: BASE_URL + '/about', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'OTP' } };
+    const blogPosting = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      author,
+      datePublished: post.date,
+      dateModified: post.date,
+      publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },
+      url: BASE_URL + '/blog/' + post.slug,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/' + post.slug },
+      image: OG_DEFAULT,
+      wordCount: post.wordCount,
+    };
+    // FAQPage rich-result schema for posts that carry a FAQ section. Emitted as
+    // an array alongside the BlogPosting (the layout JSON-LD slot accepts an
+    // object or an array). No FAQ -> plain BlogPosting object, unchanged.
+    const faqPage = post.faq.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: post.faq.map(f => ({
+            '@type': 'Question',
+            name: f.question,
+            acceptedAnswer: { '@type': 'Answer', text: f.answer },
+          })),
+        }
+      : null;
+    const jsonLd: unknown = faqPage ? [blogPosting, faqPage] : blogPosting;
     return renderInShell(request, reply, 'blog-post-conatus', {
       title: post.title + ' - OTP',
       description: post.description,
@@ -558,19 +586,7 @@ export default async function blogRoutes(app: FastifyInstance) {
       post,
       isConatus,
       breadcrumbs: bc({ name: 'Blog', url: BASE_URL + '/blog' }, { name: post.title, url: BASE_URL + '/blog/' + post.slug }),
-      jsonLd: {
-        '@context': 'https://schema.org',
-        '@type': 'BlogPosting',
-        headline: post.title,
-        author,
-        datePublished: post.date,
-        dateModified: post.date,
-        publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-192x192.png' } },
-        url: BASE_URL + '/blog/' + post.slug,
-        mainEntityOfPage: { '@type': 'WebPage', '@id': BASE_URL + '/blog/' + post.slug },
-        image: OG_DEFAULT,
-        wordCount: post.wordCount,
-      },
+      jsonLd,
     });
   });
 }
