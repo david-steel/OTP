@@ -12,6 +12,7 @@
 
 import { eq, and, desc, or, gt, isNull } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
+import { createClerkClient } from '@clerk/backend';
 import { db } from '../config/database.js';
 import {
   organizations,
@@ -59,21 +60,39 @@ export interface CreatedChampionInvite {
 }
 
 /**
- * Best-effort display name for whoever sent the invite: their active
- * org_members row in the portfolio (displayName, else email). Null if unknown.
+ * Best-effort display name for whoever sent the invite. Resolution order:
+ *   1. their org_members displayName in the portfolio,
+ *   2. their Clerk profile name (first+last, else username),
+ *   3. their email (member row, else Clerk primary email).
+ * Each step is best-effort; null only if nothing resolves.
  */
 async function lookupInviterName(portfolioOrgId: string, clerkUserId: string): Promise<string | null> {
   if (!portfolioOrgId || !clerkUserId) return null;
+
+  let email: string | null = null;
   try {
     const [m] = await db
       .select({ displayName: orgMembers.displayName, email: orgMembers.email })
       .from(orgMembers)
       .where(and(eq(orgMembers.orgId, portfolioOrgId), eq(orgMembers.clerkUserId, clerkUserId)))
       .limit(1);
-    return (m?.displayName || m?.email || null) ?? null;
-  } catch {
-    return null;
+    if (m?.displayName) return m.displayName;
+    email = m?.email ?? null;
+  } catch { /* fall through to Clerk */ }
+
+  // Clerk name fallback (when the member row has no display name set).
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (secretKey) {
+    try {
+      const clerk = createClerkClient({ secretKey });
+      const u = await clerk.users.getUser(clerkUserId);
+      const name = ([u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || '').trim();
+      if (name) return name;
+      email = email || (u.primaryEmailAddress?.emailAddress ?? null);
+    } catch { /* fall through to email */ }
   }
+
+  return email;
 }
 
 /**
