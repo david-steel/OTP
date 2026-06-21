@@ -1136,6 +1136,9 @@ export const portfolioChampionInvites = pgTable('portfolio_champion_invites', {
   createdOrgId: uuid('created_org_id').references(() => organizations.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   acceptedAt: timestamp('accepted_at'),
+  // Invite link expiry. NULL = never expires (legacy rows). New invites get a
+  // 14-day window; accept rejects expired tokens.
+  expiresAt: timestamp('expires_at'),
 }, (table) => ({
   tokenUk: uniqueIndex('portfolio_champion_invites_token_uk').on(table.token),
   portfolioIdx: index('portfolio_champion_invites_portfolio_idx').on(table.portfolioOrgId),

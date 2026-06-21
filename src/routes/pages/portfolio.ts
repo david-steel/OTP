@@ -44,8 +44,9 @@ export default async function portfolioPages(app: FastifyInstance) {
     }
 
     const token = String(request.params.token || '').trim();
-    let invite = token && token.length <= 64 ? await getChampionInviteByToken(token) : null;
-    if (!invite || invite.status !== 'pending') {
+    const invite = token && token.length <= 64 ? await getChampionInviteByToken(token) : null;
+    const expired = !!(invite && invite.expiresAt && new Date(invite.expiresAt).getTime() < Date.now());
+    if (!invite || invite.status !== 'pending' || expired) {
       return reply.status(404).view('pages/portfolio-invite-accept', {
         title: 'Invite - OTP',
         noindex: true,

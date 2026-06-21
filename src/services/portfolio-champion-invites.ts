@@ -10,7 +10,7 @@
 // Mirrors portfolios.ts / portfolio-invites.ts: same db, schema, drizzle
 // helpers, .js extensions, and PortfolioError envelope.
 
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, or, gt, isNull } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import { db } from '../config/database.js';
 import {
@@ -19,10 +19,10 @@ import {
   teams,
   teamMemberships,
   kpis,
+  portfolioMembers,
   portfolioChampionInvites,
 } from '../db/schema.js';
 import { PortfolioError } from './portfolios.js';
-import { linkMemberOrg } from './portfolios.js';
 import { getPortfolioPresets } from './portfolio-presets.js';
 import { placeOwnerOnStarterChart } from './starter-chart.js';
 import { reconcileChartClaimByEmail } from './chart-claim-reconcile.js';
@@ -32,6 +32,9 @@ import { reconcileChartClaimByEmail } from './chart-claim-reconcile.js';
 function freshToken(): string {
   return randomBytes(24).toString('base64url');
 }
+
+/** How long an invite link stays valid. */
+const INVITE_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 // ---- Create ----
 
@@ -80,6 +83,7 @@ export async function createChampionInvite(
     token: freshToken(),
     status: 'pending',
     invitedByUserId,
+    expiresAt: new Date(Date.now() + INVITE_EXPIRY_MS),
   }).returning({ id: portfolioChampionInvites.id, token: portfolioChampionInvites.token, email: portfolioChampionInvites.email });
 
   return { id: row.id, token: row.token, email: row.email };
@@ -161,6 +165,7 @@ export interface ChampionInviteByToken {
   email: string;
   orgName: string | null;
   status: string;
+  expiresAt: Date | null;
 }
 
 /** Load a champion invite by token (for the accept page), or null. */
@@ -176,6 +181,7 @@ export async function getChampionInviteByToken(
       email: portfolioChampionInvites.email,
       orgName: portfolioChampionInvites.orgName,
       status: portfolioChampionInvites.status,
+      expiresAt: portfolioChampionInvites.expiresAt,
     })
     .from(portfolioChampionInvites)
     .innerJoin(organizations, eq(organizations.id, portfolioChampionInvites.portfolioOrgId))
@@ -190,6 +196,7 @@ export async function getChampionInviteByToken(
     email: row.email,
     orgName: row.orgName ?? null,
     status: row.status as string,
+    expiresAt: row.expiresAt ?? null,
   };
 }
 
@@ -203,10 +210,22 @@ export interface AcceptChampionInviteInput {
 }
 
 /**
- * Accept a champion invite. Loads the pending invite by token, creates a
- * brand-new standard org seeded from the portfolio's template, makes the
- * champion its owner, seeds the template's starter KPIs, links the new org into
- * the portfolio, and marks the invite accepted. Returns the new orgId.
+ * Accept a champion invite. HARDENED:
+ *  - The must-be-atomic CORE (atomically claim the pending invite, create the org
+ *    + owner, link into the portfolio, record createdOrgId) runs in ONE
+ *    transaction. The atomic claim (UPDATE ... WHERE status='pending' ...
+ *    RETURNING) makes accept exactly-once: a double-click or concurrent accept
+ *    finds no pending row and 409s -- never a duplicate org. If any core step
+ *    throws, the whole transaction rolls back, so a failed accept leaves the
+ *    invite pending (retryable) and NEVER a half-created / unlinked org.
+ *  - Expired invites are rejected (both an early check for a clean error and the
+ *    claim's WHERE clause as defense-in-depth).
+ *  - Best-effort ENRICHMENT (default team, starter-KPI seeding, chart placement)
+ *    runs AFTER commit. It must stay outside the transaction: in Postgres a
+ *    single failed statement poisons the whole tx, so a swallowed error inside it
+ *    would abort everything. Post-commit, each piece is isolated -- a seeding
+ *    hiccup can't undo the org/owner/link.
+ * Returns the new orgId.
  */
 export async function acceptChampionInvite(
   input: AcceptChampionInviteInput,
@@ -217,7 +236,7 @@ export async function acceptChampionInvite(
   if (!token) throw new PortfolioError('INVALID_TOKEN', 'An invite token is required');
   if (!clerkUserId) throw new PortfolioError('NOT_AUTHENTICATED', 'Sign in required', 401);
 
-  // 1. Load pending invite by token.
+  // Early read for clean, specific errors (the tx claim is the real guard).
   const [invite] = await db
     .select()
     .from(portfolioChampionInvites)
@@ -227,50 +246,93 @@ export async function acceptChampionInvite(
   if (invite.status !== 'pending') {
     throw new PortfolioError('INVITE_NOT_PENDING', 'This invite has already been used or revoked', 409);
   }
+  if (invite.expiresAt && invite.expiresAt.getTime() < Date.now()) {
+    throw new PortfolioError('INVITE_EXPIRED', 'This invite link has expired', 410);
+  }
 
   const orgName = (input.orgName && String(input.orgName).trim())
     || invite.orgName
     || `${invite.email}'s organization`;
+  const ownerEmail = clerkEmail || invite.email;
 
-  // 2. Create the new standard org. Mirror createPortfolioAboveOrg's org insert
-  //    for the required fields: clerkOrgId is synthetic (no real Clerk org yet),
-  //    industry + size are NOT NULL with no default so they carry sentinels.
-  const [newOrg] = await db.insert(organizations).values({
-    name: orgName.slice(0, 255),
-    kind: 'standard',
-    clerkOrgId: `champion:${invite.id}`,
-    industry: 'Unspecified',
-    size: 'small',
-  }).returning();
+  // Read the template (portfolio presets) BEFORE the tx -- it's pre-existing data.
+  let templateKpis: NonNullable<Awaited<ReturnType<typeof getPortfolioPresets>>>['kpis'] = [];
+  try {
+    const presets = await getPortfolioPresets(invite.portfolioOrgId);
+    templateKpis = presets?.kpis ?? [];
+  } catch {
+    templateKpis = [];
+  }
 
-  // 3. Owner org_members row for the champion.
-  const [ownerMember] = await db.insert(orgMembers).values({
-    orgId: newOrg.id,
-    clerkUserId,
-    email: clerkEmail || invite.email,
-    role: 'owner',
-    status: 'active',
-  }).returning({ id: orgMembers.id });
+  // ---- Atomic core, all-or-nothing ----
+  const now = new Date();
+  const core = await db.transaction(async (tx) => {
+    // Atomic claim: flip pending -> accepted. WHERE also re-checks expiry so an
+    // invite that lapsed between the read and here can't slip through. If 0 rows
+    // come back, another accept won the race (or it lapsed) -> 409.
+    const claimed = await tx
+      .update(portfolioChampionInvites)
+      .set({ status: 'accepted', acceptedAt: now })
+      .where(and(
+        eq(portfolioChampionInvites.id, invite.id),
+        eq(portfolioChampionInvites.status, 'pending'),
+        or(isNull(portfolioChampionInvites.expiresAt), gt(portfolioChampionInvites.expiresAt, now)),
+      ))
+      .returning({ id: portfolioChampionInvites.id });
+    if (claimed.length === 0) {
+      throw new PortfolioError('INVITE_NOT_PENDING', 'This invite has already been used, revoked, or expired', 409);
+    }
 
-  // 4. Default Leadership Team + owner on chart. Best-effort -- a chart/team
-  //    hiccup must not fail the whole accept (mirrors createPortfolio's
-  //    markOrgEnterprise try/catch and onboarding's non-blocking provisioning).
+    // New standard org (synthetic clerkOrgId; industry/size are NOT NULL sentinels).
+    const [newOrg] = await tx.insert(organizations).values({
+      name: orgName.slice(0, 255),
+      kind: 'standard',
+      clerkOrgId: `champion:${invite.id}`,
+      industry: 'Unspecified',
+      size: 'small',
+    }).returning({ id: organizations.id });
+
+    // Owner org_members row for the champion.
+    const [ownerMember] = await tx.insert(orgMembers).values({
+      orgId: newOrg.id,
+      clerkUserId,
+      email: ownerEmail,
+      role: 'owner',
+      status: 'active',
+    }).returning({ id: orgMembers.id });
+
+    // Link the new org into the portfolio (inline so it's part of the tx; mirrors
+    // linkMemberOrg's insert). onConflictDoNothing for the (portfolio, member) uk.
+    await tx.insert(portfolioMembers)
+      .values({ portfolioOrgId: invite.portfolioOrgId, memberOrgId: newOrg.id, status: 'active' })
+      .onConflictDoNothing();
+
+    // Record which org this invite produced.
+    await tx.update(portfolioChampionInvites)
+      .set({ createdOrgId: newOrg.id })
+      .where(eq(portfolioChampionInvites.id, invite.id));
+
+    return { orgId: newOrg.id, ownerMemberId: ownerMember.id };
+  });
+
+  // ---- Best-effort enrichment, post-commit (each isolated) ----
+  // Default Leadership Team + owner membership.
   let teamId: string | null = null;
   try {
     let [leadTeam] = await db.select({ id: teams.id })
       .from(teams)
-      .where(and(eq(teams.orgId, newOrg.id), eq(teams.slug, 'leadership')))
+      .where(and(eq(teams.orgId, core.orgId), eq(teams.slug, 'leadership')))
       .limit(1);
     if (!leadTeam) {
       try {
         [leadTeam] = await db.insert(teams)
-          .values({ orgId: newOrg.id, name: 'Leadership Team', slug: 'leadership', type: 'leadership', isDefault: true })
+          .values({ orgId: core.orgId, name: 'Leadership Team', slug: 'leadership', type: 'leadership', isDefault: true })
           .returning({ id: teams.id });
       } catch { /* concurrent create -- re-read */ }
       if (!leadTeam) {
         [leadTeam] = await db.select({ id: teams.id })
           .from(teams)
-          .where(and(eq(teams.orgId, newOrg.id), eq(teams.slug, 'leadership')))
+          .where(and(eq(teams.orgId, core.orgId), eq(teams.slug, 'leadership')))
           .limit(1);
       }
     }
@@ -278,44 +340,24 @@ export async function acceptChampionInvite(
       teamId = leadTeam.id;
       try {
         await db.insert(teamMemberships)
-          .values({ teamId: leadTeam.id, memberId: ownerMember.id, roleOnTeam: 'leader' });
+          .values({ teamId: leadTeam.id, memberId: core.ownerMemberId, roleOnTeam: 'leader' });
       } catch { /* unique (team_id, member_id) -- already on the team */ }
     }
   } catch {
-    // ignore -- team provisioning is secondary to the org/owner creation.
+    // ignore -- team provisioning is secondary; the org exists and is linked.
   }
 
+  // Seed the template's starter KPIs. Owner semantics mirror onboarding's
+  // human-owned KPI: ownerEntityType from the template, ownerExternalId = the
+  // owner's org_members.id (the only valid entity in a brand-new org).
   try {
-    await placeOwnerOnStarterChart({
-      orgId: newOrg.id,
-      orgName,
-      industry: 'Unspecified',
-      orgSize: 'small',
-      ownerDisplayName: clerkEmail || invite.email,
-      ownerEmail: clerkEmail || invite.email,
-      roleKey: 'other',
-    });
-    // Link the owner's org_members row to the chart tile carrying their email.
-    await reconcileChartClaimByEmail(newOrg.id, ownerMember.id);
-  } catch {
-    // ignore -- chart placement is non-blocking, same as onboarding.
-  }
-
-  // 5. Seed the template's starter KPIs into the new org. Owner semantics mirror
-  //    onboarding's POST /onboarding/kpi for a human owner: ownerEntityType
-  //    'human' + ownerExternalId = the owner's org_members.id (the only valid
-  //    entity in a brand-new org). A template KPI tagged ownerType 'agent' maps
-  //    to ownerEntityType 'agent' but is still anchored to the owner member id.
-  try {
-    const presets = await getPortfolioPresets(invite.portfolioOrgId);
-    const templateKpis = presets?.kpis ?? [];
     if (templateKpis.length > 0) {
       await db.insert(kpis).values(
         templateKpis.map((k) => ({
-          organizationId: newOrg.id,
+          organizationId: core.orgId,
           teamId,
           ownerEntityType: (k.ownerType === 'agent' ? 'agent' : 'human') as 'agent' | 'human',
-          ownerExternalId: ownerMember.id,
+          ownerExternalId: core.ownerMemberId,
           title: k.title,
           goalOperator: k.goalOperator ?? null,
           goalValue: k.goalValue ?? null,
@@ -327,18 +369,24 @@ export async function acceptChampionInvite(
       );
     }
   } catch {
-    // ignore -- a KPI seeding hiccup must not abort the accept. The org exists
-    // and is linked; the champion can add KPIs manually.
+    // ignore -- a KPI seeding hiccup must not matter; the champion can add KPIs.
   }
 
-  // 6. Link the new org into the portfolio as an active member.
-  await linkMemberOrg(invite.portfolioOrgId, newOrg.id);
+  // Place the owner on the starter org chart.
+  try {
+    await placeOwnerOnStarterChart({
+      orgId: core.orgId,
+      orgName,
+      industry: 'Unspecified',
+      orgSize: 'small',
+      ownerDisplayName: ownerEmail,
+      ownerEmail,
+      roleKey: 'other',
+    });
+    await reconcileChartClaimByEmail(core.orgId, core.ownerMemberId);
+  } catch {
+    // ignore -- chart placement is non-blocking, same as onboarding.
+  }
 
-  // 7. Mark the invite accepted.
-  await db
-    .update(portfolioChampionInvites)
-    .set({ status: 'accepted', acceptedAt: new Date(), createdOrgId: newOrg.id })
-    .where(eq(portfolioChampionInvites.id, invite.id));
-
-  return { orgId: newOrg.id };
+  return { orgId: core.orgId };
 }
