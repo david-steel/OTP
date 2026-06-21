@@ -905,6 +905,7 @@ await app.register(import('./routes/api/active-org.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/admin-portfolios.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-invites.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/portfolio-presets.js'), { prefix: '/api/v1' });
+await app.register(import('./routes/api/portfolio-team.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/org-ai-keys.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/org-logo.js'), { prefix: '/api/v1' });
 await app.register(import('./routes/api/enterprise.js'), { prefix: '/api/v1' });

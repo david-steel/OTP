@@ -83,6 +83,13 @@
                   class="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">Cancel</button>
         </div>
         <p id="add-member-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
+        <p class="text-xs text-gray-500 mt-3 border-t pt-3">
+          <span class="font-semibold text-gray-700">Where do I find an organization's ID?</span>
+          Each organization's owner or admin can find it in
+          <span class="font-medium text-gray-700">Settings → Company</span>, under
+          <span class="font-mono text-gray-700">Company ID</span> — they copy it there and send it to you.
+          Already-linked orgs below show their ID; click it to copy.
+        </p>
       </div>
 
       <% if (_members.length === 0) { %>
@@ -94,11 +101,38 @@
           <% _members.forEach(function(m) { %>
             <div class="flex items-center justify-between gap-4 px-5 py-4 border-b last:border-b-0">
               <div class="font-medium text-gray-900 truncate"><%= m.name %></div>
-              <span class="text-xs text-gray-400 truncate"><%= m.id %></span>
+              <button type="button" class="member-id-copy text-xs text-gray-400 hover:text-otp-600 font-mono truncate transition-colors"
+                      data-org-id="<%= m.id %>" title="Click to copy organization ID"><%= m.id %></button>
             </div>
           <% }); %>
         </div>
       <% } %>
+    </section>
+
+    <!-- ===== Portfolio team ===== -->
+    <section class="mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold text-gray-900">Portfolio team</h2>
+        <span class="text-xs text-gray-500">People from member orgs who attend portfolio meetings</span>
+      </div>
+      <div class="bg-white border rounded-xl p-5">
+        <div id="team-list" class="space-y-2 mb-4">
+          <p class="text-sm text-gray-500">Loading team…</p>
+        </div>
+        <div class="border-t pt-4">
+          <label for="team-add-select" class="block text-sm font-semibold text-gray-900 mb-2">Add from member organizations</label>
+          <div class="flex flex-wrap gap-2 items-center">
+            <select id="team-add-select"
+                    class="flex-1 min-w-[18rem] px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-otp-500/40">
+              <option value="">Select a person…</option>
+            </select>
+            <button type="button" id="team-add-btn"
+                    class="px-4 py-2 bg-otp-500 text-white rounded-lg hover:bg-otp-600 text-sm font-semibold transition-colors">Add to team</button>
+          </div>
+          <p id="team-error" class="text-xs text-red-600 mt-2" style="display:none;"></p>
+          <p class="text-xs text-gray-400 mt-2">Only people who belong to a member organization can be added.</p>
+        </div>
+      </div>
     </section>
 
     <!-- ===== Super-metrics ===== -->
@@ -159,18 +193,25 @@
       <h2 class="text-lg font-bold text-gray-900 mb-3">Presets (inherited by member orgs)</h2>
       <div class="bg-white border rounded-xl p-6">
         <p class="text-sm text-gray-600 mb-4">
-          Set a default sidebar that member organizations inherit. Lock it to prevent members from overriding.
+          Standardize the sidebar across member organizations. Lock it to prevent members from overriding.
         </p>
 
-        <label for="presets-sidebar" class="block text-sm font-semibold text-gray-900 mb-2">Sidebar preset (JSON)</label>
-        <textarea id="presets-sidebar" rows="10" spellcheck="false"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-otp-500/40"
-                  placeholder="null"></textarea>
+        <label class="flex items-start gap-2 text-sm text-gray-700">
+          <input type="checkbox" id="presets-inherit-sidebar"
+                 class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
+          <span>
+            <span class="font-semibold text-gray-900">Member organizations inherit the portfolio sidebar</span><br>
+            <span class="text-xs text-gray-500">Member orgs use this portfolio's standardized sidebar instead of their own.</span>
+          </span>
+        </label>
 
-        <label class="flex items-center gap-2 mt-3 text-sm text-gray-700">
+        <label class="flex items-start gap-2 mt-3 text-sm text-gray-700">
           <input type="checkbox" id="presets-lock-sidebar"
-                 class="h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
-          Lock sidebar (members cannot override)
+                 class="mt-0.5 h-4 w-4 rounded border-gray-300 text-otp-500 focus:ring-otp-500/40">
+          <span>
+            <span class="font-semibold text-gray-900">Lock it</span><br>
+            <span class="text-xs text-gray-500">Members cannot override the inherited sidebar.</span>
+          </span>
         </label>
 
         <div class="flex items-center gap-3 mt-4">
@@ -283,7 +324,7 @@
     });
 
     // ---- Presets (sidebar inherited by member orgs) ----
-    var presetsSidebar = document.getElementById('presets-sidebar');
+    var presetsInherit = document.getElementById('presets-inherit-sidebar');
     var presetsLock = document.getElementById('presets-lock-sidebar');
     var presetsSaveBtn = document.getElementById('presets-save-btn');
     var presetsStatus = document.getElementById('presets-status');
@@ -305,8 +346,9 @@
       presetsStatus.style.display = 'inline';
     }
 
-    // Prefill the textarea + lock checkbox from the saved presets.
-    if (presetsSidebar) {
+    // Prefill the inherit + lock checkboxes from the saved presets. A non-null
+    // sidebar preset means "member orgs inherit the portfolio sidebar".
+    if (presetsInherit) {
       fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/presets', {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
@@ -314,29 +356,21 @@
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
-          if (!data) { presetsSidebar.value = ''; return; }
+          if (!data) return;
           var sb = (data && typeof data.sidebar !== 'undefined') ? data.sidebar : null;
-          presetsSidebar.value = (sb === null || typeof sb === 'undefined')
-            ? '' : JSON.stringify(sb, null, 2);
+          presetsInherit.checked = (sb !== null && typeof sb !== 'undefined');
           var locked = (data && Array.isArray(data.locked)) ? data.locked : [];
           if (presetsLock) presetsLock.checked = locked.indexOf('sidebar') !== -1;
         })
-        .catch(function () { /* leave empty on failure */ });
+        .catch(function () { /* leave defaults on failure */ });
     }
 
     if (presetsSaveBtn) presetsSaveBtn.addEventListener('click', function () {
       clearPresetsErr();
-      var raw = (presetsSidebar.value || '').trim();
-      var sidebar = null;
-      if (raw !== '') {
-        try {
-          sidebar = JSON.parse(raw);
-        } catch (e) {
-          showPresetsErr('Sidebar must be valid JSON: ' + (e && e.message ? e.message : 'parse error'));
-          return;
-        }
-      }
-      var locked = (presetsLock && presetsLock.checked) ? ['sidebar'] : [];
+      // Checkbox -> a simple inherit marker; null when off. Lock only applies
+      // when inheriting.
+      var sidebar = (presetsInherit && presetsInherit.checked) ? { inherit: true } : null;
+      var locked = (sidebar && presetsLock && presetsLock.checked) ? ['sidebar'] : [];
       presetsSaveBtn.disabled = true;
       fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/presets', {
         method: 'POST',
@@ -355,6 +389,144 @@
           presetsSaveBtn.disabled = false;
           showPresetsErr(err.message || 'Could not save presets.');
         });
+    });
+
+    // ---- Portfolio team (people from member orgs) ----
+    var teamList = document.getElementById('team-list');
+    var teamSelect = document.getElementById('team-add-select');
+    var teamAddBtn = document.getElementById('team-add-btn');
+    var teamError = document.getElementById('team-error');
+
+    function showTeamErr(msg) { if (teamError) { teamError.textContent = msg; teamError.style.display = 'block'; } }
+    function clearTeamErr() { if (teamError) { teamError.textContent = ''; teamError.style.display = 'none'; } }
+
+    function teamLabel(p) {
+      var name = p.displayName || p.email || p.clerkUserId;
+      if (p.email && p.displayName) name += ' (' + p.email + ')';
+      return name;
+    }
+
+    function renderTeam(data) {
+      var team = (data && Array.isArray(data.team)) ? data.team : [];
+      var candidates = (data && Array.isArray(data.candidates)) ? data.candidates : [];
+
+      // Current members list.
+      if (!teamList) return;
+      teamList.innerHTML = '';
+      if (team.length === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'text-sm text-gray-500';
+        empty.textContent = 'No team members yet. Add people from the member organizations below.';
+        teamList.appendChild(empty);
+      } else {
+        team.forEach(function (m) {
+          var row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-3 py-1.5';
+          var left = document.createElement('div');
+          left.className = 'min-w-0';
+          var nm = document.createElement('div');
+          nm.className = 'text-sm font-medium text-gray-900 truncate';
+          nm.textContent = m.displayName || m.email || m.clerkUserId;
+          var sub = document.createElement('div');
+          sub.className = 'text-xs text-gray-500 truncate';
+          sub.textContent = (m.role === 'owner' ? 'Owner' : 'Member') + (m.email ? ' · ' + m.email : '');
+          left.appendChild(nm); left.appendChild(sub);
+          row.appendChild(left);
+          if (m.role !== 'owner') {
+            var rm = document.createElement('button');
+            rm.type = 'button';
+            rm.className = 'text-xs font-semibold text-red-600 hover:underline shrink-0';
+            rm.textContent = 'Remove';
+            rm.addEventListener('click', function () { removeTeamMember(m.id, rm); });
+            row.appendChild(rm);
+          }
+          teamList.appendChild(row);
+        });
+      }
+
+      // Candidate dropdown.
+      if (teamSelect) {
+        teamSelect.innerHTML = '';
+        var ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = candidates.length ? 'Select a person…' : 'No one available to add';
+        teamSelect.appendChild(ph);
+        candidates.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c.clerkUserId;
+          var label = teamLabel(c);
+          if (c.sourceOrgs && c.sourceOrgs.length) label += ' — ' + c.sourceOrgs.join(', ');
+          opt.textContent = label;
+          teamSelect.appendChild(opt);
+        });
+        teamSelect.disabled = candidates.length === 0;
+      }
+    }
+
+    function loadTeam() {
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/team', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) { if (data) renderTeam(data); else if (teamList) teamList.innerHTML = '<p class="text-sm text-gray-500">Could not load team.</p>'; })
+        .catch(function () { if (teamList) teamList.innerHTML = '<p class="text-sm text-gray-500">Could not load team.</p>'; });
+    }
+
+    function removeTeamMember(memberId, btn) {
+      clearTeamErr();
+      if (btn) btn.disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/team/' + encodeURIComponent(memberId), {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not remove member.');
+          });
+          loadTeam();
+        })
+        .catch(function (err) { if (btn) btn.disabled = false; showTeamErr(err.message || 'Could not remove member.'); });
+    }
+
+    if (teamAddBtn) teamAddBtn.addEventListener('click', function () {
+      clearTeamErr();
+      var clerkUserId = teamSelect ? (teamSelect.value || '') : '';
+      if (!clerkUserId) { showTeamErr('Select a person to add.'); return; }
+      teamAddBtn.disabled = true;
+      fetch('/api/v1/portfolios/' + encodeURIComponent(portfolioId) + '/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ clerkUserId: clerkUserId })
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (e) {
+            throw new Error((e && e.error && (e.error.message || e.error.code)) || 'Could not add member.');
+          });
+          teamAddBtn.disabled = false;
+          loadTeam();
+        })
+        .catch(function (err) { teamAddBtn.disabled = false; showTeamErr(err.message || 'Could not add member.'); });
+    });
+
+    loadTeam();
+
+    // ---- Click-to-copy member org IDs ----
+    Array.prototype.forEach.call(document.querySelectorAll('.member-id-copy'), function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-org-id') || '';
+        var orig = btn.textContent;
+        var done = function () { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = orig; }, 1200); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(id).then(done).catch(function () { done(); });
+        } else {
+          var t = document.createElement('textarea'); t.value = id; document.body.appendChild(t);
+          t.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); done();
+        }
+      });
     });
   })();
 </script>
