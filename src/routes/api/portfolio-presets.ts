@@ -84,10 +84,21 @@ async function assertPortfolioOwnerOrAdmin(
   return userId;
 }
 
+const templateKpiSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  unit: z.string().trim().max(40).nullish(),
+  goalOperator: z.enum(['gte', 'lte', 'gt', 'lt', 'eq']).nullish(),
+  goalValue: z.number().finite().nullish(),
+  timeGrain: z.enum(['weekly', 'monthly', 'quarterly']).optional(),
+  ownerType: z.enum(['agent', 'human']).optional(),
+});
+
 const presetsSchema = z.object({
   sidebar: z.any().optional(),
   settings: z.any().optional(),
   locked: z.array(z.string()).max(20).optional(),
+  kpis: z.array(templateKpiSchema).max(100).optional(),
+  apiKeyPolicy: z.object({ allowLocationOverride: z.boolean() }).optional(),
 });
 
 export default async function portfolioPresetRoutes(app: FastifyInstance) {
@@ -123,6 +134,8 @@ export default async function portfolioPresetRoutes(app: FastifyInstance) {
         sidebar: body.data.sidebar,
         settings: body.data.settings,
         locked: body.data.locked,
+        kpis: body.data.kpis,
+        apiKeyPolicy: body.data.apiKeyPolicy,
       });
       return { ok: true };
     } catch (e) {
