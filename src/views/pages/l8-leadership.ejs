@@ -830,6 +830,7 @@
       if (!fresh || !live) throw new Error('no #ids');
       rehomeFlagForm();
       live.replaceWith(fresh);
+      applyFocus(); // re-hide the freshly swapped-in section if it isn't the active step
     } catch (e) {
       // Safe fallback: the exact reload path every other kind uses.
       try { snapshotDrafts(); } catch (e2) {}
@@ -857,6 +858,7 @@
       if (!fresh || !live) throw new Error('no #rocks');
       rehomeFlagForm();
       live.replaceWith(fresh);
+      applyFocus(); // re-hide the freshly swapped-in section if it isn't the active step
     } catch (e) {
       try { snapshotDrafts(); } catch (e2) {}
       window.location.reload();
@@ -896,6 +898,7 @@
       if (!fresh || !live) throw new Error('no #scorecard');
       rehomeFlagForm();
       live.replaceWith(fresh);
+      applyFocus(); // re-hide the freshly swapped-in section if it isn't the active step
     } catch (e) {
       try { snapshotDrafts(); } catch (e2) {}
       window.location.reload();
@@ -920,6 +923,7 @@
       if (!fresh || !live) throw new Error('no #headlines');
       rehomeFlagForm();
       live.replaceWith(fresh);
+      applyFocus(); // re-hide the freshly swapped-in section if it isn't the active step
     } catch (e) {
       try { snapshotDrafts(); } catch (e2) {}
       window.location.reload();
@@ -944,6 +948,7 @@
       if (!fresh || !live) throw new Error('no #todos');
       rehomeFlagForm();
       live.replaceWith(fresh);
+      applyFocus(); // re-hide the freshly swapped-in section if it isn't the active step
     } catch (e) {
       try { snapshotDrafts(); } catch (e2) {}
       window.location.reload();
@@ -1144,7 +1149,11 @@
   // timer already tracks, so Prev/Next and the chips drive it for free.
   // Persisted per browser.
   const FOCUS_MODE_KEY = 'otp-l8-focus-mode';
-  const sections = chips.map(c => document.getElementById(c.dataset.section));
+  // Resolve section nodes LIVE each call: the refresh*Section() helpers swap a
+  // section out with replaceWith(), which detaches the originally-captured node.
+  // A cached list would then miss the swapped-in element and leave it visible
+  // alongside the active one (the "two sections show up" bug). Re-query always.
+  function liveSections() { return chips.map(function (c) { return document.getElementById(c.dataset.section); }); }
   let focusMode = false;
   try { focusMode = localStorage.getItem(FOCUS_MODE_KEY) === '1'; } catch (e) { /* no storage */ }
   // Labs meetings_broken_out: the focused rail run-mode is always single-section.
@@ -1152,7 +1161,7 @@
   if (_stepped) focusMode = true;
   const focusBtn = document.getElementById('focus-toggle');
   function applyFocus() {
-    sections.forEach((s, i) => { if (s) s.style.display = (focusMode && i !== timerState.sectionIdx) ? 'none' : ''; });
+    liveSections().forEach((s, i) => { if (s) s.style.display = (focusMode && i !== timerState.sectionIdx) ? 'none' : ''; });
     if (focusBtn) {
       focusBtn.textContent = focusMode ? 'Focus: on' : 'Focus';
       focusBtn.classList.toggle('bg-orgy-blue', focusMode);
