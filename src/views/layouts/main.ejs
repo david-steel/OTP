@@ -736,6 +736,36 @@
     body.otp-rail-collapsed .otp-sb-org { display: none; }
     /* Org logo in the rail header: sized to the header line, name shows if unset. */
     .otp-sb-logo { max-height: 22px; width: auto; max-width: 100%; vertical-align: middle; display: inline-block; }
+    /* Org switcher in the rail header: turns the static org name into a dropdown
+       that POSTs to /api/v1/active-org (validated-switch cookie) and reloads.
+       Options hydrate from /api/v1/active-org/options on load -- that fetch also
+       fixes the label (server-side layout locals lack orgName, so it would
+       otherwise read the "Workspace" fallback). Menu is position:fixed so it
+       escapes the rail's overflow:hidden. */
+    .otp-sb-org-btn {
+      display: flex; align-items: center; gap: 6px; width: 100%;
+      background: none; border: 0; padding: 2px 4px; margin: -2px -4px; border-radius: 8px;
+      font: inherit; color: inherit; font-weight: 700; cursor: pointer; text-align: left; overflow: hidden;
+    }
+    .otp-sb-org-btn:hover { background: rgba(13,125,242,0.06); }
+    .otp-sb-org-btn .otp-sb-label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
+    .otp-org-switch-chev { flex: none; color: var(--ink-mute, #888c96); transition: transform .15s ease; }
+    .otp-sb-org-btn[aria-expanded="true"] .otp-org-switch-chev { transform: rotate(180deg); }
+    .otp-org-switch-menu {
+      position: fixed; left: 12px; top: 106px; width: 206px; z-index: 60;
+      background: #fff; border: 1px solid rgba(20,22,28,0.12); border-radius: 10px;
+      box-shadow: 0 8px 28px rgba(20,22,28,0.16); padding: 6px; max-height: 60vh; overflow-y: auto;
+    }
+    .otp-org-switch-grp { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-mute, #888c96); padding: 8px 10px 4px; }
+    .otp-org-switch-item {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      background: none; border: 0; padding: 8px 10px; border-radius: 8px;
+      font: inherit; font-size: 13.5px; color: var(--ink, #14161c); font-weight: 500; cursor: pointer; text-align: left;
+    }
+    .otp-org-switch-item:hover { background: rgba(13,125,242,0.07); }
+    .otp-org-switch-item.is-active { font-weight: 700; color: var(--blue-deep, #0b62c4); }
+    .otp-org-switch-item .otp-org-switch-check { margin-left: auto; flex: none; color: var(--blue-deep, #0b62c4); }
+    .otp-org-switch-empty, .otp-org-switch-err { padding: 10px; font-size: 12.5px; color: var(--ink-mute, #888c96); }
     .otp-sb-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; }
     /* Pinned footer: keeps Upgrade above the fold no matter how tall the nav is. */
     .otp-sb-foot { flex: none; padding: 6px 8px; border-top: 1px solid rgba(20,22,28,0.06); }
@@ -812,7 +842,17 @@
     body.otp-rail-collapsed .otp-sb-pf-badge { display: none; }
   </style>
   <aside id="otp-sidebar" class="otp-sb<%= _sbSettings ? ' otp-sb-settings' : '' %><%= _sbIsPortfolio ? ' otp-sb-portfolio' : '' %>" aria-label="App navigation">
-    <div class="otp-sb-org"><span class="otp-sb-label"><% if (_sbSettings) { %>Settings<% } else if (locals.orgLogoUrl) { %><img src="<%= locals.orgLogoUrl %>" alt="<%= locals.orgName || 'Workspace' %>" class="otp-sb-logo"><% } else { %><%= locals.orgName || 'Workspace' %><% } %><% if (_sbIsPortfolio && !_sbSettings) { %><span class="otp-sb-pf-badge">Portfolio</span><% } %></span></div>
+    <% if (_sbSettings) { %>
+    <div class="otp-sb-org"><span class="otp-sb-label">Settings</span></div>
+    <% } else { %>
+    <div class="otp-sb-org">
+      <button type="button" id="otp-org-switch-btn" class="otp-sb-org-btn" aria-haspopup="listbox" aria-expanded="false" title="Switch organization">
+        <span class="otp-sb-label otp-org-switch-name"><% if (locals.orgLogoUrl) { %><img src="<%= locals.orgLogoUrl %>" alt="<%= locals.orgName || 'Workspace' %>" class="otp-sb-logo"><% } else { %><span class="otp-org-switch-text"><%= locals.orgName || 'Workspace' %></span><% } %><% if (_sbIsPortfolio) { %><span class="otp-sb-pf-badge">Portfolio</span><% } %></span>
+        <svg class="otp-org-switch-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div id="otp-org-switch-menu" class="otp-org-switch-menu" hidden role="listbox" aria-label="Your organizations"></div>
+    </div>
+    <% } %>
     <nav class="otp-sb-nav"><%- _sbHtml %></nav>
     <% if (!_sbSettings) { %>
       <div class="otp-sb-foot">
@@ -903,6 +943,70 @@
         }).catch(function (err) { console.warn('sidebar preference not saved', err); });
       });
     })();
+  </script>
+  <script>
+  // Org switcher: hydrate the rail header from /api/v1/active-org/options (which
+  // also corrects the label since the layout's server locals lack orgName), and
+  // on selection POST /api/v1/active-org -> reload. The validated-switch cookie
+  // is what resolveOrgForRequest reads; a plain ?orgId reload is ignored, which
+  // is why the old dropdown always snapped back to the default org.
+  (function(){
+    var btn = document.getElementById('otp-org-switch-btn');
+    var menu = document.getElementById('otp-org-switch-menu');
+    if (!btn || !menu || window.__otpOrgSwitchInit) return;
+    window.__otpOrgSwitchInit = true;
+    var nameEl = btn.querySelector('.otp-org-switch-text');
+
+    function close(){ menu.hidden = true; btn.setAttribute('aria-expanded','false'); }
+    function open(){ menu.hidden = false; btn.setAttribute('aria-expanded','true'); }
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+    function pick(orgId){
+      fetch('/api/v1/active-org', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: orgId })
+      }).then(function(r){
+        if (r.ok) location.reload();
+        else menu.innerHTML = '<div class="otp-org-switch-err">Could not switch organization.</div>';
+      }).catch(function(){ menu.innerHTML = '<div class="otp-org-switch-err">Could not switch organization.</div>'; });
+    }
+
+    function row(o, active){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'otp-org-switch-item' + (active ? ' is-active' : '');
+      b.setAttribute('role', 'option');
+      b.innerHTML = '<span>' + esc(o.name) + '</span>' + (active
+        ? '<svg class="otp-org-switch-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'
+        : '');
+      b.addEventListener('click', function(){ if (active) { close(); return; } pick(o.id); });
+      return b;
+    }
+
+    function grp(label){ var d = document.createElement('div'); d.className = 'otp-org-switch-grp'; d.textContent = label; menu.appendChild(d); }
+
+    fetch('/api/v1/active-org/options', { credentials: 'include' })
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+      .then(function(d){
+        var orgs = (d && d.orgs) || [], pfs = (d && d.portfolios) || [];
+        var all = orgs.concat(pfs);
+        var active = d && d.activeOrgId;
+        // No explicit pin -> resolver defaults to the first/oldest membership.
+        if (!all.some(function(o){ return o.id === active; })) active = orgs.length ? orgs[0].id : (pfs[0] && pfs[0].id);
+        var cur = all.filter(function(o){ return o.id === active; })[0];
+        if (nameEl && cur) nameEl.textContent = cur.name;
+        menu.innerHTML = '';
+        if (orgs.length) { grp('Organizations'); orgs.forEach(function(o){ menu.appendChild(row(o, o.id === active)); }); }
+        if (pfs.length) { grp('Portfolios'); pfs.forEach(function(o){ menu.appendChild(row(o, o.id === active)); }); }
+        if (!all.length) menu.innerHTML = '<div class="otp-org-switch-empty">No organizations.</div>';
+      })
+      .catch(function(){ menu.innerHTML = '<div class="otp-org-switch-err">Could not load organizations.</div>'; });
+
+    btn.addEventListener('click', function(e){ e.stopPropagation(); if (menu.hidden) open(); else close(); });
+    document.addEventListener('click', function(e){ if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) close(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !menu.hidden) close(); });
+  })();
   </script>
   <% } %>
 

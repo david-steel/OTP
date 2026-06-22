@@ -158,16 +158,10 @@
       </div>
     </div>
 
-    <% if (orgs.length > 1) { %>
-      <form method="GET" action="/dashboard" class="text-sm">
-        <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Organization</label>
-        <select name="orgId" onchange="this.form.submit()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orgy-blue">
-          <% orgs.forEach(function(o){ %>
-            <option value="<%= o.id %>" <%= o.id === (locals.org && locals.org.id) ? 'selected' : '' %>><%= o.name %></option>
-          <% }); %>
-        </select>
-      </form>
-    <% } %>
+    <!-- Org switcher moved to the sidebar header (layouts/main.ejs). The old
+         GET ?orgId form here never worked: resolveOrgForRequest reads the
+         validated-switch cookie, not the query param, so it always snapped back
+         to the default org. The sidebar switcher POSTs /api/v1/active-org. -->
 
     <!-- Customize mode: hide/reorder tiles + font size. Toolbar shows only
          while editing; the button toggles edit mode (script at page bottom). -->
