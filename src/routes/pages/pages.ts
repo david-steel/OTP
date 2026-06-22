@@ -233,6 +233,37 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /origin -- The Origin of OTP. A standalone editorial "lore" page: the chain
+  // of events behind why OTP was built (Frankl, the Rebbe, EOS, Feynman's
+  // cataclysm sentence, the knowledge graph). Indexed; in the sitemap.
+  app.get('/origin', async (_request, reply) => {
+    const canonical = BASE_URL + '/origin';
+    return renderV7(reply, 'origin', {
+      title: 'The Origin of OTP: Why It Was Built',
+      description: "The origin story of OTP. How Man's Search for Meaning, a message from the Lubavitcher Rebbe, EOS, Feynman's cataclysm sentence, and a knowledge graph led to one idea: let agents carry the operational work, so people are free for the work that matters.",
+      canonical,
+      ogType: 'article',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: 'The Origin of OTP: Why It Was Built',
+        description: "The origin story of OTP: how Man's Search for Meaning, a message from the Lubavitcher Rebbe, EOS, Feynman's cataclysm sentence, and a knowledge graph led to a single idea, that agents should carry the operational work so people are free for the work that matters.",
+        datePublished: '2026-06-22',
+        inLanguage: 'en',
+        author: { '@type': 'Person', name: 'David Steel' },
+        publisher: { '@type': 'Organization', name: 'OTP', url: BASE_URL, logo: { '@type': 'ImageObject', url: BASE_URL + '/public/favicon-orgy-512.png' } },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+        about: [
+          { '@type': 'Book', name: "Man's Search for Meaning", author: { '@type': 'Person', name: 'Viktor Frankl' } },
+          { '@type': 'Person', name: 'Menachem Mendel Schneerson' },
+          { '@type': 'Person', name: 'Viktor Frankl' },
+          { '@type': 'Person', name: 'Richard Feynman' },
+          { '@type': 'Thing', name: 'EOS (Entrepreneurial Operating System)' },
+        ],
+      },
+    });
+  });
+
   // Browse
   app.get('/browse', async (request, reply) => {
     // One card per organization: the most recent published OOS file per org.

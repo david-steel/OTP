@@ -1,0 +1,333 @@
+<%#
+  /origin -- The Origin of OTP. A standalone editorial "lore" page rendered in
+  the v7 layout (real OTP nav + footer). Page-specific styles are scoped under
+  .origin so they never touch the shared nav/footer. SEO (title, description,
+  canonical, jsonLd Article) is passed from the route via renderV7.
+%>
+<style>
+  .origin{
+    --bg:#fbfaf7; --paper:#ffffff; --ink:#14161c; --ink-soft:#525866; --rule:#e7e4dd;
+    --blue:#0d7df2; --green:#0a9d63; --lime:#8BC42A; --orange:#ff7a1a; --amber:#D97706;
+    --maxw:680px;
+    background:var(--bg); color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,sans-serif; font-size:19px; line-height:1.68;
+    -webkit-font-smoothing:antialiased;
+  }
+  .origin *{box-sizing:border-box}
+  .origin .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+
+  .origin .hero{padding:84px 0 56px}
+  .origin .kicker{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);margin:0 0 24px}
+  .origin h1{font-family:"Schibsted Grotesk",sans-serif;font-weight:800;font-size:48px;line-height:1.04;letter-spacing:-0.03em;margin:0 0 26px;color:var(--ink)}
+  .origin h1 .b{color:var(--blue)}
+  .origin .lede{font-size:21px;color:var(--ink-soft);margin:0 0 26px;max-width:580px}
+  .origin .dedication{font-size:15px;color:var(--ink-soft);padding:14px 18px;border-left:3px solid var(--green);background:#f4f8f3;border-radius:0 8px 8px 0;max-width:560px}
+
+  .origin section{padding:44px 0;border-top:1px solid var(--rule)}
+  .origin .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin:0 0 16px}
+  .origin h2{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:31px;line-height:1.14;letter-spacing:-0.02em;margin:0 0 20px;color:var(--ink)}
+  .origin h3{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;margin:30px 0 8px;color:var(--ink)}
+  .origin p{margin:0 0 20px}
+  .origin p:last-child{margin-bottom:0}
+  .origin .soft{color:var(--ink-soft)}
+  .origin em{font-style:italic}
+  .origin strong{font-weight:700}
+
+  .origin blockquote{margin:28px 0;padding:6px 0 6px 24px;border-left:3px solid var(--blue);font-family:"Schibsted Grotesk",sans-serif;font-weight:500;font-size:22px;line-height:1.42;color:var(--ink)}
+  .origin blockquote cite{display:block;margin-top:12px;font-style:normal;font-size:14px;letter-spacing:.01em;color:var(--ink-soft)}
+
+  .origin .prayer{margin:28px auto;max-width:520px;text-align:center;font-family:"Schibsted Grotesk",sans-serif;font-weight:500;font-size:21px;line-height:1.95;color:var(--ink)}
+  .origin .prayer span{display:block}
+  .origin .prayer .last{color:var(--blue);font-weight:700}
+
+  .origin .graphsection{background:linear-gradient(180deg,var(--bg),#f1f0ea)}
+  .origin .graphsection .wrap{max-width:1040px}
+  .origin .graphhead{max-width:var(--maxw);margin:0 auto}
+  .origin .graphcard{margin:32px auto 0;background:var(--paper);border:1px solid var(--rule);border-radius:16px;box-shadow:0 26px 64px -36px rgba(20,22,28,.28);overflow:hidden}
+  .origin #originGraph{display:block;width:100%;height:680px;cursor:grab;touch-action:none}
+  .origin #originGraph:active{cursor:grabbing}
+  .origin .ginfo{min-height:78px;padding:18px 24px;border-top:1px solid var(--rule);display:flex;align-items:flex-start;gap:14px;background:var(--paper)}
+  .origin .ginfo .dot{width:13px;height:13px;border-radius:50%;margin-top:6px;flex:0 0 auto;background:var(--blue)}
+  .origin .ginfo .gtitle{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:16px;margin:0 0 3px;color:var(--ink)}
+  .origin .ginfo .gdesc{font-size:14.5px;line-height:1.5;color:var(--ink-soft);margin:0}
+  .origin .caption{max-width:var(--maxw);margin:24px auto 0;color:var(--ink-soft);font-size:16px}
+  .origin .livelink{display:inline-block;margin-top:8px;font-family:"JetBrains Mono",monospace;font-weight:500;font-size:13px;letter-spacing:.03em;color:var(--blue);text-decoration:none;border-bottom:2px solid rgba(13,125,242,.25);padding-bottom:1px}
+  .origin .livelink:hover{border-bottom-color:var(--blue)}
+  .origin .legend{max-width:var(--maxw);margin:20px auto 0;display:flex;flex-wrap:wrap;gap:12px 22px;font-size:13px;color:var(--ink-soft)}
+  .origin .legend span{display:inline-flex;align-items:center;gap:7px}
+  .origin .legend i{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+  .origin .sign{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:20px;color:var(--ink);margin-top:32px}
+
+  .origin .seal{background:#14161c;color:#cdd2dc;margin-top:0;border-top:1px solid var(--rule)}
+  .origin .seal .wrap{padding:54px 26px 60px;max-width:720px}
+  .origin .seal .eyebrow{color:var(--lime)}
+  .origin .seal h2{color:#fff}
+  .origin .seal p{color:#aeb4c0}
+  .origin .seal .meta{font-family:"JetBrains Mono",monospace;font-size:12px;color:#7b8290;margin-top:26px;letter-spacing:.04em}
+  .origin .seal a{color:#5fb0ff;text-decoration:none}
+
+  @media (max-width:640px){
+    .origin{font-size:18px}
+    .origin .hero{padding:54px 0 38px}
+    .origin h1{font-size:34px}
+    .origin h2{font-size:25px}
+    .origin .lede{font-size:19px}
+    .origin blockquote{font-size:20px}
+    .origin #originGraph{height:560px}
+  }
+</style>
+
+<main class="origin">
+  <header class="hero">
+    <div class="wrap">
+      <p class="kicker">OTP &middot; The Origin Story</p>
+      <h1>Let the agents carry the work,<br>so people are free for <span class="b">what matters.</span></h1>
+      <p class="lede">This is what OTP is for. It is also, I have come to believe, a very old idea wearing new clothes. What follows is the chain of things that had to happen for OTP to exist, told once, in order, so it is never lost.</p>
+      <p class="dedication">Written first for <strong>Rabbi Mendy Herson</strong>, Executive Director of Chabad of Greater Somerset County, who unknowingly stands inside this story. Kept here as part of the OTP record, for whoever reads it next.</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">The destination was named long ago</p>
+      <h2>A world freed from toil, so people are free to know God.</h2>
+      <p>The Rambam closes the entire Mishneh Torah with a description of the days of Mashiach. He does not describe a world of wonders and miracles. He describes a world freed from struggle and scarcity, so that, in his words, the people "will be free to study Torah and its wisdom, and there will be no one to oppress them," and "the one occupation of the whole world will be to know God."</p>
+      <p>He ends with the verse from Isaiah: <em>"for the earth shall be full of the knowledge of the Lord, as the waters cover the sea."</em></p>
+      <p>The Rebbe carried that vision and taught something many people miss. Technology is not a detour from that world. It is a tool given to help build it. Every advance arrives precisely when the world is ready to turn it toward holiness.</p>
+      <p class="soft">OTP is a small and literal attempt at the first step of that vision. Take the operational burden off people. Let them be free for the work that matters most. I did not set out to build a piece of the Rambam's world. I set out to fix how organizations run. I only saw the shape of it later.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">How the idea reached me</p>
+      <h2>Vienna, 1959.</h2>
+      <p>Viktor Frankl, the psychiatrist who survived the camps and wrote that meaning is the thing that keeps a person alive, was ready to give up. His ideas were under attack. He was prepared to abandon his life's work and leave the city.</p>
+      <p>The Rebbe heard of it. He sent a woman who was traveling to Vienna, Marguerite Chajes, with a message for Frankl: <em>"Remain strong. Continue your work with complete resolve. Do not give up. Ultimately you will prevail."</em> Frankl, by every account, broke down and wept. He stayed. He kept fighting for his work. That same year his book reached the English-speaking world, and went on to be read by tens of millions of people.</p>
+      <p>One of them, decades later, was me. The book told me the one thing I needed to hear. I had the question backwards. I kept asking what the meaning of my life was. Frankl says that life is the one asking, and that I am the one who has to answer.</p>
+
+      <h3>Then the world started arranging itself</h3>
+      <p>My friend <strong>Michael Ben-Shimon</strong> had a copy of <em>Traction</em>, the book that lays out EOS, sitting in his office. Boys from the yeshiva came by, saw it on the shelf, and started talking, EOS and Chabad in the same breath, as if the two had always belonged together. Their own father runs EOS for Chabad. The system I had chosen to build OTP on was already the system the movement itself runs on. The connection they made out loud was the connection I was about to build in code.</p>
+      <p>Not long after, at the bat mitzvah of Michael's daughter <strong>Noga</strong>, Rabbi Mendy Herson stood up to speak. He quoted <em>Man's Search for Meaning</em>. The same book that had reset my life was the book the rabbi chose for the room. I reached out to him afterward. That is how Mendy and I became friends. He has no idea he was standing inside my story when he opened his mouth.</p>
+      <p>Through Mendy came the Gurkovs. <strong>Rabbi Michel Gurcov</strong> put <em>Ein Yaakov</em> in my hands, and the daily prayer I have been saying grew out of starting it. His son, <strong>Rabbi Mayer Gurkov</strong>, spoke to me about AI and the Rebbe, and handed me the frame for the whole thing: the Rebbe's vision of people set free for the work that matters. The destination at the top of this page did not come from me. It was brought to me, by name.</p>
+
+      <h3>And then the part that explains the graph</h3>
+      <p>I was listening to Radiolab when I heard the physicist Richard Feynman's question, the one he posed to his students:</p>
+      <blockquote>"If, in some cataclysm, all of scientific knowledge were to be destroyed, and only one sentence passed on to the next generation of creatures, what statement would contain the most information in the fewest words?"
+      <cite>Richard Feynman, The Feynman Lectures on Physics</cite></blockquote>
+      <p>That question is the seed of the OTP knowledge graph. What does an organization actually know? If almost everything were lost, what is the smallest set of connected truths that would let it be rebuilt? OTP's graph is my attempt to hold that for a company. The page you are reading is shaped the same way on purpose.</p>
+      <p class="soft">And somewhere in the middle of all of this, at the exact point when I was ready to give up myself, this is the thing that came into my life and would not let me go. The message the Rebbe sent to a despondent man in Vienna never really stopped with that man. That is not how these things move.</p>
+    </div>
+  </section>
+
+  <section class="graphsection">
+    <div class="wrap">
+      <div class="graphhead">
+        <p class="eyebrow">The pieces</p>
+        <h2>Everything is connected. From the inside, that is what hashgacha pratit looks like.</h2>
+        <p class="soft">Each of these arrived on its own, years apart, with no plan tying them together. Only looking back do you see they were one thing the whole time. Hover or tap any point to follow the thread.</p>
+      </div>
+
+      <div class="graphcard">
+        <canvas id="originGraph"></canvas>
+        <div class="ginfo">
+          <span class="dot" id="ginfo-dot"></span>
+          <div>
+            <p class="gtitle" id="ginfo-title">Touch a point to follow the thread</p>
+            <p class="gdesc" id="ginfo-desc">Every node arrived separately. The lines are the connections only visible afterward.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i style="background:#0d7df2"></i>The work (OTP)</span>
+        <span><i style="background:#D97706"></i>The people</span>
+        <span><i style="background:#0a9d63"></i>The teachings &amp; ideas</span>
+        <span><i style="background:#ff7a1a"></i>The moments</span>
+      </div>
+
+      <p class="caption">
+        The living version, the one OTP actually runs on, is here:<br>
+        <a class="livelink" href="/graph">See the living knowledge graph at orgtp.com/graph &rarr;</a>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Why me, and why now</p>
+      <h2>I cannot answer that. I have stopped trying to.</h2>
+      <p>On a night I will not soon forget, I was not told a reason. I was told only one thing. <em>You cannot run away.</em> So I am not going to.</p>
+      <p class="soft">This is the prayer I have been saying. It grew on its own, one line at a time, and I noticed only after the fact where it was heading.</p>
+      <div class="prayer">
+        <span>"Thank You for seeing me."</span>
+        <span>"And for hearing me."</span>
+        <span>"Help me hear You in everyday life."</span>
+        <span class="last">"And give me the courage to follow where You lead."</span>
+      </div>
+      <p>Rabbi, that last line is the reason I wrote to you. Not to be told I am right. I think I already feel that this is real, and feeling it is not the same as being able to carry it. I wrote to you to borrow some of the courage.</p>
+      <p class="sign">David</p>
+    </div>
+  </section>
+
+  <section class="seal">
+    <div class="wrap">
+      <p class="eyebrow">For whoever reads this next</p>
+      <h2>If much of this is one day lost, let this be one of the sentences that survives.</h2>
+      <p>OTP exists to take the operational work off people, so they are free for the work that matters most. That is the whole of it. Everything else on this page is how one person came to believe it was worth a life.</p>
+      <p class="meta">Part of the OTP record &middot; written by David Steel &middot; June 22, 2026 &middot; <a href="/">orgtp.com</a></p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var canvas = document.getElementById('originGraph');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  var GROUP = { work:{c:'#0d7df2'}, person:{c:'#D97706'}, idea:{c:'#0a9d63'}, moment:{c:'#ff7a1a'} };
+
+  var nodes = [
+    {id:'otp',    label:'OTP',                          g:'work', r:30, desc:'The operating system I built. Agents take the operational work off the team, so people are free for what matters.'},
+    {id:'agents', label:'Agents carry the work',         g:'work', r:19, desc:'The operational burden, lifted off people. The first step of the Rambam’s world, in present tense.'},
+    {id:'free',   label:'People free for what matters',  g:'work', r:21, desc:'The whole point. Time and mind returned to people for the highest work they were put here to do.'},
+    {id:'graph',  label:'The Knowledge Graph',           g:'work', r:18, desc:'OTP’s answer to Feynman’s question: the smallest set of connected truths that lets an organization be rebuilt.'},
+    {id:'rebbe',  label:'The Rebbe',                     g:'person', r:22, desc:'Rabbi Menachem Mendel Schneerson. He taught that the world is meant to be freed for the knowledge of God, and that technology is a tool given to help build it. In 1959 he sent a message that kept Viktor Frankl going.'},
+    {id:'frankl', label:'Viktor Frankl',                 g:'person', r:20, desc:'Ready to abandon his work in 1959. The Rebbe’s message reached him: remain strong, continue, you will prevail. He stayed. His book went on to millions.'},
+    {id:'david',  label:'David',                         g:'person', r:22, desc:'Ready to give up, when this came into my life and would not let me go.'},
+    {id:'mendy',  label:'Rabbi Mendy Herson',            g:'person', r:19, desc:'At Noga’s bat mitzvah he quoted Man’s Search for Meaning, the same book that reset my life. I reached out. That is how we became friends. He stood inside this story without knowing it.'},
+    {id:'michael',label:'Michael Ben-Shimon',           g:'person', r:18, desc:'My friend. Traction sat in his office; yeshiva boys saw it and spoke of EOS and Chabad in the same breath. His daughter’s bat mitzvah is where Mendy and I crossed paths.'},
+    {id:'msm',    label:"Man's Search for Meaning",      g:'idea', r:19, desc:'Frankl’s book. It told me the question was backwards. Life is the one asking. I am the one who answers.'},
+    {id:'rambam', label:'Rambam',                        g:'idea', r:17, desc:'The close of the Mishneh Torah: a world freed from toil so all may be free to know God, as the waters cover the sea.'},
+    {id:'dirah',  label:"Dirah B'Tachtonim",            g:'idea', r:16, desc:'The purpose of creation in Chabad thought: a dwelling for God in the lowest, most physical world, built through our work in the material.'},
+    {id:'hash',   label:'Hashgacha Pratit',             g:'idea', r:18, desc:'Individual providence. The thread you can only see by looking back. The reason none of this feels like an accident.'},
+    {id:'eos',    label:'EOS / Traction',               g:'idea', r:17, desc:'How real organizations actually run. OTP was built on it. The yeshiva boys named it next to Chabad before I had built a line of it.'},
+    {id:'feynman',label:'Feynman’s cataclysm sentence', g:'idea', r:18, desc:'If all knowledge were destroyed and one sentence survived, what would carry the most information? The seed of the OTP knowledge graph.'},
+    {id:'noga',   label:'Noga’s Bat Mitzvah',      g:'moment', r:16, desc:'Where Rabbi Mendy quoted Man’s Search for Meaning. The room where the chain connected.'},
+    {id:'radiolab',label:'Radiolab',                     g:'moment', r:15, desc:'Where I first heard Feynman’s cataclysm question, the one that became the knowledge graph.'},
+    {id:'yboys',  label:'The Yeshiva boys',             g:'person', r:16, desc:'They walked into Michael’s office, saw Traction on the shelf, and connected EOS and Chabad out loud. Their own father runs EOS for Chabad itself. They are tied to Rabbi Mendy.'},
+    {id:'michel', label:'Rabbi Michel Gurcov',          g:'person', r:17, desc:'Of Wayne, attached to Rabbi Mendy. He put Ein Yaakov in my hands.'},
+    {id:'mayer',  label:'Rabbi Mayer Gurkov',           g:'person', r:17, desc:'Rabbi Michel’s son. He spoke about AI and the Rebbe, and brought me the Rebbe’s idea: people freed for the work that matters.'},
+    {id:'einyakov',label:'Ein Yaakov',                  g:'idea', r:16, desc:'The Talmud’s aggadah, gathered in one place. Rabbi Michel Gurcov pointed me to it. The daily prayer I have been saying grew out of starting it.'}
+  ];
+
+  var E = function(a,b){return {s:a,t:b};};
+  var links = [
+    E('rebbe','frankl'), E('frankl','msm'), E('msm','david'),
+    E('rebbe','rambam'), E('rebbe','dirah'),
+    E('rambam','free'), E('dirah','agents'),
+    E('david','eos'), E('eos','otp'), E('david','otp'),
+    E('otp','agents'), E('agents','free'), E('otp','graph'),
+    E('hash','david'), E('hash','rebbe'), E('hash','otp'), E('hash','graph'),
+    E('noga','mendy'), E('noga','michael'), E('mendy','msm'), E('mendy','david'),
+    E('michael','eos'), E('michael','david'),
+    E('radiolab','feynman'), E('feynman','graph'), E('david','radiolab'),
+    E('yboys','mendy'), E('yboys','michael'), E('yboys','eos'),
+    E('michel','mendy'), E('michel','einyakov'), E('michel','mayer'),
+    E('mayer','rebbe'), E('mayer','free'), E('mayer','david'),
+    E('rebbe','mendy'), E('rebbe','michel'), E('rebbe','yboys'),
+    E('einyakov','david')
+  ];
+
+  var idx = {}; nodes.forEach(function(n,i){idx[n.id]=i;});
+  links.forEach(function(e){e.s=idx[e.s];e.t=idx[e.t];});
+
+  var W=980, H=600;
+  function resize(){
+    var rect = canvas.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  (function seed(){
+    var cx=W/2, cy=H/2;
+    nodes.forEach(function(n,i){
+      var a=(i/nodes.length)*Math.PI*2;
+      n.x=cx+Math.cos(a)*Math.min(W,H)*0.34+(Math.random()-0.5)*30;
+      n.y=cy+Math.sin(a)*Math.min(W,H)*0.34+(Math.random()-0.5)*30;
+      n.vx=0; n.vy=0;
+    });
+  })();
+
+  var hover=-1, drag=-1, dragOff={x:0,y:0};
+
+  function tick(){
+    var cx=W/2, cy=H/2;
+    for(var i=0;i<nodes.length;i++){
+      for(var j=i+1;j<nodes.length;j++){
+        var a=nodes[i], b=nodes[j];
+        var dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy; if(d2<0.01)d2=0.01;
+        var d=Math.sqrt(d2), f=7400/d2, fx=(dx/d)*f, fy=(dy/d)*f;
+        a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+      }
+    }
+    links.forEach(function(e){
+      var a=nodes[e.s], b=nodes[e.t];
+      var dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||0.01;
+      var f=(d-112)*0.013, fx=(dx/d)*f, fy=(dy/d)*f;
+      a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+    });
+    nodes.forEach(function(n,i){
+      if(i===drag) return;
+      n.vx+=(cx-n.x)*0.0015; n.vy+=(cy-n.y)*0.0015;
+      n.vx*=0.86; n.vy*=0.86;
+      var sp=Math.sqrt(n.vx*n.vx+n.vy*n.vy);
+      if(sp>6){n.vx*=6/sp;n.vy*=6/sp;}
+      n.x+=n.vx; n.y+=n.vy;
+      var pad=n.r+66;
+      if(n.x<pad){n.x=pad;n.vx*=-0.3;}
+      if(n.x>W-pad){n.x=W-pad;n.vx*=-0.3;}
+      if(n.y<n.r+14){n.y=n.r+14;n.vy*=-0.3;}
+      if(n.y>H-n.r-16){n.y=H-n.r-16;n.vy*=-0.3;}
+    });
+  }
+  function neighbors(i){ var s={}; if(i<0) return s; links.forEach(function(e){ if(e.s===i)s[e.t]=1; if(e.t===i)s[e.s]=1; }); return s; }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var nb=neighbors(hover);
+    links.forEach(function(e){
+      var a=nodes[e.s], b=nodes[e.t], on=(hover<0)||(e.s===hover||e.t===hover);
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=on?'rgba(20,22,28,0.26)':'rgba(20,22,28,0.06)'; ctx.lineWidth=on?1.6:1; ctx.stroke();
+    });
+    nodes.forEach(function(n,i){
+      var col=GROUP[n.g].c, dim=(hover>=0 && i!==hover && !nb[i]);
+      ctx.globalAlpha=dim?0.3:1;
+      if(i===hover){ ctx.beginPath(); ctx.arc(n.x,n.y,n.r+7,0,Math.PI*2); ctx.fillStyle='rgba(13,125,242,0.10)'; ctx.fill(); }
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.92)'; ctx.stroke();
+      ctx.globalAlpha=dim?0.42:1;
+      ctx.font=(i===idx['otp']?'700 ':'600 ')+(i===idx['otp']?15:12)+'px "Schibsted Grotesk", sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      var ly=n.y+n.r+6;
+      ctx.lineWidth=3.5; ctx.strokeStyle='rgba(251,250,247,0.95)'; ctx.strokeText(n.label,n.x,ly);
+      ctx.fillStyle='#14161c'; ctx.fillText(n.label,n.x,ly);
+      ctx.globalAlpha=1;
+    });
+  }
+  function loop(){ tick(); draw(); requestAnimationFrame(loop); }
+  function pick(mx,my){ var best=-1,bd=1e9; nodes.forEach(function(n,i){ var dx=mx-n.x,dy=my-n.y,d=dx*dx+dy*dy,rr=(n.r+10)*(n.r+10); if(d<rr&&d<bd){bd=d;best=i;} }); return best; }
+  function setInfo(i){
+    var t=document.getElementById('ginfo-title'),d=document.getElementById('ginfo-desc'),dot=document.getElementById('ginfo-dot');
+    if(i<0){t.textContent='Touch a point to follow the thread';d.textContent='Every node arrived separately. The lines are the connections only visible afterward.';dot.style.background='#0d7df2';return;}
+    t.textContent=nodes[i].label; d.textContent=nodes[i].desc; dot.style.background=GROUP[nodes[i].g].c;
+  }
+  function pos(ev){ var r=canvas.getBoundingClientRect(); var p=ev.touches?ev.touches[0]:ev; return {x:p.clientX-r.left,y:p.clientY-r.top}; }
+
+  canvas.addEventListener('mousemove',function(ev){
+    if(drag>=0){var m=pos(ev);nodes[drag].x=m.x-dragOff.x;nodes[drag].y=m.y-dragOff.y;nodes[drag].vx=0;nodes[drag].vy=0;return;}
+    var m=pos(ev),h=pick(m.x,m.y); if(h!==hover){hover=h;setInfo(h);canvas.style.cursor=h>=0?'pointer':'grab';}
+  });
+  canvas.addEventListener('mousedown',function(ev){var m=pos(ev),h=pick(m.x,m.y);if(h>=0){drag=h;dragOff={x:m.x-nodes[h].x,y:m.y-nodes[h].y};hover=h;setInfo(h);}});
+  window.addEventListener('mouseup',function(){drag=-1;});
+  canvas.addEventListener('mouseleave',function(){if(drag<0){hover=-1;setInfo(-1);}});
+  canvas.addEventListener('touchstart',function(ev){var m=pos(ev),h=pick(m.x,m.y);if(h>=0){hover=h;setInfo(h);drag=h;dragOff={x:m.x-nodes[h].x,y:m.y-nodes[h].y};ev.preventDefault();}},{passive:false});
+  canvas.addEventListener('touchmove',function(ev){if(drag>=0){var m=pos(ev);nodes[drag].x=m.x-dragOff.x;nodes[drag].y=m.y-dragOff.y;nodes[drag].vx=0;nodes[drag].vy=0;ev.preventDefault();}},{passive:false});
+  window.addEventListener('touchend',function(){drag=-1;});
+  window.addEventListener('resize',resize);
+  resize(); loop();
+})();
+</script>
