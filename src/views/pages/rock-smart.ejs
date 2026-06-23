@@ -284,7 +284,11 @@
     </div>
 
     <% if (canEdit) { %>
-    <div class="no-print flex items-center justify-end gap-2 mt-6">
+    <label class="no-print flex items-center gap-2 mt-6 text-sm" style="color:var(--ink-soft,#374151);">
+      <input type="checkbox" id="sr-shadow" style="width:1rem;height:1rem;" <%= (rock && rock.shadowOwnerOnly) ? 'checked' : '' %>>
+      &#128274; Shadow priority &mdash; visible only to me (hidden from everyone else, including admins)
+    </label>
+    <div class="no-print flex items-center justify-end gap-2 mt-3">
       <span id="sr-saved-2" class="sr-saved" style="display:none;">Saved</span>
       <button type="button" id="sr-save-2" class="sr-btn sr-btn-primary">Save SMART Rock</button>
     </div>
@@ -478,6 +482,7 @@
       title: title,
       description: $('sr-description').value,
       smartData: collectSmart(),
+      shadowOwnerOnly: !!($('sr-shadow') && $('sr-shadow').checked),
     };
     var dueEl = $('sr-due');
     if (dueEl.value) {
