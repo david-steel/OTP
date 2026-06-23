@@ -4,7 +4,7 @@ date: 2026-06-21
 author: David Steel
 slug: what-is-eos
 type: founder_essay
-status: published
+status: draft
 series: operating-system
 series_part: 1
 description: What is EOS? EOS is a complete business operating system created by Gino Wickman that gives leadership teams six tools to run their company with clarity.
