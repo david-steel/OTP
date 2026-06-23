@@ -13,22 +13,6 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
-  // ---- June 23, 2026 ----
-
-  {
-    date: '2026-06-23',
-    tags: ['Major', 'Brand'],
-    title: 'Meet Ollie, and the story of why OTP exists',
-    why: 'The name says the whole mission out loud: when the work is carried for you, you are free to come out and do what matters.',
-    cta: { text: 'Meet Ollie', url: '/ollie' },
-    summary: 'Our mascot has a name and a home of his own. Ollie comes from "olly olly oxen free," the call that means everyone is safe and free to come out. He stands for the whole point of OTP: let your AI agents carry the operational work, so your people are free for what matters. We also published the origin story of OTP itself.',
-    details: `<ul class="list-disc pl-6 space-y-1">
-<li><strong>Meet Ollie.</strong> Our green guide finally has a name and a page of his own. "Ollie" is from <em>olly olly oxen free</em>, the playground call that means the round is over and everyone can come out, safe and free. <a href="/ollie" class="text-otp-600 underline">Say hello</a>.</li>
-<li><strong>What he stands for.</strong> Agents carry the operational work, so people are free for what matters. Ollie is what that freedom looks like, and he represents the whole team, humans and agents, on one playbook.</li>
-<li><strong>The origin of OTP.</strong> We also wrote down why OTP exists at all, the chain of people and ideas behind it. <a href="/origin" class="text-otp-600 underline">Read the origin story</a>.</li>
-</ul>`,
-  },
-
   // ---- June 22, 2026 (SCHEDULED) ----
   // Future-dated on purpose: the visibility gate (see isPublishedEntry below,
   // honored by the What's New page, the unread badge, and the weekly email)
