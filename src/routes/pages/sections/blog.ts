@@ -444,6 +444,24 @@ const BLOG_POSTS: BlogPost[] = [
       wordCount: 1500,
     },
   },
+  {
+    slug: 'entrepreneurial-operating-system-guide',
+    template: 'blog-post-46',
+    title: 'The Ultimate Guide to the Entrepreneurial Operating System and Operating Software: Implementing AI-Integrated Business Tools - OTP',
+    description: 'A complete guide to the Entrepreneurial Operating System (EOS): its core components, what to look for in EOS software, and how AI-integrated meeting tools on the OTP platform elevate team collaboration.',
+    datePublished: '2026-06-23',
+    wordCount: 1500,
+    ogImage: BASE_URL + '/public/blog/eos-guide-hero.jpg',
+  },
+  {
+    slug: 'what-is-an-integrator',
+    template: 'blog-post-47',
+    title: 'What Is an Integrator? Definition, Role, and Key Responsibilities in EOS - OTP',
+    description: 'What is an Integrator? A complete guide to the Integrator role: its definition, core responsibilities, how it differs from the Visionary and Implementer, and how AI agents and meeting software amplify it in EOS-aligned organizations.',
+    datePublished: '2026-06-23',
+    wordCount: 1400,
+    ogImage: BASE_URL + '/public/blog/integrator-hero.jpg',
+  },
 ];
 
 // O(1) lookup map. Built once at module load.
