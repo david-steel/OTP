@@ -462,6 +462,33 @@ const BLOG_POSTS: BlogPost[] = [
     wordCount: 1400,
     ogImage: BASE_URL + '/public/blog/integrator-hero.jpg',
   },
+  {
+    slug: 'define-entrepreneurial',
+    template: 'blog-post-48',
+    title: 'What Does Entrepreneurial Mean? A Complete Definition and Guide to Entrepreneurial Characteristics and Mindset - OTP',
+    description: 'What does entrepreneurial mean? A complete guide to the entrepreneurial mindset: its definition, core traits, what drives entrepreneurial performance, and how the EOS framework and AI agents amplify it.',
+    datePublished: '2026-06-23',
+    wordCount: 1500,
+    ogImage: BASE_URL + '/public/blog/entrepreneurial-hero.jpg',
+  },
+  {
+    slug: 'operating-software',
+    template: 'blog-post-49',
+    title: 'What Is Operating Software? How Modern Businesses Leverage AI-Driven Automation for Efficiency - OTP',
+    description: 'What is operating software? How modern businesses use AI-driven operating software and Enterprise Operating Systems to streamline workflows, integrate AI agents as team members, and run more efficient meetings.',
+    datePublished: '2026-06-23',
+    wordCount: 1500,
+    ogImage: BASE_URL + '/public/blog/operating-software-hero.jpg',
+  },
+  {
+    slug: 'measurables',
+    template: 'blog-post-50',
+    title: 'What Are Measurables in Business? How to Track What Matters for Effective Performance Management - OTP',
+    description: 'What are measurables in business? A guide to KPIs and business measurables: how to define them, which ones matter for EOS teams, and how AI agents enable real-time tracking on the OTP platform.',
+    datePublished: '2026-06-23',
+    wordCount: 1700,
+    ogImage: BASE_URL + '/public/blog/measurables-hero.jpg',
+  },
 ];
 
 // O(1) lookup map. Built once at module load.
