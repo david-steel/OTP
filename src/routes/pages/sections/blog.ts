@@ -489,6 +489,15 @@ const BLOG_POSTS: BlogPost[] = [
     wordCount: 1700,
     ogImage: BASE_URL + '/public/blog/measurables-hero.jpg',
   },
+  {
+    slug: 'what-is-eos',
+    template: 'blog-post-51',
+    title: 'What is EOS? The Entrepreneurial Operating System Explained - OTP',
+    description: 'What is EOS? A clear explanation of the Entrepreneurial Operating System: its six key components (Vision, People, Data, Issues, Process, Traction), how to implement it, the benefits, and how AI agents and OTP support EOS practices.',
+    datePublished: '2026-06-23',
+    wordCount: 1600,
+    ogImage: BASE_URL + '/public/blog/what-is-eos-hero.jpg',
+  },
 ];
 
 // O(1) lookup map. Built once at module load.
