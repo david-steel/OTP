@@ -1,0 +1,164 @@
+<%#
+  /ollie -- Meet Ollie, the OTP mascot. Standalone editorial character page in
+  the v7 layout. Built for SEO (entity page) + AEO (visible FAQ mirrored in
+  FAQPage JSON-LD passed from the route). Styles scoped under .ollie.
+%>
+<style>
+  .ollie{
+    --bg:#fbfaf7; --paper:#ffffff; --ink:#14161c; --ink-soft:#525866; --rule:#e7e4dd;
+    --blue:#0d7df2; --green:#0a9d63; --lime:#8BC42A; --amber:#D97706;
+    --maxw:720px;
+    background:var(--bg); color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,sans-serif; font-size:19px; line-height:1.68;
+    -webkit-font-smoothing:antialiased;
+  }
+  .ollie *{box-sizing:border-box}
+  .ollie .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+
+  .ollie .hero{padding:72px 0 52px;text-align:center}
+  .ollie .hero img.face{width:200px;height:200px;object-fit:contain;margin:0 auto 10px;display:block;filter:drop-shadow(0 18px 30px rgba(20,22,28,.12))}
+  .ollie .kicker{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin:0 0 14px}
+  .ollie h1{font-family:"Schibsted Grotesk",sans-serif;font-weight:800;font-size:52px;line-height:1.02;letter-spacing:-0.03em;margin:0 0 18px;color:var(--ink)}
+  .ollie h1 .b{color:var(--blue)}
+  .ollie .lede{font-size:21px;color:var(--ink-soft);margin:0 auto;max-width:600px}
+
+  .ollie section{padding:44px 0;border-top:1px solid var(--rule)}
+  .ollie .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin:0 0 16px}
+  .ollie h2{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:30px;line-height:1.14;letter-spacing:-0.02em;margin:0 0 18px;color:var(--ink)}
+  .ollie p{margin:0 0 18px}
+  .ollie p:last-child{margin-bottom:0}
+  .ollie .soft{color:var(--ink-soft)}
+  .ollie em{font-style:italic}
+  .ollie strong{font-weight:700}
+
+  .ollie .callout{margin:24px 0;padding:22px 24px;background:#f3f8f3;border-left:3px solid var(--lime);border-radius:0 10px 10px 0}
+  .ollie .callout .big{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:22px;color:var(--ink);margin:0 0 6px}
+
+  .ollie .poses{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:26px}
+  .ollie .pose{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:20px;text-align:center}
+  .ollie .pose img{width:96px;height:96px;object-fit:contain;margin:0 auto 12px;display:block}
+  .ollie .pose h3{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:16px;margin:0 0 5px;color:var(--ink)}
+  .ollie .pose p{font-size:14.5px;color:var(--ink-soft);margin:0}
+
+  .ollie .faq{margin-top:22px}
+  .ollie .faq details{border:1px solid var(--rule);border-radius:12px;background:var(--paper);margin-bottom:12px;padding:2px 20px}
+  .ollie .faq summary{font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:18px;color:var(--ink);cursor:pointer;padding:16px 0;list-style:none}
+  .ollie .faq summary::-webkit-details-marker{display:none}
+  .ollie .faq summary::after{content:"+";float:right;color:var(--blue);font-weight:700;font-size:22px;line-height:1}
+  .ollie .faq details[open] summary::after{content:"\2212"}
+  .ollie .faq .ans{padding:0 0 18px;color:var(--ink-soft);font-size:16.5px;line-height:1.6}
+
+  .ollie .cta{text-align:center;background:linear-gradient(180deg,var(--bg),#f1f0ea)}
+  .ollie .cta img{width:120px;height:120px;object-fit:contain;margin:0 auto 16px;display:block}
+  .ollie .btn{display:inline-block;margin-top:8px;background:var(--blue);color:#fff;font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:17px;text-decoration:none;padding:14px 28px;border-radius:10px}
+  .ollie .btn.ghost{background:transparent;color:var(--blue);border:2px solid var(--blue);margin-left:10px}
+
+  @media (max-width:640px){
+    .ollie{font-size:18px}
+    .ollie .hero{padding:48px 0 36px}
+    .ollie h1{font-size:38px}
+    .ollie h2{font-size:25px}
+    .ollie .poses{grid-template-columns:1fr}
+    .ollie .btn.ghost{margin-left:0;margin-top:10px}
+  }
+</style>
+
+<main class="ollie">
+  <header class="hero">
+    <div class="wrap">
+      <img class="face" src="/public/images/orgy-wave.webp" alt="Ollie, the OTP mascot, waving hello">
+      <p class="kicker">The OTP Mascot</p>
+      <h1>Meet <span class="b">Ollie.</span></h1>
+      <p class="lede">Ollie is the face of OTP. His whole job, and his whole name, is one idea: when the work is carried for you, you are free to come out and do what matters.</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Where the name comes from</p>
+      <h2>Olly olly oxen free.</h2>
+      <p>Every kid knows the call, even if they never knew how to spell it. <em>Olly olly oxen free.</em> It is what you shout at the end of the game. It means the round is over, the hiding is done, everyone can come out into the open now. You are safe. You are free. Come home.</p>
+      <div class="callout">
+        <p class="big">Ollie is that call, turned into a character.</p>
+        <p class="soft">A green, friendly all-clear. The signal that you can stop hiding under the pile of operational work and step back into the open.</p>
+      </div>
+      <p>That is not a cute coincidence layered on after the fact. It is the entire point of OTP, compressed into a name. So it felt right that the one who guides you through the product would carry it.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">What Ollie stands for</p>
+      <h2>Agents carry the work, so people are free for what matters.</h2>
+      <p>OTP is the operating platform for teams of people and AI agents: one chart, one scoreboard, one weekly meeting. The agents take on the operational load, the repeatable work, the tracking, the follow-through, so the humans are freed for the work only humans can do.</p>
+      <p>Ollie is what that freedom looks like. He shows up across OTP as your guide, never your boss. He represents the team, the humans and the agents together, working off the same playbook.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Where you will run into him</p>
+      <h2>Ollie is with you the whole way.</h2>
+      <div class="poses">
+        <div class="pose">
+          <img src="/public/images/orgy-orchestrate.webp" alt="Ollie orchestrating a team of people and AI agents">
+          <h3>Orchestrating</h3>
+          <p>Keeping people and agents pointed at the same goals on one chart.</p>
+        </div>
+        <div class="pose">
+          <img src="/public/images/orgy-scoreboard.webp" alt="Ollie at the scoreboard reviewing KPIs">
+          <h3>At the scoreboard</h3>
+          <p>Holding the numbers in front of you in the weekly meeting.</p>
+        </div>
+        <div class="pose">
+          <img src="/public/images/orgy-present.webp" alt="Ollie presenting and guiding through OTP">
+          <h3>Guiding</h3>
+          <p>Walking new founders and teams through setup, step by step.</p>
+        </div>
+        <div class="pose">
+          <img src="/public/images/orgy-celebrate.webp" alt="Ollie celebrating a win">
+          <h3>Celebrating</h3>
+          <p>Cheering the wins when a Rock lands or a goal gets hit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Questions about Ollie</p>
+      <h2>The short answers.</h2>
+      <div class="faq">
+        <details open>
+          <summary>Who is Ollie?</summary>
+          <div class="ans">Ollie is the mascot of OTP, the operating platform for teams of people and AI agents. He is the friendly green guide you meet across the product, in onboarding, in the weekly meeting, and on the scoreboard.</div>
+        </details>
+        <details>
+          <summary>What does the name Ollie mean?</summary>
+          <div class="ans">It comes from "olly olly oxen free," the call shouted at the end of a children's game to tell everyone they can come out of hiding, that they are safe and free. Ollie is that all-clear turned into a character.</div>
+        </details>
+        <details>
+          <summary>What does Ollie represent?</summary>
+          <div class="ans">OTP's mission: let AI agents carry the operational work, so people are free for the work that matters. Ollie is what that freedom looks like, and he represents the whole team, humans and agents, working off one shared playbook.</div>
+        </details>
+        <details>
+          <summary>What is OTP?</summary>
+          <div class="ans">OTP is the operating platform for teams of people and AI agents. It gives an organization one chart, one scoreboard, and one weekly meeting, so humans and their AI agents are coordinated, accountable, and working toward the same goals.</div>
+        </details>
+        <details>
+          <summary>Is Ollie an AI?</summary>
+          <div class="ans">No. Ollie is a mascot, not a product feature or a chatbot. He is the character that represents OTP and the human-plus-AI team it helps you run.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap" style="text-align:center">
+      <img src="/public/images/orgy-hero.webp" alt="Ollie waving you in to OTP">
+      <h2>Come meet the team Ollie helps run.</h2>
+      <p class="soft">See what it looks like when agents carry the work and your people are free for what matters.</p>
+      <p><a class="btn" href="/what-is-otp">What is OTP</a><a class="btn ghost" href="/origin">The origin story</a></p>
+    </div>
+  </section>
+</main>

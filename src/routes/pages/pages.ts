@@ -264,6 +264,51 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /ollie -- Meet Ollie, the OTP mascot. Character/origin page built for SEO
+  // (entity page) and AEO (visible FAQ mirrored in FAQPage JSON-LD). Indexed;
+  // in the sitemap.
+  app.get('/ollie', async (_request, reply) => {
+    const canonical = BASE_URL + '/ollie';
+    const faq: Array<[string, string]> = [
+      ['Who is Ollie?', 'Ollie is the mascot of OTP, the operating platform for teams of people and AI agents. He is the friendly green guide you meet across the product, in onboarding, in the weekly meeting, and on the scoreboard.'],
+      ['What does the name Ollie mean?', 'It comes from "olly olly oxen free," the call shouted at the end of a children\'s game to tell everyone they can come out of hiding, that they are safe and free. Ollie is that all-clear turned into a character.'],
+      ['What does Ollie represent?', "OTP's mission: let AI agents carry the operational work, so people are free for the work that matters. Ollie is what that freedom looks like, and he represents the whole team, humans and agents, working off one shared playbook."],
+      ['What is OTP?', 'OTP is the operating platform for teams of people and AI agents. It gives an organization one chart, one scoreboard, and one weekly meeting, so humans and their AI agents are coordinated, accountable, and working toward the same goals.'],
+      ['Is Ollie an AI?', 'No. Ollie is a mascot, not a product feature or a chatbot. He is the character that represents OTP and the human-plus-AI team it helps you run.'],
+    ];
+    return renderV7(reply, 'ollie', {
+      title: 'Meet Ollie, the OTP Mascot',
+      description: 'Ollie is the mascot of OTP. His name comes from "olly olly oxen free," the call that means everyone is safe and free to come out. He stands for OTP\'s mission: let AI agents carry the operational work, so people are free for what matters.',
+      canonical,
+      ogImage: BASE_URL + '/public/images/orgy-hero.webp',
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: 'Meet Ollie, the OTP Mascot',
+          url: canonical,
+          inLanguage: 'en',
+          about: {
+            '@type': 'Thing',
+            name: 'Ollie',
+            description: 'The mascot of OTP, the operating platform for teams of people and AI agents. Named after "olly olly oxen free," representing OTP\'s mission to free people for the work that matters by letting AI agents carry the operational work.',
+            image: BASE_URL + '/public/images/orgy-hero.webp',
+          },
+          isPartOf: { '@type': 'Organization', name: 'OTP', url: BASE_URL },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faq.map(([q, a]) => ({
+            '@type': 'Question',
+            name: q,
+            acceptedAnswer: { '@type': 'Answer', text: a },
+          })),
+        },
+      ],
+    });
+  });
+
   // Browse
   app.get('/browse', async (request, reply) => {
     // One card per organization: the most recent published OOS file per org.
