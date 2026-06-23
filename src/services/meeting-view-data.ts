@@ -14,6 +14,8 @@ import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull } from 'drizzle
 import { db } from '../config/database.js';
 import { kpis, kpiValues, rocks, tickets, todos, teamMemberships, orgMembers, teams, meetingHeadlines, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, rockMilestones } from '../db/schema.js';
 import { useScorecardSnapshot, belongsToMeetingTeam } from './meeting-snapshot.js';
+import { rockVisibilityForSeats } from '../shared/rock-visibility.js';
+import { resolveViewerSeatIds } from './membership.js';
 
 export async function resolveMeetingViewData(request: FastifyRequest, org: any, meeting: any) {
     const orgKpis = await db.select().from(kpis)
@@ -58,10 +60,15 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
     // Quarterly Priorities hides completed + archived rocks by default; ?rocks=all
     // reveals them (rendered at the bottom with a Reopen button).
     const _showHiddenRocks = (request.query as any)?.rocks === 'all';
+    // Shadow rocks are visible ONLY to their owner. Resolve who is viewing this
+    // meeting so the Rock Review hides another member's private rock from the
+    // room, while still showing the owner their own. See shared/rock-visibility.ts.
+    const _viewerSeats = await resolveViewerSeatIds(request, org);
     const _rockConds = [
       eq(rocks.organizationId, org.id),
       meeting.teamId ? eq(rocks.teamId, meeting.teamId) : isNull(rocks.teamId),
       isNull(rocks.deletedAt),
+      rockVisibilityForSeats(_viewerSeats),
     ];
     if (!_showHiddenRocks) {
       _rockConds.push(isNull(rocks.completedAt), isNull(rocks.archivedAt));
@@ -76,6 +83,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
         eq(rocks.organizationId, org.id),
         meeting.teamId ? eq(rocks.teamId, meeting.teamId) : isNull(rocks.teamId),
         isNull(rocks.deletedAt),
+        rockVisibilityForSeats(_viewerSeats),
         or(isNotNull(rocks.completedAt), isNotNull(rocks.archivedAt)),
       ));
     const hiddenRocksCount = _hiddenRows.filter(
@@ -114,6 +122,7 @@ export async function resolveMeetingViewData(request: FastifyRequest, org: any, 
           eq(rocks.organizationId, org.id),
           inArray(rocks.id, _baseIds),
           isNull(rocks.deletedAt),
+          rockVisibilityForSeats(_viewerSeats),
           or(isNotNull(rocks.completedAt), isNotNull(rocks.archivedAt)),
         ));
         const _byId = new Map<string, any>((rocksData.rocks as any[]).map((r: any) => [r.id, r]));

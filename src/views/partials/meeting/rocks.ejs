@@ -63,6 +63,7 @@
                   </span>
                 <% } %>
                 <span class="text-xs text-gray-500"><%= r.quarter %></span>
+                <% if (r.shadowOwnerOnly) { %><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-gray-200 text-gray-700" title="Shadow priority -- visible only to you">&#128274; Private</span><% } %>
                 <label class="text-xs text-gray-500 inline-flex items-center gap-1">Due
                   <input type="date" data-rock-due
                          value="<%= r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : '' %>"
@@ -183,6 +184,10 @@
           <input id="new-rock-due" type="date" class="col-span-12 border rounded p-2 text-sm" value="<%= (function(){ var d=new Date(); var q=Math.floor(d.getMonth()/3); var endMonth=q*3+2; var end=new Date(d.getFullYear(),endMonth+1,0); return end.toISOString().slice(0,10); })() %>">
           <textarea id="new-rock-status" class="col-span-12 border rounded p-2 text-sm h-16" placeholder="Initial status note (optional)"></textarea>
         </div>
+        <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
+          <input id="new-rock-shadow" type="checkbox" class="h-4 w-4">
+          &#128274; Shadow priority &mdash; visible only to me (hidden from everyone else, including admins)
+        </label>
         <div class="flex gap-2 mt-2">
           <button id="new-rock-save" class="text-xs px-3 py-1.5 bg-orgy-blue text-white rounded hover:bg-orgy-blue-deep font-medium">Add Priority</button>
           <button id="new-rock-cancel" class="text-xs px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>

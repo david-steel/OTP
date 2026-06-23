@@ -1273,6 +1273,11 @@ export const rocks = pgTable('rocks', {
   createdBy: varchar('created_by', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  // Shadow rock: when true, visible ONLY to its owner -- hidden from every
+  // other member, including org owners/admins. A genuinely private priority.
+  // Enforced in ALL rock read paths via shared/rock-visibility.ts. Added via
+  // ensure-shadow-rocks.ts boot DDL.
+  shadowOwnerOnly: boolean('shadow_owner_only').notNull().default(false),
   deletedAt: timestamp('deleted_at'),
 }, (table) => ({
   orgIdx: index('rocks_org_idx').on(table.organizationId),

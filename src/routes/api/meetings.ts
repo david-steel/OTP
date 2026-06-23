@@ -3,6 +3,7 @@ import { eq, and, desc, asc, sql, isNull, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { meetings, rocks, kpis, kpiValues, tickets, todos, auditLogs, organizations } from '../../db/schema.js';
+import { noShadowRocks } from '../../shared/rock-visibility.js';
 import { getAuth } from '@clerk/fastify';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
@@ -256,6 +257,7 @@ async function buildRocksSnapshot(orgId: string, teamId: string | null) {
       eq(rocks.organizationId, orgId),
       teamId ? eq(rocks.teamId, teamId) : isNull(rocks.teamId),
       isNull(rocks.deletedAt),
+      noShadowRocks(), // keep shadow rocks out of the frozen meeting snapshot
       isNull(rocks.completedAt),
       isNull(rocks.archivedAt),
     ))

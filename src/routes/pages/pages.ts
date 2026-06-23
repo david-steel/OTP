@@ -5,6 +5,7 @@ import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, onboardingSequence, rockMilestones } from '../../db/schema.js';
+import { rockVisibilityForSeats, noShadowRocks } from '../../shared/rock-visibility.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser, getFounderTileIds } from '../../services/membership.js';
@@ -549,6 +550,9 @@ export default async function pageRoutes(app: FastifyInstance) {
       myRocks = await db.select().from(rocks)
         .where(and(
           eq(rocks.organizationId, org.id),
+          // Shadow rocks: the viewer sees their own; ownerExternalIds is this
+          // viewer's seats. Others' private rocks stay hidden here.
+          rockVisibilityForSeats(ownerExternalIds),
           isNull(rocks.deletedAt),
           isNull(rocks.completedAt),
           isNull(rocks.archivedAt),
@@ -748,7 +752,9 @@ export default async function pageRoutes(app: FastifyInstance) {
     if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
     const [rock] = await db.select().from(rocks)
-      .where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id), isNull(rocks.deletedAt)))
+      // Shadow rocks fail closed on the detail page (manage via dashboard /
+      // meeting Rock Review); a non-owner gets the same 404 as a missing rock.
+      .where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id), isNull(rocks.deletedAt), noShadowRocks()))
       .limit(1);
     if (!rock) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
@@ -4474,6 +4480,7 @@ ${additionalContext ? `\n## ADDITIONAL CONTEXT\n${additionalContext}` : ''}`;
         eq(rocks.organizationId, org.id),
         eq(rocks.ownerExternalId, externalId),
         isNull(rocks.deletedAt),
+        noShadowRocks(), // never expose someone's shadow rocks on a profile view
       )).orderBy(desc(rocks.dueDate)),
       db.select().from(todos).where(and(
         eq(todos.organizationId, org.id),

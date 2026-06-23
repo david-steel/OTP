@@ -3,6 +3,7 @@ import { eq, and, desc, asc, sql, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../config/database.js';
 import { rocks, auditLogs } from '../../db/schema.js';
+import { noShadowRocks } from '../../shared/rock-visibility.js';
 import { getAuth } from '@clerk/fastify';
 import { getAuthOrg, gateReadOnlyRole } from '../../middleware/auth-helpers.js';
 import { resolveApiKey, requireScope } from '../../middleware/api-key-auth.js';
@@ -24,6 +25,9 @@ const createRockSchema = z.object({
   dueDate: z.string().datetime(),
   onTrack: z.boolean().optional().default(true),
   statusNote: z.string().optional(),
+  // Shadow rock: visible only to the owner. Enforced in all read paths via
+  // shared/rock-visibility.ts.
+  shadowOwnerOnly: z.boolean().optional().default(false),
   teamId: z.string().uuid().nullable().optional(),
   planSectionId: z.string().uuid().nullable().optional(),
   executionItemId: z.string().uuid().nullable().optional(),
@@ -43,6 +47,8 @@ const updateRockSchema = z.object({
   dueDate: z.string().datetime().optional(),
   onTrack: z.boolean().optional(),
   statusNote: z.string().optional(),
+  // Shadow rock toggle (owner-only visibility).
+  shadowOwnerOnly: z.boolean().optional(),
   completed: z.boolean().optional(),
   // Archive (kill/deprioritize) a rock without deleting it. true stamps
   // archivedAt; false (Reopen) clears it. Hidden from the default Rock Review.
@@ -105,6 +111,7 @@ export default async function rockRoutes(app: FastifyInstance) {
       quarter: body.data.quarter,
       dueDate: new Date(body.data.dueDate),
       onTrack: body.data.onTrack ?? true,
+      shadowOwnerOnly: body.data.shadowOwnerOnly ?? false,
       statusNote: body.data.statusNote,
       statusUpdatedAt: body.data.statusNote ? new Date() : null,
       teamId: body.data.teamId || null,
@@ -133,7 +140,7 @@ export default async function rockRoutes(app: FastifyInstance) {
     const org = await authedOrFail(request, reply);
     if (!org) return;
 
-    const conditions = [eq(rocks.organizationId, org.id), isNull(rocks.deletedAt)];
+    const conditions = [eq(rocks.organizationId, org.id), isNull(rocks.deletedAt), noShadowRocks()];
     if (request.query.quarter) conditions.push(eq(rocks.quarter, request.query.quarter));
     if (request.query.ownerExternalId) conditions.push(eq(rocks.ownerExternalId, request.query.ownerExternalId));
     if (request.query.onTrack === 'true') conditions.push(eq(rocks.onTrack, true));
@@ -153,7 +160,7 @@ export default async function rockRoutes(app: FastifyInstance) {
     const org = await authedOrFail(request, reply);
     if (!org) return;
 
-    const [rock] = await db.select().from(rocks).where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id))).limit(1);
+    const [rock] = await db.select().from(rocks).where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id), noShadowRocks())).limit(1);
     if (!rock) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Rock not found' } });
     return { rock };
   });
@@ -183,6 +190,7 @@ export default async function rockRoutes(app: FastifyInstance) {
     if (d.quarter !== undefined) updates.quarter = d.quarter;
     if (d.dueDate !== undefined) updates.dueDate = new Date(d.dueDate);
     if (d.onTrack !== undefined) updates.onTrack = d.onTrack;
+    if (d.shadowOwnerOnly !== undefined) updates.shadowOwnerOnly = d.shadowOwnerOnly;
     if (d.statusNote !== undefined) {
       updates.statusNote = d.statusNote;
       updates.statusUpdatedAt = new Date();

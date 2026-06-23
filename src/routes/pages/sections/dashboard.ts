@@ -16,6 +16,7 @@ import { getAuth } from '@clerk/fastify';
 import { eq, and, desc, asc, sql, inArray, or, isNull, isNotNull, gt } from 'drizzle-orm';
 import { db } from '../../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, rockMilestones, orgWallets, walletLedger, subscriptions } from '../../../db/schema.js';
+import { rockVisibilityForSeats, noShadowRocks } from '../../../shared/rock-visibility.js';
 import { getStripe } from '../../../services/stripe.js';
 import { getOrCreateWallet } from '../../../services/wallet.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../../middleware/permissions.js';
@@ -3179,6 +3180,10 @@ Founder, OTP</p>
           isNull(rocks.archivedAt),
           eq(rocks.quarter, currentQuarter),
           ccScope(rocks.teamId, rocks.ownerExternalId),
+          // Shadow rocks: show the viewer their own, hide everyone else's even
+          // when on a shared team (ccScope spans my teams). claimedIds is the
+          // founder-tile-scrubbed identity computed above.
+          rockVisibilityForSeats(claimedIds),
         ))
         .orderBy(desc(rocks.dueDate));
     }
@@ -3525,7 +3530,7 @@ Founder, OTP</p>
           .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt), isNull(kpis.archivedAt))),
         db.select({ id: rocks.id, title: rocks.title, owner: rocks.ownerExternalId })
           .from(rocks)
-          .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
+          .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt), noShadowRocks())),
         db.select({ id: tickets.id, title: tickets.title, owner: tickets.ownerExternalId })
           .from(tickets)
           .where(and(
@@ -3645,7 +3650,7 @@ Founder, OTP</p>
         const topIds = new Set(topHumans.map(n => n.externalId));
         const [fdRocks, fdKpis, fdTickets, fdTodos] = await Promise.all([
           db.select({ owner: rocks.ownerExternalId }).from(rocks)
-            .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt))),
+            .where(and(eq(rocks.organizationId, org.id), isNull(rocks.deletedAt), noShadowRocks())),
           db.select({ owner: kpis.ownerExternalId }).from(kpis)
             .where(and(eq(kpis.organizationId, org.id), isNull(kpis.deletedAt), isNull(kpis.archivedAt))),
           db.select({ owner: tickets.ownerExternalId }).from(tickets)

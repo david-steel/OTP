@@ -225,6 +225,42 @@ export async function getFounderTileIds(orgId: string | null | undefined, clerkO
   return ids;
 }
 
+/**
+ * The seat IDs the current viewer "is" -- their claimed chart tiles, with the
+ * founder's tiles scrubbed out for non-founders (the SAME identity every
+ * "my X" query uses). This is what decides shadow-rock ownership, so it must
+ * match that logic exactly. Honors super-admin impersonation
+ * (request.impersonation.as) so "view as X" resolves to X, not the admin.
+ * Returns [] for unidentified viewers / API keys -> shadow rocks fail closed.
+ */
+export async function resolveViewerSeatIds(
+  request: any,
+  org: { id: string; clerkOrgId?: string | null },
+): Promise<string[]> {
+  const { getAuth } = await import('@clerk/fastify');
+  const imp = (request as any).impersonation as { as?: string } | null;
+  let effectiveClerkId: string | null = imp?.as || null;
+  if (!effectiveClerkId) {
+    try { effectiveClerkId = getAuth(request)?.userId || null; } catch { effectiveClerkId = null; }
+  }
+  if (!effectiveClerkId) return [];
+  const [m] = await db
+    .select({ claimedEntityId: orgMembers.claimedEntityId, claimedEntityIds: orgMembers.claimedEntityIds })
+    .from(orgMembers)
+    .where(and(eq(orgMembers.orgId, org.id), eq(orgMembers.clerkUserId, effectiveClerkId)))
+    .limit(1);
+  if (!m) return [];
+  const seats = new Set<string>();
+  if (Array.isArray(m.claimedEntityIds)) for (const id of m.claimedEntityIds) if (typeof id === 'string' && id) seats.add(id);
+  if (m.claimedEntityId) seats.add(m.claimedEntityId);
+  const isLegacyFounder = !!(org.clerkOrgId && org.clerkOrgId === effectiveClerkId);
+  if (!isLegacyFounder) {
+    const founderTiles = await getFounderTileIds(org.id, org.clerkOrgId);
+    for (const t of founderTiles) seats.delete(t);
+  }
+  return Array.from(seats);
+}
+
 export async function getOrgsForUser(clerkUserId: string): Promise<{ orgId: string; role: Role; claimedEntityId: string | null }[]> {
   if (!clerkUserId) return [];
   const rows = await db

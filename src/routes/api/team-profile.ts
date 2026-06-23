@@ -8,6 +8,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq, and, isNull, sql, desc, asc, gte, lt } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { rocks, todos, tickets, meetings } from '../../db/schema.js';
+import { noShadowRocks } from '../../shared/rock-visibility.js';
 import { getAuthOrg } from '../../middleware/auth-helpers.js';
 
 export default async function teamProfileRoutes(app: FastifyInstance) {
@@ -46,6 +47,7 @@ export default async function teamProfileRoutes(app: FastifyInstance) {
         eq(rocks.organizationId, org.id),
         eq(rocks.ownerExternalId, externalId),
         isNull(rocks.deletedAt),
+        noShadowRocks(), // never expose someone's shadow rocks on a profile view
       )).orderBy(desc(rocks.dueDate)),
       db.select().from(todos).where(and(
         eq(todos.organizationId, org.id),

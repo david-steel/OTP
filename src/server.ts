@@ -1351,6 +1351,14 @@ try {
 }
 
 try {
+  const { ensureShadowRocksColumn } = await import('./db/ensure-shadow-rocks.js');
+  await ensureShadowRocksColumn();
+  app.log.info('rocks.shadow_owner_only is ready (shadow rocks -- owner-only visibility)');
+} catch (err) {
+  app.log.error({ err }, 'ensureShadowRocksColumn failed -- shadow rocks will not persist until resolved');
+}
+
+try {
   const { ensureOrgPrivacy } = await import('./db/ensure-org-privacy.js');
   await ensureOrgPrivacy();
   app.log.info('organizations.is_private is ready (private-plan cross-org enforcement)');
