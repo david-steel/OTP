@@ -6,6 +6,7 @@ import { eq, and, desc, asc, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { organizations, oosFiles, claims, claimSimilarities, apiKeys, bestPractices, oosBestPracticeMatches, consultantProfiles, practiceVotes, newsletterSubscribers, oosOperatingPlans, oosOperatingPlanSections, oosExecutionItems, meetings, rocks, todos, tickets, kpis, kpiValues, partnerSignups, improvements, orgMembers, teams, teamMemberships, meetingHeadlines, managerAgents, seatResponsibilities, seatFitReviews, orgValues, valueReviews, onboardingSequence, rockMilestones } from '../../db/schema.js';
 import { rockVisibilityForSeats, noShadowRocks } from '../../shared/rock-visibility.js';
+import { resolveViewerSeatIds } from '../../services/membership.js';
 import { hasOrgWideView, canEditOrgSettings, capabilitiesFor, canIntegrate } from '../../middleware/permissions.js';
 import type { Role } from '../../services/membership.js';
 import { getOrgsForUser, getFounderTileIds } from '../../services/membership.js';
@@ -753,10 +754,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     // as the public not-found pages above. Never reveals the rock exists.
     if (!org) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
+    // Owner-aware: the owner can open their own shadow rock's SMART planner;
+    // a non-owner gets the same 404 as a missing rock.
+    const viewerSeats = await resolveViewerSeatIds(request, org);
     const [rock] = await db.select().from(rocks)
-      // Shadow rocks fail closed on the detail page (manage via dashboard /
-      // meeting Rock Review); a non-owner gets the same 404 as a missing rock.
-      .where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id), isNull(rocks.deletedAt), noShadowRocks()))
+      .where(and(eq(rocks.id, id), eq(rocks.organizationId, org.id), isNull(rocks.deletedAt), rockVisibilityForSeats(viewerSeats)))
       .limit(1);
     if (!rock) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
 
