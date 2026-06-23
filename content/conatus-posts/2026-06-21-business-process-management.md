@@ -125,3 +125,7 @@ In Claude Desktop or Cursor or any MCP client, add this block:
 ```
 
 Restart the client. Then ask: *"Use OTP to show me which seats on my org chart own recurring processes, and flag any seat without a documented process owner."*
+
+---
+
+*Related: the tooling side of this discipline — [business management software](/blog/business-management-software) for running the operating cadence.*

@@ -121,3 +121,7 @@ In Claude Desktop or Cursor or any MCP client, add this block:
 ```
 
 Restart the client. Then ask: *"Use OTP to show me which seats on our org chart have core values accountability attached to them."*
+
+---
+
+*Related: core values are not the same as your [core competencies](/blog/core-competencies) — the handful of things your business must be measurably excellent at.*

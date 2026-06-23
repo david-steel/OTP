@@ -52,7 +52,7 @@ These four structural failures produce every accountability problem I have seen.
 
 A culture of accountability is not a climate of pressure. It is a climate where everyone knows what they own and nobody has to guess whether they are on track.
 
-The foundation is a single document that lists every seat, the outcome the seat is accountable for, and the target. Gino Wickman calls the ownership piece the Accountability Chart in EOS (Entrepreneurial Operating System). The principle is correct: every seat on the chart has one person who owns it, and that person is accountable for the result, not just the activity. OTP runs alongside EOS for the teams that use it, extending the accountability structure into the weekly rhythm.
+The foundation is a single document that lists every seat, the outcome the seat is accountable for, and the target. Gino Wickman calls the ownership piece the [Accountability Chart](/blog/accountability-chart) in EOS (Entrepreneurial Operating System). The principle is correct: every seat on the chart has one person who owns it, and that person is accountable for the result, not just the activity. OTP runs alongside EOS for the teams that use it, extending the accountability structure into the weekly rhythm.
 
 The cadence is where culture actually forms. A weekly scorecard review is what makes ownership real. Not a formal performance review. A weekly look at the numbers, seat by seat, and a direct conversation when any number is off target.
 

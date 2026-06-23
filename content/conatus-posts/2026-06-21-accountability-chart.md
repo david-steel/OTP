@@ -111,3 +111,7 @@ In Claude Desktop or Cursor or any MCP client, add this block:
 ```
 
 Restart the client. Then ask: *"Use OTP to show me the Accountability Chart for my organization and list the accountabilities for each seat."*
+
+---
+
+*Related: what the chart enables day to day — [accountability in the workplace](/blog/accountability-in-the-workplace).*

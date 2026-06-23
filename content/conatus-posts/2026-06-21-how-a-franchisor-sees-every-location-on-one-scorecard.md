@@ -102,3 +102,5 @@ You will see exactly what a franchisor's cross-location roll-up looks like in a 
 ---
 
 *Series: Franchise. Post 5 of an in-progress series. Previous posts cover the hybrid chart structure, the per-location agent team, presets as the consistency lever, and benchmarking locations against each other.*
+
+*Related: the other side of the rollup — [how each franchisee owns their own scorecard while corporate sees the rollup](/blog/each-franchisee-own-scorecard-corporate-sees-the-rollup).*

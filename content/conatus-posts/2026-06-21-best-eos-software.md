@@ -110,4 +110,4 @@ Restart the client. Then ask: *"Use OTP to show me the current scorecard and whi
 
 ---
 
-*Series: Operating System. Post 2 of an in-progress series. Related: [Humans and agents on the same scorecard](/blog/humans-and-agents-on-the-same-scorecard)*
+*Series: Operating System. Post 2 of an in-progress series. Related: [Humans and agents on the same scorecard](/blog/humans-and-agents-on-the-same-scorecard) and [business management software](/blog/business-management-software).*

@@ -123,3 +123,7 @@ In Claude Desktop or Cursor or any MCP client, add this block:
 ```
 
 Restart the client. Then ask: *"Use OTP to show me the seats on our org chart and the metrics each one is accountable for."*
+
+---
+
+*Related: strategy is only half the job — see [how to run a business](/blog/how-to-run-a-business) day to day.*

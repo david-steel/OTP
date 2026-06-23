@@ -24,7 +24,7 @@ Four meeting types cover almost everything a healthy team needs.
 
 **The daily pulse.** Short. Ten to fifteen minutes. Its only job is to surface blockers and coordinate daily priorities. It is not a status report. If someone needs to explain their status for more than thirty seconds, that is a conversation to have after the meeting.
 
-**The weekly operating meeting.** This is the one that matters most. Ninety minutes or less. Scorecard review, rock check, and issue solving. EOS, the Entrepreneurial Operating System created by Gino Wickman, formalizes this as the Level 10 Meeting (a registered trademark of EOS Worldwide). The specific format matters less than the discipline: the same agenda, every week, no exceptions, with the people who own the numbers in the room.
+**The weekly operating meeting.** This is the one that matters most. Ninety minutes or less. Scorecard review, rock check, and issue solving. EOS, the Entrepreneurial Operating System created by Gino Wickman, formalizes this as the [Level 10 Meeting](/blog/level-10-meeting) (a registered trademark of EOS Worldwide). The specific format matters less than the discipline: the same agenda, every week, no exceptions, with the people who own the numbers in the room.
 
 **The quarterly planning session.** Zoomed out. Where are we versus our 90-day rocks? What did we learn? What are we prioritizing next? This is the meeting where you update the plan, not the meeting where you run the plan.
 

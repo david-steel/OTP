@@ -97,3 +97,7 @@ In Claude Desktop or Cursor or any MCP client, add this block:
 ```
 
 Restart the client. Then ask: *"Use OTP to show me which seats on our chart own recurring processes and which processes have no assigned owner."*
+
+---
+
+*Related: your core processes are how you deliver your [core competencies](/blog/core-competencies) — the few capabilities your business must be excellent at.*
