@@ -78,7 +78,7 @@ export function renderLifecycleEmail(e: LifecycleEmail, firstName: string | null
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};"><tr><td align="center" style="padding:32px 16px;">`,
     '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #ECEFF3;">',
     header(),
-    `<tr><td align="center" style="padding:28px 28px 4px 28px;"><img src="${IMG}/${e.mascot}" width="120" alt="Orgy" style="width:120px;height:auto;display:block;"></td></tr>`,
+    `<tr><td align="center" style="padding:28px 28px 4px 28px;"><img src="${IMG}/${e.mascot}" width="120" alt="Ollie" style="width:120px;height:auto;display:block;"></td></tr>`,
     '<tr><td style="padding:8px 32px 0 32px;">',
   ];
   if (e.eyebrow) {

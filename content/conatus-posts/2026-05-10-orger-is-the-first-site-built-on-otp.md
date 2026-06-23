@@ -13,7 +13,7 @@ description: Orger.ai just shipped a new look and a new home. It is also the fir
 
 [Orger.ai](https://orger.ai) just shipped.
 
-The new homepage went live today with a mascot named Orgy, a headline that reads "Your org chart, with agents," and a free builder that lets you drag and drop the humans you have and get grounded recommendations for the AI agents you should build next.
+The new homepage went live today with a mascot named Ollie, a headline that reads "Your org chart, with agents," and a free builder that lets you drag and drop the humans you have and get grounded recommendations for the AI agents you should build next.
 
 That sentence is the marketing. The interesting sentence is the one underneath it.
 
