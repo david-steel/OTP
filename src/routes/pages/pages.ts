@@ -236,7 +236,8 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // /origin -- The Origin of OTP. A standalone editorial "lore" page: the chain
   // of events behind why OTP was built (Frankl, the Rebbe, EOS, Feynman's
-  // cataclysm sentence, the knowledge graph). Indexed; in the sitemap.
+  // cataclysm sentence, the knowledge graph). UNPUBLISHED: noindex and NOT in
+  // the sitemap or nav -- reachable only by direct link (shared privately).
   app.get('/origin', async (_request, reply) => {
     const canonical = BASE_URL + '/origin';
     return renderV7(reply, 'origin', {
@@ -244,6 +245,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: "The origin story of OTP. How Man's Search for Meaning, a message from the Lubavitcher Rebbe, EOS, Feynman's cataclysm sentence, and a knowledge graph led to one idea: let agents carry the operational work, so people are free for the work that matters.",
       canonical,
       ogType: 'article',
+      noindex: true,
       jsonLd: {
         '@context': 'https://schema.org',
         '@type': 'Article',
