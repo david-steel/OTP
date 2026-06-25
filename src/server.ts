@@ -463,6 +463,12 @@ app.get('/llms.txt', async (request, reply) => {
   return reply.sendFile('llms.txt');
 });
 
+// IndexNow key verification at root (Bing/Yandex instant indexing)
+app.get('/index-now-b8465197-493e-41b8-9e52-4089d6bd6a59.txt', async (request, reply) => {
+  reply.type('text/plain');
+  return reply.sendFile('index-now-b8465197-493e-41b8-9e52-4089d6bd6a59.txt');
+});
+
 // llms-full.txt -- comprehensive content for AI systems
 app.get('/llms-full.txt', async (request, reply) => {
   const { db: database } = await import('./config/database.js');
