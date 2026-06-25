@@ -162,7 +162,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       description: 'OTP is the operating system for teams of people and AI agents. One chart, one scoreboard, one weekly meeting - built on the EOS you already run. Your whole team is free; you only pay for the agents.',
       canonical: BASE_URL + '/',
       ogImage: OG_DEFAULT,
-      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents.' },
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents.', sameAs: ['https://x.com/OrgTP_1'] },
     });
   });
 
