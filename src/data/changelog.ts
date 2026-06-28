@@ -13,6 +13,36 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
 
+  // ---- June 29, 2026 (SCHEDULED) ----
+  // Future-dated: the visibility gate hides these until 2026-06-29, so they
+  // land in the week-of-6/29 drop (What's New page, unread badge, weekly email).
+
+  {
+    date: '2026-06-29',
+    tags: ['Core', 'Rocks'],
+    title: 'Shadow Rocks: a private quarterly priority only you can see',
+    why: 'Track a personal or sensitive Rock on your own scorecard without putting it in front of the whole team.',
+    cta: { text: 'Open your Rocks', url: '/dashboard' },
+    summary: 'You can now mark a Rock as private, a "Shadow Rock" visible only to its owner and hidden from every other member, including org owners and admins (no founder override). Add one from the Rock form or the SMART Rock Planner with the Private checkbox; it carries a Private badge on your own surfaces and never appears in anyone else’s Rock Review, dashboard, profile, or meeting.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Private by design.</strong> A Shadow Rock is visible only to the person who owns it. No one else in the organization can see it, not managers, not admins, not the owner of the org.</li>
+<li><strong>One checkbox.</strong> Mark any Rock private from the Rock form or the SMART Rock Planner. It shows a Private badge wherever you see your own Rocks.</li>
+<li><strong>Hidden everywhere else.</strong> Shadow Rocks are filtered out of every other member’s Rock Review, dashboard, profile, rock list, and meeting view, so a sensitive priority stays yours alone.</li>
+</ul>`,
+  },
+
+  {
+    date: '2026-06-29',
+    tags: ['Onboarding', 'Fixes'],
+    title: 'Invited teammates now join your org the moment they sign up',
+    why: 'No more chasing someone who created an account but landed outside your organization.',
+    summary: 'When a person you invited creates their account, they are now attached to your organization automatically at sign-up, with no magic-link click or specific landing page required. Previously a teammate who signed up and navigated elsewhere could end up with an account but no membership; that gap is closed. Also fixed: the meeting runner no longer renders two sections at once.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>Automatic on sign-up.</strong> A matching pending invite is accepted the instant the account is created, so invited teammates land inside your org with their seat, team, and access already set, instead of in an empty account.</li>
+<li><strong>Meeting runner fix.</strong> The meeting runner no longer renders two sections at once.</li>
+</ul>`,
+  },
+
   // ---- June 22, 2026 (SCHEDULED) ----
   // Future-dated on purpose: the visibility gate (see isPublishedEntry below,
   // honored by the What's New page, the unread badge, and the weekly email)
