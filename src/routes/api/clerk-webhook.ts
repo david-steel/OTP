@@ -8,6 +8,7 @@ import { db } from '../../config/database.js';
 import { onboardingSequence, newsletterSubscribers } from '../../db/schema.js';
 import { sendEmail } from '../../config/email.js';
 import { updateContactInAudience } from '../../services/resend-audience.js';
+import { acceptPendingInviteByEmail } from '../../services/membership.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +23,7 @@ interface ClerkUserCreatedData {
   email_addresses: ClerkEmailAddress[];
   primary_email_address_id: string | null;
   first_name?: string | null;
+  last_name?: string | null;
 }
 
 interface ClerkWebhookEvent {
@@ -102,6 +104,26 @@ export default async function clerkWebhookRoutes(app: FastifyInstance) {
       return { ok: true, warning: 'no_email' };
     }
 
+    // Auto-accept a matching pending org invite at the moment the account is
+    // created. This fixes the stranded-user problem at its source: previously
+    // the by-email reconcile ran ONLY when a logged-in no-org user happened to
+    // land on /dashboard, so anyone who signed up and bounced elsewhere stayed
+    // invited-but-not-a-member forever. Running it here attaches them to their
+    // org the instant they sign up. Placed before the onboarding-duplicate
+    // early-return so it always fires; acceptPendingInviteByEmail is idempotent
+    // (no pending invite -> no-op) and best-effort (a failure never blocks ack).
+    let inviteAccepted = false;
+    try {
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || null;
+      const accepted = await acceptPendingInviteByEmail(user.id, email, fullName);
+      if (accepted?.ok) {
+        inviteAccepted = true;
+        console.log(`[clerk-webhook] auto-accepted pending invite for ${email} -> org ${accepted.orgId}`);
+      }
+    } catch (err) {
+      console.error('[clerk-webhook] pending-invite auto-accept failed (non-blocking):', err);
+    }
+
     const [existing] = await db
       .select()
       .from(onboardingSequence)
@@ -110,7 +132,7 @@ export default async function clerkWebhookRoutes(app: FastifyInstance) {
 
     if (existing) {
       console.log(`[clerk-webhook] Onboarding row already exists for ${user.id}, skipping`);
-      return { ok: true, duplicate: true };
+      return { ok: true, duplicate: true, inviteAccepted };
     }
 
     await db.insert(onboardingSequence).values({
@@ -157,6 +179,6 @@ export default async function clerkWebhookRoutes(app: FastifyInstance) {
       console.error(`[clerk-webhook] Welcome email failed to send to ${email}`);
     }
 
-    return { ok: true, sent };
+    return { ok: true, sent, inviteAccepted };
   });
 }
