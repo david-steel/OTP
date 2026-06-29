@@ -905,7 +905,7 @@ app.get('/sitemap.xml', async (request, reply) => {
   // so we don't want Date.now churning the file on every crawl.
   try {
     const { MEETING_TEMPLATES } = await import('./data/meeting-templates.js');
-    const TEMPLATES_LASTMOD = '2026-06-12';
+    const TEMPLATES_LASTMOD = '2026-06-29'; // bumped: long-form SEO guides + FAQPage schema added to all templates
     for (const t of MEETING_TEMPLATES) {
       dynamicUrls += `  <url><loc>${BASE}/templates/${t.slug}</loc><lastmod>${TEMPLATES_LASTMOD}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
     }
