@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OTP OG Card</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#14161c; --ink-soft:#494d57; --ink-mute:#888c96;
+      --blue:#0d7df2; --orgy:#a8e63a; --orgy-deep:#8bc42a; --orgy-on-light:#5a7d1f;
+      --paper:#fcfcfd; --warm:#f5f7fa; --line:#e6e8ec;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{width:1200px;height:630px;overflow:hidden;}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      background:
+        radial-gradient(1100px 520px at 84% -10%, #eef6ff 0%, rgba(238,246,255,0) 60%),
+        linear-gradient(180deg, var(--paper) 0%, var(--warm) 100%);
+      color:var(--ink); position:relative; padding:70px 80px;
+      display:flex; flex-direction:column;
+    }
+    .frame{position:absolute;inset:26px;border:1px solid var(--line);border-radius:14px;pointer-events:none;}
+    .top{display:flex;align-items:center;justify-content:space-between;}
+    .brand{display:flex;align-items:center;gap:13px;}
+    .tick{width:15px;height:15px;background:var(--orgy);border-radius:3px;box-shadow:0 0 0 4px rgba(168,230,58,0.16);}
+    .wordmark{font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:27px;letter-spacing:-0.01em;color:var(--ink);}
+    .site{font-size:16px;font-weight:500;color:var(--ink-mute);}
+    .eyebrow{margin-top:50px;font-size:15px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:var(--orgy-on-light);}
+    .title{margin-top:20px;font-family:'Schibsted Grotesk',sans-serif;font-weight:800;
+      font-size:__TITLE_SIZE__px;line-height:1.03;letter-spacing:-0.025em;color:var(--ink);max-width:1010px;}
+    .rule{margin-top:28px;width:96px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--orgy-deep),var(--blue));}
+    .subtitle{margin-top:24px;font-size:27px;font-weight:500;line-height:1.32;color:var(--ink-soft);max-width:900px;}
+    .ribbon{position:absolute;left:0;bottom:0;width:100%;height:6px;background:linear-gradient(90deg,var(--orgy) 0%,var(--orgy-deep) 45%,var(--blue) 100%);}
+  </style>
+</head>
+<body>
+  <div class="frame"></div>
+  <div class="top">
+    <div class="brand"><div class="tick"></div><div class="wordmark">OTP</div></div>
+    <div class="site">orgtp.com</div>
+  </div>
+  <div class="eyebrow">__EYEBROW__</div>
+  <h1 class="title">__TITLE__</h1>
+  <div class="rule"></div>
+  <div class="subtitle">__SUBTITLE__</div>
+  <div class="ribbon"></div>
+</body>
+</html>

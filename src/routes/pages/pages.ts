@@ -173,7 +173,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP for CIOs - Govern people and AI agents on one accountability layer',
       description: 'You can see what your AI costs. OTP shows you what it does. One operating system where every person and every AI agent gets a seat, a number, and a real job - with the governance, audit, and data controls a CIO signs off on.',
       canonical: BASE_URL + '/cio',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-cio.png',
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CIOs', url: BASE_URL + '/cio', description: 'Govern people and AI agents on one accountability layer. The operating system for the org of people and agents.' },
     });
   });
@@ -185,7 +185,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP for COOs - Run the whole operation, people and agents, on one chart',
       description: 'The work between meetings is where execution dies. OTP runs your whole operating cadence - chart, scorecard, meeting, to-dos, done - for people and agents, so every commitment closes and the business runs on the system, not on you.',
       canonical: BASE_URL + '/coo',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-coo.png',
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for COOs', url: BASE_URL + '/coo', description: 'The operating cadence for a workforce of people and agents. Every commitment closes the loop.' },
     });
   });
@@ -197,7 +197,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP for CEOs - See your whole company, people and agents, driving one plan',
       description: 'Your vision is only as real as the org running it. OTP makes the plan live: every person and every agent on one chart, laddering to your operating plan, so you can see your whole company executing the future you set.',
       canonical: BASE_URL + '/ceo',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-ceo.png',
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CEOs', url: BASE_URL + '/ceo', description: 'See your whole company - people and agents - driving one plan. The operating system for the company you are building.' },
     });
   });
@@ -209,7 +209,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP for CFOs - Put a cost and a return on every seat, human or agent',
       description: 'AI is now a line item. OTP shows you its return: a cost and a number on every seat - person or agent - rolled up to your operating plan, with the spend controls, audit trail, and bring-your-own-rate billing a CFO signs off on.',
       canonical: BASE_URL + '/cfo',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-cfo.png',
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CFOs', url: BASE_URL + '/cfo', description: 'Put a cost and a return on every seat - human or agent. The operating layer that connects AI spend to contribution.' },
     });
   });
@@ -221,7 +221,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'OTP for CHROs - The right people in the right seats, agents included',
       description: 'Org design used to stop at the people. OTP puts every person and every agent on one accountability chart - each with a seat, a role they own, and a number - so you can see who is thriving, where the gaps are, and how to grow a hybrid workforce.',
       canonical: BASE_URL + '/chro',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-chro.png',
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'OTP for CHROs', url: BASE_URL + '/chro', description: 'An accountability chart that knows what every seat - person or agent - actually owns. Org design for the hybrid workforce.' },
     });
   });
@@ -805,7 +805,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Start Here - Schedule a 30-Minute Intro with the Founder of OTP',
       description: 'A free 30-minute conversation with David Steel, founder of OTP. We map your AI footprint, find the coordination gaps, and decide together whether OTP is the right next move.',
       canonical: BASE_URL + '/start-here',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-start-here.png',
       breadcrumbs: bc({ name: 'Start Here', url: BASE_URL + '/start-here' }),
     });
   });
@@ -901,7 +901,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Why OTP - There Is No Shadow IT Problem. There Is an Org Chart Problem.',
       description: 'Every AI tool in your stack is doing work that used to require a human seat. None of them have one. OTP gives every agent a seat, an SOP, and a scorecard, on the same chart as your humans.',
       canonical: BASE_URL + '/why-otp',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-why-otp.png',
       breadcrumbs: bc({ name: 'Why OTP', url: BASE_URL + '/why-otp' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -919,7 +919,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'The OTP Toolbox - Free Tools for Augmented Human Organizations',
       description: 'Five foundational tools plus the rest of the OTP toolbox. OOS Starter Template, the live Org Chart Builder, the CLAUDE.md Compiler, the Agent Builder, and the Coordination Checkup. Free. Use whether you sign up or not.',
       canonical: BASE_URL + '/tools',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-tools.png',
       breadcrumbs: bc({ name: 'Tools', url: BASE_URL + '/tools' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -937,7 +937,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'What is OTP - The Operating Layer for the Augmented Human Organization',
       description: 'OTP is a model, a protocol, a network, and a SaaS for organizations where humans and AI agents share seats, share SOPs, and share one scoreboard. Six components, two-week implementation, open file format.',
       canonical: BASE_URL + '/what-is-otp',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-what-is-otp.png',
       breadcrumbs: bc({ name: 'What is OTP', url: BASE_URL + '/what-is-otp' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -1108,7 +1108,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'For the first time, your strategy is an artifact your agents can read',
       description: "An OOS file is where your team's plan and your agents' rules live together. Humans read it. Agents query it. No translation layer between the boardroom and the bot.",
       canonical: BASE_URL + '/protocol',
-      ogImage: OG_DEFAULT,
+      ogImage: BASE_URL + '/public/og/og-protocol.png',
       breadcrumbs: bc({ name: 'Protocol', url: BASE_URL + '/protocol' }),
       jsonLd: {
         '@context': 'https://schema.org',
@@ -3029,6 +3029,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       title: 'Pricing - OTP',
       description: 'OTP is free for the open network. Publish, browse, search, compare, and learn from organizational AI intelligence at no cost. Enterprise adds a private intelligence layer.',
       canonical: BASE_URL + '/pricing',
+      ogImage: BASE_URL + '/public/og/og-pricing.png',
       breadcrumbs: bc({ name: 'Pricing', url: BASE_URL + '/pricing' }),
       jsonLd: {
         '@context': 'https://schema.org',
