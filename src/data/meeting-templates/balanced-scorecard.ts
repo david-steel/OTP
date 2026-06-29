@@ -85,6 +85,73 @@ export const BALANCED_SCORECARD_TEMPLATES: MeetingTemplate[] = [
       'Initiatives and next-quarter focus:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/balanced-scorecard-quarterly-review\n',
+    guideHtml: `<h2>The Ultimate Balanced Scorecard Quarterly Strategy Review Guide</h2>
+<p>Setting a corporate strategy is only half the battle - the real challenge lies in execution. Without a structured, recurring mechanism to review progress, even the most brilliant strategic plans end up as forgotten documents. That is why the <strong>Balanced Scorecard Quarterly Strategy Review</strong> is the cornerstone of high-performing organizations.</p>
+<p>By evaluating your business across four distinct perspectives - Financial, Customer, Internal Processes, and Learning &amp; Growth - this framework ensures your leadership team maintains a holistic, balanced view of organizational health.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Balanced Scorecard Quarterly Review Template</strong> and a step-by-step agenda to help your leadership team track performance, analyze variances, and drive strategic alignment.</p>
+
+<h2>What is a Balanced Scorecard Quarterly Strategy Review?</h2>
+<p>A Balanced Scorecard Quarterly Strategy Review is a strategic, 120-minute meeting held at the end of each quarter.</p>
+<p>The primary objective of the meeting is to evaluate the company's performance against its strategic objectives, analyze key performance indicators (KPIs), and review the status of strategic initiatives. Unlike tactical monthly reviews, the quarterly review is designed to assess <strong>macro-level strategy execution and long-term organizational alignment</strong>.</p>
+<h3>The Four Perspectives of the Balanced Scorecard:</h3>
+<ul>
+<li><strong>Financial Perspective:</strong> How do we look to our shareholders? (e.g., revenue growth, profit margins, cash flow).</li>
+<li><strong>Customer Perspective:</strong> How do our customers see us? (e.g., customer retention, Net Promoter Score, acquisition cost).</li>
+<li><strong>Internal Business Processes Perspective:</strong> What must we excel at? (e.g., operational efficiency, quality metrics, cycle times).</li>
+<li><strong>Learning &amp; Growth Perspective:</strong> How can we continue to improve and create value? (e.g., employee retention, skill development, technology adoption).</li>
+</ul>
+
+<h2>The Standard 120-Minute Quarterly Strategy Review Agenda</h2>
+<p>To cover all four perspectives, analyze variances, and align on strategic initiatives without rushing, we recommend a structured <strong>120-minute time-boxed agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Executive Summary &amp; Context</strong></td><td>Welcome the team, review the agenda, and re-align on the overarching corporate vision and annual goals.</td></tr>
+<tr><td><strong>00:10 - 00:30</strong></td><td><strong>Financial Perspective Review</strong></td><td>Review financial KPIs, analyze revenue and margin variances, and discuss financial health.</td></tr>
+<tr><td><strong>00:30 - 00:50</strong></td><td><strong>Customer Perspective Review</strong></td><td>Evaluate customer satisfaction, retention metrics, and market share trends.</td></tr>
+<tr><td><strong>00:50 - 01:10</strong></td><td><strong>Internal Processes Review</strong></td><td>Review operational efficiency, quality metrics, and key process bottlenecks.</td></tr>
+<tr><td><strong>01:10 - 01:30</strong></td><td><strong>Learning &amp; Growth Review</strong></td><td>Assess employee engagement, training progress, and organizational capability development.</td></tr>
+<tr><td><strong>01:30 - 01:50</strong></td><td><strong>Strategic Initiatives Triage</strong></td><td>Review the status of major strategic projects. Identify off-track initiatives and reallocate resources.</td></tr>
+<tr><td><strong>01:50 - 02:00</strong></td><td><strong>Action Items &amp; Wrap-Up</strong></td><td>Summarize key decisions, assign owners to new action items, and officially close the meeting.</td></tr>
+</tbody>
+</table>
+
+<h2>Best Practices for a High-Impact Strategy Review</h2>
+<h3>1. Focus on the "Why" Behind the Data</h3>
+<p>Do not let the meeting become a boring reading of charts. If a metric is green, celebrate briefly and move on. If a metric is red or yellow, focus the discussion on <strong>variance analysis</strong>: <em>Why did we miss the target? What operational bottlenecks caused this variance? What is our concrete plan to get back on track?</em></p>
+<h3>2. Maintain a Balanced View</h3>
+<p>It is common for leadership teams to spend 80% of their time discussing financial metrics. However, financial results are lagging indicators - they tell you what happened in the past. To predict future success, you must spend equal time discussing leading indicators in the Customer, Internal Process, and Learning &amp; Growth perspectives.</p>
+<h3>3. Link Initiatives to Objectives</h3>
+<p>Every strategic initiative (project) on your scorecard must be directly linked to a strategic objective. If you are spending time and budget on a project that does not directly move the needle on one of your scorecard objectives, question why that project exists.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is a Balanced Scorecard?</h3>
+<p>A Balanced Scorecard is a strategic management performance metric used to identify, improve, and control a business's various functions and resulting outcomes. It measures performance across four perspectives: Financial, Customer, Internal Processes, and Learning &amp; Growth.</p>
+<h3>How often should you run a Balanced Scorecard review?</h3>
+<p>We recommend running a comprehensive Balanced Scorecard review <strong>quarterly</strong> for strategic alignment and initiative planning. Additionally, teams should run a lighter, 60-minute <strong>monthly</strong> review to track key metrics and spot off-track trends early.</p>
+<h3>What is the difference between a KPI and a Balanced Scorecard?</h3>
+<p>A KPI (Key Performance Indicator) is a single metric used to measure performance. A Balanced Scorecard is a comprehensive strategic management framework that organizes KPIs into four balanced perspectives to ensure they align with the company's long-term strategy.</p>
+<h3>Who should attend the Quarterly Strategy Review?</h3>
+<p>The quarterly review should be attended by the executive leadership team, departmental heads, and the owners of the strategic objectives and initiatives represented on the scorecard.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'What is a Balanced Scorecard?',
+        a: 'A Balanced Scorecard is a strategic management performance metric used to identify, improve, and control a business\'s various functions and resulting outcomes. It measures performance across four perspectives: Financial, Customer, Internal Processes, and Learning & Growth.',
+      },
+      {
+        q: 'How often should you run a Balanced Scorecard review?',
+        a: 'We recommend running a comprehensive Balanced Scorecard review quarterly for strategic alignment and initiative planning. Additionally, teams should run a lighter, 60-minute monthly review to track key metrics and spot off-track trends early.',
+      },
+      {
+        q: 'What is the difference between a KPI and a Balanced Scorecard?',
+        a: 'A KPI (Key Performance Indicator) is a single metric used to measure performance. A Balanced Scorecard is a comprehensive strategic management framework that organizes KPIs into four balanced perspectives to ensure they align with the company\'s long-term strategy.',
+      },
+      {
+        q: 'Who should attend the Quarterly Strategy Review?',
+        a: 'The quarterly review should be attended by the executive leadership team, departmental heads, and the owners of the strategic objectives and initiatives represented on the scorecard.',
+      },
+    ],
   },
   {
     slug: 'balanced-scorecard-monthly-review',
