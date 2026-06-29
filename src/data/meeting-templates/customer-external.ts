@@ -607,6 +607,90 @@ Qualify the buyer, uncover real pain, and tailor the demo to their problem inste
 
 ---
 Free template from OrgTP. Adapt or run it live at orgtp.com/templates/discovery-demo-call`,
+    guideHtml: `<h2>The Ultimate Discovery &amp; Demo Call Template &amp; Agenda Guide</h2>
+<p>In B2B sales, the discovery call is the single most critical step of the entire sales cycle. Yet, most sales reps make the fatal mistake of pitching too early - turning what should be a collaborative exploration into a boring, one-way feature dump. To win high-value clients, you must master the art of discovery before you ever show a single product feature.</p>
+<p>A great discovery call uncovers the prospect's true pain points, quantifies the business impact of those problems, and builds a clear bridge to your solution.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Discovery &amp; Demo Call Template</strong> and a step-by-step agenda to help your sales team qualify prospects, build trust, and run high-converting product demonstrations.</p>
+
+<h2>What is a Discovery &amp; Demo Call?</h2>
+<p>A Discovery &amp; Demo Call is a structured, 45-minute sales meeting designed to qualify a prospect, understand their operational challenges, and demonstrate how your product or service solves their specific problems.</p>
+<p>Rather than running separate discovery and demo meetings - which increases friction and drop-off rates - this combined framework allows you to seamlessly transition from diagnostic questions to a highly tailored, value-focused demonstration.</p>
+<h3>The Core Objectives of the Call:</h3>
+<ul>
+<li><strong>Qualify the Prospect:</strong> Determine if the prospect is a good fit for your solution (budget, authority, need, timeline).</li>
+<li><strong>Diagnose the Pain:</strong> Uncover the root causes of their current operational bottlenecks.</li>
+<li><strong>Quantify the Impact:</strong> Help the prospect calculate the financial or operational cost of doing nothing.</li>
+<li><strong>Deliver a Tailored Demo:</strong> Show only the specific features that solve their diagnosed problems (no generic feature tours).</li>
+<li><strong>Secure Clear Next Steps:</strong> Agree on a concrete, scheduled next action before ending the call.</li>
+</ul>
+
+<h2>The Standard 45-Minute Discovery &amp; Demo Agenda</h2>
+<p>To respect your prospect's time and maintain control of the conversation, we recommend a strict <strong>time-boxed 45-minute agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Rapport &amp; Agenda Setting</strong></td><td>Break the ice, confirm the hard stop, and outline the agenda. Ask the prospect what they hope to get out of today's call.</td></tr>
+<tr><td><strong>00:05 - 00:20</strong></td><td><strong>Active Discovery (The Diagnosis)</strong></td><td>Ask open-ended questions to understand their current workflow, pain points, goals, and decision-making process.</td></tr>
+<tr><td><strong>00:20 - 00:35</strong></td><td><strong>The Tailored Demo (The Cure)</strong></td><td>Demonstrate your solution. Focus strictly on the 2-3 features that directly address the pain points uncovered during discovery.</td></tr>
+<tr><td><strong>00:35 - 00:40</strong></td><td><strong>Q&amp;A &amp; Objection Handling</strong></td><td>Address any technical, operational, or pricing questions. Validate their concerns and provide clear, honest answers.</td></tr>
+<tr><td><strong>00:40 - 00:45</strong></td><td><strong>Next Steps &amp; Close</strong></td><td>Agree on the next logical step (e.g., a deep-dive technical call, a proposal review, or a trial setup) and put it on the calendar.</td></tr>
+</tbody>
+</table>
+
+<h2>Key Discovery Questions to Ask</h2>
+<p>To run an effective discovery session, move away from yes/no questions and use open-ended, diagnostic prompts:</p>
+<h3>To Understand the Current State:</h3>
+<ul>
+<li><em>"Walk me through your current process for managing [Function]. What is working well, and where are the bottlenecks?"</em></li>
+<li><em>"How much time or manual effort is your team currently spending on [Task] each week?"</em></li>
+</ul>
+<h3>To Quantify the Pain:</h3>
+<ul>
+<li><em>"If you don't solve this problem in the next 90 days, what is the impact on your team's goals or revenue?"</em></li>
+<li><em>"What is this bottleneck costing your business in terms of lost productivity or missed opportunities?"</em></li>
+</ul>
+<h3>To Understand the Decision Process:</h3>
+<ul>
+<li><em>"Aside from yourself, who else on the leadership or technical team needs to be involved in reviewing this solution?"</em></li>
+<li><em>"What is your typical timeline for evaluating and implementing a new tool like this?"</em></li>
+</ul>
+
+<h2>Best Practices for a High-Converting Demo</h2>
+<h3>1. Never Show a Feature Without Context</h3>
+<p>Before showing any feature, tie it back to what the prospect told you during discovery. Use the <strong>"So What?"</strong> framework: <em>"You mentioned that your team wastes 5 hours a week on manual reporting. Because of that, I want to show you our automated dashboard, which generates those reports in one click - saving your team 20 hours a month."</em></p>
+<h3>2. Do Not Over-Demo</h3>
+<p>Your product might have 50 amazing features, but the prospect only cares about the 3 that solve their immediate problems. Showing too much complexity confuses buyers and slows down deals. Keep your demo simple, focused, and high-impact.</p>
+<h3>3. Sell the Destination, Not the Plane</h3>
+<p>Focus your presentation on the <strong>outcomes and value</strong> your product delivers, not just the technical mechanics of how it works. Prospects buy a better version of themselves and their business - sell them that future state.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is the main goal of a discovery call?</h3>
+<p>The primary goal of a discovery call is to determine mutual fit. It is a diagnostic session to qualify the prospect, understand their pain points, and decide if your solution can genuinely deliver value to their business.</p>
+<h3>Should you demo on the first call?</h3>
+<p>Yes, if you are using a combined Discovery &amp; Demo framework. However, you must run at least 15 minutes of active discovery first. Never start a demo without understanding the prospect's specific pain points, or you will end up giving a generic, low-converting feature tour.</p>
+<h3>How do you handle pricing questions during discovery?</h3>
+<p>Be transparent. If a prospect asks about pricing early, provide a realistic range based on their team size or needs, and explain what factors influence the final cost. Trying to hide pricing builds distrust and wastes time for both parties.</p>
+<h3>What is the BANT framework in sales qualification?</h3>
+<p>BANT is a classic sales qualification framework that stands for <strong>Budget, Authority, Need, and Timeline</strong>. It helps sales reps determine if a prospect has the budget to buy, the authority to make the decision, a genuine need for the solution, and a realistic timeline for purchase.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'What is the main goal of a discovery call?',
+        a: 'The primary goal of a discovery call is to determine mutual fit. It is a diagnostic session to qualify the prospect, understand their pain points, and decide if your solution can genuinely deliver value to their business.',
+      },
+      {
+        q: 'Should you demo on the first call?',
+        a: 'Yes, if you are using a combined Discovery & Demo framework. However, you must run at least 15 minutes of active discovery first. Never start a demo without understanding the prospect\'s specific pain points, or you will end up giving a generic, low-converting feature tour.',
+      },
+      {
+        q: 'How do you handle pricing questions during discovery?',
+        a: 'Be transparent. If a prospect asks about pricing early, provide a realistic range based on their team size or needs, and explain what factors influence the final cost. Trying to hide pricing builds distrust and wastes time for both parties.',
+      },
+      {
+        q: 'What is the BANT framework in sales qualification?',
+        a: 'BANT is a classic sales qualification framework that stands for Budget, Authority, Need, and Timeline. It helps sales reps determine if a prospect has the budget to buy, the authority to make the decision, a genuine need for the solution, and a realistic timeline for purchase.',
+      },
+    ],
   },
   {
     slug: 'account-planning-meeting',
