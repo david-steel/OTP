@@ -790,6 +790,87 @@ export const ONE_ON_ONE_TEMPLATES: MeetingTemplate[] = [
       '- Owner: __________  Action: __________  Due: __________\n' +
       '- Owner: __________  Action: __________  Due: __________\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/mentor-mentee-meeting\n',
+    guideHtml: `<h2>The Ultimate Mentor &amp; Mentee Meeting Template &amp; Agenda Guide</h2>
+<p>Mentorship is one of the most powerful drivers of professional growth and career advancement. Yet, many mentorship relationships fail to reach their full potential because the sessions lack structure. Without a clear framework, meetings can easily devolve into pleasant but aimless catch-ups that fail to drive real progress or accountability.</p>
+<p>To build a high-impact mentorship relationship, both mentors and mentees need a structured, action-oriented approach to their conversations.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Mentor &amp; Mentee Meeting Template</strong> and a step-by-step agenda to help you run focused, productive, and inspiring mentorship sessions.</p>
+
+<h2>What is a Mentor &amp; Mentee Meeting?</h2>
+<p>A Mentor / Mentee Meeting is a structured, 45-minute session designed to facilitate professional development, skill-building, and strategic career planning.</p>
+<p>The primary objective of the meeting is to help the mentee navigate specific professional challenges, explore career opportunities, and commit to concrete growth actions. Rather than a top-down lecture, a great mentorship session is a collaborative, reflective dialogue driven by the mentee's goals and curiosity.</p>
+<h3>The Core Objectives of the Session:</h3>
+<ul>
+<li><strong>Review Progress:</strong> Check in on action items and commitments made during the previous session.</li>
+<li><strong>Address Current Challenges:</strong> Deep-dive into a specific decision, skill, or obstacle the mentee is currently facing.</li>
+<li><strong>Share Experience &amp; Insights:</strong> Exchange stories, lessons learned, and strategic perspectives.</li>
+<li><strong>Define Actionable Next Steps:</strong> Ensure the mentee leaves with 1-2 concrete actions to execute before the next meeting.</li>
+<li><strong>Maintain Momentum:</strong> Establish a consistent, predictable rhythm for ongoing development.</li>
+</ul>
+
+<h2>The Standard 45-Minute Mentorship Agenda</h2>
+<p>To keep your conversations focused and respect both parties' schedules, we recommend a strict <strong>time-boxed 45-minute agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:06</strong></td><td><strong>Reconnect &amp; Recap</strong></td><td>Catch up briefly, rebuild rapport, and review the action items or commitments from your last session.</td></tr>
+<tr><td><strong>00:06 - 00:18</strong></td><td><strong>Mentee Sets the Agenda</strong></td><td>The mentee introduces the primary topic or challenge they want help with today (e.g., a decision, skill, or goal).</td></tr>
+<tr><td><strong>00:18 - 00:33</strong></td><td><strong>Explore &amp; Share Experience</strong></td><td>Ask diagnostic questions, share relevant stories or lessons, and brainstorm potential solutions together.</td></tr>
+<tr><td><strong>00:33 - 00:41</strong></td><td><strong>Decide Next Steps</strong></td><td>Help the mentee choose one or two concrete, realistic actions to take before the next scheduled session.</td></tr>
+<tr><td><strong>00:41 - 00:45</strong></td><td><strong>Reflect &amp; Schedule</strong></td><td>Briefly reflect on the value of today's session, confirm the date for the next meeting, and officially close.</td></tr>
+</tbody>
+</table>
+
+<h2>Key Discussion Prompts for Mentors and Mentees</h2>
+<p>To drive deep, meaningful conversations, move away from generic status updates and use these targeted discussion prompts:</p>
+<h3>For the Mentee to Ask (To Drive the Conversation):</h3>
+<ul>
+<li><em>"I am currently facing [Challenge]. How have you handled similar situations in your career?"</em></li>
+<li><em>"What are the 2-3 skills you think are most critical for someone in my role to develop over the next year?"</em></li>
+<li><em>"How do you balance short-term operational demands with long-term strategic career planning?"</em></li>
+</ul>
+<h3>For the Mentor to Ask (To Facilitate Reflection):</h3>
+<ul>
+<li><em>"What is the real bottleneck holding you back from your primary goal right now?"</em></li>
+<li><em>"If you could only accomplish one major milestone next month, what would deliver the highest impact?"</em></li>
+<li><em>"What is one area where you feel you are playing it too safe in your current role?"</em></li>
+</ul>
+
+<h2>Best Practices for a High-Impact Mentorship Relationship</h2>
+<h3>1. The Mentee Must Drive the Relationship</h3>
+<p>The single most important rule of mentorship is that <strong>the mentee owns the agenda</strong>. The mentee is responsible for scheduling the meetings, preparing the discussion topics in advance, and following up on action items. The mentor is there to guide, support, and share experience - not to manage the mentee's career.</p>
+<h3>2. Focus on Growth, Not Just Status Updates</h3>
+<p>Do not waste valuable session time giving a chronological list of everything you did last week. Instead, focus the conversation on <strong>strategic growth areas, leadership development, and problem-solving</strong>. Use the recap phase to report on outcomes, then spend the rest of the time looking forward.</p>
+<h3>3. Commit to Absolute Confidentiality</h3>
+<p>For a mentorship relationship to succeed, there must be complete trust. Both parties must commit to absolute confidentiality regarding everything discussed during the sessions. This psychological safety allows for honest reflection, vulnerability, and genuine breakthrough moments.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>How often should mentors and mentees meet?</h3>
+<p>We recommend meeting <strong>monthly</strong> for a structured, 45-minute session. This frequency provides enough time for the mentee to make meaningful progress on their action items between meetings while respecting the mentor's busy schedule.</p>
+<h3>What is the main role of a mentor?</h3>
+<p>A mentor's role is to act as a trusted advisor, sounding board, and guide. Rather than telling the mentee exactly what to do, a great mentor asks powerful questions, shares relevant personal experiences, and helps the mentee discover their own solutions.</p>
+<h3>How should a mentee prepare for a mentorship meeting?</h3>
+<p>A mentee should prepare by updating their progress on previous action items, identifying 1-2 specific challenges or strategic questions they want to discuss, and sending a brief agenda to the mentor at least 24 hours in advance.</p>
+<h3>What makes a mentorship relationship successful?</h3>
+<p>A successful mentorship relationship is built on mutual respect, clear expectations, active listening, absolute confidentiality, and a commitment to action. The relationship thrives when the mentee is proactive and the mentor is generous with their insights.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'How often should mentors and mentees meet?',
+        a: 'We recommend meeting monthly for a structured, 45-minute session. This frequency provides enough time for the mentee to make meaningful progress on their action items between meetings while respecting the mentor\'s busy schedule.',
+      },
+      {
+        q: 'What is the main role of a mentor?',
+        a: 'A mentor\'s role is to act as a trusted advisor, sounding board, and guide. Rather than telling the mentee exactly what to do, a great mentor asks powerful questions, shares relevant personal experiences, and helps the mentee discover their own solutions.',
+      },
+      {
+        q: 'How should a mentee prepare for a mentorship meeting?',
+        a: 'A mentee should prepare by updating their progress on previous action items, identifying 1-2 specific challenges or strategic questions they want to discuss, and sending a brief agenda to the mentor at least 24 hours in advance.',
+      },
+      {
+        q: 'What makes a mentorship relationship successful?',
+        a: 'A successful mentorship relationship is built on mutual respect, clear expectations, active listening, absolute confidentiality, and a commitment to action. The relationship thrives when the mentee is proactive and the mentor is generous with their insights.',
+      },
+    ],
   },
   {
     slug: 'feedback-coaching-one-on-one',
