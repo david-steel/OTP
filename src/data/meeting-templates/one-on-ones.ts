@@ -98,6 +98,67 @@ export const ONE_ON_ONE_TEMPLATES: MeetingTemplate[] = [
       '- Owner: __________  Action: __________  Due: __________\n' +
       '- Owner: __________  Action: __________  Due: __________\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/weekly-one-on-one-meeting\n',
+    guideHtml: `<h2>The Ultimate Weekly Manager 1:1 Meeting Template &amp; Guide</h2>
+<p>The weekly 1:1 is the single most important meeting a manager runs. It is the foundation of team trust, the early warning system for operational bottlenecks, and the primary vehicle for employee engagement and retention. Yet, many managers treat 1:1s as optional status updates, reschedule them constantly, or run them without any structured agenda.</p>
+<p>When 1:1s are disorganized or treated as low-priority, direct reports feel undervalued, communication breaks down, and minor issues quickly escalate into major operational crises.</p>
+<p>This comprehensive guide provides a battle-tested Weekly Manager 1:1 Template and a step-by-step agenda to help you run highly efficient, trust-building, and action-oriented 1:1 meetings.</p>
+<h2>What is a Weekly Manager 1:1 Meeting?</h2>
+<p>A Weekly Manager 1:1 is a dedicated, 30-minute meeting between a manager and their direct report.</p>
+<p>The primary objective of the meeting is to build a strong professional relationship, align on weekly priorities, and proactively resolve any roadblocks. Unlike team meetings, the weekly 1:1 is <strong>the direct report's meeting</strong> - they own the agenda, and the manager's role is to listen, coach, and support.</p>
+<h3>The Core Objectives of the Weekly 1:1:</h3>
+<ul>
+<li>Build Trust &amp; Rapport: Create a safe space for open, honest communication and mutual feedback.</li>
+<li>Align on Priorities: Ensure the direct report is focused on the highest-impact tasks for the week.</li>
+<li>Remove Roadblocks: Proactively identify and resolve operational, technical, or cross-functional bottlenecks.</li>
+<li>Support Professional Growth: Discuss career aspirations, skill development, and learning opportunities.</li>
+<li>Maintain Accountability: Review commitments and action items from the previous week.</li>
+</ul>
+<h2>The Standard 30-Minute Weekly 1:1 Agenda</h2>
+<p>To maximize efficiency and ensure the direct report's priorities are addressed first, we recommend a strict time-boxed 30-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Owner</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Personal Check-In</strong></td><td>Both</td><td>Break the ice, build rapport, and check in on overall energy, stress levels, and well-being.</td></tr>
+<tr><td><strong>00:05 - 00:15</strong></td><td><strong>Their Topics First</strong></td><td>Direct Report</td><td>The direct report shares their updates, questions, challenges, and ideas. The manager listens and takes notes.</td></tr>
+<tr><td><strong>00:15 - 00:22</strong></td><td><strong>Your Topics &amp; Priorities</strong></td><td>Manager</td><td>The manager shares critical updates, aligns on weekly priorities, and provides feedback.</td></tr>
+<tr><td><strong>00:22 - 00:27</strong></td><td><strong>Growth &amp; Feedback</strong></td><td>Both</td><td>Discuss long-term goals, skill development, or exchange constructive feedback.</td></tr>
+<tr><td><strong>00:27 - 00:30</strong></td><td><strong>Action Items &amp; Close</strong></td><td>Both</td><td>Recap new commitments, assign owners, and confirm the date for the next meeting.</td></tr>
+</tbody>
+</table>
+<h2>Best Practices for Managers</h2>
+<h3>1. Never Cancel or Reschedule</h3>
+<p>Rescheduling or canceling a 1:1 sends a clear, damaging message to your direct report: <em>"Everything else on my plate is more important than you."</em> Treat the weekly 1:1 as a sacred, unmovable block on your calendar. If you absolutely must reschedule due to an emergency, do it immediately and put a new time on the calendar for the same week.</p>
+<h3>2. Follow the 90/10 Rule of Listening</h3>
+<p>During the first 15 minutes of the meeting, the manager should do <strong>10% of the talking and 90% of the listening</strong>. Resist the urge to jump in with immediate solutions or take over the conversation. Ask open-ended questions and let your direct report fully explain their thoughts and challenges.</p>
+<h3>3. Document Commitments and Action Items</h3>
+<p>A great 1:1 should always result in concrete action items. Keep a shared, running document where both parties can add agenda items during the week and document commitments made during the meeting. Reviewing last week's action items at the start of the next meeting builds a powerful culture of accountability.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>How long should a weekly 1:1 meeting be?</h3>
+<p>We recommend a strict <strong>30-minute</strong> time-box for weekly 1:1s. This duration is long enough to cover priorities and roadblocks without creating meeting fatigue. For senior leaders or complex roles, a <strong>45 to 60-minute</strong> biweekly session may be more appropriate.</p>
+<h3>What is the difference between a 1:1 and a status update?</h3>
+<p>A status update is a tactical review of project timelines and task lists. A weekly 1:1 is a relationship-building and coaching session focused on the employee's well-being, priorities, roadblocks, and professional development.</p>
+<h3>How do you handle a direct report who has nothing to discuss?</h3>
+<p>If a direct report says they have nothing on their agenda, do not cancel the meeting. Use this as an opportunity to ask deep, strategic questions: <em>“What is the most frustrating part of your workflow right now?”</em> or <em>“If you could change one thing about our team dynamics, what would it be?”</em></p>
+<h3>Should 1:1 meetings be documented?</h3>
+<p>Yes. Managers and direct reports should maintain a shared, private document to track agenda items, document key decisions, and list weekly action items. This document serves as a valuable record for quarterly performance reviews and career planning.</p>`,
+    faq: [
+      {
+            "q": "How long should a weekly 1:1 meeting be?",
+            "a": "We recommend a strict 30-minute time-box for weekly 1:1s. This duration is long enough to cover priorities and roadblocks without creating meeting fatigue. For senior leaders or complex roles, a 45 to 60-minute biweekly session may be more appropriate."
+      },
+      {
+            "q": "What is the difference between a 1:1 and a status update?",
+            "a": "A status update is a tactical review of project timelines and task lists. A weekly 1:1 is a relationship-building and coaching session focused on the employee's well-being, priorities, roadblocks, and professional development."
+      },
+      {
+            "q": "How do you handle a direct report who has nothing to discuss?",
+            "a": "If a direct report says they have nothing on their agenda, do not cancel the meeting. Use this as an opportunity to ask deep, strategic questions: \"What is the most frustrating part of your workflow right now?\" or \"If you could change one thing about our team dynamics, what would it be?\""
+      },
+      {
+            "q": "Should 1:1 meetings be documented?",
+            "a": "Yes. Managers and direct reports should maintain a shared, private document to track agenda items, document key decisions, and list weekly action items. This document serves as a valuable record for quarterly performance reviews and career planning."
+      }
+],
   },
   {
     slug: 'skip-level-one-on-one',

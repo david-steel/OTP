@@ -160,6 +160,69 @@ export const V2MOM_OGSM_TEMPLATES: MeetingTemplate[] = [
       'Commitments:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/v2mom-alignment-meeting\n',
+    guideHtml: `<h2>The Ultimate V2MOM Team Alignment Meeting Template &amp; Guide</h2>
+<p>Drafting a corporate V2MOM is only the first step toward organizational alignment. The true challenge lies in cascading that vision down to the teams and individuals who must execute it. If your department heads and team members do not understand how their daily work connects to the corporate V2MOM, your strategic plan will fail to deliver results.</p>
+<p>To bridge this gap, leadership teams must run a structured <strong>V2MOM Team Alignment Meeting</strong>.</p>
+<p>This comprehensive guide provides a battle-tested V2MOM Team Alignment Meeting Template and a step-by-step agenda to help your leadership team communicate the corporate V2MOM, foster deep understanding, and secure organizational commitment.</p>
+<h2>What is a V2MOM Team Alignment Meeting?</h2>
+<p>A V2MOM Team Alignment Meeting is a highly collaborative, 90-minute workshop held shortly after the corporate V2MOM is finalized.</p>
+<p>Unlike a top-down presentation or a passive email announcement, this meeting is designed to be a <strong>two-way dialogue</strong>. The primary objective is to ensure that department heads and key contributors thoroughly understand the corporate Vision, align with the core Values, and take active ownership of the Methods and Measures.</p>
+<h3>The Core Objectives of the Alignment Meeting:</h3>
+<ul>
+<li>Communicate the Vision: Share the bold, inspiring strategic direction for the upcoming year.</li>
+<li>Foster Deep Understanding: Move past surface-level reading to explain the "why" behind the strategic choices.</li>
+<li>Confirm Ownership: Assign clear department-level owners to every corporate Measure.</li>
+<li>Identify Cross-Functional Dependencies: Uncover and resolve resource bottlenecks or overlapping initiatives.</li>
+<li>Secure Commitment: Build shared accountability and excitement across the entire leadership team.</li>
+</ul>
+<h2>The Standard 90-Minute V2MOM Alignment Agenda</h2>
+<p>To ensure a highly collaborative, interactive session that drives deep alignment and ownership, we recommend a structured 90-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Why This V2MOM Exists</strong></td><td>The CEO or leader introduces the meeting, shares the context of the new V2MOM, and outlines the alignment goals.</td></tr>
+<tr><td><strong>00:10 - 00:25</strong></td><td><strong>Walk the Vision &amp; Values</strong></td><td>Review the corporate Vision and Values. Discuss how the core Values will guide operational decisions and behaviors.</td></tr>
+<tr><td><strong>00:25 - 00:50</strong></td><td><strong>Walk the Methods</strong></td><td>Deep-dive into the 3-5 primary Methods. Explain the strategic intent and expected outcomes of each initiative.</td></tr>
+<tr><td><strong>00:50 - 01:05</strong></td><td><strong>Confirm Measures &amp; Owners</strong></td><td>Review the corporate Measures. Confirm which department or leader owns each metric and KPI.</td></tr>
+<tr><td><strong>01:05 - 01:20</strong></td><td><strong>Address Obstacles &amp; Dependencies</strong></td><td>Open the floor to discuss potential resource constraints, risks, and cross-functional dependencies.</td></tr>
+<tr><td><strong>01:20 - 01:30</strong></td><td><strong>Questions &amp; Commitment</strong></td><td>Address any remaining questions, secure formal commitment from all attendees, and outline next steps.</td></tr>
+</tbody>
+</table>
+<h2>Best Practices for Cascading the V2MOM</h2>
+<p>To successfully cascade your V2MOM throughout the organization, implement these three essential best practices:</p>
+<h3>1. Focus on Understanding, Not Editing</h3>
+<p>The purpose of the alignment meeting is to align the team around a <em>finished</em> corporate V2MOM - it is not a co-authoring session. Do not let the meeting devolve into word-smithing the Vision or debating the core Values. Focus the energy on <strong>how</strong> the team will execute the Methods and achieve the Measures.</p>
+<h3>2. Encourage "Catchball" Dialogue</h3>
+<p>Do not just read the slides. Ask diagnostic questions to verify understanding: <em>“How does this specific Method impact your department's priorities?”</em> or <em>“What resources do you need from other teams to hit this Measure?”</em> This two-way dialogue is critical for uncovering hidden bottlenecks early.</p>
+<h3>3. Mandate Departmental V2MOMs</h3>
+<p>Alignment is not complete until every department and team has written their own V2MOM that directly supports the corporate version. Use this meeting to set a clear timeline (typically 2-3 weeks) for department heads to draft and submit their aligned V2MOMs.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is the goal of a V2MOM Team Alignment Meeting?</h3>
+<p>The primary goal is to communicate a finalized corporate V2MOM to department heads and key contributors, ensuring they thoroughly understand the strategic direction, take ownership of specific measures, and align their team-level plans.</p>
+<h3>Who should attend the V2MOM Alignment Meeting?</h3>
+<p>The meeting should be attended by the executive leadership team, department heads, team leads, and key individual contributors who are responsible for executing the strategic plan.</p>
+<h3>How do you handle pushback on strategic priorities during the meeting?</h3>
+<p>Validate the concern, explain the strategic "why" and data behind the decision, and focus the discussion on how to overcome the identified obstacles rather than reopening the debate on the priority itself.</p>
+<h3>What is the next step after the alignment meeting?</h3>
+<p>The next step is for department heads to run similar alignment sessions with their respective teams and draft their own departmental V2MOMs that directly align with the corporate Measures.</p>`,
+    faq: [
+      {
+            "q": "What is the goal of a V2MOM Team Alignment Meeting?",
+            "a": "The primary goal is to communicate a finalized corporate V2MOM to department heads and key contributors, ensuring they thoroughly understand the strategic direction, take ownership of specific measures, and align their team-level plans."
+      },
+      {
+            "q": "Who should attend the V2MOM Alignment Meeting?",
+            "a": "The meeting should be attended by the executive leadership team, department heads, team leads, and key individual contributors who are responsible for executing the strategic plan."
+      },
+      {
+            "q": "How do you handle pushback on strategic priorities during the meeting?",
+            "a": "Validate the concern, explain the strategic \"why\" and data behind the decision, and focus the discussion on how to overcome the identified obstacles rather than reopening the debate on the priority itself."
+      },
+      {
+            "q": "What is the next step after the alignment meeting?",
+            "a": "The next step is for department heads to run similar alignment sessions with their respective teams and draft their own departmental V2MOMs that directly align with the corporate Measures."
+      }
+],
   },
   {
     slug: 'v2mom-quarterly-review',
@@ -312,6 +375,79 @@ export const V2MOM_OGSM_TEMPLATES: MeetingTemplate[] = [
       'Commitments:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/v2mom-one-on-one\n',
+    guideHtml: `<h2>The Ultimate V2MOM 1:1 Alignment Check-In Template &amp; Guide</h2>
+<p>The true power of the V2MOM (Vision, Values, Methods, Measures, Obstacles) framework is realized when it moves beyond corporate slides and becomes a personal execution tool. If your team members do not see how their daily tasks directly impact the company's strategic goals, your V2MOM is just corporate wall art.</p>
+<p>To bridge this gap and drive consistent execution, managers must bring the V2MOM down to the individual level using a structured <strong>V2MOM 1:1 Alignment Check-In</strong>.</p>
+<p>This comprehensive guide provides a battle-tested V2MOM 1:1 Alignment Check-In Template and a step-by-step agenda to help managers and direct reports maintain absolute alignment, track personal measures, and overcome operational obstacles.</p>
+<h2>What is a V2MOM 1:1 Alignment Check-In?</h2>
+<p>A V2MOM 1:1 Alignment Check-In is a focused, 30-minute biweekly or monthly meeting between a manager and their direct report.</p>
+<p>Unlike standard tactical 1:1s that focus on long task lists or immediate fires, this check-in is strictly <strong>strategic and developmental</strong>. The primary objective is to review the direct report's personal V2MOM, track progress against their assigned Measures, and proactively address any Obstacles preventing success.</p>
+<h3>The Core Objectives of the Check-In:</h3>
+<ul>
+<li>Connect to the Vision: Re-align the individual's daily focus with the team and corporate vision.</li>
+<li>Track Personal Measures: Review actual performance data against the direct report's assigned KPIs.</li>
+<li>Evaluate Method Effectiveness: Discuss whether their current daily activities are actually moving the needle.</li>
+<li>Proactively Solve Obstacles: Identify and remove operational, technical, or resource bottlenecks.</li>
+<li>Foster Continuous Growth: Provide targeted coaching and feedback to support professional development.</li>
+</ul>
+<h2>The Standard 30-Minute V2MOM 1:1 Agenda</h2>
+<p>To keep the conversation highly strategic and prevent it from devolving into a tactical status update, we recommend a strict time-boxed 30-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Connect to the Vision</strong></td><td>Re-align on the direct report's personal Vision and discuss how their current focus supports the team's annual goals.</td></tr>
+<tr><td><strong>00:05 - 00:12</strong></td><td><strong>Review Personal Measures</strong></td><td>Review actual performance data against their assigned Measures. Identify any off-track metrics.</td></tr>
+<tr><td><strong>00:12 - 00:20</strong></td><td><strong>Methods Working vs. Not Working</strong></td><td>Discuss whether their current daily activities and projects (Methods) are delivering the expected strategic value.</td></tr>
+<tr><td><strong>00:20 - 00:27</strong></td><td><strong>Obstacles &amp; Support Needed</strong></td><td>Proactively identify any bottlenecks, resource constraints, or risks, and agree on immediate support or escalations.</td></tr>
+<tr><td><strong>00:27 - 00:30</strong></td><td><strong>Commitments &amp; Next Steps</strong></td><td>Confirm key action items and personal commitments for the upcoming cycle, and close the meeting.</td></tr>
+</tbody>
+</table>
+<h2>Key Discussion Prompts for V2MOM 1:1s</h2>
+<p>To drive deep, reflective conversations, managers should use open-ended, diagnostic prompts during the check-in:</p>
+<h3>To Evaluate Alignment:</h3>
+<ul>
+<li><em>“Looking at your calendar over the past two weeks, what percentage of your time was spent on activities that directly support your V2MOM Measures?”</em></li>
+<li><em>“Are there any tasks or projects currently on your plate that do not align with our strategic vision? How can we deprioritize or delegate them?”</em></li>
+</ul>
+<h3>To Diagnose Obstacles:</h3>
+<ul>
+<li><em>“What is the single biggest bottleneck slowing down your progress on Method #2 right now?”</em></li>
+<li><em>“Do you have the necessary tools, data, and cross-functional support to hit your target for Measure #3?”</em></li>
+</ul>
+<h2>Best Practices for Managers</h2>
+<h3>1. Separate Strategy from Tactics</h3>
+<p>Do not combine this strategic check-in with your weekly tactical 1:1. If you try to discuss project status updates and strategic V2MOM alignment in the same meeting, the tactical fires will always consume the time. Run this check-in as a dedicated, separate session.</p>
+<h3>2. Focus on Leading Indicators</h3>
+<p>When reviewing Measures, focus heavily on leading indicators (activities you can control) rather than just lagging indicators (historical results). For example, if the lagging Measure is "Secure 5 new clients," discuss the leading indicator: "Conduct 15 active discovery calls."</p>
+<h3>3. Build a Culture of Psychological Safety</h3>
+<p>If a direct report is struggling to hit a Measure, they must feel safe raising it early. Use the Obstacles section to collaborate on solutions and reallocate resources, rather than using it as an opportunity for performance discipline.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>How often should you run a V2MOM 1:1 check-in?</h3>
+<p>We recommend running a dedicated V2MOM 1:1 check-in biweekly or monthly. This frequency keeps strategic goals top-of-mind without creating meeting fatigue.</p>
+<h3>What is the difference between a tactical 1:1 and a V2MOM 1:1?</h3>
+<p>A tactical 1:1 focuses on day-to-day task lists, project status updates, and immediate operational fires. A V2MOM 1:1 is strictly strategic, focusing on long-term alignment, KPI tracking, obstacle removal, and professional growth.</p>
+<h3>How do you handle a direct report who is consistently missing their V2MOM Measures?</h3>
+<p>Use the "Five Whys" technique to diagnose the root cause. Determine if the miss is due to unrealistic targets, lack of resources, skill gaps, or poor execution, and co-author a targeted 30-day corrective action plan.</p>
+<h3>Who owns the direct report's personal V2MOM?</h3>
+<p>The direct report owns their personal V2MOM. They are responsible for drafting it, updating their performance data, and driving the execution of their Methods. The manager's role is to coach, support, and remove obstacles.</p>`,
+    faq: [
+      {
+            "q": "How often should you run a V2MOM 1:1 check-in?",
+            "a": "We recommend running a dedicated V2MOM 1:1 check-in biweekly or monthly. This frequency keeps strategic goals top-of-mind without creating meeting fatigue."
+      },
+      {
+            "q": "What is the difference between a tactical 1:1 and a V2MOM 1:1?",
+            "a": "A tactical 1:1 focuses on day-to-day task lists, project status updates, and immediate operational fires. A V2MOM 1:1 is strictly strategic, focusing on long-term alignment, KPI tracking, obstacle removal, and professional growth."
+      },
+      {
+            "q": "How do you handle a direct report who is consistently missing their V2MOM Measures?",
+            "a": "Use the \"Five Whys\" technique to diagnose the root cause. Determine if the miss is due to unrealistic targets, lack of resources, skill gaps, or poor execution, and co-author a targeted 30-day corrective action plan."
+      },
+      {
+            "q": "Who owns the direct report's personal V2MOM?",
+            "a": "The direct report owns their personal V2MOM. They are responsible for drafting it, updating their performance data, and driving the execution of their Methods. The manager's role is to coach, support, and remove obstacles."
+      }
+],
   },
   {
     slug: 'v2mom-annual-planning',
@@ -390,6 +526,69 @@ export const V2MOM_OGSM_TEMPLATES: MeetingTemplate[] = [
       'Measures and owners:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/v2mom-annual-planning\n',
+    guideHtml: `<h2>The Ultimate V2MOM Annual Planning Template &amp; Guide</h2>
+<p>The <strong>V2MOM</strong> (Vision, Values, Methods, Measures, Obstacles) is the legendary strategic planning framework created by Marc Benioff, founder and CEO of Salesforce. Benioff attributes Salesforce's meteoric growth and absolute organizational alignment directly to the continuous use of the V2MOM.</p>
+<p>If your company struggles with rapid scaling, lacks a clear and shared vision, or finds that different departments are pulling in opposite directions, implementing the V2MOM will bring absolute clarity and alignment to your organization.</p>
+<p>This comprehensive guide provides a battle-tested V2MOM Annual Planning Template and a step-by-step agenda to help your leadership team define your vision, align on values, and build a robust execution roadmap for the upcoming year.</p>
+<h2>What is V2MOM Annual Planning?</h2>
+<p>V2MOM Annual Planning is a highly collaborative, 4-hour strategic workshop held by the executive leadership team at the start of each fiscal year.</p>
+<p>The primary objective of the session is to co-author a single, high-impact V2MOM document that defines the company's strategic direction. Unlike traditional, dry business plans, the V2MOM is a dynamic, living document that fits on a single page and is designed to be understood and adopted by every employee in the organization.</p>
+<h3>The Five Components of the V2MOM:</h3>
+<ol>
+<li><strong>Vision:</strong> What do you want to achieve? (A bold, inspiring statement of your future state).</li>
+<li><strong>Values:</strong> What is most important to you? (The core beliefs that guide your decisions and behaviors).</li>
+<li><strong>Methods:</strong> How will you get it done? (The specific actions, initiatives, and projects required to achieve the vision).</li>
+<li><strong>Obstacles:</strong> What is standing in your way? (The challenges, risks, and bottlenecks you must overcome).</li>
+<li><strong>Measures:</strong> How will you know you succeeded? (The quantifiable metrics and KPIs that track progress).</li>
+</ol>
+<h2>The Standard 4-Hour V2MOM Annual Planning Agenda</h2>
+<p>To build a comprehensive, aligned V2MOM without getting bogged down in tactical details, we recommend a structured 240-minute time-boxed agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:40</strong></td><td><strong>Year in Review &amp; Reflection</strong></td><td>Review the past year's performance, celebrate wins, and document key lessons learned.</td></tr>
+<tr><td><strong>00:40 - 01:10</strong></td><td><strong>Draft the Vision</strong></td><td>Brainstorm and write a bold, inspiring Vision statement for the upcoming year.</td></tr>
+<tr><td><strong>01:10 - 01:40</strong></td><td><strong>Align on Values</strong></td><td>Identify and prioritize the top 3-5 core Values that will guide your decisions and behaviors.</td></tr>
+<tr><td><strong>01:40 - 02:30</strong></td><td><strong>Build the Methods</strong></td><td>Brainstorm and select the 3-5 primary Methods (initiatives) required to achieve the Vision.</td></tr>
+<tr><td><strong>02:30 - 03:10</strong></td><td><strong>Name the Obstacles</strong></td><td>Honestly identify the internal and external Obstacles that could prevent you from executing your Methods.</td></tr>
+<tr><td><strong>03:10 - 03:50</strong></td><td><strong>Set the Measures</strong></td><td>Define specific, quantifiable Measures (KPIs) for every Method. Assign clear owners.</td></tr>
+<tr><td><strong>03:50 - 04:00</strong></td><td><strong>Commitment &amp; Close</strong></td><td>Re-affirm the team's commitment to the finished V2MOM and outline the communication plan.</td></tr>
+</tbody>
+</table>
+<h2>Best Practices for a High-Impact V2MOM</h2>
+<h3>1. Order Matters: Values Guide Methods</h3>
+<p>A common mistake is jumping straight to Methods (what you want to do) before aligning on Values (what is most important). Your Values must act as the filter for your Methods. If one of your core Values is "Customer Success," but your proposed Methods focus strictly on aggressive cost-cutting that hurts service quality, your V2MOM is misaligned.</p>
+<h3>2. Be Brutally Honest About Obstacles</h3>
+<p>Do not treat the Obstacles section as an afterthought. The best V2MOMs are incredibly transparent about the risks, resource constraints, and market challenges the company faces. Identifying obstacles early allows you to proactively build countermeasures into your Methods.</p>
+<h3>3. Keep It Concise and Accessible</h3>
+<p>The power of the V2MOM lies in its simplicity. The entire document must fit on a single page. If your V2MOM is a 10-page document, employees will not read it, remember it, or align with it. Keep your language simple, direct, and free of corporate jargon.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What does V2MOM stand for?</h3>
+<p>V2MOM stands for Vision, Values, Methods, Measures, and Obstacles. It is a strategic planning and organizational alignment framework created by Salesforce founder Marc Benioff.</p>
+<h3>How does V2MOM differ from traditional strategic planning?</h3>
+<p>Traditional strategic planning often results in dense, multi-page documents that are rarely read or updated. The V2MOM is a concise, single-page document that is highly visual, dynamic, and designed to be adopted by every level of the organization.</p>
+<h3>Can a company have multiple V2MOMs?</h3>
+<p>Yes. Typically, the CEO and executive team write the corporate V2MOM. Then, every department, team, and even individual employee writes their own V2MOM that directly aligns with and supports the corporate version.</p>
+<h3>How often should the V2MOM be updated?</h3>
+<p>The V2MOM is typically drafted annually during a strategic planning session. However, it should be formally reviewed and updated quarterly or semi-annually to adjust to major market shifts or resource changes.</p>`,
+    faq: [
+      {
+            "q": "What does V2MOM stand for?",
+            "a": "V2MOM stands for Vision, Values, Methods, Measures, and Obstacles. It is a strategic planning and organizational alignment framework created by Salesforce founder Marc Benioff."
+      },
+      {
+            "q": "How does V2MOM differ from traditional strategic planning?",
+            "a": "Traditional strategic planning often results in dense, multi-page documents that are rarely read or updated. The V2MOM is a concise, single-page document that is highly visual, dynamic, and designed to be adopted by every level of the organization."
+      },
+      {
+            "q": "Can a company have multiple V2MOMs?",
+            "a": "Yes. Typically, the CEO and executive team write the corporate V2MOM. Then, every department, team, and even individual employee writes their own V2MOM that directly aligns with and supports the corporate version."
+      },
+      {
+            "q": "How often should the V2MOM be updated?",
+            "a": "The V2MOM is typically drafted annually during a strategic planning session. However, it should be formally reviewed and updated quarterly or semi-annually to adjust to major market shifts or resource changes."
+      }
+],
   },
   {
     slug: 'ogsm-planning-session',

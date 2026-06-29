@@ -715,6 +715,73 @@ Free template from OrgTP. Adapt or run it live at orgtp.com/templates/brainstorm
 
 ---
 Free template from OrgTP. Adapt or run it live at orgtp.com/templates/problem-solving-meeting`,
+    guideHtml: `<h2>The Ultimate Problem-Solving Meeting (IDS) Template &amp; Guide</h2>
+<p>Every business faces problems, but high-growth companies solve them permanently, while struggling companies discuss the same issues week after week. If your team's meetings feel like endless venting sessions that end without clear decisions or action items, you are suffering from a lack of structured problem-solving.</p>
+<p>To break this cycle, teams must adopt a disciplined, repeatable framework that moves them from identifying symptoms to executing permanent solutions.</p>
+<p>This comprehensive guide provides a battle-tested Problem-Solving Meeting Template based on the EOS IDS (Identify, Discuss, Solve) framework and a step-by-step agenda to help your team resolve issues once and for all.</p>
+<h2>What is an IDS Problem-Solving Meeting?</h2>
+<p>An IDS Problem-Solving Meeting is a highly focused, 60-minute session designed to resolve specific operational bottlenecks, broken processes, or team conflicts.</p>
+<p>Rather than discussing problems in chronological order or letting the loudest voice dominate, this meeting forces the team to prioritize their issues list, dig deep to find the root cause, and commit to concrete, actionable solutions.</p>
+<h3>The Core Objectives of the Meeting:</h3>
+<ul>
+<li>Prioritize Ruthlessly: Focus 100% of the team's energy on the most critical issues first.</li>
+<li>Find the Root Cause: Dig past surface-level symptoms to identify the real, underlying problem.</li>
+<li>Encourage Open Debate: Ensure every team member can share their data and perspective without fear of blame.</li>
+<li>Commit to Action: Leave the meeting with a clear, single-owner action item for every solved issue.</li>
+</ul>
+<h2>The Standard 60-Minute IDS Agenda</h2>
+<p>To maintain focus and ensure you leave the meeting with concrete action items, we recommend a strict time-boxed 60-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:08</strong></td><td><strong>List &amp; Prioritize</strong></td><td>Review the issues list. Select the top 3 most critical issues that require immediate resolution today.</td></tr>
+<tr><td><strong>00:08 - 00:20</strong></td><td><strong>Identify (The Root Cause)</strong></td><td>Dig deep to find the root cause of Issue #1. Do not start discussing solutions until the real problem is clearly stated.</td></tr>
+<tr><td><strong>00:20 - 00:42</strong></td><td><strong>Discuss (The Debate)</strong></td><td>Open the floor for everyone to share their thoughts, data, and perspectives on Issue #1. Keep discussions focused on the root cause.</td></tr>
+<tr><td><strong>00:42 - 00:55</strong></td><td><strong>Solve (The Action)</strong></td><td>Agree on a concrete action item (To-Do) that will resolve Issue #1 permanently. Assign a single owner and a 7-day deadline.</td></tr>
+<tr><td><strong>00:55 - 01:00</strong></td><td><strong>Confirm &amp; Close</strong></td><td>Recap the new To-Dos, confirm owners, and officially close the meeting.</td></tr>
+</tbody>
+</table>
+<h2>The Three Steps of IDS Explained</h2>
+<h3>1. Identify (I)</h3>
+<p>Most teams waste time solving symptoms rather than the actual problem. For example, "Our sales are down" is a symptom. The root cause might be "Our new sales reps haven't been trained on our product updates." Spend significant time identifying the real issue before moving to discussion.</p>
+<h3>2. Discuss (D)</h3>
+<p>This is the phase for open, honest debate. Every team member should have the opportunity to voice their opinion and present data. However, once everyone has said their piece, stop discussing. Do not let the conversation go in circles. Move immediately to the solution.</p>
+<h3>3. Solve (S)</h3>
+<p>A solution is not a vague agreement to "do better." A solution is a concrete, actionable task that can be completed within the next 7 days. Every solution must end with a single owner and a clear definition of "done."</p>
+<h2>Best Practices for Effective Problem Solving</h2>
+<h3>1. Maintain Psychological Safety</h3>
+<p>If team members are afraid of being blamed for mistakes, they will hide problems. Establish a culture where problems are viewed as opportunities for improvement, not indictments of personal performance.</p>
+<h3>2. One Owner Per Action Item</h3>
+<p>If an action item is assigned to "John and Sarah," nobody is accountable. Every To-Do must have a single, named owner who is 100% responsible for its completion.</p>
+<h3>3. Solve the Top 3 First</h3>
+<p>Never try to work through your issues list chronologically. Always prioritize. If you only solve the top 2 most critical issues during the meeting, that is a massive win. Vague, low-priority issues can wait or roll over to the next week.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What does IDS stand for in business?</h3>
+<p>IDS stands for Identify, Discuss, and Solve. It is a three-step problem-solving methodology popularized by the Entrepreneurial Operating System (EOS) to help teams resolve issues permanently.</p>
+<h3>How do you identify the root cause of a problem?</h3>
+<p>Use the "Five Whys" technique. Start with the symptom and ask "Why did this happen?" five times in succession. This process helps peel away surface-level symptoms to reveal the true operational or behavioral root cause.</p>
+<h3>What happens if we can't solve an issue during the meeting?</h3>
+<p>If an issue is too complex to solve in 60 minutes, assign a To-Do to a team member to gather more data or run a sub-meeting, and bring the issue back to the main list next week with the necessary context.</p>
+<h3>Why can only one person own an action item?</h3>
+<p>When multiple people share ownership of a task, accountability is diluted. Having a single owner ensures there is one clear point of contact who is responsible for driving the task to completion.</p>`,
+    faq: [
+      {
+            "q": "What does IDS stand for in business?",
+            "a": "IDS stands for Identify, Discuss, and Solve. It is a three-step problem-solving methodology popularized by the Entrepreneurial Operating System (EOS) to help teams resolve issues permanently."
+      },
+      {
+            "q": "How do you identify the root cause of a problem?",
+            "a": "Use the \"Five Whys\" technique. Start with the symptom and ask \"Why did this happen?\" five times in succession. This process helps peel away surface-level symptoms to reveal the true operational or behavioral root cause."
+      },
+      {
+            "q": "What happens if we can't solve an issue during the meeting?",
+            "a": "If an issue is too complex to solve in 60 minutes, assign a To-Do to a team member to gather more data or run a sub-meeting, and bring the issue back to the main list next week with the necessary context."
+      },
+      {
+            "q": "Why can only one person own an action item?",
+            "a": "When multiple people share ownership of a task, accountability is diluted. Having a single owner ensures there is one clear point of contact who is responsible for driving the task to completion."
+      }
+],
   },
   {
     slug: 'async-standup-meeting',

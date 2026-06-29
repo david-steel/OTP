@@ -230,6 +230,74 @@ export const BALANCED_SCORECARD_TEMPLATES: MeetingTemplate[] = [
       'Off-track measures, owners, and actions:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/balanced-scorecard-monthly-review\n',
+    guideHtml: `<h2>The Ultimate Balanced Scorecard Monthly Review Template &amp; Guide</h2>
+<p>While quarterly strategy reviews are essential for high-level alignment and initiative planning, ninety days is too long to wait to spot operational drift. To ensure your strategy is executed successfully, your leadership team needs a monthly operational checkpoint. That is where the Balanced Scorecard Monthly Review comes in.</p>
+<p>The monthly review is a fast-paced, operational meeting designed to track key performance indicators (KPIs), identify off-track measures, and assign immediate corrective actions before minor variances turn into major strategic failures.</p>
+<p>This comprehensive guide provides a battle-tested Balanced Scorecard Monthly Review Template and a step-by-step agenda to help your team maintain operational momentum and keep your strategy on track.</p>
+<h2>What is a Balanced Scorecard Monthly Review?</h2>
+<p>A Balanced Scorecard Monthly Review is a structured, 60-minute operational meeting held mid-quarter.</p>
+<p>Unlike the quarterly review - which focuses on long-term initiatives and strategic pivots - the monthly review is strictly focused on KPI tracking and variance management. It uses the four classic perspectives of the Balanced Scorecard (Financial, Customer, Internal Process, and Learning &amp; Growth) to evaluate the company's current operational health.</p>
+<h3>The Core Objectives of the Monthly Review:</h3>
+<ul>
+<li>Track KPI Trends: Review the Red/Yellow/Green status of every measure on your scorecard.</li>
+<li>Spot Early Warning Signs: Identify lagging indicators and operational bottlenecks before they impact quarterly results.</li>
+<li>Assign Corrective Actions: Create short-term, 30-day action plans to get off-track measures back to Green.</li>
+<li>Maintain Accountability: Ensure every KPI owner is actively monitoring and managing their assigned metrics.</li>
+</ul>
+<h2>The Standard 60-Minute Monthly Review Agenda</h2>
+<p>To keep the meeting highly operational and prevent it from devolving into a long-term strategic debate, we recommend a strict time-boxed 60-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Scorecard Snapshot</strong></td><td>Quickly review the overall scorecard health. Note the percentage of measures currently sitting at Green, Yellow, and Red.</td></tr>
+<tr><td><strong>00:05 - 00:17</strong></td><td><strong>Financial Measures Review</strong></td><td>Review monthly financial KPIs (e.g., cash flow, revenue vs. budget, gross margin).</td></tr>
+<tr><td><strong>00:17 - 00:29</strong></td><td><strong>Customer Measures Review</strong></td><td>Evaluate customer satisfaction, support ticket volume, and monthly retention rates.</td></tr>
+<tr><td><strong>00:29 - 00:41</strong></td><td><strong>Internal Process Measures Review</strong></td><td>Review operational efficiency, product quality, and delivery cycle times.</td></tr>
+<tr><td><strong>00:41 - 00:49</strong></td><td><strong>Learning &amp; Growth Measures Review</strong></td><td>Check in on employee retention, training completion rates, and key hiring pipelines.</td></tr>
+<tr><td><strong>00:49 - 01:00</strong></td><td><strong>Off-Track Triage &amp; Actions</strong></td><td>Focus 100% of the remaining time on Red or trending-Red measures. Assign clear owners and 30-day corrective actions.</td></tr>
+</tbody>
+</table>
+<h2>The Red, Yellow, Green (RYG) Status Framework</h2>
+<p>To run an efficient monthly review, your scorecard must use a clear, objective RYG status framework to categorize performance:</p>
+<ul>
+<li><strong>Green (On Track):</strong> The metric is meeting or exceeding the monthly target. No action required.</li>
+<li><strong>Yellow (At Risk):</strong> The metric is slightly below target but within an acceptable variance threshold (typically within 5-10%). This requires close monitoring and potential minor adjustments.</li>
+<li><strong>Red (Off Track):</strong> The metric is significantly below target and outside the acceptable variance threshold. This requires immediate triage, a root-cause analysis, and a formal corrective action plan.</li>
+</ul>
+<h2>Best Practices for an Efficient Monthly Review</h2>
+<h3>1. Pre-Populate the Scorecard</h3>
+<p>Never waste meeting time entering data or updating charts. Every KPI owner must update their metrics and assign their RYG statuses at least 24 hours before the meeting. The meeting should start with a fully populated, color-coded scorecard.</p>
+<h3>2. Triage by Exception</h3>
+<p>Do not spend time discussing Green metrics. If a metric is Green, the owner simply says "Green" and you move to the next item. Focus 90% of your discussion and energy on the Red and Yellow metrics that require active problem-solving and resource allocation.</p>
+<h3>3. Keep Corrective Actions Under 30 Days</h3>
+<p>The action items generated during a monthly review should not be massive, multi-month projects. Instead, they should be short-term, tactical interventions designed to get a specific metric back on track within the next 30 days (e.g., "Run a targeted email campaign to clear excess inventory" or "Reallocate two support reps to clear the ticket backlog").</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is the difference between a monthly and quarterly Balanced Scorecard review?</h3>
+<p>A monthly review is operational and tactical, focusing on tracking monthly KPIs, spotting variances, and assigning short-term (30-day) corrective actions. A quarterly review is strategic, focusing on long-term initiatives, budget allocations, and potential pivots in the overall business strategy.</p>
+<h3>How do you define variance thresholds for RYG status?</h3>
+<p>Variance thresholds should be defined objectively for each metric. For example, if your monthly sales target is $100,000, Green might be $100,000+, Yellow might be $90,000 to $99,999 (within 10%), and Red would be anything below $90,000.</p>
+<h3>Who owns the KPIs on a Balanced Scorecard?</h3>
+<p>Every single KPI on your scorecard must have a single, named owner (typically a departmental leader or manager). If a KPI is owned by "the team" or "the department," accountability is diluted and the metric is highly likely to slip.</p>
+<h3>What happens if a metric stays Red for multiple months?</h3>
+<p>If a metric remains Red for two or more consecutive months despite corrective actions, it indicates a systemic issue. This should be escalated to a deep-dive problem-solving session (such as an IDS meeting) or flagged as a major topic for the upcoming Quarterly Strategy Review.</p>`,
+    faq: [
+      {
+            "q": "What is the difference between a monthly and quarterly Balanced Scorecard review?",
+            "a": "A monthly review is operational and tactical, focusing on tracking monthly KPIs, spotting variances, and assigning short-term (30-day) corrective actions. A quarterly review is strategic, focusing on long-term initiatives, budget allocations, and potential pivots in the overall business strategy."
+      },
+      {
+            "q": "How do you define variance thresholds for RYG status?",
+            "a": "Variance thresholds should be defined objectively for each metric. For example, if your monthly sales target is $100,000, Green might be $100,000+, Yellow might be $90,000 to $99,999 (within 10%), and Red would be anything below $90,000."
+      },
+      {
+            "q": "Who owns the KPIs on a Balanced Scorecard?",
+            "a": "Every single KPI on your scorecard must have a single, named owner (typically a departmental leader or manager). If a KPI is owned by \"the team\" or \"the department,\" accountability is diluted and the metric is highly likely to slip."
+      },
+      {
+            "q": "What happens if a metric stays Red for multiple months?",
+            "a": "If a metric remains Red for two or more consecutive months despite corrective actions, it indicates a systemic issue. This should be escalated to a deep-dive problem-solving session (such as an IDS meeting) or flagged as a major topic for the upcoming Quarterly Strategy Review."
+      }
+],
   },
   {
     slug: 'strategy-map-workshop',

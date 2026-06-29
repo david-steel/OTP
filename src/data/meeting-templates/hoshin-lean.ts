@@ -82,6 +82,76 @@ export const HOSHIN_LEAN_TEMPLATES: MeetingTemplate[] = [
       'Owners and review rhythm:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/hoshin-annual-planning\n',
+    guideHtml: `<h2>The Ultimate Hoshin Kanri Annual Planning Template &amp; Guide</h2>
+<p>In Lean management, Hoshin Kanri (also known as Policy Deployment) is the premier framework for strategic planning and execution. Originating in Japan and popularized by companies like Toyota and Hewlett-Packard, Hoshin Kanri translates to "direction setting" or "compass needle." It is designed to align an entire organization's daily operations with its long-term strategic vision.</p>
+<p>If your company struggles with strategic misalignment, has too many competing priorities, or fails to execute its annual plans, implementing Hoshin Kanri will bring absolute focus and discipline to your organization.</p>
+<p>This comprehensive guide provides a battle-tested Hoshin Annual Planning Template and a step-by-step agenda to help your leadership team select breakthrough objectives, deploy them through "catchball," and build a robust execution roadmap.</p>
+<h2>What is Hoshin Kanri Annual Planning?</h2>
+<p>Hoshin Kanri Annual Planning is a highly collaborative, 4-hour strategic workshop held by the executive leadership team.</p>
+<p>The primary objective of the session is to select <strong>no more than 3 to 5 vital breakthrough objectives</strong> for the upcoming year and deploy them throughout the organization. Unlike traditional top-down planning, Hoshin Kanri relies on a two-way negotiation process called <strong>catchball</strong> to ensure targets are realistic, resources are aligned, and ownership is established at every level.</p>
+<h3>The Core Pillars of Hoshin Annual Planning:</h3>
+<ul>
+<li>Reflect on True North: Re-align on the company's long-term vision, mission, and core values.</li>
+<li>Scan Current Conditions: Analyze performance data, market shifts, and operational capabilities.</li>
+<li>Select Breakthrough Objectives: Focus on 3-5 vital, game-changing goals for the year.</li>
+<li>Deploy via Catchball: Engage in two-way dialogue with department heads to co-author targets and tactics.</li>
+<li>Establish Review Cadence: Set up monthly and quarterly reviews to track progress and prevent strategy drift.</li>
+</ul>
+<h2>The Standard 4-Hour Hoshin Annual Planning Agenda</h2>
+<p>To build a focused, aligned annual plan without getting bogged down in tactical details, we recommend a structured 240-minute time-boxed agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:30</strong></td><td><strong>Reflect on True North</strong></td><td>Re-align on the long-term vision and review the past year's performance and lessons learned.</td></tr>
+<tr><td><strong>00:30 - 01:10</strong></td><td><strong>Scan Current Conditions</strong></td><td>Analyze current operational data, market trends, and organizational capabilities.</td></tr>
+<tr><td><strong>01:10 - 02:00</strong></td><td><strong>Select Breakthrough Objectives</strong></td><td>Brainstorm and select the 3-5 vital breakthrough objectives for the upcoming year.</td></tr>
+<tr><td><strong>02:00 - 02:50</strong></td><td><strong>Define Annual Priorities</strong></td><td>Break down each breakthrough objective into specific annual improvement priorities with measurable targets.</td></tr>
+<tr><td><strong>02:50 - 03:40</strong></td><td><strong>The Catchball Process</strong></td><td>Conduct initial catchball discussions to align resources, challenge targets, and shape implementation means.</td></tr>
+<tr><td><strong>03:40 - 04:00</strong></td><td><strong>Confirm Owners &amp; Review Rhythm</strong></td><td>Assign executive owners to each priority, confirm the monthly review cadence, and close the session.</td></tr>
+</tbody>
+</table>
+<h2>The Power of the "Catchball" Process</h2>
+<p>A unique and critical component of Hoshin Kanri is <strong>catchball</strong>. In traditional planning, executives hand down targets to managers, who then hand them down to teams. This often leads to unrealistic goals, lack of ownership, and operational failure.</p>
+<p>In Hoshin Kanri, the strategic ball is "thrown" back and forth between levels of the organization:</p>
+<ol>
+<li>Leadership proposes a strategic objective and target.</li>
+<li>Department heads analyze the objective, assess their capacity, and throw the ball back with proposed tactics, resource requirements, and adjusted targets.</li>
+<li>This iterative dialogue continues until both levels agree on a realistic, fully resourced plan. This co-authoring process builds deep ownership and alignment.</li>
+</ol>
+<h2>Best Practices for Hoshin Annual Planning</h2>
+<h3>1. Focus on the Vital Few, Ignore the Useful Many</h3>
+<p>The biggest failure in strategic planning is trying to do too much. If you have 15 priorities, you have none. Hoshin Kanri forces you to focus strictly on the <strong>3 to 5 breakthrough objectives</strong> that will fundamentally transform your business. Everything else is operational noise.</p>
+<h3>2. Separate Strategy from Daily Operations</h3>
+<p>Breakthrough objectives are designed to close significant performance gaps or capture major market opportunities - they are not "business as usual." Ensure your annual plan clearly distinguishes between strategic breakthrough initiatives and daily operational KPIs.</p>
+<h3>3. Establish a Strict Review Cadence</h3>
+<p>An annual plan is useless without execution tracking. Before ending your planning session, schedule your monthly Hoshin reviews for the entire year. Consistency in tracking is what separates successful execution from strategic failure.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What does Hoshin Kanri mean?</h3>
+<p>Hoshin Kanri is a Japanese strategic planning methodology that translates to "direction setting" or "policy deployment." It aligns an organization’s daily activities with its long-term strategic goals.</p>
+<h3>What is "catchball" in Hoshin Kanri?</h3>
+<p>Catchball is a collaborative, two-way negotiation process between different levels of an organization. It ensures that strategic goals, targets, and resource allocations are co-authored and agreed upon, rather than handed down from the top.</p>
+<h3>How many breakthrough objectives should a company have?</h3>
+<p>A company should focus on no more than 3 to 5 vital breakthrough objectives per year. Attempting to execute more than 5 strategic initiatives dilutes focus and resources, leading to poor execution.</p>
+<h3>What is the difference between Hoshin Kanri and OKRs?</h3>
+<p>While both focus on goal alignment, Hoshin Kanri is a comprehensive, top-down strategic deployment system that uses tools like the X-matrix and catchball to align long-term breakthroughs with annual priorities. OKRs are typically more bottom-up, tactical, and run on shorter (quarterly) cycles.</p>`,
+    faq: [
+      {
+            "q": "What does Hoshin Kanri mean?",
+            "a": "Hoshin Kanri is a Japanese strategic planning methodology that translates to \"direction setting\" or \"policy deployment.\" It aligns an organization’s daily activities with its long-term strategic goals."
+      },
+      {
+            "q": "What is \"catchball\" in Hoshin Kanri?",
+            "a": "Catchball is a collaborative, two-way negotiation process between different levels of an organization. It ensures that strategic goals, targets, and resource allocations are co-authored and agreed upon, rather than handed down from the top."
+      },
+      {
+            "q": "How many breakthrough objectives should a company have?",
+            "a": "A company should focus on no more than 3 to 5 vital breakthrough objectives per year. Attempting to execute more than 5 strategic initiatives dilutes focus and resources, leading to poor execution."
+      },
+      {
+            "q": "What is the difference between Hoshin Kanri and OKRs?",
+            "a": "While both focus on goal alignment, Hoshin Kanri is a comprehensive, top-down strategic deployment system that uses tools like the X-matrix and catchball to align long-term breakthroughs with annual priorities. OKRs are typically more bottom-up, tactical, and run on shorter (quarterly) cycles."
+      }
+],
   },
   {
     slug: 'hoshin-catchball-session',
@@ -234,6 +304,75 @@ export const HOSHIN_LEAN_TEMPLATES: MeetingTemplate[] = [
       'Adjustments and who updates the plan:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/hoshin-x-matrix-review\n',
+    guideHtml: `<h2>The Ultimate Hoshin X-Matrix Review Template &amp; Guide</h2>
+<p>In the Hoshin Kanri (Policy Deployment) framework, the <strong>X-Matrix</strong> is the ultimate visual tool for strategic alignment. It is a single-page document that maps out the complete connection between your long-term breakthroughs, annual priorities, improvement targets, and key owners.</p>
+<p>However, an X-Matrix is not a static document to be filled out once a year and filed away. To ensure your strategy remains honest, realistic, and fully aligned, your leadership team must run a structured <strong>Hoshin X-Matrix Review</strong>.</p>
+<p>This comprehensive guide provides a battle-tested Hoshin X-Matrix Review Template and a step-by-step workshop agenda to help your team pressure-test your strategic plan, expose operational gaps, and maintain absolute alignment.</p>
+<h2>What is a Hoshin X-Matrix Review?</h2>
+<p>A Hoshin X-Matrix Review is a strategic, 90-minute workshop held quarterly.</p>
+<p>The primary objective of the session is to validate the integrity of your strategic plan. By analyzing the correlation marks on the X-Matrix, the leadership team pressure-tests whether your annual priorities genuinely support your long-term breakthroughs, whether your improvement targets are measurable, and whether your resources are balanced or overloaded.</p>
+<h3>The Four Quadrants of the X-Matrix:</h3>
+<ul>
+<li><strong>South (Long-Term Breakthroughs):</strong> What are our 3-5 year strategic goals?</li>
+<li><strong>West (Annual Priorities):</strong> What must we accomplish this year to advance those breakthroughs?</li>
+<li><strong>North (Improvement Targets):</strong> How will we measure success? (KPIs and metrics).</li>
+<li><strong>East (Owners &amp; Resources):</strong> Who is responsible for driving each priority?</li>
+</ul>
+<h2>The Standard 90-Minute X-Matrix Review Agenda</h2>
+<p>To systematically analyze all four quadrants and verify the integrity of your strategic plan, we recommend a structured 90-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Orient to the X-Matrix</strong></td><td>Welcome the team, review the four quadrants, and establish the focus of today's alignment check.</td></tr>
+<tr><td><strong>00:10 - 00:30</strong></td><td><strong>Verify Breakthrough-to-Annual Links</strong></td><td>Analyze the correlation marks between long-term breakthroughs and annual priorities. Ensure every breakthrough is supported.</td></tr>
+<tr><td><strong>00:30 - 00:50</strong></td><td><strong>Check Priorities-to-Targets Links</strong></td><td>Verify that every annual priority has a corresponding, measurable improvement target. Expose any unmeasured priorities.</td></tr>
+<tr><td><strong>00:50 - 01:10</strong></td><td><strong>Analyze Resource &amp; Ownership Balance</strong></td><td>Review the East quadrant. Ensure ownership is balanced and no single leader or department is overloaded.</td></tr>
+<tr><td><strong>01:10 - 01:25</strong></td><td><strong>Triage Gaps &amp; Adjust Plan</strong></td><td>Address any strategic gaps, orphaned priorities, or resource bottlenecks uncovered during the review.</td></tr>
+<tr><td><strong>01:25 - 01:30</strong></td><td><strong>Confirm Commitments &amp; Close</strong></td><td>Re-affirm ownership, document any adjustments to the matrix, and officially close the session.</td></tr>
+</tbody>
+</table>
+<h2>How to Expose Strategic Gaps Using the X-Matrix</h2>
+<p>The true power of the X-Matrix lies in its ability to expose strategic dishonesty and operational gaps through its visual correlation marks:</p>
+<h3>1. Orphaned Priorities (The "Why" Gap)</h3>
+<p>Look at your annual priorities (West). If you find a priority that does not have a correlation mark linking it to a long-term breakthrough (South), ask: <em>Why are we spending time and resources on this priority if it doesn't advance our long-term strategy?</em></p>
+<h3>2. Unsupported Breakthroughs (The "How" Gap)</h3>
+<p>Look at your long-term breakthroughs (South). If you find a breakthrough that has no correlation marks linking it to an annual priority (West), you have a strategic gap. You are claiming a long-term goal but have planned no concrete actions this year to achieve it.</p>
+<h3>3. Overloaded Owners (The "Who" Gap)</h3>
+<p>Look at the East quadrant. If you see a single leader's name correlated with 8 different annual priorities and 10 different targets, they are overloaded. The X-Matrix visually exposes resource bottlenecks before they lead to execution failure and burnout.</p>
+<h2>Best Practices for the X-Matrix Review</h2>
+<h3>1. Keep It on a Single Page</h3>
+<p>The core discipline of the X-Matrix is that it must fit on a single sheet of paper (typically printed on large A3 or ledger paper). This constraint forces your leadership team to be concise, eliminate strategic fluff, and focus strictly on the vital few priorities.</p>
+<h3>2. Use Strong vs. Weak Correlation Marks</h3>
+<p>Use distinct symbols to represent the strength of the links between quadrants (e.g., a solid circle for a primary/strong correlation, and an open circle for a secondary/weak correlation). This prevents teams from claiming that "everything connects to everything" and forces honest strategic prioritization.</p>
+<h3>3. Run the Review Quarterly</h3>
+<p>While you track metrics monthly on a Bowling Chart, you should review the structural integrity of the X-Matrix quarterly. This cadence allows you to adjust to major market shifts or resource constraints without disrupting your annual planning rhythm.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is a Hoshin X-Matrix?</h3>
+<p>A Hoshin X-Matrix is a single-page strategic planning document that visually connects long-term breakthroughs, annual priorities, improvement targets, and key owners using correlation marks in a grid.</p>
+<h3>What are correlation marks in an X-Matrix?</h3>
+<p>Correlation marks are visual symbols (such as solid or open circles) placed in the corners of the matrix to show the strength of the relationship between different quadrants (e.g., how strongly an annual priority supports a long-term breakthrough).</p>
+<h3>How do you identify an overloaded owner on the X-Matrix?</h3>
+<p>Scan the East quadrant (Owners). If a single individual's column has correlation marks linking them to an excessive number of priorities or targets, they are a resource bottleneck and tasks should be reallocated.</p>
+<h3>How often should the X-Matrix be reviewed?</h3>
+<p>While metrics are tracked monthly, the structural alignment and resource balance of the X-Matrix should be formally reviewed by the leadership team quarterly.</p>`,
+    faq: [
+      {
+            "q": "What is a Hoshin X-Matrix?",
+            "a": "A Hoshin X-Matrix is a single-page strategic planning document that visually connects long-term breakthroughs, annual priorities, improvement targets, and key owners using correlation marks in a grid."
+      },
+      {
+            "q": "What are correlation marks in an X-Matrix?",
+            "a": "Correlation marks are visual symbols (such as solid or open circles) placed in the corners of the matrix to show the strength of the relationship between different quadrants (e.g., how strongly an annual priority supports a long-term breakthrough)."
+      },
+      {
+            "q": "How do you identify an overloaded owner on the X-Matrix?",
+            "a": "Scan the East quadrant (Owners). If a single individual's column has correlation marks linking them to an excessive number of priorities or targets, they are a resource bottleneck and tasks should be reallocated."
+      },
+      {
+            "q": "How often should the X-Matrix be reviewed?",
+            "a": "While metrics are tracked monthly, the structural alignment and resource balance of the X-Matrix should be formally reviewed by the leadership team quarterly."
+      }
+],
   },
   {
     slug: 'hoshin-monthly-review',
@@ -309,6 +448,76 @@ export const HOSHIN_LEAN_TEMPLATES: MeetingTemplate[] = [
       'Escalations:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/hoshin-monthly-review\n',
+    guideHtml: `<h2>The Ultimate Hoshin Kanri Monthly Review Template &amp; Guide</h2>
+<p>In the Hoshin Kanri (Policy Deployment) framework, the annual plan is only the starting point. The true engine of strategic execution is the <strong>Hoshin Monthly Review</strong>. Without a disciplined monthly cadence to track progress, analyze variances, and adjust tactics, even the most brilliant annual plans will drift and fail.</p>
+<p>The monthly review is the operational heartbeat that keeps your breakthrough objectives top-of-mind and ensures your daily activities remain aligned with your strategic direction.</p>
+<p>This comprehensive guide provides a battle-tested Hoshin Monthly Review Template and a step-by-step agenda to help your leadership team track performance, read bowling charts, and maintain strategic momentum.</p>
+<h2>What is a Hoshin Monthly Review?</h2>
+<p>A Hoshin Monthly Review is a structured, 60-minute meeting where priority owners and leadership inspect progress against annual strategic targets.</p>
+<p>Unlike weekly tactical syncs, the monthly Hoshin review is strictly focused on <strong>strategic execution, variance analysis, and countermeasure deployment</strong>. It uses visual tracking tools - specifically the Hoshin Bowling Chart - to quickly identify which strategic priorities are on track and which require immediate intervention.</p>
+<h3>The Core Objectives of the Monthly Review:</h3>
+<ul>
+<li>Track Strategic Progress: Review actual performance against monthly targets for every strategic priority.</li>
+<li>Analyze Variances: Identify the root causes of any missed targets or lagging indicators.</li>
+<li>Deploy Countermeasures: Agree on immediate, actionable steps to get off-track priorities back to Green.</li>
+<li>Maintain Accountability: Ensure every strategic priority has a clear owner who is actively driving execution.</li>
+</ul>
+<h2>The Standard 60-Minute Hoshin Monthly Review Agenda</h2>
+<p>To keep the meeting highly focused on strategic problem-solving and variance management, we recommend a strict time-boxed 60-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Scorecard &amp; Bowling Chart Snapshot</strong></td><td>Quickly review the overall health of the Hoshin plan. Note the percentage of targets currently sitting at Green, Yellow, and Red.</td></tr>
+<tr><td><strong>00:05 - 00:20</strong></td><td><strong>Review Green &amp; On-Track Priorities</strong></td><td>Priority owners provide brief, high-level updates on Green priorities. Celebrate wins and confirm next milestones.</td></tr>
+<tr><td><strong>00:20 - 00:50</strong></td><td><strong>Red/Yellow Variance Triage</strong></td><td>Focus 50% of the meeting on off-track priorities. Owners present root-cause analyses and proposed countermeasures.</td></tr>
+<tr><td><strong>00:50 - 00:55</strong></td><td><strong>Confirm Actions &amp; Escalations</strong></td><td>Summarize new countermeasures, assign owners, and document any resource escalations.</td></tr>
+<tr><td><strong>00:55 - 01:00</strong></td><td><strong>Meeting Evaluation &amp; Close</strong></td><td>Briefly rate the meeting's efficiency and confirm the date for the next review.</td></tr>
+</tbody>
+</table>
+<h2>How to Read a Hoshin Bowling Chart</h2>
+<p>The primary visual tool used during the Hoshin Monthly Review is the <strong>Bowling Chart</strong> (so named because the grid of numbers resembles a bowling scorecard).</p>
+<p>A standard Bowling Chart tracks:</p>
+<ul>
+<li><strong>Strategic Objective / Priority:</strong> The high-level goal being tracked.</li>
+<li><strong>Metric / KPI:</strong> How success is measured.</li>
+<li><strong>Target vs. Actual:</strong> The planned target for each month of the year, compared against the actual result achieved.</li>
+<li><strong>RYG Status:</strong> Visual color-coding (Red/Yellow/Green) representing performance against the target.</li>
+</ul>
+<p>During the review, the team scans the Bowling Chart to identify "Red" cells. A Red cell is an immediate trigger for a root-cause analysis (often documented on an A3 report) and a countermeasure.</p>
+<h2>Best Practices for an Effective Hoshin Review</h2>
+<h3>1. Pre-Populate the Bowling Chart</h3>
+<p>Never waste meeting time looking up metrics or updating spreadsheets. Every priority owner must update their actual results and color-code their Bowling Chart cells at least 24 hours before the meeting starts.</p>
+<h3>2. Focus on the Process, Not the Person</h3>
+<p>When a strategic priority is Red, the purpose of the meeting is not to assign blame or punish the owner. Instead, focus the team's collective intelligence on <strong>solving the process bottleneck</strong> that caused the miss. Encourage transparency and psychological safety.</p>
+<h3>3. Countermeasures Must Be Actionable</h3>
+<p>A countermeasure is not a vague promise to "try harder." It must be a specific, actionable task with a single owner and a clear deadline (e.g., "Reallocate $5,000 from marketing budget to support sales training by Friday").</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is a Hoshin Bowling Chart?</h3>
+<p>A Bowling Chart is a visual tracking tool used in Hoshin Kanri to compare monthly actual results against planned strategic targets across the fiscal year, using Red/Yellow/Green color-coding to highlight variances.</p>
+<h3>What is the difference between a Hoshin monthly review and a weekly tactical meeting?</h3>
+<p>A weekly tactical meeting focuses on day-to-day operations, task lists, and immediate fires. A Hoshin monthly review is strictly strategic, focusing on tracking progress against annual breakthrough objectives and deploying countermeasures for off-track priorities.</p>
+<h3>What is a countermeasure in Hoshin Kanri?</h3>
+<p>A countermeasure is an immediate, actionable step taken to address a missed target or operational variance, designed to get an off-track strategic priority back to Green within the next 30 days.</p>
+<h3>Who should facilitate the Hoshin Monthly Review?</h3>
+<p>The review is typically facilitated by the Chief of Staff, a Lean/Continuous Improvement leader, or the Integrator, with active participation from the entire executive leadership team.</p>`,
+    faq: [
+      {
+            "q": "What is a Hoshin Bowling Chart?",
+            "a": "A Bowling Chart is a visual tracking tool used in Hoshin Kanri to compare monthly actual results against planned strategic targets across the fiscal year, using Red/Yellow/Green color-coding to highlight variances."
+      },
+      {
+            "q": "What is the difference between a Hoshin monthly review and a weekly tactical meeting?",
+            "a": "A weekly tactical meeting focuses on day-to-day operations, task lists, and immediate fires. A Hoshin monthly review is strictly strategic, focusing on tracking progress against annual breakthrough objectives and deploying countermeasures for off-track priorities."
+      },
+      {
+            "q": "What is a countermeasure in Hoshin Kanri?",
+            "a": "A countermeasure is an immediate, actionable step taken to address a missed target or operational variance, designed to get an off-track strategic priority back to Green within the next 30 days."
+      },
+      {
+            "q": "Who should facilitate the Hoshin Monthly Review?",
+            "a": "The review is typically facilitated by the Chief of Staff, a Lean/Continuous Improvement leader, or the Integrator, with active participation from the entire executive leadership team."
+      }
+],
   },
   {
     slug: 'gemba-walk',
@@ -538,6 +747,69 @@ export const HOSHIN_LEAN_TEMPLATES: MeetingTemplate[] = [
       'Check and follow-up actions:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/a3-problem-solving-review\n',
+    guideHtml: `<h2>The Ultimate A3 Problem-Solving Review Template &amp; Guide</h2>
+<p>In Lean manufacturing and continuous improvement frameworks (pioneered by Toyota), the A3 process is the gold standard for structured problem-solving. The name comes from the international A3 paper size - because the core philosophy of the framework is that the complete story of a problem, its analysis, and its solution must fit on a single sheet of paper.</p>
+<p>If your team struggles with disorganized problem-solving, jumps to conclusions without analyzing data, or fails to document lessons learned, implementing the A3 process will transform your operational discipline.</p>
+<p>This comprehensive guide provides a battle-tested A3 Problem-Solving Template and a step-by-step review agenda to help your team analyze root causes, implement countermeasures, and foster a culture of continuous learning.</p>
+<h2>What is an A3 Problem-Solving Review?</h2>
+<p>An A3 Problem-Solving Review is a structured, 60-minute collaborative session where a problem owner presents their A3 report to a coach, leadership team, or key stakeholders.</p>
+<p>Rather than a formal presentation, the A3 review is a <strong>coaching and alignment session</strong>. It follows the classic Plan-Do-Check-Act (PDCA) cycle to ensure the team is solving the right problem, using data-driven analysis, and implementing sustainable countermeasures.</p>
+<h3>The Six Key Sections of an A3 Report:</h3>
+<ol>
+<li><strong>Background &amp; Problem Statement:</strong> Define the business context and clearly state the problem and its impact.</li>
+<li><strong>Current Condition &amp; Goal:</strong> Document the current state with data and set a specific, measurable target.</li>
+<li><strong>Root Cause Analysis:</strong> Use tools like the "Five Whys" or Fishbone diagrams to identify the underlying cause.</li>
+<li><strong>Countermeasures:</strong> Propose and validate solutions that directly address the root cause.</li>
+<li><strong>Plan, Check, &amp; Follow-Up:</strong> Detail the implementation timeline, how results will be measured, and follow-up actions.</li>
+<li><strong>Coaching &amp; Questions:</strong> Document feedback and lessons learned during the review session.</li>
+</ol>
+<h2>The Standard 60-Minute A3 Review Agenda</h2>
+<p>To ensure a rigorous, data-driven discussion that focuses on coaching and root-cause thinking, we recommend a structured 60-minute agenda:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Background &amp; Problem Statement</strong></td><td>The owner presents the business context and defines the specific problem being addressed.</td></tr>
+<tr><td><strong>00:10 - 00:20</strong></td><td><strong>Current Condition &amp; Goal</strong></td><td>Review the data representing the current state and align on the measurable target.</td></tr>
+<tr><td><strong>00:20 - 00:35</strong></td><td><strong>Root Cause Analysis</strong></td><td>Deep-dive into the analysis (e.g., Five Whys). Verify that the analysis is based on facts, not assumptions.</td></tr>
+<tr><td><strong>00:35 - 00:45</strong></td><td><strong>Countermeasures Evaluation</strong></td><td>Review the proposed solutions and verify that they directly address the identified root causes.</td></tr>
+<tr><td><strong>00:45 - 00:55</strong></td><td><strong>Implementation &amp; Check Plan</strong></td><td>Review the action plan, timeline, and the mechanism for measuring results (the "Check" phase of PDCA).</td></tr>
+<tr><td><strong>00:55 - 01:00</strong></td><td><strong>Coaching Feedback &amp; Close</strong></td><td>The coach or stakeholders provide feedback, document lessons learned, and approve the next steps.</td></tr>
+</tbody>
+</table>
+<h2>Best Practices for the A3 Process</h2>
+<h3>1. Go to the Gemba (The Real Place)</h3>
+<p>An A3 report cannot be written from an office or a conference room. The owner must go to the "Gemba" - the actual place where the work is done - to observe the process, gather data, and talk to the people executing the work. Facts on an A3 must be verified firsthand.</p>
+<h3>2. Spend 80% of the Effort on Planning</h3>
+<p>In the PDCA cycle, the "Plan" phase consists of the first four sections of the A3 (Background, Current Condition, Goal, and Root Cause Analysis). High-performing teams spend 80% of their time and effort on these sections. If you define the problem correctly and find the true root cause, the countermeasures are usually obvious.</p>
+<h3>3. Use Visuals Over Text</h3>
+<p>An effective A3 report uses charts, graphs, process maps, and diagrams instead of dense blocks of text. Anyone in the organization should be able to look at the A3 and understand the complete story of the problem and solution in under 5 minutes.</p>
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is an A3 in Lean problem-solving?</h3>
+<p>An A3 is a structured problem-solving tool and report format pioneered by Toyota. It fits the complete story of a problem, its analysis, countermeasures, and follow-up plan on a single sheet of A3-sized paper, following the Plan-Do-Check-Act (PDCA) cycle.</p>
+<h3>What does Gemba mean in Lean?</h3>
+<p>Gemba is a Japanese term meaning "the real place." In business and Lean manufacturing, it refers to the place where value is created (e.g., the factory floor, the customer support desk, or the software development environment) where problems should be observed firsthand.</p>
+<h3>How does the PDCA cycle map to an A3?</h3>
+<p>The PDCA (Plan-Do-Check-Act) cycle maps perfectly to the A3: Sections 1-4 represent "Plan" (defining the problem and root cause), Section 5 represents "Do" (implementing countermeasures) and "Check" (measuring results), and Section 6 represents "Act" (standardizing the solution and sharing lessons).</p>
+<h3>Who should write and review an A3?</h3>
+<p>The A3 is written by the individual closest to the problem (the owner) and reviewed in a collaborative session with a coach (manager or Lean specialist) and key stakeholders who are impacted by the process.</p>`,
+    faq: [
+      {
+            "q": "What is an A3 in Lean problem-solving?",
+            "a": "An A3 is a structured problem-solving tool and report format pioneered by Toyota. It fits the complete story of a problem, its analysis, countermeasures, and follow-up plan on a single sheet of A3-sized paper, following the Plan-Do-Check-Act (PDCA) cycle."
+      },
+      {
+            "q": "What does Gemba mean in Lean?",
+            "a": "Gemba is a Japanese term meaning \"the real place.\" In business and Lean manufacturing, it refers to the place where value is created (e.g., the factory floor, the customer support desk, or the software development environment) where problems should be observed firsthand."
+      },
+      {
+            "q": "How does the PDCA cycle map to an A3?",
+            "a": "The PDCA (Plan-Do-Check-Act) cycle maps perfectly to the A3: Sections 1-4 represent \"Plan\" (defining the problem and root cause), Section 5 represents \"Do\" (implementing countermeasures) and \"Check\" (measuring results), and Section 6 represents \"Act\" (standardizing the solution and sharing lessons)."
+      },
+      {
+            "q": "Who should write and review an A3?",
+            "a": "The A3 is written by the individual closest to the problem (the owner) and reviewed in a collaborative session with a coach (manager or Lean specialist) and key stakeholders who are impacted by the process."
+      }
+],
   },
   {
     slug: 'lean-daily-huddle',
