@@ -64,6 +64,36 @@ export default async function templateRoutes(app: FastifyInstance) {
       (t) => t.category === template.category && t.slug !== template.slug,
     ).slice(0, 4);
 
+    const howToLd = {
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: template.title.replace(/ - OTP$/, ''),
+      description: template.description,
+      url: BASE_URL + '/templates/' + slug,
+      totalTime: isoDuration(template.minutes),
+      isAccessibleForFree: true,
+      step: template.steps.map((s, i) => ({
+        '@type': 'HowToStep',
+        position: i + 1,
+        name: s.name,
+        text: s.text,
+      })),
+    };
+
+    // FAQPage schema, built from the template's authored FAQ (must mirror the
+    // visible Q&A on the page). Emitted only when the template defines `faq`.
+    const faqLd = template.faq && template.faq.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: template.faq.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        }
+      : null;
+
     return renderInShell(request, reply, 'template-detail', {
       title: template.title + ' - OTP',
       description: template.description,
@@ -73,21 +103,7 @@ export default async function templateRoutes(app: FastifyInstance) {
         { name: 'Templates', url: BASE_URL + '/templates' },
         { name: template.shortName, url: BASE_URL + '/templates/' + slug },
       ),
-      jsonLd: {
-        '@context': 'https://schema.org',
-        '@type': 'HowTo',
-        name: template.title.replace(/ - OTP$/, ''),
-        description: template.description,
-        url: BASE_URL + '/templates/' + slug,
-        totalTime: isoDuration(template.minutes),
-        isAccessibleForFree: true,
-        step: template.steps.map((s, i) => ({
-          '@type': 'HowToStep',
-          position: i + 1,
-          name: s.name,
-          text: s.text,
-        })),
-      },
+      jsonLd: faqLd ? [howToLd, faqLd] : howToLd,
       template,
       related,
     });

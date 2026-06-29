@@ -27,6 +27,7 @@ export interface MeetingTemplate {
   bodyHtml: string;        // full authored page body (intro, when-to-use, attendees, tips, mistakes); the agenda is rendered separately from steps
   downloadMarkdown: string;// the .md a user downloads (clean, AI-importable)
   guideHtml?: string;      // optional long-form SEO guide, rendered below the download section on the detail page
+  faq?: { q: string; a: string }[]; // optional FAQ Q&A; drives FAQPage JSON-LD. MUST mirror the visible FAQ in guideHtml verbatim (Google requires schema to match on-page content).
 }
 
 // Build the lowercased search blob a client-side filter matches against.

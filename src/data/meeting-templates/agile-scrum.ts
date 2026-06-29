@@ -359,6 +359,25 @@ Free template from OrgTP. Adapt or run it live at orgtp.com/templates/sprint-rev
 <p>As a general rule of thumb, the Sprint Review should be time-boxed to a maximum of <strong>1 hour for every week of sprint duration</strong> (e.g., a 2-hour review for a 2-week sprint).</p>
 <h3>Can we run a Sprint Review without a working demo?</h3>
 <p>While a working software demo is the ideal way to show progress, some sprints may focus on research, architecture, or design. In these cases, the team should present their findings, wireframes, or architectural decisions to gather stakeholder feedback.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'Who should attend the Sprint Review?',
+        a: 'The Sprint Review should be attended by the Product Owner, the Scrum Master, the Developers, and key stakeholders (such as customers, business sponsors, sales teams, or internal users).',
+      },
+      {
+        q: 'What happens to unfinished work at the end of a sprint?',
+        a: 'Any product backlog items that do not meet the team\'s "Definition of Done" are not demonstrated during the Sprint Review. They are moved back to the Product Backlog, where the Product Owner re-prioritizes them for future sprints.',
+      },
+      {
+        q: 'How long should a Sprint Review be?',
+        a: 'As a general rule of thumb, the Sprint Review should be time-boxed to a maximum of 1 hour for every week of sprint duration (e.g., a 2-hour review for a 2-week sprint).',
+      },
+      {
+        q: 'Can we run a Sprint Review without a working demo?',
+        a: 'While a working software demo is the ideal way to show progress, some sprints may focus on research, architecture, or design. In these cases, the team should present their findings, wireframes, or architectural decisions to gather stakeholder feedback.',
+      },
+    ],
   },
   {
     slug: 'sprint-retrospective-meeting',
