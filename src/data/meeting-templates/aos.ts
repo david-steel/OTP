@@ -859,5 +859,79 @@ export const AOS_TEMPLATES: MeetingTemplate[] = [
       'Lessons, changes, and carry-forward:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/aos-quarterly-retrospective\n',
+    guideHtml: `<h2>The Ultimate Quarterly Retrospective Template &amp; Agenda Guide</h2>
+<p>While bi-weekly sprint retrospectives are excellent for tactical, short-term adjustments, teams often lose sight of the bigger picture. To drive long-term growth, prevent systemic burnout, and align on macro-level goals, organizations must run a comprehensive <strong>Quarterly Retrospective</strong>.</p>
+<p>A quarterly retrospective allows your team to step out of the day-to-day execution, analyze high-level trends over the past 90 days, and make strategic adjustments to your operating system.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Quarterly Retrospective Template</strong> and a step-by-step agenda to help your team evaluate performance, celebrate major wins, and align on strategic priorities for the upcoming quarter.</p>
+
+<h2>What is a Quarterly Retrospective?</h2>
+<p>A Quarterly Retrospective is a strategic, 75-minute team reflection session held at the end of each quarter.</p>
+<p>Unlike sprint retrospectives - which focus on immediate process tweaks - the quarterly retrospective is designed to evaluate <strong>macro-level trends, team health, cross-functional collaboration, and long-term strategic alignment</strong>. It is the perfect opportunity to assess whether your team's daily habits are actually moving the needle on your quarterly goals.</p>
+<h3>The Core Objectives of a Quarterly Retrospective:</h3>
+<ul>
+<li><strong>Evaluate Macro Trends:</strong> Look at performance data and team dynamics over a 90-day horizon rather than a 2-week window.</li>
+<li><strong>Assess Team Health:</strong> Check in on burnout levels, role alignment, and overall job satisfaction.</li>
+<li><strong>Identify Systemic Bottlenecks:</strong> Uncover deep-seated operational issues that require structural or process changes.</li>
+<li><strong>Align on Future Strategy:</strong> Ensure the team is energized and aligned on the upcoming quarter's priorities.</li>
+</ul>
+
+<h2>The Standard 75-Minute Quarterly Retrospective Agenda</h2>
+<p>To cover historical performance, team health, and future planning without rushing, we recommend a structured <strong>75-minute time-boxed agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Set the Tone &amp; Ground Rules</strong></td><td>Welcome the team, review the quarterly timeline, and establish a safe, collaborative environment for honest feedback.</td></tr>
+<tr><td><strong>00:10 - 00:25</strong></td><td><strong>Score Priorities &amp; Scorecard</strong></td><td>Review the past quarter's goals, KPIs, and key milestones. Celebrate major wins and document any missed targets.</td></tr>
+<tr><td><strong>00:25 - 00:45</strong></td><td><strong>What Went Well &amp; What Didn't</strong></td><td>Open the floor for team members to share their macro-level feedback on processes, tools, and collaboration.</td></tr>
+<tr><td><strong>00:45 - 01:05</strong></td><td><strong>Deep-Dive &amp; Problem Solving</strong></td><td>Prioritize the most critical systemic issues raised and brainstorm structural solutions or process improvements.</td></tr>
+<tr><td><strong>01:05 - 01:15</strong></td><td><strong>Carry-Forward &amp; Close</strong></td><td>Agree on 2-3 high-priority action items for the next quarter, assign owners, and officially close the session.</td></tr>
+</tbody>
+</table>
+
+<h2>Key Focus Areas for a Quarterly Retrospective</h2>
+<p>To keep your quarterly review strategic, guide your team's discussion around these three macro-level pillars:</p>
+<h3>1. People &amp; Collaboration</h3>
+<p>Evaluate how the team worked together over the past 90 days. Ask: <em>Did we have the right people in the right seats? Did we experience communication breakdowns with other departments? How are the team's energy and burnout levels?</em></p>
+<h3>2. Process &amp; Tools</h3>
+<p>Analyze the efficiency of your operating system. Ask: <em>Are our current meetings, reporting structures, and workflows serving us, or are they creating unnecessary overhead? What tools did we adopt that helped us, and which ones slowed us down?</em></p>
+<h3>3. Strategy &amp; Alignment</h3>
+<p>Assess your progress against high-level goals. Ask: <em>Did we hit our quarterly priorities? If we missed targets, was it due to poor execution, unrealistic planning, or unexpected market shifts? Are we still aligned on our long-term vision?</em></p>
+
+<h2>Best Practices for a Successful Quarterly Review</h2>
+<h3>1. Gather Data in Advance</h3>
+<p>Do not rely solely on memory. Before the meeting, gather key performance metrics, sprint velocity charts, and any employee feedback data. Having a clear, objective record of the past 90 days prevents recency bias from dominating the discussion.</p>
+<h3>2. Focus on Systemic Solutions, Not Quick Fixes</h3>
+<p>If an issue kept coming up throughout the quarter, a simple process tweak won't solve it. Use the quarterly retrospective to address the <strong>root cause</strong> of systemic problems - even if it requires structural changes, role reassignments, or retiring legacy tools.</p>
+<h3>3. Keep Action Items Realistic</h3>
+<p>Because this is a quarterly meeting, it is tempting to create a massive list of process improvements. Resist this urge. Agree on no more than <strong>2 to 3 high-impact operational changes</strong> for the upcoming quarter. Ensure each change has a clear owner and is integrated into your weekly tracking.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>How does a quarterly retrospective differ from a sprint retrospective?</h3>
+<p>A sprint retrospective is tactical and held every 2 weeks to make immediate, minor adjustments to the team's workflow. A quarterly retrospective is strategic and held every 90 days to evaluate macro-level trends, team health, and long-term alignment.</p>
+<h3>Who should attend the quarterly retrospective?</h3>
+<p>The quarterly retrospective should be attended by the entire functional team, including the Product Owner, Scrum Master, Developers, and any key cross-functional partners who worked closely with the team during the quarter.</p>
+<h3>How do you prevent a quarterly retrospective from becoming a venting session?</h3>
+<p>Ensure the facilitator maintains a strict time-box for each agenda item and actively steers the conversation toward constructive, action-oriented solutions. Use the "Set the Tone" phase to remind the team that the goal is continuous improvement, not finger-pointing.</p>
+<h3>What happens to unresolved issues at the end of the retrospective?</h3>
+<p>Any systemic issues that cannot be resolved with immediate action items should be documented and carried forward into the upcoming quarter's strategic planning sessions or addressed by leadership as structural priorities.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'How does a quarterly retrospective differ from a sprint retrospective?',
+        a: 'A sprint retrospective is tactical and held every 2 weeks to make immediate, minor adjustments to the team\'s workflow. A quarterly retrospective is strategic and held every 90 days to evaluate macro-level trends, team health, and long-term alignment.',
+      },
+      {
+        q: 'Who should attend the quarterly retrospective?',
+        a: 'The quarterly retrospective should be attended by the entire functional team, including the Product Owner, Scrum Master, Developers, and any key cross-functional partners who worked closely with the team during the quarter.',
+      },
+      {
+        q: 'How do you prevent a quarterly retrospective from becoming a venting session?',
+        a: 'Ensure the facilitator maintains a strict time-box for each agenda item and actively steers the conversation toward constructive, action-oriented solutions. Use the "Set the Tone" phase to remind the team that the goal is continuous improvement, not finger-pointing.',
+      },
+      {
+        q: 'What happens to unresolved issues at the end of the retrospective?',
+        a: 'Any systemic issues that cannot be resolved with immediate action items should be documented and carried forward into the upcoming quarter\'s strategic planning sessions or addressed by leadership as structural priorities.',
+      },
+    ],
   },
 ];
