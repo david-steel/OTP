@@ -1,0 +1,202 @@
+@import url("chapter-01.css");
+
+.chapter-two.cover-page h1 em,
+.chapter-two .tax-number,
+.chapter-two.executive-page .large-line {
+  color: var(--orange);
+  font-style: normal;
+}
+
+.chapter-two.cover-page .chapter-label span {
+  background: var(--orange);
+}
+
+.tax-list {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tax-list span,
+.audit-list li,
+.change-list span,
+.boundary-list span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.tax-list span {
+  min-height: 78px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.tax-detail-page {
+  display: grid;
+  grid-template-columns: 0.55fr 1fr;
+  gap: clamp(38px, 8vw, 96px);
+  align-items: center;
+}
+
+.tax-number {
+  font-size: clamp(7rem, 18vw, 15rem);
+  font-weight: 850;
+  line-height: 0.84;
+}
+
+.tax-detail-copy {
+  display: grid;
+  gap: 22px;
+}
+
+.tax-detail-copy h2 {
+  font-size: clamp(2.4rem, 6vw, 5.8rem);
+}
+
+.boundary-list {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: min(960px, 100%);
+}
+
+.boundary-list span {
+  min-height: 76px;
+  padding: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 760;
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+  text-align: center;
+}
+
+.audit-page {
+  gap: 30px;
+}
+
+.audit-list {
+  margin: 0;
+  padding: 0;
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  counter-reset: audit;
+}
+
+.audit-list li {
+  min-height: 112px;
+  padding: 18px 20px;
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  counter-increment: audit;
+}
+
+.audit-list li::before {
+  content: counter(audit, decimal-leading-zero);
+  color: var(--blue);
+  font-size: 0.82rem;
+  font-weight: 840;
+  letter-spacing: 0.12em;
+}
+
+.change-list {
+  width: min(840px, 100%);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.change-list span {
+  min-height: 102px;
+  padding: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 780;
+  text-align: center;
+}
+
+.cost-drawer {
+  width: min(900px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cost-drawer div {
+  min-height: 128px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.cost-drawer strong {
+  display: block;
+  color: var(--blue);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.cost-drawer span {
+  color: var(--muted);
+}
+
+.quote-page.chapter-two,
+.layer-page.chapter-two {
+  background: var(--blue);
+}
+
+.orange-page {
+  background: var(--orange);
+}
+
+.orange-page .eyebrow,
+.orange-page h2,
+.orange-page p,
+.orange-page .large-line {
+  color: var(--ink);
+}
+
+@media screen and (max-width: 820px) {
+  .tax-detail-page {
+    grid-template-columns: 1fr;
+  }
+
+  .tax-list,
+  .boundary-list,
+  .change-list,
+  .audit-list,
+  .cost-drawer {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .tax-detail-copy h2 {
+    font-size: 38pt;
+  }
+
+  .tax-number {
+    font-size: 118pt;
+  }
+
+  .audit-list li,
+  .change-list span,
+  .boundary-list span {
+    box-shadow: none;
+  }
+}

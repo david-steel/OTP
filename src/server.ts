@@ -195,6 +195,35 @@ await app.register(fastifyStatic, {
   decorateReply: false,
 });
 
+// "The Intelligent Organization" book — clean-URL static mount so the landing
+// page lives at /the-intelligent-organization/ and chapters at
+// /the-intelligent-organization/chapter-NN.html (relative CSS/img/PDF refs in
+// the published HTML resolve under this prefix). decorateReply:false to coexist
+// with the /public/ mount above.
+await app.register(fastifyStatic, {
+  root: path.join(__dirname, '..', 'public', 'the-intelligent-organization'),
+  prefix: '/the-intelligent-organization/',
+  index: 'index.html',
+  maxAge: 31536000000,
+  immutable: true,
+  decorateReply: false,
+});
+
+// Book landing page. The static mount above serves the chapter HTML, CSS,
+// images and PDFs under the prefix, but @fastify/static's `index` does not
+// resolve the bare prefix path under ignoreTrailingSlash, so the landing page
+// is served explicitly here (read + send, mirroring /home-v7). Sub-paths like
+// /the-intelligent-organization/chapter-01.html still hit the static mount.
+app.get('/the-intelligent-organization', async (_request, reply) => {
+  const { readFile } = await import('node:fs/promises');
+  const p = path.join(__dirname, '..', 'public', 'the-intelligent-organization', 'index.html');
+  const html = await readFile(p, 'utf8');
+  return reply.type('text/html').send(html);
+});
+
+// /book lands on the book home.
+app.get('/book', async (_request, reply) => reply.redirect('/the-intelligent-organization/'));
+
 // Conventional favicon path. Pages declare /public/favicon-orgy.png, but old
 // crawlers, RSS readers, and link unfurlers request /favicon.ico directly and
 // were getting the 404 page.
@@ -754,6 +783,20 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/process-templates', priority: '0.8', changefreq: 'monthly' },
     { loc: '/premium-support', priority: '0.8', changefreq: 'monthly' },
     { loc: '/guide/connect-your-agent', priority: '0.7', changefreq: 'monthly' },
+    // "The Intelligent Organization" book — landing page + 12 chapter pages.
+    { loc: '/the-intelligent-organization/', priority: '0.9', changefreq: 'monthly' },
+    { loc: '/the-intelligent-organization/chapter-01.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-02.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-03.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-04.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-05.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-06.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-07.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-08.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-09.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-10.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-11.html', priority: '0.7', changefreq: 'yearly' },
+    { loc: '/the-intelligent-organization/chapter-12.html', priority: '0.7', changefreq: 'yearly' },
   ];
 
   const today = new Date().toISOString().split('T')[0];

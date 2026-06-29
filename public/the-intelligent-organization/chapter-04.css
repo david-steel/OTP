@@ -1,0 +1,499 @@
+@import url("chapter-03.css");
+
+body.chapter-04 {
+  --chapter-blue: var(--blue);
+  --chapter-blue-soft: rgba(20, 119, 238, 0.12);
+}
+
+.chapter-four-cover h1 em,
+.detail-number,
+.chapter-four-framework strong,
+.map-center strong,
+.detail-copy strong,
+.comparison-grid strong,
+.inventory-split strong {
+  color: var(--chapter-blue);
+  font-style: normal;
+}
+
+.chapter-four-cover .chapter-label span {
+  background: var(--chapter-blue);
+}
+
+.chapter-four-cover .cover-ollie {
+  transform: rotate(-2deg);
+}
+
+.chapter-four-blue {
+  background: var(--chapter-blue);
+}
+
+.chapter-four-blue .eyebrow,
+.chapter-four-blue p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.chapter-four-blue h2,
+.chapter-four-blue .closing-line {
+  color: var(--white);
+}
+
+.question-stack,
+.behavior-grid,
+.shift-list,
+.workforce-fields,
+.authority-list,
+.inspect-grid,
+.comparison-grid,
+.inventory-split {
+  width: min(960px, 100%);
+  display: grid;
+  gap: 12px;
+}
+
+.question-stack {
+  margin-top: 48px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.question-stack span,
+.behavior-grid span,
+.shift-list div,
+.workforce-fields article,
+.detail-cards div,
+.authority-list span,
+.inspect-grid div,
+.comparison-grid article,
+.inventory-split div,
+.inventory-list li,
+.seat-card,
+.role-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.question-stack span {
+  min-height: 86px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.behavior-page,
+.chapter-four-shift {
+  background: var(--white);
+  gap: 34px;
+}
+
+.behavior-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.behavior-grid span {
+  min-height: 108px;
+  padding: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  text-align: center;
+  font-weight: 820;
+}
+
+.shift-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.shift-list div {
+  min-height: 140px;
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.shift-list strong {
+  color: var(--chapter-blue);
+  font-size: 1.1rem;
+}
+
+.shift-list span,
+.workforce-fields span,
+.detail-cards span,
+.inspect-grid span,
+.comparison-grid span,
+.inventory-split span,
+.seat-card span,
+.role-card span {
+  color: var(--muted);
+}
+
+.chapter-four-framework {
+  background: var(--soft);
+}
+
+.workforce-fields {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workforce-fields article {
+  min-height: 132px;
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.workforce-fields strong {
+  font-size: 1.1rem;
+}
+
+.map-page {
+  background: var(--soft);
+  gap: 28px;
+}
+
+.workforce-map {
+  width: min(980px, 100%);
+  min-height: 470px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, rgba(219, 225, 234, 0.55) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(219, 225, 234, 0.55) 1px, transparent 1px),
+    var(--white);
+  background-size: 64px 64px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 0.82fr 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+}
+
+.map-rail {
+  grid-column: 1 / -1;
+  min-height: 56px;
+  border-radius: 8px;
+  background: var(--chapter-blue);
+  color: var(--white);
+  display: grid;
+  place-items: center;
+  font-weight: 820;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.map-column,
+.map-center {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.map-column strong {
+  color: var(--ink);
+}
+
+.map-column span,
+.map-center span {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--soft);
+  color: var(--ink);
+  font-weight: 760;
+}
+
+.map-center {
+  border-color: var(--chapter-blue);
+  background: var(--chapter-blue-soft);
+}
+
+.map-center strong {
+  font-size: 1.2rem;
+}
+
+.workforce-detail-page {
+  display: grid;
+  grid-template-columns: 0.44fr 1fr;
+  gap: clamp(36px, 7vw, 86px);
+  align-items: center;
+  background: var(--white);
+}
+
+.authority-page {
+  background: var(--soft);
+}
+
+.detail-number {
+  font-size: clamp(6.4rem, 16vw, 13rem);
+  font-weight: 850;
+  line-height: 0.84;
+}
+
+.detail-copy {
+  display: grid;
+  gap: 22px;
+}
+
+.detail-copy h2 {
+  font-size: clamp(2.3rem, 5.7vw, 5.5rem);
+}
+
+.detail-cards,
+.inspect-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: min(780px, 100%);
+}
+
+.detail-cards div,
+.inspect-grid div {
+  min-height: 116px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.inspect-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.authority-list {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.authority-list span {
+  min-height: 94px;
+  padding: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  text-align: center;
+  font-weight: 820;
+}
+
+.comparison-page {
+  background: var(--soft);
+  gap: 30px;
+}
+
+.comparison-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.comparison-grid article {
+  min-height: 230px;
+  padding: 24px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.comparison-grid strong {
+  font-size: 1.3rem;
+}
+
+.comparison-grid span {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.executive-ollie-page {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: clamp(40px, 7vw, 92px);
+  align-items: center;
+  background:
+    radial-gradient(circle at 78% 47%, rgba(183, 239, 24, 0.2), transparent 31%),
+    var(--paper);
+}
+
+.ollie-copy {
+  display: grid;
+  gap: 24px;
+}
+
+.leadership-scene {
+  width: min(520px, 100%);
+  min-height: 590px;
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, rgba(219, 225, 234, 0.55) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(219, 225, 234, 0.55) 1px, transparent 1px),
+    var(--white);
+  background-size: 58px 58px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.leadership-scene img {
+  position: absolute;
+  z-index: 4;
+  width: 270px;
+  right: 34px;
+  bottom: 52px;
+  transform: rotate(-5deg);
+  filter: drop-shadow(0 22px 48px rgba(183, 239, 24, 0.24));
+}
+
+.table-line {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 126px;
+  border-top: 1px solid var(--line);
+  background: var(--white);
+}
+
+.seat-card,
+.role-card {
+  position: absolute;
+  z-index: 5;
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.seat-card {
+  width: 180px;
+}
+
+.human-seat {
+  top: 34px;
+  left: 34px;
+}
+
+.agent-seat {
+  top: 34px;
+  right: 34px;
+}
+
+.role-card {
+  width: 220px;
+  left: 36px;
+  bottom: 34px;
+}
+
+.role-card strong {
+  color: var(--chapter-blue);
+}
+
+.inventory-page {
+  gap: 28px;
+}
+
+.inventory-split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.inventory-split div {
+  min-height: 120px;
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.inventory-list {
+  margin: 0;
+  padding: 0;
+  width: min(940px, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+  counter-reset: inventory;
+}
+
+.inventory-list li {
+  min-height: 100px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+  counter-increment: inventory;
+}
+
+.inventory-list li::before {
+  content: counter(inventory, decimal-leading-zero);
+  color: var(--chapter-blue);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.chapter-four-closing {
+  background: var(--orange);
+  text-align: center;
+  align-items: center;
+}
+
+.chapter-four-closing .eyebrow,
+.chapter-four-closing h2,
+.chapter-four-closing p,
+.chapter-four-closing .final-line {
+  color: var(--ink);
+}
+
+@media screen and (max-width: 820px) {
+  .question-stack,
+  .behavior-grid,
+  .shift-list,
+  .workforce-fields,
+  .workforce-map,
+  .workforce-detail-page,
+  .detail-cards,
+  .authority-list,
+  .inspect-grid,
+  .comparison-grid,
+  .executive-ollie-page,
+  .inventory-split,
+  .inventory-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .question-stack span,
+  .behavior-grid span,
+  .shift-list div,
+  .workforce-fields article,
+  .workforce-map,
+  .detail-cards div,
+  .authority-list span,
+  .inspect-grid div,
+  .comparison-grid article,
+  .inventory-split div,
+  .inventory-list li,
+  .seat-card,
+  .role-card,
+  .leadership-scene {
+    box-shadow: none;
+  }
+
+  .detail-copy h2 {
+    font-size: 38pt;
+  }
+
+  .detail-number {
+    font-size: 112pt;
+  }
+
+  .behavior-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .inventory-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
