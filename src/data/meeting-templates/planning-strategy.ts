@@ -234,6 +234,82 @@ export const PLANNING_STRATEGY_TEMPLATES: MeetingTemplate[] = [
       'Next-quarter priorities and owners:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/quarterly-business-review\n',
+    guideHtml: `<h2>The Ultimate Quarterly Business Review (QBR) Template &amp; Guide</h2>
+<p>A Quarterly Business Review (QBR) is one of the most critical touchpoints you have with your customers, executives, or cross-functional teams. Done right, a QBR cements your status as a strategic partner, aligns stakeholders on high-level goals, and uncovers massive growth opportunities.</p>
+<p>Done wrong, it becomes a boring, retrospective status report that stakeholders dread attending.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Quarterly Business Review Template</strong> and a step-by-step agenda to help you deliver high-impact QBRs that drive retention, alignment, and strategic growth.</p>
+
+<h2>What is a Quarterly Business Review (QBR)?</h2>
+<p>A QBR is a strategic meeting held once a quarter with key stakeholders to discuss the health of the business, review performance metrics, align on strategic goals, and plan for the upcoming 90 days.</p>
+<p>Unlike weekly or monthly tactical syncs, a QBR is strictly focused on <strong>high-level strategy and value delivery</strong>. It is an opportunity to step out of the day-to-day execution and look at the bigger picture.</p>
+<h3>The Core Objectives of a QBR:</h3>
+<ul>
+<li><strong>Demonstrate Value:</strong> Prove the ROI and impact delivered over the past 90 days.</li>
+<li><strong>Align on Strategy:</strong> Ensure both teams are working toward the same long-term business objectives.</li>
+<li><strong>Identify Roadblocks:</strong> Uncover and address systemic issues before they impact performance.</li>
+<li><strong>Plan the Next Quarter:</strong> Agree on the key priorities, initiatives, and "WIGs" (Wildly Important Goals) for the next 90 days.</li>
+</ul>
+
+<h2>The Standard 90-Minute QBR Agenda</h2>
+<p>To cover both historical performance and future strategy without rushing, we recommend a structured <strong>90-minute time-boxed agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Executive Summary &amp; Alignment</strong></td><td>Welcome stakeholders, review the agenda, and re-align on the overarching business vision and partnership goals.</td></tr>
+<tr><td><strong>00:10 - 00:30</strong></td><td><strong>The 90-Day Retrospective</strong></td><td>Review key performance indicators (KPIs), milestones achieved, and the value delivered over the past quarter.</td></tr>
+<tr><td><strong>00:30 - 00:45</strong></td><td><strong>Challenges &amp; Lessons Learned</strong></td><td>Openly discuss any roadblocks, missed targets, or operational bottlenecks, and outline corrective actions.</td></tr>
+<tr><td><strong>00:45 - 01:15</strong></td><td><strong>Strategic Planning (The Next 90 Days)</strong></td><td>Brainstorm and agree on the primary initiatives, goals, and resource allocation for the upcoming quarter.</td></tr>
+<tr><td><strong>01:15 - 01:30</strong></td><td><strong>Action Items &amp; Wrap-Up</strong></td><td>Summarize key decisions, assign owners to new action items, and confirm the timeline for the next review.</td></tr>
+</tbody>
+</table>
+
+<h2>Slide-by-Slide QBR Presentation Structure</h2>
+<p>When building your QBR presentation deck, use this highly effective 6-slide structure to keep your audience engaged:</p>
+<ol>
+<li><strong>Slide 1: Executive Summary:</strong> A high-level overview of the partnership's health, top wins, and the primary focus of today's meeting.</li>
+<li><strong>Slide 2: KPI &amp; Performance Dashboard:</strong> Visual charts showing performance against agreed-upon benchmarks. Focus on outcomes, not just activities.</li>
+<li><strong>Slide 3: Strategic Wins:</strong> Highlight 2-3 major achievements from the past quarter and explain the business impact of those wins.</li>
+<li><strong>Slide 4: Roadblocks &amp; Solutions:</strong> A transparent look at what didn't go well, why it happened, and the exact plan to fix it.</li>
+<li><strong>Slide 5: Future Roadmap:</strong> A visual timeline of the key initiatives and deliverables planned for the next 90 days.</li>
+<li><strong>Slide 6: Mutual Commitments:</strong> A clear list of what is required from both parties to ensure success in the upcoming quarter.</li>
+</ol>
+
+<h2>Best Practices for Delivering a World-Class QBR</h2>
+<h3>1. Focus on Outcomes, Not Outputs</h3>
+<p>Stakeholders do not care about how many tasks you completed; they care about the <strong>business results</strong> of those tasks. Instead of saying, <em>"We published 12 blog posts,"</em> say, <em>"Our content strategy drove a 24% increase in organic leads this quarter."</em></p>
+<h3>2. Keep It Forward-Looking</h3>
+<p>A common mistake is spending 80% of the meeting reviewing the past. A great QBR spends <strong>30% of the time on the past and 70% on the future</strong>. Use the retrospective to build context, then focus the energy on strategic planning.</p>
+<h3>3. Ensure the Right People are in the Room</h3>
+<p>A QBR is a strategic meeting, which means decision-makers must be present. Ensure executive sponsors, product leaders, or key business owners are invited and actively participating.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>Who should lead the QBR?</h3>
+<p>The QBR is typically co-led by the Account Manager/Customer Success Manager and the primary client contact, with active contributions from executive sponsors and technical leads.</p>
+<h3>How do you handle a bad quarter in a QBR?</h3>
+<p>Be completely transparent. Present the data honestly, explain the root cause of the underperformance, and come prepared with a concrete, actionable plan to get back on track. Executives respect transparency and proactive problem-solving.</p>
+<h3>What is the difference between a QBR and an MBR?</h3>
+<p>A Monthly Business Review (MBR) is more tactical, focusing on month-over-month metrics and operational execution. A QBR is highly strategic, focusing on long-term alignment, ROI, and macro-level planning.</p>
+<h3>How do you prepare stakeholders for a QBR?</h3>
+<p>Send the presentation deck and key performance data to all attendees at least 48 hours in advance. This allows stakeholders to review the information beforehand so the meeting can be spent on strategic discussion rather than reading slides.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'Who should lead the QBR?',
+        a: 'The QBR is typically co-led by the Account Manager/Customer Success Manager and the primary client contact, with active contributions from executive sponsors and technical leads.',
+      },
+      {
+        q: 'How do you handle a bad quarter in a QBR?',
+        a: 'Be completely transparent. Present the data honestly, explain the root cause of the underperformance, and come prepared with a concrete, actionable plan to get back on track. Executives respect transparency and proactive problem-solving.',
+      },
+      {
+        q: 'What is the difference between a QBR and an MBR?',
+        a: 'A Monthly Business Review (MBR) is more tactical, focusing on month-over-month metrics and operational execution. A QBR is highly strategic, focusing on long-term alignment, ROI, and macro-level planning.',
+      },
+      {
+        q: 'How do you prepare stakeholders for a QBR?',
+        a: 'Send the presentation deck and key performance data to all attendees at least 48 hours in advance. This allows stakeholders to review the information beforehand so the meeting can be spent on strategic discussion rather than reading slides.',
+      },
+    ],
   },
   {
     slug: 'board-meeting',
