@@ -744,6 +744,82 @@ Cash actions (who / what / when):
 -
 
 Free template from OrgTP. Adapt or run it live at orgtp.com/templates/cash-power-of-one-meeting`,
+    guideHtml: `<h2>The Ultimate Cash &amp; Power of One Meeting Template &amp; Agenda Guide</h2>
+<p>In business, profit is an opinion, but cash is a fact. Many growing companies find themselves highly profitable on paper while simultaneously struggling with cash flow bottlenecks. To build a resilient, scalable business, leadership teams must move beyond standard profit and loss (P&amp;L) statements and actively manage their cash operating cycle. That is where the <strong>Power of One</strong> framework comes in.</p>
+<p>The Power of One is a strategic financial exercise that demonstrates how small, incremental changes across seven key operational levers can have a massive, compounding impact on your company's cash flow and overall valuation.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Power of One Meeting Template</strong> and a step-by-step agenda to help your leadership team analyze cash flow, model growth scenarios, and unlock hidden capital.</p>
+
+<h2>What is a Cash &amp; Power of One Meeting?</h2>
+<p>A Cash / Power of One Meeting is a strategic, 90-minute financial review held monthly or quarterly.</p>
+<p>The primary objective of the meeting is to evaluate the company's cash position, analyze the cash conversion cycle, and run scenario modeling using the <strong>7 Financial Levers</strong>. Rather than focusing on complex accounting rules, this meeting is designed to help non-financial leaders understand how their daily operational decisions directly impact the company's bank account.</p>
+<h3>The Core Objectives of the Meeting:</h3>
+<ul>
+<li><strong>Review Cash Runway:</strong> Understand the company's current cash position, net burn rate, and runway.</li>
+<li><strong>Analyze the Cash Conversion Cycle:</strong> Measure the time it takes for a dollar spent on inventory or resources to return to the bank account as revenue.</li>
+<li><strong>Model the 7 Levers:</strong> Run scenario analyses to see how 1% or 1-day adjustments impact cash flow.</li>
+<li><strong>Commit to Cash Initiatives:</strong> Agree on specific operational changes to optimize cash flow over the next 30 to 90 days.</li>
+</ul>
+
+<h2>The Standard 90-Minute Cash &amp; Power of One Agenda</h2>
+<p>To cover historical cash performance, run scenario modeling, and agree on operational changes, we recommend a structured <strong>90-minute time-boxed agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:15</strong></td><td><strong>Cash Position &amp; Runway Review</strong></td><td>Review current cash balances, accounts receivable (A/R) aging, accounts payable (A/P) aging, and net cash flow.</td></tr>
+<tr><td><strong>00:15 - 00:45</strong></td><td><strong>The 7 Financial Levers Analysis</strong></td><td>Go through each of the 7 operational levers. Identify which levers are currently underperforming or creating bottlenecks.</td></tr>
+<tr><td><strong>00:45 - 01:15</strong></td><td><strong>Scenario Modeling (The Power of One)</strong></td><td>Run live scenario modeling. Calculate the cash impact of making a 1% or 1-day improvement across each of the 7 levers.</td></tr>
+<tr><td><strong>01:15 - 01:30</strong></td><td><strong>Action Items &amp; Cash Commitments</strong></td><td>Agree on 1-2 specific cash-optimization initiatives for the upcoming month, assign owners, and close the meeting.</td></tr>
+</tbody>
+</table>
+
+<h2>The 7 Financial Levers of the Power of One</h2>
+<p>To unlock hidden cash in your business, your leadership team must analyze and optimize these seven operational levers:</p>
+<ol>
+<li><strong>Price:</strong> Can you increase your prices by 1%? A 1% price increase flows directly to the bottom line with zero added cost.</li>
+<li><strong>Volume:</strong> Can you sell 1% more units or secure 1% more transactions at your current price point?</li>
+<li><strong>Cost of Goods Sold (COGS):</strong> Can you reduce your direct costs (materials, direct labor, software licensing) by 1%?</li>
+<li><strong>Operating Expenses (OpEx):</strong> Can you reduce your indirect overhead costs (rent, administrative software, travel) by 1%?</li>
+<li><strong>Accounts Receivable (A/R) Days:</strong> Can you collect payments from your customers 1 day faster?</li>
+<li><strong>Inventory / Work-in-Progress (WIP) Days:</strong> Can you reduce the time your inventory or service delivery sits in progress by 1 day?</li>
+<li><strong>Accounts Payable (A/P) Days:</strong> Can you negotiate with your vendors to pay them 1 day later without incurring penalties?</li>
+</ol>
+
+<h2>Best Practices for a High-Impact Cash Review</h2>
+<h3>1. Focus on Small, Compounding Changes</h3>
+<p>Do not try to find a single, massive 20% cost-cutting measure. The magic of the Power of One is in the compounding effect of small changes. A 1% increase in price, combined with a 1% reduction in COGS and a 1-day reduction in A/R days, can easily increase a company's cash flow by 10% to 30% without disrupting operations.</p>
+<h3>2. Involve Cross-Functional Leaders</h3>
+<p>Cash flow is not just the CFO's job. Every department head controls at least one of the 7 levers. Sales leaders control Price and Volume; operations leaders control COGS and Inventory; HR and marketing leaders control OpEx; customer success leaders often influence A/R days. Involving all leaders builds shared financial accountability.</p>
+<h3>3. Model Scenarios Live</h3>
+<p>Use a spreadsheet or financial modeling tool to run scenarios live during the meeting. Showing your sales leader exactly how much cash is unlocked by a 1% price increase - or showing your operations leader the cash cost of holding excess inventory - makes the financial reality of the business tangible and actionable.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What is the "Power of One" in business?</h3>
+<p>The Power of One is a financial management framework that shows how making small, 1% or 1-day improvements across seven key operational levers (Price, Volume, COGS, OpEx, A/R, Inventory, and A/P) can dramatically increase a company's cash flow and valuation.</p>
+<h3>How often should you run a Cash / Power of One meeting?</h3>
+<p>We recommend running a dedicated Cash / Power of One meeting <strong>monthly</strong> for companies experiencing rapid growth, tight cash flow, or significant inventory cycles. For stable, cash-rich companies, a <strong>quarterly</strong> strategic review is sufficient.</p>
+<h3>What are the 7 financial levers of cash flow?</h3>
+<p>The 7 financial levers are: Price, Volume, Cost of Goods Sold (COGS), Operating Expenses (OpEx), Accounts Receivable (A/R) Days, Inventory/WIP Days, and Accounts Payable (A/P) Days.</p>
+<h3>How does the Power of One differ from a standard budget review?</h3>
+<p>A standard budget review compares actual expenses against forecasted budgets to control spending. The Power of One is a strategic, forward-looking exercise focused on optimizing the cash conversion cycle and modeling the compounding impact of operational changes on cash flow.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'What is the "Power of One" in business?',
+        a: 'The Power of One is a financial management framework that shows how making small, 1% or 1-day improvements across seven key operational levers (Price, Volume, COGS, OpEx, A/R, Inventory, and A/P) can dramatically increase a company\'s cash flow and valuation.',
+      },
+      {
+        q: 'How often should you run a Cash / Power of One meeting?',
+        a: 'We recommend running a dedicated Cash / Power of One meeting monthly for companies experiencing rapid growth, tight cash flow, or significant inventory cycles. For stable, cash-rich companies, a quarterly strategic review is sufficient.',
+      },
+      {
+        q: 'What are the 7 financial levers of cash flow?',
+        a: 'The 7 financial levers are: Price, Volume, Cost of Goods Sold (COGS), Operating Expenses (OpEx), Accounts Receivable (A/R) Days, Inventory/WIP Days, and Accounts Payable (A/P) Days.',
+      },
+      {
+        q: 'How does the Power of One differ from a standard budget review?',
+        a: 'A standard budget review compares actual expenses against forecasted budgets to control spending. The Power of One is a strategic, forward-looking exercise focused on optimizing the cash conversion cycle and modeling the compounding impact of operational changes on cash flow.',
+      },
+    ],
   },
   {
     slug: 'quarterly-theme-rollout-meeting',
