@@ -87,6 +87,74 @@ Duration: 90 min | Cadence: Weekly | Participants: Leadership team (3-10)
 
 
 Free template from OrgTP. Adapt or run it live at orgtp.com/templates/level-10-meeting`,
+    guideHtml: `<h2>The Ultimate Level 10 Meeting Template &amp; Agenda Guide</h2>
+<p>In the Entrepreneurial Operating System (EOS)&reg;, the Level 10 Meeting&trade; (L10) is the heartbeat of a healthy, aligned leadership team. The name comes from a simple question: <em>On a scale of 1 to 10, how rateable was today's meeting?</em> Most business meetings rate at a 4 or 5. The L10 is designed to ensure every meeting is a solid 10.</p>
+<p>If your team's meetings are running over time, devolving into unstructured discussions, or failing to resolve key issues, implementing the strict Level 10 framework will transform your operational execution.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Level 10 Meeting Template</strong> and a step-by-step agenda breakdown to help your team stay focused, solve issues permanently, and maintain weekly traction.</p>
+
+<h2>What is a Level 10 Meeting?</h2>
+<p>A Level 10 Meeting is a weekly, 90-minute meeting designed for leadership teams and departmental units. It is strictly time-boxed, starts and ends on time, and follows the exact same agenda every single week.</p>
+<p>The primary objective of the L10 is to keep the team aligned on weekly priorities, review key metrics, and spend the majority of the time <strong>identifying, discussing, and solving (IDS) the company's most critical issues</strong>.</p>
+
+<h2>The Standard 90-Minute Level 10 Agenda</h2>
+<p>To maintain momentum, the L10 agenda is divided into two distinct phases: <strong>The Pulse (25 minutes)</strong> and <strong>The Solve (65 minutes)</strong>.</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Phase</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Good News</strong></td><td>The Pulse</td><td>Share one personal and one professional win from the past week to transition into a positive, collaborative mindset.</td></tr>
+<tr><td><strong>00:05 - 00:10</strong></td><td><strong>The Scorecard</strong></td><td>The Pulse</td><td>Review 5-15 high-level weekly metrics. If a metric is off-track, drop it to the Issues List (no discussion allowed yet).</td></tr>
+<tr><td><strong>00:10 - 00:15</strong></td><td><strong>Rock Review</strong></td><td>The Pulse</td><td>Review quarterly priorities (Rocks). Status is simply "On Track" or "Off Track." Off-track Rocks are dropped to the Issues List.</td></tr>
+<tr><td><strong>00:15 - 00:20</strong></td><td><strong>Customer/Employee Headlines</strong></td><td>The Pulse</td><td>Share 1-sentence updates regarding key client or team feedback. Drop any issues arising from these headlines to the Issues List.</td></tr>
+<tr><td><strong>00:20 - 00:25</strong></td><td><strong>To-Do List</strong></td><td>The Pulse</td><td>Review last week's action items. The goal is a 90% completion rate. Uncompleted items remain on the list or become issues.</td></tr>
+<tr><td><strong>00:25 - 01:25</strong></td><td><strong>IDS (Identify, Discuss, Solve)</strong></td><td>The Solve</td><td><strong>The core of the meeting.</strong> Prioritize the top 3 issues on the list, identify the root cause, discuss solutions, and assign action items.</td></tr>
+<tr><td><strong>01:25 - 01:30</strong></td><td><strong>Conclude &amp; Rate</strong></td><td>The Solve</td><td>Recap new To-Dos, decide if any headlines need to be communicated to the company, and rate the meeting from 1 to 10.</td></tr>
+</tbody>
+</table>
+
+<h2>The IDS&trade; Framework: How to Solve Issues Permanently</h2>
+<p>The majority of your Level 10 Meeting (60 minutes) is dedicated to IDS. Most teams waste time discussing symptoms rather than solving the actual problem. The EOS IDS framework prevents this:</p>
+<ol>
+<li><strong>I - Identify:</strong> Dig deep to find the root cause of the issue. Do not start discussing until the real problem is clearly stated.</li>
+<li><strong>D - Discuss:</strong> Open the floor for everyone to share their thoughts, data, and perspectives. Keep discussions focused on the root cause, not tangents.</li>
+<li><strong>S - Solve:</strong> Agree on a concrete action item (To-Do) that will resolve the issue permanently. A solution always ends with a clear owner and a 7-day deadline.</li>
+</ol>
+
+<h2>Best Practices for Running a Level 10 Meeting</h2>
+<h3>1. Same Day, Same Time, Same Agenda</h3>
+<p>Consistency is key. Do not reschedule the meeting because someone is missing. The meeting must go on. This builds a predictable operational rhythm that the entire organization can rely on.</p>
+<h3>2. No Discussion During the Pulse</h3>
+<p>The first 25 minutes are strictly for reporting data. If a metric is off-track or a Rock is failing, simply say "Off Track" and drop it to the Issues List. Do not allow the team to start solving problems early, or you will run out of time for IDS.</p>
+<h3>3. Rate Honestly</h3>
+<p>At the end of the meeting, every attendee must rate it from 1 to 10. If anyone rates it below an 8, they must explain why. This feedback loop ensures the meeting remains highly efficient and valuable.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>What does IDS stand for in EOS?</h3>
+<p>IDS stands for <strong>Identify, Discuss, and Solve</strong>. It is the three-step problem-solving methodology used during the core phase of the weekly Level 10 Meeting to resolve issues permanently.</p>
+<h3>Why is it called a Level 10 Meeting?</h3>
+<p>It is called a Level 10 Meeting because it is designed to be a "10 out of 10" in terms of efficiency, value, and engagement. Attendees rate the meeting at the end of each session to ensure it maintains this high standard.</p>
+<h3>Who should attend the Level 10 Meeting?</h3>
+<p>The weekly L10 is typically run by the leadership team. However, as an organization scales, every department or cross-functional team should run their own departmental Level 10 Meetings to maintain alignment.</p>
+<h3>What happens if we don't solve all the issues during IDS?</h3>
+<p>It is completely normal to have unsolved issues left on the list. Unsolved issues simply roll over to the next week's Issues List. The team should always prioritize the top 3 most critical issues first, rather than trying to solve them in chronological order.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'What does IDS stand for in EOS?',
+        a: 'IDS stands for Identify, Discuss, and Solve. It is the three-step problem-solving methodology used during the core phase of the weekly Level 10 Meeting to resolve issues permanently.',
+      },
+      {
+        q: 'Why is it called a Level 10 Meeting?',
+        a: 'It is called a Level 10 Meeting because it is designed to be a "10 out of 10" in terms of efficiency, value, and engagement. Attendees rate the meeting at the end of each session to ensure it maintains this high standard.',
+      },
+      {
+        q: 'Who should attend the Level 10 Meeting?',
+        a: 'The weekly L10 is typically run by the leadership team. However, as an organization scales, every department or cross-functional team should run their own departmental Level 10 Meetings to maintain alignment.',
+      },
+      {
+        q: 'What happens if we don\'t solve all the issues during IDS?',
+        a: 'It is completely normal to have unsolved issues left on the list. Unsolved issues simply roll over to the next week\'s Issues List. The team should always prioritize the top 3 most critical issues first, rather than trying to solve them in chronological order.',
+      },
+    ],
   },
 
   {
