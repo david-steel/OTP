@@ -305,6 +305,60 @@ Show the increment to stakeholders, gather feedback, and adapt the backlog. A wo
 
 ---
 Free template from OrgTP. Adapt or run it live at orgtp.com/templates/sprint-review-meeting`,
+    guideHtml: `<h2>The Ultimate Sprint Review Template &amp; Meeting Agenda Guide</h2>
+<p>A successful Sprint Review is more than just a demo - it is a collaborative session where the Scrum Team and stakeholders align on what was built, gather feedback, and adapt the product backlog for the upcoming sprint.</p>
+<p>If your Sprint Reviews feel like a dry, one-way presentation or a stressful "sign-off" meeting, your team is missing out on the core value of agile feedback loops.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Sprint Review Template</strong> and a step-by-step <strong>Sprint Review Meeting Agenda</strong> to help your team showcase their hard work, build trust with stakeholders, and drive continuous product improvement.</p>
+
+<h2>What is a Sprint Review?</h2>
+<p>The Sprint Review is an informal meeting held at the end of each sprint. It is one of the four formal events in the Scrum framework. The primary objective is to inspect the increment of work completed during the sprint and adapt the Product Backlog if necessary.</p>
+<h3>Sprint Review vs. Sprint Retrospective: What&rsquo;s the Difference?</h3>
+<p>It is common to confuse these two end-of-sprint events, but they serve entirely different purposes:</p>
+<ul>
+<li><strong>Sprint Review:</strong> Focuses on <strong>WHAT</strong> the team built. It is a product-focused meeting where stakeholders are present to review the product increment and provide feedback.</li>
+<li><strong>Sprint Retrospective:</strong> Focuses on <strong>HOW</strong> the team built it. It is an internal team meeting focused on process improvement, collaboration, and tools.</li>
+</ul>
+
+<h2>The Standard 1-Hour Sprint Review Meeting Agenda</h2>
+<p>To keep your team focused and respect your stakeholders' time, we recommend a strict <strong>time-boxed 60-minute agenda</strong>. Below is the exact agenda structure included in our downloadable template:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Owner</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Welcome &amp; Context Setting</strong></td><td>Product Owner</td><td>Welcome stakeholders, state the Sprint Goal, and outline which product backlog items were "Done" and which were "Not Done."</td></tr>
+<tr><td><strong>00:05 - 00:15</strong></td><td><strong>The Product Demo (The Increment)</strong></td><td>Developers / Team</td><td>Demonstrate the working software or completed deliverables. Focus on value and user experience, not just lines of code.</td></tr>
+<tr><td><strong>00:15 - 00:35</strong></td><td><strong>Stakeholder Feedback &amp; Discussion</strong></td><td>Facilitator / PO</td><td>Open the floor for questions, gather feedback on the demoed features, and discuss real-world usability.</td></tr>
+<tr><td><strong>00:35 - 00:50</strong></td><td><strong>Market &amp; Backlog Review</strong></td><td>Product Owner</td><td>Review the current state of the Product Backlog, discuss release dates, and analyze any market or budget changes.</td></tr>
+<tr><td><strong>00:50 - 01:00</strong></td><td><strong>Next Steps &amp; Wrap-Up</strong></td><td>Scrum Master</td><td>Summarize key feedback, outline tentative goals for the next sprint, and officially close the meeting.</td></tr>
+</tbody>
+</table>
+
+<h2>Key Roles in a Sprint Review</h2>
+<p>For a Sprint Review to run smoothly, every participant must understand their role:</p>
+<ul>
+<li><strong>The Product Owner (PO):</strong> Explains what backlog items have been completed (and which haven't), manages stakeholder expectations, and leads the discussion on how the feedback impacts the future product roadmap.</li>
+<li><strong>The Scrum Team (Developers):</strong> Demonstrates the working increment, explains what went well during the sprint, discusses any technical obstacles they overcame, and answers technical questions.</li>
+<li><strong>The Scrum Master:</strong> Facilitates the meeting, ensures the event remains time-boxed, and helps the team maintain an informal, collaborative atmosphere.</li>
+<li><strong>Stakeholders:</strong> Provide honest, constructive feedback on the product increment, share market insights, and align on upcoming priorities.</li>
+</ul>
+
+<h2>Best Practices for an Effective Sprint Review</h2>
+<p>To move your Sprint Reviews from "boring status updates" to "high-value collaboration sessions," implement these three best practices:</p>
+<h3>1. Focus on Value, Not Just Features</h3>
+<p>Don't just list the technical tasks your team completed. Instead, explain <strong>why</strong> those tasks matter to the user. Frame your demo around user stories: <em>"We built this feature so that our customers can complete their checkout process in under 30 seconds."</em></p>
+<h3>2. Keep It Informal</h3>
+<p>The Sprint Review is not a formal presentation or a high-stakes slide deck review. It should be an informal, hands-on session. Encourage stakeholders to interact with the working software themselves during the meeting if possible.</p>
+<h3>3. Embrace "Negative" Feedback</h3>
+<p>If stakeholders point out flaws or suggest changes, view it as a win. Finding out that a feature doesn't meet user needs during a Sprint Review is infinitely better than finding out after it has been deployed to production. Capture this feedback and use it to refine your Product Backlog.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>Who should attend the Sprint Review?</h3>
+<p>The Sprint Review should be attended by the Product Owner, the Scrum Master, the Developers, and key stakeholders (such as customers, business sponsors, sales teams, or internal users).</p>
+<h3>What happens to unfinished work at the end of a sprint?</h3>
+<p>Any product backlog items that do not meet the team's "Definition of Done" are not demonstrated during the Sprint Review. They are moved back to the Product Backlog, where the Product Owner re-prioritizes them for future sprints.</p>
+<h3>How long should a Sprint Review be?</h3>
+<p>As a general rule of thumb, the Sprint Review should be time-boxed to a maximum of <strong>1 hour for every week of sprint duration</strong> (e.g., a 2-hour review for a 2-week sprint).</p>
+<h3>Can we run a Sprint Review without a working demo?</h3>
+<p>While a working software demo is the ideal way to show progress, some sprints may focus on research, architecture, or design. In these cases, the team should present their findings, wireframes, or architectural decisions to gather stakeholder feedback.</p>`,
   },
   {
     slug: 'sprint-retrospective-meeting',

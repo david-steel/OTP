@@ -24,6 +24,20 @@
     font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--blue-deep);
     background:var(--grey); border:1px solid var(--line); border-radius:5px; padding:1px 5px;
   }
+  .td-body em { font-style:italic; }
+  .td-body table {
+    width:100%; border-collapse:collapse; margin:6px 0 18px; font-size:14px;
+    display:block; overflow-x:auto;
+  }
+  .td-body th, .td-body td {
+    text-align:left; vertical-align:top; padding:9px 12px; border:1px solid var(--line); line-height:1.5;
+  }
+  .td-body thead th {
+    background:var(--grey); color:var(--ink);
+    font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:12.5px;
+    letter-spacing:-0.005em; white-space:nowrap;
+  }
+  .td-body tbody td:first-child { white-space:nowrap; }
 
   .td-meta { display:flex; flex-wrap:wrap; gap:8px; }
   .td-badge {
@@ -149,6 +163,13 @@
         Print
       </button>
     </div>
+
+    <!-- Long-form SEO guide (per-template, optional). Trusted authored HTML. -->
+    <% if (template.guideHtml) { %>
+      <div class="card p-6 sm:p-8 mt-8">
+        <div class="td-body"><%- template.guideHtml %></div>
+      </div>
+    <% } %>
 
     <!-- Run live CTA -->
     <div class="td-cta no-print mt-8">
