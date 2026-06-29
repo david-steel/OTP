@@ -105,6 +105,71 @@ export const RETROSPECTIVE_TEMPLATES: MeetingTemplate[] = [
 
 ---
 Free template from OrgTP. Adapt or run it live at orgtp.com/templates/start-stop-continue-retrospective`,
+    guideHtml: `<h2>The Ultimate Start, Stop, Continue Retrospective Template &amp; Guide</h2>
+<p>Continuous improvement is the cornerstone of agile teams, but traditional retrospectives can easily devolve into aimless venting sessions or repetitive discussions. To drive real, actionable change, teams need a simple, action-oriented framework. That is where the <strong>Start, Stop, Continue</strong> retrospective comes in.</p>
+<p>By focusing strictly on concrete actions - what to start doing, what to stop doing, and what to keep doing - this framework cuts through the noise and leaves your team with a clear, realistic action plan for the upcoming cycle.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Start, Stop, Continue Template</strong> and a step-by-step guide to running a high-impact retrospective that actually drives team progress.</p>
+
+<h2>What is a Start, Stop, Continue Retrospective?</h2>
+<p>The Start, Stop, Continue retrospective is a team reflection exercise designed to evaluate recent performance and identify specific behavioral or operational changes.</p>
+<p>Unlike other retrospective formats that focus heavily on feelings or abstract concepts, this framework is strictly <strong>action-oriented</strong>. It forces the team to categorize their feedback into three distinct, actionable buckets:</p>
+<ul>
+<li><strong>Start:</strong> New ideas, processes, or tools that the team should introduce to improve performance, efficiency, or collaboration.</li>
+<li><strong>Stop:</strong> Current behaviors, bottlenecks, or inefficient processes that are actively hurting the team and should be abandoned immediately.</li>
+<li><strong>Continue:</strong> Successful practices, habits, or workflows that are delivering value and must be preserved and reinforced.</li>
+</ul>
+
+<h2>The Standard 60-Minute Retrospective Agenda</h2>
+<p>To keep your team energized and ensure you leave the meeting with concrete action items, we recommend a strict <strong>time-boxed 60-minute agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:05</strong></td><td><strong>Set the Stage</strong></td><td>Welcome the team, outline the focus of the retrospective (e.g., the last sprint or month), and establish a safe, collaborative environment.</td></tr>
+<tr><td><strong>00:05 - 00:15</strong></td><td><strong>Silent Brainstorming</strong></td><td>Team members work individually to write down their feedback and place them into the Start, Stop, and Continue buckets.</td></tr>
+<tr><td><strong>00:15 - 00:30</strong></td><td><strong>Group &amp; Discuss</strong></td><td>Group similar ideas together, read them aloud, and discuss the feedback as a team to ensure mutual understanding.</td></tr>
+<tr><td><strong>00:30 - 00:45</strong></td><td><strong>Prioritize (Dot Voting)</strong></td><td>Give team members 3-5 votes each to identify the most critical items in each bucket that require immediate action.</td></tr>
+<tr><td><strong>00:45 - 00:55</strong></td><td><strong>Create Action Items</strong></td><td>Turn the top-voted items into concrete action items with a clear owner and a realistic deadline.</td></tr>
+<tr><td><strong>00:55 - 01:00</strong></td><td><strong>Wrap-Up &amp; Close</strong></td><td>Thank the team, confirm where the action items will be tracked, and officially close the meeting.</td></tr>
+</tbody>
+</table>
+
+<h2>Best Practices for a High-Impact Retrospective</h2>
+<p>To get the most out of your Start, Stop, Continue exercise, implement these three essential best practices:</p>
+<h3>1. Establish Psychological Safety First</h3>
+<p>A retrospective only works if team members feel safe sharing honest feedback. Remind the team of the <strong>Retrospective Prime Directive</strong>: <em>Regardless of what we discover, we understand and truly believe that everyone did the best job they could, given what they knew at the time, their skills and abilities, the resources available, and the situation at hand.</em></p>
+<h3>2. Focus on the "Stop" Bucket</h3>
+<p>Teams are usually great at coming up with new things to "Start" doing, but they rarely discuss what they need to "Stop" doing. Overloading a team with new initiatives without removing old bottlenecks leads to burnout. Force the team to identify at least 2-3 operational habits they can realistically stop.</p>
+<h3>3. Limit Your Action Items</h3>
+<p>Do not try to solve every problem at once. A successful retrospective should result in no more than <strong>3 to 5 high-priority action items</strong> for the next cycle. If you try to implement 15 changes at once, your team will lose focus and accomplish none of them.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>How often should you run a Start, Stop, Continue retrospective?</h3>
+<p>This exercise is highly versatile and can be run at the end of every sprint (typically every 2 weeks), at the end of a major project milestone, or on a monthly basis to check in on team dynamics and operational health.</p>
+<h3>Who should facilitate the retrospective?</h3>
+<p>The retrospective is typically facilitated by the Scrum Master or Agile Project Manager. However, to keep things fresh and encourage shared ownership, you can rotate the facilitator role among different team members each cycle.</p>
+<h3>What is the difference between Start, Stop, Continue and Glad, Sad, Mad?</h3>
+<p>While Glad, Sad, Mad focuses heavily on the emotional state of the team during the last cycle, Start, Stop, Continue is strictly focused on operational actions and behavioral changes. Both are valuable, but Start, Stop, Continue is ideal when you need to drive immediate process improvements.</p>
+<h3>How do you ensure retrospective action items are actually completed?</h3>
+<p>Every action item must have a single owner and a clear deadline. Review the status of the previous retrospective's action items during the "Set the Stage" phase of your next meeting to maintain accountability and show the team that their feedback drives real change.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'How often should you run a Start, Stop, Continue retrospective?',
+        a: 'This exercise is highly versatile and can be run at the end of every sprint (typically every 2 weeks), at the end of a major project milestone, or on a monthly basis to check in on team dynamics and operational health.',
+      },
+      {
+        q: 'Who should facilitate the retrospective?',
+        a: 'The retrospective is typically facilitated by the Scrum Master or Agile Project Manager. However, to keep things fresh and encourage shared ownership, you can rotate the facilitator role among different team members each cycle.',
+      },
+      {
+        q: 'What is the difference between Start, Stop, Continue and Glad, Sad, Mad?',
+        a: 'While Glad, Sad, Mad focuses heavily on the emotional state of the team during the last cycle, Start, Stop, Continue is strictly focused on operational actions and behavioral changes. Both are valuable, but Start, Stop, Continue is ideal when you need to drive immediate process improvements.',
+      },
+      {
+        q: 'How do you ensure retrospective action items are actually completed?',
+        a: 'Every action item must have a single owner and a clear deadline. Review the status of the previous retrospective\'s action items during the "Set the Stage" phase of your next meeting to maintain accountability and show the team that their feedback drives real change.',
+      },
+    ],
   },
   {
     slug: 'sailboat-retrospective',
