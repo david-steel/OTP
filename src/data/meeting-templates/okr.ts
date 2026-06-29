@@ -538,6 +538,78 @@ export const OKR_TEMPLATES: MeetingTemplate[] = [
       'Next-month focus and owners:\n\n' +
       '---\n\n' +
       'Free template from OrgTP. Adapt or run it live at orgtp.com/templates/okr-monthly-review\n',
+    guideHtml: `<h2>The Ultimate OKR Monthly Review Template &amp; Agenda Guide</h2>
+<p>Setting Objectives and Key Results (OKRs) is only the first step toward organizational alignment. The real magic of the OKR framework happens during execution - specifically, during your <strong>OKR Monthly Review</strong>. Without a structured monthly checkpoint, OKRs quickly become "set-it-and-forget-it" goals that teams ignore until the end of the quarter.</p>
+<p>If your team struggles to maintain momentum on quarterly goals or finds themselves scrambling in week 12 to hit targets, implementing a structured monthly OKR review will keep everyone aligned and accountable.</p>
+<p>This comprehensive guide provides a battle-tested <strong>OKR Monthly Review Template</strong> and a step-by-step agenda to help your team track progress, adjust confidence scores, and drive consistent execution.</p>
+
+<h2>What is an OKR Monthly Review?</h2>
+<p>An OKR Monthly Review is a strategic, 60-minute meeting where leadership or departmental teams inspect their progress against quarterly Objectives and Key Results. Unlike weekly tactical syncs that focus on day-to-day tasks, the monthly OKR review is strictly focused on <strong>outcomes, confidence scores, and strategic adjustments</strong>. It is the bridge between weekly execution and quarterly planning.</p>
+<h3>The Core Objectives of an OKR Monthly Review:</h3>
+<ul>
+<li><strong>Assess Progress:</strong> Review current data for every Key Result and update confidence scores.</li>
+<li><strong>Identify Off-Track Goals:</strong> Spot lagging indicators early while there is still time to course-correct.</li>
+<li><strong>Align Resources:</strong> Reallocate budget, time, or team members to support critical, struggling OKRs.</li>
+<li><strong>Foster Accountability:</strong> Ensure every Key Result has a clear owner who is actively driving progress.</li>
+</ul>
+
+<h2>The Standard 60-Minute OKR Monthly Review Agenda</h2>
+<p>To keep the meeting highly efficient and focused on strategic problem-solving, we recommend a strict <strong>time-boxed 60-minute agenda</strong>:</p>
+<table class="td-guide-table">
+<thead><tr><th>Time</th><th>Agenda Item</th><th>Objective</th></tr></thead>
+<tbody>
+<tr><td><strong>00:00 - 00:10</strong></td><td><strong>Objective Alignment &amp; Wins</strong></td><td>Quickly review the quarterly Objectives and celebrate any major milestones or key results achieved since the last review.</td></tr>
+<tr><td><strong>00:10 - 00:30</strong></td><td><strong>Key Result &amp; Confidence Score Review</strong></td><td>Go through each Key Result. Owners report current metrics and update their confidence score (on a scale of 0.0 to 1.0).</td></tr>
+<tr><td><strong>00:30 - 00:50</strong></td><td><strong>Triage &amp; Problem Solving</strong></td><td>Focus 100% of the energy on OKRs with low confidence scores (below 0.7). Brainstorm solutions and adjust action plans.</td></tr>
+<tr><td><strong>00:50 - 01:00</strong></td><td><strong>Resource Allocation &amp; Next Steps</strong></td><td>Confirm any shifts in resources or priorities, document new action items, and close the meeting.</td></tr>
+</tbody>
+</table>
+
+<h2>Understanding OKR Confidence Scores</h2>
+<p>A critical component of the OKR Monthly Review is the <strong>Confidence Score</strong>. For every Key Result, the owner must assign a score between <strong>0.0 and 1.0</strong> representing their confidence in hitting the target by the end of the quarter:</p>
+<ul>
+<li><strong>0.7 - 1.0 (Green - On Track):</strong> We are highly confident we will hit this target. No major changes needed.</li>
+<li><strong>0.4 - 0.6 (Yellow - At Risk):</strong> We have a chance, but we are facing roadblocks. This requires discussion and potential resource adjustments.</li>
+<li><strong>0.0 - 0.3 (Red - Off Track):</strong> We are highly unlikely to hit this target under current conditions. This requires immediate triage, a pivot, or a formal adjustment of the Key Result.</li>
+</ul>
+<p><em>Note: In the OKR framework, a score of 0.7 is considered a success. If your team is consistently hitting 1.0 on every OKR, your goals are not ambitious enough.</em></p>
+
+<h2>Best Practices for an Effective OKR Review</h2>
+<h3>1. Focus on Outcomes, Not Activities</h3>
+<p>During the review, do not let team members list all the tasks they worked on. Instead, force them to report on the <strong>actual metric change</strong>. Instead of saying, <em>"We worked on the new landing page,"</em> say, <em>"The landing page is live, and our conversion rate is currently at 3.2% against our target of 4.0%."</em></p>
+<h3>2. Update Data Before the Meeting</h3>
+<p>Do not waste valuable meeting time looking up metrics or updating spreadsheets. Every Key Result owner must update their data and confidence scores at least 24 hours before the meeting starts.</p>
+<h3>3. Encourage Psychological Safety</h3>
+<p>If a Key Result is in the "Red" (0.0 - 0.3), the owner should feel safe reporting it. The purpose of the monthly review is not to assign blame, but to collaborate as a team to solve problems and support one another.</p>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>How often should we review OKRs?</h3>
+<p>While OKRs are set quarterly, they should be reviewed <strong>monthly</strong> in a dedicated strategic meeting. Additionally, teams should do a quick 5-minute check-in on their OKRs during their weekly tactical meetings to keep them top-of-mind.</p>
+<h3>What is a good OKR confidence score?</h3>
+<p>In the OKR framework, a confidence score of <strong>0.7 to 0.8</strong> is considered the sweet spot. It means the goal was highly ambitious (a "stretch goal") and the team achieved significant progress. Hitting 1.0 consistently indicates that your goals are too easy.</p>
+<h3>Can we change an OKR mid-quarter?</h3>
+<p>Generally, OKRs should remain fixed during the quarter to maintain focus. However, if a major market shift occurs, a key assumption is proven false, or a business priority completely changes, it is better to adjust or drop the OKR during your monthly review rather than waste resources chasing an irrelevant goal.</p>
+<h3>Who should attend the OKR Monthly Review?</h3>
+<p>The monthly review should be attended by the leadership team (for company-wide OKRs) or the specific departmental team (for department-level OKRs). Every Key Result owner must be present to report on their progress.</p>`,
+    // FAQPage JSON-LD source. Keep verbatim with the visible FAQ in guideHtml above.
+    faq: [
+      {
+        q: 'How often should we review OKRs?',
+        a: 'While OKRs are set quarterly, they should be reviewed monthly in a dedicated strategic meeting. Additionally, teams should do a quick 5-minute check-in on their OKRs during their weekly tactical meetings to keep them top-of-mind.',
+      },
+      {
+        q: 'What is a good OKR confidence score?',
+        a: 'In the OKR framework, a confidence score of 0.7 to 0.8 is considered the sweet spot. It means the goal was highly ambitious (a "stretch goal") and the team achieved significant progress. Hitting 1.0 consistently indicates that your goals are too easy.',
+      },
+      {
+        q: 'Can we change an OKR mid-quarter?',
+        a: 'Generally, OKRs should remain fixed during the quarter to maintain focus. However, if a major market shift occurs, a key assumption is proven false, or a business priority completely changes, it is better to adjust or drop the OKR during your monthly review rather than waste resources chasing an irrelevant goal.',
+      },
+      {
+        q: 'Who should attend the OKR Monthly Review?',
+        a: 'The monthly review should be attended by the leadership team (for company-wide OKRs) or the specific departmental team (for department-level OKRs). Every Key Result owner must be present to report on their progress.',
+      },
+    ],
   },
   {
     slug: 'okr-grading-session',
