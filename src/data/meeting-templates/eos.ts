@@ -90,6 +90,168 @@ Free template from OrgTP. Adapt or run it live at orgtp.com/templates/level-10-m
   },
 
   {
+    slug: 'accountability-chart',
+    title: 'Accountability Chart Template',
+    shortName: 'Accountability Chart',
+    description:
+      'Free EOS-style Accountability Chart template. Structure your company by function and seat, define the 5 roles per seat, and put the right person in every seat with GWC.',
+    category: 'eos',
+    methodology: 'EOS',
+    minutes: 90,
+    cadence: 'Annually, reviewed quarterly',
+    participants: 'Visionary, Integrator, and leadership team (3-10 people)',
+    keywords: [
+      'eos accountability chart',
+      'accountability chart template',
+      'org chart vs accountability chart',
+      'accountability chart',
+      'EOS org structure',
+      'right person right seat',
+      'GWC template',
+      'integrator and visionary',
+    ],
+    steps: [
+      { name: 'Structure first, people second', minutes: 15, text: 'Ignore current titles and people. Design the seats the business needs to hit its 3-year goals, starting from a blank chart.' },
+      { name: 'Map the three core functions', minutes: 15, text: 'Lay out Sales & Marketing, Operations, and Finance & Administration as the three seats that sit under the Integrator.' },
+      { name: 'Place the Visionary and Integrator', minutes: 10, text: 'Name the Integrator who harmonizes the functions and runs the day-to-day, and the Visionary who owns big ideas, culture, and strategy.' },
+      { name: 'Define the 5 roles per seat', minutes: 20, text: 'For each seat, write the five primary roles it owns. Keep them simple, actionable, and measurable.' },
+      { name: 'Apply the GWC filter', minutes: 20, text: 'For every person in a seat, confirm they Get it, Want it, and have the Capacity to do it. Flag any seat that fails GWC.' },
+      { name: 'Spot gaps and next hires', minutes: 10, text: 'Identify open seats, people in the wrong seat, and the next hire the structure demands. Assign owners and a review date.' },
+    ],
+    bodyHtml: `<p>An Accountability Chart structures your company by <strong>function and responsibility</strong> rather than title and hierarchy. Based on the EOS model, it answers one question for every part of the business: who owns this, and what are they accountable for. The result is clear ownership, fewer dropped balls, and a structure built to scale.</p>
+<h2>When to use it</h2>
+<p>Build your Accountability Chart when responsibilities overlap, decisions stall, or growth has outpaced your original structure. Revisit it whenever you set new annual goals or plan a key hire. Design it for where the business is going, not only where it is today.</p>
+<h2>Who attends</h2>
+<p>The Visionary, the Integrator, and your leadership team. Keep the working group small enough to make real structural decisions, usually three to ten people.</p>
+<h2>How to run it</h2>
+<p>Start with structure, not people. Lay out the seats the business needs to hit its multi-year goals, beginning with the three core functions, Sales &amp; Marketing, Operations, and Finance &amp; Administration, sitting under the Integrator with the Visionary alongside. Define the five primary roles for each seat, then place people using GWC: do they <em>Get it, Want it, and have the Capacity to do it</em>. Close by naming open seats, wrong-seat fits, and the next hire the structure demands.</p>
+<h2>Facilitator tips</h2>
+<ul>
+<li>Design the seats first; only then place names.</li>
+<li>One person owns each seat. Shared seats mean shared blame.</li>
+<li>Keep each seat to five clear, measurable roles.</li>
+<li>Use GWC honestly, even when the answer is uncomfortable.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ul>
+<li>Drawing your current org chart and relabeling it an Accountability Chart.</li>
+<li>Building around the people you have instead of the seats you need.</li>
+<li>Putting two names on one seat to avoid a hard conversation.</li>
+<li>Listing titles instead of the actual roles a seat owns.</li>
+</ul>
+<p>Build it once and keep it living. <a href="/l8">Run your Accountability Chart in OrgTP</a>, with seats, roles, and owners connected to the rest of your operating system.</p>`,
+    downloadMarkdown: `# Accountability Chart Template
+
+Structure your company by function and responsibility, not title. Based on the EOS model. One seat, one owner, five roles each.
+
+Duration: 90 min | Cadence: Annually, reviewed quarterly | Participants: Visionary, Integrator, leadership team
+
+## The three core functions (under the Integrator)
+- [ ] Sales & Marketing (Attracting) - Owner:
+- [ ] Operations (Delivering) - Owner:
+- [ ] Finance & Administration (Tracking) - Owner:
+
+## Leadership seats
+- [ ] Visionary - Owner:
+- [ ] Integrator - Owner:
+
+## For each seat: define 5 roles
+1.
+2.
+3.
+4.
+5.
+
+## GWC check (right person, right seat)
+- [ ] G - Gets it
+- [ ] W - Wants it
+- [ ] C - Capacity to do it
+
+## Gaps and next hires
+- Open seats:
+- Wrong-seat fits:
+- Next hire:
+
+---
+Free template from OrgTP. Adapt or run it live at orgtp.com/templates/accountability-chart`,
+    guideHtml: `<h2>The Ultimate EOS Accountability Chart Template &amp; Guide</h2>
+<p>In the Entrepreneurial Operating System (EOS)&reg;, the Accountability Chart is the single most powerful tool for structuring an organization for growth. While traditional companies rely on organizational charts to show who reports to whom, high-growth companies use Accountability Charts to define <strong>who is responsible for what</strong>.</p>
+<p>If your team is struggling with dropped balls, overlapping responsibilities, or communication bottlenecks, it is time to retire your traditional org chart and build a true Accountability Chart.</p>
+<p>This comprehensive guide provides a battle-tested <strong>Accountability Chart Template</strong> and a step-by-step framework to help you structure your business for maximum efficiency and clear ownership.</p>
+
+<h2>What is an EOS Accountability Chart?</h2>
+<p>An Accountability Chart is a visual representation of your company's structure, organized by <strong>functions and responsibilities</strong> rather than job titles or people.</p>
+<p>The core philosophy of the Accountability Chart is simple: <strong>For every seat in the organization, there must be 100% clarity on its primary roles, and only one person can own that seat.</strong> When two or more people are responsible for the same outcome, nobody is accountable.</p>
+
+<h2>Accountability Chart vs. Traditional Org Chart</h2>
+<p>Understanding the difference between these two structures is critical for organizational alignment:</p>
+<table class="td-guide-table">
+<thead><tr><th>Feature</th><th>Traditional Org Chart</th><th>EOS Accountability Chart</th></tr></thead>
+<tbody>
+<tr><td><strong>Primary Focus</strong></td><td>Job titles, hierarchy, and reporting lines.</td><td>Functions, seats, and specific roles/responsibilities.</td></tr>
+<tr><td><strong>Orientation</strong></td><td>Person-first (Who do we have, and where do they fit?).</td><td>Structure-first (What does the business need to scale?).</td></tr>
+<tr><td><strong>Ownership</strong></td><td>Often features co-heads or shared management.</td><td>Strict rule of "One person, one seat" for ultimate accountability.</td></tr>
+<tr><td><strong>Purpose</strong></td><td>Shows status and career progression.</td><td>Eliminates complexity, dropped balls, and finger-pointing.</td></tr>
+</tbody>
+</table>
+
+<h2>The Three Core Functions of Every Business</h2>
+<p>According to the EOS framework, every business consists of three core functions that must run smoothly to achieve traction:</p>
+<ol>
+<li><strong>Sales &amp; Marketing (Attracting):</strong> The function responsible for generating demand, securing new clients, and retaining existing ones.</li>
+<li><strong>Operations (Delivering):</strong> The function responsible for building the product, delivering the service, and ensuring customer satisfaction.</li>
+<li><strong>Finance &amp; Administration (Tracking):</strong> The function responsible for managing cash flow, infrastructure, HR, and financial reporting.</li>
+</ol>
+<h3>The Integrator and The Visionary</h3>
+<p>To bind these three functions together, the Accountability Chart introduces two critical leadership seats:</p>
+<ul>
+<li><strong>The Integrator:</strong> The individual who manages the day-to-day operations, harmonizes the three core functions, and executes the business plan.</li>
+<li><strong>The Visionary:</strong> The creative force of the company who focuses on big ideas, culture, R&amp;D, and long-term strategic partnerships.</li>
+</ul>
+
+<h2>How to Build Your Accountability Chart (Step-by-Step)</h2>
+<h3>Step 1: Structure First, People Second</h3>
+<p>When designing your chart, completely ignore your current team members and their existing titles. Ask yourself: <em>If we were building this business from scratch today to reach our 3-year goals, what functions and seats would we absolutely need?</em></p>
+<h3>Step 2: Define the 5 Roles for Each Seat</h3>
+<p>For every seat you identify, write down the <strong>5 primary roles</strong> that seat is responsible for. Keep them simple, actionable, and measurable. For example, the Sales Manager seat roles might include: LMA (Lead, Manage, Accountability), Sales Process, Training, and Target Tracking.</p>
+<h3>Step 3: Apply the GWC&trade; Filter</h3>
+<p>Once the structure is built, place your team members into the seats using the GWC filter:</p>
+<ul>
+<li><strong>G (Get it):</strong> Do they truly understand the culture, pace, and demands of this seat?</li>
+<li><strong>W (Want it):</strong> Do they genuinely want to perform this role every day?</li>
+<li><strong>C (Capacity to do it):</strong> Do they have the mental, physical, and emotional capacity to excel in this seat?</li>
+</ul>
+
+<h2>Frequently Asked Questions (FAQs)</h2>
+<h3>Can one person occupy multiple seats on the Accountability Chart?</h3>
+<p>Yes. In smaller or growing companies, it is very common for one person to sit in multiple seats (e.g., the Integrator might also temporarily own the Finance seat). However, they must clearly understand which "hat" they are wearing at any given time, and as the company grows, those seats should be handed off to new hires.</p>
+<h3>What is the difference between an Accountability Chart and an Org Chart?</h3>
+<p>An Org Chart focuses on hierarchy and reporting lines (who reports to whom). An Accountability Chart focuses on functions and roles (who is responsible for what). The Accountability Chart is designed to eliminate overlapping duties and ensure clear ownership.</p>
+<h3>What does GWC stand for in EOS?</h3>
+<p>GWC stands for <strong>Get it, Want it, and Capacity to do it</strong>. It is the EOS tool used to determine if a team member is the right person in the right seat for a specific role on your Accountability Chart.</p>
+<h3>Why can only one person own a seat?</h3>
+<p>If two people share a seat (e.g., "Co-Directors of Marketing"), accountability is diluted. When a goal is missed, it is easy to point fingers. Having a single owner ensures that there is one clear point of contact who is 100% responsible for the outcomes of that seat.</p>`,
+    faq: [
+      {
+        q: 'Can one person occupy multiple seats on the Accountability Chart?',
+        a: 'Yes. In smaller or growing companies, it is very common for one person to sit in multiple seats (e.g., the Integrator might also temporarily own the Finance seat). However, they must clearly understand which "hat" they are wearing at any given time, and as the company grows, those seats should be handed off to new hires.',
+      },
+      {
+        q: 'What is the difference between an Accountability Chart and an Org Chart?',
+        a: 'An Org Chart focuses on hierarchy and reporting lines (who reports to whom). An Accountability Chart focuses on functions and roles (who is responsible for what). The Accountability Chart is designed to eliminate overlapping duties and ensure clear ownership.',
+      },
+      {
+        q: 'What does GWC stand for in EOS?',
+        a: 'GWC stands for Get it, Want it, and Capacity to do it. It is the EOS tool used to determine if a team member is the right person in the right seat for a specific role on your Accountability Chart.',
+      },
+      {
+        q: 'Why can only one person own a seat?',
+        a: 'If two people share a seat (e.g., "Co-Directors of Marketing"), accountability is diluted. When a goal is missed, it is easy to point fingers. Having a single owner ensures that there is one clear point of contact who is 100% responsible for the outcomes of that seat.',
+      },
+    ],
+  },
+
+  {
     slug: 'eos-quarterly-pulsing-meeting',
     title: 'Quarterly Pulsing Meeting Template',
     shortName: 'Quarterly Pulsing Meeting',
