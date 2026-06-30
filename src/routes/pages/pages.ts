@@ -843,7 +843,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/partners', async (request, reply) => {
     return renderV7(reply, 'partners', {
       title: 'OTP Partner Program - Become a Certified OTP Integrator',
-      description: 'OTP Partner Program for trusted advisors -- EOS Implementers, Scaling Up coaches, fractional CXOs, MSPs, AI consultancies, agent builders. Three tiers, recurring revenue share, multi-tenant dashboard, Founding Partner cohort limited to 50.',
+      description: 'OTP Partner Program for trusted advisors -- operating-system implementers, business coaches, fractional CXOs, MSPs, AI consultancies, agent builders. Three tiers, recurring revenue share, multi-tenant dashboard, Founding Partner cohort limited to 50.',
       canonical: BASE_URL + '/partners',
       ogImage: BASE_URL + '/public/og/og-partners.png',
       breadcrumbs: bc({ name: 'Partner Program', url: BASE_URL + '/partners' }),
@@ -2728,7 +2728,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/sign-up', async (_request, reply) => {
     return renderV7(reply, 'sign-up', {
       title: 'Create your free OTP workspace',
-      description: 'The free operating platform for EOS� teams. Run your 1:1s, weekly Level 10�, org chart, and a lot more on OTP. Free for your team, forever.',
+      description: 'The free operating platform for leadership teams. Run your 1:1s, weekly leadership meeting, org chart, and a lot more on OTP. Free for your team, forever.',
       canonical: BASE_URL + '/sign-up',
       noindex: true,
       loadClerk: true,
@@ -2758,7 +2758,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/free-account', async (_request, reply) => {
     return renderV7(reply, 'free-account', {
       title: 'Claim Your Free OTP Account | Free for Your Whole Team',
-      description: 'OTP is free for your whole team while we are in Beta. No per-seat fees, no credit card. Per-seat EOS tools run $8 to $16 per user per month.',
+      description: 'OTP is free for your whole team while we are in Beta. No per-seat fees, no credit card. Per-seat operating-system tools run $8 to $16 per user per month.',
       canonical: BASE_URL + '/free-account',
       ogImage: BASE_URL + '/public/og/og-free-account.png',
       googleAdsId: 'AW-18159119434',
@@ -2887,7 +2887,7 @@ export default async function pageRoutes(app: FastifyInstance) {
     }));
     return renderV7(reply, 'experts-browse', {
       title: 'Operating-System Coach Directory | OTP',
-      description: `Public directory of ${counts.total}+ operating-system coaches and consultants -- EOS Implementers, Scaling Up coaches, and OTP-native publishers. Filter by framework, location, or expertise.`,
+      description: `Public directory of ${counts.total}+ operating-system coaches and consultants -- business coaches and OTP-native publishers. Filter by framework, location, or expertise.`,
       canonical: BASE_URL + '/experts',
       ogImage: BASE_URL + '/public/og/og-experts.png',
       breadcrumbs: bc({ name: 'Coach Directory', url: BASE_URL + '/experts' }),
