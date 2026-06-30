@@ -40,11 +40,11 @@
         </h1>
         <p class="font-mono text-[12.5px] text-[var(--ink-mute)] mt-4">
           <%= counts.total %> coaches listed
-          <% if (counts.eos > 0) { %> &middot; <%= counts.eos %> EOS Implementers<% } %>
+          <% if (counts.eos > 0) { %> &middot; <%= counts.eos %> operating-system coaches<% } %>
           <% if (counts.claimed > 0) { %> &middot; <%= counts.claimed %> claimed<% } %>
         </p>
         <p class="ex-prose text-[15px] sm:text-[16px] text-[var(--ink-soft)] leading-[1.65] max-w-[42rem] mt-4">
-          Public directory of operating-system coaches and consultants. Listings include EOS Implementers (seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow">EOS Worldwide's public directory</a>), Scaling Up coaches, and OTP-native publishers. Coaches can <a href="/for-coaches">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
+          Public directory of operating-system coaches and consultants, including business coaches and OTP-native publishers. Coaches can <a href="/for-coaches">claim their profile</a> to add bio, services, calendar, and published coordination intelligence.
         </p>
         <div class="mt-6">
           <a href="/for-coaches" class="btn-primary inline-block px-6 py-3 text-[15px]">Are you a coach? Claim your profile &rarr;</a>
@@ -63,7 +63,7 @@
       </div>
       <select id="filter-source" class="ex-select">
         <option value="">All listings</option>
-        <option value="eosworldwide">EOS Implementers</option>
+        <option value="eosworldwide">Operating-system coaches</option>
         <option value="otp">OTP Publishers</option>
         <option value="claimed">Claimed only</option>
       </select>
@@ -118,7 +118,7 @@
             <!-- Source / claim badges -->
             <div class="flex flex-wrap gap-1.5 mt-3.5">
               <% if (isEOS) { %>
-                <span class="ex-badge" style="background:rgba(13,125,242,0.08);color:var(--blue-deep);border-color:rgba(13,125,242,0.2);">EOS Implementer</span>
+                <span class="ex-badge" style="background:rgba(13,125,242,0.08);color:var(--blue-deep);border-color:rgba(13,125,242,0.2);">Operating-System Coach</span>
               <% } else if (sourceTag === 'otp') { %>
                 <span class="ex-badge" style="background:rgba(168,230,58,0.18);color:var(--orgy-deep);border-color:rgba(139,196,42,0.4);">OTP Publisher</span>
               <% } %>
@@ -149,13 +149,9 @@
 
     <!-- Trademark + sourcing footer -->
     <div class="ex-prose mt-14 pt-7 border-t border-[var(--line)] text-[12.5px] text-[var(--ink-mute)] leading-[1.65] max-w-[44rem]">
-      <p class="mb-3">
-        <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-soft)]">Sourcing.</span>
-        Profiles tagged "EOS Implementer" are seeded from <a href="https://implementer.eosworldwide.com" target="_blank" rel="noopener noreferrer nofollow">EOS Worldwide's public directory</a> via their open WordPress REST API. Each listing links back to its source page. Implementers can <a href="/for-coaches">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown">request removal</a>.
-      </p>
       <p class="mb-2">
-        <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-soft)]">Trademarks.</span>
-        EOS, Entrepreneurial Operating System, EOS Implementer, and related marks are trademarks of EOS Worldwide, LLC. OTP and Sneeze It are not affiliated with, endorsed by, or sponsored by EOS Worldwide. Listings here are factual references to publicly available coach profiles and do not imply endorsement in either direction.
+        <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-soft)]">Listings.</span>
+        This is a public directory of operating-system coaches and consultants. Listings are factual references to publicly available coach profiles and do not imply endorsement in either direction. Coaches can <a href="/for-coaches">claim their listing</a> to control the content shown, or <a href="/tickets?type=takedown">request removal</a>. OTP and Sneeze It are an independent product and are not affiliated with, endorsed by, or sponsored by any operating-system framework or its provider.
       </p>
     </div>
   </div>
@@ -224,7 +220,7 @@
 
     var badges = el('div', 'flex flex-wrap gap-1.5 mt-3.5');
     if (srcTag === 'eosworldwide') {
-      badges.appendChild(badge('EOS Implementer', 'background:rgba(13,125,242,0.08);color:var(--blue-deep);border-color:rgba(13,125,242,0.2);'));
+      badges.appendChild(badge('Operating-System Coach', 'background:rgba(13,125,242,0.08);color:var(--blue-deep);border-color:rgba(13,125,242,0.2);'));
     } else if (srcTag === 'otp') {
       badges.appendChild(badge('OTP Publisher', 'background:rgba(168,230,58,0.18);color:var(--orgy-deep);border-color:rgba(139,196,42,0.4);'));
     }
