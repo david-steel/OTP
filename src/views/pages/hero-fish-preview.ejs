@@ -11,7 +11,7 @@
 <style>
   :root{
     --ink:#14161c; --ink-soft:#3c424d; --ink-mute:#7c828d;
-    --blue:#0d7df2; --green:#8bc42a; --green-deep:#6fa01f; --orgy:#a8e63a; --line:#ececef;
+    --blue:#0d7df2; --green:#5d9e16; --school:#2a2f37; --line:#ececef;
   }
   *{ box-sizing:border-box; } html,body{ margin:0; }
   body{ background:#fff; color:var(--ink); font-family:'Schibsted Grotesk','Inter',sans-serif; -webkit-font-smoothing:antialiased; }
@@ -34,35 +34,44 @@
   .cta{ background:var(--blue); color:#fff; font-weight:600; font-size:16px; padding:15px 26px; border-radius:11px; box-shadow:0 10px 24px rgba(13,125,242,.22); display:inline-block; }
   .cta-note{ font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-mute); }
 
-  /* ---------- the coded fish scene (no video, loops forever) ---------- */
-  .art{ position:relative; min-height:460px; }
+  /* ---------- coded line-art fish scene: a school that merges into one ---------- */
+  .art{ position:relative; min-height:480px; }
   .scene{ position:absolute; inset:0; overflow:hidden; }
-  .glow{ position:absolute; left:50%; top:52%; width:60%; aspect-ratio:1; transform:translate(-50%,-50%);
-    background:radial-gradient(closest-side, rgba(168,230,58,.22), rgba(168,230,58,0) 70%);
-    border-radius:50%; animation:breathe 7s ease-in-out infinite; }
 
-  .fish{ position:absolute; color:var(--green); will-change:transform; aspect-ratio:100/64; height:auto;
-    filter:drop-shadow(0 8px 14px rgba(20,22,28,.10)); overflow:visible; }
+  .fish{ position:absolute; left:50%; top:50%; height:auto; aspect-ratio:100/60;
+    overflow:visible; transform-origin:center; }
 
-  /* central fish: grows bigger and bigger, then eases back for a seamless loop */
-  .lead{ left:50%; top:50%; width:120px; margin:-38px 0 0 -60px; color:var(--green);
-    filter:drop-shadow(0 18px 26px rgba(20,22,28,.16));
-    animation:grow 8s cubic-bezier(.45,.05,.3,1) infinite, bobLead 4.5s ease-in-out infinite; }
-  @keyframes grow{ 0%{ transform:scale(.34); } 62%{ transform:scale(1.55); } 100%{ transform:scale(.34); } }
-  @keyframes bobLead{ 0%,100%{ translate:0 0; } 50%{ translate:0 -10px; } }
+  /* the small school -- thin ink line-art, swims in from the left, merges, returns */
+  .s{ color:var(--school); animation:converge 8.5s cubic-bezier(.5,.05,.3,1) infinite; }
+  .s1{ width:56px; --hx:-152px; --hy:-58px; }
+  .s2{ width:46px; --hx:-104px; --hy:-8px; }
+  .s3{ width:62px; --hx:-178px; --hy:32px; }
+  .s4{ width:42px; --hx:-92px;  --hy:64px; }
+  .s5{ width:50px; --hx:-198px; --hy:-20px; }
+  .s6{ width:38px; --hx:-128px; --hy:96px; }
 
-  /* small fish drifting around like a gentle school */
-  .f1{ width:46px; left:14%; top:24%; color:var(--green); animation:driftA 11s ease-in-out infinite; }
-  .f2{ width:38px; left:64%; top:18%; color:var(--green-deep); animation:driftB 13s ease-in-out infinite; }
-  .f3{ width:52px; left:70%; top:62%; color:var(--green); animation:driftC 12s ease-in-out infinite; }
-  .f4{ width:34px; left:20%; top:68%; color:var(--blue); animation:driftB 14s ease-in-out infinite reverse; }
-  .f5{ width:42px; left:44%; top:12%; color:var(--green-deep); animation:driftA 15s ease-in-out infinite reverse; }
-  .f6{ width:30px; left:34%; top:80%; color:var(--green); animation:driftC 16s ease-in-out infinite; }
+  @keyframes converge{
+    0%   { transform:translate(var(--hx),var(--hy)) scale(1);   opacity:1; }
+    16%  { transform:translate(var(--hx),var(--hy)) scale(1);   opacity:1; }
+    52%  { transform:translate(-16px,-10px) scale(.72);         opacity:1; }
+    60%  { transform:translate(-16px,-10px) scale(.40);         opacity:0; }
+    82%  { transform:translate(-16px,-10px) scale(.40);         opacity:0; }
+    100% { transform:translate(var(--hx),var(--hy)) scale(1);   opacity:1; }
+  }
 
-  @keyframes driftA{ 0%,100%{ transform:translate(0,0) rotate(-5deg); } 50%{ transform:translate(34px,-30px) rotate(4deg); } }
-  @keyframes driftB{ 0%,100%{ transform:translate(0,0) rotate(3deg); } 50%{ transform:translate(-30px,26px) rotate(-4deg); } }
-  @keyframes driftC{ 0%,100%{ transform:translate(0,0) rotate(-3deg); } 50%{ transform:translate(-26px,-24px) rotate(5deg); } }
-  @keyframes breathe{ 0%,100%{ opacity:.65; transform:translate(-50%,-50%) scale(.9); } 50%{ opacity:1; transform:translate(-50%,-50%) scale(1.08); } }
+  /* the one fish -- bold green line-art, emerges as the school merges, grows bigger */
+  .big{ width:190px; margin:-57px 0 0 -95px; color:var(--green);
+    animation:emerge 8.5s cubic-bezier(.5,.05,.3,1) infinite; }
+  @keyframes emerge{
+    0%   { transform:scale(.18); opacity:0; }
+    46%  { transform:scale(.18); opacity:0; }
+    56%  { transform:scale(.92); opacity:1; }
+    74%  { transform:scale(1.16); opacity:1; }
+    86%  { transform:scale(1.28); opacity:1; }
+    93%  { transform:scale(1.32); opacity:1; }
+    98%  { transform:scale(1.34); opacity:0; }
+    100% { transform:scale(.18); opacity:0; }
+  }
 
   @media (max-width:920px){
     .hero-in{ grid-template-columns:1fr; gap:8px; padding:64px 24px 76px; text-align:center; }
@@ -71,22 +80,22 @@
     .art{ order:-1; min-height:300px; }
   }
   @media (prefers-reduced-motion: reduce){
-    .fish, .lead, .glow{ animation:none !important; }
-    .lead{ transform:scale(1.2); }
+    .s, .big{ animation:none !important; }
+    .s{ opacity:0; } .big{ transform:scale(1.2); opacity:1; }
   }
   .pv-flag{ font-family:'Inter',sans-serif; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#b3b8c0; text-align:center; padding:14px; border-top:1px solid var(--line); }
 </style>
 </head>
 <body>
-  <!-- one fish shape, instanced many times via <use> -->
+  <!-- one minimalist line-art fish, instanced via <use> -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-      <symbol id="fish" viewBox="0 0 100 64">
-        <ellipse cx="47" cy="32" rx="29" ry="18" fill="currentColor"/>
-        <path d="M19,32 L2,15 L8,32 L2,49 Z" fill="currentColor" opacity=".62"/>
-        <path d="M42,15 Q51,3 60,17 Z" fill="currentColor" opacity=".62"/>
-        <circle cx="62" cy="27" r="3.4" fill="#14161c"/>
-        <circle cx="63.2" cy="25.8" r="1.1" fill="#fff"/>
+      <symbol id="fish" viewBox="0 0 100 60">
+        <g fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M30,30 Q52,11 80,30 Q52,49 30,30"/>
+          <path d="M30,30 L13,19 M30,30 L13,41"/>
+          <path d="M66,22 Q61,30 66,38"/>
+        </g>
       </symbol>
     </defs>
   </svg>
@@ -113,19 +122,18 @@
 
       <div class="art">
         <div class="scene">
-          <div class="glow"></div>
-          <svg class="fish f1"><use href="#fish"/></svg>
-          <svg class="fish f2"><use href="#fish"/></svg>
-          <svg class="fish f3"><use href="#fish"/></svg>
-          <svg class="fish f4"><use href="#fish"/></svg>
-          <svg class="fish f5"><use href="#fish"/></svg>
-          <svg class="fish f6"><use href="#fish"/></svg>
-          <svg class="fish lead"><use href="#fish"/></svg>
+          <svg class="fish s s1"><use href="#fish"/></svg>
+          <svg class="fish s s2"><use href="#fish"/></svg>
+          <svg class="fish s s3"><use href="#fish"/></svg>
+          <svg class="fish s s4"><use href="#fish"/></svg>
+          <svg class="fish s s5"><use href="#fish"/></svg>
+          <svg class="fish s s6"><use href="#fish"/></svg>
+          <svg class="fish big"><use href="#fish"/></svg>
         </div>
       </div>
     </div>
   </section>
 
-  <div class="pv-flag">Isolated preview &middot; coded fish animation (no video, loops free)</div>
+  <div class="pv-flag">Isolated preview &middot; line-art school merges into one (coded, loops free)</div>
 </body>
 </html>
