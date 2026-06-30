@@ -182,6 +182,13 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.type('text/html').send(html);
   });
 
+  // /hero-fish-preview -- same hero with a coded (CSS/SVG) fish animation in the
+  // focal slot instead of AI-generated video. No model, no cost, loops forever.
+  app.get('/hero-fish-preview', async (_request, reply) => {
+    const html = await ejs.renderFile(`${V7_VIEWS}/pages/hero-fish-preview.ejs`, { assetVersion: ASSET_VERSION });
+    return reply.type('text/html').send(html);
+  });
+
   // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
   // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
   app.get('/cio', async (_request, reply) => {
