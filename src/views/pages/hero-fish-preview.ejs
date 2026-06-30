@@ -11,7 +11,7 @@
 <style>
   :root{
     --ink:#14161c; --ink-soft:#3c424d; --ink-mute:#7c828d;
-    --blue:#0d7df2; --green:#5d9e16; --school:#2a2f37; --line:#ececef;
+    --blue:#0d7df2; --school:#0d7df2; --line:#ececef;
   }
   *{ box-sizing:border-box; } html,body{ margin:0; }
   body{ background:#fff; color:var(--ink); font-family:'Schibsted Grotesk','Inter',sans-serif; -webkit-font-smoothing:antialiased; }
@@ -34,34 +34,34 @@
   .cta{ background:var(--blue); color:#fff; font-weight:600; font-size:16px; padding:15px 26px; border-radius:11px; box-shadow:0 10px 24px rgba(13,125,242,.22); display:inline-block; }
   .cta-note{ font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-mute); }
 
-  /* ---------- line-art school that collapses to a point, then one fish blooms ---------- */
+  /* ---------- blue line-art school that merges into one bigger fish ---------- */
   .art{ position:relative; min-height:480px; }
   .scene{ position:absolute; inset:0; overflow:hidden; }
 
-  .fish{ position:absolute; left:50%; top:50%; height:auto; aspect-ratio:100/64;
+  .fish{ position:absolute; left:50%; top:50%; height:auto; aspect-ratio:150/80;
     overflow:visible; transform-origin:center; }
 
   .s{ color:var(--school); animation:converge 8.5s cubic-bezier(.5,.04,.3,1) infinite; }
-  .s1{ width:56px; --hx:-150px; --hy:-58px; }
-  .s2{ width:46px; --hx:-104px; --hy:-8px; }
-  .s3{ width:60px; --hx:-176px; --hy:34px; }
-  .s4{ width:42px; --hx:-92px;  --hy:62px; }
-  .s5{ width:50px; --hx:-196px; --hy:-18px; }
-  .s6{ width:38px; --hx:-126px; --hy:94px; }
+  .s1{ width:62px; --hx:-150px; --hy:-46px; }
+  .s2{ width:50px; --hx:-118px; --hy:-12px; }
+  .s3{ width:66px; --hx:-178px; --hy:18px; }
+  .s4{ width:46px; --hx:-100px; --hy:46px; }
+  .s5{ width:54px; --hx:-202px; --hy:-30px; }
+  .s6{ width:42px; --hx:-138px; --hy:72px; }
 
-  /* school swims to the exact center, shrinks to a point and disappears, then re-forms */
+  /* school swims to the exact center, shrinks to a point and vanishes, then re-forms */
   @keyframes converge{
     0%    { transform:translate(-50%,-50%) translate(var(--hx),var(--hy)) scale(1); opacity:1; }
     14%   { transform:translate(-50%,-50%) translate(var(--hx),var(--hy)) scale(1); opacity:1; }
     40%   { transform:translate(-50%,-50%) translate(0,0) scale(.5);  opacity:1; }
     46%   { transform:translate(-50%,-50%) translate(0,0) scale(.06); opacity:0; }
     90%   { transform:translate(-50%,-50%) translate(0,0) scale(.06); opacity:0; }
-    91%   { transform:translate(-50%,-50%) translate(var(--hx),var(--hy)) scale(1); opacity:0; } /* teleport home while invisible */
-    100%  { transform:translate(-50%,-50%) translate(var(--hx),var(--hy)) scale(1); opacity:1; } /* fade back in, in formation */
+    91%   { transform:translate(-50%,-50%) translate(var(--hx),var(--hy)) scale(1); opacity:0; }
+    100%  { transform:translate(-50%,-50%) translate(var(--hx),var(--hy)) scale(1); opacity:1; }
   }
 
-  /* the one fish blooms from the same point AFTER the school is gone, grows, then fully fades BEFORE the school returns */
-  .big{ width:188px; color:var(--green); animation:emerge 8.5s cubic-bezier(.5,.04,.3,1) infinite; }
+  /* the one fish blooms from that point AFTER the school is gone, grows, fades before the school returns */
+  .big{ width:218px; color:var(--blue); animation:emerge 8.5s cubic-bezier(.5,.04,.3,1) infinite; }
   @keyframes emerge{
     0%   { transform:translate(-50%,-50%) scale(0);    opacity:0; }
     46%  { transform:translate(-50%,-50%) scale(0);    opacity:0; }
@@ -87,16 +87,17 @@
 </style>
 </head>
 <body>
-  <!-- a real fish: asymmetric body, rounded head (right), forked tail (left), dorsal fin, eye -->
+  <!-- traced from the Sakana fugu line-fish: leaf body, sharp nose right, forked tail left, gill -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-      <symbol id="fish" viewBox="0 0 100 64">
-        <g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M31,32 C31,22 43,18 57,18 C74,18 86,24 90,32 C86,40 74,46 57,46 C43,46 31,42 31,32 Z"/>
-          <path d="M31,32 L12,19 L20,32 L12,45 Z"/>
-          <path d="M53,18 Q58,9 64,17"/>
+      <symbol id="fish" viewBox="0 0 150 80">
+        <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M48,40 C52,20 80,10 104,14 C122,17 132,28 138,40"/>
+          <path d="M48,40 C52,60 80,70 104,66 C122,63 132,52 138,40"/>
+          <path d="M48,40 C34,30 20,22 8,16"/>
+          <path d="M48,40 C34,50 20,58 8,64"/>
+          <path d="M104,20 C97,30 97,50 104,60"/>
         </g>
-        <circle cx="78" cy="28" r="2.7" fill="currentColor"/>
       </symbol>
     </defs>
   </svg>
@@ -135,6 +136,6 @@
     </div>
   </section>
 
-  <div class="pv-flag">Isolated preview &middot; school collapses to a point, one fish blooms and grows</div>
+  <div class="pv-flag">Isolated preview &middot; blue school merges into one fish (traced from Sakana, recolored)</div>
 </body>
 </html>
