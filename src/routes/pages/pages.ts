@@ -202,6 +202,19 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /home-manifesto-preview -- philosophy-led homepage (belief -> broken ->
+  // why -> imagine -> proof -> product -> manifesto -> the enemy line).
+  // noindex throwaway preview; delete once a direction is chosen.
+  app.get('/home-manifesto-preview', async (_request, reply) => {
+    return renderV7(reply, 'home-manifesto', {
+      title: 'OTP - Unlock the potential in every person',
+      description: 'We refuse to accept that humanity\'s greatest potential should be spent managing work. OTP brings people and AI together as one team.',
+      canonical: BASE_URL + '/',
+      ogImage: OG_DEFAULT,
+      noindex: true,
+    });
+  });
+
   // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
   // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
   app.get('/cio', async (_request, reply) => {
