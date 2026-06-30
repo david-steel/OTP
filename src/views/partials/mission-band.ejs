@@ -3,20 +3,21 @@
     <%- include('../partials/mission-band') %> at the close of marketing pages.
     Visible copy is the short clause; the full mission sentence lives in the footer. %>
 <section class="mzn">
-  <div class="mzn-glow" aria-hidden="true"></div>
   <div class="mzn-wrap">
-    <span class="mzn-kicker"><span class="mzn-tick"></span>Our mission</span>
-    <h2 class="mzn-line">Unlocking the potential in every person through the <span class="mzn-accent">partnership of people and&nbsp;AI</span>.</h2>
+    <div class="mzn-rule" aria-hidden="true"></div>
+    <div class="mzn-body">
+      <span class="mzn-kicker">Our mission</span>
+      <h2 class="mzn-line">Unlocking the potential in every person through the <span class="mzn-accent">partnership of people and AI</span>.</h2>
+    </div>
   </div>
 </section>
 <style>
-  .mzn { position:relative; overflow:hidden; background:#f7f5ef; border-top:1px solid rgba(20,39,26,.07); border-bottom:1px solid rgba(20,39,26,.07); padding:108px 24px; }
-  .mzn-glow { position:absolute; left:50%; top:46%; width:780px; height:540px; max-width:120vw; transform:translate(-50%,-50%); background:radial-gradient(closest-side, rgba(168,230,58,.15), rgba(168,230,58,0) 72%); pointer-events:none; }
-  .mzn-wrap { position:relative; max-width:1000px; margin:0 auto; text-align:center; }
-  .mzn-kicker { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-mute,#6b7280); display:inline-flex; align-items:center; gap:9px; margin-bottom:28px; }
-  .mzn-tick { width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
-  .mzn-line { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; letter-spacing:-0.028em; line-height:1.07; font-size:clamp(2.05rem,5vw,3.6rem); color:var(--ink,#14161c); margin:0 auto; max-width:18ch; text-wrap:balance; }
-  .mzn-accent { color:var(--blue,#0d7df2); white-space:nowrap; }
-  @media (max-width:900px){ .mzn-accent { white-space:normal; } .mzn-line{ max-width:16ch; } }
-  @media (max-width:640px){ .mzn { padding:76px 20px; } .mzn-line{ max-width:none; } }
+  .mzn { background:#f7f5ef; border-top:1px solid rgba(20,39,26,.07); border-bottom:1px solid rgba(20,39,26,.07); padding:120px 24px; }
+  .mzn-wrap { max-width:1080px; margin:0 auto; display:flex; gap:34px; align-items:stretch; }
+  .mzn-rule { flex:0 0 5px; border-radius:99px; background:linear-gradient(180deg, var(--orgy,#a8e63a), var(--orgy-deep,#8BC42A)); }
+  .mzn-body { flex:1 1 auto; }
+  .mzn-kicker { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-mute,#6b7280); display:block; margin-bottom:22px; }
+  .mzn-line { font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; letter-spacing:-0.03em; line-height:1.04; font-size:clamp(2.2rem,5.4vw,4rem); color:var(--ink,#14161c); margin:0; max-width:20ch; text-wrap:balance; }
+  .mzn-accent { color:var(--blue,#0d7df2); }
+  @media (max-width:640px){ .mzn { padding:84px 20px; } .mzn-wrap{ gap:22px; } .mzn-line{ max-width:none; } }
 </style>
