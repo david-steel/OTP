@@ -1,141 +1,179 @@
-<%# Manifesto homepage -- philosophy-led "would I follow this into battle" build.
+<%# Manifesto homepage v2 -- editorial/structured. Left-aligned grid, numbered
+    movements, hairline rules, type contrast, one full-bleed proof block.
     Body-only; renderV7 wraps it in the v7 layout (nav, footer, fonts, tokens). %>
 <style>
-  .mf-wrap{ max-width:860px; margin:0 auto; }
-  .mf-sec{ padding:120px 24px; }
-  .mf-paper{ background:#f7f5ef; }
-  .mf-dark{ background:#0c1626; }
-  .mf-close{ background:linear-gradient(180deg,#ffffff, #eef4ff); }
+  .mfx-wrap{ max-width:1120px; margin:0 auto; padding:0 32px; }
+  .mfx-accent{ color:var(--blue,#0d7df2); }
+  .mfx-tick{ width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
 
-  .mf-eyebrow{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-mute,#7c828d); display:inline-flex; align-items:center; justify-content:center; gap:9px; margin-bottom:32px; }
-  .mf-tick{ width:8px; height:8px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
+  /* ---- hero: left-aligned, asymmetric, big ---- */
+  .mfx-hero{ padding:146px 0 96px; }
+  .mfx-kicker{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:12px; letter-spacing:.17em; text-transform:uppercase; color:var(--ink-mute,#7c828d); display:inline-flex; align-items:center; gap:10px; }
+  .mfx-h1{ margin:26px 0 0; font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(2.8rem,6.4vw,5rem); line-height:1.0; letter-spacing:-0.043em; color:var(--ink,#14161c); max-width:17ch; }
+  .mfx-sub{ margin:28px 0 0; font-family:'Inter',sans-serif; font-weight:400; font-size:clamp(1.1rem,1.4vw,1.28rem); line-height:1.6; color:var(--ink-soft,#3c424d); max-width:33rem; }
+  .mfx-cta{ margin-top:38px; display:flex; gap:22px; align-items:center; flex-wrap:wrap; }
+  .mfx-link{ font-family:'Inter',sans-serif; font-weight:600; font-size:15px; color:var(--blue,#0d7df2); text-decoration:none; }
+  .mfx-link:hover{ text-decoration:underline; }
 
-  .mf-hero{ padding:152px 24px 112px; text-align:center; }
-  .mf-h1{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(2.6rem,6vw,4.6rem); line-height:1.04; letter-spacing:-0.04em; color:var(--ink,#14161c); margin:0 auto; max-width:17ch; }
-  .mf-sub{ font-family:'Inter',sans-serif; font-weight:400; font-size:clamp(1.1rem,1.5vw,1.32rem); line-height:1.6; color:var(--ink-soft,#3c424d); margin:30px auto 0; max-width:35rem; }
-  .mf-cta{ margin-top:42px; display:flex; gap:22px; align-items:center; justify-content:center; flex-wrap:wrap; }
-  .mf-link{ font-family:'Inter',sans-serif; font-weight:600; font-size:15px; color:var(--blue,#0d7df2); text-decoration:none; }
-  .mf-link:hover{ text-decoration:underline; }
+  /* ---- numbered movement: index column + statement column, ruled ---- */
+  .mvx{ display:grid; grid-template-columns:130px minmax(0,1fr); gap:60px; align-items:start;
+        padding:86px 0; border-top:1px solid var(--rule,#e7e8ec); }
+  .mvx-num{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:14px; font-weight:500; color:var(--blue,#0d7df2); letter-spacing:.06em; }
+  .mvx-label{ margin-top:14px; font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-mute,#7c828d); line-height:1.5; }
 
-  .mf-lines{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:clamp(1.45rem,2.7vw,2.15rem); line-height:1.46; letter-spacing:-0.02em; color:var(--ink-soft,#3c424d); max-width:24ch; margin:0 auto; text-align:center; }
-  .mf-lines p{ margin:0 0 .5em; }
-  .mf-lines p:last-child{ margin-bottom:0; }
-  .mf-peak{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(2.6rem,7vw,5rem); line-height:1.02; letter-spacing:-0.045em; color:var(--ink,#14161c); margin:52px auto 0; max-width:18ch; text-align:center; }
-  .mf-accent{ color:var(--blue,#0d7df2); }
-  .mf-mission{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:clamp(1.6rem,3.4vw,2.5rem); line-height:1.26; letter-spacing:-0.028em; color:var(--ink,#14161c); max-width:21ch; margin:36px auto 0; text-align:center; }
+  .mvx-statement{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:clamp(1.7rem,3.2vw,2.65rem); line-height:1.22; letter-spacing:-0.022em; color:var(--ink,#14161c); max-width:30ch; }
+  .mvx-statement p{ margin:0 0 .42em; }
+  .mvx-statement p:last-child{ margin-bottom:0; }
+  .mvx-peak{ margin-top:.62em; font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(2.2rem,5.2vw,4rem); line-height:1.02; letter-spacing:-0.04em; color:var(--ink,#14161c); max-width:20ch; }
+  .mvx-mission{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(1.85rem,3.6vw,2.85rem); line-height:1.18; letter-spacing:-0.028em; color:var(--ink,#14161c); max-width:24ch; margin-top:6px; }
+  .mvx-h2{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.08; letter-spacing:-0.03em; color:var(--ink,#14161c); max-width:18ch; }
+  .mvx-body{ font-family:'Inter',sans-serif; font-weight:400; font-size:clamp(1.05rem,1.3vw,1.18rem); line-height:1.62; color:var(--ink-soft,#3c424d); max-width:34rem; margin-top:20px; }
 
-  .mf-h2{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(2rem,4vw,3rem); line-height:1.07; letter-spacing:-0.032em; color:var(--ink,#14161c); margin:0 auto; max-width:18ch; text-align:center; }
-  .mf-body{ font-family:'Inter',sans-serif; font-weight:400; font-size:clamp(1.05rem,1.4vw,1.2rem); line-height:1.65; color:var(--ink-soft,#3c424d); max-width:35rem; margin:22px auto 0; text-align:center; }
+  /* enumerated "imagine if" rows -- designed list, hairline-separated */
+  .mvx-rows{ max-width:36rem; }
+  .mvx-row{ display:flex; gap:18px; align-items:baseline; padding:16px 0; border-top:1px solid var(--rule,#e7e8ec); }
+  .mvx-row:first-child{ border-top:0; padding-top:0; }
+  .mvx-row .r-n{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-mute,#9aa0aa); flex:0 0 auto; padding-top:.35em; }
+  .mvx-row .r-t{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:clamp(1.2rem,2vw,1.6rem); line-height:1.3; letter-spacing:-0.015em; color:var(--ink,#14161c); }
 
-  .mf-enemy{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(2.1rem,5vw,3.7rem); line-height:1.1; letter-spacing:-0.032em; color:var(--ink,#14161c); max-width:18ch; margin:0 auto; text-align:center; }
-  .mf-note{ font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-mute,#7c828d); margin-top:16px; text-align:center; }
+  /* ---- full-bleed proof block: breaks the rhythm ---- */
+  .mfx-proof{ background:#0c1626; padding:120px 0; }
+  .mfx-proof .mvx{ border-top:0; padding:0; }
+  .mfx-proof .mvx-num{ color:var(--orgy,#a8e63a); }
+  .mfx-proof .mvx-label{ color:rgba(255,255,255,.5); }
+  .mfx-proof .mvx-h2{ color:#fff; }
+  .mfx-proof .mvx-body{ color:rgba(255,255,255,.8); }
 
-  .mf-reveal{ opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease; }
-  .mf-reveal.in{ opacity:1; transform:none; }
-  @media (prefers-reduced-motion: reduce){ .mf-reveal{ opacity:1 !important; transform:none !important; transition:none; } }
-  @media (max-width:640px){ .mf-sec{ padding:84px 20px; } .mf-hero{ padding:118px 20px 74px; } }
+  /* ---- close ---- */
+  .mfx-close{ border-top:1px solid var(--rule,#e7e8ec); padding:108px 0 134px; }
+  .mfx-enemy{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(2.2rem,5.4vw,4.2rem); line-height:1.08; letter-spacing:-0.036em; color:var(--ink,#14161c); max-width:20ch; }
+  .mfx-note{ font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-mute,#7c828d); margin-top:16px; }
+
+  .mvx-reveal{ opacity:0; transform:translateY(16px); transition:opacity .7s ease, transform .7s ease; }
+  .mvx-reveal.in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){ .mvx-reveal{ opacity:1 !important; transform:none !important; transition:none; } }
+
+  @media (max-width:760px){
+    .mvx{ grid-template-columns:1fr; gap:16px; padding:58px 0; }
+    .mfx-hero{ padding:116px 0 70px; }
+    .mfx-proof{ padding:84px 0; }
+    .mfx-close{ padding:74px 0 96px; }
+  }
 </style>
 
 <!-- ================= HERO ================= -->
-<section class="mf-hero">
-  <div class="mf-wrap">
-    <div class="mf-eyebrow"><span class="mf-tick"></span>The operating system for people and AI</div>
-    <h1 class="mf-h1">Every person has more potential than their workday allows.</h1>
-    <p class="mf-sub">OTP brings people and AI together as one team, and clears the busywork that keeps companies from thinking, creating, and growing.</p>
-    <div class="mf-cta">
+<section class="mfx-hero">
+  <div class="mfx-wrap">
+    <div class="mfx-kicker"><span class="mfx-tick"></span>The operating system for people and AI</div>
+    <h1 class="mfx-h1">Every person has more potential than their workday allows.</h1>
+    <p class="mfx-sub">OTP brings people and AI together as one team, and clears the busywork that keeps companies from thinking, creating, and growing.</p>
+    <div class="mfx-cta">
       <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
+      <a href="#problem" class="mfx-link">Why we exist &darr;</a>
     </div>
   </div>
 </section>
 
-<!-- ================= WHAT'S BROKEN ================= -->
-<section class="mf-sec mf-paper">
-  <div class="mf-wrap">
-    <div class="mf-eyebrow" style="display:flex;"><span class="mf-tick"></span>We believe something is broken</div>
-    <div class="mf-lines mf-reveal">
-      <p>For decades we made people more productive.</p>
-      <p>They have never felt busier.</p>
-      <p>We built software to save time, then filled the time with more software.</p>
-      <p>We automated the work, then invented more of it.</p>
-      <p>Somewhere, we stopped asking the only question that matters.</p>
-    </div>
-    <p class="mf-peak mf-reveal">What is productivity <span class="mf-accent">for?</span></p>
-  </div>
-</section>
-
-<!-- ================= WHY WE EXIST (the mission) ================= -->
-<section class="mf-sec">
-  <div class="mf-wrap">
-    <div class="mf-lines mf-reveal">
-      <p>The highest purpose of technology is not to replace people.</p>
-      <p>It is to elevate them.</p>
-    </div>
-    <p class="mf-mission mf-reveal">That is why OTP exists. Not to build another AI platform, but to <span class="mf-accent">unlock the potential in every person through the partnership of people and AI</span>, so together we leave the world better than we found it.</p>
-  </div>
-</section>
-
-<!-- ================= IMAGINE IF (the vision) ================= -->
-<section class="mf-sec mf-paper">
-  <div class="mf-wrap">
-    <div class="mf-eyebrow" style="display:flex;"><span class="mf-tick"></span>Imagine if</div>
-    <div class="mf-lines mf-reveal">
-      <p>Every employee had perfect memory.</p>
-      <p>Every decision built on every lesson before it.</p>
-      <p>Every AI understood your whole organization.</p>
-      <p>And every person finally had time to think, to create, to build something that matters.</p>
-    </div>
-    <p class="mf-peak mf-reveal">That's <span class="mf-accent">OTP</span>.</p>
-  </div>
-</section>
-
-<!-- ================= WE LIVE IT (the proof) ================= -->
-<section class="mf-sec mf-dark">
-  <div class="mf-wrap">
-    <div class="mf-eyebrow" style="display:flex;color:var(--orgy,#a8e63a);"><span class="mf-tick"></span>We don't describe this. We live it.</div>
-    <h2 class="mf-h2" style="color:#fff;">We run our own company on these exact agents.</h2>
-    <p class="mf-body" style="color:rgba(255,255,255,.82);">Radar, Dan, Pepper, Dash, and Tally are the same agents that run the company that built OTP. Working live, on this platform, next to our people, every single day. No one else can hand you a philosophy and show you it running.</p>
-  </div>
-</section>
-
-<!-- ================= THE PLATFORM (the alternative) ================= -->
-<section class="mf-sec">
-  <div class="mf-wrap">
-    <div class="mf-eyebrow" style="display:flex;"><span class="mf-tick"></span>So here is the alternative</div>
-    <h2 class="mf-h2">Put people and AI on one accountable team.</h2>
-    <p class="mf-body">OTP gives your whole team free meeting software: one chart, one scoreboard, one weekly meeting. Then every AI agent takes a seat, owns a number, and does the work between meetings, right next to your people. Bring your own agents, or start with five of ours. Free for your whole team.</p>
-    <div class="mf-cta">
-      <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &rarr;</a>
-      <a href="/compare" class="mf-link">See how it works &rarr;</a>
+<!-- ================= 01 THE PROBLEM ================= -->
+<section id="problem" class="mfx-wrap">
+  <div class="mvx">
+    <div class="mvx-side"><div class="mvx-num">01</div><div class="mvx-label">We believe<br>something<br>is broken</div></div>
+    <div class="mvx-main">
+      <div class="mvx-statement mvx-reveal">
+        <p>For decades we made people more productive.</p>
+        <p>They have never felt busier.</p>
+        <p>We built software to save time, then filled the time with more software.</p>
+        <p>We automated the work, then invented more of it.</p>
+      </div>
+      <p class="mvx-peak mvx-reveal">What is productivity <span class="mfx-accent">for?</span></p>
     </div>
   </div>
 </section>
 
-<!-- ================= ORIGIN / MANIFESTO ================= -->
-<section class="mf-sec mf-paper">
-  <div class="mf-wrap">
-    <div class="mf-eyebrow" style="display:flex;"><span class="mf-tick"></span>The manifesto</div>
-    <h2 class="mf-h2">Read <em>The Intelligent Organization</em>.</h2>
-    <p class="mf-body">Our founding manifesto for Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
-    <div class="mf-cta">
-      <a href="/the-intelligent-organization/" class="btn-primary px-8 py-4 text-[16px]">Read the manifesto &rarr;</a>
+<!-- ================= 02 THE BELIEF ================= -->
+<section class="mfx-wrap">
+  <div class="mvx">
+    <div class="mvx-side"><div class="mvx-num">02</div><div class="mvx-label">Why<br>we exist</div></div>
+    <div class="mvx-main">
+      <div class="mvx-statement mvx-reveal">
+        <p>The highest purpose of technology is not to replace people.</p>
+        <p>It is to elevate them.</p>
+      </div>
+      <p class="mvx-mission mvx-reveal">That is why OTP exists. Not to build another AI platform, but to <span class="mfx-accent">unlock the potential in every person through the partnership of people and AI</span>, so together we leave the world better than we found it.</p>
     </div>
   </div>
 </section>
 
-<!-- ================= CLOSE (the enemy line) ================= -->
-<section class="mf-sec mf-close">
-  <div class="mf-wrap">
-    <p class="mf-enemy mf-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="mf-accent">managing work</span>.</p>
-    <div class="mf-cta">
-      <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
+<!-- ================= 03 THE VISION ================= -->
+<section class="mfx-wrap">
+  <div class="mvx">
+    <div class="mvx-side"><div class="mvx-num">03</div><div class="mvx-label">Imagine<br>if</div></div>
+    <div class="mvx-main">
+      <div class="mvx-rows mvx-reveal">
+        <div class="mvx-row"><span class="r-n">i</span><span class="r-t">Every employee had perfect memory.</span></div>
+        <div class="mvx-row"><span class="r-n">ii</span><span class="r-t">Every decision built on every lesson before it.</span></div>
+        <div class="mvx-row"><span class="r-n">iii</span><span class="r-t">Every AI understood your whole organization.</span></div>
+        <div class="mvx-row"><span class="r-n">iv</span><span class="r-t">Every person finally had time to think, to create, to build something that matters.</span></div>
+      </div>
+      <p class="mvx-peak mvx-reveal">That's <span class="mfx-accent">OTP</span>.</p>
     </div>
-    <p class="mf-note">Free for your whole team. No credit card.</p>
   </div>
+</section>
+
+<!-- ================= PROOF (full-bleed, breaks the grid) ================= -->
+<section class="mfx-proof">
+  <div class="mfx-wrap">
+    <div class="mvx">
+      <div class="mvx-side"><div class="mvx-num">&mdash;</div><div class="mvx-label">We don't<br>describe this.<br>We live it.</div></div>
+      <div class="mvx-main">
+        <h2 class="mvx-h2">We run our own company on these exact agents.</h2>
+        <p class="mvx-body">Radar, Dan, Pepper, Dash, and Tally are the same agents that run the company that built OTP. Working live, on this platform, next to our people, every single day. No one else can hand you a philosophy and show you it running.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 04 THE PLATFORM ================= -->
+<section class="mfx-wrap">
+  <div class="mvx">
+    <div class="mvx-side"><div class="mvx-num">04</div><div class="mvx-label">So here is<br>the alternative</div></div>
+    <div class="mvx-main">
+      <h2 class="mvx-h2">Put people and AI on one accountable team.</h2>
+      <p class="mvx-body">OTP gives your whole team free meeting software: one chart, one scoreboard, one weekly meeting. Then every AI agent takes a seat, owns a number, and does the work between meetings, right next to your people. Bring your own agents, or start with five of ours. Free for your whole team.</p>
+      <div class="mfx-cta">
+        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &rarr;</a>
+        <a href="/compare" class="mfx-link">See how it works &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 05 THE MANIFESTO ================= -->
+<section class="mfx-wrap">
+  <div class="mvx">
+    <div class="mvx-side"><div class="mvx-num">05</div><div class="mvx-label">The<br>manifesto</div></div>
+    <div class="mvx-main">
+      <h2 class="mvx-h2">Read <em>The Intelligent Organization</em>.</h2>
+      <p class="mvx-body">Our founding manifesto for Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
+      <div class="mfx-cta">
+        <a href="/the-intelligent-organization/" class="btn-primary px-8 py-4 text-[16px]">Read the manifesto &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CLOSE ================= -->
+<section class="mfx-wrap mfx-close">
+  <p class="mfx-enemy mvx-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="mfx-accent">managing work</span>.</p>
+  <div class="mfx-cta">
+    <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
+  </div>
+  <p class="mfx-note">Free for your whole team. No credit card.</p>
 </section>
 
 <script>
 (function(){
-  var els = [].slice.call(document.querySelectorAll('.mf-reveal'));
+  var els = [].slice.call(document.querySelectorAll('.mvx-reveal'));
   if (!('IntersectionObserver' in window) || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
     els.forEach(function(e){ e.classList.add('in'); }); return;
   }
