@@ -189,6 +189,19 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.type('text/html').send(html);
   });
 
+  // /home-battle-preview -- restructured homepage on the "would I follow this
+  // into battle" thesis: conviction + proof first, product as the weapon.
+  // noindex throwaway preview; delete once a direction is chosen.
+  app.get('/home-battle-preview', async (_request, reply) => {
+    return renderV7(reply, 'home-battle', {
+      title: 'OTP - Put your AI on the chart',
+      description: 'People and AI on one accountable team that remembers and compounds. We run our own company on these exact agents, live.',
+      canonical: BASE_URL + '/',
+      ogImage: OG_DEFAULT,
+      noindex: true,
+    });
+  });
+
   // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
   // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
   app.get('/cio', async (_request, reply) => {
