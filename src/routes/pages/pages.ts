@@ -166,6 +166,14 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /mission-preview -- isolated, noindex preview of the mission band partial,
+  // rendered on a blank white page so the design can be judged on its own.
+  // Throwaway design-review route; safe to delete once the band is approved.
+  app.get('/mission-preview', async (_request, reply) => {
+    const html = await ejs.renderFile(`${V7_VIEWS}/pages/mission-preview.ejs`, { assetVersion: ASSET_VERSION });
+    return reply.type('text/html').send(html);
+  });
+
   // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
   // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
   app.get('/cio', async (_request, reply) => {
