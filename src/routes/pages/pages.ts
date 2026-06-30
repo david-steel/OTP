@@ -159,7 +159,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   app.get('/', async (_request, reply) => {
     return renderV7(reply, 'home-v8', {
       title: 'OTP - Run your company with people and AI agents',
-      description: 'OTP is the operating system for teams of people and AI agents. One chart, one scoreboard, one weekly meeting - built on the EOS you already run. Your whole team is free; you only pay for the agents.',
+      description: 'OTP is the operating system for teams of people and AI agents. One chart, one scoreboard, one weekly meeting - built on the operating system you already run. Your whole team is free; you only pay for the agents.',
       canonical: BASE_URL + '/',
       ogImage: OG_DEFAULT,
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents.', sameAs: ['https://x.com/OrgTP_1'] },
@@ -1012,19 +1012,21 @@ export default async function pageRoutes(app: FastifyInstance) {
 
   // /otp-vs-ninety-eos-one -- bottom-funnel comparison page. Concede Stage-1
   // EOS parity, win on agents-as-employees + humans-free/agents-paid pricing.
-  app.get('/otp-vs-ninety-eos-one', async (_request, reply) => {
+  // Legacy comparison URL retired for trademark compliance -> redirect to /compare.
+  app.get('/otp-vs-ninety-eos-one', async (_request, reply) => reply.redirect('/compare', 301));
+  app.get('/compare', async (_request, reply) => {
     return renderV7(reply, 'otp-vs-ninety-eos-one', {
-      title: 'OTP vs Ninety vs EOS One vs Bloom - Run the Same EOS, Plus a Workforce',
-      description: 'Ninety, EOS One and Bloom Growth are EOS software. OTP runs the same EOS and lets AI agents take real seats with real KPIs and real work. Your whole team is free; you only pay for agents. See the side-by-side.',
-      canonical: BASE_URL + '/otp-vs-ninety-eos-one',
+      title: 'How OTP compares - Run your operating system, plus a workforce',
+      description: 'Most business-operating-system software digitizes the system you already run. OTP runs the same kind of system and lets AI agents take real seats with real KPIs and real work. Your whole team is free; you only pay for agents. See the side-by-side.',
+      canonical: BASE_URL + '/compare',
       ogImage: OG_DEFAULT,
-      breadcrumbs: bc({ name: 'OTP vs Ninety vs EOS One vs Bloom', url: BASE_URL + '/otp-vs-ninety-eos-one' }),
+      breadcrumbs: bc({ name: 'How OTP compares', url: BASE_URL + '/compare' }),
       jsonLd: {
         '@context': 'https://schema.org',
         '@type': 'WebPage',
-        name: 'OTP vs Ninety vs EOS One vs Bloom',
-        description: 'Side-by-side: OTP vs Ninety vs EOS One vs Bloom Growth. Humans free, agents paid; agents take seats with KPIs and do the work.',
-        url: BASE_URL + '/otp-vs-ninety-eos-one',
+        name: 'How OTP compares',
+        description: 'Side-by-side: OTP vs traditional operating-system software. Humans free, agents paid; agents take seats with KPIs and do the work.',
+        url: BASE_URL + '/compare',
       },
     });
   });
@@ -2775,21 +2777,23 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get('/level-10-meetings', async (_request, reply) => {
+  // Legacy URL retired for trademark compliance -> redirect to /weekly-meetings.
+  app.get('/level-10-meetings', async (_request, reply) => reply.redirect('/weekly-meetings', 301));
+  app.get('/weekly-meetings', async (_request, reply) => {
     return renderV7(reply, 'level-10-meetings', {
-      title: 'Level 10 Meeting Software | Run the Weekly Leadership Meeting on OTP',
-      description: 'Run your weekly Level 10 Meeting on OTP. Timed agenda, live scoreboard, rock review, headlines, to-dos, and issue solving in one place. Free for your whole team in Beta.',
-      canonical: BASE_URL + '/level-10-meetings',
+      title: 'Weekly Meeting Software | Run the Weekly Leadership Meeting on OTP',
+      description: 'Run your weekly leadership meeting on OTP. Timed agenda, live scoreboard, priority review, headlines, to-dos, and issue solving in one place. Free for your whole team in Beta.',
+      canonical: BASE_URL + '/weekly-meetings',
       ogImage: BASE_URL + '/public/og/og-level-10-meetings.png',
       googleAdsId: 'AW-18159119434',
-      breadcrumbs: bc({ name: 'Level 10 Meetings', url: BASE_URL + '/level-10-meetings' }),
+      breadcrumbs: bc({ name: 'Weekly Meetings', url: BASE_URL + '/weekly-meetings' }),
     });
   });
 
   app.get('/the-otp-difference', async (_request, reply) => {
     return renderV7(reply, 'the-otp-difference', {
       title: 'The OTP Difference | Free, AI-Native, Whole Team Included',
-      description: 'How OTP is different from per-seat EOS tools: free for your whole team, an AI Chief of Staff built in, and the work between meetings handled.',
+      description: 'How OTP is different from per-seat operating-system tools: free for your whole team, an AI Chief of Staff built in, and the work between meetings handled.',
       canonical: BASE_URL + '/the-otp-difference',
       ogImage: BASE_URL + '/public/og/og-the-otp-difference.png',
       googleAdsId: 'AW-18159119434',
