@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Hero preview — OTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161c; --ink-soft:#3c424d; --ink-mute:#7c828d;
+    --blue:#0d7df2; --blue-deep:#0a56b0; --orgy:#a8e63a; --line:#ececef;
+  }
+  *{ box-sizing:border-box; } html,body{ margin:0; }
+  body{ background:#ffffff; color:var(--ink); font-family:'Schibsted Grotesk','Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+
+  /* minimal nav, just for top-of-page realism */
+  .nav{ height:64px; border-bottom:1px solid var(--line); }
+  .nav-in{ max-width:1180px; margin:0 auto; height:100%; padding:0 28px; display:flex; align-items:center; justify-content:space-between; }
+  .brand{ font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; font-size:18px; letter-spacing:-.02em; }
+  .brand .b{ color:var(--blue); }
+  .nav-links{ display:flex; gap:26px; font-size:14px; color:var(--ink-soft); }
+  .nav-links span{ opacity:.9; }
+  .nav-cta{ background:var(--ink); color:#fff; font-size:14px; font-weight:600; padding:9px 16px; border-radius:9px; }
+  @media (max-width:760px){ .nav-links{ display:none; } }
+
+  /* hero */
+  .hero{ position:relative; overflow:hidden; }
+  .hero-in{ max-width:1180px; margin:0 auto; padding:104px 28px 112px; display:grid; grid-template-columns:1.04fr .96fr; gap:56px; align-items:center; }
+
+  .eyebrow{ font-weight:600; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-mute); }
+  .h1{ font-weight:600; font-size:clamp(2.7rem,5.2vw,4.2rem); line-height:1.03; letter-spacing:-0.038em; margin:20px 0 0; max-width:13ch; }
+  .h1 .accent{ color:var(--blue); }
+  .sub{ font-family:'Inter',sans-serif; font-weight:400; font-size:clamp(1.06rem,1.35vw,1.2rem); line-height:1.6; color:var(--ink-soft); margin:26px 0 0; max-width:31rem; }
+  .cta-row{ margin-top:36px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .cta{ background:var(--blue); color:#fff; font-weight:600; font-size:16px; padding:15px 26px; border-radius:11px; box-shadow:0 10px 24px rgba(13,125,242,.22); transition:transform .15s ease, box-shadow .15s ease; display:inline-block; }
+  .cta:hover{ transform:translateY(-1px); box-shadow:0 14px 30px rgba(13,125,242,.28); }
+  .cta-note{ font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-mute); }
+  .trust{ margin-top:40px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13.5px; color:var(--ink-mute); }
+  .trust b{ color:var(--ink-soft); font-weight:600; }
+  .trust .dot{ width:3px; height:3px; border-radius:50%; background:#cfd3da; display:inline-block; }
+
+  /* the single focal element: Ollie, calm */
+  .art{ position:relative; display:flex; align-items:center; justify-content:center; min-height:440px; }
+  .glow{ position:absolute; width:560px; height:560px; max-width:115%; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(168,230,58,.20), rgba(168,230,58,0) 70%); pointer-events:none; }
+  .ollie{ position:relative; width:min(440px,82%); height:auto; display:block;
+    filter:drop-shadow(0 34px 46px rgba(20,22,28,.18)); animation:float 6.5s ease-in-out infinite; }
+  @keyframes float{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-16px); } }
+
+  @media (max-width:920px){
+    .hero-in{ grid-template-columns:1fr; gap:20px; padding:72px 24px 84px; text-align:center; }
+    .h1{ max-width:none; margin-left:auto; margin-right:auto; }
+    .sub{ margin-left:auto; margin-right:auto; }
+    .cta-row, .trust{ justify-content:center; }
+    .art{ order:-1; min-height:0; margin-bottom:14px; }
+    .ollie{ width:min(280px,66vw); }
+  }
+  @media (prefers-reduced-motion: reduce){ .ollie{ animation:none; } }
+
+  .pv-flag{ font-family:'Inter',sans-serif; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#b3b8c0; text-align:center; padding:14px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-in">
+      <div class="brand"><span class="b">[</span>OTP<span class="b">]</span></div>
+      <div class="nav-links"><span>Protocol</span><span>Pricing</span><span>Browse</span><span>Blog</span></div>
+      <a class="nav-cta" href="#">Get started</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-in">
+      <div class="copy">
+        <div class="eyebrow">For teams of people and AI</div>
+        <h1 class="h1">Your people and <span class="accent">AI agents</span>, on one team.</h1>
+        <p class="sub">Free meeting software for your whole team — chart, scoreboard, weekly meeting. Your AI agents get a seat right next to your people. No agents of your own yet? Start with five of ours, free.</p>
+        <div class="cta-row">
+          <a class="cta" href="#">Start free &rarr;</a>
+          <span class="cta-note">No credit card. Free for your whole team.</span>
+        </div>
+        <div class="trust">
+          <b>Whole team free</b><span class="dot"></span><b>Agents do the work</b><span class="dot"></span><b>Built on the system you run</b>
+        </div>
+      </div>
+      <div class="art">
+        <div class="glow"></div>
+        <img class="ollie" src="/public/orgy-cut.png" alt="Ollie, the OTP mascot">
+      </div>
+    </div>
+  </section>
+
+  <div class="pv-flag">Isolated preview &middot; redesigned hero (not yet live)</div>
+</body>
+</html>

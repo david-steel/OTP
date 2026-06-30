@@ -174,6 +174,14 @@ export default async function pageRoutes(app: FastifyInstance) {
     return reply.type('text/html').send(html);
   });
 
+  // /hero-preview -- isolated, noindex preview of the redesigned homepage hero
+  // (restraint + single focal element, vs the current animated SVG scene).
+  // Throwaway design-review route; safe to delete once a direction is chosen.
+  app.get('/hero-preview', async (_request, reply) => {
+    const html = await ejs.renderFile(`${V7_VIEWS}/pages/hero-preview.ejs`, { assetVersion: ASSET_VERSION });
+    return reply.type('text/html').send(html);
+  });
+
   // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
   // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
   app.get('/cio', async (_request, reply) => {
