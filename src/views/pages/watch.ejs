@@ -48,6 +48,7 @@
     return type === 'human' ? anonHuman(pretty) : pretty;
   }
   var AGENT_PORTRAITS = { radar:1, dan:1, pepper:1, dash:1, tally:1 };
+  function fixRole(r){ return String(r || '').replace(/contrator/ig, 'Contractor'); }
   function agentSlug(name){
     var s = String(name || '').toLowerCase().replace(/[^a-z]/g, '');
     return AGENT_PORTRAITS[s] ? s : null;
@@ -193,7 +194,7 @@
             <div class="wt-grouptag" style="color:#b45309;"><span class="sw wt-sw-h"></span>Humans &middot; <%= humansList.length %></div>
             <div class="wt-tiles">
               <% humansList.forEach(function(h){ %>
-                <div class="wt-tile"><div class="nm"><%= esc(anonHuman(h.name)) %></div><div class="rl"><%= esc(h.role || '') %></div></div>
+                <div class="wt-tile"><div class="nm"><%= esc(anonHuman(h.name)) %></div><div class="rl"><%= esc(fixRole(h.role)) %></div></div>
               <% }); %>
             </div>
           </div>
@@ -205,7 +206,7 @@
               <% agentsList.forEach(function(a){ var slug = agentSlug(a.name); %>
                 <div class="wt-tile">
                   <div class="nm"><% if (slug) { %><img src="/public/images/vs/<%= slug %>.png?v=<%= _v %>" alt="" loading="lazy"><% } %><%= esc(a.name) %></div>
-                  <div class="rl"><%= esc(a.role || a.mission || '') %></div>
+                  <div class="rl"><%= esc(fixRole(a.role || a.mission)) %></div>
                 </div>
               <% }); %>
             </div>
@@ -292,7 +293,7 @@
              try { aEntry = Object.entries(agentMeeting.ratings || {}).find(function(e){ return /^AGT_/i.test(e[0]); }); } catch(e) {}
            %>
           <% if (aEntry) { %>
-          <p class="wt-body" style="margin-top:22px;">And read this one twice: on <%= fdate(agentMeeting.ended_at) %>, <b><%= esc(ownerLabel(aEntry[0], 'agent')) %></b>, an AI agent, sat the <%= fdate(agentMeeting.ended_at) === fdate(lastMeeting && lastMeeting.ended_at) ? 'meeting above' : 'leadership meeting' %> and rated it <b><%= num(aEntry[1]) %>/10</b>. Agents don't just do the work here. They sit at the table.</p>
+          <p class="wt-body" style="margin-top:22px;">On <%= fdate(agentMeeting.ended_at) %>, <b><%= esc(ownerLabel(aEntry[0], 'agent')) %></b>, an AI agent, sat the <%= fdate(agentMeeting.ended_at) === fdate(lastMeeting && lastMeeting.ended_at) ? 'meeting above' : 'leadership meeting' %> and rated it <b><%= num(aEntry[1]) %>/10</b>. Agents don't just do the work here. They sit at the table.</p>
           <% } %>
         <% } %>
         <% if (rockRows.length) { %>
@@ -315,11 +316,11 @@
       <div class="wt-side"><span class="wt-label">05 / The correction log</span></div>
       <div class="wt-main">
         <h2 class="wt-head">Where we were wrong, on the record.</h2>
-        <p class="wt-body">Every rule in our published operating system carries the failure that taught it to us. This is the part no vendor volunteers. We think it is the most useful thing on the page.</p>
+        <p class="wt-body">Every rule in our published operating system carries the failure that taught it to us. This is the part no vendor volunteers.</p>
         <div class="wt-corr">
           <% corrections.forEach(function(c){ %>
           <div class="wt-crow">
-            <div class="cid"><%= esc(c.claim_id) %> &middot; <%= esc(c.section || '') %><% if (c.agent_name) { %> &middot; <%= esc(c.agent_name) %><% } %></div>
+            <div class="cid"><%= esc(c.claim_id) %><% if (c.created_at) { %> &middot; <%= fdate(c.created_at) %><% } %> &middot; <%= esc(c.section || '') %><% if (c.agent_name) { %> &middot; <%= esc(c.agent_name) %><% } %></div>
             <div class="cr"><%= esc(c.rule) %></div>
             <% if (c.failure_mode) { %><div class="cf"><b>What goes wrong otherwise:</b> <%= esc(c.failure_mode) %></div><% } %>
           </div>
