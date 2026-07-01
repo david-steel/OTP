@@ -18,8 +18,22 @@ export const changelog: ChangelogEntry[] = [
   // land in the week-of-6/29 drop (What's New page, unread badge, weekly email).
 
   {
+    date: '2026-06-30',
+    tags: ['Scoreboard'],
+    title: 'Add a KPI right from the Scoreboard',
+    why: 'Spin up a new measurable without leaving your scoreboard to hunt for the right seat on the org chart.',
+    cta: { text: 'Open your scoreboard', url: '/dashboard/kpis' },
+    summary: 'You can now create a brand-new KPI straight from the Scoreboard. A "+ Add KPI" button in the header (and an "Add your first KPI" button on the empty state) opens the same edit panel in create mode: name it, set the target, pick the owning seat, and save, all in one place. Previously, adding a KPI meant going to the Team chart and finding the seat first. The Team-chart flow still works exactly as before.',
+    details: `<ul class="list-disc pl-6 space-y-1">
+<li><strong>+ Add KPI on the Scoreboard.</strong> A button in the header and on the empty state, available to KPI admins, opens a create panel without leaving the page.</li>
+<li><strong>Pick the owner inline.</strong> Choose the owning seat from a dropdown in the panel, so a new KPI lands on the right seat immediately.</li>
+<li><strong>Team chart unchanged.</strong> You can still add a KPI from any seat on the Team chart, exactly as before.</li>
+</ul>`,
+  },
+
+  {
     date: '2026-06-29',
-    tags: ['Core', 'Rocks'],
+    tags: ['Core', 'Rocks', 'Major'],
     title: 'Shadow Rocks: a private quarterly priority only you can see',
     why: 'Track a personal or sensitive Rock on your own scorecard without putting it in front of the whole team.',
     cta: { text: 'Open your Rocks', url: '/dashboard' },
