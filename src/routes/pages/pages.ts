@@ -207,8 +207,8 @@ export default async function pageRoutes(app: FastifyInstance) {
   // noindex throwaway preview; delete once a direction is chosen.
   app.get('/home-manifesto-preview', async (_request, reply) => {
     return renderV7(reply, 'home-manifesto', {
-      title: 'OTP - You are capable of more than your workday allows',
-      description: 'A movement for the future of work: people and AI as one team, unlocking the potential in every person. There is no finish line. Join us.',
+      title: 'OTP - The meeting was never the problem',
+      description: 'A letter from our founder: put people and AI agents on one chart and fix the week, not the meeting. Our own company runs on it, live and public. Every human free; agent seats $16/mo.',
       canonical: BASE_URL + '/',
       ogImage: OG_DEFAULT,
       noindex: true,

@@ -1,9 +1,11 @@
-<%# Manifesto homepage v5 -- "The Infinite Game" (Fable).
-    Sakana-fugu discipline: warm white, ONE accent (the OTP green family),
-    giant Schibsted statements, mono wayfinding labels in the left margin,
-    full-bleed hairline rules, huge whitespace. The mission and the
-    infinite-game litany ARE the page. Body-only; renderV7 wraps it. %>
+<%# Manifesto homepage v6 -- "The Letter" (Fable).
+    A signed letter from David Steel with exhibits, rebuilt after a 3-persona
+    adversarial copy test (Ninety loyalist / AI-burned cynic / COO). Every
+    claim on this page is verifiable: live OOS link, real importers, real
+    pricing, published failure log. Fugu-quiet one-accent editorial system.
+    Body-only; renderV7 wraps it. %>
 <% var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
+   var LIVE_OOS = '/oos/38970f19-3b87-4498-910b-3bbb736178fc';
    var crew = [
      { name:'Radar',  role:'Chief of Staff', slug:'radar' },
      { name:'Dan',    role:'Strategist',     slug:'dan' },
@@ -12,14 +14,13 @@
      { name:'Tally',  role:'Scorekeeper',    slug:'tally' }
    ]; %>
 <style>
-  /* ---- type system: battle / litany / head / body / label. same use everywhere. ---- */
-  .ig{ --t-battle:clamp(2.7rem,5.6vw,4.7rem); --t-litany:clamp(1.6rem,3vw,2.55rem);
-       --t-head:clamp(1.45rem,2.3vw,1.95rem); --t-body:clamp(1.02rem,1.12vw,1.12rem);
-       --t-label:12px; --rule:#e7e8ec; --accent:#06724a; --mark:#a8e63a;
+  /* ---- type system: battle / head / body / label. same use everywhere. ---- */
+  .ig{ --t-battle:clamp(2.7rem,5.6vw,4.7rem); --t-head:clamp(1.45rem,2.3vw,1.95rem);
+       --t-body:clamp(1.02rem,1.12vw,1.12rem); --t-label:12px;
+       --rule:#e7e8ec; --accent:#06724a; --mark:#a8e63a;
        background:var(--white,#fcfcfd); }
   .ig *{ box-sizing:border-box; }
   .ig-battle{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:var(--t-battle); line-height:1.03; letter-spacing:-0.035em; color:var(--ink,#14161c); }
-  .ig-litany{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:var(--t-litany); line-height:1.16; letter-spacing:-0.025em; color:var(--ink,#14161c); }
   .ig-head{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:var(--t-head); line-height:1.2; letter-spacing:-0.02em; color:var(--ink,#14161c); }
   .ig-body{ font-family:'Inter',sans-serif; font-weight:400; font-size:var(--t-body); line-height:1.66; color:var(--ink-soft,#494d57); }
   .ig-label{ font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; font-size:var(--t-label); letter-spacing:.18em; text-transform:uppercase; color:var(--accent); }
@@ -33,17 +34,18 @@
 
   /* section grammar: full-bleed hairline, mono label hanging in the left column */
   .ig-sec{ border-top:1px solid var(--rule); }
-  .ig-sec .ig-wrap{ display:grid; grid-template-columns:180px minmax(0,1fr); gap:56px; padding-top:92px; padding-bottom:92px; align-items:start; }
+  .ig-sec .ig-wrap{ display:grid; grid-template-columns:180px minmax(0,1fr); gap:56px; padding-top:88px; padding-bottom:88px; align-items:start; }
   .ig-side{ position:sticky; top:96px; }
   .ig-main{ max-width:680px; }
-  .ig-main .ig-body{ margin-top:18px; max-width:58ch; }
+  .ig-main .ig-body{ margin-top:18px; max-width:60ch; }
+  .ig-main .ig-body + .ig-body{ margin-top:14px; }
   .ig-main .ig-cta{ margin-top:32px; }
 
   /* hero */
-  .ig-hero .ig-wrap{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:64px; align-items:center; padding-top:118px; padding-bottom:104px; }
+  .ig-hero .ig-wrap{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:64px; align-items:center; padding-top:112px; padding-bottom:96px; }
   .ig-kicker{ display:inline-flex; align-items:center; gap:10px; margin-bottom:28px; }
   .ig-tick{ width:8px; height:8px; background:var(--mark); display:inline-block; }
-  .ig-h1{ max-width:16ch; }
+  .ig-h1{ max-width:14ch; }
   .ig-sub{ margin-top:26px; max-width:52ch; text-wrap:pretty; }
   .ig-hero .ig-cta{ margin-top:34px; }
   .ig-hero .ig-note{ margin-top:14px; }
@@ -53,22 +55,17 @@
   @keyframes ig-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
   .ig-panel .ig-label{ position:absolute; left:18px; bottom:14px; z-index:2; color:var(--ink-mute,#888c96); }
 
-  /* the creed: stacked "We believe" statements, carved, no chrome */
-  .ig-creed{ margin-top:34px; display:flex; flex-direction:column; gap:30px; }
-  .ig-creed .c{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(1.3rem,2.2vw,1.8rem); line-height:1.28; letter-spacing:-0.02em; color:var(--ink,#14161c); max-width:30ch; }
-  .ig-creed .c .wb{ color:var(--accent); }
-  .ig-creed .c.ig-reveal:nth-child(2){ transition-delay:.1s; }
-  .ig-creed .c.ig-reveal:nth-child(3){ transition-delay:.2s; }
-  .ig-creed .c.ig-reveal:nth-child(4){ transition-delay:.3s; }
-  .ig-recruit{ margin-top:40px; }
+  /* puck rows: NOW / NEXT / THEN */
+  .ig-puck{ margin-top:36px; }
+  .ig-prow{ display:flex; gap:24px; align-items:baseline; padding:22px 0; border-top:1px solid var(--rule); }
+  .ig-prow .tag{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; font-weight:500; letter-spacing:.18em; color:var(--accent); flex:0 0 64px; }
+  .ig-prow .t{ font-family:'Inter',sans-serif; font-size:var(--t-body); line-height:1.6; color:var(--ink,#14161c); max-width:56ch; }
 
-  /* infinite game litany */
-  .ig-game .ig-main{ max-width:760px; }
-  .ig-noline{ margin-top:10px; }
-  .ig-litany-list{ margin-top:44px; }
-  .ig-li{ display:flex; gap:26px; align-items:center; padding:30px 0; border-top:1px solid var(--rule); }
-  .ig-li img{ width:52px; height:auto; flex:0 0 52px; }
-  .ig-li .t{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(1.25rem,2vw,1.7rem); line-height:1.25; letter-spacing:-0.02em; color:var(--ink,#14161c); max-width:26ch; }
+  /* COO Q&A rows */
+  .ig-qa{ margin-top:34px; }
+  .ig-qrow{ padding:24px 0; border-top:1px solid var(--rule); }
+  .ig-qrow .q{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:16px; color:var(--ink,#14161c); }
+  .ig-qrow .a{ font-family:'Inter',sans-serif; font-size:15px; line-height:1.62; color:var(--ink-soft,#494d57); margin-top:8px; max-width:60ch; }
 
   /* proof band */
   .ig-proof{ background:#f4f5f7; }
@@ -84,24 +81,25 @@
   .ig-shot{ margin-top:30px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; max-width:560px; box-shadow:0 16px 40px rgba(20,22,28,.08); }
   .ig-shot img{ width:100%; display:block; }
 
-  /* close */
+  /* close + signature */
   .ig-close{ border-top:1px solid var(--rule); }
-  .ig-close .ig-wrap{ padding-top:128px; padding-bottom:140px; text-align:center; }
+  .ig-close .ig-wrap{ padding-top:120px; padding-bottom:120px; text-align:center; }
   .ig-enemy{ max-width:19ch; margin:0 auto; text-wrap:balance; }
   .ig-mark{ position:relative; display:inline-block; white-space:nowrap; }
   .ig-mark svg{ position:absolute; left:-2%; bottom:-0.12em; width:104%; height:.22em; overflow:visible; }
   .ig-mark svg path{ fill:none; stroke:var(--mark); stroke-width:7; stroke-linecap:round; }
-  .ig-close .ig-comejoin{ margin-top:30px; font-family:'Inter',sans-serif; font-weight:500; font-size:clamp(1.05rem,1.4vw,1.25rem); color:var(--ink-soft,#494d57); }
-  .ig-close .ig-cta{ justify-content:center; margin-top:36px; }
-  .ig-close .ig-note{ margin-top:14px; }
+  .ig-litany{ margin:38px auto 0; max-width:52ch; }
+  .ig-litany p{ font-family:'Inter',sans-serif; font-weight:500; font-size:clamp(1.02rem,1.3vw,1.18rem); line-height:1.7; color:var(--ink-soft,#494d57); margin:0; }
+  .ig-sig{ margin-top:44px; }
+  .ig-sig .name{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:1.35rem; color:var(--ink,#14161c); }
+  .ig-sig .role{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-mute,#888c96); margin-top:6px; }
+  .ig-ps{ margin:40px auto 0; max-width:56ch; font-family:'Inter',sans-serif; font-size:15px; line-height:1.65; color:var(--ink-soft,#494d57); }
 
   /* reveal */
   .ig-reveal{ opacity:0; transform:translateY(16px); transition:opacity .65s ease, transform .65s cubic-bezier(.16,1,.3,1); }
   .ig-reveal.in{ opacity:1; transform:none; }
-  .ig-li.ig-reveal:nth-child(2){ transition-delay:.12s; }
-  .ig-li.ig-reveal:nth-child(3){ transition-delay:.24s; }
   .ig-mark svg path{ stroke-dasharray:1; stroke-dashoffset:1; }
-  .in .ig-mark svg path, .ig-mark.in svg path{ animation:ig-draw .8s ease .45s forwards; }
+  .in .ig-mark svg path{ animation:ig-draw .8s ease .45s forwards; }
   @keyframes ig-draw{ to{stroke-dashoffset:0;} }
   @media (prefers-reduced-motion: reduce){
     .ig-reveal{ opacity:1 !important; transform:none !important; transition:none; }
@@ -110,31 +108,30 @@
   }
 
   @media (max-width:900px){
-    .ig-hero .ig-wrap{ grid-template-columns:1fr; gap:44px; padding-top:96px; padding-bottom:72px; }
+    .ig-hero .ig-wrap{ grid-template-columns:1fr; gap:44px; padding-top:92px; padding-bottom:68px; }
     .ig-panel{ max-width:420px; }
-    .ig-sec .ig-wrap{ grid-template-columns:1fr; gap:18px; padding-top:64px; padding-bottom:64px; }
+    .ig-sec .ig-wrap{ grid-template-columns:1fr; gap:18px; padding-top:60px; padding-bottom:60px; }
     .ig-side{ position:static; }
     .ig-wrap{ padding:0 22px; }
-    .ig-li{ gap:18px; padding:24px 0; }
-    .ig-li img{ width:40px; flex-basis:40px; }
-    .ig-close .ig-wrap{ padding-top:88px; padding-bottom:96px; }
+    .ig-prow{ flex-direction:column; gap:8px; padding:18px 0; }
+    .ig-close .ig-wrap{ padding-top:84px; padding-bottom:92px; }
   }
 </style>
 
 <div class="ig">
 
-  <!-- HERO: the mission is the headline -->
+  <!-- HERO -->
   <section class="ig-hero">
     <div class="ig-wrap">
       <div>
-        <div class="ig-kicker"><span class="ig-tick"></span><span class="ig-label">Our battle cry</span></div>
-        <h1 class="ig-battle ig-h1">You are capable of <span class="ig-accent">more</span> than your workday allows.</h1>
-        <p class="ig-body ig-sub">We are building the partnership of people and AI that sets that potential loose. So together we leave the world better than we found it.</p>
+        <div class="ig-kicker"><span class="ig-tick"></span><span class="ig-label">A letter from David Steel, founder of OTP</span></div>
+        <h1 class="ig-battle ig-h1">The meeting was never the <span class="ig-accent">problem</span>.</h1>
+        <p class="ig-body ig-sub">You run a good meeting. Priorities, scorecard, action items. Then everyone goes back to the flood, and nothing moves until next week. I built OTP to fix the week, not the meeting.</p>
         <div class="ig-cta">
-          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Join the movement &rarr;</a>
-          <a href="#why" class="ig-link">Read the battle cry &darr;</a>
+          <a href="<%= LIVE_OOS %>" class="btn-primary px-8 py-4 text-[16px]">Watch our company run, live &rarr;</a>
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="ig-link">Claim a founding seat &rarr;</a>
         </div>
-        <p class="ig-note">Free for your whole team. No credit card.</p>
+        <p class="ig-note">Every human is free. Agent seats are $16 a month.</p>
       </div>
       <div class="ig-panel">
         <img src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot: half living creature, half circuitry. People and AI as one.">
@@ -143,57 +140,36 @@
     </div>
   </section>
 
-  <!-- 01 THE PROBLEM -->
+  <!-- 01 A CONFESSION -->
   <section class="ig-sec" id="why">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">01 / The enemy</span></div>
+      <div class="ig-side"><span class="ig-label">01 / A confession</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">We were promised technology would set us free.</h2>
-        <p class="ig-body">Instead it made us busier. More tools, more tabs, more pings, more work about the work. Somewhere along the way, managing the work became the work. Your best hours, the ones you were going to use to think, to create, to build something that matters, got eaten by the machine that was supposed to save them. We are done accepting that.</p>
+        <h2 class="ig-head">I was promised freedom. I got a phone.</h2>
+        <p class="ig-body">I run a marketing agency. Payroll, clients, a Tuesday leadership meeting. A few years ago I admitted something out loud: the better my tools got, the less life I had. The phone that promised to connect me took my attention. The software that promised to save time filled the time with more work. My team was productive. Nobody was free. Work had quietly stolen the fun out of our lives, and the freedom we were promised turned out to be an illusion with a login screen.</p>
       </div>
     </div>
   </section>
 
-  <!-- 02 OUR BELIEF -->
+  <!-- 02 WHAT I DID ABOUT IT -->
   <section class="ig-sec">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">02 / What we believe</span></div>
-      <div class="ig-main">
-        <h2 class="ig-head ig-reveal">This is not a feature list. It is a creed.</h2>
-        <div class="ig-creed">
-          <p class="c ig-reveal"><span class="wb">We believe</span> there is untapped potential in every person, and unlocking it is the whole job.</p>
-          <p class="c ig-reveal"><span class="wb">We believe</span> AI's highest purpose is not to replace people. It is to elevate them.</p>
-          <p class="c ig-reveal"><span class="wb">We believe</span> people and AI on one team will outplay any company still playing alone.</p>
-          <p class="c ig-reveal"><span class="wb">We believe</span> work should give you back more than it takes from you.</p>
-        </div>
-        <p class="ig-body ig-recruit ig-reveal">If you believe these things too, you are already one of us. The rest is just handing you the tools.</p>
+      <div class="ig-side"><span class="ig-label">02 / What I did about it</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">So I hired employees who don't have inboxes.</h2>
+        <p class="ig-body">I started building AI agents. Not chatbots. Employees. Radar prepares my morning briefing before I wake up. Dash reads every ad account so nobody has to stare at dashboards. Pepper triages my inbox. Dan pressure-tests my strategy in writing before I bet money on it. Tally keeps the score honest.</p>
+        <p class="ig-body">Then I hit a wall, and it was not the AI. It was the org chart. Every system for running a company assumes the company is made only of people. There was no seat for an agent, no number it owned, no one it answered to. So we built OTP: the operating system where people and AI hold seats on the same chart.</p>
       </div>
     </div>
   </section>
 
-  <!-- 03 THE INFINITE GAME: the battle cry -->
-  <section class="ig-sec ig-game">
-    <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">&infin; / The infinite game</span></div>
-      <div class="ig-main">
-        <h2 class="ig-litany ig-reveal">This is the infinite game we have chosen to play.<br><span class="ig-accent ig-noline">There is no finish line.</span></h2>
-        <div class="ig-litany-list">
-          <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-1.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be more human potential to unlock.</span></div>
-          <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-2.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be better ways for people and AI to work together.</span></div>
-          <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-3.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be opportunities to leave the world better than we found it.</span></div>
-        </div>
-        <p class="ig-head ig-recruit ig-reveal">We will still be playing this game in fifty years. The only question is who will be playing it with us.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 04 PROOF -->
+  <!-- EXHIBIT A: LIVE PROOF -->
   <section class="ig-sec ig-proof">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">03 / We live it</span></div>
+      <div class="ig-side"><span class="ig-label">Exhibit A / Our company, live</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">We are not asking you to believe words. We are showing you a company that runs on them.</h2>
-        <p class="ig-body">Radar, Dan, Pepper, Dash, and Tally are the real agents running the company that built OTP. Live, next to our people, every single day. When we say people and AI can play as one team, we are not describing a vision. We are describing our Tuesday.</p>
+        <h2 class="ig-head">Don't take my word for anything. Watch us run.</h2>
+        <p class="ig-body">Companies have published their handbooks before. We publish something further: our operating system, live, with AI agents holding seats, owning numbers, and getting corrected in public. Every role. Every rule. Every mistake, because when an agent gets something wrong here, the correction becomes a published rule with the failure written into it. Marketers don't volunteer their failure log. Operators do.</p>
         <div class="ig-crew">
           <% crew.forEach(function(m){ %>
             <div class="ig-member">
@@ -203,50 +179,106 @@
             </div>
           <% }); %>
         </div>
-        <div class="ig-cta"><a href="/free-agents" class="ig-link">Meet the agents &rarr;</a></div>
+        <div class="ig-cta">
+          <a href="<%= LIVE_OOS %>" class="ig-link">Read our live operating system &rarr;</a>
+          <a href="/free-agents" class="ig-link">Meet the agents &rarr;</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- 05 THE PLATFORM -->
+  <!-- 03 WHERE THIS GOES -->
   <section class="ig-sec">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">04 / How we fight</span></div>
+      <div class="ig-side"><span class="ig-label">03 / Where this goes</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">Busywork does not fall to good intentions. It falls to a system.</h2>
-        <p class="ig-body">OTP puts your people and your AI on one team: one chart, one scoreboard, one weekly meeting. Every agent takes a seat, owns a number, and clears the busywork between meetings. Every person gets their time, their focus, and their potential back. Bring your own agents, or start with five of ours.</p>
+        <h2 class="ig-head">I skate to where the puck is going. Here is the whole rink.</h2>
+        <div class="ig-puck">
+          <div class="ig-prow"><span class="tag">Now</span><span class="t">You run your company on meetings, priorities, and a scorecard. OTP does that today, free, for your whole team.</span></div>
+          <div class="ig-prow"><span class="tag">Next</span><span class="t">AI agents take seats on the chart, own real numbers, and work the six days between meetings. Mine already do.</span></div>
+          <div class="ig-prow"><span class="tag">Then</span><span class="t">Your organization runs as one. People and AI, one team, one rhythm, no gap between deciding and doing.</span></div>
+        </div>
+        <p class="ig-body">I won't tell you your competitors are about to lap you. I don't know your market. I know one thing that is checkable: this future is not a prediction, because it is already running at my company. You can go look at it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXHIBIT B: THE MACHINE -->
+  <section class="ig-sec">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">Exhibit B / The machine</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">Don't switch. Run us alongside.</h2>
+        <p class="ig-body">OTP's free tier is the whole meeting product: the chart, the scorecard, priorities, to-dos, the weekly meeting. Free for every human, no credit card, and it is not a trial. Agent seats are $16 a month, and the <a href="/pricing" class="ig-link" style="font-size:inherit;">full price list is public</a>. If you run on Ninety or Bloom Growth today, drop in your export files and OTP rebuilds your chart from who owns what, in an afternoon. Then run both, side by side, for a quarter. If we don't earn the switch, you lost an afternoon.</p>
+        <p class="ig-body">Two rules, before you ask. Numbers: our scorekeeper agent reads the source systems and pushes the scorecard, timestamped and logged. Agents don't type numbers they didn't read. Actions: nothing goes to a client or a teammate without a human approving it. That rule is published in our operating system, where you can hold us to it.</p>
         <div class="ig-shot">
           <img src="/public/images/vs/l10.png?v=<%= _v %>" alt="The OTP weekly meeting: timed agenda, live scoreboard, every commitment tracked" loading="lazy">
         </div>
         <div class="ig-cta">
-          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &rarr;</a>
-          <a href="/compare" class="ig-link">See how it works &rarr;</a>
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Set up your company free &rarr;</a>
+          <a href="/import/ninety" class="ig-link">Import from Ninety or Bloom &rarr;</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 06 THE MANIFESTO -->
+  <!-- 04 THE QUESTIONS YOUR COO WILL ASK -->
   <section class="ig-sec">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">05 / The declaration</span></div>
+      <div class="ig-side"><span class="ig-label">04 / For your COO</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">Read <em>The Intelligent Organization</em>.</h2>
-        <p class="ig-body">Our founding declaration of Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
-        <div class="ig-cta"><a href="/the-intelligent-organization/" class="ig-link">Read the manifesto &rarr;</a></div>
+        <h2 class="ig-head">The boring answers, on purpose.</h2>
+        <p class="ig-body">You will forward this to the person who actually has to implement it. These are for them.</p>
+        <div class="ig-qa">
+          <div class="ig-qrow"><div class="q">Whose data is it?</div><div class="a">Yours. Import from Ninety or Bloom Growth in an afternoon; the chart rebuilds itself from who owns what. If you ever leave, your data leaves with you.</div></div>
+          <div class="ig-qrow"><div class="q">What can an agent do on its own?</div><div class="a">Read, prepare, draft, propose. It cannot send anything to a client or teammate without a human approving it, and every action is logged with a timestamp.</div></div>
+          <div class="ig-qrow"><div class="q">How secure is "early"?</div><div class="a">The honest answer: we are early, and I won't pretend otherwise. Role-based access and audit trails are built in, and you can bring your own AI key so your data runs on your own model provider. Ask me anything directly; you get me, not a sales engineer.</div></div>
+          <div class="ig-qrow"><div class="q">What does early cost me?</div><div class="a">The product ships weekly and improves in public. What it does not cost: money (humans are free), migration pain (an afternoon), or lock-in (see the first answer).</div></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- CLOSE -->
+  <!-- 05 YOUR TUESDAY -->
+  <section class="ig-sec">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">05 / Your Tuesday</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">Now let me describe your Tuesday, six months from now.</h2>
+        <p class="ig-body">Your briefing wrote itself before you woke up. The scorecard filled itself in from the source systems on Friday, timestamped. Three of last week's to-dos were done by Wednesday, by agents, reviewed by the humans who own them. The meeting takes half the time, because everyone, human and AI, already knows the score. You leave at five. Not because you gave up. Because it's handled.</p>
+        <p class="ig-body">Then the real question shows up, the one I built all of this to ask: what will you do with the hours you get back?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 THE ASK -->
+  <section class="ig-sec">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">06 / Fifty companies</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">I'm not looking for a million users. I'm looking for fifty.</h2>
+        <p class="ig-body">That is not scarcity theater. It is arithmetic. I can give real, personal attention to fifty companies while we build this, so fifty is the number. The Founding Fifty put people and AI on one chart and run as one, with me in the room. And your agents will not be copies of mine: Radar and Dash grew out of an agency, yours will grow out of your company. What OTP gives them is what mine have. A seat, a number, and a chain of command.</p>
+        <p class="ig-body">Today the deepest proof I can show you is my own company, and I know that is a sample size of one. That is exactly what the Founding Fifty is for: making it fifty.</p>
+        <div class="ig-cta">
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Claim a founding seat &rarr;</a>
+        </div>
+        <p class="ig-note" style="margin-top:14px;">Every human is free. No credit card.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSE + SIGNATURE -->
   <section class="ig-close">
     <div class="ig-wrap">
       <p class="ig-battle ig-enemy ig-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="ig-mark">managing work<svg viewBox="0 0 200 14" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M3,10 Q55,4 110,8 T197,6"/></svg></span>.</p>
-      <p class="ig-comejoin ig-reveal">If that sentence quickened your pulse, you are already one of us.</p>
-      <div class="ig-cta ig-reveal">
-        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Join the movement &rarr;</a>
+      <div class="ig-litany ig-reveal">
+        <p>There will always be more human potential to unlock. There will always be better ways for people and AI to work together. There will always be a world to leave better than we found it. This work has no finish line. We chose it anyway.</p>
       </div>
-      <p class="ig-note">Free for your whole team. No credit card. No finish line.</p>
+      <div class="ig-sig ig-reveal">
+        <div class="name">David Steel</div>
+        <div class="role">Founder, OTP</div>
+      </div>
+      <p class="ig-ps ig-reveal">P.S. If you only do one thing today, spend ten minutes inside <a href="<%= LIVE_OOS %>" class="ig-link" style="font-size:inherit;">our live operating system</a>. It says more than any homepage could.</p>
     </div>
   </section>
 </div>
