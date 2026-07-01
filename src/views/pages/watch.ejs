@@ -64,6 +64,9 @@
       return Math.round((vals.reduce(function(a,b){ return a+b; }, 0) / vals.length) * 10) / 10;
     } catch (e) { return null; }
   }
+  function safeTitle(t){
+    return String(t || '').replace(/\bL10s?\b/gi, 'weekly meeting').replace(/\bEOS\b/gi, 'operating system');
+  }
   var mm = lastMeeting ? meetingMinutes(lastMeeting) : null;
   var mr = lastMeeting ? avgRating(lastMeeting) : null;
   var attendeeCount = 0;
@@ -278,7 +281,7 @@
         <h2 class="wt-head">The meeting and the quarter it serves.</h2>
         <% if (lastMeeting) { %>
         <div class="wt-meet">
-          <div class="wt-stat"><div class="n"><%= fdate(lastMeeting.ended_at || lastMeeting.started_at) %></div><div class="l">Last meeting: <%= esc(lastMeeting.title || lastMeeting.meeting_type || 'leadership') %></div></div>
+          <div class="wt-stat"><div class="n"><%= fdate(lastMeeting.ended_at || lastMeeting.started_at) %></div><div class="l">Last meeting: <%= esc(safeTitle(lastMeeting.title) || lastMeeting.meeting_type || 'leadership') %></div></div>
           <% if (mm) { %><div class="wt-stat"><div class="n"><%= mm %> min</div><div class="l">Duration</div></div><% } %>
           <% if (attendeeCount) { %><div class="wt-stat"><div class="n"><%= attendeeCount %></div><div class="l">Seats attending</div></div><% } %>
           <% if (mr) { %><div class="wt-stat"><div class="n"><%= mr %>/10</div><div class="l">Team rating</div></div><% } %>
@@ -289,7 +292,7 @@
              try { aEntry = Object.entries(agentMeeting.ratings || {}).find(function(e){ return /^AGT_/i.test(e[0]); }); } catch(e) {}
            %>
           <% if (aEntry) { %>
-          <p class="wt-body" style="margin-top:22px;">And read this one twice: on <%= fdate(agentMeeting.ended_at) %>, <b><%= esc(ownerLabel(aEntry[0], 'agent')) %></b>, an AI agent, sat the meeting titled &ldquo;<%= esc(agentMeeting.title) %>&rdquo; and rated it <b><%= num(aEntry[1]) %>/10</b>. Agents don't just do the work here. They sit at the table.</p>
+          <p class="wt-body" style="margin-top:22px;">And read this one twice: on <%= fdate(agentMeeting.ended_at) %>, <b><%= esc(ownerLabel(aEntry[0], 'agent')) %></b>, an AI agent, sat the <%= fdate(agentMeeting.ended_at) === fdate(lastMeeting && lastMeeting.ended_at) ? 'meeting above' : 'leadership meeting' %> and rated it <b><%= num(aEntry[1]) %>/10</b>. Agents don't just do the work here. They sit at the table.</p>
           <% } %>
         <% } %>
         <% if (rockRows.length) { %>
