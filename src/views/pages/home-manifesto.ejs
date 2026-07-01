@@ -1,7 +1,8 @@
-<%# Manifesto homepage v4 -- DISCIPLINED type system (Sakana-style restraint).
-    Four sizes only: display (hero + close), head (every section), body, label.
-    Head + body per movement, not walls of giant text. Spine, portraits, shot
-    kept. Body-only; renderV7 wraps it. %>
+<%# Manifesto homepage v5 -- "The Infinite Game" (Fable).
+    Sakana-fugu discipline: warm white, ONE accent (the OTP green family),
+    giant Schibsted statements, mono wayfinding labels in the left margin,
+    full-bleed hairline rules, huge whitespace. The mission and the
+    infinite-game litany ARE the page. Body-only; renderV7 wraps it. %>
 <% var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
    var crew = [
      { name:'Radar',  role:'Chief of Staff', slug:'radar' },
@@ -11,281 +12,237 @@
      { name:'Tally',  role:'Scorekeeper',    slug:'tally' }
    ]; %>
 <style>
-  /* ---- ONE type system. four sizes. used the same way every time. ---- */
-  .mf{ --t-display:clamp(2.4rem,4.4vw,3.3rem); --t-head:clamp(1.4rem,2.1vw,1.85rem);
-       --t-body:clamp(1rem,1.1vw,1.1rem); --t-label:12px;
-       --rule:#e7e8ec; }
-  .mf *{ box-sizing:border-box; }
-  .mf-display{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:var(--t-display); line-height:1.06; letter-spacing:-0.035em; color:var(--ink,#14161c); }
-  .mf-head{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:var(--t-head); line-height:1.18; letter-spacing:-0.022em; color:var(--ink,#14161c); }
-  .mf-body{ font-family:'Inter',sans-serif; font-weight:400; font-size:var(--t-body); line-height:1.62; color:var(--ink-soft,#3c424d); }
-  .mf-label{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:var(--t-label); letter-spacing:.16em; text-transform:uppercase; color:var(--ink-mute,#7c828d); }
-  .mf-accent{ color:var(--blue,#0d7df2); }
+  /* ---- type system: battle / litany / head / body / label. same use everywhere. ---- */
+  .ig{ --t-battle:clamp(2.7rem,5.6vw,4.7rem); --t-litany:clamp(1.6rem,3vw,2.55rem);
+       --t-head:clamp(1.45rem,2.3vw,1.95rem); --t-body:clamp(1.02rem,1.12vw,1.12rem);
+       --t-label:12px; --rule:#e7e8ec; --accent:#06724a; --mark:#a8e63a;
+       background:var(--white,#fcfcfd); }
+  .ig *{ box-sizing:border-box; }
+  .ig-battle{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:var(--t-battle); line-height:1.03; letter-spacing:-0.035em; color:var(--ink,#14161c); }
+  .ig-litany{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:var(--t-litany); line-height:1.16; letter-spacing:-0.025em; color:var(--ink,#14161c); }
+  .ig-head{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:var(--t-head); line-height:1.2; letter-spacing:-0.02em; color:var(--ink,#14161c); }
+  .ig-body{ font-family:'Inter',sans-serif; font-weight:400; font-size:var(--t-body); line-height:1.66; color:var(--ink-soft,#494d57); }
+  .ig-label{ font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; font-size:var(--t-label); letter-spacing:.18em; text-transform:uppercase; color:var(--accent); }
+  .ig-accent{ color:var(--accent); }
 
-  .mf-wrap{ max-width:1080px; margin:0 auto; padding:0 32px; }
-  .mf-link{ font-family:'Inter',sans-serif; font-weight:600; font-size:14px; color:var(--blue,#0d7df2); text-decoration:none; }
-  .mf-link:hover{ text-decoration:underline; }
-  .mf-cta{ margin-top:30px; display:flex; gap:22px; align-items:center; flex-wrap:wrap; }
+  .ig-wrap{ max-width:1120px; margin:0 auto; padding:0 36px; }
+  .ig-link{ font-family:'Inter',sans-serif; font-weight:600; font-size:15px; color:var(--accent); text-decoration:none; }
+  .ig-link:hover{ text-decoration:underline; }
+  .ig-cta{ display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .ig-note{ font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-mute,#888c96); }
+
+  /* section grammar: full-bleed hairline, mono label hanging in the left column */
+  .ig-sec{ border-top:1px solid var(--rule); }
+  .ig-sec .ig-wrap{ display:grid; grid-template-columns:180px minmax(0,1fr); gap:56px; padding-top:92px; padding-bottom:92px; align-items:start; }
+  .ig-side{ position:sticky; top:96px; }
+  .ig-main{ max-width:680px; }
+  .ig-main .ig-body{ margin-top:18px; max-width:58ch; }
+  .ig-main .ig-cta{ margin-top:32px; }
 
   /* hero */
-  .mf-hero{ padding:126px 0 84px; }
-  .mf-herogrid{ display:grid; grid-template-columns:minmax(0,1fr) 500px; gap:40px; align-items:center; }
-  .mf-kicker{ display:inline-flex; align-items:center; gap:10px; margin-bottom:26px; }
-  .mf-tick{ width:7px; height:7px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
-  .mf-h1{ max-width:15ch; }
-  .mf-sub{ margin-top:26px; max-width:30rem; }
-  .mf-heroart{ position:relative; height:400px; }
-  .mf-heroart-m{ display:none; }
-  .mf-scene{ position:absolute; top:50%; left:50%; width:660px; height:520px; transform:translate(-50%,-50%) scale(.7); transform-origin:center; }
+  .ig-hero .ig-wrap{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:64px; align-items:center; padding-top:118px; padding-bottom:104px; }
+  .ig-kicker{ display:inline-flex; align-items:center; gap:10px; margin-bottom:28px; }
+  .ig-tick{ width:8px; height:8px; background:var(--mark); display:inline-block; }
+  .ig-h1{ max-width:13ch; }
+  .ig-sub{ margin-top:26px; max-width:52ch; text-wrap:pretty; }
+  .ig-hero .ig-cta{ margin-top:34px; }
+  .ig-hero .ig-note{ margin-top:14px; }
+  .ig-panel{ position:relative; border:1px solid var(--rule); background:#fff; aspect-ratio:1/1.04; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .ig-panel::after{ content:''; position:absolute; left:50%; bottom:8%; width:62%; height:16%; transform:translateX(-50%); background:radial-gradient(ellipse, rgba(168,230,58,.30), transparent 70%); }
+  .ig-panel img{ width:64%; max-width:340px; position:relative; z-index:1; animation:ig-float 6s ease-in-out infinite; }
+  @keyframes ig-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .ig-panel .ig-label{ position:absolute; left:18px; bottom:14px; z-index:2; color:var(--ink-mute,#888c96); }
 
-  /* ---- ported hero scene: people + AI as one team ---- */
-  .mf-scene .rise{ opacity:0; animation:h-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
-  @keyframes h-rise{ from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
-  .mf-scene .pop{ opacity:0; animation:h-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
-  @keyframes h-pop{ from{opacity:0;transform:scale(.86);} to{opacity:1;transform:scale(1);} }
-  .h-mascot{ position:absolute; left:46px; top:132px; width:316px; z-index:3; }
-  .h-mascot img{ width:100%; display:block; animation:h-float 5.5s ease-in-out infinite; }
-  @keyframes h-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
-  .h-glow{ position:absolute; left:66px; top:324px; width:278px; height:104px; z-index:1; background:radial-gradient(ellipse, rgba(13,125,242,0.22), transparent 70%); animation:h-breathe 5.5s ease-in-out infinite; }
-  @keyframes h-breathe{ 0%,100%{opacity:.55;transform:scale(.92);} 50%{opacity:1;transform:scale(1.08);} }
-  .h-bubble{ position:absolute; left:28px; top:14px; width:286px; z-index:5; background:#fff; border:1px solid var(--rule,#e6e8ec); border-radius:16px 16px 16px 4px; padding:13px 16px; box-shadow:0 10px 30px -12px rgba(20,22,28,.22); font-family:'Inter',sans-serif; font-size:13.5px; line-height:1.5; color:var(--ink,#14161c); }
-  .h-bubble b{ color:var(--green-deep,#06724a); font-weight:600; }
-  .h-conn{ position:absolute; inset:0; z-index:2; pointer-events:none; overflow:visible; }
-  .h-conn path{ fill:none; stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:h-draw 1s ease forwards; }
-  @keyframes h-draw{ to{stroke-dashoffset:0;} }
-  .h-pulse{ fill:#fff; stroke-width:2; }
-  .h-rail{ position:absolute; right:0; top:30px; width:248px; z-index:4; display:flex; flex-direction:column; gap:9px; }
-  .h-pill{ display:inline-flex; align-items:center; gap:7px; align-self:flex-start; background:#fff; border:1px solid var(--rule,#e6e8ec); border-radius:999px; padding:5px 12px 5px 8px; font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:11px; font-weight:700; letter-spacing:.04em; box-shadow:0 4px 14px -6px rgba(20,22,28,.18); }
-  .h-pill-ico{ width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-  .h-pill.hu{ color:var(--orange-deep,#d4540a); } .h-pill.hu .h-pill-ico{ background:rgba(255,122,26,.16); }
-  .h-pill.ag{ color:var(--blue-deep,#0a56b0); } .h-pill.ag .h-pill-ico{ background:rgba(13,125,242,.14); }
-  .h-card{ background:#fff; border:1px solid var(--rule,#e6e8ec); border-radius:13px; padding:11px 12px; box-shadow:0 6px 20px -10px rgba(20,22,28,.2); display:flex; gap:10px; align-items:flex-start; }
-  .h-av{ width:34px; height:34px; border-radius:9px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
-  .h-card-body{ flex:1; min-width:0; }
-  .h-name{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:13px; color:var(--ink,#14161c); }
-  .h-sub{ font-family:'Inter',sans-serif; font-size:11px; color:var(--ink-mute,#888c96); margin-top:1px; }
-  .h-stat{ display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; margin-top:6px; font-family:'Inter',sans-serif; }
-  .h-d{ width:6px; height:6px; border-radius:50%; flex:none; }
-  .h-live{ display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700; color:var(--green-deep,#06724a); }
-  .h-live i{ width:6px; height:6px; border-radius:50%; background:var(--green,#0a9d63); animation:h-livedot 1.8s ease-in-out infinite; }
-  @keyframes h-livedot{ 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
-  .h-bar{ height:5px; border-radius:3px; background:#f0f1f3; margin-top:7px; overflow:hidden; }
-  .h-bar i{ display:block; height:100%; border-radius:3px; background:var(--blue,#0d7df2); transform:scaleX(0); transform-origin:left; animation:h-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
-  @keyframes h-grow{ to{transform:scaleX(1);} }
-  @media (max-width:960px){
-    .mf-herogrid{ grid-template-columns:1fr; }
-    .mf-heroart{ height:auto; margin-top:6px; }
-    .mf-scene{ display:none; }
-    .mf-heroart-m{ display:block; width:230px; margin:0 auto; animation:h-float 5.5s ease-in-out infinite; }
+  /* infinite game litany */
+  .ig-game .ig-main{ max-width:760px; }
+  .ig-noline{ margin-top:10px; }
+  .ig-litany-list{ margin-top:44px; }
+  .ig-li{ display:flex; gap:26px; align-items:center; padding:30px 0; border-top:1px solid var(--rule); }
+  .ig-li img{ width:52px; height:auto; flex:0 0 52px; }
+  .ig-li .t{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(1.25rem,2vw,1.7rem); line-height:1.25; letter-spacing:-0.02em; color:var(--ink,#14161c); max-width:26ch; }
+
+  /* proof band */
+  .ig-proof{ background:#f4f5f7; }
+  .ig-proof .ig-main{ max-width:760px; }
+  .ig-crew{ display:flex; gap:16px; margin-top:36px; flex-wrap:wrap; }
+  .ig-member{ background:#fff; border:1px solid var(--rule); border-radius:14px; padding:12px 12px 14px; width:128px; box-shadow:0 1px 2px rgba(20,22,28,.04); transition:transform .25s cubic-bezier(.16,1,.3,1); }
+  .ig-member:hover{ transform:translateY(-4px); }
+  .ig-member img{ width:100%; aspect-ratio:1/1; border-radius:9px; display:block; object-fit:cover; background:#f0f1f3; }
+  .ig-member .mn{ margin-top:10px; font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:13.5px; font-weight:700; color:var(--ink,#14161c); }
+  .ig-member .mr{ font-family:'Inter',sans-serif; font-size:11.5px; color:var(--ink-mute,#888c96); margin-top:1px; }
+
+  /* platform shot */
+  .ig-shot{ margin-top:30px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; max-width:560px; box-shadow:0 16px 40px rgba(20,22,28,.08); }
+  .ig-shot img{ width:100%; display:block; }
+
+  /* close */
+  .ig-close{ border-top:1px solid var(--rule); }
+  .ig-close .ig-wrap{ padding-top:128px; padding-bottom:140px; text-align:center; }
+  .ig-enemy{ max-width:19ch; margin:0 auto; text-wrap:balance; }
+  .ig-mark{ position:relative; display:inline-block; white-space:nowrap; }
+  .ig-mark svg{ position:absolute; left:-2%; bottom:-0.12em; width:104%; height:.22em; overflow:visible; }
+  .ig-mark svg path{ fill:none; stroke:var(--mark); stroke-width:7; stroke-linecap:round; }
+  .ig-close .ig-comejoin{ margin-top:30px; font-family:'Inter',sans-serif; font-weight:500; font-size:clamp(1.05rem,1.4vw,1.25rem); color:var(--ink-soft,#494d57); }
+  .ig-close .ig-cta{ justify-content:center; margin-top:36px; }
+  .ig-close .ig-note{ margin-top:14px; }
+
+  /* reveal */
+  .ig-reveal{ opacity:0; transform:translateY(16px); transition:opacity .65s ease, transform .65s cubic-bezier(.16,1,.3,1); }
+  .ig-reveal.in{ opacity:1; transform:none; }
+  .ig-li.ig-reveal:nth-child(2){ transition-delay:.12s; }
+  .ig-li.ig-reveal:nth-child(3){ transition-delay:.24s; }
+  .ig-mark svg path{ stroke-dasharray:1; stroke-dashoffset:1; }
+  .in .ig-mark svg path, .ig-mark.in svg path{ animation:ig-draw .8s ease .45s forwards; }
+  @keyframes ig-draw{ to{stroke-dashoffset:0;} }
+  @media (prefers-reduced-motion: reduce){
+    .ig-reveal{ opacity:1 !important; transform:none !important; transition:none; }
+    .ig-panel img{ animation:none; }
+    .ig-mark svg path{ stroke-dashoffset:0; animation:none !important; }
   }
-  @media (prefers-reduced-motion: reduce){ .mf-scene .pop,.mf-scene .rise,.h-mascot img,.mf-heroart-m{ animation:none !important; opacity:1 !important; } }
 
-  /* stage + running spine */
-  .mf-stage{ position:relative; max-width:1080px; margin:0 auto; padding:0 32px; }
-  .mf-stage::before{ content:''; position:absolute; left:32px; top:0; bottom:0; width:1px; background:var(--rule); pointer-events:none; }
-
-  /* movement: index | content, ruled, calm rhythm */
-  .mv{ display:grid; grid-template-columns:140px minmax(0,1fr); gap:48px; align-items:start;
-       padding:64px 0 64px 28px; border-top:1px solid var(--rule); }
-  .mv-num{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:14px; font-weight:500; color:var(--blue,#0d7df2); letter-spacing:.04em; }
-  .mv-side .mf-label{ margin-top:14px; line-height:1.6; display:block; }
-  .mv-head{ max-width:24ch; }
-  .mv-body{ max-width:32rem; margin-top:16px; }
-
-  /* vision list -- distinguished by weight, not size */
-  .mv-list{ max-width:34rem; margin-top:4px; }
-  .mv-li{ display:flex; gap:16px; align-items:baseline; padding:14px 0; border-top:1px solid var(--rule); }
-  .mv-li:first-child{ border-top:0; padding-top:0; }
-  .mv-li .li-n{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-mute,#9aa0aa); flex:0 0 22px; }
-  .mv-li .li-hand{ width:32px; height:auto; flex:0 0 32px; display:block; align-self:center; }
-  .mv-li .li-t{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:var(--t-body); line-height:1.4; color:var(--ink,#14161c); }
-
-  /* meeting shot */
-  .mf-shot{ margin-top:26px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; max-width:520px; box-shadow:0 20px 44px rgba(20,22,28,.07); }
-  .mf-shot img{ width:100%; display:block; }
-
-  /* blue proof panel -- aligned to content width, a clean card */
-  .mf-proof{ background:var(--blue,#0d7df2); margin:0; padding:60px 48px; border-radius:18px; }
-  .mf-proof .mv{ border-top:0; padding:0; }
-  .mf-proof .mv-num{ color:rgba(255,255,255,.9); }
-  .mf-proof .mf-label{ color:rgba(255,255,255,.72); }
-  .mf-proof .mv-head{ color:#fff; }
-  .mf-proof .mv-body{ color:rgba(255,255,255,.86); }
-  .mf-crew{ display:flex; gap:20px; margin-top:32px; flex-wrap:wrap; }
-  .mf-member{ width:96px; }
-  .mf-member img{ width:96px; height:96px; border-radius:16px; display:block; object-fit:cover; background:#fff; box-shadow:0 8px 20px rgba(8,30,66,.18); }
-  .mf-member .mn{ margin-top:12px; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:#fff; }
-  .mf-member .mr{ font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,.66); }
-
-  /* close -- centered finale, below the spine */
-  .mf-close .mf-wrap{ border-top:1px solid var(--rule); padding-top:96px; padding-bottom:128px; text-align:center; }
-  .mf-enemy{ font-weight:600; max-width:32ch; margin:0 auto; text-wrap:balance; }
-  .mf-close .mf-cta{ justify-content:center; margin-top:34px; }
-  .mf-note{ font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-mute,#7c828d); margin-top:14px; }
-
-  .mf-reveal{ opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
-  .mf-reveal.in{ opacity:1; transform:none; }
-  @media (prefers-reduced-motion: reduce){ .mf-reveal{ opacity:1 !important; transform:none !important; transition:none; } }
-
-  @media (max-width:760px){
-    .mf-stage::before{ left:20px; }
-    .mv{ grid-template-columns:1fr; gap:14px; padding:48px 0; }
-    .mf-herogrid{ grid-template-columns:1fr; gap:16px; }
-    .mf-heroart{ order:-1; }
-    .mf-heroart img{ width:180px; }
-    .mf-hero{ padding:104px 0 60px; }
-    .mf-proof{ margin:0; padding:40px 22px; border-radius:14px; }
-    .mf-close{ padding:60px 0 84px; }
-    .mf-wrap, .mf-stage{ padding:0 20px; }
+  @media (max-width:900px){
+    .ig-hero .ig-wrap{ grid-template-columns:1fr; gap:44px; padding-top:96px; padding-bottom:72px; }
+    .ig-panel{ max-width:420px; }
+    .ig-sec .ig-wrap{ grid-template-columns:1fr; gap:18px; padding-top:64px; padding-bottom:64px; }
+    .ig-side{ position:static; }
+    .ig-wrap{ padding:0 22px; }
+    .ig-li{ gap:18px; padding:24px 0; }
+    .ig-li img{ width:40px; flex-basis:40px; }
+    .ig-close .ig-wrap{ padding-top:88px; padding-bottom:96px; }
   }
 </style>
 
-<div class="mf">
+<div class="ig">
 
-  <!-- HERO -->
-  <section class="mf-hero">
-    <div class="mf-wrap mf-herogrid">
-      <div class="mf-herocopy">
-        <div class="mf-kicker"><span class="mf-tick"></span><span class="mf-label">The operating system for people and AI</span></div>
-        <h1 class="mf-display mf-h1">Every person has more potential than their workday allows.</h1>
-        <p class="mf-body mf-sub">OTP brings people and AI together as one team, and clears the busywork that keeps companies from thinking, creating, and growing.</p>
-        <div class="mf-cta">
-          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
-          <a href="#problem" class="mf-link">Why we exist &darr;</a>
+  <!-- HERO: the mission is the headline -->
+  <section class="ig-hero">
+    <div class="ig-wrap">
+      <div>
+        <div class="ig-kicker"><span class="ig-tick"></span><span class="ig-label">Our mission</span></div>
+        <h1 class="ig-battle ig-h1">Unlock the potential in <span class="ig-accent">every person</span>.</h1>
+        <p class="ig-body ig-sub">Through the partnership of people and AI, working as one team. So together we leave the world better than we found it.</p>
+        <div class="ig-cta">
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &rarr;</a>
+          <a href="#why" class="ig-link">Why we exist &darr;</a>
         </div>
+        <p class="ig-note">Free for your whole team. No credit card.</p>
       </div>
-      <div class="mf-heroart">
-        <div class="mf-scene">
-          <div class="h-glow"></div>
-          <svg class="h-conn" viewBox="0 0 660 520">
-            <path pathLength="1" d="M348,297 C384,297 388,100 412,100" stroke="var(--orange,#ff7a1a)" style="animation-delay:.7s"/>
-            <path pathLength="1" d="M348,300 C384,300 390,175 412,175" stroke="var(--orange,#ff7a1a)" style="animation-delay:.8s"/>
-            <path pathLength="1" d="M348,302 C384,302 390,289 412,289" stroke="var(--blue,#0d7df2)" style="animation-delay:.9s"/>
-            <path pathLength="1" d="M348,305 C384,305 392,368 412,368" stroke="var(--blue,#0d7df2)" style="animation-delay:1s"/>
-            <circle class="h-pulse" r="4" stroke="var(--orange,#ff7a1a)"><animateMotion dur="2.8s" repeatCount="indefinite" begin="1.7s" path="M348,297 C384,297 388,100 412,100"/></circle>
-            <circle class="h-pulse" r="4" stroke="var(--blue,#0d7df2)"><animateMotion dur="2.8s" repeatCount="indefinite" begin="2.3s" path="M348,305 C384,305 392,368 412,368"/></circle>
-          </svg>
-          <div class="h-mascot pop" style="animation-delay:.3s"><img src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot"></div>
-          <div class="h-bubble pop" style="animation-delay:.95s">My SOP drives the work. My KPI tracks the result. It all ladders up to this quarter's priorities and the year's goals. <b>Leadership sees every step.</b></div>
-          <div class="h-rail">
-            <div class="h-pill hu pop" style="animation-delay:.55s"><span class="h-pill-ico"><svg width="10" height="10" viewBox="0 0 24 24" fill="var(--orange-deep,#d4540a)"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg></span>HUMANS</div>
-            <div class="h-card rise" style="animation-delay:.62s"><div class="h-av" style="background:#e07a3a">S</div><div class="h-card-body"><div class="h-name">Sarah</div><div class="h-sub">Product Manager</div><div class="h-stat" style="color:var(--orange-deep,#d4540a)"><span class="h-d" style="background:var(--orange,#ff7a1a)"></span>In a meeting</div></div></div>
-            <div class="h-card rise" style="animation-delay:.72s"><div class="h-av" style="background:#c4612a">A</div><div class="h-card-body"><div class="h-name">Alex</div><div class="h-sub">Data Analyst</div><div class="h-stat" style="color:var(--orange-deep,#d4540a)"><span class="h-d" style="background:var(--orange,#ff7a1a)"></span>Working on report</div></div></div>
-            <div class="h-pill ag pop" style="animation-delay:.8s;margin-top:4px;"><span class="h-pill-ico"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep,#0a56b0)" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg></span>AI AGENTS</div>
-            <div class="h-card rise" style="animation-delay:.88s"><div class="h-av" style="background:#0d7df2">R</div><div class="h-card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="h-name">Research Agent</div><span class="h-live"><i></i>Live</span></div><div class="h-sub">Gathering insights</div><div class="h-bar"><i style="width:72%;animation-delay:1.3s"></i></div></div></div>
-            <div class="h-card rise" style="animation-delay:.98s"><div class="h-av" style="background:#0a64c4">W</div><div class="h-card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="h-name">Workflow Agent</div><span class="h-live"><i></i>Live</span></div><div class="h-sub">Automating steps</div><div class="h-bar"><i style="width:64%;background:var(--green,#0a9d63);animation-delay:1.45s"></i></div></div></div>
-          </div>
-        </div>
-        <img class="mf-heroart-m" src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot">
+      <div class="ig-panel">
+        <img src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot: half living creature, half circuitry. People and AI as one.">
+        <span class="ig-label">People &times; AI</span>
       </div>
     </div>
   </section>
 
-  <div class="mf-stage">
-
-    <!-- 01 -->
-    <div class="mv" id="problem">
-      <div class="mv-side"><div class="mv-num">01</div><span class="mf-label">The problem</span></div>
-      <div class="mv-main mf-reveal">
-        <h2 class="mf-head mv-head">What is productivity for?</h2>
-        <p class="mf-body mv-body">For decades we made people more productive. They have never felt busier. We built software to save time, then filled the time with more software. We automated the work, then invented more of it. Somewhere, we stopped asking the only question that matters.</p>
+  <!-- 01 THE PROBLEM -->
+  <section class="ig-sec" id="why">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">01 / The problem</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">What is productivity for?</h2>
+        <p class="ig-body">For decades we made people more productive. They have never felt busier. We built software to save time, then filled the time with more software. We automated the work, then invented more of it. Somewhere, we stopped asking the only question that matters.</p>
       </div>
     </div>
+  </section>
 
-    <!-- 02 -->
-    <div class="mv">
-      <div class="mv-side"><div class="mv-num">02</div><span class="mf-label">Why we exist</span></div>
-      <div class="mv-main mf-reveal">
-        <h2 class="mf-head mv-head">Technology's highest purpose is not to replace people. It is to elevate them.</h2>
-        <p class="mf-body mv-body">That is why OTP exists. Not to build another AI platform, but to unlock the potential in every person through the partnership of people and AI, so together we leave the world better than we found it.</p>
+  <!-- 02 OUR BELIEF -->
+  <section class="ig-sec">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">02 / Our belief</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">Technology's highest purpose is not to replace people. It is to elevate them.</h2>
+        <p class="ig-body">That is why OTP exists. Not to build another AI platform, but to unlock the potential in every person through the partnership of people and AI, so together we leave the world better than we found it.</p>
       </div>
     </div>
+  </section>
 
-    <!-- 03 -->
-    <div class="mv">
-      <div class="mv-side"><div class="mv-num">03</div><span class="mf-label">Imagine if</span></div>
-      <div class="mv-main mf-reveal">
-        <div class="mv-list">
-          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-1.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every employee had perfect memory.</span></div>
-          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-2.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every decision built on every lesson before it.</span></div>
-          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-3.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every AI understood your whole organization.</span></div>
-          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-4.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every person had time to think, to create, to build something that matters.</span></div>
-        </div>
-        <p class="mf-head mv-head" style="margin-top:32px;">That's OTP.</p>
-      </div>
-    </div>
-
-    <!-- PROOF -->
-    <div class="mf-proof">
-      <div class="mv">
-        <div class="mv-side"><div class="mv-num">&mdash;</div><span class="mf-label">We live it</span></div>
-        <div class="mv-main">
-          <h2 class="mf-head mv-head">We run our own company on these exact agents.</h2>
-          <p class="mf-body mv-body">Radar, Dan, Pepper, Dash, and Tally are the same agents that run the company that built OTP. Working live, next to our people, every single day. No one else can hand you a philosophy and show you it running.</p>
-          <div class="mf-crew mf-reveal">
-            <% crew.forEach(function(m){ %>
-              <div class="mf-member">
-                <img src="/public/images/vs/<%= m.slug %>.png?v=<%= _v %>" alt="<%= m.name %>, the OTP <%= m.role %>" loading="lazy">
-                <div class="mn"><%= m.name %></div>
-                <div class="mr"><%= m.role %></div>
-              </div>
-            <% }); %>
-          </div>
-          <div class="mf-cta" style="margin-top:30px;"><a href="/free-agents" style="display:inline-block;background:#fff;color:var(--blue,#0d7df2);font-family:'Inter',sans-serif;font-weight:600;font-size:15px;padding:13px 22px;border-radius:10px;text-decoration:none;box-shadow:0 8px 20px rgba(8,30,66,.18);">Meet the agents &rarr;</a></div>
+  <!-- 03 THE INFINITE GAME: the battle cry -->
+  <section class="ig-sec ig-game">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">&infin; / The infinite game</span></div>
+      <div class="ig-main">
+        <h2 class="ig-litany ig-reveal">This is the infinite game we have chosen to play.<br><span class="ig-accent ig-noline">There is no finish line.</span></h2>
+        <div class="ig-litany-list">
+          <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-1.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be more human potential to unlock.</span></div>
+          <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-2.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be better ways for people and AI to work together.</span></div>
+          <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-3.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be opportunities to leave the world better than we found it.</span></div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- 04 -->
-    <div class="mv">
-      <div class="mv-side"><div class="mv-num">04</div><span class="mf-label">The platform</span></div>
-      <div class="mv-main mf-reveal">
-        <h2 class="mf-head mv-head">Other tools bolt on an AI assistant. OTP makes AI an accountable employee.</h2>
-        <p class="mf-body mv-body">OTP gives your whole team free meeting software: one chart, one scoreboard, one weekly meeting. Then every AI agent takes a seat, owns a number, and does the work between meetings, next to your people. Bring your own, or start with five of ours. Free for your whole team.</p>
-        <div class="mf-shot">
-          <img src="/public/images/vs/l10.png?v=<%= _v %>" alt="The OTP weekly meeting: timed agenda, live scoreboard, every commitment tracked">
+  <!-- 04 PROOF -->
+  <section class="ig-sec ig-proof">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">03 / We live it</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">We run our own company on these exact agents.</h2>
+        <p class="ig-body">Radar, Dan, Pepper, Dash, and Tally are the same agents that run the company that built OTP. Working live, next to our people, every single day. No one else can hand you a philosophy and show you it running.</p>
+        <div class="ig-crew">
+          <% crew.forEach(function(m){ %>
+            <div class="ig-member">
+              <img src="/public/images/vs/<%= m.slug %>.png?v=<%= _v %>" alt="<%= m.name %>, the OTP <%= m.role %>" loading="lazy">
+              <div class="mn"><%= m.name %></div>
+              <div class="mr"><%= m.role %></div>
+            </div>
+          <% }); %>
         </div>
-        <div class="mf-cta">
+        <div class="ig-cta"><a href="/free-agents" class="ig-link">Meet the agents &rarr;</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 THE PLATFORM -->
+  <section class="ig-sec">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">04 / The platform</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">Other tools bolt on an AI assistant. OTP makes AI an accountable employee.</h2>
+        <p class="ig-body">OTP gives your whole team free meeting software: one chart, one scoreboard, one weekly meeting. Then every AI agent takes a seat, owns a number, and does the work between meetings, next to your people. Bring your own, or start with five of ours.</p>
+        <div class="ig-shot">
+          <img src="/public/images/vs/l10.png?v=<%= _v %>" alt="The OTP weekly meeting: timed agenda, live scoreboard, every commitment tracked" loading="lazy">
+        </div>
+        <div class="ig-cta">
           <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &rarr;</a>
-          <a href="/compare" class="mf-link">See how it works &rarr;</a>
+          <a href="/compare" class="ig-link">See how it works &rarr;</a>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- 05 -->
-    <div class="mv">
-      <div class="mv-side"><div class="mv-num">05</div><span class="mf-label">The manifesto</span></div>
-      <div class="mv-main mf-reveal">
-        <h2 class="mf-head mv-head">Read <em>The Intelligent Organization</em>.</h2>
-        <p class="mf-body mv-body">Our founding manifesto for Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
-        <div class="mf-cta">
-          <a href="/the-intelligent-organization/" class="btn-primary px-8 py-4 text-[16px]">Read the manifesto &rarr;</a>
-        </div>
+  <!-- 06 THE MANIFESTO -->
+  <section class="ig-sec">
+    <div class="ig-wrap">
+      <div class="ig-side"><span class="ig-label">05 / The manifesto</span></div>
+      <div class="ig-main ig-reveal">
+        <h2 class="ig-head">Read <em>The Intelligent Organization</em>.</h2>
+        <p class="ig-body">Our founding manifesto for Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
+        <div class="ig-cta"><a href="/the-intelligent-organization/" class="ig-link">Read the manifesto &rarr;</a></div>
       </div>
     </div>
+  </section>
 
-  </div>
-
-  <!-- CLOSE (centered finale, below the spine) -->
-  <section class="mf-close">
-    <div class="mf-wrap">
-      <p class="mf-display mf-enemy mf-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="mf-accent">managing work</span>.</p>
-      <div class="mf-cta">
-        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
+  <!-- CLOSE -->
+  <section class="ig-close">
+    <div class="ig-wrap">
+      <p class="ig-battle ig-enemy ig-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="ig-mark">managing work<svg viewBox="0 0 200 14" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M3,10 Q55,4 110,8 T197,6"/></svg></span>.</p>
+      <p class="ig-comejoin ig-reveal">If you believe people are meant for more, come play the infinite game with us.</p>
+      <div class="ig-cta ig-reveal">
+        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Join us, start free &rarr;</a>
       </div>
-      <p class="mf-note">Free for your whole team. No credit card.</p>
+      <p class="ig-note">Free for your whole team. No credit card.</p>
     </div>
   </section>
 </div>
 
 <script>
 (function(){
-  var els = [].slice.call(document.querySelectorAll('.mf-reveal'));
+  var els = [].slice.call(document.querySelectorAll('.ig-reveal'));
   if (!('IntersectionObserver' in window) || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
     els.forEach(function(e){ e.classList.add('in'); }); return;
   }
   var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin:'0px 0px -8% 0px', threshold:0.12 });
   els.forEach(function(e){ io.observe(e); });
-  setTimeout(function(){ els.forEach(function(e){ e.classList.add('in'); }); }, 2600);
+  setTimeout(function(){ els.forEach(function(e){ e.classList.add('in'); }); }, 2800);
 })();
 </script>
