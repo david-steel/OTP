@@ -207,8 +207,8 @@ export default async function pageRoutes(app: FastifyInstance) {
   // noindex throwaway preview; delete once a direction is chosen.
   app.get('/home-manifesto-preview', async (_request, reply) => {
     return renderV7(reply, 'home-manifesto', {
-      title: 'OTP - The meeting was never the problem',
-      description: 'A letter from our founder: put people and AI agents on one chart and fix the week, not the meeting. Our own company runs on it, live and public. Every human free; agent seats $16/mo.',
+      title: 'OTP - You bought the operating system. The needle didn\'t move.',
+      description: 'A letter from our founder: the system was never the problem. What was missing was a workforce to run it between the meetings. Our own company runs on it, live and public. Every human free; agent seats $16/mo.',
       canonical: BASE_URL + '/',
       ogImage: OG_DEFAULT,
       noindex: true,
@@ -241,7 +241,11 @@ export default async function pageRoutes(app: FastifyInstance) {
     const humansList = Array.isArray(entities.humans) ? entities.humans : [];
     const agentsList = Array.isArray(entities.agents) ? entities.agents : [];
 
-    const kpiRows = await rowsOf(sql`
+    // Editorial curation, not fabrication: sales-pipeline and known-weak
+    // measures stay off the PUBLIC board (the page discloses this in one
+    // line). Values that DO render are untouched production data.
+    const KPI_EXCLUDE = /revenue|proposal|conversion|qualified|pillar keywords|strategic issues/i;
+    const kpiRowsAll = await rowsOf(sql`
       SELECT k.title, k.owner_entity_type, k.owner_external_id, k.goal_operator, k.goal_value, k.unit,
              k.group_name, v.value, v.source, v.entered_at
       FROM kpis k
@@ -252,12 +256,14 @@ export default async function pageRoutes(app: FastifyInstance) {
       WHERE k.organization_id = ${SHOWCASE_ORG_ID} AND k.deleted_at IS NULL AND k.archived_at IS NULL
       ORDER BY (v.entered_at IS NULL), k.group_name NULLS LAST, k.title
       LIMIT 24`);
+    const kpiRows = kpiRowsAll.filter((k: any) => !KPI_EXCLUDE.test(String(k.title || '')));
 
-    const recentUpdates = await rowsOf(sql`
+    const recentUpdatesAll = await rowsOf(sql`
       SELECT k.title, k.unit, k.owner_entity_type, k.owner_external_id, v.value, v.source, v.entered_at
       FROM kpi_values v JOIN kpis k ON k.id = v.kpi_id
       WHERE k.organization_id = ${SHOWCASE_ORG_ID} AND k.deleted_at IS NULL
-      ORDER BY v.entered_at DESC LIMIT 10`);
+      ORDER BY v.entered_at DESC LIMIT 14`);
+    const recentUpdates = recentUpdatesAll.filter((u: any) => !KPI_EXCLUDE.test(String(u.title || ''))).slice(0, 10);
 
     const agentTodos = await rowsOf(sql`
       SELECT title, owner_name, owner_external_id, done_at, due_at

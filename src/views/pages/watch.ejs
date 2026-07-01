@@ -33,12 +33,19 @@
     (humansList || []).forEach(function(h){ if (h.id) OWNER_LOOKUP[String(h.id)] = { name: h.name, type: 'human' }; });
     (agentsList || []).forEach(function(a){ if (a.id) OWNER_LOOKUP[String(a.id)] = { name: a.name, type: 'agent' }; });
   } catch(e) {}
+  function anonHuman(name){
+    var s = String(name || '').trim();
+    if (!s) return 'Team member';
+    if (/^david\s+steel$/i.test(s) || /^david$/i.test(s)) return 'David Steel';
+    return s.split(/\s+/).map(function(p){ return p.charAt(0) ? p.charAt(0).toUpperCase() + '.' : ''; }).join(' ');
+  }
   function ownerLabel(id, type){
     var hit = OWNER_LOOKUP[String(id || '')];
-    if (hit) return hit.name;
+    if (hit) return hit.type === 'human' ? anonHuman(hit.name) : hit.name;
     var s = String(id || '');
     if (/^user_/.test(s) || /^org/.test(s) || s.length > 24) return type === 'agent' ? 'Agent' : 'Human';
-    return s.replace(/^(AGT|HUM)_/i, '').toLowerCase().replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); });
+    var pretty = s.replace(/^(AGT|HUM)_/i, '').toLowerCase().replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); });
+    return type === 'human' ? anonHuman(pretty) : pretty;
   }
   var AGENT_PORTRAITS = { radar:1, dan:1, pepper:1, dash:1, tally:1 };
   function agentSlug(name){
@@ -176,14 +183,14 @@
       <div class="wt-side"><span class="wt-label">01 / The chart</span></div>
       <div class="wt-main">
         <h2 class="wt-head"><%= humansList.length %> humans and <%= agentsList.length %> AI agents. One chart.</h2>
-        <p class="wt-body">Every seat below is real and current, from our published operating system. Agents hold seats the same way people do: a role, an escalation line, a number they answer for.</p>
+        <p class="wt-body">Every seat below is real and current, from our published operating system. Agents hold seats the same way people do: a role, an escalation line, a number they answer for. Our people appear by initials; they did not sign up to be famous. The agents did.</p>
         <div class="wt-chart">
           <% if (humansList.length) { %>
           <div>
             <div class="wt-grouptag" style="color:#b45309;"><span class="sw wt-sw-h"></span>Humans &middot; <%= humansList.length %></div>
             <div class="wt-tiles">
               <% humansList.forEach(function(h){ %>
-                <div class="wt-tile"><div class="nm"><%= esc(h.name) %></div><div class="rl"><%= esc(h.role || '') %></div></div>
+                <div class="wt-tile"><div class="nm"><%= esc(anonHuman(h.name)) %></div><div class="rl"><%= esc(h.role || '') %></div></div>
               <% }); %>
             </div>
           </div>
@@ -213,7 +220,7 @@
       <div class="wt-side"><span class="wt-label">02 / The scoreboard</span></div>
       <div class="wt-main">
         <h2 class="wt-head">The scorecard, as it stands right now.</h2>
-        <p class="wt-body">Source column tells you who typed the number: API means an agent read it from the source system and pushed it, with a timestamp. Where you see a stale date, that is a real scuff mark, not a rendering bug. Live systems have them.</p>
+        <p class="wt-body">Source column tells you who typed the number: API means an agent read it from the source system and pushed it, with a timestamp. Where you see a stale date, that is a real scuff mark, not a rendering bug. Live systems have them. A few sales-pipeline and client-confidential measures are not published on this board; every value that is shown is unedited.</p>
         <% if (kpiRows.length) { %>
         <div class="wt-score">
           <div class="wt-srow hd"><span>Measure</span><span style="text-align:right;">Latest</span><span class="hg">Owner</span><span class="hs">Source</span><span style="text-align:right;">Updated</span></div>
@@ -281,7 +288,7 @@
         <p class="wt-body" style="margin-top:26px;">Current quarterly priorities, with their honest status.</p>
         <div class="wt-feed">
           <% rockRows.forEach(function(r){ %>
-          <div class="wt-frow"><span class="ft"><%= esc(r.title) %> <span class="wt-mut" style="font-size:12px;">&middot; <%= esc(r.owner_name || '') %></span></span><span class="fw"><span class="wt-pill <%= r.on_track ? 'wt-on' : 'wt-off' %>"><%= r.on_track ? 'on track' : 'off track' %></span></span></div>
+          <div class="wt-frow"><span class="ft"><%= esc(r.title) %> <span class="wt-mut" style="font-size:12px;">&middot; <%= esc(r.owner_entity_type === 'human' ? anonHuman(r.owner_name) : (r.owner_name || '')) %></span></span><span class="fw"><span class="wt-pill <%= r.on_track ? 'wt-on' : 'wt-off' %>"><%= r.on_track ? 'on track' : 'off track' %></span></span></div>
           <% }); %>
         </div>
         <% } %>
