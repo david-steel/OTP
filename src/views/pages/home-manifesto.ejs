@@ -28,11 +28,16 @@
   .mf-cta{ margin-top:30px; display:flex; gap:22px; align-items:center; flex-wrap:wrap; }
 
   /* hero */
-  .mf-hero{ padding:150px 0 100px; }
+  .mf-hero{ padding:132px 0 90px; }
+  .mf-herogrid{ display:grid; grid-template-columns:1.08fr .92fr; gap:52px; align-items:center; }
   .mf-kicker{ display:inline-flex; align-items:center; gap:10px; margin-bottom:26px; }
   .mf-tick{ width:7px; height:7px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
-  .mf-h1{ max-width:18ch; }
+  .mf-h1{ max-width:16ch; }
   .mf-sub{ margin-top:26px; max-width:32rem; }
+  .mf-heroart{ display:flex; justify-content:center; }
+  .mf-heroart img{ width:min(360px,84%); height:auto; filter:drop-shadow(0 26px 42px rgba(20,22,28,.17)); animation:mf-float 6.5s ease-in-out infinite; }
+  @keyframes mf-float{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-14px);} }
+  @media (prefers-reduced-motion: reduce){ .mf-heroart img{ animation:none; } }
 
   /* stage + running spine */
   .mf-stage{ position:relative; max-width:1080px; margin:0 auto; padding:0 32px; }
@@ -51,23 +56,25 @@
   .mv-li{ display:flex; gap:16px; align-items:baseline; padding:14px 0; border-top:1px solid var(--rule); }
   .mv-li:first-child{ border-top:0; padding-top:0; }
   .mv-li .li-n{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-mute,#9aa0aa); flex:0 0 22px; }
+  .mv-li .li-hand{ width:32px; height:auto; flex:0 0 32px; display:block; align-self:center; }
   .mv-li .li-t{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:500; font-size:var(--t-body); line-height:1.4; color:var(--ink,#14161c); }
 
   /* meeting shot */
   .mf-shot{ margin-top:26px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; max-width:520px; box-shadow:0 20px 44px rgba(20,22,28,.07); }
   .mf-shot img{ width:100%; display:block; }
 
-  /* dark proof panel */
-  .mf-proof{ background:#0c1626; margin:0 -32px; padding:72px 60px; }
+  /* blue proof panel */
+  .mf-proof{ background:var(--blue,#0d7df2); margin:0 -32px; padding:76px 60px; }
   .mf-proof .mv{ border-top:0; padding:0; }
-  .mf-proof .mf-label{ color:rgba(255,255,255,.5); }
+  .mf-proof .mv-num{ color:rgba(255,255,255,.9); }
+  .mf-proof .mf-label{ color:rgba(255,255,255,.72); }
   .mf-proof .mv-head{ color:#fff; }
-  .mf-proof .mv-body{ color:rgba(255,255,255,.78); }
-  .mf-crew{ display:flex; gap:18px; margin-top:30px; flex-wrap:wrap; }
-  .mf-member{ width:72px; }
-  .mf-member img{ width:72px; height:72px; border-radius:14px; display:block; object-fit:cover; background:rgba(255,255,255,.06); }
-  .mf-member .mn{ margin-top:10px; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; color:#fff; }
-  .mf-member .mr{ font-family:'Inter',sans-serif; font-size:10.5px; color:rgba(255,255,255,.5); }
+  .mf-proof .mv-body{ color:rgba(255,255,255,.86); }
+  .mf-crew{ display:flex; gap:20px; margin-top:32px; flex-wrap:wrap; }
+  .mf-member{ width:96px; }
+  .mf-member img{ width:96px; height:96px; border-radius:16px; display:block; object-fit:cover; background:#fff; box-shadow:0 8px 20px rgba(8,30,66,.18); }
+  .mf-member .mn{ margin-top:12px; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:#fff; }
+  .mf-member .mr{ font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,.66); }
 
   /* close */
   .mf-close{ border-top:1px solid var(--rule); padding:96px 0 128px 28px; }
@@ -81,7 +88,10 @@
   @media (max-width:760px){
     .mf-stage::before{ left:20px; }
     .mv{ grid-template-columns:1fr; gap:14px; padding:48px 0; }
-    .mf-hero{ padding:116px 0 64px; }
+    .mf-herogrid{ grid-template-columns:1fr; gap:16px; }
+    .mf-heroart{ order:-1; }
+    .mf-heroart img{ width:180px; }
+    .mf-hero{ padding:104px 0 60px; }
     .mf-proof{ margin:0 -20px; padding:56px 24px; }
     .mf-close{ padding:60px 0 84px; }
     .mf-wrap, .mf-stage{ padding:0 20px; }
@@ -92,13 +102,18 @@
 
   <!-- HERO -->
   <section class="mf-hero">
-    <div class="mf-wrap">
-      <div class="mf-kicker"><span class="mf-tick"></span><span class="mf-label">The operating system for people and AI</span></div>
-      <h1 class="mf-display mf-h1">Every person has more potential than their workday allows.</h1>
-      <p class="mf-body mf-sub">OTP brings people and AI together as one team, and clears the busywork that keeps companies from thinking, creating, and growing.</p>
-      <div class="mf-cta">
-        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
-        <a href="#problem" class="mf-link">Why we exist &darr;</a>
+    <div class="mf-wrap mf-herogrid">
+      <div class="mf-herocopy">
+        <div class="mf-kicker"><span class="mf-tick"></span><span class="mf-label">The operating system for people and AI</span></div>
+        <h1 class="mf-display mf-h1">Every person has more potential than their workday allows.</h1>
+        <p class="mf-body mf-sub">OTP brings people and AI together as one team, and clears the busywork that keeps companies from thinking, creating, and growing.</p>
+        <div class="mf-cta">
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
+          <a href="#problem" class="mf-link">Why we exist &darr;</a>
+        </div>
+      </div>
+      <div class="mf-heroart">
+        <img src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot">
       </div>
     </div>
   </section>
@@ -128,10 +143,10 @@
       <div class="mv-side"><div class="mv-num">03</div><span class="mf-label">Imagine if</span></div>
       <div class="mv-main mf-reveal">
         <div class="mv-list">
-          <div class="mv-li"><span class="li-n">i</span><span class="li-t">Every employee had perfect memory.</span></div>
-          <div class="mv-li"><span class="li-n">ii</span><span class="li-t">Every decision built on every lesson before it.</span></div>
-          <div class="mv-li"><span class="li-n">iii</span><span class="li-t">Every AI understood your whole organization.</span></div>
-          <div class="mv-li"><span class="li-n">iv</span><span class="li-t">Every person had time to think, to create, to build something that matters.</span></div>
+          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-1.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every employee had perfect memory.</span></div>
+          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-2.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every decision built on every lesson before it.</span></div>
+          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-3.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every AI understood your whole organization.</span></div>
+          <div class="mv-li"><img class="li-hand" src="/public/images/onboarding-hand-4.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="li-t">Every person had time to think, to create, to build something that matters.</span></div>
         </div>
         <p class="mf-head mv-head" style="margin-top:32px;">That's OTP.</p>
       </div>
@@ -140,7 +155,7 @@
     <!-- PROOF -->
     <div class="mf-proof">
       <div class="mv">
-        <div class="mv-side"><div class="mv-num" style="color:var(--orgy,#a8e63a);">&mdash;</div><span class="mf-label">We live it</span></div>
+        <div class="mv-side"><div class="mv-num">&mdash;</div><span class="mf-label">We live it</span></div>
         <div class="mv-main">
           <h2 class="mf-head mv-head">We run our own company on these exact agents.</h2>
           <p class="mf-body mv-body">Radar, Dan, Pepper, Dash, and Tally are the same agents that run the company that built OTP. Working live, next to our people, every single day. No one else can hand you a philosophy and show you it running.</p>
