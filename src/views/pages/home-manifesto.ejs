@@ -43,7 +43,7 @@
   .ig-hero .ig-wrap{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:64px; align-items:center; padding-top:118px; padding-bottom:104px; }
   .ig-kicker{ display:inline-flex; align-items:center; gap:10px; margin-bottom:28px; }
   .ig-tick{ width:8px; height:8px; background:var(--mark); display:inline-block; }
-  .ig-h1{ max-width:13ch; }
+  .ig-h1{ max-width:16ch; }
   .ig-sub{ margin-top:26px; max-width:52ch; text-wrap:pretty; }
   .ig-hero .ig-cta{ margin-top:34px; }
   .ig-hero .ig-note{ margin-top:14px; }
@@ -52,6 +52,15 @@
   .ig-panel img{ width:64%; max-width:340px; position:relative; z-index:1; animation:ig-float 6s ease-in-out infinite; }
   @keyframes ig-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
   .ig-panel .ig-label{ position:absolute; left:18px; bottom:14px; z-index:2; color:var(--ink-mute,#888c96); }
+
+  /* the creed: stacked "We believe" statements, carved, no chrome */
+  .ig-creed{ margin-top:34px; display:flex; flex-direction:column; gap:30px; }
+  .ig-creed .c{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(1.3rem,2.2vw,1.8rem); line-height:1.28; letter-spacing:-0.02em; color:var(--ink,#14161c); max-width:30ch; }
+  .ig-creed .c .wb{ color:var(--accent); }
+  .ig-creed .c.ig-reveal:nth-child(2){ transition-delay:.1s; }
+  .ig-creed .c.ig-reveal:nth-child(3){ transition-delay:.2s; }
+  .ig-creed .c.ig-reveal:nth-child(4){ transition-delay:.3s; }
+  .ig-recruit{ margin-top:40px; }
 
   /* infinite game litany */
   .ig-game .ig-main{ max-width:760px; }
@@ -118,12 +127,12 @@
   <section class="ig-hero">
     <div class="ig-wrap">
       <div>
-        <div class="ig-kicker"><span class="ig-tick"></span><span class="ig-label">Our mission</span></div>
-        <h1 class="ig-battle ig-h1">Unlock the potential in <span class="ig-accent">every person</span>.</h1>
-        <p class="ig-body ig-sub">Through the partnership of people and AI, working as one team. So together we leave the world better than we found it.</p>
+        <div class="ig-kicker"><span class="ig-tick"></span><span class="ig-label">Our battle cry</span></div>
+        <h1 class="ig-battle ig-h1">You are capable of <span class="ig-accent">more</span> than your workday allows.</h1>
+        <p class="ig-body ig-sub">We are building the partnership of people and AI that sets that potential loose. So together we leave the world better than we found it.</p>
         <div class="ig-cta">
-          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start free &rarr;</a>
-          <a href="#why" class="ig-link">Why we exist &darr;</a>
+          <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Join the movement &rarr;</a>
+          <a href="#why" class="ig-link">Read the battle cry &darr;</a>
         </div>
         <p class="ig-note">Free for your whole team. No credit card.</p>
       </div>
@@ -137,10 +146,10 @@
   <!-- 01 THE PROBLEM -->
   <section class="ig-sec" id="why">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">01 / The problem</span></div>
+      <div class="ig-side"><span class="ig-label">01 / The enemy</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">What is productivity for?</h2>
-        <p class="ig-body">For decades we made people more productive. They have never felt busier. We built software to save time, then filled the time with more software. We automated the work, then invented more of it. Somewhere, we stopped asking the only question that matters.</p>
+        <h2 class="ig-head">We were promised technology would set us free.</h2>
+        <p class="ig-body">Instead it made us busier. More tools, more tabs, more pings, more work about the work. Somewhere along the way, managing the work became the work. Your best hours, the ones you were going to use to think, to create, to build something that matters, got eaten by the machine that was supposed to save them. We are done accepting that.</p>
       </div>
     </div>
   </section>
@@ -148,10 +157,16 @@
   <!-- 02 OUR BELIEF -->
   <section class="ig-sec">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">02 / Our belief</span></div>
-      <div class="ig-main ig-reveal">
-        <h2 class="ig-head">Technology's highest purpose is not to replace people. It is to elevate them.</h2>
-        <p class="ig-body">That is why OTP exists. Not to build another AI platform, but to unlock the potential in every person through the partnership of people and AI, so together we leave the world better than we found it.</p>
+      <div class="ig-side"><span class="ig-label">02 / What we believe</span></div>
+      <div class="ig-main">
+        <h2 class="ig-head ig-reveal">This is not a feature list. It is a creed.</h2>
+        <div class="ig-creed">
+          <p class="c ig-reveal"><span class="wb">We believe</span> there is untapped potential in every person, and unlocking it is the whole job.</p>
+          <p class="c ig-reveal"><span class="wb">We believe</span> AI's highest purpose is not to replace people. It is to elevate them.</p>
+          <p class="c ig-reveal"><span class="wb">We believe</span> people and AI on one team will outplay any company still playing alone.</p>
+          <p class="c ig-reveal"><span class="wb">We believe</span> work should give you back more than it takes from you.</p>
+        </div>
+        <p class="ig-body ig-recruit ig-reveal">If you believe these things too, you are already one of us. The rest is just handing you the tools.</p>
       </div>
     </div>
   </section>
@@ -167,6 +182,7 @@
           <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-2.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be better ways for people and AI to work together.</span></div>
           <div class="ig-li ig-reveal"><img src="/public/images/onboarding-hand-3.webp?v=<%= _v %>" alt="" aria-hidden="true"><span class="t">There will always be opportunities to leave the world better than we found it.</span></div>
         </div>
+        <p class="ig-head ig-recruit ig-reveal">We will still be playing this game in fifty years. The only question is who will be playing it with us.</p>
       </div>
     </div>
   </section>
@@ -176,8 +192,8 @@
     <div class="ig-wrap">
       <div class="ig-side"><span class="ig-label">03 / We live it</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">We run our own company on these exact agents.</h2>
-        <p class="ig-body">Radar, Dan, Pepper, Dash, and Tally are the same agents that run the company that built OTP. Working live, next to our people, every single day. No one else can hand you a philosophy and show you it running.</p>
+        <h2 class="ig-head">We are not asking you to believe words. We are showing you a company that runs on them.</h2>
+        <p class="ig-body">Radar, Dan, Pepper, Dash, and Tally are the real agents running the company that built OTP. Live, next to our people, every single day. When we say people and AI can play as one team, we are not describing a vision. We are describing our Tuesday.</p>
         <div class="ig-crew">
           <% crew.forEach(function(m){ %>
             <div class="ig-member">
@@ -195,10 +211,10 @@
   <!-- 05 THE PLATFORM -->
   <section class="ig-sec">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">04 / The platform</span></div>
+      <div class="ig-side"><span class="ig-label">04 / How we fight</span></div>
       <div class="ig-main ig-reveal">
-        <h2 class="ig-head">Other tools bolt on an AI assistant. OTP makes AI an accountable employee.</h2>
-        <p class="ig-body">OTP gives your whole team free meeting software: one chart, one scoreboard, one weekly meeting. Then every AI agent takes a seat, owns a number, and does the work between meetings, next to your people. Bring your own, or start with five of ours.</p>
+        <h2 class="ig-head">Busywork does not fall to good intentions. It falls to a system.</h2>
+        <p class="ig-body">OTP puts your people and your AI on one team: one chart, one scoreboard, one weekly meeting. Every agent takes a seat, owns a number, and clears the busywork between meetings. Every person gets their time, their focus, and their potential back. Bring your own agents, or start with five of ours.</p>
         <div class="ig-shot">
           <img src="/public/images/vs/l10.png?v=<%= _v %>" alt="The OTP weekly meeting: timed agenda, live scoreboard, every commitment tracked" loading="lazy">
         </div>
@@ -213,10 +229,10 @@
   <!-- 06 THE MANIFESTO -->
   <section class="ig-sec">
     <div class="ig-wrap">
-      <div class="ig-side"><span class="ig-label">05 / The manifesto</span></div>
+      <div class="ig-side"><span class="ig-label">05 / The declaration</span></div>
       <div class="ig-main ig-reveal">
         <h2 class="ig-head">Read <em>The Intelligent Organization</em>.</h2>
-        <p class="ig-body">Our founding manifesto for Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
+        <p class="ig-body">Our founding declaration of Organizational Intelligence Management. Twelve chapters on why companies forget, and how to build one that never does.</p>
         <div class="ig-cta"><a href="/the-intelligent-organization/" class="ig-link">Read the manifesto &rarr;</a></div>
       </div>
     </div>
@@ -226,11 +242,11 @@
   <section class="ig-close">
     <div class="ig-wrap">
       <p class="ig-battle ig-enemy ig-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="ig-mark">managing work<svg viewBox="0 0 200 14" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M3,10 Q55,4 110,8 T197,6"/></svg></span>.</p>
-      <p class="ig-comejoin ig-reveal">If you believe people are meant for more, come play the infinite game with us.</p>
+      <p class="ig-comejoin ig-reveal">If that sentence quickened your pulse, you are already one of us.</p>
       <div class="ig-cta ig-reveal">
-        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Join us, start free &rarr;</a>
+        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Join the movement &rarr;</a>
       </div>
-      <p class="ig-note">Free for your whole team. No credit card.</p>
+      <p class="ig-note">Free for your whole team. No credit card. No finish line.</p>
     </div>
   </section>
 </div>
