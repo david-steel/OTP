@@ -28,16 +28,57 @@
   .mf-cta{ margin-top:30px; display:flex; gap:22px; align-items:center; flex-wrap:wrap; }
 
   /* hero */
-  .mf-hero{ padding:132px 0 90px; }
-  .mf-herogrid{ display:grid; grid-template-columns:1.08fr .92fr; gap:52px; align-items:center; }
+  .mf-hero{ padding:126px 0 84px; }
+  .mf-herogrid{ display:grid; grid-template-columns:minmax(0,1fr) 500px; gap:40px; align-items:center; }
   .mf-kicker{ display:inline-flex; align-items:center; gap:10px; margin-bottom:26px; }
   .mf-tick{ width:7px; height:7px; border-radius:50%; background:var(--orgy,#a8e63a); display:inline-block; }
-  .mf-h1{ max-width:16ch; }
-  .mf-sub{ margin-top:26px; max-width:32rem; }
-  .mf-heroart{ display:flex; justify-content:center; }
-  .mf-heroart img{ width:min(360px,84%); height:auto; filter:drop-shadow(0 26px 42px rgba(20,22,28,.17)); animation:mf-float 6.5s ease-in-out infinite; }
-  @keyframes mf-float{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-14px);} }
-  @media (prefers-reduced-motion: reduce){ .mf-heroart img{ animation:none; } }
+  .mf-h1{ max-width:15ch; }
+  .mf-sub{ margin-top:26px; max-width:30rem; }
+  .mf-heroart{ position:relative; height:400px; }
+  .mf-heroart-m{ display:none; }
+  .mf-scene{ position:absolute; top:50%; left:50%; width:660px; height:520px; transform:translate(-50%,-50%) scale(.7); transform-origin:center; }
+
+  /* ---- ported hero scene: people + AI as one team ---- */
+  .mf-scene .rise{ opacity:0; animation:h-rise .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes h-rise{ from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+  .mf-scene .pop{ opacity:0; animation:h-pop .55s cubic-bezier(.34,1.4,.5,1) forwards; }
+  @keyframes h-pop{ from{opacity:0;transform:scale(.86);} to{opacity:1;transform:scale(1);} }
+  .h-mascot{ position:absolute; left:46px; top:132px; width:316px; z-index:3; }
+  .h-mascot img{ width:100%; display:block; animation:h-float 5.5s ease-in-out infinite; }
+  @keyframes h-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .h-glow{ position:absolute; left:66px; top:324px; width:278px; height:104px; z-index:1; background:radial-gradient(ellipse, rgba(13,125,242,0.22), transparent 70%); animation:h-breathe 5.5s ease-in-out infinite; }
+  @keyframes h-breathe{ 0%,100%{opacity:.55;transform:scale(.92);} 50%{opacity:1;transform:scale(1.08);} }
+  .h-bubble{ position:absolute; left:28px; top:14px; width:286px; z-index:5; background:#fff; border:1px solid var(--rule,#e6e8ec); border-radius:16px 16px 16px 4px; padding:13px 16px; box-shadow:0 10px 30px -12px rgba(20,22,28,.22); font-family:'Inter',sans-serif; font-size:13.5px; line-height:1.5; color:var(--ink,#14161c); }
+  .h-bubble b{ color:var(--green-deep,#06724a); font-weight:600; }
+  .h-conn{ position:absolute; inset:0; z-index:2; pointer-events:none; overflow:visible; }
+  .h-conn path{ fill:none; stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:h-draw 1s ease forwards; }
+  @keyframes h-draw{ to{stroke-dashoffset:0;} }
+  .h-pulse{ fill:#fff; stroke-width:2; }
+  .h-rail{ position:absolute; right:0; top:30px; width:248px; z-index:4; display:flex; flex-direction:column; gap:9px; }
+  .h-pill{ display:inline-flex; align-items:center; gap:7px; align-self:flex-start; background:#fff; border:1px solid var(--rule,#e6e8ec); border-radius:999px; padding:5px 12px 5px 8px; font-family:'Schibsted Grotesk','Inter',sans-serif; font-size:11px; font-weight:700; letter-spacing:.04em; box-shadow:0 4px 14px -6px rgba(20,22,28,.18); }
+  .h-pill-ico{ width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .h-pill.hu{ color:var(--orange-deep,#d4540a); } .h-pill.hu .h-pill-ico{ background:rgba(255,122,26,.16); }
+  .h-pill.ag{ color:var(--blue-deep,#0a56b0); } .h-pill.ag .h-pill-ico{ background:rgba(13,125,242,.14); }
+  .h-card{ background:#fff; border:1px solid var(--rule,#e6e8ec); border-radius:13px; padding:11px 12px; box-shadow:0 6px 20px -10px rgba(20,22,28,.2); display:flex; gap:10px; align-items:flex-start; }
+  .h-av{ width:34px; height:34px; border-radius:9px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff; font-family:'Schibsted Grotesk',sans-serif; }
+  .h-card-body{ flex:1; min-width:0; }
+  .h-name{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:13px; color:var(--ink,#14161c); }
+  .h-sub{ font-family:'Inter',sans-serif; font-size:11px; color:var(--ink-mute,#888c96); margin-top:1px; }
+  .h-stat{ display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; margin-top:6px; font-family:'Inter',sans-serif; }
+  .h-d{ width:6px; height:6px; border-radius:50%; flex:none; }
+  .h-live{ display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700; color:var(--green-deep,#06724a); }
+  .h-live i{ width:6px; height:6px; border-radius:50%; background:var(--green,#0a9d63); animation:h-livedot 1.8s ease-in-out infinite; }
+  @keyframes h-livedot{ 0%,100%{box-shadow:0 0 0 0 rgba(10,157,99,.5);} 50%{box-shadow:0 0 0 5px rgba(10,157,99,0);} }
+  .h-bar{ height:5px; border-radius:3px; background:#f0f1f3; margin-top:7px; overflow:hidden; }
+  .h-bar i{ display:block; height:100%; border-radius:3px; background:var(--blue,#0d7df2); transform:scaleX(0); transform-origin:left; animation:h-grow 1.3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes h-grow{ to{transform:scaleX(1);} }
+  @media (max-width:960px){
+    .mf-herogrid{ grid-template-columns:1fr; }
+    .mf-heroart{ height:auto; margin-top:6px; }
+    .mf-scene{ display:none; }
+    .mf-heroart-m{ display:block; width:230px; margin:0 auto; animation:h-float 5.5s ease-in-out infinite; }
+  }
+  @media (prefers-reduced-motion: reduce){ .mf-scene .pop,.mf-scene .rise,.h-mascot img,.mf-heroart-m{ animation:none !important; opacity:1 !important; } }
 
   /* stage + running spine */
   .mf-stage{ position:relative; max-width:1080px; margin:0 auto; padding:0 32px; }
@@ -63,8 +104,8 @@
   .mf-shot{ margin-top:26px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; max-width:520px; box-shadow:0 20px 44px rgba(20,22,28,.07); }
   .mf-shot img{ width:100%; display:block; }
 
-  /* blue proof panel */
-  .mf-proof{ background:var(--blue,#0d7df2); margin:0 -32px; padding:76px 60px; }
+  /* blue proof panel -- aligned to content width, a clean card */
+  .mf-proof{ background:var(--blue,#0d7df2); margin:0; padding:60px 48px; border-radius:18px; }
   .mf-proof .mv{ border-top:0; padding:0; }
   .mf-proof .mv-num{ color:rgba(255,255,255,.9); }
   .mf-proof .mf-label{ color:rgba(255,255,255,.72); }
@@ -76,9 +117,10 @@
   .mf-member .mn{ margin-top:12px; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:#fff; }
   .mf-member .mr{ font-family:'Inter',sans-serif; font-size:11px; color:rgba(255,255,255,.66); }
 
-  /* close */
-  .mf-close{ border-top:1px solid var(--rule); padding:96px 0 128px 28px; }
-  .mf-enemy{ font-weight:600; max-width:20ch; }
+  /* close -- centered finale, below the spine */
+  .mf-close .mf-wrap{ border-top:1px solid var(--rule); padding-top:96px; padding-bottom:128px; text-align:center; }
+  .mf-enemy{ font-weight:600; max-width:32ch; margin:0 auto; text-wrap:balance; }
+  .mf-close .mf-cta{ justify-content:center; margin-top:34px; }
   .mf-note{ font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-mute,#7c828d); margin-top:14px; }
 
   .mf-reveal{ opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
@@ -92,7 +134,7 @@
     .mf-heroart{ order:-1; }
     .mf-heroart img{ width:180px; }
     .mf-hero{ padding:104px 0 60px; }
-    .mf-proof{ margin:0 -20px; padding:56px 24px; }
+    .mf-proof{ margin:0; padding:40px 22px; border-radius:14px; }
     .mf-close{ padding:60px 0 84px; }
     .mf-wrap, .mf-stage{ padding:0 20px; }
   }
@@ -113,7 +155,28 @@
         </div>
       </div>
       <div class="mf-heroart">
-        <img src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot">
+        <div class="mf-scene">
+          <div class="h-glow"></div>
+          <svg class="h-conn" viewBox="0 0 660 520">
+            <path pathLength="1" d="M348,297 C384,297 388,100 412,100" stroke="var(--orange,#ff7a1a)" style="animation-delay:.7s"/>
+            <path pathLength="1" d="M348,300 C384,300 390,175 412,175" stroke="var(--orange,#ff7a1a)" style="animation-delay:.8s"/>
+            <path pathLength="1" d="M348,302 C384,302 390,289 412,289" stroke="var(--blue,#0d7df2)" style="animation-delay:.9s"/>
+            <path pathLength="1" d="M348,305 C384,305 392,368 412,368" stroke="var(--blue,#0d7df2)" style="animation-delay:1s"/>
+            <circle class="h-pulse" r="4" stroke="var(--orange,#ff7a1a)"><animateMotion dur="2.8s" repeatCount="indefinite" begin="1.7s" path="M348,297 C384,297 388,100 412,100"/></circle>
+            <circle class="h-pulse" r="4" stroke="var(--blue,#0d7df2)"><animateMotion dur="2.8s" repeatCount="indefinite" begin="2.3s" path="M348,305 C384,305 392,368 412,368"/></circle>
+          </svg>
+          <div class="h-mascot pop" style="animation-delay:.3s"><img src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot"></div>
+          <div class="h-bubble pop" style="animation-delay:.95s">My SOP drives the work. My KPI tracks the result. It all ladders up to this quarter's priorities and the year's goals. <b>Leadership sees every step.</b></div>
+          <div class="h-rail">
+            <div class="h-pill hu pop" style="animation-delay:.55s"><span class="h-pill-ico"><svg width="10" height="10" viewBox="0 0 24 24" fill="var(--orange-deep,#d4540a)"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg></span>HUMANS</div>
+            <div class="h-card rise" style="animation-delay:.62s"><div class="h-av" style="background:#e07a3a">S</div><div class="h-card-body"><div class="h-name">Sarah</div><div class="h-sub">Product Manager</div><div class="h-stat" style="color:var(--orange-deep,#d4540a)"><span class="h-d" style="background:var(--orange,#ff7a1a)"></span>In a meeting</div></div></div>
+            <div class="h-card rise" style="animation-delay:.72s"><div class="h-av" style="background:#c4612a">A</div><div class="h-card-body"><div class="h-name">Alex</div><div class="h-sub">Data Analyst</div><div class="h-stat" style="color:var(--orange-deep,#d4540a)"><span class="h-d" style="background:var(--orange,#ff7a1a)"></span>Working on report</div></div></div>
+            <div class="h-pill ag pop" style="animation-delay:.8s;margin-top:4px;"><span class="h-pill-ico"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep,#0a56b0)" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg></span>AI AGENTS</div>
+            <div class="h-card rise" style="animation-delay:.88s"><div class="h-av" style="background:#0d7df2">R</div><div class="h-card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="h-name">Research Agent</div><span class="h-live"><i></i>Live</span></div><div class="h-sub">Gathering insights</div><div class="h-bar"><i style="width:72%;animation-delay:1.3s"></i></div></div></div>
+            <div class="h-card rise" style="animation-delay:.98s"><div class="h-av" style="background:#0a64c4">W</div><div class="h-card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="h-name">Workflow Agent</div><span class="h-live"><i></i>Live</span></div><div class="h-sub">Automating steps</div><div class="h-bar"><i style="width:64%;background:var(--green,#0a9d63);animation-delay:1.45s"></i></div></div></div>
+          </div>
+        </div>
+        <img class="mf-heroart-m" src="/public/orgy-cut.png?v=<%= _v %>" alt="Ollie, the OTP mascot">
       </div>
     </div>
   </section>
@@ -168,6 +231,7 @@
               </div>
             <% }); %>
           </div>
+          <div class="mf-cta" style="margin-top:30px;"><a href="/free-agents" style="display:inline-block;background:#fff;color:var(--blue,#0d7df2);font-family:'Inter',sans-serif;font-weight:600;font-size:15px;padding:13px 22px;border-radius:10px;text-decoration:none;box-shadow:0 8px 20px rgba(8,30,66,.18);">Meet the agents &rarr;</a></div>
         </div>
       </div>
     </div>
@@ -176,7 +240,7 @@
     <div class="mv">
       <div class="mv-side"><div class="mv-num">04</div><span class="mf-label">The platform</span></div>
       <div class="mv-main mf-reveal">
-        <h2 class="mf-head mv-head">Put people and AI on one accountable team.</h2>
+        <h2 class="mf-head mv-head">Other tools bolt on an AI assistant. OTP makes AI an accountable employee.</h2>
         <p class="mf-body mv-body">OTP gives your whole team free meeting software: one chart, one scoreboard, one weekly meeting. Then every AI agent takes a seat, owns a number, and does the work between meetings, next to your people. Bring your own, or start with five of ours. Free for your whole team.</p>
         <div class="mf-shot">
           <img src="/public/images/vs/l10.png?v=<%= _v %>" alt="The OTP weekly meeting: timed agenda, live scoreboard, every commitment tracked">
@@ -200,16 +264,18 @@
       </div>
     </div>
 
-    <!-- CLOSE -->
-    <div class="mf-close">
+  </div>
+
+  <!-- CLOSE (centered finale, below the spine) -->
+  <section class="mf-close">
+    <div class="mf-wrap">
       <p class="mf-display mf-enemy mf-reveal">We refuse to accept that humanity's greatest potential should be spent <span class="mf-accent">managing work</span>.</p>
       <div class="mf-cta">
         <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Start building &rarr;</a>
       </div>
       <p class="mf-note">Free for your whole team. No credit card.</p>
     </div>
-
-  </div>
+  </section>
 </div>
 
 <script>
