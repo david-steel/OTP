@@ -156,13 +156,16 @@ export default async function pageRoutes(app: FastifyInstance) {
   // Homepage. Serves the v7 redesign (public/home-v7.html) as a standalone
   // static document -- compiled CSS, SEO meta + JSON-LD, and GA baked into the
   // file's head. No layout, no DB. /home-v7 and /public/home-v7.html match.
+  // Homepage: "The Letter" (home-manifesto) promoted 2026-07-01 after a
+  // 4/4 persona conversion test. Prior homepage view (home-v8) retained on
+  // disk; /home-manifesto-preview stays as a noindex alias of this page.
   app.get('/', async (_request, reply) => {
-    return renderV7(reply, 'home-v8', {
-      title: 'OTP - Run your company with people and AI agents',
-      description: 'OTP is the operating system for teams of people and AI agents. One chart, one scoreboard, one weekly meeting - built on the operating system you already run. Your whole team is free; you only pay for the agents.',
+    return renderV7(reply, 'home-manifesto', {
+      title: 'OTP - You bought into the system. The needle didn\'t move.',
+      description: 'A letter from our founder: the system was never the problem. What was missing was a workforce to run it between the meetings. Our own company runs on it, live and public. Every human free; agent seats $16/mo.',
       canonical: BASE_URL + '/',
       ogImage: OG_DEFAULT,
-      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents.', sameAs: ['https://x.com/OrgTP_1'] },
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'OTP', url: BASE_URL + '/', description: 'The operating system for teams of people and AI agents. Unlocking the potential in every person through the partnership of people and AI.', sameAs: ['https://x.com/OrgTP_1'] },
     });
   });
 

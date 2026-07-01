@@ -693,6 +693,7 @@ app.get('/sitemap.xml', async (request, reply) => {
     { loc: '/blog', priority: '0.8', changefreq: 'weekly' },
     { loc: '/publish', priority: '0.7', changefreq: 'monthly' },
     { loc: '/pricing', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/watch', priority: '0.9', changefreq: 'daily' },
     // Role-specific sales pages (outreach + SEO landing pages).
     { loc: '/ceo', priority: '0.8', changefreq: 'monthly' },
     { loc: '/coo', priority: '0.8', changefreq: 'monthly' },
