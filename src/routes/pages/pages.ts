@@ -207,7 +207,7 @@ export default async function pageRoutes(app: FastifyInstance) {
   // noindex throwaway preview; delete once a direction is chosen.
   app.get('/home-manifesto-preview', async (_request, reply) => {
     return renderV7(reply, 'home-manifesto', {
-      title: 'OTP - You bought the operating system. The needle didn\'t move.',
+      title: 'OTP - You bought into the system. The needle didn\'t move.',
       description: 'A letter from our founder: the system was never the problem. What was missing was a workforce to run it between the meetings. Our own company runs on it, live and public. Every human free; agent seats $16/mo.',
       canonical: BASE_URL + '/',
       ogImage: OG_DEFAULT,
@@ -256,7 +256,12 @@ export default async function pageRoutes(app: FastifyInstance) {
       WHERE k.organization_id = ${SHOWCASE_ORG_ID} AND k.deleted_at IS NULL AND k.archived_at IS NULL
       ORDER BY (v.entered_at IS NULL), k.group_name NULLS LAST, k.title
       LIMIT 24`);
-    const kpiRows = kpiRowsAll.filter((k: any) => !KPI_EXCLUDE.test(String(k.title || '')));
+    // Freshness cut: the public board only carries measures that have moved
+    // in the last 5 weeks. Quiet measures aren't lied about, they're left off.
+    const FRESH_MS = 35 * 24 * 3600 * 1000;
+    const kpiRows = kpiRowsAll.filter((k: any) =>
+      !KPI_EXCLUDE.test(String(k.title || '')) &&
+      k.entered_at && (Date.now() - new Date(k.entered_at).getTime()) < FRESH_MS);
 
     const recentUpdatesAll = await rowsOf(sql`
       SELECT k.title, k.unit, k.owner_entity_type, k.owner_external_id, v.value, v.source, v.entered_at
@@ -279,10 +284,23 @@ export default async function pageRoutes(app: FastifyInstance) {
         AND completed_at IS NULL AND shadow_owner_only IS NOT TRUE
       ORDER BY due_date ASC LIMIT 10`);
 
+    // The showcase meeting is the LEADERSHIP meeting (full room, run to
+    // completion with ratings), not whichever 1:1 happened to finish last.
     const meetingRows = await rowsOf(sql`
       SELECT title, meeting_type, started_at, ended_at, attendees, ratings
       FROM meetings
       WHERE organization_id = ${SHOWCASE_ORG_ID} AND deleted_at IS NULL AND status = 'completed'
+        AND meeting_type = 'leadership' AND jsonb_array_length(attendees) >= 3
+        AND started_at IS NOT NULL AND ended_at IS NOT NULL AND ratings::text <> '{}'
+      ORDER BY ended_at DESC NULLS LAST LIMIT 1`);
+
+    // The jaw-dropper, when it exists: a leadership meeting an AI agent sat
+    // in and rated. Proof that agents hold seats, straight from the record.
+    const agentMeetingRows = await rowsOf(sql`
+      SELECT title, ended_at, ratings
+      FROM meetings
+      WHERE organization_id = ${SHOWCASE_ORG_ID} AND deleted_at IS NULL AND status = 'completed'
+        AND ratings::text LIKE '%AGT_%'
       ORDER BY ended_at DESC NULLS LAST LIMIT 1`);
 
     const corrections = oos ? await rowsOf(sql`
@@ -297,7 +315,7 @@ export default async function pageRoutes(app: FastifyInstance) {
       ogImage: OG_DEFAULT,
       org, oosMeta: oos ? { version: oos.version, publishedAt: oos.publishedAt, id: oos.id, claimCount: oos.claimCount } : null,
       humansList, agentsList, kpiRows, recentUpdates, agentTodos, rockRows,
-      lastMeeting: meetingRows[0] || null, corrections,
+      lastMeeting: meetingRows[0] || null, agentMeeting: agentMeetingRows[0] || null, corrections,
       renderedAt: new Date(),
     });
   });
