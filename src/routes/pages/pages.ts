@@ -215,6 +215,87 @@ export default async function pageRoutes(app: FastifyInstance) {
     });
   });
 
+  // /watch -- "The Window": a public, read-only, rendered-at-request-time view
+  // of the showcase org (Sneeze It) actually running on OTP. This is the
+  // homepage letter's proof surface: real chart entities from the latest
+  // published OOS, the live scorecard with value sources + timestamps, agent
+  // to-do activity, the last completed meeting, current rocks, and the
+  // correction log (published claims incl. failure modes). Every block is
+  // defensive: a failed query renders as an absent section, never a 500.
+  app.get('/watch', async (_request, reply) => {
+    const SHOWCASE_ORG_ID = '48aff0f9-f364-4308-84df-01613213865b'; // Sneeze It
+    const [org] = await db.select().from(organizations).where(eq(organizations.id, SHOWCASE_ORG_ID)).limit(1);
+    if (!org || !isCrossOrgVisible(org)) return renderV7(reply.status(404), '404', { title: 'Page Not Found - OTP', noindex: true });
+
+    async function rowsOf(query: any): Promise<any[]> {
+      try { const r = await db.execute(query); return (r as any).rows || []; } catch { return []; }
+    }
+
+    let oos: any = null;
+    try {
+      [oos] = await db.select().from(oosFiles)
+        .where(and(eq(oosFiles.orgId, SHOWCASE_ORG_ID), eq(oosFiles.status, 'published')))
+        .orderBy(desc(oosFiles.publishedAt)).limit(1);
+    } catch { /* section renders empty */ }
+    const entities = (oos?.frontmatter as any)?.entities || {};
+    const humansList = Array.isArray(entities.humans) ? entities.humans : [];
+    const agentsList = Array.isArray(entities.agents) ? entities.agents : [];
+
+    const kpiRows = await rowsOf(sql`
+      SELECT k.title, k.owner_entity_type, k.owner_external_id, k.goal_operator, k.goal_value, k.unit,
+             k.group_name, v.value, v.source, v.entered_at
+      FROM kpis k
+      LEFT JOIN LATERAL (
+        SELECT value, source, entered_at FROM kpi_values
+        WHERE kpi_id = k.id ORDER BY period_start DESC LIMIT 1
+      ) v ON true
+      WHERE k.organization_id = ${SHOWCASE_ORG_ID} AND k.deleted_at IS NULL AND k.archived_at IS NULL
+      ORDER BY (v.entered_at IS NULL), k.group_name NULLS LAST, k.title
+      LIMIT 24`);
+
+    const recentUpdates = await rowsOf(sql`
+      SELECT k.title, k.unit, k.owner_entity_type, k.owner_external_id, v.value, v.source, v.entered_at
+      FROM kpi_values v JOIN kpis k ON k.id = v.kpi_id
+      WHERE k.organization_id = ${SHOWCASE_ORG_ID} AND k.deleted_at IS NULL
+      ORDER BY v.entered_at DESC LIMIT 10`);
+
+    const agentTodos = await rowsOf(sql`
+      SELECT title, owner_name, owner_external_id, done_at, due_at
+      FROM todos
+      WHERE organization_id = ${SHOWCASE_ORG_ID} AND deleted_at IS NULL
+        AND owner_entity_type = 'agent' AND done_at IS NOT NULL
+      ORDER BY done_at DESC LIMIT 8`);
+
+    const rockRows = await rowsOf(sql`
+      SELECT title, owner_name, owner_entity_type, on_track, quarter, due_date, completed_at
+      FROM rocks
+      WHERE organization_id = ${SHOWCASE_ORG_ID} AND deleted_at IS NULL AND archived_at IS NULL
+        AND completed_at IS NULL AND shadow_owner_only IS NOT TRUE
+      ORDER BY due_date ASC LIMIT 10`);
+
+    const meetingRows = await rowsOf(sql`
+      SELECT title, meeting_type, started_at, ended_at, attendees, ratings
+      FROM meetings
+      WHERE organization_id = ${SHOWCASE_ORG_ID} AND deleted_at IS NULL AND status = 'completed'
+      ORDER BY ended_at DESC NULLS LAST LIMIT 1`);
+
+    const corrections = oos ? await rowsOf(sql`
+      SELECT claim_id, section, rule, failure_mode, agent_name, created_at
+      FROM claims WHERE oos_file_id = ${oos.id}
+      ORDER BY created_at DESC, display_order DESC LIMIT 6`) : [];
+
+    return renderV7(reply, 'watch', {
+      title: 'Watch our company run, live - OTP',
+      description: 'A live, read-only window into the company that builds OTP: the real chart of humans and AI agents, the live scorecard with timestamps, agent work, the last meeting, and the published correction log. Rendered from production data at request time.',
+      canonical: BASE_URL + '/watch',
+      ogImage: OG_DEFAULT,
+      org, oosMeta: oos ? { version: oos.version, publishedAt: oos.publishedAt, id: oos.id, claimCount: oos.claimCount } : null,
+      humansList, agentsList, kpiRows, recentUpdates, agentTodos, rockRows,
+      lastMeeting: meetingRows[0] || null, corrections,
+      renderedAt: new Date(),
+    });
+  });
+
   // /cio -- role-specific sales page for CIOs / heads of AI (esp. PE-backed
   // operators). Sells OTP on its own; built from the Andrew Frey demo resonance.
   app.get('/cio', async (_request, reply) => {

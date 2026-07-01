@@ -1,0 +1,329 @@
+<%# /watch -- "The Window". Public read-only live view of the showcase org
+    running on OTP. Rendered from production data at request time; every
+    section hides itself if its data is empty. Shares the letter page's
+    quiet one-accent editorial system (.wt- prefix). Body-only; renderV7 wraps. %>
+<%
+  var _v = (typeof assetVersion !== 'undefined' ? assetVersion : 'dev');
+  function esc(s){ return String(s == null ? '' : s); }
+  function rel(d, now){
+    if (!d) return '';
+    var ms = (now || new Date()).getTime() - new Date(d).getTime();
+    if (ms < 0) ms = 0;
+    var m = Math.floor(ms / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    var days = Math.floor(h / 24);
+    if (days < 45) return days + 'd ago';
+    return Math.floor(days / 30) + 'mo ago';
+  }
+  function fdate(d){
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function num(v){
+    if (v == null) return '';
+    var n = Number(v);
+    if (!isFinite(n)) return esc(v);
+    return (Math.round(n * 100) / 100).toLocaleString('en-US');
+  }
+  var OWNER_LOOKUP = {};
+  try {
+    (humansList || []).forEach(function(h){ if (h.id) OWNER_LOOKUP[String(h.id)] = { name: h.name, type: 'human' }; });
+    (agentsList || []).forEach(function(a){ if (a.id) OWNER_LOOKUP[String(a.id)] = { name: a.name, type: 'agent' }; });
+  } catch(e) {}
+  function ownerLabel(id, type){
+    var hit = OWNER_LOOKUP[String(id || '')];
+    if (hit) return hit.name;
+    var s = String(id || '');
+    if (/^user_/.test(s) || /^org/.test(s) || s.length > 24) return type === 'agent' ? 'Agent' : 'Human';
+    return s.replace(/^(AGT|HUM)_/i, '').toLowerCase().replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); });
+  }
+  var AGENT_PORTRAITS = { radar:1, dan:1, pepper:1, dash:1, tally:1 };
+  function agentSlug(name){
+    var s = String(name || '').toLowerCase().replace(/[^a-z]/g, '');
+    return AGENT_PORTRAITS[s] ? s : null;
+  }
+  function meetingMinutes(m){
+    if (!m || !m.started_at || !m.ended_at) return null;
+    var mins = Math.round((new Date(m.ended_at).getTime() - new Date(m.started_at).getTime()) / 60000);
+    return (mins > 0 && mins < 600) ? mins : null;
+  }
+  function avgRating(m){
+    try {
+      var vals = Object.values(m.ratings || {}).map(Number).filter(function(x){ return isFinite(x) && x > 0; });
+      if (!vals.length) return null;
+      return Math.round((vals.reduce(function(a,b){ return a+b; }, 0) / vals.length) * 10) / 10;
+    } catch (e) { return null; }
+  }
+  var mm = lastMeeting ? meetingMinutes(lastMeeting) : null;
+  var mr = lastMeeting ? avgRating(lastMeeting) : null;
+  var attendeeCount = 0;
+  try { attendeeCount = Array.isArray(lastMeeting && lastMeeting.attendees) ? lastMeeting.attendees.length : 0; } catch(e) {}
+%>
+<style>
+  .wt{ --rule:#e7e8ec; --accent:#06724a; --mark:#a8e63a; --t-label:12px;
+       background:var(--white,#fcfcfd); }
+  .wt *{ box-sizing:border-box; }
+  .wt-battle{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:clamp(2.3rem,4.6vw,3.6rem); line-height:1.05; letter-spacing:-0.03em; color:var(--ink,#14161c); }
+  .wt-head{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:600; font-size:clamp(1.3rem,2vw,1.7rem); line-height:1.2; letter-spacing:-0.02em; color:var(--ink,#14161c); }
+  .wt-body{ font-family:'Inter',sans-serif; font-size:clamp(1rem,1.1vw,1.08rem); line-height:1.65; color:var(--ink-soft,#494d57); }
+  .wt-label{ font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; font-size:var(--t-label); letter-spacing:.18em; text-transform:uppercase; color:var(--accent); }
+  .wt-mut{ color:var(--ink-mute,#888c96); }
+  .wt-link{ font-family:'Inter',sans-serif; font-weight:600; font-size:15px; color:var(--accent); text-decoration:none; }
+  .wt-link:hover{ text-decoration:underline; }
+  .wt-wrap{ max-width:1120px; margin:0 auto; padding:0 36px; }
+
+  .wt-hero{ padding:96px 0 56px; }
+  .wt-live{ display:inline-flex; align-items:center; gap:9px; margin-bottom:24px; }
+  .wt-dot{ width:9px; height:9px; border-radius:50%; background:var(--mark); position:relative; }
+  .wt-dot::after{ content:''; position:absolute; inset:-4px; border-radius:50%; border:1.5px solid var(--mark); opacity:.6; animation:wt-ping 2.2s ease-out infinite; }
+  @keyframes wt-ping{ 0%{ transform:scale(.5); opacity:.7; } 80%,100%{ transform:scale(1.5); opacity:0; } }
+  .wt-hero h1{ max-width:18ch; }
+  .wt-hero .wt-body{ margin-top:20px; max-width:60ch; }
+  .wt-stamp{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; letter-spacing:.06em; color:var(--ink-mute,#888c96); margin-top:22px; }
+
+  .wt-sec{ border-top:1px solid var(--rule); }
+  .wt-sec .wt-wrap{ display:grid; grid-template-columns:180px minmax(0,1fr); gap:56px; padding-top:72px; padding-bottom:72px; align-items:start; }
+  .wt-side{ position:sticky; top:96px; }
+  .wt-main{ max-width:820px; }
+  .wt-main > .wt-body{ margin-top:14px; max-width:62ch; }
+
+  /* chart tiles */
+  .wt-chart{ margin-top:28px; display:flex; flex-direction:column; gap:26px; }
+  .wt-grouptag{ display:flex; align-items:center; gap:9px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
+  .wt-grouptag .sw{ width:8px; height:8px; }
+  .wt-tiles{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:12px; margin-top:12px; }
+  .wt-tile{ border:1px solid var(--rule); background:#fff; border-radius:10px; padding:12px 14px; }
+  .wt-tile .nm{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:700; font-size:14.5px; color:var(--ink,#14161c); display:flex; align-items:center; gap:8px; }
+  .wt-tile .nm img{ width:26px; height:26px; border-radius:6px; object-fit:cover; background:#f0f1f3; }
+  .wt-tile .rl{ font-family:'Inter',sans-serif; font-size:12px; color:var(--ink-mute,#888c96); margin-top:3px; line-height:1.4; }
+
+  /* scoreboard table */
+  .wt-score{ margin-top:26px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; background:#fff; }
+  .wt-srow{ display:grid; grid-template-columns:minmax(0,2.2fr) 92px minmax(0,1fr) 92px 110px; gap:14px; align-items:center; padding:13px 18px; border-top:1px solid var(--rule); }
+  .wt-srow:first-child{ border-top:0; }
+  .wt-srow.hd{ background:#f7f8f9; padding:10px 18px; }
+  .wt-srow.hd span{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); }
+  .wt-srow .kt{ font-family:'Inter',sans-serif; font-weight:600; font-size:14px; color:var(--ink,#14161c); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .wt-srow .kv{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:500; color:var(--ink,#14161c); text-align:right; }
+  .wt-srow .kg{ font-family:'Inter',sans-serif; font-size:12.5px; color:var(--ink-mute,#888c96); }
+  .wt-srow .ks{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; }
+  .wt-srow .kw{ font-family:'Inter',sans-serif; font-size:12.5px; color:var(--ink-mute,#888c96); text-align:right; }
+  .wt-owner{ display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; }
+  .wt-owner .sw{ width:7px; height:7px; flex:none; }
+  .wt-sw-h{ background:#f5a623; } .wt-sw-a{ background:var(--mark); }
+
+  /* activity list rows */
+  .wt-feed{ margin-top:26px; }
+  .wt-frow{ display:flex; gap:16px; align-items:baseline; padding:13px 0; border-top:1px solid var(--rule); }
+  .wt-frow:first-child{ border-top:0; }
+  .wt-frow .ft{ font-family:'Inter',sans-serif; font-size:14.5px; color:var(--ink,#14161c); flex:1; min-width:0; }
+  .wt-frow .ft b{ font-weight:600; }
+  .wt-frow .fw{ font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-mute,#888c96); flex:none; }
+
+  /* meeting + rocks cards */
+  .wt-meet{ margin-top:26px; border:1px solid var(--rule); border-radius:12px; background:#fff; padding:22px 24px; display:flex; gap:34px; flex-wrap:wrap; }
+  .wt-stat .n{ font-family:'Schibsted Grotesk','Inter',sans-serif; font-weight:800; font-size:1.6rem; color:var(--ink,#14161c); }
+  .wt-stat .l{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute,#888c96); margin-top:4px; }
+  .wt-pill{ display:inline-block; font-family:'Inter',sans-serif; font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:999px; }
+  .wt-on{ color:#16a34a; background:#dcfce7; } .wt-off{ color:#dc2626; background:#fee2e2; }
+
+  /* correction log */
+  .wt-corr{ margin-top:26px; display:flex; flex-direction:column; gap:12px; }
+  .wt-crow{ border:1px solid var(--rule); border-radius:12px; background:#fff; padding:16px 20px; }
+  .wt-crow .cid{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em; color:var(--accent); }
+  .wt-crow .cr{ font-family:'Inter',sans-serif; font-weight:600; font-size:14.5px; color:var(--ink,#14161c); margin-top:6px; line-height:1.5; }
+  .wt-crow .cf{ font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-soft,#494d57); margin-top:6px; line-height:1.55; }
+  .wt-crow .cf b{ font-weight:600; color:var(--ink,#14161c); }
+
+  .wt-close{ border-top:1px solid var(--rule); }
+  .wt-close .wt-wrap{ padding:88px 36px 104px; text-align:center; }
+  .wt-close .wt-battle{ max-width:22ch; margin:0 auto; text-wrap:balance; }
+  .wt-close .wt-body{ margin:22px auto 0; max-width:52ch; }
+  .wt-close .cta{ margin-top:32px; display:flex; gap:24px; justify-content:center; align-items:center; flex-wrap:wrap; }
+
+  .wt-empty{ font-family:'Inter',sans-serif; font-size:14px; color:var(--ink-mute,#888c96); margin-top:20px; font-style:italic; }
+
+  @media (max-width:900px){
+    .wt-wrap{ padding:0 22px; }
+    .wt-sec .wt-wrap{ grid-template-columns:1fr; gap:16px; padding-top:52px; padding-bottom:52px; }
+    .wt-side{ position:static; }
+    .wt-hero{ padding:80px 0 44px; }
+    .wt-srow{ grid-template-columns:minmax(0,1.6fr) 80px 100px; }
+    .wt-srow .kg, .wt-srow .ks{ display:none; }
+    .wt-srow.hd .hg, .wt-srow.hd .hs{ display:none; }
+  }
+</style>
+
+<div class="wt">
+
+  <!-- HERO -->
+  <section class="wt-hero">
+    <div class="wt-wrap">
+      <div class="wt-live"><span class="wt-dot"></span><span class="wt-label">The window / live from <%= esc(org.name) %></span></div>
+      <h1 class="wt-battle">This is not a demo.</h1>
+      <p class="wt-body">You are looking at the company that builds OTP, running on OTP. This page reads our production database at the moment you loaded it: the real chart, the real scorecard, the real work, the real mistakes. Nothing here is staged, and some of it is unflattering. That is the point.</p>
+      <p class="wt-stamp">RENDERED <%= new Date(renderedAt).toUTCString().toUpperCase() %><% if (oosMeta && oosMeta.publishedAt) { %> &middot; OPERATING SYSTEM v<%= oosMeta.version %>, PUBLISHED <%= fdate(oosMeta.publishedAt).toUpperCase() %><% } %></p>
+    </div>
+  </section>
+
+  <!-- THE CHART -->
+  <% if (humansList.length || agentsList.length) { %>
+  <section class="wt-sec">
+    <div class="wt-wrap">
+      <div class="wt-side"><span class="wt-label">01 / The chart</span></div>
+      <div class="wt-main">
+        <h2 class="wt-head"><%= humansList.length %> humans and <%= agentsList.length %> AI agents. One chart.</h2>
+        <p class="wt-body">Every seat below is real and current, from our published operating system. Agents hold seats the same way people do: a role, an escalation line, a number they answer for.</p>
+        <div class="wt-chart">
+          <% if (humansList.length) { %>
+          <div>
+            <div class="wt-grouptag" style="color:#b45309;"><span class="sw wt-sw-h"></span>Humans &middot; <%= humansList.length %></div>
+            <div class="wt-tiles">
+              <% humansList.forEach(function(h){ %>
+                <div class="wt-tile"><div class="nm"><%= esc(h.name) %></div><div class="rl"><%= esc(h.role || '') %></div></div>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
+          <% if (agentsList.length) { %>
+          <div>
+            <div class="wt-grouptag" style="color:var(--accent);"><span class="sw wt-sw-a"></span>AI agents &middot; <%= agentsList.length %></div>
+            <div class="wt-tiles">
+              <% agentsList.forEach(function(a){ var slug = agentSlug(a.name); %>
+                <div class="wt-tile">
+                  <div class="nm"><% if (slug) { %><img src="/public/images/vs/<%= slug %>.png?v=<%= _v %>" alt="" loading="lazy"><% } %><%= esc(a.name) %></div>
+                  <div class="rl"><%= esc(a.role || a.mission || '') %></div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- THE SCOREBOARD -->
+  <section class="wt-sec">
+    <div class="wt-wrap">
+      <div class="wt-side"><span class="wt-label">02 / The scoreboard</span></div>
+      <div class="wt-main">
+        <h2 class="wt-head">The scorecard, as it stands right now.</h2>
+        <p class="wt-body">Source column tells you who typed the number: API means an agent read it from the source system and pushed it, with a timestamp. Where you see a stale date, that is a real scuff mark, not a rendering bug. Live systems have them.</p>
+        <% if (kpiRows.length) { %>
+        <div class="wt-score">
+          <div class="wt-srow hd"><span>Measure</span><span style="text-align:right;">Latest</span><span class="hg">Owner</span><span class="hs">Source</span><span style="text-align:right;">Updated</span></div>
+          <% kpiRows.forEach(function(k){ %>
+          <div class="wt-srow">
+            <span class="kt" title="<%= esc(k.title) %>"><%= esc(k.title) %></span>
+            <span class="kv"><%= k.value != null ? num(k.value) : '–' %><% if (k.value != null && k.unit) { %> <span style="color:var(--ink-mute,#888c96);font-size:11px;"><%= esc(k.unit) %></span><% } %></span>
+            <span class="kg"><span class="wt-owner" style="color:<%= k.owner_entity_type === 'agent' ? 'var(--accent)' : '#b45309' %>;"><span class="sw <%= k.owner_entity_type === 'agent' ? 'wt-sw-a' : 'wt-sw-h' %>"></span><%= esc(ownerLabel(k.owner_external_id, k.owner_entity_type)) %></span></span>
+            <span class="ks" style="color:<%= k.source === 'api' ? 'var(--accent)' : 'var(--ink-mute,#888c96)' %>;"><%= k.source ? esc(k.source) : '' %></span>
+            <span class="kw"><%= k.entered_at ? rel(k.entered_at, renderedAt) : 'no data yet' %></span>
+          </div>
+          <% }); %>
+        </div>
+        <% } else { %>
+        <p class="wt-empty">The scorecard query returned nothing just now. Refresh, or read the operating system below; the rules are always up.</p>
+        <% } %>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE WORK BETWEEN MEETINGS -->
+  <% if (agentTodos.length || recentUpdates.length) { %>
+  <section class="wt-sec">
+    <div class="wt-wrap">
+      <div class="wt-side"><span class="wt-label">03 / Between meetings</span></div>
+      <div class="wt-main">
+        <h2 class="wt-head">Work that happened while nobody was in a meeting.</h2>
+        <% if (agentTodos.length) { %>
+        <p class="wt-body">To-dos completed by agents, most recent first.</p>
+        <div class="wt-feed">
+          <% agentTodos.forEach(function(t){ %>
+          <div class="wt-frow"><span class="ft"><b><%= esc(t.owner_name || t.owner_external_id) %></b> completed: <%= esc(t.title) %></span><span class="fw"><%= rel(t.done_at, renderedAt) %></span></div>
+          <% }); %>
+        </div>
+        <% } %>
+        <% if (recentUpdates.length) { %>
+        <p class="wt-body" style="margin-top:28px;">Latest scorecard entries, as they landed.</p>
+        <div class="wt-feed">
+          <% recentUpdates.forEach(function(u){ %>
+          <div class="wt-frow"><span class="ft"><b><%= esc(ownerLabel(u.owner_external_id, u.owner_entity_type)) %></b> logged <%= esc(u.title) %>: <b><%= num(u.value) %><%= u.unit ? ' ' + esc(u.unit) : '' %></b><% if (u.source === 'api') { %> <span style="color:var(--accent);font-size:11px;font-family:'JetBrains Mono',monospace;">VIA API</span><% } %></span><span class="fw"><%= rel(u.entered_at, renderedAt) %></span></div>
+          <% }); %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- THE MEETING + ROCKS -->
+  <% if (lastMeeting || rockRows.length) { %>
+  <section class="wt-sec">
+    <div class="wt-wrap">
+      <div class="wt-side"><span class="wt-label">04 / The rhythm</span></div>
+      <div class="wt-main">
+        <h2 class="wt-head">The meeting and the quarter it serves.</h2>
+        <% if (lastMeeting) { %>
+        <div class="wt-meet">
+          <div class="wt-stat"><div class="n"><%= fdate(lastMeeting.ended_at || lastMeeting.started_at) %></div><div class="l">Last meeting: <%= esc(lastMeeting.title || lastMeeting.meeting_type || 'leadership') %></div></div>
+          <% if (mm) { %><div class="wt-stat"><div class="n"><%= mm %> min</div><div class="l">Duration</div></div><% } %>
+          <% if (attendeeCount) { %><div class="wt-stat"><div class="n"><%= attendeeCount %></div><div class="l">Seats attending</div></div><% } %>
+          <% if (mr) { %><div class="wt-stat"><div class="n"><%= mr %>/10</div><div class="l">Team rating</div></div><% } %>
+        </div>
+        <% } %>
+        <% if (rockRows.length) { %>
+        <p class="wt-body" style="margin-top:26px;">Current quarterly priorities, with their honest status.</p>
+        <div class="wt-feed">
+          <% rockRows.forEach(function(r){ %>
+          <div class="wt-frow"><span class="ft"><%= esc(r.title) %> <span class="wt-mut" style="font-size:12px;">&middot; <%= esc(r.owner_name || '') %></span></span><span class="fw"><span class="wt-pill <%= r.on_track ? 'wt-on' : 'wt-off' %>"><%= r.on_track ? 'on track' : 'off track' %></span></span></div>
+          <% }); %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- THE CORRECTION LOG -->
+  <% if (corrections.length) { %>
+  <section class="wt-sec">
+    <div class="wt-wrap">
+      <div class="wt-side"><span class="wt-label">05 / The correction log</span></div>
+      <div class="wt-main">
+        <h2 class="wt-head">Where we were wrong, on the record.</h2>
+        <p class="wt-body">Every rule in our published operating system carries the failure that taught it to us. This is the part no vendor volunteers. We think it is the most useful thing on the page.</p>
+        <div class="wt-corr">
+          <% corrections.forEach(function(c){ %>
+          <div class="wt-crow">
+            <div class="cid"><%= esc(c.claim_id) %> &middot; <%= esc(c.section || '') %><% if (c.agent_name) { %> &middot; <%= esc(c.agent_name) %><% } %></div>
+            <div class="cr"><%= esc(c.rule) %></div>
+            <% if (c.failure_mode) { %><div class="cf"><b>What goes wrong otherwise:</b> <%= esc(c.failure_mode) %></div><% } %>
+          </div>
+          <% }); %>
+        </div>
+        <% if (oosMeta) { %>
+        <div style="margin-top:24px;"><a class="wt-link" href="/oos/<%= oosMeta.id %>">Read all <%= oosMeta.claimCount %> published rules &rarr;</a></div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- CLOSE -->
+  <section class="wt-close">
+    <div class="wt-wrap">
+      <p class="wt-battle">Now imagine this window looking into your company.</p>
+      <p class="wt-body">Everything above runs on the free tier plus five agent seats. Your chart, your scorecard, your agents, your rhythm. Set it up this afternoon, next to whatever you run today.</p>
+      <div class="cta">
+        <a href="/sign-up" onclick="return (typeof gtagSendEvent==='function')?gtagSendEvent('/sign-up'):true" class="btn-primary px-8 py-4 text-[16px]">Claim a founding seat &rarr;</a>
+        <a href="/home-manifesto-preview" class="wt-link">Read the letter from our founder &rarr;</a>
+      </div>
+    </div>
+  </section>
+</div>
