@@ -92,9 +92,10 @@
         </div>
       </div>
 
-      <!-- PRIVATE -- the privacy tier. Amber accent mirrors the Help panel's
-           Premium Support row and the sidebar Upgrade item. Calendly CTA, no
-           checkout. -->
+      <!-- PRIVATE -- the privacy tier. HIDDEN 2026-07-01 per David: four cards
+           broke the 3-column pricing grid. Flip the guard below to bring it
+           back. The Private plan itself still exists (billing untouched). -->
+      <% if (false) { %>
       <div class="card p-8 sm:p-9 flex flex-col relative border-t-[3px]"
            style="border-top-color:#b45309;">
         <div class="eyebrow mb-3" style="color:#92400e;">Turn off cross-org learning</div>
@@ -131,6 +132,7 @@
           <p class="font-mono text-[11px] text-[var(--ink-mute)] text-center mt-2.5">Early-supporter pricing.</p>
         </div>
       </div>
+      <% } %>
 
       <!-- PAID -- everything else -->
       <div class="card p-8 sm:p-9 flex flex-col relative border-t-[3px]"
