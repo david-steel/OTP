@@ -206,10 +206,10 @@ export const changelog: ChangelogEntry[] = [
     title: 'A free library of 180+ meeting templates and agendas',
     why: 'One more thing off your plate. You never start a meeting from a blank page again.',
     cta: { text: 'Raid the library', url: '/templates' },
-    summary: 'OrgTP now has a free meeting template library at /templates: ready-to-run agendas for every kind of meeting and every major operating system. EOS, Scaling Up, Pinnacle, the Accelerate Operating System, Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, Balanced Scorecard, plus Agile and Scrum ceremonies, one-on-ones, retrospectives, focus groups, QBRs, board meetings, and more. Search by name or methodology, download any template as markdown, print it, or adapt it and run it live in OrgTP. No sign-in required.',
+    summary: 'OrgTP now has a free meeting template library at /templates: ready-to-run agendas for every kind of meeting and every major operating system. The classic entrepreneurial operating system, Scaling Up, Pinnacle, the Accelerate Operating System, Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, Balanced Scorecard, plus Agile and Scrum ceremonies, one-on-ones, retrospectives, focus groups, QBRs, board meetings, and more. Search by name or methodology, download any template as markdown, print it, or adapt it and run it live in OrgTP. No sign-in required.',
     details: `<p>Every meeting worth running has a shape. We wrote down more than 180 of them.</p>
 <ul class="list-disc pl-6 space-y-1">
-<li><strong>Every major operating system.</strong> EOS, Scaling Up, Pinnacle, Accelerate (AOS), Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, and Balanced Scorecard, each with its full meeting cadence from daily huddle to annual planning, plus signature sessions like the 4DX WIG Session and the Holacracy Tactical and Governance meetings.</li>
+<li><strong>Every major operating system.</strong> The classic entrepreneurial operating system, Scaling Up, Pinnacle, Accelerate (AOS), Metronomics, OKR, 4DX, Holacracy, Hoshin Kanri and Lean, V2MOM and OGSM, and Balanced Scorecard, each with its full meeting cadence from daily huddle to annual planning, plus signature sessions like the 4DX WIG Session and the Holacracy Tactical and Governance meetings.</li>
 <li><strong>And every everyday meeting.</strong> Agile and Scrum ceremonies, 1:1s and people meetings, team operations, retrospectives, customer and external, and innovation and facilitation.</li>
 <li><strong>Real agendas, not stubs.</strong> Each template has a timeboxed agenda, who should attend, duration and cadence, facilitator tips, and common mistakes to avoid.</li>
 <li><strong>Search and filter.</strong> Find a template by name, methodology, or what you are trying to do. Filter by operating system or meeting type.</li>
@@ -379,7 +379,7 @@ export const changelog: ChangelogEntry[] = [
     summary: "Three things that used to bounce you out of OTP now stay inside it. A megaphone in the nav lights up when there is something new and shows the latest updates in a click. A Help and Support panel puts the ticket desk, the user guide, and the update feed one click away. And the content pages themselves -- the guide, What's New, the blog, every article -- now render inside the app shell when you are signed in, so your navigation never disappears.",
     details: `<ul class="list-disc pl-6 space-y-1">
 <li><strong>The megaphone.</strong> A red badge appears when updates have shipped since your last look. Open it for the latest entries; the full history lives on the What's New page.</li>
-<li><strong>Help and Support.</strong> The (?) in the nav opens a panel with Raise a Ticket, the User Guide, What's New, the EOS + AI article library, and what's coming next.</li>
+<li><strong>Help and Support.</strong> The (?) in the nav opens a panel with Raise a Ticket, the User Guide, What's New, the operating-system + AI article library, and what's coming next.</li>
 <li><strong>No more exits.</strong> Guide, What's New, blog, and Premium Support pages keep the sidebar and top bar when you are signed in. Visitors still get the full marketing pages at the same links.</li>
 </ul>`,
   },
@@ -425,7 +425,7 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-06-10',
     tags: ['Help', 'Onboarding'],
     title: 'A (?) on everything: contextual help across the whole app',
-    summary: 'The little (?) explainer that started next to New Meeting now covers the entire platform -- about 46 topics across every surface. Every Daily dashboard panel, all seven sections of the live meeting runner, the to-do queue, the scoreboard, issues, the org chart, People Review, Members, Teams, the Operating Plan, the CEO view, the intelligence pages, and all the settings pages each have a (?) that opens a plain-language explanation of what the thing is, what it shows, and what you can do there. No jargon assumed -- every EOS-style term is defined the first time you meet it.',
+    summary: 'The little (?) explainer that started next to New Meeting now covers the entire platform -- about 46 topics across every surface. Every Daily dashboard panel, all seven sections of the live meeting runner, the to-do queue, the scoreboard, issues, the org chart, People Review, Members, Teams, the Operating Plan, the CEO view, the intelligence pages, and all the settings pages each have a (?) that opens a plain-language explanation of what the thing is, what it shows, and what you can do there. No jargon assumed -- every operating-system term is defined the first time you meet it.',
     details: `<p>Built so a first-time user can learn the system from inside the system.</p>
 <ul class="list-disc pl-6 space-y-1">
 <li><strong>Everywhere you work.</strong> Daily dashboard panels, every agenda section of the meeting runner, to-dos, the scoreboard, issues, the org chart and People Review, Members and Teams, the Operating Plan and CEO view, Browse and the Intelligence Graph, and Settings.</li>
@@ -521,7 +521,7 @@ export const changelog: ChangelogEntry[] = [
     tags: ['Migration'],
     title: 'The importer now speaks Bloom Growth too',
     summary: 'The same drop-your-exports importer that moves teams off Ninety now also handles Bloom Growth at /import/bloom. Export your meeting data from Bloom (it ships a ZIP of CSVs: Quarterly Priorities, To-Dos, O&O Issues, KPI Metrics, Headlines), unzip, and drop the CSVs in. OTP rebuilds your accountability chart from who owns what and writes your Rocks, To-Dos, Issues, and Scorecard in, exactly like the Ninety flow. The engine is shared, so the same idempotent, write-free-preview behavior applies.',
-    details: `<p>The import engine was built source-agnostic on purpose: it reconstructs your chart from the owner column that every clean EOS export carries, regardless of which tool produced it. Adding Bloom Growth was mostly teaching the parser Bloom's file names.</p>
+    details: `<p>The import engine was built source-agnostic on purpose: it reconstructs your chart from the owner column that every clean export from your current tool carries, regardless of which tool produced it. Adding Bloom Growth was mostly teaching the parser Bloom's file names.</p>
 <ul class="list-disc pl-6 space-y-1">
 <li><strong>New page at <code>/import/bloom</code></strong> with Bloom-specific export steps (Bloom exports per meeting, as a ZIP you unzip). Same preview-then-commit flow, same mascot, same "rebuild the chart from who owns what" result.</li>
 <li><strong>Bloom's quirky file names handled</strong> — its To-Dos file is literally named "To-Dos (KPI (Metrics))", which naive detection would mistake for a scorecard. The parser now matches explicit module names first and treats the scorecard as the fallback, so To-Dos, Quarterly Priorities (Goals), and O&O (Issues) all land in the right place.</li>
@@ -537,7 +537,7 @@ export const changelog: ChangelogEntry[] = [
     tags: ['Major', 'Migration'],
     title: 'Switch from Ninety: drop your exports and OTP rebuilds your chart from who owns what',
     summary: 'There is now a one-page way to move from Ninety.io to OTP. Export your Rocks, To-Dos, Issues, Headlines, and Scorecard from Ninety, drop the files at /import/ninety, and OTP reconstructs your accountability chart from the owner of every Rock, KPI, and Issue, because Ninety has no structured chart export. The preview runs with no account and stores nothing; once you have a workspace, one click writes it all in: people seated on the chart, Rocks, To-Dos, Issues, and Scorecard KPIs with their weekly history. Re-running never duplicates. Alongside it, a new eight-part comparison series explains where OTP sits relative to Scaling Up, OKRs, 4DX, Holacracy, Agile/Scrum, Lean/Six Sigma, V2MOM, and the Great Game of Business.',
-    details: `<p>The biggest thing keeping anyone on their current operating-system tool is the cost of switching. This release attacks that directly for Ninety.io, the most common place EOS-style teams keep their Rocks, scorecard, and issues today.</p>
+    details: `<p>The biggest thing keeping anyone on their current operating-system tool is the cost of switching. This release attacks that directly for Ninety.io, the most common place operating-system-style teams keep their Rocks, scorecard, and issues today.</p>
 
 <h3>The hard part, and the trick that beats it</h3>
 <p>We looked at exactly what Ninety lets you export. The five list modules come out clean as spreadsheets: <strong>Rocks, To-Dos, Issues, Headlines</strong> as XLSX and the <strong>Scorecard</strong> as CSV. But the one thing OTP cares about most, the <strong>Accountability Chart</strong>, has no structured export at all. Ninety only prints it to PDF, and the detailed PDF drops the seat descriptions. There is also no public API.</p>
@@ -561,8 +561,8 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-05-27',
     tags: ['Major', 'Security', 'Multi-tenant'],
     title: 'Every page knows who is actually looking at it -- multi-tenant tightening across the dashboard',
-    summary: 'OTP started as a single-tenant tool, and the first real second-user session (a live L10 with two people in the room) exposed every place the code still assumed there was only one user. The dashboard, members, teams, KPIs, People Review, and the org chart now scope strictly by role and chart position. Owner / admin / implementer see the full org. Manager and EOS Integrator / Visionary see their own seat plus their reports-to subtree. Managee and member see only their own seat. The "My Practice" tab is now hidden from anyone who is not an owner or operating partner. And every check is impersonation-aware -- "view as <user>" from the admin panel now shows you exactly what that user sees, not a leaked admin view glued onto their name.',
-    details: `<p>Two days, fifteen commits, one root pattern. OTP was built first as a tool for a founder running their own org, and that meant the codebase had founder-only assumptions sprinkled across dozens of routes. The moment a second real human signed in -- a teammate joining a live L10 -- those assumptions started leaking the founder's data into the teammate's view. The remediation is a structural tightening: any check that gates data on "who is looking at this?" now reads from the request's resolved member, honors super-admin impersonation, and applies a single canonical role tier from the chart-permissions service.</p>
+    summary: 'OTP started as a single-tenant tool, and the first real second-user session (a live weekly leadership meeting with two people in the room) exposed every place the code still assumed there was only one user. The dashboard, members, teams, KPIs, People Review, and the org chart now scope strictly by role and chart position. Owner / admin / implementer see the full org. Manager and Integrator / Visionary see their own seat plus their reports-to subtree. Managee and member see only their own seat. The "My Practice" tab is now hidden from anyone who is not an owner or operating partner. And every check is impersonation-aware -- "view as <user>" from the admin panel now shows you exactly what that user sees, not a leaked admin view glued onto their name.',
+    details: `<p>Two days, fifteen commits, one root pattern. OTP was built first as a tool for a founder running their own org, and that meant the codebase had founder-only assumptions sprinkled across dozens of routes. The moment a second real human signed in -- a teammate joining a live weekly leadership meeting -- those assumptions started leaking the founder's data into the teammate's view. The remediation is a structural tightening: any check that gates data on "who is looking at this?" now reads from the request's resolved member, honors super-admin impersonation, and applies a single canonical role tier from the chart-permissions service.</p>
 
 <h3>Multi-tenant scoping across the dashboard</h3>
 <p>Every route that returns user-scoped data was checked against the rule "must scope by the requesting member's role and chart position." Findings shipped as a coordinated sweep:</p>
@@ -581,7 +581,7 @@ export const changelog: ChangelogEntry[] = [
 <p>Super-admin "view as &lt;user&gt;" was leaking the admin's data into the impersonated view because four separate code paths derived "who is the effective viewer?" from the Clerk session (always the admin) instead of from the impersonation cookie payload. All four are now routed through <code>request.impersonation.as || auth.userId</code> so every gate evaluates as the impersonated user. A super-admin-gated diagnostic endpoint at <code>/api/v1/_debug/dashboard-state</code> stays in place -- it returns the resolved identity, role, claimed tiles, and the actual results that would be returned for the current request, so the next tenant-isolation question gets answered in one request instead of guessed at.</p>
 
 <h3>The principle going forward</h3>
-<p>Two memory rules now sit alongside the code so the pattern does not need to be relearned. "Who is the viewer?" gates must read from <code>request.orgMember</code> and <code>request.impersonation.as</code>, never from <code>auth.userId</code> or <code>resolveOrgForUser(auth.userId)</code> (the first two honor impersonation; the second two do not). The canonical "see-all" tier is owner / admin / implementer, defined in <code>services/chart-permissions.ts</code>; EOS roles like Integrator and Visionary view through their reports-to subtree, same as Manager. Before any new class of user is invited to OTP -- first paid client, first partner-org, first coach managing multiple orgs -- a structured re-scan runs against the same five greps captured in <code>docs/security-audit-2026-05-27.md</code>. This is a posture, not a one-time cleanup.</p>`,
+<p>Two memory rules now sit alongside the code so the pattern does not need to be relearned. "Who is the viewer?" gates must read from <code>request.orgMember</code> and <code>request.impersonation.as</code>, never from <code>auth.userId</code> or <code>resolveOrgForUser(auth.userId)</code> (the first two honor impersonation; the second two do not). The canonical "see-all" tier is owner / admin / implementer, defined in <code>services/chart-permissions.ts</code>; Integrator and Visionary roles view through their reports-to subtree, same as Manager. Before any new class of user is invited to OTP -- first paid client, first partner-org, first coach managing multiple orgs -- a structured re-scan runs against the same five greps captured in <code>docs/security-audit-2026-05-27.md</code>. This is a posture, not a one-time cleanup.</p>`,
   },
 
   // ---- May 26, 2026 ----
@@ -589,16 +589,16 @@ export const changelog: ChangelogEntry[] = [
   {
     date: '2026-05-26',
     tags: ['Meetings', 'Polish'],
-    title: 'L10 day, hardened from inside the room -- segue saves, short titles, draft preservation, due dates, and Slack previews',
-    summary: 'A live Leadership L10 with two people in the room surfaced five UX cuts that all shipped inside the meeting: invited members can now save their segue without an Authentication error, short issue titles ("Reps") no longer reject as invalid ticket data, every reload preserves whatever you are typing, L10 to-do due dates accept a custom override instead of a hardcoded seven days from today, and meeting URLs pasted into Slack or WhatsApp finally render as the meeting page rather than as a generic sign-in marketing card.',
-    details: `<p>Most product bugs surface during demos. This one surfaced inside a real L10 with two people running it for the first time -- which means each fix had a 60-second turnaround window between the bug showing up and being deployed live to the meeting in progress.</p>
+    title: 'Weekly leadership meeting day, hardened from inside the room -- segue saves, short titles, draft preservation, due dates, and Slack previews',
+    summary: 'A live weekly leadership meeting with two people in the room surfaced five UX cuts that all shipped inside the meeting: invited members can now save their segue without an Authentication error, short issue titles ("Reps") no longer reject as invalid ticket data, every reload preserves whatever you are typing, meeting to-do due dates accept a custom override instead of a hardcoded seven days from today, and meeting URLs pasted into Slack or WhatsApp finally render as the meeting page rather than as a generic sign-in marketing card.',
+    details: `<p>Most product bugs surface during demos. This one surfaced inside a real weekly leadership meeting with two people running it for the first time -- which means each fix had a 60-second turnaround window between the bug showing up and being deployed live to the meeting in progress.</p>
 
 <h3>The five inside-the-meeting fixes</h3>
 <ul class="list-disc pl-6 space-y-2">
-<li><strong>Segue / headlines / ratings save no longer errors out.</strong> The API auth resolver was only honoring the legacy-founder Clerk path; the invited-member path was missing. Any invited teammate trying to save a field got "Authentication required" even though they could see the meeting page. The resolver now honors both paths, matching what the page-level guard already does. Any invited org member can now run their L10 normally.</li>
+<li><strong>Segue / headlines / ratings save no longer errors out.</strong> The API auth resolver was only honoring the legacy-founder Clerk path; the invited-member path was missing. Any invited teammate trying to save a field got "Authentication required" even though they could see the meeting page. The resolver now honors both paths, matching what the page-level guard already does. Any invited org member can now run their weekly leadership meeting normally.</li>
 <li><strong>"Add Issue" no longer rejects short titles.</strong> The "Add Issue" UI hint promised "any non-empty title" but the server schema required five characters. A four-character title (<em>"Reps"</em> in the live meeting) returned "Add failed: invalid ticket data" with no explanation. Title and description validators were relaxed to one character minimum, matching the UI promise. Spam control already lives in the rate limiter; min-length validation does not need to do that job.</li>
-<li><strong>Saves no longer wipe what the other person is typing.</strong> Any save on the L10 page (segue, headline, rating, issue, to-do) fired an SSE event that triggered a full-page reload for every other attendee. The reload preserved scroll position and the focused element's ID, but not the contents of any input the other attendee was typing into. Now every reload path snapshots non-empty <code>textarea</code> / <code>input</code> / <code>contenteditable</code> values to <code>sessionStorage</code> before reloading and restores them on load. Typing in segue while a teammate saves their headline is now safe.</li>
-<li><strong>L10 to-do due dates accept a custom date.</strong> The to-do create form on the L10 page hardcoded the due date to seven days from today with no override field. A new date input next to the priority / recurrence selectors lets you pick any date; if you leave it blank, the seven-day default still applies. Picks anchor to end-of-day local so a "due today" to-do does not show overdue at 9 AM the same day.</li>
+<li><strong>Saves no longer wipe what the other person is typing.</strong> Any save on the meeting page (segue, headline, rating, issue, to-do) fired an SSE event that triggered a full-page reload for every other attendee. The reload preserved scroll position and the focused element's ID, but not the contents of any input the other attendee was typing into. Now every reload path snapshots non-empty <code>textarea</code> / <code>input</code> / <code>contenteditable</code> values to <code>sessionStorage</code> before reloading and restores them on load. Typing in segue while a teammate saves their headline is now safe.</li>
+<li><strong>Meeting to-do due dates accept a custom date.</strong> The to-do create form on the meeting page hardcoded the due date to seven days from today with no override field. A new date input next to the priority / recurrence selectors lets you pick any date; if you leave it blank, the seven-day default still applies. Picks anchor to end-of-day local so a "due today" to-do does not show overdue at 9 AM the same day.</li>
 <li><strong>Meeting links in Slack / WhatsApp render as the meeting page, not as a sign-in marketing card.</strong> Before today, pasting a meeting URL into Slack rendered the sign-in page's "Free in Beta" mascot card because the unfurl bot followed the auth redirect and scraped the sign-in meta tags. Now the meeting URL returns a public preview at the same path: meeting title, scheduled date in ET, attendee names, and a "Sign in to view" CTA. No agenda contents, scorecard, rocks, ratings, segue, or headlines leak -- public-safe metadata only. Sharing a meeting link with a teammate finally looks like sharing a meeting link.</li>
 </ul>
 
@@ -625,7 +625,7 @@ export const changelog: ChangelogEntry[] = [
 <p>Every agent on the Sneeze It army -- Radar, Pepper, Dirk, Arin, AIO, and the rest -- has been migrated off Todoist and onto OTP's API. When an agent identifies an action item for you, it lands on your queue in seconds, tagged with the agent's name so you can see which one pushed it. The migration replaces 50+ touchpoints across the agent system; the canonical path now is a single shell wrapper (<code>~/.claude/otp-todo.sh</code>) every agent calls.</p>
 
 <h3>Descriptions with formatting</h3>
-<p>The to-do create form (on /me/todos, /dashboard, and inside L10 meetings) now has a description field with a small toolbar: <strong>**bold**</strong>, <em>*italic*</em>, and <code>[label](url)</code> link insertion. Cmd/Ctrl+B / +I / +K shortcut too. What you type is what gets stored -- no editor library, no contenteditable surprises -- and the renderer is gated so a malicious link can't inject javascript: URLs.</p>
+<p>The to-do create form (on /me/todos, /dashboard, and inside weekly leadership meetings) now has a description field with a small toolbar: <strong>**bold**</strong>, <em>*italic*</em>, and <code>[label](url)</code> link insertion. Cmd/Ctrl+B / +I / +K shortcut too. What you type is what gets stored -- no editor library, no contenteditable surprises -- and the renderer is gated so a malicious link can't inject javascript: URLs.</p>
 
 <h3>Todoist is deprecated</h3>
 <p>Todoist was the bridge while OTP built its own todo layer. That bridge is no longer needed. A migration script (<code>~/.claude/scripts/import-todoist-todos.sh</code>) mirrors any remaining open Todoist tasks into OTP on demand -- run once when you're ready to flip the switch. Agent surfaces still in the codebase reference Todoist only in DEPRECATED sections so the history stays readable.</p>`,
@@ -756,7 +756,7 @@ export const changelog: ChangelogEntry[] = [
 </ol>
 
 <h3>First real signal</h3>
-<p>Joel Swanson, an EOS Implementer in Colorado, became the first cold-email-driven claim today -- about four hours after his email landed. He wrote back asking the basic "who are you, what is this, why should I care" questions, which became the spec for the new <code>/coach</code> 101 panel and the welcome email template every coach receives from this point on.</p>
+<p>Joel Swanson, a business operating system implementer in Colorado, became the first cold-email-driven claim today -- about four hours after his email landed. He wrote back asking the basic "who are you, what is this, why should I care" questions, which became the spec for the new <code>/coach</code> 101 panel and the welcome email template every coach receives from this point on.</p>
 
 <h3>Under the hood</h3>
 <ul>
@@ -845,7 +845,7 @@ export const changelog: ChangelogEntry[] = [
     date: '2026-05-07',
     tags: ['Major', 'Tools'],
     title: 'A daily home for managers -- the Dashboard now runs your day',
-    summary: 'The /dashboard page is now an EOS-style daily manager surface: meeting selector, headlines (Integrator marks read), my Quarterly Priorities with on/off-track toggle, KPIs with inline weekly entry, my To-Dos, IDS issues, plus a "My Agents" panel where you upload your CLAUDE.md or Agent.md and get a 0-8 score. New "Dashboard" dropdown in the global nav and a sticky tab strip on every dashboard page so you always know where you are and where else to go.',
+    summary: 'The /dashboard page is now an operating-system-style daily manager surface: meeting selector, headlines (Integrator marks read), my Quarterly Priorities with on/off-track toggle, KPIs with inline weekly entry, my To-Dos, IDS issues, plus a "My Agents" panel where you upload your CLAUDE.md or Agent.md and get a 0-8 score. New "Dashboard" dropdown in the global nav and a sticky tab strip on every dashboard page so you always know where you are and where else to go.',
     details: `<p>OTP's dashboard used to be a publisher splash for owners and a near-empty page for everyone else. It is now a daily manager workspace, designed to be opened every morning.</p>
 
 <h3>What you get on /dashboard</h3>
@@ -861,10 +861,10 @@ export const changelog: ChangelogEntry[] = [
 <li><strong>Multi-org dropdown</strong> -- if you are a member of more than one org, switch between them right at the top of the page.</li>
 </ul>
 
-<h3>Two new EOS roles: Visionary and Integrator</h3>
+<h3>Two new roles: Visionary and Integrator</h3>
 <ul>
 <li>Added <strong>Visionary</strong> and <strong>Integrator</strong> as first-class roles alongside Owner / Admin / Manager / Managee. Visible in the Members invite dropdown.</li>
-<li>The <strong>Integrator</strong> role unlocks running-the-meeting actions: marking headlines read, overriding a Rock's status, marking issues solved. Owners, Admins, and EOS Implementers also have these powers, so nothing changes for orgs that have not adopted the role yet.</li>
+<li>The <strong>Integrator</strong> role unlocks running-the-meeting actions: marking headlines read, overriding a Rock's status, marking issues solved. Owners, Admins, and Implementers also have these powers, so nothing changes for orgs that have not adopted the role yet.</li>
 </ul>
 
 <h3>Wayfinding: Dashboard dropdown + tab strip</h3>
@@ -895,10 +895,10 @@ export const changelog: ChangelogEntry[] = [
   {
     date: '2026-05-05',
     tags: ['Naming'],
-    title: 'L10 is now L8 -- weekly leadership meeting renamed to point at agentic maturity',
+    title: 'The weekly leadership meeting is now the L8 Meeting -- renamed to point at agentic maturity',
     summary: 'OTP\'s weekly leadership meeting is now called the L8 Meeting. Same agenda, same cadence -- different finish line. "L8" aims at Level 8 (Autonomous Agent Teams) on the 8 Levels of Agentic Engineering. Old /l10 URLs 301-redirect to /l8 so existing links and bookmarks keep working.',
-    details: `<p>The weekly leadership meeting is now the <strong>L8 Meeting</strong>. The name comes from Level 8 of the 8 Levels of Agentic Engineering -- Autonomous Agent Teams. Same agenda shape as the EOS L10 (Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude); different reason to run it: every week the meeting forces the question "are we more agentic this week than last week?"</p>
-<p>Old <code>/l10</code> URLs continue to work via 301 redirect, so any link, bookmark, or doc that points at <code>/l10</code> will land on <code>/l8</code> automatically. The glossary keeps the L10 entry alongside the new L8 entry so the EOS lineage stays discoverable.</p>`,
+    details: `<p>The weekly leadership meeting is now the <strong>L8 Meeting</strong>. The name comes from Level 8 of the 8 Levels of Agentic Engineering -- Autonomous Agent Teams. Same agenda shape you already run (Checkin, Scorecard, Quarterly Priorities, Headlines, To-Dos, Issues, Conclude); different reason to run it: every week the meeting forces the question "are we more agentic this week than last week?"</p>
+<p>Old <code>/l10</code> URLs continue to work via 301 redirect, so any link, bookmark, or doc that points at <code>/l10</code> will land on <code>/l8</code> automatically. The glossary keeps the old name alongside the new L8 entry so the earlier terminology stays discoverable.</p>`,
   },
 
   // ---- May 3, 2026 ----
@@ -995,7 +995,7 @@ export const changelog: ChangelogEntry[] = [
 
 <h3>A new <code>/start-here</code> page</h3>
 <ul>
-<li>Modeled on the EOS Worldwide pattern: one promise, three steps, one calendar.</li>
+<li>Modeled on the classic one-promise, three-steps, one-calendar pattern.</li>
 <li>Hero promises a 30-minute conversation with David Steel, founder of OTP. No slides, no sales gauntlet.</li>
 <li>"What happens on the call" section walks through the three things in order: map your AI footprint, find the coordination gaps, decide the next move.</li>
 <li>Inline Calendly widget renders the full calendar plus time slots without scrolling, branded against the OTP color palette.</li>
@@ -1219,7 +1219,7 @@ export const changelog: ChangelogEntry[] = [
     details: `<p>OTP is now a living system. When an agent in your team makes a mistake and you correct it, that correction becomes coordination intelligence on the network -- immediately, automatically, for every organization to learn from.</p>
 <ul>
 <li><strong>Auto-capture:</strong> When you correct an agent's output, the agent automatically calls <code>capture_learning</code> with what failed, what to do instead, and why. Every correction is a learning. No manual step.</li>
-<li><strong>Auto-publish:</strong> Learnings go directly to your published OOS and the OTP network. No draft step, no delay. Your correction is available to the entire network within seconds.</li>
+<li><strong>Auto-publish:</strong> Learnings go directly to your published OOS and the OTP network. No draft step, no delay. Your correction is available to the entire network within seconds. (Superseded: publishing now goes through your draft OOS with human review.)</li>
 <li><strong>Auto-pull:</strong> Before executing their main task, agents check OTP for relevant learnings: "Has anyone (including other orgs) learned something about what I'm about to do?" If yes, they follow the learning instead of repeating the mistake.</li>
 <li><strong>Cross-org learning:</strong> When another organization discovers a coordination failure that matches your agent setup, OTP surfaces it. Their failure becomes your prevention.</li>
 </ul>

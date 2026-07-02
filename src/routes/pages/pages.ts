@@ -484,6 +484,10 @@ export default async function pageRoutes(app: FastifyInstance) {
         FROM oos_files f JOIN organizations o ON f.org_id = o.id
         WHERE f.status = 'published'
           AND o.is_private IS NOT TRUE
+          -- Public-catalog quality bar (2026-07-01): empty shells (0 claims =>
+          -- "0.0x efficiency" cards) stay off /browse until they publish real
+          -- claims. They are not deleted, just not shown to skeptical buyers.
+          AND f.claim_count > 0
         ORDER BY o.id, f.published_at DESC NULLS LAST
       ) latest
       ORDER BY published_at DESC NULLS LAST
